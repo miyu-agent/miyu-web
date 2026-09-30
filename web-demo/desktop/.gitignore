@@ -1,0 +1,4 @@
+target/
+
+# Tauri 生成的 schema（给编辑器补全用），编的时候会再生成，不进仓库。
+gen/schemas/

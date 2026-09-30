@@ -25,6 +25,11 @@ MIYU_HOME=<单独的测试目录> MIYU_RESOURCES=$PWD/resources MIYU_CORE_BIN=$P
 - 桥还顶着核心以后的网页模块做几样（蓝图 `web.md` 最后一节）：画 mermaid 图（`web.mermaid`）、给本机文件和 blob（`/file`、`/blob`，带口令，数据根不给）、抓链接卡片（`web.link_preview`、`/link-image`，要能联网，内网地址不抓）。
 - 预览工作区：让她用 `write` 把产物写进这个会话工作目录下的 `artifacts/`，写完右边自动打开（窗口够宽时）。
 
+### 桌面端（Tauri）
+
+同一份页面也能套一个桌面端外壳（`desktop/`）：一个本机窗口，页面、内核、软件包一个都不改。
+起桥、开窗口、环境变量怎么写见 `desktop/README.md`。
+
 ### 测试
 
 纯逻辑（事件 → 条目、时间线的段和字、差异、左栏的一项、框下面那一行、数的写法、回答的 Markdown 怎么解析和上色、预览工作区放什么、媒体卡片）有测试，拿仓库里事件的样本当底料，不开浏览器：

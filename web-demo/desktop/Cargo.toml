@@ -1,0 +1,34 @@
+[package]
+name = "miyu-desktop"
+version = "0.0.1"
+edition = "2024"
+publish = false
+license = "GPL-3.0-or-later"
+description = "Miyu 的桌面端外壳（Tauri）：起桥，再开一个本机窗口，页面、内核、软件包照网页演示那一份。"
+build = "build.rs"
+
+[build-dependencies]
+# Tauri 的构建脚本：把 tauri.conf.json、图标这些编进上下文。Apache-2.0 或 MIT。
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# 桌面端的外壳：系统自带的网页视图加一个 Rust 的窗口（设计 01 第一节、设计 21 X2，蓝图 web/architecture.md「宿主」）。
+tauri = { version = "2", features = [] }
+# 桥那一半：页面文件、核心连接、web.* 顶替、本机文件和 blob 的规矩都在这一个库里（蓝图「宿主怎么搬」第 3 步）。
+miyu-web-bridge = { path = "../bridge" }
+
+# 和仓库工作区的 lints 一样（根目录 Cargo.toml），演示程序也照这套规矩。
+[lints.rust]
+unsafe_code = "forbid"
+unused_must_use = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+let_underscore_must_use = "deny"
+unused_result_ok = "deny"
+unwrap_used = "deny"
+missing_errors_doc = "warn"
+missing_panics_doc = "warn"
+
+# 演示程序不进仓库的 workspace，自己单独编，门禁不查它。
+[workspace]
