@@ -25,6 +25,8 @@ import { fit } from '../model/footer.js';
 import { read } from '../model/commands.js';
 import { CommandList } from './commands.js';
 import { Picker } from './picker.js';
+import { MeterPanel, ring } from './meter.js';
+import { short } from '../model/format.js';
 import { HistoryList } from './history.js';
 import { MentionList } from './mention.js';
 import { wordAt, plan, pathText, dirWord, splice, failure } from '../model/mention.js';
@@ -98,14 +100,16 @@ export class Composer {
     this.input.addEventListener('scroll', () => { this.backdrop.scrollTop = this.input.scrollTop; });
     /** 选一样的浮层（`/language`）：和命令列表同一个位置 */
     this.picker = new Picker();
+    /** 上下文、累计两格点开的构成浮层（蓝图「框下面那一行的数」）：和命令列表同一个位置 */
+    this.meter = new MeterPanel();
     this.head = h('div.composer-head');
     this.tools = h('span.composer-tools');
     this.float = h('div.composer-float');
     /** 占着整个框的（挂载位 `composer.takeover`：确认和提问的抽屉）；有东西占着时框里原来的让出来（`takeover`） */
     this.takeoverEl = h('div.composer-takeover');
-    this.box = h('div.composer', this.notice, this.takeoverEl, this.head, h('div.composer-field', this.backdrop, this.input), this.bar = h('div.composer-bar', this.tools, this.sendButton), this.menu.el, this.picker.el, this.historyList.el, this.mention.el, this.float);
+    this.box = h('div.composer', this.notice, this.takeoverEl, this.head, h('div.composer-field', this.backdrop, this.input), this.bar = h('div.composer-bar', this.tools, this.sendButton), this.menu.el, this.picker.el, this.historyList.el, this.mention.el, this.meter.el, this.float);
     this.el = h('div.composer-dock', this.box, this.footer);
-    this.parts = /** @type {{key: string, text: string}[]} */ ([]);
+    this.parts = /** @type {any[]} */ ([]);
     /** 撤销时放回框里的那句：恢复时还没动过的收回去（`tui.md`「输入框」第 7 条）。 */
     this.putBackText = /** @type {string|null} */ (null);
     // 那一行变宽变窄、中间的按钮出现消失：右边重新挑放得下的
@@ -574,12 +578,54 @@ export class Composer {
     // 中间有按钮的（后台任务），它和两边各隔一个 `footer_gap`，右边先让
     const middle = this.middle.offsetWidth;
     const room = this.footer.clientWidth - this.left.scrollWidth - res.layout.footer_gap - (middle ? middle + res.layout.footer_gap : 0);
+    // 量的是真画出来的宽：圆环、图标写不成一串字，量的时候就得照真节点画一遍
+    const line = (parts) => parts.flatMap((p, i) => [...(i ? [h('span.sep', ' · ')] : []), this.meterPart(p)]);
     const measure = (parts) => {
-      this.right.textContent = parts.map((p) => p.text).join(' · ');
+      replace(this.right, line(parts));
       return this.right.offsetWidth;
     };
     const kept = fit(this.parts, room, measure);
-    this.right.textContent = kept.map((p) => p.text).join(' · ');
+    replace(this.right, line(kept));
+    // 开着的那一格被丢了（窗口窄了、那一格没了）：浮层一起关上
+    if (this.meter.open && !kept.some((p) => p.key === this.meter.open)) this.meter.close();
+    for (const el of this.right.querySelectorAll('.footer-meter')) el.classList.toggle('is-on', el.dataset.key === this.meter.open);
+  }
+
+  /** 右边的一格：速度是字；上下文是一个空心圆环；累计是数据库图标、数、命中率。后两格点了开构成浮层。 */
+  meterPart(part) {
+    if (part.key === 'speed') return h('span.footer-speed', part.text);
+    if (part.key === 'context') {
+      return h('button.footer-meter', { type: 'button', title: part.text, dataset: { key: 'context' }, onclick: () => this.openMeter(part) }, ring(part));
+    }
+    return h('button.footer-meter', { type: 'button', title: part.text, dataset: { key: 'total' }, onclick: () => this.openMeter(part) },
+      icon('database'), h('span', part.tokens), h('span.sep', ' · '), h('span', t('hit', { percent: part.percent })));
+  }
+
+  /**
+   * 点开这一格的构成浮层（蓝图 `web.md`「框下面那一行的数」）：上下文写这一次主请求的用量四格加消息条数，累计写
+   * 这一路的请求次数、输入、输出、缓存读、缓存写、命中率。数据是 `model/footer.js` 那一格带来的。
+   * @param {any} part 右边的一格
+   */
+  openMeter(part) {
+    const d = part.detail;
+    const rows = !d ? [] : part.key === 'context'
+      ? [
+        [t('usage.uncached'), short(d.uncached)],
+        [t('usage.cache_read'), short(d.cacheRead)],
+        [t('usage.cache_write'), short(d.cacheWrite)],
+        [t('usage.output'), short(d.output)],
+        ...(d.messages == null ? [] : [[t('usage.messages'), String(d.messages)]]),
+      ]
+      : [
+        [t('usage.requests'), String(d.requests)],
+        [t('usage.input'), short(d.input)],
+        [t('usage.output'), short(d.output)],
+        [t('usage.cache_read'), short(d.cacheRead)],
+        [t('usage.cache_write'), short(d.cacheWrite)],
+        [t('usage.hit'), `${part.percent}%`],
+      ];
+    this.meter.toggle(part.key, t(`usage.${part.key}`), part.text, rows);
+    this.drawRight();
   }
 }
 

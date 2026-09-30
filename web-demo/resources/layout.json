@@ -41,6 +41,11 @@
     "close_ms": 260
   },
   "footer_gap": 16,
+  "context_ring": {
+    "size": 14,
+    "stroke": 2,
+    "warn_at": 0.8
+  },
   "level_cycle": [
     "workspace",
     "full",

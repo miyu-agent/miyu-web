@@ -1,12 +1,16 @@
 // @ts-check
 //! 输入框下面那一行要写的字（蓝图 `web.md`「框下面那一行的数」，照 TUI 演示的 `ui/footer.rs`、`core/push.rs`）：
-//! 左边权限级别和模型，右边速度 · 上下文 · 累计；还是 0 的格子不写；放不下时右边先丢速度、再丢累计。
+//! 左边权限级别和模型，右边速度 · 上下文环 · 累计（数据库图标、数、命中率）；还是 0 的格子不写；放不下时右边先丢速度、
+//! 再丢累计。上下文那一格带环要的比例，上下文和累计各自带点开浮层要的构成（`ui/meter.js` 画）。
 
 import { res, t } from '../util/res.js';
 import { short, hitRate, percentTenths } from './format.js';
 import { levelOf } from './transcript.js';
 
 const input = (u) => u.uncached + u.cache_read + u.cache_write;
+
+/** 上下文那一格点开的构成：这一次主请求的用量四格加消息几条（`kernel/events-bodies.md` 的 `usage`、`messages`）。 */
+const seen = (u, messages) => ({ uncached: u.uncached, cacheRead: u.cache_read, cacheWrite: u.cache_write, output: u.output, messages });
 
 /**
  * @param {any[]} events 这个会话的持久事件
@@ -18,15 +22,24 @@ export function footer(events, limits) {
   let endpoint = null;
   let speed = null;
   let context = 0;
-  const total = { input: 0, output: 0, hit: 0, mainInput: 0 };
+  /** 上下文那一格用的那一次请求（点开看的构成照它） */
+  let last = null;
+  const total = { input: 0, output: 0, hit: 0, mainInput: 0, requests: 0, uncached: 0, cacheRead: 0, cacheWrite: 0 };
   for (const e of events) {
     const b = e.body;
     if ((e.kind === 'session.created' || e.kind === 'session.policy_changed') && b.permission) level = levelOf(b.permission);
     // 清空了：上下文清零，下一次请求再照实际的写（蓝图 `web.md`「压缩、清空」）
-    if (e.kind === 'context.compacted' && b.trigger === 'clear') context = 0;
+    if (e.kind === 'context.compacted' && b.trigger === 'clear') {
+      context = 0;
+      last = null;
+    }
     if (e.kind !== 'model.called') continue;
     if (b.model) ({ model, endpoint } = b);
     if (!b.usage) continue;
+    total.requests += 1;
+    total.uncached += b.usage.uncached;
+    total.cacheRead += b.usage.cache_read;
+    total.cacheWrite += b.usage.cache_write;
     total.input += input(b.usage);
     total.output += b.usage.output;
     // 回顾这类辅助请求（带 `purpose`）算进累计，不改上下文、命中率、速度（蓝图「回顾」第 5 条）：单独发、不命中缓存
@@ -34,7 +47,10 @@ export function footer(events, limits) {
     total.mainInput += input(b.usage);
     total.hit += b.usage.cache_read;
     // 上下文照主请求算：压缩的摘要请求看的是另一份东西
-    if (!b.compaction) context = input(b.usage) + b.usage.output;
+    if (!b.compaction) {
+      context = input(b.usage) + b.usage.output;
+      last = seen(b.usage, b.messages);
+    }
     // 出字的速度：输出 ÷ 从第一个字到说完的时间
     if (b.duration_ms != null && b.first_token_ms != null && b.usage.output > 0 && b.duration_ms > b.first_token_ms) {
       speed = (b.usage.output * 1000) / (b.duration_ms - b.first_token_ms);
@@ -43,13 +59,26 @@ export function footer(events, limits) {
   const right = [];
   if (speed != null) right.push({ key: 'speed', text: t('speed', { rate: Math.round(speed) }) });
   if (context > 0) {
-    const text = limits.window
-      ? t('context', { used: short(context), window: short(limits.window), percent: percentTenths(context, limits.window) })
-      : short(context);
-    right.push({ key: 'context', text });
+    const window = limits.window;
+    right.push({
+      key: 'context',
+      used: context,
+      window,
+      // 环上画的弧：用了 ÷ 窗口，超过窗口的夹到画满；没有窗口的没有比例（只画轨道）
+      ratio: window ? Math.min(1, context / window) : null,
+      text: window ? t('context', { used: short(context), window: short(window), percent: percentTenths(context, window) }) : short(context),
+      detail: last,
+    });
   }
   if (total.input + total.output > 0) {
-    right.push({ key: 'total', text: t('total', { tokens: short(total.input + total.output), percent: hitRate(total.hit, total.mainInput) }) });
+    const percent = hitRate(total.hit, total.mainInput);
+    right.push({
+      key: 'total',
+      tokens: short(total.input + total.output),
+      percent,
+      text: `${short(total.input + total.output)} · ${t('hit', { percent })}`,
+      detail: total,
+    });
   }
   return { left: { level, label: levelLabel(level), model, endpoint }, right };
 }

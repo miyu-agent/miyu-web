@@ -74,6 +74,18 @@
 .level-full { color: var(--t-full); }
 .level-read_only { color: var(--t-read-only); }
 .footer-right { flex: none; }
+/* 右边那两格能的（上下文环、累计）：悬停加下划线、指针变手，点了开构成浮层（蓝图「框下面那一行的数」） */
+.footer-meter {
+  display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: none;
+  color: inherit; font: inherit; cursor: pointer;
+}
+.footer-meter:hover, .footer-meter.is-on { color: var(--text-soft); text-decoration: underline; text-underline-offset: 3px; }
+.footer-meter .icon { width: 13px; height: 13px; stroke-width: 2; }
+/* 上下文那个空心圆环：轨道淡、弧跟字色；到 `context_ring.warn_at`（八成）弧换警告色 */
+.meter-ring { flex: none; }
+.meter-ring-track { fill: none; stroke: color-mix(in srgb, currentColor 30%, transparent); }
+.meter-ring-arc { fill: none; stroke: currentColor; stroke-linecap: round; }
+.meter-ring.is-warn { color: var(--t-warn); }
 /* 中间：软件包挂的（后台任务的按钮，挂载位 composer.footer）；空着不占地方 */
 .footer-middle { display: flex; flex: none; align-items: center; }
 .footer-middle:empty { display: none; }
