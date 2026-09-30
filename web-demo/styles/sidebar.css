@@ -8,7 +8,7 @@
   display: grid;
   grid-template-columns: 252px minmax(0, 1fr) 0px;
   width: 100%;
-  height: calc(100dvh / var(--ui-scale));
+  height: 100%; /* 撑满 #app；不要用 100dvh / --ui-scale，WebKit 上会短一成（见 base.css 的 #app） */
   overflow: hidden;
   zoom: var(--ui-scale);
   transition: grid-template-columns 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);

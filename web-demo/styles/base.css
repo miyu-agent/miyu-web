@@ -56,6 +56,10 @@
 
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
+/* 页面的根也要有确定的高度：`.app-shell` 靠 `height: 100%` 撑满它（见 sidebar.css）。
+   不用 `100dvh`：整页放大（zoom）在 WebKit 里是「换坐标系」的老模型，`dvh` 在放大元素里量到的是本地视口，
+   再除一次 `--ui-scale` 就短一成、底下留一条空档；`%` 两边的算法一致（2026-10-01 在 Tauri/WebKitGTK 上查出）。 */
+#app { height: 100%; }
 body {
   background: var(--surface);
   color: var(--text);
