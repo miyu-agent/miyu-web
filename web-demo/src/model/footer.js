@@ -1,7 +1,7 @@
 // @ts-check
 //! 输入框下面那一行要写的字（蓝图 `web.md`「框下面那一行的数」，照 TUI 演示的 `ui/footer.rs`、`core/push.rs`）：
 //! 左边权限级别和模型，右边速度 · 上下文环 · 累计（数据库图标、数、命中率）；还是 0 的格子不写；放不下时右边先丢速度、
-//! 再丢累计。上下文那一格带环要的比例，上下文和累计各自带点开浮层要的构成（`ui/meter.js` 画）。
+//! 再丢累计。上下文那一格带环要的比例，上下文和累计各自带点开就地展开要的构成（`ui/meter.js` 画）。
 
 import { res, t } from '../util/res.js';
 import { short, hitRate, percentTenths } from './format.js';

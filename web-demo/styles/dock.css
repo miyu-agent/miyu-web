@@ -18,7 +18,7 @@
 .composer-dock.is-running .composer-notice { translate: 0 calc(-1 * (var(--pulse-row) * var(--pulse-lines, 1) + var(--pulse-gap))); }
 
 /* ── 命令列表、选语言的浮层、输入历史列表、@ 选文件的列表：浮在框上面，和框一样宽；半透明的 surface-1 加毛玻璃，一圈细线，浮起来的阴影 ── */
-.dock-commands, .dock-picker, .dock-history, .dock-mention, .dock-usage {
+.dock-commands, .dock-picker, .dock-history, .dock-mention {
   position: absolute; z-index: 3; right: -1px; bottom: calc(100% + 1px + var(--list-gap)); left: -1px;
   padding: 6px; border: 1px solid var(--line); border-radius: 14px;
   background: color-mix(in srgb, var(--surface-1) 90%, transparent);
@@ -26,7 +26,7 @@
   box-shadow: var(--float-shadow);
   animation: rise-in var(--motion-in) var(--ease-out) both;
 }
-.dock-commands.is-leaving, .dock-picker.is-leaving, .dock-history.is-leaving, .dock-mention.is-leaving, .dock-usage.is-leaving { animation: sink-out var(--motion-out) var(--ease-in) both; }
+.dock-commands.is-leaving, .dock-picker.is-leaving, .dock-history.is-leaving, .dock-mention.is-leaving { animation: sink-out var(--motion-out) var(--ease-in) both; }
 .commands-head { padding: 4px 10px 6px; color: var(--text-faint); font-size: 12px; line-height: 16px; }
 /* 最多露 --rows 条（layout.json 的 command_rows），多的在里面滚；名字一列照最长的对齐 */
 .commands-list {
@@ -96,16 +96,6 @@
 .mention-empty.is-error { color: var(--t-warn); }
 .mention-hint { padding: 6px 10px 2px; color: var(--text-faint); font-size: 12px; line-height: 16px; }
 
-/* ── 上下文、累计点开的构成浮层（蓝图 web.md「框下面那一行的数」）：和命令列表同一个位置、同一个样子；头一行标题、
-   第二行总账，下面一行一项（左边名字、右边数） ── */
-.meter-head { padding: 4px 10px 6px; }
-.meter-title { color: var(--text); font-size: 13px; font-weight: 600; }
-.meter-sum { padding: 2px 10px 8px; color: var(--text); font: 12.5px var(--mono); }
-.meter-rows { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 18px; }
-.meter-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; height: 24px; padding: 0 10px; }
-.meter-label { color: var(--text-soft); font-size: 12.5px; white-space: nowrap; }
-.meter-value { color: var(--text); font: 12.5px var(--mono); text-align: right; white-space: nowrap; }
-
 @media (prefers-reduced-motion: reduce) {
-  .pulse-shine, .dock-commands, .dock-picker, .dock-history, .dock-mention, .dock-usage { animation: none; }
+  .pulse-shine, .dock-commands, .dock-picker, .dock-history, .dock-mention { animation: none; }
 }

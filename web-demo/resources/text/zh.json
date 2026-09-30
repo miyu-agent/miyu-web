@@ -73,7 +73,8 @@
     "cache_read": "缓存读",
     "cache_write": "缓存写",
     "messages": "消息",
-    "hit": "命中"
+    "hit": "命中",
+    "window": "窗口"
   },
   "refused": "被拒绝了：{message}",
   "payload_busy": "附件还在传，传完再发",

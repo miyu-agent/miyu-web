@@ -25,8 +25,7 @@ import { fit } from '../model/footer.js';
 import { read } from '../model/commands.js';
 import { CommandList } from './commands.js';
 import { Picker } from './picker.js';
-import { MeterPanel, ring } from './meter.js';
-import { short } from '../model/format.js';
+import { Meters, ring } from './meter.js';
 import { HistoryList } from './history.js';
 import { MentionList } from './mention.js';
 import { wordAt, plan, pathText, dirWord, splice, failure } from '../model/mention.js';
@@ -100,15 +99,16 @@ export class Composer {
     this.input.addEventListener('scroll', () => { this.backdrop.scrollTop = this.input.scrollTop; });
     /** 选一样的浮层（`/language`）：和命令列表同一个位置 */
     this.picker = new Picker();
-    /** 上下文、累计两格点开的构成浮层（蓝图「框下面那一行的数」）：和命令列表同一个位置 */
-    this.meter = new MeterPanel();
+    /** 上下文、累计两格点开的构成（蓝图「框下面那一行的数」）：就地长在框和那一行之间 */
+    this.meter = new Meters();
     this.head = h('div.composer-head');
     this.tools = h('span.composer-tools');
     this.float = h('div.composer-float');
     /** 占着整个框的（挂载位 `composer.takeover`：确认和提问的抽屉）；有东西占着时框里原来的让出来（`takeover`） */
     this.takeoverEl = h('div.composer-takeover');
-    this.box = h('div.composer', this.notice, this.takeoverEl, this.head, h('div.composer-field', this.backdrop, this.input), this.bar = h('div.composer-bar', this.tools, this.sendButton), this.menu.el, this.picker.el, this.historyList.el, this.mention.el, this.meter.el, this.float);
-    this.el = h('div.composer-dock', this.box, this.footer);
+    this.box = h('div.composer', this.notice, this.takeoverEl, this.head, h('div.composer-field', this.backdrop, this.input), this.bar = h('div.composer-bar', this.tools, this.sendButton), this.menu.el, this.picker.el, this.historyList.el, this.mention.el, this.float);
+    // 上下文的环、累计那两格点开的「牌」就长在框和那一行之间（蓝图「框下面那一行的数」），是就地展开，不是浮层
+    this.el = h('div.composer-dock', this.box, this.meter.el, this.footer);
     this.parts = /** @type {any[]} */ ([]);
     /** 撤销时放回框里的那句：恢复时还没动过的收回去（`tui.md`「输入框」第 7 条）。 */
     this.putBackText = /** @type {string|null} */ (null);
@@ -586,12 +586,15 @@ export class Composer {
     };
     const kept = fit(this.parts, room, measure);
     replace(this.right, line(kept));
-    // 开着的那一格被丢了（窗口窄了、那一格没了）：浮层一起关上
+    // 开着的那一格被丢了（窗口窄了、那一格没了）：就地展开的那块一起收起来
     if (this.meter.open && !kept.some((p) => p.key === this.meter.open)) this.meter.close();
+    // 开着的还在：底下那几个数一直在变，跟着重画（数没变的重画免了，动画不重放）
+    const open = kept.find((p) => p.key === this.meter.open);
+    if (open) this.meter.refresh(open);
     for (const el of this.right.querySelectorAll('.footer-meter')) el.classList.toggle('is-on', el.dataset.key === this.meter.open);
   }
 
-  /** 右边的一格：速度是字；上下文是一个空心圆环；累计是数据库图标、数、命中率。后两格点了开构成浮层。 */
+  /** 右边的一格：速度是字；上下文是一个空心圆环；累计是数据库图标、数、命中率。后两格点了在框下面就地展开。 */
   meterPart(part) {
     if (part.key === 'speed') return h('span.footer-speed', part.text);
     if (part.key === 'context') {
@@ -602,29 +605,12 @@ export class Composer {
   }
 
   /**
-   * 点开这一格的构成浮层（蓝图 `web.md`「框下面那一行的数」）：上下文写这一次主请求的用量四格加消息条数，累计写
-   * 这一路的请求次数、输入、输出、缓存读、缓存写、命中率。数据是 `model/footer.js` 那一格带来的。
+   * 点开这一格（蓝图 `web.md`「框下面那一行的数」）：框和那一行之间长出一块牌子，上下文写这一次主请求的用量四格加
+   * 消息条数，累计写这一路的输入、请求次数。数据和画法都在 `ui/meter.js`，这里只是把点转过去，再照新的开合重画那一行。
    * @param {any} part 右边的一格
    */
   openMeter(part) {
-    const d = part.detail;
-    const rows = !d ? [] : part.key === 'context'
-      ? [
-        [t('usage.uncached'), short(d.uncached)],
-        [t('usage.cache_read'), short(d.cacheRead)],
-        [t('usage.cache_write'), short(d.cacheWrite)],
-        [t('usage.output'), short(d.output)],
-        ...(d.messages == null ? [] : [[t('usage.messages'), String(d.messages)]]),
-      ]
-      : [
-        [t('usage.requests'), String(d.requests)],
-        [t('usage.input'), short(d.input)],
-        [t('usage.output'), short(d.output)],
-        [t('usage.cache_read'), short(d.cacheRead)],
-        [t('usage.cache_write'), short(d.cacheWrite)],
-        [t('usage.hit'), `${part.percent}%`],
-      ];
-    this.meter.toggle(part.key, t(`usage.${part.key}`), part.text, rows);
+    this.meter.toggle(part);
     this.drawRight();
   }
 }

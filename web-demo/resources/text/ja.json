@@ -73,7 +73,8 @@
     "cache_read": "キャッシュ読込",
     "cache_write": "キャッシュ書込",
     "messages": "メッセージ",
-    "hit": "命中"
+    "hit": "命中",
+    "window": "ウィンドウ"
   },
   "refused": "拒否されました：{message}",
   "payload_busy": "添付ファイルをアップロード中です。終わってから送信してください",
