@@ -345,7 +345,11 @@ export class Sidebar {
   /** 会话表底下放不下的，菜单往上开（照旧版 `app.js:2466-2470`）。 */
   placeMenu() {
     const m = this.items.querySelector('.session-menu');
-    const list = this.items.parentElement;
+    // 比的是能滚的那一块 `.session-list` 的底（蓝图 web.md「左栏」的菜单），不是 `.session-items` 的上一级
+    // `.session-track`：那一层只包着会话表本身（「选中的那一块」照它定位），会话只有一两个时，比它还高的菜单
+    // 永远算「放不下」；一往上开又被 `.session-list` 的 `overflow` 从上面裁掉，只剩最后一项「删除」飘在会话
+    // 表顶上（2026-10-01 项目主人指出）。
+    const list = this.items.closest('.session-list');
     if (!m || !list) return;
     if (m.getBoundingClientRect().bottom > list.getBoundingClientRect().bottom - 4) m.classList.add('open-up');
   }
