@@ -13,9 +13,12 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 # 桌面端的外壳：系统自带的网页视图加一个 Rust 的窗口（设计 01 第一节、设计 21 X2，蓝图 web/architecture.md「宿主」）。
-tauri = { version = "2", features = [] }
+# `tray-icon` 是托盘（蓝图「宿主怎么搬」第 6 步）；`image-png` 是让 `Image::from_bytes` 认得了那张 PNG。
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
 # 桥那一半：页面文件、核心连接、web.* 顶替、本机文件和 blob 的规矩都在这一个库里（蓝图「宿主怎么搬」第 3 步）。
 miyu-web-bridge = { path = "../bridge" }
+# 托盘菜单上那两个字从页面资源里拿（`resources/text/*.json` 的 `tray`，蓝图「宿主怎么搬」第 6 步）。
+serde_json = "1"
 
 # 和仓库工作区的 lints 一样（根目录 Cargo.toml），演示程序也照这套规矩。
 [lints.rust]

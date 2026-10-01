@@ -330,6 +330,10 @@
     "full": "{y} 年 {m} 月 {d} 日"
   },
   "interrupted_jobs": " · バックグラウンドで {count} 件実行中です。中断しても停止しません",
+  "tray": {
+    "show": "メインウィンドウを表示",
+    "quit": "終了"
+  },
   "sessions_page": {
     "title": "すべてのセッション",
     "search": "セッションを検索",

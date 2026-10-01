@@ -330,6 +330,10 @@
     "full": "{y} 年 {m} 月 {d} 日"
   },
   "interrupted_jobs": " · 后台还有 {count} 个在跑，打断不停它们",
+  "tray": {
+    "show": "显示主窗口",
+    "quit": "退出"
+  },
   "sessions_page": {
     "title": "全部会话",
     "search": "搜索会话",
