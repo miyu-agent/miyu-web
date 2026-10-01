@@ -247,7 +247,7 @@ test('回顾（session.recapped）：在它来的位置画一块，第一行「�
   const after = footer(log, { window: 1_000_000 }).right;
   assert.equal(after.find((p) => p.key === 'context')?.text, before.find((p) => p.key === 'context')?.text, '上下文不变');
   assert.equal(after.find((p) => p.key === 'speed')?.text, before.find((p) => p.key === 'speed')?.text, '速度不变');
-  const pct = (parts) => parts.find((p) => p.key === 'total')?.percent;
+  const pct = (parts) => /\(C(\d+)%\)/.exec(parts.find((p) => p.key === 'total')?.text ?? '')?.[1];
   assert.equal(pct(after), pct(before), '命中率只算主对话');
   assert.notEqual(after.find((p) => p.key === 'total')?.text, before.find((p) => p.key === 'total')?.text, '累计算进去');
 });
