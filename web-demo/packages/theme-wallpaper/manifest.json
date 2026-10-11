@@ -13,7 +13,7 @@
   },
   "kind": "optional",
   "description": {
-    "zh": "主题里多一套「跟随壁纸」：照这台电脑现在的桌面壁纸取主色，按 MD3 Content 生成，浅深跟着系统，盖在同深浅的那一套的底色、字色、强调色上面。壁纸由网页服务读（和桌面在同一台机器上）；读不到的（别的桌面、视频壁纸、页面开在别的机器上）没有这一套。页面在前台时隔一会儿问一次换没换。"
+    "zh": "主题里多一个「跟随壁纸」：照这台电脑现在的桌面壁纸取主色，按 MD3 Content 生成浅色、深色两份（全部的颜色）。壁纸由网页服务读（和桌面在同一台机器上）；读不到的（别的桌面、视频壁纸、页面开在别的机器上）没有这个主题。页面在前台时隔一会儿问一次换没换。"
   },
   "note": "取色用 src/lib/md3（material-color-utilities 0.4，Apache-2.0）：QuantizerCelebi 128 色、Score 排名取第一名，SchemeContent 对比度 0。壁纸经宿主的 wallpaper(dark)（浏览器那一份问桥的 /wallpaper，crate miyu-wallpaper）。",
   "text": {
@@ -29,7 +29,8 @@
   },
   "inject": [
     "slots",
-    "host"
+    "host",
+    "theme~"
   ],
   "settings": {
     "check_seconds": {

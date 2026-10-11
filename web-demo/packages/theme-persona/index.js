@@ -1,15 +1,15 @@
 // @ts-check
 //! 跟着人格的外观（软件包 `theme-persona`，蓝图 `web.md`「主题」的「跟着人格的外观」）：照正在看的会话用的人格（状态事件
 //! `look.changed`，和左栏左上角、对话区的头像同一份）：
-//! - 主题「跟随人格」：往主题包的 `theme.palettes` 挂一套生成的（浅深跟着系统）；颜色照人格自选的主色（核心 P-6 的 `seed`），没选的照头像
-//!   取的第一名（`src/lib/md3/`）。都没有、无人格、取不出的交 `null`：就是同深浅的那一套。换了颜色换一份挂上，选着这一套的当场渐变过去。
+//! - 主题「跟随人格」：往主题包的 `theme.palettes` 挂一个生成的主题（浅、深两份都生成，`src/lib/md3/`）；颜色照人格自选的主色（核心 P-6
+//!   的 `seed`），没选的照头像取的第一名。都没有、无人格、取不出的交 `null`：就是默认那个主题。换了颜色换一份挂上，选着它的当场渐变过去。
 //! - 背景图（核心 P-6）：和选哪一套无关，一直跟着人格。铺在对话区（`style.css`：页面根上 `has-persona-backdrop`、变量
 //!   `--persona-backdrop`），上面盖一层底色，多浓是设置项 `veil`。左栏照主题。
 //! 停用了这个包就没有「跟随人格」这一套、没有背景图。
 //!
 //! 头像在浏览器里缩小到长边 `sample_side` 再取色；同一张图取过的记着，换回来不再算。
 
-import { seedOf, cellsOf } from '../../src/lib/md3/index.js';
+import { seedOf, themeOf } from '../../src/lib/md3/index.js';
 import { pixelsOf } from '../../src/lib/md3/pixels.js';
 
 /** 排在定的那几套后面 */
@@ -24,14 +24,14 @@ export function apply(ctx) {
 
   /**
    * 挂一套：先挂新的再拿掉原来的（同一个 `id` 后挂的盖住先挂的，主题包不会在中间看到没有这一套）。
-   * @param {number|string|null} seed ARGB（从头像取的）、`#rrggbb`（自选的）；`null` 不盖
+   * @param {number|string|null} seed ARGB（从头像取的）、`#rrggbb`（自选的）；`null` 交不出（用默认那个主题）
    */
   const palette = (seed) => {
-    /** @type {Partial<Record<'light'|'dark', ReturnType<typeof cellsOf>>>} */
+    /** @type {Partial<Record<'light'|'dark', ReturnType<typeof themeOf>>>} */
     const made = {};
     return ctx.slots.mount('theme.palettes', {
-      id: 'persona', name: ctx.text('name'), scheme: 'auto', order: ORDER,
-      render: (/** @type {'light'|'dark'} */ scheme) => (seed == null ? null : (made[scheme] ??= cellsOf(seed, scheme))),
+      id: 'persona', name: ctx.text('name'), order: ORDER,
+      render: (/** @type {'light'|'dark'} */ scheme) => (seed == null ? null : (made[scheme] ??= themeOf(seed, scheme))),
     });
   };
   let current = /** @type {number|string|null} */ (null);

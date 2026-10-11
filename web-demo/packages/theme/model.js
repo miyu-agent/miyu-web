@@ -1,36 +1,34 @@
 // @ts-check
-//! 主题包选哪一套、一套实际是什么颜色（蓝图 `web.md`「主题」、「跟着人格的外观」第 1 条）。纯函数；写变量、听系统在 `index.js`。
+//! 主题包用哪个主题、浅的还是深的、一个主题实际是什么颜色（蓝图 `web.md`「主题」）。纯函数；写变量、听系统在 `index.js`。
 //!
-//! 挂进来的一套：定的（`scheme` 是 `light`、`dark`）`render()` 交整套；生成的（`scheme` 是 `auto`）浅深跟着系统，`render(scheme)` 交要盖在
-//! 同深浅的第一套定的上面的那几格，交 `null` 的不盖。
+//! 挂进来的一个主题是成对的一套：`render(scheme)` 交浅色或深色那一份的全部颜色，交不出的（「跟随人格」这时没有颜色可取）交 `null`，
+//! 用第一个主题（默认）的那一份。
 
 /**
  * @typedef {{page: Record<string, string>, tui: Record<string, string>}} Colors
- * @typedef {{id: string, name?: string, scheme: 'light'|'dark'|'auto', render: (scheme?: 'light'|'dark') => (Colors|Partial<Colors>|null)}} Palette
+ * @typedef {{id: string, name?: string, order?: number, render: (scheme: 'light'|'dark') => (Colors|null)}} Palette
  */
-
-/** 一套是浅的还是深的：生成的跟着系统。 @param {Palette} p @param {'light'|'dark'} system @returns {'light'|'dark'} */
-export const schemeOf = (p, system) => (p.scheme === 'auto' ? system : p.scheme);
-
-/** 同深浅的第一套定的。 @param {Palette[]} all @param {'light'|'dark'} scheme */
-export const baseOf = (all, scheme) => all.find((p) => p.scheme === scheme) ?? null;
 
 /**
- * 现在用哪一套：设置项写了的（还在的）用它；没写的、写的没了的跟着系统（同深浅的第一套定的），再没有的用第一套定的、第一套。
- * @param {Palette[]} all @param {string|null|undefined} wanted 设置项 `palette` @param {'light'|'dark'} system
+ * 浅的还是深的：设置项「明暗」定了的照它，跟随系统（`auto`、没写、写错的）照系统。
+ * @param {string|null|undefined} setting @param {'light'|'dark'} system @returns {'light'|'dark'}
  */
-export function chosenOf(all, wanted, system) {
-  return all.find((p) => p.id === wanted) ?? baseOf(all, system) ?? all.find((p) => p.scheme !== 'auto') ?? all[0] ?? null;
-}
+export const schemeOf = (setting, system) => (setting === 'light' || setting === 'dark' ? setting : system);
 
 /**
- * 一套这时实际的颜色：定的照它，生成的是同深浅的第一套定的盖上它交的那几格。
- * @param {Palette[]} all @param {Palette} p @param {'light'|'dark'} system
- * @returns {Colors}
+ * 用哪个主题：设置项写了的（还在的）用它；没写、写的没了的用第一个。
+ * @param {Palette[]} all @param {string|null|undefined} wanted
  */
-export function colorsOf(all, p, system) {
-  if (p.scheme !== 'auto') return /** @type {Colors} */ (p.render());
-  const base = /** @type {Colors|null} */ (baseOf(all, system)?.render() ?? null);
-  const over = p.render(system);
-  return { page: { ...base?.page, ...over?.page }, tui: { ...base?.tui, ...over?.tui } };
+export const chosenOf = (all, wanted) => all.find((p) => p.id === wanted) ?? all[0] ?? null;
+
+/**
+ * 一个主题这时的颜色：交不出的用第一个主题的那一份；都交不出的是 `null`。
+ * @param {Palette[]} all @param {Palette} p @param {'light'|'dark'} scheme
+ * @returns {Colors|null}
+ */
+export function colorsOf(all, p, scheme) {
+  const own = p.render(scheme);
+  if (own) return own;
+  const first = all[0];
+  return first && first !== p ? first.render(scheme) : null;
 }

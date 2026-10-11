@@ -1,12 +1,18 @@
 // @ts-check
-//! 照一张图生成一套颜色（蓝图 `web.md`「主题」的「跟着人格的外观」第 2 条；软件包 `theme-persona`、`theme-wallpaper`，人格的编辑卡片的
-//! 「主题色」那一行共用）：从像素取主色，照 MD3 `CONTENT`、对比度 0 生成浅色或深色一套，换成要盖在同深浅的那一套上面的几格。纯函数；
-//! 读图在 `pixels.js`。
+//! 照一张图生成一个主题（蓝图 `web.md`「主题」的「跟着人格的外观」第 2 条；软件包 `theme-persona`、`theme-wallpaper`，人格的编辑卡片的
+//! 「主题色」那一行共用）：从像素取主色，照 MD3 `CONTENT`、对比度 0 生成浅色或深色那一份，全部的格子（和默认主题一样多）。纯函数；读图在
+//! `pixels.js`，原色表在 `design.js`。
 //!
-//! 只盖中性色和强调色：出错的红、差异的红绿、链接、代码高亮、吉祥物的颜色照同深浅的那一套（语义色跟着图变了反而认不出）。用 `CONTENT` 不用
-//! `TONAL_SPOT`：后者把底色也染上主色，头像取到肤色、金发时整页发棕发浑；`CONTENT` 的底色基本是中性灰，只有强调带颜色。
+//! 每一格怎么来：
+//! - 中性色、强调色照 MD3 的角色（`PAGE`、`COMMON`、`TUI`）；
+//! - 不带颜色的（`NEUTRAL`：终端的 `dim`、引用、代码注释……）照它在原色表里的明度取这一套的中性色；
+//! - 有含义的颜色（出错、增删、代码高亮……）色相不变、往主色靠一点（`Blend.harmonize`，最多转 15°），明度、彩度照原色表；
+//! - 阴影、遮罩照原色表的样子，浅色的影换成这一套的字色；写成算式的照抄；吉祥物照抄。
+//!
+//! 用 `CONTENT` 不用 `TONAL_SPOT`：后者把底色也染上主色，头像取到肤色、金发时整页发棕发浑；`CONTENT` 的底色基本是中性灰，只有强调带颜色。
 
-import { QuantizerCelebi, Score, Hct, SchemeContent, MaterialDynamicColors as D, argbFromRgb, argbFromHex, hexFromArgb } from './vendor/mcu.min.js';
+import { QuantizerCelebi, Score, Hct, SchemeContent, MaterialDynamicColors as D, Blend, argbFromRgb, argbFromHex, hexFromArgb } from './vendor/mcu.min.js';
+import { DESIGN } from './design.js';
 
 /** 取主色时最多挑多少种颜色（MD3 取壁纸色的做法） */
 const QUANTIZE = 128;
@@ -37,6 +43,13 @@ const COMMON = {
 };
 /** 终端那一组跟着主色的几格 */
 const TUI = { accent: 'primary', workspace: 'primary' };
+/** 链接照主色 */
+const LINK = { link: 'primary' };
+/** 不带颜色的几格（字、线、底一类）：照原色表的明度取中性色。原色表深色那一份是 tokyonight，这几格带着它的蓝，不能当有含义的颜色往主色靠 */
+const NEUTRAL = {
+  page: ['tok_c', 'tok_p'],
+  tui: ['dim', 'hover', 'shade', 'md_bold', 'md_italic', 'md_quote', 'md_math', 'diagram_text', 'diagram_line', 'diagram_backdrop', 'code_comment', 'code_operator'],
+};
 
 /**
  * 图里最像主题色的几种，好的在前（第一种就是自动取的那一种；几种之间色相尽量隔开）：RGBA 的像素（`ImageData.data` 那样一格四个数），
@@ -64,16 +77,31 @@ export function seedsOf(rgba, count = 4) {
 export const seedOf = (rgba) => seedsOf(rgba, 1)[0] ?? null;
 
 /**
- * 照主色生成一套要盖的颜色。
+ * 照主色生成一个主题的浅色或深色那一份：全部的格子（和原色表、默认主题一样多）。
  * @param {number|string} seed ARGB 或 `#rrggbb`（自选的主色）
- * @param {'light'|'dark'} scheme 浅的还是深的
+ * @param {'light'|'dark'} scheme
  * @returns {{page: Record<string, string>, tui: Record<string, string>}}
  */
-export function cellsOf(seed, scheme) {
+export function themeOf(seed, scheme) {
   const argb = typeof seed === 'string' ? argbFromHex(seed) : seed;
   const s = new SchemeContent(Hct.fromInt(argb), scheme === 'dark', 0);
-  const pick = (/** @type {Record<string, string>} */ table) => Object.fromEntries(Object.entries(table).map(([k, role]) => [k, hexFromArgb(/** @type {any} */ (D)[role].getArgb(s))]));
-  return { page: { ...pick(PAGE[scheme]), ...pick(COMMON) }, tui: pick(TUI) };
+  const role = (/** @type {string} */ name) => hexFromArgb(/** @type {any} */ (D)[name].getArgb(s));
+  const roles = (/** @type {Record<string, string>} */ table) => Object.fromEntries(Object.entries(table).map(([k, name]) => [k, role(name)]));
+  // 浅色的影用这一套的字色（原色表是暖黑），深色的照原色表（黑）
+  const ink = argbFromHex(role('onSurface'));
+  const shadow = scheme === 'light' ? `${(ink >> 16) & 255}, ${(ink >> 8) & 255}, ${ink & 255}` : null;
+  const design = DESIGN[scheme];
+  /** @param {Record<string, string>} from @param {string[]} neutral @param {(k: string) => boolean} keep */
+  const derive = (from, neutral, keep) => Object.fromEntries(Object.entries(from).map(([k, v]) => {
+    if (keep(k) || !/^#[0-9a-f]{6}$/i.test(v)) return [k, shadow && v.includes('rgba(') ? v.replace(/rgba\(\s*\d+,\s*\d+,\s*\d+,/g, `rgba(${shadow},`) : v];
+    const hct = Hct.fromInt(argbFromHex(v));
+    if (neutral.includes(k)) return [k, hexFromArgb(s.neutralVariantPalette.tone(Math.round(hct.tone)))];
+    return [k, hexFromArgb(Blend.harmonize(hct.toInt(), argb))];
+  }));
+  return {
+    page: { ...derive(design.page, NEUTRAL.page, () => false), ...roles(PAGE[scheme]), ...roles(COMMON), ...roles(LINK) },
+    tui: { ...derive(design.tui, NEUTRAL.tui, (k) => k.startsWith('mascot_')), ...roles(TUI) },
+  };
 }
 
 /** ARGB 写成 `#rrggbb`（小写；存进人格、给人看、记缓存）。 @param {number} argb */

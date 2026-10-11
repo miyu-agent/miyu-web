@@ -85,7 +85,7 @@ export class App {
       // 临时浮出来时点收起那个按钮是真展开（蓝图「左栏」的「临时浮出」）
       collapse: () => this.collapse(!this.root.classList.contains('is-sidebar-peek')),
       close: () => this.drawer(false),
-      theme: () => this.ctx.theme?.next(),
+      theme: () => this.ctx.theme?.toggle(),
       dark: () => !!this.ctx.theme?.dark(),
       copyId: (id) => copy(id, (text, good) => this.composer.say(text, good)),
       notYet: (name) => this.composer.say(t('sidebar.not_yet', { name })),

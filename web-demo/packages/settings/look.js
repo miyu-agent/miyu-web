@@ -1,5 +1,5 @@
 // @ts-check
-//! 网页自己的设置（蓝图 `web.md`「设置页」第 11、12 条）：「外观」页只有主题卡片；一个包的设置项（一个个颜色、重画间隔这类）在
+//! 网页自己的设置（蓝图 `web.md`「设置页」第 11、12 条）：「外观」那一组是明暗和主题卡片；一个包的设置项（一个个颜色、重画间隔这类）在
 //! 「软件包」页点那个包展开（`packageSettings`）。存在网页这边（内核的 `packages`：出厂 → 发行版 → 个人 · 这台设备），画法和核心的
 //! 项同一个 `shell`，小字只在改过时写「已改」。
 
@@ -14,27 +14,38 @@ export function later(fill) {
   return el;
 }
 
-/** 「外观」页：主题卡片，第一张「跟随系统」（小样是第一套浅的、第一套深的底色）。 */
+/**
+ * 「通用」页最上面「主题」一组：一行「明暗」（跟随系统、浅色、深色），下面一排主题卡片（默认、跟随人格、跟随壁纸），小样照现在的明暗画
+ * （蓝图 `web.md`「主题」，2026-10-11 项目主人：主题是成对的一套，跟随系统是明暗不是一个主题）。
+ */
 export function drawLook(dialog) {
   const ctx = dialog.ctx;
   return later(async (el) => {
     const theme = await ctx.packages.settings('theme');
     const palettes = ctx.slots.list('theme.palettes');
-    // 出厂是空字：空着的就是跟随系统
-    const chosen = theme.values.palette || null;
-    const pick = async (id) => {
-      await ctx.packages.set('theme', { config: { palette: id } });
+    // 没写、写的没了的是第一个
+    const chosen = palettes.some((p) => p.id === theme.values.palette) ? theme.values.palette : palettes[0]?.id;
+    const set = async (config) => {
+      await ctx.packages.set('theme', { config });
       dialog.drawBody();
     };
-    const card = (id, name, colors) => h(`button.set-theme${chosen === id ? '.is-on' : ''}`, { type: 'button', onclick: () => pick(id) },
-      h('span.set-theme-sample', colors
-        ? [h('i', { style: { background: colors.sidebar_bg } }), h('i', { style: { background: colors.surface } },
-          h('b', { style: { background: colors.accent } }), h('b', { style: { background: colors.text, opacity: '0.5' } }), h('b', { style: { background: colors.gold } }))]
-        : ['light', 'dark'].map((s) => palettes.find((p) => p.scheme === s)).filter(Boolean).map((p) => h('i', { style: { background: p.render().page.surface } }))),
-      h('span.set-theme-name', name));
-    // 生成的那几套（跟随人格、跟随壁纸）照这时实际的颜色画
-    const colorsOf = (p) => (ctx.theme?.colorsOf ?? ((x) => x.render()))(p).page;
-    replace(el, groupBlock(ctx.text('theme'), [h('div.set-themes', card(null, ctx.text('follow_system'), null), palettes.map((p) => card(p.id, p.name, colorsOf(p))))]));
+    const scheme = shell({
+      name: ctx.text('scheme'),
+      control: select(dialog, [
+        { value: 'auto', name: ctx.text('follow_system') },
+        { value: 'light', name: ctx.text('scheme_light') },
+        { value: 'dark', name: ctx.text('scheme_dark') },
+      ], theme.values.scheme ?? 'auto', (v) => set({ scheme: v })),
+    });
+    const colorsOf = (p) => (ctx.theme?.colorsOf ?? ((x) => x.render('light')))(p)?.page ?? {};
+    const card = (p) => {
+      const colors = colorsOf(p);
+      return h(`button.set-theme${chosen === p.id ? '.is-on' : ''}`, { type: 'button', onclick: () => set({ palette: p.id }) },
+        h('span.set-theme-sample', h('i', { style: { background: colors.sidebar_bg } }), h('i', { style: { background: colors.surface } },
+          h('b', { style: { background: colors.accent } }), h('b', { style: { background: colors.text, opacity: '0.5' } }), h('b', { style: { background: colors.gold } }))),
+        h('span.set-theme-name', p.name));
+    };
+    replace(el, groupBlock(ctx.text('theme'), [scheme.el, h('div.set-themes', palettes.map(card))]));
   });
 }
 
@@ -58,7 +69,7 @@ export function packageSettings(dialog, id) {
     const specs = got.manifest.settings ?? {};
     // 只列有控件能改的；结构复杂的（json、map、list）改不了，不列
     const keys = editableKeys(specs);
-    const hidden = (k) => specs[k].advanced || (id.startsWith('theme-') && k.startsWith('t_'));
+    const hidden = (k) => specs[k].advanced || (id.startsWith('theme-') && /^(light_|dark_)?t_/.test(k));
     const rowOf = (k) => packageRow(dialog, id, k, got, () => replace(el, packageSettings(dialog, id)));
     replace(el, h('div.set-rows', keys.filter((k) => !hidden(k)).map(rowOf)), fold(ctx, keys.filter(hidden).map(rowOf)));
   });

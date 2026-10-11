@@ -1,12 +1,12 @@
 // @ts-check
 //! 主题「跟随壁纸」（软件包 `theme-wallpaper`，蓝图 `web.md`「主题」的「跟着人格的外观」第 5 条）：照这台电脑现在的桌面壁纸取主色
-//! （`src/lib/md3/`），往主题包的 `theme.palettes` 挂一套生成的（浅深跟着系统）。壁纸经宿主的 `wallpaper(dark)` 读（浏览器那一份问桥）；
+//! （`src/lib/md3/`），往主题包的 `theme.palettes` 挂一个生成的主题（浅、深两份都生成）。壁纸经宿主的 `wallpaper(dark)` 读（浏览器那一份问桥）；
 //! 读不到、取不出颜色的不挂，设置页就没有这一张。
 //!
-//! 页面在前台时隔 `check_seconds` 秒问一次换没换（宿主交的记号 `sig` 变了才重取色），回到前台、系统换了深浅时当场问。同一张图取过、
-//! 取不出的记着，不再取。
+//! 页面在前台时隔 `check_seconds` 秒问一次换没换（宿主交的记号 `sig` 变了才重取色），回到前台、换了浅深（事件 `theme.changed`）时当场问；
+//! 问的是页面这时的浅深（服务 `theme`，深浅可以各设一张壁纸）。同一张图取过、取不出的记着，不再取。
 
-import { seedOf, cellsOf } from '../../src/lib/md3/index.js';
+import { seedOf, themeOf } from '../../src/lib/md3/index.js';
 import { pixelsOf } from '../../src/lib/md3/pixels.js';
 
 /** 排在定的那几套、「跟随人格」后面 */
@@ -14,7 +14,9 @@ const ORDER = 11;
 
 /** @param {any} ctx */
 export function apply(ctx) {
-  const dark = matchMedia('(prefers-color-scheme: dark)');
+  const system = matchMedia('(prefers-color-scheme: dark)');
+  /** 页面这时是不是深色：照主题包的「明暗」，没有主题包的照系统 */
+  const dark = () => ctx.theme?.dark?.() ?? system.matches;
   /** 挂着的那一套：拿掉用 @type {(() => void)|null} */
   let undo = null;
   /** 最近一次看过的记号（取出颜色的、取不出的都算） */
@@ -23,12 +25,12 @@ export function apply(ctx) {
 
   /** 挂一套：先挂新的再拿掉原来的（主题包不会在中间看到没有这一套）。 @param {number} seed ARGB */
   const mount = (seed) => {
-    /** @type {Partial<Record<'light'|'dark', ReturnType<typeof cellsOf>>>} */
+    /** @type {Partial<Record<'light'|'dark', ReturnType<typeof themeOf>>>} */
     const made = {};
     const before = undo;
     undo = ctx.slots.mount('theme.palettes', {
-      id: 'wallpaper', name: ctx.text('name'), scheme: 'auto', order: ORDER,
-      render: (/** @type {'light'|'dark'} */ scheme) => (made[scheme] ??= cellsOf(seed, scheme)),
+      id: 'wallpaper', name: ctx.text('name'), order: ORDER,
+      render: (/** @type {'light'|'dark'} */ scheme) => (made[scheme] ??= themeOf(seed, scheme)),
     });
     before?.();
   };
@@ -42,7 +44,7 @@ export function apply(ctx) {
     if (busy || document.hidden) return;
     busy = true;
     try {
-      const got = await ctx.host.wallpaper?.(dark.matches);
+      const got = await ctx.host.wallpaper?.(dark());
       if (!got) {
         seen = null;
         return unmount();
@@ -69,12 +71,10 @@ export function apply(ctx) {
   };
   ctx.effect(() => {
     document.addEventListener('visibilitychange', onVisible);
-    dark.addEventListener('change', check);
-    return () => {
-      document.removeEventListener('visibilitychange', onVisible);
-      dark.removeEventListener('change', check);
-    };
+    return () => document.removeEventListener('visibilitychange', onVisible);
   });
+  // 换了浅深（也会是自己挂上去引起的：记号一样，不再取）
+  ctx.on('theme.changed', check);
   // 改了间隔：照新的重排
   ctx.watchConfig(schedule);
   ctx.effect(() => () => {

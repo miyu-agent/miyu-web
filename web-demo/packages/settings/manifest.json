@@ -209,6 +209,9 @@
       "advanced": "高级（{count}）",
       "theme": "主题",
       "follow_system": "跟随系统",
+      "scheme": "明暗",
+      "scheme_light": "浅色",
+      "scheme_dark": "深色",
       "pkg_missing": "缺少 {names}",
       "back": "设置",
       "models": {
@@ -450,6 +453,9 @@
       "advanced": "Advanced ({count})",
       "theme": "Theme",
       "follow_system": "Follow system",
+      "scheme": "Mode",
+      "scheme_light": "Light",
+      "scheme_dark": "Dark",
       "pkg_missing": "Missing {names}",
       "back": "Settings",
       "models": {
@@ -691,6 +697,9 @@
       "advanced": "詳細（{count}）",
       "theme": "テーマ",
       "follow_system": "システムに合わせる",
+      "scheme": "外観モード",
+      "scheme_light": "ライト",
+      "scheme_dark": "ダーク",
       "pkg_missing": "{names} が足りません",
       "back": "設定",
       "models": {

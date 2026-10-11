@@ -1,0 +1,1523 @@
+{
+  "id": "theme-default",
+  "version": "0.2.0",
+  "name": {
+    "zh": "默认主题",
+    "en": "Default theme",
+    "ja": "デフォルトテーマ"
+  },
+  "summary": {
+    "zh": "主题「默认」：浅色是晨光，深色是 tokyonight",
+    "en": "The \"Default\" theme: Morning when light, tokyonight when dark",
+    "ja": "テーマ「デフォルト」：ライトは晨光、ダークは tokyonight"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "一个主题，浅色、深色各一份：浅色是晨光，深色是 tokyonight。每个颜色都是设置项（浅色的 light_、深色的 dark_ 打头），能单改。"
+  },
+  "note": "2026-10-11 由 theme-morning、theme-tokyonight 两个包并成（主题是成对的一套）。浅色（light_）：浅色。从角色取色（眼睛 #3368c0、发色 #e8c48e、缎带 #853b49、衬衫 #faf2e9），照 MD3 生成（material-color-utilities 0.4，TONAL_SPOT，对比度 0）；强调色取 tone 40。page 一段是旧版网页的名字，括号里是 MD3 的角色：surface（surface）、sidebar_bg（surface_container）、surface_1（surface_container_lowest：浮起来的比底亮，照旧版浅色）、surface_2（surface_container_high）、surface_3（surface_container_highest）、text（on_surface）、text_soft（on_surface_variant）、line（outline_variant）、line_strong（outline）、accent（primary）、accent_soft（primary_container）、gold（secondary）、ribbon（tertiary）。tui 一段照 TUI 演示的语义色，在晨光的底上重新取（对比度够）。link、code_bg、code_ink、tok_* 是 Markdown 的，照旧版浅色（styles.css:163-225）：链接是定值，不跟主题；代码底是页面自己的底 surface，代码字是 text 和底八五开；tok_* 是 One Light 的九种颜色（注释压暗了一档）。她的回答里代码块的底另换成 surface_1（styles/markdown.css，照旧版）。 深色（dark_）：深色。tui 一段和 TUI 演示的 themes/tokyonight-night.json 一样（去掉网页用不上的几格）；page 一段把 tokyonight 的颜色填进 MD3 的角色，名字照旧版网页：surface（bg #1a1b26）、sidebar_bg（bg_dark #16161e，比底暗一档，照旧版深色）、surface_1（#1f2335：浮起来的比底亮）、surface_2（bg_highlight #24283b）、surface_3（#292e42）、text（fg）、text_soft（fg_dark）、line（#3b4261）、line_strong（comment 更亮的一档 #565f89）、accent（blue）、accent_soft（#394b70）、gold（yellow）、ribbon（red）。link、code_bg、code_ink、tok_* 是 Markdown 的，照旧版深色（styles.css:1-225）：链接是定值，不跟主题；代码底是 surface_2（旧版 surface_container_high），代码字是 text 兑一点 accent；tok_* 是 One Dark 的九种颜色。她的回答里代码块的底另换成 surface_1（styles/markdown.css，照旧版）。",
+  "text": {
+    "zh": {
+      "name": "默认"
+    },
+    "en": {
+      "name": "Default"
+    },
+    "ja": {
+      "name": "デフォルト"
+    }
+  },
+  "inject": [
+    "slots"
+  ],
+  "settings": {
+    "light_surface": {
+      "type": "color",
+      "default": "#faf9f7",
+      "name": {
+        "zh": "浅色 surface"
+      },
+      "applies": "live"
+    },
+    "light_sidebar_bg": {
+      "type": "color",
+      "default": "#f8f7f4",
+      "name": {
+        "zh": "浅色 sidebar_bg"
+      },
+      "applies": "live"
+    },
+    "light_surface_1": {
+      "type": "color",
+      "default": "#ffffff",
+      "name": {
+        "zh": "浅色 surface_1"
+      },
+      "applies": "live"
+    },
+    "light_surface_2": {
+      "type": "color",
+      "default": "#efece7",
+      "name": {
+        "zh": "浅色 surface_2"
+      },
+      "applies": "live"
+    },
+    "light_surface_3": {
+      "type": "color",
+      "default": "#e6e2db",
+      "name": {
+        "zh": "浅色 surface_3"
+      },
+      "applies": "live"
+    },
+    "light_text": {
+      "type": "color",
+      "default": "#1d1c1a",
+      "name": {
+        "zh": "浅色 text"
+      },
+      "applies": "live"
+    },
+    "light_text_soft": {
+      "type": "color",
+      "default": "#625d56",
+      "name": {
+        "zh": "浅色 text_soft"
+      },
+      "applies": "live"
+    },
+    "light_line": {
+      "type": "color",
+      "default": "#e7e3dc",
+      "name": {
+        "zh": "浅色 line"
+      },
+      "applies": "live"
+    },
+    "light_line_strong": {
+      "type": "color",
+      "default": "#d5cfc5",
+      "name": {
+        "zh": "浅色 line_strong"
+      },
+      "applies": "live"
+    },
+    "light_accent": {
+      "type": "color",
+      "default": "#3a63c9",
+      "name": {
+        "zh": "浅色 accent"
+      },
+      "applies": "live"
+    },
+    "light_accent_soft": {
+      "type": "color",
+      "default": "#e8eefb",
+      "name": {
+        "zh": "浅色 accent_soft"
+      },
+      "applies": "live"
+    },
+    "light_on_primary": {
+      "type": "color",
+      "default": "#ffffff",
+      "name": {
+        "zh": "浅色 on_primary"
+      },
+      "applies": "live"
+    },
+    "light_on_primary_container": {
+      "type": "color",
+      "default": "#1f3a82",
+      "name": {
+        "zh": "浅色 on_primary_container"
+      },
+      "applies": "live"
+    },
+    "light_gold": {
+      "type": "color",
+      "default": "#b8892f",
+      "name": {
+        "zh": "浅色 gold"
+      },
+      "applies": "live"
+    },
+    "light_ribbon": {
+      "type": "color",
+      "default": "#b14a5c",
+      "name": {
+        "zh": "浅色 ribbon"
+      },
+      "applies": "live"
+    },
+    "light_online": {
+      "type": "color",
+      "default": "#2e8b57",
+      "name": {
+        "zh": "浅色 online"
+      },
+      "applies": "live"
+    },
+    "light_danger": {
+      "type": "color",
+      "default": "#c2413b",
+      "name": {
+        "zh": "浅色 danger"
+      },
+      "applies": "live"
+    },
+    "light_bubble_shadow": {
+      "type": "text",
+      "default": "0 1px 2px rgba(40, 32, 20, 0.05)",
+      "name": {
+        "zh": "浅色 bubble_shadow"
+      },
+      "applies": "live"
+    },
+    "light_card_shadow": {
+      "type": "text",
+      "default": "0 1px 2px rgba(40, 32, 20, 0.04), 0 8px 24px -12px rgba(40, 32, 20, 0.16)",
+      "name": {
+        "zh": "浅色 card_shadow"
+      },
+      "applies": "live"
+    },
+    "light_float_shadow": {
+      "type": "text",
+      "default": "0 18px 40px -12px rgba(40, 32, 20, 0.22), 0 3px 10px -3px rgba(40, 32, 20, 0.1)",
+      "name": {
+        "zh": "浅色 float_shadow"
+      },
+      "applies": "live"
+    },
+    "light_peek_shadow": {
+      "type": "text",
+      "default": "14px 0 40px -16px rgba(40, 32, 20, 0.28), 1px 0 0 rgba(40, 32, 20, 0.05)",
+      "name": {
+        "zh": "浅色 peek_shadow"
+      },
+      "applies": "live"
+    },
+    "light_sidebar_active": {
+      "type": "color",
+      "default": "#ebe8e2",
+      "name": {
+        "zh": "浅色 sidebar_active"
+      },
+      "applies": "live"
+    },
+    "light_sidebar_active_shadow": {
+      "type": "text",
+      "default": "0 1px 2px rgba(40, 32, 20, 0.08), 0 3px 10px -5px rgba(40, 32, 20, 0.14)",
+      "name": {
+        "zh": "浅色 sidebar_active_shadow"
+      },
+      "applies": "live"
+    },
+    "light_composer_shadow": {
+      "type": "text",
+      "default": "0 0 0 1px rgba(40, 32, 20, 0.035), 0 1px 3px rgba(40, 32, 20, 0.06), 0 8px 26px -10px rgba(40, 32, 20, 0.16)",
+      "name": {
+        "zh": "浅色 composer_shadow"
+      },
+      "applies": "live"
+    },
+    "light_composer_focus_shadow": {
+      "type": "text",
+      "default": "0 0 0 1px rgba(40, 32, 20, 0.05), 0 2px 8px rgba(40, 32, 20, 0.08), 0 10px 26px -14px rgba(40, 32, 20, 0.18)",
+      "name": {
+        "zh": "浅色 composer_focus_shadow"
+      },
+      "applies": "live"
+    },
+    "light_scrim": {
+      "type": "color",
+      "default": "rgba(28, 24, 18, 0.32)",
+      "name": {
+        "zh": "浅色 scrim"
+      },
+      "applies": "live"
+    },
+    "light_diff_add": {
+      "type": "color",
+      "default": "#1a7f37",
+      "name": {
+        "zh": "浅色 diff_add"
+      },
+      "applies": "live"
+    },
+    "light_diff_del": {
+      "type": "color",
+      "default": "#cf222e",
+      "name": {
+        "zh": "浅色 diff_del"
+      },
+      "applies": "live"
+    },
+    "light_link": {
+      "type": "color",
+      "default": "#3a63c9",
+      "name": {
+        "zh": "浅色 link"
+      },
+      "applies": "live"
+    },
+    "light_code_bg": {
+      "type": "text",
+      "default": "var(--surface)",
+      "name": {
+        "zh": "浅色 code_bg"
+      },
+      "applies": "live"
+    },
+    "light_code_ink": {
+      "type": "color",
+      "default": "color-mix(in srgb, var(--text) 85%, var(--surface))",
+      "name": {
+        "zh": "浅色 code_ink"
+      },
+      "applies": "live"
+    },
+    "light_tok_c": {
+      "type": "color",
+      "default": "#81828a",
+      "name": {
+        "zh": "浅色 tok_c"
+      },
+      "applies": "live"
+    },
+    "light_tok_p": {
+      "type": "color",
+      "default": "#383a42",
+      "name": {
+        "zh": "浅色 tok_p"
+      },
+      "applies": "live"
+    },
+    "light_tok_o": {
+      "type": "color",
+      "default": "#017eb4",
+      "name": {
+        "zh": "浅色 tok_o"
+      },
+      "applies": "live"
+    },
+    "light_tok_k": {
+      "type": "color",
+      "default": "#a626a4",
+      "name": {
+        "zh": "浅色 tok_k"
+      },
+      "applies": "live"
+    },
+    "light_tok_s": {
+      "type": "color",
+      "default": "#3f8141",
+      "name": {
+        "zh": "浅色 tok_s"
+      },
+      "applies": "live"
+    },
+    "light_tok_n": {
+      "type": "color",
+      "default": "#986801",
+      "name": {
+        "zh": "浅色 tok_n"
+      },
+      "applies": "live"
+    },
+    "light_tok_f": {
+      "type": "color",
+      "default": "#3a6fe0",
+      "name": {
+        "zh": "浅色 tok_f"
+      },
+      "applies": "live"
+    },
+    "light_tok_t": {
+      "type": "color",
+      "default": "#a07001",
+      "name": {
+        "zh": "浅色 tok_t"
+      },
+      "applies": "live"
+    },
+    "light_tok_y": {
+      "type": "color",
+      "default": "#d3453b",
+      "name": {
+        "zh": "浅色 tok_y"
+      },
+      "applies": "live"
+    },
+    "light_artifact_shadow": {
+      "type": "text",
+      "default": "0 1px 2px rgba(40, 32, 20, 0.04), 0 12px 32px -14px rgba(40, 32, 20, 0.18)",
+      "name": {
+        "zh": "浅色 artifact_shadow"
+      },
+      "applies": "live"
+    },
+    "light_t_dim": {
+      "type": "color",
+      "default": "#8a857c",
+      "name": {
+        "zh": "浅色 终端色 dim"
+      },
+      "applies": "live"
+    },
+    "light_t_accent": {
+      "type": "color",
+      "default": "#3a63c9",
+      "name": {
+        "zh": "浅色 终端色 accent"
+      },
+      "applies": "live"
+    },
+    "light_t_workspace": {
+      "type": "color",
+      "default": "#3a63c9",
+      "name": {
+        "zh": "浅色 终端色 workspace"
+      },
+      "applies": "live"
+    },
+    "light_t_full": {
+      "type": "color",
+      "default": "#b14a5c",
+      "name": {
+        "zh": "浅色 终端色 full"
+      },
+      "applies": "live"
+    },
+    "light_t_read_only": {
+      "type": "color",
+      "default": "#a0741f",
+      "name": {
+        "zh": "浅色 终端色 read_only"
+      },
+      "applies": "live"
+    },
+    "light_t_thought": {
+      "type": "color",
+      "default": "#2d6f7b",
+      "name": {
+        "zh": "浅色 终端色 thought"
+      },
+      "applies": "live"
+    },
+    "light_t_thought_hover": {
+      "type": "color",
+      "default": "#1d5560",
+      "name": {
+        "zh": "浅色 终端色 thought_hover"
+      },
+      "applies": "live"
+    },
+    "light_t_shade": {
+      "type": "color",
+      "default": "#f2efea",
+      "name": {
+        "zh": "浅色 终端色 shade"
+      },
+      "applies": "live"
+    },
+    "light_t_added": {
+      "type": "color",
+      "default": "#2e8b57",
+      "name": {
+        "zh": "浅色 终端色 added"
+      },
+      "applies": "live"
+    },
+    "light_t_removed": {
+      "type": "color",
+      "default": "#c2413b",
+      "name": {
+        "zh": "浅色 终端色 removed"
+      },
+      "applies": "live"
+    },
+    "light_t_diff_added_fg": {
+      "type": "color",
+      "default": "#006d39",
+      "name": {
+        "zh": "浅色 终端色 diff_added_fg"
+      },
+      "applies": "live"
+    },
+    "light_t_diff_added_bg": {
+      "type": "color",
+      "default": "#ddf8de",
+      "name": {
+        "zh": "浅色 终端色 diff_added_bg"
+      },
+      "applies": "live"
+    },
+    "light_t_diff_removed_fg": {
+      "type": "color",
+      "default": "#ba1a1a",
+      "name": {
+        "zh": "浅色 终端色 diff_removed_fg"
+      },
+      "applies": "live"
+    },
+    "light_t_diff_removed_bg": {
+      "type": "color",
+      "default": "#ffe6e1",
+      "name": {
+        "zh": "浅色 终端色 diff_removed_bg"
+      },
+      "applies": "live"
+    },
+    "light_t_error": {
+      "type": "color",
+      "default": "#c2413b",
+      "name": {
+        "zh": "浅色 终端色 error"
+      },
+      "applies": "live"
+    },
+    "light_t_warn": {
+      "type": "color",
+      "default": "#a0741f",
+      "name": {
+        "zh": "浅色 终端色 warn"
+      },
+      "applies": "live"
+    },
+    "light_t_good": {
+      "type": "color",
+      "default": "#2e8b57",
+      "name": {
+        "zh": "浅色 终端色 good"
+      },
+      "applies": "live"
+    },
+    "light_t_md_heading": {
+      "type": "color",
+      "default": "#934654",
+      "name": {
+        "zh": "浅色 终端色 md_heading"
+      },
+      "applies": "live"
+    },
+    "light_t_md_bold": {
+      "type": "color",
+      "default": "#1f1b14",
+      "name": {
+        "zh": "浅色 终端色 md_bold"
+      },
+      "applies": "live"
+    },
+    "light_t_md_italic": {
+      "type": "color",
+      "default": "#4e4635",
+      "name": {
+        "zh": "浅色 终端色 md_italic"
+      },
+      "applies": "live"
+    },
+    "light_t_md_code": {
+      "type": "color",
+      "default": "#8e4e00",
+      "name": {
+        "zh": "浅色 终端色 md_code"
+      },
+      "applies": "live"
+    },
+    "light_t_md_link": {
+      "type": "color",
+      "default": "#235cb3",
+      "name": {
+        "zh": "浅色 终端色 md_link"
+      },
+      "applies": "live"
+    },
+    "light_t_md_url": {
+      "type": "color",
+      "default": "#235cb3",
+      "name": {
+        "zh": "浅色 终端色 md_url"
+      },
+      "applies": "live"
+    },
+    "light_t_md_image": {
+      "type": "color",
+      "default": "#762f3d",
+      "name": {
+        "zh": "浅色 终端色 md_image"
+      },
+      "applies": "live"
+    },
+    "light_t_md_quote": {
+      "type": "color",
+      "default": "#746f68",
+      "name": {
+        "zh": "浅色 终端色 md_quote"
+      },
+      "applies": "live"
+    },
+    "light_t_md_mark": {
+      "type": "color",
+      "default": "#7c5815",
+      "name": {
+        "zh": "浅色 终端色 md_mark"
+      },
+      "applies": "live"
+    },
+    "light_t_md_table_head": {
+      "type": "color",
+      "default": "#235cb3",
+      "name": {
+        "zh": "浅色 终端色 md_table_head"
+      },
+      "applies": "live"
+    },
+    "light_t_md_math": {
+      "type": "color",
+      "default": "#1f1b14",
+      "name": {
+        "zh": "浅色 终端色 md_math"
+      },
+      "applies": "live"
+    },
+    "light_t_diagram_text": {
+      "type": "color",
+      "default": "#4e4635",
+      "name": {
+        "zh": "浅色 终端色 diagram_text"
+      },
+      "applies": "live"
+    },
+    "light_t_diagram_line": {
+      "type": "color",
+      "default": "#807663",
+      "name": {
+        "zh": "浅色 终端色 diagram_line"
+      },
+      "applies": "live"
+    },
+    "light_t_diagram_backdrop": {
+      "type": "color",
+      "default": "#fff8f2",
+      "name": {
+        "zh": "浅色 终端色 diagram_backdrop"
+      },
+      "applies": "live"
+    },
+    "light_t_hover": {
+      "type": "color",
+      "default": "#3d3a35",
+      "name": {
+        "zh": "浅色 终端色 hover"
+      },
+      "applies": "live"
+    },
+    "light_t_code_keyword": {
+      "type": "color",
+      "default": "#934654",
+      "name": {
+        "zh": "浅色 终端色 code_keyword"
+      },
+      "applies": "live"
+    },
+    "light_t_code_function": {
+      "type": "color",
+      "default": "#235cb3",
+      "name": {
+        "zh": "浅色 终端色 code_function"
+      },
+      "applies": "live"
+    },
+    "light_t_code_string": {
+      "type": "color",
+      "default": "#006d39",
+      "name": {
+        "zh": "浅色 终端色 code_string"
+      },
+      "applies": "live"
+    },
+    "light_t_code_number": {
+      "type": "color",
+      "default": "#8e4e00",
+      "name": {
+        "zh": "浅色 终端色 code_number"
+      },
+      "applies": "live"
+    },
+    "light_t_code_comment": {
+      "type": "color",
+      "default": "#807663",
+      "name": {
+        "zh": "浅色 终端色 code_comment"
+      },
+      "applies": "live"
+    },
+    "light_t_code_type": {
+      "type": "color",
+      "default": "#006781",
+      "name": {
+        "zh": "浅色 终端色 code_type"
+      },
+      "applies": "live"
+    },
+    "light_t_code_constant": {
+      "type": "color",
+      "default": "#8e4e00",
+      "name": {
+        "zh": "浅色 终端色 code_constant"
+      },
+      "applies": "live"
+    },
+    "light_t_code_property": {
+      "type": "color",
+      "default": "#00696b",
+      "name": {
+        "zh": "浅色 终端色 code_property"
+      },
+      "applies": "live"
+    },
+    "light_t_code_operator": {
+      "type": "color",
+      "default": "#4e4635",
+      "name": {
+        "zh": "浅色 终端色 code_operator"
+      },
+      "applies": "live"
+    },
+    "light_t_code_macro": {
+      "type": "color",
+      "default": "#004494",
+      "name": {
+        "zh": "浅色 终端色 code_macro"
+      },
+      "applies": "live"
+    },
+    "light_t_code_parameter": {
+      "type": "color",
+      "default": "#7c5815",
+      "name": {
+        "zh": "浅色 终端色 code_parameter"
+      },
+      "applies": "live"
+    },
+    "light_t_mascot_head": {
+      "type": "color",
+      "default": "#fbf6ef",
+      "name": {
+        "zh": "浅色 吉祥物 头"
+      },
+      "applies": "live"
+    },
+    "light_t_mascot_ear": {
+      "type": "color",
+      "default": "#aab2d6",
+      "name": {
+        "zh": "浅色 吉祥物 耳朵"
+      },
+      "applies": "live"
+    },
+    "light_t_mascot_eye": {
+      "type": "color",
+      "default": "#3a63c9",
+      "name": {
+        "zh": "浅色 吉祥物 眼睛"
+      },
+      "applies": "live"
+    },
+    "light_t_mascot_fin": {
+      "type": "color",
+      "default": "#f49aa8",
+      "name": {
+        "zh": "浅色 吉祥物 鳍"
+      },
+      "applies": "live"
+    },
+    "light_t_mascot_head_shade": {
+      "type": "color",
+      "default": "#c9c3d9",
+      "name": {
+        "zh": "浅色 吉祥物 头的影子"
+      },
+      "applies": "live"
+    },
+    "light_t_mascot_ear_shade": {
+      "type": "color",
+      "default": "#737ba3",
+      "name": {
+        "zh": "浅色 吉祥物 耳朵的影子"
+      },
+      "applies": "live"
+    },
+    "light_t_mascot_fin_shade": {
+      "type": "color",
+      "default": "#c86478",
+      "name": {
+        "zh": "浅色 吉祥物 鳍的影子"
+      },
+      "applies": "live"
+    },
+    "light_t_mascot_outline": {
+      "type": "color",
+      "default": "#4a4260",
+      "name": {
+        "zh": "浅色 吉祥物 轮廓"
+      },
+      "applies": "live"
+    },
+    "light_t_mascot_lamp": {
+      "type": "color",
+      "default": "#5aa9ff",
+      "name": {
+        "zh": "浅色 吉祥物 肚子上的灯"
+      },
+      "applies": "live"
+    },
+    "dark_surface": {
+      "type": "color",
+      "default": "#1a1b26",
+      "name": {
+        "zh": "深色 surface"
+      },
+      "applies": "live"
+    },
+    "dark_sidebar_bg": {
+      "type": "color",
+      "default": "#191a24",
+      "name": {
+        "zh": "深色 sidebar_bg"
+      },
+      "applies": "live"
+    },
+    "dark_surface_1": {
+      "type": "color",
+      "default": "#1f2233",
+      "name": {
+        "zh": "深色 surface_1"
+      },
+      "applies": "live"
+    },
+    "dark_surface_2": {
+      "type": "color",
+      "default": "#262a3d",
+      "name": {
+        "zh": "深色 surface_2"
+      },
+      "applies": "live"
+    },
+    "dark_surface_3": {
+      "type": "color",
+      "default": "#2e3348",
+      "name": {
+        "zh": "深色 surface_3"
+      },
+      "applies": "live"
+    },
+    "dark_text": {
+      "type": "color",
+      "default": "#c0caf5",
+      "name": {
+        "zh": "深色 text"
+      },
+      "applies": "live"
+    },
+    "dark_text_soft": {
+      "type": "color",
+      "default": "#9aa3c7",
+      "name": {
+        "zh": "深色 text_soft"
+      },
+      "applies": "live"
+    },
+    "dark_line": {
+      "type": "color",
+      "default": "#272b3e",
+      "name": {
+        "zh": "深色 line"
+      },
+      "applies": "live"
+    },
+    "dark_line_strong": {
+      "type": "color",
+      "default": "#373d57",
+      "name": {
+        "zh": "深色 line_strong"
+      },
+      "applies": "live"
+    },
+    "dark_accent": {
+      "type": "color",
+      "default": "#7aa2f7",
+      "name": {
+        "zh": "深色 accent"
+      },
+      "applies": "live"
+    },
+    "dark_accent_soft": {
+      "type": "color",
+      "default": "#2b3a5f",
+      "name": {
+        "zh": "深色 accent_soft"
+      },
+      "applies": "live"
+    },
+    "dark_on_primary": {
+      "type": "color",
+      "default": "#16161e",
+      "name": {
+        "zh": "深色 on_primary"
+      },
+      "applies": "live"
+    },
+    "dark_on_primary_container": {
+      "type": "color",
+      "default": "#d5ddff",
+      "name": {
+        "zh": "深色 on_primary_container"
+      },
+      "applies": "live"
+    },
+    "dark_gold": {
+      "type": "color",
+      "default": "#e0af68",
+      "name": {
+        "zh": "深色 gold"
+      },
+      "applies": "live"
+    },
+    "dark_ribbon": {
+      "type": "color",
+      "default": "#f7768e",
+      "name": {
+        "zh": "深色 ribbon"
+      },
+      "applies": "live"
+    },
+    "dark_online": {
+      "type": "color",
+      "default": "#9ece6a",
+      "name": {
+        "zh": "深色 online"
+      },
+      "applies": "live"
+    },
+    "dark_danger": {
+      "type": "color",
+      "default": "#f7768e",
+      "name": {
+        "zh": "深色 danger"
+      },
+      "applies": "live"
+    },
+    "dark_bubble_shadow": {
+      "type": "text",
+      "default": "0 1px 2px rgba(0, 0, 0, 0.22)",
+      "name": {
+        "zh": "深色 bubble_shadow"
+      },
+      "applies": "live"
+    },
+    "dark_card_shadow": {
+      "type": "text",
+      "default": "0 1px 2px rgba(0, 0, 0, 0.25), 0 10px 28px -14px rgba(0, 0, 0, 0.55)",
+      "name": {
+        "zh": "深色 card_shadow"
+      },
+      "applies": "live"
+    },
+    "dark_float_shadow": {
+      "type": "text",
+      "default": "0 22px 48px -16px rgba(0, 0, 0, 0.72), 0 4px 12px -4px rgba(0, 0, 0, 0.4)",
+      "name": {
+        "zh": "深色 float_shadow"
+      },
+      "applies": "live"
+    },
+    "dark_peek_shadow": {
+      "type": "text",
+      "default": "16px 0 44px -16px rgba(0, 0, 0, 0.75), 1px 0 0 rgba(0, 0, 0, 0.3)",
+      "name": {
+        "zh": "深色 peek_shadow"
+      },
+      "applies": "live"
+    },
+    "dark_sidebar_active": {
+      "type": "color",
+      "default": "#24283b",
+      "name": {
+        "zh": "深色 sidebar_active"
+      },
+      "applies": "live"
+    },
+    "dark_sidebar_active_shadow": {
+      "type": "text",
+      "default": "0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px -5px rgba(0, 0, 0, 0.55)",
+      "name": {
+        "zh": "深色 sidebar_active_shadow"
+      },
+      "applies": "live"
+    },
+    "dark_composer_shadow": {
+      "type": "text",
+      "default": "0 1px 3px rgba(0, 0, 0, 0.3), 0 10px 30px -12px rgba(0, 0, 0, 0.6)",
+      "name": {
+        "zh": "深色 composer_shadow"
+      },
+      "applies": "live"
+    },
+    "dark_composer_focus_shadow": {
+      "type": "text",
+      "default": "0 2px 8px rgba(0, 0, 0, 0.4), 0 10px 28px -14px rgba(0, 0, 0, 0.55)",
+      "name": {
+        "zh": "深色 composer_focus_shadow"
+      },
+      "applies": "live"
+    },
+    "dark_scrim": {
+      "type": "color",
+      "default": "rgba(6, 7, 12, 0.5)",
+      "name": {
+        "zh": "深色 scrim"
+      },
+      "applies": "live"
+    },
+    "dark_diff_add": {
+      "type": "color",
+      "default": "#3fb950",
+      "name": {
+        "zh": "深色 diff_add"
+      },
+      "applies": "live"
+    },
+    "dark_diff_del": {
+      "type": "color",
+      "default": "#f85149",
+      "name": {
+        "zh": "深色 diff_del"
+      },
+      "applies": "live"
+    },
+    "dark_link": {
+      "type": "color",
+      "default": "#7aa2f7",
+      "name": {
+        "zh": "深色 link"
+      },
+      "applies": "live"
+    },
+    "dark_code_bg": {
+      "type": "text",
+      "default": "var(--surface-2)",
+      "name": {
+        "zh": "深色 code_bg"
+      },
+      "applies": "live"
+    },
+    "dark_code_ink": {
+      "type": "color",
+      "default": "color-mix(in srgb, var(--text) 94%, var(--accent))",
+      "name": {
+        "zh": "深色 code_ink"
+      },
+      "applies": "live"
+    },
+    "dark_tok_c": {
+      "type": "color",
+      "default": "#7f848e",
+      "name": {
+        "zh": "深色 tok_c"
+      },
+      "applies": "live"
+    },
+    "dark_tok_p": {
+      "type": "color",
+      "default": "#abb2bf",
+      "name": {
+        "zh": "深色 tok_p"
+      },
+      "applies": "live"
+    },
+    "dark_tok_o": {
+      "type": "color",
+      "default": "#56b6c2",
+      "name": {
+        "zh": "深色 tok_o"
+      },
+      "applies": "live"
+    },
+    "dark_tok_k": {
+      "type": "color",
+      "default": "#c678dd",
+      "name": {
+        "zh": "深色 tok_k"
+      },
+      "applies": "live"
+    },
+    "dark_tok_s": {
+      "type": "color",
+      "default": "#98c379",
+      "name": {
+        "zh": "深色 tok_s"
+      },
+      "applies": "live"
+    },
+    "dark_tok_n": {
+      "type": "color",
+      "default": "#d19a66",
+      "name": {
+        "zh": "深色 tok_n"
+      },
+      "applies": "live"
+    },
+    "dark_tok_f": {
+      "type": "color",
+      "default": "#61afef",
+      "name": {
+        "zh": "深色 tok_f"
+      },
+      "applies": "live"
+    },
+    "dark_tok_t": {
+      "type": "color",
+      "default": "#e5c07b",
+      "name": {
+        "zh": "深色 tok_t"
+      },
+      "applies": "live"
+    },
+    "dark_tok_y": {
+      "type": "color",
+      "default": "#e06c75",
+      "name": {
+        "zh": "深色 tok_y"
+      },
+      "applies": "live"
+    },
+    "dark_artifact_shadow": {
+      "type": "text",
+      "default": "0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 36px -16px rgba(0, 0, 0, 0.62)",
+      "name": {
+        "zh": "深色 artifact_shadow"
+      },
+      "applies": "live"
+    },
+    "dark_t_dim": {
+      "type": "color",
+      "default": "#7c84ad",
+      "name": {
+        "zh": "深色 终端色 dim"
+      },
+      "applies": "live"
+    },
+    "dark_t_accent": {
+      "type": "color",
+      "default": "#7aa2f7",
+      "name": {
+        "zh": "深色 终端色 accent"
+      },
+      "applies": "live"
+    },
+    "dark_t_workspace": {
+      "type": "color",
+      "default": "#7aa2f7",
+      "name": {
+        "zh": "深色 终端色 workspace"
+      },
+      "applies": "live"
+    },
+    "dark_t_full": {
+      "type": "color",
+      "default": "#f7768e",
+      "name": {
+        "zh": "深色 终端色 full"
+      },
+      "applies": "live"
+    },
+    "dark_t_read_only": {
+      "type": "color",
+      "default": "#e0af68",
+      "name": {
+        "zh": "深色 终端色 read_only"
+      },
+      "applies": "live"
+    },
+    "dark_t_thought": {
+      "type": "color",
+      "default": "#41a6b5",
+      "name": {
+        "zh": "深色 终端色 thought"
+      },
+      "applies": "live"
+    },
+    "dark_t_thought_hover": {
+      "type": "color",
+      "default": "#6db3cb",
+      "name": {
+        "zh": "深色 终端色 thought_hover"
+      },
+      "applies": "live"
+    },
+    "dark_t_shade": {
+      "type": "color",
+      "default": "#232739",
+      "name": {
+        "zh": "深色 终端色 shade"
+      },
+      "applies": "live"
+    },
+    "dark_t_added": {
+      "type": "color",
+      "default": "#9ece6a",
+      "name": {
+        "zh": "深色 终端色 added"
+      },
+      "applies": "live"
+    },
+    "dark_t_removed": {
+      "type": "color",
+      "default": "#f7768e",
+      "name": {
+        "zh": "深色 终端色 removed"
+      },
+      "applies": "live"
+    },
+    "dark_t_diff_added_fg": {
+      "type": "color",
+      "default": "#9ece6a",
+      "name": {
+        "zh": "深色 终端色 diff_added_fg"
+      },
+      "applies": "live"
+    },
+    "dark_t_diff_added_bg": {
+      "type": "color",
+      "default": "#20303b",
+      "name": {
+        "zh": "深色 终端色 diff_added_bg"
+      },
+      "applies": "live"
+    },
+    "dark_t_diff_removed_fg": {
+      "type": "color",
+      "default": "#f7768e",
+      "name": {
+        "zh": "深色 终端色 diff_removed_fg"
+      },
+      "applies": "live"
+    },
+    "dark_t_diff_removed_bg": {
+      "type": "color",
+      "default": "#37222c",
+      "name": {
+        "zh": "深色 终端色 diff_removed_bg"
+      },
+      "applies": "live"
+    },
+    "dark_t_error": {
+      "type": "color",
+      "default": "#f7768e",
+      "name": {
+        "zh": "深色 终端色 error"
+      },
+      "applies": "live"
+    },
+    "dark_t_warn": {
+      "type": "color",
+      "default": "#e0af68",
+      "name": {
+        "zh": "深色 终端色 warn"
+      },
+      "applies": "live"
+    },
+    "dark_t_good": {
+      "type": "color",
+      "default": "#9ece6a",
+      "name": {
+        "zh": "深色 终端色 good"
+      },
+      "applies": "live"
+    },
+    "dark_t_md_heading": {
+      "type": "color",
+      "default": "#bb9af7",
+      "name": {
+        "zh": "深色 终端色 md_heading"
+      },
+      "applies": "live"
+    },
+    "dark_t_md_bold": {
+      "type": "color",
+      "default": "#c0caf5",
+      "name": {
+        "zh": "深色 终端色 md_bold"
+      },
+      "applies": "live"
+    },
+    "dark_t_md_italic": {
+      "type": "color",
+      "default": "#a9b1d6",
+      "name": {
+        "zh": "深色 终端色 md_italic"
+      },
+      "applies": "live"
+    },
+    "dark_t_md_code": {
+      "type": "color",
+      "default": "#e5a07a",
+      "name": {
+        "zh": "深色 终端色 md_code"
+      },
+      "applies": "live"
+    },
+    "dark_t_md_link": {
+      "type": "color",
+      "default": "#6a8fd8",
+      "name": {
+        "zh": "深色 终端色 md_link"
+      },
+      "applies": "live"
+    },
+    "dark_t_md_url": {
+      "type": "color",
+      "default": "#6a8fd8",
+      "name": {
+        "zh": "深色 终端色 md_url"
+      },
+      "applies": "live"
+    },
+    "dark_t_md_image": {
+      "type": "color",
+      "default": "#9d7cd8",
+      "name": {
+        "zh": "深色 终端色 md_image"
+      },
+      "applies": "live"
+    },
+    "dark_t_md_quote": {
+      "type": "color",
+      "default": "#828bb8",
+      "name": {
+        "zh": "深色 终端色 md_quote"
+      },
+      "applies": "live"
+    },
+    "dark_t_md_mark": {
+      "type": "color",
+      "default": "#e0af68",
+      "name": {
+        "zh": "深色 终端色 md_mark"
+      },
+      "applies": "live"
+    },
+    "dark_t_md_table_head": {
+      "type": "color",
+      "default": "#7aa2f7",
+      "name": {
+        "zh": "深色 终端色 md_table_head"
+      },
+      "applies": "live"
+    },
+    "dark_t_md_math": {
+      "type": "color",
+      "default": "#c0caf5",
+      "name": {
+        "zh": "深色 终端色 md_math"
+      },
+      "applies": "live"
+    },
+    "dark_t_diagram_text": {
+      "type": "color",
+      "default": "#a9b1d6",
+      "name": {
+        "zh": "深色 终端色 diagram_text"
+      },
+      "applies": "live"
+    },
+    "dark_t_diagram_line": {
+      "type": "color",
+      "default": "#737aa2",
+      "name": {
+        "zh": "深色 终端色 diagram_line"
+      },
+      "applies": "live"
+    },
+    "dark_t_diagram_backdrop": {
+      "type": "color",
+      "default": "#1a1b26",
+      "name": {
+        "zh": "深色 终端色 diagram_backdrop"
+      },
+      "applies": "live"
+    },
+    "dark_t_hover": {
+      "type": "color",
+      "default": "#b4bde6",
+      "name": {
+        "zh": "深色 终端色 hover"
+      },
+      "applies": "live"
+    },
+    "dark_t_code_keyword": {
+      "type": "color",
+      "default": "#bb9af7",
+      "name": {
+        "zh": "深色 终端色 code_keyword"
+      },
+      "applies": "live"
+    },
+    "dark_t_code_function": {
+      "type": "color",
+      "default": "#7aa2f7",
+      "name": {
+        "zh": "深色 终端色 code_function"
+      },
+      "applies": "live"
+    },
+    "dark_t_code_string": {
+      "type": "color",
+      "default": "#9ece6a",
+      "name": {
+        "zh": "深色 终端色 code_string"
+      },
+      "applies": "live"
+    },
+    "dark_t_code_number": {
+      "type": "color",
+      "default": "#ff9e64",
+      "name": {
+        "zh": "深色 终端色 code_number"
+      },
+      "applies": "live"
+    },
+    "dark_t_code_comment": {
+      "type": "color",
+      "default": "#565f89",
+      "name": {
+        "zh": "深色 终端色 code_comment"
+      },
+      "applies": "live"
+    },
+    "dark_t_code_type": {
+      "type": "color",
+      "default": "#2ac3de",
+      "name": {
+        "zh": "深色 终端色 code_type"
+      },
+      "applies": "live"
+    },
+    "dark_t_code_constant": {
+      "type": "color",
+      "default": "#ff9e64",
+      "name": {
+        "zh": "深色 终端色 code_constant"
+      },
+      "applies": "live"
+    },
+    "dark_t_code_property": {
+      "type": "color",
+      "default": "#73daca",
+      "name": {
+        "zh": "深色 终端色 code_property"
+      },
+      "applies": "live"
+    },
+    "dark_t_code_operator": {
+      "type": "color",
+      "default": "#89ddff",
+      "name": {
+        "zh": "深色 终端色 code_operator"
+      },
+      "applies": "live"
+    },
+    "dark_t_code_macro": {
+      "type": "color",
+      "default": "#7dcfff",
+      "name": {
+        "zh": "深色 终端色 code_macro"
+      },
+      "applies": "live"
+    },
+    "dark_t_code_parameter": {
+      "type": "color",
+      "default": "#e0af68",
+      "name": {
+        "zh": "深色 终端色 code_parameter"
+      },
+      "applies": "live"
+    },
+    "dark_t_mascot_head": {
+      "type": "color",
+      "default": "#c0caf5",
+      "name": {
+        "zh": "深色 吉祥物 头"
+      },
+      "applies": "live"
+    },
+    "dark_t_mascot_ear": {
+      "type": "color",
+      "default": "#565f89",
+      "name": {
+        "zh": "深色 吉祥物 耳朵"
+      },
+      "applies": "live"
+    },
+    "dark_t_mascot_eye": {
+      "type": "color",
+      "default": "#3d59a1",
+      "name": {
+        "zh": "深色 吉祥物 眼睛"
+      },
+      "applies": "live"
+    },
+    "dark_t_mascot_fin": {
+      "type": "color",
+      "default": "#f7768e",
+      "name": {
+        "zh": "深色 吉祥物 鳍"
+      },
+      "applies": "live"
+    },
+    "dark_t_mascot_head_shade": {
+      "type": "color",
+      "default": "#737aa2",
+      "name": {
+        "zh": "深色 吉祥物 头的影子"
+      },
+      "applies": "live"
+    },
+    "dark_t_mascot_ear_shade": {
+      "type": "color",
+      "default": "#3b4261",
+      "name": {
+        "zh": "深色 吉祥物 耳朵的影子"
+      },
+      "applies": "live"
+    },
+    "dark_t_mascot_fin_shade": {
+      "type": "color",
+      "default": "#b4506a",
+      "name": {
+        "zh": "深色 吉祥物 鳍的影子"
+      },
+      "applies": "live"
+    },
+    "dark_t_mascot_outline": {
+      "type": "color",
+      "default": "#0f0f17",
+      "name": {
+        "zh": "深色 吉祥物 轮廓"
+      },
+      "applies": "live"
+    },
+    "dark_t_mascot_lamp": {
+      "type": "color",
+      "default": "#7dcfff",
+      "name": {
+        "zh": "深色 吉祥物 肚子上的灯"
+      },
+      "applies": "live"
+    }
+  }
+}

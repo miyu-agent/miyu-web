@@ -194,10 +194,10 @@ flowchart TB
 
 | 包 | 种类 | 要（`inject`） | 提供的服务 | 声明的挂载位 | 挂进 | 设置项 |
 |---|---|---|---|---|---|---|
-| `theme-morning`、`theme-tokyonight` | 可选 | `slots` | — | — | `theme.palettes` | 每个颜色一项（live） |
-| `theme` | 基础 | `slots`、`packages` | `theme` | `theme.palettes`（list） | — | `palette`（live） |
-| `theme-persona` | 可选 | `slots` | — | — | `theme.palettes`（「跟随人格」，生成的） | `veil`（live）、`sample_side` |
-| `theme-wallpaper` | 可选 | `slots`、`host` | — | — | `theme.palettes`（「跟随壁纸」，生成的；读不到不挂） | `check_seconds`（live）、`sample_side` |
+| `theme-default` | 可选 | `slots` | — | — | `theme.palettes`（「默认」，浅色晨光、深色 tokyonight） | 每个颜色一项，`light_`、`dark_` 打头（live） |
+| `theme` | 基础 | `slots`、`packages` | `theme` | `theme.palettes`（list） | — | `palette`、`scheme`（live） |
+| `theme-persona` | 可选 | `slots` | — | — | `theme.palettes`（「跟随人格」） | `veil`（live）、`sample_side` |
+| `theme-wallpaper` | 可选 | `slots`、`host` | — | — | `theme.palettes`（「跟随壁纸」，读不到不挂） | `check_seconds`（live）、`sample_side` |
 | `app` | 基础 | `core`、`sessions`、`host`、`page`、`slots`、`packages`、`lightbox~`、`theme~` | `chat`、`markdown`、`commands`、`composer` | `stage.right`、`stage.info`（list）、`markdown.code`（keyed）、`composer.above`、`composer.bar`、`composer.head`、`composer.payload`、`composer.footer`、`composer.float`（list） | — | 还在 `resources/layout.json` 等处，拆出去的包带走自己的 |
 | `rail` | 可选 | `slots`、`chat` | — | — | `stage.right` | `min_prompts`、`current_at`、`jump_margin`、`gutter`、`close_ms` |
 | `mermaid` | 可选 | `slots`、`core`、`host`、`markdown`、`lightbox~` | — | — | `markdown.code`（键 `mermaid`） | `max_height` |

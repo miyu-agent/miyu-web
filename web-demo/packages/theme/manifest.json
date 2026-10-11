@@ -8,7 +8,7 @@
   },
   "kind": "base",
   "description": {
-    "zh": "照选中的那一套颜色把页面的颜色变量写上；一套一套的颜色由主题包挂进 theme.palettes：定的整套交，生成的（跟随人格、跟随壁纸）浅深跟着系统、盖在同深浅的第一套上面。没选的跟着系统：浅色用第一套浅的，深色用第一套深的。"
+    "zh": "照选中的主题和明暗把页面的颜色变量写上。主题由主题包挂进 theme.palettes，每个都是成对的一套（浅色、深色各一份）；明暗跟随系统、或定成浅色、深色。"
   },
   "inject": [
     "slots",
@@ -24,7 +24,20 @@
       "type": "text",
       "default": "",
       "name": {
-        "zh": "用哪一套（空着的跟着系统）"
+        "zh": "用哪个主题（空着的是第一个）"
+      },
+      "applies": "live"
+    },
+    "scheme": {
+      "type": "choice",
+      "choices": [
+        "auto",
+        "light",
+        "dark"
+      ],
+      "default": "auto",
+      "name": {
+        "zh": "明暗（auto 跟随系统）"
       },
       "applies": "live"
     }
