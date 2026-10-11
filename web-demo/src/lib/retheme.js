@@ -26,8 +26,12 @@ export function retheme(change, opts = {}) {
   queueMicrotask(() => {
     const run = queued;
     queued = [];
-    doc.startViewTransition(() => {
+    const shift = doc.startViewTransition(() => {
       for (const fn of run) fn();
+    });
+    // 连着换（存了人格紧跟着重读、换会话紧跟着换颜色）时前一次被后一次顶掉，浏览器拒掉前一次的 ready：那是正常的，改动照样做了
+    shift.ready.catch((/** @type {any} */ err) => {
+      if (err?.name !== 'AbortError') console.error(err);
     });
   });
 }

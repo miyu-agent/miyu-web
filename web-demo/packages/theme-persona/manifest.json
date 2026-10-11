@@ -48,9 +48,9 @@
       "min": 0,
       "max": 1,
       "name": {
-        "zh": "背景图上面盖的那一层底色多浓（0 不盖，1 盖满看不见图）",
-        "en": "How thick the page color laid over the background is (0 none, 1 hides the image)",
-        "ja": "背景画像の上に重ねる地の色の濃さ（0 で重ねない、1 で画像が見えない）"
+        "zh": "人格没设透明度时，背景图上面盖的那一层底色多浓（0 不盖，1 盖满看不见图）",
+        "en": "For personas without their own opacity: how thick the page color laid over the background is (0 none, 1 hides the image)",
+        "ja": "人格が透明度を設定していないとき、背景画像の上に重ねる地の色の濃さ（0 で重ねない、1 で画像が見えない）"
       },
       "applies": "live"
     }

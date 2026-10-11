@@ -4,8 +4,9 @@
 //! - 主题「跟随人格」：往主题包的 `theme.palettes` 挂一个生成的主题（浅、深两份都生成，`src/lib/md3/`）；颜色照人格自选的主色（核心 P-6
 //!   的 `seed`），没选的照头像取的第一名。都没有、无人格、取不出的交 `null`：就是默认那个主题。换了颜色换一份挂上，选着它的当场渐变过去。
 //! - 背景图（核心 P-6）：和选哪个主题无关，一直跟着人格。铺满整个窗口（`style.css`：页面根上 `has-persona-backdrop`、变量
-//!   `--persona-backdrop`），上面盖一层底色，多浓是设置项 `veil`；左栏、标签、输入框磨砂。换图和换颜色并成一次整页淡过去
-//!   （`src/lib/retheme.js`）。
+//!   `--persona-backdrop`、`--persona-veil`、`--persona-focus`），上面盖一层底色；左栏、标签、输入框磨砂。透明度、焦点照人格的（核心
+//!   P-7，`look.js`），没设的透明度照设置项 `veil`、焦点居中。编辑卡片拖滑杆、拖焦点时发 `look.preview`，正在看的就是那个人格的当场
+//!   照它铺，松手存了以后照 `look.changed` 来的。换图和换颜色并成一次整页淡过去（`src/lib/retheme.js`）。
 //! 停用了这个包就没有「跟随人格」这一套、没有背景图。
 //!
 //! 头像在浏览器里缩小到长边 `sample_side` 再取色；同一张图取过的记着，换回来不再算。
@@ -13,6 +14,7 @@
 import { seedOf, themeOf } from '../../src/lib/md3/index.js';
 import { pixelsOf } from '../../src/lib/md3/pixels.js';
 import { retheme } from '../../src/lib/retheme.js';
+import { veilOf, positionOf } from './look.js';
 
 /** 排在定的那几套后面 */
 const ORDER = 10;
@@ -54,30 +56,42 @@ export function apply(ctx) {
   };
 
   const root = document.documentElement;
-  /** 铺着的背景图（改了设置项 `veil` 照它重铺） */
-  let shown = /** @type {string|null} */ (null);
-  /** 背景图：有的铺上、没有的拿掉；换了图的整页淡过去 @param {string|null} url */
-  const backdrop = (url) => {
-    if (url !== shown) {
-      shown = url;
-      return retheme(() => lay(url));
-    }
-    lay(url);
+  /**
+   * 铺着的背景图：哪个人格的、图、透明度、焦点（改了设置项 `veil`、编辑卡片预览时照它重铺）
+   * @type {{persona: string|null, url: string|null, opacity: number|null, focus: any}}
+   */
+  let shown = { persona: null, url: null, opacity: null, focus: null };
+  /** 编辑卡片正在预览的（拖滑杆、拖焦点）：盖在 `shown` 上面，`null` 是没在预览 @type {{opacity?: number, focus?: any}|null} */
+  let preview = null;
+  /** 背景图：有的铺上、没有的拿掉；换了图的整页淡过去 @param {typeof shown} next */
+  const backdrop = (next) => {
+    const swap = next.url !== shown.url;
+    shown = next;
+    if (swap) retheme(lay);
+    else lay();
   };
-  /** 真去铺 @param {string|null} url */
-  const lay = (url) => {
+  /** 照 `shown` 和预览真去铺 */
+  const lay = () => {
+    const url = shown.url;
     root.classList.toggle('has-persona-backdrop', !!url);
     if (url) {
       root.style.setProperty('--persona-backdrop', `url("${url}")`);
-      root.style.setProperty('--persona-veil', `${Math.round(ctx.config.veil * 100)}%`);
+      root.style.setProperty('--persona-veil', `${veilOf(preview?.opacity ?? shown.opacity, ctx.config.veil)}%`);
+      root.style.setProperty('--persona-focus', positionOf(preview?.focus ?? shown.focus));
     } else {
-      root.style.removeProperty('--persona-backdrop');
-      root.style.removeProperty('--persona-veil');
+      for (const name of ['--persona-backdrop', '--persona-veil', '--persona-focus']) root.style.removeProperty(name);
     }
   };
+  // 编辑卡片拖滑杆、拖焦点：正在看的就是那个人格的当场照它铺；`null` 是不预览了
+  ctx.on('look.preview', (/** @type {{persona: string, opacity?: number, focus?: any}|null} */ p) => {
+    preview = p && p.persona === shown.persona ? p : null;
+    lay();
+  });
 
-  ctx.on('look.changed', async (/** @type {{name: string, avatar?: string|null, seed?: string|null, background?: string|null}|null} */ look) => {
-    backdrop(look?.background ?? null);
+  ctx.on('look.changed', async (/** @type {{persona?: string, name: string, avatar?: string|null, seed?: string|null, background?: string|null, opacity?: number|null, focus?: any}|null} */ look) => {
+    // 存好、人格重读了：照新的铺，预览收掉
+    preview = null;
+    backdrop({ persona: look?.persona ?? null, url: look?.background ?? null, opacity: look?.opacity ?? null, focus: look?.focus ?? null });
     // 自选的主题色照它，不用取
     if (look?.seed) {
       wanted = look.seed;
@@ -90,10 +104,11 @@ export function apply(ctx) {
     const seed = (await seeds.get(url)) ?? null;
     if (wanted === url) use(seed);
   });
-  // 盖的那一层多浓改了：当场重铺
-  ctx.watchConfig(() => backdrop(shown));
+  // 没设透明度的人格盖多浓（设置项 `veil`）改了：当场重铺
+  ctx.watchConfig(lay);
   ctx.effect(() => () => {
     undo();
-    lay(null);
+    shown = { persona: null, url: null, opacity: null, focus: null };
+    lay();
   });
 }

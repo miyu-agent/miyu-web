@@ -4,7 +4,8 @@
 //! - 头像：圆的图（没有的画名字的第一个字），点它换，悬停盖一层写「更换」；有头像的右上角一个小 × 移除。不是正方形的先裁（`crop.js`）。
 //! - 主题色：一排方块：「自动」（照头像取的第一名，就是不存；块上铺那个颜色、写 A）、头像取到的前四色（点一下存成这个人格的主色）、
 //!   「+」（浏览器的取色器；选的不在那四色里的在「+」前面多画一块）；现在用的那一块上画一个勾。
-//! - 背景图：16:9 的小图（没有的是一块底色、写「添加」），点它换，悬停写「更换」，有图的右上角一个小 ×；大的先缩小、存成 WebP（存不了的
+//! - 背景图：16:9 的小图（没有的是一块底色、写「添加」，点它选图）；有图的悬停盖一层，两个按钮「更换」「焦点」（`focus.js`），右上角一个
+//!   小 ×；下面一行「透明度」滑杆，拖的时候整页当场跟着变（`look.preview`），松手存（核心 P-7）。大的先缩小、存成 WebP（存不了的
 //!   JPEG，照片存 PNG 太大）。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
@@ -12,12 +13,15 @@ import { seedsOf, hexOf, inkOf } from '../../src/lib/md3/index.js';
 import { pixelsOf } from '../../src/lib/md3/pixels.js';
 import { shrink, store } from './avatars.js';
 import { cropAvatar } from './crop.js';
+import { chooseFocus } from './focus.js';
 
 /** 核心收头像、背景图的上限（P-5 头像 1 MiB；P-6 背景图 5 MiB，`blob.put` 收图就封在 5 MiB）：缩小以后还超的再压（`avatars.js` 的 `shrink`） */
 const AVATAR_BYTES = 1024 * 1024;
 const BACKGROUND_BYTES = 5 * 1024 * 1024;
 /** 列出头像取到的几种颜色 */
 const CANDIDATES = 4;
+/** 人格没设透明度时画多少（蓝图第 6 条：盖 80% 的底色） */
+const OPACITY_DEFAULT = 20;
 /** 头像的地址 → 取到的几种颜色（`#rrggbb`）；同一张取过的不再算 @type {Map<string, Promise<string[]>>} */
 const picked = new Map();
 
@@ -43,6 +47,9 @@ export class Appearance {
     this.avatar = /** @type {string|null} */ (null);
     this.background = /** @type {string|null} */ (null);
     this.seed = /** @type {string|null} */ (null);
+    /** 背景图的透明度（0–100）、焦点（`[x, y]`）（核心 P-7）；没设的 `null` */
+    this.opacity = /** @type {number|null} */ (null);
+    this.focus = /** @type {[number, number]|null} */ (null);
     /** 头像取到的几种颜色：哪张图的、取到的（还没取完是空的） */
     this.candidates = { url: /** @type {string|null} */ (null), colors: /** @type {string[]} */ ([]) };
     // 三行各一格（换了、读到了只重画它，不动写了一半的字）
@@ -56,6 +63,8 @@ export class Appearance {
     this.avatar = got?.avatar ?? null;
     this.background = got?.background ?? null;
     this.seed = got?.seed ?? null;
+    this.opacity = got?.background_opacity ?? null;
+    this.focus = got?.background_focus ?? null;
   }
 
   /** 三行都画一遍。 */
@@ -103,22 +112,51 @@ export class Appearance {
     const pick = this.filePicker((file) => this.changeImage('background', file));
     this.redraw(this.backgroundBox,
       this.picture('background', url ? h('img', { src: url, alt: '' }) : h('span.setup-pic-empty', icon('image'), t('edit.add_short')), !!url,
-        () => pick.click(), this.background ? () => this.setPart('background', { unset: true }) : null),
+        () => pick.click(), this.background ? () => this.setPart('background', { unset: true }) : null,
+        url ? [{ label: t('edit.focus'), act: () => this.pickFocus(url) }] : []),
+      url ? this.opacityRow() : null,
       pick);
   }
 
+  /** 「透明度」一行：拖的时候整页当场跟着变，松手存。 */
+  opacityRow() {
+    const value = this.opacity ?? OPACITY_DEFAULT;
+    const shown = h('span.setup-opacity-value', `${value}%`);
+    const slider = /** @type {HTMLInputElement} */ (h('input.setup-range', { type: 'range', min: '0', max: '100', step: '1', value: String(value), 'aria-label': this.t('edit.opacity') }));
+    slider.addEventListener('input', () => {
+      shown.textContent = `${slider.value}%`;
+      this.ctx.emit('look.preview', { persona: this.id, opacity: Number(slider.value) });
+    });
+    slider.addEventListener('change', () => this.setPart('background_opacity', Number(slider.value)));
+    return h('div.setup-opacity', h('span.setup-opacity-name', this.t('edit.opacity')), slider, shown);
+  }
+
+  /** 选焦点：开窗口，「确定」存、「居中」删掉。 @param {string} url */
+  async pickFocus(url) {
+    const got = await chooseFocus({
+      text: this.t, kit: this.kit, from: this.backgroundBox,
+      preview: (focus) => this.ctx.emit('look.preview', focus ? { persona: this.id, focus } : null),
+    }, url, this.focus);
+    if (got === 'center') await this.setPart('background_focus', { unset: true });
+    else if (got) await this.setPart('background_focus', got);
+  }
+
   /**
-   * 一张图（头像、背景图）：图本身是按钮，点了换；有图的悬停盖一层写「更换」；`remove` 有的右上角一个小 ×。
+   * 一张图（头像、背景图）：图本身是按钮，点了换；有图的悬停盖一层写「更换」；`remove` 有的右上角一个小 ×。`actions` 有的（背景图），悬停
+   * 那一层里是一排按钮：「更换」和它们。
    * @param {'avatar'|'background'} part @param {Node} inner @param {boolean} shown 有图 @param {() => void} change
-   * @param {(() => void)|null} remove
+   * @param {(() => void)|null} remove @param {Array<{label: string, act: () => void}>} [actions]
    */
-  picture(part, inner, shown, change, remove) {
+  picture(part, inner, shown, change, remove, actions = []) {
     const t = this.t;
     const changeTitle = t(`edit.${part}_change`);
     const removeTitle = t(`edit.${part}_remove`);
-    return h(`div.setup-pic.is-${part}`,
-      h('button.setup-pic-main', { type: 'button', title: changeTitle, 'aria-label': changeTitle, onclick: change },
-        inner, shown || part === 'avatar' ? h('span.setup-pic-hover', { 'aria-hidden': 'true' }, t('edit.change_short')) : null),
+    const main = shown && actions.length
+      ? h('div.setup-pic-main.has-actions', inner,
+        h('span.setup-pic-hover', [{ label: t('edit.change_short'), act: change }, ...actions].map((a) => h('button.setup-pic-action', { type: 'button', onclick: a.act }, a.label))))
+      : h('button.setup-pic-main', { type: 'button', title: changeTitle, 'aria-label': changeTitle, onclick: change },
+        inner, shown || part === 'avatar' ? h('span.setup-pic-hover', { 'aria-hidden': 'true' }, t('edit.change_short')) : null);
+    return h(`div.setup-pic.is-${part}`, main,
       remove ? h('button.setup-pic-remove', { type: 'button', title: removeTitle, 'aria-label': removeTitle, onclick: remove }, icon('x')) : null);
   }
 
@@ -194,9 +232,9 @@ export class Appearance {
   }
 
   /**
-   * `persona.set` 只带这一样（头像、背景图 `{blob}` 换、`{unset: true}` 删；主题色 `#rrggbb` 设、`{unset: true}` 回到跟随头像），存了重读、
+   * `persona.set` 只带这一样（头像、背景图 `{blob}` 换、`{unset: true}` 删；主题色 `#rrggbb` 设、`{unset: true}` 回到自动；透明度、焦点（P-7）写数、`{unset: true}` 删），存了重读、
    * 重画这三行，叫列表、左上角、对话区跟着换。
-   * @param {'avatar'|'background'|'seed'} part @param {any} value
+   * @param {'avatar'|'background'|'seed'|'background_opacity'|'background_focus'} part @param {any} value
    */
   async setPart(part, value) {
     try {
@@ -206,6 +244,8 @@ export class Appearance {
       this.paint();
       this.hooks.saved();
     } catch (err) {
+      // 存不了的：整页回到原来的样子（预览收掉）
+      this.ctx.emit('look.preview', null);
       this.hooks.say(/** @type {any} */ (err)?.data?.message ?? /** @type {any} */ (err)?.message ?? String(err));
     }
   }

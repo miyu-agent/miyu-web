@@ -78,6 +78,7 @@
 /* 人格详情最上面三行（蓝图 web.md「跟着人格的外观」第 4 条，2026-10-11 项目主人定：图本身就是按钮）：头像、背景图点了换，
    悬停盖一层暗的写「更换」，有图的右上角一个小 × 移除；主题色一排方块（自动 A、头像取到的几色、+），现在用的画一个勾。都不描边 */
 .setup-avatar-box, .setup-seed-box, .setup-bg-box { position: relative; display: flex; align-items: center; gap: 10px; min-height: 32px; }
+.setup-bg-box { flex-direction: column; align-items: flex-start; }
 .setup-seed-box { flex-wrap: wrap; gap: 8px; }
 .setup-pic { position: relative; flex: none; }
 .setup-pic-main {
@@ -116,19 +117,48 @@
 .setup-swatch.is-pick { background: var(--surface-2); color: var(--text-soft); }
 .setup-swatch.is-pick:hover { transform: none; background: var(--surface-3); color: var(--text); }
 .setup-color-input { position: absolute; left: 0; bottom: 0; width: 0; height: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; }
+/* 背景图有图时悬停那一层：一排按钮「更换」「焦点」（白字、半透明的白底，不描边） */
+.setup-pic-main.has-actions { cursor: default; }
+.setup-pic-main.has-actions .setup-pic-hover { display: flex; gap: 8px; align-items: center; justify-content: center; }
+.setup-pic-main.has-actions:hover .setup-pic-hover, .setup-pic-main.has-actions:focus-within .setup-pic-hover { opacity: 1; }
+.setup-pic-action {
+  height: 28px; padding: 0 12px; border: 0; border-radius: 999px; background: rgba(255, 255, 255, 0.2); color: #fff;
+  font: 500 12.5px var(--sans); cursor: pointer; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.setup-pic-action:hover { background: rgba(255, 255, 255, 0.32); }
+.setup-pic-action:focus-visible { outline: none; background: rgba(255, 255, 255, 0.32); }
+/* 透明度那一行：名字、滑杆、百分数 */
+.setup-opacity { display: flex; align-items: center; gap: 10px; width: 176px; color: var(--text-soft); font-size: 12.5px; }
+.setup-opacity-name { flex: none; }
+.setup-opacity-value { flex: none; min-width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
+.setup-opacity .setup-range { flex: 1; min-width: 0; width: auto; }
+/* 滑杆（透明度、裁头像的放大）：细的轨道、实心的圆点，不描边 */
+.setup-range { width: 280px; height: 18px; margin: 0; background: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
+.setup-range:focus-visible { outline: none; }
+.setup-range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--surface-3); }
+.setup-range::-moz-range-track { height: 4px; border: 0; border-radius: 2px; background: var(--surface-3); }
+.setup-range::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent); }
+.setup-range::-webkit-slider-thumb { width: 14px; height: 14px; margin-top: -5px; border: 0; border-radius: 50%; background: var(--accent); box-shadow: var(--bubble-shadow); -webkit-appearance: none; appearance: none; }
+.setup-range::-moz-range-thumb { width: 14px; height: 14px; border: 0; border-radius: 50%; background: var(--accent); box-shadow: var(--bubble-shadow); }
+/* 选焦点的窗口（focus.js）：整张图、一个圆点；下面窄的、宽的两个小框 */
+.setup-focus { display: grid; justify-items: center; gap: 14px; }
+.setup-focus-pic { position: relative; border-radius: 10px; background: center / 100% 100% no-repeat; cursor: crosshair; touch-action: none; }
+.setup-focus-dot {
+  position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: #fff;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3); pointer-events: none;
+}
+.setup-focus-samples { display: flex; gap: 16px; align-items: flex-end; }
+.setup-focus-sample { display: grid; justify-items: center; gap: 6px; margin: 0; color: var(--text-faint); font-size: 12px; }
+.setup-focus-frame { display: block; border-radius: 8px; background: center / cover no-repeat var(--surface-2); }
+.setup-focus-frame.is-narrow { width: 72px; height: 112px; }
+.setup-focus-frame.is-wide { width: 200px; height: 84px; }
+.setup-focus .setup-foot { width: 100%; }
 /* 裁头像的窗口（crop.js）：图上一个圆的框，框外压暗；拖图挪、滚轮或滑杆放大 */
 .setup-crop { display: grid; justify-items: center; gap: 14px; }
 .setup-crop-stage { position: relative; width: 280px; height: 280px; overflow: hidden; border-radius: 12px; background: var(--surface-2); cursor: grab; touch-action: none; }
 .setup-crop-stage:active { cursor: grabbing; }
 .setup-crop-canvas { display: block; width: 280px; height: 280px; }
 .setup-crop-ring { position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 200px rgba(0, 0, 0, 0.45); pointer-events: none; }
-.setup-crop-zoom { width: 280px; height: 18px; margin: 0; background: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
-.setup-crop-zoom:focus-visible { outline: none; }
-.setup-crop-zoom::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--surface-3); }
-.setup-crop-zoom::-moz-range-track { height: 4px; border: 0; border-radius: 2px; background: var(--surface-3); }
-.setup-crop-zoom::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent); }
-.setup-crop-zoom::-webkit-slider-thumb { width: 16px; height: 16px; margin-top: -6px; border: 0; border-radius: 50%; background: var(--accent); box-shadow: var(--bubble-shadow); -webkit-appearance: none; appearance: none; }
-.setup-crop-zoom::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: var(--accent); box-shadow: var(--bubble-shadow); }
 .setup-crop .setup-foot { width: 100%; }
 .setup-float-scrim.setup-crop-scrim.is-page { z-index: 91; }
 /* 预设详情的图标那一格：现在的图标加一个下拉的箭头；点开下面一块（搜索、不用图标、一排图标），都不描边 */

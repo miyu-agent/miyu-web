@@ -78,7 +78,7 @@ export async function cropAvatar(env, file) {
       slider.value = String(zoom);
       draw();
     };
-    const slider = /** @type {HTMLInputElement} */ (h('input.setup-crop-zoom', { type: 'range', min: '1', max: String(MAX_ZOOM), step: '0.01', value: '1', 'aria-label': t('edit.crop_zoom') }));
+    const slider = /** @type {HTMLInputElement} */ (h('input.setup-range.setup-crop-zoom', { type: 'range', min: '1', max: String(MAX_ZOOM), step: '0.01', value: '1', 'aria-label': t('edit.crop_zoom') }));
     slider.addEventListener('input', () => zoomTo(Number(slider.value)));
     const stage = h('div.setup-crop-stage', canvas, h('div.setup-crop-ring', { 'aria-hidden': 'true' }));
     /** @type {{id: number, x: number, y: number}|null} */
