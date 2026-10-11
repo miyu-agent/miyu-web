@@ -520,12 +520,7 @@ export class App {
 
   async send(text, extra = {}) {
     try {
-      if (!this.current) {
-        // 新会话第一句还在开会话的时候又说了一句：等同一个会话开好，接着发进去，不另开一个（2026-10-11 实测：核心开会话慢的那几秒里
-        // 连按回车，开出了好几个会话）
-        if (!this.creating) this.creating = this.createSession().finally(() => { this.creating = null; });
-        await this.creating;
-      }
+      await this.ensureSession();
       // 工作区是会话的属性（核心 9-7）：说话不再带 `cwd`
       await this.store.send(/** @type {string} */ (this.current), text, extra);
       return true;
@@ -534,6 +529,16 @@ export class App {
       this.composer.say(why === err.message ? t('refused', { message: why }) : why);
       return false;
     }
+  }
+
+  /**
+   * 还没开的新会话先开出来（说第一句话、空会话里打 `/goal <目标>` 时）。还在开的时候又来一次：等同一个会话开好，不另开一个
+   * （2026-10-11 实测：核心开会话慢的那几秒里连按回车，开出了好几个会话）。
+   */
+  async ensureSession() {
+    if (this.current) return;
+    if (!this.creating) this.creating = this.createSession().finally(() => { this.creating = null; });
+    await this.creating;
   }
 
   /** 开会话（新会话说第一句话时）：带上选的目录、模型、人格、预设，开好了看它、把还没开时点过的权限级别这类发过去。 */

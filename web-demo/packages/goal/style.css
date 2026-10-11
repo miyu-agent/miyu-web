@@ -13,3 +13,35 @@
 /* 停着、等回复：暗的；受阻：警示色 */
 .goal-pill[data-state="paused"], .goal-pill[data-state="waiting"] { color: var(--text-soft); }
 .goal-pill[data-state="blocked"] { color: var(--t-warn); }
+
+/* 改目标的浮层：和后台任务的浮层同一个位置、同一个样子（输入框上面，半透明加毛玻璃，浮起来的阴影；进场升上来，退场沉下去） */
+.goal-panel {
+  position: absolute; z-index: 3; right: -1px; bottom: calc(100% + 1px + var(--list-gap, 6px)); left: -1px;
+  display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-1) 90%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  box-shadow: var(--float-shadow); animation: rise-in var(--motion-in) var(--ease-out) both;
+}
+.goal-panel.is-leaving { animation: sink-out var(--motion-out) var(--ease-in) both; }
+.goal-panel-head { display: flex; align-items: baseline; gap: 8px; padding: 0 4px; line-height: 18px; }
+.goal-panel-head strong { color: var(--text); font-size: 13px; font-weight: 600; }
+.goal-panel-state { min-width: 0; overflow: hidden; color: var(--text-faint); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+/* 原文的框：不描边，底色深一档，聚焦加一圈影 */
+.goal-panel-field {
+  width: 100%; min-height: 64px; max-height: 40vh; padding: 8px 10px; border: 0; border-radius: 9px; outline: none; resize: none;
+  background: var(--surface-2); color: var(--text); font: 14px/1.55 var(--sans);
+}
+.goal-panel-field:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.goal-panel-error { margin: 0; padding: 0 4px; color: var(--t-warn); font-size: 12.5px; }
+.goal-panel-bar { display: flex; align-items: center; gap: 6px; }
+.goal-panel-gap { flex: 1; }
+.goal-panel-btn {
+  padding: 4px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--text-soft); font: 13px var(--sans); cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.goal-panel-btn:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.goal-panel-btn.is-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--ribbon) 14%, transparent); color: var(--ribbon); }
+.goal-panel-btn.is-primary { background: var(--accent); color: var(--on-primary); }
+.goal-panel-btn.is-primary:hover:not(:disabled) { background: var(--accent); color: var(--on-primary); filter: brightness(1.06); }
+/* 点不了的（原文没变、在等核心回）：同设置页的主按钮 */
+.goal-panel-btn:disabled { cursor: default; color: var(--text-faint); }
+.goal-panel-btn.is-primary:disabled { background: var(--surface-2); }

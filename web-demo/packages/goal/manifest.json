@@ -13,7 +13,7 @@
   },
   "kind": "optional",
   "description": {
-    "zh": "正在看的会话有长期目标（/goal）时，输入框右上方（和左上方的运行状态行同一行）写目标和第几轮，停着、等回复、受阻换成状态和颜色；点它等于打 /goal。"
+    "zh": "正在看的会话有长期目标（/goal）时，输入框右上方（和左上方的运行状态行同一行）写目标和第几轮，停着、等回复、受阻换成状态和颜色；点它开一个浮层改目标原文，能暂停、继续、清除。"
   },
   "inject": [
     "slots",
@@ -35,6 +35,14 @@
         "waiting": "等待回复",
         "paused": "已暂停",
         "blocked": "受阻"
+      },
+      "panel": {
+        "title": "目标",
+        "save": "保存",
+        "pause": "暂停",
+        "resume": "继续",
+        "clear": "清除",
+        "confirm_clear": "确认清除"
       }
     },
     "en": {
@@ -46,6 +54,14 @@
         "waiting": "Waiting for reply",
         "paused": "Paused",
         "blocked": "Blocked"
+      },
+      "panel": {
+        "title": "Goal",
+        "save": "Save",
+        "pause": "Pause",
+        "resume": "Resume",
+        "clear": "Clear",
+        "confirm_clear": "Confirm clear"
       }
     },
     "ja": {
@@ -57,6 +73,14 @@
         "waiting": "返信待ち",
         "paused": "一時停止中",
         "blocked": "行き詰まり"
+      },
+      "panel": {
+        "title": "目標",
+        "save": "保存",
+        "pause": "一時停止",
+        "resume": "再開",
+        "clear": "消去",
+        "confirm_clear": "消去を確定"
       }
     }
   }

@@ -1,5 +1,9 @@
 {
   "note": "斜杠命令（蓝图 web.md「斜杠命令」）：照 TUI 演示的 commands.json，去掉网页用不上的 /icons、/exit 和别的演示命令（/demo-todo 2026-10-07 也删了）。run 是做什么（src/ui/commands.js 的 RUNS），都是真的（假命令 2026-10-07 删了，/help 做成真的）。aliases 是别名，args 是名字后面能接参数。summary 每种语言各写一句（蓝图 web.md「界面语言」，照 TUI 那一份）。",
+  "opens_session": [
+    "goal"
+  ],
+  "opens_session_note": "空会话里打这几个核心命令、后面带着字的：先照说第一句话一样开会话，再交核心（2026-10-12 项目主人定只有 /goal <目标>：设目标就是要她开始干活）。别的核心命令空会话里照旧提示需要先开始会话。",
   "commands": [
     {
       "name": "undo",

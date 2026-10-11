@@ -148,6 +148,16 @@ test('空会话里打了核心认的命令（要造好的会话才能用）：�
   assert.equal(read(list, '/compact 重点', later).kind, 'command', '网页自己的照旧执行');
 });
 
+test('空会话里打 /goal <目标>（opens_session）：交外面先开会话；不带字的、别的核心命令照旧要等会话（2026-10-12）', () => {
+  const later = new Set(['goal', 'remember']);
+  const opens = new Set(res.commands.opens_session);
+  assert.deepEqual([...opens], ['goal']);
+  assert.deepEqual(read(list, '/goal 把测试修绿', later, opens), { kind: 'unlisted', name: 'goal', words: '把测试修绿' });
+  assert.equal(read(list, '/Goal 把测试修绿', later, opens).kind, 'unlisted', '不分大小写');
+  assert.equal(read(list, '/goal', later, opens).kind, 'later', '不带字的看不了，照旧');
+  assert.equal(read(list, '/remember 喜欢猫', later, opens).kind, 'later');
+});
+
 test('列表里没有的命令被核心拒了：只有认不出、带着字的照话发；数字码一样的别的拒绝不发（2026-10-12）', () => {
   assert.equal(talkAfterRefusal('unknown_command', '目录是干什么的'), true);
   assert.equal(talkAfterRefusal('unknown_command', null), false, '不带字的写拒绝那一句');

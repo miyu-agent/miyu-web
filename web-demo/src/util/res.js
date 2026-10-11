@@ -7,7 +7,7 @@ import { addIcons } from '../lib/dom.js';
 
 /**
  * @typedef {{text: any, layout: any, persona: any, lucide: any, timeline: any, markdown: any, artifacts: any, cards: any,
- *   commands: {commands: import('../model/commands.js').Spec[]}, languages: import('../kernel/language.js').Table,
+ *   commands: {commands: import('../model/commands.js').Spec[], opens_session?: string[]}, languages: import('../kernel/language.js').Table,
  *   language: import('../kernel/language.js').Language, human: {tools: Record<string, any>, said: Record<string, string>}}} Res
  *   `human` 是核心给的给人看的字（`human.get`，`core/human.js`）；`language` 是定下来的界面语言，`text`、`commands` 的说明照它装
  */
@@ -90,7 +90,8 @@ export async function useTexts(base, lang) {
 export function settle(fallback, own, lang, list) {
   res.text = own ? merge(fallback, own) : fallback;
   res.language = lang;
-  res.commands = { commands: list.map((c) => ({ ...c, summary: local(c.summary, lang) })) };
+  // 清单外的几格（`opens_session`）照原样留着，只换说明
+  res.commands = { ...res.commands, commands: list.map((c) => ({ ...c, summary: local(c.summary, lang) })) };
 }
 
 /** 把 `{名字}` 换成字段的值；没给的留着原样，一眼看得出漏了哪个。 */

@@ -38,6 +38,9 @@ import { show, hide, span } from '../lib/motion.js';
 import { isNewline, insertNewline } from '../lib/newline.js';
 import { stash } from '../model/stash.js';
 
+/** 空会话里打了、带着字就先开会话的核心命令（`commands.json` 的 `opens_session`） */
+const opensSession = () => new Set((res.commands.opens_session ?? []).map((/** @type {string} */ n) => n.toLowerCase()));
+
 /**
  * @typedef {{id: string, has: () => boolean, busy: () => boolean, take: () => Record<string, any>|null, putBack: (given: any) => void,
  *   keep?: (given: any) => any, recall?: (saved: {session: string, kept: any}|null) => void, settle?: () => void,
@@ -271,7 +274,7 @@ export class Composer {
     if (this.locked) return this.say(this.locked);
     const text = this.input.value;
     // 空会话才看「要等会话的」那几个名字：刚开出会话、核心的命令表还没照它重问回来时，它们照列表里没有的交核心
-    const line = read(this.specs(), text, this.on.session() ? undefined : this.on.laterCommands?.());
+    const line = read(this.specs(), text, this.on.session() ? undefined : this.on.laterCommands?.(), opensSession());
     if (line.kind === 'command') {
       this.remember(text);
       this.run(line.spec, line.words);

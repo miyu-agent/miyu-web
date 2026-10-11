@@ -69,13 +69,15 @@ export function find(list, name) {
 }
 
 /**
- * 回车时这一行是什么：`later` 是核心认、要造好的会话才能用的命令名和别名（小写；空会话里不列，打了也不当话发，提示开了会话才能用）。
+ * 回车时这一行是什么：`later` 是核心认、要造好的会话才能用的命令名和别名（小写；空会话里不列，打了也不当话发，提示开了会话才能用）；
+ * 其中 `opens` 里的（`commands.json` 的 `opens_session`：`/goal`）后面带着字的交外面先开会话（`unlisted`）。
  * @param {Spec[]} list
  * @param {string} value 框里的字
  * @param {Set<string>} [later]
+ * @param {Set<string>} [opens]
  * @returns {Line}
  */
-export function read(list, value, later = new Set()) {
+export function read(list, value, later = new Set(), opens = new Set()) {
   const name = typed(value);
   if (name == null) return { kind: 'talk' };
   const words = value.slice(1 + name.length).trim();
@@ -83,7 +85,7 @@ export function read(list, value, later = new Set()) {
   if (spec && !words) return { kind: 'command', spec, words: null };
   if (spec?.args) return { kind: 'command', spec, words };
   // 核心认、要造好的会话才能用的（空会话里不列）：不当话发出去（2026-10-10：空会话里打 `/remember 内容` 被当成一句话发给了她）
-  if (!spec && name && later.has(name.toLowerCase())) return { kind: 'later' };
+  if (!spec && name && later.has(name.toLowerCase())) return words && opens.has(name.toLowerCase()) ? { kind: 'unlisted', name, words } : { kind: 'later' };
   // 列表里没有的名字：交给外面（开着的会话里问核心，2026-10-12：没开记忆的会话里打 `/remember 内容` 被当成一句话发给了她）
   if (!spec && name) return { kind: 'unlisted', name, words: words || null };
   if (!spec && !words) return { kind: 'unknown' };
