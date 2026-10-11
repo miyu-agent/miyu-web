@@ -43,15 +43,15 @@
 /* 不挂在她头下的一行：回报、压缩、清空（蓝图 web.md「后台命令、子代理的回报」「压缩、清空」）。和收尾那一行一样对齐、
    一样大：缩进到她的内容那一列，等宽 13px，字暗、记号有颜色；能点开的悬停亮一档，点开下面铺底色 */
 /* 提示行（回报、压缩、清空）：和时间线收起那一行一个样子（正文字体 600、11.5px、text 的六成二），记号照旧有颜色（蓝图 web.md「后台命令、子代理的回报」） */
-.note { margin-bottom: 19px; padding-left: 40px; color: color-mix(in srgb, var(--text) 62%, var(--surface)); font: 600 11.5px/1.5 var(--sans); }
-/* 上下各空一行（正文的一行高，同回答和结尾那一行之间；2026-10-10 项目主人：原来空得好大）：上面那一块的下边距 30 收掉 7，下面接收起那一行时
-   它自己还有 7 的留白 */
-.assistant-message + .note, .assistant-message + .compacting { margin-top: -7px; }
+.note { margin-bottom: 12px; padding-left: 40px; color: color-mix(in srgb, var(--text) 62%, var(--surface)); font: 600 11.5px/1.5 var(--sans); }
+/* 上下各空一行，一行照提示行自己的字高（11.5px × 1.5），不照正文（2026-10-12 项目主人：原来照正文的一行，上 25、下 28，看着比一行宽；
+   10-10 那次是从上 33、下 40 收到正文的一行）：上面那一块的下边距 30 收掉 12，下面接收起那一行时它自己还有 7 的留白 */
+.assistant-message + .note, .assistant-message + .compacting { margin-top: -12px; }
 /* 压缩的进度（蓝图 web.md「压缩的进度」，方案 A）：和回报那一行一样缩进；流光照运行状态行，下面一根细条，过了一会儿呼吸 */
 .compacting {
   --cp-base: color-mix(in srgb, var(--accent) 85%, black);
   --cp-peak: color-mix(in srgb, white 55%, var(--accent));
-  margin-bottom: 19px; padding-left: 40px; animation: fade-in var(--motion-in) var(--ease-out);
+  margin-bottom: 12px; padding-left: 40px; animation: fade-in var(--motion-in) var(--ease-out);
 }
 .compacting.is-breathing .compacting-line, .compacting.is-breathing .compacting-bar { animation: compacting-breathe 2s ease-in-out infinite; }
 /* 自动压缩停下来等的那一行：同结果那一行（.note 的字） */
