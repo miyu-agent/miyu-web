@@ -344,7 +344,10 @@
         "owner_desc": "私聊时视为终端管理员本人",
         "owner_hint": "号码",
         "owner_bad": "号码不能包含空格",
-        "gone": "软件包不存在"
+        "gone": "软件包不存在",
+        "mcp": "MCP 服务",
+        "mcp_restart": "重启",
+        "mcp_stopped": "服务已停止"
       },
       "onboard": {
         "title_list": "选择模型供应商",
@@ -604,7 +607,10 @@
         "owner_desc": "Treated as the terminal admin in private chats",
         "owner_hint": "Number",
         "owner_bad": "Number can't contain spaces",
-        "gone": "Package not found"
+        "gone": "Package not found",
+        "mcp": "MCP servers",
+        "mcp_restart": "Restart",
+        "mcp_stopped": "Server stopped"
       },
       "onboard": {
         "title_list": "Select a model provider",
@@ -864,7 +870,10 @@
         "owner_desc": "個人チャットでは端末管理者本人として扱います",
         "owner_hint": "番号",
         "owner_bad": "番号に空白は使えません",
-        "gone": "パッケージがありません"
+        "gone": "パッケージがありません",
+        "mcp": "MCP サーバー",
+        "mcp_restart": "再起動",
+        "mcp_stopped": "サーバーが停止"
       },
       "onboard": {
         "title_list": "モデルプロバイダーを選択",

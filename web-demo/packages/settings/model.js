@@ -337,3 +337,17 @@ const EDITABLE = new Set(['boolean', 'choice', 'number', 'duration', 'color', 't
 
 /** 一个包能在设置页列出来的设置项（照清单的先后）。 @param {Record<string, {type: string}>} settings */
 export const editableKeys = (settings) => Object.keys(settings ?? {}).filter((k) => EDITABLE.has(settings[k].type));
+
+/**
+ * 软件包列表收到一条 `package.changed`（订阅 `packages`，核心 F-8 三补）：整项换；`entry` 是空的从列表拿掉；没有的照编号排进去。
+ * @param {any[]} list @param {string} id @param {any|null} entry
+ */
+export function applyPackageChange(list, id, entry) {
+  const rest = list.filter((p) => p.package !== id);
+  if (!entry) return rest;
+  if (rest.length === list.length) return [...rest, entry].sort((a, b) => a.package.localeCompare(b.package));
+  return list.map((p) => (p.package === id ? entry : p));
+}
+
+/** 包开着、它带的 MCP 服务有停下的（核心 X-4：`mcp` 每一格的 `state`）。 @param {any} p */
+export const mcpStopped = (p) => p.enabled !== false && (p.mcp ?? []).some((s) => s.state === 'stopped');

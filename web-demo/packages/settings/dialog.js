@@ -11,6 +11,7 @@ import { drawPackages } from './packages.js';
 import { drawModels } from './models.js';
 import { sectionKit } from './kit.js';
 import { Extensions } from './extensions.js';
+import { PackageFeed } from './packages-feed.js';
 import { drawCorePackages, followExtension } from './core-packages.js';
 import { drawBackstage } from './backstage.js';
 import { Subpage, swap } from './subpage.js';
@@ -36,6 +37,8 @@ export class SettingsDialog {
     this.onPush = this.onPush.bind(this);
     /** 核心拉起的扩展（「软件包」页）：开着弹窗时订阅它们的状态 */
     this.extensions = new Extensions(this);
+    /** 软件包列表的推送（服务起了、停了当场换） */
+    this.feed = new PackageFeed(this);
   }
 
   /** 打开：画框，读配置，到 `page` 那一页（没给的回上次看的）。 */
@@ -81,6 +84,7 @@ export class SettingsDialog {
     document.removeEventListener('keydown', this.onKey, true);
     this.ctx.core.pushes?.delete(this.onPush);
     this.extensions.stop();
+    this.feed.stop();
     this.sub.close();
     leave(this.root, () => this.root.remove());
   }
@@ -102,7 +106,7 @@ export class SettingsDialog {
     const cfg = this.ctx.config;
     this.pages = buildPages(schema, got, { merge: cfg.merge, moveGroups: cfg.move_groups, hide: cfg.hide_prefixes });
     this.modelsPromise = this.loadModels();
-    await this.extensions.start();
+    await Promise.all([this.extensions.start(), this.feed.start()]);
   }
 
   /** 读模型列表：读着的时候 `modelsLoading`，读完了在模型页的重画一次（正在改一项的不打断）。 */
@@ -301,6 +305,7 @@ export class SettingsDialog {
   /** 别处改了配置（别的终端、命令行、手改文件）：重读重画；扩展的状态变了只重画那一组。 */
   onPush(method, params) {
     if (!this.isOpen) return;
+    if (this.feed.push(method, params)) return;
     if (this.extensions.push(method, params)) {
       // 扩展开了、停了：软件包列表那一行的状态、开关跟着换
       if (method === 'extension.changed' && followExtension(this, params.entry) && this.current === 'packages' && !this.editing()) this.drawBody();

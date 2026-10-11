@@ -269,3 +269,14 @@ test('同名的几家：标出来，地址从哪来（主机名、$环境变量�
   const same = sameNamed([{ id: 'deepseek', name: { value: 'DeepSeek' } }, { id: 'dev', name: { value: 'DeepSeek' } }, { id: 'fake', name: { value: 'fake' } }]);
   assert.deepEqual([...same].sort(), ['deepseek', 'dev']);
 });
+
+test('软件包列表的推送：整项换、空的拿掉、新的照编号排进去；有服务停了（包开着）', async () => {
+  const { applyPackageChange, mcpStopped } = await import('../../packages/settings/model.js');
+  const list = [{ package: 'a', v: 1 }, { package: 'c', v: 1 }];
+  assert.deepEqual(applyPackageChange(list, 'a', { package: 'a', v: 2 }), [{ package: 'a', v: 2 }, { package: 'c', v: 1 }]);
+  assert.deepEqual(applyPackageChange(list, 'c', null), [{ package: 'a', v: 1 }]);
+  assert.deepEqual(applyPackageChange(list, 'b', { package: 'b', v: 1 }).map((p) => p.package), ['a', 'b', 'c']);
+  assert.equal(mcpStopped({ enabled: true, mcp: [{ name: 'x', state: 'running' }, { name: 'y', state: 'stopped' }] }), true);
+  assert.equal(mcpStopped({ enabled: false, mcp: [{ name: 'y', state: 'stopped' }] }), false, '关着的不算');
+  assert.equal(mcpStopped({ enabled: true }), false);
+});

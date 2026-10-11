@@ -5,10 +5,12 @@
 //! （有这一格才有开关，发 `package.enable`、`package.disable`，核心照种类办），必需的写「必需」。点一行滑进它的信息页（`subpage.js`，
 //! 左上角箭头返回；2026-10-10 项目主人）：版本和状态、启用、它加的功能、权限（扩展的「运行」「权限」两行，`extensions.js`）、
 //! 设置项（`config.schema` 里 `package` 是它的）、卸载（管理员自己装的才有）。程序不在的只有状态（界面包核心照旧给设置项，照画）。
+//! 带 MCP 服务的（扩展包、`bundle`，核心 X-4）多一组「MCP 服务」：一个服务一行写现在怎样，组头「重启」（`package.restart`）。
 
 import { h, icon, hasIcon } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField } from './rows.js';
-import { splitKey, itemFor } from './model.js';
+import { splitKey, itemFor, mcpStopped } from './model.js';
+import { stateText } from './extensions.js';
 import { openBackstage } from './backstage.js';
 
 /** 段：照核心核实过的标记分，先后照这里 */
@@ -55,7 +57,9 @@ function packageRow(dialog, p) {
   const t = (/** @type {string} */ key) => dialog.ctx.text(key);
   const id = p.package;
   const missing = p.status === 'program_missing';
-  const state = QUIET.has(p.status) ? null : h(`span.set-pkg-status${missing ? '.is-bad' : p.status === 'running' ? '.is-on' : ''}`, t(`pkg.status.${p.status}`));
+  // 包开着、带的 MCP 服务有停下的：写「服务已停止」（核心的状态是好好的也照这个写）
+  const state = mcpStopped(p) && !missing ? h('span.set-pkg-status.is-warn', t('pkg.mcp_stopped'))
+    : QUIET.has(p.status) ? null : h(`span.set-pkg-status${missing ? '.is-bad' : p.status === 'running' ? '.is-on' : ''}`, t(`pkg.status.${p.status}`));
   const control = p.required ? h('span.set-pkg-status', t('pkg.required'))
     : 'enabled' in p ? switchFor(dialog, p) : null;
   return h('div.set-row.set-pkg.is-expandable', {
@@ -126,12 +130,14 @@ function infoPage(dialog, id) {
   const isExt = dialog.extensions.entries.has(id);
   // 只有一个功能、名字和软件一样的（人格记忆这种）不列：和页头说的重了
   const own = (p.features ?? []).length === 1 && p.features[0].name === p.name;
-  const features = (own ? [] : p.features ?? []).map((f) => h('div.set-row', h('div.set-text', h('div.set-name', h('span', f.name ?? f.id)), f.summary ? h('p.set-desc', f.summary) : null)));
+  // MCP 服务的功能（`mcp-<服务名>`）在「MCP 服务」那一组里已经有了，不再列
+  const features = (own ? [] : p.features ?? []).filter((f) => !(p.mcp?.length && String(f.id).startsWith('mcp-'))).map((f) => h('div.set-row', h('div.set-text', h('div.set-name', h('span', f.name ?? f.id)), f.summary ? h('p.set-desc', f.summary) : null)));
   return [
     ...head,
     // 扩展：运行、权限、要批准的那一块，再接设置项；别的：启用一行（有开关的），设置项另起一组
     isExt ? h('section.set-group', dialog.extensions.body(id, settings))
       : 'enabled' in p ? h('section.set-group', h('div.set-rows', h('div.set-row', h('div.set-text', h('div.set-name', h('span', t('enabled')))), h('div.set-control', switchFor(dialog, p))))) : null,
+    mcpGroup(dialog, p),
     !isExt && settings.length ? groupBlock(t('pkg.settings'), settings) : null,
     // 平台接入的：终端管理员在这个平台上的号，接在它的设置项后面
     p.connection?.platform ? ownerAccounts(dialog, p.connection.platform) : null,
@@ -214,3 +220,38 @@ function ownerAccounts(dialog, platform) {
     h('div.set-control', h('div.set-chips', chips, add)))));
 }
 
+/**
+ * 「MCP 服务」一组（核心 X-4）：一个服务一行，名字，下面写现在怎样（同扩展的「运行」），停了有标准错误的能点开看；组头「重启」
+ * （`package.restart`：扩展连进程带服务，`bundle` 重启它的服务；包关着的不出）。状态照推送来的列表当场换（`packages-feed.js`）。
+ * @param {any} dialog @param {any} p
+ */
+function mcpGroup(dialog, p) {
+  const list = p.mcp ?? [];
+  if (!list.length) return null;
+  const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
+  const on = p.enabled !== false;
+  dialog.mcpShowing ??= new Set();
+  const showing = /** @type {Set<string>} */ (dialog.mcpShowing);
+  const restart = on ? h('button.set-btn.is-small', { type: 'button', onclick: async () => {
+    try {
+      const got = await dialog.ctx.core.request('package.restart', { package: p.package });
+      if (got?.package) dialog.packages = dialog.packages.map((x) => (x.package === got.package ? got : x));
+    } catch (err) {
+      dialog.toast(err?.message ?? String(err));
+    }
+    dialog.drawBody();
+  } }, t('pkg.mcp_restart')) : null;
+  const rows = list.map((s) => {
+    const key = `${p.package}/${s.name}`;
+    const stopped = on && s.state === 'stopped';
+    const stderr = Array.isArray(s.stderr) ? s.stderr.join('\n') : s.stderr ?? '';
+    const peek = stopped && stderr ? h('button.set-link', { type: 'button', onclick: () => { if (showing.has(key)) showing.delete(key); else showing.add(key); dialog.drawBody(); } },
+      t(showing.has(key) ? 'ext.hide_output' : 'ext.show_output')) : null;
+    return [
+      h('div.set-row', h('div.set-text', h('div.set-name', h('span', s.name)),
+        h(`p.set-desc${stopped ? '.is-error' : ''}`, stateText(t, { ...s, on: on && s.state !== 'off' })), peek)),
+      showing.has(key) && stderr ? h('pre.set-ext-output', stderr) : null,
+    ];
+  });
+  return h('section.set-group', h('div.set-group-head', h('h3.set-group-name', t('pkg.mcp')), restart), h('div.set-rows', rows));
+}

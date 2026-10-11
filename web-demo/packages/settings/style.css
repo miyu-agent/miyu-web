@@ -379,3 +379,7 @@
 /* 「软件包」页核心那一段：扩展的名字后面暗色写现在怎样 */
 .set-pkg-state { margin-left: 8px; color: var(--text-faint); font-size: 12px; font-style: normal; font-weight: 400; }
 
+/* 软件包信息页「MCP 服务」一组：组头右边「重启」；列表上「服务已停止」warn 色 */
+.set-group-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.set-group-head .set-group-name { margin-bottom: 0; }
+.set-pkg-status.is-warn { color: var(--t-warn, var(--gold)); }
