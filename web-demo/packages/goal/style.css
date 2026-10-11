@@ -1,0 +1,13 @@
+/* 长期目标（软件包 goal；蓝图 web.md「长期目标」）：框下面那一行中间一截，和后台任务的按钮一个样子；目标太长截掉末尾 */
+.goal-pill {
+  display: inline-flex; align-items: center; gap: 6px; min-width: 0; padding: 0; border: 0; background: none; color: var(--accent);
+  font: inherit; cursor: pointer;
+}
+.goal-pill[hidden] { display: none; }
+.goal-pill:hover .goal-text, .goal-pill:hover .goal-tail { text-decoration: underline; text-underline-offset: 3px; }
+.goal-text { max-width: 16em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.goal-pill .icon { width: 13px; height: 13px; flex: none; }
+.goal-sep, .goal-tail { flex: none; }
+/* 停着、等回复：暗的；受阻：警示色 */
+.goal-pill[data-state="paused"], .goal-pill[data-state="waiting"] { color: var(--text-soft); }
+.goal-pill[data-state="blocked"] { color: var(--t-warn); }

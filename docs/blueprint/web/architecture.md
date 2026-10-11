@@ -206,6 +206,7 @@ flowchart TB
 | `pulse` | 可选 | `slots` | — | — | `composer.above`（order 20） | `sweep_seconds`、`dim`、`lift`、`dot_mark`、`dot_count`、`tick_ms`、`words`（json） |
 | `attachments` | 可选 | `slots`、`core`、`host`、`composer` | — | — | `composer.bar`、`composer.head`、`composer.payload`；拖文件进来的那一层盖在整页上（挂在 `body` 上，和灯箱一样） | `max_files`、`max_mib`、`count_lines_max` |
 | `jobs` | 可选 | `slots`、`core`、`sessions`、`chat`、`composer` | — | — | `composer.footer`、`composer.float` | `tick_ms` |
+| `goal` | 可选 | `slots`、`core`、`sessions`、`chat`、`composer` | — | — | `composer.footer` | — |
 | `asking` | 可选 | `slots`、`chat`、`composer`、`core` | — | — | `composer.takeover`；了结以后留下的经 `chat.item`（键 `asking`）画在她那一轮里 | `max_vh`、`preview_min_width`、`esc_window_ms` |
 | `setup` | 可选 | `slots`、`chat`、`composer`、`core`、`commands`、`storage` | — | — | `composer.above`（order 90：空会话的「选择人格」「设置工作区」）、`stage.info`（开着的会话左上角）、`settings.section`（「人格」「预设」两页，点开原地编辑）、`settings.editor`（键 `persona.default`）；登记 `/workspace` | — |
 | `mascot` | 可选 | `slots`、`composer`、`chat`、`sessions` | — | — | —（整页最前面一层，挂在 `body` 上，和灯箱一样；台子照输入框、命令列表、后台任务浮层量） | 模型的数（形状、脸、灯光）、`pixel`、`cols`、`rows`、平常站在哪、重力、落地、被带着走、拖、待机、走动、跳、动作、手里的东西的像素图（模型照 TUI 的 `mascot.json`） |

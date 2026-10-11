@@ -282,7 +282,13 @@
     },
     "changed": "{to} に切り替えました：元のモデルでエラー",
     "model_replaced": "{from} がなくなったため {to} に戻しました",
-    "workspace": "ワークスペース：{path}"
+    "workspace": "ワークスペース：{path}",
+    "module": {
+      "round": "{name} · 自分で続ける",
+      "names": {
+        "goal": "長期目標"
+      }
+    }
   },
   "ago": {
     "now": "たった今",

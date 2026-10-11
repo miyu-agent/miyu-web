@@ -1,0 +1,63 @@
+{
+  "id": "goal",
+  "version": "0.1.0",
+  "name": {
+    "zh": "长期目标",
+    "en": "Goals",
+    "ja": "長期目標"
+  },
+  "summary": {
+    "zh": "在输入框下方显示长期目标的进度",
+    "en": "Show the long-running goal's progress below the input box",
+    "ja": "入力欄の下に長期目標の進み具合を表示"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "正在看的会话有长期目标（/goal）时，框下面那一行中间写目标和第几轮，停着、等回复、受阻换成状态和颜色；点它等于打 /goal。"
+  },
+  "inject": [
+    "slots",
+    "core",
+    "sessions",
+    "chat",
+    "composer"
+  ],
+  "styles": [
+    "style.css"
+  ],
+  "text": {
+    "zh": {
+      "rounds": "第 {round} 轮",
+      "rounds_limited": "第 {round}/{limit} 轮",
+      "blocked_why": "受阻：{reason}",
+      "states": {
+        "running": "进行中",
+        "waiting": "等待回复",
+        "paused": "已暂停",
+        "blocked": "受阻"
+      }
+    },
+    "en": {
+      "rounds": "Round {round}",
+      "rounds_limited": "Round {round}/{limit}",
+      "blocked_why": "Blocked: {reason}",
+      "states": {
+        "running": "Running",
+        "waiting": "Waiting for reply",
+        "paused": "Paused",
+        "blocked": "Blocked"
+      }
+    },
+    "ja": {
+      "rounds": "{round} ラウンド目",
+      "rounds_limited": "{round}/{limit} ラウンド目",
+      "blocked_why": "行き詰まり：{reason}",
+      "states": {
+        "running": "進行中",
+        "waiting": "返信待ち",
+        "paused": "一時停止中",
+        "blocked": "行き詰まり"
+      }
+    }
+  }
+}

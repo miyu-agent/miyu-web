@@ -41,6 +41,19 @@ export function speakerOf(by, jobs, parent = null) {
 }
 
 /**
+ * 核心里的模块替她开的一轮（`from` 是 `{kind: 'module', id}`，例如长期目标闲着时的续轮，`goal.md` 第 7 条）：不当你的话画，画一行
+ * 「◇ 长期目标 · 自己接着做」，点开看核心写给她的原文（英文、带标签，照原样，不当 Markdown）。认不得的模块写它的编号。
+ * @param {any} e 日志里的 `user` 条目
+ */
+export function moduleNote(e) {
+  const id = String(e.from?.id ?? '');
+  const names = res.text.notes.module.names;
+  const name = typeof names[id] === 'string' ? names[id] : id;
+  const mark = res.layout.note_marks.module ?? '';
+  return { type: 'note', key: e.id, seq: null, turn: null, tone: 'module', mark, text: t('notes.module.round', { name }), detail: { kind: 'plain', text: e.text ?? '' } };
+}
+
+/**
  * 别的会话空下来了、等不到了（`peer.idle`，跨会话施工 C-6）：不属于哪一轮。`idle` 写「会话 短编号 回复：status」（没有 status 的写「回复了」），绿点；
  * `expired`、`gone` 暗点（只记下、不叫醒她）；点开看完整的编号和 `status`。
  * @param {any} e

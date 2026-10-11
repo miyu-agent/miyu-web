@@ -16,6 +16,7 @@
     { "id": "pulse" },
     { "id": "attachments" },
     { "id": "jobs" },
+    { "id": "goal" },
     { "id": "settings" },
     { "id": "mascot" }
   ],

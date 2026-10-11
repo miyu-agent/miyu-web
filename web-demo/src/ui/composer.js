@@ -270,7 +270,8 @@ export class Composer {
   async submit() {
     if (this.locked) return this.say(this.locked);
     const text = this.input.value;
-    const line = read(this.specs(), text, this.on.laterCommands?.());
+    // 空会话才看「要等会话的」那几个名字：刚开出会话、核心的命令表还没照它重问回来时，它们照列表里没有的交核心
+    const line = read(this.specs(), text, this.on.session() ? undefined : this.on.laterCommands?.());
     if (line.kind === 'command') {
       this.remember(text);
       this.run(line.spec, line.words);

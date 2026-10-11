@@ -282,7 +282,13 @@
     },
     "changed": "Switched to {to} (previous model failed)",
     "model_replaced": "{from} unavailable, switched to {to}",
-    "workspace": "Workspace: {path}"
+    "workspace": "Workspace: {path}",
+    "module": {
+      "round": "{name} · continuing automatically",
+      "names": {
+        "goal": "Goal"
+      }
+    }
   },
   "ago": {
     "now": "Just now",

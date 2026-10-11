@@ -12,7 +12,7 @@
 
 import { res, t } from '../util/res.js';
 import { short, hitRate, seconds, hhmm } from './format.js';
-import { speakerOf, peerNote, changeNote, modelNote, compactedNote, failureText, recapNote, compactFailedNote, workspaceNote } from './notes.js';
+import { speakerOf, moduleNote, peerNote, changeNote, modelNote, compactedNote, failureText, recapNote, compactFailedNote, workspaceNote } from './notes.js';
 
 /** 权限级别：只读的写 `read_only`，别的照 `level`（`tui.md`「正文」第 4 条）。 @param {any} p */
 export const levelOf = (p) => (p?.read_only ? 'read_only' : p?.level ?? 'workspace');
@@ -44,6 +44,11 @@ export function itemsOf(entries, status, opts = {}) {
   for (const e of shown) {
     switch (e.kind) {
       case 'user': {
+        // 模块替她开的一轮（长期目标的续轮）：一行小字，不当你的话（2026-10-12 项目主人定）
+        if (e.from?.kind === 'module') {
+          items.push({ ...moduleNote(e), seq: seqOf(e.id) });
+          break;
+        }
         const item = userItem(e, jobs, opts);
         if (e.queued) queued.push(item);
         else items.push(item);
