@@ -41,7 +41,8 @@ export class PulseLine {
     /** 排着的话：一条一行，列在运行状态行下面 */
     this.queue = h('div.pulse-queue');
     this.drawnQueue = '';
-    this.el = h('div.dock-pulse.unfold', {
+    // `dock-lane`：紧挨着框的那一行，和别的包挂的（长期目标）共用，自己靠左（`styles/dock.css`）
+    this.el = h('div.dock-pulse.dock-lane.unfold', {
       style: `--pulse-sweep: ${config.sweep_seconds}s; --pulse-dim: ${config.dim * 100}%; --pulse-lift: ${config.lift * 100}%`,
     },
     h('div.unfold-inner', h('div.pulse-body',

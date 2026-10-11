@@ -284,9 +284,9 @@
     "model_replaced": "{from} がなくなったため {to} に戻しました",
     "workspace": "ワークスペース：{path}",
     "module": {
-      "round": "{name} · 自分で続ける",
+      "round": "{name} · {round} ラウンド目",
       "names": {
-        "goal": "長期目標"
+        "goal": "目標"
       }
     }
   },

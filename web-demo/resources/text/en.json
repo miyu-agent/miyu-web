@@ -284,7 +284,7 @@
     "model_replaced": "{from} unavailable, switched to {to}",
     "workspace": "Workspace: {path}",
     "module": {
-      "round": "{name} · continuing automatically",
+      "round": "{name} · Round {round}",
       "names": {
         "goal": "Goal"
       }

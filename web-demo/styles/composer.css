@@ -83,7 +83,7 @@
 .level-read_only { color: var(--t-read-only); }
 .footer-right { flex: none; }
 /* 中间：软件包挂的（后台任务的按钮，挂载位 composer.footer）；空着不占地方 */
-.footer-middle { display: flex; flex: none; align-items: center; gap: 14px; }
+.footer-middle { display: flex; flex: none; align-items: center; }
 .footer-middle:empty { display: none; }
 
 @media (max-width: 836px) {

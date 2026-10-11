@@ -97,9 +97,8 @@
 /* 停掉的（人停的、她停的、随撤销、因重启、中断）：同一个实心圆点，text_soft（2026-09-30 项目主人定） */
 .note-line.tone-stopped .note-mark { color: var(--text-soft); }
 .note-line.tone-error .note-mark { color: var(--t-error); }
-/* 模块替她开的一轮（长期目标的续轮）：空心菱形，主色；点开的原文照原样换行 */
+/* 模块替她开的一轮（长期目标的续轮）：空心菱形，主色 */
 .note-line.tone-module .note-mark { color: var(--accent); }
-.note-plain { color: var(--text-soft); font-size: 13px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
 /* 能点开的：只有字那一截能点、能悬停（同收起那一行；2026-10-10 项目主人：原来整行都算，指针在右边也变深） */
 .note.is-expandable .note-line { width: fit-content; max-width: 100%; cursor: pointer; transition: color 0.15s ease; }
 .note.is-expandable .note-line:hover { color: color-mix(in srgb, var(--text) 84%, var(--surface)); }

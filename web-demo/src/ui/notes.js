@@ -63,8 +63,6 @@ export function noteNode(it, where, markdown) {
 function detailNode(detail, where, markdown) {
   const n = res.text.notes;
   const section = (label, ...body) => h('div.tl-detail', h('div.tl-label', label), ...body);
-  // 照原样的字（模块写给她的，带标签，不当 Markdown）
-  if (detail.kind === 'plain') return h('div.tl-body.note-detail', h('div.note-plain', detail.text));
   if (detail.kind === 'text') {
     const md = h('div.reply.markdown-body.note-report');
     renderMarkdown(md, detail.text, { say: markdown.say, hooks: markdown.hooks('note'), streaming: false });

@@ -7,13 +7,13 @@
     "ja": "長期目標"
   },
   "summary": {
-    "zh": "在输入框下方显示长期目标的进度",
-    "en": "Show the long-running goal's progress below the input box",
-    "ja": "入力欄の下に長期目標の進み具合を表示"
+    "zh": "在输入框右上方显示长期目标的进度",
+    "en": "Show the long-running goal's progress above the input box",
+    "ja": "入力欄の右上に長期目標の進み具合を表示"
   },
   "kind": "optional",
   "description": {
-    "zh": "正在看的会话有长期目标（/goal）时，框下面那一行中间写目标和第几轮，停着、等回复、受阻换成状态和颜色；点它等于打 /goal。"
+    "zh": "正在看的会话有长期目标（/goal）时，输入框右上方（和左上方的运行状态行同一行）写目标和第几轮，停着、等回复、受阻换成状态和颜色；点它等于打 /goal。"
   },
   "inject": [
     "slots",

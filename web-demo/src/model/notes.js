@@ -41,8 +41,9 @@ export function speakerOf(by, jobs, parent = null) {
 }
 
 /**
- * 核心里的模块替她开的一轮（`from` 是 `{kind: 'module', id}`，例如长期目标闲着时的续轮，`goal.md` 第 7 条）：不当你的话画，画一行
- * 「◇ 长期目标 · 自己接着做」，点开看核心写给她的原文（英文、带标签，照原样，不当 Markdown）。认不得的模块写它的编号。
+ * 核心里的模块替她开的一轮（`from` 是 `{kind: 'module', id}`，长期目标闲着时的续轮，`goal.md` 第 7 条）：不当你的话画，画一行
+ * 「◇ 目标 · 第 2 轮」，不能点开（核心写给她的那段是给模型看的，人不要；2026-10-12 项目主人定）。轮次照条目的 `round`，没有的只写
+ * 名字；认不得的模块写它的编号。
  * @param {any} e 日志里的 `user` 条目
  */
 export function moduleNote(e) {
@@ -50,7 +51,8 @@ export function moduleNote(e) {
   const names = res.text.notes.module.names;
   const name = typeof names[id] === 'string' ? names[id] : id;
   const mark = res.layout.note_marks.module ?? '';
-  return { type: 'note', key: e.id, seq: null, turn: null, tone: 'module', mark, text: t('notes.module.round', { name }), detail: { kind: 'plain', text: e.text ?? '' } };
+  const text = Number.isInteger(e.round) && e.round > 0 ? t('notes.module.round', { name, round: e.round }) : name;
+  return { type: 'note', key: e.id, seq: null, turn: null, tone: 'module', mark, text, detail: null };
 }
 
 /**

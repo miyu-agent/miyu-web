@@ -127,22 +127,23 @@ test('别处来的话写是谁：子代理照任务的标题，父会话写「�
   assert.deepEqual(got.items.map((it) => it.speaker.name), ['子代理 · 查文档', '父会话']);
 });
 
-test('模块替她开的一轮（长期目标的续轮）：一行小字、点开看原文，不当你的话；她的回答照常一块（2026-10-12）', async () => {
+test('模块替她开的一轮（长期目标的续轮）：一行「目标 · 第 N 轮」，不能点开、不当你的话；没有轮次的只写名字（2026-10-12）', async () => {
   const { group } = await import('../src/model/group.js');
   const prompt = '<goal_round>\nYour standing objective, set by the user with `/goal`.\n</goal_round>';
   const entries = [
-    { id: 'm4', kind: 'user', text: prompt, turn: 5, from: { kind: 'module', id: 'goal' }, at: AT },
+    { id: 'm4', kind: 'user', text: prompt, turn: 5, round: 2, from: { kind: 'module', id: 'goal' }, at: AT },
     { id: 'b9.0', kind: 'reply', turn: 5, text: '修好了一个。', at: AT },
     { id: 'e9', kind: 'end', turn: 5, level: 'workspace', reason: 'completed', at: AT },
-    { id: 'm5', kind: 'user', text: '别的', turn: 6, from: { kind: 'module', id: 'later' }, at: AT },
+    { id: 'm5', kind: 'user', text: prompt, turn: 6, from: { kind: 'module', id: 'goal' }, at: AT },
+    { id: 'm6', kind: 'user', text: '别的', turn: 7, from: { kind: 'module', id: 'later' }, at: AT },
   ];
   const got = itemsOf(entries, { state: 'idle' });
   const shown = got.items.filter((it) => it.type !== 'done');
-  assert.deepEqual(brief(shown), ['note: 长期目标 · 自己接着做', 'reply: 修好了一个。', 'note: later · 自己接着做'], '认不得的模块写编号');
+  assert.deepEqual(brief(shown), ['note: 目标 · 第 2 轮', 'reply: 修好了一个。', 'note: 目标', 'note: later'], '没有轮次的只写名字，认不得的模块写编号');
   assert.equal(got.items[0].tone, 'module');
-  assert.deepEqual(got.items[0].detail, { kind: 'plain', text: prompt }, '原文照原样');
+  assert.equal(got.items[0].detail, null, '给模型看的原文不给人');
   assert.ok(got.items.every((it) => it.type !== 'user'));
-  assert.deepEqual(group(got.items).map((b) => b.kind), ['note', 'her', 'note'], '下一轮的那一行不并进她上一轮');
+  assert.deepEqual(group(got.items).map((b) => b.kind), ['note', 'her', 'note', 'note'], '下一轮的那一行不并进她上一轮');
 });
 
 test('核心补上的格（9-8 三补）：后台命令的回报带退出码、用时；改文件的一步带真实路径，预览工作区照它', async () => {

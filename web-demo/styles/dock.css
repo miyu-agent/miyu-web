@@ -14,7 +14,13 @@
   --list-gap: 6px;
 }
 
-/* 提示在回答时浮到运行状态行上面：用独立的 translate，不碰提示自己的定位和 transform */
+/* 紧挨着框的那一行（挂进 composer.above、带 .dock-lane 的）：运行状态行靠左、长期目标靠右，叠在同一格里共用一行，高照高的那个；
+   别的（待办）照先后排在它上面。99 只是「排在最后一行」：中间没东西的行高是 0 */
+.dock-above { display: grid; grid-template-columns: minmax(0, 1fr); }
+.dock-above > .dock-lane { grid-row: 99; grid-column: 1; }
+
+/* 提示在回答时、有长期目标那一行时浮到这一行上面：用独立的 translate，不碰提示自己的定位和 transform */
+.composer-dock:has(.dock-goal.is-on) .composer-notice { translate: 0 calc(-1 * (var(--pulse-row) + var(--pulse-gap))); }
 .composer-dock.is-running .composer-notice { translate: 0 calc(-1 * (var(--pulse-row) * var(--pulse-lines, 1) + var(--pulse-gap))); }
 
 /* ── 命令列表、选语言的浮层、输入历史列表、@ 选文件的列表：浮在框上面，和框一样宽；半透明的 surface-1 加毛玻璃，一圈细线，浮起来的阴影 ── */

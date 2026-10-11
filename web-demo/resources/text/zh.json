@@ -284,9 +284,9 @@
     "model_replaced": "{from} 不可用，已切换到 {to}",
     "workspace": "工作区：{path}",
     "module": {
-      "round": "{name} · 自己接着做",
+      "round": "{name} · 第 {round} 轮",
       "names": {
-        "goal": "长期目标"
+        "goal": "目标"
       }
     }
   },

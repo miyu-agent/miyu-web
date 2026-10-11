@@ -1,9 +1,11 @@
 // @ts-check
-//! 长期目标（软件包 `goal`，蓝图 `web.md`「长期目标」；2026-10-12 项目主人定）：正在看的会话有长期目标时，框下面那一行的中间写
-//! 「(靶心图标) 目标 · 第 N 轮」，停着、等回复、受阻换成状态和颜色（`model.js`）；点它等于打 `/goal`（核心的回执写进提示）。照会话状态的
-//! `goal`（`view.status` 推来就重画）。停用了这一截没有，`/goal` 照样能用。
+//! 长期目标（软件包 `goal`，蓝图 `web.md`「长期目标」；2026-10-12 项目主人定）：正在看的会话有长期目标时，输入框右上方（和左上方的
+//! 运行状态行共用紧挨着框的那一行，挂载位 `composer.above`、`.dock-lane`）写「(靶心图标) 目标原文 · 第 N 轮」，停着、等回复、受阻换成
+//! 状态和颜色（`model.js`）；出来、收起照「动效」（`unfold`）。点它等于打 `/goal`（核心的回执写进提示）。照会话状态的 `goal`
+//! （`view.status` 推来就重画）。停用了这一截没有，`/goal` 照样能用。
 
 import { h, icon } from '../../src/lib/dom.js';
+import { unfold } from '../../src/lib/motion.js';
 import { goalLine } from './model.js';
 
 /** @param {any} ctx */
@@ -12,7 +14,9 @@ export function apply(ctx) {
   let session = ctx.chat.current();
   const text = h('span.goal-text');
   const tail = h('span.goal-tail');
-  const button = /** @type {HTMLButtonElement} */ (h('button.goal-pill', { type: 'button', hidden: true, onclick: () => ask() }, icon('target'), text, h('span.goal-sep', '·'), tail));
+  const button = /** @type {HTMLButtonElement} */ (h('button.goal-pill', { type: 'button', onclick: () => ask() }, icon('target'), text, h('span.goal-sep', '·'), tail));
+  const el = h('div.dock-goal.dock-lane.unfold', h('div.unfold-inner', h('div.goal-body', button)));
+  unfold(el, false);
   /** 上一次画的：没变的不重画（在收的字每来一段都推一次会话状态） */
   let seen = '';
   /** @param {string|null} id @param {any} status */
@@ -22,7 +26,8 @@ export function apply(ctx) {
     const sig = JSON.stringify(line);
     if (sig === seen) return;
     seen = sig;
-    button.hidden = !line;
+    // 收起时字留着（收的动画里还看得到）
+    unfold(el, !!line);
     if (!line) return;
     text.textContent = line.text;
     tail.textContent = line.tail;
@@ -41,6 +46,5 @@ export function apply(ctx) {
   };
   redo(session, session ? ctx.sessions.sessions.get(session)?.view.status ?? null : null);
   ctx.on('view.changed', (/** @type {any} */ v) => redo(v.session, v.status));
-  ctx.slots.mount('composer.footer', { id: 'goal', order: 20, render: () => button });
-  ctx.effect(() => () => button.remove());
+  ctx.slots.mount('composer.above', { id: 'goal', order: 30, render: () => el });
 }
