@@ -18,7 +18,7 @@ import { Sidebar } from './sidebar.js';
 import { Chat } from './chat.js';
 import { Composer } from './composer.js';
 import { Artifacts } from './artifacts.js';
-import { runCommand, refusalText, redo, copyTurn, Commands, revertLatest } from './commands.js';
+import { runCommand, runUnlisted, refusalText, redo, copyTurn, Commands, revertLatest } from './commands.js';
 import { coreSpecs } from '../model/commands.js';
 import { rank, startupSession } from '../model/session.js';
 import { statusFooter, levelLabel, nextLevel, levelParams } from '../model/footer.js';
@@ -163,6 +163,8 @@ export class App {
       interrupt: () => this.interrupt(),
       cycleLevel: () => this.cycleLevel(),
       command: (spec, words) => runCommand(this, spec, words),
+      // 列表里没有的命令：开着的会话里交核心认，核心不认、带着字的交回 'talk' 照话发
+      unlisted: (name, words) => runUnlisted(this, name, words),
       // 命令列表开了：照正在看的会话重问核心认哪些（预设、记忆开关换了，下一次打开就是新的）
       commandsOpened: () => this.refreshCommands(),
       // 空会话里核心认、要等会话的命令名（打了不当话发）

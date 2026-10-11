@@ -12,7 +12,7 @@ import { h, replace } from './dom.js';
 import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { fitAbove } from './fit.js';
-import { Menu, keptAttachments } from '../model/commands.js';
+import { Menu, keptAttachments, talkAfterRefusal } from '../model/commands.js';
 import { itemsOf } from '../model/entries.js';
 import { copy } from '../markdown/build.js';
 import { Refusal } from '../core/connection.js';
@@ -186,9 +186,37 @@ export async function runCommand(app, spec, words) {
   }
 }
 
-/** 核心拒绝的写核心给的那一句（2026-10-10 起网页不再照原因码另写一份）；别的错写它自己的话。 */
+/**
+ * 列表里没有的命令（`read` 的 `unlisted`）：开着的会话里交核心认（`command.catalog` 第 2 条：菜单里没有的头照样交 `command.run`，
+ * 照拒绝的 `data.why` 说为什么）。核心也不认（`unknown_command`）、后面带着字的交回 `'talk'`，照普通的话发（`/etc 目录是干什么的`）；
+ * 不带字的写「命令不存在」、交回 `'keep'`（字留在框里，蓝图「斜杠命令」第 4 条）；别的写回执或拒绝的那一句，交回 `'done'`。
+ * 空会话里不问：带字的是一句话，不带的「命令不存在」。
+ * @param {App} app @param {string} name @param {string|null} words @returns {Promise<'talk'|'done'|'keep'>}
+ */
+export async function runUnlisted(app, name, words) {
+  if (!app.current) {
+    if (words) return 'talk';
+    app.composer.say(t('commands.unknown'));
+    return 'keep';
+  }
+  try {
+    const got = await app.store.conn.request('command.run', { session: app.current, text: `/${name}${words ? ` ${words}` : ''}` });
+    if (got?.said) app.composer.say(got.said, true);
+  } catch (err) {
+    if (err instanceof Refusal && talkAfterRefusal(err.reason, words)) return 'talk';
+    if (!(err instanceof Refusal)) console.error(err);
+    app.composer.say(refusalText(err));
+    if (err instanceof Refusal && err.reason === 'unknown_command') return 'keep';
+  }
+  return 'done';
+}
+
+/**
+ * 核心拒绝的写核心给的那一句（2026-10-10 起网页不再照原因码另写一份）：带了 `data.why` 的（`/goal`、`/remember` 这类用不了的，核心
+ * 照连接的语言说为什么，`command.catalog` 第 2 条）写它，不然写拒绝本身的话；别的错写它自己的话。
+ */
 export function refusalText(err) {
-  return err.message;
+  return typeof err?.data?.why === 'string' && err.data.why ? err.data.why : err.message;
 }
 
 /** @type {Record<string, (app: App, spec: Spec, words: string|null) => unknown>} */

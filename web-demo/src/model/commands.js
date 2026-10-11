@@ -5,8 +5,9 @@
 //! - 像不像命令：`/` 开头，后面像个命令名（英文字母打头，只有英文字母、数字、`-`、`_`；刚打一个 `/` 也算）。
 //!   `/你吃了吗`、路径 `/home/…` 不算，照普通的话发。
 //! - 列表：没有空白时开；边打边筛，名字（或别名）开头的排前面、含着的排后面；`Esc` 关掉以后字变了才再开。
-//! - 回车：`/名字` 是命令；带参数的命令名字后面空一格接着的字是参数；没有这个命令的弹「命令不存在」；
-//!   别的后面跟了字的是一句话。
+//! - 回车：`/名字` 是命令；带参数的命令名字后面空一格接着的字是参数；列表里没有的名字（带不带字）是 `unlisted`：开着的会话里
+//!   交核心认（`command.catalog` 第 2 条：菜单里没有的头照样交 `command.run`，照拒绝的 `data.why` 说），核心不认的、带着字的
+//!   照普通的话发；空会话里带字的是一句话，不带的弹「命令不存在」。
 
 /**
  * @typedef {{name: string, aliases?: string[], summary: string, run: string, args?: boolean, argument?: string}} Spec
@@ -30,7 +31,10 @@ export function mergeSpecs(local, core) {
   const taken = new Set(local.flatMap((s) => [s.name, ...(s.aliases ?? [])]));
   return [...local, ...core.filter((s) => ![s.name, ...(s.aliases ?? [])].some((n) => taken.has(n)))];
 }
-/** @typedef {{kind: 'command', spec: Spec, words: string|null}|{kind: 'unknown'}|{kind: 'later'}|{kind: 'talk'}} Line 回车时框里那一行是什么（`later`：空会话里打了核心的命令） */
+/**
+ * @typedef {{kind: 'command', spec: Spec, words: string|null}|{kind: 'unlisted', name: string, words: string|null}|{kind: 'unknown'}|{kind: 'later'}|{kind: 'talk'}} Line
+ *   回车时框里那一行是什么（`later`：空会话里打了核心的命令；`unlisted`：列表里没有的名字，`words` 是后面的字，没写的是 `null`）
+ */
 
 /** 框里的字像不像命令：像的交回命令名（刚打一个 `/` 的是空的），不像的是 `null`。名字要紧挨着 `/`。 */
 export function typed(value) {
@@ -80,8 +84,19 @@ export function read(list, value, later = new Set()) {
   if (spec?.args) return { kind: 'command', spec, words };
   // 核心认、要造好的会话才能用的（空会话里不列）：不当话发出去（2026-10-10：空会话里打 `/remember 内容` 被当成一句话发给了她）
   if (!spec && name && later.has(name.toLowerCase())) return { kind: 'later' };
+  // 列表里没有的名字：交给外面（开着的会话里问核心，2026-10-12：没开记忆的会话里打 `/remember 内容` 被当成一句话发给了她）
+  if (!spec && name) return { kind: 'unlisted', name, words: words || null };
   if (!spec && !words) return { kind: 'unknown' };
   return { kind: 'talk' };
+}
+
+/**
+ * 列表里没有的命令交核心被拒了以后，要不要照普通的话发：只有核心认不出（原因码 `unknown_command`）、后面带着字的（`/etc 目录是干什么的`）。
+ * 只认原因码：数字码 -32010 别的拒绝也用（`memory_unavailable`），照它判会把无人格会话里的 `/remember 内容` 发给她。
+ * @param {string|null|undefined} reason @param {string|null} words
+ */
+export function talkAfterRefusal(reason, words) {
+  return !!words && reason === 'unknown_command';
 }
 
 /** 命令列表的状态：开没开、选中哪一条（照 TUI 演示的 `menu.rs`）。 */

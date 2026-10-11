@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { typed, menuTyped, filter, find, read, Menu, keptAttachments } from '../src/model/commands.js';
+import { typed, menuTyped, filter, find, read, Menu, keptAttachments, talkAfterRefusal } from '../src/model/commands.js';
 
 const res = loadRes();
 const list = res.commands.commands;
@@ -42,7 +42,7 @@ test('列表开不开：名字后面打了空格就收起（名字打全了）',
   assert.equal(menuTyped('/undo\n'), null, '换行也是空白');
 });
 
-test('回车时这一行是什么：命令带着参数；没有这个命令的弹「命令不存在」；别的照普通的话发', () => {
+test('回车时这一行是什么：命令带着参数；列表里没有的名字交外面（会话里问核心）；别的照普通的话发', () => {
   const r = read(list, '/compact 重点保留 数据库设计');
   assert.equal(r.kind, 'command');
   assert.equal(r.spec?.name, 'compact');
@@ -52,9 +52,10 @@ test('回车时这一行是什么：命令带着参数；没有这个命令的�
   assert.equal(read(list, '/undo').spec?.name, 'undo');
   assert.equal(read(list, '/rewind').spec?.name, 'undo', '别名一样执行');
   assert.equal(read(list, '/resume').spec?.name, 'sessions', '别名一样执行（2026-10-02）');
-  assert.equal(read(list, '/theme 深色').kind, 'talk', '不带参数的命令后面跟了字：一句话');
-  assert.equal(read(list, '/etc 目录是干什么的').kind, 'talk', '不弹命令不存在');
-  assert.equal(read(list, '/nosuch').kind, 'unknown');
+  assert.equal(read(list, '/new 一个话题').kind, 'talk', '不带参数的命令后面跟了字：一句话');
+  assert.deepEqual(read(list, '/etc 目录是干什么的'), { kind: 'unlisted', name: 'etc', words: '目录是干什么的' }, '核心不认的外面照话发');
+  assert.deepEqual(read(list, '/nosuch'), { kind: 'unlisted', name: 'nosuch', words: null });
+  assert.deepEqual(read(list, '/nosuch   '), { kind: 'unlisted', name: 'nosuch', words: null }, '只有空白：没写');
   assert.equal(read(list, '/').kind, 'unknown');
   assert.equal(read(list, '你好').kind, 'talk');
   assert.equal(read(list, '/你吃了吗').kind, 'talk');
@@ -142,7 +143,14 @@ test('空会话里打了核心认的命令（要造好的会话才能用）：�
   assert.equal(read(list, '/Dream', later).kind, 'later', '不分大小写');
   assert.equal(read(list, '/memo', later).kind, 'later', '别名一样');
   assert.equal(read(list, '/reset', later).kind, 'command', '网页自己也有的（/clear 的别名）照网页的，它自己管空会话怎么说');
-  assert.equal(read(list, '/etc 目录是干什么的', later).kind, 'talk', '不是核心的照旧是一句话');
-  assert.equal(read(list, '/nosuch', later).kind, 'unknown');
+  assert.equal(read(list, '/etc 目录是干什么的', later).kind, 'unlisted', '不是核心的照旧交外面');
+  assert.equal(read(list, '/nosuch', later).kind, 'unlisted');
   assert.equal(read(list, '/compact 重点', later).kind, 'command', '网页自己的照旧执行');
+});
+
+test('列表里没有的命令被核心拒了：只有认不出、带着字的照话发；数字码一样的别的拒绝不发（2026-10-12）', () => {
+  assert.equal(talkAfterRefusal('unknown_command', '目录是干什么的'), true);
+  assert.equal(talkAfterRefusal('unknown_command', null), false, '不带字的写拒绝那一句');
+  assert.equal(talkAfterRefusal('memory_unavailable', '喜欢猫'), false, '无人格会话里的 /remember 内容不发给她');
+  assert.equal(talkAfterRefusal(null, '喜欢猫'), false);
 });

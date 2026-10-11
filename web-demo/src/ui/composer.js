@@ -50,6 +50,7 @@ import { stash } from '../model/stash.js';
 export class Composer {
   /**
    * @param {{send: (text: string, extra: Record<string, any>) => Promise<boolean>, interrupt: () => void, cycleLevel: () => void,
+   *   unlisted: (name: string, words: string|null) => Promise<'talk'|'done'|'keep'>,
    *   command: (spec: import('../model/commands.js').Spec, words: string|null) => void,
    *   history: {load: () => import('../model/history.js').Item[], save: (items: import('../model/history.js').Item[]) => void},
    *   commandsOpened?: () => void, allCommands?: () => Promise<import('../model/commands.js').Spec[]>,
@@ -64,6 +65,8 @@ export class Composer {
     this.specs = specs;
     this.payload = payload;
     this.running = false;
+    /** 列表里没有的命令交给核心、还没回 */
+    this.asking = false;
     this.esc = 0;
     this.noticeTimer = 0;
     this.input = /** @type {HTMLTextAreaElement} */ (h('textarea.composer-input', {
@@ -276,6 +279,24 @@ export class Composer {
     if (line.kind === 'unknown') {
       this.say(t('commands.unknown'));
       return;
+    }
+    // 列表里没有的：外面问核心；核心也不认、带着字的照普通的话往下发
+    if (line.kind === 'unlisted') {
+      // 等核心回的时候再按回车不再问一次
+      if (this.asking) return;
+      this.asking = true;
+      let kind;
+      try {
+        kind = await this.on.unlisted(line.name, line.words);
+      } finally {
+        this.asking = false;
+      }
+      // 没有这个命令（`keep`）：字留在框里；做了、被拒了的照命令清掉框（等的时候改了字的不冲掉）
+      if (kind === 'done') {
+        this.remember(text);
+        if (this.input.value === text) this.set('');
+      }
+      if (kind !== 'talk') return;
     }
     if (line.kind === 'later') {
       this.say(t('commands.needs_session'));
