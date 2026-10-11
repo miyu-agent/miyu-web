@@ -1,25 +1,24 @@
 /* 人格的背景图（packages/theme-persona/index.js 在页面根上写 has-persona-backdrop、--persona-backdrop、--persona-veil；蓝图 web.md
    「跟着人格的外观」第 6 条）：图铺满整个窗口（左栏也在图上，2026-10-11 项目主人定），铺满、居中裁，上面一层底色（surface，浓度照
-   --persona-veil）让字看得清。左栏、左上角的标签、空会话输入框上面那一排按钮、输入框是磨砂的：半透明的底加模糊，透出一点图的颜色；
+   --persona-veil）让字看得清。左栏、左上角的标签、空会话输入框上面那一排按钮、输入框是磨砂的：半透明的底加模糊，透出一点图的颜色
+   （标签 42%，2026-10-11 项目主人嫌磨砂不够显，比第一版透一点）；
    你的气泡、卡片、菜单照旧是实底 */
-.has-persona-backdrop .app-shell {
-  background:
-    linear-gradient(color-mix(in srgb, var(--surface) var(--persona-veil, 80%), transparent), color-mix(in srgb, var(--surface) var(--persona-veil, 80%), transparent)),
-    var(--persona-backdrop) center / cover no-repeat var(--surface);
-}
-.has-persona-backdrop .stage { background: transparent; }
+.has-persona-backdrop .app-shell { background: var(--persona-backdrop) center / cover no-repeat var(--surface); }
+/* 底色那一层只盖对话区；左栏自己磨砂，直接透图（比对话区多透 8%），磨砂才看得出来（2026-10-11 项目主人：原来左栏底下也有那一层，
+   透出来的是洗淡了的图，磨砂不显） */
+.has-persona-backdrop .stage { background: color-mix(in srgb, var(--surface) var(--persona-veil, 80%), transparent); }
 .has-persona-backdrop .sidebar {
-  background: color-mix(in srgb, var(--sidebar-bg) 62%, transparent);
-  -webkit-backdrop-filter: blur(24px) saturate(1.2); backdrop-filter: blur(24px) saturate(1.2);
+  background: color-mix(in srgb, var(--sidebar-bg) calc(var(--persona-veil, 80%) - 8%), transparent);
+  -webkit-backdrop-filter: blur(28px) saturate(1.3); backdrop-filter: blur(28px) saturate(1.3);
 }
 .has-persona-backdrop .composer {
   background: color-mix(in srgb, var(--surface-1) 70%, transparent);
   -webkit-backdrop-filter: blur(20px) saturate(1.2); backdrop-filter: blur(20px) saturate(1.2);
 }
 .has-persona-backdrop .setup-btn, .has-persona-backdrop .setup-info {
-  background: color-mix(in srgb, var(--surface-1) 55%, transparent);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
+  background: color-mix(in srgb, var(--surface-1) 42%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3);
 }
-.has-persona-backdrop .setup-btn:hover { background: color-mix(in srgb, var(--surface-3) 72%, transparent); }
+.has-persona-backdrop .setup-btn:hover { background: color-mix(in srgb, var(--surface-3) 62%, transparent); }
 /* 对话区上下的淡出是一条实的底色，盖在图上就是一道带子：有图时不画 */
 .has-persona-backdrop .chat-fade, .has-persona-backdrop .chat-fade-top { visibility: hidden; }
