@@ -1,12 +1,12 @@
 /* 人格的背景图（packages/theme-persona/index.js 在页面根上写 has-persona-backdrop、--persona-backdrop、--persona-veil；蓝图 web.md
    「跟着人格的外观」第 6 条）：图铺满整个窗口（左栏也在图上，2026-10-11 项目主人定），铺满、照焦点裁（--persona-focus，没设的居中），
    上面一层底色（surface，浓度照 --persona-veil：100 减人格的透明度）让字看得清。左栏、左上角的标签、空会话输入框上面那一排按钮、输入框是磨砂的：半透明的底加模糊，透出一点图的颜色
-   （标签 42%，2026-10-11 项目主人嫌磨砂不够显，比第一版透一点）；
+   （标签 52%，2026-10-11 项目主人先嫌磨砂不够显、调透，又要再实一点）；
    你的气泡、卡片、菜单照旧是实底 */
 /* 底色那一层盖整个窗口（左栏收起、展开的动画里，左栏和对话区之间那道缝也是盖着的；2026-10-11 项目主人截到收起时左边一道没盖的深色）。
    左栏磨砂照浏览器的 backdrop-filter 模糊它后面的（滑动、浮出时都对得上；原来自己垫一份图用 background-attachment: fixed，
    滑动、整页放大时对不上，浮出来是一团团的颜色，项目主人截图问过）：后面已经盖了底色，模糊时把饱和度拉高，透出图的颜色，
-   左栏自己的底色只薄薄一层 */
+   左栏自己的底色铺 40% */
 .has-persona-backdrop .app-shell {
   background:
     linear-gradient(color-mix(in srgb, var(--surface) var(--persona-veil, 80%), transparent) 0 0),
@@ -14,7 +14,7 @@
 }
 .has-persona-backdrop .stage { background: transparent; }
 .has-persona-backdrop .sidebar {
-  background: color-mix(in srgb, var(--sidebar-bg) 28%, transparent);
+  background: color-mix(in srgb, var(--sidebar-bg) 40%, transparent);
   -webkit-backdrop-filter: blur(28px) saturate(1.9); backdrop-filter: blur(28px) saturate(1.9);
 }
 .has-persona-backdrop .composer {
@@ -22,7 +22,7 @@
   -webkit-backdrop-filter: blur(20px) saturate(1.2); backdrop-filter: blur(20px) saturate(1.2);
 }
 .has-persona-backdrop .setup-btn, .has-persona-backdrop .setup-info {
-  background: color-mix(in srgb, var(--surface-1) 42%, transparent);
+  background: color-mix(in srgb, var(--surface-1) 52%, transparent);
   -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3);
 }
 .has-persona-backdrop .setup-btn:hover { background: color-mix(in srgb, var(--surface-3) 62%, transparent); }
