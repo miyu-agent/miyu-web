@@ -22,8 +22,8 @@ use hyper::{Request, Response, StatusCode};
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
 
-use miyu_ipc::Ready;
-use miyu_store::root::DataRoot;
+use miyu_client::connect::Ready;
+use miyu_client::places::DataRoot;
 use miyu_webserve::Site as _;
 
 use crate::backstage::Backstage;

@@ -10,7 +10,7 @@ use std::time::Duration;
 use serde::Deserialize;
 use serde_json::{Value, json};
 
-use miyu_store::root::DataRoot;
+use miyu_client::places::DataRoot;
 
 /// 常量在资源目录里的位置。
 pub const FILE: &str = "web/web.json";
@@ -69,7 +69,7 @@ impl Settings {
         let path = resources.join(MANIFEST);
         let text = std::fs::read_to_string(&path)
             .map_err(|error| format!("{} not readable: {error}", path.display()))?;
-        let manifest = miyu_config::package::read(&text)
+        let manifest = miyu_client::manifest::read(&text)
             .map_err(|problem| format!("{} not readable: {problem}", path.display()))?;
         let default = |name: &str| {
             manifest
@@ -77,7 +77,7 @@ impl Settings {
                 .iter()
                 .find(|setting| setting.name == name)
                 .and_then(|setting| match setting.default {
-                    Some(miyu_config::Value::Int(value)) => Some(value),
+                    Some(miyu_client::manifest::Value::Int(value)) => Some(value),
                     _ => None,
                 })
                 .ok_or_else(|| format!("{}: settings.{name} has no default", path.display()))

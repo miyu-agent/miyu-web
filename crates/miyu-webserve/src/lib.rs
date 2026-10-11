@@ -17,7 +17,7 @@ pub mod ws;
 
 use std::sync::Arc;
 
-use miyu_store::root::DataRoot;
+use miyu_client::places::DataRoot;
 
 /// 运行日志的目标。搬来的代码照原样记在 `miyu::web` 下：网页软件的 `web.log` 一个字不变；桥的运行日志里这几行的来源也是
 /// `web`，说的是它网页那一头。

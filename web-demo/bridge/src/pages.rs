@@ -65,13 +65,15 @@ impl Tickets {
 pub struct PageTypes(HashMap<String, String>);
 
 impl PageTypes {
-    /// 读资源目录下的 `web/web.json`：资源目录照 `MIYU_RESOURCES`，没设的是仓库的 `resources/`。
+    /// 读资源目录下的 `web/web.json`：资源目录照 `MIYU_RESOURCES`（核心检出里的 `resources/`；仓库拆开以后没有默认的，施工 S-4）。
     ///
     /// # Errors
     ///
     /// 读不到、不是 JSON、没有 `types`：说是哪一样。
     pub fn load() -> Result<PageTypes, String> {
-        let root = std::env::var_os("MIYU_RESOURCES").map_or_else(|| Path::new(env!("CARGO_MANIFEST_DIR")).join("../../resources"), Into::into);
+        let root: std::path::PathBuf = std::env::var_os("MIYU_RESOURCES")
+            .ok_or_else(|| "没设 MIYU_RESOURCES：指向核心检出里的 resources/".to_string())?
+            .into();
         let file = root.join("web/web.json");
         let text = std::fs::read_to_string(&file).map_err(|e| format!("读不了 {}：{e}", file.display()))?;
         let v: Value = serde_json::from_str(&text).map_err(|e| format!("{} 不是 JSON：{e}", file.display()))?;

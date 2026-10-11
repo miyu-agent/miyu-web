@@ -1,14 +1,31 @@
 //! 网页软件的数（施工 9-1 下）：默认值照清单 `packages/web/package.toml`，常量照 `web/web.json`；核心交回的最终值盖上去，不合范围的
 //! 照旧。
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 
 use serde_json::json;
 
 use super::*;
 
+/// 出厂的资源目录照装好的样子拼一份（施工 S-4，仓库拆开以后）：清单在这个仓库的 `package/`，`web/web.json` 还在核心的
+/// 资源目录里（照 git 依赖钉住的那份检出，`miyu_client::WORKSPACE_ROOT`）。一个进程拼一次。
+fn shipped_root() -> &'static Path {
+    static ROOT: OnceLock<PathBuf> = OnceLock::new();
+    ROOT.get_or_init(|| {
+        let root = std::env::temp_dir().join(format!("miyu-web-shipped-{}", std::process::id()));
+        std::fs::create_dir_all(root.join("web")).unwrap();
+        std::fs::create_dir_all(root.join("packages/web")).unwrap();
+        let core = Path::new(miyu_client::WORKSPACE_ROOT).join("resources");
+        std::fs::copy(core.join("web/web.json"), root.join("web/web.json")).unwrap();
+        let ours = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../package/package.toml");
+        std::fs::copy(ours, root.join(MANIFEST)).unwrap();
+        root
+    })
+}
+
 fn shipped() -> Settings {
-    Settings::load(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../resources")).unwrap()
+    Settings::load(shipped_root()).unwrap()
 }
 
 #[test]
@@ -52,13 +69,8 @@ fn final_values_from_the_core_win_and_odd_ones_are_ignored() {
 
 #[test]
 fn every_key_asked_for_is_declared_in_the_manifest() {
-    let text = std::fs::read_to_string(
-        Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../resources")
-            .join(MANIFEST),
-    )
-    .unwrap();
-    let manifest = miyu_config::package::read(&text).unwrap();
+    let text = std::fs::read_to_string(shipped_root().join(MANIFEST)).unwrap();
+    let manifest = miyu_client::manifest::read(&text).unwrap();
     let declared: Vec<String> = manifest
         .settings
         .iter()

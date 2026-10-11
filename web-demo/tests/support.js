@@ -29,12 +29,19 @@ export function loadRes() {
   return res;
 }
 
+/** 核心的资源目录：仓库拆开以后照 `MIYU_RESOURCES`（核心检出里的 `resources/`）找，没有默认的（施工 S-4）。 */
+function coreResources() {
+  const dir = process.env.MIYU_RESOURCES;
+  if (!dir) throw new Error('没设 MIYU_RESOURCES：指向核心检出里的 resources/');
+  return dir.endsWith('/') || dir.endsWith('\\') ? dir : `${dir}/`;
+}
+
 /**
- * 仓库资源目录里给人看的字，拼成桥 `web.human` 回的样子（`bridge/src/human.rs`）：内核的一份、每个软件包各一份，
+ * 核心资源目录里给人看的字，拼成桥 `web.human` 回的样子（`bridge/src/human.rs`）：内核的一份、每个软件包各一份，
  * 说法的编号前面加上它在哪（`core/…`、`software/<包>/…`）。
  */
 function human() {
-  const root = here('../../resources/');
+  const root = coreResources();
   const read = (dir) => JSON.parse(readFileSync(`${root}${dir}/human/zh.json`, 'utf8'));
   const out = { tools: {}, said: {} };
   const add = (dir) => {

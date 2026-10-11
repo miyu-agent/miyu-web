@@ -246,7 +246,7 @@ fn the_forwarding_code_never_reads_the_local_token() {
         let text = std::fs::read_to_string(crates.join(file)).expect("读得到");
         for forbidden in [
             "read_token",
-            "miyu_ipc::connect(",
+            "connect::connect(",
             "connect_or_start(",
             "run/token",
             "\"token\"",

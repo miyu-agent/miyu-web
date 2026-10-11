@@ -10,8 +10,8 @@ use serde_json::{Value, json};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, ReadHalf, WriteHalf};
 use tokio::sync::oneshot;
 
-use miyu_ipc::Connection;
-use miyu_store::root::DataRoot;
+use miyu_client::connect::Connection;
+use miyu_client::places::DataRoot;
 
 use crate::TARGET;
 use crate::serve::CoreCommand;
@@ -178,7 +178,7 @@ impl Cores {
 
 /// 连核心（没在跑就拉起来），照登录令牌握手。
 async fn connect(root: &DataRoot, core: &CoreCommand, login: &str) -> Result<Link, Failed> {
-    let connection = miyu_ipc::connect_or_start_bare(root, || core())
+    let connection = miyu_client::connect::connect_or_start_bare(root, || core())
         .await
         .map_err(|error| {
             tracing::warn!(target: TARGET, error = %error, "core unreachable");

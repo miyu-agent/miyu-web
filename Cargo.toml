@@ -1,0 +1,35 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2024"
+rust-version = "1.97"
+license = "GPL-3.0-or-later"
+publish = false
+
+# 照核心仓库的那一份（设计 32 第五节）。
+[workspace.lints.rust]
+unsafe_code = "forbid"
+# 不吞错误：必须处理的返回值不许不理。
+unused_must_use = "deny"
+# 公开的东西都要有文档注释。
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+# 不吞错误：不许用 `let _ =` 或 `.ok()` 把错误悄悄扔掉。真要扔，写 #[expect(..., reason = "...")]。
+let_underscore_must_use = "deny"
+unused_result_ok = "deny"
+# 读到坏数据要报错，不能直接崩。测试里允许，见 clippy.toml。
+unwrap_used = "deny"
+# 会出错的函数写 # Errors，会 panic 的写 # Panics。
+missing_errors_doc = "warn"
+missing_panics_doc = "warn"
+
+# 核心照 git 依赖钉住一个提交（设计 32 第三节）：升级就是改这三行的 rev、过三台 CI。代码只经门面 miyu-client 用；
+# miyu-ipc、miyu-store 只给测试用（在测试里假扮核心听本机套接字、造数据根，设计 32 第四节第 2 条）。
+[workspace.dependencies]
+miyu-client = { git = "https://github.com/miyu-agent/miyu", rev = "bc0c49851863c81323e04a371143e19a352a2ff1" }
+miyu-ipc = { git = "https://github.com/miyu-agent/miyu", rev = "bc0c49851863c81323e04a371143e19a352a2ff1" }
+miyu-store = { git = "https://github.com/miyu-agent/miyu", rev = "bc0c49851863c81323e04a371143e19a352a2ff1" }

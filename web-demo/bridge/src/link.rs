@@ -17,8 +17,8 @@ use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
 use tokio_tungstenite::tungstenite::http::StatusCode;
 
-use miyu_store::env::Env;
-use miyu_store::root::DataRoot;
+use miyu_client::places::Env;
+use miyu_client::places::DataRoot;
 
 use crate::Site;
 
@@ -96,7 +96,7 @@ pub async fn run(stream: TcpStream, site: Arc<Site>) {
     writing.abort();
 }
 
-pub(crate) type Connected = (miyu_ipc::Connection, String);
+pub(crate) type Connected = (miyu_client::connect::Connection, String);
 
 /// 往浏览器写的那一头收到它就关掉页面的线：核心那头断了。开头是一个空字符，核心写来的一行 JSON 不会是它。
 const CORE_GONE: &str = "\u{0}core-gone";
@@ -107,15 +107,15 @@ pub(crate) async fn connect() -> Result<Connected, String> {
     let root = DataRoot::locate(&env).map_err(|e| format!("找不到数据根：{e}"))?;
     root.prepare().map_err(|e| format!("建不了数据根：{e}"))?;
     let connected = match std::env::var_os("MIYU_CORE_BIN") {
-        Some(bin) => miyu_ipc::connect_or_start(&root, move || {
+        Some(bin) => miyu_client::connect::connect_or_start(&root, move || {
             let mut core = Command::new(bin);
             core.arg("core");
             core
         })
         .await
         .map_err(|e| format!("拉不起核心：{e}"))?,
-        None => miyu_ipc::connect(&root).await.map_err(|e| match e {
-            miyu_ipc::ConnectError::NotRunning => "核心没在跑：启动桥时设 MIYU_CORE_BIN 指向重制版的 miyu".to_string(),
+        None => miyu_client::connect::connect(&root).await.map_err(|e| match e {
+            miyu_client::connect::ConnectError::NotRunning => "核心没在跑：启动桥时设 MIYU_CORE_BIN 指向重制版的 miyu".to_string(),
             e => format!("连不上核心：{e}"),
         })?,
     };

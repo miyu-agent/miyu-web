@@ -16,10 +16,10 @@ use std::time::Duration;
 
 use serde_json::json;
 
+use miyu_client::connect::Ready;
 use miyu_client::open::Core;
 pub use miyu_client::open::{Browser, SystemBrowser};
-use miyu_ipc::Ready;
-use miyu_store::root::DataRoot;
+use miyu_client::places::DataRoot;
 
 use crate::serve::{CoreCommand, address, running};
 use crate::texts::Language;
@@ -159,7 +159,7 @@ async fn ensure(root: &DataRoot, port: Option<u16>, launch: &Launch) -> Result<S
     {
         return Ok(site);
     }
-    match miyu_ipc::spawn_detached((launch.serve)(port), root.path()).await {
+    match miyu_client::connect::spawn_detached((launch.serve)(port), root.path()).await {
         Ok(Ready::Ready | Ready::Running) => {}
         Ok(Ready::Failed(reason)) => {
             return Err(

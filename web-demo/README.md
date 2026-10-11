@@ -7,14 +7,14 @@
 ### 怎么跑
 
 浏览器只会说 WebSocket，核心听的是本机的套接字，中间要一个桥（`bridge/`）：它给页面文件，把 `/ws` 转到核心，
-替页面出示本机令牌。在工作树根目录：
+替页面出示本机令牌。核心在另一个仓库（`miyu-agent/miyu`），先在它的检出里编一次核心（`cargo build -p miyu`），下面的
+`<核心检出>` 换成它的路径。在这个仓库的根目录：
 
 ```sh
-cargo build -p miyu
 cargo build --manifest-path web-demo/bridge/Cargo.toml
-# 第一次：建数据根的骨架、写模型的配置（system/config.toml；已经有配置的不覆盖）
+# 第一次：在核心检出里建数据根的骨架、写模型的配置（system/config.toml；已经有配置的不覆盖）
 MIYU_DEV_BASE_URL=<地址，写到 /v1> MIYU_DEV_MODEL=<模型> MIYU_DEV_WINDOW=300000 cargo xtask dev-home <单独的测试目录>
-MIYU_HOME=<同一个目录> MIYU_RESOURCES=$PWD/resources MIYU_CORE_BIN=$PWD/target/debug/miyu \
+MIYU_HOME=<同一个目录> MIYU_RESOURCES=<核心检出>/resources MIYU_CORE_BIN=<核心检出>/target/debug/miyu \
   DEEPSEEK_API_KEY=<key> MIYU_DEV_BASE_URL=<地址，写到 /v1> web-demo/bridge/target/debug/miyu-web-bridge 8766
 ```
 
@@ -32,7 +32,7 @@ MIYU_HOME=<同一个目录> MIYU_RESOURCES=$PWD/resources MIYU_CORE_BIN=$PWD/tar
 纯逻辑（事件 → 条目、时间线的段和字、差异、左栏的一项、框下面那一行、数的写法、回答的 Markdown 怎么解析和上色、预览工作区放什么、媒体卡片）有测试，拿仓库里事件的样本当底料，不开浏览器：
 
 ```sh
-node --test web-demo/tests
+MIYU_RESOURCES=<核心检出>/resources node --test web-demo/tests
 cargo clippy --manifest-path web-demo/bridge/Cargo.toml --all-targets -- -D warnings
 cargo test --manifest-path web-demo/bridge/Cargo.toml
 ```

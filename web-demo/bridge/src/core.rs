@@ -26,8 +26,8 @@ impl Refused {
 
 /// 一条握过手的核心连接。
 pub struct Core {
-    lines: Lines<BufReader<ReadHalf<miyu_ipc::Connection>>>,
-    writer: WriteHalf<miyu_ipc::Connection>,
+    lines: Lines<BufReader<ReadHalf<miyu_client::connect::Connection>>>,
+    writer: WriteHalf<miyu_client::connect::Connection>,
 }
 
 impl Core {

@@ -619,6 +619,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "lazy_static"
+version = "1.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20870f649af7073d53e38067b2a84312175d56ea15217e1b15bc83506ec50afb"
+
+[[package]]
 name = "libc"
 version = "0.2.189"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -668,13 +674,29 @@ dependencies = [
 [[package]]
 name = "miyu-assemble"
 version = "0.0.0"
+source = "git+https://github.com/miyu-agent/miyu?rev=bc0c49851863c81323e04a371143e19a352a2ff1#bc0c49851863c81323e04a371143e19a352a2ff1"
 dependencies = [
  "miyu-kernel",
 ]
 
 [[package]]
+name = "miyu-client"
+version = "0.0.0"
+source = "git+https://github.com/miyu-agent/miyu?rev=bc0c49851863c81323e04a371143e19a352a2ff1#bc0c49851863c81323e04a371143e19a352a2ff1"
+dependencies = [
+ "miyu-config",
+ "miyu-ipc",
+ "miyu-kernel",
+ "miyu-log",
+ "miyu-store",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "miyu-config"
 version = "0.0.0"
+source = "git+https://github.com/miyu-agent/miyu?rev=bc0c49851863c81323e04a371143e19a352a2ff1#bc0c49851863c81323e04a371143e19a352a2ff1"
 dependencies = [
  "serde",
  "serde_json",
@@ -684,6 +706,7 @@ dependencies = [
 [[package]]
 name = "miyu-drivers"
 version = "0.0.0"
+source = "git+https://github.com/miyu-agent/miyu?rev=bc0c49851863c81323e04a371143e19a352a2ff1#bc0c49851863c81323e04a371143e19a352a2ff1"
 dependencies = [
  "miyu-kernel",
  "serde",
@@ -693,6 +716,7 @@ dependencies = [
 [[package]]
 name = "miyu-fs"
 version = "0.0.0"
+source = "git+https://github.com/miyu-agent/miyu?rev=bc0c49851863c81323e04a371143e19a352a2ff1#bc0c49851863c81323e04a371143e19a352a2ff1"
 dependencies = [
  "ignore",
  "jiff",
@@ -707,6 +731,7 @@ dependencies = [
 [[package]]
 name = "miyu-ipc"
 version = "0.0.0"
+source = "git+https://github.com/miyu-agent/miyu?rev=bc0c49851863c81323e04a371143e19a352a2ff1#bc0c49851863c81323e04a371143e19a352a2ff1"
 dependencies = [
  "getrandom 0.4.3",
  "miyu-pipe",
@@ -721,6 +746,7 @@ dependencies = [
 [[package]]
 name = "miyu-kernel"
 version = "0.0.0"
+source = "git+https://github.com/miyu-agent/miyu?rev=bc0c49851863c81323e04a371143e19a352a2ff1#bc0c49851863c81323e04a371143e19a352a2ff1"
 dependencies = [
  "serde",
  "serde_json",
@@ -728,8 +754,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "miyu-log"
+version = "0.0.0"
+source = "git+https://github.com/miyu-agent/miyu?rev=bc0c49851863c81323e04a371143e19a352a2ff1#bc0c49851863c81323e04a371143e19a352a2ff1"
+dependencies = [
+ "jiff",
+ "miyu-config",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "miyu-pipe"
 version = "0.0.0"
+source = "git+https://github.com/miyu-agent/miyu?rev=bc0c49851863c81323e04a371143e19a352a2ff1#bc0c49851863c81323e04a371143e19a352a2ff1"
 dependencies = [
  "tokio",
  "windows-sys 0.61.2",
@@ -738,6 +776,7 @@ dependencies = [
 [[package]]
 name = "miyu-policy"
 version = "0.0.0"
+source = "git+https://github.com/miyu-agent/miyu?rev=bc0c49851863c81323e04a371143e19a352a2ff1#bc0c49851863c81323e04a371143e19a352a2ff1"
 dependencies = [
  "miyu-assemble",
  "miyu-config",
@@ -751,6 +790,7 @@ dependencies = [
 [[package]]
 name = "miyu-recall"
 version = "0.0.0"
+source = "git+https://github.com/miyu-agent/miyu?rev=bc0c49851863c81323e04a371143e19a352a2ff1#bc0c49851863c81323e04a371143e19a352a2ff1"
 dependencies = [
  "miyu-kernel",
  "serde",
@@ -761,6 +801,7 @@ dependencies = [
 [[package]]
 name = "miyu-store"
 version = "0.0.0"
+source = "git+https://github.com/miyu-agent/miyu?rev=bc0c49851863c81323e04a371143e19a352a2ff1#bc0c49851863c81323e04a371143e19a352a2ff1"
 dependencies = [
  "argon2",
  "getrandom 0.4.3",
@@ -784,9 +825,7 @@ dependencies = [
  "base64",
  "futures-util",
  "getrandom 0.4.3",
- "miyu-ipc",
- "miyu-kernel",
- "miyu-store",
+ "miyu-client",
  "serde_json",
  "tokio",
  "tokio-tungstenite",
@@ -1130,6 +1169,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sharded-slab"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f40ca3c46823713e0d4209592e8d6e826aa57e928f09752619fc696c499637f6"
+dependencies = [
+ "lazy_static",
+]
+
+[[package]]
 name = "shlex"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1231,6 +1279,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "thread_local"
+version = "1.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ad99c4c6d32803332c548b1af0540b357b3f5fc0be8f6c6bfe8b2e6ae784070"
+dependencies = [
+ "cfg-if",
+]
+
+[[package]]
 name = "tokio"
 version = "1.53.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1318,6 +1375,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a"
 dependencies = [
  "once_cell",
+]
+
+[[package]]
+name = "tracing-subscriber"
+version = "0.3.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb7f578e5945fb242538965c2d0b04418d38ec25c79d160cd279bf0731c8d319"
+dependencies = [
+ "sharded-slab",
+ "thread_local",
+ "tracing-core",
 ]
 
 [[package]]

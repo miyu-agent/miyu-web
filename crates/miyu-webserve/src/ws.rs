@@ -117,22 +117,23 @@ where
         }
         sink
     });
-    let core = match miyu_ipc::connect_or_start_bare(site.root(), || (site.core())()).await {
-        Ok(core) => core,
-        Err(error) => {
-            tracing::warn!(target: TARGET, error = %error, "core unreachable");
-            let notice = serde_json::json!({
-                "jsonrpc": "2.0",
-                "method": "web.error",
-                "params": {"message": error.to_string()},
-            });
-            send(&out, Message::text(notice.to_string())).await;
-            send(&out, close(CloseCode::Normal)).await;
-            drop(out);
-            finish(writer, frames).await;
-            return;
-        }
-    };
+    let core =
+        match miyu_client::connect::connect_or_start_bare(site.root(), || (site.core())()).await {
+            Ok(core) => core,
+            Err(error) => {
+                tracing::warn!(target: TARGET, error = %error, "core unreachable");
+                let notice = serde_json::json!({
+                    "jsonrpc": "2.0",
+                    "method": "web.error",
+                    "params": {"message": error.to_string()},
+                });
+                send(&out, Message::text(notice.to_string())).await;
+                send(&out, close(CloseCode::Normal)).await;
+                drop(out);
+                finish(writer, frames).await;
+                return;
+            }
+        };
     tracing::debug!(target: TARGET, "websocket connected");
     let (read, mut write) = tokio::io::split(core);
     // 核心 → 浏览器：一行一个文字帧；核心断了关 1012，叫浏览器那头的循环停下。

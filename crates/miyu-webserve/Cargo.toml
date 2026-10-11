@@ -8,12 +8,9 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
-# 连核心：转发浏览器的连接不读本机令牌（connect_or_start_bare）；要一次性码那一下照终端出示（connect_or_start）。
-miyu-ipc = { path = "../miyu-ipc" }
-# 数据根。
-miyu-store = { path = "../miyu-store" }
-# 拉起核心的命令（`CoreCommand`）：照终端的样子连核心那一块挪进了门面（施工 S-1）。
-miyu-client = { path = "../miyu-client" }
+# 核心只经门面 miyu-client 用（设计 32 第二节）：连核心（转发浏览器的连接不读本机令牌，connect_or_start_bare）、数据根；
+# 拉起核心的命令（`CoreCommand`）照终端的样子连核心那一块也在门面里（施工 S-1）。
+miyu-client.workspace = true
 # HTTP/1 的回应、请求的类型（照网页软件，本来就在依赖图里）。MIT。
 hyper = { version = "1", features = ["server", "http1"] }
 hyper-util = { version = "0.1", default-features = false, features = ["tokio"] }
@@ -28,3 +25,7 @@ tracing = { version = "0.1", default-features = false, features = ["std"] }
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+# 单元测试里造数据根（设计 32 第四节第 2 条）。
+miyu-store.workspace = true

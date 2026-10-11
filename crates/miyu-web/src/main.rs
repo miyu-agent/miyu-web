@@ -8,9 +8,9 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 use std::sync::Arc;
 
-use miyu_store::env::Env;
-use miyu_store::resources::ResourceRoot;
-use miyu_store::root::DataRoot;
+use miyu_client::places::DataRoot;
+use miyu_client::places::Env;
+use miyu_client::places::ResourceRoot;
 use miyu_web::open::{Launch, Open, SystemBrowser, open};
 use miyu_web::serve::Serve;
 use miyu_web::settings::Settings;
@@ -75,7 +75,7 @@ fn main() -> ExitCode {
 /// `serve`：读资源、装运行日志，跑到空闲退出。
 async fn serve(root: DataRoot, env: &Env, port: Option<u16>) -> u8 {
     let failed = |reason: String| {
-        print!("{}", miyu_ipc::Ready::Failed(reason).line());
+        print!("{}", miyu_client::connect::Ready::Failed(reason).line());
         1
     };
     let resources = match ResourceRoot::locate(env) {
@@ -89,10 +89,10 @@ async fn serve(root: DataRoot, env: &Env, port: Option<u16>) -> u8 {
     let pages = std::env::var_os("MIYU_WEB_PAGES")
         .filter(|pages| !pages.is_empty())
         .map_or_else(|| resources.path().join("web").join("pages"), PathBuf::from);
-    let _log = miyu_log::install(
+    let _log = miyu_client::log::install(
         &root.state().join("logs"),
         "web",
-        miyu_log::LevelFilter::INFO,
+        miyu_client::log::LevelFilter::INFO,
         env.home.as_deref(),
     );
     let settings = settings.from_core(&root).await;
