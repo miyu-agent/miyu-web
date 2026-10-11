@@ -236,3 +236,36 @@ test('选模型的项的下拉：模型照显示名，有好几家的写是哪�
   assert.deepEqual(referenceOptions({ providers: [{ id: 'a', models: [{ ref: 'a/m', model: 'm' }] }] }), [{ value: 'a/m', name: 'm' }], '只有一家的不写是哪一家');
   assert.deepEqual(referenceOptions(null), []);
 });
+
+test('供应商页（2026-10-11 改版）：地址的主机名、只换密钥的那一条改动、选模型按供应商分组', async () => {
+  const { hostOf, keyChange, pickGroups } = await import('../../packages/settings/model.js');
+  assert.equal(hostOf('https://api.deepseek.com/v1'), 'api.deepseek.com');
+  assert.equal(hostOf('http://192.0.2.10:3425/v1'), '192.0.2.10:3425');
+  assert.equal(hostOf({ env: 'MIYU_URL' }), null, '写成环境变量的不写主机名');
+  assert.equal(hostOf('不是地址'), null);
+  const got = { items: { 'providers.ds.key': { layers: [{ origin: { layer: 'personal' }, used: true, value: { env: 'A' } }], origin: { layer: 'personal' }, value: { env: 'A' } } } };
+  const [change] = keyChange('ds', { secret: 'ds-1' }, got, 'personal');
+  assert.equal(change.key, 'providers.ds.key');
+  assert.deepEqual(change.value, { secret: 'ds-1' });
+  assert.ok(change.expect, '带着这一层读到的 expect');
+  assert.equal(keyChange('a.b', { env: 'X' }, { items: {} }, 'personal')[0].key, 'providers."a.b".key', '编号里有点的加引号');
+  const providers = [
+    { id: 'a', models: [{ model: 'x', name: 'X', vision: true }, { model: 'x2', name: 'X', vision: false }] },
+    { id: 'b', models: [{ model: 'y', name: 'Y', vision: false }] },
+    { id: 'c', models: [] },
+  ];
+  const all = pickGroups(providers, () => true, (m) => m.name);
+  assert.deepEqual(all.map((g) => g.provider.id), ['a', 'b'], '一个模型都没有的家不列');
+  assert.deepEqual(all[0].models.map((r) => r.dup), [true, true], '同一家里名字重了的标出来');
+  const seeing = pickGroups(providers, (m) => m.vision, (m) => m.name);
+  assert.deepEqual(seeing.map((g) => [g.provider.id, g.models.length]), [['a', 1]], '看图的只列看得了图的');
+});
+
+test('同名的几家：标出来，地址从哪来（主机名、$环境变量）', async () => {
+  const { whereOf, sameNamed } = await import('../../packages/settings/model.js');
+  assert.equal(whereOf('https://api.deepseek.com'), 'api.deepseek.com');
+  assert.equal(whereOf({ env: 'MIYU_DEV_BASE_URL' }), '$MIYU_DEV_BASE_URL');
+  assert.equal(whereOf(null), null);
+  const same = sameNamed([{ id: 'deepseek', name: { value: 'DeepSeek' } }, { id: 'dev', name: { value: 'DeepSeek' } }, { id: 'fake', name: { value: 'fake' } }]);
+  assert.deepEqual([...same].sort(), ['deepseek', 'dev']);
+});

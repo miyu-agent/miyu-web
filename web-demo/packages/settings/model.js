@@ -225,6 +225,60 @@ export function providerChanges(id, form, got, layer, secret) {
   return changes;
 }
 
+/**
+ * 只换一家的密钥（供应商页头下面那一块，蓝图「设置页」第 14 条）：一条改动，写 `providers.<编号>.key` 的引用。
+ * @param {string} id @param {{secret: string}|{env: string}} ref @param {{items?: Record<string, Entry>}} got @param {string} layer
+ */
+export function keyChange(id, ref, got, layer) {
+  const key = `providers.${keySegment(id)}.key`;
+  return [{ key, value: ref, expect: expectFor(got.items?.[key] ?? null, layer) }];
+}
+
+/**
+ * 地址的主机名（供应商那一列第二行：同名的两家靠它分开）：写成环境变量的、写坏的是 `null`。
+ * @param {any} url
+ */
+export function hostOf(url) {
+  if (typeof url !== 'string') return null;
+  try {
+    return new URL(url).host || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 地址从哪来，给人分开同名的两家用：主机名，写成环境变量的是 `$变量名`；都没有的 `null`。
+ * @param {any} url
+ */
+export function whereOf(url) {
+  return hostOf(url) ?? (url && typeof url === 'object' && typeof url.env === 'string' ? `$${url.env}` : null);
+}
+
+/**
+ * 显示名重了的几家（2026-10-11 项目主人：两个 DeepSeek 分不出）：交回这些家的编号，画的地方在名字旁边多写地址从哪来（`whereOf`）。
+ * @param {any[]} providers
+ */
+export function sameNamed(providers) {
+  const names = duplicates(providers.map(providerName));
+  return new Set(providers.filter((p) => names.has(providerName(p))).map((p) => p.id));
+}
+
+/**
+ * 选默认模型的选择器按供应商分组（蓝图「设置页」第 14 条）：一家一组，组里是这一家的模型；`keep` 挑哪些列（看图的只列看得了图的），
+ * 一个模型都不剩的家不列。同一家里名字重了的标出来（行下面写模型名）。
+ * @template M
+ * @param {{id: string, models?: M[]}[]} providers @param {(m: M) => boolean} keep @param {(m: M) => string} nameOf
+ * @returns {{provider: any, models: {m: M, dup: boolean}[]}[]}
+ */
+export function pickGroups(providers, keep, nameOf) {
+  return providers.map((provider) => {
+    const models = (provider.models ?? []).filter(keep);
+    const dup = duplicates(models.map(nameOf));
+    return { provider, models: models.map((m) => ({ m, dup: dup.has(nameOf(m)) })) };
+  }).filter((g) => g.models.length);
+}
+
 /** 池的成员往前（`-1`）、往后（`1`）挪一格；到头了不动。 @param {string[]} list @param {number} i @param {number} dir */
 export function moveMember(list, i, dir) {
   const j = i + dir;

@@ -154,33 +154,52 @@
 .set-tabbar { transition: background-color 0.15s ease, color 0.15s ease; }
 .set-tabbar:hover { background: var(--surface-2); color: var(--text); }
 .set-tabbar.is-on { background: var(--surface-3); color: var(--text); }
-.set-prov-wrap { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 16px; min-height: 320px; margin-top: 14px; }
+.set-prov-wrap { display: grid; grid-template-columns: 184px minmax(0, 1fr); gap: 20px; min-height: 320px; margin-top: 14px; }
+/* 左边一家一格两行：图标、名称，下面一行暗色小字（用不了的原因 warn 色，能用的写地址的主机名）；图标、首字母方块一样大，不拉长 */
 .set-prov-list { display: flex; flex-direction: column; gap: 2px; }
-.set-prov { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: var(--text-soft); font: 13px var(--sans); text-align: left; cursor: pointer; }
-.set-prov span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.set-prov em { color: var(--text-faint); font: 11px var(--mono); font-style: normal; }
+.set-prov { display: flex; align-items: center; gap: 9px; min-height: 34px; padding: 6px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--text-soft); font: 13px var(--sans); text-align: left; cursor: pointer; }
+.set-prov-text, .set-prov.is-add > span { display: flex; flex: 1; flex-direction: column; gap: 1px; min-width: 0; }
+.set-prov-text > span, .set-prov-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.set-prov-text small { color: var(--text-faint); font-size: 11.5px; }
+.set-prov-text small.is-warn { color: var(--t-warn, var(--gold)); }
 .set-prov:hover { background: var(--surface-2); color: var(--text); }
 .set-prov.is-on { background: var(--sidebar-active); box-shadow: var(--sidebar-active-shadow); color: var(--text); }
 .set-prov.is-add { color: var(--text-faint); }
+.set-prov.is-add .icon { width: 16px; height: 16px; margin: 0 1px; }
 .set-prov-main { min-width: 0; }
-.set-prov-facts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
-.set-fact { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.set-fact span { color: var(--text-faint); font-size: 11.5px; }
-.set-fact-note { margin-left: 6px; color: var(--text-faint); font-size: 11.5px; font-style: normal; font-weight: 400; }
-.set-fact strong { max-width: 220px; overflow: hidden; font-size: 13px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
-.set-prov-buttons { display: flex; gap: 6px; margin-left: auto; }
+/* 右边头上：图标、名称（大一号）、地址，右边两个按钮；不画分隔线，靠留白分开下面几块 */
+.set-prov-title { display: flex; align-items: center; gap: 12px; }
+.set-prov-title > div:nth-child(2) { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+.set-prov-title strong { font-size: 16px; font-weight: 600; }
+.set-prov-title span { overflow: hidden; color: var(--text-faint); font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+.prov-logo.is-big { width: 28px; height: 28px; }
+.prov-logo.is-big.is-initial { font-size: 14px; border-radius: 8px; }
+.set-prov-buttons { display: flex; flex: none; gap: 6px; }
+.set-prov-note { margin: 8px 0 0; color: var(--text-faint); font-size: 12.5px; }
 .set-test { margin: 8px 0 0; font: 12px var(--mono); color: var(--text-soft); }
 .set-test.is-good { color: var(--online); }
 .set-test.is-bad { color: var(--danger); }
-.set-model-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 2px 12px; margin-top: 10px; }
-.set-pick { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 34px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: var(--text); font: 13px var(--sans); text-align: left; cursor: pointer; }
+/* 密钥：没设的一块淡的 warn 底，直接填；设了的一行「已设置」「更换」 */
+.set-key-block { margin-top: 16px; padding: 12px 14px; border-radius: 10px; background: var(--surface-2); }
+.set-key-block.is-missing { background: color-mix(in srgb, var(--t-warn, var(--gold)) 10%, var(--surface-1)); }
+.set-key-why { margin: 0 0 10px; color: var(--t-warn, var(--gold)); font-size: 12.5px; }
+.set-key-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.set-key-row .set-input { flex: 1; min-width: 180px; background: var(--surface-1); }
+.set-key-block .set-error { margin: 8px 0 0; }
+.set-key-line { display: flex; align-items: center; gap: 12px; margin-top: 16px; font-size: 13px; }
+.set-key-line > span:first-child { color: var(--text-faint); }
+.set-key-state { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 模型：一行「模型 N」和搜索框；下面一个一行：名字、右边暗字「1M 上下文 · 看图」 */
+.set-models { margin-top: 22px; }
+.set-models-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; padding: 0 2px; color: var(--text-faint); font-size: 12.5px; }
+.set-models-head .set-model-search { width: 220px; max-width: 50%; margin-top: 0; }
+.set-model-list { display: flex; flex-direction: column; gap: 1px; }
 .set-model { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 34px; padding: 5px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--text); font: 13px var(--sans); text-align: left; cursor: pointer; }
-.set-model:hover, .set-pick:hover { background: var(--surface-2); }
-.set-model.is-on, .set-pick.is-on { background: var(--surface-3); }
+.set-model:hover { background: var(--surface-2); }
+.set-model.is-on { background: var(--surface-3); }
 .set-model-id { display: block; overflow: hidden; color: var(--text-faint); font: 11px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
 .set-model-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.set-model-meta { display: inline-flex; align-items: center; gap: 5px; color: var(--text-faint); font: 11.5px var(--mono); }
-.set-model-meta .icon { width: 13px; height: 13px; }
+.set-model-meta { flex: none; margin-left: auto; color: var(--text-faint); font-size: 12px; white-space: nowrap; }
 .set-drawer {
   position: absolute; top: 0; right: 0; bottom: 0; z-index: 4; width: min(380px, 100%); padding: 0 16px 16px; overflow-y: auto;
   border-left: 1px solid var(--line); background: var(--surface); box-shadow: -12px 0 24px -18px rgba(0, 0, 0, 0.25);
@@ -198,20 +217,14 @@
 .set-drawer .set-chips { max-width: none; }
 .set-drawer .set-input:not(.is-number) { width: 160px; }
 .set-row.is-todo { opacity: 0.6; }
-.set-picks { position: relative; display: flex; flex-direction: column; gap: 2px; margin-top: 10px; }
-.set-picks > .set-status { position: absolute; top: -22px; right: 0; }
-.set-pick code { color: var(--text-faint); font: 11px var(--mono); }
-.set-radio { width: 14px; height: 14px; flex: none; border-radius: 50%; background: var(--surface-3); }
-.set-pick.is-on .set-radio { background: var(--accent); box-shadow: inset 0 0 0 4px var(--accent), inset 0 0 0 7px var(--surface-1); }
 .set-pools { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; margin-top: 14px; }
 .set-pool { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border: 0; border-radius: 12px; background: var(--surface-1); box-shadow: var(--card-shadow); color: var(--text); font: 13px var(--sans); text-align: left; }
 .set-pool-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .set-pool .set-chips { justify-content: flex-start; max-width: none; }
-.set-pool.is-add { flex-direction: row; align-items: center; justify-content: center; min-height: 84px; background: color-mix(in srgb, var(--text) 3%, transparent); box-shadow: none; color: var(--text-soft); cursor: pointer; transition: background-color 0.15s ease; }
-.set-pool.is-add:hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }
+/* 卡片下面一行「＋ 新建模型池」（同「＋ 添加供应商」，2026-10-11：原来是一整块淡底的大卡）；占满一行，不跟卡片挤在一格 */
+.set-pool-new { grid-column: 1 / -1; width: fit-content; }
 
 /* 第二轮（只放用户要看的） */
-.set-warn-dot { width: 6px; height: 6px; flex: none; border-radius: 50%; background: var(--t-warn, var(--gold)); }
 .set-prov-warn { margin: 10px 0 0; color: var(--t-warn, var(--gold)); font-size: 12.5px; }
 .set-model-state { color: var(--t-warn, var(--gold)); font-size: 11.5px; font-style: normal; }
 .set-pick-provider { color: var(--text-faint); font-size: 12px; }
@@ -268,17 +281,33 @@
 .set-chip.is-member { padding: 0 4px; }
 .set-chip.is-member button:disabled { opacity: 0.3; cursor: default; }
 .set-chip.is-member > span { padding: 0 2px; }
-/* 正在新建：还是「新建」那一张（尺寸、淡底不变），中间居中「@ 框」，下面一行暗色小字 */
-.set-pool.is-add.is-editing { flex-direction: column; gap: 6px; cursor: default; }
-.set-pool.is-add.is-editing:hover { background: color-mix(in srgb, var(--text) 3%, transparent); }
-.set-new-row { display: flex; align-items: center; gap: 6px; }
+/* 正在新建：一张白卡，头上「@」加名字框（淡底一块，白卡上看得出），下面一行暗色小字 */
+.set-pool.is-editing .set-pool-head { justify-content: flex-start; }
 .set-new-at { color: var(--text-soft); font-weight: 600; }
-.set-new-row .set-input { width: 280px; max-width: 60vw; background: var(--surface-1); }
-.set-new-row .set-input:focus { box-shadow: var(--card-shadow); }
+.set-pool.is-editing .set-input { flex: 1; max-width: 320px; background: var(--surface-2); }
 .set-new-hint { color: var(--text-faint); font-size: 12px; }
 .set-new-hint.is-bad { color: var(--danger); }
 
 /* 找模型、读模型列表、选模型的小窗 */
+/* 默认模型（defaults.js）：一个用途一行，右边的按钮写着现在选的（图标、名字、暗字哪一家） */
+.set-use-pick { max-width: 340px; gap: 8px; }
+.set-use-pick > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.set-use-pick em { flex: none; color: var(--text-faint); font-size: 12px; font-style: normal; }
+.set-use-pick .prov-logo { width: 16px; height: 16px; }
+/* 选一个模型的选择器（model-pick.js）：按供应商分组，组头暗色小字；现在选的打勾，用不了的暗着 */
+.set-pick-group { display: flex; align-items: center; gap: 8px; padding: 10px 8px 4px; color: var(--text-faint); font-size: 12px; font-weight: 600; }
+.set-pick-group .prov-logo { width: 15px; height: 15px; }
+.set-pick-group small { color: var(--text-faint); font-weight: 400; }
+.set-pick-group em { margin-left: auto; color: var(--t-warn, var(--gold)); font-style: normal; font-weight: 400; }
+.set-pick-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 34px; padding: 4px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--text); font: 13px var(--sans); text-align: left; cursor: pointer; }
+.set-pick-row:hover { background: var(--surface-2); }
+.set-pick-row.is-on { background: var(--surface-3); }
+.set-pick-row.is-off { opacity: 0.5; cursor: default; }
+.set-pick-row.is-off:hover { background: transparent; }
+.set-pick-check { display: inline-grid; flex: none; width: 16px; color: var(--accent); }
+.set-pick-check .icon { width: 15px; height: 15px; }
+.set-menu-item.is-off { opacity: 0.5; cursor: default; }
+.set-menu-item.is-off:hover { background: transparent; }
 .set-model-search { width: 100%; margin-top: 12px; }
 .set-loading { display: flex; align-items: center; gap: 8px; padding: 18px 0; color: var(--text-faint); font-size: 13px; }
 .set-loading .icon { animation: set-spin 0.9s linear infinite; }
@@ -347,11 +376,6 @@
 .set-ext-ask li span { color: var(--text-soft); }
 .set-ext-ask .set-form-buttons { margin-top: 10px; }
 
-/* 「语义模型」（embedding.js）：顶上核心的说明 */
-.set-embed-desc { margin: 12px 0 12px; }
 /* 「软件包」页核心那一段：扩展的名字后面暗色写现在怎样 */
 .set-pkg-state { margin-left: 8px; color: var(--text-faint); font-size: 12px; font-style: normal; font-weight: 400; }
 
-/* 用不了的单选（内置模型没装）：暗着、不能点 */
-.set-pick.is-off { cursor: default; opacity: 0.55; }
-.set-pick.is-off:hover { background: transparent; }

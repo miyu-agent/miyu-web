@@ -228,9 +228,11 @@ export function select(dialog, options, value, pick) {
 /** 在 `anchor` 下面开一个菜单；点外面、`Esc`、选了一项关上。 */
 export function menu(dialog, anchor, options, value, pick) {
   dialog.panel.querySelector('.set-menu')?.dispatchEvent(new CustomEvent('set-dismiss'));
-  const items = options.map((o) => h(`button.set-menu-item${JSON.stringify(o.value) === JSON.stringify(value) ? '.is-on' : ''}`, {
+  // `off` 的（用不了：没装的这类）暗着、点不了，暗字写为什么
+  const items = options.map((o) => h(`button.set-menu-item${JSON.stringify(o.value) === JSON.stringify(value) ? '.is-on' : ''}${o.off ? '.is-off' : ''}`, {
     type: 'button',
     role: 'option',
+    disabled: o.off ? true : null,
     onclick: () => { close(); if (JSON.stringify(o.value) !== JSON.stringify(value)) pick(o.value); },
   }, h('span', o.name), o.note ? h('em', o.note) : null, JSON.stringify(o.value) === JSON.stringify(value) ? icon('check') : null));
   // 选项多的（选模型的那种，上百个）顶上一个搜索框：照名字、暗字找，不分大小写；回车选第一个对得上的

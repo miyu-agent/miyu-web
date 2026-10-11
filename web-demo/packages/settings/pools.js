@@ -1,7 +1,7 @@
 // @ts-check
 //! 模型池（蓝图 `web.md`「设置页」第 14 条）：一个池一张卡片：头上 `@名字`、调用方式（固定、轮换）、「＋ 添加」（从还没进来的模型里
-//! 勾）、删除；下面成员一行一个（序号、名字、哪一家，悬停露出往上、往下、✕）；最后一张「新建模型池」写名字回车建好。改了当场存，
-//! 写进个人设置。
+//! 勾）、删除；下面成员一行一个（序号、名字、哪一家，悬停露出往上、往下、✕）。卡片下面一行「＋ 新建模型池」（同「＋ 添加供应商」，
+//! 2026-10-11：原来是一整块淡底的大卡），点了原地变成一张白卡写名字，回车建好。改了当场存，写进个人设置。
 
 import { h, icon } from '../../src/lib/dom.js';
 import { pickModels } from './picker.js';
@@ -78,13 +78,13 @@ export function drawPools(dialog, list) {
       rows.length ? scroller(pool.name, rows) : h('span.set-muted', t('pool_empty')));
   };
 
-  // 新建：还是这一张卡（宽、高、底色不变），中间换成居中的「@ 框」，下面一行「回车创建 · Esc 取消」；回车建好（固定、没有成员），
-  // `Esc`、空着点别处回到原来的样子
-  const create = h('button.set-pool.is-add', { type: 'button' }, icon('plus'), t('new_pool'));
+  // 新建：卡片下面一行「＋ 新建模型池」，点了原地变成一张白卡：头上「@」加名字框，下面一行「回车创建 · Esc 取消」；回车建好（固定、
+  // 没有成员），`Esc`、空着点别处回到那一行
+  const create = h('button.set-prov.is-add.set-pool-new', { type: 'button' }, icon('plus'), h('span', t('new_pool')));
   create.addEventListener('click', () => {
     const hint = h('span.set-new-hint', t('pool_new_hint'));
     const input = /** @type {HTMLInputElement} */ (h('input.set-input', { type: 'text', placeholder: t('pool_name_hint'), spellcheck: 'false', autocomplete: 'off' }));
-    const box = h('div.set-pool.is-add.is-editing', h('div.set-new-row', h('span.set-new-at', '@'), input), hint);
+    const box = h('div.set-pool.is-editing', h('div.set-pool-head', h('span.set-new-at', '@'), input), hint);
     const cancel = () => box.replaceWith(create);
     const fail = (why) => { hint.textContent = why; hint.classList.add('is-bad'); };
     box.addEventListener('set-dismiss', cancel);
