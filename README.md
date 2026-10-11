@@ -11,7 +11,7 @@
 
 ```sh
 cargo test
-MIYU_RESOURCES=<核心检出>/resources node --test web-demo/tests
+MIYU_RESOURCES=<核心检出>/resources node --test 'web-demo/tests/**/*.test.js'
 cargo test --manifest-path web-demo/bridge/Cargo.toml
 ```
 

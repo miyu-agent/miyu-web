@@ -32,7 +32,7 @@ MIYU_HOME=<同一个目录> MIYU_RESOURCES=<核心检出>/resources MIYU_CORE_BI
 纯逻辑（事件 → 条目、时间线的段和字、差异、左栏的一项、框下面那一行、数的写法、回答的 Markdown 怎么解析和上色、预览工作区放什么、媒体卡片）有测试，拿仓库里事件的样本当底料，不开浏览器：
 
 ```sh
-MIYU_RESOURCES=<核心检出>/resources node --test web-demo/tests
+MIYU_RESOURCES=<核心检出>/resources node --test 'web-demo/tests/**/*.test.js'
 cargo clippy --manifest-path web-demo/bridge/Cargo.toml --all-targets -- -D warnings
 cargo test --manifest-path web-demo/bridge/Cargo.toml
 ```

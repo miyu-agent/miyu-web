@@ -54,7 +54,7 @@ jobs:
         run: |
           node --version
           manifest=$(cargo metadata --format-version 1 --locked | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const p=JSON.parse(s).packages.find(p=>p.name==="miyu-client");console.log(p.manifest_path)})')
-          MIYU_RESOURCES="$(dirname "$manifest")/../../resources" node --test web-demo/tests
+          MIYU_RESOURCES="$(dirname "$manifest")/../../resources" node --test 'web-demo/tests/**/*.test.js'
       - name: 演示的桥
         if: runner.os == 'Linux'
         run: |

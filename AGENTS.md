@@ -8,7 +8,7 @@ Miyu 的网页（头）：网页软件 `miyu-web`（`crates/miyu-web`，只听�
 - 协议、事件的形状以核心仓库的 `docs/blueprint/protocol.md`、`docs/designs/samples/` 为准；改到协议的事先找核心。
 - 升级核心：改仓库根 `Cargo.toml` 里钉住的提交（三行一起改）和 `web-demo/bridge/Cargo.toml` 里那一行，过三台 CI。
 - 每个 `.rs` 文件不超过 500 行，测试也算；clippy `-D warnings`；不吞错误（不写 `let _ =`、`.ok()` 扔错误）。
-- 网页的纯逻辑测试读核心的出厂资源：本机跑设 `MIYU_RESOURCES` 指到核心检出里的 `resources/`（`node --test web-demo/tests`）。
+- 网页的纯逻辑测试读核心的出厂资源：本机跑设 `MIYU_RESOURCES` 指到核心检出里的 `resources/`（`node --test 'web-demo/tests/**/*.test.js'`）。
 - 给人看的字照三种语言；界面上只放人要的，说法照通用软件的短句；控件不画描边。
 - 图纸在 `docs/blueprint/`（`web.md`、`web-ui.md`、`web-module.md`、`webserve.md`、`web/`）；改了界面先改图纸。
 - 本机测：沙箱数据根（`MIYU_HOME` 指到单独的目录），不碰 `~/.miyu`，不重启别人在用的核心；key 和地址只放在命令里。
