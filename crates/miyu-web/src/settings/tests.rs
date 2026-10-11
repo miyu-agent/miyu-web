@@ -1,4 +1,4 @@
-//! 网页软件的数（施工 9-1 下）：默认值照清单 `packages/web/package.toml`，常量照 `web/web.json`；核心交回的最终值盖上去，不合范围的
+//! 网页软件的数（施工 9-1 下）：默认值照清单 `packages/web/package.toml`，常量照 `packages/web/web.json`；核心交回的最终值盖上去，不合范围的
 //! 照旧。
 
 use std::path::{Path, PathBuf};
@@ -8,18 +8,15 @@ use serde_json::json;
 
 use super::*;
 
-/// 出厂的资源目录照装好的样子拼一份（施工 S-4，仓库拆开以后）：清单在这个仓库的 `package/`，`web/web.json` 还在核心的
-/// 资源目录里（照 git 依赖钉住的那份检出，`miyu_client::WORKSPACE_ROOT`）。一个进程拼一次。
+/// 出厂的资源目录照装好的样子拼一份（仓库拆开以后）：这个仓库的 `package/`（清单、`web.json`）放进 `packages/web/`。一个进程拼一次。
 fn shipped_root() -> &'static Path {
     static ROOT: OnceLock<PathBuf> = OnceLock::new();
     ROOT.get_or_init(|| {
         let root = std::env::temp_dir().join(format!("miyu-web-shipped-{}", std::process::id()));
-        std::fs::create_dir_all(root.join("web")).unwrap();
-        std::fs::create_dir_all(root.join("packages/web")).unwrap();
-        let core = Path::new(miyu_client::WORKSPACE_ROOT).join("resources");
-        std::fs::copy(core.join("web/web.json"), root.join("web/web.json")).unwrap();
-        let ours = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../package/package.toml");
-        std::fs::copy(ours, root.join(MANIFEST)).unwrap();
+        std::fs::create_dir_all(root.join(DIR)).unwrap();
+        let ours = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../package");
+        std::fs::copy(ours.join("package.toml"), root.join(MANIFEST)).unwrap();
+        std::fs::copy(ours.join("web.json"), root.join(FILE)).unwrap();
         root
     })
 }

@@ -70,8 +70,8 @@
 | `crates/miyu-webserve/src/pages.rs`（W-9 写在 `crates/miyu-web/src/pages.rs`，施工 O-16 搬进共用的 `miyu-webserve`，`webserve.md`） | 页面文件、响应头 | W-9 |
 | `crates/miyu-webserve/src/ws.rs`、`lib.rs`（同上） | 核对 Host、Origin；WebSocket 和核心连接两头照转 | W-9 |
 | `crates/miyu-web/src/media.rs`、`media/` | `POST /media` 换票据，`GET /media/<票据>` 分段给；细的见 `web-ui.md`「在哪」 | W-10 |
-| `resources/web/web.json` | 媒体类型的表、页面的内容安全策略（端口、空闲多久、票据记多久施工 9-1 下挪进网页的清单 `packages/web/package.toml`，成了配置项） | W-9、W-10、9-1 下 |
-| `resources/web/pages/` | 页面文件。M9 的网页搬进主仓库以前，开发时设 `MIYU_WEB_PAGES` 指到网页演示的 `web-demo/` | W-9 |
+| `package/web.json`（装好在资源目录的 `packages/web/`；2026-10-11 从核心的 `resources/web/` 挪进来） | 媒体类型的表、页面的内容安全策略（端口、空闲多久、票据记多久施工 9-1 下挪进网页的清单 `packages/web/package.toml`，成了配置项） | W-9、W-10、9-1 下 |
+| 资源目录的 `packages/web/pages/` | 页面文件（原来在 `resources/web/pages/`，2026-10-11 跟着挪进网页包的文件夹）。开发时设 `MIYU_WEB_PAGES` 指到 `web-demo/` | W-9 |
 
 - 分层照 `01-架构.md` 第九节：`miyu-mermaid`、`miyu-net` 在第 3 层（执行器），`miyu-web` 在第 5 层（头）。门禁读那张表，三行要先登记（「要跟着改的别的页」）。
 - `miyu-web` 只依赖 `miyu-ipc`、`miyu-store`、`miyu-kernel`（编号的写法），不依赖 `miyu-endpoint`、`miyu-core`：它不是核心。

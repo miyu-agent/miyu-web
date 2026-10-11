@@ -48,7 +48,7 @@ pub struct Site {
     pub types: media::Types,
     /// 软件后台页的票据（`/page`、`/p/`）。
     pub pages: pages::Tickets,
-    /// 软件后台页的文件的媒体类型（资源目录的 `web/web.json`）。
+    /// 软件后台页的文件的媒体类型（这个仓库的 `package/web.json`，编进桥里）。
     pub page_types: pages::PageTypes,
 }
 

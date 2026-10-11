@@ -1,7 +1,7 @@
 //! 网页软件的数（`web-module.md`「起草时定的」第 25 条，施工 9-1 下改）：端口、空闲多久、`/media` 的票据记多久、最多几张
 //! 是配置项，声明在网页自己的清单 `packages/web/package.toml` 的 `[settings]` 里（`packages.md`「配置项」），`serve` 起来时先连核心
-//! 问 `config.get` 拿最终值（[`Settings::configured`]）；默认值照清单读。媒体类型的表、页面的内容安全策略是常量，还在
-//! `web/web.json`。
+//! 问 `config.get` 拿最终值（[`Settings::configured`]）；默认值照清单读。媒体类型的表、页面的内容安全策略是常量，在网页包自己的
+//! 文件夹里的 `web.json`（仓库拆开以后从核心的 `resources/web/` 挪进这个仓库的 `package/`，装好在 `packages/web/web.json`）。
 
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -12,8 +12,11 @@ use serde_json::{Value, json};
 
 use miyu_client::places::DataRoot;
 
+/// 网页包装好以后在资源目录里的文件夹（这个仓库的 `package/` 照原样放进去）：清单、常量、页面都在这里。
+pub const DIR: &str = "packages/web";
+
 /// 常量在资源目录里的位置。
-pub const FILE: &str = "web/web.json";
+pub const FILE: &str = "packages/web/web.json";
 
 /// 网页自己的清单在资源目录里的位置。
 pub const MANIFEST: &str = "packages/web/package.toml";
@@ -55,7 +58,7 @@ struct Constants {
 }
 
 impl Settings {
-    /// 读资源目录 `resources` 里的 `web/web.json` 和清单里几项配置的默认值。
+    /// 读资源目录 `resources` 里网页包的 `web.json` 和清单里几项配置的默认值。
     ///
     /// # Errors
     ///

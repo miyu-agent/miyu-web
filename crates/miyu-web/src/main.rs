@@ -88,7 +88,10 @@ async fn serve(root: DataRoot, env: &Env, port: Option<u16>) -> u8 {
     };
     let pages = std::env::var_os("MIYU_WEB_PAGES")
         .filter(|pages| !pages.is_empty())
-        .map_or_else(|| resources.path().join("web").join("pages"), PathBuf::from);
+        .map_or_else(
+            || resources.path().join(miyu_web::settings::DIR).join("pages"),
+            PathBuf::from,
+        );
     let _log = miyu_client::log::install(
         &root.state().join("logs"),
         "web",

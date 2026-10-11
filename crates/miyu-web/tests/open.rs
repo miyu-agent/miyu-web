@@ -70,13 +70,16 @@ impl Browser for FakeBrowser {
 /// 拉起的是真的 `miyu-web serve`：数据根、资源目录照这个临时目录，空闲 1 秒就走。
 fn launch(home: &Home) -> Launch {
     let resources = home.dir.join("resources");
-    std::fs::create_dir_all(resources.join("web")).expect("建得了");
     std::fs::create_dir_all(resources.join("packages/web")).expect("建得了");
-    // `web/web.json` 还在核心的资源目录里（照 git 依赖钉住的那份检出），清单在这个仓库的 `package/`（施工 S-4）。
-    let core = Path::new(miyu_client::WORKSPACE_ROOT).join("resources");
-    std::fs::copy(core.join("web/web.json"), resources.join("web/web.json")).expect("拷得了");
+    // 网页包（这个仓库的 `package/`：清单、`web.json`）照装好的样子放进 `packages/web/`
+    let package = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../package");
+    std::fs::copy(
+        package.join("web.json"),
+        resources.join("packages/web/web.json"),
+    )
+    .expect("拷得了");
     // 空闲多久照清单的默认值（施工 9-1 下）：这里改成 1 秒，测完很快就走。核心没在跑，`serve` 照默认起。
-    let ours = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../package/package.toml");
+    let ours = package.join("package.toml");
     let manifest = std::fs::read_to_string(ours).expect("出厂的读得到");
     let quick = manifest.replace("default = 600\n", "default = 1\n");
     assert_ne!(quick, manifest, "清单里有空闲的默认值");

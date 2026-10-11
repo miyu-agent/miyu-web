@@ -61,23 +61,21 @@ impl Tickets {
     }
 }
 
-/// 页面文件的媒体类型（`resources/web/web.json` 的 `types`）。
+/// 网页包的常量（这个仓库的 `package/web.json`，和 `miyu-web serve` 同一份），编进桥里：桥不用再找核心的资源目录。
+const WEB_JSON: &str = include_str!("../../../package/web.json");
+
+/// 页面文件的媒体类型（`package/web.json` 的 `types`）。
 pub struct PageTypes(HashMap<String, String>);
 
 impl PageTypes {
-    /// 读资源目录下的 `web/web.json`：资源目录照 `MIYU_RESOURCES`（核心检出里的 `resources/`；仓库拆开以后没有默认的，施工 S-4）。
+    /// 读编进来的 `web.json` 的 `types`。
     ///
     /// # Errors
     ///
-    /// 读不到、不是 JSON、没有 `types`：说是哪一样。
+    /// 不是 JSON、没有 `types`：说是哪一样。
     pub fn load() -> Result<PageTypes, String> {
-        let root: std::path::PathBuf = std::env::var_os("MIYU_RESOURCES")
-            .ok_or_else(|| "没设 MIYU_RESOURCES：指向核心检出里的 resources/".to_string())?
-            .into();
-        let file = root.join("web/web.json");
-        let text = std::fs::read_to_string(&file).map_err(|e| format!("读不了 {}：{e}", file.display()))?;
-        let v: Value = serde_json::from_str(&text).map_err(|e| format!("{} 不是 JSON：{e}", file.display()))?;
-        let types = v["types"].as_object().ok_or_else(|| format!("{} 少了 types", file.display()))?
+        let v: Value = serde_json::from_str(WEB_JSON).map_err(|e| format!("package/web.json 不是 JSON：{e}"))?;
+        let types = v["types"].as_object().ok_or_else(|| "package/web.json 少了 types".to_string())?
             .iter().filter_map(|(k, t)| Some((k.clone(), t.as_str()?.to_string()))).collect();
         Ok(PageTypes(types))
     }
