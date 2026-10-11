@@ -3,28 +3,19 @@
    上面一层底色（surface，浓度照 --persona-veil：100 减人格的透明度）让字看得清。左栏、左上角的标签、空会话输入框上面那一排按钮、输入框是磨砂的：半透明的底加模糊，透出一点图的颜色
    （标签 42%，2026-10-11 项目主人嫌磨砂不够显，比第一版透一点）；
    你的气泡、卡片、菜单照旧是实底 */
-/* 底色那一层盖整个窗口（左栏收起、展开的动画里，左栏和对话区之间那道正在合拢的缝也是盖着的；2026-10-11 项目主人截到收起时左边一道
-   没盖的深色，原来底色只盖对话区）。左栏不透过它模糊（那样透出来的是洗淡了的图，磨砂不显），自己垫一份同一张原图（照窗口铺，
-   background-attachment: fixed），模糊、盖一层比对话区薄 8% 的左栏底色 */
+/* 底色那一层盖整个窗口（左栏收起、展开的动画里，左栏和对话区之间那道缝也是盖着的；2026-10-11 项目主人截到收起时左边一道没盖的深色）。
+   左栏磨砂照浏览器的 backdrop-filter 模糊它后面的（滑动、浮出时都对得上；原来自己垫一份图用 background-attachment: fixed，
+   滑动、整页放大时对不上，浮出来是一团团的颜色，项目主人截图问过）：后面已经盖了底色，模糊时把饱和度拉高，透出图的颜色，
+   左栏自己的底色只薄薄一层 */
 .has-persona-backdrop .app-shell {
   background:
     linear-gradient(color-mix(in srgb, var(--surface) var(--persona-veil, 80%), transparent) 0 0),
     var(--persona-backdrop) var(--persona-focus, center) / cover no-repeat var(--surface);
 }
 .has-persona-backdrop .stage { background: transparent; }
-.has-persona-backdrop .sidebar { isolation: isolate; background: transparent; }
-.has-persona-backdrop .sidebar::before {
-  position: absolute; inset: -48px; z-index: -1; pointer-events: none; content: '';
-  background:
-    linear-gradient(color-mix(in srgb, var(--sidebar-bg) max(calc(var(--persona-veil, 80%) - 8%), 0%), transparent) 0 0),
-    var(--persona-backdrop) var(--persona-focus, center) / cover no-repeat fixed;
-  filter: blur(28px) saturate(1.3);
-  /* 模糊会往外渗：画大一圈再照左栏的框裁掉，边上不发虚 */
-  clip-path: inset(48px);
-}
-/* 宽屏的左栏在格子里，没有定位：垫的那一份照它定位（窄屏的抽屉本来就是 fixed） */
-@media (min-width: 837px) {
-  .has-persona-backdrop .sidebar { position: relative; }
+.has-persona-backdrop .sidebar {
+  background: color-mix(in srgb, var(--sidebar-bg) 28%, transparent);
+  -webkit-backdrop-filter: blur(28px) saturate(1.9); backdrop-filter: blur(28px) saturate(1.9);
 }
 .has-persona-backdrop .composer {
   background: color-mix(in srgb, var(--surface-1) 70%, transparent);
