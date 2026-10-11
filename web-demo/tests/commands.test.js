@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { typed, menuTyped, filter, find, read, Menu, keptAttachments, talkAfterRefusal } from '../src/model/commands.js';
+import { typed, menuTyped, filter, find, read, Menu, keptAttachments, talkAfterRefusal, quietReceipt } from '../src/model/commands.js';
 
 const res = loadRes();
 const list = res.commands.commands;
@@ -163,4 +163,13 @@ test('列表里没有的命令被核心拒了：只有认不出、带着字的�
   assert.equal(talkAfterRefusal('unknown_command', null), false, '不带字的写拒绝那一句');
   assert.equal(talkAfterRefusal('memory_unavailable', '喜欢猫'), false, '无人格会话里的 /remember 内容不发给她');
   assert.equal(talkAfterRefusal(null, '喜欢猫'), false);
+});
+
+test('设长期目标不写回执；看、改、停、继续、清掉照旧写（2026-10-12）', () => {
+  assert.equal(quietReceipt('goal', '把测试修绿'), true);
+  assert.equal(quietReceipt('goal', '--rounds 3 把测试修绿'), true);
+  assert.equal(quietReceipt('goal', 'pause the build'), true, '带字的整句当目标');
+  assert.equal(quietReceipt('goal', null), false, '看');
+  for (const sub of ['pause', 'resume', 'clear', 'edit 新的目标']) assert.equal(quietReceipt('goal', sub), false, sub);
+  assert.equal(quietReceipt('remember', '喜欢猫'), false);
 });

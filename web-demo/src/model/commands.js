@@ -101,6 +101,17 @@ export function talkAfterRefusal(reason, words) {
   return !!words && reason === 'unknown_command';
 }
 
+/**
+ * 回执不写进提示的：设长期目标（`/goal <目标>`，右上方那一截出来了就是回执，2026-10-12 项目主人）。照核心的认法（`command.run`
+ * 第 10 条）：后面没别的字的 `pause`、`resume`、`clear` 和 `edit …` 是子命令，别的带字的整句是设目标。看、改、停、清的照旧写。
+ * @param {string} name 正名 @param {string|null} words
+ */
+export function quietReceipt(name, words) {
+  const w = (words ?? '').trim();
+  if (name !== 'goal' || !w) return false;
+  return !['pause', 'resume', 'clear', 'edit'].includes(w) && !/^edit\s/.test(w);
+}
+
 /** 命令列表的状态：开没开、选中哪一条（照 TUI 演示的 `menu.rs`）。 */
 export class Menu {
   constructor() {

@@ -12,7 +12,7 @@ import { h, replace } from './dom.js';
 import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { fitAbove } from './fit.js';
-import { Menu, keptAttachments, talkAfterRefusal } from '../model/commands.js';
+import { Menu, keptAttachments, talkAfterRefusal, quietReceipt } from '../model/commands.js';
 import { itemsOf } from '../model/entries.js';
 import { copy } from '../markdown/build.js';
 import { Refusal } from '../core/connection.js';
@@ -212,7 +212,7 @@ export async function runUnlisted(app, name, words) {
   }
   try {
     const got = await app.store.conn.request('command.run', { session: app.current, text: `/${name}${words ? ` ${words}` : ''}` });
-    if (got?.said) app.composer.say(got.said, true);
+    if (got?.said && !quietReceipt(got.command ?? name.toLowerCase(), words)) app.composer.say(got.said, true);
   } catch (err) {
     if (err instanceof Refusal && talkAfterRefusal(err.reason, words)) return 'talk';
     if (!(err instanceof Refusal)) console.error(err);
@@ -243,7 +243,7 @@ const RUNS = {
     const timer = setTimeout(() => { waiting = true; app.composer.say(t('commands.running', { name: `/${spec.name}` }), false, true); }, res.layout.command_wait_ms);
     try {
       const got = await app.store.conn.request('command.run', { session: app.current, text: `/${spec.name}${words ? ` ${words}` : ''}` });
-      if (got?.said) app.composer.say(got.said, true);
+      if (got?.said && !quietReceipt(spec.name, words)) app.composer.say(got.said, true);
       else if (waiting) app.composer.quiet();
     } finally {
       clearTimeout(timer);
