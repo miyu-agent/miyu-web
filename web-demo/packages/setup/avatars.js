@@ -53,7 +53,7 @@ export class PersonaImages {
  * 要传的那张图（2026-10-11 项目主人定：各个头先缩小再传，核心的上限只当兜底）：核心收的类型、长边不超过 `side`、不比 `maxBytes` 大的照原样；
  * 别的在浏览器里照比例画到长边 `side` 的画布上重新存：先存 WebP，浏览器存不了的存 `fallback`（头像 PNG，背景图 JPEG），还比 `maxBytes`
  * 大的存成 JPEG（透明的地方铺白）。都超的交最小的那一份，由核心照上限拒（写它的原话）。
- * @param {File} file @param {number} side 长边最多多少像素 @param {{fallback?: string, maxBytes?: number}} [opts]
+ * @param {Blob} file @param {number} side 长边最多多少像素 @param {{fallback?: string, maxBytes?: number}} [opts]
  * @returns {Promise<Blob>}
  */
 export async function shrink(file, side, opts = {}) {

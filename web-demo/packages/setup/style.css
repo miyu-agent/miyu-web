@@ -75,22 +75,62 @@
 .setup-face img { width: 100%; height: 100%; object-fit: cover; }
 .setup-face .icon { width: 20px; height: 20px; }
 .setup-face.is-big { width: 56px; height: 56px; font-size: 22px; }
-/* 人格详情最上面的头像那一格：圆的图、两个按钮 */
-.setup-avatar-box { display: flex; align-items: center; gap: 10px; }
-/* 主题色那一行：「自动」、头像取到的几块颜色、「自选颜色」；现在用的：「自动」铺主色的淡底（MD3 选中的选项卡片那样），色块上画一个勾（都不描边）。
-   取色器藏着，按钮叫它出来 */
-.setup-seed-box, .setup-bg-box { position: relative; display: flex; align-items: center; gap: 10px; min-height: 32px; }
+/* 人格详情最上面三行（蓝图 web.md「跟着人格的外观」第 4 条，2026-10-11 项目主人定：图本身就是按钮）：头像、背景图点了换，
+   悬停盖一层暗的写「更换」，有图的右上角一个小 × 移除；主题色一排方块（自动 A、头像取到的几色、+），现在用的画一个勾。都不描边 */
+.setup-avatar-box, .setup-seed-box, .setup-bg-box { position: relative; display: flex; align-items: center; gap: 10px; min-height: 32px; }
 .setup-seed-box { flex-wrap: wrap; gap: 8px; }
-.setup-seed-auto { height: 32px; padding: 0 12px; border: 0; border-radius: 10px; background: var(--surface-2); color: var(--text); font: 14px var(--sans); cursor: pointer; }
-.setup-seed-auto:hover { background: var(--surface-3); }
-.setup-seed-auto.is-on { background: var(--accent-soft); color: var(--on-primary-container); }
-.setup-swatch { flex: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 10px; cursor: pointer; transition: transform 0.12s var(--ease-out); }
+.setup-pic { position: relative; flex: none; }
+.setup-pic-main {
+  position: relative; display: grid; place-items: center; overflow: hidden; padding: 0; border: 0;
+  background: var(--surface-2); color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer;
+}
+.setup-pic.is-avatar .setup-pic-main {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-1)); color: var(--accent); font-size: 24px; font-weight: 600;
+}
+.setup-pic.is-background .setup-pic-main { width: 176px; height: 99px; border-radius: 10px; }
+.setup-pic-main img { width: 100%; height: 100%; object-fit: cover; }
+.setup-pic-hover {
+  position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, 0.42); color: #fff;
+  font-size: 12.5px; font-weight: 500; opacity: 0; transition: opacity 0.15s ease;
+}
+.setup-pic-main:hover .setup-pic-hover, .setup-pic-main:focus-visible .setup-pic-hover { opacity: 1; }
+.setup-pic-main:focus-visible { outline: none; }
+.setup-pic-empty { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.setup-pic-empty .icon { width: 22px; height: 22px; }
+.setup-pic-main:has(.setup-pic-empty):hover { background: var(--surface-3); color: var(--text); }
+.setup-pic-remove {
+  position: absolute; top: -7px; right: -7px; display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0;
+  border-radius: 50%; background: var(--surface-3); color: var(--text-soft); box-shadow: var(--bubble-shadow); cursor: pointer;
+}
+.setup-pic.is-avatar .setup-pic-remove { top: -3px; right: -3px; }
+.setup-pic-remove:hover { background: color-mix(in srgb, var(--danger) 18%, var(--surface-3)); color: var(--danger); }
+.setup-pic-remove .icon { width: 13px; height: 13px; }
+.setup-swatch {
+  flex: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 10px;
+  font: 600 13px var(--sans); cursor: pointer; transition: transform 0.12s var(--ease-out);
+}
 .setup-swatch:hover { transform: scale(1.08); }
 .setup-swatch .icon { width: 18px; height: 18px; }
+.setup-swatch.is-auto:not([style*="background"]) { background: var(--surface-2); color: var(--text-soft); }
+.setup-swatch.is-pick { background: var(--surface-2); color: var(--text-soft); }
+.setup-swatch.is-pick:hover { transform: none; background: var(--surface-3); color: var(--text); }
 .setup-color-input { position: absolute; left: 0; bottom: 0; width: 0; height: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; }
-/* 背景图那一行：16:9 的小图，没有的空一块底色 */
-.setup-bg-thumb { flex: none; width: 96px; height: 54px; overflow: hidden; border-radius: 8px; background: var(--surface-2); }
-.setup-bg-thumb img { width: 100%; height: 100%; object-fit: cover; }
+/* 裁头像的窗口（crop.js）：图上一个圆的框，框外压暗；拖图挪、滚轮或滑杆放大 */
+.setup-crop { display: grid; justify-items: center; gap: 14px; }
+.setup-crop-stage { position: relative; width: 280px; height: 280px; overflow: hidden; border-radius: 12px; background: var(--surface-2); cursor: grab; touch-action: none; }
+.setup-crop-stage:active { cursor: grabbing; }
+.setup-crop-canvas { display: block; width: 280px; height: 280px; }
+.setup-crop-ring { position: absolute; inset: 0; border-radius: 50%; box-shadow: 0 0 0 200px rgba(0, 0, 0, 0.45); pointer-events: none; }
+.setup-crop-zoom { width: 280px; height: 18px; margin: 0; background: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
+.setup-crop-zoom:focus-visible { outline: none; }
+.setup-crop-zoom::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: var(--surface-3); }
+.setup-crop-zoom::-moz-range-track { height: 4px; border: 0; border-radius: 2px; background: var(--surface-3); }
+.setup-crop-zoom::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--accent); }
+.setup-crop-zoom::-webkit-slider-thumb { width: 16px; height: 16px; margin-top: -6px; border: 0; border-radius: 50%; background: var(--accent); box-shadow: var(--bubble-shadow); -webkit-appearance: none; appearance: none; }
+.setup-crop-zoom::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: var(--accent); box-shadow: var(--bubble-shadow); }
+.setup-crop .setup-foot { width: 100%; }
+.setup-float-scrim.setup-crop-scrim.is-page { z-index: 91; }
 /* 预设详情的图标那一格：现在的图标加一个下拉的箭头；点开下面一块（搜索、不用图标、一排图标），都不描边 */
 .setup-icon-pick { display: grid; gap: 8px; }
 .setup-icon-now { display: inline-flex; align-items: center; gap: 4px; width: fit-content; height: 36px; padding: 0 8px; border: 0; border-radius: 10px; background: var(--surface-2); color: var(--text); font: 15px var(--sans); cursor: pointer; }

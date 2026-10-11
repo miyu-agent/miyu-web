@@ -1,15 +1,17 @@
 // @ts-check
-//! 人格的外观那几行（蓝图 `web.md`「主题」的「跟着人格的外观」第 3、4 条；核心 P-5 头像、P-6 主题色和背景图）：人格的编辑卡片里最上面
-//! 三行，换、删都当场存（只带这一样的 `persona.set`），不等「保存」。
-//! - 头像：圆的图（没有的画名字的第一个字），「更换头像」「移除头像」。
-//! - 主题色：「自动」（照头像取的第一名，就是不存）、头像取到的前四色（色块，点一下存成这个人格的主色）、「自选颜色」（浏览器的取色器；
-//!   选的不在那四色里的多画一块）；现在用的那一个是选中的样子（色块上画一个勾）。
-//! - 背景图：一张小图（没有的空一块底色），「更换背景图」「移除背景图」；大的先缩小、存成 WebP（存不了的 JPEG，照片存 PNG 太大）。
+//! 人格的外观那几行（蓝图 `web.md`「主题」的「跟着人格的外观」第 4、6、8 条；核心 P-5 头像、P-6 主题色和背景图）：人格的编辑卡片里
+//! 最上面三行，换、删都当场存（只带这一样的 `persona.set`），不等「保存」。图本身就是按钮（2026-10-11 项目主人定，不要一排字的按钮）：
+//! - 头像：圆的图（没有的画名字的第一个字），点它换，悬停盖一层写「更换」；有头像的右上角一个小 × 移除。不是正方形的先裁（`crop.js`）。
+//! - 主题色：一排方块：「自动」（照头像取的第一名，就是不存；块上铺那个颜色、写 A）、头像取到的前四色（点一下存成这个人格的主色）、
+//!   「+」（浏览器的取色器；选的不在那四色里的在「+」前面多画一块）；现在用的那一块上画一个勾。
+//! - 背景图：16:9 的小图（没有的是一块底色、写「添加」），点它换，悬停写「更换」，有图的右上角一个小 ×；大的先缩小、存成 WebP（存不了的
+//!   JPEG，照片存 PNG 太大）。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { seedsOf, hexOf, inkOf } from '../../src/lib/md3/index.js';
 import { pixelsOf } from '../../src/lib/md3/pixels.js';
 import { shrink, store } from './avatars.js';
+import { cropAvatar } from './crop.js';
 
 /** 核心收头像、背景图的上限（P-5 头像 1 MiB；P-6 背景图 5 MiB，`blob.put` 收图就封在 5 MiB）：缩小以后还超的再压（`avatars.js` 的 `shrink`） */
 const AVATAR_BYTES = 1024 * 1024;
@@ -68,9 +70,8 @@ export class Appearance {
     const url = this.imageUrl(this.catalog.avatars, this.avatar, () => this.paintAvatar(), this.avatarBox);
     const pick = this.filePicker((file) => this.changeImage('avatar', file));
     this.redraw(this.avatarBox,
-      h('span.setup-face.is-persona.is-big', { 'aria-hidden': 'true' }, url ? h('img', { src: url, alt: '' }) : [...this.hooks.name()][0] ?? ''),
-      this.kit.button(t('edit.avatar_change'), {}, () => pick.click()),
-      this.avatar ? this.kit.button(t('edit.avatar_remove'), {}, () => this.setPart('avatar', { unset: true })) : null,
+      this.picture('avatar', url ? h('img', { src: url, alt: '' }) : h('span.setup-pic-initial', [...this.hooks.name()][0] ?? ''), !!url,
+        () => pick.click(), this.avatar ? () => this.setPart('avatar', { unset: true }) : null),
       pick);
   }
 
@@ -80,21 +81,45 @@ export class Appearance {
     const input = /** @type {HTMLInputElement} */ (h('input.setup-color-input', { type: 'color', value: this.seed ?? colors[0] ?? '#3368c0', tabindex: '-1', 'aria-hidden': 'true' }));
     input.addEventListener('change', () => this.setPart('seed', input.value));
     const open = () => (typeof input.showPicker === 'function' ? input.showPicker() : input.click());
+    /** 一块：现在用的画一个勾 @param {string} cls @param {string} title @param {boolean} on @param {string|null} fill @param {any} mark @param {() => void} act */
+    const block = (cls, title, on, fill, mark, act) => h(`button.setup-swatch${cls}${on ? '.is-on' : ''}`, {
+      type: 'button', title, 'aria-label': title, 'aria-pressed': String(on), onclick: act,
+      style: fill ? `background: ${fill}; color: ${inkOf(fill)}` : '',
+    }, on ? icon('check') : mark);
     const choose = (/** @type {string} */ hex) => () => (this.seed === hex ? undefined : this.setPart('seed', hex));
-    /** 一块颜色：现在用的画一个勾 @param {string} hex @param {() => void} act */
-    const swatch = (hex, act) => {
-      const on = this.seed === hex;
-      return h(`button.setup-swatch${on ? '.is-on' : ''}`, { type: 'button', title: hex, 'aria-label': hex, 'aria-pressed': String(on), style: `background: ${hex}; color: ${inkOf(hex)}`, onclick: act },
-        on ? icon('check') : null);
-    };
-    // 自选的不在头像那几种里的：多画一块，点它再选
+    // 自选的不在头像那几种里的：在「+」前面多画一块，点它再选
     const own = this.seed && !colors.includes(this.seed) ? this.seed : null;
     this.redraw(this.seedBox,
-      h(`button.setup-seed-auto${this.seed ? '' : '.is-on'}`, { type: 'button', 'aria-pressed': String(!this.seed), onclick: () => this.seed && this.setPart('seed', { unset: true }) }, t('edit.seed_auto')),
-      colors.map((hex) => swatch(hex, choose(hex))),
-      own ? swatch(own, open) : null,
-      this.kit.button(t('edit.seed_pick'), {}, open),
+      block('.is-auto', t('edit.seed_auto'), !this.seed, colors[0] ?? null, 'A', () => (this.seed ? this.setPart('seed', { unset: true }) : undefined)),
+      colors.map((hex) => block('', hex, this.seed === hex, hex, null, choose(hex))),
+      own ? block('', own, true, own, null, open) : null,
+      block('.is-pick', t('edit.seed_pick'), false, null, icon('plus'), open),
       input);
+  }
+
+  paintBackground() {
+    const t = this.t;
+    const url = this.imageUrl(this.catalog.backgrounds, this.background, () => this.paintBackground(), this.backgroundBox);
+    const pick = this.filePicker((file) => this.changeImage('background', file));
+    this.redraw(this.backgroundBox,
+      this.picture('background', url ? h('img', { src: url, alt: '' }) : h('span.setup-pic-empty', icon('image'), t('edit.add_short')), !!url,
+        () => pick.click(), this.background ? () => this.setPart('background', { unset: true }) : null),
+      pick);
+  }
+
+  /**
+   * 一张图（头像、背景图）：图本身是按钮，点了换；有图的悬停盖一层写「更换」；`remove` 有的右上角一个小 ×。
+   * @param {'avatar'|'background'} part @param {Node} inner @param {boolean} shown 有图 @param {() => void} change
+   * @param {(() => void)|null} remove
+   */
+  picture(part, inner, shown, change, remove) {
+    const t = this.t;
+    const changeTitle = t(`edit.${part}_change`);
+    const removeTitle = t(`edit.${part}_remove`);
+    return h(`div.setup-pic.is-${part}`,
+      h('button.setup-pic-main', { type: 'button', title: changeTitle, 'aria-label': changeTitle, onclick: change },
+        inner, shown || part === 'avatar' ? h('span.setup-pic-hover', { 'aria-hidden': 'true' }, t('edit.change_short')) : null),
+      remove ? h('button.setup-pic-remove', { type: 'button', title: removeTitle, 'aria-label': removeTitle, onclick: remove }, icon('x')) : null);
   }
 
   /**
@@ -112,17 +137,6 @@ export class Appearance {
       });
     }
     return [];
-  }
-
-  paintBackground() {
-    const t = this.t;
-    const url = this.imageUrl(this.catalog.backgrounds, this.background, () => this.paintBackground(), this.backgroundBox);
-    const pick = this.filePicker((file) => this.changeImage('background', file));
-    this.redraw(this.backgroundBox,
-      h('span.setup-bg-thumb', { 'aria-hidden': 'true' }, url ? h('img', { src: url, alt: '' }) : null),
-      this.kit.button(t('edit.background_change'), {}, () => pick.click()),
-      this.background ? this.kit.button(t('edit.background_remove'), {}, () => this.setPart('background', { unset: true })) : null,
-      pick);
   }
 
   /**
@@ -166,9 +180,12 @@ export class Appearance {
   async changeImage(part, file) {
     const cfg = this.ctx.config;
     try {
+      // 头像不是正方形的先裁；取消了就不换
+      const source = part === 'avatar' ? await cropAvatar({ text: this.t, kit: this.kit, from: this.avatarBox }, file) : file;
+      if (!source) return;
       const blob = part === 'avatar'
-        ? await shrink(file, cfg.avatar_side, { maxBytes: AVATAR_BYTES })
-        : await shrink(file, cfg.background_side, { fallback: 'image/jpeg', maxBytes: BACKGROUND_BYTES });
+        ? await shrink(source, cfg.avatar_side, { maxBytes: AVATAR_BYTES })
+        : await shrink(source, cfg.background_side, { fallback: 'image/jpeg', maxBytes: BACKGROUND_BYTES });
       const hash = await store(this.ctx.core, blob, { chunk: cfg.avatar_chunk_bytes, tries: cfg.avatar_tries }, part);
       await this.setPart(part, { blob: hash });
     } catch (err) {

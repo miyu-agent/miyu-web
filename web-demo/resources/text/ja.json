@@ -163,7 +163,6 @@
     "unknown": "そのコマンドはありません",
     "not_open": "このセッションはまだ始まっていません",
     "undone": "取り消しました",
-    "theme_changed": "テーマ：{name}",
     "nothing_to_copy": "コピーできる返信がまだありません",
     "undone_jobs": "取り消しました · {count} 件のタスクを停止しました",
     "language_changed": "表示言語：{name}",

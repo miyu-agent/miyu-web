@@ -1,7 +1,25 @@
-/* 人格的背景图（packages/theme-persona/index.js 在页面根上写 has-persona-backdrop、--persona-backdrop、--persona-veil）：只铺对话区，
-   图铺满、居中裁，上面一层底色（surface 照设置项 veil 的浓度）让字看得清；用对话区自己的背景画，不另加一层，不动浮层的上下 */
-.has-persona-backdrop .stage {
+/* 人格的背景图（packages/theme-persona/index.js 在页面根上写 has-persona-backdrop、--persona-backdrop、--persona-veil；蓝图 web.md
+   「跟着人格的外观」第 6 条）：图铺满整个窗口（左栏也在图上，2026-10-11 项目主人定），铺满、居中裁，上面一层底色（surface，浓度照
+   --persona-veil）让字看得清。左栏、左上角的标签、空会话输入框上面那一排按钮、输入框是磨砂的：半透明的底加模糊，透出一点图的颜色；
+   你的气泡、卡片、菜单照旧是实底 */
+.has-persona-backdrop .app-shell {
   background:
     linear-gradient(color-mix(in srgb, var(--surface) var(--persona-veil, 80%), transparent), color-mix(in srgb, var(--surface) var(--persona-veil, 80%), transparent)),
     var(--persona-backdrop) center / cover no-repeat var(--surface);
 }
+.has-persona-backdrop .stage { background: transparent; }
+.has-persona-backdrop .sidebar {
+  background: color-mix(in srgb, var(--sidebar-bg) 62%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2); backdrop-filter: blur(24px) saturate(1.2);
+}
+.has-persona-backdrop .composer {
+  background: color-mix(in srgb, var(--surface-1) 70%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2); backdrop-filter: blur(20px) saturate(1.2);
+}
+.has-persona-backdrop .setup-btn, .has-persona-backdrop .setup-info {
+  background: color-mix(in srgb, var(--surface-1) 55%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
+}
+.has-persona-backdrop .setup-btn:hover { background: color-mix(in srgb, var(--surface-3) 72%, transparent); }
+/* 对话区上下的淡出是一条实的底色，盖在图上就是一道带子：有图时不画 */
+.has-persona-backdrop .chat-fade, .has-persona-backdrop .chat-fade-top { visibility: hidden; }

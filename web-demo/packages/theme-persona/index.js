@@ -3,14 +3,16 @@
 //! `look.changed`，和左栏左上角、对话区的头像同一份）：
 //! - 主题「跟随人格」：往主题包的 `theme.palettes` 挂一个生成的主题（浅、深两份都生成，`src/lib/md3/`）；颜色照人格自选的主色（核心 P-6
 //!   的 `seed`），没选的照头像取的第一名。都没有、无人格、取不出的交 `null`：就是默认那个主题。换了颜色换一份挂上，选着它的当场渐变过去。
-//! - 背景图（核心 P-6）：和选哪一套无关，一直跟着人格。铺在对话区（`style.css`：页面根上 `has-persona-backdrop`、变量
-//!   `--persona-backdrop`），上面盖一层底色，多浓是设置项 `veil`。左栏照主题。
+//! - 背景图（核心 P-6）：和选哪个主题无关，一直跟着人格。铺满整个窗口（`style.css`：页面根上 `has-persona-backdrop`、变量
+//!   `--persona-backdrop`），上面盖一层底色，多浓是设置项 `veil`；左栏、标签、输入框磨砂。换图和换颜色并成一次整页淡过去
+//!   （`src/lib/retheme.js`）。
 //! 停用了这个包就没有「跟随人格」这一套、没有背景图。
 //!
 //! 头像在浏览器里缩小到长边 `sample_side` 再取色；同一张图取过的记着，换回来不再算。
 
 import { seedOf, themeOf } from '../../src/lib/md3/index.js';
 import { pixelsOf } from '../../src/lib/md3/pixels.js';
+import { retheme } from '../../src/lib/retheme.js';
 
 /** 排在定的那几套后面 */
 const ORDER = 10;
@@ -54,9 +56,16 @@ export function apply(ctx) {
   const root = document.documentElement;
   /** 铺着的背景图（改了设置项 `veil` 照它重铺） */
   let shown = /** @type {string|null} */ (null);
-  /** 背景图：有的铺上、没有的拿掉 @param {string|null} url */
+  /** 背景图：有的铺上、没有的拿掉；换了图的整页淡过去 @param {string|null} url */
   const backdrop = (url) => {
-    shown = url;
+    if (url !== shown) {
+      shown = url;
+      return retheme(() => lay(url));
+    }
+    lay(url);
+  };
+  /** 真去铺 @param {string|null} url */
+  const lay = (url) => {
     root.classList.toggle('has-persona-backdrop', !!url);
     if (url) {
       root.style.setProperty('--persona-backdrop', `url("${url}")`);
@@ -85,6 +94,6 @@ export function apply(ctx) {
   ctx.watchConfig(() => backdrop(shown));
   ctx.effect(() => () => {
     undo();
-    backdrop(null);
+    lay(null);
   });
 }

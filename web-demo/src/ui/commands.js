@@ -248,10 +248,6 @@ const RUNS = {
     if (got?.cached) app.recapAgain(session, got.text);
     if (app.current === session) requestAnimationFrame(() => app.chat.reveal());
   },
-  theme: async (app) => {
-    const next = await app.ctx.theme?.next();
-    if (next) app.composer.say(t('commands.theme_changed', { name: next.name }));
-  },
   // 界面语言（蓝图「界面语言」第 3 条）：不带参数的开一个浮层选；写了 auto 或表里的一种直接换，写别的提示能写哪些
   language: (app, spec, words) => {
     const lang = app.ctx.language;

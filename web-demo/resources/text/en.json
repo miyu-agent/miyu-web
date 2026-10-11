@@ -163,7 +163,6 @@
     "unknown": "No such command",
     "not_open": "No session yet",
     "undone": "Undone",
-    "theme_changed": "Theme: {name}",
     "nothing_to_copy": "No reply to copy",
     "undone_jobs": "Undone · stopped {count} task(s)",
     "language_changed": "Interface language: {name}",

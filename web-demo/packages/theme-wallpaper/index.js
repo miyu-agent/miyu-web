@@ -3,7 +3,8 @@
 //! （`src/lib/md3/`），往主题包的 `theme.palettes` 挂一个生成的主题（浅、深两份都生成）。壁纸经宿主的 `wallpaper(dark)` 读（浏览器那一份问桥）；
 //! 读不到、取不出颜色的不挂，设置页就没有这一张。
 //!
-//! 页面在前台时隔 `check_seconds` 秒问一次换没换（宿主交的记号 `sig` 变了才重取色），回到前台、换了浅深（事件 `theme.changed`）时当场问；
+//! 页面在前台时隔 `check_seconds` 秒问一次换没换（宿主交的记号 `sig` 变了才重取色），回到前台、窗口拿回焦点、换了浅深（事件
+//! `theme.changed`）时当场问（niri 这类平铺的桌面上浏览器一直露着，不会有「回到前台」）；
 //! 问的是页面这时的浅深（服务 `theme`，深浅可以各设一张壁纸）。同一张图取过、取不出的记着，不再取。
 
 import { seedOf, themeOf } from '../../src/lib/md3/index.js';
@@ -71,7 +72,11 @@ export function apply(ctx) {
   };
   ctx.effect(() => {
     document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
   });
   // 换了浅深（也会是自己挂上去引起的：记号一样，不再取）
   ctx.on('theme.changed', check);

@@ -56,6 +56,8 @@
 .set-rows { display: flex; flex-direction: column; }
 .set-row { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .set-rows > .set-row:last-child { border-bottom: 0; }
+/* 「明暗」那一行下面紧跟着主题卡片，不画分隔线（2026-10-11 项目主人） */
+.set-row:has(+ .set-themes) { border-bottom: 0; }
 .set-text { flex: 1; min-width: 0; }
 .set-name { display: flex; align-items: baseline; gap: 8px; min-width: 0; font-size: 14px; }
 .set-desc { display: -webkit-box; margin: 3px 0 0; overflow: hidden; color: var(--text-soft); font-size: 12.5px; line-height: 1.45; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
