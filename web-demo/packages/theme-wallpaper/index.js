@@ -1,13 +1,16 @@
 // @ts-check
-//! 主题「跟随壁纸」（软件包 `theme-wallpaper`，蓝图 `web.md`「主题」的「跟着人格的外观」第 5 条）：照这台电脑现在的桌面壁纸取主色
-//! （`src/lib/md3/`），往主题包的 `theme.palettes` 挂一个生成的主题（浅、深两份都生成）。壁纸经宿主的 `wallpaper(dark)` 读（浏览器那一份问桥）；
+//! 主题「跟随壁纸」（软件包 `theme-wallpaper`，蓝图 `web.md`「主题」的「跟着人格的外观」第 5 条）：往主题包的 `theme.palettes` 挂一个
+//! 生成的主题（浅、深两份都生成，`src/lib/md3/`）。经宿主的 `wallpaper(dark)` 读（浏览器那一份问桥），两个来处：
+//! - matugen 生成的那份颜色（有就先照它，2026-10-11 项目主人定）：MD3 角色照它的，和桌面上别的软件一模一样；认不出的（模板旧了、
+//!   缺格子）当没有；
+//! - 桌面壁纸：照图取主色。
 //! 读不到、取不出颜色的不挂，设置页就没有这一张。
 //!
 //! 页面在前台时隔 `check_seconds` 秒问一次换没换（宿主交的记号 `sig` 变了才重取色），回到前台、窗口拿回焦点、换了浅深（事件
 //! `theme.changed`）时当场问（niri 这类平铺的桌面上浏览器一直露着，不会有「回到前台」）；
 //! 问的是页面这时的浅深（服务 `theme`，深浅可以各设一张壁纸）。同一张图取过、取不出的记着，不再取。
 
-import { seedOf, themeOf } from '../../src/lib/md3/index.js';
+import { seedOf, themeOf, themeFromRoles, matugenOf } from '../../src/lib/md3/index.js';
 import { pixelsOf } from '../../src/lib/md3/pixels.js';
 
 /** 排在定的那几套、「跟随人格」后面 */
@@ -24,14 +27,17 @@ export function apply(ctx) {
   let seen = /** @type {string|null} */ (null);
   let busy = false;
 
-  /** 挂一套：先挂新的再拿掉原来的（主题包不会在中间看到没有这一套）。 @param {number} seed ARGB */
-  const mount = (seed) => {
+  /**
+   * 挂一套：先挂新的再拿掉原来的（主题包不会在中间看到没有这一套）。
+   * @param {(scheme: 'light'|'dark') => ReturnType<typeof themeOf>} make 浅或深那一份怎么生成
+   */
+  const mount = (make) => {
     /** @type {Partial<Record<'light'|'dark', ReturnType<typeof themeOf>>>} */
     const made = {};
     const before = undo;
     undo = ctx.slots.mount('theme.palettes', {
       id: 'wallpaper', name: ctx.text('name'), order: ORDER,
-      render: (/** @type {'light'|'dark'} */ scheme) => (made[scheme] ??= themeOf(seed, scheme)),
+      render: (/** @type {'light'|'dark'} */ scheme) => (made[scheme] ??= make(scheme)),
     });
     before?.();
   };
@@ -52,11 +58,18 @@ export function apply(ctx) {
       }
       if (got.sig === seen) return;
       seen = got.sig;
+      if (got.kind === 'matugen') {
+        // 认不出的当没有
+        const m = matugenOf(got.colors);
+        if (m) mount((scheme) => themeFromRoles(m[scheme], m.source, scheme));
+        else unmount();
+        return;
+      }
       const rgba = await pixelsOf(got.url, ctx.config.sample_side);
       const seed = rgba ? seedOf(rgba) : null;
       // 解不了的图、灰的：没有这一套
       if (seed == null) unmount();
-      else mount(seed);
+      else mount((scheme) => themeOf(seed, scheme));
     } finally {
       busy = false;
     }

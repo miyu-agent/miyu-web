@@ -11,7 +11,8 @@
 //! - 选目录：浏览器给不了本机路径，请桥开系统的选目录对话框（`/pick-dir`，桥的 `dialog.rs`）；页面开在别的机器上的（地址不是本机）
 //!   不请，对话框会开在桥那台机器上、人看不到。
 //! - 软件后台页：带着口令 `POST /page` 请桥造一张票据，交回框的地址（地址里只有票据，框里的页面读得到自己的地址，口令不能给它）。
-//! - 桌面壁纸（主题「跟随壁纸」）：浏览器读不到桌面，请桥读（`/wallpaper`，crate `miyu-wallpaper`）；页面开在别的机器上的不请。
+//! - 桌面壁纸（主题「跟随壁纸」）：浏览器读不到桌面，请桥读（`/wallpaper`，crate `miyu-wallpaper`，matugen 生成的那份颜色优先）；
+//!   页面开在别的机器上的不请。
 //! - 打开时直接到哪个软件的后台页：`miyu web --package <编号>` 打出的网址在 `#` 后面多一个 `package=<编号>`，和口令一起读、一起抹掉。
 
 /**
@@ -213,10 +214,11 @@ async function pickDir(key, opts = {}) {
 }
 
 /**
- * 桌面壁纸（主题「跟随壁纸」，蓝图 `web.md`「跟着人格的外观」第 5 条）：问桥现在的壁纸（桥的 `/wallpaper`），交换没换的记号 `sig`
- * 和取图的地址 `url`（地址里带着记号，换了图地址就不一样）。页面开在别的机器上的（那是桥那台机器的壁纸）、读不到的、问不到桥的交 `null`。
+ * 桌面壁纸（主题「跟随壁纸」，蓝图 `web.md`「跟着人格的外观」第 5 条）：问桥（`/wallpaper`）现在的那一份。matugen 生成的颜色优先：
+ * 交 `{sig, kind: 'matugen', colors}`（`colors` 是那份 JSON，页面自己认）；没有的交 `{sig, kind: 'image', url}`（取图的地址，带着记号）。
+ * `sig` 是换没换的记号。页面开在别的机器上的（那是桥那台机器的壁纸）、两样都读不到的、问不到桥的交 `null`。
  * @param {string} key @param {boolean} dark 页面这时是不是深色（深浅可以各设一张）
- * @returns {Promise<{sig: string, url: string}|null>}
+ * @returns {Promise<{sig: string, kind: 'matugen', colors: any}|{sig: string, kind: 'image', url: string}|null>}
  */
 async function wallpaper(key, dark) {
   if (!onThisMachine()) return null;
@@ -224,11 +226,13 @@ async function wallpaper(key, dark) {
     const q = new URLSearchParams({ k: key, dark: dark ? '1' : '0' });
     const got = await fetch(`/wallpaper?${q}`, { cache: 'no-store' });
     if (!got.ok) return null;
-    const sig = (await got.json())?.sig;
+    const { sig, kind } = await got.json() ?? {};
     if (typeof sig !== 'string') return null;
-    q.set('image', '1');
+    q.set('data', '1');
     q.set('sig', sig);
-    return { sig, url: `/wallpaper?${q}` };
+    if (kind !== 'matugen') return { sig, kind: 'image', url: `/wallpaper?${q}` };
+    const colors = await fetch(`/wallpaper?${q}`, { cache: 'no-store' });
+    return colors.ok ? { sig, kind: 'matugen', colors: await colors.json() } : null;
   } catch {
     return null;
   }

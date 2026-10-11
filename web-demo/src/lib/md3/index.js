@@ -85,18 +85,67 @@ export const seedOf = (rgba) => seedsOf(rgba, 1)[0] ?? null;
 export function themeOf(seed, scheme) {
   const argb = typeof seed === 'string' ? argbFromHex(seed) : seed;
   const s = new SchemeContent(Hct.fromInt(argb), scheme === 'dark', 0);
-  const role = (/** @type {string} */ name) => hexFromArgb(/** @type {any} */ (D)[name].getArgb(s));
+  return build(scheme, (name) => hexFromArgb(/** @type {any} */ (D)[name].getArgb(s)), (tone) => hexFromArgb(s.neutralVariantPalette.tone(tone)), argb);
+}
+
+/**
+ * 照 matugen 生成的那一份铺（蓝图「跟着人格的外观」第 5 条）：MD3 角色照它的（和桌面上别的软件一模一样），它没有的格子照上面的规矩
+ * 生成：有含义的颜色往它的主色靠，不带颜色的照它 `surfaceVariant` 的色相、彩度取明度。
+ * @param {Record<string, string>} roles 这一份的角色（`matugenOf` 认过的，驼峰的名字）
+ * @param {string} source 主色 `#rrggbb`
+ * @param {'light'|'dark'} scheme
+ */
+export function themeFromRoles(roles, source, scheme) {
+  const nv = Hct.fromInt(argbFromHex(roles.surfaceVariant));
+  return build(scheme, (name) => roles[name], (tone) => hexFromArgb(Hct.from(nv.hue, nv.chroma, tone).toInt()), argbFromHex(source));
+}
+
+/** 生成一份要的 MD3 角色（matugen 的模板照这一串写） */
+export const ROLES = [...new Set([...Object.values(PAGE.light), ...Object.values(PAGE.dark), ...Object.values(COMMON), ...Object.values(TUI),
+  ...Object.values(LINK), 'onSurface', 'surfaceVariant'])].sort();
+
+/**
+ * 认 matugen 生成的那一份（`package/matugen/miyu-web.json` 模板）：`{source, light: {角色: 颜色}, dark: {…}}`，角色是 matugen 的写法
+ * （`surface_container_low`），换成驼峰；缺了哪个角色、颜色不是 `#rrggbb` 的是 `null`（当没有，回去自己取色）。
+ * @param {any} json
+ * @returns {{source: string, light: Record<string, string>, dark: Record<string, string>}|null}
+ */
+export function matugenOf(json) {
+  const hex = (/** @type {any} */ v) => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
+  if (!json || !hex(json.source)) return null;
+  /** @param {any} side */
+  const side = (side) => {
+    if (!side || typeof side !== 'object') return null;
+    const out = /** @type {Record<string, string>} */ ({});
+    for (const role of ROLES) {
+      const v = side[role.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)];
+      if (!hex(v)) return null;
+      out[role] = v.toLowerCase();
+    }
+    return out;
+  };
+  const light = side(json.light);
+  const dark = side(json.dark);
+  return light && dark ? { source: json.source.toLowerCase(), light, dark } : null;
+}
+
+/**
+ * 铺一份：角色从 `role` 来，不带颜色的从 `neutral(明度)` 来，有含义的颜色往 `source` 靠。
+ * @param {'light'|'dark'} scheme @param {(name: string) => string} role @param {(tone: number) => string} neutral @param {number} source ARGB
+ * @returns {{page: Record<string, string>, tui: Record<string, string>}}
+ */
+function build(scheme, role, neutral, source) {
   const roles = (/** @type {Record<string, string>} */ table) => Object.fromEntries(Object.entries(table).map(([k, name]) => [k, role(name)]));
   // 浅色的影用这一套的字色（原色表是暖黑），深色的照原色表（黑）
   const ink = argbFromHex(role('onSurface'));
   const shadow = scheme === 'light' ? `${(ink >> 16) & 255}, ${(ink >> 8) & 255}, ${ink & 255}` : null;
   const design = DESIGN[scheme];
-  /** @param {Record<string, string>} from @param {string[]} neutral @param {(k: string) => boolean} keep */
-  const derive = (from, neutral, keep) => Object.fromEntries(Object.entries(from).map(([k, v]) => {
+  /** @param {Record<string, string>} from @param {string[]} quiet @param {(k: string) => boolean} keep */
+  const derive = (from, quiet, keep) => Object.fromEntries(Object.entries(from).map(([k, v]) => {
     if (keep(k) || !/^#[0-9a-f]{6}$/i.test(v)) return [k, shadow && v.includes('rgba(') ? v.replace(/rgba\(\s*\d+,\s*\d+,\s*\d+,/g, `rgba(${shadow},`) : v];
     const hct = Hct.fromInt(argbFromHex(v));
-    if (neutral.includes(k)) return [k, hexFromArgb(s.neutralVariantPalette.tone(Math.round(hct.tone)))];
-    return [k, hexFromArgb(Blend.harmonize(hct.toInt(), argb))];
+    if (quiet.includes(k)) return [k, neutral(Math.round(hct.tone))];
+    return [k, hexFromArgb(Blend.harmonize(hct.toInt(), source))];
   }));
   return {
     page: { ...derive(design.page, NEUTRAL.page, () => false), ...roles(PAGE[scheme]), ...roles(COMMON), ...roles(LINK) },

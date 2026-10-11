@@ -88,3 +88,22 @@ test('色块上的勾：浅的颜色上用深的，深的颜色上用白的', ()
   assert.equal(inkOf('#ffe08a'), '#1a1b20');
   assert.equal(inkOf('#3368c0'), '#ffffff');
 });
+
+test('matugen 那一份：角色照它的、缺格子的不认；它没有的格子照规矩生成（93 格）', async () => {
+  const { matugenOf, themeFromRoles, ROLES } = await import('../../src/lib/md3/index.js');
+  const snake = (/** @type {string} */ r) => r.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
+  // 用 Content 生成的角色充当 matugen 的输出（真 matugen 生成的样本在实测里对过）
+  const side = (/** @type {'light'|'dark'} */ s) => Object.fromEntries(ROLES.map((r) => [snake(r), r === 'surfaceVariant' ? (s === 'dark' ? '#424752' : '#dfe2f0') : '#123456']));
+  const json = { source: '#3368C0', light: side('light'), dark: side('dark') };
+  const m = matugenOf(json);
+  assert.ok(m);
+  assert.equal(m.source, '#3368c0');
+  assert.equal(m.dark.surfaceContainerLowest, '#123456');
+  const t = themeFromRoles(m.dark, m.source, 'dark');
+  assert.equal(t.page.surface, '#123456', '角色照它的');
+  assert.equal(Object.keys(t.page).length + Object.keys(t.tui).length, 93);
+  assert.equal(t.tui.mascot_eye, DESIGN.dark.tui.mascot_eye);
+  assert.equal(matugenOf({ ...json, dark: { ...json.dark, primary: undefined } }), null, '缺一格');
+  assert.equal(matugenOf({ ...json, source: 'blue' }), null);
+  assert.equal(matugenOf(null), null);
+});

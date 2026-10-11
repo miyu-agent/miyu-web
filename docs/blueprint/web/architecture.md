@@ -57,7 +57,7 @@ flowchart TB
 | `files.read(文件, 从哪, 多长)` 读附件的一段字节（分块传给核心，`blob.write`，核心施工 W-5） | 浏览器文件切一段读出来 | 有路径的不用读（直接 `blob.put` 的 `path`）；粘贴来的（只有内容）照浏览器 |
 | `open(地址)` 外面的链接 | 新标签页 | 系统的浏览器 |
 | `files.pickDir({title, start})` 选目录（工作区的「选择文件夹…」，设置页的路径项，`web.md`「设置页」第 5 条）：交路径，取消了交 `false`，开不了交 `null`（用的地方退回自己画的文件夹浏览器） | 浏览器给不了本机路径：页面在本机的请桥开系统的对话框（桥的 `/pick-dir`，Linux 照 zenity、kdialog，macOS 照 osascript，Windows 照 PowerShell；2026-10-08 项目主人：应该打开目录选择器）；页面开在别的机器上、桥那台没有对话框程序的交 `null` | 系统的选目录对话框，交回路径 |
-| `wallpaper(深色)` 桌面壁纸（主题「跟随壁纸」，`web.md`「跟着人格的外观」第 5 条）：交换没换的记号 `sig` 和取图的地址 `url`，读不到的交 `null` | 页面在本机的问桥的 `/wallpaper`（crate `miyu-wallpaper`：awww、swww、hyprpaper、GNOME、KDE、macOS、Windows）；页面开在别的机器上的交 `null`（那是桥那台机器的） | 外壳照同一个 crate 读，图走自定义协议 |
+| `wallpaper(深色)` 桌面壁纸（主题「跟随壁纸」，`web.md`「跟着人格的外观」第 5 条）：matugen 生成的那份颜色优先，交 `{sig, kind: 'matugen', colors}`；没有的交 `{sig, kind: 'image', url}`（取图的地址）；`sig` 是换没换的记号，读不到的交 `null` | 页面在本机的问桥的 `/wallpaper`（crate `miyu-wallpaper`：matugen 的输出文件；Linux 的 KDE、GNOME、XFCE、Cinnamon、MATE、awww、swww、hyprpaper、swaybg、wpaperd、waypaper、feh、nitrogen；macOS；Windows）；页面开在别的机器上的交 `null`（那是桥那台机器的） | 外壳照同一个 crate 读，图走自定义协议 |
 | `openPath(路径)` 用系统里打开这种文件的程序打开本机的文件（设置页点来源，第 7 条） | 没有（交 `false`，设置页改成复制路径） | 系统的默认程序 |
 | `intercept(根)` 接住页面里的链接 | 什么都不做 | 点 `target=_blank` 的链接改走 `open`，点带 `download` 的改走存文件的对话框（网页视图不一定管下载） |
 | `clipboard.write(字)` | `navigator.clipboard` | 同（网页视图大多给），不给的走外壳 |

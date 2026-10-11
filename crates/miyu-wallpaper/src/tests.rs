@@ -3,8 +3,9 @@
 use std::path::PathBuf;
 
 use crate::parse::{
-    gsettings_uri, hyprpaper_active, kde_image, kde_package_pick, osascript_path, path_or_uri,
-    reg_wallpaper, sniff, swww_query,
+    fehbg, gsettings_uri, hyprpaper_active, is_heic, kde_image, kde_package_pick, macos_index,
+    nitrogen_cfg, osascript_path, path_or_uri, reg_wallpaper, sniff, swaybg_image, swww_query,
+    waypaper_ini, wpaperd_all, xfce_last_image,
 };
 use crate::{Wallpaper, image_kind};
 
@@ -131,12 +132,13 @@ fn signature_changes_when_the_file_changes() -> std::io::Result<()> {
     std::fs::create_dir_all(&dir)?;
     let path = dir.join("w.png");
     std::fs::write(&path, b"\x89PNG\r\n\x1a\n first")?;
-    assert_eq!(image_kind(&path)?, Some("image/png"));
+    assert_eq!(image_kind(&path)?, Some(("image/png", false)));
     assert_eq!(image_kind(&dir)?, None, "目录不是图");
     let w = Wallpaper {
         path: path.clone(),
         from: "test",
         mime: "image/png",
+        heic: false,
     };
     let before = w.signature()?;
     assert_eq!(w.signature()?, before, "没动过的一样");
@@ -145,4 +147,81 @@ fn signature_changes_when_the_file_changes() -> std::io::Result<()> {
     assert_eq!(w.read()?.len(), 23);
     std::fs::remove_dir_all(&dir)?;
     Ok(())
+}
+
+#[test]
+fn more_desktops_and_wallpaper_programs() {
+    let xml = r#"<channel name="xfce4-desktop" version="1.0"><property name="backdrop" type="empty"><property name="screen0" type="empty">
+      <property name="monitoreDP-1" type="empty"><property name="workspace0" type="empty">
+        <property name="color-style" type="int" value="0"/><property name="last-image" type="string" value="/home/u/Pictures/a&amp;b.jpg"/>
+      </property></property></property></property></channel>"#;
+    assert_eq!(
+        xfce_last_image(xml),
+        Some(PathBuf::from("/home/u/Pictures/a&b.jpg"))
+    );
+    let args = |v: &[&str]| v.iter().map(|s| (*s).to_owned()).collect::<Vec<_>>();
+    assert_eq!(
+        swaybg_image(&args(&[
+            "swaybg", "-o", "eDP-1", "-i", "/w/a.png", "-m", "fill"
+        ])),
+        Some(PathBuf::from("/w/a.png"))
+    );
+    assert_eq!(
+        swaybg_image(&args(&["swaybg", "--image=/w/b.png"])),
+        Some(PathBuf::from("/w/b.png"))
+    );
+    assert_eq!(swaybg_image(&args(&["swaybg", "-c", "#000000"])), None);
+    assert_eq!(
+        wpaperd_all("eDP-1: /home/u/w/1.jpg\nHDMI-A-1: /home/u/w/2.jpg\n"),
+        Some(PathBuf::from("/home/u/w/1.jpg"))
+    );
+    let ini = "[Settings]\nlanguage = en\nfolder = ~/Pictures\nwallpaper = ~/Pictures/w1.png,~/Pictures/w2.png\nbackend = swww\n";
+    assert_eq!(
+        waypaper_ini(ini, "/home/u"),
+        Some(PathBuf::from("/home/u/Pictures/w1.png"))
+    );
+    assert_eq!(
+        waypaper_ini("[Other]\nwallpaper = /x.png\n", "/home/u"),
+        None,
+        "别的节里的不算"
+    );
+    assert_eq!(
+        fehbg("#!/bin/sh\nfeh --no-fehbg --bg-fill '/home/u/it'\\''s.jpg' \n"),
+        Some(PathBuf::from("/home/u/it's.jpg"))
+    );
+    assert_eq!(
+        nitrogen_cfg("[xin_-1]\nfile=/home/u/n.jpg\nmode=5\nbgcolor=#000000\n"),
+        Some(PathBuf::from("/home/u/n.jpg"))
+    );
+}
+
+#[test]
+fn macos_index_plist_and_heic() {
+    // `plutil -convert xml1` 转出来的样子（剪过）：第一个 file:// 是目录（壁纸文件夹）的不算
+    let xml = "<dict><key>Provider</key><string>com.apple.wallpaper.choice.image</string>\n\
+               <key>relative</key><string>file:///Users/u/Pictures/</string>\n\
+               <key>relative</key><string>file:///Users/u/Pictures/My%20Wall.heic</string></dict>";
+    assert_eq!(
+        macos_index(xml),
+        Some(PathBuf::from("/Users/u/Pictures/My Wall.heic"))
+    );
+    assert_eq!(
+        macos_index(
+            "<dict><key>Provider</key><string>com.apple.wallpaper.choice.aerials</string></dict>"
+        ),
+        None
+    );
+    assert!(is_heic(b"\0\0\0\x18ftypheic\0\0"));
+    assert!(is_heic(b"\0\0\0\x18ftypmif1\0\0"));
+    assert!(!is_heic(b"\0\0\0\x1cftypavif\0\0"));
+}
+
+#[test]
+fn matugen_output_lives_in_the_cache_dir() {
+    let path = crate::matugen::output_path();
+    assert!(
+        path.as_ref()
+            .is_some_and(|p| p.ends_with("miyu/matugen.json") || p.ends_with(r"miyu\matugen.json")),
+        "{path:?}"
+    );
 }
