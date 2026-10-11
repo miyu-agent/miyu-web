@@ -7,15 +7,26 @@
     "ja": "人格の外観"
   },
   "summary": {
-    "zh": "照会话人格的头像或自选的颜色生成页面的颜色，对话区铺人格的背景图",
-    "en": "Color the page from the session persona's avatar or chosen color, and show its background",
-    "ja": "会話の人格のアイコンか選んだ色からページの色を作り、背景画像を敷く"
+    "zh": "主题「跟随人格」：照会话人格的头像或自选的颜色生成页面的颜色；对话区铺人格的背景图",
+    "en": "A \"Follow persona\" theme colored from the session persona's avatar or chosen color, and its background in the chat",
+    "ja": "テーマ「人格に合わせる」：会話の人格のアイコンか選んだ色からページの色を作り、会話欄に背景画像を敷く"
   },
   "kind": "optional",
   "description": {
-    "zh": "照正在看的会话用的人格：主题色照人格自选的颜色、没选的照头像取主色，按 MD3 生成浅色、深色两套，盖在选中的主题的底色、字色、强调色上面（出错、差异、代码高亮的颜色照原来的主题）；人格有背景图的铺在对话区，上面盖一层底色。都没有、无人格的照原来的主题。"
+    "zh": "主题里多一套「跟随人格」：照正在看的会话用的人格，主色照人格自选的颜色、没选的照头像取的第一名，按 MD3 Content 生成，浅深跟着系统，盖在同深浅的那一套的底色、字色、强调色上面（出错、差异、代码高亮的颜色照原来的）；都没有、无人格的就是同深浅的那一套。人格有背景图的铺在对话区，上面盖一层底色，和选哪一套主题无关。"
   },
-  "note": "取色用 material-color-utilities 0.4（vendor/，Apache-2.0）：QuantizerCelebi 128 色、Score 挑第一个，SchemeTonalSpot 对比度 0。",
+  "note": "取色用 src/lib/md3（material-color-utilities 0.4，Apache-2.0）：QuantizerCelebi 128 色、Score 排名取第一名，SchemeContent 对比度 0。",
+  "text": {
+    "zh": {
+      "name": "跟随人格"
+    },
+    "en": {
+      "name": "Follow persona"
+    },
+    "ja": {
+      "name": "人格に合わせる"
+    }
+  },
   "inject": [
     "slots"
   ],

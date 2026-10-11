@@ -14,7 +14,7 @@ export function later(fill) {
   return el;
 }
 
-/** 「外观」页：主题卡片，第一张「跟随系统」。 */
+/** 「外观」页：主题卡片，第一张「跟随系统」（小样是第一套浅的、第一套深的底色）。 */
 export function drawLook(dialog) {
   const ctx = dialog.ctx;
   return later(async (el) => {
@@ -30,9 +30,11 @@ export function drawLook(dialog) {
       h('span.set-theme-sample', colors
         ? [h('i', { style: { background: colors.sidebar_bg } }), h('i', { style: { background: colors.surface } },
           h('b', { style: { background: colors.accent } }), h('b', { style: { background: colors.text, opacity: '0.5' } }), h('b', { style: { background: colors.gold } }))]
-        : palettes.slice(0, 2).map((p) => h('i', { style: { background: p.render().page.surface } }))),
+        : ['light', 'dark'].map((s) => palettes.find((p) => p.scheme === s)).filter(Boolean).map((p) => h('i', { style: { background: p.render().page.surface } }))),
       h('span.set-theme-name', name));
-    replace(el, groupBlock(ctx.text('theme'), [h('div.set-themes', card(null, ctx.text('follow_system'), null), palettes.map((p) => card(p.id, p.name, p.render().page)))]));
+    // 生成的那几套（跟随人格、跟随壁纸）照这时实际的颜色画
+    const colorsOf = (p) => (ctx.theme?.colorsOf ?? ((x) => x.render()))(p).page;
+    replace(el, groupBlock(ctx.text('theme'), [h('div.set-themes', card(null, ctx.text('follow_system'), null), palettes.map((p) => card(p.id, p.name, colorsOf(p))))]));
   });
 }
 

@@ -77,11 +77,16 @@
 .setup-face.is-big { width: 56px; height: 56px; font-size: 22px; }
 /* 人格详情最上面的头像那一格：圆的图、两个按钮 */
 .setup-avatar-box { display: flex; align-items: center; gap: 10px; }
-/* 主题色那一行：自选的画一块颜色、写 #rrggbb；没选的写「跟随头像」（暗）。取色器藏着，按钮叫它出来 */
+/* 主题色那一行：「自动」、头像取到的几块颜色、「自选颜色」；现在用的：「自动」铺主色的淡底（MD3 选中的选项卡片那样），色块上画一个勾（都不描边）。
+   取色器藏着，按钮叫它出来 */
 .setup-seed-box, .setup-bg-box { position: relative; display: flex; align-items: center; gap: 10px; min-height: 32px; }
-.setup-swatch { flex: none; width: 24px; height: 24px; border-radius: 7px; }
-.setup-seed-hex { color: var(--text-soft); font: 12.5px/1 var(--mono); }
-.setup-seed-follow { color: var(--text-faint); font-size: 13px; }
+.setup-seed-box { flex-wrap: wrap; gap: 8px; }
+.setup-seed-auto { height: 32px; padding: 0 12px; border: 0; border-radius: 10px; background: var(--surface-2); color: var(--text); font: 14px var(--sans); cursor: pointer; }
+.setup-seed-auto:hover { background: var(--surface-3); }
+.setup-seed-auto.is-on { background: var(--accent-soft); color: var(--on-primary-container); }
+.setup-swatch { flex: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 10px; cursor: pointer; transition: transform 0.12s var(--ease-out); }
+.setup-swatch:hover { transform: scale(1.08); }
+.setup-swatch .icon { width: 18px; height: 18px; }
 .setup-color-input { position: absolute; left: 0; bottom: 0; width: 0; height: 0; padding: 0; border: 0; opacity: 0; pointer-events: none; }
 /* 背景图那一行：16:9 的小图，没有的空一块底色 */
 .setup-bg-thumb { flex: none; width: 96px; height: 54px; overflow: hidden; border-radius: 8px; background: var(--surface-2); }
