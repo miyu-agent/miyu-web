@@ -19,6 +19,8 @@ tokio-tungstenite = "0.29"
 futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
 # 访问口令：32 个随机字节，取系统的随机数（和本机令牌同一个库）。
 getrandom = { version = "0.4", features = ["std"] }
+# 主题「跟随壁纸」读桌面壁纸：这个仓库的 crate，只用标准库。
+miyu-wallpaper = { path = "../../crates/miyu-wallpaper" }
 # 核心的 `fs.read`、`blob.get` 回的一段是 base64（`/file`、`/blob` 照它一块块写给浏览器）。和仓库里的同一个版本。MIT 或 Apache-2.0。
 base64 = "0.22"
 

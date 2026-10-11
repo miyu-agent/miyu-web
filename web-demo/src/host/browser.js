@@ -11,6 +11,7 @@
 //! - 选目录：浏览器给不了本机路径，请桥开系统的选目录对话框（`/pick-dir`，桥的 `dialog.rs`）；页面开在别的机器上的（地址不是本机）
 //!   不请，对话框会开在桥那台机器上、人看不到。
 //! - 软件后台页：带着口令 `POST /page` 请桥造一张票据，交回框的地址（地址里只有票据，框里的页面读得到自己的地址，口令不能给它）。
+//! - 桌面壁纸（主题「跟随壁纸」）：浏览器读不到桌面，请桥读（`/wallpaper`，crate `miyu-wallpaper`）；页面开在别的机器上的不请。
 //! - 打开时直接到哪个软件的后台页：`miyu web --package <编号>` 打出的网址在 `#` 后面多一个 `package=<编号>`，和口令一起读、一起抹掉。
 
 /**
@@ -212,6 +213,28 @@ async function pickDir(key, opts = {}) {
 }
 
 /**
+ * 桌面壁纸（主题「跟随壁纸」，蓝图 `web.md`「跟着人格的外观」第 5 条）：问桥现在的壁纸（桥的 `/wallpaper`），交换没换的记号 `sig`
+ * 和取图的地址 `url`（地址里带着记号，换了图地址就不一样）。页面开在别的机器上的（那是桥那台机器的壁纸）、读不到的、问不到桥的交 `null`。
+ * @param {string} key @param {boolean} dark 页面这时是不是深色（深浅可以各设一张）
+ * @returns {Promise<{sig: string, url: string}|null>}
+ */
+async function wallpaper(key, dark) {
+  if (!onThisMachine()) return null;
+  try {
+    const q = new URLSearchParams({ k: key, dark: dark ? '1' : '0' });
+    const got = await fetch(`/wallpaper?${q}`, { cache: 'no-store' });
+    if (!got.ok) return null;
+    const sig = (await got.json())?.sig;
+    if (typeof sig !== 'string') return null;
+    q.set('image', '1');
+    q.set('sig', sig);
+    return { sig, url: `/wallpaper?${q}` };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * 软件后台页（核心 F-6 中，`package-pages.md`）：带着口令请桥造一张票据，交回框的地址；没有后台页、问不到桥的交 `null`。
  * @param {string} key @param {string} id 软件包的编号
  * @returns {Promise<string|null>}
@@ -252,6 +275,8 @@ export function browserHost() {
     },
     /** 软件后台页：框的地址（见上面的 `packagePage`）；`launch` 是打开时点名的软件（没有是 `null`） */
     pages: { open: (/** @type {string} */ id) => packagePage(key, id), launch: launchPackage },
+    /** 桌面壁纸：问桥（见上面的 `wallpaper`） */
+    wallpaper: (/** @type {boolean} */ dark) => wallpaper(key, dark),
     /** 外面的链接：新标签页。 */
     open: (/** @type {string} */ url) => { window.open(url, '_blank', 'noopener'); },
     /** 接住页面里的链接：浏览器自己会办，什么都不做；交回怎么不接。 */

@@ -57,6 +57,7 @@ flowchart TB
 | `files.read(文件, 从哪, 多长)` 读附件的一段字节（分块传给核心，`blob.write`，核心施工 W-5） | 浏览器文件切一段读出来 | 有路径的不用读（直接 `blob.put` 的 `path`）；粘贴来的（只有内容）照浏览器 |
 | `open(地址)` 外面的链接 | 新标签页 | 系统的浏览器 |
 | `files.pickDir({title, start})` 选目录（工作区的「选择文件夹…」，设置页的路径项，`web.md`「设置页」第 5 条）：交路径，取消了交 `false`，开不了交 `null`（用的地方退回自己画的文件夹浏览器） | 浏览器给不了本机路径：页面在本机的请桥开系统的对话框（桥的 `/pick-dir`，Linux 照 zenity、kdialog，macOS 照 osascript，Windows 照 PowerShell；2026-10-08 项目主人：应该打开目录选择器）；页面开在别的机器上、桥那台没有对话框程序的交 `null` | 系统的选目录对话框，交回路径 |
+| `wallpaper(深色)` 桌面壁纸（主题「跟随壁纸」，`web.md`「跟着人格的外观」第 5 条）：交换没换的记号 `sig` 和取图的地址 `url`，读不到的交 `null` | 页面在本机的问桥的 `/wallpaper`（crate `miyu-wallpaper`：awww、swww、hyprpaper、GNOME、KDE、macOS、Windows）；页面开在别的机器上的交 `null`（那是桥那台机器的） | 外壳照同一个 crate 读，图走自定义协议 |
 | `openPath(路径)` 用系统里打开这种文件的程序打开本机的文件（设置页点来源，第 7 条） | 没有（交 `false`，设置页改成复制路径） | 系统的默认程序 |
 | `intercept(根)` 接住页面里的链接 | 什么都不做 | 点 `target=_blank` 的链接改走 `open`，点带 `download` 的改走存文件的对话框（网页视图不一定管下载） |
 | `clipboard.write(字)` | `navigator.clipboard` | 同（网页视图大多给），不给的走外壳 |
@@ -189,12 +190,14 @@ flowchart TB
 
 2026-09-30 起一件件搬（「怎么搬」第 3 步进行中）。这张表跟着搬，拆出一个包改一行。
 
-**编进内核的服务**：`core`（连核心，现在经桥）、`sessions`（会话仓库）、`host`（宿主，见「宿主」：`kind`、这个页面登录成的账号 `account`、新会话的工作目录 `cwd`（握手回应的 `host.workspace`，核心施工 W-3；原来是起桥的目录）、家目录 `home`（`host.home`）、`files`、`open`、`clipboard`；口令不出宿主）、`page`（页面的根）、`slots`、`seams`、`storage`（这台设备上存的：宿主给的存法，键带账号，读写兜着）、`packages`（列出每个包的状态和清单、停用启用、改个人那一层的配置：按项合，写 `null` 的删掉那一项）。名字列在 `src/kernel/services.js`，内核起来时查一遍都提供了。
+**编进内核的服务**：`core`（连核心，现在经桥）、`sessions`（会话仓库）、`host`（宿主，见「宿主」：`kind`、这个页面登录成的账号 `account`、新会话的工作目录 `cwd`（握手回应的 `host.workspace`，核心施工 W-3；原来是起桥的目录）、家目录 `home`（`host.home`）、`files`、`open`、`clipboard`、`wallpaper`；口令不出宿主）、`page`（页面的根）、`slots`、`seams`、`storage`（这台设备上存的：宿主给的存法，键带账号，读写兜着）、`packages`（列出每个包的状态和清单、停用启用、改个人那一层的配置：按项合，写 `null` 的删掉那一项）。名字列在 `src/kernel/services.js`，内核起来时查一遍都提供了。
 
 | 包 | 种类 | 要（`inject`） | 提供的服务 | 声明的挂载位 | 挂进 | 设置项 |
 |---|---|---|---|---|---|---|
 | `theme-morning`、`theme-tokyonight` | 可选 | `slots` | — | — | `theme.palettes` | 每个颜色一项（live） |
 | `theme` | 基础 | `slots`、`packages` | `theme` | `theme.palettes`（list） | — | `palette`（live） |
+| `theme-persona` | 可选 | `slots` | — | — | `theme.palettes`（「跟随人格」，生成的） | `veil`（live）、`sample_side` |
+| `theme-wallpaper` | 可选 | `slots`、`host` | — | — | `theme.palettes`（「跟随壁纸」，生成的；读不到不挂） | `check_seconds`（live）、`sample_side` |
 | `app` | 基础 | `core`、`sessions`、`host`、`page`、`slots`、`packages`、`lightbox~`、`theme~` | `chat`、`markdown`、`commands`、`composer` | `stage.right`、`stage.info`（list）、`markdown.code`（keyed）、`composer.above`、`composer.bar`、`composer.head`、`composer.payload`、`composer.footer`、`composer.float`（list） | — | 还在 `resources/layout.json` 等处，拆出去的包带走自己的 |
 | `rail` | 可选 | `slots`、`chat` | — | — | `stage.right` | `min_prompts`、`current_at`、`jump_margin`、`gutter`、`close_ms` |
 | `mermaid` | 可选 | `slots`、`core`、`host`、`markdown`、`lightbox~` | — | — | `markdown.code`（键 `mermaid`） | `max_height` |

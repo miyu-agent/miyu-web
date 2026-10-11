@@ -4,7 +4,7 @@
 //!
 //! 编进内核的服务（宏内核：决定快慢、彼此紧挨着的放在一起，像编进内核的驱动）：
 //! `core` 连核心（线是宿主给的）、`sessions` 会话仓库、`host` 宿主（平台有关的：这个页面登录成的账号、新会话的工作目录（账号的工作区）和家目录、
-//! 附件从哪来、外链、剪贴板；蓝图「宿主」）、`page` 页面的根、`slots` 挂载位、`seams` 职能、`packages` 软件包（状态、停用、
+//! 附件从哪来、外链、剪贴板、桌面壁纸；蓝图「宿主」）、`page` 页面的根、`slots` 挂载位、`seams` 职能、`packages` 软件包（状态、停用、
 //! 启用、改配置）、`storage` 这台设备上存的东西（键带账号，「多用户、多终端」）、`language` 界面语言（内核自己的设置项，
 //! 蓝图 `web.md`「界面语言」）。
 //!
@@ -203,6 +203,7 @@ export async function boot(root) {
         pages: host.pages,
         open: host.open,
         clipboard: host.clipboard,
+        wallpaper: host.wallpaper,
       });
       // 页面里的外链、下载：浏览器照原样，桌面端改走系统的浏览器、存文件的对话框
       ctx.effect(() => host.intercept(root));

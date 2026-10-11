@@ -17,6 +17,7 @@
 //! - 链接卡片不经桥：页面直接问核心的 `link.preview`，卡片的图是 blob，照 `/blob` 取（核心施工 W-7）。
 //! - `@` 选文件不经桥：页面直接问核心的 `fs.list`、`fs.find`（核心施工 W-2）。
 //! - 选工作区的「选择文件夹…」经 `/pick-dir?k=口令&title=…&start=…` 开系统的选目录对话框（`dialog.rs`），回选的绝对路径。
+//! - 主题「跟随壁纸」经 `/wallpaper?k=口令&dark=0|1` 问桌面壁纸换没换、带 `image=1` 取图（`wallpaper.rs`，crate `miyu-wallpaper`）。
 //! - 软件后台页经 `POST /page` 换票据、`/p/<票据>/<包>/<路径>` 给文件（`pages.rs`，核心 F-6 中）：文件经核心的 `package.file` 读。
 //!
 //! 用法：`cargo run -- [端口] [--package <编号>]`，默认 8765；页面文件是这个 crate 上一层的 `web-demo/`。带 `--package` 的打出的网址
@@ -30,6 +31,7 @@ mod files;
 mod link;
 mod media;
 mod pages;
+mod wallpaper;
 
 use std::path::PathBuf;
 use std::sync::Arc;

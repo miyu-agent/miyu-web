@@ -1,0 +1,60 @@
+{
+  "id": "theme-wallpaper",
+  "version": "0.1.0",
+  "name": {
+    "zh": "跟随壁纸",
+    "en": "Follow wallpaper",
+    "ja": "壁紙に合わせる"
+  },
+  "summary": {
+    "zh": "主题「跟随壁纸」：照这台电脑的桌面壁纸生成页面的颜色",
+    "en": "A \"Follow wallpaper\" theme colored from this computer's desktop wallpaper",
+    "ja": "テーマ「壁紙に合わせる」：このパソコンのデスクトップ壁紙からページの色を作る"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "主题里多一套「跟随壁纸」：照这台电脑现在的桌面壁纸取主色，按 MD3 Content 生成，浅深跟着系统，盖在同深浅的那一套的底色、字色、强调色上面。壁纸由网页服务读（和桌面在同一台机器上）；读不到的（别的桌面、视频壁纸、页面开在别的机器上）没有这一套。页面在前台时隔一会儿问一次换没换。"
+  },
+  "note": "取色用 src/lib/md3（material-color-utilities 0.4，Apache-2.0）：QuantizerCelebi 128 色、Score 排名取第一名，SchemeContent 对比度 0。壁纸经宿主的 wallpaper(dark)（浏览器那一份问桥的 /wallpaper，crate miyu-wallpaper）。",
+  "text": {
+    "zh": {
+      "name": "跟随壁纸"
+    },
+    "en": {
+      "name": "Follow wallpaper"
+    },
+    "ja": {
+      "name": "壁紙に合わせる"
+    }
+  },
+  "inject": [
+    "slots",
+    "host"
+  ],
+  "settings": {
+    "check_seconds": {
+      "type": "number",
+      "default": 30,
+      "min": 5,
+      "max": 3600,
+      "integer": true,
+      "name": {
+        "zh": "隔多久问一次壁纸换没换（秒，页面在前台时）",
+        "en": "How often to check whether the wallpaper changed (seconds, while the page is in front)",
+        "ja": "壁紙が変わったか確かめる間隔（秒、ページが前面にあるとき）"
+      },
+      "applies": "live"
+    },
+    "sample_side": {
+      "type": "number",
+      "default": 128,
+      "min": 16,
+      "max": 512,
+      "integer": true,
+      "name": {
+        "zh": "取色前壁纸缩到多大（长边像素）"
+      },
+      "advanced": true
+    }
+  }
+}

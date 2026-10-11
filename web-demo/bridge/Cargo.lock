@@ -819,6 +819,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "miyu-wallpaper"
+version = "0.0.1"
+
+[[package]]
 name = "miyu-web-bridge"
 version = "0.0.1"
 dependencies = [
@@ -826,6 +830,7 @@ dependencies = [
  "futures-util",
  "getrandom 0.4.3",
  "miyu-client",
+ "miyu-wallpaper",
  "serde_json",
  "tokio",
  "tokio-tungstenite",

@@ -1,0 +1,14 @@
+[package]
+name = "miyu-wallpaper"
+description = "读这台电脑现在的桌面壁纸（主题「跟随壁纸」取色用，蓝图 web.md「跟着人格的外观」第 5 条）：照各家桌面的命令、配置文件找图，只交浏览器认得的图"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+# 只用标准库：跑系统的命令（awww、gsettings、osascript、reg……）、读配置文件。桥（web-demo/bridge）照路径依赖用它。
+[dependencies]
+
+[lints]
+workspace = true
