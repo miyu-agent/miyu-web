@@ -304,7 +304,7 @@
         "key_change": "更换",
         "key_save": "保存",
         "key_use_env": "改用环境变量",
-        "key_use_paste": "改用粘贴",
+        "key_use_paste": "改用 API Key",
         "count": "模型 {count}",
         "unset": "未设置"
       },
@@ -564,7 +564,7 @@
         "key_change": "Change",
         "key_save": "Save",
         "key_use_env": "Use an environment variable",
-        "key_use_paste": "Paste a key instead",
+        "key_use_paste": "Use an API key",
         "count": "Models {count}",
         "unset": "Not set"
       },
@@ -824,7 +824,7 @@
         "key_change": "変更",
         "key_save": "保存",
         "key_use_env": "環境変数を使う",
-        "key_use_paste": "キーを貼り付ける",
+        "key_use_paste": "API キーを使う",
         "count": "モデル {count}",
         "unset": "未設定"
       },
