@@ -56,8 +56,9 @@ export class PresetEditor {
     this.title.textContent = label || this.id;
     const name = this.kit.text(label, '', (text) => { if (text) this.set([{ key: 'preset.name', value: text }]); });
     const list = Array.isArray(got.features) ? got.features : [];
-    // 分四段：功能、MCP 服务、脚本、技能（2026-10-12 项目主人），各一个小标题，空的段不出
-    const features = h('div.setup-features', featureGroups(list).map((g) => [h('div.setup-feature-group', t(`edit.feature_groups.${g.group}`)), g.items.map((f) => this.featureRow(f))]));
+    // 分四段：功能、MCP 服务、脚本、技能（2026-10-12 项目主人），空的段不出；包的功能那一段不写小标题（左边这一格就叫「功能」，
+    // 写了上下两个「功能」挨着），别的各一个
+    const features = h('div.setup-features', featureGroups(list).map((g) => [g.group === 'feature' ? null : h('div.setup-feature-group', t(`edit.feature_groups.${g.group}`)), g.items.map((f) => this.featureRow(f))]));
     this.note = h('p.setup-error', { hidden: true });
     const remove = got.remove ? twoClick(this.kit, t(`edit.${got.remove}`), t(`edit.${got.remove}_again`), () => this.drop()) : null;
     replace(this.body,
