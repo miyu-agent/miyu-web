@@ -188,3 +188,14 @@ test('编辑、写入那一行：后面接这一步加减的行数（核心给�
   assert.equal(row(tool('edit', { file_path: '/tmp/a.txt', edits: [{ old_string: 'x', new_string: 'x' }] })).diff, null, '加减都是 0');
   assert.equal(row(tool('read', { file_path: '/tmp/a.txt' })).diff, null, '不是编辑');
 });
+
+test('读了技能的 SKILL.md（视图条目的 skill）：写「使用技能 · 显示名」、技能的图标；没有显示名的写技能名；出错的照读文件（2026-10-12）', async () => {
+  const { stepOf } = await import('../src/model/entries.js');
+  const base = { id: 'b1.0', kind: 'tool', name: 'read', state: 'ok', args: '{"file_path":"/p/skills/skill-creator/SKILL.md"}', title: { name: '读取', object: '~/…/SKILL.md' }, at: '2026-10-12T00:00:00Z', took_ms: 5 };
+  const r = row(stepOf({ ...base, skill: { name: 'skill-creator', title: '写技能' } }));
+  assert.deepEqual([r.icon, r.name, r.subject, r.mono], ['sparkles', '使用技能', '写技能', false]);
+  assert.equal(row(stepOf({ ...base, skill: { name: 'notes' } })).subject, 'notes');
+  const plain = row(stepOf(base));
+  assert.deepEqual([plain.name, plain.subject], ['读取', '~/…/SKILL.md'], '没有 skill 的照读文件');
+  assert.equal(row(stepOf({ ...base, state: 'error', skill: { name: 'notes' } })).name, '读取');
+});

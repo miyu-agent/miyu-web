@@ -236,7 +236,13 @@
         "restored": "已恢复出厂设置",
         "features": "功能",
         "no_features": "暂无可用功能",
-        "not_installed": "未安装"
+        "not_installed": "未安装",
+        "feature_groups": {
+          "feature": "功能",
+          "mcp": "MCP 服务",
+          "script": "脚本",
+          "skill": "技能"
+        }
       },
       "folders": {
         "open": "选择文件夹…",
@@ -355,7 +361,13 @@
         "restored": "Defaults restored",
         "features": "Features",
         "no_features": "No features available",
-        "not_installed": "Not installed"
+        "not_installed": "Not installed",
+        "feature_groups": {
+          "feature": "Features",
+          "mcp": "MCP servers",
+          "script": "Scripts",
+          "skill": "Skills"
+        }
       },
       "folders": {
         "open": "Select folder…",
@@ -474,7 +486,13 @@
         "restored": "出荷時の状態に戻しました",
         "features": "機能",
         "no_features": "切り替えられる機能がありません",
-        "not_installed": "未インストール"
+        "not_installed": "未インストール",
+        "feature_groups": {
+          "feature": "機能",
+          "mcp": "MCP サーバー",
+          "script": "スクリプト",
+          "skill": "スキル"
+        }
       },
       "folders": {
         "open": "フォルダを選ぶ…",

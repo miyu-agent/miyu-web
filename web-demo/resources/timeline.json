@@ -38,5 +38,6 @@
   },
   "tick_ms": 100,
   "fold_ms": 380,
-  "step_ms": 320
+  "step_ms": 320,
+  "icon_skill": "sparkles"
 }

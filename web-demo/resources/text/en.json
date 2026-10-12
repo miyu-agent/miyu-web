@@ -113,7 +113,8 @@
       "binary": "Not a text file, diff not shown",
       "missing": "Can't get the content before and after the change"
     },
-    "changed": "Changed"
+    "changed": "Changed",
+    "skill": "Use skill"
   },
   "markdown": {
     "code": "Code",

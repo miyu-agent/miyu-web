@@ -88,6 +88,8 @@ function titled(step, kind, base) {
   const name = title.name ?? step.name;
   const object = title.object ?? null;
   const said = title.said ?? null;
+  // 用了技能（读了它的 SKILL.md，2026-10-12 项目主人）：「使用技能 · 写技能」，技能的图标；出错的照读文件的样子
+  if (step.skill && !bad) return { ...base, icon: res.timeline.icon_skill, name: t('timeline.skill'), subject: step.skill.title };
   if (kind === 'command') {
     const took = step.state === 'done' && step.duration != null ? toolDuration(step.duration) : null;
     const timer = step.state === 'running' && step.start != null ? { since: step.start, format: /** @type {const} */ ('job') } : null;

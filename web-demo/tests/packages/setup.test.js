@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave } from '../../packages/setup/model.js';
+import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave, featureGroups } from '../../packages/setup/model.js';
 
 const list = [{ persona: 'engineer', name: null }, { persona: 'miyu', name: 'Miyu' }, { persona: 'bad', problem: 'persona.toml:2: …' }];
 
@@ -116,4 +116,12 @@ test('新会话先选上上一次的：最新的顶层会话的人格、预设�
   assert.deepEqual(lastChoice([{ preset: 'full', cwd: '/w' }], personas, presets), { persona: false, preset: 'full', cwd: '/w' });
   assert.deepEqual(lastChoice([{ persona: 'gone', preset: 'gone', cwd: '/w' }], personas, presets), { cwd: '/w' });
   assert.equal(lastChoice([], personas, presets), null);
+});
+
+test('预设的功能分四段：功能、MCP 服务、脚本、技能，段里照核心的先后，空的段不要（2026-10-12）', () => {
+  const list = [{ id: 'web' }, { id: 'mcp-github' }, { id: 'knowledge' }, { id: 'skill-notes' }, { id: 'script-weather' }, { id: 'skill-writer' }];
+  assert.deepEqual(featureGroups(list).map((g) => `${g.group}:${g.items.map((f) => f.id).join(',')}`),
+    ['feature:web,knowledge', 'mcp:mcp-github', 'script:script-weather', 'skill:skill-notes,skill-writer']);
+  assert.deepEqual(featureGroups([{ id: 'web' }]).map((g) => g.group), ['feature'], '只有包的功能：只一段');
+  assert.deepEqual(featureGroups([]), []);
 });

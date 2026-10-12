@@ -70,7 +70,8 @@
       "access": {
         "write": "写入 {count} 个文件",
         "read": "读取 {count} 个文件",
-        "exec": "运行 {tool}"
+        "exec": "运行 {tool}",
+        "install": "安装或卸载软件包"
       },
       "access_other": "使用 {tool}",
       "outside": "工作区外",
@@ -91,7 +92,44 @@
       "cancelled_approval": "批准已取消",
       "answered_who": " · {who}",
       "notes_line": "补充：{notes}",
-      "next_question": "下一题"
+      "next_question": "下一题",
+      "plan": {
+        "install": "安装软件包 {id}",
+        "restore": "恢复软件包 {id}",
+        "remove": "卸载软件包 {id}",
+        "enable": "启用扩展 {id}",
+        "replaces": "（替换 {version}）",
+        "replaces_unknown": "（替换已安装的版本）",
+        "labels": {
+          "includes": "包含",
+          "skipped": "无法加载",
+          "needs": "所需权限",
+          "deletes": "一并删除",
+          "size": "大小"
+        },
+        "skipped": "{file}（{why}）",
+        "separator": "、",
+        "settings_keys": "设置 {keys}",
+        "state_dir": "状态目录",
+        "size": "{size}，{files} 个文件",
+        "programs": {
+          "ui": "界面程序",
+          "process": "扩展程序",
+          "worker": "小程序",
+          "builtin": "内置功能"
+        },
+        "carried": {
+          "command": "命令 miyu {name}",
+          "page": "后台页",
+          "mascot": "吉祥物",
+          "connection": "接入 {platform}",
+          "system_account": "系统账号",
+          "mcp": "MCP 服务 {name}",
+          "skill": "技能 {name}",
+          "script": "脚本 {name}",
+          "settings": "{count} 项设置"
+        }
+      }
     },
     "en": {
       "asking": "{who} is asking",
@@ -111,7 +149,8 @@
       "access": {
         "write": "Write {count} file(s)",
         "read": "Read {count} file(s)",
-        "exec": "Run {tool}"
+        "exec": "Run {tool}",
+        "install": "Install or remove a package"
       },
       "access_other": "Use {tool}",
       "outside": "Outside workspace",
@@ -132,7 +171,44 @@
       "cancelled_approval": "Approval cancelled",
       "answered_who": " · {who}",
       "notes_line": "Notes: {notes}",
-      "next_question": "Next question"
+      "next_question": "Next question",
+      "plan": {
+        "install": "Install package {id}",
+        "restore": "Restore package {id}",
+        "remove": "Remove package {id}",
+        "enable": "Enable extension {id}",
+        "replaces": " (replaces {version})",
+        "replaces_unknown": " (replaces the installed version)",
+        "labels": {
+          "includes": "Includes",
+          "skipped": "Failed to load",
+          "needs": "Permissions",
+          "deletes": "Also deletes",
+          "size": "Size"
+        },
+        "skipped": "{file} ({why})",
+        "separator": ", ",
+        "settings_keys": "settings {keys}",
+        "state_dir": "state directory",
+        "size": "{size}, {files} files",
+        "programs": {
+          "ui": "UI program",
+          "process": "extension program",
+          "worker": "worker",
+          "builtin": "built-in feature"
+        },
+        "carried": {
+          "command": "command miyu {name}",
+          "page": "admin page",
+          "mascot": "mascot",
+          "connection": "{platform} connection",
+          "system_account": "system account",
+          "mcp": "MCP server {name}",
+          "skill": "skill {name}",
+          "script": "script {name}",
+          "settings": "{count} settings"
+        }
+      }
     },
     "ja": {
       "asking": "{who} が質問しています",
@@ -152,7 +228,8 @@
       "access": {
         "write": "{count} 個のファイルに書き込みます",
         "read": "{count} 個のファイルを読みます",
-        "exec": "{tool} を実行します"
+        "exec": "{tool} を実行します",
+        "install": "パッケージのインストールまたは削除"
       },
       "access_other": "{tool} を使います",
       "outside": "ワークスペース外",
@@ -173,7 +250,44 @@
       "cancelled_approval": "許可の確認を取り消しました",
       "answered_who": " · {who}",
       "notes_line": "補足：{notes}",
-      "next_question": "次へ"
+      "next_question": "次へ",
+      "plan": {
+        "install": "パッケージ {id} をインストール",
+        "restore": "パッケージ {id} を復元",
+        "remove": "パッケージ {id} を削除",
+        "enable": "拡張機能 {id} を有効化",
+        "replaces": "（{version} を置き換え）",
+        "replaces_unknown": "（インストール済みの版を置き換え）",
+        "labels": {
+          "includes": "含まれるもの",
+          "skipped": "読み込めないもの",
+          "needs": "必要な権限",
+          "deletes": "同時に削除",
+          "size": "サイズ"
+        },
+        "skipped": "{file}（{why}）",
+        "separator": "、",
+        "settings_keys": "設定 {keys}",
+        "state_dir": "状態ディレクトリ",
+        "size": "{size}、{files} ファイル",
+        "programs": {
+          "ui": "UI プログラム",
+          "process": "拡張プログラム",
+          "worker": "ワーカー",
+          "builtin": "内蔵機能"
+        },
+        "carried": {
+          "command": "コマンド miyu {name}",
+          "page": "管理ページ",
+          "mascot": "マスコット",
+          "connection": "{platform} 接続",
+          "system_account": "システムアカウント",
+          "mcp": "MCP サーバー {name}",
+          "skill": "スキル {name}",
+          "script": "スクリプト {name}",
+          "settings": "設定 {count} 項目"
+        }
+      }
     }
   }
 }

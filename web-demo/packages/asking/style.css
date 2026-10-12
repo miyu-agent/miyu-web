@@ -23,6 +23,12 @@
 .asking-question { margin-bottom: 8px; color: var(--text); font-size: 14px; font-weight: 600; line-height: 1.45; }
 .asking-paths { display: grid; gap: 2px; margin: -4px 0 10px; }
 .asking-path { display: flex; align-items: center; gap: 8px; color: var(--text-soft); font-family: var(--mono); font-size: 12.5px; word-break: break-all; }
+/* 装、卸软件包的那几行：包文件夹一行（同路径），下面左边名目（淡、固定宽）、右边内容 */
+.asking-plan { display: grid; gap: 4px; margin: -4px 0 12px; }
+.asking-plan > .asking-path { margin-bottom: 4px; }
+.asking-plan-row { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 10px; font-size: 13px; line-height: 1.55; }
+.asking-plan-label { color: var(--text-faint); }
+.asking-plan-items { color: var(--text); overflow-wrap: anywhere; }
 .asking-command { white-space: pre-wrap; }
 .asking-outside {
   flex: none; padding: 0 6px; border-radius: 4px; background: color-mix(in srgb, var(--t-warn) 14%, transparent);

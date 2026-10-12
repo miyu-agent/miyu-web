@@ -201,6 +201,8 @@ export function stepOf(e) {
     images: e.images ?? [],
     approval: e.approval ?? null,
     files: e.files ?? [],
+    // 读的是技能的 SKILL.md（视图条目的 `skill`，`{name, title}`）：那一行写「使用技能 · 显示名」
+    skill: e.skill && typeof e.skill.name === 'string' ? { name: e.skill.name, title: typeof e.skill.title === 'string' && e.skill.title ? e.skill.title : e.skill.name } : null,
   };
 }
 

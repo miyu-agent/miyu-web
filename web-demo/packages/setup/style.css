@@ -250,6 +250,9 @@
 .setup-add:hover { background: var(--surface-3); color: var(--text); }
 .setup-add svg { width: 14px; height: 14px; }
 .setup-features { display: grid; gap: 0; padding-top: 2px; }
+/* 分段的小标题（功能、MCP 服务、脚本、技能）：淡的小字，和上一段隔开一点；第一段不隔 */
+.setup-feature-group { padding: 12px 0 2px; color: var(--text-faint); font-size: 12px; }
+.setup-feature-group:first-child { padding-top: 0; }
 .setup-feature { display: flex; align-items: center; gap: 10px; min-height: 32px; color: var(--text); font-size: 13.5px; }
 .setup-feature-name { flex: 1; min-width: 0; }
 .setup-feature.is-missing .setup-feature-name { color: var(--text-faint); }

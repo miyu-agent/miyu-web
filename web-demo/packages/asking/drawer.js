@@ -244,9 +244,23 @@ export class Drawer {
       h('div.asking-question', head ? head.title : q.question, head?.outsideSandbox ? h('span.asking-outside', t('outside_sandbox')) : null),
       head?.command != null ? h('div.asking-paths', h('div.asking-path', h('span.asking-command', head.command.split('\n').map((l) => `$ ${l}`).join('\n')))) : null,
       head?.paths.length ? h('div.asking-paths', head.paths.map((p) => h('div.asking-path', h('span', p.path), p.outside ? h('span.asking-outside', t('outside')) : null))) : null,
+      head?.plan ? this.planRows(head.plan) : null,
       h(`div.asking-main${previews ? '.has-preview' : ''}`, h('div.asking-options', options), previews),
       d.kind === 'ask' ? this.notesRow() : null,
     ];
+  }
+
+  /**
+   * 装、卸软件包的那几行（`package-plan.js`）：包文件夹一行，下面左边名目、右边内容；「无法加载」一项一行，别的照顿号连成一行。
+   * @param {import('./package-plan.js').Plan} plan
+   */
+  planRows(plan) {
+    const t = this.text;
+    const skipped = t('plan.labels.skipped');
+    return h('div.asking-plan',
+      plan.path ? h('div.asking-path', h('span', plan.path)) : null,
+      plan.rows.map((r) => h('div.asking-plan-row', h('span.asking-plan-label', r.label),
+        h('span.asking-plan-items', r.label === skipped ? r.items.map((x) => h('div', x)) : r.items.join(t('plan.separator'))))));
   }
 
   /** 一个选项：编号（能多选的是勾选框）、标题、说明；确认的「不允许」在编辑时下面接理由的框。 */

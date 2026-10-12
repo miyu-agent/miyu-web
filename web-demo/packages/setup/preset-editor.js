@@ -9,6 +9,7 @@
 import { h, icon, replace, hasIcon, iconNames } from '../../src/lib/dom.js';
 import { field, twoClick } from './form.js';
 import { refusalText } from './persona-editor.js';
+import { featureGroups } from './model.js';
 
 /** @typedef {{saved: () => void, removed: (remains: boolean) => void, close: () => void}} Hooks */
 
@@ -55,7 +56,8 @@ export class PresetEditor {
     this.title.textContent = label || this.id;
     const name = this.kit.text(label, '', (text) => { if (text) this.set([{ key: 'preset.name', value: text }]); });
     const list = Array.isArray(got.features) ? got.features : [];
-    const features = h('div.setup-features', list.map((f) => this.featureRow(f)));
+    // 分四段：功能、MCP 服务、脚本、技能（2026-10-12 项目主人），各一个小标题，空的段不出
+    const features = h('div.setup-features', featureGroups(list).map((g) => [h('div.setup-feature-group', t(`edit.feature_groups.${g.group}`)), g.items.map((f) => this.featureRow(f))]));
     this.note = h('p.setup-error', { hidden: true });
     const remove = got.remove ? twoClick(this.kit, t(`edit.${got.remove}`), t(`edit.${got.remove}_again`), () => this.drop()) : null;
     replace(this.body,

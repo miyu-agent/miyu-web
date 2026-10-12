@@ -5,6 +5,8 @@
 //!
 //! 确认也当成一道题：选项是几种决定（`decision`），没有「输入其他答案」。
 
+import { packagePlan } from './package-plan.js';
+
 /**
  * @typedef {{label: string, description?: string, preview?: string, decision?: string}} Option
  * @typedef {{header?: string, question: string, options: Option[], multiple?: boolean}} Question
@@ -191,8 +193,9 @@ export function answerOf(d, i) {
 /**
  * 确认的问题行：`要写 1 个文件` 这类（`access.<种类>`，没有的 `access_other`），下面的路径（家目录写 `~`，工作区外的标出来）。
  * 跑命令的（核心 D-4 起 `detail` 是 `{command, sandbox, title, tool}`）：问题行是她写的短标题，没有的写「要运行一条命令」；下面是命令原文，
- * `sandbox: false` 是这一次不在沙盒里跑。
- * @param {{access: string, detail?: {tool?: string, paths?: {path: string, zone?: string}[], command?: string, title?: string, sandbox?: boolean}}} body
+ * `sandbox: false` 是这一次不在沙盒里跑。装、卸软件包的（核心 F-10 下上，`access: install`，`detail.preview`）：问题行是「安装软件包 notes 0.2.0」，
+ * 下面是包文件夹和「包含」「无法加载」这几行（`package-plan.js`）。
+ * @param {{access: string, detail?: any}} body
  * @param {string|null} home
  * @param {(key: string, fields?: Record<string, any>) => string} text 照键取字（`ctx.text`：没有这个键的交回键本身）
  */
@@ -203,8 +206,10 @@ export function approvalHead(body, home, text) {
   const key = `access.${access}`;
   const known = text(key, fields);
   const exec = access === 'exec' && typeof body.detail?.command === 'string';
+  const plan = packagePlan(body.detail, home, text);
   return {
-    title: exec ? body.detail?.title || text('exec_untitled') : known === key ? text('access_other', fields) : known,
+    title: plan ? plan.title : exec ? body.detail?.title || text('exec_untitled') : known === key ? text('access_other', fields) : known,
+    plan,
     command: exec ? body.detail?.command ?? null : null,
     outsideSandbox: body.detail?.sandbox === false,
     paths: paths.map((p) => ({ path: home && (p.path === home || p.path.startsWith(`${home}/`)) ? `~${p.path.slice(home.length)}` : p.path, outside: p.zone === 'outside' })),

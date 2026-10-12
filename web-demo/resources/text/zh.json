@@ -113,7 +113,8 @@
       "binary": "不是文字文件，不显示差异",
       "missing": "无法获取修改前后的内容"
     },
-    "changed": "修改"
+    "changed": "修改",
+    "skill": "使用技能"
   },
   "markdown": {
     "code": "代码",
