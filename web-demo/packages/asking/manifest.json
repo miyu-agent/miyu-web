@@ -129,7 +129,9 @@
           "script": "脚本 {name}",
           "settings": "{count} 项设置"
         }
-      }
+      },
+      "private": "私密目录",
+      "private_tip": "别的程序存钥匙、登录信息的目录"
     },
     "en": {
       "asking": "{who} is asking",
@@ -208,7 +210,9 @@
           "script": "script {name}",
           "settings": "{count} settings"
         }
-      }
+      },
+      "private": "Private folder",
+      "private_tip": "Where other programs keep keys and logins"
     },
     "ja": {
       "asking": "{who} が質問しています",
@@ -287,7 +291,9 @@
           "script": "スクリプト {name}",
           "settings": "設定 {count} 項目"
         }
-      }
+      },
+      "private": "プライベートフォルダ",
+      "private_tip": "ほかのプログラムが鍵やログイン情報を保存する場所"
     }
   }
 }

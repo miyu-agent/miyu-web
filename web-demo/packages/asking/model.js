@@ -212,7 +212,8 @@ export function approvalHead(body, home, text) {
     plan,
     command: exec ? body.detail?.command ?? null : null,
     outsideSandbox: body.detail?.sandbox === false,
-    paths: paths.map((p) => ({ path: home && (p.path === home || p.path.startsWith(`${home}/`)) ? `~${p.path.slice(home.length)}` : p.path, outside: p.zone === 'outside' })),
+    // `zone`：`outside` 工作区外，`private` 别的程序的私密目录（`~/.ssh` 这类，核心 5-13），各一个标记；别的不标
+    paths: paths.map((p) => ({ path: home && (p.path === home || p.path.startsWith(`${home}/`)) ? `~${p.path.slice(home.length)}` : p.path, zone: p.zone === 'outside' || p.zone === 'private' ? p.zone : null })),
   };
 }
 

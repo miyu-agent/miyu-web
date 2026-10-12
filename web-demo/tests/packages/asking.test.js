@@ -77,13 +77,16 @@ test('确认：提了放行规则的三项（工作区那一项核心还不收�
   assert.deepEqual(saveEdit(withReason(onDeny, '别清'), '别清了').done, { kind: 'approve', decision: 'deny', reason: '别清了' }, '理由框里按 Enter');
 });
 
-test('确认的问题行：写几个文件、家目录写 ~、工作区外的标出来；运行的写命令', () => {
+test('确认的问题行：写几个文件、家目录写 ~、工作区外和私密目录的标出来；运行的写命令', () => {
   // 照 ctx.text：有的键写成「键+字段」，没有的交回键本身
   const has = new Set(['access.write', 'access.read', 'access.exec', 'access_other']);
   const text = (key, fields) => (has.has(key) ? `${key}${JSON.stringify(fields)}` : key);
   const head = approvalHead(approval('demo_approve_1').body, '/home/alice', text);
   assert.equal(head.title, 'access.write{"count":1,"tool":"write"}');
-  assert.deepEqual(head.paths, [{ path: '~/.editorconfig', outside: true }]);
+  assert.deepEqual(head.paths, [{ path: '~/.editorconfig', zone: 'outside' }]);
+  // 别的程序的私密目录（核心 5-13 的 `private`）也标出来；只能读的（`read_only`）、没写的不标
+  const priv = approvalHead({ call_id: 'p', access: 'read', detail: { tool: 'read', paths: [{ path: '/home/alice/.ssh/id_ed25519', write: false, zone: 'private' }, { path: '/etc/hosts', zone: 'read_only' }, { path: '/w/a' }] } }, '/home/alice', text);
+  assert.deepEqual(priv.paths, [{ path: '~/.ssh/id_ed25519', zone: 'private' }, { path: '/etc/hosts', zone: null }, { path: '/w/a', zone: null }]);
   // 跑命令的（D-4）：问题行是短标题，带命令原文，`sandbox: false` 标出来；没有短标题的写「要运行一条命令」；老的只有 `tool` 的照原来
   const exec = approvalHead(approval('demo_approve_2').body, null, text);
   assert.deepEqual([exec.title, exec.command, exec.outsideSandbox], ['清掉另一个仓库的编译产物', 'cargo clean --manifest-path ~/src/other/Cargo.toml', true]);
