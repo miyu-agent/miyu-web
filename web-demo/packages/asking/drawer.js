@@ -179,6 +179,8 @@ export class Drawer {
       this.foot = h('div.asking-foot', this.keysEl = h('span.asking-keys'),
         h('span.asking-foot-right', h('button.asking-cancel', { type: 'button', onclick: () => this.cancel() }, t('cancel')), review ? null : this.nextButton())));
     this.drawKeys();
+    // 画上去了才量得到：写了几行的框照字长高（单行的照本来的高，同 `grow`）
+    for (const box of scroll.querySelectorAll('textarea.asking-edit')) grow(/** @type {HTMLTextAreaElement} */ (box));
     scroll.querySelector('.asking-option.is-selected')?.scrollIntoView({ block: 'nearest' });
     // 正在写的框（自己写的答案、补充）给焦点、量高度；「不允许」下面常驻的理由框不算（这时抽屉可能还没露出来，量到的是 0）
     const box = /** @type {HTMLTextAreaElement|null} */ (this.el.querySelector('textarea:not(.asking-reason)'));
@@ -373,9 +375,14 @@ export class Drawer {
   }
 }
 
-/** 框跟着字长高。 @param {HTMLTextAreaElement} box */
+/**
+ * 框跟着字长高：放得下的照本来的高（一行，`rows: 1`），放不下的才照字的高写死。本来的高带小数（13.5 × 1.5 + 上下 6），
+ * `scrollHeight` 是取整的：一律写死的话，有没有焦点（焦点进来时量一次、重画时没量）差零点几像素，Firefox 不取整，整张卡片跟着上下挪
+ * （2026-10-12 项目主人：切换选项时卡片抖）。
+ * @param {HTMLTextAreaElement} box
+ */
 function grow(box) {
-  box.style.height = 'auto';
-  box.style.height = `${box.scrollHeight}px`;
+  box.style.height = '';
+  if (box.scrollHeight > box.clientHeight) box.style.height = `${box.scrollHeight}px`;
 }
 
