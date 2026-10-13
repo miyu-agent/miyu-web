@@ -66,6 +66,7 @@
 .wl-lang:hover, .wl-lang:focus-visible { outline: 0; background: var(--surface-2); }
 .wl-lang.is-on { background: var(--surface-3); }
 .wl-tag { padding: 2px 8px; border-radius: 6px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); font-size: 12px; }
+.wl-lang-note { color: var(--text-faint); font-size: 13px; }
 .wl-check { display: inline-flex; margin-left: auto; color: var(--accent); }
 .wl-check svg { width: 15px; height: 15px; }
 

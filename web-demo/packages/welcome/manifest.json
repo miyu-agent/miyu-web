@@ -58,7 +58,8 @@
         "model": "模型",
         "persona": "人格",
         "theme": "主题",
-        "preset": "预设"
+        "preset": "预设",
+        "sandbox": "沙盒"
       },
       "hello": {
         "title": "欢迎使用 Miyu",
@@ -73,6 +74,14 @@
       },
       "back": "上一步",
       "next": "下一步",
+      "sandbox": {
+        "title": "沙盒",
+        "sub": "新会话照它开局，可在设置中修改",
+        "workspace": "开",
+        "workspace_note": "工作区里读写，命令在沙盒里运行",
+        "full": "关",
+        "full_note": "完全放开，不再确认"
+      },
       "done": {
         "title": "设置完成",
         "model": "模型 {name}",
@@ -89,7 +98,8 @@
         "model": "Model",
         "persona": "Persona",
         "theme": "Theme",
-        "preset": "Preset"
+        "preset": "Preset",
+        "sandbox": "Sandbox"
       },
       "hello": {
         "title": "Welcome to Miyu",
@@ -104,6 +114,14 @@
       },
       "back": "Back",
       "next": "Next",
+      "sandbox": {
+        "title": "Sandbox",
+        "sub": "New sessions start this way. Editable in Settings",
+        "workspace": "On",
+        "workspace_note": "Read and write in the workspace, run commands in the sandbox",
+        "full": "Off",
+        "full_note": "Full access, no confirmations"
+      },
       "done": {
         "title": "Setup complete",
         "model": "Model {name}",
@@ -120,7 +138,8 @@
         "model": "モデル",
         "persona": "人格",
         "theme": "テーマ",
-        "preset": "プリセット"
+        "preset": "プリセット",
+        "sandbox": "サンドボックス"
       },
       "hello": {
         "title": "Miyu へようこそ",
@@ -135,6 +154,14 @@
       },
       "back": "戻る",
       "next": "次へ",
+      "sandbox": {
+        "title": "サンドボックス",
+        "sub": "新しいセッションはこの設定で始まります。設定で変更できます",
+        "workspace": "オン",
+        "workspace_note": "ワークスペース内で読み書きし、コマンドはサンドボックスで実行",
+        "full": "オフ",
+        "full_note": "フルアクセス、確認なし"
+      },
       "done": {
         "title": "設定完了",
         "model": "モデル {name}",

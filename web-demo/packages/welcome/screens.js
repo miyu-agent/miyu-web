@@ -1,5 +1,6 @@
 // @ts-check
-//! 引导自己画的三屏（蓝图 `web.md`「第一次引导」第 3、4、10 条）：欢迎、界面语言、完成。模型、人格、预设那几屏由别的包交来。
+//! 引导自己画的几屏（蓝图 `web.md`「第一次引导」第 3、4、10 条和第 9 条下面一款）：欢迎、界面语言、沙盒、完成。模型、人格、主题、
+//! 预设那几屏由别的包交来。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 
@@ -59,6 +60,47 @@ export function languageScreen(g) {
           g.ctx.storage.set(STEP_KEY, null);
         }
         g.go('model', 1);
+        return null;
+      },
+    },
+  };
+}
+
+/**
+ * 沙盒（第 9 条下面一款；核心 8-32，2026-10-13 项目主人：默认开）：两行「开」「关」，先选中现在的（没写的是开）。「下一步」和现在的不一样的
+ * 写个人设置的 `permission.level`：开是 `workspace`，关是 `full`。新会话照它开局。
+ * @param {import('./guide.js').Guide} g
+ */
+export function sandboxScreen(g) {
+  const t = g.t;
+  const core = g.ctx.core;
+  let now = 'workspace';
+  let chosen = now;
+  const list = h('div.wl-langs');
+  const draw = () => replace(list, ['workspace', 'full'].map((v) => h(`button.wl-lang${v === chosen ? '.is-on' : ''}`, { type: 'button', onclick: () => { chosen = v; draw(); } },
+    h('span.wl-lang-name', t(`sandbox.${v}`)), h('span.wl-lang-note', t(`sandbox.${v}_note`)),
+    v === chosen ? h('span.wl-check', icon('check')) : null)));
+  draw();
+  // 读现在写着的（中途关了重来的、设置页改过的）：是关的换过去
+  core.request('config.get', { keys: ['permission.level'] }).then((/** @type {any} */ got) => {
+    const value = got?.items?.['permission.level']?.value;
+    if (value !== 'full' || chosen !== 'workspace' || now !== 'workspace') return;
+    now = chosen = 'full';
+    draw();
+  }).catch(() => {});
+  return {
+    title: t('sandbox.title'),
+    sub: t('sandbox.sub'),
+    body: list,
+    focus: /** @type {HTMLElement|null} */ (list.querySelector('.wl-lang.is-on')),
+    next: {
+      ready: () => true,
+      run: async () => {
+        if (chosen !== now) {
+          await core.request('config.set', { layer: 'personal', changes: [{ key: 'permission.level', value: chosen }] });
+          now = chosen;
+        }
+        g.go('done', 1);
         return null;
       },
     },

@@ -4,12 +4,12 @@
 //! （步骤条）、上一步、下一步，管 `Enter`、`↑` `↓`、换屏的动画和吉祥物站哪。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { helloScreen, languageScreen, doneScreen, STEP_KEY, DONE_KEY } from './screens.js';
+import { helloScreen, languageScreen, sandboxScreen, doneScreen, STEP_KEY, DONE_KEY } from './screens.js';
 
 /** 步子的先后；`back` 是上一步回到哪 */
-const BACK = /** @type {Record<string, string|null>} */ ({ hello: null, language: 'hello', model: 'language', persona: 'model', theme: 'persona', preset: 'theme', done: 'preset' });
+const BACK = /** @type {Record<string, string|null>} */ ({ hello: null, language: 'hello', model: 'language', persona: 'model', theme: 'persona', preset: 'theme', sandbox: 'preset', done: 'sandbox' });
 /** 进步骤条的几步 */
-export const NUMBERED = ['language', 'model', 'persona', 'theme', 'preset'];
+export const NUMBERED = ['language', 'model', 'persona', 'theme', 'preset', 'sandbox'];
 /** 换一屏要选中的选项（`↑` `↓` 换着选的：选了就是它；别的只挪焦点） */
 const CHOICES = '.ob-row:not([disabled]), .wl-lang, .setup-choice, .ob-model';
 const SELECTS = new Set(['wl-lang', 'setup-choice', 'ob-model']);
@@ -141,12 +141,13 @@ export class Guide {
               this.result[step] = part.label();
               this.ids[step] = part.id;
             }
-            this.go(step === 'persona' ? 'theme' : step === 'theme' ? 'preset' : 'done', 1);
+            this.go(step === 'persona' ? 'theme' : step === 'theme' ? 'preset' : 'sandbox', 1);
             return null;
           },
         },
       }, dir);
-    } else if (step === 'done') this.show(doneScreen(this), dir);
+    } else if (step === 'sandbox') this.show(sandboxScreen(this), dir);
+    else if (step === 'done') this.show(doneScreen(this), dir);
   }
 
   /**
