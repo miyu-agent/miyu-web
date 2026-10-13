@@ -8,7 +8,7 @@
 //! - 文件的字经桥的 `/file` 取（以后是核心的网页模块）；同一个文件改过（序号变了）才重取；
 //! - 宽度能拖，记在这个浏览器里；来了新的、工作区关着时，开关按钮上一个圆点；窗口够宽时自动打开。
 
-import { h, icon, replace } from './dom.js';
+import { h, icon, replace, setUrl } from './dom.js';
 import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { artifacts, artifactLanguage } from '../model/artifacts.js';
@@ -166,7 +166,7 @@ export class Artifacts {
   }
 
   /** 画当前这一个；`force` 为假时，同一个文件没改过就不重画。 */
-  draw(force = false) {
+  async draw(force = false) {
     const a = this.list.find((x) => x.path === this.current);
     const session = this.where.session;
     if (!a || !session) return;
@@ -181,10 +181,13 @@ export class Artifacts {
     this.sourceButton.classList.toggle('is-active', mode === 'source');
     this.title.textContent = a.name;
     this.badge.textContent = t(`artifacts.types.${a.kind}`);
-    const url = `${fileUrl(a.path)}&v=${a.seq}`;
-    this.download.setAttribute('href', fileUrl(a.path, true));
+    setUrl(this.download, 'href', fileUrl(a.path, true));
     this.drawMenu();
     const token = ++this.token;
+    // 地址可能要等（直接连网页软件的先换票据）；带上序号，改过的不吃浏览器的缓存
+    const base = await fileUrl(a.path);
+    if (token !== this.token) return;
+    const url = `${base}${base.includes('?') ? '&' : '?'}v=${a.seq}`;
     if (a.kind === 'image' && mode === 'preview') return replace(this.view, imageStage(url, a.name));
     if (a.kind === 'video') return replace(this.view, h('div.artifact-video', h('video', { src: url, controls: true, preload: 'metadata', playsinline: true })));
     replace(this.view, h('div.artifact-loading', icon('loader-circle'), t('artifacts.loading')));

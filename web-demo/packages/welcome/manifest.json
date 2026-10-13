@@ -17,6 +17,7 @@
   },
   "inject": [
     "core",
+    "host",
     "language",
     "storage",
     "chat~",
@@ -54,6 +55,7 @@
     "zh": {
       "brand": "Miyu",
       "steps": {
+        "account": "账号",
         "language": "语言",
         "model": "模型",
         "persona": "人格",
@@ -94,6 +96,7 @@
     "en": {
       "brand": "Miyu",
       "steps": {
+        "account": "Account",
         "language": "Language",
         "model": "Model",
         "persona": "Persona",
@@ -134,6 +137,7 @@
     "ja": {
       "brand": "Miyu",
       "steps": {
+        "account": "アカウント",
         "language": "言語",
         "model": "モデル",
         "persona": "人格",

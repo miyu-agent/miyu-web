@@ -16,14 +16,12 @@
 //! - 打开时直接到哪个软件的后台页：`miyu web --package <编号>` 打出的网址在 `#` 后面多一个 `package=<编号>`，和口令一起读、一起抹掉。
 
 /**
- * @typedef {{name: string, size: number, type: string, file?: Blob, path?: string, stored?: {session: string, hash: string}}} FileRef
- *   `stored`：核心存好的那一份（输入历史翻出来的附件），缩略图、内容照桥的 `/blob` 取
- *   一个要当附件的文件：浏览器给的只有内容（`file`），桌面端给的有路径（`path`）
- * @typedef {{readyState: number, send: (text: string) => void, onopen: any, onmessage: any, onclose: any, onerror: any}} Channel
- *   连核心的一条线，样子照 WebSocket：`readyState` 是 1 时通着，一帧一条 JSON-RPC 消息
- * @typedef {{getItem: (k: string) => string|null, setItem: (k: string, v: string) => void, removeItem: (k: string) => void}} Store
- *   这台设备上存东西的存法
+ * @typedef {import('./files.js').FileRef} FileRef
+ * @typedef {import('./files.js').Channel} Channel
+ * @typedef {import('./files.js').Store} Store
  */
+
+import { fileTools, store, onThisMachine } from './files.js';
 
 const KEY = 'miyu.web.bridge-key';
 
@@ -39,19 +37,20 @@ function bridgeKey() {
 }
 
 /**
- * 桥给的几种地址，都带口令。
+ * 桥给的几种地址，都带口令（照两份宿主共用的样子异步交，桥的当场就有）。
  * @param {string} key 访问口令
+ * @returns {import('./files.js').Urls}
  */
 export function urls(key) {
   return {
     /** 一个本机文件：`download` 为真的叫浏览器存下来。 */
-    file: (/** @type {string} */ path, download = false) => {
+    file: async (path, download = false) => {
       const q = new URLSearchParams({ k: key, path });
       if (download) q.set('download', '1');
       return `/file?${q}`;
     },
     /** 一个 blob（你的话里的附件）：下载的存成 `name`。 */
-    blob: (/** @type {string} */ hash, /** @type {string} */ type, /** @type {{download?: boolean, name?: string|null}} */ how = {}) => {
+    blob: async (hash, type, how = {}) => {
       const q = new URLSearchParams({ k: key, hash, type });
       if (how.download) q.set('download', '1');
       if (how.download && how.name) q.set('name', how.name);
@@ -59,124 +58,6 @@ export function urls(key) {
     },
   };
 }
-
-/** 浏览器的文件换成附件用的样子。 */
-const refs = (/** @type {Iterable<File>} */ list) => [...list].map((file) => /** @type {FileRef} */ ({ name: file.name, size: file.size, type: file.type, file }));
-
-/** 选文件：系统的选文件窗口，能多选；取消的交回空的。 */
-function pick() {
-  return new Promise((resolve) => {
-    const input = /** @type {HTMLInputElement} */ (document.createElement('input'));
-    input.type = 'file';
-    input.multiple = true;
-    input.addEventListener('change', () => resolve(refs(input.files ?? [])), { once: true });
-    input.addEventListener('cancel', () => resolve([]), { once: true });
-    input.click();
-  });
-}
-
-/**
- * 拖文件（蓝图 `web.md`「附件」第 1 条）：文件一拖进窗口 `enter`，到了 `target` 上面、离开它 `over(真假)`，拖出窗口、松开了
- * `leave`；只有在 `target` 上松开才 `drop`（交回文件；附件给的是整页，在哪松开都收）。在别处松开什么都不做，页面也不跳去打开那个文件。拖的不是文件的不管。
- * 交回怎么不看。桌面端照窗口的拖放事件和落点做同一件事。
- * @param {HTMLElement} target 收文件的那一块
- * @param {{enter: () => void, over: (inside: boolean) => void, leave: () => void, drop: (files: FileRef[]) => void}} on
- */
-function watchDrop(target, on) {
-  let depth = 0;
-  let inside = false;
-  const isFiles = (/** @type {DragEvent} */ e) => !!e.dataTransfer && [...e.dataTransfer.types].includes('Files');
-  const within = (/** @type {DragEvent} */ e) => e.target instanceof Node && target.contains(e.target);
-  const hover = (/** @type {boolean} */ yes) => {
-    if (yes === inside) return;
-    inside = yes;
-    on.over(yes);
-  };
-  const end = () => {
-    depth = 0;
-    hover(false);
-    on.leave();
-  };
-  /** @type {[string, (e: DragEvent) => void][]} */
-  const events = [
-    ['dragenter', (e) => {
-      if (!isFiles(e)) return;
-      e.preventDefault();
-      if (depth++ === 0) on.enter();
-      hover(within(e));
-    }],
-    ['dragover', (e) => {
-      if (!isFiles(e)) return;
-      e.preventDefault();
-      const yes = within(e);
-      if (e.dataTransfer) e.dataTransfer.dropEffect = yes ? 'copy' : 'none';
-      hover(yes);
-    }],
-    ['dragleave', (e) => {
-      if (!isFiles(e) || --depth > 0) return;
-      end();
-    }],
-    ['drop', (e) => {
-      if (!isFiles(e)) return;
-      e.preventDefault();
-      const yes = within(e);
-      end();
-      if (yes) on.drop(refs(e.dataTransfer?.files ?? []));
-    }],
-  ];
-  for (const [name, fn] of events) document.addEventListener(name, /** @type {any} */ (fn));
-  return () => { for (const [name, fn] of events) document.removeEventListener(name, /** @type {any} */ (fn)); };
-}
-
-/**
- * 框里的缩略图：图片、视频交回一个临时地址和怎么松开它；别的是 `null`。
- * @param {FileRef} ref
- */
-function preview(key, ref) {
-  if (!/^(image|video)\//.test(ref.type)) return null;
-  if (ref.stored) return { url: urls(key).blob(ref.stored.hash, ref.type), release: () => {} };
-  // 本机的文件（`@` 选文件交过来的，只有路径）：照桥的 `/file` 取
-  if (ref.path && !(ref.file instanceof Blob)) return { url: urls(key).file(ref.path), release: () => {} };
-  if (!(ref.file instanceof Blob)) return null;
-  const url = URL.createObjectURL(ref.file);
-  return { url, release: () => URL.revokeObjectURL(url) };
-}
-
-/**
- * 读文字文件的内容（框里的卡写有几行）：超过 `max` 字节的、读不了的交 `null`。
- * @param {FileRef} ref
- * @param {number} max
- */
-async function text(key, ref, max) {
-  if (ref.size > max) return null;
-  try {
-    if (ref.stored || (ref.path && !(ref.file instanceof Blob))) {
-      const url = ref.stored ? urls(key).blob(ref.stored.hash, 'text/plain') : urls(key).file(/** @type {string} */ (ref.path));
-      const got = await fetch(url);
-      return got.ok ? await got.text() : null;
-    }
-    return ref.file instanceof Blob ? await ref.file.text() : null;
-  } catch { return null; }
-}
-
-/**
- * 读附件的一段字节（分块传给核心，`blob.write`，核心施工 W-5）：浏览器的文件切一段读出来。
- * @param {FileRef} ref
- * @param {number} offset
- * @param {number} length
- * @returns {Promise<Uint8Array>}
- */
-async function read(ref, offset, length) {
-  if (!(ref.file instanceof Blob)) throw new Error('没有内容');
-  return new Uint8Array(await ref.file.slice(offset, offset + length).arrayBuffer());
-}
-
-/** 这台设备上存东西：`localStorage`（隐私窗口、清过数据时读写会抛，由内核的 `storage` 兜着）。 */
-const store = /** @type {Store} */ ({
-  getItem: (k) => localStorage.getItem(k),
-  setItem: (k, v) => localStorage.setItem(k, v),
-  removeItem: (k) => localStorage.removeItem(k),
-});
 
 /**
  * 问桥口令还对不对：`/key?k=口令` 回 `204` 是对、`403` 是用不了了；问不到的是桥没在跑。
@@ -191,9 +72,6 @@ async function checkKey(key) {
     return 'down';
   }
 }
-
-/** 页面和桥在同一台机器上（地址是本机）。 */
-const onThisMachine = () => ['127.0.0.1', 'localhost', '[::1]', '::1'].includes(location.hostname);
 
 /**
  * 选目录：请桥开系统的对话框（2026-10-08 项目主人：选择文件夹应该打开目录选择器）。交回选的绝对路径；点了取消的交 `false`；
@@ -265,15 +143,15 @@ export function browserHost() {
     /** 开一条到核心的线（经桥）。 */
     channel: () => /** @type {Channel} */ (/** @type {unknown} */ (new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws?k=${key}`))),
     urls: urls(key),
+    /** 握手带的凭据：走桥的不带（桥出示本机令牌） */
+    credential: () => null,
+    /** 记下登录令牌：走桥的用不着 */
+    remember: (/** @type {any} */ login) => {},
+    forget: () => {},
     /** 问桥口令还对不对（蓝图 `web.md`「连核心」第 9 条）：`ok`、`bad`（用不了了，桥重启过）、`down`（问不到，桥没在跑） */
     check: () => checkKey(key),
     files: {
-      pick,
-      watchDrop,
-      preview: (/** @type {FileRef} */ ref) => preview(key, ref),
-      refs,
-      text: (/** @type {FileRef} */ ref, /** @type {number} */ max) => text(key, ref, max),
-      read,
+      ...fileTools(urls(key)),
       /** 选目录：请桥开系统的对话框（见上面的 `pickDir`） */
       pickDir: (/** @type {{title?: string, start?: string}} */ opts) => pickDir(key, opts),
     },
@@ -283,6 +161,8 @@ export function browserHost() {
     wallpaper: (/** @type {boolean} */ dark) => wallpaper(key, dark),
     /** 外面的链接：新标签页。 */
     open: (/** @type {string} */ url) => { window.open(url, '_blank', 'noopener'); },
+    /** 重新载入页面 */
+    restart: () => location.reload(),
     /** 接住页面里的链接：浏览器自己会办，什么都不做；交回怎么不接。 */
     intercept: (/** @type {HTMLElement} */ root) => () => {},
     clipboard: { write: (/** @type {string} */ text) => navigator.clipboard.writeText(text) },

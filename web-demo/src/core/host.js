@@ -11,11 +11,13 @@ export function useHost(h) {
 }
 
 /**
- * 一个本机文件的地址。`download` 为真的叫浏览器存下来。宿主还没交进来时是空的。能不能读照核心（`fs.read`），不分会话。
+ * 一个本机文件的地址。`download` 为真的叫浏览器存下来。宿主还没交进来时、换不到的是空的。能不能读照核心（`fs.read`），不分会话。
+ * 异步：直接连网页软件的先换票据（蓝图 `web/architecture.md`「浏览器的第二份宿主」）；写进元素用 `setUrl`。
  * @param {string} path 绝对路径
+ * @returns {Promise<string>}
  */
 export function fileUrl(path, download = false) {
-  return host ? host.urls.file(path, download) : '';
+  return host ? host.urls.file(path, download) : Promise.resolve('');
 }
 
 /**
@@ -23,9 +25,10 @@ export function fileUrl(path, download = false) {
  * @param {string} hash `sha256:…`
  * @param {string} type 媒体类型
  * @param {{download?: boolean, name?: string|null}} [how]
+ * @returns {Promise<string>}
  */
 export function blobUrl(hash, type, how = {}) {
-  return host ? host.urls.blob(hash, type, how) : '';
+  return host ? host.urls.blob(hash, type, how) : Promise.resolve('');
 }
 
 

@@ -26,6 +26,8 @@ import { loadHuman } from '../core/human.js';
 import { placeOf } from '../model/paths.js';
 import { useHost } from '../core/host.js';
 import { browserHost } from '../host/browser.js';
+import { servedHost } from '../host/served.js';
+import { signIn } from './signin.js';
 import { accountStorage } from './storage.js';
 import { useIcons } from '../lib/dom.js';
 import { KERNEL_SERVICES } from './services.js';
@@ -55,23 +57,23 @@ export async function boot(root) {
   await useTexts(resources, language);
   document.documentElement.lang = language.tag;
   // 连着桥的时候页面正中写一句，不留一片白（蓝图 `web.md`「连核心」第 9 条）
-  root.replaceChildren(Object.assign(document.createElement('div'), { className: 'boot-wait', textContent: t('boot.connecting') }));
-  const host = browserHost();
-  if (!host) throw new Offline('none');
+  // 两份宿主：有桥的口令走桥，没有的是网页软件给的页面（蓝图 `web/architecture.md`「浏览器的第二份宿主」）
+  const host = browserHost() ?? servedHost();
+  const served = host.kind === 'served';
+  root.replaceChildren(Object.assign(document.createElement('div'), { className: 'boot-wait', textContent: t(served ? 'boot.connecting_web' : 'boot.connecting') }));
   // 旧代码（src/ui）经它拿地址、开外链、写剪贴板
   useHost(host);
-  // 断了自己重连（蓝图 `web.md`「连核心」第 1 条）：连上以后重新握手、补上漏掉的，见下面 `onReopen`
-  const conn = new Connection(host.channel, res.layout.reconnect_ms, host.check);
-  // 连不上：问桥口令还对不对，照它写为什么（口令用不了、桥没在跑、桥连不上核心）
-  await conn.connect().catch(async (err) => {
-    if (err.message !== 'bridge') throw new Offline('core', err.message);
-    const key = await host.check();
-    throw new Offline(key === 'ok' ? 'core' : key, key === 'ok' ? t('no_bridge') : '');
-  });
-  root.replaceChildren();
   // 能当场确认、回答（确认和提问的抽屉，核心 D-1、D-2）：核心照造会话的那个连接的 `caps.input` 定这个会话有没有人能确认、回答
   const greeting = { protocol: [1, 1], head: { kind: 'web', version: '0.0.0' }, locale: language.tag, caps: { input: true } };
-  const hello = await conn.request('hello', greeting);
+  // 开线、握手（凭据、登录框、「账号」那一屏在 `signin.js`）。断了自己重连（蓝图 `web.md`「连核心」第 1 条）：连上以后重新握手、补上漏掉的，
+  // 见下面 `onReopen`。连不上：走桥的问口令还对不对，照它写为什么（口令用不了、桥没在跑、桥连不上核心）；直接连的就是网页软件没在跑
+  const { conn, hello, setup } = await signIn(host, greeting, root, async (err) => {
+    if (err.message !== 'bridge') throw new Offline('core', err.message);
+    if (served) throw new Offline('web');
+    const key = await host.check();
+    throw new Offline(key === 'ok' ? 'core' : key, key === 'ok' ? t('no_bridge') : '');
+  }, res.layout.reconnect_ms);
+  root.replaceChildren();
   // 这个页面登录成哪个账号：这台设备上存的按它分开（「多用户、多终端」第 5 条）
   const account = hello?.account ?? 'admin';
   const storage = accountStorage(host.store, account, LEGACY);
@@ -111,11 +113,19 @@ export async function boot(root) {
   await store.boot();
   // 断了又连上了（核心重启过）：重新握手，读进来了的会话重新订阅、补上漏掉的，断着时别处开的会话接上
   conn.onReopen(() => {
-    conn.request('hello', greeting)
+    conn.request('hello', { ...greeting, ...(host.credential() ?? {}) })
       .then(() => store.resume())
       // 配置的订阅也要等重新握手以后（蓝图「界面语言」第 5 条）
       .then(() => followConfig())
-      .catch((err) => console.error(`重连以后接不上：${err.message}`));
+      .catch((err) => {
+        // 登录令牌作废了（别处重设了密码）：忘掉，重新载入出登录框（蓝图「连核心」第 1 条下面几款）
+        if (err?.reason === 'bad_login') {
+          host.forget();
+          host.restart();
+          return;
+        }
+        console.error(`重连以后接不上：${err.message}`);
+      });
   });
 
   /**
@@ -197,6 +207,8 @@ export async function boot(root) {
       ctx.provide('host', {
         kind: host.kind,
         account,
+        /** 这次起页面时设了账号（一次性码连上的）：引导第一段「账号」算走过，不再出欢迎页 */
+        signedUp: setup,
         cwd: info.cwd,
         home: info.home,
         files: host.files,
@@ -271,7 +283,7 @@ export async function boot(root) {
 
 /** 连不上桥（蓝图 `web.md`「连核心」第 9 条）：为什么是哪一种，入口照它画一张卡。 */
 export class Offline extends Error {
-  /** @param {'bad'|'none'|'down'|'core'|'old'} kind @param {string} [detail] 桥的原话 */
+  /** @param {'bad'|'none'|'down'|'core'|'old'|'web'} kind @param {string} [detail] 桥的原话 */
   constructor(kind, detail = '') {
     super(detail || kind);
     this.kind = kind;

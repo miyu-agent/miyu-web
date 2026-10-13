@@ -48,7 +48,8 @@ export function apply(ctx) {
     const step = ctx.storage.get(STEP_KEY, null);
     ctx.storage.set(STEP_KEY, null);
     guide = new Guide(ctx, () => uncover(true), release);
-    guide.open(typeof step === 'string' ? step : 'hello');
+    // 设了账号进来的（「账号」是第一步）不再出欢迎页，从界面语言起
+    guide.open(typeof step === 'string' ? step : ctx.host?.signedUp ? 'language' : 'hello');
   };
   start();
   ctx.effect(() => () => {

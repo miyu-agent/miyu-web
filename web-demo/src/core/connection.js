@@ -139,6 +139,14 @@ export class Connection {
     }, ms);
   }
 
+  /** 关掉这条线、不再重连（握手被拒了，核心回完就断开：登录这一段换一条新的线再来）。 */
+  close() {
+    this.gaveUp = true;
+    clearTimeout(this.retryTimer);
+    this.retryTimer = null;
+    try { this.ws?.close(); } catch { /* 已经断了 */ }
+  }
+
   /** 口令用不了了（桥重启过），不再重连。 */
   onLost(fn) { this.losts.add(fn); }
 

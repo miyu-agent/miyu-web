@@ -5,7 +5,7 @@
 //! 不叠。传的时候罩一层、转一个小圈；悬停露 ×。进来缩放淡入，拿掉缩回去淡出、宽度收掉，后面的滑过来补上（「动效」）。
 //! 缩略图的地址由宿主给（浏览器是文件内容的临时地址，桌面端是路径换成的），跟着那一张：拿走时松开。
 
-import { h, icon } from '../../src/lib/dom.js';
+import { h, icon, setUrl } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { bytes } from '../../src/lib/format.js';
 import { kindOf, extOf, lineCount } from './model.js';
@@ -15,7 +15,7 @@ export class TrayView {
    * @param {import('./model.js').Tray} tray
    * @param {(path: string, fields?: any) => string} t 这个包的字
    * @param {(id: number) => void} remove 点了 × 拿掉
-   * @param {{preview: (file: any) => {url: string, release: () => void}|null, text: (file: any, max: number) => Promise<string|null>}} files
+   * @param {{preview: (file: any) => Promise<{url: string, release: () => void}|null>, text: (file: any, max: number) => Promise<string|null>}} files
    *   宿主的文件能力：缩略图的地址、读文字文件
    * @param {{count_lines_max: number}} config
    */
@@ -29,7 +29,7 @@ export class TrayView {
     // 那一排出来、收起：高度从 0 长出来、收回去（外面一层放高度，里面一层裁掉，间距在最里面，收着的连间距一起收掉）
     this.el = h('div.attach-tray', h('div.attach-clip', h('div.attach-pad', this.strip)));
     /** 画着的几张：附件的编号 → 节点、缩略图 */
-    /** @type {Map<number, {el: HTMLElement, shown: {url: string, release: () => void}|null, state: string}>} */
+    /** @type {Map<number, {el: HTMLElement, shown: Promise<{url: string, release: () => void}|null>|null, state: string}>} */
     this.chips = new Map();
     this.stop = tray.watch(() => this.draw());
     this.strip.addEventListener('scroll', () => this.edges(), { passive: true });
@@ -51,7 +51,7 @@ export class TrayView {
       this.chips.delete(id);
       leave(chip.el, () => {
         chip.el.remove();
-        chip.shown?.release();
+        chip.shown?.then((s) => s?.release());
         this.edges();
       });
     }
@@ -88,7 +88,9 @@ export class TrayView {
   chip(it) {
     const t = this.t;
     const kind = kindOf(it.file);
+    // 缩略图的地址可能要等（直接连网页软件的先换票据）；取不到的照文件画（下面的 `error`）
     const shown = kind === 'image' || kind === 'video' ? this.files.preview(it.file) : null;
+    const src = shown?.then((s) => s?.url ?? '') ?? Promise.resolve('');
     const ext = extOf(it.name);
     const badge = () => (ext ? h('span.attach-ext', ext) : null);
     const x = h('button.attach-remove', { type: 'button', title: t('remove'), 'aria-label': t('remove'), onclick: () => this.remove(it.id) }, icon('x'));
@@ -105,7 +107,7 @@ export class TrayView {
     };
     let el;
     if (shown && kind === 'video') {
-      const video = h('video', { src: `${shown.url}#t=0.1`, muted: true, preload: 'metadata', playsinline: true });
+      const video = h('video', { muted: true, preload: 'metadata', playsinline: true });
       el = h('div.attach-chip.is-media.is-video', { title: it.name }, video, h('span.attach-play', icon('play')), badge(), busy, x);
       video.addEventListener('error', () => {
         const plain = card();
@@ -115,8 +117,9 @@ export class TrayView {
         if (chip) chip.el = plain;
         el = plain;
       }, { once: true });
+      setUrl(video, 'src', src, '#t=0.1');
     } else if (shown) {
-      const img = h('img', { src: shown.url, alt: it.name, decoding: 'async' });
+      const img = h('img', { alt: it.name, decoding: 'async' });
       el = h('div.attach-chip.is-media', { title: it.name }, img, badge(), busy, x);
       // 取不出图的（输入历史翻出来的、发它的会话已经删了）照文件画
       img.addEventListener('error', () => {
@@ -126,6 +129,7 @@ export class TrayView {
         if (chip) chip.el = plain;
         el = plain;
       }, { once: true });
+      setUrl(img, 'src', src);
     } else {
       el = card();
     }
@@ -135,7 +139,7 @@ export class TrayView {
   /** 停用了：不看了，缩略图都松开。 */
   destroy() {
     this.stop();
-    for (const chip of this.chips.values()) chip.shown?.release();
+    for (const chip of this.chips.values()) chip.shown?.then((s) => s?.release());
     this.chips.clear();
     this.el.remove();
   }

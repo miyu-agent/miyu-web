@@ -6,12 +6,14 @@
 import { t } from '../util/res.js';
 
 /**
- * @param {'bad'|'none'|'down'|'core'|'old'} kind
+ * @param {'bad'|'none'|'down'|'core'|'old'|'web'} kind
  * @param {string} [message] 桥的原话（`core` 时）
  * @returns {{title: string, why: string, how: string}}
  */
 export function offline(kind, message = '') {
   if (kind === 'old') return { title: t('boot.old_title'), why: t('boot.old_why'), how: t('boot.old_how') };
+  // 直接连网页软件的（`miyu web` 打开的）：连不上就是网页软件没在跑
+  if (kind === 'web') return { title: t('boot.web_title'), why: t('boot.web_why'), how: t('boot.web_how') };
   const title = t('boot.title');
   if (kind === 'core') return { title, why: message, how: t('boot.core_how') };
   if (kind === 'down') return { title, why: t('boot.down_why'), how: t('boot.down_how') };

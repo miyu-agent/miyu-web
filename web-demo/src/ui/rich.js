@@ -58,7 +58,7 @@ function hooksFor(scope, where, say, made, ext) {
     }
     return made.get(id);
   };
-  /** 地址 → 浏览器能取的：本机的换成桥的地址；网上的照原样；别的（取不了的）是 `null`。 */
+  /** 地址 → 浏览器能取的：本机的经宿主换（可能要等，交 `Promise`）；网上的照原样；别的（取不了的）是 `null`。 */
   const url = (target, download = false) => {
     const path = localPath(target, where);
     if (path) return fileUrl(path, download);

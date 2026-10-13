@@ -8,7 +8,7 @@
 //! - 编辑、重做只有最新的那一轮有，在回答时没有：由对话区给节点打 `is-latest`、给整块打 `is-running`，CSS 藏。
 //!   做什么由整页给（`app.js`），这里只画、接键。
 
-import { h, icon } from './dom.js';
+import { h, icon, setUrl } from './dom.js';
 import { res, t } from '../util/res.js';
 import { leave } from '../lib/motion.js';
 import { imageCard } from './media.js';
@@ -121,24 +121,27 @@ function attachmentsNode(list, media) {
 function fileCard(a) {
   const name = a.name ?? a.blob;
   const dot = name.lastIndexOf('.');
-  return h('a.user-file', {
-    href: blobUrl(a.blob, a.media_type, { download: true, name }),
+  const card = h('a.user-file', {
     title: t('said.download', { name }),
     download: '',
   },
   h('span.user-file-name', name),
   h('span.user-file-sub', a.media_type ?? ''),
   dot > 0 ? h('span.user-file-ext', name.slice(dot + 1).toUpperCase()) : null);
+  setUrl(card, 'href', blobUrl(a.blob, a.media_type, { download: true, name }));
+  return card;
 }
 
 /** 视频：第一帧加一个播放记号，点了原地换成带控制条的播放器；取不出第一帧的换成文件的小卡。 */
 function videoThumb(a, card) {
   const url = blobUrl(a.blob, a.media_type);
-  const video = /** @type {HTMLVideoElement} */ (h('video', { src: `${url}#t=0.1`, muted: true, preload: 'metadata', playsinline: true }));
+  const video = /** @type {HTMLVideoElement} */ (h('video', { muted: true, preload: 'metadata', playsinline: true }));
+  setUrl(video, 'src', url, '#t=0.1');
   const node = h('div.user-video', { role: 'button', tabindex: '0', title: a.name ?? '' }, video, h('span.user-video-play', icon('play')));
   video.addEventListener('error', () => node.replaceWith(card), { once: true });
   const play = () => {
-    const player = h('video.user-video-player', { src: url, controls: true, autoplay: true, playsinline: true });
+    const player = h('video.user-video-player', { controls: true, autoplay: true, playsinline: true });
+    setUrl(player, 'src', url);
     node.replaceWith(player);
   };
   node.addEventListener('click', play);

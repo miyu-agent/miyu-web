@@ -9,7 +9,7 @@
 //! - 她还在写的，最后一次画完停 250 毫秒再取：地址还没写完就去抓纯属浪费（回答每来一段字整段重画，旧的那份已经不在页面上了，
 //!   它的定时到了也不取）。
 
-import { h, icon } from './dom.js';
+import { h, icon, setUrl } from './dom.js';
 import { res } from '../util/res.js';
 import { blobUrl } from '../core/host.js';
 import { cardView } from '../model/linkcard.js';
@@ -60,17 +60,24 @@ function previewFor(url) {
   return lookups.get(url);
 }
 
+/** 配图、图标：照 blob 取（地址可能要等，`setUrl`）；取不到的照 `onerror` 去掉。 @param {string} tag @param {{blob: string, media_type: string}} pic @param {(e: any) => void} onerror */
+function picture(tag, pic, onerror) {
+  const img = h(tag, { alt: '', loading: 'lazy', decoding: 'async', onerror });
+  setUrl(img, 'src', blobUrl(pic.blob, pic.media_type));
+  return img;
+}
+
 /** 一张卡片：配图（有的话；视频的叠播放记号和时长）、图标和标题、描述、站名（· 作者）和外链图标。 */
 function card(preview, href) {
   const view = cardView(preview);
   const media = preview.image
     ? h(`div.link-card-media${view.video ? '.is-video' : ''}`,
-      h('img', { src: blobUrl(preview.image.blob, preview.image.media_type), alt: '', loading: 'lazy', decoding: 'async', onerror: (e) => e.target.parentElement?.remove() }),
+      picture('img', preview.image, (e) => e.target.parentElement?.remove()),
       view.video ? h('span.link-card-play', icon('play')) : null,
       view.duration ? h('span.link-card-time', view.duration) : null)
     : null;
   const mark = preview.icon
-    ? h('img.link-card-icon', { src: blobUrl(preview.icon.blob, preview.icon.media_type), alt: '', loading: 'lazy', onerror: (e) => e.target.remove() })
+    ? picture('img.link-card-icon', preview.icon, (e) => e.target.remove())
     : h('span.link-card-icon.is-letter', (preview.site || preview.title || '?').trim().charAt(0).toUpperCase());
   let host = href;
   try { host = new URL(href).host; } catch { /* 写坏了的地址照原样当站名 */ }

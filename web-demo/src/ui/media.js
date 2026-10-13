@@ -1,22 +1,31 @@
 // @ts-check
 //! 图片、视频、音频卡片（蓝图 `web.md`「图片」「音视频、图片卡片」）：照旧版 `app.js:4867-4891`（视频）、`6455-6535`（图片）、
-//! `shared.js:97-290`（音频播放器）。地址由调用的一方给（本机的经桥的 `/file`、`/blob`，网上的照原样）。
+//! `shared.js:97-290`（音频播放器）。地址由调用的一方给（本机的经宿主换，可能要等：交 `Promise`；网上的照原样）。
 //!
 //! - 图片：最宽最高 250px，按图的宽高先占好地方；点开是灯箱；读不出来的写一句，本机的再写按哪个路径找的。
 //! - 视频：原生控制条，右上角一个全页播放的按钮（悬停才露），下面一行说明。
 //! - 音频：旧版的自制播放器：封面块、名字、时长；播放、进度条（点、拖、左右键 5 秒）、静音、音量、下载。
 
-import { h, icon, replace } from './dom.js';
+import { h, icon, replace, setUrl } from './dom.js';
 import { res, t } from '../util/res.js';
 import { openExternal } from '../core/host.js';
 
+/** 写上地址（可能要等，`setUrl`）再交回这个元素。 @template {Element} E @param {E} el @param {string} attr @param {string|Promise<string>} url */
+const withUrl = (el, attr, url) => {
+  setUrl(el, attr, url);
+  return el;
+};
+
 /**
  * 一张图（`.conversation-media`）。知道宽高的先按比例占好地方，图来了不跳。
- * @param {{url: string, name?: string, width?: number, height?: number, workspace?: () => void, lightbox?: () => any, tried?: string}} what
+ * @param {{url: string|Promise<string>, name?: string, width?: number, height?: number, workspace?: () => void, lightbox?: () => any, tried?: string}} what
  *   `lightbox` 交回现在的灯箱（软件包 lightbox 的服务；没装是 `undefined`）；`tried` 本机的图按哪个路径找（读不出来时写出来）
  */
 export function imageCard(what) {
-  const img = /** @type {HTMLImageElement} */ (h('img', { src: what.url, alt: what.name ?? '', loading: 'lazy', decoding: 'async' }));
+  const img = /** @type {HTMLImageElement} */ (h('img', { alt: what.name ?? '', loading: 'lazy', decoding: 'async' }));
+  /** 点开时用的地址：要等的等到了才有 */
+  let url = typeof what.url === 'string' ? what.url : '';
+  setUrl(img, 'src', what.url).then((u) => { url = u; });
   const fallback = h('div.conversation-media-fallback', { hidden: true }, icon('circle-alert'), h('span', t('media.image_failed')),
     what.tried ? h('span.conversation-media-tried', what.tried) : null);
   const ratio = what.width && what.height && what.width / what.height;
@@ -31,8 +40,9 @@ export function imageCard(what) {
   const open = () => {
     if (!img.isConnected) return;
     const box = what.lightbox?.();
-    if (box) box.open({ url: what.url, name: what.name, workspace: what.workspace, vector: /\.svg$/i.test(what.name ?? '') });
-    else openExternal(what.url);
+    if (!url) return;
+    if (box) box.open({ url, name: what.name, workspace: what.workspace, vector: /\.svg$/i.test(what.name ?? '') });
+    else openExternal(url);
   };
   visual.addEventListener('click', open);
   visual.addEventListener('keydown', (e) => {
@@ -46,10 +56,11 @@ export function imageCard(what) {
 
 /**
  * 一段视频（`.video-card`）：原生控制条；右上角的按钮铺满整页再点收回。
- * @param {{url: string, name: string}} what
+ * @param {{url: string|Promise<string>, name: string}} what
  */
 export function videoCard(what) {
-  const video = h('video', { src: what.url, controls: true, preload: 'metadata', playsinline: true });
+  const video = h('video', { controls: true, preload: 'metadata', playsinline: true });
+  setUrl(video, 'src', what.url);
   const shell = h('div.video-shell', video);
   const full = h('button.vfs-btn', { type: 'button', title: t('media.fullscreen'), 'aria-label': t('media.fullscreen') }, icon('maximize-2'));
   full.addEventListener('click', () => {
@@ -62,10 +73,11 @@ export function videoCard(what) {
 
 /**
  * 一段音频：旧版的自制播放器（`shared.js:97-290`）。
- * @param {{url: string, name: string, download?: string}} what `download` 是下载的地址，没有的不画下载
+ * @param {{url: string|Promise<string>, name: string, download?: string|Promise<string>}} what `download` 是下载的地址，没有的不画下载
  */
 export function audioCard(what) {
-  const audio = /** @type {HTMLAudioElement} */ (h('audio', { src: what.url, preload: 'metadata' }));
+  const audio = /** @type {HTMLAudioElement} */ (h('audio', { preload: 'metadata' }));
+  setUrl(audio, 'src', what.url);
   const meta = h('div.media-audio-meta', '--:--');
   const play = h('button.media-audio-play', { type: 'button' });
   const now = h('span.media-audio-time', '0:00');
@@ -75,7 +87,7 @@ export function audioCard(what) {
   const mute = h('button.media-audio-icon-btn', { type: 'button' });
   const volume = /** @type {HTMLInputElement} */ (h('input.media-audio-volume', { type: 'range', min: '0', max: '1', step: '0.05', value: '1', title: t('media.volume'), 'aria-label': t('media.volume') }));
   const download = what.download
-    ? h('a.media-audio-icon-btn', { href: what.download, download: what.name, title: t('media.download'), 'aria-label': t('media.download') }, icon('download'))
+    ? withUrl(h('a.media-audio-icon-btn', { download: what.name, title: t('media.download'), 'aria-label': t('media.download') }, icon('download')), 'href', what.download)
     : null;
   const card = h('div.media-audio-card',
     h('div.media-audio-head', h('div.media-audio-cover', icon('music')), h('div.media-audio-info', h('div.media-audio-name', { title: what.name }, what.name), meta)),

@@ -160,7 +160,8 @@ export class Guide {
     this.screen = screen;
     this.screenStep = this.step;
     this.running = false;
-    const stepBack = BACK[this.step];
+    // 设了账号进来的没有欢迎页：界面语言那一屏没有上一步
+    const stepBack = this.step === 'language' && this.ctx.host?.signedUp ? null : BACK[this.step];
     const back = screen.back ?? (stepBack && this.step !== 'done' ? () => this.go(stepBack, -1) : null);
     const next = screen.next ?? null;
     this.nextBtn = next ? /** @type {HTMLButtonElement} */ (h('button.wl-btn.is-primary', { type: 'button', onclick: () => this.run() }, this.labelOf(next))) : null;
@@ -197,8 +198,10 @@ export class Guide {
 
   /** 步骤条：现在这一步加粗，中间短线。 */
   drawSteps() {
-    const at = NUMBERED.indexOf(this.step);
-    replace(this.steps, NUMBERED.map((s, i) => h(`li${i === at ? '.is-now' : ''}`, `${i + 1} ${this.t(`steps.${s}`)}`)));
+    // 这次起页面时设了账号的（直接连网页软件、一次性码连上的）：最前面多一段「账号」，算走过（蓝图「连核心」第 1 条下面几款）
+    const list = this.ctx.host?.signedUp ? ['account', ...NUMBERED] : NUMBERED;
+    const at = list.indexOf(this.step);
+    replace(this.steps, list.map((s, i) => h(`li${i === at ? '.is-now' : ''}`, `${i + 1} ${this.t(`steps.${s}`)}`)));
   }
 
   /** 主按钮能不能点、写什么（测试连接那一屏的跟着测的结果变）。 */

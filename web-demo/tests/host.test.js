@@ -41,16 +41,16 @@ test('平台的 API、桥的地址只在 src/host/ 里用', () => {
   assert.deepEqual(bad, []);
 });
 
-test('浏览器那一份的地址：带口令，不带会话（核心照账号、照路径给，W-6）；下载的带 download，blob 另带原来的名字', () => {
+test('浏览器那一份的地址：带口令，不带会话（核心照账号、照路径给，W-6）；下载的带 download，blob 另带原来的名字', async () => {
   const u = urls('k1');
-  const file = new URL(u.file('/home/a b/x.png'), 'http://x');
+  const file = new URL(await u.file('/home/a b/x.png'), 'http://x');
   assert.equal(file.pathname, '/file');
   assert.deepEqual(Object.fromEntries(file.searchParams), { k: 'k1', path: '/home/a b/x.png' });
-  assert.equal(new URL(u.file('/x', true), 'http://x').searchParams.get('download'), '1');
-  const blob = new URL(u.blob('sha256:ab', 'application/pdf', { download: true, name: '报告.pdf' }), 'http://x');
+  assert.equal(new URL(await u.file('/x', true), 'http://x').searchParams.get('download'), '1');
+  const blob = new URL(await u.blob('sha256:ab', 'application/pdf', { download: true, name: '报告.pdf' }), 'http://x');
   assert.equal(blob.pathname, '/blob');
   assert.deepEqual(Object.fromEntries(blob.searchParams), { k: 'k1', hash: 'sha256:ab', type: 'application/pdf', download: '1', name: '报告.pdf' });
-  assert.equal(new URL(u.blob('sha256:ab', 'image/png'), 'http://x').searchParams.has('name'), false, '不下载的不带名字');
+  assert.equal(new URL(await u.blob('sha256:ab', 'image/png'), 'http://x').searchParams.has('name'), false, '不下载的不带名字');
   assert.equal('linkImage' in u, false, '链接卡片的图是 blob，照 /blob 取（核心施工 W-7）');
 });
 
@@ -174,4 +174,40 @@ test('重连时口令用不了了（桥重启过）：不再白试，告诉外�
   await new Promise((r) => setTimeout(r, 20));
   assert.equal(lost, 1, '口令用不了了：说一声');
   assert.equal(lines.length, 3, '不再试');
+});
+
+test('直接连网页软件的那一份：一次性码只交一次，接着用记着的登录令牌，忘掉以后交 null；地址带令牌换票据，同一样东西只换一次', async () => {
+  const saved = new Map();
+  const calls = [];
+  const keep = Object.fromEntries(['location', 'history', 'localStorage', 'fetch'].map((k) => [k, Object.getOwnPropertyDescriptor(globalThis, k)]));
+  globalThis.location = /** @type {any} */ ({ hash: '#setup=abc123', pathname: '/', search: '', protocol: 'http:', host: 'x', hostname: '127.0.0.1' });
+  globalThis.history = /** @type {any} */ ({ replaceState: () => { globalThis.location.hash = ''; } });
+  globalThis.localStorage = /** @type {any} */ ({ getItem: (k) => saved.get(k) ?? null, setItem: (k, v) => saved.set(k, v), removeItem: (k) => saved.delete(k) });
+  globalThis.fetch = /** @type {any} */ (async (path, init) => {
+    calls.push([path, init.headers.Authorization, init.body]);
+    return { ok: true, json: async () => ({ url: `/media/t${calls.length}` }) };
+  });
+  try {
+    const { servedHost } = await import('../src/host/served.js');
+    const host = servedHost();
+    assert.equal(location.hash, '', '一次性码从地址栏抹掉');
+    assert.deepEqual(host.credential(), { code: 'abc123' });
+    assert.equal(host.credential(), null, '码只用一次，没令牌的出登录框');
+    assert.equal(await host.urls.blob('sha256:ab', 'image/png'), '', '没登录换不到票据');
+    host.remember({ token: 'tok', expires: '2999-01-01T00:00:00Z' });
+    assert.deepEqual(host.credential(), { login: 'tok' });
+    assert.equal(await host.urls.blob('sha256:ab', 'image/png'), '/media/t1');
+    assert.equal(await host.urls.blob('sha256:ab', 'image/png'), '/media/t1', '同一样东西不再换');
+    assert.equal(calls.length, 1);
+    assert.deepEqual([calls[0][0], calls[0][1], JSON.parse(calls[0][2])], ['/media', 'Bearer tok', { blob: 'sha256:ab', type: 'image/png' }]);
+    assert.deepEqual(JSON.parse((await host.urls.file('/a', true), calls[1][2])), { path: '/a', download: true });
+    assert.equal(servedHost().credential().login, 'tok', '刷新以后照记着的令牌');
+    host.forget();
+    assert.equal(servedHost().credential(), null, '忘掉了的出登录框');
+  } finally {
+    for (const [k, d] of Object.entries(keep)) {
+      if (d) Object.defineProperty(globalThis, k, d);
+      else delete globalThis[k];
+    }
+  }
 });

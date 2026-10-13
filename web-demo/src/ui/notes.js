@@ -72,7 +72,7 @@ function detailNode(detail, where, markdown) {
   if (!detail.hash) return h('div.tl-body.note-detail', command, section(n.output_label, h('div.note-detail-head', n.no_output)));
   const pre = h('pre', n.loading);
   const head = h('div.note-detail-head', { hidden: true });
-  fetch(blobUrl(detail.hash, 'text/plain'))
+  blobUrl(detail.hash, 'text/plain').then((url) => fetch(url))
     .then((r) => (r.ok ? r.text() : Promise.reject(new Error(`${r.status} ${r.statusText}`))))
     .then((text) => {
       const lines = text.replace(/\n$/, '').split('\n');

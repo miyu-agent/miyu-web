@@ -56,6 +56,22 @@ export function append(el, kids) {
 }
 
 /** 换掉全部子节点。 */
+/**
+ * 写一个地址属性（`src`、`href`）：地址可能要等（直接连网页软件的先换票据，蓝图 `web/architecture.md`「浏览器的第二份宿主」）。是字符串的
+ * 当场写上；是 `Promise` 的等到了再写，等到的是空的照取不到发一次 `error`。交回写上的那个地址（等的交 `Promise`）。
+ * @param {Element} el @param {string} attr @param {string|Promise<string>} url @param {string} [suffix] 接在地址后面的（视频的 `#t=0.1`）
+ * @returns {Promise<string>}
+ */
+export function setUrl(el, attr, url, suffix = '') {
+  const done = Promise.resolve(url).then((u) => {
+    if (u) el.setAttribute(attr, u + suffix);
+    else el.dispatchEvent(new Event('error'));
+    return u;
+  });
+  if (typeof url === 'string' && url) el.setAttribute(attr, url + suffix);
+  return done;
+}
+
 export function replace(el, ...kids) {
   el.replaceChildren();
   return append(el, kids);
