@@ -4,7 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { configId, customId, validUrl, cleanUrl, providerRows, testParams, setupChanges, noPools, modelOrder, filterNames, failureOf } from '../../packages/settings/onboard/logic.js';
+import { configId, customId, validUrl, cleanUrl, providerRows, testParams, setupChanges, noPools, modelOrder, filterNames, failureOf, usableIds } from '../../packages/settings/onboard/logic.js';
 
 test('目录里的编号不合写法的换成配置里的写法', () => {
   assert.equal(configId('deepseek'), 'deepseek');
@@ -103,9 +103,21 @@ test('模型的先后：试的那一个排第一，去重；搜索不分大小�
   assert.deepEqual(filterNames(['a', 'b'], '  '), ['a', 'b']);
 });
 
-test('没测成：列不出模型的要填模型名，配置错的、别的照分类，带状态码', () => {
-  assert.deepEqual(failureOf({ ok: false, stage: 'list', error: { class: 'other', message: 'no models listed' } }), { key: 'onboard.no_list', status: null, needsModel: true, message: 'no models listed' });
+test('没测成：核心说要模型名的要填模型名，列模型时认证错的照分类，配置错的、别的照分类，带状态码（核心 8-11 五补）', () => {
+  assert.deepEqual(failureOf({ ok: false, stage: 'list', need_model: true, error: { class: 'other', message: 'no models listed' } }), { key: 'onboard.no_list', status: null, needsModel: true, message: 'no models listed' });
+  assert.deepEqual(failureOf({ ok: false, stage: 'list', error: { class: 'auth', status: 401, message: 'bad key' } }), { key: 'onboard.classes.auth', status: 401, needsModel: false, message: 'bad key' });
   assert.deepEqual(failureOf({ ok: false, stage: 'config', error: { class: 'no_model', message: 'needs base_url' } }).key, 'onboard.config_error');
   assert.deepEqual(failureOf({ ok: false, stage: 'request', error: { class: 'auth', status: 401, message: 'bad key' } }), { key: 'onboard.classes.auth', status: 401, needsModel: false, message: 'bad key' });
   assert.equal(failureOf({ ok: false, stage: 'request', error: { class: 'weird' } }).key, 'onboard.classes.other');
+});
+
+test('配好了的照密钥取不取得到算：引用的密钥没了的不算，没写密钥的算（2026-10-13 项目主人实测）', () => {
+  const got = usableIds([
+    { id: 'deepseek', key: { ref: 'secret:deepseek-1', set: false } },
+    { id: 'magpie', key: { ref: 'secret:magpie-1', set: true } },
+    { id: 'local', models: [] },
+  ]);
+  assert.deepEqual([...got].sort(), ['local', 'magpie']);
+  const rows = providerRows([{ id: 'deepseek', name: 'DeepSeek', supported: true }], null, got);
+  assert.equal(rows.common[0].configured, null, '密钥没了的那一家照没配过的走，不标已配置');
 });

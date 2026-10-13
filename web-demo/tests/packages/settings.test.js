@@ -290,3 +290,12 @@ test('个人设置里的 MCP 服务推来一项：换掉同名的、新的接在
   assert.equal(mcpStopped({ enabled: true, mcp: [{ name: 'x', state: 'stopped', covered: true }] }), false, '被替代的照旧 off/stopped 也不报「服务已停止」');
   assert.equal(mcpStopped({ enabled: true, mcp: [{ name: 'x', state: 'stopped' }] }), true);
 });
+
+test('测试连接那一行：只列了模型的写列出几个，发了一句的写模型和首字，要模型名的接一句怎么再测（核心 8-11 五补）', async () => {
+  const { testLine } = await import('../../packages/settings/model-bits.js');
+  const ctx = { text: (k, f) => `${k}${f ? JSON.stringify(f) : ''}` };
+  assert.equal(testLine(ctx, { ok: true, checked: 'list', models: ['a', 'b'], model: 'a' }), 'models.test_listed{"count":2}');
+  assert.equal(testLine(ctx, { ok: true, checked: 'request', models: [], model: 'm', first_token_ms: 812 }), 'models.test_ok{"model":"m","ms":812}');
+  assert.equal(testLine(ctx, { ok: false, stage: 'list', need_model: true, error: { message: 'not found' } }), 'not found · models.test_need_model');
+  assert.equal(testLine(ctx, { ok: false, stage: 'list', error: { class: 'auth', message: 'bad key' } }), 'bad key');
+});
