@@ -48,7 +48,7 @@ function providerItem(dialog, x, on, logos, same) {
   const sub = [where ? h('small', where) : null, reason];
   return h(`button.set-prov${on ? '.is-on' : ''}`, {
     type: 'button',
-    onclick: () => { dialog.provider = x.id; dialog.modelDetail = null; dialog.keyEdit = null; if (dialog.modelQuery) dialog.modelQuery.providers = ''; dialog.drawBody(); },
+    onclick: () => { dialog.provider = x.id; dialog.modelDetail = null; dialog.keyEdit = null; dialog.tested = null; if (dialog.modelQuery) dialog.modelQuery.providers = ''; dialog.drawBody(); },
   }, logos ? logoEl(x.logo ?? null, providerName(x)) : null, h('span.set-prov-text', h('span', providerName(x)), sub));
 }
 
@@ -56,21 +56,25 @@ function providerItem(dialog, x, on, logos, same) {
 function head(dialog, p, logos) {
   const ctx = dialog.ctx;
   const address = typeof p.base_url === 'object' && p.base_url?.env ? ctx.text('from_env', { name: p.base_url.env }) : inputText(p.base_url);
-  const result = h('p.set-test', { hidden: true });
-  const test = h('button.set-btn', { type: 'button', onclick: async () => {
-    test.disabled = true;
+  // 测的结果记在弹窗上（`dialog.tested`）：测成了会重读这一家的模型、整块重画，结果照它画回来（原来写在这一次画的元素上，重画就没了）
+  const shown = dialog.tested?.id === p.id ? dialog.tested : null;
+  const result = h(`p.set-test${shown?.tone ? `.is-${shown.tone}` : ''}`, { hidden: !shown }, shown ? (shown.text ?? icon('loader-circle')) : null);
+  const show = (/** @type {{id: string, tone?: string, text?: string}} */ next) => {
+    dialog.tested = next;
     result.hidden = false;
-    result.className = 'set-test';
-    replace(result, icon('loader-circle'));
+    result.className = `set-test${next.tone ? ` is-${next.tone}` : ''}`;
+    replace(result, next.text ?? icon('loader-circle'));
+  };
+  const test = h('button.set-btn', { type: 'button', disabled: !!shown && shown.text == null, onclick: async () => {
+    test.disabled = true;
+    show({ id: p.id });
     try {
       const r = await ctx.core.request('provider.test', { provider: p.id, ...(dialog.modelDetail ? { model: dialog.modelDetail } : {}) });
-      result.className = `set-test ${r.ok ? 'is-good' : 'is-bad'}`;
-      replace(result, testLine(ctx, r));
+      show({ id: p.id, tone: r.ok ? 'good' : 'bad', text: testLine(ctx, r) });
       // 测成了：核心顺手存了供应商列出来的模型，重读这一家
       if (r.ok) refreshProvider(dialog, p.id, false);
     } catch (err) {
-      result.className = 'set-test is-bad';
-      replace(result, err.message);
+      show({ id: p.id, tone: 'bad', text: err.message });
     }
     test.disabled = false;
   } }, ctx.text('models.test'));
