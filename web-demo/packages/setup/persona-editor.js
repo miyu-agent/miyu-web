@@ -39,9 +39,15 @@ export class PersonaEditor {
     this.before = null;
     /** @type {string|null} */
     this.remove = null;
+    /** 外观当场存过（「保存」也亮着，点了提示已保存；2026-10-13 项目主人） */
+    this.touched = false;
     /** 外观那三行 */
     this.look = new Appearance(ctx, kit, catalog, id, {
-      saved: () => this.hooks.saved(),
+      saved: () => {
+        this.touched = true;
+        this.sync();
+        this.hooks.saved();
+      },
       say: (text) => this.say(text),
       name: () => this.name?.value.trim() || this.before?.name || '',
     });
@@ -111,9 +117,9 @@ export class PersonaEditor {
     return !!this.before && personaSave(this.before, this.current()) != null;
   }
 
-  /** 「存」：改了、名字不空才点得了。 */
+  /** 「存」：改了字（或者外观当场存过）、名字不空才点得了。 */
   sync() {
-    if (this.saveBtn) this.saveBtn.disabled = !this.dirty() || !this.name?.value.trim();
+    if (this.saveBtn) this.saveBtn.disabled = !(this.dirty() || this.touched) || !this.name?.value.trim();
   }
 
   /** @param {string} text @param {HTMLElement[]} [more] */
@@ -142,7 +148,15 @@ export class PersonaEditor {
       return;
     }
     const payload = personaSave(this.before, this.current());
-    if (!payload) return;
+    if (!payload) {
+      // 只改了外观：已经当场存了，这里只说一声
+      if (this.touched) {
+        this.touched = false;
+        this.sync();
+        this.kit.toast(this.t('edit.saved'));
+      }
+      return;
+    }
     this.saveBtn.disabled = true;
     try {
       await this.ctx.core.request('persona.set', { persona: this.id, ...payload });
@@ -155,6 +169,7 @@ export class PersonaEditor {
       }
       return;
     }
+    this.touched = false;
     this.kit.toast(this.t('edit.saved'));
     await this.load();
     this.hooks.saved();
