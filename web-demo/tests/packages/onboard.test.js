@@ -4,7 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { configId, customId, validUrl, cleanUrl, providerRows, testParams, setupChanges, noPools, modelOrder, filterNames, failureOf, usableIds } from '../../packages/settings/onboard/logic.js';
+import { configId, customId, validUrl, cleanUrl, providerRows, testParams, setupChanges, noPools, modelOrder, filterNames, failureOf, usableIds, customIdProblem } from '../../packages/settings/onboard/logic.js';
 
 test('目录里的编号不合写法的换成配置里的写法', () => {
   assert.equal(configId('deepseek'), 'deepseek');
@@ -120,4 +120,15 @@ test('配好了的照密钥取不取得到算：引用的密钥没了的不算�
   assert.deepEqual([...got].sort(), ['local', 'magpie']);
   const rows = providerRows([{ id: 'deepseek', name: 'DeepSeek', supported: true }], null, got);
   assert.equal(rows.common[0].configured, null, '密钥没了的那一家照没配过的走，不标已配置');
+});
+
+test('自定义的编号：人起的照它存，写法不对、重了的说哪里不对（2026-10-13 项目主人）', () => {
+  assert.equal(customIdProblem('my-relay', new Set(['dev'])), null);
+  assert.equal(customIdProblem('My', new Set()), 'bad_id');
+  assert.equal(customIdProblem('9x', new Set()), 'bad_id');
+  assert.equal(customIdProblem('dev', new Set(['dev'])), 'taken_id');
+  const { id, changes } = setupChanges({ kind: 'custom', driver: 'openai-chat', base_url: 'https://api.example.com/v1', id: 'my-relay' }, null, { taken: new Set() });
+  assert.equal(id, 'my-relay');
+  assert.ok(changes.some((c) => c.key === 'providers.my-relay.base_url'));
+  assert.equal(setupChanges({ kind: 'custom', driver: 'openai-chat', base_url: 'https://api.example.com/v1' }, null, { taken: new Set() }).id, 'example', '没起的照主机名');
 });

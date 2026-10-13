@@ -2,6 +2,8 @@
 //! 接一家供应商的纯逻辑（蓝图 `web.md`「第一次引导」第 5–7、12 条；照核心 `cli/setup.md` 第 3–10 条，写的东西和 `miyu setup` 一样）：
 //! 选一家那一屏有哪几行、标什么；配置里的编号怎么起（目录里的、自定义的）；`provider.test` 带什么；存的时候写哪几项。
 
+import { validId } from '../model.js';
+
 /** 通用的二级域名：`api.example.co.uk` 取 `example`（`cli/setup.md` 第 4 条第 3 款） */
 const SECOND_LEVEL = new Set(['co', 'com', 'net', 'org', 'edu', 'gov', 'ac']);
 /** 出厂的三个池：配置里一个池都没有时一起写（`cli/setup.md` 第 10 条） */
@@ -37,6 +39,17 @@ export function customId(url, taken) {
   let id = root;
   for (let n = 2; taken.has(id); n += 1) id = `${root}-${n}`;
   return id;
+}
+
+/**
+ * 自定义的那一家人起的编号哪里不对（2026-10-13 项目主人：能自己起）：照「路径里的名字」的写法（小写字母开头，只有小写字母、数字、`-`、`_`，
+ * 最长 32），不能和配置里已有的重。对的交 `null`，不然交字的键（设置页编辑表那两句）。
+ * @param {string} id @param {Set<string>} taken
+ * @returns {'bad_id'|'taken_id'|null}
+ */
+export function customIdProblem(id, taken) {
+  if (!validId(id)) return 'bad_id';
+  return taken.has(id) ? 'taken_id' : null;
 }
 
 /** 地址写得对不对：`http://`、`https://` 开头、读得出主机名。 @param {string} text */
@@ -100,7 +113,7 @@ export function providerRows(featured, detect, configured) {
  * @typedef {{kind: 'configured', id: string}
  *   | {kind: 'catalog', catalog: string, env: string|null}
  *   | {kind: 'local', catalog: string}
- *   | {kind: 'custom', driver: string, base_url: string}} Target 要接的那一家：配好了的、目录里的、本机的服务、自定义的
+ *   | {kind: 'custom', driver: string, base_url: string, id?: string}} Target 要接的那一家：配好了的、目录里的、本机的服务、自定义的（`id` 人起的编号，空着照主机名起）
  * @typedef {{value: string}|{env: string}|null} Key 这一次用的密钥：贴的、环境变量、不要
  */
 
@@ -138,7 +151,7 @@ export function setupChanges(target, key, opts) {
   let id;
   if (target.kind === 'configured') id = target.id;
   else {
-    id = target.kind === 'custom' ? customId(target.base_url, opts.taken) : configId(target.catalog);
+    id = target.kind === 'custom' ? target.id || customId(target.base_url, opts.taken) : configId(target.catalog);
     const put = (/** @type {string} */ field, /** @type {any} */ value) => changes.push({ key: `providers.${id}.${field}`, value });
     if (target.kind !== 'custom' && id !== target.catalog) put('catalog', target.catalog);
     if (target.kind === 'custom') {
