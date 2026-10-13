@@ -57,6 +57,7 @@
         "language": "语言",
         "model": "模型",
         "persona": "人格",
+        "theme": "主题",
         "preset": "预设"
       },
       "hello": {
@@ -87,6 +88,7 @@
         "language": "Language",
         "model": "Model",
         "persona": "Persona",
+        "theme": "Theme",
         "preset": "Preset"
       },
       "hello": {
@@ -117,6 +119,7 @@
         "language": "言語",
         "model": "モデル",
         "persona": "人格",
+        "theme": "テーマ",
         "preset": "プリセット"
       },
       "hello": {

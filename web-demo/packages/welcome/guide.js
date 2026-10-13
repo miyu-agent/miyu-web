@@ -7,9 +7,9 @@ import { h, icon, replace } from '../../src/lib/dom.js';
 import { helloScreen, languageScreen, doneScreen, STEP_KEY, DONE_KEY } from './screens.js';
 
 /** 步子的先后；`back` 是上一步回到哪 */
-const BACK = /** @type {Record<string, string|null>} */ ({ hello: null, language: 'hello', model: 'language', persona: 'model', preset: 'persona', done: 'preset' });
+const BACK = /** @type {Record<string, string|null>} */ ({ hello: null, language: 'hello', model: 'language', persona: 'model', theme: 'persona', preset: 'theme', done: 'preset' });
 /** 进步骤条的几步 */
-export const NUMBERED = ['language', 'model', 'persona', 'preset'];
+export const NUMBERED = ['language', 'model', 'persona', 'theme', 'preset'];
 /** 换一屏要选中的选项（`↑` `↓` 换着选的：选了就是它；别的只挪焦点） */
 const CHOICES = '.ob-row:not([disabled]), .wl-lang, .setup-choice, .ob-model';
 const SELECTS = new Set(['wl-lang', 'setup-choice', 'ob-model']);
@@ -121,8 +121,11 @@ export class Guide {
         },
       });
       flow.start();
-    } else if (step === 'persona' || step === 'preset') {
-      const part = step === 'persona' ? this.ctx.personas.persona(this.kit, host) : this.ctx.personas.preset(this.kit, host);
+    } else if (step === 'persona' || step === 'theme' || step === 'preset') {
+      // 主题照人格那一步存好的人格（2026-10-13）；没存成的（不会走到这里）跳过
+      if (step === 'theme' && !this.ids.persona) return this.go(dir > 0 ? 'preset' : 'persona', dir);
+      const part = step === 'persona' ? this.ctx.personas.persona(this.kit, host)
+        : step === 'theme' ? this.ctx.personas.theme(this.kit, host, this.ids.persona) : this.ctx.personas.preset(this.kit, host);
       this.show({ title: '', body: h('p.wl-wait', icon('loader-circle')), next: null, kind: 'wait' }, dir);
       await part.load();
       if (this.step !== step) return;
@@ -134,9 +137,11 @@ export class Guide {
           run: async () => {
             const why = await screen.next.run();
             if (why) return why;
-            this.result[step] = part.label();
-            this.ids[step] = part.id;
-            this.go(step === 'persona' ? 'preset' : 'done', 1);
+            if (step !== 'theme') {
+              this.result[step] = part.label();
+              this.ids[step] = part.id;
+            }
+            this.go(step === 'persona' ? 'theme' : step === 'theme' ? 'preset' : 'done', 1);
             return null;
           },
         },

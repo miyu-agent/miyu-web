@@ -14,6 +14,7 @@ import { Catalog } from './catalog.js';
 import { ListPage, problemText } from './page.js';
 import { browse } from './folders.js';
 import { PersonaStep, PresetStep } from './welcome.js';
+import { ThemeStep } from './theme-step.js';
 import { editPersona } from './quick-edit.js';
 
 const RECENT = 'setup.recent';
@@ -60,9 +61,15 @@ export function apply(ctx) {
    */
   const lookOf = (session) => {
     if (!catalog.personas) return undefined;
-    const id = session ? chat.persona(session) : inUse().persona;
-    const p = id ? catalog.personas.find((x) => x.persona === id) : null;
-    // 自选的主题色、背景图（核心 P-6）和背景图的透明度、焦点（P-7）跟着交出去：跟着人格的外观（软件包 `theme-persona`）照它们画
+    return lookFor(session ? chat.persona(session) : inUse().persona);
+  };
+  /**
+   * 一个人格画成什么样：自选的主题色、背景图（核心 P-6）和背景图的透明度、焦点（P-7）跟着交出去，跟着人格的外观（软件包 `theme-persona`）
+   * 照它们画。没有这个人格的是 `null`。
+   * @param {string|null} id
+   */
+  const lookFor = (id) => {
+    const p = id ? catalog.personas?.find((x) => x.persona === id) : null;
     return p ? {
       persona: p.persona, name: personaName(p), avatar: catalog.avatars.url(p.persona, p.avatar), seed: p.seed ?? null,
       background: catalog.backgrounds.url(p.persona, p.background), opacity: p.background_opacity ?? null, focus: p.background_focus ?? null,
@@ -75,6 +82,9 @@ export function apply(ctx) {
     persona: (kit, host) => new PersonaStep(ctx, kit, catalog, host),
     /** @param {import('./form.js').Kit} kit @param {import('./welcome.js').Host} host */
     preset: (kit, host) => new PresetStep(ctx, kit, catalog, host),
+    /** 主题那一屏（2026-10-13）：人格那一步存好的人格 @param {import('./form.js').Kit} kit @param {import('./welcome.js').Host} host @param {string} id */
+    // 引导盖着的时候整页照这个人格的样子画（空会话照上一次会话选的人格算，不一定是它）；走完进的新会话就是它，对话区照常接着发
+    theme: (kit, host, id) => new ThemeStep(ctx, kit, catalog, host, id, () => ctx.publish('look.changed', lookFor(id))),
   });
   // 头像读到了：她那一轮的头换成图
   catalog.listeners.add(() => chat.refreshLook());

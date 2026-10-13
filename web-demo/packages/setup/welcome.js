@@ -1,11 +1,11 @@
 // @ts-check
 //! 第一次引导里人格、预设那两屏（蓝图 `web.md`「第一次引导」第 8、9 条），经服务 `personas` 交给软件包 `welcome`：
-//! - 人格：和设置页的人格详情一样几格（头像、名称、说明、人设、示范对话、角色扮演提示），名称必填；「下一步」一条 `persona.set` 新建
-//!   （不写编号，头像一起），再设成默认人格。默认人格已经指着一个在的人格（中途关了重来）：读它填好，只存改了的。
+//! - 人格：和设置页的人格详情一样几格（头像、背景图、名称、说明、人设、示范对话、角色扮演提示），名称必填；「下一步」一条 `persona.set`
+//!   新建（不写编号，头像、背景图一起），再设成默认人格。默认人格已经指着一个在的人格（中途关了重来）：读它填好，只存改了的。
 //! - 预设：一个预设一张卡片，写开了、关了哪些功能；最后一张「自定义」原地展开名称和功能开关。「下一步」设成默认预设（自定义的先建）。
 //! 每一屏交 `{title, sub, body, next: {ready, run}, focus}`，上一步、下一步的按钮由引导画；`run` 交回出错的字，成了是 `null`。
 
-import { h, replace } from '../../src/lib/dom.js';
+import { h, icon, replace } from '../../src/lib/dom.js';
 import { field, area } from './form.js';
 import { Pairs } from './pairs.js';
 import { personaSave, halfPair, personaName, presetName } from './model.js';
@@ -38,7 +38,12 @@ export class PersonaStep {
     this.avatar = /** @type {{hash: string, url: string}|null} */ (null);
     /** 改的那个人格原来的头像版本 */
     this.version = /** @type {string|null} */ (null);
+    /** 选了还没存的背景图（2026-10-13 项目主人：引导里也要能设）；原来的背景图版本；去掉了原来的那张 */
+    this.background = /** @type {{hash: string, url: string}|null} */ (null);
+    this.bgVersion = /** @type {string|null} */ (null);
+    this.bgDropped = false;
     this.avatarBox = h('div.setup-avatar-box');
+    this.backgroundBox = h('div.setup-bg-box');
     this.note = h('p.setup-error', { hidden: true });
   }
 
@@ -52,6 +57,7 @@ export class PersonaStep {
       const [got, persona, reminders, examples] = await Promise.all([this.ctx.core.request('persona.get', { persona: id }), read('persona'), read('reminders'), read('examples')]);
       this.id = id;
       this.version = got?.avatar ?? null;
+      this.bgVersion = got?.background ?? null;
       this.before = {
         name: typeof got?.name === 'string' ? got.name : '',
         summary: typeof got?.summary === 'string' ? got.summary : '',
@@ -81,8 +87,10 @@ export class PersonaStep {
       this.host.ready();
     });
     this.paintAvatar();
+    this.paintBackground();
     const body = h('div.setup-editor.is-welcome',
       field(t('edit.avatar'), this.avatarBox),
+      field(t('edit.background'), this.backgroundBox),
       field(t('edit.name'), this.name),
       field(t('edit.summary'), this.summary),
       field(t('edit.persona'), this.persona),
@@ -112,6 +120,47 @@ export class PersonaStep {
       h('span.setup-face.is-persona.is-big', { 'aria-hidden': 'true' }, url ? h('img', { src: url, alt: '' }) : [...name][0] ?? ''),
       this.kit.button(this.t(url ? 'edit.avatar_change' : 'welcome.avatar_pick'), {}, () => pick.click()),
       pick);
+  }
+
+  /** 背景图那一格：16:9 的小图（没有的一块底色写「添加」），点它选图；有图的右上角一个小 × 去掉（同设置页人格卡片的外观那一行）。 */
+  paintBackground() {
+    const t = this.t;
+    const url = this.background?.url ?? (this.id && !this.bgDropped ? this.catalog.backgrounds.url(this.id, this.bgVersion) : null);
+    const pick = /** @type {HTMLInputElement} */ (h('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp,image/*', hidden: true }));
+    pick.addEventListener('change', () => {
+      const file = pick.files?.[0];
+      pick.value = '';
+      if (file) this.chooseBackground(file);
+    });
+    const title = t(url ? 'edit.background_change' : 'edit.background');
+    const drop = () => {
+      if (this.background) URL.revokeObjectURL(this.background.url);
+      this.background = null;
+      this.bgDropped = !!this.bgVersion;
+      this.paintBackground();
+    };
+    replace(this.backgroundBox,
+      h('div.setup-pic.is-background',
+        h('button.setup-pic-main', { type: 'button', title, 'aria-label': title, onclick: () => pick.click() },
+          url ? h('img', { src: url, alt: '' }) : h('span.setup-pic-empty', icon('image'), t('edit.add_short')),
+          url ? h('span.setup-pic-hover', { 'aria-hidden': 'true' }, t('edit.change_short')) : null),
+        url ? h('button.setup-pic-remove', { type: 'button', title: t('edit.background_remove'), 'aria-label': t('edit.background_remove'), onclick: drop }, icon('x')) : null),
+      pick);
+  }
+
+  /** 选了一张背景图：缩小（存成 WebP，存不了的 JPEG）、传成 blob，存的时候一起交。 @param {File} file */
+  async chooseBackground(file) {
+    const cfg = this.ctx.config;
+    try {
+      const blob = await shrink(file, cfg.background_side, { fallback: 'image/jpeg', maxBytes: 5 * 1024 * 1024 });
+      const hash = await store(this.ctx.core, blob, { chunk: cfg.avatar_chunk_bytes, tries: cfg.avatar_tries }, 'background');
+      if (this.background) URL.revokeObjectURL(this.background.url);
+      this.background = { hash, url: URL.createObjectURL(blob) };
+      this.say('');
+      this.paintBackground();
+    } catch (err) {
+      this.say(refusalText(err));
+    }
   }
 
   /** 选了一张：缩小、传成 blob，存的时候一起交。 @param {File} file */
@@ -147,10 +196,11 @@ export class PersonaStep {
     const now = { ...this.before, name: this.name?.value ?? '', summary: this.summary?.value ?? '', persona: this.persona?.value ?? '', reminders: this.reminders?.value ?? '', pairs };
     const payload = personaSave(this.before, now) ?? {};
     const avatar = this.avatar ? { avatar: { blob: this.avatar.hash } } : {};
+    const background = this.background ? { background: { blob: this.background.hash } } : this.bgDropped ? { background: { unset: true } } : {};
     try {
       let id = this.id;
-      if (!id || Object.keys(payload).length || this.avatar) {
-        const got = await this.ctx.core.request('persona.set', { ...(id ? { persona: id } : {}), ...payload, ...avatar });
+      if (!id || Object.keys(payload).length || this.avatar || Object.keys(background).length) {
+        const got = await this.ctx.core.request('persona.set', { ...(id ? { persona: id } : {}), ...payload, ...avatar, ...background });
         id = id ?? got?.persona ?? null;
       }
       if (!id) return t('welcome.save_failed');
@@ -158,6 +208,8 @@ export class PersonaStep {
       this.id = id;
       this.before = now;
       this.avatar = null;
+      this.background = null;
+      this.bgDropped = false;
       this.host.mascot?.hop();
       await this.catalog.load();
       return null;
