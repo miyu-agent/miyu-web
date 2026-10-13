@@ -293,6 +293,7 @@
     "external": "外部",
     "tail": "最後の {count} 行のみ表示",
     "no_output": "出力は保存されていません",
+    "no_summary": "要約は保存されていません",
     "truncated": "（途中を省略）",
     "loading": "取得中…",
     "load_failed": "取得できません：{reason}",

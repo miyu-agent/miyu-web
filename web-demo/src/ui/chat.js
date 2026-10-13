@@ -31,7 +31,7 @@ export class Chat {
     this.home = home;
     this.say = (/** @type {string} */ text, /** @type {boolean|undefined} */ good) => notice.say(text, good);
     /** 看着的这个会话在哪（`ui/rich.js`）：取本机文件的地址要；换了会话由 `setWhere` 换。 */
-    this.where = /** @type {import('./rich.js').Where} */ ({ session: null, home, cwd: null, lightbox: () => ext?.lightbox?.(), detail: () => Promise.resolve(null) });
+    this.where = /** @type {import('./rich.js').Where} */ ({ session: null, home, cwd: null, lightbox: () => ext?.lightbox?.(), detail: () => Promise.resolve(null), summary: () => Promise.resolve(null) });
     /** 画回答时带着的（`markdown/render.js`）：提示；扩展点（图、卡片）照一条回答的范围取。 */
     this.markdown = { say: this.say, hooks: richHooks(this.where, this.say, ext) };
     this.list = h('div.timeline');
@@ -78,7 +78,7 @@ export class Chat {
    */
   setWhere(session, cwd) {
     if (this.where.session === session && this.where.cwd === cwd) return;
-    this.where = { session, home: this.home, cwd, lightbox: () => this.ext?.lightbox?.(), detail: (call) => (session ? this.ext?.detail?.(session, call) ?? Promise.resolve(null) : Promise.resolve(null)) };
+    this.where = { session, home: this.home, cwd, lightbox: () => this.ext?.lightbox?.(), detail: (call) => (session ? this.ext?.detail?.(session, call) ?? Promise.resolve(null) : Promise.resolve(null)), summary: (upto) => (session ? this.ext?.summary?.(session, upto) ?? Promise.resolve(null) : Promise.resolve(null)) };
     this.markdown = { say: this.say, hooks: richHooks(this.where, this.say, this.ext) };
   }
 

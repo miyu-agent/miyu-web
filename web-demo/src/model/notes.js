@@ -92,8 +92,9 @@ export function compactedNote(e, stats = null) {
   return {
     type: 'note', key: `n${e.seq}`, seq: e.seq, turn: e.turn ?? null, tone: 'good', mark: res.layout.note_marks.good,
     text: head + ask, compaction: clear ? 'clear' : (b.trigger ?? 'auto'),
-    // 点开看摘要（照回报点开的 Markdown 那一种）；清空、摘要空的不能点
-    detail: !clear && b.summary?.trim() ? { kind: 'text', text: b.summary, truncated: false } : null,
+    // 点开看摘要（照回报点开的 Markdown 那一种）：条目里没有原文，点开时照序号问核心（`view.detail {session, compaction}`，蓝图 view.md）；
+    // 清空的不能点
+    detail: clear ? null : b.summary?.trim() ? { kind: 'text', text: b.summary, truncated: false } : { kind: 'compaction', upto: e.seq },
   };
 }
 

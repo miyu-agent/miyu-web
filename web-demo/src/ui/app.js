@@ -48,7 +48,7 @@ export class App {
   constructor(store, conn, info, ctx, lightbox) {
     this.ctx = ctx;
     /** 软件包接进来的：挂载位、现在的灯箱（`rich.js` 的 `Ext`） */
-    this.ext = { slots: ctx.slots, lightbox, storage: ctx.storage, account: info.account ?? null, titleOf: (id) => this.titleOf(id), detail: (session, call) => this.callDetail(session, call) };
+    this.ext = { slots: ctx.slots, lightbox, storage: ctx.storage, account: info.account ?? null, titleOf: (id) => this.titleOf(id), detail: (session, call) => this.callDetail(session, call), summary: (session, upto) => this.compactionSummary(session, upto) };
     /** 一次调用改了什么（`view.detail`）：同一次调用的结果不会变，照「会话 调用」记着只问一次 @type {Map<string, Promise<any>>} */
     this.details = new Map();
     this.store = store;
@@ -446,6 +446,17 @@ export class App {
     const key = `${session} ${call}`;
     if (!this.details.has(key)) this.details.set(key, this.store.conn.request('view.detail', { session, call }).catch(() => null));
     return /** @type {Promise<any>} */ (this.details.get(key));
+  }
+
+  /**
+   * 一次压缩的摘要原文（`view.detail {session, compaction: <序号>}`，核心交 `summary`）：压好的不会变，照「会话 c序号」记着只问一次。
+   * 问不到的（旧核心、没有这次压缩）交 `null`。
+   * @param {string} session @param {number} upto
+   */
+  compactionSummary(session, upto) {
+    const key = `${session} c${upto}`;
+    if (!this.details.has(key)) this.details.set(key, this.store.conn.request('view.detail', { session, compaction: upto }).then((r) => (typeof r?.summary === 'string' ? r.summary : null), () => null));
+    return /** @type {Promise<string|null>} */ (this.details.get(key));
   }
 
   /**

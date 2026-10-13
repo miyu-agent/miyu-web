@@ -19,8 +19,8 @@ import { fileUrl } from '../core/host.js';
 
 /**
  * 看着的这个会话在哪：会话编号（新会话还没开的是 `null`）、家目录、工作目录；时间线里的结果图点开找的灯箱。
- * @typedef {{session: string|null, home: string|null, cwd: string|null, lightbox?: () => any, detail?: (call: string) => Promise<any>}} Where
- *   `detail` 问核心一次调用改了什么（`view.detail`，编辑、写入点开时）
+ * @typedef {{session: string|null, home: string|null, cwd: string|null, lightbox?: () => any, detail?: (call: string) => Promise<any>, summary?: (upto: number) => Promise<string|null>}} Where
+ *   `detail` 问核心一次调用改了什么（`view.detail`，编辑、写入点开时）；`summary` 问一次压缩的摘要原文（压缩那一行点开时）
  */
 
 /**
@@ -37,7 +37,7 @@ export function richHooks(where, say, ext) {
 }
 
 /**
- * @typedef {{slots?: any, lightbox?: () => any, storage?: {get: (k: string, d: any) => any, set: (k: string, v: any) => void}, account?: string|null, titleOf?: (id: string) => string|null}} Ext
+ * @typedef {{slots?: any, lightbox?: () => any, storage?: {get: (k: string, d: any) => any, set: (k: string, v: any) => void}, account?: string|null, titleOf?: (id: string) => string|null, detail?: (session: string, call: string) => Promise<any>, summary?: (session: string, upto: number) => Promise<string|null>}} Ext
  *   软件包 app 交进来的：`ctx.slots`、交回现在的灯箱（没装是 `undefined`）、这台设备上存东西（内核的 `storage`）、这个页面登录成的账号
  */
 

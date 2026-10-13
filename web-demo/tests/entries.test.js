@@ -113,6 +113,8 @@ test('旁白：压缩、清空、后台任务、换了模型、工作区、别�
   ]);
   assert.deepEqual(got.items[2].detail, { kind: 'output', command: 'npm test', hash: 'sha256:x', chars: 10 });
   assert.equal(got.items[1].compaction, 'clear');
+  assert.deepEqual(got.items[0].detail, { kind: 'compaction', upto: 20 }, '压缩那一行点开照序号问摘要');
+  assert.equal(got.items[1].detail, null, '清空的不能点');
   assert.equal(got.items[7].event.kind, 'question.answered');
   assert.equal(got.items[8].recap, '做了这些');
   assert.equal(got.items[8].covers, 3);
