@@ -105,7 +105,7 @@ export const ROLES = [...new Set([...Object.values(PAGE.light), ...Object.values
   ...Object.values(LINK), 'onSurface', 'surfaceVariant'])].sort();
 
 /**
- * 认 matugen 生成的那一份（`package/matugen/miyu-web.json` 模板）：`{source, light: {角色: 颜色}, dark: {…}}`，角色是 matugen 的写法
+ * 认 matugen 生成的那一份（`web/matugen/miyu-web.json` 模板）：`{source, light: {角色: 颜色}, dark: {…}}`，角色是 matugen 的写法
  * （`surface_container_low`），换成驼峰；缺了哪个角色、颜色不是 `#rrggbb` 的是 `null`（当没有，回去自己取色）。
  * @param {any} json
  * @returns {{source: string, light: Record<string, string>, dark: Record<string, string>}|null}

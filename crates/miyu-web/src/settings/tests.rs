@@ -14,7 +14,7 @@ fn shipped_root() -> &'static Path {
     ROOT.get_or_init(|| {
         let root = std::env::temp_dir().join(format!("miyu-web-shipped-{}", std::process::id()));
         std::fs::create_dir_all(root.join(DIR)).unwrap();
-        let ours = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../package");
+        let ours = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../web");
         std::fs::copy(ours.join("package.toml"), root.join(MANIFEST)).unwrap();
         std::fs::copy(ours.join("web.json"), root.join(FILE)).unwrap();
         root

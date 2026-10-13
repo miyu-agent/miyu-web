@@ -72,7 +72,7 @@ fn launch(home: &Home) -> Launch {
     let resources = home.dir.join("resources");
     std::fs::create_dir_all(resources.join("packages/web")).expect("建得了");
     // 网页包（这个仓库的 `package/`：清单、`web.json`）照装好的样子放进 `packages/web/`
-    let package = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../package");
+    let package = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../web");
     std::fs::copy(
         package.join("web.json"),
         resources.join("packages/web/web.json"),
