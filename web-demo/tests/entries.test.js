@@ -160,3 +160,19 @@ test('核心补上的格（9-8 三补）：后台命令的回报带退出码、�
   assert.deepEqual(artifactEvents([tool], '/ws')[0].body.effects, [{ kind: 'file.changed', path: '/real/ws/out/x.md' }, { kind: 'file.trashed', path: '/real/ws/out/y.md' }]);
   assert.deepEqual(artifactEvents([{ ...tool, files: undefined }], '/ws')[0].body.effects, [{ kind: 'file.changed', path: '/ws/x.md' }], '没有 files 的照参数拼工作目录');
 });
+
+test('要人确认、没定就取消了的那一步：这一段后面一行交给 asking 画「批准已取消」；定了的、没要确认的不出（验收 W-99）', async () => {
+  const { reportOf } = await import('../packages/asking/model.js');
+  const approval = { access: 'write', detail: { paths: [{ path: '/etc/x' }] } };
+  const entries = [
+    { id: 'g8.0', kind: 'group', turn: 4, steps: ['t8.1', 't8.2', 't8.3'], summary: [], at: AT },
+    { id: 't8.1', kind: 'tool', turn: 4, call: 'c1', name: 'write', state: 'ok', approval: { ...approval, decision: 'allow' }, at: AT },
+    { id: 't8.2', kind: 'tool', turn: 4, call: 'c2', name: 'read', state: 'cancelled', at: AT },
+    { id: 't8.3', kind: 'tool', turn: 4, call: 'c3', name: 'write', state: 'cancelled', approval, at: AT },
+  ];
+  const got = itemsOf(entries, { state: 'idle' }).items;
+  assert.deepEqual(got.map((it) => it.type), ['steps', 'note']);
+  assert.equal(got[1].slot, 'asking');
+  assert.equal(got[1].turn, 4);
+  assert.deepEqual(reportOf(got[1].event, got[1].asked), { type: 'cancelled', kind: 'approve' });
+});

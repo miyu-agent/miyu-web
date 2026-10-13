@@ -60,7 +60,7 @@ export function itemsOf(entries, status, opts = {}) {
         break;
       case 'group':
         spoke.add(e.turn);
-        items.push(segmentOf(e, byId));
+        items.push(segmentOf(e, byId), ...cancelledApprovals(e, byId));
         break;
       case 'end':
         items.push(endItem(e, status));
@@ -313,6 +313,22 @@ function jobNote(e, jobs) {
     ? { kind: 'text', text: e.report ?? '', truncated: false }
     : { kind: 'output', command: e.command ?? jobs.get(e.job)?.command ?? null, hash: e.output?.blob ?? null, chars: e.output?.chars ?? null };
   return { type: 'note', key: e.id, seq: seqOf(e.id), turn: null, tone, mark: marks[tone] ?? '', text, detail };
+}
+
+/**
+ * 这一段里要人确认、没定就取消了的（两下 Esc、打断，这一轮结束时还没结果的也记 `cancelled`）：每一步一行「批准已取消」，交给软件包
+ * `asking` 画（同了结以后留下的，蓝图「确认和提问」第 6 条）。确认记在那一步的 `approval` 上（核心 view.md），定了的有 `decision`。
+ * @param {any} g @param {Map<string, any>} byId
+ */
+function cancelledApprovals(g, byId) {
+  return (g.steps ?? []).map((/** @type {string} */ id) => byId.get(id))
+    .filter((e) => e?.kind === 'tool' && e.approval && !e.approval.decision && (e.state === 'cancelled' || e.state === 'skipped'))
+    .map((e) => {
+      const seq = seqOf(e.id);
+      const asked = { seq, kind: 'tool.approval_requested', at: e.at, body: { call_id: e.call ?? e.id, name: e.name, ...e.approval } };
+      const event = { seq, kind: 'tool.result', at: e.at, body: { call_id: e.call ?? e.id, status: e.state } };
+      return { type: 'note', key: `${e.id}.cancelled`, seq, turn: e.turn ?? null, slot: 'asking', event, asked };
+    });
 }
 
 /**
