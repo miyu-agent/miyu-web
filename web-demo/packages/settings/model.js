@@ -349,5 +349,15 @@ export function applyPackageChange(list, id, entry) {
   return list.map((p) => (p.package === id ? entry : p));
 }
 
-/** 包开着、它带的 MCP 服务有停下的（核心 X-4：`mcp` 每一格的 `state`）。 @param {any} p */
-export const mcpStopped = (p) => p.enabled !== false && (p.mcp ?? []).some((s) => s.state === 'stopped');
+/** 包开着、它带的 MCP 服务有停下的（核心 X-4：`mcp` 每一格的 `state`；被个人设置里同名的替代了的不算，F-9 补的 `covered`）。 @param {any} p */
+export const mcpStopped = (p) => p.enabled !== false && (p.mcp ?? []).some((s) => s.state === 'stopped' && !s.covered);
+
+/**
+ * 个人设置里的 MCP 服务推来一项（`mcp.changed {name, server}`，核心 F-9 补）：换掉同名的；新的接在后面（照个人设置里写的先后，新写的在最后）；
+ * `server` 是 `null` 的拿掉。
+ * @param {any[]} list @param {string} name @param {any|null} server
+ */
+export function applyServerChange(list, name, server) {
+  if (!server) return list.filter((s) => s.name !== name);
+  return list.some((s) => s.name === name) ? list.map((s) => (s.name === name ? server : s)) : [...list, server];
+}

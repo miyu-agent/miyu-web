@@ -1,9 +1,9 @@
 // @ts-check
 //! 软件包列表的推送（蓝图 `web.md`「设置页」第 13 条；核心 F-8 三补，`subscribe {"stream": "packages"}`）：设置弹窗开着时订、关了退订；
-//! 回应就是整份列表，之后 `package.changed` 整项换（MCP 服务起了、停了也推，核心 X-4），掉了队（`resync`）重订。换了在「软件包」
-//! 页的重画（正在改一项的不打断）。
+//! 回应就是整份列表，之后 `package.changed` 整项换（MCP 服务起了、停了也推，核心 X-4），掉了队（`resync`）重订。个人设置里写的
+//! MCP 服务（核心 F-9 补）订上以后读一次 `mcp.list`，之后跟 `mcp.changed`。换了在「软件包」页的重画（正在改一项的不打断）。
 
-import { applyPackageChange } from './model.js';
+import { applyPackageChange, applyServerChange } from './model.js';
 
 export class PackageFeed {
   /** @param {any} dialog 设置页的弹窗（`dialog.js`） */
@@ -23,6 +23,8 @@ export class PackageFeed {
       // 旧核心没有这个流：照 `package.list` 读的那一份，不跟推送
       this.live = false;
     }
+    // 订上以后再读，读完到订上之间的变化不会漏（推来的照名字换）；旧核心没有这个方法：不画那一组
+    this.dialog.homeMcp = await this.dialog.ctx.core.request('mcp.list', {}).then((r) => (Array.isArray(r?.servers) ? r.servers : null), () => null);
   }
 
   /** 弹窗关了：退订。 */
@@ -36,6 +38,11 @@ export class PackageFeed {
   push(method, params) {
     if (method === 'package.changed' && typeof params?.package === 'string') {
       this.dialog.packages = applyPackageChange(this.dialog.packages ?? [], params.package, params.entry ?? null);
+      this.redraw();
+      return true;
+    }
+    if (method === 'mcp.changed' && typeof params?.name === 'string') {
+      this.dialog.homeMcp = applyServerChange(this.dialog.homeMcp ?? [], params.name, params.server ?? null);
       this.redraw();
       return true;
     }

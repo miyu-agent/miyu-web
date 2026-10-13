@@ -323,7 +323,8 @@
         "part": {
           "connection": "接入",
           "ui": "界面",
-          "feature": "功能"
+          "feature": "功能",
+          "home_mcp": "个人设置中的 MCP 服务"
         },
         "status": {
           "running": "运行中",
@@ -347,7 +348,10 @@
         "gone": "软件包不存在",
         "mcp": "MCP 服务",
         "mcp_restart": "重启",
-        "mcp_stopped": "服务已停止"
+        "mcp_stopped": "服务已停止",
+        "home_mcp_hint": "在个人设置文件 settings.toml 的 [mcp.<名称>] 中添加或修改，保存后立即生效",
+        "mcp_covered": "被个人设置中的同名服务替代",
+        "covered": "被个人设置替代"
       },
       "onboard": {
         "title_list": "选择模型供应商",
@@ -586,7 +590,8 @@
         "part": {
           "connection": "Integrations",
           "ui": "Interfaces",
-          "feature": "Features"
+          "feature": "Features",
+          "home_mcp": "MCP servers in personal settings"
         },
         "status": {
           "running": "Running",
@@ -610,7 +615,10 @@
         "gone": "Package not found",
         "mcp": "MCP servers",
         "mcp_restart": "Restart",
-        "mcp_stopped": "Server stopped"
+        "mcp_stopped": "Server stopped",
+        "home_mcp_hint": "Add or change them under [mcp.<name>] in settings.toml; changes apply when saved",
+        "mcp_covered": "Replaced by the server of the same name in personal settings",
+        "covered": "Replaced by personal settings"
       },
       "onboard": {
         "title_list": "Select a model provider",
@@ -849,7 +857,8 @@
         "part": {
           "connection": "接続",
           "ui": "画面",
-          "feature": "機能"
+          "feature": "機能",
+          "home_mcp": "個人設定の MCP サーバー"
         },
         "status": {
           "running": "実行中",
@@ -873,7 +882,10 @@
         "gone": "パッケージがありません",
         "mcp": "MCP サーバー",
         "mcp_restart": "再起動",
-        "mcp_stopped": "サーバーが停止"
+        "mcp_stopped": "サーバーが停止",
+        "home_mcp_hint": "settings.toml の [mcp.<名前>] で追加・変更します。保存するとすぐ反映されます",
+        "mcp_covered": "個人設定の同名サーバーに置き換えられています",
+        "covered": "個人設定に置き換え済み"
       },
       "onboard": {
         "title_list": "モデルプロバイダーを選択",

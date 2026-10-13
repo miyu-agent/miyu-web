@@ -280,3 +280,13 @@ test('软件包列表的推送：整项换、空的拿掉、新的照编号排�
   assert.equal(mcpStopped({ enabled: false, mcp: [{ name: 'y', state: 'stopped' }] }), false, '关着的不算');
   assert.equal(mcpStopped({ enabled: true }), false);
 });
+
+test('个人设置里的 MCP 服务推来一项：换掉同名的、新的接在后面、null 拿掉；被替代的服务不算停下（核心 F-9 补）', async () => {
+  const { applyServerChange, mcpStopped } = await import('../../packages/settings/model.js');
+  const list = [{ name: 'a', state: 'running' }, { name: 'b', state: 'stopped' }];
+  assert.deepEqual(applyServerChange(list, 'b', { name: 'b', state: 'running' }).map((s) => `${s.name}:${s.state}`), ['a:running', 'b:running']);
+  assert.deepEqual(applyServerChange(list, 'c', { name: 'c', state: 'starting' }).map((s) => s.name), ['a', 'b', 'c']);
+  assert.deepEqual(applyServerChange(list, 'a', null).map((s) => s.name), ['b']);
+  assert.equal(mcpStopped({ enabled: true, mcp: [{ name: 'x', state: 'stopped', covered: true }] }), false, '被替代的照旧 off/stopped 也不报「服务已停止」');
+  assert.equal(mcpStopped({ enabled: true, mcp: [{ name: 'x', state: 'stopped' }] }), true);
+});

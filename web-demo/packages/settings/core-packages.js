@@ -5,13 +5,14 @@
 //! （有这一格才有开关，发 `package.enable`、`package.disable`，核心照种类办），必需的写「必需」。点一行滑进它的信息页（`subpage.js`，
 //! 左上角箭头返回；2026-10-10 项目主人）：版本和状态、启用、它加的功能、权限（扩展的「运行」「权限」两行，`extensions.js`）、
 //! 设置项（`config.schema` 里 `package` 是它的）、卸载（管理员自己装的才有）。程序不在的只有状态（界面包核心照旧给设置项，照画）。
-//! 带 MCP 服务的（扩展包、`bundle`，核心 X-4）多一组「MCP 服务」：一个服务一行写现在怎样，组头「重启」（`package.restart`）。
+//! 带 MCP 服务的（扩展包、`bundle`，核心 X-4）多一组「MCP 服务」：一个服务一行写现在怎样（`mcp-servers.js`），组头「重启」（`package.restart`）；
+//! 个人设置里写的服务（F-9 补）在列表的段后面单列一组。
 
 import { h, icon, hasIcon } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField } from './rows.js';
 import { splitKey, itemFor, mcpStopped } from './model.js';
-import { stateText } from './extensions.js';
 import { openBackstage } from './backstage.js';
+import { serverRow, homeMcpPart } from './mcp-servers.js';
 
 /** 段：照核心核实过的标记分，先后照这里 */
 const PARTS = /** @type {const} */ (['connection', 'ui', 'feature']);
@@ -35,7 +36,7 @@ export function drawCorePackages(dialog, page) {
   // 对不上哪个包的组（核心自己的模块）照旧一组一组摊开
   const all = new Set(packages.map((p) => p.package));
   const rest = (page?.groups ?? []).filter((g) => !all.has(g.id)).map((g) => groupBlock(g.name, g.items.map((item) => coreRow(dialog, item)))).filter(Boolean);
-  return [...parts, ...rest].filter(Boolean);
+  return [...parts, homeMcpPart(dialog), ...rest].filter(Boolean);
 }
 
 /**
@@ -58,7 +59,9 @@ function packageRow(dialog, p) {
   const id = p.package;
   const missing = p.status === 'program_missing';
   // 包开着、带的 MCP 服务有停下的：写「服务已停止」（核心的状态是好好的也照这个写）
-  const state = mcpStopped(p) && !missing ? h('span.set-pkg-status.is-warn', t('pkg.mcp_stopped'))
+  // 服务全被个人设置里同名的替代了（F-9 补的 `covered`，`status` 照旧 `off`）：写「被个人设置替代」，不当关着
+  const state = p.covered && !missing ? h('span.set-pkg-status', t('pkg.covered'))
+    : mcpStopped(p) && !missing ? h('span.set-pkg-status.is-warn', t('pkg.mcp_stopped'))
     : QUIET.has(p.status) ? null : h(`span.set-pkg-status${missing ? '.is-bad' : p.status === 'running' ? '.is-on' : ''}`, t(`pkg.status.${p.status}`));
   const control = p.required ? h('span.set-pkg-status', t('pkg.required'))
     : 'enabled' in p ? switchFor(dialog, p) : null;
@@ -116,7 +119,7 @@ function infoPage(dialog, id) {
   if (!p) return [h('p.set-empty', t('pkg.gone'))];
   const missing = p.status === 'program_missing';
   // 状态和版本：好好的「已启用」、关着的「已停用」开关已经说了，不写
-  const line = [QUIET.has(p.status) ? null : t(`pkg.status.${p.status}`), p.version ? t('pkg.version', { version: p.version }) : null].filter(Boolean).join(' · ');
+  const line = [p.covered ? t('pkg.covered') : QUIET.has(p.status) ? null : t(`pkg.status.${p.status}`), p.version ? t('pkg.version', { version: p.version }) : null].filter(Boolean).join(' · ');
   const head = [
     p.summary ? h('p.set-sub-desc', p.summary) : null,
     line ? h(`p.set-pkg-line${missing ? '.is-bad' : ''}`, line) : null,
@@ -230,9 +233,8 @@ function mcpGroup(dialog, p) {
   if (!list.length) return null;
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const on = p.enabled !== false;
-  dialog.mcpShowing ??= new Set();
-  const showing = /** @type {Set<string>} */ (dialog.mcpShowing);
-  const restart = on ? h('button.set-btn.is-small', { type: 'button', onclick: async () => {
+  // 都被个人设置里同名的替代了的不给「重启」：重启的是这个包的服务，它们不起
+  const restart = on && !list.every((s) => s.covered) ? h('button.set-btn.is-small', { type: 'button', onclick: async () => {
     try {
       const got = await dialog.ctx.core.request('package.restart', { package: p.package });
       if (got?.package) dialog.packages = dialog.packages.map((x) => (x.package === got.package ? got : x));
@@ -241,17 +243,6 @@ function mcpGroup(dialog, p) {
     }
     dialog.drawBody();
   } }, t('pkg.mcp_restart')) : null;
-  const rows = list.map((s) => {
-    const key = `${p.package}/${s.name}`;
-    const stopped = on && s.state === 'stopped';
-    const stderr = Array.isArray(s.stderr) ? s.stderr.join('\n') : s.stderr ?? '';
-    const peek = stopped && stderr ? h('button.set-link', { type: 'button', onclick: () => { if (showing.has(key)) showing.delete(key); else showing.add(key); dialog.drawBody(); } },
-      t(showing.has(key) ? 'ext.hide_output' : 'ext.show_output')) : null;
-    return [
-      h('div.set-row', h('div.set-text', h('div.set-name', h('span', s.name)),
-        h(`p.set-desc${stopped ? '.is-error' : ''}`, stateText(t, { ...s, on: on && s.state !== 'off' })), peek)),
-      showing.has(key) && stderr ? h('pre.set-ext-output', stderr) : null,
-    ];
-  });
+  const rows = list.map((s) => serverRow(dialog, `${p.package}/${s.name}`, s, { on }));
   return h('section.set-group', h('div.set-group-head', h('h3.set-group-name', t('pkg.mcp')), restart), h('div.set-rows', rows));
 }
