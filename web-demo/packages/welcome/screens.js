@@ -66,6 +66,59 @@ export function languageScreen(g) {
   };
 }
 
+/** 称呼、更多描述最多几个字（核心 P-9 的配置清单） */
+const NAME_MAX = 64;
+const ABOUT_MAX = 2000;
+
+/**
+ * 关于你（第 8 条下面一款；核心 P-9，2026-10-13 项目主人定两部分）：「AI 怎么称呼你」（必填）、「更多描述（可选）」，先填现在写着的。
+ * 「下一步」和现在的不一样的写个人设置：写了的写，清空了的删掉。新会话生效。
+ * @param {import('./guide.js').Guide} g
+ */
+export function profileScreen(g) {
+  const t = g.t;
+  const core = g.ctx.core;
+  const name = /** @type {HTMLInputElement} */ (h('input.set-input.ob-input', { type: 'text', maxlength: String(NAME_MAX), placeholder: t('profile.name_hint'), spellcheck: 'false', autocomplete: 'off' }));
+  const about = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.wl-area', { maxlength: String(ABOUT_MAX), rows: '5', placeholder: t('profile.about_hint') }));
+  /** 现在写着的（读到以前是空的） */
+  const now = { name: '', about: '' };
+  core.request('config.get', { keys: ['profile.name', 'profile.about'] }).then((/** @type {any} */ got) => {
+    const read = (/** @type {string} */ k) => (typeof got?.items?.[k]?.value === 'string' ? got.items[k].value : '');
+    now.name = read('profile.name');
+    now.about = read('profile.about');
+    // 人已经打了字的不盖掉
+    if (!name.value) name.value = now.name;
+    if (!about.value) about.value = now.about;
+    g.sync();
+  }).catch(() => {});
+  name.addEventListener('input', () => g.sync());
+  const row = (/** @type {string} */ label, /** @type {HTMLElement} */ control) => h('div.ob-field.wl-profile-row', h('span.ob-field-name', label), h('div.ob-field-control', control));
+  return {
+    title: t('profile.title'),
+    sub: t('profile.sub'),
+    body: h('div.wl-profile', row(t('profile.name'), name), row(t('profile.about'), about)),
+    focus: name,
+    next: {
+      ready: () => !!name.value.trim(),
+      run: async () => {
+        /** @type {{key: string, value?: string, unset?: boolean}[]} */
+        const changes = [];
+        for (const [key, value, was] of [['profile.name', name.value.trim(), now.name], ['profile.about', about.value.trim(), now.about]]) {
+          if (value === was) continue;
+          changes.push(value ? { key, value } : { key, unset: true });
+        }
+        if (changes.length) {
+          await core.request('config.set', { layer: 'personal', changes });
+          now.name = name.value.trim();
+          now.about = about.value.trim();
+        }
+        g.go('preset', 1);
+        return null;
+      },
+    },
+  };
+}
+
 /**
  * 沙盒（第 9 条下面一款；核心 8-32，2026-10-13 项目主人：默认开）：两行「开」「关」，先选中现在的（没写的是开）。「下一步」和现在的不一样的
  * 写个人设置的 `permission.level`：开是 `workspace`，关是 `full`。新会话照它开局。

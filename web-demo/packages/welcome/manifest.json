@@ -60,6 +60,7 @@
         "model": "模型",
         "persona": "人格",
         "theme": "主题",
+        "profile": "关于你",
         "preset": "预设",
         "sandbox": "沙盒"
       },
@@ -76,6 +77,14 @@
       },
       "back": "上一步",
       "next": "下一步",
+      "profile": {
+        "title": "AI 怎么认识你",
+        "sub": "可在设置中修改",
+        "name": "AI 怎么称呼你",
+        "name_hint": "名字或昵称",
+        "about": "更多描述（可选）",
+        "about_hint": "职业、兴趣、希望 AI 留意的事"
+      },
       "sandbox": {
         "title": "沙盒",
         "sub": "新会话照它开局，可在设置中修改",
@@ -101,6 +110,7 @@
         "model": "Model",
         "persona": "Persona",
         "theme": "Theme",
+        "profile": "About you",
         "preset": "Preset",
         "sandbox": "Sandbox"
       },
@@ -117,6 +127,14 @@
       },
       "back": "Back",
       "next": "Next",
+      "profile": {
+        "title": "How the AI knows you",
+        "sub": "Editable in Settings",
+        "name": "What should the AI call you",
+        "name_hint": "Name or nickname",
+        "about": "More about you (optional)",
+        "about_hint": "Work, interests, things the AI should keep in mind"
+      },
       "sandbox": {
         "title": "Sandbox",
         "sub": "New sessions start this way. Editable in Settings",
@@ -142,6 +160,7 @@
         "model": "モデル",
         "persona": "人格",
         "theme": "テーマ",
+        "profile": "あなたについて",
         "preset": "プリセット",
         "sandbox": "サンドボックス"
       },
@@ -158,6 +177,14 @@
       },
       "back": "戻る",
       "next": "次へ",
+      "profile": {
+        "title": "AI にあなたを紹介",
+        "sub": "設定で変更できます",
+        "name": "AI からの呼び名",
+        "name_hint": "名前やニックネーム",
+        "about": "そのほか（任意）",
+        "about_hint": "仕事、趣味、AI に気をつけてほしいこと"
+      },
       "sandbox": {
         "title": "サンドボックス",
         "sub": "新しいセッションはこの設定で始まります。設定で変更できます",

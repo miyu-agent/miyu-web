@@ -97,6 +97,7 @@
       "model": "Model",
       "persona": "Persona",
       "theme": "Theme",
+      "profile": "About you",
       "preset": "Preset",
       "sandbox": "Sandbox"
     }

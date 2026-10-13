@@ -10,7 +10,7 @@ import { t } from '../util/res.js';
 import { Connection, Refusal } from '../core/connection.js';
 
 /** 「账号」那一屏的步骤条：后面几段照引导（`packages/welcome` 的 `NUMBERED`） */
-const STEPS = ['account', 'language', 'model', 'persona', 'theme', 'preset', 'sandbox'];
+const STEPS = ['account', 'language', 'model', 'persona', 'theme', 'profile', 'preset', 'sandbox'];
 /** 用户名的写法（核心 `kernel/ids.md`「路径里的名字」） */
 const USERNAME = /^[a-z][a-z0-9_-]{0,31}$/;
 /** 密码最短几个字节（`web-module.md` 第一条第 4 款） */
