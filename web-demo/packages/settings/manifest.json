@@ -247,6 +247,8 @@
           "ok": ""
         },
         "test_ok": "连接成功 · {model} · 首字 {ms} ms",
+        "test_listed": "连接成功 · 列出 {count} 个模型",
+        "test_need_model": "点开一个模型再测试连接",
         "price_currency": "币种",
         "temperature": "默认温度",
         "pool_add": "添加",
@@ -382,6 +384,7 @@
         "testing": "正在测试…",
         "test_ok": "连接成功 · {count} 个模型",
         "no_list": "未获取到模型列表",
+        "save_anyway": "仍然保存",
         "config_error": "配置错误",
         "classes": {
           "retryable": "临时错误",
@@ -514,6 +517,8 @@
           "ok": ""
         },
         "test_ok": "Connected · {model} · first token {ms} ms",
+        "test_listed": "Connected · {count} models listed",
+        "test_need_model": "Open a model and test again",
         "price_currency": "Currency",
         "temperature": "Default temperature",
         "pool_add": "Add",
@@ -649,6 +654,7 @@
         "testing": "Testing…",
         "test_ok": "Connected · {count} models",
         "no_list": "No model list",
+        "save_anyway": "Save anyway",
         "config_error": "Configuration error",
         "classes": {
           "retryable": "Temporary error",
@@ -781,6 +787,8 @@
           "ok": ""
         },
         "test_ok": "使用可能 · {model} · 最初の応答 {ms} ms",
+        "test_listed": "接続成功 · モデル {count} 個を取得",
+        "test_need_model": "モデルを開いてから再テスト",
         "price_currency": "通貨",
         "temperature": "既定の温度",
         "pool_add": "追加",
@@ -916,6 +924,7 @@
         "testing": "テスト中…",
         "test_ok": "接続成功 · モデル {count} 個",
         "no_list": "モデル一覧を取得できませんでした",
+        "save_anyway": "それでも保存",
         "config_error": "設定エラー",
         "classes": {
           "retryable": "一時的なエラー",

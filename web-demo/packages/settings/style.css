@@ -186,6 +186,7 @@
 .set-key-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .set-key-row .set-input { flex: 1; min-width: 180px; background: var(--surface-1); }
 .set-key-block .set-error { margin: 8px 0 0; }
+.set-key-label { display: block; margin-bottom: 8px; color: var(--text-faint); font-size: 13px; }
 .set-key-line { display: flex; align-items: center; gap: 12px; margin-top: 16px; font-size: 13px; }
 .set-key-line > span:first-child { color: var(--text-faint); }
 .set-key-state { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

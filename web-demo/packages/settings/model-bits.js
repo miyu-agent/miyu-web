@@ -69,3 +69,13 @@ export async function refreshProvider(dialog, id, refresh) {
     if (dialog.isOpen && !dialog.editing()) dialog.drawBody();
   }
 }
+
+/**
+ * 测试连接的结果那一行（核心 8-11 五补）：只列了模型的写列出几个，发了一句的写模型和首字；没成的照原话，要模型名的接一句怎么再测。
+ * @param {any} ctx @param {any} r `provider.test` 的回应
+ */
+export function testLine(ctx, r) {
+  if (r.ok) return r.checked === 'list' ? ctx.text('models.test_listed', { count: (r.models ?? []).length }) : ctx.text('models.test_ok', { model: r.model, ms: r.first_token_ms });
+  const raw = r.error?.message ?? r.stage;
+  return r.need_model ? `${raw} · ${ctx.text('models.test_need_model')}` : raw;
+}

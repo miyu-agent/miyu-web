@@ -60,10 +60,17 @@ export const cleanUrl = (text) => text.trim().replace(/\/+$/, '');
  */
 
 /**
+ * 算配好了的几家（蓝图第 6 条）：`model.list` 里密钥取得到的、没写密钥的（本机的服务这类）。写了密钥、引用的密钥没了的（`key.set` 是
+ * `false`，2026-10-13 项目主人实测）不算：照没配过的走，存的时候照同一个编号写新的密钥。
+ * @param {any[]} providers `model.list` 的 `providers`
+ */
+export const usableIds = (providers) => new Set(providers.filter((p) => !p?.key || p.key.set).map((p) => p.id));
+
+/**
  * 选一家那一屏的几行（蓝图第 5 条）：常用的照 `featured` 的先后，本机的照 `provider.detect` 的先后。
  * @param {any[]} featured `provider.catalog {featured: true}` 的 `providers`
  * @param {any} detect `provider.detect` 的回应（读不到是 `null`）
- * @param {Set<string>} configured `model.list` 里配好的编号
+ * @param {Set<string>} configured 配好了的编号（`usableIds`）
  * @returns {{common: Row[], local: Row[]}}
  */
 export function providerRows(featured, detect, configured) {
@@ -167,8 +174,8 @@ export function filterNames(models, query) {
 }
 
 /**
- * 没测成的那一行写什么（蓝图第 6 条）：`stage` 是 `config` 的写「配置错误」，`list` 的写「未获取到模型列表」（多一行填模型名），
- * 别的照出错的分类；有状态码的接 ` · 401`。交回字的键和要不要填模型名。
+ * 没测成的那一行写什么（蓝图第 6 条）：核心说要模型名的（`need_model`，核心 8-11 五补）写「未获取到模型列表」（多一行填模型名），
+ * `stage` 是 `config` 的写「配置错误」，别的照出错的分类（列模型时认证错的也是）；有状态码的接 ` · 401`。交回字的键和要不要填模型名。
  * @param {any} result `provider.test` 的回应
  * @returns {{key: string, status: number|null, needsModel: boolean, message: string}}
  */
@@ -176,7 +183,7 @@ export function failureOf(result) {
   const error = result?.error ?? {};
   const message = typeof error.message === 'string' ? error.message : '';
   const status = typeof error.status === 'number' ? error.status : null;
-  if (result?.stage === 'list') return { key: 'onboard.no_list', status: null, needsModel: true, message };
+  if (result?.need_model) return { key: 'onboard.no_list', status: null, needsModel: true, message };
   if (result?.stage === 'config') return { key: 'onboard.config_error', status: null, needsModel: false, message };
   const KNOWN = ['retryable', 'rate_limited', 'context_too_long', 'auth', 'no_model', 'cooling', 'content_policy', 'bad_stream', 'empty_reply'];
   return { key: `onboard.classes.${KNOWN.includes(error.class) ? error.class : 'other'}`, status, needsModel: false, message };

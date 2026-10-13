@@ -6,7 +6,7 @@
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { hasLogos, logoEl } from '../../src/lib/logo.js';
 import { duplicates, inputText, providerName, hostOf, whereOf, sameNamed, layerFor, secretName, keyChange } from './model.js';
-import { modelName, metaOf, sharedState, loadingRow, searchable, refreshProvider } from './model-bits.js';
+import { modelName, metaOf, sharedState, loadingRow, searchable, refreshProvider, testLine } from './model-bits.js';
 import { openForm } from './provider-form.js';
 import { openAdd } from './add-provider.js';
 import { drawer } from './model-detail.js';
@@ -65,7 +65,7 @@ function head(dialog, p, logos) {
     try {
       const r = await ctx.core.request('provider.test', { provider: p.id, ...(dialog.modelDetail ? { model: dialog.modelDetail } : {}) });
       result.className = `set-test ${r.ok ? 'is-good' : 'is-bad'}`;
-      replace(result, r.ok ? ctx.text('models.test_ok', { model: r.model, ms: r.first_token_ms }) : r.error?.message ?? r.stage);
+      replace(result, testLine(ctx, r));
       // 测成了：核心顺手存了供应商列出来的模型，重读这一家
       if (r.ok) refreshProvider(dialog, p.id, false);
     } catch (err) {
@@ -88,15 +88,15 @@ function head(dialog, p, logos) {
 }
 
 /**
- * 密钥（一家一个，核心 8-25）：没设的一块淡的 warn 底，直接填（粘贴，或者改用环境变量）；设了的一行「已设置」和「更换」。
+ * 密钥（一家一个，核心 8-25）：写了、取不到的一块淡的 warn 底，直接填（粘贴，或者改用环境变量）；设了的一行「已设置」和「更换」。
+ * 配置里没写密钥的（没有 `key` 这一格：核心照不带认证头用，本机的服务这类）同样一个框能补，不写「不可用」（2026-10-13 验收 W-139）。
  * 存的先后同编辑表：粘贴的先 `secret.set` 存成新名字，再一条 `config.set` 写引用。明文只在框里，存完就扔。
  */
 function keyBlock(dialog, p) {
   const ctx = dialog.ctx;
   const t = (k, f) => ctx.text(`models.${k}`, f);
-  const key = p.key;
-  // 旧核心没有这一格：不画
-  if (!key) return null;
+  const key = p.key ?? { set: false, ref: null };
+  const unwritten = !p.key;
   const changing = dialog.keyEdit === p.id;
   if (key.set && !changing) {
     const state = key.ref?.startsWith('env:') ? ctx.text('from_env', { name: key.ref.slice(4) }) : t('key_saved');
@@ -148,8 +148,10 @@ function keyBlock(dialog, p) {
   field.addEventListener('keydown', (e) => { if (e.key === 'Enter') save.click(); });
   const swap = h('button.set-link', { type: 'button', onclick: () => { dialog.keyKind = kind === 'secret' ? 'env' : 'secret'; dialog.drawBody(); } }, t(kind === 'secret' ? 'key_use_env' : 'key_use_paste'));
   const cancel = changing ? h('button.set-btn', { type: 'button', onclick: () => { dialog.keyEdit = null; dialog.drawBody(); } }, ctx.text('models.form.cancel')) : null;
-  return h(`div.set-key-block${key.set ? '' : '.is-missing'}`,
-    key.set ? null : h('p.set-key-why', t('states.no_key')),
+  const missing = !key.set && !unwritten;
+  return h(`div.set-key-block${missing ? '.is-missing' : ''}`,
+    missing ? h('p.set-key-why', t('states.no_key')) : null,
+    unwritten ? h('span.set-key-label', t('key')) : null,
     h('div.set-key-row', field, save, cancel, swap),
     error);
 }
