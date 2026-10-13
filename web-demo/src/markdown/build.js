@@ -43,7 +43,7 @@ function block(b, ctx) {
     case 'heading':
       return h(`h${b.level}`, kids(b.kids, ctx));
     case 'list':
-      return h(b.ordered ? 'ol' : `ul${b.task ? '.task-list' : ''}`, b.items.map((it) => (it.check == null
+      return h(b.ordered ? 'ol' : `ul${b.task ? '.task-list' : ''}`, b.start != null ? { start: b.start } : null, b.items.map((it) => (it.check == null
         ? h('li', kids(it.kids, ctx))
         : h('li.task-list-item', h('input', { type: 'checkbox', checked: it.check, disabled: true }), h('span', kids(it.kids, ctx))))));
     case 'quote':

@@ -18,7 +18,7 @@ import { inline } from './inline.js';
  *   | {type: 'math', tex: string, raw: string}
  *   | {type: 'table', align: string[], head: import('./inline.js').Inline[][], rows: import('./inline.js').Inline[][][]}
  *   | {type: 'hr'}
- *   | {type: 'list', ordered: boolean, task: boolean, items: {check: boolean|null, kids: import('./inline.js').Inline[]}[]}
+ *   | {type: 'list', ordered: boolean, start?: number, task: boolean, items: {check: boolean|null, kids: import('./inline.js').Inline[]}[]}
  *   | {type: 'line', text: string, value: any}} Block
  */
 
@@ -30,7 +30,7 @@ export const FENCE_CLOSE = /^\s*```\s*$/;
 const LANG = /^[\w.+-]{1,40}$/;
 const HEADING = /^(#{1,6})\s+(.+)$/;
 const BULLET = /^\s*[-*+]\s+(.+)$/;
-const NUMBERED = /^\s*\d+[.)]\s+(.+)$/;
+const NUMBERED = /^\s*(\d+)[.)]\s+(.+)$/;
 const TASK = /^\[([ xX])\]\s+(.*)$/;
 const QUOTE = /^\s*>\s?(.*)$/;
 const MATH_DELIMS = [['$$', '$$'], ['\\[', '\\]']];
@@ -239,7 +239,8 @@ function table(lines, start) {
 
 /**
  * 从这一行起的列表：先认无序的、再认有序的；连着的项合成一张，缩进的也摊平（不嵌套）；一行不是项就结束。
- * 无序的项以 `[ ]`、`[x]` 开头的是任务，有一项是任务整张就是任务列表。不是列表的是 `null`。
+ * 无序的项以 `[ ]`、`[x]` 开头的是任务，有一项是任务整张就是任务列表；有序的记第一项的号（`start`，中间隔了别的段落的
+ * `2.`、`3.` 照原样接着数）。不是列表的是 `null`。
  * @returns {{block: Block, next: number}|null}
  */
 function list(lines, start) {
@@ -248,10 +249,12 @@ function list(lines, start) {
     const items = [];
     let i = start;
     for (let m; i < lines.length && (m = pattern.exec(lines[i])); i += 1) {
-      const task = ordered ? null : TASK.exec(m[1]);
-      items.push(task ? { check: task[1] !== ' ', kids: inline(task[2]) } : { check: null, kids: inline(m[1]) });
+      const text = ordered ? m[2] : m[1];
+      const task = ordered ? null : TASK.exec(text);
+      items.push(task ? { check: task[1] !== ' ', kids: inline(task[2]) } : { check: null, kids: inline(text) });
     }
-    return { block: { type: 'list', ordered, task: items.some((it) => it.check != null), items }, next: i };
+    const first = ordered ? Number(/** @type {RegExpExecArray} */ (NUMBERED.exec(lines[start]))[1]) : 1;
+    return { block: { type: 'list', ordered, ...(first !== 1 ? { start: first } : {}), task: items.some((it) => it.check != null), items }, next: i };
   }
   return null;
 }

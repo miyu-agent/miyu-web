@@ -107,10 +107,12 @@ test('任务列表：[ ]、[x]、[X]；混着普通项的整张还是任务列�
   ]);
 });
 
-test('有序列表：. 和 ) 都算，不认起始数', () => {
+test('有序列表：. 和 ) 都算，第一项的号照原样起（中间隔了段落的接着数），从 1 起的不写', () => {
   assert.deepEqual(parse('3. a\n4) b'), [
-    { type: 'list', ordered: true, task: false, items: [{ check: null, kids: ['a'] }, { check: null, kids: ['b'] }] },
+    { type: 'list', ordered: true, start: 3, task: false, items: [{ check: null, kids: ['a'] }, { check: null, kids: ['b'] }] },
   ]);
+  assert.deepEqual(parse('1. a').map((b) => b.start), [undefined]);
+  assert.deepEqual(parse('1. a\n\n- x\n\n2. b').filter((b) => b.ordered).map((b) => b.start ?? 1), [1, 2]);
 });
 
 test('引用：连着的 > 行合成一块，里面只认行内的写法', () => {
