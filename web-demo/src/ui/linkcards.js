@@ -5,7 +5,7 @@
 //! 几条规矩，出问题一律照普通链接、不让正文变样（核心没带 `net` 软件包的也是）：
 //!
 //! - 一条回答最多换 3 张（真做成了的才算名额），最多试 6 个；同一个地址只换第一次出现的；
-//! - 取不到、超时、不是网页的，什么都不做，不画「载入中」；
+//! - 取不到、超时、不是网页的，什么都不做，不画「载入中」；暂时取不到的（`unreachable`、问的时候断了线）不记，下次画到再问；
 //! - 她还在写的，最后一次画完停 250 毫秒再取：地址还没写完就去抓纯属浪费（回答每来一段字整段重画，旧的那份已经不在页面上了，
 //!   它的定时到了也不取）。
 
@@ -46,14 +46,28 @@ function soleLink(p) {
   return link && /^https?:\/\//i.test(link.getAttribute('href') ?? '') ? link : null;
 }
 
-/** 问核心要一个地址的卡片；问过的直接给。没做成的（`card` 是 `null`）、拒了的是 `null`。 */
-function previewFor(url) {
+/**
+ * 问核心要一个地址的卡片；问过的直接给。没做成的（`card` 是 `null`）、拒了的是 `null`。暂时取不到的（`why` 是 `unreachable`，核心 W-7
+ * 三补；问的时候断了线）不记：这一次照普通链接，下次画到这一条再问（蓝图「链接卡片」第 3 条），不定时去问。
+ * @param {string} url
+ * @returns {Promise<any>}
+ */
+export function previewFor(url) {
   if (!lookups.has(url)) {
+    let again = false;
     const ask = conn
-      ? conn.request('link.preview', { url }).then((r) => r?.card ?? null).catch((err) => {
+      ? conn.request('link.preview', { url }).then((r) => {
+        again = !r?.card && r?.why === 'unreachable';
+        return r?.card ?? null;
+      }).catch((err) => {
+        again = err?.reason === 'disconnected';
         console.error(`取不到链接卡片 ${url}：${err.message}`);
         return null;
-      }).then((preview) => { known.set(url, preview); return preview; })
+      }).then((preview) => {
+        if (again) lookups.delete(url);
+        else known.set(url, preview);
+        return preview;
+      })
       : Promise.resolve(null);
     lookups.set(url, ask);
   }

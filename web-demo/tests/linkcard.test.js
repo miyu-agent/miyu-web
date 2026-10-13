@@ -22,3 +22,29 @@ test('视频：有配图的叠播放记号、写时长；站名后面接作者�
   assert.deepEqual(cardView({ kind: 'article', site: 'ArchWiki', author: '没用' }), { video: false, duration: null, site: 'ArchWiki · 没用' });
   assert.deepEqual(cardView({ site: '' }), { video: false, duration: null, site: '' }, '站名空的交空的，由画的地方照主机名补');
 });
+
+test('暂时取不到的（unreachable、断了线）下次画到再问，拿到就换上；no_preview 的整页只问一次（核心 W-7 三补）', async () => {
+  const { previewFor, useConnection } = await import('../src/ui/linkcards.js');
+  const asked = [];
+  const replies = {
+    'https://b.example/v': [{ card: null, why: 'unreachable' }, { card: { title: '视频' } }],
+    'https://n.example/x': [{ card: null, why: 'no_preview' }, { card: { title: '不该再问' } }],
+  };
+  const silent = console.error;
+  console.error = () => {};
+  try {
+    useConnection(/** @type {any} */ ({ request: async (m, p) => { asked.push(p.url); return replies[p.url].shift(); } }));
+    assert.equal(await previewFor('https://b.example/v'), null);
+    assert.deepEqual(await previewFor('https://b.example/v'), { title: '视频' }, '再画到时又问了一次');
+    assert.deepEqual(await previewFor('https://b.example/v'), { title: '视频' }, '拿到了的不再问');
+    assert.equal(await previewFor('https://n.example/x'), null);
+    assert.equal(await previewFor('https://n.example/x'), null, 'no_preview 的不再问');
+    assert.deepEqual(asked, ['https://b.example/v', 'https://b.example/v', 'https://n.example/x']);
+    useConnection(/** @type {any} */ ({ request: async () => { throw Object.assign(new Error('断了'), { reason: 'disconnected' }); } }));
+    assert.equal(await previewFor('https://c.example/'), null);
+    useConnection(/** @type {any} */ ({ request: async () => ({ card: { title: '连上了' } }) }));
+    assert.deepEqual(await previewFor('https://c.example/'), { title: '连上了' }, '断了线的下次再问');
+  } finally {
+    console.error = silent;
+  }
+});
