@@ -9,7 +9,7 @@ import { h, icon, replace } from '../../../src/lib/dom.js';
 import { logoEl } from '../../../src/lib/logo.js';
 import { secretName } from '../model.js';
 import { select } from '../rows.js';
-import { providerRows, usableIds, testParams, setupChanges, noPools, modelOrder, filterNames, failureOf, validUrl, cleanUrl } from './logic.js';
+import { providerRows, usableIds, testParams, setupChanges, noPools, modelOrder, filterNames, failureOf, validUrl, cleanUrl, customId, customIdProblem } from './logic.js';
 
 /** 模型最多列几个（再多的搜） */
 const MAX_MODELS = 200;
@@ -191,11 +191,30 @@ export class ProviderFlow {
     const drawSeg = () => replace(seg, select({ panel: this.host.panel, ctx: this.ctx }, drivers, driver, (/** @type {string} */ v) => { driver = v; drawSeg(); this.stale?.(); }));
     drawSeg();
     const keyInput = this.keyField(t('onboard.key_optional'));
-    const target = () => /** @type {Target} */ ({ kind: 'custom', driver, base_url: cleanUrl(url.value) });
-    const rows = [this.fieldRow(t('onboard.url'), url), this.fieldRow(t('onboard.driver'), seg), this.fieldRow(t('onboard.key'), keyInput)];
+    // 编号（2026-10-13 项目主人：能自己起）：照地址的主机名起好填上，人改过以后不再跟着地址变；写得不对、重了的下面红字
+    const idInput = /** @type {HTMLInputElement} */ (h('input.set-input.ob-input', { type: 'text', spellcheck: 'false', autocomplete: 'off' }));
+    const idError = h('p.ob-field-error', { hidden: true });
+    let idTyped = false;
+    const idOf = () => idInput.value.trim();
+    const checkId = () => {
+      const why = customIdProblem(idOf(), this.configured);
+      idError.hidden = !why || !idOf();
+      idError.textContent = why ? t(`models.form.${why}`, { id: idOf() }) : '';
+      return !why;
+    };
+    idInput.addEventListener('input', () => { idTyped = true; checkId(); this.host.ready(); });
+    const target = () => /** @type {Target} */ ({ kind: 'custom', driver, base_url: cleanUrl(url.value), id: idOf() });
+    const rows = [this.fieldRow(t('onboard.url'), url), this.fieldRow(t('onboard.driver'), seg), this.fieldRow(t('models.form.id'), h('div', idInput, idError)), this.fieldRow(t('onboard.key'), keyInput)];
     const key = () => (keyInput.value.trim() ? { value: keyInput.value.trim() } : null);
-    url.addEventListener('input', () => this.stale?.());
-    return this.testing(target, '', rows, key, () => validUrl(cleanUrl(url.value)), url, { auto: false, pasted: () => !!keyInput.value.trim(), title: t('onboard.custom_title') });
+    url.addEventListener('input', () => {
+      if (!idTyped) {
+        const u = cleanUrl(url.value);
+        idInput.value = validUrl(u) ? customId(u, this.configured) : '';
+        checkId();
+      }
+      this.stale?.();
+    });
+    return this.testing(target, '', rows, key, () => validUrl(cleanUrl(url.value)) && checkId(), url, { auto: false, pasted: () => !!keyInput.value.trim(), title: t('onboard.custom_title') });
   }
 
   /** 密钥框：不回显，改了要重测。 @param {string} hint */

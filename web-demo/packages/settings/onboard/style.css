@@ -27,7 +27,8 @@
 .ob-note.is-bad { color: var(--danger); }
 
 .ob-field { display: grid; grid-template-columns: 96px minmax(0, 1fr); align-items: center; gap: 12px; min-height: 32px; }
-.ob-field-name { color: var(--text-soft); font-size: 13.5px; }
+.ob-field-error { margin: 4px 0 0; color: var(--danger); font-size: 12px; }
+.ob-field-name { align-self: start; color: var(--text-soft); font-size: 13.5px; line-height: 32px; }
 .ob-field-control { min-width: 0; }
 .ob-input, .ob-search { width: 100%; height: 32px; }
 .ob-fixed { color: var(--text); font-size: 13.5px; }
