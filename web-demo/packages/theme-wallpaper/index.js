@@ -6,8 +6,8 @@
 //! - 桌面壁纸：照图取主色。
 //! 读不到、取不出颜色的不挂，设置页就没有这一张。
 //!
-//! 页面在前台时隔 `check_seconds` 秒问一次换没换（宿主交的记号 `sig` 变了才重取色），回到前台、窗口拿回焦点、换了浅深（事件
-//! `theme.changed`）时当场问（niri 这类平铺的桌面上浏览器一直露着，不会有「回到前台」）；
+//! 换没换不轮询（2026-10-14 项目主人定）：宿主的 `wallpaperChanges` 推过来（桥盯着壁纸来处的文件）时问一次，回到前台、窗口拿回焦点、
+//! 换了浅深（事件 `theme.changed`）时也问一次（只能经 IPC 换、不落文件的 hyprpaper、swaybg 靠这个跟上）；宿主交的记号 `sig` 变了才重取色。
 //! 问的是页面这时的浅深（服务 `theme`，深浅可以各设一张壁纸）。同一张图取过、取不出的记着，不再取。
 
 import { seedOf, themeOf, matugenOf } from '../../src/lib/md3/index.js';
@@ -75,11 +75,6 @@ export function apply(ctx) {
     }
   };
 
-  let timer = 0;
-  const schedule = () => {
-    clearInterval(timer);
-    timer = window.setInterval(check, ctx.config.check_seconds * 1000);
-  };
   const onVisible = () => {
     if (!document.hidden) check();
   };
@@ -91,14 +86,10 @@ export function apply(ctx) {
       window.removeEventListener('focus', onVisible);
     };
   });
+  // 桥推过来壁纸换了（页面在后台时不问，回到前台那一下问）
+  ctx.effect(() => ctx.host.wallpaperChanges?.(check) ?? (() => {}));
   // 换了浅深（也会是自己挂上去引起的：记号一样，不再取）
   ctx.on('theme.changed', check);
-  // 改了间隔：照新的重排
-  ctx.watchConfig(schedule);
-  ctx.effect(() => () => {
-    clearInterval(timer);
-    unmount();
-  });
-  schedule();
+  ctx.effect(() => () => unmount());
   check();
 }

@@ -12,7 +12,7 @@
 //!   不请，对话框会开在桥那台机器上、人看不到。
 //! - 软件后台页：带着口令 `POST /page` 请桥造一张票据，交回框的地址（地址里只有票据，框里的页面读得到自己的地址，口令不能给它）。
 //! - 桌面壁纸（主题「跟随壁纸」）：浏览器读不到桌面，请桥读（`/wallpaper`，crate `miyu-wallpaper`，matugen 生成的那份颜色优先）；
-//!   页面开在别的机器上的不请。
+//!   换没换开一条 `/wallpaper/events`，桥盯着壁纸来处的文件、变了推一条（不轮询）。页面开在别的机器上的不请。
 //! - 打开时直接到哪个软件的后台页：`miyu web --package <编号>` 打出的网址在 `#` 后面多一个 `package=<编号>`，和口令一起读、一起抹掉。
 
 /**
@@ -117,6 +117,19 @@ async function wallpaper(key, dark) {
 }
 
 /**
+ * 盯着桌面壁纸换没换（蓝图 `web.md`「跟着人格的外观」第 5 条，2026-10-14 项目主人：不轮询）：开一条 `/wallpaper/events`，桥那边壁纸来处的
+ * 文件变了叫 `changed`。断了的浏览器自己会重连。页面开在别的机器上的不开。交回关掉的函数。
+ * @param {string} key @param {() => void} changed
+ * @returns {() => void}
+ */
+function wallpaperChanges(key, changed) {
+  if (!onThisMachine() || typeof EventSource !== 'function') return () => {};
+  const source = new EventSource(`/wallpaper/events?${new URLSearchParams({ k: key })}`);
+  source.onmessage = () => changed();
+  return () => source.close();
+}
+
+/**
  * 软件后台页（核心 F-6 中，`package-pages.md`）：带着口令请桥造一张票据，交回框的地址；没有后台页、问不到桥的交 `null`。
  * @param {string} key @param {string} id 软件包的编号
  * @returns {Promise<string|null>}
@@ -159,6 +172,8 @@ export function browserHost() {
     pages: { open: (/** @type {string} */ id) => packagePage(key, id), launch: launchPackage },
     /** 桌面壁纸：问桥（见上面的 `wallpaper`） */
     wallpaper: (/** @type {boolean} */ dark) => wallpaper(key, dark),
+    /** 桌面壁纸换了：桥推过来（见上面的 `wallpaperChanges`） */
+    wallpaperChanges: (/** @type {() => void} */ changed) => wallpaperChanges(key, changed),
     /** 外面的链接：新标签页。 */
     open: (/** @type {string} */ url) => { window.open(url, '_blank', 'noopener'); },
     /** 重新载入页面 */

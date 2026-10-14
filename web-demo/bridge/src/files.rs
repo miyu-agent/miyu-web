@@ -1,5 +1,5 @@
 //! 页面文件：只认 `GET`，路径落在页面目录里才给；别的 404。开发用，不缓存。`/file`、`/blob` 交给 `media.rs`，`/pick-dir` 交给 `dialog.rs`，
-//! `/wallpaper` 交给 `wallpaper.rs`，
+//! `/wallpaper`、`/wallpaper/events` 交给 `wallpaper.rs`，
 //! 软件后台页的 `POST /page`、`/p/…` 交给 `pages.rs`。
 
 use std::io;
@@ -55,6 +55,9 @@ pub async fn serve(mut stream: TcpStream, site: &Site) -> io::Result<()> {
         let start = q.get("start").filter(|s| !s.is_empty()).map(String::as_str);
         let picked = crate::dialog::pick_dir(q.get("title").map_or("", String::as_str), start).await;
         return reply(&mut stream, "200 OK", "application/json; charset=utf-8", picked.json().as_bytes()).await;
+    }
+    if path == "/wallpaper/events" {
+        return crate::wallpaper::events(&mut stream, site, query).await;
     }
     if path == "/wallpaper" {
         return crate::wallpaper::serve(&mut stream, site, query).await;

@@ -108,6 +108,7 @@ export function servedHost() {
     pages: { open: async (/** @type {string} */ id) => (await post('/page', { package: id })) || null, launch: launchPackage },
     /** 桌面壁纸：网页软件不给 */
     wallpaper: async (/** @type {boolean} */ dark) => null,
+    wallpaperChanges: (/** @type {() => void} */ changed) => () => {},
     open: (/** @type {string} */ url) => { window.open(url, '_blank', 'noopener'); },
     /** 重新载入页面 */
     restart: () => location.reload(),

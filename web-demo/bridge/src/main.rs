@@ -17,8 +17,8 @@
 //! - 链接卡片不经桥：页面直接问核心的 `link.preview`，卡片的图是 blob，照 `/blob` 取（核心施工 W-7）。
 //! - `@` 选文件不经桥：页面直接问核心的 `fs.list`、`fs.find`（核心施工 W-2）。
 //! - 选工作区的「选择文件夹…」经 `/pick-dir?k=口令&title=…&start=…` 开系统的选目录对话框（`dialog.rs`），回选的绝对路径。
-//! - 主题「跟随壁纸」经 `/wallpaper?k=口令&dark=0|1` 问桌面壁纸（matugen 那一份优先）换没换、带 `data=1` 取那一份（`wallpaper.rs`，
-//!   crate `miyu-wallpaper`）。
+//! - 主题「跟随壁纸」经 `/wallpaper?k=口令&dark=0|1` 问桌面壁纸（matugen 那一份优先）换没换、带 `data=1` 取那一份，
+//!   `/wallpaper/events?k=口令` 盯着壁纸来处的文件、变了推一条（`wallpaper.rs`，crate `miyu-wallpaper`；不轮询）。
 //! - 软件后台页经 `POST /page` 换票据、`/p/<票据>/<包>/<路径>` 给文件（`pages.rs`，核心 F-6 中）：文件经核心的 `package.file` 读。
 //!
 //! 用法：`cargo run -- [端口] [--package <编号>]`，默认 8765；页面文件是这个 crate 上一层的 `web-demo/`。带 `--package` 的打出的网址
@@ -53,6 +53,8 @@ pub struct Site {
     pub pages: pages::Tickets,
     /// 软件后台页的文件的媒体类型（这个仓库的 `web/web.json`，编进桥里）。
     pub page_types: pages::PageTypes,
+    /// 盯着壁纸来处的文件（`/wallpaper/events`）。
+    pub wallpaper: wallpaper::Follow,
 }
 
 #[tokio::main]
@@ -86,7 +88,7 @@ async fn main() {
         Ok(t) => t,
         Err(e) => return eprintln!("{e}"),
     };
-    let site = Arc::new(Site { dir, key, port, types, pages: pages::Tickets::default(), page_types });
+    let site = Arc::new(Site { dir, key, port, types, pages: pages::Tickets::default(), page_types, wallpaper: wallpaper::Follow::default() });
     println!("网页演示（真核心）：http://127.0.0.1:{port}/#k={}{launch}", site.key);
     println!("这个链接这一次启动有效；只在本机能打开。Ctrl+C 停。");
     loop {

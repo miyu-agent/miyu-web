@@ -216,6 +216,7 @@ export async function boot(root) {
         open: host.open,
         clipboard: host.clipboard,
         wallpaper: host.wallpaper,
+        wallpaperChanges: host.wallpaperChanges,
       });
       // 页面里的外链、下载：浏览器照原样，桌面端改走系统的浏览器、存文件的对话框
       ctx.effect(() => host.intercept(root));

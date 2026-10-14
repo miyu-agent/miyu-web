@@ -741,7 +741,11 @@
      - Windows：注册表 `HKCU\Control Panel\Desktop` 的 `WallPaper`；空的、读不了的（幻灯片放映）读 Windows 转好的那一张 `%APPDATA%\Microsoft\Windows\Themes\TranscodedWallpaper`（没有扩展名的 JPEG，照文件开头认）。Windows 聚焦（Spotlight）读不到。
      - 只要浏览器认得的图（照文件开头认：PNG、JPEG、WebP、GIF、BMP、AVIF；macOS 上的 HEIC 先转）。视频壁纸（mpvpaper 这类）读不到。
    - 两个都没有的（别的桌面、页面开在别的机器上）、取不出颜色的不出这张卡片。
-   - 宿主的 `wallpaper(深色)`（`web/architecture.md`「宿主」）：演示的桥 `/wallpaper?k=口令&dark=0|1` 回 `{sig, kind}`（换没换的记号；`kind` 是 `matugen` 还是 `image`），带 `data=1` 回那份颜色（JSON）或图；网页软件 `miyu-web serve` 的等它的口令、`/media` 那一套做完一起接，在那之前没有这一张。页面在前台时隔 5 秒（设置项 `check_seconds`）问一次，回到前台、窗口拿回焦点、换了浅深时当场问，记号变了才重取色（原来 30 秒，2026-10-11 项目主人换了壁纸等不到；niri 这类平铺的桌面上浏览器一直露着，不会有「回到前台」）。
+   - 宿主的 `wallpaper(深色)`（`web/architecture.md`「宿主」）：演示的桥 `/wallpaper?k=口令&dark=0|1` 回 `{sig, kind}`（换没换的记号；`kind` 是 `matugen` 还是 `image`），带 `data=1` 回那份颜色（JSON）或图；网页软件 `miyu-web serve` 的等它的口令、`/media` 那一套做完一起接，在那之前没有这一张。记号变了才重取色。
+   - **换了壁纸跟着变，不轮询**（2026-10-14 项目主人定，两个头一样；原来页面在前台时隔 5 秒问一次，设置项 `check_seconds` 去掉）：
+     - 网页服务盯住壁纸来处的文件，变了推给页面：清单照 `miyu-wallpaper` 交的（找到了壁纸的是 `Wallpaper.watch`：图本身加上 `watch_list()`；matugen 那一份、什么都没找到的是 `watch_list()`：matugen 的输出，KDE 的 `plasma-org.kde.plasma.desktop-appletsrc`、GNOME 一系的 `~/.config/dconf/user`、XFCE 的 `xfce4-desktop.xml`，awww、swww 的缓存目录，hyprpaper、wpaperd、waypaper 的配置，`~/.fehbg`、nitrogen 的 `bg-saved.cfg`，macOS 的 `Index.plist`，Windows 的 `TranscodedWallpaper`；还没有的也盯着，建出来就算变了）。盯用 `miyu_wallpaper::watch::Watch`：只用系统的通知（inotify、FSEvents、ReadDirectoryChangesW、kqueue），不退回定时去看；起不来的记一行日志，只靠下面那一条。
+     - 桥：`/wallpaper/events?k=口令` 是一条 `text/event-stream`，盯的文件变了（一阵收齐）发一条 `changed`；页面收到再问一次 `/wallpaper`。每次回答 `/wallpaper` 以后照这次找到的换清单。宿主的 `wallpaperChanges(回调)` 开这条流、交回关掉的函数；页面开在别的机器上的、问不到桥的不开。
+     - 页面重新可见、窗口拿回焦点、换了浅深时也问一次：只能经 IPC 换、不落文件的（hyprpaper、swaybg）靠这个跟上。
 6. 背景图（核心 P-6）一直跟着人格走，和选哪个主题无关（2026-10-11 项目主人定：图铺满窗口，左栏和标签磨砂半透明；原来 10-10 定的只铺对话区，左栏实底，和图融不到一起）：
    - 图铺满整个窗口（左栏也在图上），铺满、照焦点裁（没选焦点的居中）；整个窗口上面盖一层底色（`surface`）让字看得清（2026-10-11 项目主人截到收起左栏时左边一道没盖的深色：底色曾经只盖对话区，收起、展开的动画里左栏和对话区之间那道缝露出原图）；
    - 左栏、对话区左上角浮着的那几个标签（人格、功能、工作区）、输入框是磨砂的：半透明的底色加模糊，透出一点图的颜色。左栏用浏览器的 `backdrop-filter` 模糊它后面的（已经盖了底色的图），饱和度拉高透出图的颜色，自己的底色铺一层（`sidebar_bg` 40%，项目主人要再实一点）；滑动、悬停浮出时都和后面对得上（2026-10-11 项目主人截到浮出时一团团的颜色：中间试过自己垫一份图用 `background-attachment: fixed`，滑动、整页放大时对不上）；标签 52%、输入框 70%（`surface_1`）（2026-10-11 项目主人嫌磨砂不够显：原来左栏底下也盖着那一层，透出来的是洗淡了的图）。你的气泡、卡片、菜单照旧是实底；
@@ -759,6 +763,7 @@
 | `web-demo/bridge/`（`cargo test`） | `/file`、`/blob` 回哪一段、核心拒的换成什么状态，存下来的文件名只留最后一段（`media.rs`）；软件后台页的地址拆成票据、包、文件，票据认得出是哪个包、多了扔掉最早的，核心拒的换成什么状态（`pages.rs`） |
 | `crates/miyu-wallpaper`（`cargo test`） | 各家的回答读出图的路径（照真的输出剪的样本：awww、swww、hyprpaper、GNOME 的转义、KDE 的节和壁纸包、macOS、Windows），只要浏览器认得的图（HEIC 不要），换了图记号跟着变 |
 | `crates/miyu-wallpaper`（`cargo test`）补 | XFCE 的 `last-image`、swaybg 的参数、wpaperd、waypaper（`~` 换家目录、只认 `[Settings]`）、feh（路径里的单引号）、nitrogen、macOS 的 `Index.plist`（目录不算）、HEIC 认得出、matugen 输出在缓存目录 |
+| `crates/miyu-wallpaper`（`cargo test`）再补 | 盯的清单（matugen 在头一个、各家的文件）、盯的计划（文件和还没有的盯最近的在的上层，目录整个往下盯）、真盯（建出目录和文件、改了、缓存目录里变了叫，同一层别的文件、只读、清单空了不叫） |
 | `web-demo/tests/packages/goal.test.js`、`tests/entries.test.js` 补 | 装、卸软件包的确认卡片写什么（`tests/packages/package-plan.test.js`）；预设的功能分四段（`setup.test.js`）；用了技能那一步（`words.test.js`）；长期目标那一截：跑着写第几轮（带上限）、停着等回复受阻写状态（受阻带原因）、完成了没有的不写；空会话里 `/goal <目标>` 交外面先开会话、不带字的和别的核心命令照旧（`commands.test.js`）；模块开的一轮画成「目标 · 第 N 轮」、不能点开、不当你的话 |
 | `web-demo/tests/packages/backdrop.test.js` | 背景图的透明度换成盖的底色（没设、写错的照设置项）、焦点换成 CSS 位置（没设、写错的居中）；选焦点窗口里指针落在哪一点（夹住、取整）、图照比例放进框里多大 |
 | `web-demo/tests/packages/crop.test.js` | 裁头像：差不多正方形（2% 以内）的不弹；一倍时短边铺满框；挪、放大以后夹住，框里不露空；框对着原图的哪一块 |
