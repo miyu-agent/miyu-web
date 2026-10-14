@@ -21,6 +21,7 @@ use hyper::header;
 use hyper::{Request, Response, StatusCode};
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
+use tokio::sync::Notify;
 
 use miyu_client::connect::Ready;
 use miyu_client::places::DataRoot;
@@ -69,6 +70,8 @@ pub(crate) struct Site {
     active: AtomicUsize,
     /// 最后一个走的时候。
     quiet_since: Mutex<Instant>,
+    /// 走了一个：叫醒接连接的那一圈，照新的情形算下一次几时醒。
+    wake: Notify,
 }
 
 /// 连着的一个：数着，走的时候减掉、记下时刻。
@@ -82,6 +85,7 @@ impl Drop for Busy {
             .lock()
             .unwrap_or_else(PoisonError::into_inner) = Instant::now();
         self.0.active.fetch_sub(1, Ordering::AcqRel);
+        self.0.wake.notify_one();
     }
 }
 
@@ -92,16 +96,17 @@ impl Site {
         Busy(Arc::clone(self))
     }
 
-    /// 空闲了多久；有连着的是空的。
-    fn idle_for(&self) -> Option<Duration> {
+    /// 照空闲 `idle` 算几时该退出；有连着的是空的。
+    fn quiet_until(&self, idle: Duration) -> Option<Instant> {
         if self.active.load(Ordering::Acquire) > 0 {
             return None;
         }
         Some(
-            self.quiet_since
+            *self
+                .quiet_since
                 .lock()
                 .unwrap_or_else(PoisonError::into_inner)
-                .elapsed(),
+                + idle,
         )
     }
 }
@@ -179,6 +184,7 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
         backstage,
         active: AtomicUsize::new(0),
         quiet_since: Mutex::new(Instant::now()),
+        wake: Notify::new(),
     });
     let reason = accept(&listener, &site).await;
     remove_address(&run);
@@ -186,12 +192,20 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
     Ok(())
 }
 
-/// 接连接，直到空闲到点、收到停的信号：交回为什么停。
+/// 接连接，直到空闲到点、收到停的信号：交回为什么停。不定时醒（2026-10-15 设计 00「避免轮询」）：每一圈打扫一次，再睡到下一件到点的事
+/// （空闲到点、核心连接到点该关）；没有到点的事就只等连接来、连着的走（`Busy` 走时叫醒）。票据换、找时也顺手丢过期的。
 async fn accept(listener: &TcpListener, site: &Arc<Site>) -> &'static str {
     let idle = site.settings.idle();
-    let mut tick =
-        tokio::time::interval((idle / 4).clamp(Duration::from_millis(10), Duration::from_secs(1)));
+    let stop = stopped();
+    tokio::pin!(stop);
     loop {
+        let links = site.media.sweep();
+        site.backstage.sweep();
+        let quiet = site.quiet_until(idle);
+        if quiet.is_some_and(|at| at <= Instant::now()) {
+            return "idle";
+        }
+        let next = quiet.into_iter().chain(links).min();
         tokio::select! {
             accepted = listener.accept() => {
                 if let Ok((stream, _)) = accepted {
@@ -210,15 +224,18 @@ async fn accept(listener: &TcpListener, site: &Arc<Site>) -> &'static str {
                     });
                 }
             }
-            _ = tick.tick() => {
-                site.media.sweep();
-                site.backstage.sweep();
-                if site.idle_for().is_some_and(|quiet| quiet >= idle) {
-                    return "idle";
-                }
-            }
-            () = stopped() => return "signal",
+            () = site.wake.notified() => {}
+            () = until(next) => {}
+            () = &mut stop => return "signal",
         }
+    }
+}
+
+/// 睡到 `at`；空的一直睡。
+async fn until(at: Option<Instant>) {
+    match at {
+        Some(at) => tokio::time::sleep_until(at.into()).await,
+        None => std::future::pending().await,
     }
 }
 

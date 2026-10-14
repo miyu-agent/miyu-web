@@ -83,11 +83,9 @@ impl Link {
         self.waiting.alive.load(Ordering::SeqCst)
     }
 
-    fn idle_for(&self) -> Duration {
-        self.used
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .elapsed()
+    /// 最后一次问的时刻。
+    fn used(&self) -> Instant {
+        *self.used.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
     /// 问一次，等它的回应。
@@ -166,13 +164,19 @@ impl Cores {
         Ok((link, false))
     }
 
-    /// 关掉断了的、60 秒没人用的（正在问的不关）。
-    pub(crate) fn sweep(&self) {
-        if let Ok(mut links) = self.links.try_lock() {
-            links.retain(|_, link| {
-                link.alive() && (link.idle_for() < IDLE || Arc::strong_count(link) > 1)
-            });
-        }
+    /// 关掉断了的、60 秒没人用的（正在问的不关）；交回留下的几时最早到点。正在问的、过了点的不算：问它的请求走时会再叫醒打扫
+    /// （`serve` 的 `Busy`）。表被占着的（正有请求在连）也一样，交回空的。
+    pub(crate) fn sweep(&self) -> Option<Instant> {
+        let mut links = self.links.try_lock().ok()?;
+        let now = Instant::now();
+        links.retain(|_, link| {
+            link.alive() && (link.used() + IDLE > now || Arc::strong_count(link) > 1)
+        });
+        links
+            .values()
+            .map(|link| link.used() + IDLE)
+            .filter(|at| *at > now)
+            .min()
     }
 }
 

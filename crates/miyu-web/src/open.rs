@@ -174,7 +174,8 @@ async fn ensure(root: &DataRoot, port: Option<u16>, launch: &Launch) -> Result<S
         }
         Err(error) => return Err(Started::Failed(error.to_string())),
     }
-    // 别人刚拉起的（`running`）可能还没写好地址：等一会儿。
+    // 别人刚拉起的（`running`）可能还没写好地址：等一会儿。只能问（设计 00「避免轮询」写明的例外）：那一个不是这里拉起的，没有管子
+    // 可等；每 50 毫秒看一次，最多 10 秒，只在打开时。
     for _ in 0..200 {
         if let Some(site) = address(root) {
             return Ok(site);

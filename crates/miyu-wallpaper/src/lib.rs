@@ -25,7 +25,8 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::time::{Duration, Instant};
+use std::sync::mpsc;
+use std::time::Duration;
 
 /// 跑一条命令最多等多久：壁纸程序卡住了也不能把页面的请求挂着。
 pub const TIMEOUT: Duration = Duration::from_secs(2);
@@ -166,7 +167,8 @@ fn image_kind(path: &Path) -> io::Result<Option<(&'static str, bool)>> {
     Ok((cfg!(target_os = "macos") && parse::is_heic(head)).then_some(("image/jpeg", true)))
 }
 
-/// 跑一条命令、读它的标准输出。没装的（找不到程序）、出错退出的是 `None`；超时的杀掉，算错。
+/// 跑一条命令、读它的标准输出。没装的（找不到程序）、出错退出的是 `None`；超时的杀掉，算错。不定时去看它退没退（2026-10-15 设计 00
+/// 「避免轮询」）：另一个线程把输出读到头（它退了、管子就关了），这边照时限等那一个线程交回。
 pub(crate) fn run(program: &str, args: &[&str]) -> io::Result<Option<String>> {
     let mut child = match Command::new(program)
         .args(args)
@@ -179,12 +181,16 @@ pub(crate) fn run(program: &str, args: &[&str]) -> io::Result<Option<String>> {
         Err(e) if e.kind() == io::ErrorKind::NotFound => return Ok(None),
         Err(e) => return Err(e),
     };
-    let start = Instant::now();
-    let status = loop {
-        if let Some(status) = child.try_wait()? {
-            break status;
-        }
-        if start.elapsed() > TIMEOUT {
+    let (read, got) = mpsc::channel();
+    if let Some(mut pipe) = child.stdout.take() {
+        std::thread::spawn(move || {
+            let mut out = String::new();
+            let _gone = read.send(pipe.read_to_string(&mut out).map(|_| out));
+        });
+    }
+    let out = match got.recv_timeout(TIMEOUT) {
+        Ok(out) => out,
+        Err(mpsc::RecvTimeoutError::Timeout) => {
             child.kill()?;
             child.wait()?;
             return Err(io::Error::new(
@@ -192,14 +198,11 @@ pub(crate) fn run(program: &str, args: &[&str]) -> io::Result<Option<String>> {
                 format!("{program} 过了 {} 秒没回", TIMEOUT.as_secs()),
             ));
         }
-        std::thread::sleep(Duration::from_millis(20));
+        // 没有管子（不会发生）：照没有输出
+        Err(mpsc::RecvTimeoutError::Disconnected) => Ok(String::new()),
     };
-    if !status.success() {
+    if !child.wait()?.success() {
         return Ok(None);
     }
-    let mut out = String::new();
-    if let Some(mut pipe) = child.stdout.take() {
-        pipe.read_to_string(&mut out)?;
-    }
-    Ok(Some(out))
+    out.map(Some)
 }

@@ -39,6 +39,7 @@
 1. 单实例：`miyu-web serve` 先拿 `run/web.lock`，拿不到写 `running` 走。拿到了听端口，把地址写进 `run/web`（先写临时文件再改名），往标准输出写一行 `ready`，和核心那一行同一个写法（`ipc.md`「那一行」，复用 `miyu-ipc` 的 `Ready`）。端口被占了写 `error port <端口> in use`（`open` 认这个写法，照人的语言说，「施工时定的」第 5 条），别的起不来写 `error <原因>`。
 2. 端口：照 `--port`，没写照配置 `web.port`（施工 9-1 下：只能写在系统配置，设置页「软件包」那一页露；改了下次起网页界面时生效）。`serve` 起来时核心在跑的就问它 `config.get` 拿 `web.*` 四项的最终值，不为这个拉起核心：`miyu web` 先经 `open` 连上核心才拉起 `serve`；核心没在跑的照清单的默认值起，记一行 `INFO web config from defaults`，连上了却被拒的记 `WARN web config not read`（固定端口，第 2 题）；`0` 是系统挑一个空的。只听回环地址 `127.0.0.1`，不听别的网卡。端口被占了：`miyu web` 照人的语言说哪个端口被占了、怎么换。出厂端口 8300（「施工时定的」第 1 条）。
 3. 空闲退出：没有 WebSocket 连着、没有 `/media`、软件后台页在给，连续 10 分钟就退出（配置 `web.idle_seconds`，出厂 600，设置页不露），先删 `run/web`、再放锁。收到停的信号照样先删再放。
+   - 不定时醒（2026-10-15 设计 00「避免轮询」）：睡到下一件到点的事（空闲到点、核心连接 60 秒到点该关），没有到点的事就只等连接来、连着的走；过期的票据在换、找、有连接走时丢。
 4. 每个请求先核对 Host：只认 `127.0.0.1:<端口>`、`localhost:<端口>`、`[::1]:<端口>`，别的回 403。别的网站把自己的域名解析到回环地址也进不来（DNS rebinding）。
 5. 页面文件：`GET /` 给 `index.html`，别的照路径在页面目录里找。带 `..` 的、换成真实位置以后跑到页面目录外的、不是普通文件的，404。类型照扩展名（`web.json` 的表）。响应头一律带：`X-Content-Type-Options: nosniff`、`Referrer-Policy: no-referrer`、`Cache-Control: no-cache`、`Content-Security-Policy`（照 `web.json`，至少有 `connect-src 'self'`、`frame-ancestors 'none'`）。从来不设 cookie（「起草时定的」第 13 条）。
 6. 页面目录：`MIYU_WEB_PAGES` 设了照它，不然是资源目录下的 `packages/web/pages/`（网页包的文件夹）。资源目录照 `store/resources.md` 第 1 条找，和核心同一个办法。

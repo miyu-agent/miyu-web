@@ -101,6 +101,9 @@ async fn main() {
 }
 
 /// 一条连接：看一眼请求行，`/ws` 的交给 WebSocket，别的当页面文件。
+///
+/// 请求行还没到齐的隔 10 毫秒再看，最多 50 次：只能问（设计 00「避免轮询」写明的例外），`peek` 有字就回、等不到更多的字；只在
+/// 连接刚来时，平常一次就齐。
 async fn serve(stream: TcpStream, site: Arc<Site>) {
     let mut head = [0u8; 1024];
     let mut seen = 0;

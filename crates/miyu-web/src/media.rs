@@ -10,7 +10,7 @@ pub(crate) mod tickets;
 
 use std::path::Path;
 use std::sync::{Arc, Mutex, PoisonError};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
@@ -63,10 +63,10 @@ impl Media {
         self.tickets.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    /// 定时打扫：过期的票据、没人用的核心连接。
-    pub(crate) fn sweep(&self) {
+    /// 打扫：过期的票据、没人用的核心连接；交回下一条核心连接几时到点该关（`Cores::sweep`）。
+    pub(crate) fn sweep(&self) -> Option<Instant> {
         self.tickets().sweep();
-        self.cores.sweep();
+        self.cores.sweep()
     }
 }
 

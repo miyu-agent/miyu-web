@@ -59,7 +59,7 @@ impl Backstage {
         self.tickets.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    /// 定时打扫：过期的票据。
+    /// 打扫：过期的票据。
     pub(crate) fn sweep(&self) {
         self.tickets().sweep();
     }
