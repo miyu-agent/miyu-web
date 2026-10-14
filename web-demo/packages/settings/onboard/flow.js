@@ -192,7 +192,7 @@ export class ProviderFlow {
     drawSeg();
     const keyInput = this.keyField(t('onboard.key_optional'));
     // 编号（2026-10-13 项目主人：能自己起）：照地址的主机名起好填上，人改过以后不再跟着地址变；写得不对、重了的下面红字
-    const idInput = /** @type {HTMLInputElement} */ (h('input.set-input.ob-input', { type: 'text', spellcheck: 'false', autocomplete: 'off' }));
+    const idInput = /** @type {HTMLInputElement} */ (h('input.set-input.ob-input', { type: 'text', placeholder: t('onboard.id_auto'), spellcheck: 'false', autocomplete: 'off' }));
     const idError = h('p.ob-field-error', { hidden: true });
     let idTyped = false;
     const idOf = () => idInput.value.trim();
@@ -204,7 +204,8 @@ export class ProviderFlow {
     };
     idInput.addEventListener('input', () => { idTyped = true; checkId(); this.host.ready(); });
     const target = () => /** @type {Target} */ ({ kind: 'custom', driver, base_url: cleanUrl(url.value), id: idOf() });
-    const rows = [this.fieldRow(t('onboard.url'), url), this.fieldRow(t('onboard.driver'), seg), this.fieldRow(t('models.form.id'), h('div', idInput, idError)), this.fieldRow(t('onboard.key'), keyInput)];
+    // 编号在第一行（2026-10-14 项目主人：编号应该在最上面一项；终端 miyu setup 同一个口径）
+    const rows = [this.fieldRow(t('models.form.id'), h('div', idInput, idError)), this.fieldRow(t('onboard.url'), url), this.fieldRow(t('onboard.driver'), seg), this.fieldRow(t('onboard.key'), keyInput)];
     const key = () => (keyInput.value.trim() ? { value: keyInput.value.trim() } : null);
     url.addEventListener('input', () => {
       if (!idTyped) {
@@ -214,7 +215,7 @@ export class ProviderFlow {
       }
       this.stale?.();
     });
-    return this.testing(target, '', rows, key, () => validUrl(cleanUrl(url.value)) && checkId(), url, { auto: false, pasted: () => !!keyInput.value.trim(), title: t('onboard.custom_title') });
+    return this.testing(target, '', rows, key, () => validUrl(cleanUrl(url.value)) && checkId(), idInput, { auto: false, pasted: () => !!keyInput.value.trim(), title: t('onboard.custom_title') });
   }
 
   /** 密钥框：不回显，改了要重测。 @param {string} hint */
