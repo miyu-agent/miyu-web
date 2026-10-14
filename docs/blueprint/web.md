@@ -743,7 +743,7 @@
    - 两个都没有的（别的桌面、页面开在别的机器上）、取不出颜色的不出这张卡片。
    - 宿主的 `wallpaper(深色)`（`web/architecture.md`「宿主」）：演示的桥 `/wallpaper?k=口令&dark=0|1` 回 `{sig, kind}`（换没换的记号；`kind` 是 `matugen` 还是 `image`），是图的多一格 `seeds`（桥照图算好的候选色，见下面「主色」），带 `data=1` 回那份颜色（JSON）或图；网页软件 `miyu-web serve` 的等它的口令、`/media` 那一套做完一起接，在那之前没有这一张。记号变了才重取色。
    - **换了壁纸跟着变，不轮询**（2026-10-14 项目主人定，两个头一样；原来页面在前台时隔 5 秒问一次，设置项 `check_seconds` 去掉）：
-     - 网页服务盯住壁纸来处的文件，变了推给页面：清单照 `miyu-wallpaper` 交的（找到了壁纸的是 `Wallpaper.watch`：图本身加上 `watch_list()`；matugen 那一份、什么都没找到的是 `watch_list()`：matugen 的输出，KDE 的 `plasma-org.kde.plasma.desktop-appletsrc`、GNOME 一系的 `~/.config/dconf/user`、XFCE 的 `xfce4-desktop.xml`，awww、swww 的缓存目录，hyprpaper、wpaperd、waypaper 的配置，`~/.fehbg`、nitrogen 的 `bg-saved.cfg`，macOS 的 `Index.plist`，Windows 的 `TranscodedWallpaper`；还没有的也盯着，建出来就算变了）。盯用 `miyu_wallpaper::watch::Watch`：只用系统的通知（inotify、FSEvents、ReadDirectoryChangesW、kqueue），不退回定时去看；起不来的记一行日志，只靠下面那一条。
+     - 网页服务盯住壁纸来处的文件，变了推给页面：清单照 `miyu-wallpaper` 交的（找到了壁纸的是 `Wallpaper.watch`：图本身、找到它的那一家的文件 `watch::files_of(from)`（KDE 的 `plasma-org.kde.plasma.desktop-appletsrc`、GNOME 一系的 `~/.config/dconf/user`、XFCE 的 `xfce4-desktop.xml`，awww、swww 的缓存目录，hyprpaper、wpaperd、waypaper 的配置，`~/.fehbg`、nitrogen 的 `bg-saved.cfg`，macOS 的 `Index.plist`，Windows 的 `TranscodedWallpaper`），加上 `watch_list()`；matugen 那一份、什么都没找到的只盯 `watch_list()`：matugen 的输出）。别家的不盯，在的文件只盯它自己、不盯所在的目录，还没有的不盯（2026-10-15 设计 00「避免轮询」：空闲 0 唤醒，盯 `~`、`~/.config` 会被别的程序的写入叫醒）：换了一家、新装的、建出来的，靠下面那一条拿回焦点再找。盯用 `miyu_wallpaper::watch::Watch`：只用系统的通知（inotify、FSEvents、ReadDirectoryChangesW、kqueue），不退回定时去看；起不来的记一行日志，只靠下面那一条。
      - 桥：`/wallpaper/events?k=口令` 是一条 `text/event-stream`，盯的文件变了（一阵收齐）发一条 `changed`；页面收到再问一次 `/wallpaper`。每次回答 `/wallpaper` 以后照这次找到的换清单。宿主的 `wallpaperChanges(回调)` 开这条流、交回关掉的函数；页面开在别的机器上的、问不到桥的不开。
      - 页面重新可见、窗口拿回焦点、换了浅深时也问一次：只能经 IPC 换、不落文件的（hyprpaper、swaybg）靠这个跟上。
    - **主色**（2026-10-14 项目主人定）：选着「跟随壁纸」「跟随人格」时，主题卡片下面多一行「主色」：一排色块，打分高的在前，现在用的那一块画一个勾（不描边，同人格卡片的主题色）；点一块当场换（整页淡过去）。
@@ -767,7 +767,7 @@
 | `web-demo/bridge/`（`cargo test`） | `/file`、`/blob` 回哪一段、核心拒的换成什么状态，存下来的文件名只留最后一段（`media.rs`）；软件后台页的地址拆成票据、包、文件，票据认得出是哪个包、多了扔掉最早的，核心拒的换成什么状态（`pages.rs`） |
 | `crates/miyu-wallpaper`（`cargo test`） | 各家的回答读出图的路径（照真的输出剪的样本：awww、swww、hyprpaper、GNOME 的转义、KDE 的节和壁纸包、macOS、Windows），只要浏览器认得的图（HEIC 不要），换了图记号跟着变 |
 | `crates/miyu-wallpaper`（`cargo test`）补 | XFCE 的 `last-image`、swaybg 的参数、wpaperd、waypaper（`~` 换家目录、只认 `[Settings]`）、feh（路径里的单引号）、nitrogen、macOS 的 `Index.plist`（目录不算）、HEIC 认得出、matugen 输出在缓存目录 |
-| `crates/miyu-wallpaper`（`cargo test`）再补 | 盯的清单（matugen 在头一个、各家的文件）、盯的计划（文件和还没有的盯最近的在的上层，目录整个往下盯）、真盯（建出目录和文件、改了、缓存目录里变了叫，同一层别的文件、只读、清单空了不叫） |
+| `crates/miyu-wallpaper`（`cargo test`）再补 | 盯的清单（总要盯的只有 matugen 那一份、各家只列自己的文件）、盯的计划（在的文件只盯它自己、目录整个往下盯、还没有的不盯）、真盯（改了、换成了别的文件、换过以后再改、缓存目录里变了叫，同一层别的文件、还没有的建出来、只读、清单空了不叫） |
 | `web-demo/tests/packages/goal.test.js`、`tests/entries.test.js` 补 | 装、卸软件包的确认卡片写什么（`tests/packages/package-plan.test.js`）；预设的功能分四段（`setup.test.js`）；用了技能那一步（`words.test.js`）；长期目标那一截：跑着写第几轮（带上限）、停着等回复受阻写状态（受阻带原因）、完成了没有的不写；空会话里 `/goal <目标>` 交外面先开会话、不带字的和别的核心命令照旧（`commands.test.js`）；模块开的一轮画成「目标 · 第 N 轮」、不能点开、不当你的话 |
 | `web-demo/tests/packages/backdrop.test.js` | 背景图的透明度换成盖的底色（没设、写错的照设置项）、焦点换成 CSS 位置（没设、写错的居中）；选焦点窗口里指针落在哪一点（夹住、取整）、图照比例放进框里多大 |
 | `web-demo/tests/packages/crop.test.js` | 裁头像：差不多正方形（2% 以内）的不弹；一倍时短边铺满框；挪、放大以后夹住，框里不露空；框对着原图的哪一块 |
