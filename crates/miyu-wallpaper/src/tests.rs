@@ -139,6 +139,7 @@ fn signature_changes_when_the_file_changes() -> std::io::Result<()> {
         from: "test",
         mime: "image/png",
         heic: false,
+        watch: Vec::new(),
     };
     let before = w.signature()?;
     assert_eq!(w.signature()?, before, "没动过的一样");
@@ -224,4 +225,119 @@ fn matugen_output_lives_in_the_cache_dir() {
             .is_some_and(|p| p.ends_with("miyu/matugen.json") || p.ends_with(r"miyu\matugen.json")),
         "{path:?}"
     );
+}
+
+/// 测盯文件用的目录：照真实路径（macOS 的临时目录在链接 `/var` 下面，系统的通知报的是真实路径）。
+fn watch_root(name: &str) -> std::io::Result<PathBuf> {
+    let root = std::env::temp_dir().join(format!("miyu-wallpaper-{name}-{}", std::process::id()));
+    if root.exists() {
+        std::fs::remove_dir_all(&root)?;
+    }
+    std::fs::create_dir_all(&root)?;
+    root.canonicalize()
+}
+
+#[test]
+fn watch_plan_covers_missing_files_by_their_nearest_directory() -> std::io::Result<()> {
+    use notify::RecursiveMode::{NonRecursive, Recursive};
+    let root = watch_root("plan")?;
+    std::fs::create_dir_all(root.join("cache"))?;
+    let targets = [
+        root.join("a.ini"),
+        root.join("missing/deeper/b.ini"),
+        root.join("cache"),
+    ];
+    let plan = crate::watch::plan(&targets);
+    assert_eq!(
+        plan.get(&root),
+        Some(&NonRecursive),
+        "文件、还没有的都盯在的那一层"
+    );
+    assert_eq!(
+        plan.get(&root.join("cache")),
+        Some(&Recursive),
+        "目录整个往下盯"
+    );
+    assert_eq!(plan.len(), 2);
+    assert!(
+        crate::watch::touches(&targets, &root.join("cache/0.12/DP-2")),
+        "目录里面的"
+    );
+    assert!(
+        crate::watch::touches(&targets, &root.join("missing")),
+        "建出了中间的目录"
+    );
+    assert!(
+        !crate::watch::touches(&targets, &root.join("other.txt")),
+        "同一层别的文件不算"
+    );
+    assert_eq!(
+        crate::watch::resolve(&root.join("missing/deeper/b.ini")),
+        root.join("missing/deeper/b.ini")
+    );
+    std::fs::remove_dir_all(&root)?;
+    Ok(())
+}
+
+#[test]
+fn watch_list_has_matugen_and_the_platform_files() {
+    let list = crate::watch::watch_list();
+    assert_eq!(
+        list.first(),
+        crate::matugen::output_path().as_ref(),
+        "matugen 那一份在头一个"
+    );
+    if cfg!(all(unix, not(target_os = "macos"))) && std::env::var_os("HOME").is_some() {
+        assert!(list.iter().any(|p| p.ends_with("dconf/user")));
+        assert!(list.iter().any(|p| p.ends_with("awww")));
+        assert!(list.iter().any(|p| p.ends_with(".fehbg")));
+    }
+}
+
+#[test]
+fn watch_calls_back_when_listed_files_change_and_only_then() -> std::io::Result<()> {
+    use std::sync::mpsc;
+    use std::time::Duration;
+    let root = watch_root("live")?;
+    let file = root.join("later/deeper/wall.ini");
+    let cache = root.join("cache");
+    let (tx, rx) = mpsc::channel();
+    let watch = crate::watch::Watch::start(vec![file.clone(), cache.clone()], move || {
+        let _sent = tx.send(());
+    })?;
+    let quiet = |what: &str| {
+        assert!(
+            rx.recv_timeout(Duration::from_millis(900)).is_err(),
+            "{what}：不该叫"
+        );
+    };
+    let called = |what: &str| {
+        assert!(
+            rx.recv_timeout(Duration::from_secs(10)).is_ok(),
+            "{what}：该叫"
+        );
+        // 一阵收齐叫一次，后面还在路上的收掉
+        std::thread::sleep(Duration::from_millis(700));
+        while rx.try_recv().is_ok() {}
+    };
+    std::fs::write(root.join("other.txt"), "x")?;
+    quiet("同一层别的文件");
+    std::fs::create_dir_all(file.parent().unwrap_or(&root))?;
+    std::fs::write(&file, "first")?;
+    called("建出了目录和文件");
+    std::fs::write(&file, "second")?;
+    called("改了文件");
+    assert_eq!(std::fs::read_to_string(&file)?, "second");
+    quiet("只是读");
+    std::fs::create_dir_all(cache.join("0.12"))?;
+    std::fs::write(cache.join("0.12/DP-2"), "x")?;
+    called("建出了缓存目录");
+    std::fs::write(cache.join("0.12/DP-2"), "y")?;
+    called("缓存目录里面的文件变了");
+    watch.set(Vec::new())?;
+    std::fs::write(&file, "third")?;
+    quiet("清单空了");
+    drop(watch);
+    std::fs::remove_dir_all(&root)?;
+    Ok(())
 }

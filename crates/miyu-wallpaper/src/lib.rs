@@ -9,6 +9,8 @@
 //! 找到的还要是浏览器认得的图（照文件开头几个字节认：PNG、JPEG、WebP、GIF、BMP、AVIF）；macOS 上的 HEIC 用系统自带的 `sips` 转成 JPEG，
 //! 别的（视频壁纸）当读不到。只用标准库；跑的命令都有时限（[`TIMEOUT`]），没装、没在跑、出错退出的当这一家没有，接着问下一家。读各家
 //! 回答的纯函数在 [`parse`]（每个平台上都编、都测）。
+//!
+//! 换了壁纸要跟着变的，照 [`watch`] 盯文件（[`Wallpaper::watch`]、没找到时的 [`watch::watch_list`]），不定时去问。
 
 pub mod matugen;
 pub mod parse;
@@ -17,6 +19,7 @@ mod probe;
 mod tests;
 #[cfg(all(unix, not(target_os = "macos")))]
 mod unix;
+pub mod watch;
 
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::{self, Read};
@@ -41,6 +44,8 @@ pub struct Wallpaper {
     pub mime: &'static str,
     /// 是 HEIC，读的时候先转成 JPEG（只在 macOS 上有）。
     pub heic: bool,
+    /// 要盯哪些文件，变了就重找（[`watch::Watch`]）：图本身，加上 [`watch::watch_list`]（换了来处也看得到）。
+    pub watch: Vec<PathBuf>,
 }
 
 impl Wallpaper {
@@ -125,11 +130,14 @@ pub fn find(dark: bool) -> io::Result<Option<Wallpaper>> {
         match ask(dark) {
             Ok(Some(path)) => match image_kind(&path) {
                 Ok(Some((mime, heic))) => {
+                    let mut watch = vec![path.clone()];
+                    watch.extend(watch::watch_list());
                     return Ok(Some(Wallpaper {
                         path,
                         from,
                         mime,
                         heic,
+                        watch,
                     }));
                 }
                 Ok(None) => {}

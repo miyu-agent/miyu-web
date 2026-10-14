@@ -889,6 +889,9 @@ dependencies = [
 [[package]]
 name = "miyu-wallpaper"
 version = "0.0.1"
+dependencies = [
+ "notify",
+]
 
 [[package]]
 name = "miyu-web"

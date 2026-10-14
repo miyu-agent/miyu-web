@@ -7,8 +7,11 @@ rust-version.workspace = true
 license.workspace = true
 publish.workspace = true
 
-# 只用标准库：跑系统的命令（awww、gsettings、osascript、reg……）、读配置文件。桥（web-demo/bridge）照路径依赖用它。
+# 找壁纸只用标准库：跑系统的命令（awww、gsettings、osascript、reg……）、读配置文件。桥（web-demo/bridge）照路径依赖用它，终端照 git 提交钉。
 [dependencies]
+# 换了壁纸跟着变（`watch.rs`）：只用它的系统通知（inotify、FSEvents、ReadDirectoryChangesW、kqueue），不用定时去看的 PollWatcher。
+# 默认特性带 macOS 的 FSEvents。CC0-1.0。
+notify = "8.2"
 
 [lints]
 workspace = true
