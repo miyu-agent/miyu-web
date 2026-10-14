@@ -24,7 +24,7 @@ use notify::{Event, EventKind, RecursiveMode, Watcher as _};
 /// 一阵变动收齐了才叫一次：换壁纸的程序往往连着写好几个文件。
 const SETTLE: Duration = Duration::from_millis(300);
 
-/// 总要盯的：matugen 生成的那一份（还没有的不盯，见 [`plan`]）。没找到壁纸的只盯它。
+/// 总要盯的：matugen 生成的那一份（还没有的不盯）。没找到壁纸的只盯它。
 #[must_use]
 pub fn watch_list() -> Vec<PathBuf> {
     crate::matugen::output_path().into_iter().collect()
