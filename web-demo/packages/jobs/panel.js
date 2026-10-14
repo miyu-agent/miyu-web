@@ -5,7 +5,7 @@
 //! 动效，展开时列表跟着往下滚，往下滚时这一行钉在顶上）。一行一个、一行字：左边照种类的图标，标题后面接编号，右边状态的记号接一段
 //! 字。子代理那一行点了进它的会话；后台命令那一行点了在下面展开预览（`preview.js`）。在跑的不止一个时头一行有「全部停掉」。
 //!
-//! 开着时每 `tick_ms` 只改用时那几个字、读一次开着的预览；任务的样子变了才整个重画（不然每秒重画一次，展开收起的动画、悬停
+//! 开着时每 `tick_ms` 只改用时那几个字（开着的预览自己接着读，`preview.js`）；任务的样子变了才整个重画（不然每秒重画一次，展开收起的动画、悬停
 //! 都被打断）。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
@@ -95,12 +95,14 @@ export class JobsPanel {
     show(this.el);
     clearInterval(this.timer);
     this.timer = window.setInterval(() => this.tick(), this.config.tick_ms);
+    for (const p of this.previews.values()) p.start();
     document.addEventListener('keydown', this.onKey, true);
     document.addEventListener('pointerdown', this.onDown, true);
   }
 
   close() {
     clearInterval(this.timer);
+    for (const p of this.previews.values()) p.stop();
     document.removeEventListener('keydown', this.onKey, true);
     document.removeEventListener('pointerdown', this.onDown, true);
     if (this.isOpen()) hide(this.el);
@@ -127,7 +129,6 @@ export class JobsPanel {
       // 派它的那条还在更早、没读的页里的（核心 9-6 上的种子）不知道几时开始，不走表
       if (text && Number.isFinite(since)) text.textContent = this.t('states.running', { elapsed: clock((now - since) / 1000) });
     }
-    for (const p of this.previews.values()) p.refresh();
   }
 
   /**
@@ -148,7 +149,7 @@ export class JobsPanel {
     const now = Date.now();
     // 没了的任务的预览放掉
     const alive = new Set([...s.live, ...s.done].map((l) => keyOf(l.task)));
-    for (const key of [...this.previews.keys()]) if (!alive.has(key)) this.previews.delete(key);
+    for (const [key, p] of [...this.previews]) if (!alive.has(key)) this.dropPreview(key, p);
     const doneFold = h(`div.jobs-fold.jobs-done-fold${this.doneOpen ? '.is-open' : ''}`, h('div.jobs-fold-inner', s.done.flatMap((l) => this.row(l, now))));
     const doneButton = h(`button.jobs-done${this.doneOpen ? '.is-open' : ''}`, {
       type: 'button', 'aria-expanded': String(this.doneOpen),
@@ -225,17 +226,23 @@ export class JobsPanel {
     return preview ? [row, preview] : [row];
   }
 
-  /** 展开、收起一条后台命令的预览：展开时读一次（跑着的之后每秒再读），列表跟着往下滚。 */
+  /** 收起一条预览：不再接着读。 @param {string} key @param {Preview|undefined} p */
+  dropPreview(key, p) {
+    p?.stop();
+    this.previews.delete(key);
+  }
+
+  /** 展开、收起一条后台命令的预览：展开时读最后几行（跑着的接着往下读），列表跟着往下滚。 */
   togglePreview(task, row, fold) {
     const key = keyOf(task);
     const open = !this.previews.has(key);
     if (open) {
-      const p = new Preview(task, this.t, this.on.read);
+      const p = new Preview(task, this.t, this.on.read, this.config.preview_lines);
       this.previews.set(key, p);
       replace(/** @type {HTMLElement} */ (fold.firstChild), p.el);
-      p.refresh();
+      p.start();
       this.follow(fold);
-    } else this.previews.delete(key);
+    } else this.dropPreview(key, this.previews.get(key));
     row.classList.toggle('is-previewing', open);
     fold.classList.toggle('is-open', open);
   }

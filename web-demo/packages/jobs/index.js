@@ -30,8 +30,10 @@ export function apply(ctx) {
       }
     },
     enter: (id) => ctx.chat.open(id),
-    // 后台命令的输出：照派它的会话读最后几行（施工 7-4 补）
-    read: (owner, job) => ctx.core.request('job.output', { session: owner, job, tail: ctx.config.preview_lines }),
+    // 后台命令的输出：照派它的会话读最后几行（施工 7-4 补）；带 `after` 的读那个字节往后的，没有新的等着（核心 V-6 上）
+    read: (owner, job, after) => ctx.core.request('job.output', after === undefined
+      ? { session: owner, job, tail: ctx.config.preview_lines }
+      : { session: owner, job, after, wait: true }),
   });
   ctx.effect(() => () => panel.destroy());
   /** 会话状态的任务表变了才重画 @param {string|null} id @param {any} status */

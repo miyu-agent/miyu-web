@@ -1,11 +1,10 @@
 // @ts-check
 //! `@` 选文件问核心（蓝图 `web.md`「`@` 选文件」第 2 条，核心施工 W-2）：按目录找经 `fs.list`、模糊找经 `fs.find`，都带工作目录；
-//! 清单没建完（`building`）先交已经建好的，隔一会儿再问；媒体类型照扩展名认（核心的列表里不带）。
+//! 清单没建完（`building`）先交已经建好的，再问一次带 `wait` 的；媒体类型照扩展名认（核心的列表里不带）。
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { res } from '../src/util/res.js';
 import { listFiles } from '../src/core/files.js';
 
 loadRes();
@@ -25,23 +24,28 @@ test('按目录找：fs.list 带工作目录、目录、开头；算「只读这
   assert.deepEqual(found.items.map((x) => x.type), ['', 'image/png', '']);
 });
 
-test('模糊找：fs.find 带工作目录、打的字、开列表时的 fresh；没建完的先交出来，隔 find_poll_ms 再问（不再带 fresh），建完为止', async () => {
-  const saved = res.layout.find_poll_ms;
-  res.layout.find_poll_ms = 1;
-  try {
-    const conn = fakeConn([
-      { items: [{ path: 'main.rs', full: '/w/main.rs', dir: false, marks: [0] }], partial: false, building: true },
-      { items: [{ path: 'main.rs', full: '/w/main.rs', dir: false, marks: [0] }, { path: 'src/main.js', full: '/w/src/main.js', dir: false, marks: [4] }], partial: false, building: false },
-    ]);
-    const seen = [];
-    const found = await listFiles(/** @type {any} */ (conn), '/w', { mode: 'find', query: 'main' }, true, (f) => seen.push(f.items.length));
-    assert.deepEqual(conn.asked, [['fs.find', { cwd: '/w', query: 'main', fresh: true }], ['fs.find', { cwd: '/w', query: 'main', fresh: false }]]);
-    assert.deepEqual(seen, [1]);
-    assert.equal(found.layer, false);
-    assert.equal(found.items.length, 2);
-  } finally {
-    res.layout.find_poll_ms = saved;
-  }
+test('模糊找：fs.find 带工作目录、打的字、开列表时的 fresh；没建完的先交出来，再问一次带 wait 的（不再带 fresh），照它交', async () => {
+  const conn = fakeConn([
+    { items: [{ path: 'main.rs', full: '/w/main.rs', dir: false, marks: [0] }], partial: false, building: true },
+    { items: [{ path: 'main.rs', full: '/w/main.rs', dir: false, marks: [0] }, { path: 'src/main.js', full: '/w/src/main.js', dir: false, marks: [4] }], partial: false, building: false },
+  ]);
+  const seen = [];
+  const found = await listFiles(/** @type {any} */ (conn), '/w', { mode: 'find', query: 'main' }, true, (f) => seen.push(f.items.length));
+  assert.deepEqual(conn.asked, [['fs.find', { cwd: '/w', query: 'main', fresh: true }], ['fs.find', { cwd: '/w', query: 'main', fresh: false, wait: true }]]);
+  assert.deepEqual(seen, [1]);
+  assert.equal(found.layer, false);
+  assert.equal(found.items.length, 2);
+});
+
+test('旧核心不认 wait、当场答还没建完的：照它交，不接着问', async () => {
+  const conn = fakeConn([
+    { items: [], partial: false, building: true },
+    { items: [{ path: 'a', full: '/w/a', dir: false, marks: [] }], partial: false, building: true },
+    { items: [], partial: false, building: false },
+  ]);
+  const found = await listFiles(/** @type {any} */ (conn), '/w', { mode: 'find', query: 'a' }, false);
+  assert.equal(conn.asked.length, 2);
+  assert.equal(found.items.length, 1);
 });
 
 test('还要不要接着问由问的那一头定：不要了就停，交回最后一次的', async () => {
