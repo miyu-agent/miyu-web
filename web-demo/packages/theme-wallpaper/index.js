@@ -3,15 +3,16 @@
 //! 生成的主题（浅、深两份都生成，`src/lib/md3/`）。经宿主的 `wallpaper(dark)` 读（浏览器那一份问桥），两个来处：
 //! - matugen 生成的那份颜色（有就先照它，2026-10-11 项目主人定）：只取它的主色 `source`，再照 `src/lib/md3/` 那一套生成（2026-10-14：两个头
 //!   同一个主色出一样的颜色，不直接用它的 MD3 角色）；认不出的（没有 `source`）当没有；
-//! - 桌面壁纸：照图取主色。
+//! - 桌面壁纸：网页服务照图算好的候选色（`seeds`，最多四个、打分高的在前；2026-10-14 项目主人定壁纸取色归头，和核心算头像的是同一份
+//!   Rust 代码），用设置项 `seed` 选的那个，没选的、选的不在这张壁纸的候选里的（换了壁纸）用第一个。设置页「主题」那一组的「主色」照这一套
+//!   交的 `seeds()` 画，选了写 `seed`。
 //! 读不到、取不出颜色的不挂，设置页就没有这一张。
 //!
 //! 换没换不轮询（2026-10-14 项目主人定）：宿主的 `wallpaperChanges` 推过来（桥盯着壁纸来处的文件）时问一次，回到前台、窗口拿回焦点、
 //! 换了浅深（事件 `theme.changed`）时也问一次（只能经 IPC 换、不落文件的 hyprpaper、swaybg 靠这个跟上）；宿主交的记号 `sig` 变了才重取色。
 //! 问的是页面这时的浅深（服务 `theme`，深浅可以各设一张壁纸）。同一张图取过、取不出的记着，不再取。
 
-import { seedOf, themeOf, matugenOf } from '../../src/lib/md3/index.js';
-import { pixelsOf } from '../../src/lib/md3/pixels.js';
+import { themeOf, matugenOf } from '../../src/lib/md3/index.js';
 
 /** 排在定的那几套、「跟随人格」后面 */
 const ORDER = 11;
@@ -29,17 +30,29 @@ export function apply(ctx) {
 
   /**
    * 挂一套：先挂新的再拿掉原来的（主题包不会在中间看到没有这一套）。
-   * @param {(scheme: 'light'|'dark') => ReturnType<typeof themeOf>} make 浅或深那一份怎么生成
+   * @param {string} seed 主色 @param {string[]} [seeds] 壁纸的候选色（matugen 那一份只有一个主色，没有这一行）
    */
-  const mount = (make) => {
+  const mount = (seed, seeds) => {
     /** @type {Partial<Record<'light'|'dark', ReturnType<typeof themeOf>>>} */
     const made = {};
     const before = undo;
     undo = ctx.slots.mount('theme.palettes', {
       id: 'wallpaper', name: ctx.text('name'), order: ORDER,
-      render: (/** @type {'light'|'dark'} */ scheme) => (made[scheme] ??= make(scheme)),
+      render: (/** @type {'light'|'dark'} */ scheme) => (made[scheme] ??= themeOf(seed, scheme)),
+      seeds: seeds?.length ? () => ({
+        colors: seeds, current: seed, auto: false,
+        pick: (/** @type {string|null} */ hex) => ctx.packages.set('theme-wallpaper', { config: { seed: hex } }),
+      }) : undefined,
     });
     before?.();
+  };
+  /** 这张壁纸的候选色（最近一次问到的；matugen 那一份的是 `null`） */
+  let candidates = /** @type {string[]|null} */ (null);
+  /** 照设置项 `seed` 挂：选的不在候选里的用第一个 */
+  const mountSeeds = () => {
+    if (!candidates?.length) return unmount();
+    const chosen = ctx.config.seed;
+    mount(candidates.includes(chosen) ? chosen : candidates[0], candidates);
   };
   const unmount = () => {
     undo?.();
@@ -60,16 +73,17 @@ export function apply(ctx) {
       seen = got.sig;
       if (got.kind === 'matugen') {
         // 只取它的主色（`source`），照同一套算（2026-10-14 两个头一样）；认不出的当没有
+        candidates = null;
         const m = matugenOf(got.colors);
-        if (m) mount((scheme) => themeOf(m.source, scheme));
+        if (m) mount(m.source);
         else unmount();
         return;
       }
-      const rgba = await pixelsOf(got.url, ctx.config.sample_side);
-      const seed = rgba ? seedOf(rgba) : null;
-      // 解不了的图、灰的：没有这一套
-      if (seed == null) unmount();
-      else mount((scheme) => themeOf(seed, scheme));
+      // 换了壁纸、选的不在新的候选里：回到第一个，存的也删掉（和 Android 一样，换回原来那张也是第一个）
+      if (ctx.config.seed && !got.seeds.includes(ctx.config.seed)) ctx.packages.set('theme-wallpaper', { config: { seed: null } }).catch(() => {});
+      // 解不了的图（网页服务算不出候选色）：没有这一套
+      candidates = got.seeds;
+      mountSeeds();
     } finally {
       busy = false;
     }
@@ -90,6 +104,8 @@ export function apply(ctx) {
   ctx.effect(() => ctx.host.wallpaperChanges?.(check) ?? (() => {}));
   // 换了浅深（也会是自己挂上去引起的：记号一样，不再取）
   ctx.on('theme.changed', check);
+  // 「主色」选了别的：照它重挂
+  ctx.watchConfig(() => (candidates ? mountSeeds() : undefined));
   ctx.effect(() => () => unmount());
   check();
 }

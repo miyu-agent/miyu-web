@@ -13,9 +13,9 @@
   },
   "kind": "optional",
   "description": {
-    "zh": "主题里多一个「跟随人格」：照正在看的会话用的人格，主色照人格自选的颜色、没选的照头像取的第一名，按 MD3 Content 生成浅色、深色两份（全部的颜色）；都没有、无人格的就是默认那个主题。人格有背景图的铺在对话区，上面盖一层底色，和选哪个主题无关。"
+    "zh": "主题里多一个「跟随人格」：照正在看的会话用的人格，主色照人格自选的颜色、没选的照头像的第一个候选色（核心算好给的），按 MD3 Content 生成浅色、深色两份（全部的颜色）；都没有、无人格的就是默认那个主题。人格有背景图的铺在对话区，上面盖一层底色，和选哪个主题无关。"
   },
-  "note": "取色用 src/lib/md3（material-color-utilities 0.4，Apache-2.0）：QuantizerCelebi 128 色、Score 排名取第一名，SchemeContent 对比度 0。",
+  "note": "头像的候选色由核心算（persona.list、persona.get 的 seeds）；生成主题用 src/lib/md3（material-color-utilities 0.4，Apache-2.0）的 SchemeContent，对比度 0。",
   "text": {
     "zh": {
       "name": "跟随人格"
@@ -28,20 +28,10 @@
     }
   },
   "inject": [
-    "slots"
+    "slots",
+    "personas~"
   ],
   "settings": {
-    "sample_side": {
-      "type": "number",
-      "default": 128,
-      "min": 16,
-      "max": 512,
-      "integer": true,
-      "name": {
-        "zh": "取色前头像缩到多大（长边像素）"
-      },
-      "advanced": true
-    },
     "veil": {
       "type": "number",
       "default": 0.8,

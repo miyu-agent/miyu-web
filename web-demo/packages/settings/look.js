@@ -4,6 +4,7 @@
 //! 项同一个 `shell`，小字只在改过时写「已改」。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { inkOf } from '../../src/lib/md3/index.js';
 import { shell, groupBlock, toggle, textField, select } from './rows.js';
 import { editableKeys } from './model.js';
 
@@ -16,7 +17,8 @@ export function later(fill) {
 
 /**
  * 「通用」页最上面「主题」一组：一行「明暗」（跟随系统、浅色、深色），下面一排主题卡片（默认、跟随人格、跟随壁纸），小样照现在的明暗画
- * （蓝图 `web.md`「主题」，2026-10-11 项目主人：主题是成对的一套，跟随系统是明暗不是一个主题）。
+ * （蓝图 `web.md`「主题」，2026-10-11 项目主人：主题是成对的一套，跟随系统是明暗不是一个主题）。选着的那一套交了 `seeds()` 的（跟随人格、
+ * 跟随壁纸，2026-10-14 项目主人定），卡片下面多一行「主色」（`seedRow`）。
  */
 export function drawLook(dialog) {
   const ctx = dialog.ctx;
@@ -45,8 +47,49 @@ export function drawLook(dialog) {
           h('b', { style: { background: colors.accent } }), h('b', { style: { background: colors.text, opacity: '0.5' } }), h('b', { style: { background: colors.gold } }))),
         h('span.set-theme-name', p.name));
     };
-    replace(el, groupBlock(ctx.text('theme'), [scheme.el, h('div.set-themes', palettes.map(card))]));
+    const current = palettes.find((p) => p.id === chosen);
+    replace(el, groupBlock(ctx.text('theme'), [scheme.el, h('div.set-themes', palettes.map(card)), seedRow(dialog, current?.seeds?.())]));
   });
+}
+
+/**
+ * 「主色」一行：一排色块，打分高的在前，现在用的画一个勾（不描边）；能「自动」的（跟随人格：不存就照第一个）前面多一块写 A，
+ * 自选的不在候选里的后面多一块。点了当场存，
+ * 存好重画。没有候选色的不出这一行。
+ * @param {any} dialog @param {{colors: string[], current: string|null, auto: boolean, pick: (hex: string|null) => Promise<any>}|undefined} seeds
+ */
+function seedRow(dialog, seeds) {
+  if (!seeds?.colors.length) return null;
+  const ctx = dialog.ctx;
+  /** @type {ReturnType<typeof shell>} */
+  let row;
+  const pick = async (/** @type {string|null} */ hex) => {
+    if (hex === seeds.current) return;
+    row.busy();
+    try {
+      await seeds.pick(hex);
+      row.done();
+      dialog.drawBody();
+    } catch (err) {
+      row.fail(/** @type {any} */ (err)?.message ?? String(err));
+    }
+  };
+  const block = (/** @type {string|null} */ hex, /** @type {string} */ fill, /** @type {string} */ title, /** @type {any} */ mark) => {
+    const on = hex === seeds.current;
+    return h(`button.set-seed${on ? '.is-on' : ''}`, {
+      type: 'button', title, 'aria-label': title, 'aria-pressed': String(on), onclick: () => pick(hex),
+      style: { background: fill, color: inkOf(fill) },
+    }, on ? icon('check') : mark);
+  };
+  row = shell({
+    name: ctx.text('main_color'),
+    control: h('div.set-seeds',
+      seeds.auto ? block(null, seeds.colors[0], ctx.text('main_color_auto'), 'A') : null,
+      seeds.colors.map((hex) => block(hex, hex, hex, null)),
+      // 自选的不在候选里的（人格卡片里「+」选的）：后面多画一块，画上勾（同人格卡片）
+      seeds.current && !seeds.colors.includes(seeds.current) ? block(seeds.current, seeds.current, seeds.current, null) : null),
+  });
+  return row.el;
 }
 
 /** 收起来的「高级（N）」：点开看。 */

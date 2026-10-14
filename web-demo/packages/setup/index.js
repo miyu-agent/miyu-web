@@ -64,14 +64,14 @@ export function apply(ctx) {
     return lookFor(session ? chat.persona(session) : inUse().persona);
   };
   /**
-   * 一个人格画成什么样：自选的主题色、背景图（核心 P-6）和背景图的透明度、焦点（P-7）跟着交出去，跟着人格的外观（软件包 `theme-persona`）
+   * 一个人格画成什么样：自选的主题色、头像的候选色（核心算好给的 `seeds`）、背景图（核心 P-6）和背景图的透明度、焦点（P-7）跟着交出去，跟着人格的外观（软件包 `theme-persona`）
    * 照它们画。没有这个人格的是 `null`。
    * @param {string|null} id
    */
   const lookFor = (id) => {
     const p = id ? catalog.personas?.find((x) => x.persona === id) : null;
     return p ? {
-      persona: p.persona, name: personaName(p), avatar: catalog.avatars.url(p.persona, p.avatar), seed: p.seed ?? null,
+      persona: p.persona, name: personaName(p), avatar: catalog.avatars.url(p.persona, p.avatar), seed: p.seed ?? null, seeds: p.seeds ?? [],
       background: catalog.backgrounds.url(p.persona, p.background), opacity: p.background_opacity ?? null, focus: p.background_focus ?? null,
     } : null;
   };
@@ -85,6 +85,16 @@ export function apply(ctx) {
     /** 主题那一屏（2026-10-13）：人格那一步存好的人格 @param {import('./form.js').Kit} kit @param {import('./welcome.js').Host} host @param {string} id */
     // 引导盖着的时候整页照这个人格的样子画（空会话照上一次会话选的人格算，不一定是它）；走完进的新会话就是它，对话区照常接着发
     theme: (kit, host, id) => new ThemeStep(ctx, kit, catalog, host, id, () => ctx.publish('look.changed', lookFor(id))),
+    /**
+     * 换一个人格的主题色（设置页「主题」那一组的「主色」，2026-10-14 项目主人：和编辑卡片那一格是同一份）：`null` 回到自动。存了重读列表，
+     * 整页照新的样子画。
+     * @param {string} id @param {string|null} seed
+     */
+    setSeed: async (id, seed) => {
+      await ctx.core.request('persona.set', { persona: id, seed: seed ?? { unset: true } });
+      // 重读完叫一声，对话区照新的列表发 `look.changed`
+      await catalog.load();
+    },
   });
   // 头像读到了：她那一轮的头换成图
   catalog.listeners.add(() => chat.refreshLook());

@@ -2,15 +2,15 @@
 //! 人格的外观那几行（蓝图 `web.md`「主题」的「跟着人格的外观」第 4、6、8 条；核心 P-5 头像、P-6 主题色和背景图）：人格的编辑卡片里
 //! 最上面三行，换、删都当场存（只带这一样的 `persona.set`），不等「保存」。图本身就是按钮（2026-10-11 项目主人定，不要一排字的按钮）：
 //! - 头像：圆的图（没有的画名字的第一个字），点它换，悬停盖一层写「更换」；有头像的右上角一个小 × 移除。不是正方形的先裁（`crop.js`）。
-//! - 主题色：一排方块：「自动」（照头像取的第一名，就是不存；块上铺那个颜色、写 A）、头像取到的前四色（点一下存成这个人格的主色）、
+//! - 主题色：一排方块：「自动」（照头像取的第一名，就是不存；块上铺那个颜色、写 A）、头像的候选色（核心算好在人格里给的 `seeds`，最多四个，
+//!   2026-10-14 项目主人定头像取色归核心；点一下存成这个人格的主色）、
 //!   「+」（浏览器的取色器；选的不在那四色里的在「+」前面多画一块）；现在用的那一块上画一个勾。
 //! - 背景图：16:9 的小图（没有的是一块底色、写「添加」，点它选图）；有图的悬停盖一层，两个按钮「更换」「焦点」（`focus.js`），右上角一个
 //!   小 ×；下面一行「透明度」滑杆，拖的时候整页当场跟着变（`look.preview`），松手存（核心 P-7）。大的先缩小、存成 WebP（存不了的
 //!   JPEG，照片存 PNG 太大）。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { seedsOf, hexOf, inkOf } from '../../src/lib/md3/index.js';
-import { pixelsOf } from '../../src/lib/md3/pixels.js';
+import { inkOf } from '../../src/lib/md3/index.js';
 import { shrink, store } from './avatars.js';
 import { cropAvatar } from './crop.js';
 import { chooseFocus } from './focus.js';
@@ -18,18 +18,8 @@ import { chooseFocus } from './focus.js';
 /** 核心收头像、背景图的上限（P-5 头像 1 MiB；P-6 背景图 5 MiB，`blob.put` 收图就封在 5 MiB）：缩小以后还超的再压（`avatars.js` 的 `shrink`） */
 const AVATAR_BYTES = 1024 * 1024;
 const BACKGROUND_BYTES = 5 * 1024 * 1024;
-/** 列出头像取到的几种颜色 */
-const CANDIDATES = 4;
 /** 人格没设透明度时画多少（蓝图第 6 条：盖 80% 的底色） */
 const OPACITY_DEFAULT = 20;
-/** 头像的地址 → 取到的几种颜色（`#rrggbb`）；同一张取过的不再算 @type {Map<string, Promise<string[]>>} */
-const picked = new Map();
-
-/** 头像取到的几种颜色，好的在前。 @param {string} url */
-function candidatesOf(url) {
-  if (!picked.has(url)) picked.set(url, pixelsOf(url).then((rgba) => (rgba ? seedsOf(rgba, CANDIDATES).map(hexOf) : [])));
-  return /** @type {Promise<string[]>} */ (picked.get(url));
-}
 
 export class Appearance {
   /**
@@ -47,11 +37,11 @@ export class Appearance {
     this.avatar = /** @type {string|null} */ (null);
     this.background = /** @type {string|null} */ (null);
     this.seed = /** @type {string|null} */ (null);
+    /** 头像的候选色（核心给的，打分高的在前；没头像的是空的） */
+    this.seeds = /** @type {string[]} */ ([]);
     /** 背景图的透明度（0–100）、焦点（`[x, y]`）（核心 P-7）；没设的 `null` */
     this.opacity = /** @type {number|null} */ (null);
     this.focus = /** @type {[number, number]|null} */ (null);
-    /** 头像取到的几种颜色：哪张图的、取到的（还没取完是空的） */
-    this.candidates = { url: /** @type {string|null} */ (null), colors: /** @type {string[]} */ ([]) };
     // 三行各一格（换了、读到了只重画它，不动写了一半的字）
     this.avatarBox = h('div.setup-avatar-box');
     this.seedBox = h('div.setup-seed-box');
@@ -63,6 +53,7 @@ export class Appearance {
     this.avatar = got?.avatar ?? null;
     this.background = got?.background ?? null;
     this.seed = got?.seed ?? null;
+    this.seeds = Array.isArray(got?.seeds) ? got.seeds : [];
     this.opacity = got?.background_opacity ?? null;
     this.focus = got?.background_focus ?? null;
   }
@@ -86,7 +77,7 @@ export class Appearance {
 
   paintSeed() {
     const t = this.t;
-    const colors = this.candidatesFor(this.imageUrl(this.catalog.avatars, this.avatar, () => this.paintSeed(), this.seedBox));
+    const colors = this.seeds;
     const input = /** @type {HTMLInputElement} */ (h('input.setup-color-input', { type: 'color', value: this.seed ?? colors[0] ?? '#3368c0', tabindex: '-1', 'aria-hidden': 'true' }));
     input.addEventListener('change', () => this.setPart('seed', input.value));
     const open = () => (typeof input.showPicker === 'function' ? input.showPicker() : input.click());
@@ -158,23 +149,6 @@ export class Appearance {
         inner, shown || part === 'avatar' ? h('span.setup-pic-hover', { 'aria-hidden': 'true' }, t('edit.change_short')) : null);
     return h(`div.setup-pic.is-${part}`, main,
       remove ? h('button.setup-pic-remove', { type: 'button', title: removeTitle, 'aria-label': removeTitle, onclick: remove }, icon('x')) : null);
-  }
-
-  /**
-   * 这张头像取到的几种颜色：取过的交回，没取的去取、取完重画这一行（这一行不在页面上了、头像又换了的不画）。
-   * @param {string|null} url
-   */
-  candidatesFor(url) {
-    if (this.candidates.url === url) return this.candidates.colors;
-    this.candidates = { url, colors: [] };
-    if (url) {
-      candidatesOf(url).then((colors) => {
-        if (this.candidates.url !== url) return;
-        this.candidates.colors = colors;
-        if (this.seedBox.isConnected && colors.length) this.paintSeed();
-      });
-    }
-    return [];
   }
 
   /**

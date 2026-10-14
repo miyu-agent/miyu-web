@@ -410,7 +410,9 @@
         "save": "保存",
         "save_failed": "保存失败：{reason}",
         "back": "上一步"
-      }
+      },
+      "main_color": "主色",
+      "main_color_auto": "自动"
     },
     "en": {
       "title": "Settings",
@@ -681,7 +683,9 @@
         "save": "Save",
         "save_failed": "Save failed: {reason}",
         "back": "Back"
-      }
+      },
+      "main_color": "Main color",
+      "main_color_auto": "Auto"
     },
     "ja": {
       "title": "設定",
@@ -952,7 +956,9 @@
         "save": "保存",
         "save_failed": "保存に失敗しました：{reason}",
         "back": "戻る"
-      }
+      },
+      "main_color": "メインカラー",
+      "main_color_auto": "自動"
     }
   },
   "styles": [
