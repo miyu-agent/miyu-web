@@ -1,17 +1,19 @@
 // @ts-check
 //! 照一张图生成一个主题（蓝图 `web.md`「主题」的「跟着人格的外观」第 2 条；软件包 `theme-persona`、`theme-wallpaper`，人格的编辑卡片的
-//! 「主题色」那一行共用）：从像素取主色，照 MD3 `CONTENT`、对比度 0 生成浅色或深色那一份，全部的格子（和默认主题一样多）。纯函数；读图在
-//! `pixels.js`，原色表在 `design.js`。
+//! 「主题色」那一行共用）：从像素取主色，照 MD3 `CONTENT`、对比度 0 生成五条色板（中性、中性变体、主色、次色、第三色），全部的格子（和默认
+//! 主题一样多）。纯函数；读图在 `pixels.js`，原色表（默认主题：深色 tokyonight、浅色晨光）在 `design.js`。
 //!
-//! 每一格怎么来：
-//! - 中性色、强调色照 MD3 的角色（`PAGE`、`COMMON`、`TUI`）；
-//! - 不带颜色的（`NEUTRAL`：终端的 `dim`、引用、代码注释……）照它在原色表里的明度取这一套的中性色；
-//! - 有含义的颜色（出错、增删、代码高亮……）色相不变、往主色靠一点（`Blend.harmonize`，最多转 15°），明度、彩度照原色表；
-//! - 阴影、遮罩照原色表的样子，浅色的影换成这一套的字色；写成算式的照抄；吉祥物照抄。
+//! 每一格怎么来（2026-10-14 项目主人定，两个头同一套，终端的方案页「终端配色方案」）：
+//! - 归了色板的（`KIND`）：照原色表里这一格的明度（HCT 的 tone），从那条色板取同一明度的颜色：明暗层次和默认主题一样，只换色相。
+//!   底、正文、思考、粗体、行内代码一类归中性；暗字、线、斜体、引用、注释一类归中性变体；强调色、链接、表头归主色；`gold` 归次色；
+//!   `ribbon`、图片归第三色；吉祥物头归中性、耳朵归中性变体、眼睛归主色、鳍归第三色（原来照抄）。不再用 MD3 的角色。
+//! - 有含义的颜色（出错、增删、警告、代码着色……，没归色板的 `#rrggbb`）：色相往主色靠一点（`Blend.harmonize`，最多转 15°），明度、彩度照原色表。
+//! - 阴影、遮罩照原色表的样子，浅色的影换成这一套的字色；写成算式的照抄。
+//! 浅色那一份照晨光的明度（底色近白，项目主人 10-14 定；终端照 Tokyo Night Day），深色照 tokyonight（两个头一样）。
 //!
-//! 用 `CONTENT` 不用 `TONAL_SPOT`：后者把底色也染上主色，头像取到肤色、金发时整页发棕发浑；`CONTENT` 的底色基本是中性灰，只有强调带颜色。
+//! 用 `CONTENT` 不用 `TONAL_SPOT`：后者把底色那条色板也染得很重，头像取到肤色、金发时整页发棕发浑。
 
-import { QuantizerCelebi, Score, Hct, SchemeContent, MaterialDynamicColors as D, Blend, argbFromRgb, argbFromHex, hexFromArgb } from './vendor/mcu.min.js';
+import { QuantizerCelebi, Score, Hct, SchemeContent, Blend, argbFromRgb, argbFromHex, hexFromArgb } from './vendor/mcu.min.js';
 import { DESIGN } from './design.js';
 
 /** 取主色时最多挑多少种颜色（MD3 取壁纸色的做法） */
@@ -19,36 +21,28 @@ const QUANTIZE = 128;
 /** 太透明的像素不算（头像的圆角外面、抠了图的背景） */
 const MIN_ALPHA = 200;
 
+/** 色板：中性、中性变体、主色、次色、第三色（`SchemeContent` 的五条） */
+const PALETTES = { n: 'neutralPalette', nv: 'neutralVariantPalette', p: 'primaryPalette', s: 'secondaryPalette', t: 'tertiaryPalette' };
+
 /**
- * 页面那一组的每一格对应 MD3 的哪个角色：浅色、深色各一份（照「晨光」「tokyonight」的对应：浮起来的东西浅色里比底亮、深色里也比底亮一档）。
- * @type {Record<'light'|'dark', Record<string, string>>}
+ * 每一格归哪条色板（照终端方案页的归类对过来；网页独有的层次照它的用处归）。没写的 `#rrggbb` 是有含义的颜色，往主色偏。
+ * @type {{page: Record<string, keyof typeof PALETTES>, tui: Record<string, keyof typeof PALETTES>}}
  */
-const PAGE = {
-  light: {
-    surface: 'surface', sidebar_bg: 'surfaceContainer', surface_1: 'surfaceContainerLowest', surface_2: 'surfaceContainerHigh',
-    surface_3: 'surfaceContainerHighest', sidebar_active: 'surfaceContainerHigh',
+const KIND = {
+  page: {
+    surface: 'n', sidebar_bg: 'n', surface_1: 'n', surface_2: 'n', surface_3: 'n', sidebar_active: 'n', text: 'n', on_primary: 'n', tok_p: 'n',
+    text_soft: 'nv', line: 'nv', line_strong: 'nv', tok_c: 'nv', tok_o: 'nv',
+    accent: 'p', accent_soft: 'p', on_primary_container: 'p', link: 'p',
+    gold: 's', ribbon: 't',
   },
-  dark: {
-    surface: 'surface', sidebar_bg: 'surfaceContainerLowest', surface_1: 'surfaceContainerLow', surface_2: 'surfaceContainer',
-    surface_3: 'surfaceContainerHigh', sidebar_active: 'surfaceContainer',
+  tui: {
+    thought: 'n', thought_hover: 'n', shade: 'n', md_bold: 'n', md_code: 'n', md_math: 'n', diagram_backdrop: 'n',
+    mascot_head: 'n', mascot_head_shade: 'n', mascot_outline: 'n',
+    dim: 'nv', hover: 'nv', md_italic: 'nv', md_quote: 'nv', diagram_text: 'nv', diagram_line: 'nv', code_comment: 'nv', code_operator: 'nv',
+    mascot_ear: 'nv', mascot_ear_shade: 'nv',
+    accent: 'p', workspace: 'p', md_link: 'p', md_url: 'p', md_table_head: 'p', mascot_eye: 'p',
+    md_image: 't', mascot_fin: 't', mascot_fin_shade: 't',
   },
-};
-/**
- * 浅色、深色都一样的几格。主色的容器色照 `secondaryContainer`：`CONTENT` 的 `primaryContainer` 就是原色（饱和、浅色里也是深的），
- * `accent_soft` 是垫在正文字下面的淡底（提问卡片选中的那一项），要的是浅色里浅、深色里深的那一档。
- */
-const COMMON = {
-  text: 'onSurface', text_soft: 'onSurfaceVariant', line: 'outlineVariant', line_strong: 'outline', accent: 'primary',
-  accent_soft: 'secondaryContainer', on_primary: 'onPrimary', on_primary_container: 'onSecondaryContainer', gold: 'secondary', ribbon: 'tertiary',
-};
-/** 终端那一组跟着主色的几格 */
-const TUI = { accent: 'primary', workspace: 'primary' };
-/** 链接照主色 */
-const LINK = { link: 'primary' };
-/** 不带颜色的几格（字、线、底一类）：照原色表的明度取中性色。原色表深色那一份是 tokyonight，这几格带着它的蓝，不能当有含义的颜色往主色靠 */
-const NEUTRAL = {
-  page: ['tok_c', 'tok_p'],
-  tui: ['dim', 'hover', 'shade', 'md_bold', 'md_italic', 'md_quote', 'md_math', 'diagram_text', 'diagram_line', 'diagram_backdrop', 'code_comment', 'code_operator'],
 };
 
 /**
@@ -78,79 +72,40 @@ export const seedOf = (rgba) => seedsOf(rgba, 1)[0] ?? null;
 
 /**
  * 照主色生成一个主题的浅色或深色那一份：全部的格子（和原色表、默认主题一样多）。
- * @param {number|string} seed ARGB 或 `#rrggbb`（自选的主色）
+ * @param {number|string} seed ARGB 或 `#rrggbb`（自选的主色、matugen 给的 `source`）
  * @param {'light'|'dark'} scheme
  * @returns {{page: Record<string, string>, tui: Record<string, string>}}
  */
 export function themeOf(seed, scheme) {
   const argb = typeof seed === 'string' ? argbFromHex(seed) : seed;
-  const s = new SchemeContent(Hct.fromInt(argb), scheme === 'dark', 0);
-  return build(scheme, (name) => hexFromArgb(/** @type {any} */ (D)[name].getArgb(s)), (tone) => hexFromArgb(s.neutralVariantPalette.tone(tone)), argb);
+  const s = /** @type {any} */ (new SchemeContent(Hct.fromInt(argb), scheme === 'dark', 0));
+  const design = DESIGN[scheme];
+  /** 从一条色板取同一明度的颜色 @param {keyof typeof PALETTES} kind @param {string} like 原色表里的那一格 */
+  const pick = (kind, like) => {
+    const palette = s[PALETTES[kind]];
+    return hexFromArgb(Hct.from(palette.hue, palette.chroma, Hct.fromInt(argbFromHex(like)).tone).toInt());
+  };
+  /** @param {Record<string, string>} from @param {Record<string, keyof typeof PALETTES>} kinds @param {string|null} shadow */
+  const derive = (from, kinds, shadow) => Object.fromEntries(Object.entries(from).map(([k, v]) => {
+    if (!/^#[0-9a-f]{6}$/i.test(v)) return [k, shadow && v.includes('rgba(') ? v.replace(/rgba\(\s*\d+,\s*\d+,\s*\d+,/g, `rgba(${shadow},`) : v];
+    if (kinds[k]) return [k, pick(kinds[k], v)];
+    return [k, hexFromArgb(Blend.harmonize(argbFromHex(v), argb))];
+  }));
+  // 浅色的影用这一套的字色（原色表是暖黑），深色的照原色表（黑）
+  const ink = argbFromHex(pick('n', design.page.text));
+  const shadow = scheme === 'light' ? `${(ink >> 16) & 255}, ${(ink >> 8) & 255}, ${ink & 255}` : null;
+  return { page: derive(design.page, KIND.page, shadow), tui: derive(design.tui, KIND.tui, null) };
 }
 
 /**
- * 照 matugen 生成的那一份铺（蓝图「跟着人格的外观」第 5 条）：MD3 角色照它的（和桌面上别的软件一模一样），它没有的格子照上面的规矩
- * 生成：有含义的颜色往它的主色靠，不带颜色的照它 `surfaceVariant` 的色相、彩度取明度。
- * @param {Record<string, string>} roles 这一份的角色（`matugenOf` 认过的，驼峰的名字）
- * @param {string} source 主色 `#rrggbb`
- * @param {'light'|'dark'} scheme
- */
-export function themeFromRoles(roles, source, scheme) {
-  const nv = Hct.fromInt(argbFromHex(roles.surfaceVariant));
-  return build(scheme, (name) => roles[name], (tone) => hexFromArgb(Hct.from(nv.hue, nv.chroma, tone).toInt()), argbFromHex(source));
-}
-
-/** 生成一份要的 MD3 角色（matugen 的模板照这一串写） */
-export const ROLES = [...new Set([...Object.values(PAGE.light), ...Object.values(PAGE.dark), ...Object.values(COMMON), ...Object.values(TUI),
-  ...Object.values(LINK), 'onSurface', 'surfaceVariant'])].sort();
-
-/**
- * 认 matugen 生成的那一份（`web/matugen/miyu-web.json` 模板）：`{source, light: {角色: 颜色}, dark: {…}}`，角色是 matugen 的写法
- * （`surface_container_low`），换成驼峰；缺了哪个角色、颜色不是 `#rrggbb` 的是 `null`（当没有，回去自己取色）。
+ * 认 matugen 生成的那一份（`web/matugen/miyu-web.json` 模板）：只取 `source`（主色），再照 `themeOf` 那一套算（2026-10-14 两个头一样，
+ * 不直接用 matugen 给的角色；旧模板生成的、带了角色的照样认）。`source` 不是 `#rrggbb` 的是 `null`。
  * @param {any} json
- * @returns {{source: string, light: Record<string, string>, dark: Record<string, string>}|null}
+ * @returns {{source: string}|null}
  */
 export function matugenOf(json) {
-  const hex = (/** @type {any} */ v) => typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v);
-  if (!json || !hex(json.source)) return null;
-  /** @param {any} side */
-  const side = (side) => {
-    if (!side || typeof side !== 'object') return null;
-    const out = /** @type {Record<string, string>} */ ({});
-    for (const role of ROLES) {
-      const v = side[role.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)];
-      if (!hex(v)) return null;
-      out[role] = v.toLowerCase();
-    }
-    return out;
-  };
-  const light = side(json.light);
-  const dark = side(json.dark);
-  return light && dark ? { source: json.source.toLowerCase(), light, dark } : null;
-}
-
-/**
- * 铺一份：角色从 `role` 来，不带颜色的从 `neutral(明度)` 来，有含义的颜色往 `source` 靠。
- * @param {'light'|'dark'} scheme @param {(name: string) => string} role @param {(tone: number) => string} neutral @param {number} source ARGB
- * @returns {{page: Record<string, string>, tui: Record<string, string>}}
- */
-function build(scheme, role, neutral, source) {
-  const roles = (/** @type {Record<string, string>} */ table) => Object.fromEntries(Object.entries(table).map(([k, name]) => [k, role(name)]));
-  // 浅色的影用这一套的字色（原色表是暖黑），深色的照原色表（黑）
-  const ink = argbFromHex(role('onSurface'));
-  const shadow = scheme === 'light' ? `${(ink >> 16) & 255}, ${(ink >> 8) & 255}, ${ink & 255}` : null;
-  const design = DESIGN[scheme];
-  /** @param {Record<string, string>} from @param {string[]} quiet @param {(k: string) => boolean} keep */
-  const derive = (from, quiet, keep) => Object.fromEntries(Object.entries(from).map(([k, v]) => {
-    if (keep(k) || !/^#[0-9a-f]{6}$/i.test(v)) return [k, shadow && v.includes('rgba(') ? v.replace(/rgba\(\s*\d+,\s*\d+,\s*\d+,/g, `rgba(${shadow},`) : v];
-    const hct = Hct.fromInt(argbFromHex(v));
-    if (quiet.includes(k)) return [k, neutral(Math.round(hct.tone))];
-    return [k, hexFromArgb(Blend.harmonize(hct.toInt(), source))];
-  }));
-  return {
-    page: { ...derive(design.page, NEUTRAL.page, () => false), ...roles(PAGE[scheme]), ...roles(COMMON), ...roles(LINK) },
-    tui: { ...derive(design.tui, NEUTRAL.tui, (k) => k.startsWith('mascot_')), ...roles(TUI) },
-  };
+  const source = json?.source;
+  return typeof source === 'string' && /^#[0-9a-f]{6}$/i.test(source) ? { source: source.toLowerCase() } : null;
 }
 
 /** ARGB 写成 `#rrggbb`（小写；存进人格、给人看、记缓存）。 @param {number} argb */
