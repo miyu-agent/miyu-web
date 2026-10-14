@@ -238,10 +238,11 @@ fn watch_root(name: &str) -> std::io::Result<PathBuf> {
 }
 
 #[test]
-fn watch_plan_covers_missing_files_by_their_nearest_directory() -> std::io::Result<()> {
+fn watch_plan_watches_files_themselves_and_skips_missing_ones() -> std::io::Result<()> {
     use notify::RecursiveMode::{NonRecursive, Recursive};
     let root = watch_root("plan")?;
     std::fs::create_dir_all(root.join("cache"))?;
+    std::fs::write(root.join("a.ini"), "x")?;
     let targets = [
         root.join("a.ini"),
         root.join("missing/deeper/b.ini"),
@@ -249,23 +250,19 @@ fn watch_plan_covers_missing_files_by_their_nearest_directory() -> std::io::Resu
     ];
     let plan = crate::watch::plan(&targets);
     assert_eq!(
-        plan.get(&root),
+        plan.get(&root.join("a.ini")),
         Some(&NonRecursive),
-        "文件、还没有的都盯在的那一层"
+        "在的文件只盯它自己"
     );
     assert_eq!(
         plan.get(&root.join("cache")),
         Some(&Recursive),
         "目录整个往下盯"
     );
-    assert_eq!(plan.len(), 2);
+    assert_eq!(plan.len(), 2, "还没有的不盯，也不盯上层：{plan:?}");
     assert!(
         crate::watch::touches(&targets, &root.join("cache/0.12/DP-2")),
         "目录里面的"
-    );
-    assert!(
-        crate::watch::touches(&targets, &root.join("missing")),
-        "建出了中间的目录"
     );
     assert!(
         !crate::watch::touches(&targets, &root.join("other.txt")),
@@ -280,17 +277,19 @@ fn watch_plan_covers_missing_files_by_their_nearest_directory() -> std::io::Resu
 }
 
 #[test]
-fn watch_list_has_matugen_and_the_platform_files() {
-    let list = crate::watch::watch_list();
+fn watch_list_is_matugen_and_files_of_only_the_source_found() {
     assert_eq!(
-        list.first(),
-        crate::matugen::output_path().as_ref(),
-        "matugen 那一份在头一个"
+        crate::watch::watch_list(),
+        crate::matugen::output_path()
+            .into_iter()
+            .collect::<Vec<_>>(),
+        "总要盯的只有 matugen 那一份"
     );
     if cfg!(all(unix, not(target_os = "macos"))) && std::env::var_os("HOME").is_some() {
-        assert!(list.iter().any(|p| p.ends_with("dconf/user")));
-        assert!(list.iter().any(|p| p.ends_with("awww")));
-        assert!(list.iter().any(|p| p.ends_with(".fehbg")));
+        let awww = crate::watch::files_of("awww");
+        assert!(awww.len() == 1 && awww[0].ends_with("awww"), "{awww:?}");
+        assert!(crate::watch::files_of("feh")[0].ends_with(".fehbg"));
+        assert!(crate::watch::files_of("swaybg").is_empty(), "不落文件的");
     }
 }
 
@@ -299,12 +298,18 @@ fn watch_calls_back_when_listed_files_change_and_only_then() -> std::io::Result<
     use std::sync::mpsc;
     use std::time::Duration;
     let root = watch_root("live")?;
-    let file = root.join("later/deeper/wall.ini");
+    let file = root.join("wall.ini");
+    let later = root.join("later.ini");
     let cache = root.join("cache");
+    std::fs::write(&file, "first")?;
+    std::fs::create_dir_all(&cache)?;
     let (tx, rx) = mpsc::channel();
-    let watch = crate::watch::Watch::start(vec![file.clone(), cache.clone()], move || {
-        let _sent = tx.send(());
-    })?;
+    let watch = crate::watch::Watch::start(
+        vec![file.clone(), later.clone(), cache.clone()],
+        move || {
+            let _sent = tx.send(());
+        },
+    )?;
     let quiet = |what: &str| {
         assert!(
             rx.recv_timeout(Duration::from_millis(900)).is_err(),
@@ -322,20 +327,24 @@ fn watch_calls_back_when_listed_files_change_and_only_then() -> std::io::Result<
     };
     std::fs::write(root.join("other.txt"), "x")?;
     quiet("同一层别的文件");
-    std::fs::create_dir_all(file.parent().unwrap_or(&root))?;
-    std::fs::write(&file, "first")?;
-    called("建出了目录和文件");
+    std::fs::write(&later, "x")?;
+    quiet("还没有的建出来了（不盯，靠拿回焦点再找）");
     std::fs::write(&file, "second")?;
     called("改了文件");
     assert_eq!(std::fs::read_to_string(&file)?, "second");
     quiet("只是读");
+    std::fs::write(root.join("wall.ini.tmp"), "third")?;
+    std::fs::rename(root.join("wall.ini.tmp"), &file)?;
+    called("换成了别的文件");
+    std::fs::write(&file, "fourth")?;
+    called("换过以后再改（重盯了新的那一个）");
     std::fs::create_dir_all(cache.join("0.12"))?;
     std::fs::write(cache.join("0.12/DP-2"), "x")?;
-    called("建出了缓存目录");
+    called("缓存目录里面建出了文件");
     std::fs::write(cache.join("0.12/DP-2"), "y")?;
     called("缓存目录里面的文件变了");
     watch.set(Vec::new())?;
-    std::fs::write(&file, "third")?;
+    std::fs::write(&file, "fifth")?;
     quiet("清单空了");
     drop(watch);
     std::fs::remove_dir_all(&root)?;

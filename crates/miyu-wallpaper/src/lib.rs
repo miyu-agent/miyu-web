@@ -45,7 +45,7 @@ pub struct Wallpaper {
     pub mime: &'static str,
     /// 是 HEIC，读的时候先转成 JPEG（只在 macOS 上有）。
     pub heic: bool,
-    /// 要盯哪些文件，变了就重找（[`watch::Watch`]）：图本身，加上 [`watch::watch_list`]（换了来处也看得到）。
+    /// 要盯哪些文件，变了就重找（[`watch::Watch`]）：图本身、找到它的那一家的文件（[`watch::files_of`]），加上 [`watch::watch_list`]。
     pub watch: Vec<PathBuf>,
 }
 
@@ -132,6 +132,7 @@ pub fn find(dark: bool) -> io::Result<Option<Wallpaper>> {
             Ok(Some(path)) => match image_kind(&path) {
                 Ok(Some((mime, heic))) => {
                     let mut watch = vec![path.clone()];
+                    watch.extend(watch::files_of(from));
                     watch.extend(watch::watch_list());
                     return Ok(Some(Wallpaper {
                         path,
