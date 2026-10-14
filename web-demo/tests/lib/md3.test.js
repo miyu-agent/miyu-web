@@ -1,6 +1,6 @@
 // @ts-check
-//! 照一张图生成一个主题（`src/lib/md3/`，蓝图「跟着人格的外观」第 2、4 条）：从像素取前几种主色、照 MD3 Content 生成浅色或深色那一份的
-//! 全部格子。
+//! 照一张图生成一个主题（`src/lib/md3/`，蓝图「跟着人格的外观」第 2、4 条）：从像素取前几种主色、照 MD3 Content 的五条色板、每一格照原色表
+//! 那一格的明度生成浅色或深色那一份的全部格子（2026-10-14 两个头同一套）。
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -39,23 +39,24 @@ test('前几种：好的在前、第一种就是自动取的那一种，色相�
   assert.equal(seedsOf(rgba, 2).length, 2);
 });
 
-test('照主色生成（Content）：中性色、强调色照 MD3 的角色；底色基本是中性的，强调带颜色', () => {
-  const light = themeOf('#3368c0', 'light');
-  assert.equal(light.page.surface, '#f9f9ff');
-  assert.equal(light.page.surface_1, '#ffffff', '浅色里浮起来的比底亮');
-  assert.equal(light.page.accent, '#0b4fa6');
+test('照主色生成：每一格照原色表那一格的明度、从对应色板取色；深色和终端同一个主色出一样的颜色（终端方案页那张表）', () => {
+  const tone = (/** @type {string} */ hex) => Hct.fromInt(argbFromHex(hex)).tone;
+  const dark = themeOf('#ca9b83', 'dark');
+  // 终端「改后 · 深色」那一列（参照都是 tokyonight 同一格）：两个头逐格一样
+  const terminal = { surface: '#1f1b19', text: '#d3cac7', accent: '#c89981' };
+  for (const [k, v] of Object.entries(terminal)) assert.equal(dark.page[k], v, `page.${k}`);
+  const tui = { thought: '#9f9794', md_quote: '#9a8a83', code_comment: '#6c5e58', md_link: '#b2866f', md_image: '#948e62', error: '#f9786c',
+    code_keyword: '#cf94eb', mascot_head: '#d3cac7', mascot_ear: '#6c5e58', mascot_fin: '#a7a073' };
+  for (const [k, v] of Object.entries(tui)) assert.equal(dark.tui[k], v, `tui.${k}`);
+  // 明暗层次和原色表一样：底、浮起来的、左栏的明度照默认主题那一格（差不过 1）
+  for (const k of ['surface', 'surface_1', 'surface_2', 'sidebar_bg', 'text', 'text_soft']) {
+    assert.ok(Math.abs(tone(dark.page[k]) - tone(DESIGN.dark.page[k])) < 1, `dark ${k} 的明度`);
+  }
+  // 浅色照晨光（项目主人 10-14 定：底色近白，不照 Tokyo Night Day）
+  const light = themeOf('#ca9b83', 'light');
+  assert.ok(tone(light.page.surface) > 97, `浅色的底近白：${light.page.surface}`);
+  assert.ok(Math.abs(tone(light.page.accent) - tone(DESIGN.light.page.accent)) < 1, '强调色照晨光那一格的明度');
   assert.equal(light.page.link, light.page.accent);
-  assert.equal(light.page.text, '#191b21');
-  assert.equal(light.page.accent_soft, '#c3d4fd', '垫在字下面的淡底：浅色里是浅的（不是 Content 的原色容器）');
-  const dark = themeOf('#3368c0', 'dark');
-  assert.equal(dark.page.surface, '#111319');
-  assert.equal(dark.page.sidebar_bg, '#0c0e13', '深色里左栏比底暗一档');
-  assert.equal(dark.page.surface_1, '#191b21', '深色里浮起来的也比底亮一档');
-  assert.equal(dark.page.accent, '#adc6ff');
-  assert.equal(dark.page.accent_soft, '#38496b', '深色里的淡底是深的');
-  assert.equal(dark.tui.workspace, dark.page.accent);
-  // 金发那样的暖色：底色只带一点点暖
-  assert.equal(themeOf('#e0b44a', 'light').page.surface, '#fff8f2');
 });
 
 test('生成的是整份：格子和原色表（默认主题）一样多，浅深都有，不借默认主题的', () => {
@@ -67,7 +68,7 @@ test('生成的是整份：格子和原色表（默认主题）一样多，浅�
   }
 });
 
-test('有含义的颜色色相不变、往主色靠一点；不带颜色的取中性色；阴影换影的颜色；吉祥物照抄', () => {
+test('有含义的颜色色相不变、往主色靠一点；不带颜色的取中性色；吉祥物跟着换；阴影换影的颜色', () => {
   const hue = (/** @type {string} */ hex) => Hct.fromInt(argbFromHex(hex)).hue;
   const turned = (/** @type {string} */ a, /** @type {string} */ b) => { const d = Math.abs(hue(a) - hue(b)) % 360; return Math.min(d, 360 - d); };
   const brown = themeOf('#7a573e', 'dark');
@@ -75,12 +76,14 @@ test('有含义的颜色色相不变、往主色靠一点；不带颜色的取�
     const d = turned(DESIGN.dark.page[k], brown.page[k]);
     assert.ok(d > 0.5 && d <= 15.5, `${k} 转了 ${d.toFixed(1)}°（最多 15°）`);
   }
-  // 深色原色表是 tokyonight：这几格带着它的蓝，生成的换成这一套的中性色（彩度低）
-  for (const k of ['dim', 'code_comment', 'md_quote']) assert.ok(Hct.fromInt(argbFromHex(brown.tui[k])).chroma < 12, `${k} 是中性的：${brown.tui[k]}`);
-  assert.equal(brown.tui.mascot_eye, DESIGN.dark.tui.mascot_eye, '吉祥物不跟着变');
+  // 深色原色表是 tokyonight：思考、暗字、注释、引用带着它的青、蓝，生成的换成这一套的中性色（彩度低）
+  for (const k of ['thought', 'dim', 'code_comment', 'md_quote']) assert.ok(Hct.fromInt(argbFromHex(brown.tui[k])).chroma < 12, `${k} 是中性的：${brown.tui[k]}`);
+  assert.notEqual(brown.tui.mascot_eye, DESIGN.dark.tui.mascot_eye, '吉祥物跟着换（项目主人 10-14 定）');
+  assert.ok(turned(brown.tui.mascot_eye, brown.page.accent) < 5, '眼睛照主色');
   assert.equal(brown.page.card_shadow, DESIGN.dark.page.card_shadow, '深色的影照黑');
   const light = themeOf('#3368c0', 'light');
-  assert.equal(light.page.scrim, 'rgba(25, 27, 33, 0.32)', '浅色的影换成这一套的字色 #191b21');
+  assert.match(light.page.scrim, /^rgba\(\d+, \d+, \d+, 0\.32\)$/, '浅色的影换成这一套的字色');
+  assert.notEqual(light.page.scrim, DESIGN.light.page.scrim);
   assert.equal(light.page.code_ink, DESIGN.light.page.code_ink, '算式照抄');
 });
 
@@ -89,21 +92,13 @@ test('色块上的勾：浅的颜色上用深的，深的颜色上用白的', ()
   assert.equal(inkOf('#3368c0'), '#ffffff');
 });
 
-test('matugen 那一份：角色照它的、缺格子的不认；它没有的格子照规矩生成（93 格）', async () => {
-  const { matugenOf, themeFromRoles, ROLES } = await import('../../src/lib/md3/index.js');
-  const snake = (/** @type {string} */ r) => r.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
-  // 用 Content 生成的角色充当 matugen 的输出（真 matugen 生成的样本在实测里对过）
-  const side = (/** @type {'light'|'dark'} */ s) => Object.fromEntries(ROLES.map((r) => [snake(r), r === 'surfaceVariant' ? (s === 'dark' ? '#424752' : '#dfe2f0') : '#123456']));
-  const json = { source: '#3368C0', light: side('light'), dark: side('dark') };
-  const m = matugenOf(json);
-  assert.ok(m);
-  assert.equal(m.source, '#3368c0');
-  assert.equal(m.dark.surfaceContainerLowest, '#123456');
-  const t = themeFromRoles(m.dark, m.source, 'dark');
-  assert.equal(t.page.surface, '#123456', '角色照它的');
-  assert.equal(Object.keys(t.page).length + Object.keys(t.tui).length, 93);
-  assert.equal(t.tui.mascot_eye, DESIGN.dark.tui.mascot_eye);
-  assert.equal(matugenOf({ ...json, dark: { ...json.dark, primary: undefined } }), null, '缺一格');
-  assert.equal(matugenOf({ ...json, source: 'blue' }), null);
+test('matugen 那一份：只取 source 当主色，照同一套算；旧模板带着角色的照样认；没有 source 的不认', async () => {
+  const { matugenOf } = await import('../../src/lib/md3/index.js');
+  const m = matugenOf({ source: '#3368C0', light: { primary: '#123456' }, dark: {} });
+  assert.deepEqual(m, { source: '#3368c0' });
+  assert.deepEqual(themeOf(m.source, 'dark'), themeOf('#3368c0', 'dark'), '和自己取到这个主色一样');
+  assert.deepEqual(matugenOf({ source: '#abcdef' }), { source: '#abcdef' }, '新模板只有 source');
+  assert.equal(matugenOf({ source: 'blue' }), null);
+  assert.equal(matugenOf({ light: {} }), null);
   assert.equal(matugenOf(null), null);
 });

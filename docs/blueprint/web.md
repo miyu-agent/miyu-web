@@ -720,12 +720,12 @@
 **跟着人格的外观**（2026-10-10 项目主人定主题色跟人格、背景图只铺对话区；2026-10-11 看过取色对比改定：「跟随人格」「跟随壁纸」是主题里的两套，生成方式用 MD3 的 Content，编辑卡片列出头像取到的前四色；页面的底做得素，一个目的就是方便换成人格、壁纸的颜色和图）：
 
 1. 主题那一排三张卡片：默认、**跟随人格**、**跟随壁纸**（后两个是软件包 `theme-persona`、`theme-wallpaper` 挂进 `theme.palettes` 的，停用了就没有这一张）。和默认一样浅、深两份都有，照「明暗」用哪一份；选了别的主题就是那个主题的颜色（原来人格的颜色一直盖在上面，2026-10-11 改掉）。卡片的小样照这一刻生成的颜色画。
-2. 怎么生成：从图里取主色（material-color-utilities 0.4 的 `QuantizerCelebi` 128 色、`Score` 排名，取第一名；`src/lib/md3/`，两个包和编辑卡片共用），照 MD3 的 `SchemeContent`、对比度 0 生成浅、深两份，每一份全部的格子都生成（2026-10-11 改：原来只生成中性色和强调色那十几格，别的借晨光、tokyonight）：
-   - 中性色、强调色照 MD3 的角色：`surface`、`sidebar_bg`、`surface_1`–`surface_3`、`sidebar_active`、`text`、`text_soft`、`line`、`line_strong`、`accent`、`accent_soft`、`on_primary`、`on_primary_container`、`gold`、`ribbon`、`link`，终端那一组的 `accent`、`workspace`。`accent_soft`、`on_primary_container` 照 `secondaryContainer`、`onSecondaryContainer`（`Content` 的 `primaryContainer` 就是原色，饱和、浅色里也深，垫在正文字下面看不清）。
-   - 别的不带颜色的（终端的 `dim`、Markdown 的引用、代码注释这一类）：照它在原色表里的明度，取这一套的中性色（`neutralVariant`）。
+2. 怎么生成：从图里取主色（material-color-utilities 0.4 的 `QuantizerCelebi` 128 色、`Score` 排名，取第一名；`src/lib/md3/`，两个包和编辑卡片共用），照 MD3 的 `SchemeContent`、对比度 0 生成五条色板（中性、中性变体、主色、次色、第三色），浅、深两份全部的格子都生成。2026-10-14 项目主人定两个头同一套（终端的方案页「终端配色方案」，四件都选推荐；浅色网页照晨光、终端照 Tokyo Night Day，网页这一点照晨光原样）：
+   - 归了色板的：照原色表（默认主题：深色 tokyonight、浅色晨光）里这一格的明度（HCT 的 tone），从那条色板取同一明度的颜色，明暗层次和默认主题一样、只换色相（原来照 MD3 的角色，深色太深、浅色近白；深色两个头同一个主色出一样的颜色）。中性：`surface`、`sidebar_bg`、`surface_1`–`surface_3`、`sidebar_active`、`text`、`on_primary`、`tok_p`，终端那一组的思考（两格）、`shade`、粗体、行内代码、公式、图的底；中性变体：`text_soft`、`line`、`line_strong`、`tok_c`、`tok_o`，终端的 `dim`、`hover`、斜体、引用、图里的字和线、代码注释、运算符；主色：`accent`、`accent_soft`、`on_primary_container`、`link`，终端的 `accent`、`workspace`、链接、网址、表头；次色：`gold`；第三色：`ribbon`、终端的图片。
+   - 思考算中性色：原色表深色那一份的思考是 tokyonight 的青，照「有含义的颜色」只偏 15° 就不跟头像（终端 10-14 报的），所以归中性。
    - 有含义的颜色（出错、在线、增删、代码高亮、Markdown 的标题和代码……，2026-10-11 项目主人定）：色相不变、往主色靠一点（MD3 的 `Blend.harmonize`，最多转 15°，matugen 处理自定义颜色就是这样），明度、彩度照原色表，对比度跟着保住。
    - 阴影、遮罩：照原色表的样子，浅色的影换成这一套的字色，深色的照黑；`code_bg`、`code_ink` 这种写成算式的照抄。
-   - 吉祥物：照它自己的颜色，不跟着变（2026-10-11 项目主人定）。
+   - 吉祥物：跟着换（2026-10-14 项目主人定，原来照抄）：头照中性、耳朵照中性变体、眼睛照主色、鳍照第三色，明度照原色表；灯照有含义的颜色。
    - 原色表是生成器自己的一份定值（`src/lib/md3/design.js`，浅、深各一份，出厂和默认主题的出厂值一样）：改默认主题的颜色不影响生成的。
    - 原来用 `TonalSpot`：底色也染上主色，头像取到肤色、金发时整页发棕发浑；`Content` 的底色基本是中性灰，只有强调带颜色。
 3. 跟随人格：照正在看的会话用的人格（空会话照选着的、默认的；和左栏左上角、对话区的头像同一份，网页发状态事件 `look.changed`）。人格自选了主色（核心 P-6 的 `seed`）的照它，没选的照头像取的第一名；都没有、无人格、取不出的就是默认那个主题。换了会话、人格、头像：整页 0.3 秒淡过去（上面「主题」的换颜色）。
@@ -734,7 +734,7 @@
    - 主题色：一排方块。第一块是「自动」（照头像取的第一名，就是不存；块上铺那个颜色、写「A」），接着头像取到的前四色（点一下就存成这个人格的主色），最后一块「+」开浏览器的取色器（选的不在那四色里的，在「+」前面多画一块）；现在用的那一块上画一个勾（不描边）。当场存（同头像，不等「保存」），存在人格里（核心 P-6：`persona.toml` 的 `[appearance] seed`，一律小写 `#rrggbb`；`persona.set` 的 `seed` 写颜色设、`{unset: true}` 删，删了是自动）。外观这几行（头像、主题色、背景图、透明度、焦点）当场存过以后，卡片底下的「保存」也亮着（2026-10-13 项目主人：只改了外观时「保存」是灰的，像是没存上）：点了提示「已保存」，写了字的一起存。
    - 背景图：16:9 的小图（没有的是一块底色，中间一个图片的图标、写「添加」，点它选图）。有图的悬停盖一层，两个按钮「更换」「焦点」（第 6 条）；右上角一个小 ×。下面一行「透明度」的滑杆（第 6 条）。
 5. 跟随壁纸：照这台电脑现在的桌面壁纸取色。浏览器读不到桌面，由网页服务（和桌面在同一台机器上）读，crate `miyu-wallpaper`（只用标准库，跑的命令限 2 秒）。两个来处，matugen 优先（2026-10-11 项目主人定）：
-   - **matugen**：用 matugen 换壁纸的，它照模板生成一份颜色（`web/matugen/miyu-web.json`，说明在同目录 `README.md`；只给文件和说明，网页不去改人的 matugen 配置，2026-10-11 项目主人定）。生成到固定的地方：Linux `$XDG_CACHE_HOME/miyu/matugen.json`（没设的 `~/.cache/miyu/`），macOS `~/Library/Caches/miyu/matugen.json`，Windows `%LOCALAPPDATA%\miyu\matugen.json`。里面是主色和浅、深两份 MD3 角色；网页照这些角色铺，matugen 没有的格子照第 2 条生成（有含义的颜色往它的主色靠，不带颜色的照它的 `surface_variant` 的色相、彩度取明度）。这样和桌面上别的软件一模一样（它们用的是同一份 matugen 设置：配色方式、对比度），也盖住网页自己读不到的桌面。不想用了删掉那个文件。
+   - **matugen**：用 matugen 换壁纸的，它照模板生成一份颜色（`web/matugen/miyu-web.json`，说明在同目录 `README.md`；只给文件和说明，网页不去改人的 matugen 配置，2026-10-11 项目主人定）。生成到固定的地方：Linux `$XDG_CACHE_HOME/miyu/matugen.json`（没设的 `~/.cache/miyu/`），macOS `~/Library/Caches/miyu/matugen.json`，Windows `%LOCALAPPDATA%\miyu\matugen.json`。网页只取它的主色 `source`，照第 2 条那一套生成（2026-10-14 两个头一样：原来照 matugen 给的 MD3 角色铺）；模板只剩 `source`，旧模板生成的、带着角色的照样认。主色和桌面上别的软件是同一个，也盖住网页自己读不到的桌面。不想用了删掉那个文件。
    - **自己读壁纸取色**（没有 matugen 那份的）：
      - Linux：KDE（`plasma-org.kde.plasma.desktop-appletsrc` 的 `Image=`，壁纸包挑分辨率最大的一张）、GNOME（`gsettings`，深色先照 `picture-uri-dark`）、XFCE（`xfce4-desktop.xml` 的 `last-image`）、Cinnamon（`gsettings` 的 `org.cinnamon.desktop.background`）、MATE（`org.mate.background picture-filename`）；窗口管理器上的壁纸程序：awww、swww（`query`）、Hyprland 的 hyprpaper（`hyprctl hyprpaper listactive`）、swaybg（看它的进程参数 `-i`）、wpaperd（`wpaperctl all-wallpapers`）、waypaper（它的 `config.ini`）、X11 的 feh（`~/.fehbg`）、nitrogen（`bg-saved.cfg`）。先问认得出的桌面自己的设置，再问这些程序。
      - macOS：先读系统存壁纸设置的文件（`~/Library/Application Support/com.apple.wallpaper/Store/Index.plist`，`plutil` 转成 JSON 找图的 `file://`；不用申请权限），读不到的（老系统、系统自带的动态壁纸）再用 `osascript` 问 System Events（第一次会问要不要允许，不允许的就是读不到）。系统壁纸多是 HEIC，浏览器（除了 Safari）解不了：网页服务先用系统自带的 `sips` 转成 JPEG 再给。

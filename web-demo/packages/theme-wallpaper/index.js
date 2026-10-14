@@ -1,8 +1,8 @@
 // @ts-check
 //! 主题「跟随壁纸」（软件包 `theme-wallpaper`，蓝图 `web.md`「主题」的「跟着人格的外观」第 5 条）：往主题包的 `theme.palettes` 挂一个
 //! 生成的主题（浅、深两份都生成，`src/lib/md3/`）。经宿主的 `wallpaper(dark)` 读（浏览器那一份问桥），两个来处：
-//! - matugen 生成的那份颜色（有就先照它，2026-10-11 项目主人定）：MD3 角色照它的，和桌面上别的软件一模一样；认不出的（模板旧了、
-//!   缺格子）当没有；
+//! - matugen 生成的那份颜色（有就先照它，2026-10-11 项目主人定）：只取它的主色 `source`，再照 `src/lib/md3/` 那一套生成（2026-10-14：两个头
+//!   同一个主色出一样的颜色，不直接用它的 MD3 角色）；认不出的（没有 `source`）当没有；
 //! - 桌面壁纸：照图取主色。
 //! 读不到、取不出颜色的不挂，设置页就没有这一张。
 //!
@@ -10,7 +10,7 @@
 //! `theme.changed`）时当场问（niri 这类平铺的桌面上浏览器一直露着，不会有「回到前台」）；
 //! 问的是页面这时的浅深（服务 `theme`，深浅可以各设一张壁纸）。同一张图取过、取不出的记着，不再取。
 
-import { seedOf, themeOf, themeFromRoles, matugenOf } from '../../src/lib/md3/index.js';
+import { seedOf, themeOf, matugenOf } from '../../src/lib/md3/index.js';
 import { pixelsOf } from '../../src/lib/md3/pixels.js';
 
 /** 排在定的那几套、「跟随人格」后面 */
@@ -59,9 +59,9 @@ export function apply(ctx) {
       if (got.sig === seen) return;
       seen = got.sig;
       if (got.kind === 'matugen') {
-        // 认不出的当没有
+        // 只取它的主色（`source`），照同一套算（2026-10-14 两个头一样）；认不出的当没有
         const m = matugenOf(got.colors);
-        if (m) mount((scheme) => themeFromRoles(m[scheme], m.source, scheme));
+        if (m) mount((scheme) => themeOf(m.source, scheme));
         else unmount();
         return;
       }

@@ -1,42 +1,4 @@
 {
-  "note": "Miyu 网页「跟随壁纸」用的颜色，matugen 照 miyu-web.json 模板生成。删掉这个文件，网页就回去自己读壁纸取色。",
-  "source": "{{colors.source_color.default.hex}}",
-  "light": {
-    "on_primary": "{{colors.on_primary.light.hex}}",
-    "on_secondary_container": "{{colors.on_secondary_container.light.hex}}",
-    "on_surface": "{{colors.on_surface.light.hex}}",
-    "on_surface_variant": "{{colors.on_surface_variant.light.hex}}",
-    "outline": "{{colors.outline.light.hex}}",
-    "outline_variant": "{{colors.outline_variant.light.hex}}",
-    "primary": "{{colors.primary.light.hex}}",
-    "secondary": "{{colors.secondary.light.hex}}",
-    "secondary_container": "{{colors.secondary_container.light.hex}}",
-    "surface": "{{colors.surface.light.hex}}",
-    "surface_container": "{{colors.surface_container.light.hex}}",
-    "surface_container_high": "{{colors.surface_container_high.light.hex}}",
-    "surface_container_highest": "{{colors.surface_container_highest.light.hex}}",
-    "surface_container_low": "{{colors.surface_container_low.light.hex}}",
-    "surface_container_lowest": "{{colors.surface_container_lowest.light.hex}}",
-    "surface_variant": "{{colors.surface_variant.light.hex}}",
-    "tertiary": "{{colors.tertiary.light.hex}}"
-  },
-  "dark": {
-    "on_primary": "{{colors.on_primary.dark.hex}}",
-    "on_secondary_container": "{{colors.on_secondary_container.dark.hex}}",
-    "on_surface": "{{colors.on_surface.dark.hex}}",
-    "on_surface_variant": "{{colors.on_surface_variant.dark.hex}}",
-    "outline": "{{colors.outline.dark.hex}}",
-    "outline_variant": "{{colors.outline_variant.dark.hex}}",
-    "primary": "{{colors.primary.dark.hex}}",
-    "secondary": "{{colors.secondary.dark.hex}}",
-    "secondary_container": "{{colors.secondary_container.dark.hex}}",
-    "surface": "{{colors.surface.dark.hex}}",
-    "surface_container": "{{colors.surface_container.dark.hex}}",
-    "surface_container_high": "{{colors.surface_container_high.dark.hex}}",
-    "surface_container_highest": "{{colors.surface_container_highest.dark.hex}}",
-    "surface_container_low": "{{colors.surface_container_low.dark.hex}}",
-    "surface_container_lowest": "{{colors.surface_container_lowest.dark.hex}}",
-    "surface_variant": "{{colors.surface_variant.dark.hex}}",
-    "tertiary": "{{colors.tertiary.dark.hex}}"
-  }
+  "note": "Miyu 网页「跟随壁纸」用的主色，matugen 照 miyu-web.json 模板生成；网页只读 source，照自己的规矩生成整套颜色。删掉这个文件，网页就回去自己读壁纸取色。",
+  "source": "{{colors.source_color.default.hex}}"
 }
