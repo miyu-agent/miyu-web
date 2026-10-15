@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { typed, menuTyped, filter, find, read, Menu, keptAttachments, talkAfterRefusal, quietReceipt } from '../src/model/commands.js';
+import { typed, menuTyped, filter, find, read, Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText } from '../src/model/commands.js';
 
 const res = loadRes();
 const list = res.commands.commands;
@@ -172,4 +172,11 @@ test('设长期目标不写回执；看、改、停、继续、清掉照旧写�
   assert.equal(quietReceipt('goal', null), false, '看');
   for (const sub of ['pause', 'resume', 'clear', 'edit 新的目标']) assert.equal(quietReceipt('goal', sub), false, sub);
   assert.equal(quietReceipt('remember', '喜欢猫'), false);
+});
+
+test('拒绝写什么：有 why 的写 why；扩展的命令答了错（command_failed，核心 X-14 下）两行：拒绝的话、扩展的原话', () => {
+  assert.equal(refusalText({ message: '命令不可用。', reason: 'command_not_allowed', data: { why: '这个预设关了 /review' } }), '这个预设关了 /review');
+  assert.equal(refusalText({ message: '命令执行失败。', reason: 'command_failed', data: { why: 'token expired' } }), '命令执行失败。\ntoken expired');
+  assert.equal(refusalText({ message: '命令暂时不可用。', reason: 'command_unavailable', data: null }), '命令暂时不可用。');
+  assert.equal(refusalText(new Error('断了')), '断了');
 });

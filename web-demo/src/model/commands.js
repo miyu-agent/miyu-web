@@ -93,6 +93,17 @@ export function read(list, value, later = new Set(), opens = new Set()) {
 }
 
 /**
+ * 核心拒绝的写核心给的那一句（2026-10-10 起网页不再照原因码另写一份）：带了 `data.why` 的（`/goal`、`/remember` 这类用不了的，核心
+ * 照连接的语言说为什么，`command.catalog` 第 2 条）写它，不然写拒绝本身的话；别的错写它自己的话。扩展的命令答了错的（`command_failed`，
+ * 核心 X-14 下）`why` 是扩展的原话，两行：拒绝的话、原话。
+ */
+export function refusalText(err) {
+  const why = typeof err?.data?.why === 'string' && err.data.why ? err.data.why : null;
+  if (why && err?.reason === 'command_failed') return `${err.message}\n${why}`;
+  return why ?? err.message;
+}
+
+/**
  * 列表里没有的命令交核心被拒了以后，要不要照普通的话发：只有核心认不出（原因码 `unknown_command`）、后面带着字的（`/etc 目录是干什么的`）。
  * 只认原因码：数字码 -32010 别的拒绝也用（`memory_unavailable`），照它判会把无人格会话里的 `/remember 内容` 发给她。
  * @param {string|null|undefined} reason @param {string|null} words

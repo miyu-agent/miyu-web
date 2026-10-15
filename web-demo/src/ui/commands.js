@@ -12,13 +12,15 @@ import { h, replace } from './dom.js';
 import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { fitAbove } from './fit.js';
-import { Menu, keptAttachments, talkAfterRefusal, quietReceipt } from '../model/commands.js';
+import { Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText } from '../model/commands.js';
 import { itemsOf } from '../model/entries.js';
 import { copy } from '../markdown/build.js';
 import { Refusal } from '../core/connection.js';
 
 /** @typedef {import('../model/commands.js').Spec} Spec */
 import { mergeSpecs } from '../model/commands.js';
+
+export { refusalText };
 /** @typedef {import('./app.js').App} App */
 
 /**
@@ -222,13 +224,6 @@ export async function runUnlisted(app, name, words) {
   return 'done';
 }
 
-/**
- * 核心拒绝的写核心给的那一句（2026-10-10 起网页不再照原因码另写一份）：带了 `data.why` 的（`/goal`、`/remember` 这类用不了的，核心
- * 照连接的语言说为什么，`command.catalog` 第 2 条）写它，不然写拒绝本身的话；别的错写它自己的话。
- */
-export function refusalText(err) {
-  return typeof err?.data?.why === 'string' && err.data.why ? err.data.why : err.message;
-}
 
 /** @type {Record<string, (app: App, spec: Spec, words: string|null) => unknown>} */
 const RUNS = {

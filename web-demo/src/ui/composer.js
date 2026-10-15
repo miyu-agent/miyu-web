@@ -648,10 +648,13 @@ export class Composer {
     this.notice.textContent = noStop(text);
     this.notice.title = noStop(text);
     this.notice.classList.toggle('good', good);
+    // 好几行的（扩展的命令答的一段话，核心 X-14 下）换行照留、不截，几行就多停几倍（最多 4 倍）
+    const lines = text.trim().split('\n').length;
+    this.notice.classList.toggle('is-lines', lines > 1);
     // 出来从下面升上来，停一会儿淡出（蓝图「动效」）；新的顶掉旧的；`hold` 的一直留着，等下一句顶掉或者 `quiet`
     show(this.notice);
     clearTimeout(this.noticeTimer);
-    if (!hold) this.noticeTimer = setTimeout(() => hide(this.notice), res.layout.notice_ms);
+    if (!hold) this.noticeTimer = setTimeout(() => hide(this.notice), res.layout.notice_ms * Math.min(lines, 4));
   }
 
   /** 收掉提示（`hold` 的那种等的事办完了、又没有话要说时）。 */

@@ -242,7 +242,8 @@
           "feature": "功能",
           "mcp": "MCP 服务",
           "script": "脚本",
-          "skill": "技能"
+          "skill": "技能",
+          "command": "斜杠命令"
         }
       },
       "folders": {
@@ -374,7 +375,8 @@
           "feature": "Features",
           "mcp": "MCP servers",
           "script": "Scripts",
-          "skill": "Skills"
+          "skill": "Skills",
+          "command": "Slash commands"
         }
       },
       "folders": {
@@ -506,7 +508,8 @@
           "feature": "機能",
           "mcp": "MCP サーバー",
           "script": "スクリプト",
-          "skill": "スキル"
+          "skill": "スキル",
+          "command": "スラッシュコマンド"
         }
       },
       "folders": {

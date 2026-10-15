@@ -60,6 +60,8 @@
   /* 长的（「记下了：<那句话>」这类）不超出框：末尾截掉加 …，悬停看全文 */
   max-width: calc(100% - 12px); overflow: hidden; text-overflow: ellipsis;
 }
+/* 好几行的（扩展的命令答的一段话）：换行照留、长的折行，太高的在里面滚 */
+.composer-notice.is-lines { white-space: pre-wrap; text-overflow: clip; overflow-y: auto; max-height: 40vh; }
 .composer-notice.is-leaving { animation: fade-out var(--motion-out) var(--ease-in) both; }
 /* 好消息不画描边：底色淡淡带一点绿 */
 .composer-notice.good { background: color-mix(in srgb, color-mix(in srgb, var(--t-good) 12%, var(--surface-1)) 90%, transparent); }

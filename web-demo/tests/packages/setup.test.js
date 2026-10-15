@@ -118,10 +118,10 @@ test('新会话先选上上一次的：最新的顶层会话的人格、预设�
   assert.equal(lastChoice([], personas, presets), null);
 });
 
-test('预设的功能分四段：功能、MCP 服务、脚本、技能，段里照核心的先后，空的段不要（2026-10-12）', () => {
-  const list = [{ id: 'web' }, { id: 'mcp-github' }, { id: 'knowledge' }, { id: 'skill-notes' }, { id: 'script-weather' }, { id: 'skill-writer' }];
+test('预设的功能分五段：功能、MCP 服务、脚本、技能、斜杠命令，段里照核心的先后，空的段不要（2026-10-12、10-15）', () => {
+  const list = [{ id: 'command-review' }, { id: 'web' }, { id: 'mcp-github' }, { id: 'knowledge' }, { id: 'skill-notes' }, { id: 'script-weather' }, { id: 'skill-writer' }];
   assert.deepEqual(featureGroups(list).map((g) => `${g.group}:${g.items.map((f) => f.id).join(',')}`),
-    ['feature:web,knowledge', 'mcp:mcp-github', 'script:script-weather', 'skill:skill-notes,skill-writer']);
+    ['feature:web,knowledge', 'mcp:mcp-github', 'script:script-weather', 'skill:skill-notes,skill-writer', 'command:command-review']);
   assert.deepEqual(featureGroups([{ id: 'web' }]).map((g) => g.group), ['feature'], '只有包的功能：只一段');
   assert.deepEqual(featureGroups([]), []);
 });

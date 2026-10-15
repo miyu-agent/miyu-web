@@ -162,18 +162,20 @@ export function personaSave(before, after) {
   return out.changes || out.prompts ? out : null;
 }
 
-/** 预设功能分段的先后和认法：编号前缀（核心 X-2 的 `mcp-<服务名>`、X-12 的 `script-<工具名>`、X-11 的 `skill-<名字>`），别的是包的功能。 */
-const FEATURE_GROUPS = /** @type {const} */ ([['mcp', 'mcp-'], ['script', 'script-'], ['skill', 'skill-']]);
+/** 预设功能分段的先后和认法：编号前缀（核心 X-2 的 `mcp-<服务名>`、X-12 的 `script-<工具名>`、X-11 的 `skill-<名字>`、X-14 的
+ * `command-<名字>`），别的是包的功能。 */
+const FEATURE_GROUPS = /** @type {const} */ ([['mcp', 'mcp-'], ['script', 'script-'], ['skill', 'skill-'], ['command', 'command-']]);
 
 /**
- * 预设的功能分成四段：功能、MCP 服务、脚本、技能（2026-10-12 项目主人定）；段里照核心给的先后，空的段不要。
+ * 预设的功能分成五段：功能、MCP 服务、脚本、技能（2026-10-12 项目主人定），斜杠命令（2026-10-15 项目主人定）；段里照核心给的先后，
+ * 空的段不要。
  * @template {{id: string}} F
  * @param {F[]} list `preset.get` 的 `features`
- * @returns {{group: 'feature'|'mcp'|'script'|'skill', items: F[]}[]}
+ * @returns {{group: 'feature'|'mcp'|'script'|'skill'|'command', items: F[]}[]}
  */
 export function featureGroups(list) {
   const of = (/** @type {F} */ f) => FEATURE_GROUPS.find(([, prefix]) => String(f.id).startsWith(prefix))?.[0] ?? 'feature';
-  return /** @type {const} */ (['feature', 'mcp', 'script', 'skill'])
+  return /** @type {const} */ (['feature', 'mcp', 'script', 'skill', 'command'])
     .map((group) => ({ group, items: list.filter((f) => of(f) === group) }))
     .filter((g) => g.items.length);
 }
