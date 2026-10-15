@@ -63,7 +63,8 @@ export class FullPage {
         this.blocks = this.ctx.widgets.page(route.package, route.widget);
         body = /** @type {HTMLElement} */ (this.blocks?.el);
       } else body = h('p.bs-empty', t('gone'));
-    } else if (p?.page && p.enabled !== false) {
+    } else if (p?.page) {
+      // 关着的扩展照样看得到页面（页面是包里的静态文件，同原来嵌在设置里时）；调它的方法核心回「程序未运行」
       // 能往剪贴板里写（2026-10-10 接入QQ 的会话要的：令牌要能随时复制）；读剪贴板不给
       const frame = /** @type {HTMLIFrameElement} */ (h('iframe.bs-frame', { sandbox: 'allow-scripts allow-forms', allow: 'clipboard-write', referrerpolicy: 'no-referrer', title: name }));
       this.frame = new FrameHost(this.ctx.core, t, route.package, frame);
