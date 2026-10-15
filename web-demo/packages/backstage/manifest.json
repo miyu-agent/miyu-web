@@ -18,7 +18,9 @@
   "note": "框不给 allow-same-origin，来源是空的；框的地址经宿主请网页服务造票据（/p/…），不让浏览器把 /p/… 当顶层页面打开（同源、没有框隔着就读得到登录令牌）。",
   "inject": [
     "core",
-    "host"
+    "host",
+    "widgets~",
+    "icons?"
   ],
   "provides": {
     "services": [

@@ -84,6 +84,10 @@
 .level-full { color: var(--t-full); }
 .level-read_only { color: var(--t-read-only); }
 .footer-right { flex: none; }
+/* 右边一截：扩展的界面块那一小段（`composer.status`）在用量前面，空的不占地方 */
+.footer-end { display: flex; flex: none; align-items: center; gap: 16px; min-width: 0; }
+.footer-status { display: inline-flex; min-width: 0; }
+.footer-status:empty { display: none; }
 /* 中间：软件包挂的（后台任务的按钮，挂载位 composer.footer）；空着不占地方 */
 .footer-middle { display: flex; flex: none; align-items: center; }
 .footer-middle:empty { display: none; }

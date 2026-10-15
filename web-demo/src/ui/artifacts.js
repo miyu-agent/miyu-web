@@ -7,6 +7,8 @@
 //!   内容安全策略不许联网，照旧版）；图片滚轮缩放、拖动；视频原生控制条；别的当文字；
 //! - 文件的字经桥的 `/file` 取（以后是核心的网页模块）；同一个文件改过（序号变了）才重取；
 //! - 宽度能拖，记在这个浏览器里；来了新的、工作区关着时，开关按钮上一个圆点；窗口够宽时自动打开。
+//! - 扩展的界面块放进来时（挂载位 `stage.panel`，软件包 `widgets`；2026-10-15 项目主人定）这一栏顶上两个标签「工作区」「面板」，开关按钮
+//!   产物、面板有一样就露；面板那一页露没露告诉 `panelShown`（界面块照它订阅、叫不叫程序干活）。没有界面块的和原来一样。
 
 import { h, icon, replace, setUrl } from './dom.js';
 import { show, hide } from '../lib/motion.js';
@@ -28,8 +30,9 @@ export class Artifacts {
    * @param {(text: string, good?: boolean) => void} say 提示（复制了几个字）
    * @param {() => void} changed 开、关以后整页重画（会话概况要让位）
    * @param {import('./rich.js').Ext} ext 软件包接进来的：Markdown 预览里的代码块、图片照它（mermaid、灯箱这类）
+   * @param {(shown: boolean) => void} [panelShown] 「面板」那一页露出来、收起来
    */
-  constructor(conn, shell, say, changed, ext) {
+  constructor(conn, shell, say, changed, ext, panelShown = () => {}) {
     this.ext = ext;
     this.conn = conn;
     this.shell = shell;
@@ -50,6 +53,20 @@ export class Artifacts {
     /** 当前这一个的原文（复制源码用）；还没取到的是 `null`。 */
     this.text = /** @type {string|null} */ (null);
     this.token = 0;
+    this.panelShown = panelShown;
+    /** 看哪一页：`work` 产物、`panel` 界面块 */
+    this.tab = 'work';
+    /** 面板里挂着几件（`stage.panel`） */
+    this.panelItems = 0;
+    this.panelOn = false;
+    /** 挂载位 `stage.panel` 画进这里（`ui/app.js`） */
+    this.panel = h('div.artifact-panel', { hidden: true });
+    this.tabWork = h('button.artifact-tab', { type: 'button', onclick: () => this.setTab('work') }, t('artifacts.tab_work'));
+    this.tabPanel = h('button.artifact-tab', { type: 'button', onclick: () => this.setTab('panel') }, t('artifacts.tab_panel'));
+    this.tabs = h('div.artifact-tabs', { hidden: true }, this.tabWork, this.tabPanel,
+      h('button.icon-button.artifact-action', { type: 'button', title: t('artifacts.close'), onclick: () => this.setOpen(false) }, icon('x')));
+    this.emptyWork = h('p.artifact-empty', { hidden: true }, t('artifacts.empty'));
+    this.headerClose = h('button.icon-button.artifact-action', { type: 'button', title: t('artifacts.close'), onclick: () => this.setOpen(false) }, icon('x'));
     this.toggle = h('button.icon-button.artifact-toggle', { type: 'button', hidden: true, title: t('artifacts.toggle'), onclick: () => this.setOpen(!this.open) }, icon('panel-right'));
     this.previewButton = h('button.artifact-mode', { type: 'button', title: t('artifacts.preview'), onclick: () => this.setMode('preview') }, icon('eye'));
     this.sourceButton = h('button.artifact-mode', { type: 'button', title: t('artifacts.source'), onclick: () => this.setMode('source') }, icon('code-2'));
@@ -64,13 +81,13 @@ export class Artifacts {
     this.view = h('div.artifact-view');
     this.el = h('aside.artifact-workspace', { hidden: true },
       h('div.artifact-resize-handle', { title: t('artifacts.resize'), onpointerdown: (e) => this.resize(e) }),
-      h('header.artifact-header',
+      this.tabs,
+      this.header = h('header.artifact-header',
         h('div.artifact-leading', this.modes, h('div.artifact-resource-wrap', this.titleButton, this.menu)),
         h('div.artifact-actions',
           h('button.icon-button.artifact-action', { type: 'button', title: t('artifacts.copy'), onclick: () => this.copySource() }, icon('copy')),
-          this.download, this.maxButton,
-          h('button.icon-button.artifact-action', { type: 'button', title: t('artifacts.close'), onclick: () => this.setOpen(false) }, icon('x')))),
-      this.view);
+          this.download, this.maxButton, this.headerClose)),
+      this.view, this.emptyWork, this.panel);
     document.addEventListener('click', (e) => {
       if (!this.menu.hidden && !/** @type {Element} */ (e.target).closest?.('.artifact-resource-wrap')) hide(this.menu);
     });
@@ -96,14 +113,15 @@ export class Artifacts {
     if (fresh && session) {
       this.seen.set(session, newest);
       this.current = this.list[0].path;
+      this.tab = 'work';
       // 窗口够宽的自动打开；窄的只在开关按钮上点一个圆点
       if (innerWidth > res.artifacts.auto_open_from) this.setOpen(true);
       else this.toggle.classList.add('has-new');
     }
     if (!this.list.some((a) => a.path === this.current)) this.current = this.list[0]?.path ?? null;
-    this.toggle.hidden = !this.list.length;
-    if (!this.list.length && this.open) this.setOpen(false);
-    if (this.open) this.draw();
+    this.syncChrome();
+    if (!this.hasContent() && this.open) this.setOpen(false);
+    if (this.open && this.tab === 'work') this.draw();
   }
 
   /** 约定目录的真实位置：问过的直接给；没问过的问核心（回来以后整页重画一次），还没回的是 `undefined`。 */
@@ -121,7 +139,9 @@ export class Artifacts {
 
   /** 开、关。 */
   setOpen(open) {
-    this.open = open && this.list.length > 0;
+    this.open = open && this.hasContent();
+    // 没有产物、只有面板的：开着就看面板
+    if (this.open && !this.list.length) this.tab = 'panel';
     // 那一列长出来、收回去，里面跟着淡入淡出（蓝图「动效」）
     if (this.open) show(this.el);
     else hide(this.el);
@@ -129,8 +149,49 @@ export class Artifacts {
     this.toggle.classList.toggle('is-active', this.open);
     if (this.open) this.toggle.classList.remove('has-new');
     if (!this.open && this.maximized) this.setMaximized(false);
-    if (this.open) this.draw(true);
+    if (this.open && this.tab === 'work') this.draw(true);
+    this.syncChrome();
     this.changed();
+  }
+
+  /** 产物、面板有一样就有东西可看。 */
+  hasContent() {
+    return this.list.length > 0 || this.panelItems > 0;
+  }
+
+  /** 面板里挂了几件（`ui/app.js` 看着 `stage.panel` 叫）：都拿掉了、产物也没有的收起来。 @param {number} n */
+  setPanelItems(n) {
+    this.panelItems = n;
+    this.syncChrome();
+    if (!this.hasContent() && this.open) this.setOpen(false);
+  }
+
+  /** 换一页。 @param {'work'|'panel'} tab */
+  setTab(tab) {
+    this.tab = tab;
+    this.syncChrome();
+    if (tab === 'work' && this.open) this.draw(true);
+  }
+
+  /** 照现在的样子露、藏：标签（面板有东西才有）、产物那一套、「暂无产物」、面板；开关按钮；面板那一页露没露告诉外面。 */
+  syncChrome() {
+    const tabs = this.panelItems > 0;
+    if (!tabs) this.tab = 'work';
+    const work = this.tab === 'work';
+    this.tabs.hidden = !tabs;
+    this.tabWork.classList.toggle('is-active', work);
+    this.tabPanel.classList.toggle('is-active', !work);
+    this.header.hidden = !work || !this.list.length;
+    this.headerClose.hidden = tabs;
+    this.view.hidden = !work || !this.list.length;
+    this.emptyWork.hidden = !(work && tabs && !this.list.length);
+    this.panel.hidden = work;
+    this.toggle.hidden = !this.hasContent();
+    const shown = this.open && !work;
+    if (shown !== this.panelOn) {
+      this.panelOn = shown;
+      this.panelShown(shown);
+    }
   }
 
   setMaximized(on) {

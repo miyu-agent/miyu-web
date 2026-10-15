@@ -17,7 +17,8 @@
     "packages",
     "language",
     "lightbox~",
-    "theme~"
+    "theme~",
+    "backstage~"
   ],
   "settings": {},
   "provides": {

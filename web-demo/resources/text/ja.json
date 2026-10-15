@@ -186,7 +186,10 @@
       "code": "コード",
       "text": "テキスト"
     },
-    "failed_with": "ファイルを読み込めませんでした：{reason}"
+    "failed_with": "ファイルを読み込めませんでした：{reason}",
+    "tab_work": "ワークスペース",
+    "tab_panel": "パネル",
+    "empty": "成果物はまだありません"
   },
   "commands": {
     "nothing_to_clear": "コンテキストは空です。",

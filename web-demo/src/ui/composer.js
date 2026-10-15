@@ -95,8 +95,10 @@ export class Composer {
     this.modelMenu = new ModelMenu(on.models);
     this.left = h('span.footer-left', this.levelButton, this.modelSep, this.model);
     this.right = h('span.footer-right');
+    /** 右边用量前面：挂载位 `composer.status` 挂的（扩展的界面块那一小段，软件包 `widgets`，`ui/app.js` 画进来） */
+    this.status = h('span.footer-status');
     this.middle = h('span.footer-middle');
-    this.footer = h('div.composer-footer', this.left, this.middle, this.right, this.modelMenu.el);
+    this.footer = h('div.composer-footer', this.left, this.middle, h('span.footer-end', this.status, this.right), this.modelMenu.el);
     // 从命令列表里点的、选中回车的：记成 `/名字`
     this.menu = new CommandList({ run: (spec) => { this.remember(`/${spec.name}`); this.run(spec, null); }, fill: (text) => this.fill(text), opened: () => on.commandsOpened?.() }, specs);
     /** 翻输入历史（蓝图「输入历史」） */
@@ -739,7 +741,9 @@ export class Composer {
   drawRight() {
     // 中间有按钮的（后台任务），它和两边各隔一个 `footer_gap`，右边先让
     const middle = this.middle.offsetWidth;
-    const room = this.footer.clientWidth - this.left.scrollWidth - res.layout.footer_gap - (middle ? middle + res.layout.footer_gap : 0);
+    // 用量前面挂着界面块那一小段的：让出它的宽
+    const status = this.status.offsetWidth;
+    const room = this.footer.clientWidth - this.left.scrollWidth - res.layout.footer_gap - (middle ? middle + res.layout.footer_gap : 0) - (status ? status + res.layout.footer_gap : 0);
     // 字和地方都没变：不再写一遍、量一遍（每画一次都量，一写一量逼着整页重排，收长思考时很费，蓝图「性能」）
     const sig = `${room}|${this.parts.map((p) => p.text).join('\n')}`;
     if (sig === this.rightSig) return;

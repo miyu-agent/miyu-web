@@ -39,6 +39,8 @@ export class Connection {
     this.retryTimer = /** @type {any} */ (null);
     /** @type {Set<() => void>} */
     this.reopens = new Set();
+    /** 重连以后重新握手、补完了（软件包的订阅照它重订） @type {Set<() => void>} */
+    this.rejoins = new Set();
     this.n = 0;
     // 命令编号要自己保证不撞：每条连接取一段随机数当前缀（蓝图 `protocol.md`，照 `miyu ask`）
     this.prefix = Math.random().toString(16).slice(2, 10);
@@ -152,6 +154,17 @@ export class Connection {
 
   /** 断了又连上了（重新握手、重新订阅、补上漏掉的由它做）。 */
   onReopen(fn) { this.reopens.add(fn); }
+
+  /** 重连以后重新握手、读进来的会话重新订阅完了（内核叫 `rejoined`）：软件包自己的订阅（界面块这类）照它重订。交回不再听的函数。 */
+  onRejoin(fn) {
+    this.rejoins.add(fn);
+    return () => this.rejoins.delete(fn);
+  }
+
+  /** 内核重新握手、补完了：叫 `onRejoin` 的。 */
+  rejoined() {
+    for (const fn of [...this.rejoins]) fn();
+  }
 
   /** 收推送。 */
   onPush(fn) { this.pushes.add(fn); }

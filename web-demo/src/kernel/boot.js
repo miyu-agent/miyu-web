@@ -117,6 +117,8 @@ export async function boot(root) {
       .then(() => store.resume())
       // 配置的订阅也要等重新握手以后（蓝图「界面语言」第 5 条）
       .then(() => followConfig())
+      // 软件包自己的订阅（界面块）在这之后重订
+      .then(() => conn.rejoined())
       .catch((err) => {
         // 登录令牌作废了（别处重设了密码）：忘掉，重新载入出登录框（蓝图「连核心」第 1 条下面几款）
         if (err?.reason === 'bad_login') {

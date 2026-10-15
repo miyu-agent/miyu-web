@@ -1,0 +1,52 @@
+/* 界面块（软件包 widgets；蓝图 web.md「界面块」）：只用主题的语义色；块靠底色分开，不描边 */
+.wg-home { display: grid; gap: 10px; width: 100%; margin-top: 14px; }
+.wg-panel { display: grid; gap: 10px; padding: 12px; }
+.wg-page { padding: 16px 20px 40px; overflow-y: auto; flex: 1; min-height: 0; }
+.wg-page .wg-block { --wg-bg: transparent; max-width: 760px; margin: 0 auto; padding: 0; }
+.wg-block { --wg-bg: var(--surface-1); --wg-raised: var(--surface-2); display: grid; gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--wg-bg); color: var(--text); font-size: 13px; }
+.wg-head { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--text-soft); font-size: 12px; }
+.wg-face { display: inline-flex; }
+.wg-face .icon { width: 14px; height: 14px; }
+.wg-source { flex: none; }
+.wg-title { min-width: 0; overflow: hidden; color: var(--text); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.wg-source + .wg-title::before { content: '·'; margin-right: 6px; color: var(--text-faint); font-weight: 400; }
+.wg-off { margin-left: auto; color: var(--text-faint); }
+.wg-empty { margin: 0; color: var(--text-faint); }
+.wg-heading { font-size: 13px; font-weight: 600; }
+.wg-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.wg-pairs, .wg-list { display: grid; gap: 4px; }
+.wg-pair { display: flex; justify-content: space-between; gap: 12px; }
+.wg-label { color: var(--text-soft); }
+.wg-value { text-align: right; overflow-wrap: anywhere; }
+.wg-progress { display: grid; gap: 4px; }
+.wg-bar { position: relative; height: 4px; border-radius: 2px; background: var(--wg-raised); }
+.wg-fill { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 2px; background: var(--accent); }
+.wg-mark { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--text-soft); }
+.wg-progress-text { color: var(--text-soft); font-size: 12px; }
+.wg-item { display: flex; align-items: baseline; gap: 8px; min-width: 0; padding: 3px 6px; margin: 0 -6px; border: 0; border-radius: 8px; background: none; color: inherit; font: inherit; text-align: left; }
+.wg-item.is-action { cursor: pointer; }
+.wg-item.is-action:hover { background: var(--wg-raised); }
+.wg-state, .wg-mark-doing { flex: none; width: 14px; color: var(--text-soft); text-align: center; }
+.wg-state.is-done { color: var(--t-good); }
+.wg-state.is-failed { color: var(--t-error); }
+.wg-state.is-off { color: var(--text-faint); }
+.wg-mark-doing { display: inline-flex; align-self: center; color: var(--accent); }
+.wg-mark-doing .icon { width: 13px; height: 13px; animation: wg-spin 1s linear infinite; }
+.wg-item-text { display: flex; flex: 1; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; min-width: 0; }
+.wg-item-title { overflow-wrap: anywhere; }
+.wg-item-detail { color: var(--text-soft); font-size: 12px; }
+.wg-right { flex: none; font-size: 12px; font-variant-numeric: tabular-nums; }
+.wg-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.wg-button { height: 28px; padding: 0 10px; border: 0; border-radius: 8px; background: var(--wg-raised); color: var(--text); font: inherit; font-size: 12.5px; cursor: pointer; }
+.wg-button:hover { background: color-mix(in srgb, var(--wg-raised) 88%, var(--text) 12%); }
+.wg-more { justify-self: start; padding: 2px 0; border: 0; background: none; color: var(--accent); font: inherit; font-size: 12px; cursor: pointer; }
+.wg-statuses { display: inline-flex; gap: 10px; min-width: 0; }
+.wg-status { max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 语气：普通照字色，暗、强调、好、警告、坏照主题 */
+.wg-tone-dim { color: var(--text-soft); }
+.wg-tone-accent { color: var(--accent); }
+.wg-tone-good { color: var(--t-good); }
+.wg-tone-warn { color: var(--t-warn); }
+.wg-tone-bad { color: var(--t-error); }
+@keyframes wg-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .wg-mark-doing .icon { animation: none; } }

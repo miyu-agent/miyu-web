@@ -19,6 +19,19 @@
 .artifact-resize-handle { position: absolute; top: 0; bottom: 0; left: 0; z-index: 2; width: 8px; cursor: col-resize; touch-action: none; }
 .artifact-workspace.is-maximized .artifact-resize-handle { display: none; }
 
+/* 顶上两个标签「工作区」「面板」（扩展的界面块放进来时才有，2026-10-15 项目主人定）：竖着排，内容那一块占满剩下的高 */
+.artifact-workspace { display: flex; flex-direction: column; }
+.artifact-workspace > .artifact-view, .artifact-panel { flex: 1; }
+.artifact-tabs { display: flex; flex: none; align-items: center; gap: 4px; padding: 8px 10px 0 12px; }
+.artifact-tabs > .artifact-action { margin-left: auto; }
+.artifact-tab { height: 30px; padding: 0 12px; border: 0; border-radius: var(--radius); background: transparent; color: var(--text-soft); font: inherit; font-size: 13px; cursor: pointer; }
+.artifact-tab:hover { background: var(--surface-2); color: var(--text); }
+.artifact-tab.is-active { background: var(--surface-3); color: var(--text); font-weight: 600; }
+.artifact-panel { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.artifact-empty { margin: 40px auto; color: var(--text-faint); font-size: 13px; text-align: center; }
+/* 面板里的块比这一栏深一档，块里的按钮、进度条的轨道再深一档 */
+.artifact-panel .wg-block { --wg-bg: var(--surface-2); --wg-raised: var(--surface-3); }
+
 /* 头上一行 */
 .artifact-header { display: flex; min-height: 58px; align-items: center; justify-content: space-between; padding: 8px 10px 8px 12px; gap: 10px; }
 .artifact-leading { display: flex; min-width: 0; align-items: center; gap: 7px; }

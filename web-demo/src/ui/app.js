@@ -252,7 +252,9 @@ export class App {
         this.stageInfo = h('div.stage-info'),
         this.chat.el,
         this.stageRight = h('div.stage-right'),
-        this.composer.el));
+        this.composer.el,
+        // 新会话的首页、输入框下面（挂载位 `stage.home`：扩展的界面块，软件包 `widgets`）；只在输入框居中的空会话里露（styles/chat.css）
+        this.stageHome = h('div.stage-home')));
     // 左上角浮着的那一条露着没有、多高：露着时正文从它下面起、顶上淡出（`.has-info`、`--stage-info-h`，styles/chat.css）
     const infoSize = new ResizeObserver(() => {
       const tall = this.stageInfo.getBoundingClientRect().height;
@@ -303,9 +305,21 @@ export class App {
       el.addEventListener('mouseleave', () => this.peek(false));
     }
     // 预览工作区：右边一栏，开着时顶替会话概况；开关按钮在输入框右下角、发送的左边
-    this.artifacts = new Artifacts(conn, this.root, (text, good) => this.composer.say(text, good), () => this.schedule(), this.ext);
+    this.artifacts = new Artifacts(conn, this.root, (text, good) => this.composer.say(text, good), () => this.schedule(), this.ext,
+      (shown) => ctx.emit('panel.changed', shown));
     this.root.append(this.artifacts.el);
     this.composer.sendButton.before(this.artifacts.toggle);
+    // 右边一栏的「面板」（挂载位 `stage.panel`：扩展的界面块）：挂了几件告诉工作区，有东西才出标签、露开关
+    ctx.slots.declare('stage.panel', 'list');
+    ctx.effect(() => mountList(this.artifacts.panel, ctx.slots, 'stage.panel', failedSlot));
+    ctx.slots.watch('stage.panel', () => this.artifacts.setPanelItems(ctx.slots.list('stage.panel').length));
+    // 新会话的首页（`stage.home`）、输入框下面那一行用量前面（`composer.status`）：扩展的界面块
+    ctx.slots.declare('stage.home', 'list');
+    ctx.effect(() => mountList(this.stageHome, ctx.slots, 'stage.home', failedSlot));
+    ctx.slots.declare('composer.status', 'list');
+    ctx.effect(() => mountList(this.composer.status, ctx.slots, 'composer.status', failedSlot));
+    // 用量那一截要给它让地方：挂的变了重排一次
+    ctx.slots.watch('composer.status', () => this.schedule());
     // 跳到底部（蓝图「输入框」）：正文离底部远了才露；点了回到最底下、接着跟着最新的
     const syncJump = () => this.composer.showJump(this.chat.distanceToBottom() > res.layout.jump_after);
     this.chat.el.addEventListener('scroll', syncJump, { passive: true });

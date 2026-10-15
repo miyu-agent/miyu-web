@@ -5,6 +5,9 @@
 /* 空会话（新会话、还没有一句话）：输入框在对话区正中，发出第一句话滑到底下（app.js 放动画；蓝图「对话区」的「空会话」） */
 .stage.is-empty { justify-content: center; }
 .stage.is-empty .chat-scroll { flex: 0 0 0; }
+/* 新会话首页输入框下面（挂载位 stage.home：扩展的界面块）：和输入框一样宽，只在空会话里露 */
+.stage-home { display: none; width: min(100%, 980px); margin: 0 auto; padding: 0 30px; }
+.stage.is-empty .stage-home:not(:empty) { display: block; }
 /* 正文滚到输入框上沿时淡出去，不是一刀切断（2026-09-30 改） */
 .chat-scroll {
   /* 滚到哪由 follow.js 管：关掉浏览器自己的滚动锚定，不然上面的内容一变高矮它自己挪 scrollTop，被当成人滚的 */

@@ -704,6 +704,22 @@
 5. **框和网页之间**（`FrameHost`，`packages/backstage/frame.js`，原来在设置页，2026-10-15 搬出来）：框第一次载入完，网页造一个 `MessageChannel` 把一头交给框，只交这一次（框能把自己跳到外面的地址，网页分不出载入的是谁）；照 JSON-RPC 的写法，网页认的一律照它给框的那个包。方法：`context`（`package`、`language` 照页面的 `lang`、`theme` 照底色算深浅、`colors` 是 accent、surface、surface_2、text、text_soft、line、danger 几个算出来的颜色）；`settings.get`（配置清单里 `package` 是它的项和最终值，密钥照 `config.get` 是引用；当场问核心 `config.schema`、`config.get` 只要它的键）；`settings.set`（键都要是 `<它的编号>.` 开头，不是的整个不办，回 `forbidden`「仅可修改本软件的设置」；密钥类型给一段字的，先 `secret.set` 存成新名字的密钥再写引用，核心 d77e4263；写进系统配置）；`call`（转 `package.call`，`package` 照框是谁的填）；别的回 `-32601`，写法不对的 `-32600`；核心拒的照原样（`code`、`message`、`data`）交回。推送：核心推来 `config.changed`、有它的项的推 `settings.changed {keys}`；网页换了主题、系统换了深浅（看 `<html>`、`<body>` 的属性和 `prefers-color-scheme`）推 `theme.changed {theme, colors}`。
 6. **桥这一边**（`web-demo/bridge/src/pages.rs`）：`POST /page` 照 `package.list` 查有没有后台页，造一张票据（这一次启动有效，最多 64 张，多了扔掉最早的），回 `{"url": "/p/<票据>/<包>/"}`；`GET /p/<票据>/<包>/<路径>` 照 `package.file` 一块块读、一块块写，以 `/` 结尾的补 `index.html`，类型照资源目录 `web/web.json` 的 `types`（没有的 `application/octet-stream`），响应头 `Content-Security-Policy: sandbox allow-scripts allow-forms; default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'none'; frame-ancestors 'self'`，加 `nosniff`、`Referrer-Policy: no-referrer`、`Cache-Control: no-cache`、`Access-Control-Allow-Origin: *`（框的来源是空的，ES 模块脚本、字体照跨源取，不给取不到；票据就是凭据）。2026-10-10 用一个自造的扩展包实测：模块脚本取得到、`'self'` 在空来源的框里对得上桥的地址、`fetch` 被 `connect-src 'none'` 拦下、四个方法和两种推送都对。正式的 `miyu-web` 照这一套另做（施工 F-6 下，`web-ui.md`）。
 
+### 界面块
+
+扩展包往网页上放的东西（软件包 `widgets`；设计 33「界面扩展」、核心 `widgets.md`；2026-10-15 网页对过图、项目主人定右边一栏分两页）。包只说放什么，网页自己画；只加不换，时间线、输入框、抽屉、设置页不开放。
+
+1. **四个位置**：
+   - `home`：新会话的首页（还没开会话、输入框居中时），输入框下面，和框一样宽。最多 3 块，每块最多露 8 行。
+   - `sidebar`：右边一栏的第二页「面板」。右边那一栏顶上两个标签「工作区」（产物预览，以后的 artifact 显示也住这一页）、「面板」（界面块），输入框右下角的开关按钮产物、面板有一样就露；窄屏照旧盖在上面。面板最多露 8 块，多的收成「还有 N 块」，每块最多露 12 行。
+   - `status`：输入框下面那一行的右边、用量前面，一小段字。最多 3 格，每格核心限 40 列，放不下截掉加 …；悬停写是哪个软件放的。
+   - `page`：软件的独立整页（上面「软件的页面」），网址 `#package=<编号>&widget=<编号>`，整页画内容、可以滚。在设置的「软件后台」里和后台页列在一起。
+2. **认得出是谁放的**：首页、面板、整页每块头上一行：软件的图标（清单的 `icon`，认不出的 `package`）、名字（`source`）；有标题的接标题。程序没在跑的（`running: false`）头上一行写「未运行」（暗字），内容照最后一份。
+3. **画法**：内容是几段，一律用 `textContent` 画，不认 Markdown、HTML：`heading` 小标题（13px、600）；`text` 一行或几行字（照 `\n` 换行），语气 `dim` 暗、`accent` 强调色、`good`、`warn`、`bad` 照主题的好、警告、坏色；`pairs` 一行一对，名字暗、值靠右；`progress` 一根 4px 的条，`mark` 那一处竖一道，下面一句字；`list` 一条一行：状态记号（待办 ○、进行中转圈、完成 ✓、失败 ✕、关着 —）、标题、说明暗字、右边的字（可以几段各带语气，核心 X-15 补），能点的整行是按钮；`buttons` 一排按钮。行数照这样数：标题、进度条各一行，字照换行数，一对、一条各一行，一排按钮一行；超了上限的收起，底下一个「展开」。
+4. **动作**：`call` 发 `package.call`（回应不看，拒了的照核心的话弹一句）；`open` 打开同一个包的那一整页；`copy` 写进剪贴板，弹「已复制」。
+5. **订阅**：一个连接一条 `subscribe {stream: "widgets"}`：`session` 是正在看的会话（首页不带），`showing` 照屏上这一刻有的位置（首页 `home`；面板开着、在看「面板」那一页加 `sidebar`；`status` 一直在），开着界面块的整页带 `page`、`showing` 是空的（整页盖住了别的位置，照终端的写法）。换会话、开关面板、开关整页都重新订阅（一个微任务里攒齐了发一次）；推来 `widget.changed` 换那一块，`resync` 重新订阅；断了又连上、重新握手以后重新订阅。
+6. **整页的命令**：`command.catalog` 列出来的带 `opens` 的照别的核心命令列进菜单；打了核心回 `opens`，网页打开那一整页。
+7. **网页自己的块照这一套画**（设计 33 第六节）：上下文用量、待办、后台任务现在各有各的样子（输入框下面那一行、输入框上面、浮层），挪不挪到面板里另问项目主人，挪的话照这六种内容转。
+
 ### 主题
 
 一个主题是成对的一套：浅色、深色各一份（2026-10-11 项目主人定：主体色都是成套的，晨光和 tokyonight 是一套明暗，生成的也一样分明暗两套）。都照 MD3 的颜色角色排（旧版的两套也是 MD3，`styles.css:1-225`）：
@@ -786,6 +802,7 @@
 | `web-demo/tests/lib/md3.test.js`、`tests/packages/theme.test.js` | 生成的是整份（93 格、浅深都有）、Content 的值（垫字的淡底不是原色）、有含义的颜色最多转 15°、不带颜色的是中性色、吉祥物照抄、浅色的影换颜色；明暗（跟随系统照系统）、用哪个主题（没写、写的没了用默认）、交不出颜色的用默认那一份 |
 | `web-demo/tests/packages/theme-wallpaper.test.js` | 跟随壁纸：问着的时候推来的「换了」问完再问、挂上新壁纸的颜色；一时问不到的留着原来那一套、出错以后照样跟上，没有壁纸（`null`）的才拿掉 |
 | `web-demo/tests/packages/backstage.test.js` | 软件页面的网址：`#package=`、另带 `widget`，和别的几项混着也认、写法不对的不认，写了读回来一样；宿主抹掉口令、一次性码，`package=` 留着 |
+| `web-demo/tests/packages/widgets.test.js` | 界面块：订阅时屏上有哪几个位置；订阅回应换整份、推来的一块换那一块、`null` 是没了、新来的接后面；一段占几行；截行（截在字里、列表里，按钮、进度条不拆）；右边那段字的几小段（最多 4 段）和语气 |
 | `web-demo/tests/` | 事件 → 条目：你的话、她的回答、收尾那一行的字、三个球什么时候有；时间线：段怎么分、说话就收、结果对回那一步、留言认出发给的是哪个子代理、没结果的记成打断、在收的块、同一时刻只转一处、一步那一行、思考的那一小段和窗口、命令的几行、点开的细节、收起那一行的各种写法、历史里不知道的用时不写；差异的行和加减数；Markdown 每一条块和行内的规矩、图片、在收时的补齐（`markdown.test.js`）；预览工作区里放什么、撤销和删掉的不算（`artifacts.test.js`）；路径换成绝对路径、单独一行的媒体地址（`cards.test.js`）；左栏的一项；输入框下面那一行的写法、丢格子的先后、级别的轮换；斜杠命令怎么筛、别名、带参数的；待办收成几行；运行状态行挑词、换词的时机、哪些算一件事；对话区跟着最新的时不往回退、垫多高、长回答停在开头；读回来的历史里思考照 `model.called` 的 `blocks` 算用时；点开执行命令时参数里去掉命令那几行写着的；数的写法、文件大小；你的话里的附件；附件收哪些、媒体类型写不写、小卡上那一行、框里那一排在传和传完、发的时候交出什么、拒了放回来（`packages/attachments.test.js`）；后台命令、子代理回报那一行的几种写法、回报叫醒的那一轮自己一块、谁说的、压缩和清空那一行、手动压缩那一轮不另起收尾行、出错那一句的人话、清空以后上下文清零、打断的那一轮记着还有几个在跑（`notes.test.js`）；`@` 选文件：词怎么认、两种找法、写进话里的路径、`Tab` 进目录（`mention.test.js`；问核心的哪个方法、清单没建完再问一次带 `wait` 的（旧核心当场答的不接着问）、媒体类型照扩展名在 `files.test.js`；列一层、模糊找、打分、数据目录不列是核心的，测试在核心那边）；附件收哪几种（`packages/attachments.test.js`）；输入历史：记什么、`↑` `↓` 怎么翻、清掉的那句先拿回来、列表怎么搜、一条切成几段（`history.test.js`）；界面语言：设置项、照浏览器认、选语言的浮层里的几行、缺的字退回，每种语言的字、命令说明、包的字和名字、运行状态行的词齐不齐、格和占位对不对得上（`languages.test.js`）；树的默认开关、结束的收成「已完成 N 个」、子代理下面挂几个、收着的里面在跑、文件树的线、顶层露几个、从主会话到这一个的路径（`tree.test.js`）；「N 分钟前」（`ago.test.js`）；后台任务在跑、停在半路、结束、编号怎么排、子代理有哪些（`packages/jobs.test.js`）；卡上的扩展名、文字文件几行（`packages/attachments.test.js`）；后台任务浮层的分段、派了几个、树线（`packages/jobs-panel.test.js`）；预览接着读时一共几行怎么数、只留最后几行（`packages/jobs-tail.test.js`）；吉祥物越掉越快、落在下面第一个台子上、落地多快、走出台子的边就掉、被顶上去（`packages/mascot-world.test.js`），手里的东西的像素图每一帧一样大、字都在图例里（`packages/mascot-props.test.js`）；吉祥物正脸对称、有眼睛嘴耳朵鳍、闭眼、转头（`packages/mascot.test.js`） |
 
 界面本身靠无头浏览器截图对图纸，连真核心实测。

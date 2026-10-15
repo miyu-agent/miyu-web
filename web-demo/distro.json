@@ -19,6 +19,7 @@
     { "id": "goal" },
     { "id": "settings" },
     { "id": "backstage" },
+    { "id": "widgets" },
     { "id": "mascot" }
   ],
   "seams": {}

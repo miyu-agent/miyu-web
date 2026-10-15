@@ -186,7 +186,10 @@
       "code": "Code",
       "text": "Text"
     },
-    "failed_with": "Failed to load file: {reason}"
+    "failed_with": "Failed to load file: {reason}",
+    "tab_work": "Workspace",
+    "tab_panel": "Panel",
+    "empty": "No artifacts yet"
   },
   "commands": {
     "nothing_to_clear": "The context is empty",

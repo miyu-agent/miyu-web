@@ -214,6 +214,7 @@ export async function runUnlisted(app, name, words) {
   }
   try {
     const got = await app.store.conn.request('command.run', { session: app.current, text: `/${name}${words ? ` ${words}` : ''}` });
+    openPage(app, got);
     if (got?.said && !quietReceipt(got.command ?? name.toLowerCase(), words)) app.composer.say(got.said, true);
   } catch (err) {
     if (err instanceof Refusal && talkAfterRefusal(err.reason, words)) return 'talk';
@@ -224,6 +225,15 @@ export async function runUnlisted(app, name, words) {
   return 'done';
 }
 
+
+/**
+ * 整页的命令（核心 X-15 下：界面块的整页可以带一个斜杠命令名）：回应带 `opens` 的打开那一整页（软件包 `backstage`，停用了的不开）。
+ * @param {App} app @param {any} got `command.run` 的回应
+ */
+function openPage(app, got) {
+  const o = got?.opens;
+  if (o && typeof o.package === 'string') app.ctx.backstage?.open(o.package, typeof o.widget === 'string' ? o.widget : null);
+}
 
 /** @type {Record<string, (app: App, spec: Spec, words: string|null) => unknown>} */
 const RUNS = {
@@ -238,6 +248,7 @@ const RUNS = {
     const timer = setTimeout(() => { waiting = true; app.composer.say(t('commands.running', { name: `/${spec.name}` }), false, true); }, res.layout.command_wait_ms);
     try {
       const got = await app.store.conn.request('command.run', { session: app.current, text: `/${spec.name}${words ? ` ${words}` : ''}` });
+      openPage(app, got);
       if (got?.said && !quietReceipt(spec.name, words)) app.composer.say(got.said, true);
       else if (waiting) app.composer.quiet();
     } finally {

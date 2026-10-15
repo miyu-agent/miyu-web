@@ -156,7 +156,7 @@ flowchart TB
 | 种类 | 挂进去以后 | 例子 |
 |---|---|---|
 | `single` 独占 | 新挂的盖住原来的，拿掉了原来的露出来 | `page.sidebar`（左栏）、`chat.empty`（空会话的首页） |
-| `list` 一串 | 照 `order` 排，同一个 `id` 只一份 | `composer.above`（待办、运行状态行）、`composer.bar`（框里下面一排左边的按钮：附件）、`composer.head`（框里写字的地方上面：附件那一排）、`composer.payload`（跟着话一起发的：附件；这里挂的不画，见下面）、`composer.footer`（框下面那一行的中间：后台任务的按钮）、`composer.float`（浮在输入框上面、和命令列表同一个位置：后台任务的浮层）、`message.actions`（你的话、她的一轮末尾的按钮）、`page.overlay`（灯箱）、`stage.right`（跳转条）、`composer.takeover`（占着整个框：确认和提问的抽屉；有东西时框里原来的让出来）、`chat.tail`（正文末尾、最后一轮下面：确认和提问了结以后留的结果） |
+| `list` 一串 | 照 `order` 排，同一个 `id` 只一份 | `composer.above`（待办、运行状态行）、`composer.bar`（框里下面一排左边的按钮：附件）、`composer.head`（框里写字的地方上面：附件那一排）、`composer.payload`（跟着话一起发的：附件；这里挂的不画，见下面）、`composer.footer`（框下面那一行的中间：后台任务的按钮）、`composer.float`（浮在输入框上面、和命令列表同一个位置：后台任务的浮层）、`message.actions`（你的话、她的一轮末尾的按钮）、`page.overlay`（灯箱）、`stage.right`（跳转条）、`composer.takeover`（占着整个框：确认和提问的抽屉；有东西时框里原来的让出来）、`chat.tail`（正文末尾、最后一轮下面：确认和提问了结以后留的结果）、`stage.home`（新会话首页、输入框下面：扩展的界面块）、`stage.panel`（右边一栏的「面板」那一页：扩展的界面块；有东西才出「工作区」「面板」两个标签）、`composer.status`（框下面那一行的右边、用量前面：扩展的界面块那一小段） |
 | `keyed` 按键分派 | 照键找，找不到用兜底 | `chat.item`（按条目的种类：你的话、回答、时间线、收尾那一行）、`markdown.code`（按代码块的语言）、`markdown.line`（单独一行的媒体）、`timeline.detail`（按工具） |
 
 - 挂载位的名字照 `地方.东西`，声明时写明挂进去是「替换」还是「添加」。往没声明的挂载位里挂、同一个名字声明两次：加载时报错。
@@ -212,7 +212,8 @@ flowchart TB
 | `asking` | 可选 | `slots`、`chat`、`composer`、`core` | — | — | `composer.takeover`；了结以后留下的经 `chat.item`（键 `asking`）画在她那一轮里 | `max_vh`、`preview_min_width`、`esc_window_ms` |
 | `setup` | 可选 | `slots`、`chat`、`composer`、`core`、`commands`、`storage` | — | — | `composer.above`（order 90：空会话的「选择人格」「设置工作区」）、`stage.info`（开着的会话左上角）、`settings.section`（「人格」「预设」两页，点开原地编辑）、`settings.editor`（键 `persona.default`）；登记 `/workspace` | — |
 | `mascot` | 可选 | `slots`、`composer`、`chat`、`sessions` | — | — | —（整页最前面一层，挂在 `body` 上，和灯箱一样；台子照输入框、命令列表、后台任务浮层量） | 模型的数（形状、脸、灯光）、`pixel`、`cols`、`rows`、平常站在哪、重力、落地、被带着走、拖、待机、走动、跳、动作、手里的东西的像素图（模型照 TUI 的 `mascot.json`） |
-| `backstage` | 可选 | `core`、`host` | `backstage`（`open(编号, widget?)`、`href(编号, widget?)`） | — | —（软件的独立整页，盖满窗口的一层，挂在 `body` 上；路由照宿主的 `route`：`#package=<编号>`） | — |
+| `backstage` | 可选 | `core`、`host`、`widgets~`、`icons?` | `backstage`（`open(编号, widget?)`、`href(编号, widget?)`） | — | —（软件的独立整页，盖满窗口的一层，挂在 `body` 上；路由照宿主的 `route`：`#package=<编号>`） | — |
+| `widgets` | 可选 | `core`、`host`、`slots`、`chat`、`composer~`、`backstage~`、`icons?` | `widgets`（`page(包, 块)`：整页的内容） | — | `stage.home`（新会话首页）、`stage.panel`（右边一栏的「面板」）、`composer.status`（输入框下面那一行的右边）；整页经 `backstage` | — |
 
 服务 `chat`：`current()` 正在看的会话、`scroller` 对话区滚的那一层、`list` 正文那一列、`onPrompts(fn)` 你说的话（先给现在的一份，以后每画一次给一份）、`open(id)` 看另一个会话（子代理的会话第一次看时才读）、`running()` 正在看的会话在不在回答、`home()` 家目录、`interrupt()` 打断正在看的会话（照两下 `Esc`）、`reveal()` 正文末尾（`chat.tail`）来了新的，回到跟着最新的、露出它、`anchor(node)` 把一个节点钉在这时正文里最后一块的后面（交回钉在哪，之后的接在它下面）、`place(where, node)` 照交回的位置再钉一次（换了会话回来）。服务 `markdown`：`codeBlock`、`copy`。服务 `lightbox`：`open({url, name, workspace, vector})`。服务 `theme`：`current()`、`dark()`、`next()`。服务 `commands`：`register(规格, 做法)`（跟着登记的包撤回）、`list()`。事件：`view.changed`（对话区画了一次：`{session, running, events, live, retry, queued}`）、`session.opened`（看哪个会话，`null` 是还没开的新会话）、`session.created`（`{from, to}`：新会话第一句话发出去、会话开了）、`theme.changed`。挂载位 `markdown.code` 的一件：`render({text, say})` 交回一个节点；挂的变了，回答整个重画，滚到哪留着。服务 `composer`：`say(字, 好消息)` 提示一句、`changed()` 跟着发的东西变了（发送按钮重看一遍）、`input` 写字的那个框、`focus()`、`takeover(开不开)` 挂载位 `composer.takeover` 占不占着框（框的高度缓过去，收回时焦点回到写字的地方）。挂载位 `composer.payload` 的一件不画：`has()` 有没有要跟着发的、`busy()` 还在准备（这时不能发）、`take()` 交出来并清掉（`{attachments: […]}` 这样的一块，合进 `session.send` 的参数）、`putBack(交出去的)` 核心拒了，放回来。
 

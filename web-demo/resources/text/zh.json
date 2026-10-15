@@ -186,7 +186,10 @@
       "code": "代码",
       "text": "文字"
     },
-    "failed_with": "文件载入失败：{reason}"
+    "failed_with": "文件载入失败：{reason}",
+    "tab_work": "工作区",
+    "tab_panel": "面板",
+    "empty": "暂无产物"
   },
   "commands": {
     "nothing_to_clear": "上下文为空。",

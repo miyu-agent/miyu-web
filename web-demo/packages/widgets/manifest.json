@@ -1,0 +1,63 @@
+{
+  "id": "widgets",
+  "version": "0.1.0",
+  "name": {
+    "zh": "界面块",
+    "en": "Widgets",
+    "ja": "ウィジェット"
+  },
+  "summary": {
+    "zh": "扩展包放在首页、面板、底栏、整页的内容",
+    "en": "Content extensions put on the home page, panel, status bar and full pages",
+    "ja": "拡張がホーム・パネル・ステータス・全画面に置く内容"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "扩展包声明的界面块（天气、构建状态这类），包只说放什么，网页自己画：新会话的首页、右边一栏的「面板」、输入框下面那一行的右边、软件的独立整页。只有字，不认 Markdown、HTML；能点的调它自己的方法、开它的整页、复制一段字。停用了就不画。"
+  },
+  "note": "核心 widgets.md（X-15）：subscribe {stream: widgets, session?, showing, page?}，推 widget.changed、resync；有人看核心才叫程序干活。",
+  "inject": [
+    "core",
+    "host",
+    "slots",
+    "chat",
+    "composer~",
+    "backstage~",
+    "icons?"
+  ],
+  "provides": {
+    "services": [
+      "widgets"
+    ]
+  },
+  "settings": {},
+  "styles": [
+    "style.css"
+  ],
+  "text": {
+    "zh": {
+      "not_running": "未运行",
+      "empty": "暂无内容",
+      "expand": "展开（还有 {rows} 行）",
+      "more_blocks": "还有 {count} 块",
+      "copied": "已复制",
+      "page_gone": "这一页没有了：软件卸载、停用了，或者不再提供它"
+    },
+    "en": {
+      "not_running": "Not running",
+      "empty": "No content yet",
+      "expand": "Show {rows} more lines",
+      "more_blocks": "{count} more",
+      "copied": "Copied",
+      "page_gone": "This page is gone: the package was removed, turned off, or no longer provides it"
+    },
+    "ja": {
+      "not_running": "停止中",
+      "empty": "内容はまだありません",
+      "expand": "展開（残り {rows} 行）",
+      "more_blocks": "ほか {count} 件",
+      "copied": "コピーしました",
+      "page_gone": "このページはありません：ソフトが削除・停止されたか、提供されなくなりました"
+    }
+  }
+}
