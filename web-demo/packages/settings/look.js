@@ -18,11 +18,12 @@ export function later(fill) {
 /**
  * 「通用」页最上面「主题」一组：一行「明暗」（跟随系统、浅色、深色），下面一排主题卡片（默认、跟随人格、跟随壁纸），小样照现在的明暗画
  * （蓝图 `web.md`「主题」，2026-10-11 项目主人：主题是成对的一套，跟随系统是明暗不是一个主题）。选着的那一套交了 `seeds()` 的（跟随人格、
- * 跟随壁纸，2026-10-14 项目主人定），卡片下面多一行「主色」（`seedRow`）。
+ * 跟随壁纸，2026-10-14 项目主人定），卡片下面多一行「主色」（`seedRow`）。开着的时候那几套换了（换了壁纸、换了人格的头像），
+ * 只重画这一组（`dialog.refreshLook`，设置包看着 `theme.palettes` 叫它；2026-10-15 项目主人：换了壁纸卡片和主色不当场换）。
  */
 export function drawLook(dialog) {
   const ctx = dialog.ctx;
-  return later(async (el) => {
+  const fill = async (/** @type {HTMLElement} */ el) => {
     const theme = await ctx.packages.settings('theme');
     const palettes = ctx.slots.list('theme.palettes');
     // 没写、写的没了的是第一个
@@ -49,7 +50,12 @@ export function drawLook(dialog) {
     };
     const current = palettes.find((p) => p.id === chosen);
     replace(el, groupBlock(ctx.text('theme'), [scheme.el, h('div.set-themes', palettes.map(card)), seedRow(dialog, current?.seeds?.())]));
-  });
+  };
+  const el = later(fill);
+  dialog.refreshLook = () => {
+    if (el.isConnected) fill(el).catch(() => {});
+  };
+  return el;
 }
 
 /**

@@ -24,6 +24,8 @@ export class SettingsDialog {
   constructor(ctx) {
     this.ctx = ctx;
     this.isOpen = false;
+    /** 重画「通用」页的「主题」一组（`look.js` 画的时候填；主题那几套换了时设置包叫它） @type {(() => void)|null} */
+    this.refreshLook = null;
     /** @type {import('./model.js').Page[]} */
     this.pages = [];
     this.schema = null;
