@@ -24,6 +24,11 @@ miyu-wallpaper = { path = "../../crates/miyu-wallpaper" }
 # 核心的 `fs.read`、`blob.get` 回的一段是 base64（`/file`、`/blob` 照它一块块写给浏览器）。和仓库里的同一个版本。MIT 或 Apache-2.0。
 base64 = "0.22"
 
+# 开发版也把依赖编成优化的：给壁纸算候选色要解图，不优化的慢五十倍（14 MB 的 JPG 11.7 秒对 0.22 秒），换了壁纸页面要等十几秒、等不及刷新
+# 就断了（2026-10-15 项目主人验收 W-163）。只管依赖，桥自己的代码照旧不优化、编得快。
+[profile.dev.package."*"]
+opt-level = 3
+
 # 和仓库工作区的 lints 一样（根目录 Cargo.toml），演示程序也照这套规矩。
 [lints.rust]
 unsafe_code = "forbid"

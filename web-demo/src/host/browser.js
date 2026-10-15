@@ -94,26 +94,26 @@ async function pickDir(key, opts = {}) {
 /**
  * 桌面壁纸（主题「跟随壁纸」，蓝图 `web.md`「跟着人格的外观」第 5 条）：问桥（`/wallpaper`）现在的那一份。matugen 生成的颜色优先：
  * 交 `{sig, kind: 'matugen', colors}`（`colors` 是那份 JSON，页面自己认）；没有的交 `{sig, kind: 'image', seeds}`（桥照图算好的候选色，
- * 最多四个 `#rrggbb`，打分高的在前）。`sig` 是换没换的记号。页面开在别的机器上的（那是桥那台机器的壁纸）、两样都读不到的、问不到桥的交 `null`。
+ * 最多四个 `#rrggbb`，打分高的在前）。`sig` 是换没换的记号。页面开在别的机器上的（那是桥那台机器的壁纸）、两样都读不到的（404）交 `null`；
+ * 一时问不到的（连接断了、桥出了别的错）抛错，页面留着原来那一套。
  * @param {string} key @param {boolean} dark 页面这时是不是深色（深浅可以各设一张）
  * @returns {Promise<{sig: string, kind: 'matugen', colors: any}|{sig: string, kind: 'image', seeds: string[]}|null>}
  */
 async function wallpaper(key, dark) {
   if (!onThisMachine()) return null;
-  try {
-    const q = new URLSearchParams({ k: key, dark: dark ? '1' : '0' });
-    const got = await fetch(`/wallpaper?${q}`, { cache: 'no-store' });
-    if (!got.ok) return null;
-    const { sig, kind, seeds } = await got.json() ?? {};
-    if (typeof sig !== 'string') return null;
-    if (kind !== 'matugen') return { sig, kind: 'image', seeds: Array.isArray(seeds) ? seeds.filter((c) => typeof c === 'string') : [] };
-    q.set('data', '1');
-    q.set('sig', sig);
-    const colors = await fetch(`/wallpaper?${q}`, { cache: 'no-store' });
-    return colors.ok ? { sig, kind: 'matugen', colors: await colors.json() } : null;
-  } catch {
-    return null;
-  }
+  const q = new URLSearchParams({ k: key, dark: dark ? '1' : '0' });
+  const got = await fetch(`/wallpaper?${q}`, { cache: 'no-store' });
+  if (got.status === 404) return null;
+  if (!got.ok) throw new Error(`/wallpaper ${got.status}`);
+  const { sig, kind, seeds } = await got.json() ?? {};
+  if (typeof sig !== 'string') return null;
+  if (kind !== 'matugen') return { sig, kind: 'image', seeds: Array.isArray(seeds) ? seeds.filter((c) => typeof c === 'string') : [] };
+  q.set('data', '1');
+  q.set('sig', sig);
+  const colors = await fetch(`/wallpaper?${q}`, { cache: 'no-store' });
+  if (colors.status === 404) return null;
+  if (!colors.ok) throw new Error(`/wallpaper ${colors.status}`);
+  return { sig, kind: 'matugen', colors: await colors.json() };
 }
 
 /**

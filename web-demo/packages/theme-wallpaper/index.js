@@ -10,7 +10,9 @@
 //!
 //! 换没换不轮询（2026-10-14 项目主人定）：宿主的 `wallpaperChanges` 推过来（桥盯着壁纸来处的文件）时问一次，回到前台、窗口拿回焦点、
 //! 换了浅深（事件 `theme.changed`）时也问一次（只能经 IPC 换、不落文件的 hyprpaper、swaybg 靠这个跟上）；宿主交的记号 `sig` 变了才重取色。
-//! 问的是页面这时的浅深（服务 `theme`，深浅可以各设一张壁纸）。同一张图取过、取不出的记着，不再取。
+//! 问的是页面这时的浅深（服务 `theme`，深浅可以各设一张壁纸）。同一张图取过、取不出的记着，不再取。问着的时候又推来「换了」的，问完
+//! 再问一次（一次换壁纸常推来两回：先是壁纸程序的配置，再是 awww 的缓存）；一时问不到的（网页服务在算、连接断了）留着原来那一套，只有
+//! 宿主说没有壁纸（`null`）的才拿掉（2026-10-15 项目主人验收 W-163：换了没跟着变，刷新后「跟随壁纸」不见了）。
 
 import { themeOf, matugenOf } from '../../src/lib/md3/index.js';
 
@@ -27,6 +29,8 @@ export function apply(ctx) {
   /** 最近一次看过的记号（取出颜色的、取不出的都算） */
   let seen = /** @type {string|null} */ (null);
   let busy = false;
+  /** 问着的时候又该问了（推来「换了」、拿回焦点）：问完再问一次 */
+  let again = false;
 
   /**
    * 挂一套：先挂新的再拿掉原来的（主题包不会在中间看到没有这一套）。
@@ -61,10 +65,17 @@ export function apply(ctx) {
 
   /** 问一次：换了的重取色；读不到的拿掉这一套。 */
   const check = async () => {
-    if (busy || document.hidden) return;
+    if (document.hidden) return;
+    if (busy) {
+      again = true;
+      return;
+    }
     busy = true;
+    again = false;
     try {
-      const got = await ctx.host.wallpaper?.(dark());
+      const got = await ctx.host.wallpaper?.(dark())?.catch(() => undefined);
+      // 一时问不到：留着原来那一套，下一次照样问
+      if (got === undefined) return;
       if (!got) {
         seen = null;
         return unmount();
@@ -86,6 +97,7 @@ export function apply(ctx) {
       mountSeeds();
     } finally {
       busy = false;
+      if (again) check();
     }
   };
 
