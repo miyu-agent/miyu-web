@@ -139,6 +139,40 @@ export const store = /** @type {Store} */ ({
 export const onThisMachine = () => ['127.0.0.1', 'localhost', '[::1]', '::1'].includes(location.hostname);
 
 /**
+ * 从地址栏网址的 `#` 后面去掉这几项（桥的口令、一次性码：读完就抹，不留在历史、收藏里）；别的留着（软件页面的 `package=`、`widget=`，
+ * 软件包 `backstage` 照它开页面，能收藏）。
+ * @param {string[]} keys
+ */
+export function dropFromHash(keys) {
+  const q = new URLSearchParams(location.hash.replace(/^#/, ''));
+  for (const k of keys) q.delete(k);
+  const rest = q.toString();
+  history.replaceState(null, '', location.pathname + location.search + (rest ? `#${rest}` : ''));
+}
+
+/**
+ * 网页自己的路由：网址 `#` 后面那一段（口令、一次性码读完已经抹掉），软件的独立整页照它开（软件包 `backstage`，`#package=<编号>`）。
+ * 两个浏览器宿主共用；桌面端照它的样子另给。
+ */
+export function hashRoute() {
+  return {
+    /** 现在的那一段（带 `#`，没有的是空字） */
+    current: () => location.hash,
+    /** 去一个新地址：记进浏览器的历史，后退回得来 @param {string} hash */
+    go: (hash) => { location.hash = hash; },
+    /** 后退一步 */
+    back: () => history.back(),
+    /** 换成这个地址，不记进历史；空字去掉 `#` 后面整段 @param {string} hash */
+    replace: (hash) => history.replaceState(null, '', location.pathname + location.search + hash),
+    /** 地址变了叫 `changed`（点了链接、浏览器后退、`go`）；交回不再听的函数 @param {() => void} changed */
+    watch: (changed) => {
+      window.addEventListener('hashchange', changed);
+      return () => window.removeEventListener('hashchange', changed);
+    },
+  };
+}
+
+/**
  * 选文件、拖放、读附件，交给服务 `host` 的 `files`（选目录各自补）。
  * @param {Urls} urls
  */

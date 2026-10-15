@@ -13,7 +13,7 @@
 //! - 软件后台页：带着口令 `POST /page` 请桥造一张票据，交回框的地址（地址里只有票据，框里的页面读得到自己的地址，口令不能给它）。
 //! - 桌面壁纸（主题「跟随壁纸」）：浏览器读不到桌面，请桥读（`/wallpaper`，crate `miyu-wallpaper`，matugen 生成的那份颜色优先）；
 //!   换没换开一条 `/wallpaper/events`，桥盯着壁纸来处的文件、变了推一条（不轮询）。页面开在别的机器上的不请。
-//! - 打开时直接到哪个软件的后台页：`miyu web --package <编号>` 打出的网址在 `#` 后面多一个 `package=<编号>`，和口令一起读、一起抹掉。
+//! - 网址 `#` 后面的口令读完就抹掉，别的几项留着：`miyu web --package <编号>` 打出的 `package=<编号>` 由软件包 `backstage` 照它开软件的页面。
 
 /**
  * @typedef {import('./files.js').FileRef} FileRef
@@ -21,7 +21,7 @@
  * @typedef {import('./files.js').Store} Store
  */
 
-import { fileTools, store, onThisMachine } from './files.js';
+import { fileTools, store, onThisMachine, dropFromHash, hashRoute } from './files.js';
 
 const KEY = 'miyu.web.bridge-key';
 
@@ -30,7 +30,7 @@ function bridgeKey() {
   const m = location.hash.match(/k=([0-9a-f]+)/);
   if (m) {
     try { sessionStorage.setItem(KEY, m[1]); } catch { /* 记不住就只管这一次 */ }
-    history.replaceState(null, '', location.pathname + location.search);
+    dropFromHash(['k']);
     return m[1];
   }
   try { return sessionStorage.getItem(KEY); } catch { return null; }
@@ -147,8 +147,6 @@ async function packagePage(key, id) {
 
 /** 起浏览器这个宿主；链接里、这个标签页里都没有桥的口令的交 `null`（页面说连不上桥）。 */
 export function browserHost() {
-  // 网址里 `#` 后面点名要打开的软件后台页（`package=<编号>`）：先读下来，`bridgeKey` 会把 `#` 后面抹掉
-  const launchPackage = location.hash.match(/(?:^#|&)package=([A-Za-z0-9_.-]+)/)?.[1] ?? null;
   const key = bridgeKey();
   if (!key) return null;
   return {
@@ -168,8 +166,10 @@ export function browserHost() {
       /** 选目录：请桥开系统的对话框（见上面的 `pickDir`） */
       pickDir: (/** @type {{title?: string, start?: string}} */ opts) => pickDir(key, opts),
     },
-    /** 软件后台页：框的地址（见上面的 `packagePage`）；`launch` 是打开时点名的软件（没有是 `null`） */
-    pages: { open: (/** @type {string} */ id) => packagePage(key, id), launch: launchPackage },
+    /** 软件的页面：框的地址（见上面的 `packagePage`） */
+    pages: { open: (/** @type {string} */ id) => packagePage(key, id) },
+    /** 网页自己的路由（`#` 后面那一段） */
+    route: hashRoute(),
     /** 桌面壁纸：问桥（见上面的 `wallpaper`） */
     wallpaper: (/** @type {boolean} */ dark) => wallpaper(key, dark),
     /** 桌面壁纸换了：桥推过来（见上面的 `wallpaperChanges`） */

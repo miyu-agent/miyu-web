@@ -11,16 +11,16 @@
  * @typedef {import('./files.js').Channel} Channel
  */
 
-import { fileTools, store } from './files.js';
+import { fileTools, store, dropFromHash, hashRoute } from './files.js';
 
 /** 这台设备上记登录令牌的名字（`{token, expires}`） */
 const LOGIN = 'miyu.web.login';
 
-/** 地址里的一次性码：读下来、从地址栏抹掉（刷新以后就没了：码只能用一次）。 */
+/** 地址里的一次性码：读下来、从地址栏抹掉（刷新以后就没了：码只能用一次）；`#` 后面别的几项（软件页面的 `package=`）留着。 */
 function setupCode() {
   const m = location.hash.match(/(?:^#|&)setup=([0-9a-f]+)/);
   if (!m) return null;
-  history.replaceState(null, '', location.pathname + location.search);
+  dropFromHash(['setup']);
   return m[1];
 }
 
@@ -36,8 +36,6 @@ function savedLogin() {
 
 /** 起直接连网页软件的宿主（地址里没有桥的口令时用它）。 */
 export function servedHost() {
-  // 网址里 `#` 后面点名要打开的软件后台页（`package=<编号>`）：和一次性码一起读
-  const launchPackage = location.hash.match(/(?:^#|&)package=([A-Za-z0-9_.-]+)/)?.[1] ?? null;
   let code = setupCode();
   let token = savedLogin();
   /** 换过的票据：同一样东西不再换 @type {Map<string, Promise<string>>} */
@@ -104,8 +102,10 @@ export function servedHost() {
       /** 选目录：网页软件不给，用的地方退回自己画的文件夹浏览器 */
       pickDir: async (/** @type {{title?: string, start?: string}} */ opts) => null,
     },
-    /** 软件后台页：带着登录令牌换票据，交回框的地址；换不到的交 `null` */
-    pages: { open: async (/** @type {string} */ id) => (await post('/page', { package: id })) || null, launch: launchPackage },
+    /** 软件的页面：带着登录令牌换票据，交回框的地址；换不到的交 `null` */
+    pages: { open: async (/** @type {string} */ id) => (await post('/page', { package: id })) || null },
+    /** 网页自己的路由（`#` 后面那一段） */
+    route: hashRoute(),
     /** 桌面壁纸：网页软件不给 */
     wallpaper: async (/** @type {boolean} */ dark) => null,
     wallpaperChanges: (/** @type {() => void} */ changed) => () => {},

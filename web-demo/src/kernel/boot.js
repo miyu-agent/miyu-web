@@ -213,6 +213,7 @@ export async function boot(root) {
         home: info.home,
         files: host.files,
         pages: host.pages,
+        route: host.route,
         open: host.open,
         clipboard: host.clipboard,
         wallpaper: host.wallpaper,

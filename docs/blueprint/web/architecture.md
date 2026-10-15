@@ -192,7 +192,7 @@ flowchart TB
 
 2026-09-30 起一件件搬（「怎么搬」第 3 步进行中）。这张表跟着搬，拆出一个包改一行。
 
-**编进内核的服务**：`core`（连核心，现在经桥）、`sessions`（会话仓库）、`host`（宿主，见「宿主」：`kind`、这个页面登录成的账号 `account`、新会话的工作目录 `cwd`（握手回应的 `host.workspace`，核心施工 W-3；原来是起桥的目录）、家目录 `home`（`host.home`）、`files`、`open`、`clipboard`、`wallpaper`；口令不出宿主）、`page`（页面的根）、`slots`、`seams`、`storage`（这台设备上存的：宿主给的存法，键带账号，读写兜着）、`packages`（列出每个包的状态和清单、停用启用、改个人那一层的配置：按项合，写 `null` 的删掉那一项）。名字列在 `src/kernel/services.js`，内核起来时查一遍都提供了。
+**编进内核的服务**：`core`（连核心，现在经桥）、`sessions`（会话仓库）、`host`（宿主，见「宿主」：`kind`、这个页面登录成的账号 `account`、新会话的工作目录 `cwd`（握手回应的 `host.workspace`，核心施工 W-3；原来是起桥的目录）、家目录 `home`（`host.home`）、`files`、`open`、`clipboard`、`wallpaper`、网页自己的路由 `route`（网址 `#` 后面那一段：`current`、`go`、`back`、`replace`、`watch`；口令、一次性码读完就抹，`package=` 留着）；口令不出宿主）、`page`（页面的根）、`slots`、`seams`、`storage`（这台设备上存的：宿主给的存法，键带账号，读写兜着）、`packages`（列出每个包的状态和清单、停用启用、改个人那一层的配置：按项合，写 `null` 的删掉那一项）。名字列在 `src/kernel/services.js`，内核起来时查一遍都提供了。
 
 | 包 | 种类 | 要（`inject`） | 提供的服务 | 声明的挂载位 | 挂进 | 设置项 |
 |---|---|---|---|---|---|---|
@@ -212,6 +212,7 @@ flowchart TB
 | `asking` | 可选 | `slots`、`chat`、`composer`、`core` | — | — | `composer.takeover`；了结以后留下的经 `chat.item`（键 `asking`）画在她那一轮里 | `max_vh`、`preview_min_width`、`esc_window_ms` |
 | `setup` | 可选 | `slots`、`chat`、`composer`、`core`、`commands`、`storage` | — | — | `composer.above`（order 90：空会话的「选择人格」「设置工作区」）、`stage.info`（开着的会话左上角）、`settings.section`（「人格」「预设」两页，点开原地编辑）、`settings.editor`（键 `persona.default`）；登记 `/workspace` | — |
 | `mascot` | 可选 | `slots`、`composer`、`chat`、`sessions` | — | — | —（整页最前面一层，挂在 `body` 上，和灯箱一样；台子照输入框、命令列表、后台任务浮层量） | 模型的数（形状、脸、灯光）、`pixel`、`cols`、`rows`、平常站在哪、重力、落地、被带着走、拖、待机、走动、跳、动作、手里的东西的像素图（模型照 TUI 的 `mascot.json`） |
+| `backstage` | 可选 | `core`、`host` | `backstage`（`open(编号, widget?)`、`href(编号, widget?)`） | — | —（软件的独立整页，盖满窗口的一层，挂在 `body` 上；路由照宿主的 `route`：`#package=<编号>`） | — |
 
 服务 `chat`：`current()` 正在看的会话、`scroller` 对话区滚的那一层、`list` 正文那一列、`onPrompts(fn)` 你说的话（先给现在的一份，以后每画一次给一份）、`open(id)` 看另一个会话（子代理的会话第一次看时才读）、`running()` 正在看的会话在不在回答、`home()` 家目录、`interrupt()` 打断正在看的会话（照两下 `Esc`）、`reveal()` 正文末尾（`chat.tail`）来了新的，回到跟着最新的、露出它、`anchor(node)` 把一个节点钉在这时正文里最后一块的后面（交回钉在哪，之后的接在它下面）、`place(where, node)` 照交回的位置再钉一次（换了会话回来）。服务 `markdown`：`codeBlock`、`copy`。服务 `lightbox`：`open({url, name, workspace, vector})`。服务 `theme`：`current()`、`dark()`、`next()`。服务 `commands`：`register(规格, 做法)`（跟着登记的包撤回）、`list()`。事件：`view.changed`（对话区画了一次：`{session, running, events, live, retry, queued}`）、`session.opened`（看哪个会话，`null` 是还没开的新会话）、`session.created`（`{from, to}`：新会话第一句话发出去、会话开了）、`theme.changed`。挂载位 `markdown.code` 的一件：`render({text, say})` 交回一个节点；挂的变了，回答整个重画，滚到哪留着。服务 `composer`：`say(字, 好消息)` 提示一句、`changed()` 跟着发的东西变了（发送按钮重看一遍）、`input` 写字的那个框、`focus()`、`takeover(开不开)` 挂载位 `composer.takeover` 占不占着框（框的高度缓过去，收回时焦点回到写字的地方）。挂载位 `composer.payload` 的一件不画：`has()` 有没有要跟着发的、`busy()` 还在准备（这时不能发）、`take()` 交出来并清掉（`{attachments: […]}` 这样的一块，合进 `session.send` 的参数）、`putBack(交出去的)` 核心拒了，放回来。
 

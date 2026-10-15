@@ -1,0 +1,17 @@
+/* 软件的独立整页（软件包 backstage；蓝图 web.md「软件的页面」）：盖满窗口，顶上一条窄栏，下面框占满。不描边：栏和页靠底色分开 */
+.bs-page {
+  position: fixed; z-index: 85; display: flex; flex-direction: column; inset: 0; background: var(--surface);
+  animation: fade-in var(--motion-in) var(--ease-out) both;
+}
+.bs-bar {
+  display: flex; flex: none; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 6px;
+  background: var(--surface-1); color: var(--text);
+}
+.bs-back { width: 30px; height: 30px; color: var(--text-soft); }
+.bs-back:hover { background: var(--surface-2); color: var(--text); }
+.bs-face { display: inline-flex; color: var(--text-soft); }
+.bs-face .icon { width: 16px; height: 16px; }
+.bs-name { min-width: 0; overflow: hidden; font-size: 13.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.bs-frame { display: block; flex: 1; width: 100%; min-height: 0; border: 0; background: var(--surface); }
+.bs-empty { margin: auto; padding: 24px; color: var(--text-soft); font-size: 13.5px; text-align: center; }
+body.has-backstage { overflow: hidden; }

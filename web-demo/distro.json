@@ -18,6 +18,7 @@
     { "id": "jobs" },
     { "id": "goal" },
     { "id": "settings" },
+    { "id": "backstage" },
     { "id": "mascot" }
   ],
   "seams": {}

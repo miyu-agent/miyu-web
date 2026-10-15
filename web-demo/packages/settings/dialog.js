@@ -314,13 +314,10 @@ export class SettingsDialog {
       return;
     }
     if (method !== 'config.changed') return;
-    // 攒着变了的键：重读完以后告诉开着的软件后台页（`settings.changed`）
-    this.changedKeys = [...(this.changedKeys ?? []), ...Object.keys(params?.keys ?? {})];
+    // 一阵改动收齐了再重读
     clearTimeout(this.pushTimer);
     this.pushTimer = setTimeout(() => {
-      const keys = this.changedKeys ?? [];
-      this.changedKeys = [];
-      this.reload().then(() => this.frame?.configChanged(keys)).catch(() => {});
+      this.reload().catch(() => {});
     }, 80);
   }
 

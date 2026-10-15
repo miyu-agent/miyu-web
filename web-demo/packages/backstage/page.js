@@ -1,0 +1,85 @@
+// @ts-check
+//! 软件的独立整页（软件包 `backstage`，蓝图 `web.md`「软件的页面」；2026-10-15 项目主人定：不嵌在设置里）：盖满整个窗口，顶上一条窄栏（返回、
+//! 软件的图标和名字），下面一个隔离的框占满（`<iframe sandbox="allow-scripts allow-forms" allow="clipboard-write">`，不给
+//! `allow-same-origin`：来源是空的，读不到网页的存储、登录令牌；能往剪贴板里写、不能读）。框的地址经宿主请网页服务造票据（`host.pages.open`）。
+//! 开着的时候标签页的标题换成软件名（收藏、在别的标签页里认得出），关了换回来。焦点不在框里时 `Esc` 返回。
+
+import { h, icon, hasIcon } from '../../src/lib/dom.js';
+import { FrameHost } from './frame.js';
+
+export class FullPage {
+  /**
+   * @param {any} ctx 这个包的上下文（`core`、`host`、`text`）
+   * @param {() => void} back 点了返回
+   */
+  constructor(ctx, back) {
+    this.ctx = ctx;
+    this.back = back;
+    /** @type {HTMLElement|null} */
+    this.el = null;
+    /** @type {FrameHost|null} */
+    this.frame = null;
+    /** 开着的是哪一页（`package` 加 `widget`） */
+    this.shown = '';
+    /** 打开前的标题 */
+    this.title = '';
+    this.onKey = (/** @type {KeyboardEvent} */ e) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      e.preventDefault();
+      this.back();
+    };
+  }
+
+  /**
+   * 开一页（开着别的换掉，开着同一页不动：框重新载入会丢掉软件页面里的状态）。
+   * @param {{package: string, widget: string|null}} route
+   */
+  async show(route) {
+    const key = `${route.package}/${route.widget ?? ''}`;
+    if (this.shown === key) return;
+    this.close();
+    this.shown = key;
+    const t = (/** @type {string} */ path) => this.ctx.text(path);
+    const listed = await this.ctx.core.request('package.list', {}).then((r) => r?.packages ?? [], () => []);
+    if (this.shown !== key) return;
+    const p = listed.find((/** @type {any} */ x) => x.package === route.package);
+    const name = p?.name ?? route.package;
+    const bar = h('header.bs-bar',
+      h('button.icon-button.bs-back', { type: 'button', title: t('back'), 'aria-label': t('back'), onclick: () => this.back() }, icon('arrow-left')),
+      h('span.bs-face', icon(p?.icon && hasIcon(p.icon) ? p.icon : 'package')),
+      h('span.bs-name', name));
+    /** @type {HTMLElement} */
+    let body;
+    if (p?.page && p.enabled !== false) {
+      // 能往剪贴板里写（2026-10-10 接入QQ 的会话要的：令牌要能随时复制）；读剪贴板不给
+      const frame = /** @type {HTMLIFrameElement} */ (h('iframe.bs-frame', { sandbox: 'allow-scripts allow-forms', allow: 'clipboard-write', referrerpolicy: 'no-referrer', title: name }));
+      this.frame = new FrameHost(this.ctx.core, t, route.package, frame);
+      body = frame;
+      Promise.resolve(this.ctx.host.pages?.open(route.package)).then((url) => {
+        if (this.shown !== key) return;
+        if (url) frame.src = url;
+        else frame.replaceWith(h('p.bs-empty', t('failed')));
+      });
+    } else body = h('p.bs-empty', t('gone'));
+    this.el = h('div.bs-page', { role: 'main', 'aria-label': name }, bar, body);
+    document.body.append(this.el);
+    document.body.classList.add('has-backstage');
+    document.addEventListener('keydown', this.onKey);
+    this.title = document.title;
+    document.title = name;
+  }
+
+  /** 关掉：通道收掉、标题换回来。 */
+  close() {
+    if (!this.shown) return;
+    this.shown = '';
+    this.frame?.close();
+    this.frame = null;
+    this.el?.remove();
+    this.el = null;
+    document.body.classList.remove('has-backstage');
+    document.removeEventListener('keydown', this.onKey);
+    if (this.title) document.title = this.title;
+    this.title = '';
+  }
+}

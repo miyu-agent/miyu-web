@@ -22,7 +22,8 @@
     "host",
     "packages",
     "commands",
-    "theme~"
+    "theme~",
+    "backstage~"
   ],
   "settings": {
     "width": {
@@ -316,10 +317,7 @@
         "qq": "QQ"
       },
       "backstage": {
-        "none": "没有提供后台页的软件",
-        "by": "这个页面由「{name}」提供",
-        "failed": "无法打开该软件的后台页",
-        "forbidden": "仅可修改本软件的设置"
+        "none": "没有提供后台页的软件"
       },
       "pkg": {
         "part": {
@@ -342,7 +340,7 @@
         "settings": "设置",
         "uninstall": "卸载",
         "uninstall_again": "再点一次卸载",
-        "open_backstage": "打开软件后台",
+        "open_backstage": "打开页面",
         "owner_accounts": "终端管理员的 {platform} 号",
         "owner_desc": "私聊时视为终端管理员本人",
         "owner_hint": "号码",
@@ -589,10 +587,7 @@
         "qq": "QQ"
       },
       "backstage": {
-        "none": "No package provides a dashboard",
-        "by": "This page is provided by “{name}”",
-        "failed": "Can't open this package's dashboard",
-        "forbidden": "Only this package's settings can be changed"
+        "none": "No package provides a dashboard"
       },
       "pkg": {
         "part": {
@@ -615,7 +610,7 @@
         "settings": "Settings",
         "uninstall": "Uninstall",
         "uninstall_again": "Click again to uninstall",
-        "open_backstage": "Open dashboard",
+        "open_backstage": "Open page",
         "owner_accounts": "Terminal admin's {platform} account",
         "owner_desc": "Treated as the terminal admin in private chats",
         "owner_hint": "Number",
@@ -862,10 +857,7 @@
         "qq": "QQ"
       },
       "backstage": {
-        "none": "管理画面のあるソフトはありません",
-        "by": "このページは「{name}」が提供しています",
-        "failed": "このソフトの管理画面を開けません",
-        "forbidden": "このソフト自身の設定だけ変更できます"
+        "none": "管理画面のあるソフトはありません"
       },
       "pkg": {
         "part": {
@@ -888,7 +880,7 @@
         "settings": "設定",
         "uninstall": "アンインストール",
         "uninstall_again": "もう一度押してアンインストール",
-        "open_backstage": "管理画面を開く",
+        "open_backstage": "ページを開く",
         "owner_accounts": "端末管理者の {platform} アカウント",
         "owner_desc": "個人チャットでは端末管理者本人として扱います",
         "owner_hint": "番号",

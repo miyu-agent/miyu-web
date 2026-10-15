@@ -1,0 +1,52 @@
+{
+  "id": "backstage",
+  "version": "0.1.0",
+  "name": {
+    "zh": "软件页面",
+    "en": "Package pages",
+    "ja": "ソフトのページ"
+  },
+  "summary": {
+    "zh": "带页面的软件在网页里一个一整页",
+    "en": "Each package with a page gets a full page in the web UI",
+    "ja": "ページを持つソフトをウェブで一画面ずつ表示"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "软件自己带的页面（后台页）在网页里是独立的整页：网址 #package=<编号>，能收藏、能在新标签页打开；页面放在隔离的框里，网页只留一条窄的顶栏（返回、软件名）。从设置的「软件后台」、软件的信息页打开，miyu web --package 打开的也是这一页。停用了就打不开。"
+  },
+  "note": "框不给 allow-same-origin，来源是空的；框的地址经宿主请网页服务造票据（/p/…），不让浏览器把 /p/… 当顶层页面打开（同源、没有框隔着就读得到登录令牌）。",
+  "inject": [
+    "core",
+    "host"
+  ],
+  "provides": {
+    "services": [
+      "backstage"
+    ]
+  },
+  "settings": {},
+  "styles": [
+    "style.css"
+  ],
+  "text": {
+    "zh": {
+      "back": "返回",
+      "gone": "这个软件没有页面，或者已经卸载、停用",
+      "failed": "无法打开该软件的页面",
+      "forbidden": "仅可修改本软件的设置"
+    },
+    "en": {
+      "back": "Back",
+      "gone": "This package has no page, or it was removed or turned off",
+      "failed": "Can't open this package's page",
+      "forbidden": "Only this package's settings can be changed"
+    },
+    "ja": {
+      "back": "戻る",
+      "gone": "このソフトにはページがないか、削除・停止されています",
+      "failed": "このソフトのページを開けません",
+      "forbidden": "このソフト自身の設定だけ変更できます"
+    }
+  }
+}

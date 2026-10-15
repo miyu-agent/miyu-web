@@ -11,7 +11,7 @@
 import { h, icon, hasIcon } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField } from './rows.js';
 import { splitKey, itemFor, mcpStopped } from './model.js';
-import { openBackstage } from './backstage.js';
+import { openPage } from './backstage.js';
 import { serverRow, homeMcpPart } from './mcp-servers.js';
 
 /** 段：照核心核实过的标记分，先后照这里 */
@@ -124,7 +124,8 @@ function infoPage(dialog, id) {
     p.summary ? h('p.set-sub-desc', p.summary) : null,
     line ? h(`p.set-pkg-line${missing ? '.is-bad' : ''}`, line) : null,
     // 有后台页的：一个按钮跳到「软件后台」里它的页面
-    p.page && !missing ? h('div.set-pkg-actions', h('button.set-btn', { type: 'button', onclick: () => openBackstage(dialog, id) }, t('pkg.open_backstage'))) : null,
+    // 有后台页的：一个按钮跳到它的独立整页（软件包 `backstage`；停用了那个包的不出）
+    p.page && !missing && dialog.ctx.backstage ? h('div.set-pkg-actions', h('a.set-btn.set-link', { href: dialog.ctx.backstage.href(id), onclick: (/** @type {MouseEvent} */ e) => openPage(dialog, id, e) }, t('pkg.open_backstage'))) : null,
   ];
   const group = (dialog.pages ?? []).find((x) => x.id === 'packages')?.groups.find((g) => g.id === id);
   const settings = (group?.items ?? []).map((item) => coreRow(dialog, item)).filter(Boolean);
