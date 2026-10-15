@@ -127,6 +127,7 @@
           "mcp": "MCP 服务 {name}",
           "skill": "技能 {name}",
           "script": "脚本 {name}",
+          "slash": "斜杠命令 /{name}",
           "settings": "{count} 项设置"
         }
       },
@@ -208,6 +209,7 @@
           "mcp": "MCP server {name}",
           "skill": "skill {name}",
           "script": "script {name}",
+          "slash": "slash command /{name}",
           "settings": "{count} settings"
         }
       },
@@ -289,6 +291,7 @@
           "mcp": "MCP サーバー {name}",
           "skill": "スキル {name}",
           "script": "スクリプト {name}",
+          "slash": "スラッシュコマンド /{name}",
           "settings": "設定 {count} 項目"
         }
       },

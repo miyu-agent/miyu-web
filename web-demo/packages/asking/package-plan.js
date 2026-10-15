@@ -58,6 +58,7 @@ function included(p, doing, text) {
   for (const name of strings(p.mcp)) items.push(text('plan.carried.mcp', { name }));
   for (const name of strings(p.skills)) items.push(text('plan.carried.skill', { name }));
   for (const name of strings(p.scripts)) items.push(text('plan.carried.script', { name }));
+  for (const name of strings(p.slash)) items.push(text('plan.carried.slash', { name }));
   if (doing !== 'remove' && Number.isInteger(p.settings)) items.push(text('plan.carried.settings', { count: p.settings }));
   return items;
 }

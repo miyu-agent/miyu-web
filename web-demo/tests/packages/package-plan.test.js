@@ -33,9 +33,9 @@ test('装：标题带版本和替换的版本，包文件夹写 ~，包含、无
   ]);
 });
 
-test('只带技能、脚本的包：没有程序那一项；没有的行不写', () => {
-  const plan = packagePlan({ tool: 'package', install: '/w/notes', preview: { package: 'notes', skills: ['take-notes'], scripts: ['dice'], files: 3, size: 713 } }, null, t);
-  assert.deepEqual(flat(plan), ['安装软件包 notes', '/w/notes', '包含：技能 take-notes、脚本 dice', '大小：713 B，3 个文件']);
+test('只带技能、脚本、斜杠命令模板的包（核心 X-14 上的 slash）：没有程序那一项；没有的行不写', () => {
+  const plan = packagePlan({ tool: 'package', install: '/w/notes', preview: { package: 'notes', skills: ['take-notes'], scripts: ['dice'], slash: ['review', 'todo'], files: 3, size: 713 } }, null, t);
+  assert.deepEqual(flat(plan), ['安装软件包 notes', '/w/notes', '包含：技能 take-notes、脚本 dice、斜杠命令 /review、斜杠命令 /todo', '大小：713 B，3 个文件']);
 });
 
 test('卸：一并删除写设置的键和状态目录，设置不算进包含；装回出厂的写恢复', () => {
