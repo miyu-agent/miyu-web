@@ -1,43 +1,12 @@
 // @ts-check
-//! 照一张图生成一个主题（`src/lib/md3/`，蓝图「跟着人格的外观」第 2、4 条）：从像素取前几种主色、照 MD3 Content 的五条色板、每一格照原色表
-//! 那一格的明度生成浅色或深色那一份的全部格子（2026-10-14 两个头同一套）。
+//! 照一个主色生成一个主题（`src/lib/md3/`，蓝图「跟着人格的外观」第 2、4 条）：照 MD3 Content 的五条色板、每一格照原色表那一格的明度
+//! 生成浅色或深色那一份的全部格子（2026-10-14 两个头同一套）。主色的候选由核心、网页服务算，不在这里测。
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { seedsOf, seedOf, themeOf, hexOf, inkOf } from '../../src/lib/md3/index.js';
+import { themeOf, inkOf } from '../../src/lib/md3/index.js';
 import { DESIGN } from '../../src/lib/md3/design.js';
 import { Hct, argbFromHex } from '../../src/lib/md3/vendor/mcu.min.js';
-
-/** 一张 `n` 个像素的图：一种颜色占 `share`，剩下的是另一种（`alpha` 是第二种的不透明度） */
-function image(n, main, share, other, alpha = 255) {
-  const rgba = [];
-  for (let i = 0; i < n; i++) rgba.push(...(i < n * share ? [...main, 255] : [...other, alpha]));
-  return rgba;
-}
-
-test('主色：照颜色的分布挑最像主题色的那一种；太透明的像素不算；灰的、一格都不剩的是 null', () => {
-  const blue = seedOf(image(400, [51, 104, 192], 0.7, [250, 242, 233]));
-  assert.ok(blue != null);
-  const hex = hexOf(blue);
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
-  assert.ok(b > r && b > g, `蓝色占多数的图取出蓝色，实际 ${hex}`);
-  // 抠了图的背景（全透明）不算：剩下的只有红
-  const red = hexOf(/** @type {number} */ (seedOf(image(400, [192, 40, 60], 0.3, [30, 200, 30], 0))));
-  assert.ok(parseInt(red.slice(1, 3), 16) > parseInt(red.slice(3, 5), 16), `透明的绿不算，实际 ${red}`);
-  assert.equal(seedOf(image(10, [0, 0, 0], 0, [9, 9, 9], 0)), null);
-  // 全是灰的：库会交回兜底的蓝，不要
-  assert.equal(seedOf(image(100, [128, 128, 128], 1, [0, 0, 0])), null);
-  assert.deepEqual(seedsOf(image(100, [128, 128, 128], 1, [0, 0, 0])), []);
-});
-
-test('前几种：好的在前、第一种就是自动取的那一种，色相隔开的都列出来', () => {
-  const rgba = [];
-  for (let i = 0; i < 300; i++) rgba.push(...(i < 150 ? [51, 104, 192, 255] : i < 250 ? [200, 60, 50, 255] : [40, 160, 70, 255]));
-  const all = seedsOf(rgba).map(hexOf);
-  assert.deepEqual(all, ['#3368c0', '#c83c32', '#28a046']);
-  assert.equal(hexOf(/** @type {number} */ (seedOf(rgba))), all[0]);
-  assert.equal(seedsOf(rgba, 2).length, 2);
-});
 
 test('照主色生成：每一格照原色表那一格的明度、从对应色板取色；深色和终端同一个主色出一样的颜色（终端方案页那张表）', () => {
   const tone = (/** @type {string} */ hex) => Hct.fromInt(argbFromHex(hex)).tone;

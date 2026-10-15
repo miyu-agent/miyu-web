@@ -1,7 +1,8 @@
 // @ts-check
-//! 照一张图生成一个主题（蓝图 `web.md`「主题」的「跟着人格的外观」第 2 条；软件包 `theme-persona`、`theme-wallpaper`，人格的编辑卡片的
-//! 「主题色」那一行共用）：从像素取主色，照 MD3 `CONTENT`、对比度 0 生成五条色板（中性、中性变体、主色、次色、第三色），全部的格子（和默认
-//! 主题一样多）。纯函数；读图在 `pixels.js`，原色表（默认主题：深色 tokyonight、浅色晨光）在 `design.js`。
+//! 照一个主色生成一个主题（蓝图 `web.md`「主题」的「跟着人格的外观」第 2 条；软件包 `theme-persona`、`theme-wallpaper`，人格的编辑卡片的
+//! 「主题色」那一行共用）：照 MD3 `CONTENT`、对比度 0 生成五条色板（中性、中性变体、主色、次色、第三色），全部的格子（和默认主题一样多）。
+//! 纯函数；原色表（默认主题：深色 tokyonight、浅色晨光）在 `design.js`。主色的候选不在这里取：头像的由核心算（`persona.get` 的
+//! `seeds`），壁纸的由网页服务算（`/wallpaper` 的 `seeds`），两处都是核心门面的 `miyu_client::seeds`（2026-10-14 项目主人定）。
 //!
 //! 每一格怎么来（2026-10-14 项目主人定，两个头同一套，终端的方案页「终端配色方案」）：
 //! - 归了色板的（`KIND`）：照原色表里这一格的明度（HCT 的 tone），从那条色板取同一明度的颜色：明暗层次和默认主题一样，只换色相。
@@ -13,13 +14,8 @@
 //!
 //! 用 `CONTENT` 不用 `TONAL_SPOT`：后者把底色那条色板也染得很重，头像取到肤色、金发时整页发棕发浑。
 
-import { QuantizerCelebi, Score, Hct, SchemeContent, Blend, argbFromRgb, argbFromHex, hexFromArgb } from './vendor/mcu.min.js';
+import { Hct, SchemeContent, Blend, argbFromHex, hexFromArgb } from './vendor/mcu.min.js';
 import { DESIGN } from './design.js';
-
-/** 取主色时最多挑多少种颜色（MD3 取壁纸色的做法） */
-const QUANTIZE = 128;
-/** 太透明的像素不算（头像的圆角外面、抠了图的背景） */
-const MIN_ALPHA = 200;
 
 /** 色板：中性、中性变体、主色、次色、第三色（`SchemeContent` 的五条） */
 const PALETTES = { n: 'neutralPalette', nv: 'neutralVariantPalette', p: 'primaryPalette', s: 'secondaryPalette', t: 'tertiaryPalette' };
@@ -44,31 +40,6 @@ const KIND = {
     md_image: 't', mascot_fin: 't', mascot_fin_shade: 't',
   },
 };
-
-/**
- * 图里最像主题色的几种，好的在前（第一种就是自动取的那一种；几种之间色相尽量隔开）：RGBA 的像素（`ImageData.data` 那样一格四个数），
- * 太透明的不算；灰的、一格都不剩的取不出，是空的。
- * @param {ArrayLike<number>} rgba
- * @param {number} [count]
- * @returns {number[]} ARGB
- */
-export function seedsOf(rgba, count = 4) {
-  const pixels = [];
-  for (let i = 0; i + 3 < rgba.length; i += 4) {
-    if (rgba[i + 3] < MIN_ALPHA) continue;
-    pixels.push(argbFromRgb(rgba[i], rgba[i + 1], rgba[i + 2]));
-  }
-  if (!pixels.length) return [];
-  // 一种都挑不出（全是灰的）时库交回兜底色：交 0（ARGB 的 0 是全透明，像素里不会有），滤掉
-  return Score.score(QuantizerCelebi.quantize(pixels, QUANTIZE), { desired: count, fallbackColorARGB: 0 }).filter((c) => c !== 0);
-}
-
-/**
- * 自动取的那一种（`seedsOf` 的第一种）；取不出的是 `null`。
- * @param {ArrayLike<number>} rgba
- * @returns {number|null} ARGB
- */
-export const seedOf = (rgba) => seedsOf(rgba, 1)[0] ?? null;
 
 /**
  * 照主色生成一个主题的浅色或深色那一份：全部的格子（和原色表、默认主题一样多）。
@@ -107,9 +78,6 @@ export function matugenOf(json) {
   const source = json?.source;
   return typeof source === 'string' && /^#[0-9a-f]{6}$/i.test(source) ? { source: source.toLowerCase() } : null;
 }
-
-/** ARGB 写成 `#rrggbb`（小写；存进人格、给人看、记缓存）。 @param {number} argb */
-export const hexOf = (argb) => hexFromArgb(argb).toLowerCase();
 
 /** 画在这个颜色上面的记号用深的还是浅的字色（MD3 的明度 60 以上的算浅色）。 @param {number|string} color ARGB 或 `#rrggbb` */
 export function inkOf(color) {
