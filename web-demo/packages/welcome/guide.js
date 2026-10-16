@@ -65,6 +65,8 @@ export class Guide {
       if (!this.layer.contains(/** @type {Node} */ (e.target))) this.focusScreen();
     };
     this.onScroll = () => this.ctx.mascot?.refresh?.();
+    // 步骤条放不放得下照这一栏多宽：窗口变了重新量（`fitSteps`）
+    this.onResize = new ResizeObserver(() => this.fitSteps());
   }
 
   /**
@@ -109,6 +111,7 @@ export class Guide {
 
   /** 收起：淡出，吉祥物跳回输入框上。 */
   close() {
+    this.onResize.disconnect();
     this.layer.removeEventListener('keydown', this.onKey);
     document.removeEventListener('focusin', this.onFocus);
     this.page.removeEventListener('scroll', this.onScroll);
@@ -225,7 +228,20 @@ export class Guide {
     // 这次起页面时设了账号的（直接连网页软件、一次性码连上的）：最前面多一段「账号」，算走过（蓝图「连核心」第 1 条下面几款）
     const list = this.ctx.host?.signedUp ? ['account', ...NUMBERED] : NUMBERED;
     const at = list.indexOf(this.step);
-    replace(this.steps, list.map((s, i) => h(`li${i === at ? '.is-now' : ''}`, `${i + 1} ${this.t(`steps.${s}`)}`)));
+    replace(this.steps, list.map((s, i) => {
+      const name = this.t(`steps.${s}`);
+      return h(`li${i === at ? '.is-now' : ''}`, { title: name }, h('span', String(i + 1), h('span.wl-step-name', ` ${name}`)));
+    }));
+    this.onResize.observe(this.head);
+    this.fitSteps();
+  }
+
+  /**
+   * 步骤条一行放不下（英文、日文的名字长，2026-10-16 照验收：原来折成两行）：别的几步只写编号，现在这一步照旧写名字，悬停看名字。
+   */
+  fitSteps() {
+    this.steps.classList.remove('is-tight');
+    if (this.head.scrollWidth > this.head.clientWidth || this.steps.scrollWidth > this.steps.clientWidth) this.steps.classList.add('is-tight');
   }
 
   /** 主按钮能不能点、写什么（测试连接那一屏的跟着测的结果变）。 */

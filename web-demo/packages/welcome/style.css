@@ -13,9 +13,11 @@
 .wl-head[hidden] { display: none; }
 .wl-brand { color: var(--text-soft); font-size: 13px; font-weight: 600; }
 .wl-steps { display: flex; align-items: center; margin: 0; padding: 0; color: var(--text-faint); font-size: 12.5px; list-style: none; gap: 8px; }
-.wl-steps li { display: flex; align-items: center; gap: 8px; }
+/* 一步的名字不折行（英文、日文的长：原来挤不下时「1」和「Language」折成两行）；一行放不下的别的几步只写编号（`fitSteps`） */
+.wl-steps li { display: flex; flex: none; align-items: center; gap: 8px; white-space: nowrap; }
 .wl-steps li + li::before { content: ''; width: 16px; height: 1px; background: var(--line); }
 .wl-steps li.is-now { color: var(--text); font-weight: 600; }
+.wl-steps.is-tight li:not(.is-now) .wl-step-name { display: none; }
 
 /* 一屏：往前走的从右边滑进来 12px，往回的从左边 */
 .wl-screen { display: grid; gap: 0; animation: wl-in-fwd 0.2s var(--ease-out) both; }
