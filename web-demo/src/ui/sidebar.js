@@ -70,10 +70,11 @@ export class Sidebar {
       this.face, h('div', this.name, h('span', this.dot, this.status)));
     this.setLook(null);
     this.el = h('aside.sidebar',
+      // 收起按钮在最左边，和收起以后对话区左上角的展开按钮是同一个位置：收起、展开、悬停浮出来都不跳（2026-10-16 项目主人照 Claude）
       h('header.brand-row',
+        h('button.icon-button.sidebar-collapse-button', { type: 'button', title: t('sidebar.collapse'), onclick: on.collapse }, icon('panel-left-close')),
         this.identity,
         h('button.new-chat-button', { type: 'button', title: t('sidebar.new_session'), onclick: on.newSession }, icon('square-pen')),
-        h('button.icon-button.sidebar-collapse-button', { type: 'button', title: t('sidebar.collapse'), onclick: on.collapse }, icon('panel-left-close')),
         h('button.icon-button.sidebar-close', { type: 'button', title: t('sidebar.collapse'), onclick: on.close }, icon('x'))),
       h('nav.session-list', h('div.session-track', this.pill, this.items)),
       h('footer.sidebar-footer', h('div.sidebar-actions', this.actions, this.themeButton)));

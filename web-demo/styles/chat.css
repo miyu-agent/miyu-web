@@ -46,10 +46,12 @@
 /* 不挂在她头下的一行：回报、压缩、清空（蓝图 web.md「后台命令、子代理的回报」「压缩、清空」）。和收尾那一行一样对齐、
    一样大：缩进到她的内容那一列，等宽 13px，字暗、记号有颜色；能点开的悬停亮一档，点开下面铺底色 */
 /* 提示行（回报、压缩、清空）：和时间线收起那一行一个样子（正文字体 600、11.5px、text 的六成二），记号照旧有颜色（蓝图 web.md「后台命令、子代理的回报」） */
-.note { margin-bottom: 12px; padding-left: 40px; color: color-mix(in srgb, var(--text) 62%, var(--surface)); font: 600 11.5px/1.5 var(--sans); }
+.note { margin-bottom: 18px; padding-left: 40px; color: color-mix(in srgb, var(--text) 62%, var(--surface)); font: 600 11.5px/1.5 var(--sans); }
 /* 上下各空一行，一行照提示行自己的字高（11.5px × 1.5），不照正文（2026-10-12 项目主人：原来照正文的一行，上 25、下 28，看着比一行宽；
-   10-10 那次是从上 33、下 40 收到正文的一行）：上面那一块的下边距 30 收掉 12，下面接收起那一行时它自己还有 7 的留白 */
-.assistant-message + .note, .assistant-message + .compacting { margin-top: -12px; }
+   10-10 那次是从上 33、下 40 收到正文的一行）：上面那一块的下边距 30 收掉 6、下面空 18，上下都约 18（2026-10-16 项目主人：原来上下都只有 12，离得太近） */
+.assistant-message + .note, .assistant-message + .compacting { margin-top: -6px; }
+/* 一连几条回报：彼此照旧空 12，不各空一行 */
+.note + .note { margin-top: -6px; }
 /* 压缩的进度（蓝图 web.md「压缩的进度」，方案 A）：和回报那一行一样缩进；流光照运行状态行，下面一根细条，过了一会儿呼吸 */
 .compacting {
   --cp-base: color-mix(in srgb, var(--accent) 85%, black);
@@ -277,7 +279,7 @@
 .stage-info { position: absolute; z-index: 14; top: 12px; left: 16px; display: flex; max-width: calc(100% - 96px); pointer-events: none; }
 .stage-info:empty { display: none; }
 .stage-info > * { pointer-events: auto; }
-.app-shell.is-sidebar-collapsed .stage-info { left: 56px; }
+.app-shell.is-sidebar-collapsed .stage-info { top: 20px; left: 56px; }
 .chat-crumbs:not([hidden]) + .stage-info { top: 7px; right: 16px; left: auto; max-width: 45%; }
 @media (max-width: 836px) { .stage-info { left: 56px; } }
 

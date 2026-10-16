@@ -24,6 +24,8 @@
 }
 /* 收起着、指针靠到最左边那一条：左栏临时浮出来，盖在对话区上面、不挤它，右边一道浮起来的影；离开了滑回去 */
 .app-shell.is-sidebar-collapsed.is-sidebar-peek .sidebar {
+  /* 盖在吉祥物那一层（软件包 mascot 的 .mascot-layer，40）上面：浮出来的左栏遮住它（2026-10-16 项目主人） */
+  z-index: 41;
   transform: none; opacity: 1; pointer-events: auto; box-shadow: var(--peek-shadow);
   transition: transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.2s ease, box-shadow 0.28s ease;
 }
@@ -65,7 +67,7 @@
 }
 .new-chat-button:hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }
 .new-chat-button .icon { width: 16px; height: 16px; }
-.sidebar-collapse-button { width: 30px; height: 30px; }
+.sidebar-collapse-button, .sidebar-expand-button { width: 30px; height: 30px; }
 .sidebar-collapse-button .icon, .sidebar-expand-button .icon { width: 16px; height: 16px; }
 .sidebar-close { display: none; }
 
@@ -168,6 +170,8 @@
 .stage-float { position: absolute; top: 10px; left: 12px; z-index: 15; display: flex; gap: 4px; }
 .sidebar-expand-button, .mobile-menu-button { display: none; }
 .app-shell.is-sidebar-collapsed .sidebar-expand-button { display: inline-grid; }
+/* 收起以后的展开按钮和左栏里的收起按钮叠在同一个位置（头上一行第一个，左 14、上 19）：收起、展开、悬停浮出来都不跳（2026-10-16 项目主人照 Claude） */
+.app-shell.is-sidebar-collapsed .stage-float { top: 19px; left: 14px; }
 .page-scrim { display: none; }
 
 @media (max-width: 1078px) {
@@ -195,6 +199,8 @@
   .app-shell.is-sidebar-peek .sidebar, .app-shell.is-sidebar-collapsed.is-sidebar-peek .sidebar { transform: translateX(0); box-shadow: var(--peek-shadow); }
   .page-scrim { position: fixed; inset: 0; z-index: 18; border: 0; background: var(--scrim); }
   .app-shell.is-drawer-open .page-scrim { display: block; }
+  /* 窄屏抽屉也盖住吉祥物（同上面浮出来的左栏） */
+  .app-shell.is-drawer-open .sidebar { z-index: 41; }
   .sidebar-close { display: inline-grid; width: 36px; height: 36px; }
   .sidebar-collapse-button, .app-shell.is-sidebar-collapsed .sidebar-expand-button { display: none; }
   .mobile-menu-button { display: inline-grid; width: 36px; height: 36px; }
