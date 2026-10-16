@@ -5,7 +5,8 @@
 /**
  * @typedef {{key: string, type: string, control: string, name: string, description: string, page: string, group: string,
  *   common?: boolean, layers: string[], applies: string, default?: any, options?: {value: any, name: string}[],
- *   min?: number, max?: number, max_chars?: number, element?: string}} SchemaItem 清单里的一项
+ *   min?: number, max?: number, max_chars?: number, element?: string, suggestions?: string[]}} SchemaItem 清单里的一项（`suggestions`：
+ *   控件是 `combo` 的建议值，核心照连接的语言排好先后，核心 P-9 补）
  * @typedef {{origin: {layer: string, file?: string, line?: number, env?: string}, used: boolean, value: any}} LayerValue
  * @typedef {{value?: any, origin?: LayerValue['origin'], layers?: LayerValue[]}} Entry `config.get` 里一项的最终值和每一层
  * @typedef {{key?: string, level: string, message: string, file?: string, line?: number}} Problem
@@ -361,3 +362,17 @@ export function applyServerChange(list, name, server) {
   if (!server) return list.filter((s) => s.name !== name);
   return list.some((s) => s.name === name) ? list.map((s) => (s.name === name ? server : s)) : [...list, server];
 }
+
+/**
+ * 下拉加「其他」手写（`combo`，核心 P-9 补）现在停在哪：没设的是「不设」（`null`），在建议里的是那一项，别的是「其他」、那一行字里是它。
+ * @param {string[]} suggestions @param {any} value 最终值
+ * @returns {{choice: string|null|typeof COMBO_OTHER, custom: string}}
+ */
+export function comboState(suggestions, value) {
+  if (typeof value !== 'string' || !value) return { choice: null, custom: '' };
+  if (suggestions.includes(value)) return { choice: value, custom: '' };
+  return { choice: COMBO_OTHER, custom: value };
+}
+
+/** 「其他」那一项的值：和哪个建议值都不会一样。 */
+export const COMBO_OTHER = Object.freeze({ other: true });

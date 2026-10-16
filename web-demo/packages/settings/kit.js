@@ -5,12 +5,13 @@
 //! （它自己定收不收），没有的才关弹窗。
 
 import { h } from '../../src/lib/dom.js';
-import { toggle, textField, select } from './rows.js';
+import { toggle, textField, select, combo } from './rows.js';
 
 /**
  * @typedef {{
  *   toggle: (on: boolean, change: (on: boolean) => any) => HTMLElement,
  *   select: (options: {value: any, name: string, note?: string}[], value: any, pick: (v: any) => void) => HTMLElement,
+ *   combo: (suggestions: string[], value: string|null, change: (next: string|null) => void) => HTMLElement,
  *   text: (text: string, hint: string, commit: (text: string) => void) => HTMLInputElement,
  *   field: (text: string, hint: string) => HTMLInputElement,
  *   button: (label: string, opts: {primary?: boolean, danger?: boolean}, onclick: () => void) => HTMLButtonElement,
@@ -23,6 +24,7 @@ export function sectionKit(dialog) {
   return {
     toggle,
     select: (options, value, pick) => select(dialog, options, value, pick),
+    combo: (suggestions, value, change) => combo(dialog, suggestions, value, change),
     text: (text, hint, commit) => {
       const input = textField(text, 'text', '', commit);
       if (hint) input.placeholder = hint;

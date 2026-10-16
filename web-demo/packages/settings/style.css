@@ -97,6 +97,9 @@
   background: var(--surface-2); transition: background-color 0.15s ease, box-shadow 0.15s ease; color: var(--text); font: 13px var(--sans);
 }
 .set-input.is-number { width: 96px; font-family: var(--mono); }
+/* 下拉加「其他」手写：选了「其他」下拉右边出那一行字 */
+.set-combo { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.set-combo .set-input { width: 180px; }
 .set-input:hover { background: var(--surface-3); }
 /* 聚焦：换亮底加一层软影（输入框那层影带一圈 1px 的环，放在白卡片里像描边，不用它） */
 .set-input:focus { background: var(--surface-1); box-shadow: var(--card-shadow); }

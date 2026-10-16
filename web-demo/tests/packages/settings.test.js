@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildPages, noteOf, duplicates, layerFor, expectFor, writtenIn, envRef, inputText, search, pagesWithErrors, splitKey, templateOf, realKey, itemFor, shortCount } from '../../packages/settings/model.js';
+import { buildPages, noteOf, duplicates, layerFor, expectFor, writtenIn, envRef, inputText, search, pagesWithErrors, splitKey, templateOf, realKey, itemFor, shortCount, comboState, COMBO_OTHER } from '../../packages/settings/model.js';
 import { problems } from '../../src/kernel/config.js';
 
 const schema = {
@@ -298,4 +298,13 @@ test('测试连接那一行：只列了模型的写列出几个，发了一句�
   assert.equal(testLine(ctx, { ok: true, checked: 'request', models: [], model: 'm', first_token_ms: 812 }), 'models.test_ok{"model":"m","ms":812}');
   assert.equal(testLine(ctx, { ok: false, stage: 'list', need_model: true, error: { message: 'not found' } }), 'not found · models.test_need_model');
   assert.equal(testLine(ctx, { ok: false, stage: 'list', error: { class: 'auth', message: 'bad key' } }), 'bad key');
+});
+
+test('下拉加「其他」手写（combo，核心 P-9 补）：没设停在「不设」，在建议里的停在那一项，不在的停在「其他」、那一行字里是它', () => {
+  const langs = ['简体中文', 'English', '日本語'];
+  assert.deepEqual(comboState(langs, undefined), { choice: null, custom: '' });
+  assert.deepEqual(comboState(langs, ''), { choice: null, custom: '' });
+  assert.deepEqual(comboState(langs, 'English'), { choice: 'English', custom: '' });
+  assert.deepEqual(comboState(langs, '粤语'), { choice: COMBO_OTHER, custom: '粤语' });
+  assert.deepEqual(comboState([], '粤语'), { choice: COMBO_OTHER, custom: '粤语' });
 });

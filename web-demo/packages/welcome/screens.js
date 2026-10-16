@@ -69,10 +69,13 @@ export function languageScreen(g) {
 /** 称呼、更多描述最多几个字（核心 P-9 的配置清单） */
 const NAME_MAX = 64;
 const ABOUT_MAX = 2000;
+/** 回复语言（核心 P-9 补） */
+const LANGUAGE_KEY = 'profile.preferred_reply_language';
 
 /**
- * 关于你（第 8 条下面一款；核心 P-9，2026-10-13 项目主人定两部分）：「AI 怎么称呼你」（必填）、「更多描述（可选）」，先填现在写着的。
- * 「下一步」和现在的不一样的写个人设置：写了的写，清空了的删掉。新会话生效。
+ * 关于你（第 8 条下面一款；核心 P-9，2026-10-13 项目主人定两部分）：「AI 怎么称呼你」（必填）、「更多描述（可选）」，先填现在写着的；
+ * 核心 P-9 补起第三行「回复语言（可选）」：下拉加「其他」手写（设置页的 `combo`），建议值照 `config.schema` 那一项的 `suggestions`，
+ * 旧核心没有这一项的不画这一行。「下一步」和现在的不一样的写个人设置：写了的写，清空了的删掉。新会话生效。
  * @param {import('./guide.js').Guide} g
  */
 export function profileScreen(g) {
@@ -81,7 +84,12 @@ export function profileScreen(g) {
   const name = /** @type {HTMLInputElement} */ (h('input.set-input.ob-input', { type: 'text', maxlength: String(NAME_MAX), placeholder: t('profile.name_hint'), spellcheck: 'false', autocomplete: 'off' }));
   const about = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.wl-area', { maxlength: String(ABOUT_MAX), rows: '5', placeholder: t('profile.about_hint') }));
   /** 现在写着的（读到以前是空的） */
-  const now = { name: '', about: '' };
+  const now = { name: '', about: '', language: '' };
+  /** 回复语言这一行选着、写着的（`null` 是不设） */
+  let language = /** @type {string|null} */ (null);
+  const row = (/** @type {string} */ label, /** @type {HTMLElement} */ control) => h('div.ob-field.wl-profile-row', h('span.ob-field-name', label), h('div.ob-field-control', control));
+  /** 回复语言那一行：清单和现在的值都到了才画 */
+  const languageRow = h('div.wl-profile-slot');
   core.request('config.get', { keys: ['profile.name', 'profile.about'] }).then((/** @type {any} */ got) => {
     const read = (/** @type {string} */ k) => (typeof got?.items?.[k]?.value === 'string' ? got.items[k].value : '');
     now.name = read('profile.name');
@@ -91,19 +99,27 @@ export function profileScreen(g) {
     if (!about.value) about.value = now.about;
     g.sync();
   }).catch(() => {});
+  // 分开问：旧核心不认这个键，整个拒（`unknown_config_key`），不能连累上面两项
+  Promise.all([core.request('config.schema', { keys: [LANGUAGE_KEY] }), core.request('config.get', { keys: [LANGUAGE_KEY] })]).then(([schema, got]) => {
+    const item = schema?.items?.find((/** @type {any} */ i) => i.key === LANGUAGE_KEY);
+    if (!item) return;
+    const value = got?.items?.[LANGUAGE_KEY]?.value;
+    now.language = typeof value === 'string' ? value : '';
+    language = now.language || null;
+    languageRow.replaceWith(row(t('profile.language'), g.kit.combo(Array.isArray(item.suggestions) ? item.suggestions : [], language, (next) => { language = next; })));
+  }).catch(() => {});
   name.addEventListener('input', () => g.sync());
-  const row = (/** @type {string} */ label, /** @type {HTMLElement} */ control) => h('div.ob-field.wl-profile-row', h('span.ob-field-name', label), h('div.ob-field-control', control));
   return {
     title: t('profile.title'),
     sub: t('profile.sub'),
-    body: h('div.wl-profile', row(t('profile.name'), name), row(t('profile.about'), about)),
+    body: h('div.wl-profile', row(t('profile.name'), name), row(t('profile.about'), about), languageRow),
     focus: name,
     next: {
       ready: () => !!name.value.trim(),
       run: async () => {
         /** @type {{key: string, value?: string, unset?: boolean}[]} */
         const changes = [];
-        for (const [key, value, was] of [['profile.name', name.value.trim(), now.name], ['profile.about', about.value.trim(), now.about]]) {
+        for (const [key, value, was] of [['profile.name', name.value.trim(), now.name], ['profile.about', about.value.trim(), now.about], [LANGUAGE_KEY, (language ?? '').trim(), now.language]]) {
           if (value === was) continue;
           changes.push(value ? { key, value } : { key, unset: true });
         }
@@ -111,6 +127,7 @@ export function profileScreen(g) {
           await core.request('config.set', { layer: 'personal', changes });
           now.name = name.value.trim();
           now.about = about.value.trim();
+          now.language = (language ?? '').trim();
         }
         g.go('preset', 1);
         return null;

@@ -4,7 +4,7 @@
 //! （`look.js`）共用 `shell`。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { noteOf, envRef, inputText, layerFor, writtenIn, secretName, referenceOptions } from './model.js';
+import { noteOf, envRef, inputText, layerFor, writtenIn, secretName, referenceOptions, comboState, COMBO_OTHER } from './model.js';
 
 /**
  * 一组：组名，下面一行行。
@@ -125,6 +125,7 @@ function control(dialog, item, value, save, saveSecret) {
     return select(dialog, options, value ?? null, (v) => save(v === null ? { unset: true } : { value: v }));
   }
   if (item.control === 'list') return list(dialog, item, Array.isArray(value) ? value : [], (next) => save({ value: next }));
+  if (item.control === 'combo') return combo(dialog, Array.isArray(item.suggestions) ? item.suggestions : [], value, (next) => save(next === null ? { unset: true } : { value: next }));
   const env = envRef(value);
   if (item.type === 'reference' && !env) {
     // 选模型的：下拉，第一项「不指定」（照核心的默认，写在说明里）；列表里没有的现值照原样留一项
@@ -223,6 +224,39 @@ export function select(dialog, options, value, pick) {
   const chosen = options.find((o) => JSON.stringify(o.value) === JSON.stringify(value));
   const button = h('button.set-select', { type: 'button', onclick: () => menu(dialog, button, options, value, pick) }, h('span', chosen?.name ?? inputText(value)), icon('chevron-down'));
   return button;
+}
+
+/**
+ * 下拉加「其他」手写（`combo`，核心 P-9 补）：第一项「不设」，接着照先后列建议值，最后一项「其他」；选了「其他」下拉旁边出一行字，
+ * `Enter`、离开时存那一行。已经写了、不在建议里的值，停在「其他」、那一行字里是它。选「不设」、把那一行清空交 `null`。
+ * @param {any} dialog @param {string[]} suggestions @param {any} value 现在的值 @param {(next: string|null) => void} change
+ */
+export function combo(dialog, suggestions, value, change) {
+  const ctx = dialog.ctx;
+  const state = comboState(suggestions, value);
+  let choice = state.choice;
+  const options = [{ value: null, name: ctx.text('combo_unset') }, ...suggestions.map((s) => ({ value: s, name: s })), { value: COMBO_OTHER, name: ctx.text('combo_other') }];
+  const field = textField(state.custom, 'text', '', (text) => change(text || null));
+  field.hidden = choice !== COMBO_OTHER;
+  const box = h('div.set-combo', field);
+  const pick = (/** @type {any} */ v) => {
+    choice = v;
+    draw();
+    field.hidden = v !== COMBO_OTHER;
+    if (v === COMBO_OTHER) {
+      field.focus();
+      return;
+    }
+    field.value = '';
+    change(v);
+  };
+  const draw = () => {
+    const button = select(dialog, options, choice, pick);
+    if (box.firstChild !== field) box.firstChild?.replaceWith(button);
+    else box.prepend(button);
+  };
+  draw();
+  return box;
 }
 
 /** 在 `anchor` 下面开一个菜单；点外面、`Esc`、选了一项关上。 */
