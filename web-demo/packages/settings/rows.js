@@ -150,8 +150,8 @@ function control(dialog, item, value, save, saveSecret) {
   }
   // 文字、数：一行字，`Enter`、离开时存，整串交给核心照类型读（`input`）；清空了是从这一层删掉（回到默认）；环境变量引用的先写
   // 「来自环境变量 X」，点了才改
-  // 能写很长的（「更多描述」这种，最多上千字）：几行的框，占满这一行（`shell` 照 `.set-area` 把控件放到名字下面）
-  if (isLong(item) && !env) return areaField(inputText(value), (text) => save(text === '' ? { unset: true } : { value: text }));
+  // 几行的字（控件 `textarea`，核心 P-9 三补：「更多描述」，能分行）：几行的框，占满这一行（`.set-area` 把控件放到名字下面）
+  if (item.control === 'textarea' && !env) return areaField(inputText(value), (text) => save(text === '' ? { unset: true } : { value: text }));
   const field = textField(inputText(env ? '' : value), item.control === 'number' ? 'number' : 'text', item.max != null && item.min != null ? `${item.min} – ${item.max}` : '', (text) => save(text === '' ? { unset: true } : { input: text }));
   if (!env) return field;
   const label = h('button.set-env', { type: 'button', onclick: () => { label.replaceWith(field); field.focus(); } }, ctx.text('from_env', { name: env }));
@@ -224,11 +224,6 @@ export function textField(text, kind, hint, commit) {
   return input;
 }
 
-/** 文字项能写多长算「长」：最多字数超过这个的画几行的框（`areaField`）。 */
-const LONG_TEXT = 200;
-
-/** 这一项画几行的框：文字、一行字的控件，最多能写的字数（文字项的 `max`）超过 `LONG_TEXT`。 @param {import('./model.js').Item} item */
-export const isLong = (item) => item.type === 'text' && (item.control === 'text' || !item.control) && (item.max ?? 0) > LONG_TEXT;
 
 /**
  * 几行的框：`Enter` 换行，离开时字变了才存，`Esc` 放回原来的；改了打记号（同 `textField`），存的时候去掉前后的空白。
