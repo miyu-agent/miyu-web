@@ -176,3 +176,26 @@ test('要人确认、没定就取消了的那一步：这一段后面一行交�
   assert.equal(got[1].turn, 4);
   assert.deepEqual(reportOf(got[1].event, got[1].asked), { type: 'cancelled', kind: 'approve' });
 });
+
+test('她发出去的图（核心 X-19）：一张一条，排在那一步后面、跟着她这一轮；表情包、描述照原样；没有 blob 的、不认识的种类跳过', () => {
+  const image = { kind: 'image', blob: 'ab12', media_type: 'image/gif', width: 300, height: 240 };
+  const entries = [
+    { id: 'm2', kind: 'user', text: '来张图', turn: 4, level: 'workspace', at: AT },
+    { id: 'g7.0', kind: 'group', turn: 4, steps: ['b7.0'], summary: [{ text: '发了表情包' }], at: AT },
+    { id: 'b7.0', kind: 'tool', group: 'g7.0', turn: 4, call: 'c1', name: 'send_sticker', state: 'ok', args: '{}', at: AT },
+    { id: 's8.0', kind: 'media', turn: 4, image, alt: '一只猫在点头', sticker: true, at: AT },
+    { id: 's8.1', kind: 'media', turn: 4, image: { ...image, name: 'b.png', media_type: 'image/png' }, at: AT },
+    { id: 's8.2', kind: 'media', turn: 4, image: { kind: 'image' }, at: AT },
+    { id: 'z9', kind: 'later_kind', turn: 4, at: AT },
+    { id: 'b9.0', kind: 'reply', turn: 4, text: '喏', at: AT },
+  ];
+  const got = itemsOf(entries, { state: 'busy', since: AT, permission: { level: 'workspace' } });
+  assert.deepEqual(got.items.map((it) => `${it.type}:${it.key}`), ['user:m2', 'steps:g7.0', 'media:s8.0', 'media:s8.1', 'reply:b9.0']);
+  assert.deepEqual(got.items[2], { type: 'media', key: 's8.0', turn: 4, image: { blob: 'ab12', media_type: 'image/gif', width: 300, height: 240, name: null }, alt: '一只猫在点头', sticker: true });
+  assert.equal(got.items[3].sticker, false);
+  assert.equal(got.items[3].alt, null);
+  assert.equal(got.items[3].image.name, 'b.png');
+  // 只发了图、还没开口的一轮也算她来过：不画三个球
+  const only = itemsOf(entries.slice(0, 4), { state: 'busy', since: AT, permission: { level: 'workspace' } });
+  assert.equal(only.items.some((it) => it.type === 'waiting'), false);
+});

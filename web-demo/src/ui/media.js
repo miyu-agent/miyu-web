@@ -3,6 +3,7 @@
 //! `shared.js:97-290`（音频播放器）。地址由调用的一方给（本机的经宿主换，可能要等：交 `Promise`；网上的照原样）。
 //!
 //! - 图片：最宽最高 250px，按图的宽高先占好地方；点开是灯箱；读不出来的写一句，本机的再写按哪个路径找的。
+//! - 表情包（她发出去的、`sticker` 的）：长边照 `layout.json` 的 `sticker`，不放大；不铺底、不罩黑、点不开。
 //! - 视频：原生控制条，右上角一个全页播放的按钮（悬停才露），下面一行说明。
 //! - 音频：旧版的自制播放器：封面块、名字、时长；播放、进度条（点、拖、左右键 5 秒）、静音、音量、下载。
 
@@ -18,16 +19,17 @@ const withUrl = (el, attr, url) => {
 
 /**
  * 一张图（`.conversation-media`）。知道宽高的先按比例占好地方，图来了不跳。
- * @param {{url: string|Promise<string>, name?: string, width?: number, height?: number, workspace?: () => void, lightbox?: () => any, tried?: string}} what
- *   `lightbox` 交回现在的灯箱（软件包 lightbox 的服务；没装是 `undefined`）；`tried` 本机的图按哪个路径找（读不出来时写出来）
+ * @param {{url: string|Promise<string>, name?: string, alt?: string, width?: number, height?: number, workspace?: () => void, lightbox?: () => any, tried?: string}} what
+ *   `lightbox` 交回现在的灯箱（软件包 lightbox 的服务；没装是 `undefined`）；`tried` 本机的图按哪个路径找（读不出来时写出来）；
+ *   `alt` 一句描述（她发出去的图带的）：写进图的 alt，读不出来时写在那一句下面
  */
 export function imageCard(what) {
-  const img = /** @type {HTMLImageElement} */ (h('img', { alt: what.name ?? '', loading: 'lazy', decoding: 'async' }));
+  const img = /** @type {HTMLImageElement} */ (h('img', { alt: what.alt ?? what.name ?? '', loading: 'lazy', decoding: 'async' }));
   /** 点开时用的地址：要等的等到了才有 */
   let url = typeof what.url === 'string' ? what.url : '';
   setUrl(img, 'src', what.url).then((u) => { url = u; });
   const fallback = h('div.conversation-media-fallback', { hidden: true }, icon('circle-alert'), h('span', t('media.image_failed')),
-    what.tried ? h('span.conversation-media-tried', what.tried) : null);
+    what.alt ? h('span.conversation-media-alt', what.alt) : null, what.tried ? h('span.conversation-media-tried', what.tried) : null);
   const ratio = what.width && what.height && what.width / what.height;
   const visual = h(`div.conversation-media-visual${ratio && ratio > 0.05 && ratio < 20 ? '.has-aspect' : ''}`,
     { role: 'button', tabindex: '0', title: what.name ?? '', style: ratio ? `aspect-ratio: ${what.width} / ${what.height}` : null }, img, fallback);
@@ -52,6 +54,32 @@ export function imageCard(what) {
     }
   });
   return h('figure.conversation-media', visual);
+}
+
+/**
+ * 一张表情包（`.conversation-media.is-sticker`）：长边照 `layout.json` 的 `sticker`，小的不放大，按宽高写死大小（图来了不跳）；
+ * 透明的照原样，不铺底、不罩黑，点不开。读不出来的同 `imageCard`。
+ * @param {{url: string|Promise<string>, width: number, height: number, alt?: string}} what
+ */
+export function stickerCard(what) {
+  const img = /** @type {HTMLImageElement} */ (h('img', { alt: what.alt ?? '', decoding: 'async' }));
+  setUrl(img, 'src', what.url);
+  const [width, height] = stickerSize(what.width, what.height, res.layout.sticker);
+  const fallback = h('div.conversation-media-fallback', { hidden: true }, icon('circle-alert'), h('span', t('media.image_failed')),
+    what.alt ? h('span.conversation-media-alt', what.alt) : null);
+  const visual = h('div.conversation-media-visual', { style: `width: min(100%, ${width}px); aspect-ratio: ${width} / ${height}` }, img, fallback);
+  img.addEventListener('error', () => {
+    img.remove();
+    fallback.hidden = false;
+    visual.style.removeProperty('aspect-ratio');
+  }, { once: true });
+  return h('figure.conversation-media.is-sticker', visual);
+}
+
+/** 表情包画多大：长边缩到 `long`，比它小的照原样。 @param {number} width @param {number} height @param {number} long @returns {[number, number]} */
+export function stickerSize(width, height, long) {
+  const k = Math.min(1, long / Math.max(width, height, 1));
+  return [Math.max(1, Math.round(width * k)), Math.max(1, Math.round(height * k))];
 }
 
 /**

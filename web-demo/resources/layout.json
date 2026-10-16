@@ -67,6 +67,7 @@
   "effort_order": ["off", null, "minimal", "low", "medium", "high", "xhigh", "max", "on"],
   "block_name_max": 24,
   "user_media": 160,
+  "sticker": 160,
   "note_marks": {
     "good": "●",
     "error": "●",

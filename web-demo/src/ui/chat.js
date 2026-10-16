@@ -15,6 +15,8 @@ import { userNode, endNode } from './said.js';
 import { noteNode } from './notes.js';
 import { CompactingRow } from './compacting.js';
 import { group } from '../model/group.js';
+import { imageCard, stickerCard } from './media.js';
+import { blobUrl } from '../core/host.js';
 
 export class Chat {
   /**
@@ -358,6 +360,17 @@ function herNode(cont, look) {
  */
 
 /**
+ * 她发出去的一张图（蓝图「图片」第 4 条）：表情包照 `stickerCard`，别的照回答里的图（点开是灯箱）。宽高核心一定给，没给的照不知道宽高的图。
+ * @param {any} it @param {Chat} chat
+ */
+function mediaNode(it, chat) {
+  const { blob, media_type: type, width, height, name } = it.image;
+  const url = blobUrl(blob, type);
+  if (it.sticker && width && height) return stickerCard({ url, width, height, alt: it.alt ?? undefined });
+  return imageCard({ url, name: name ?? '', alt: it.alt ?? undefined, width: width ?? undefined, height: height ?? undefined, lightbox: chat.ext?.lightbox });
+}
+
+/**
  * 她的一条：回答、三个球、收尾那一行、夹在中间的回报。时间线的一段见 `reconcile`。
  * 回答照 Markdown 画（`markdown/render.js`）；在收的先补齐半截的写法，字一变整条换掉重画。
  */
@@ -366,6 +379,7 @@ function itemNode(it, chat) {
   // 她正在回答时来的回报：夹在她这一块里（上下两段时间线中间）；软件包画的（确认和提问了结以后留的）照挂载位 `chat.item`
   if (it.type === 'note') return it.slot ? slotNode(it, chat) : noteNode(it, chat.where, chat.markdown);
   if (it.type === 'waiting') return waitingNode();
+  if (it.type === 'media') return mediaNode(it, chat);
   const node = h('div.reply.markdown-body');
   renderMarkdown(node, it.text, { say: chat.markdown.say, hooks: chat.markdown.hooks(it.scope), streaming: it.streaming });
   return node;

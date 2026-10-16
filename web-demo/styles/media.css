@@ -31,6 +31,14 @@
 /* 本机的图按哪个路径找的：小字等宽，长的折行 */
 .conversation-media-tried { font-family: var(--mono); font-size: 11px; line-height: 1.45; word-break: break-all; user-select: text; }
 
+/* 读不出来时她给的那一句描述 */
+.conversation-media-alt { color: var(--text-soft); line-height: 1.45; user-select: text; }
+/* 表情包：大小由 stickerCard 照宽高写死；透明的照原样，不铺底、不加圆角、不罩黑，点不开 */
+.conversation-media.is-sticker .conversation-media-visual { border-radius: 0; background: none; cursor: default; }
+.conversation-media.is-sticker .conversation-media-visual::after { content: none; }
+.conversation-media.is-sticker img { width: 100%; height: 100%; max-height: none; }
+.conversation-media.is-sticker .conversation-media-fallback { border-radius: var(--radius); background: var(--surface-soft); }
+
 /* 视频：原生控制条，右上角全页播放 */
 .video-card { display: flex; flex-direction: column; align-items: center; margin: 10px 0 4px; }
 .video-shell { position: relative; width: min(100%, 480px); }

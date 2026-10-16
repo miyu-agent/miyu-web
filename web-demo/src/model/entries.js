@@ -58,6 +58,14 @@ export function itemsOf(entries, status, opts = {}) {
         spoke.add(e.turn);
         items.push({ type: 'reply', key: e.id, turn: e.turn ?? null, text: e.text ?? '', streaming: !!e.open });
         break;
+      case 'media': {
+        // 她发出去的一张图（核心 X-19）：跟着她这一轮画在正文里，和回答的字一样（2026-10-16 项目主人定）
+        const item = mediaItem(e);
+        if (!item) break;
+        spoke.add(e.turn);
+        items.push(item);
+        break;
+      }
       case 'group':
         spoke.add(e.turn);
         items.push(segmentOf(e, byId), ...cancelledApprovals(e, byId));
@@ -87,6 +95,23 @@ export function itemsOf(entries, status, opts = {}) {
     queued,
     running: busy ? { turn, start: status.since ? Date.parse(status.since) : Date.now(), level } : null,
     level,
+  };
+}
+
+/**
+ * 她发出去的一张图：图照附件那一格（`blob`、媒体类型、宽高一定有）；`alt` 一句描述，`sticker` 是表情包。没有 `blob` 的不画。
+ * @param {any} e
+ */
+function mediaItem(e) {
+  const a = e.image;
+  if (!a || typeof a.blob !== 'string' || !a.blob) return null;
+  return {
+    type: 'media',
+    key: e.id,
+    turn: e.turn ?? null,
+    image: { blob: a.blob, media_type: a.media_type ?? 'image/png', width: a.width ?? null, height: a.height ?? null, name: a.name ?? null },
+    alt: typeof e.alt === 'string' && e.alt ? e.alt : null,
+    sticker: !!e.sticker,
   };
 }
 
