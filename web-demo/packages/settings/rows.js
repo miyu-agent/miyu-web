@@ -203,17 +203,23 @@ export function textField(text, kind, hint, commit) {
     input.dataset.dirty = '';
     if (input.value !== text) commit(input.value.trim());
   };
+  const revert = () => {
+    input.value = text;
+    input.dataset.dirty = '';
+  };
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       done();
     }
+    // 引导这类没人在捕获阶段拿 `Esc` 的地方：自己放回
     if (e.key === 'Escape' && input.dataset.dirty === '1') {
       e.stopPropagation();
-      input.value = text;
-      input.dataset.dirty = '';
+      revert();
     }
   });
+  // 设置弹窗在捕获阶段先拿到 `Esc`，改了没存的交到这里放回
+  input.addEventListener('set-revert', revert);
   input.addEventListener('blur', done);
   return input;
 }
@@ -225,20 +231,25 @@ const LONG_TEXT = 200;
 export const isLong = (item) => item.type === 'text' && (item.control === 'text' || !item.control) && (item.max ?? 0) > LONG_TEXT;
 
 /**
- * 几行的框：`Enter` 换行，离开时字变了才存，`Esc` 放回原来的；改了打记号（同 `textField`），字照原样存（不去前后空白里的换行以外的东西）。
+ * 几行的框：`Enter` 换行，离开时字变了才存，`Esc` 放回原来的；改了打记号（同 `textField`），存的时候去掉前后的空白。
  * @param {string} text @param {(text: string) => void} commit
  */
 export function areaField(text, commit) {
   const area = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.set-area', { rows: '4', spellcheck: 'false' }));
   area.value = text;
   area.addEventListener('input', () => { area.dataset.dirty = '1'; });
+  const revert = () => {
+    area.value = text;
+    area.dataset.dirty = '';
+  };
   area.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && area.dataset.dirty === '1') {
       e.stopPropagation();
-      area.value = text;
-      area.dataset.dirty = '';
+      revert();
     }
   });
+  // 设置弹窗在捕获阶段先拿到 `Esc`，改了没存的交到这里放回
+  area.addEventListener('set-revert', revert);
   area.addEventListener('blur', () => {
     if (area.dataset.dirty !== '1') return;
     area.dataset.dirty = '';

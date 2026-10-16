@@ -321,11 +321,17 @@ export class SettingsDialog {
     }, 80);
   }
 
-  /** `Esc`：先关框里开着的菜单、详情，再关弹窗；焦点关在框里（`Tab` 不跑到后面）。 */
+  /** `Esc`：先把正在改的字放回原来的，再关框里开着的菜单、详情，再关弹窗；焦点关在框里（`Tab` 不跑到后面）。 */
   onKey(/** @type {KeyboardEvent} */ e) {
     if (e.key === 'Escape') {
       e.stopPropagation();
       e.preventDefault();
+      // 这里在捕获阶段先拿到 `Esc`，框自己听不到：改了没存的框交给它放回（`rows.js` 的 `textField`、`areaField`），弹窗不关
+      const typing = /** @type {HTMLElement|null} */ (document.activeElement);
+      if (typing && this.panel.contains(typing) && typing.dataset.dirty === '1') {
+        typing.dispatchEvent(new CustomEvent('set-revert'));
+        return;
+      }
       const open = this.panel.querySelector('.set-menu, .set-drawer, .set-form, .set-pool.is-editing, [data-set-dismiss]');
       if (open) {
         open.dispatchEvent(new CustomEvent('set-dismiss'));
