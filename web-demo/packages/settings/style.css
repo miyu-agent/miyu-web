@@ -55,6 +55,11 @@
 .set-subgroup-name { margin: 14px 0 0; color: var(--text-soft); font-size: 12.5px; font-weight: 600; }
 .set-rows { display: flex; flex-direction: column; }
 .set-row { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+/* 几行的框：放到名字、说明下面，占满这一行；↺ 和转圈照旧在框前面 */
+.set-row:has(.set-area) { flex-wrap: wrap; }
+.set-row:has(.set-area) .set-text { flex-basis: 100%; }
+.set-row:has(.set-area) .set-control { flex: 1; }
+.set-input.set-area { flex: 1; width: auto; height: auto; min-height: 96px; padding: 7px 9px; line-height: 1.6; resize: vertical; }
 .set-rows > .set-row:last-child { border-bottom: 0; }
 /* 「明暗」那一行下面紧跟着主题卡片，不画分隔线（2026-10-11 项目主人） */
 .set-row:has(+ .set-themes) { border-bottom: 0; }
