@@ -100,14 +100,17 @@ export function profileScreen(g) {
     g.sync();
   }).catch(() => {});
   // 分开问：旧核心不认这个键，整个拒（`unknown_config_key`），不能连累上面两项
-  Promise.all([core.request('config.schema', { keys: [LANGUAGE_KEY] }), core.request('config.get', { keys: [LANGUAGE_KEY] })]).then(([schema, got]) => {
+  Promise.all([core.request('config.schema', { keys: [LANGUAGE_KEY] }), core.request('config.get', { keys: [LANGUAGE_KEY] }), g.service('settings')]).then(([schema, got]) => {
     const item = schema?.items?.find((/** @type {any} */ i) => i.key === LANGUAGE_KEY);
     if (!item) return;
     const value = got?.items?.[LANGUAGE_KEY]?.value;
     now.language = typeof value === 'string' ? value : '';
     language = now.language || null;
     languageRow.replaceWith(row(t('profile.language'), g.kit.combo(Array.isArray(item.suggestions) ? item.suggestions : [], language, (next) => { language = next; })));
-  }).catch(() => {});
+  }).catch((/** @type {any} */ err) => {
+    // 旧核心不认这个键：不画这一行，不算出错
+    if (err?.reason !== 'unknown_config_key') console.error(`回复语言那一行画不了：${err?.message ?? err}`);
+  });
   name.addEventListener('input', () => g.sync());
   return {
     title: t('profile.title'),
