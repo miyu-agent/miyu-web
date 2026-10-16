@@ -6,9 +6,9 @@
 //! 点开、收起记在这一步里，人点过的照人点的；没点过的照 `timeline.json` 的 `expand`。
 
 import { fromUnified, samePath } from '../model/diff.js';
-import { h, icon, replace } from './dom.js';
+import { h, icon, replace, hasIcon } from './dom.js';
 import { spring } from '../lib/motion.js';
-import { res, t } from '../util/res.js';
+import { res, t, moreIcons } from '../util/res.js';
 import { row, peek, messagePeek, thinkingTail, commandLines, details, kindOf } from '../model/words.js';
 import { imageCard } from './media.js';
 import { blobUrl } from '../core/host.js';
@@ -324,6 +324,13 @@ export class StepView {
     const svg = icon(name);
     if (spin) svg.classList.add('is-spin');
     replace(this.node, svg);
+    // 软件包写的图标不在常用的那一套里：读一次整套图标再画；整套里也没有这个名字的（写错了、Lucide 改了名）画通用的扳手
+    if (!hasIcon(name)) moreIcons().then(() => {
+      if (this.iconName !== name) return;
+      const again = icon(hasIcon(name) ? name : res.timeline.icon_default);
+      if (spin) again.classList.add('is-spin');
+      replace(this.node, again);
+    });
   }
 }
 

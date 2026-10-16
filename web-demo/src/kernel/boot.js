@@ -105,7 +105,7 @@ export async function boot(root) {
   // 给人看的字（工具的显示名、结果那一句）：问核心的 `human.get`；拿不到的照工具名写
   res.human = await loadHuman(conn, language.code).catch((err) => {
     console.error(`拿不到给人看的字：${err.message}`);
-    return { tools: {}, said: {} };
+    return { tools: {}, said: {}, packages: {}, icons: {} };
   });
   // 正文、状态照条目画（蓝图 `web.md`「照条目画」）：握手的 `view` 要 1 起（核心 9-8），旧核心不画，写「核心版本过旧」
   if ((hello?.view ?? 0) < 1) throw new Offline('old');
