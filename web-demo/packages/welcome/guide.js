@@ -20,7 +20,8 @@ const HOME_RIGHT = 40;
 
 /**
  * @typedef {{title: string, sub?: string|null, body: HTMLElement, back?: (() => void)|null, center?: boolean, kind?: string,
- *   next?: {label?: string|(() => string), ready: () => boolean, run: () => Promise<string|null>}|null, focus?: HTMLElement|null}} Screen
+ *   next?: {label?: string|(() => string), ready: () => boolean, run: () => Promise<string|null>}|null, focus?: HTMLElement|null,
+ *   perch?: HTMLElement|null}} Screen `perch` 是吉祥物站在哪一块的上沿（不写的照内容里第一块看得见的）
  * @typedef {{model: {id: string, model: string|null, name: string}|null, persona: string, preset: string}} Result 走完写的
  */
 
@@ -172,8 +173,15 @@ export class Guide {
           },
         },
       }, dir);
-    } else if (step === 'profile') this.show(profileScreen(this), dir);
-    else if (step === 'sandbox') this.show(sandboxScreen(this), dir);
+    } else if (step === 'profile') {
+      // 这一屏的框是设置包的样子：设置包还没起来的（重开到这一步）先转着等，不然画出来再撑开一回
+      if (!this.ctx.settings) {
+        this.show({ title: '', body: h('p.wl-wait', icon('loader-circle')), next: null, kind: 'wait' }, dir);
+        await this.service('settings');
+        if (this.step !== step) return;
+      }
+      this.show(profileScreen(this), dir);
+    } else if (step === 'sandbox') this.show(sandboxScreen(this), dir);
     else if (step === 'done') this.show(doneScreen(this), dir);
   }
 
@@ -352,8 +360,10 @@ export class Guide {
     return list;
   }
 
-  /** 这一屏内容里第一块看得见的。 */
+  /** 这一屏吉祥物站的那一块：屏自己指了的照它，不然是内容里第一块看得见的。 */
   first() {
+    const perch = this.screen?.perch;
+    if (perch?.isConnected) return perch;
     return /** @type {HTMLElement|null} */ (this.slot.querySelector('.wl-body')?.querySelector(SURFACES) ?? null);
   }
 

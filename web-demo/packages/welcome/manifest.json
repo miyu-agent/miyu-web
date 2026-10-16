@@ -84,7 +84,7 @@
         "name_hint": "名字或昵称",
         "about": "更多描述（可选）",
         "about_hint": "职业、兴趣、希望 AI 留意的事",
-        "language": "回复语言（可选）"
+        "language": "{name}（可选）"
       },
       "sandbox": {
         "title": "沙盒",
@@ -135,7 +135,7 @@
         "name_hint": "Name or nickname",
         "about": "More about you (optional)",
         "about_hint": "Work, interests, things the AI should keep in mind",
-        "language": "Reply language (optional)"
+        "language": "{name} (optional)"
       },
       "sandbox": {
         "title": "Sandbox",
@@ -186,7 +186,7 @@
         "name_hint": "名前やニックネーム",
         "about": "そのほか（任意）",
         "about_hint": "仕事、趣味、AI に気をつけてほしいこと",
-        "language": "返信の言語（任意）"
+        "language": "{name}（任意）"
       },
       "sandbox": {
         "title": "サンドボックス",

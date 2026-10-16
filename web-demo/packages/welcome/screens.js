@@ -74,8 +74,8 @@ const LANGUAGE_KEY = 'profile.preferred_reply_language';
 
 /**
  * 关于你（第 8 条下面一款；核心 P-9，2026-10-13 项目主人定两部分）：「AI 怎么称呼你」（必填）、「更多描述（可选）」，先填现在写着的；
- * 核心 P-9 补起第三行「回复语言（可选）」：下拉加「其他」手写（设置页的 `combo`），建议值照 `config.schema` 那一项的 `suggestions`，
- * 旧核心没有这一项的不画这一行。「下一步」和现在的不一样的写个人设置：写了的写，清空了的删掉。新会话生效。
+ * 核心 P-9 补起回复语言一行，排第一（2026-10-17 项目主人定，和设置页「用户」同序）：名字照 `config.schema` 那一项的 `name` 加「（可选）」，
+ * 下拉加「其他」手写（设置页的 `combo`），建议值照它的 `suggestions`；旧核心没有这一项的不画这一行。「下一步」和现在的不一样的写个人设置：写了的写，清空了的删掉。新会话生效。
  * @param {import('./guide.js').Guide} g
  */
 export function profileScreen(g) {
@@ -88,7 +88,7 @@ export function profileScreen(g) {
   /** 回复语言这一行选着、写着的（`null` 是不设） */
   let language = /** @type {string|null} */ (null);
   const row = (/** @type {string} */ label, /** @type {HTMLElement} */ control) => h('div.ob-field.wl-profile-row', h('span.ob-field-name', label), h('div.ob-field-control', control));
-  /** 回复语言那一行：清单和现在的值都到了才画 */
+  /** 回复语言那一行：清单和现在的值都到了才画；先占一行的高，画出来下面两行不跳 */
   const languageRow = h('div.wl-profile-slot');
   core.request('config.get', { keys: ['profile.name', 'profile.about'] }).then((/** @type {any} */ got) => {
     const read = (/** @type {string} */ k) => (typeof got?.items?.[k]?.value === 'string' ? got.items[k].value : '');
@@ -102,21 +102,25 @@ export function profileScreen(g) {
   // 分开问：旧核心不认这个键，整个拒（`unknown_config_key`），不能连累上面两项
   Promise.all([core.request('config.schema', { keys: [LANGUAGE_KEY] }), core.request('config.get', { keys: [LANGUAGE_KEY] }), g.service('settings')]).then(([schema, got]) => {
     const item = schema?.items?.find((/** @type {any} */ i) => i.key === LANGUAGE_KEY);
-    if (!item) return;
+    if (!item) return void languageRow.remove();
     const value = got?.items?.[LANGUAGE_KEY]?.value;
     now.language = typeof value === 'string' ? value : '';
     language = now.language || null;
-    languageRow.replaceWith(row(t('profile.language'), g.kit.combo(Array.isArray(item.suggestions) ? item.suggestions : [], language, (next) => { language = next; })));
+    languageRow.replaceWith(row(t('profile.language', { name: item.name ?? LANGUAGE_KEY }), g.kit.combo(Array.isArray(item.suggestions) ? item.suggestions : [], language, (next) => { language = next; })));
   }).catch((/** @type {any} */ err) => {
     // 旧核心不认这个键：不画这一行，不算出错
+    languageRow.remove();
     if (err?.reason !== 'unknown_config_key') console.error(`回复语言那一行画不了：${err?.message ?? err}`);
   });
   name.addEventListener('input', () => g.sync());
+  const body = h('div.wl-profile', languageRow, row(t('profile.name'), name), row(t('profile.about'), about));
   return {
     title: t('profile.title'),
     sub: t('profile.sub'),
-    body: h('div.wl-profile', row(t('profile.name'), name), row(t('profile.about'), about), languageRow),
+    body,
     focus: name,
+    // 第一块是窄的下拉、名字就在它上面：站在整张表的上沿靠右，不挡字
+    perch: body,
     next: {
       ready: () => !!name.value.trim(),
       run: async () => {

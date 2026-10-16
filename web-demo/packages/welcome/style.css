@@ -68,11 +68,12 @@
 .wl-lang:hover, .wl-lang:focus-visible { outline: 0; background: var(--surface-2); }
 .wl-lang.is-on { background: var(--surface-3); }
 .wl-tag { padding: 2px 8px; border-radius: 6px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); font-size: 12px; }
-/* 关于你：两行，名字对齐框的第一行 */
-.wl-profile { display: grid; gap: 10px; }
-/* 名字比别的屏长（「更多描述（可选）」）：这一屏名字那一列宽一些，一行写得下，和框的第一行对齐 */
-.wl-profile .wl-profile-row { grid-template-columns: 128px minmax(0, 1fr); align-items: start; }
-.wl-profile .wl-profile-row .ob-field-name { padding-top: 6px; line-height: 20px; }
+/* 关于你：三行，名字在框上面（「AI 用什么语言回复（可选）」放在左边一栏要折两三行，2026-10-17 项目主人定） */
+.wl-profile { display: grid; gap: 16px; }
+.wl-profile .wl-profile-row { grid-template-columns: minmax(0, 1fr); gap: 6px; min-height: 0; }
+.wl-profile .wl-profile-row .ob-field-name { line-height: 20px; }
+/* 回复语言那一行没到以前占着它的高（名字 20px、间隔 6px、一个下拉 30px） */
+.wl-profile .wl-profile-slot { min-height: 56px; }
 .wl-profile .wl-area { box-sizing: border-box; width: 100%; height: auto; min-height: 112px; padding: 7px 9px; line-height: 1.6; resize: vertical; }
 .wl-lang-note { color: var(--text-faint); font-size: 13px; }
 .wl-check { display: inline-flex; margin-left: auto; color: var(--accent); }
