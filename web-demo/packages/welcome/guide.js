@@ -67,7 +67,24 @@ export class Guide {
     this.onScroll = () => this.ctx.mascot?.refresh?.();
   }
 
-  /** 和设置页一个样子的控件（`settings` 包给的；它比这个包晚加载，用到时再要） */
+  /**
+   * 晚加载的服务（`settings`、`personas`：它们比这个包晚起来）：有了当场交出来，还没有的等它登记。换了界面语言重载以后直接回到
+   * 「模型」那一步，那时设置包可能还没起来（原来当场去拿，拿到空的，引导整屏空白）。
+   * @param {string} name
+   */
+  service(name) {
+    const now = this.ctx[name];
+    if (now) return Promise.resolve(now);
+    return new Promise((resolve) => {
+      const off = this.ctx.on('service.set', (/** @type {string} */ got) => {
+        if (got !== name || !this.ctx[name]) return;
+        off();
+        resolve(this.ctx[name]);
+      });
+    });
+  }
+
+  /** 和设置页一个样子的控件（`settings` 包给的；它比这个包晚加载，先 `await service('settings')` 再用） */
   get kit() {
     this.madeKit ??= this.ctx.settings.kit(this.layer, (/** @type {string} */ text) => this.say(text));
     return this.madeKit;
@@ -112,7 +129,11 @@ export class Guide {
     if (step === 'hello') this.show(helloScreen(this), dir);
     else if (step === 'language') this.show(languageScreen(this), dir);
     else if (step === 'model') {
-      const flow = this.ctx.settings.providers({
+      // 设置包还没起来的先转着等（起来了的直接画，不多闪一下）
+      if (!this.ctx.settings) this.show({ title: '', body: h('p.wl-wait', icon('loader-circle')), next: null, kind: 'wait' }, dir);
+      const settings = await this.service('settings');
+      if (this.step !== step) return;
+      const flow = settings.providers({
         ...host,
         show: (/** @type {Screen} */ screen, /** @type {1|-1} */ d) => { if (this.step === 'model') this.show(screen, d); },
         done: (/** @type {Result['model']} */ got) => {
@@ -124,9 +145,11 @@ export class Guide {
     } else if (step === 'persona' || step === 'theme' || step === 'preset') {
       // 主题照人格那一步存好的人格（2026-10-13）；没存成的（不会走到这里）跳过
       if (step === 'theme' && !this.ids.persona) return this.go(dir > 0 ? 'preset' : 'persona', dir);
-      const part = step === 'persona' ? this.ctx.personas.persona(this.kit, host)
-        : step === 'theme' ? this.ctx.personas.theme(this.kit, host, this.ids.persona) : this.ctx.personas.preset(this.kit, host);
       this.show({ title: '', body: h('p.wl-wait', icon('loader-circle')), next: null, kind: 'wait' }, dir);
+      const [personas] = await Promise.all([this.service('personas'), this.service('settings')]);
+      if (this.step !== step) return;
+      const part = step === 'persona' ? personas.persona(this.kit, host)
+        : step === 'theme' ? personas.theme(this.kit, host, this.ids.persona) : personas.preset(this.kit, host);
       await part.load();
       if (this.step !== step) return;
       const screen = part.screen();

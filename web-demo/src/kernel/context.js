@@ -46,6 +46,8 @@ export class Registry {
     if (had && had.owner !== owner) throw new Error(`服务 ${name} 已经由 ${had.owner.manifest.id} 提供`);
     this.services.set(name, { value, owner });
     this.changed(name);
+    // 用到时现找的（清单里带 `~` 的）不排进上面的依赖，要等它的听这个事件
+    this.emit('service.set', name);
   }
 
   /** 拿掉一个服务（只拿掉自己提供的）。 */

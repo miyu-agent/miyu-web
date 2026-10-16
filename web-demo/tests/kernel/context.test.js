@@ -184,3 +184,15 @@ test('字照界面语言取：这一种没有的那一句退回表里的那一�
     useLanguage({ code: 'zh', fallback: 'zh' });
   }
 });
+
+test('带 ~ 的服务不排进依赖：包照常就绪，服务后来登记时发 service.set，等它的听这个（引导换语言重载后回到「模型」那一步）', () => {
+  const reg = new Registry();
+  const heard = [];
+  let ctxOf = null;
+  const user = new Fiber(reg, pkg('user', ['settings~'], (ctx) => { ctxOf = ctx; ctx.on('service.set', (name) => heard.push([name, !!ctx.settings])); }), {});
+  user.start();
+  assert.equal(user.state, 'active');
+  assert.equal(ctxOf.settings, undefined);
+  new Fiber(reg, pkg('settings', [], (ctx) => { ctx.provide('settings', { kit: () => null }); }), {}).start();
+  assert.deepEqual(heard, [['settings', true]]);
+});
