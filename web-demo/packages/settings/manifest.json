@@ -77,6 +77,7 @@
       "of": "text",
       "default": [
         "general",
+        "user",
         "models",
         "personas",
         "presets",
@@ -128,6 +129,7 @@
       "of": "text",
       "default": {
         "general": "sliders-horizontal",
+        "user": "circle-user-round",
         "personas": "user-round",
         "models": "cpu",
         "presets": "toggle-right",
