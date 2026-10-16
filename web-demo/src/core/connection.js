@@ -18,6 +18,8 @@ export class Refusal extends Error {
 
 /** 线通着（照 WebSocket 的 `OPEN`）。 */
 const OPEN = 1;
+/** 核心一行最长 1 MiB（`protocol.md`「一行一条」，照 UTF-8 算，不算最后的换行）：超了核心断掉整条连接，所以发之前自己量。 */
+export const LINE_MAX = 1_048_576;
 
 export class Connection {
   /**
@@ -118,8 +120,13 @@ export class Connection {
         reject(new Refusal('核心断开了', -32000, 'disconnected'));
         return;
       }
+      const line = JSON.stringify({ jsonrpc: '2.0', id, method, params });
+      if (tooLong(line)) {
+        reject(new Refusal('请求太大，超过 1 MiB', -32602, 'too_large'));
+        return;
+      }
       this.waiting.set(id, { resolve, reject });
-      this.ws.send(JSON.stringify({ jsonrpc: '2.0', id, method, params }));
+      this.ws.send(line);
     });
   }
 
@@ -173,4 +180,13 @@ export class Connection {
   onStatus(fn) { this.statuses.add(fn); }
 
   status(s) { for (const fn of this.statuses) fn(s); }
+}
+
+/**
+ * 这一行照 UTF-8 超没超 `LINE_MAX`：一个 UTF-16 码元至多三个字节，短的不用编码就知道没超。
+ * @param {string} line
+ */
+export function tooLong(line) {
+  if (line.length * 3 <= LINE_MAX) return false;
+  return new TextEncoder().encode(line).length > LINE_MAX;
 }

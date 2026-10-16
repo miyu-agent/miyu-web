@@ -9,7 +9,7 @@ import { join, dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { urls } from '../src/host/browser.js';
 import { accountStorage } from '../src/kernel/storage.js';
-import { Connection, Refusal } from '../src/core/connection.js';
+import { Connection, Refusal, LINE_MAX, tooLong } from '../src/core/connection.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -210,4 +210,23 @@ test('直接连网页软件的那一份：一次性码只交一次，接着用�
       else delete globalThis[k];
     }
   }
+});
+
+test('一行超过 1 MiB 的请求不发：当场拒 too_large，连接照旧能用（核心一行最长 1 MiB，超了会断掉整条连接）', async () => {
+  const ch = /** @type {any} */ (fakeChannel());
+  const conn = new Connection(() => ch);
+  const up = conn.connect();
+  ch.readyState = 1;
+  ch.onopen();
+  await up;
+  await assert.rejects(conn.request('package.call', { data: 'a'.repeat(LINE_MAX) }), (e) => e instanceof Refusal && e.reason === 'too_large');
+  assert.equal(ch.sent.length, 0);
+  const got = conn.request('session.list', {});
+  ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', id: ch.sent[0].id, result: { ok: 1 } }) });
+  assert.deepEqual(await got, { ok: 1 });
+  // 照 UTF-8 算：汉字一个三个字节
+  assert.equal(tooLong('汉'.repeat(Math.floor(LINE_MAX / 3))), false);
+  assert.equal(tooLong('汉'.repeat(Math.floor(LINE_MAX / 3) + 1)), true);
+  assert.equal(tooLong('a'.repeat(LINE_MAX)), false);
+  assert.equal(tooLong('a'.repeat(LINE_MAX + 1)), true);
 });
