@@ -15,6 +15,8 @@
   overflow: hidden; border-radius: var(--radius); background: var(--surface-soft); cursor: zoom-in;
 }
 .conversation-media-visual.has-aspect { width: min(var(--media-max, 250px), 100%); max-height: var(--media-max, 250px); }
+/* 知道宽高的：外框照这一栏定宽，不照图（fit-content 时百分比照图算，图还没取到是 0，图到了外框才撑开、正文往下跳一下） */
+.conversation-media:has(> .has-aspect) { width: min(100%, var(--media-max, 250px)); }
 .conversation-media img { display: block; width: auto; max-width: min(100%, var(--media-max, 250px)); height: auto; max-height: var(--media-max, 250px); object-fit: contain; }
 .conversation-media-visual::after {
   position: absolute; border-radius: inherit; background: rgb(0 0 0 / 18%); content: ""; inset: 0; opacity: 0;
