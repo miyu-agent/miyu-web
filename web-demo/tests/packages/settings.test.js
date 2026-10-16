@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildPages, noteOf, duplicates, layerFor, expectFor, writtenIn, envRef, inputText, search, pagesWithErrors, splitKey, templateOf, realKey, itemFor, shortCount, comboState, COMBO_OTHER } from '../../packages/settings/model.js';
+import { buildPages, listElement, noteOf, duplicates, layerFor, expectFor, writtenIn, envRef, inputText, search, pagesWithErrors, splitKey, templateOf, realKey, itemFor, shortCount, comboState, COMBO_OTHER } from '../../packages/settings/model.js';
 import { problems } from '../../src/kernel/config.js';
 
 const schema = {
@@ -320,4 +320,16 @@ test('下拉加「其他」手写（combo，核心 P-9 补）：没设停在「�
   assert.deepEqual(comboState(langs, 'English'), { choice: 'English', custom: '' });
   assert.deepEqual(comboState(langs, '粤语'), { choice: COMBO_OTHER, custom: '粤语' });
   assert.deepEqual(comboState([], '粤语'), { choice: COMBO_OTHER, custom: '粤语' });
+});
+
+test('列表加的一个元素：int、float 的照数交，读不成数的、太大的整数照原样交给核心说错；别的照字（接入QQ的群白名单，2026-10-17）', () => {
+  assert.equal(listElement('int', '123456789'), 123456789);
+  assert.equal(listElement('int', '-3'), -3);
+  assert.equal(listElement('int', '12a'), '12a');
+  assert.equal(listElement('int', '1.5'), '1.5');
+  assert.equal(listElement('int', '99999999999999999999'), '99999999999999999999');
+  assert.equal(listElement('float', '0.5'), 0.5);
+  assert.equal(listElement('float', 'x'), 'x');
+  assert.equal(listElement('text', '123'), '123');
+  assert.equal(listElement(undefined, '123'), '123');
 });

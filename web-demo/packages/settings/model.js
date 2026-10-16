@@ -107,6 +107,17 @@ export const writtenIn = (entry, layer) => !!entry?.layers?.some((l) => l.origin
 export const envRef = (value) => (value && typeof value === 'object' && !Array.isArray(value) && typeof value.env === 'string' ? value.env : null);
 
 /**
+ * 列表加的一个元素（控件 `list`）：核心说元素是 `int`、`float` 的，照数交（接入QQ的群白名单是群号，交字会被核心拒，2026-10-17
+ * O-41）；读不成数的、超出能准确表示的整数的照原样交，由核心说错在哪。别的照字。
+ * @param {string|undefined} element @param {string} text
+ */
+export function listElement(element, text) {
+  if (element === 'int' && /^[+-]?\d+$/.test(text) && Number.isSafeInteger(Number(text))) return Number(text);
+  if (element === 'float' && text !== '' && Number.isFinite(Number(text))) return Number(text);
+  return text;
+}
+
+/**
  * 控件里写的字：`text`、`number` 控件照它显示；人改了以后整串作为 `input` 交给核心，核心照这一项的类型读（时长写 `10m`）。
  * @param {any} value
  */

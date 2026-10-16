@@ -4,7 +4,7 @@
 //! （`look.js`）共用 `shell`。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { noteOf, envRef, inputText, layerFor, writtenIn, secretName, referenceOptions, comboState, COMBO_OTHER } from './model.js';
+import { noteOf, envRef, inputText, listElement, layerFor, writtenIn, secretName, referenceOptions, comboState, COMBO_OTHER } from './model.js';
 
 /**
  * 一组：组名，下面一行行。
@@ -339,7 +339,7 @@ export function menu(dialog, anchor, options, value, pick) {
 }
 
 /**
- * 列表：一个个小块，每块 ✕，最后一个「＋」（元素是选项的开菜单，别的开一个小框）。
+ * 列表：一个个小块，每块 ✕，最后一个「＋」（元素是选项的开菜单，别的开一个小框；元素是数的照数存，`listElement`）。
  * @param {any} dialog @param {import('./model.js').Item} item @param {any[]} values @param {(next: any[]) => void} change
  */
 function list(dialog, item, values, change) {
@@ -353,7 +353,14 @@ function list(dialog, item, values, change) {
       if (rest.length) menu(dialog, add, rest, null, (v) => change([...values, v]));
       return;
     }
-    const field = textField('', 'text', '', (text) => { if (text) change([...values, text]); });
+    const numeric = item.element === 'int' || item.element === 'float';
+    const field = textField('', numeric ? 'number' : 'text', '', (text) => {
+      if (!text) return;
+      const value = listElement(item.element, text);
+      // 已经在列表里的不再存一份（同一个群号写两遍没有意思），框收回成「＋」
+      if (values.includes(value)) field.replaceWith(add);
+      else change([...values, value]);
+    });
     add.replaceWith(field);
     field.focus();
   });
