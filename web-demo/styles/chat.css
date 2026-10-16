@@ -46,12 +46,12 @@
 /* 不挂在她头下的一行：回报、压缩、清空（蓝图 web.md「后台命令、子代理的回报」「压缩、清空」）。和收尾那一行一样对齐、
    一样大：缩进到她的内容那一列，等宽 13px，字暗、记号有颜色；能点开的悬停亮一档，点开下面铺底色 */
 /* 提示行（回报、压缩、清空）：和时间线收起那一行一个样子（正文字体 600、11.5px、text 的六成二），记号照旧有颜色（蓝图 web.md「后台命令、子代理的回报」） */
-.note { margin-bottom: 18px; padding-left: 40px; color: color-mix(in srgb, var(--text) 62%, var(--surface)); font: 600 11.5px/1.5 var(--sans); }
+.note { margin-bottom: 19px; padding-left: 40px; color: color-mix(in srgb, var(--text) 62%, var(--surface)); font: 600 11.5px/1.5 var(--sans); }
 /* 上下各空一行，一行照提示行自己的字高（11.5px × 1.5），不照正文（2026-10-12 项目主人：原来照正文的一行，上 25、下 28，看着比一行宽；
-   10-10 那次是从上 33、下 40 收到正文的一行）：上面那一块的下边距 30 收掉 6、下面空 18，上下都约 18（2026-10-16 项目主人：原来上下都只有 12，离得太近） */
-.assistant-message + .note, .assistant-message + .compacting { margin-top: -6px; }
-/* 一连几条回报：彼此照旧空 12，不各空一行 */
-.note + .note { margin-top: -6px; }
+   10-10 那次是从上 33、下 40 收到正文的一行）：照字到字量（上一块最后一行字的底到提示行字的顶、提示行字的底到下一块的字或头像的顶）上下都是 22，单独一行的和夹在她这一块里的一样；一连几条之间 16（2026-10-16 项目主人：原来下面比上面窄、离头像太近，夹在她这一块里的没跟着改） */
+.assistant-message + .note, .assistant-message + .compacting { margin-top: -12px; }
+/* 一连几条回报：彼此 16，不各空一行 */
+.note + .note { margin-top: -7px; }
 /* 压缩的进度（蓝图 web.md「压缩的进度」，方案 A）：和回报那一行一样缩进；流光照运行状态行，下面一根细条，过了一会儿呼吸 */
 .compacting {
   --cp-base: color-mix(in srgb, var(--accent) 85%, black);
@@ -186,7 +186,7 @@
 /* 收尾那一行（tui.md「正文」第 4 条）：和上面的回答之间空一行（正文的一行高），等宽 13px、暗；出错的红 */
 .assistant-content > .turn-end { margin-top: calc(15px * 1.75); }
 /* 她正在回答时来的回报：夹在她这一块里，上下两段时间线中间；已经在她的内容那一列里，不再缩进，上下留和时间线一样的空 */
-.assistant-content > .note { margin-bottom: 0; padding-left: 0; }
+.assistant-content > .note { margin-top: 12px; margin-bottom: 12px; padding-left: 0; }
 .turn-end { display: flex; flex-wrap: wrap; align-items: center; column-gap: 10px; color: var(--t-dim); font: 13px/1.6 var(--mono); }
 .turn-end-text { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .turn-end.tone-error { color: var(--t-error); }

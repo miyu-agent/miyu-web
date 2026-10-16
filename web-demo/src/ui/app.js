@@ -83,7 +83,6 @@ export class App {
       // 左上角的头像：打开这个会话的人格的编辑页（软件包 setup 听这个事件，2026-10-10 项目主人）
       identity: () => this.ctx.emit('persona.open'),
       // 临时浮出来时点收起那个按钮是真展开（蓝图「左栏」的「临时浮出」）
-      collapse: () => this.collapse(!this.root.classList.contains('is-sidebar-peek')),
       close: () => this.drawer(false),
       theme: () => this.ctx.theme?.toggle(),
       dark: () => !!this.ctx.theme?.dark(),
@@ -238,13 +237,16 @@ export class App {
     // 收起着时最左边那一条：指针进来左栏临时浮出来，离开了滑回去（蓝图「左栏」的「临时浮出」）
     const zone = h('div.sidebar-peek-zone', { style: `--peek-zone: ${res.layout.sidebar_peek.zone}px` });
     this.peekTimer = 0;
+    // 左栏的开关（桌面）：只有这一个，钉在整页左上角、盖在左栏上面；收起、展开、浮出来都是它，不跟着左栏滑（2026-10-16 项目主人照 Claude：
+    // 原来左栏里一个、对话区一个，动画里两个一起露出来）。收起着的点了是真展开（浮出来的时候也是）
+    this.toggle = h('button.icon-button.sidebar-toggle', { type: 'button', onclick: () => this.collapse(!this.root.classList.contains('is-sidebar-collapsed')) }, icon('panel-left'));
     this.root = h('div.app-shell',
       this.scrim,
       zone,
       this.sidebar.el,
+      this.toggle,
       this.stageEl = h('main.stage',
         h('div.stage-float',
-          h('button.icon-button.sidebar-expand-button', { type: 'button', title: t('sidebar.expand'), onclick: () => this.collapse(false) }, icon('panel-left-open')),
           h('button.icon-button.mobile-menu-button', { type: 'button', title: t('sidebar.expand'), onclick: () => this.drawer(true) }, icon('panel-left'))),
         this.lostBar = h('div.bridge-lost', { hidden: true, role: 'alert' }, t('boot.lost')),
         this.crumbs.el,
@@ -298,9 +300,9 @@ export class App {
     this.root.classList.toggle('is-sidebar-collapsed', !!ctx.storage.get(COLLAPSED, false));
     // 按页读（核心 9-6 下）：往上滚到顶自动读更早的一页（2026-10-08 项目主人定）
     this.chat.el.addEventListener('scroll', () => this.maybeOlder(), { passive: true });
-    const expand = /** @type {HTMLElement} */ (this.root.querySelector('.sidebar-expand-button'));
     this.menuButton = /** @type {HTMLElement} */ (this.root.querySelector('.mobile-menu-button'));
-    for (const el of [zone, expand, this.menuButton, this.sidebar.el]) {
+    this.titleToggle();
+    for (const el of [zone, this.toggle, this.menuButton, this.sidebar.el]) {
       el.addEventListener('mouseenter', () => this.peek(true));
       el.addEventListener('mouseleave', () => this.peek(false));
     }
@@ -682,6 +684,14 @@ export class App {
     this.root.classList.remove('is-sidebar-peek');
     this.root.classList.toggle('is-sidebar-collapsed', yes);
     this.ctx.storage.set(COLLAPSED, yes);
+    this.titleToggle();
+  }
+
+  /** 开关的悬停字：收起着写「展开侧栏」，展开着写「收起侧栏」。 */
+  titleToggle() {
+    const label = t(this.root.classList.contains('is-sidebar-collapsed') ? 'sidebar.expand' : 'sidebar.collapse');
+    this.toggle.title = label;
+    this.toggle.setAttribute('aria-label', label);
   }
 
   /**

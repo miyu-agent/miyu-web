@@ -26,7 +26,7 @@ import { treeRows, capTops } from '../model/tree.js';
 
 /**
  * @typedef {{session: string, title: string|null, running: boolean, unread: boolean}} Item
- * @typedef {{newSession: () => void, open: (id: string) => void, collapse: () => void, close: () => void,
+ * @typedef {{newSession: () => void, open: (id: string) => void, close: () => void,
  *   rename: (id: string, title: string) => Promise<void>, pin: (id: string, on: boolean) => Promise<void>, removeMany: (ids: string[]) => Promise<string[]>, dropped: (id: string) => void,
  *   kids: (id: string) => {session: string, title: string|null, running: boolean, paused?: boolean}[], viewAll: () => void,
  *   shown: (ids: string[]) => void,
@@ -70,9 +70,9 @@ export class Sidebar {
       this.face, h('div', this.name, h('span', this.dot, this.status)));
     this.setLook(null);
     this.el = h('aside.sidebar',
-      // 收起按钮在最左边，和收起以后对话区左上角的展开按钮是同一个位置：收起、展开、悬停浮出来都不跳（2026-10-16 项目主人照 Claude）
+      // 最左边给开关留的位置：开关只有一个，钉在整页左上角（`app.js` 的 `.sidebar-toggle`），左栏在它底下滑进滑出（2026-10-16 项目主人照 Claude）
       h('header.brand-row',
-        h('button.icon-button.sidebar-collapse-button', { type: 'button', title: t('sidebar.collapse'), onclick: on.collapse }, icon('panel-left-close')),
+        h('span.brand-toggle-slot', { 'aria-hidden': 'true' }),
         this.identity,
         h('button.new-chat-button', { type: 'button', title: t('sidebar.new_session'), onclick: on.newSession }, icon('square-pen')),
         h('button.icon-button.sidebar-close', { type: 'button', title: t('sidebar.collapse'), onclick: on.close }, icon('x'))),

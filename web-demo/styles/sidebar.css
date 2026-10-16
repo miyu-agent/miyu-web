@@ -67,8 +67,14 @@
 }
 .new-chat-button:hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }
 .new-chat-button .icon { width: 16px; height: 16px; }
-.sidebar-collapse-button, .sidebar-expand-button { width: 30px; height: 30px; }
-.sidebar-collapse-button .icon, .sidebar-expand-button .icon { width: 16px; height: 16px; }
+/* 左栏的开关（桌面）：整页只有这一个，钉在左上角（头上一行第一个的位置：左 14、上 19），盖在左栏、浮出来的左栏、吉祥物上面；
+   左栏在它底下滑进滑出，它自己不动、图标不换（2026-10-16 项目主人照 Claude） */
+.app-shell { position: relative; }
+.sidebar-toggle { position: absolute; top: 19px; left: 14px; z-index: 42; width: 30px; height: 30px; }
+.sidebar-toggle:hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }
+.sidebar-toggle .icon { width: 16px; height: 16px; }
+/* 左栏头上一行给它留的位置 */
+.brand-toggle-slot { flex: 0 0 30px; height: 30px; }
 .sidebar-close { display: none; }
 
 /* 会话表：头上一行「会话」，样子照旧版的组头（styles.css:1023） */
@@ -168,10 +174,7 @@
 
 /* 对话区左上角：收起以后的展开按钮，窄屏上的菜单按钮 */
 .stage-float { position: absolute; top: 10px; left: 12px; z-index: 15; display: flex; gap: 4px; }
-.sidebar-expand-button, .mobile-menu-button { display: none; }
-.app-shell.is-sidebar-collapsed .sidebar-expand-button { display: inline-grid; }
-/* 收起以后的展开按钮和左栏里的收起按钮叠在同一个位置（头上一行第一个，左 14、上 19）：收起、展开、悬停浮出来都不跳（2026-10-16 项目主人照 Claude） */
-.app-shell.is-sidebar-collapsed .stage-float { top: 19px; left: 14px; }
+.mobile-menu-button { display: none; }
 .page-scrim { display: none; }
 
 @media (max-width: 1078px) {
@@ -202,13 +205,11 @@
   /* 窄屏抽屉也盖住吉祥物（同上面浮出来的左栏） */
   .app-shell.is-drawer-open .sidebar { z-index: 41; }
   .sidebar-close { display: inline-grid; width: 36px; height: 36px; }
-  .sidebar-collapse-button, .app-shell.is-sidebar-collapsed .sidebar-expand-button { display: none; }
+  .sidebar-toggle, .brand-toggle-slot { display: none; }
   .mobile-menu-button { display: inline-grid; width: 36px; height: 36px; }
   .stage-float { top: max(8px, env(safe-area-inset-top)); left: 8px; }
 }
 
-/* 临时浮出来时，左栏上的收起按钮是真展开：图标朝右翻过来 */
-.app-shell.is-sidebar-peek .sidebar-collapse-button .icon { transform: scaleX(-1); }
 
 /* 改名：标题换成一个输入框，和标题同一个字号、位置，淡入（蓝图「左栏」的「重命名」） */
 .session-item.is-renaming .session-item-main { cursor: text; }
