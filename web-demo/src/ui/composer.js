@@ -693,42 +693,23 @@ export class Composer {
   }
 
   /**
-   * 提示别盖住框上面那一排的按钮（2026-10-17 项目主人：空会话里「无长期目标」压在人格那颗上）：照提示原来的那一条往右看，那里是框
-   * 外面的按钮的（人格、预设、工作区三颗这类，哪个软件包挂的都一样），挪到它们右边；右边剩得太窄的（窄屏），挪到那一排的上面。
+   * 提示别盖住框上面那一排的按钮（2026-10-17 项目主人：空会话里「无长期目标」压在人格那颗上；同一天定：统一放在那一排的上面、左对齐，
+   * 宽屏窄屏都一样）：提示原来的位置上是框外面的按钮的（人格、预设、工作区三颗这类，哪个软件包挂的都一样），挪到那一排的上面；
    * 没有按钮的照原来的位置。
    */
   placeNotice() {
     const note = this.notice;
-    note.style.left = '';
     note.style.bottom = '';
-    note.style.maxWidth = '';
     const box = this.box.getBoundingClientRect();
     // 整页缩放（`--ui-scale`）以后量出来的是屏幕上的像素，写回去要换成这一层的
-    const scale = this.box.offsetWidth ? box.width / this.box.offsetWidth : 1;
+    const scale = this.box.offsetHeight ? box.height / this.box.offsetHeight : 1;
     const band = note.getBoundingClientRect();
-    const y = band.top + band.height / 2;
-    /** @param {number} x */
-    const blockerAt = (x) => document.elementsFromPoint(x, y)
+    const blocker = document.elementsFromPoint(band.left + 4, band.top + band.height / 2)
       .map((el) => el.closest('button, a, [role="button"]'))
-      .find((el) => el && !note.contains(el) && !this.box.contains(el)) ?? null;
-    let left = band.left + 4;
-    let blocker = blockerAt(left);
-    let last = null;
-    for (let i = 0; blocker && i < 8; i += 1) {
-      last = blocker;
-      left = blocker.getBoundingClientRect().right + 8;
-      blocker = blockerAt(left + 4);
-    }
-    if (!last) return;
-    const room = box.right - left - 6;
-    if (room >= 160) {
-      note.style.left = `${(left - box.left) / scale}px`;
-      note.style.maxWidth = `${room / scale}px`;
-      return;
-    }
-    // 窄的：挪到那一排的上面
-    // `bottom` 照框的下沿算：框自己的高，加上框的上沿到那一排上沿的距离，再留 7px
-    note.style.bottom = `${(box.bottom - last.getBoundingClientRect().top + 7) / scale}px`;
+      .find((el) => el && !note.contains(el) && !this.box.contains(el));
+    if (!blocker) return;
+    // `bottom` 照框的下沿算：框自己的高，加上框的下沿到那一排上沿的距离，再留 7px
+    note.style.bottom = `${(box.bottom - blocker.getBoundingClientRect().top + 7) / scale}px`;
   }
 
   /** 收掉提示（`hold` 的那种等的事办完了、又没有话要说时）。 */
