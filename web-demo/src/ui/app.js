@@ -241,7 +241,7 @@ export class App {
     this.peekTimer = 0;
     // 左栏的开关（桌面）：只有这一个，钉在整页左上角、盖在左栏上面；收起、展开、浮出来都是它，不跟着左栏滑（2026-10-16 项目主人照 Claude：
     // 原来左栏里一个、对话区一个，动画里两个一起露出来）。收起着的点了是真展开（浮出来的时候也是）
-    this.toggle = h('button.icon-button.sidebar-toggle', { type: 'button', onclick: () => this.collapse(!this.root.classList.contains('is-sidebar-collapsed')) }, icon('panel-left'));
+    this.toggle = h('button.icon-button.sidebar-toggle', { type: 'button', onclick: () => { this.autoCollapsed = false; this.collapse(!this.root.classList.contains('is-sidebar-collapsed')); } }, icon('panel-left'));
     this.root = h('div.app-shell',
       this.scrim,
       zone,
@@ -313,6 +313,10 @@ export class App {
       (shown) => ctx.emit('panel.changed', shown));
     this.root.append(this.artifacts.el);
     this.composer.sendButton.before(this.artifacts.toggle);
+    // 右栏开着、对话挤得不够时自动收起左栏，关上放回来（`fitArtifacts`）
+    this.autoCollapsed = false;
+    this.artifacts.onLayout = () => this.fitArtifacts();
+    addEventListener('resize', () => this.fitArtifacts());
     // 右边一栏的「面板」（挂载位 `stage.panel`：扩展的界面块）：挂了几件告诉工作区，有东西才出标签、露开关
     ctx.slots.declare('stage.panel', 'list');
     ctx.effect(() => mountList(this.artifacts.panel, ctx.slots, 'stage.panel', failedSlot));
@@ -680,13 +684,35 @@ export class App {
     }
   }
 
-  /** 收起、展开左栏（桌面），记下来。 */
-  collapse(yes) {
+  /** 收起、展开左栏（桌面）；`remember` 为真的记下来（人点的；右栏挤得自动收起的不记）。 */
+  collapse(yes, remember = true) {
     clearTimeout(this.peekTimer);
     this.root.classList.remove('is-sidebar-peek');
     this.root.classList.toggle('is-sidebar-collapsed', yes);
-    this.ctx.storage.set(COLLAPSED, yes);
+    if (remember) this.ctx.storage.set(COLLAPSED, yes);
     this.titleToggle();
+  }
+
+  /**
+   * 右栏开着、对话那一列剩得不够（`artifacts.json` 的 `chat_min`）时自动收起左栏，右栏关上时放回来（2026-10-17 项目主人：空间不够时
+   * 应该自动收起侧栏）。只放回自动收起的那一次：本来就收着的、中途人自己点过左栏开关的不动。窄屏（左栏是抽屉、右栏盖在上面）、
+   * 右栏最大化的不管。右栏开关、拖宽度、窗口变大小时叫。
+   */
+  fitArtifacts() {
+    const a = this.artifacts;
+    const collapsed = this.root.classList.contains('is-sidebar-collapsed');
+    if (!a.open) {
+      if (this.autoCollapsed && collapsed) this.collapse(false, false);
+      this.autoCollapsed = false;
+      return;
+    }
+    if (collapsed || a.maximized || innerWidth <= res.layout.narrow_below) return;
+    const scale = parseFloat(getComputedStyle(this.root).zoom) || 1;
+    const width = innerWidth / scale;
+    const sidebar = this.sidebar.el.getBoundingClientRect().width || 252;
+    if (width - sidebar - a.ratio * width >= res.artifacts.chat_min) return;
+    this.autoCollapsed = true;
+    this.collapse(true, false);
   }
 
   /** 开关的悬停字：收起着写「展开侧栏」，展开着写「收起侧栏」。 */

@@ -59,6 +59,8 @@ export class Artifacts {
     this.dismissed = readDismissed(ext.storage?.get(DISMISSED, null));
     /** 最近一次照的条目（删了一样以后照它重算） @type {any[]} */
     this.entries = [];
+    /** 开、关、拖完宽度、最大化以后叫（整页看对话那一列够不够宽，不够的收起左栏） */
+    this.onLayout = () => {};
     /** @type {ReturnType<typeof setTimeout>|undefined} 收起的那一下挂的类，走完拿掉 */
     this.leavingTimer = undefined;
     /** 看哪一页：`work` 产物、`panel` 界面块 */
@@ -158,6 +160,7 @@ export class Artifacts {
     if (!this.open && this.maximized) this.setMaximized(false);
     if (this.open && this.tab === 'work') this.draw(true);
     this.syncChrome();
+    this.onLayout();
     this.changed();
   }
 
@@ -229,6 +232,7 @@ export class Artifacts {
     const up = () => {
       handle.removeEventListener('pointermove', move);
       this.shell.classList.remove('is-artifact-resizing');
+      this.onLayout();
       this.ext.storage?.set(WIDTH, this.ratio);
     };
     handle.addEventListener('pointermove', move);
