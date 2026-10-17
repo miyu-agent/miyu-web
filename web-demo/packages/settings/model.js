@@ -354,6 +354,12 @@ export function applyPackageChange(list, id, entry) {
 export const mcpStopped = (p) => p.enabled !== false && (p.mcp ?? []).some((s) => s.state === 'stopped' && !s.covered);
 
 /**
+ * 几个包的编号换成给人看的名字（核心 F-11：缺的依赖 `missing`、依赖它的 `by` 都是编号）：列表里有、有名字的照名字，没装的照编号；先后照原样。
+ * @param {any[]|null|undefined} packages `package.list` 的 `packages` @param {string[]} ids
+ */
+export const packageNames = (packages, ids) => ids.map((id) => (packages ?? []).find((p) => p.package === id)?.name ?? id);
+
+/**
  * 个人设置里的 MCP 服务推来一项（`mcp.changed {name, server}`，核心 F-9 补）：换掉同名的；新的接在后面（照个人设置里写的先后，新写的在最后）；
  * `server` 是 `null` 的拿掉。
  * @param {any[]} list @param {string} name @param {any|null} server

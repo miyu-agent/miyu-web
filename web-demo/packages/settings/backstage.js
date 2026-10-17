@@ -17,7 +17,8 @@ export function drawBackstage(dialog) {
   ]);
   if (!rows.length) return [h('p.set-empty', t('backstage.none'))];
   return [h('section.set-group', h('div.set-rows', rows.map(({ p, widget, name, summary }) => {
-    const state = p.status === 'running' || p.status === 'stopped' || p.status === 'program_missing' ? h(`span.set-pkg-status${p.status === 'running' ? '.is-on' : p.status === 'program_missing' ? '.is-bad' : ''}`, t(`pkg.status.${p.status}`)) : null;
+    const bad = p.status === 'program_missing' || p.status === 'depends_missing';
+    const state = p.status === 'running' || p.status === 'stopped' || bad ? h(`span.set-pkg-status${p.status === 'running' ? '.is-on' : bad ? '.is-bad' : ''}`, t(`pkg.status.${p.status}`)) : null;
     const href = dialog.ctx.backstage?.href(p.package, widget);
     const parts = [
       h('span.set-pkg-face', icon(p.icon && hasIcon(p.icon) ? p.icon : 'package')),

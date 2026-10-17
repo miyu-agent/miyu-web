@@ -336,7 +336,8 @@
           "stopped": "已停止",
           "off": "已停用",
           "ready": "已启用",
-          "program_missing": "程序未安装"
+          "program_missing": "程序未安装",
+          "depends_missing": "缺少依赖"
         },
         "required": "必需",
         "version": "版本 {version}",
@@ -355,7 +356,10 @@
         "mcp_stopped": "服务已停止",
         "home_mcp_hint": "在个人设置文件 settings.toml 的 [mcp.<名称>] 中添加或修改，保存后立即生效",
         "mcp_covered": "被个人设置中的同名服务替代",
-        "covered": "被个人设置替代"
+        "covered": "被个人设置替代",
+        "depends_missing": "缺少依赖：{names}",
+        "depended": "{names} 依赖它，无法卸载",
+        "sep": "、"
       },
       "onboard": {
         "title_list": "选择模型供应商",
@@ -608,7 +612,8 @@
           "stopped": "Stopped",
           "off": "Disabled",
           "ready": "Enabled",
-          "program_missing": "Program not installed"
+          "program_missing": "Program not installed",
+          "depends_missing": "Missing dependencies"
         },
         "required": "Required",
         "version": "Version {version}",
@@ -627,7 +632,10 @@
         "mcp_stopped": "Server stopped",
         "home_mcp_hint": "Add or change them under [mcp.<name>] in settings.toml; changes apply when saved",
         "mcp_covered": "Replaced by the server of the same name in personal settings",
-        "covered": "Replaced by personal settings"
+        "covered": "Replaced by personal settings",
+        "depends_missing": "Missing dependencies: {names}",
+        "depended": "Can't uninstall: required by {names}",
+        "sep": ", "
       },
       "onboard": {
         "title_list": "Select a model provider",
@@ -880,7 +888,8 @@
           "stopped": "停止",
           "off": "無効",
           "ready": "有効",
-          "program_missing": "プログラム未インストール"
+          "program_missing": "プログラム未インストール",
+          "depends_missing": "依存パッケージ不足"
         },
         "required": "必須",
         "version": "バージョン {version}",
@@ -899,7 +908,10 @@
         "mcp_stopped": "サーバーが停止",
         "home_mcp_hint": "settings.toml の [mcp.<名前>] で追加・変更します。保存するとすぐ反映されます",
         "mcp_covered": "個人設定の同名サーバーに置き換えられています",
-        "covered": "個人設定に置き換え済み"
+        "covered": "個人設定に置き換え済み",
+        "depends_missing": "依存パッケージ不足：{names}",
+        "depended": "{names} が依存しているため、アンインストールできません",
+        "sep": "、"
       },
       "onboard": {
         "title_list": "モデルプロバイダーを選択",

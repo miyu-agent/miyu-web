@@ -281,6 +281,19 @@ test('软件包列表的推送：整项换、空的拿掉、新的照编号排�
   assert.equal(mcpStopped({ enabled: true }), false);
 });
 
+test('依赖的编号换成名字：列表里有名字的照名字，没装的照编号，先后照原样；三种语言都有「缺少依赖」（核心 F-11）', async () => {
+  const { packageNames } = await import('../../packages/settings/model.js');
+  const list = [{ package: 'onebot', name: '接入QQ' }, { package: 'nameless' }];
+  assert.deepEqual(packageNames(list, ['ghost', 'onebot', 'nameless']), ['ghost', '接入QQ', 'nameless']);
+  assert.deepEqual(packageNames(null, ['onebot']), ['onebot']);
+  const manifest = JSON.parse(readFileSync(new URL('../../packages/settings/manifest.json', import.meta.url), 'utf8'));
+  for (const lang of ['zh', 'en', 'ja']) {
+    const pkg = manifest.text[lang].pkg;
+    assert.ok(pkg.status.depends_missing && pkg.sep, lang);
+    assert.ok(pkg.depends_missing.includes('{names}') && pkg.depended.includes('{names}'), lang);
+  }
+});
+
 test('个人设置里的 MCP 服务推来一项：换掉同名的、新的接在后面、null 拿掉；被替代的服务不算停下（核心 F-9 补）', async () => {
   const { applyServerChange, mcpStopped } = await import('../../packages/settings/model.js');
   const list = [{ name: 'a', state: 'running' }, { name: 'b', state: 'stopped' }];

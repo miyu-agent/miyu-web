@@ -10,7 +10,7 @@
 
 import { h, icon, hasIcon } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField } from './rows.js';
-import { splitKey, itemFor, mcpStopped } from './model.js';
+import { splitKey, itemFor, mcpStopped, packageNames } from './model.js';
 import { openPage } from './backstage.js';
 import { serverRow, homeMcpPart } from './mcp-servers.js';
 
@@ -18,6 +18,8 @@ import { serverRow, homeMcpPart } from './mcp-servers.js';
 const PARTS = /** @type {const} */ (['connection', 'ui', 'feature']);
 /** 列表上不写的状态：开关已经说了 */
 const QUIET = new Set(['ready', 'off']);
+/** 写成红字的状态：程序不在、依赖的包缺了（核心 F-11：装着、不拉起） */
+const BAD = new Set(['program_missing', 'depends_missing']);
 
 /** @param {any} p */
 const partOf = (p) => (p.connection ? 'connection' : p.kind === 'ui' ? 'ui' : 'feature');
@@ -46,7 +48,8 @@ export function drawCorePackages(dialog, page) {
  */
 export function followExtension(dialog, entry) {
   const p = (dialog.packages ?? []).find((x) => x.package === entry?.package);
-  if (!p || p.status === 'program_missing') return false;
+  // 程序不在、依赖缺了的核心不拉起，扩展推来的状态不盖它（缺的装回来了，`package.changed` 整项换）
+  if (!p || BAD.has(p.status)) return false;
   const status = !entry.on ? 'off' : entry.state === 'waiting' ? 'starting' : entry.state;
   if (p.status === status && p.enabled === entry.on) return false;
   dialog.packages = dialog.packages.map((x) => (x === p ? { ...x, status, enabled: entry.on } : x));
@@ -58,11 +61,13 @@ function packageRow(dialog, p) {
   const t = (/** @type {string} */ key) => dialog.ctx.text(key);
   const id = p.package;
   const missing = p.status === 'program_missing';
+  // 程序不在、依赖缺了的先写这个（核心不拉起，服务自然停着，不另写「服务已停止」）
+  const bad = BAD.has(p.status);
   // 包开着、带的 MCP 服务有停下的：写「服务已停止」（核心的状态是好好的也照这个写）
   // 服务全被个人设置里同名的替代了（F-9 补的 `covered`，`status` 照旧 `off`）：写「被个人设置替代」，不当关着
-  const state = p.covered && !missing ? h('span.set-pkg-status', t('pkg.covered'))
-    : mcpStopped(p) && !missing ? h('span.set-pkg-status.is-warn', t('pkg.mcp_stopped'))
-    : QUIET.has(p.status) ? null : h(`span.set-pkg-status${missing ? '.is-bad' : p.status === 'running' ? '.is-on' : ''}`, t(`pkg.status.${p.status}`));
+  const state = p.covered && !bad ? h('span.set-pkg-status', t('pkg.covered'))
+    : mcpStopped(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_stopped'))
+    : QUIET.has(p.status) ? null : h(`span.set-pkg-status${bad ? '.is-bad' : p.status === 'running' ? '.is-on' : ''}`, t(`pkg.status.${p.status}`));
   const control = p.required ? h('span.set-pkg-status', t('pkg.required'))
     : 'enabled' in p ? switchFor(dialog, p) : null;
   return h('div.set-row.set-pkg.is-expandable', {
@@ -101,7 +106,7 @@ function switchFor(dialog, p) {
         dialog.extensions.asking.add(id);
         if (!dialog.sub.page) openInfo(dialog, id);
         else dialog.drawBody();
-      } else dialog.toast(err?.message ?? String(err));
+      } else dialog.toast(refusal(dialog, err));
       return false;
     }
   });
@@ -119,13 +124,15 @@ function infoPage(dialog, id) {
   if (!p) return [h('p.set-empty', t('pkg.gone'))];
   const missing = p.status === 'program_missing';
   // 状态和版本：好好的「已启用」、关着的「已停用」开关已经说了，不写
-  const line = [p.covered ? t('pkg.covered') : QUIET.has(p.status) ? null : t(`pkg.status.${p.status}`), p.version ? t('pkg.version', { version: p.version }) : null].filter(Boolean).join(' · ');
+  // 依赖缺了的写缺的是哪几个（照列表里的名字，没装的照编号）
+  const status = p.status === 'depends_missing' && p.missing?.length ? t('pkg.depends_missing', { names: packageNames(dialog.packages, p.missing).join(t('pkg.sep')) }) : t(`pkg.status.${p.status}`);
+  const bad = BAD.has(p.status);
+  const line = [p.covered && !bad ? t('pkg.covered') : QUIET.has(p.status) ? null : status, p.version ? t('pkg.version', { version: p.version }) : null].filter(Boolean).join(' · ');
   const head = [
     p.summary ? h('p.set-sub-desc', p.summary) : null,
-    line ? h(`p.set-pkg-line${missing ? '.is-bad' : ''}`, line) : null,
-    // 有后台页的：一个按钮跳到「软件后台」里它的页面
-    // 有后台页的：一个按钮跳到它的独立整页（软件包 `backstage`；停用了那个包的不出）
-    p.page && !missing && dialog.ctx.backstage ? h('div.set-pkg-actions', h('a.set-btn.set-link', { href: dialog.ctx.backstage.href(id), onclick: (/** @type {MouseEvent} */ e) => openPage(dialog, id, e) }, t('pkg.open_backstage'))) : null,
+    line ? h(`p.set-pkg-line${bad ? '.is-bad' : ''}`, line) : null,
+    // 有后台页的：一个按钮跳到它的独立整页（软件包 `backstage`；停用了那个包的、程序不在、依赖缺了的不出）
+    p.page && !bad && dialog.ctx.backstage ? h('div.set-pkg-actions', h('a.set-btn.set-link', { href: dialog.ctx.backstage.href(id), onclick: (/** @type {MouseEvent} */ e) => openPage(dialog, id, e) }, t('pkg.open_backstage'))) : null,
   ];
   const group = (dialog.pages ?? []).find((x) => x.id === 'packages')?.groups.find((g) => g.id === id);
   const settings = (group?.items ?? []).map((item) => coreRow(dialog, item)).filter(Boolean);
@@ -169,10 +176,20 @@ function removeButton(dialog, p) {
       dialog.back();
       await dialog.reload();
     } catch (err) {
-      dialog.toast(err?.message ?? String(err));
+      dialog.toast(refusal(dialog, err));
     }
   } }, t('pkg.uninstall'));
   return h('div.set-pkg-foot', button);
+}
+
+/**
+ * 拒绝时提示的话：别的包依赖它、卸不掉的（`package_depended`，卸载、关出厂的内置包时）写是哪几个依赖它（照名字）；别的照核心的话。
+ * @param {any} dialog @param {any} err
+ */
+function refusal(dialog, err) {
+  const by = err?.reason === 'package_depended' ? err.data?.by : null;
+  if (Array.isArray(by) && by.length) return dialog.ctx.text('pkg.depended', { names: packageNames(dialog.packages, by).join(dialog.ctx.text('pkg.sep')) });
+  return err?.message ?? String(err);
 }
 
 /** 平台接入那个软件的信息页上，终端管理员在这个平台上的号用的配置项（带占位，核心 O-3）。 */
