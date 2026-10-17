@@ -4,7 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { remember, Recall, search, firstLine, commandHead, pieces } from '../src/model/history.js';
+import { remember, Recall, search, firstLine, commandHead, pieces, commandPrefix } from '../src/model/history.js';
 
 /** 光标在哪：最前面、第一段、最后一段 */
 const START = { start: true, first: true, last: false };
@@ -79,6 +79,32 @@ test('发出去了：不在翻了，下一次 ↑ 从新记的那一条翻起', 
   r.older('', START);
   r.record('刚发的', 9, 100);
   assert.equal(r.older('', START), '刚发的');
+});
+
+test('框里只有一个命令名按 ↑：只翻这个命令带参数的那几条，光标在哪都行；↓ 走过最新的还给命令名；没有的照原来的规矩', () => {
+  const items = [
+    { text: '天气怎么样', at: 5 }, { text: '/goal 把测试补齐 --rounds 5', at: 4 }, { text: '/theme dark', at: 3 },
+    { text: '/goal', at: 2 }, { text: '/goal 写完文档', at: 1 },
+  ];
+  assert.equal(commandPrefix('/goal'), '/goal ');
+  assert.equal(commandPrefix('/goal '), '/goal ');
+  assert.equal(commandPrefix('/goal 改'), null);
+  assert.equal(commandPrefix('goal'), null);
+  const r = new Recall(items);
+  assert.equal(r.prefixed('/goal'), true);
+  assert.equal(r.older('/goal', END), '/goal 把测试补齐 --rounds 5', '光标在末尾也翻，跳过别的话和不带参数的');
+  assert.equal(r.prefixed('/goal 把测试补齐 --rounds 5'), false, '翻着的时候照翻着的规矩');
+  assert.equal(r.older('/goal 把测试补齐 --rounds 5', END), '/goal 写完文档');
+  assert.equal(r.older('/goal 写完文档', END), '/goal 写完文档', '到头就停');
+  assert.equal(r.newer('/goal 写完文档', END), '/goal 把测试补齐 --rounds 5');
+  assert.equal(r.newer('/goal 把测试补齐 --rounds 5', END), '/goal', '走过最新的还给命令名');
+  // 改了再按 ↑ 不算在翻，照原来的：光标不在最前面不翻
+  assert.equal(r.older('/goal 改', END), null);
+  // 历史里没有这个命令的照原来的规矩
+  const other = new Recall([{ text: '你好', at: 1 }]);
+  assert.equal(other.prefixed('/goal'), false);
+  assert.equal(other.older('/goal', END), null);
+  assert.equal(other.older('/goal', START), '你好');
 });
 
 test('列表搜：不分大小写，留下包含这些字的，从新到旧，标出对得上的那几个字；空的全留、不标', () => {

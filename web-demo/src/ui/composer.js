@@ -421,7 +421,9 @@ export class Composer {
       return;
     }
     if (this.mention.key(ev)) return;
-    if (this.menu.key(ev)) return;
+    // 框里只有一个命令名（`/goal`）、历史里有它带参数的：↑ 翻那几条，不归命令列表（2026-10-17 项目主人）
+    const recall = ev.key === 'ArrowUp' && !ev.shiftKey && !ev.ctrlKey && !ev.metaKey && !ev.altKey && this.recall.prefixed(this.input.value);
+    if (!recall && this.menu.key(ev)) return;
     // ↑ ↓：翻输入历史；不接的归浏览器挪光标
     if ((ev.key === 'ArrowUp' || ev.key === 'ArrowDown') && !ev.shiftKey && !ev.ctrlKey && !ev.metaKey && !ev.altKey) {
       const up = ev.key === 'ArrowUp';

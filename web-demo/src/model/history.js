@@ -25,12 +25,23 @@ export function remember(items, text, at, max, extra = null) {
 }
 
 /**
+ * 框里只有一个命令名（`/goal`、`/goal `，没有参数）：交回翻历史时要找的开头（`/goal `）；别的是 `null`。
+ * @param {string} value
+ */
+export function commandPrefix(value) {
+  const m = /^(\/[^\s/]+) ?$/.exec(value);
+  return m ? `${m[1]} ` : null;
+}
+
+/**
  * 翻输入历史的状态。`↑` `↓` 交回要放进框里的字；不接的交回 `null`（归浏览器挪光标）。
  *
  * - 没在翻：框里空着、或者光标在最前面按 `↑`，翻出最新的一条（先拿回两下 `Esc` 清掉的那句，见 `clear`）；框里那句没发的记着。
  * - 翻着（框里还是翻出来的那一条，没改过）：光标前面没有换行按 `↑` 往更早的走，到头就停；后面没有换行按 `↓` 往更新的走，
  *   走过最新的一条还给那句没发的。
  * - 翻出来的改了就不算在翻，改过的那句当成没发的。
+ * - 框里只有一个命令名（`/goal`）时按 `↑`（光标在哪都行）：只在这个命令带了参数的那几条里翻（2026-10-17 项目主人：打 `/goal` 按 `↑`
+ *   调出以前那句改了再发），从最新的翻起；`↓` 走过最新的一条还给 `/goal`。历史里没有这个命令的照上面的规矩。
  */
 export class Recall {
   /** @param {Item[]} items 从新到旧 */
@@ -44,6 +55,22 @@ export class Recall {
     this.draft = '';
     /** 两下 `Esc` 清掉的那句（单独一份，不进历史） */
     this.cleared = /** @type {string|null} */ (null);
+    /** 只翻这个开头的（框里只有一个命令名时开始翻的，`/goal `）；`null` 是都翻 */
+    this.prefix = /** @type {string|null} */ (null);
+  }
+
+  /** 从第 `from` 条往 `step` 那边（`1` 更早、`-1` 更新）找下一条翻得到的；没有是 `-1`。 */
+  next(from, step) {
+    for (let i = from + step; i >= 0 && i < this.items.length; i += step) {
+      if (this.prefix == null || this.items[i].text.startsWith(this.prefix)) return i;
+    }
+    return -1;
+  }
+
+  /** 框里只有一个命令名、历史里有这个命令带参数的：按 `↑` 归输入历史（命令列表开着也是）。 @param {string} value */
+  prefixed(value) {
+    const prefix = commandPrefix(value);
+    return !this.fresh(value) && prefix != null && this.items.some((x) => x.text.startsWith(prefix));
   }
 
   /** 框里还是放进去的那句（没改过）。 */
@@ -54,6 +81,14 @@ export class Recall {
   /** @param {string} value @param {Caret} caret */
   older(value, caret) {
     const fresh = this.fresh(value);
+    if (!fresh && this.prefixed(value)) {
+      this.reset();
+      this.prefix = commandPrefix(value);
+      this.draft = value;
+      this.at = this.next(-1, 1);
+      this.shown = this.items[this.at].text;
+      return this.shown;
+    }
     if (!fresh) this.reset();
     if (fresh ? !caret.first : !(value === '' || caret.start)) return null;
     if (!fresh && value === '' && this.cleared != null) {
@@ -61,9 +96,10 @@ export class Recall {
       this.cleared = null;
       return this.shown;
     }
-    if (this.at + 1 >= this.items.length) return this.at < 0 ? null : value;
+    const to = this.next(this.at, 1);
+    if (to < 0) return this.at < 0 ? null : value;
     if (this.at < 0) this.draft = value;
-    this.at += 1;
+    this.at = to;
     this.shown = this.items[this.at].text;
     return this.shown;
   }
@@ -71,7 +107,7 @@ export class Recall {
   /** @param {string} value @param {Caret} caret */
   newer(value, caret) {
     if (!this.fresh(value) || this.at < 0 || !caret.last) return null;
-    this.at -= 1;
+    this.at = this.next(this.at, -1);
     if (this.at >= 0) {
       this.shown = this.items[this.at].text;
       return this.shown;
@@ -86,6 +122,7 @@ export class Recall {
     this.at = -1;
     this.shown = null;
     this.draft = '';
+    this.prefix = null;
   }
 
   /** 两下 `Esc` 清掉了：留下这一份（再清一次换掉），空着按 `↑` 先拿回它。 */
