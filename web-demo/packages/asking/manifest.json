@@ -128,6 +128,8 @@
           "skill": "技能 {name}",
           "script": "脚本 {name}",
           "slash": "斜杠命令 /{name}",
+          "persona": "人格 {name}",
+          "preset": "预设 {name}",
           "settings": "{count} 项设置"
         }
       },
@@ -210,6 +212,8 @@
           "skill": "skill {name}",
           "script": "script {name}",
           "slash": "slash command /{name}",
+          "persona": "persona {name}",
+          "preset": "preset {name}",
           "settings": "{count} settings"
         }
       },
@@ -292,6 +296,8 @@
           "skill": "スキル {name}",
           "script": "スクリプト {name}",
           "slash": "スラッシュコマンド /{name}",
+          "persona": "人格 {name}",
+          "preset": "プリセット {name}",
           "settings": "設定 {count} 項目"
         }
       },

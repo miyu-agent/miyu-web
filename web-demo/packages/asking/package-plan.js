@@ -43,7 +43,7 @@ export function packagePlan(detail, home, text) {
   return { title, path, rows };
 }
 
-/** 「包含」那几样，照命令行的先后：程序、命令、后台页、吉祥物、接入、系统账号、MCP 服务、技能、脚本、几项设置（卸的不算设置）。 */
+/** 「包含」那几样，照命令行的先后：程序、命令、后台页、吉祥物、接入、系统账号、MCP 服务、技能、脚本、斜杠命令、人格、预设（核心 P-11 下）、几项设置（卸的不算设置）。 */
 function included(p, doing, text) {
   const items = [];
   if (typeof p.program === 'string') {
@@ -59,6 +59,8 @@ function included(p, doing, text) {
   for (const name of strings(p.skills)) items.push(text('plan.carried.skill', { name }));
   for (const name of strings(p.scripts)) items.push(text('plan.carried.script', { name }));
   for (const name of strings(p.slash)) items.push(text('plan.carried.slash', { name }));
+  for (const name of strings(p.personas)) items.push(text('plan.carried.persona', { name }));
+  for (const name of strings(p.presets)) items.push(text('plan.carried.preset', { name }));
   if (doing !== 'remove' && Number.isInteger(p.settings)) items.push(text('plan.carried.settings', { count: p.settings }));
   return items;
 }

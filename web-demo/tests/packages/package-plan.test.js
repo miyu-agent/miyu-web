@@ -38,6 +38,11 @@ test('只带技能、脚本、斜杠命令模板的包（核心 X-14 上的 slas
   assert.deepEqual(flat(plan), ['安装软件包 notes', '/w/notes', '包含：技能 take-notes、脚本 dice、斜杠命令 /review、斜杠命令 /todo', '大小：713 B，3 个文件']);
 });
 
+test('带人格、预设的包（核心 P-11 下的 personas、presets）：接在斜杠命令后面、设置前面', () => {
+  const plan = packagePlan({ tool: 'package', install: '/w/pets', preview: { package: 'pets', slash: ['pat'], personas: ['cat', 'dog'], presets: ['pet-mode'], settings: 1 } }, null, t);
+  assert.deepEqual(flat(plan), ['安装软件包 pets', '/w/pets', '包含：斜杠命令 /pat、人格 cat、人格 dog、预设 pet-mode、1 项设置']);
+});
+
 test('卸：一并删除写设置的键和状态目录，设置不算进包含；装回出厂的写恢复', () => {
   const plan = packagePlan({ tool: 'package', remove: 'notes', preview: { package: 'notes', layer: 'home', version: '1.0', settings: ['notes.dir', 'notes.style'], state: true, files: 2, size: 2048 } }, null, t);
   assert.deepEqual(flat(plan), ['卸载软件包 notes 1.0', null, '一并删除：设置 notes.dir、notes.style、状态目录', '大小：2 KB，2 个文件']);
