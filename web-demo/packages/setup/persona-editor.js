@@ -154,11 +154,11 @@ export class PersonaEditor {
     }
     const payload = personaSave(this.before, this.current());
     if (!payload) {
-      // 只改了外观：已经当场存了，这里只说一声
+      // 只改了外观：已经当场存了，这里只说一声、关掉卡片
       if (this.touched) {
         this.touched = false;
-        this.sync();
         this.kit.toast(this.t('edit.saved'));
+        this.hooks.close();
       }
       return;
     }
@@ -174,10 +174,11 @@ export class PersonaEditor {
       }
       return;
     }
+    // 存好了关掉卡片（2026-10-17 项目主人：点了保存，期望编辑的卡片自己关掉），列表照新的重读
     this.touched = false;
     this.kit.toast(this.t('edit.saved'));
-    await this.load();
     this.hooks.saved();
+    this.hooks.close();
   }
 
   async drop() {
