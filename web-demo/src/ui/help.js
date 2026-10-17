@@ -39,10 +39,13 @@ export class HelpPanel {
   /** @param {import('../model/commands.js').Spec[]} specs 现在的全部斜杠命令 */
   show(specs) {
     const section = (title, rows) => [h('div.help-section', title), h('div.help-grid', rows)];
-    const commands = specs.flatMap((s) => [
-      h('code.help-key', [`/${s.name}${s.argument ? ` ${s.argument}` : ''}`, ...(s.aliases ?? []).map((a) => `/${a}`)].join(' · ')),
-      h('span.help-what', s.summary),
-    ]);
+    // 有几种写法的（核心 O-6 四补的 `usage`）一种一行，照核心给的字（2026-10-17 项目主人：说明要列出几种写法）
+    const commands = specs.flatMap((s) => (s.usage?.length
+      ? s.usage.flatMap((u) => [h('code.help-key', u.form), h('span.help-what', u.summary)])
+      : [
+        h('code.help-key', [`/${s.name}${s.argument ? ` ${s.argument}` : ''}`, ...(s.aliases ?? []).map((a) => `/${a}`)].join(' · ')),
+        h('span.help-what', s.summary),
+      ]));
     const keys = /** @type {[string, string][]} */ (res.text.help.keys).flatMap(([key, what]) => [h('kbd.help-key', key), h('span.help-what', what)]);
     replace(this.body, section(t('help.commands'), commands), section(t('help.keys_title'), keys));
     this.body.scrollTop = 0;

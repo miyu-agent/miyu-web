@@ -12,7 +12,7 @@ import { h, replace } from './dom.js';
 import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { fitAbove } from './fit.js';
-import { Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText } from '../model/commands.js';
+import { Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText, rowsOf } from '../model/commands.js';
 import { itemsOf } from '../model/entries.js';
 import { copy } from '../markdown/build.js';
 import { Refusal } from '../core/connection.js';
@@ -70,14 +70,14 @@ export class Commands {
 /** 浮在输入框上面的命令列表。 */
 export class CommandList {
   /**
-   * @param {{run: (spec: Spec) => void, fill: (text: string) => void, opened?: () => void}} on 执行选中的；把名字填进框里；列表开了（外面照会话重问核心的命令）
+   * @param {{run: (spec: Spec, words?: string|null) => void, fill: (text: string) => void, opened?: () => void}} on 执行选中的（一种写法带着它的字）；把名字填进框里；列表开了（外面照会话重问核心的命令）
    * @param {() => Spec[]} specs 现在的全部命令（出厂的加软件包登记的）
    */
   constructor(on, specs) {
     this.on = on;
     this.specs = specs;
     this.menu = new Menu();
-    /** @type {Spec[]} */
+    /** 列表里的行：筛出来的命令，有几种写法的一种一行（`rowsOf`） @type {import('../model/commands.js').Row[]} */
     this.matches = [];
     this.value = '';
     /** 上一次鼠标在哪：列表在鼠标底下滚动时浏览器也发 `mousemove`，位置没变的不算悬停。 */
@@ -93,7 +93,8 @@ export class CommandList {
   update(value) {
     const was = this.open;
     this.value = value;
-    this.matches = this.menu.sync(value, this.specs());
+    this.matches = rowsOf(this.menu.sync(value, this.specs()));
+    this.menu.selected = Math.min(this.menu.selected, Math.max(0, this.matches.length - 1));
     if (!was && this.open) this.on.opened?.();
     // 开：从下面升上来；关：往下沉、淡出（蓝图「动效」）
     if (!this.open) {
@@ -107,15 +108,26 @@ export class CommandList {
     this.mark(true);
   }
 
-  row(spec, i) {
-    const aliases = spec.aliases?.length ? h('span.command-alias', ` (${spec.aliases.join(', ')})`) : null;
+  /** 一行：一条命令（名字、参数的提示、别名），或者它的一种写法（照核心给的 `/goal pause` 原样写，名字那一截照命令的颜色）。 */
+  row(r, i) {
+    const spec = r.spec;
+    const aliases = spec.aliases?.length && !spec.usage?.length ? h('span.command-alias', ` (${spec.aliases.join(', ')})`) : null;
+    const name = spec.usage?.length
+      ? h('span.command-name', `/${spec.name}`, r.form.length > spec.name.length + 1 ? h('span.command-arg', r.form.slice(1 + spec.name.length)) : null)
+      : h('span.command-name', `/${spec.name}`, spec.argument ? h('span.command-arg', ` ${spec.argument}`) : null, aliases);
     return h('div.command-row', {
       role: 'option',
       // 焦点留在输入框里
       onmousedown: (/** @type {MouseEvent} */ ev) => ev.preventDefault(),
       onmousemove: (/** @type {MouseEvent} */ ev) => this.hover(ev, i),
-      onclick: () => this.on.run(spec),
-    }, h('span.command-name', `/${spec.name}`, spec.argument ? h('span.command-arg', ` ${spec.argument}`) : null, aliases), h('span.command-summary', spec.summary));
+      onclick: () => this.choose(r),
+    }, name, h('span.command-summary', r.summary));
+  }
+
+  /** 选了一行：带占位的写法（`/goal <目标>`）把名字填进框里接着写；别的照它执行（一种写法带着它的字）。 @param {import('../model/commands.js').Row} r */
+  choose(r) {
+    if (r.fill) this.on.fill(`/${r.spec.name} `);
+    else this.on.run(r.spec, r.words);
   }
 
   /** 画选中的那一条；`scroll` 时把它滚进视野（只滚列表自己，不带着整页动）。 */
@@ -147,14 +159,16 @@ export class CommandList {
   /** 开着时 `↑` `↓` 选、`Tab` 补全、`Enter` 执行、`Esc` 关掉（字变了才再开）。接了的交回 `true`。 */
   key(ev) {
     if (!this.open || ev.ctrlKey || ev.metaKey || ev.altKey) return false;
-    const spec = this.matches[this.menu.selected];
+    const r = this.matches[this.menu.selected];
+    const spec = r.spec;
     if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
       this.menu.step(ev.key === 'ArrowDown', this.matches.length);
       this.mark(true);
     } else if (ev.key === 'Tab' && !ev.shiftKey) {
-      this.on.fill(`/${spec.name}${spec.args ? ' ' : ''}`);
+      // 一种写法的照它填（带占位的只填名字）；一条命令的照旧
+      this.on.fill(r.words ? `/${spec.name} ${r.words}` : `/${spec.name}${spec.args || r.fill ? ' ' : ''}`);
     } else if (ev.key === 'Enter' && !ev.shiftKey) {
-      this.on.run(spec);
+      this.choose(r);
     } else if (ev.key === 'Escape') {
       this.menu.dismiss(this.value);
       this.update(this.value);

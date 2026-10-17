@@ -10,8 +10,13 @@
 //!   照普通的话发；空会话里带字的是一句话，不带的弹「命令不存在」。
 
 /**
- * @typedef {{name: string, aliases?: string[], summary: string, run: string, args?: boolean, argument?: string}} Spec
- *   一条命令：名字（不带 `/`）、别名、列表里的说明、做什么（`ui/commands.js` 照它找处理）、名字后面能不能接参数、参数的提示（核心的命令带）
+ * @typedef {{form: string, summary: string}} Usage 一种写法（核心 O-6 四补的 `usage`）：`/goal pause`，和它的一句说明
+ * @typedef {{name: string, aliases?: string[], summary: string, run: string, args?: boolean, argument?: string, usage?: Usage[]}} Spec
+ *   一条命令：名字（不带 `/`）、别名、列表里的说明、做什么（`ui/commands.js` 照它找处理）、名字后面能不能接参数、参数的提示（核心的命令带）；
+ *   有几种写法的（核心给的 `usage`）列表、帮助里一行一种
+ * @typedef {{spec: Spec, form: string, summary: string, words: string|null, fill: boolean}} Row
+ *   列表里的一行：一条命令，或者它的一种写法；`words` 选了它交给命令的字（`/goal pause` 是 `pause`），`fill` 是带占位（`<目标>`）的，
+ *   选了只把名字填进框里接着写
  */
 
 /**
@@ -19,7 +24,27 @@
  * @param {{name: string, aliases?: string[], summary?: string, argument?: string}[]} catalog @returns {Spec[]}
  */
 export function coreSpecs(catalog) {
-  return (catalog ?? []).map((c) => ({ name: c.name, aliases: c.aliases ?? [], summary: c.summary ?? '', run: 'core', args: !!c.argument, ...(c.argument ? { argument: c.argument } : {}) }));
+  return (catalog ?? []).map((c) => {
+    const usage = (Array.isArray(c.usage) ? c.usage : []).filter((u) => u && typeof u.form === 'string' && u.form.startsWith(`/${c.name}`))
+      .map((u) => ({ form: u.form, summary: typeof u.summary === 'string' ? u.summary : '' }));
+    return { name: c.name, aliases: c.aliases ?? [], summary: c.summary ?? '', run: 'core', args: !!c.argument || usage.length > 1, ...(c.argument ? { argument: c.argument } : {}), ...(usage.length ? { usage } : {}) };
+  });
+}
+
+/**
+ * 筛出来的几条摊成列表里的行（2026-10-17 项目主人：说明要列出几种写法，核心 O-6 四补）：有 `usage` 的一种写法一行，照核心给的字，
+ * 不自己拼；没有的一条一行，照旧。
+ * @param {Spec[]} specs @returns {Row[]}
+ */
+export function rowsOf(specs) {
+  return specs.flatMap((spec) => {
+    if (!spec.usage?.length) return [{ spec, form: `/${spec.name}`, summary: spec.summary, words: null, fill: false }];
+    return spec.usage.map((u) => {
+      const rest = u.form.slice(1 + spec.name.length).trim();
+      const fill = /<[^>]*>/.test(rest);
+      return { spec, form: u.form, summary: u.summary, words: rest && !fill ? rest : null, fill };
+    });
+  });
 }
 
 /**

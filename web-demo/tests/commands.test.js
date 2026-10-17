@@ -180,3 +180,23 @@ test('拒绝写什么：有 why 的写 why；扩展的命令答了错（command_
   assert.equal(refusalText({ message: '命令暂时不可用。', reason: 'command_unavailable', data: null }), '命令暂时不可用。');
   assert.equal(refusalText(new Error('断了')), '断了');
 });
+
+test('有几种写法的命令（核心 O-6 四补的 usage）：一种写法一行，照核心给的字；带占位的选了只填名字，别的带着它的字执行', async () => {
+  const { coreSpecs, rowsOf } = await import('../src/model/commands.js');
+  const [goal, dream] = coreSpecs([
+    { name: 'goal', summary: '长期目标', argument: '<目标>', usage: [
+      { form: '/goal', summary: '看进度' }, { form: '/goal <目标>', summary: '设定长期目标；已经有一个就改它' },
+      { form: '/goal pause', summary: '暂停' }, { form: '/other', summary: '不是它的不要' }, { summary: '没写法的不要' },
+    ] },
+    { name: 'dream', summary: '整理记忆' },
+  ]);
+  assert.equal(goal.usage?.length, 3);
+  const rows = rowsOf([goal, dream]);
+  assert.deepEqual(rows.map((r) => [r.form, r.summary, r.words, r.fill]), [
+    ['/goal', '看进度', null, false],
+    ['/goal <目标>', '设定长期目标；已经有一个就改它', null, true],
+    ['/goal pause', '暂停', 'pause', false],
+    ['/dream', '整理记忆', null, false],
+  ]);
+  assert.equal(dream.usage, undefined, '没有 usage 的照旧');
+});

@@ -100,7 +100,7 @@ export class Composer {
     this.middle = h('span.footer-middle');
     this.footer = h('div.composer-footer', this.left, this.middle, h('span.footer-end', this.status, this.right), this.modelMenu.el);
     // 从命令列表里点的、选中回车的：记成 `/名字`
-    this.menu = new CommandList({ run: (spec) => { this.remember(`/${spec.name}`); this.run(spec, null); }, fill: (text) => this.fill(text), opened: () => on.commandsOpened?.() }, specs);
+    this.menu = new CommandList({ run: (spec, words = null) => { this.remember(`/${spec.name}${words ? ` ${words}` : ''}`); this.run(spec, words); }, fill: (text) => this.fill(text), opened: () => on.commandsOpened?.() }, specs);
     /** 翻输入历史（蓝图「输入历史」） */
     this.recall = new Recall(on.history.load());
     this.historyList = new HistoryList({ choose: (item) => this.chosen(item), closed: () => this.input.focus() });
