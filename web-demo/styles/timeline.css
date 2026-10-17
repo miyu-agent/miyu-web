@@ -198,6 +198,8 @@
 .tl-found-block + .tl-found-block { margin-top: 8px; }
 .tl-found-block > .tl-found-head { color: var(--text-faint); font: 11px/1.6 var(--mono); }
 .tl-found-doc { max-height: 300px; overflow: auto; font-size: 13px; }
+/* 读到的那一页里的图不画（照终端；文档里的图是知识库里的相对路径，网页取不到） */
+.tl-found-doc img { display: none; }
 
 
 /* 差异（旧版 diff.js、styles.css:2861-2967）：一张卡片，头一行做了什么、路径、加减；一行一行，加的绿底、删的红底 */
