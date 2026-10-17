@@ -482,23 +482,28 @@ export class App {
   }
 
   /**
-   * 照正在看的会话问核心认哪些斜杠命令（`command.catalog`，核心 O-6 补）：列出来的打了不会被拒；空会话里不列核心的（核心的命令要造好的
-   * 会话）。问回来时会话已经换了的不要；命令列表开着的照新的重筛。
+   * 照正在看的会话问核心认哪些斜杠命令（`command.catalog`，核心 O-6 补）：列出来的打了不会被拒。空会话里照不带会话的那一份列（核心认的
+   * 全部，连几种写法；2026-10-17 项目主人：人最常在新会话里打命令），记上要等会话（`later`）：选了、打了照回车的规矩（开会话的先开，
+   * 别的提示开了会话才能用），会话一造出来换成带会话的那一份。问回来时会话已经换了的不要；命令列表开着的照新的重筛。
    */
   async refreshCommands() {
     const session = this.current;
     if (!session) {
-      // 空会话里不列核心的，可打了它们的名字要认得出来：不带会话问一遍，记下名字、别名
-      this.commands.setCore([]);
+      // 空会话里照不带会话的那一份列，记上要等会话；名字、别名也记下（列表里和网页撞名没列出来的照样认得出来）。已经是这一份的不先清掉
+      if (!this.commands.core.every((c) => c.later)) this.commands.setCore([]);
       const all = await this.store.conn.request('command.catalog', {}).catch(() => null);
-      if (this.current === null && all) this.commands.setLater(new Set((all.commands ?? []).flatMap((c) => [c.name, ...(c.aliases ?? [])].map((n) => String(n).toLowerCase()))));
+      if (this.current !== null || !all) return;
+      this.commands.setCore(coreSpecs(all.commands ?? []).map((s) => ({ ...s, later: true })));
+      this.commands.setLater(new Set((all.commands ?? []).flatMap((c) => [c.name, ...(c.aliases ?? [])].map((n) => String(n).toLowerCase()))));
+      // 照框里现在的字重筛：问的时候列表可能因为一条都对不上关了（打得快，`/go` 时核心的还没回来）
+      this.composer.menu.update(this.composer.input.value);
       return;
     }
     this.commands.setLater(new Set());
     const got = await this.store.conn.request('command.catalog', { session }).catch(() => null);
     if (this.current !== session || !got) return;
     this.commands.setCore(coreSpecs(got.commands ?? []));
-    if (this.composer.menu.open) this.composer.menu.update(this.composer.input.value);
+    this.composer.menu.update(this.composer.input.value);
   }
 
   /** 还没开的新会话改人格、预设、工作区（软件包 `setup`）：告诉软件包（`draft.changed`），重画（`@` 照它列文件）。 @param {Partial<{persona: string|false|null, preset: string|null, cwd: string|null}>} patch */

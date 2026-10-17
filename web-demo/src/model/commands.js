@@ -11,9 +11,9 @@
 
 /**
  * @typedef {{form: string, summary: string}} Usage 一种写法（核心 O-6 四补的 `usage`）：`/goal pause`，和它的一句说明
- * @typedef {{name: string, aliases?: string[], summary: string, run: string, args?: boolean, argument?: string, usage?: Usage[]}} Spec
+ * @typedef {{name: string, aliases?: string[], summary: string, run: string, args?: boolean, argument?: string, usage?: Usage[], later?: boolean}} Spec
  *   一条命令：名字（不带 `/`）、别名、列表里的说明、做什么（`ui/commands.js` 照它找处理）、名字后面能不能接参数、参数的提示（核心的命令带）；
- *   有几种写法的（核心给的 `usage`）列表、帮助里一行一种
+ *   有几种写法的（核心给的 `usage`）列表、帮助里一行一种；`later` 是空会话里列着的核心的命令（要造好的会话才能执行）
  * @typedef {{spec: Spec, form: string, summary: string, words: string|null, fill: boolean}} Row
  *   列表里的一行：一条命令，或者它的一种写法；`words` 选了它交给命令的字（`/goal pause` 是 `pause`），`fill` 是带占位（`<目标>`）的，
  *   选了只把名字填进框里接着写
@@ -107,6 +107,12 @@ export function read(list, value, later = new Set(), opens = new Set()) {
   if (name == null) return { kind: 'talk' };
   const words = value.slice(1 + name.length).trim();
   const spec = find(list, name);
+  // 空会话里列着的核心的命令（2026-10-17 项目主人：新会话里打 / 要弹出来）：带着字、开会话的（`/goal <目标>`）先开会话再交核心；
+  // 正好是一种固定写法的（`/goal pause`，核心的 `usage` 里有、不带占位）和别的一样提示开了会话才能用，不为它白开一个会话
+  if (spec?.later) {
+    const fixed = words && (spec.usage ?? []).some((u) => u.form === `/${spec.name} ${words}`);
+    return words && !fixed && opens.has(spec.name.toLowerCase()) ? { kind: 'unlisted', name: spec.name, words } : { kind: 'later' };
+  }
   if (spec && !words) return { kind: 'command', spec, words: null };
   if (spec?.args) return { kind: 'command', spec, words };
   // 核心认、要造好的会话才能用的（空会话里不列）：不当话发出去（2026-10-10：空会话里打 `/remember 内容` 被当成一句话发给了她）

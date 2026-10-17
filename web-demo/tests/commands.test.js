@@ -200,3 +200,18 @@ test('有几种写法的命令（核心 O-6 四补的 usage）：一种写法一
   ]);
   assert.equal(dream.usage, undefined, '没有 usage 的照旧');
 });
+
+test('空会话里列着的核心的命令（later）：带着字、开会话的先开会话再交核心，别的提示开了会话才能用', async () => {
+  const { coreSpecs, read } = await import('../src/model/commands.js');
+  const list = coreSpecs([
+    { name: 'goal', summary: '长期目标', argument: '<目标>', usage: [{ form: '/goal', summary: '看进度' }, { form: '/goal <目标>', summary: '设定' }, { form: '/goal pause', summary: '暂停' }] },
+    { name: 'dream', summary: '整理记忆' },
+  ]).map((s) => ({ ...s, later: true }));
+  const opens = new Set(['goal']);
+  assert.deepEqual(read(list, '/goal 写完文档', new Set(), opens), { kind: 'unlisted', name: 'goal', words: '写完文档' });
+  assert.deepEqual(read(list, '/goal', new Set(), opens), { kind: 'later' });
+  assert.deepEqual(read(list, '/goal pause', new Set(), opens), { kind: 'later' }, '固定写法不为它白开一个会话');
+  assert.deepEqual(read(list, '/goal 暂停一下这个思路', new Set(), opens).kind, 'unlisted', '目标里有「暂停」两个字的照目标');
+  assert.deepEqual(read(list, '/dream', new Set(), opens), { kind: 'later' });
+  assert.deepEqual(read(list, '/dream 现在', new Set(), opens), { kind: 'later' });
+});
