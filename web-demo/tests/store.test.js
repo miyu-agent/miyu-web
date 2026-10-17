@@ -126,24 +126,15 @@ test('视图流的推送照编号改条目；排着的话被退回的告诉界�
   assert.equal(changed, 3);
 });
 
-test('会话状态换了：待办、模型跟着换；待办做完清空的留着清空前那一份；一轮做完了、没在看的记成没看过', () => {
+test('会话状态换了：待办、模型跟着换；一轮做完了、没在看的记成没看过', () => {
   const store = new Store(/** @type {any} */ ({ onPush() {}, request: async () => ({}) }));
   store.sessions.set('S', emptySession('S'));
   const s = /** @type {any} */ (store.sessions.get('S'));
   const status = (more) => store.push('view.status', { session: 'S', status: { state: 'running', ...more } });
   status({ todos: [{ content: 'a', status: 'in_progress' }], model: { endpoint: 'dev', model: 'm2' } });
-  assert.deepEqual([s.todos.length, s.todosDone, s.model.model], [1, null, 'm2']);
-  status({ todos: [{ content: 'a', status: 'completed' }] });
-  status({ todos: [] });
-  assert.deepEqual(s.todosDone, [{ content: 'a', status: 'completed' }], '全做完了清空的');
-  // 一下子全做完（中间没有全打勾的那一份）：照核心 9-8 九补的 todos_done
-  status({ todos: [{ content: 'b', status: 'completed' }, { content: 'c', status: 'in_progress' }] });
-  assert.equal(s.todosDone, null);
-  status({ todos: [], todos_done: [{ content: 'b', status: 'completed' }, { content: 'c', status: 'completed' }] });
-  assert.deepEqual(s.todosDone?.map((t) => t.content), ['b', 'c'], '照 todos_done');
-  const kept = s.todosDone;
-  status({ todos: [], todos_done: [{ content: 'b', status: 'completed' }, { content: 'c', status: 'completed' }] });
-  assert.equal(s.todosDone, kept, '之后的状态里还带着的不当新的');
+  assert.deepEqual([s.todos.length, s.model.model], [1, 'm2']);
+  status({ todos: [], todos_done: [{ content: 'a', status: 'completed' }] });
+  assert.deepEqual(s.todos, [], '清空了就是空的（清空前那一份不用）');
   store.view('other');
   store.push('view.status', { session: 'S', status: { state: 'idle' } });
   assert.equal(store.summary('S').unread, true);

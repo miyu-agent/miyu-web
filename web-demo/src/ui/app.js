@@ -911,7 +911,7 @@ export class App {
     }
     // 对话区画了一次：照它画的软件包（运行状态行这类）听这个事件；是状态事件，晚起来的包先拿到最后一份。
     // 带条目和会话状态（`entries`、`status`）：包照它们画（蓝图「照条目画」第 3 条）
-    this.ctx.publish('view.changed', { session: s?.id ?? null, running: view.running, queued: view.queued, todos: s?.todos ?? [], todosDone: s?.todosDone ?? null,
+    this.ctx.publish('view.changed', { session: s?.id ?? null, running: view.running, queued: view.queued, todos: s?.todos ?? [],
       entries: s?.view.list ?? [], status: s?.view.status ?? null });
     // 排着的话（打断时有排着的不撤那一轮）
     this.queuedNow = view.queued ?? [];

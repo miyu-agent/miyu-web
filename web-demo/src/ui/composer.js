@@ -85,6 +85,8 @@ export class Composer {
     // 一开始框里没字：先灰着（原来先是能发的蓝色，挂好了才变灰，刷新时右下角闪一下）
     this.sendButton = h('button.composer-send', { type: 'button', title: t('send'), disabled: true, onclick: () => this.submit() }, icon('arrow-up'));
     this.notice = h('div.composer-notice', { hidden: true });
+    /** 第几句提示：等着出的被新的一句、`quiet` 顶掉了就不出 */
+    this.noticeTurn = 0;
     /** 框下面左边：级别那一格一直是这一个按钮（换级别时字卷上去、换新的，见 `drawLevel`），后面是模型 */
     this.levelRoll = h('span.level-roll');
     this.levelButton = h('button.footer-level', { type: 'button', title: t('level_tip'), onclick: () => this.on.cycleLevel() }, this.levelRoll);
@@ -681,6 +683,23 @@ export class Composer {
 
   /** 提示：浮在输入框上面的小框，停一会儿；新的顶掉旧的。`good` 的底带一点绿（`tui.md`「提示」）。句末的句号去掉（核心的回执带着）。 */
   say(text, good = false, hold = false) {
+    // 等框上面那一叠走完过渡再出（2026-10-17 项目主人：有待办时 `/todo clear` 的提示先出在待办上面、待办才收）：回执和跟着它推来的
+    // 清单差几毫秒，先等一下让推来的画上，再等正在长出来、收回去的走完，照走完以后的位置放；新的一句顶掉还在等的
+    const turn = ++this.noticeTurn;
+    clearTimeout(this.noticeTimer);
+    this.settled().then(() => { if (turn === this.noticeTurn) this.showNotice(text, good, hold); });
+  }
+
+  /** 框上面那一叠（待办、运行状态行这类，框外面、`composer-dock` 里面的）没有正在走的过渡了；最多等 `notice_settle_ms`。 */
+  async settled() {
+    await new Promise((r) => setTimeout(r, 20));
+    const moving = this.el.getAnimations({ subtree: true })
+      .filter((a) => a instanceof CSSTransition && !this.box.contains(/** @type {KeyframeEffect} */ (a.effect)?.target ?? null));
+    if (!moving.length) return;
+    await Promise.race([Promise.all(moving.map((a) => a.finished.catch(() => {}))), new Promise((r) => setTimeout(r, res.layout.notice_settle_ms))]);
+  }
+
+  showNotice(text, good, hold) {
     this.notice.textContent = noStop(text);
     this.notice.title = noStop(text);
     this.notice.classList.toggle('good', good);
@@ -690,7 +709,6 @@ export class Composer {
     // 出来从下面升上来，停一会儿淡出（蓝图「动效」）；新的顶掉旧的；`hold` 的一直留着，等下一句顶掉或者 `quiet`
     show(this.notice);
     this.placeNotice();
-    clearTimeout(this.noticeTimer);
     if (!hold) this.noticeTimer = setTimeout(() => hide(this.notice), res.layout.notice_ms * Math.min(lines, 4));
   }
 
@@ -716,6 +734,7 @@ export class Composer {
 
   /** 收掉提示（`hold` 的那种等的事办完了、又没有话要说时）。 */
   quiet() {
+    this.noticeTurn += 1;
     clearTimeout(this.noticeTimer);
     hide(this.notice);
   }

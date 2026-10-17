@@ -26,44 +26,43 @@ test('做完几项、一共几项；全做完了才算做完，没有待办不�
   assert.ok(!allDone([]), '没有待办不算做完');
 });
 
-test('放得下的也是：做完两项及以上的收成一行，没做完的一项一行；只做完一项的照原样打勾；一项都没做完的全列', () => {
-  assert.deepEqual(show(fold(todos(5, 2), config.rows, false)), ['folded:2', 'active:第3项', 'pending:第4项', 'pending:第5项']);
-  assert.deepEqual(show(fold(todos(3, 1), config.rows, false)), ['done:第1项', 'active:第2项', 'pending:第3项'], '只做完一项的不收');
-  assert.deepEqual(show(fold(todos(5, 4), config.rows, false)), ['folded:4', 'active:第5项'], '做完四项的不再一直挂着');
+test('放得下、做完的不到两项：一项一行，没做完的照先后在前、做完的那一项排在最后（2026-10-17 项目主人在终端）', () => {
   assert.deepEqual(show(fold(todos(3), config.rows, false)), ['active:第1项', 'pending:第2项', 'pending:第3项']);
+  assert.deepEqual(show(fold(todos(5, 1), config.rows, false)), ['active:第2项', 'pending:第3项', 'pending:第4项', 'pending:第5项', 'done:第1项'], '只做完一项的划线排最后');
 });
 
-test('放不下：做完的收成一行，接着在做的和后面的，放不下的收成最后一行', () => {
-  const rows = fold(todos(9, 3), 5, false);
-  assert.deepEqual(show(rows), ['folded:3', 'active:第4项', 'pending:第5项', 'pending:第6项', 'more:3']);
+test('做完两项及以上：做完的收成最底下一行，上面是没做完的（TUI 的例子：做完 4、共 7）', () => {
+  const list = Array.from({ length: 7 }, (_, i) => ({ text: ['一号', '二号', '三号', '四号', '五号', '六号', '七号'][i], state: i < 4 ? 'done' : i === 4 ? 'active' : 'pending' }));
+  assert.deepEqual(show(fold(/** @type {any} */ (list), 5, false)), ['active:五号', 'pending:六号', 'pending:七号', 'folded:4']);
+  assert.deepEqual(show(fold(todos(5, 2), config.rows, false)), ['active:第3项', 'pending:第4项', 'pending:第5项', 'folded:2']);
+});
+
+test('放不下：没做完的在前，放不下的收成「还有 N 项」，排在「已完成」上面（TUI 的例子：做完 12、共 20）', () => {
+  const rows = fold(todos(20, 12), 5, false);
+  assert.deepEqual(show(rows), ['active:第13项', 'pending:第14项', 'pending:第15项', 'more:5', 'folded:12']);
   assert.equal(rows.length, 5, '最多 5 行');
 });
 
-test('放不下、还没做完一项：没有收起的那一行，最后一行是还有几项', () => {
-  const rows = fold(todos(9), 5, false);
-  assert.deepEqual(show(rows), ['active:第1项', 'pending:第2项', 'pending:第3项', 'pending:第4项', 'more:5']);
+test('放不下、还没做完一项：没有「已完成」那一行，最后一行是还有几项', () => {
+  assert.deepEqual(show(fold(todos(9), 5, false)), ['active:第1项', 'pending:第2项', 'pending:第3项', 'pending:第4项', 'more:5']);
+});
+
+test('放不下、只做完一项：照 TUI 也收成「已完成 1 项」', () => {
+  assert.deepEqual(show(fold(todos(9, 1), 5, false)), ['active:第2项', 'pending:第3项', 'pending:第4项', 'more:5', 'folded:1']);
 });
 
 test('放不下、剩下的正好放得下：不写还有几项', () => {
-  const rows = fold(todos(9, 5), 5, false);
-  assert.deepEqual(show(rows), ['folded:5', 'active:第6项', 'pending:第7项', 'pending:第8项', 'pending:第9项']);
+  assert.deepEqual(show(fold(todos(9, 5), 5, false)), ['active:第6项', 'pending:第7项', 'pending:第8项', 'pending:第9项', 'folded:5']);
 });
 
-test('全做完了（停着让人看的那一会儿）：留最后一项看它打勾，前面的收成一行', () => {
-  assert.deepEqual(show(fold(todos(9, 9), 5, false)), ['folded:8', 'done:第9项']);
-  assert.deepEqual(show(fold(todos(3, 3), 5, false)), ['folded:2', 'done:第3项']);
-  assert.deepEqual(show(fold(todos(2, 2), 5, false)), ['done:第1项', 'done:第2项'], '收了也只省一行的不收');
-  assert.deepEqual(show(fold(todos(1, 1), 5, false)), ['done:第1项'], '只有一项的不收');
+test('展开：全部列出，做完的也排在末尾', () => {
+  assert.deepEqual(show(fold(todos(4, 2), 5, true)), ['active:第3项', 'pending:第4项', 'done:第1项', 'done:第2项']);
+  assert.deepEqual(fold([], 5, true), []);
 });
 
-test('展开：全部列出', () => {
-  assert.equal(fold(todos(9, 3), 5, true).length, 9);
-  assert.deepEqual(fold([], 5, false), []);
-});
-
-test('出厂露 5 行（照 TUI），全做完了停 1.5 秒再收', () => {
+test('出厂露 5 行（照 TUI）；全做完了不停，没有停多久那一项', () => {
   assert.equal(config.rows, 5);
-  assert.equal(config.hold_ms, 1500);
+  assert.equal(config.hold_ms, undefined);
 });
 
 test('核心的清单换成这一块的样子：pending 没做、in_progress 在做、completed 做完，不认识的当没做；空的是空的', async () => {

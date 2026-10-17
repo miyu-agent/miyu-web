@@ -6,7 +6,7 @@
 /** @typedef {{text: string, state: TodoState}} Todo 一项 */
 /**
  * @typedef {{kind: 'item', todo: Todo}|{kind: 'folded', count: number}|{kind: 'more', count: number}} Row
- *   一行：一项；做完的收成的一行（`☑ 做完 N 项`）；放不下的收成的最后一行（`… 还有 N 项`）
+ *   一行：一项；做完的收成的最底下一行（`☑ 已完成 N 项`）；放不下的收成的一行（`… 还有 N 项`，在「已完成」上面）
  */
 
 /** 做完几项、一共几项（头一行的 `待办 2/5`）。 */
@@ -18,27 +18,25 @@ export function progress(todos) {
 export const allDone = (todos) => todos.length > 0 && todos.every((x) => x.state === 'done');
 
 /**
- * 收成几行。`full` 时全部列出（长的由界面折行）；做完两项及以上的不管放不放得下都收成一行「已完成 N 项」，只做完一项的照原样
- * 一行打勾（2026-10-17 项目主人：原来项数不超过 `rows` 的一项一行、做完的一直挂着；同一天又定一项的不收），接着在做的和后面的，
- * 放不下的收成最后一行（`tui.md` 第 4 条）。全做完了（收掉前停着让人看的那一会儿）留最后一项，前面的收成一行，好看到它打勾。
+ * 收成几行（照 TUI 的 `todo_lines`，2026-10-17 项目主人在终端定的）：没做完的照先后在前，做完的排到末尾（`full` 全部列出时也是，
+ * 长的由界面折行）。做完的不到两项、放得下的一项一行；不然做完的收成最底下一行「已完成 N 项」，上面是没做完的，放不下的收成
+ * 「… 还有 N 项」，排在「已完成」那一行上面。全做完了的不画（`dock.js`），这里照常收。
  * @param {Todo[]} todos
- * @param {number} rows 最多几行（`layout.json` 的 `todo_rows`）
+ * @param {number} rows 最多几行（不算头一行）
  * @param {boolean} full
  * @returns {Row[]}
  */
 export function fold(todos, rows, full) {
   const items = (list) => list.map((todo) => /** @type {Row} */ ({ kind: 'item', todo }));
-  if (full) return items(todos);
-  if (allDone(todos)) return todos.length > 2 ? [{ kind: 'folded', count: todos.length - 1 }, ...items(todos.slice(-1))] : items(todos);
-  const done = todos.filter((x) => x.state === 'done').length;
-  // 只做完一项的不收：那一项照原样打勾，和没做完的一起照先后列
-  const open = done >= 2 ? todos.filter((x) => x.state !== 'done') : todos;
-  /** @type {Row[]} */
-  const out = done >= 2 ? [{ kind: 'folded', count: done }] : [];
-  const room = Math.max(0, rows - out.length);
+  const open = todos.filter((x) => x.state !== 'done');
+  const done = todos.length - open.length;
+  if (full || (todos.length <= rows && done <= 1)) return items([...open, ...todos.filter((x) => x.state === 'done')]);
+  const room = Math.max(0, rows - (done > 0 ? 1 : 0));
   const shown = open.length <= room ? open.length : Math.max(0, room - 1);
-  out.push(...items(open.slice(0, shown)));
+  /** @type {Row[]} */
+  const out = items(open.slice(0, shown));
   if (shown < open.length) out.push({ kind: 'more', count: open.length - shown });
+  if (done > 0) out.push({ kind: 'folded', count: done });
   return out;
 }
 

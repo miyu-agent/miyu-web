@@ -13,6 +13,6 @@ export function apply(ctx) {
   ctx.on('session.opened', (id) => dock.show(id));
   ctx.on('session.created', ({ to }) => dock.show(to));
   // 待办（核心 D-3）：对话区每画一次带着正在看的会话的清单
-  ctx.on('view.changed', (/** @type {any} */ v) => dock.setReal(v.session ?? null, v.todos ?? [], v.todosDone ?? null));
+  ctx.on('view.changed', (/** @type {any} */ v) => dock.setReal(v.session ?? null, v.todos ?? []));
   ctx.slots.mount('composer.above', { id: 'todo', order: 10, render: () => dock.el });
 }

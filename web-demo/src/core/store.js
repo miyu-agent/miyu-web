@@ -11,7 +11,7 @@ import { SessionIndex } from './session-index.js';
 import { ViewLog, VIEW_PUSHES } from './view.js';
 
 /**
- * @typedef {{id: string, view: ViewLog, limits: any, todos: {content: string, status: string}[], todosDone: {content: string, status: string}[]|null,
+ * @typedef {{id: string, view: ViewLog, limits: any, todos: {content: string, status: string}[],
  *   model: {ref?: string, endpoint?: string, model?: string, effort?: {level: string, from: string}}|null,
  *   first: number|null, more: boolean, paged: boolean, older: boolean, base: Base|null, gone?: boolean}} Session
  *   `first` 读进来的最早一条的序号，`more` 还有更早的（`view.page`），`paged` 往前翻过，`older` 正在读更早的一页
@@ -23,7 +23,7 @@ import { ViewLog, VIEW_PUSHES } from './view.js';
 
 /** 一个刚知道、还没读的会话。 @param {string} id @returns {Session} */
 export function emptySession(id) {
-  return { id, view: new ViewLog(), limits: {}, model: null, todos: [], todosDone: null, first: null, more: false, paged: false, older: false, base: null };
+  return { id, view: new ViewLog(), limits: {}, model: null, todos: [], first: null, more: false, paged: false, older: false, base: null };
 }
 
 export class Store {
@@ -156,7 +156,6 @@ export class Store {
     s.limits = r.limits ?? s.limits ?? {};
     s.model = r.status?.model ?? r.model ?? null;
     s.todos = r.status?.todos ?? r.todos ?? [];
-    s.todosDone = null;
     s.base = { upto: r.last ?? 0, usage: r.usage ?? null, permission: r.permission ?? null, jobs: r.jobs ?? null, workspace: r.workspace ?? null };
   }
 
@@ -259,14 +258,8 @@ export class Store {
     log.apply(method, p);
     if (method !== 'view.status') return;
     const status = log.status ?? {};
-    // 待办全做完了清空的：待办那一块照清空前那一份停一下再收（会话状态里没有清空前那一份，照前后两份认）
-    const before = s.todos ?? [];
+    // 待办：全做完了、清空了待办那一块当场收（2026-10-17 项目主人在终端定的），清空前那一份（`todos_done`）不用
     s.todos = status.todos ?? [];
-    if (s.todos.length) s.todosDone = null;
-    // 因为全做完了清空的：核心 9-8 九补起状态里带清空前那一份（`todos_done`，只在清空的时候有）；照「从有到空、同时带着它」那一下认，
-    // 之后的状态里这一格还在的不再播（前一份已经是空的）。老核心没有这一格的照前后两份认（前一份就全做完了的）
-    else if (before.length && Array.isArray(status.todos_done) && status.todos_done.length) s.todosDone = status.todos_done;
-    else if (before.length && before.every((t) => t.status === 'completed')) s.todosDone = before;
     if (status.model) s.model = status.model;
     if (was !== 'idle' && status.state === 'idle' && s.id !== this.viewing) this.unread.add(s.id);
     if (!wasPreparing && status.preparing) this.preparing(s.id);
