@@ -77,14 +77,16 @@ export function find(list, name) {
 
 /**
  * 回车时这一行是什么：`later` 是核心认、要造好的会话才能用的命令名和别名（小写；空会话里不列，打了也不当话发，提示开了会话才能用）；
- * 其中 `opens` 里的（`commands.json` 的 `opens_session`：`/goal`）后面带着字的交外面先开会话（`unlisted`）。
+ * 其中 `opens` 里的（`commands.json` 的 `opens_session`：`/goal`）后面带着字的交外面先开会话（`unlisted`）；`nones` 里的（`commands.json`
+ * 的 `empty_none`：`/goal`、`/todo`）不带字的、固定写法照核心「没有」的那一句（`empty_fixed`）。
  * @param {Spec[]} list
  * @param {string} value 框里的字
  * @param {Set<string>} [later]
  * @param {Set<string>} [opens]
+ * @param {Set<string>} [nones]
  * @returns {Line}
  */
-export function read(list, value, later = new Set(), opens = new Set()) {
+export function read(list, value, later = new Set(), opens = new Set(), nones = new Set()) {
   const name = typed(value);
   if (name == null) return { kind: 'talk' };
   const words = value.slice(1 + name.length).trim();
@@ -92,12 +94,12 @@ export function read(list, value, later = new Set(), opens = new Set()) {
   // 空会话里列着的核心的命令（2026-10-17 项目主人：新会话里打 / 要弹出来）：带着字、开会话的（`/goal <目标>`）先开会话再交核心；
   // 正好是一种固定写法的（`/goal pause`，核心的 `usage` 里有、不带占位）和别的一样提示开了会话才能用，不为它白开一个会话
   // 开会话的（`/goal`）没写字的提示写上内容（2026-10-17 项目主人：原来提示需要先开始会话），它的固定写法照核心「没有」的那一句，
-  // 都不开会话
+  // 都不开会话；`/todo`、`/todo clear`（核心 D-3 再补）还没有会话就还没有待办，一样照核心「无待办。」
   if (spec?.later) {
     const opening = opens.has(spec.name.toLowerCase());
     const fixed = words && (spec.usage ?? []).some((u) => u.form === `/${spec.name} ${words}`);
     if (opening && !words) return { kind: 'needs_words', spec };
-    if (opening && fixed) return { kind: 'empty_fixed', spec };
+    if (nones.has(spec.name.toLowerCase()) && (!words || fixed)) return { kind: 'empty_fixed', spec };
     return words && opening ? { kind: 'unlisted', name: spec.name, words } : { kind: 'later' };
   }
   if (spec && !words) return { kind: 'command', spec, words: null };

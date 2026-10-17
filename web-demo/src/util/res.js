@@ -7,7 +7,7 @@ import { addIcons } from '../lib/dom.js';
 
 /**
  * @typedef {{text: any, layout: any, persona: any, lucide: any, timeline: any, markdown: any, artifacts: any, cards: any,
- *   commands: {commands: import('../model/commands.js').Spec[], opens_session?: string[]}, languages: import('../kernel/language.js').Table,
+ *   commands: {commands: import('../model/commands.js').Spec[], opens_session?: string[], empty_none?: string[]}, languages: import('../kernel/language.js').Table,
  *   language: import('../kernel/language.js').Language, human: {tools: Record<string, any>, said: Record<string, string>}}} Res
  *   `human` 是核心给的给人看的字（`human.get`，`core/human.js`）；`language` 是定下来的界面语言，`text`、`commands` 的说明照它装
  */

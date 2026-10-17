@@ -216,7 +216,8 @@
       "goal": "Enter a goal"
     },
     "empty_fixed": {
-      "goal": "No goal."
+      "goal": "No goal.",
+      "todo": "No todos."
     }
   },
   "language": {

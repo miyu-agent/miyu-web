@@ -4,6 +4,11 @@
     "goal"
   ],
   "opens_session_note": "空会话里打这几个核心命令、后面带着字的：先照说第一句话一样开会话，再交核心（2026-10-12 项目主人定只有 /goal <目标>：设目标就是要她开始干活）。别的核心命令空会话里照旧提示需要先开始会话。",
+  "empty_none": [
+    "goal",
+    "todo"
+  ],
+  "empty_none_note": "空会话里照核心「没有」的那一句说的核心命令（2026-10-17）：还没有会话就还没有那样东西。/goal 是它的固定写法（/goal pause、resume、clear：核心 usage 里有、不带占位的）；/todo 不带字的、/todo clear 都是。说的话在界面字的 commands.empty_fixed.<名字>，照抄核心资源（commands/goal-none、commands/todo-none），测试对着查。",
   "commands": [
     {
       "name": "undo",

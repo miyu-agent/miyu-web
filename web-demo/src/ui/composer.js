@@ -40,6 +40,8 @@ import { stash } from '../model/stash.js';
 
 /** 空会话里打了、带着字就先开会话的核心命令（`commands.json` 的 `opens_session`） */
 const opensSession = () => new Set((res.commands.opens_session ?? []).map((/** @type {string} */ n) => n.toLowerCase()));
+/** 空会话里照核心「没有」的那一句说的核心命令（`commands.json` 的 `empty_none`） */
+const emptyNone = () => new Set((res.commands.empty_none ?? []).map((/** @type {string} */ n) => n.toLowerCase()));
 
 /**
  * @typedef {{id: string, has: () => boolean, busy: () => boolean, take: () => Record<string, any>|null, putBack: (given: any) => void,
@@ -290,7 +292,7 @@ export class Composer {
     if (this.locked) return this.say(this.locked);
     const text = this.input.value;
     // 空会话才看「要等会话的」那几个名字：刚开出会话、核心的命令表还没照它重问回来时，它们照列表里没有的交核心
-    const line = read(this.specs(), text, this.on.session() ? undefined : this.on.laterCommands?.(), opensSession());
+    const line = read(this.specs(), text, this.on.session() ? undefined : this.on.laterCommands?.(), opensSession(), emptyNone());
     if (line.kind === 'command') {
       this.remember(text);
       this.run(line.spec, line.words);
@@ -328,8 +330,8 @@ export class Composer {
       this.set(`/${line.spec.name} `);
       return;
     }
-    // 它的固定写法（`/goal pause`）：还没有会话就还没有那样东西，照核心「没有」的那一句（核心资源的 `commands/goal-none`，`human.get`
-    // 不给，网页照抄一份，测试对着核心的资源查），不开会话
+    // 它的固定写法（`/goal pause`）、`/todo`：还没有会话就还没有那样东西，照核心「没有」的那一句（核心资源的 `commands/goal-none`、
+    // `commands/todo-none`，`human.get` 不给，网页照抄一份，测试对着核心的资源查），不开会话
     if (line.kind === 'empty_fixed') {
       const key = `commands.empty_fixed.${line.spec.name}`;
       this.say(t(key) === key ? t('commands.needs_session') : t(key));

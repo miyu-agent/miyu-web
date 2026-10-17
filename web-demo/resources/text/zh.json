@@ -216,7 +216,8 @@
       "goal": "请输入目标内容"
     },
     "empty_fixed": {
-      "goal": "无长期目标。"
+      "goal": "无长期目标。",
+      "todo": "无待办。"
     }
   },
   "language": {

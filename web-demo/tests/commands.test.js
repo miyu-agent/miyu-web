@@ -204,20 +204,38 @@ test('空会话里列着的核心的命令（later）：带着字、开会话的
   const opens = new Set(['goal']);
   assert.deepEqual(read(list, '/goal 写完文档', new Set(), opens), { kind: 'unlisted', name: 'goal', words: '写完文档' });
   assert.equal(read(list, '/goal', new Set(), opens).kind, 'needs_words', '只打 /goal：提示写上内容，不开会话');
-  assert.equal(read(list, '/goal pause', new Set(), opens).kind, 'empty_fixed', '固定写法照核心「没有」的那一句，不为它白开一个会话');
+  assert.equal(read(list, '/goal pause', new Set(), opens, new Set(['goal'])).kind, 'empty_fixed', '固定写法照核心「没有」的那一句，不为它白开一个会话');
   assert.deepEqual(read(list, '/goal 暂停一下这个思路', new Set(), opens).kind, 'unlisted', '目标里有「暂停」两个字的照目标');
   assert.deepEqual(read(list, '/dream', new Set(), opens), { kind: 'later' });
   assert.deepEqual(read(list, '/dream 现在', new Set(), opens), { kind: 'later' });
 });
 
-test('空会话里 /goal 的固定写法照核心「没有目标」的那一句：网页照抄的那一份和核心资源的一字不差', async () => {
+test('空会话里打 /todo、/todo clear（核心 D-3 再补，empty_none）：还没有待办，照核心「无待办。」，不开会话；别的字照旧要等会话', async () => {
+  const { coreSpecs } = await import('../src/model/commands.js');
+  const list = coreSpecs([
+    { name: 'goal', summary: '长期目标', argument: '<目标>', usage: [{ form: '/goal', summary: '看进度' }, { form: '/goal <目标>', summary: '设定' }, { form: '/goal pause', summary: '暂停' }] },
+    { name: 'todo', summary: '待办', argument: '[clear]', usage: [{ form: '/todo', summary: '看待办' }, { form: '/todo clear', summary: '清空' }] },
+  ]).map((s) => ({ ...s, later: true }));
+  const opens = new Set(res.commands.opens_session);
+  const nones = new Set(res.commands.empty_none);
+  assert.equal(read(list, '/todo', new Set(), opens, nones).kind, 'empty_fixed');
+  assert.equal(read(list, '/todo clear', new Set(), opens, nones).kind, 'empty_fixed');
+  assert.equal(read(list, '/todo 别的', new Set(), opens, nones).kind, 'later', '核心不认的写法照旧');
+  assert.equal(read(list, '/goal pause', new Set(), opens, nones).kind, 'empty_fixed');
+  assert.equal(read(list, '/goal', new Set(), opens, nones).kind, 'needs_words', '开会话的不带字的照旧提示写上内容');
+  assert.equal(read(list, '/goal 写完文档', new Set(), opens, nones).kind, 'unlisted');
+});
+
+test('空会话里照「没有」说的（/goal 的固定写法、/todo）：网页照抄的那一份和核心资源的一字不差', async () => {
   const { readFileSync } = await import('node:fs');
   const { join } = await import('node:path');
   const dir = process.env.MIYU_RESOURCES;
   assert.ok(dir, '没设 MIYU_RESOURCES');
   for (const lang of ['zh', 'en', 'ja']) {
-    const core = JSON.parse(readFileSync(join(/** @type {string} */ (dir), 'core', 'human', `${lang}.json`), 'utf8')).said['commands/goal-none'];
-    const web = JSON.parse(readFileSync(new URL(`../resources/text/${lang}.json`, import.meta.url), 'utf8')).commands.empty_fixed.goal;
-    assert.equal(web, core, lang);
+    const core = JSON.parse(readFileSync(join(/** @type {string} */ (dir), 'core', 'human', `${lang}.json`), 'utf8')).said;
+    const web = JSON.parse(readFileSync(new URL(`../resources/text/${lang}.json`, import.meta.url), 'utf8')).commands.empty_fixed;
+    assert.equal(web.goal, core['commands/goal-none'], lang);
+    assert.equal(web.todo, core['commands/todo-none'], lang);
+    assert.deepEqual(Object.keys(web).sort(), [...res.commands.empty_none].sort(), 'empty_none 里的每一条都有一句');
   }
 });
