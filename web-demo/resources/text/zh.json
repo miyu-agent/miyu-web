@@ -174,7 +174,7 @@
     "maximize": "最大化",
     "restore": "还原",
     "close": "关闭",
-    "list": "产物列表",
+    "list": "展示过的",
     "loading": "载入中…",
     "failed": "文件载入失败",
     "resize": "拖动调整宽度",
@@ -182,14 +182,16 @@
       "markdown": "MD",
       "html": "HTML",
       "image": "图片",
-      "video": "视频",
       "code": "代码",
-      "text": "文字"
+      "text": "文字",
+      "pdf": "PDF",
+      "file": "文件"
     },
     "failed_with": "文件载入失败：{reason}",
     "tab_work": "工作区",
     "tab_panel": "面板",
-    "empty": "暂无产物"
+    "empty": "还没有展示过东西",
+    "download_named": "下载 {name}"
   },
   "commands": {
     "nothing_to_clear": "上下文为空。",

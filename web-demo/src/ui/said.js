@@ -16,8 +16,9 @@ import { blobUrl } from '../core/host.js';
 import { shortSession } from '../model/words.js';
 
 /**
- * @typedef {{copy: (text: string) => void, edit: (text: string) => void, copyTurn: (turn: number) => void, redo: () => void, openJobs: () => void, openSession: (id: string) => void, compacted?: (session: string|null) => void}} Actions
- *   复制一段字；照改过的话重做最新的一轮；复制她这一轮说的全部正文；原样重做最新的一轮；打开后台任务的浮层；看另一个会话
+ * @typedef {{copy: (text: string) => void, edit: (text: string) => void, copyTurn: (turn: number) => void, redo: () => void, openJobs: () => void, openSession: (id: string) => void, compacted?: (session: string|null) => void, reveal?: (path: string) => void}} Actions
+ *   复制一段字；照改过的话重做最新的一轮；复制她这一轮说的全部正文；原样重做最新的一轮；打开后台任务的浮层；看另一个会话；
+ *   在右栏打开她展示过的那一样
  * @typedef {{session: string|null, lightbox: () => any, mine?: boolean, titleOf?: (id: string) => string|null}} Media
  *   附件的地址照哪个会话取、现在的灯箱、是不是你说的、一个会话的标题（「来自「标题」」用）
  * @typedef {{kind: 'image'|'file', blob: string, media_type: string, width: number|null, height: number|null, name: string|null}} Attachment

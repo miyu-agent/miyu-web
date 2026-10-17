@@ -67,7 +67,7 @@
 4. 造一张票据：32 个随机字节，64 位小写十六进制。记在内存里：哪个登录令牌、哪个资源、多大、`type`、`name`、`download`。同一个令牌、同一个资源、同样三格的，交回原来那一张。12 小时没用过的作废；最多 4096 张，多了丢最久没用的。网页软件重启，票据全作废，页面照 404 重新换。
 5. 回应 `{"url":"/media/<票据>"}`。
 6. `GET /media/<票据>`：不认识的 404。带 `Range: bytes=…` 的只认一段，回 206；超出的回 416；不带的回全部。照 `blob.get`、`fs.read` 一块 512 KiB 地读，读一块写一块，不整个读进内存。
-7. 类型：`type` 在 `web.json` 的 blob 类型表里的照它；`path` 的照扩展名查表；都没有的 `application/octet-stream`。响应头带 `nosniff`、`Cache-Control: private, no-cache`、`Content-Security-Policy: sandbox; default-src 'none'; img-src data:; media-src data:; style-src 'unsafe-inline'`：有人直接打开这个地址（一个 SVG、一个 HTML），它在一个空的来源里跑，碰不到页面。`download` 的加 `Content-Disposition: attachment`，名字照 `name`（只留最后一段），UTF-8 照 RFC 5987 转义。
+7. 类型：`type` 在 `web.json` 的 blob 类型表里的照它；`path` 的照扩展名查表；都没有的 `application/octet-stream`。响应头带 `nosniff`、`Cache-Control: private, no-cache`、`Content-Security-Policy: sandbox; default-src 'none'; img-src data:; media-src data:; style-src 'unsafe-inline'`：有人直接打开这个地址（一个 SVG、一个 HTML），它在一个空的来源里跑，碰不到页面。`application/pdf` 不放进 `sandbox`（浏览器自己的 PDF 阅读器在沙盒的来源里不肯开，她 `show` 的 PDF 要在右栏看，核心 D-5），只带 `default-src 'none'; img-src data:; style-src 'unsafe-inline'`。`download` 的加 `Content-Disposition: attachment`，名字照 `name`（只留最后一段），UTF-8 照 RFC 5987 转义。
 8. 链接卡片的图、附件、她写到的本机图片和音视频，都走这一条。网页软件不另开图片代理：抓网上东西的只有核心的 `net` 包，地址闸只有一处。
 9. 有 `/media` 在给，网页软件不算空闲。
 10. 施工 W-10 定的细处见「施工时定的」第 11 到 16 条：「blob 类型表」就是 `types` 那张表的值；一个令牌一条核心连接、同时问；`Range` 只认一段，好几段、写法不对的照没写；`GET` 时照这时的大小算；令牌作废了票据一起作废；方法只认 `POST`、`GET`。没写名字的下载，本机文件照文件名，blob 只写 `attachment`。

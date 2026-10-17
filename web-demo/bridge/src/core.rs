@@ -20,7 +20,10 @@ pub struct Refused {
 
 impl Refused {
     fn bridge(message: impl Into<String>) -> Self {
-        Self { reason: "bridge".to_string(), message: message.into() }
+        Self {
+            reason: "bridge".to_string(),
+            message: message.into(),
+        }
     }
 }
 
@@ -39,9 +42,14 @@ impl Core {
     pub async fn open() -> Result<Self, String> {
         let (connection, token) = crate::link::connect().await?;
         let (reader, writer) = tokio::io::split(connection);
-        let mut core = Self { lines: BufReader::new(reader).lines(), writer };
+        let mut core = Self {
+            lines: BufReader::new(reader).lines(),
+            writer,
+        };
         let hello = json!({"protocol": [1, 1], "head": {"kind": "web", "version": env!("CARGO_PKG_VERSION")}, "token": token, "caps": {"input": false}});
-        core.call("hello", hello).await.map_err(|r| format!("握手被拒：{}", r.message))?;
+        core.call("hello", hello)
+            .await
+            .map_err(|r| format!("握手被拒：{}", r.message))?;
         Ok(core)
     }
 
@@ -51,19 +59,41 @@ impl Core {
     ///
     /// 核心拒了（照原因码）；连接断了、写不出去（原因码 `bridge`）。
     pub async fn call(&mut self, method: &str, params: Value) -> Result<Value, Refused> {
-        let id = format!("bridge-{}-{}", std::process::id(), NEXT.fetch_add(1, Ordering::Relaxed) + 1);
-        let line = json!({"jsonrpc": "2.0", "id": id, "method": method, "params": params}).to_string() + "\n";
-        self.writer.write_all(line.as_bytes()).await.map_err(|e| Refused::bridge(format!("写给核心时出错：{e}")))?;
+        let id = format!(
+            "bridge-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed) + 1
+        );
+        let line = json!({"jsonrpc": "2.0", "id": id, "method": method, "params": params})
+            .to_string()
+            + "\n";
+        self.writer
+            .write_all(line.as_bytes())
+            .await
+            .map_err(|e| Refused::bridge(format!("写给核心时出错：{e}")))?;
         loop {
-            let got = self.lines.next_line().await.map_err(|e| Refused::bridge(format!("读核心时出错：{e}")))?;
-            let Some(got) = got else { return Err(Refused::bridge("核心断开了")) };
-            let Ok(message) = serde_json::from_str::<Value>(&got) else { continue };
+            let got = self
+                .lines
+                .next_line()
+                .await
+                .map_err(|e| Refused::bridge(format!("读核心时出错：{e}")))?;
+            let Some(got) = got else {
+                return Err(Refused::bridge("核心断开了"));
+            };
+            let Ok(message) = serde_json::from_str::<Value>(&got) else {
+                continue;
+            };
             if message["id"] != json!(id) {
                 continue;
             }
             if let Some(error) = message.get("error") {
-                let reason = error["data"]["reason"].as_str().map_or_else(|| error["code"].to_string(), str::to_string);
-                return Err(Refused { reason, message: error["message"].as_str().unwrap_or("").to_string() });
+                let reason = error["data"]["reason"]
+                    .as_str()
+                    .map_or_else(|| error["code"].to_string(), str::to_string);
+                return Err(Refused {
+                    reason,
+                    message: error["message"].as_str().unwrap_or("").to_string(),
+                });
             }
             return Ok(message["result"].clone());
         }

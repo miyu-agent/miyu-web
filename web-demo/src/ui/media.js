@@ -19,15 +19,19 @@ const withUrl = (el, attr, url) => {
 
 /**
  * 一张图（`.conversation-media`）。知道宽高的先按比例占好地方，图来了不跳。
- * @param {{url: string|Promise<string>, name?: string, alt?: string, width?: number, height?: number, workspace?: () => void, lightbox?: () => any, tried?: string}} what
+ * @param {{url: string|Promise<string>, name?: string, alt?: string, width?: number, height?: number, workspace?: () => void, lightbox?: () => any, tried?: string, download?: string|Promise<string>, vector?: boolean}} what
  *   `lightbox` 交回现在的灯箱（软件包 lightbox 的服务；没装是 `undefined`）；`tried` 本机的图按哪个路径找（读不出来时写出来）；
- *   `alt` 一句描述（她发出去的图带的）：写进图的 alt，读不出来时写在那一句下面
+ *   `alt` 一句描述（她发出去的图带的）：写进图的 alt，读不出来时写在那一句下面；`workspace` 给了的灯箱里多「在右栏打开」；
+ *   `download` 下载用的地址（blob 的要带名字，没给的照图的地址）；`vector` 是矢量图（没给的照名字的后缀认）
  */
 export function imageCard(what) {
   const img = /** @type {HTMLImageElement} */ (h('img', { alt: what.alt ?? what.name ?? '', loading: 'lazy', decoding: 'async' }));
   /** 点开时用的地址：要等的等到了才有 */
   let url = typeof what.url === 'string' ? what.url : '';
   setUrl(img, 'src', what.url).then((u) => { url = u; });
+  /** 下载的地址：给了的等它到了才有 */
+  let download = '';
+  if (what.download) Promise.resolve(what.download).then((u) => { download = u; });
   const fallback = h('div.conversation-media-fallback', { hidden: true }, icon('circle-alert'), h('span', t('media.image_failed')),
     what.alt ? h('span.conversation-media-alt', what.alt) : null, what.tried ? h('span.conversation-media-tried', what.tried) : null);
   const ratio = what.width && what.height && what.width / what.height;
@@ -43,7 +47,7 @@ export function imageCard(what) {
     if (!img.isConnected) return;
     const box = what.lightbox?.();
     if (!url) return;
-    if (box) box.open({ url, name: what.name, workspace: what.workspace, vector: /\.svg$/i.test(what.name ?? '') });
+    if (box) box.open({ url, name: what.name, workspace: what.workspace, download: download || undefined, vector: what.vector ?? /\.svg$/i.test(what.name ?? '') });
     else openExternal(url);
   };
   visual.addEventListener('click', open);

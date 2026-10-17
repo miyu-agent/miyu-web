@@ -74,15 +74,26 @@ impl PageTypes {
     ///
     /// 不是 JSON、没有 `types`：说是哪一样。
     pub fn load() -> Result<PageTypes, String> {
-        let v: Value = serde_json::from_str(WEB_JSON).map_err(|e| format!("web/web.json 不是 JSON：{e}"))?;
-        let types = v["types"].as_object().ok_or_else(|| "web/web.json 少了 types".to_string())?
-            .iter().filter_map(|(k, t)| Some((k.clone(), t.as_str()?.to_string()))).collect();
+        let v: Value =
+            serde_json::from_str(WEB_JSON).map_err(|e| format!("web/web.json 不是 JSON：{e}"))?;
+        let types = v["types"]
+            .as_object()
+            .ok_or_else(|| "web/web.json 少了 types".to_string())?
+            .iter()
+            .filter_map(|(k, t)| Some((k.clone(), t.as_str()?.to_string())))
+            .collect();
         Ok(PageTypes(types))
     }
 
     fn of(&self, path: &str) -> &str {
-        let ext = Path::new(path).extension().and_then(|e| e.to_str()).map(str::to_ascii_lowercase).unwrap_or_default();
-        self.0.get(&ext).map_or("application/octet-stream", String::as_str)
+        let ext = Path::new(path)
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(str::to_ascii_lowercase)
+            .unwrap_or_default();
+        self.0
+            .get(&ext)
+            .map_or("application/octet-stream", String::as_str)
     }
 }
 
@@ -94,12 +105,21 @@ impl PageTypes {
 pub async fn issue(stream: &mut TcpStream, site: &Site, head: &str, body: &[u8]) -> io::Result<()> {
     let bearer = head.lines().find_map(|l| {
         let (name, value) = l.split_once(':')?;
-        name.trim().eq_ignore_ascii_case("authorization").then(|| value.trim().strip_prefix("Bearer ").unwrap_or("").to_string())
+        name.trim().eq_ignore_ascii_case("authorization").then(|| {
+            value
+                .trim()
+                .strip_prefix("Bearer ")
+                .unwrap_or("")
+                .to_string()
+        })
     });
     if bearer.as_deref() != Some(site.key.as_str()) {
         return plain(stream, "403 Forbidden", "口令不对").await;
     }
-    let Some(package) = serde_json::from_slice::<Value>(body).ok().and_then(|v| v["package"].as_str().map(str::to_string)) else {
+    let Some(package) = serde_json::from_slice::<Value>(body)
+        .ok()
+        .and_then(|v| v["package"].as_str().map(str::to_string))
+    else {
         return plain(stream, "400 Bad Request", "要 {\"package\"}").await;
     };
     let mut core = match Core::open().await {
@@ -110,7 +130,10 @@ pub async fn issue(stream: &mut TcpStream, site: &Site, head: &str, body: &[u8])
         Ok(got) => got,
         Err(refused) => return plain(stream, "502 Bad Gateway", &refused.message).await,
     };
-    let has_page = listed["packages"].as_array().is_some_and(|all| all.iter().any(|p| p["package"] == json!(package) && p["page"] == json!(true)));
+    let has_page = listed["packages"].as_array().is_some_and(|all| {
+        all.iter()
+            .any(|p| p["package"] == json!(package) && p["page"] == json!(true))
+    });
     if !has_page {
         return plain(stream, "404 Not Found", "这个软件没有后台页").await;
     }
@@ -147,7 +170,9 @@ pub async fn serve(stream: &mut TcpStream, site: &Site, path: &str) -> io::Resul
         Ok(got) => got,
         Err(refused) => return plain(stream, status_of(&refused.reason), &refused.message).await,
     };
-    let kind = site.page_types.of(if file.is_empty() { "index.html" } else { &file });
+    let kind = site
+        .page_types
+        .of(if file.is_empty() { "index.html" } else { &file });
     let head = format!(
         "HTTP/1.1 200 OK\r\nContent-Type: {kind}\r\nContent-Length: {size}\r\nContent-Security-Policy: {CSP}\r\nX-Content-Type-Options: nosniff\r\n\
          Referrer-Policy: no-referrer\r\nCache-Control: no-cache\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n"
@@ -157,7 +182,9 @@ pub async fn serve(stream: &mut TcpStream, site: &Site, path: &str) -> io::Resul
     let mut at = first.len() as u64;
     while !eof && at < size {
         // 头已经写出去了：中途出错只能断开，浏览器照长度对不上认出来
-        let Ok((data, _, end)) = read(&mut core, &package, &file, at).await else { return Ok(()) };
+        let Ok((data, _, end)) = read(&mut core, &package, &file, at).await else {
+            return Ok(());
+        };
         if data.is_empty() {
             return Ok(());
         }
@@ -169,12 +196,29 @@ pub async fn serve(stream: &mut TcpStream, site: &Site, path: &str) -> io::Resul
 }
 
 /// 问核心要一块：这一块、整份多大、读到头了没有。
-async fn read(core: &mut Core, package: &str, path: &str, offset: u64) -> Result<(Vec<u8>, u64, bool), Refused> {
-    let got = core.call("package.file", json!({"package": package, "path": path, "offset": offset})).await?;
+async fn read(
+    core: &mut Core,
+    package: &str,
+    path: &str,
+    offset: u64,
+) -> Result<(Vec<u8>, u64, bool), Refused> {
+    let got = core
+        .call(
+            "package.file",
+            json!({"package": package, "path": path, "offset": offset}),
+        )
+        .await?;
     let data = base64::engine::general_purpose::STANDARD
         .decode(got["data"].as_str().unwrap_or(""))
-        .map_err(|e| Refused { reason: "bridge".to_string(), message: format!("核心给的不是 base64：{e}") })?;
-    Ok((data, got["size"].as_u64().unwrap_or(0), got["eof"].as_bool().unwrap_or(true)))
+        .map_err(|e| Refused {
+            reason: "bridge".to_string(),
+            message: format!("核心给的不是 base64：{e}"),
+        })?;
+    Ok((
+        data,
+        got["size"].as_u64().unwrap_or(0),
+        got["eof"].as_bool().unwrap_or(true),
+    ))
 }
 
 /// `/p/<票据>/<包>/<路径>` 拆成三段（路径的 `%xx` 换回来；以 `/` 结尾的补上 `index.html`，空的照核心认成 `index.html`）。
@@ -194,7 +238,15 @@ fn split(path: &str) -> Option<(String, String, String)> {
 
 /// 包的编号放进地址：只有字母、数字、`-`、`_`、`.` 原样，别的转义。
 fn encode(text: &str) -> String {
-    text.bytes().map(|b| if b.is_ascii_alphanumeric() || b"-_.".contains(&b) { (b as char).to_string() } else { format!("%{b:02X}") }).collect()
+    text.bytes()
+        .map(|b| {
+            if b.is_ascii_alphanumeric() || b"-_.".contains(&b) {
+                (b as char).to_string()
+            } else {
+                format!("%{b:02X}")
+            }
+        })
+        .collect()
 }
 
 /// 核心拒的原因码换成 HTTP 的状态。
@@ -212,11 +264,26 @@ mod tests {
 
     #[test]
     fn paths_split_into_ticket_package_and_file() {
-        assert_eq!(split("/p/abc/demo/"), Some(("abc".into(), "demo".into(), String::new())));
-        assert_eq!(split("/p/abc/demo"), Some(("abc".into(), "demo".into(), String::new())));
-        assert_eq!(split("/p/abc/demo/app.js"), Some(("abc".into(), "demo".into(), "app.js".into())));
-        assert_eq!(split("/p/abc/demo/sub/"), Some(("abc".into(), "demo".into(), "sub/index.html".into())));
-        assert_eq!(split("/p/abc/demo/%E4%B8%AD.css"), Some(("abc".into(), "demo".into(), "中.css".into())));
+        assert_eq!(
+            split("/p/abc/demo/"),
+            Some(("abc".into(), "demo".into(), String::new()))
+        );
+        assert_eq!(
+            split("/p/abc/demo"),
+            Some(("abc".into(), "demo".into(), String::new()))
+        );
+        assert_eq!(
+            split("/p/abc/demo/app.js"),
+            Some(("abc".into(), "demo".into(), "app.js".into()))
+        );
+        assert_eq!(
+            split("/p/abc/demo/sub/"),
+            Some(("abc".into(), "demo".into(), "sub/index.html".into()))
+        );
+        assert_eq!(
+            split("/p/abc/demo/%E4%B8%AD.css"),
+            Some(("abc".into(), "demo".into(), "中.css".into()))
+        );
         assert_eq!(split("/p//demo/"), None);
         assert_eq!(split("/x/abc/demo/"), None);
     }

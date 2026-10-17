@@ -1,6 +1,6 @@
 //! `/media`（`web-ui.md`「怎么走」第三条，施工 W-10）：页面带登录令牌 `POST /media` 换一张票据，`GET /media/<票据>` 拿一个
 //! blob 或者一份本机文件，能带 `Range`。内容由核心照 `blob.get`、`fs.read` 一块 512 KiB 地给，读一块写一块，不整个读进内存。
-//! 回应关在一个空的来源里（`sandbox`）：有人直接打开这个地址，它碰不到页面。
+//! 回应关在一个空的来源里（`sandbox`）：有人直接打开这个地址，它碰不到页面。PDF 除外（浏览器的阅读器在沙盒里不肯开），照旧不许取别的。
 
 pub(crate) mod link;
 mod range;
@@ -37,6 +37,9 @@ pub(crate) const MOST_BODY: usize = 64 * 1024;
 /// 给媒体时的 `Content-Security-Policy`：一个空的来源。
 const SANDBOX: &str =
     "sandbox; default-src 'none'; img-src data:; media-src data:; style-src 'unsafe-inline'";
+
+/// 给 PDF 时的：不放进 `sandbox`（浏览器自己的阅读器在沙盒的来源里不肯开，她 `show` 的 PDF 要在右栏看，核心 D-5），照旧不许取别的。
+const PDF: &str = "default-src 'none'; img-src data:; style-src 'unsafe-inline'";
 
 /// 表里没有的类型。
 const OCTET: &str = "application/octet-stream";
@@ -151,11 +154,8 @@ pub(crate) async fn get(request: Request<Incoming>, site: Arc<Site>) -> Response
     let mut response = Response::new(BodyExt::boxed(StreamBody::new(stream)));
     *response.status_mut() = status;
     let headers = response.headers_mut();
-    insert(
-        headers,
-        header::CONTENT_TYPE,
-        &content_type(&site.settings, &wanted),
-    );
+    let kind = content_type(&site.settings, &wanted);
+    insert(headers, header::CONTENT_TYPE, &kind);
     insert(headers, header::CONTENT_LENGTH, &(end - start).to_string());
     headers.insert(header::ACCEPT_RANGES, HeaderValue::from_static("bytes"));
     if status == StatusCode::PARTIAL_CONTENT {
@@ -171,7 +171,7 @@ pub(crate) async fn get(request: Request<Incoming>, site: Arc<Site>) -> Response
     );
     headers.insert(
         header::CONTENT_SECURITY_POLICY,
-        HeaderValue::from_static(SANDBOX),
+        HeaderValue::from_static(policy(&kind)),
     );
     if wanted.download {
         let name = wanted.name.as_deref().or(match &wanted.source {
@@ -342,6 +342,15 @@ fn content_type(settings: &Settings, wanted: &Wanted) -> String {
     match &wanted.source {
         Source::Path(path) => settings.type_of(Path::new(path)).to_string(),
         Source::Blob(_) => OCTET.to_string(),
+    }
+}
+
+/// 回应的内容安全策略：PDF 是 `PDF`，别的是一个空的来源（`SANDBOX`）。
+fn policy(kind: &str) -> &'static str {
+    if kind == "application/pdf" {
+        PDF
+    } else {
+        SANDBOX
     }
 }
 

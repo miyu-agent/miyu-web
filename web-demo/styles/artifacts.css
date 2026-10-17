@@ -86,8 +86,8 @@
 .artifact-image-stage.is-dragging { cursor: grabbing; }
 .artifact-image-stage img { max-width: 100%; max-height: 100%; object-fit: contain; transform-origin: center top; transition: transform 160ms cubic-bezier(0.2, 0, 0, 1); }
 .artifact-image-stage.is-dragging img { transition: none; }
-.artifact-video { display: flex; height: 100%; align-items: center; justify-content: center; padding: 16px; }
-.artifact-video video { max-width: 100%; max-height: 100%; border-radius: var(--radius); background: #000; }
+/* PDF 交给浏览器自己的阅读器：它自己画底色 */
+.artifact-frame.is-pdf { background: var(--surface-soft); }
 .artifact-loading, .artifact-failure {
   display: flex; height: 100%; align-items: center; justify-content: center; gap: 8px; color: var(--text-faint); font-size: 13px;
 }

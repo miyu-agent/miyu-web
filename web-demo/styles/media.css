@@ -172,3 +172,24 @@ p.has-link-card { margin: 10px 0; }
 @media (max-width: 480px) {
   .media-audio-volume { display: none; }
 }
+
+/* 她 show 过的、右栏看得了的（HTML、Markdown、代码、文字、PDF）和别的文件：正文里一张卡片（蓝图 web.md「展示」），点了在右栏打开、
+   别的文件点了下载；样子照你的话上的文件卡（不画描边，一点点影） */
+.shown-card {
+  display: flex; width: fit-content; min-width: 220px; max-width: min(100%, 420px); align-items: center; margin: 3px 0 18px; padding: 10px 12px; gap: 11px;
+  border: 0; border-radius: 12px; background: color-mix(in srgb, var(--surface-2) 50%, var(--surface-1)); box-shadow: var(--card-shadow);
+  color: var(--text); cursor: pointer; font: inherit; text-align: left; text-decoration: none; transition: background-color 0.15s ease;
+}
+.shown-card:hover { background: var(--surface-2); }
+.shown-card-icon {
+  display: grid; width: 36px; height: 36px; flex: none; place-items: center; border-radius: 9px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent);
+}
+.shown-card-icon .icon { width: 18px; height: 18px; }
+.shown-card-text { display: grid; min-width: 0; flex: 1; gap: 2px; }
+.shown-card-name { overflow: hidden; font-size: 13.5px; font-weight: 600; line-height: 18px; text-overflow: ellipsis; white-space: nowrap; }
+.shown-card-sub { overflow: hidden; color: var(--text-faint); font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+.shown-card-go { display: grid; flex: none; place-items: center; color: var(--text-faint); }
+.shown-card-go .icon { width: 15px; height: 15px; }
+.shown-card:hover .shown-card-go { color: var(--text-soft); }
+

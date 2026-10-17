@@ -23,7 +23,7 @@ import { coreSpecs } from '../model/commands.js';
 import { rank, startupSession } from '../model/session.js';
 import { statusFooter, levelLabel, nextLevel, levelParams } from '../model/footer.js';
 import { itemsOf, levelOf } from '../model/entries.js';
-import { compactingOf, lastTurn, turnEnded, untouchedTurnOf, artifactEvents } from '../model/view-state.js';
+import { compactingOf, lastTurn, turnEnded, untouchedTurnOf } from '../model/view-state.js';
 import { copy } from '../markdown/build.js';
 import { childrenFromStatus, runningDeepStatus } from '../lib/jobs.js';
 import { SessionsPage } from './sessions-page.js';
@@ -150,6 +150,8 @@ export class App {
       // 打断那一轮后面那一句：打开后台任务的浮层（软件包 jobs 听这个事件）
       openJobs: () => this.ctx.emit('jobs.open'),
       openSession: (id) => this.open(id),
+      // 她 show 过的那一样在右栏打开（正文里的卡片、灯箱里的「在右栏打开」）
+      reveal: (path) => this.artifacts.reveal(path),
     }, this.ext);
     ctx.slots.watch('markdown.code', () => this.chat.redraw());
     // 正文里交给软件包画的条目（确认和提问了结以后留的，按 `asking`）；挂的变了，正文重画
@@ -307,7 +309,7 @@ export class App {
       el.addEventListener('mouseleave', () => this.peek(false));
     }
     // 预览工作区：右边一栏，开着时顶替会话概况；开关按钮在输入框右下角、发送的左边
-    this.artifacts = new Artifacts(conn, this.root, (text, good) => this.composer.say(text, good), () => this.schedule(), this.ext,
+    this.artifacts = new Artifacts(this.root, (text, good) => this.composer.say(text, good), () => this.schedule(), this.ext,
       (shown) => ctx.emit('panel.changed', shown));
     this.root.append(this.artifacts.el);
     this.composer.sendButton.before(this.artifacts.toggle);
@@ -895,7 +897,7 @@ export class App {
     const level = this.current ? null : this.pendingLevel;
     if (level) f.left = { ...f.left, level, label: levelLabel(level) };
     this.composer.drawFooter(f);
-    this.artifacts.update(s ? artifactEvents(s.view.list, this.workdir()) : [], this.chat.where);
+    this.artifacts.update(s ? s.view.list : [], this.chat.where);
     this.followKids();
   }
 }

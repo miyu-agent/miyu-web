@@ -6,7 +6,7 @@ import { Lightbox } from './lightbox.js';
 
 /** @param {any} ctx */
 export function apply(ctx) {
-  const box = new Lightbox((path) => ctx.text(path));
+  const box = new Lightbox((path) => ctx.text(path), ctx.host.clipboard?.image);
   ctx.effect(() => () => box.destroy());
   ctx.provide('lightbox', { open: (what) => box.open(what) });
 }

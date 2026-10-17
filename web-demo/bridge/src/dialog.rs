@@ -47,33 +47,76 @@ fn tools(start: Option<&str>) -> Vec<Tool> {
         } else {
             "POSIX path of (choose folder with prompt (system attribute \"MIYU_PICK_TITLE\"))"
         };
-        return vec![Tool { program: "osascript", args: vec!["-e".into(), script.into()] }];
+        return vec![Tool {
+            program: "osascript",
+            args: vec!["-e".into(), script.into()],
+        }];
     }
     if cfg!(windows) {
         let script = "[Console]::OutputEncoding = [Text.Encoding]::UTF8; Add-Type -AssemblyName System.Windows.Forms; \
             $d = New-Object System.Windows.Forms.FolderBrowserDialog; $d.Description = $env:MIYU_PICK_TITLE; \
             if ($env:MIYU_PICK_START) { $d.SelectedPath = $env:MIYU_PICK_START }; \
             if ($d.ShowDialog() -eq 'OK') { [Console]::Out.Write($d.SelectedPath) } else { exit 1 }";
-        return vec![Tool { program: "powershell", args: vec!["-NoProfile".into(), "-STA".into(), "-Command".into(), script.into()] }];
+        return vec![Tool {
+            program: "powershell",
+            args: vec![
+                "-NoProfile".into(),
+                "-STA".into(),
+                "-Command".into(),
+                script.into(),
+            ],
+        }];
     }
     // zenity 从哪开始照 `--filename`，目录要带结尾的 `/`；kdialog 照第一个参数
-    let mut zenity = vec!["--file-selection".into(), "--directory".into(), "--title".into(), "$MIYU_PICK_TITLE".into()];
+    let mut zenity = vec![
+        "--file-selection".into(),
+        "--directory".into(),
+        "--title".into(),
+        "$MIYU_PICK_TITLE".into(),
+    ];
     let mut kdialog = vec!["--getexistingdirectory".into()];
     if let Some(dir) = start {
-        zenity.extend(["--filename".into(), format!("{}/", dir.trim_end_matches('/'))]);
+        zenity.extend([
+            "--filename".into(),
+            format!("{}/", dir.trim_end_matches('/')),
+        ]);
         kdialog.push(dir.into());
     }
     kdialog.extend(["--title".into(), "$MIYU_PICK_TITLE".into()]);
-    vec![Tool { program: "zenity", args: zenity }, Tool { program: "kdialog", args: kdialog }]
+    vec![
+        Tool {
+            program: "zenity",
+            args: zenity,
+        },
+        Tool {
+            program: "kdialog",
+            args: kdialog,
+        },
+    ]
 }
 
 /// 开对话框，等人选完。
 pub async fn pick_dir(title: &str, start: Option<&str>) -> Picked {
     for tool in tools(start) {
         // 标题经环境变量交：参数里写的 `$MIYU_PICK_TITLE` 在这里换成真的字（不经 shell）
-        let args: Vec<String> = tool.args.iter().map(|a| if a == "$MIYU_PICK_TITLE" { title.to_owned() } else { a.clone() }).collect();
+        let args: Vec<String> = tool
+            .args
+            .iter()
+            .map(|a| {
+                if a == "$MIYU_PICK_TITLE" {
+                    title.to_owned()
+                } else {
+                    a.clone()
+                }
+            })
+            .collect();
         let mut cmd = Command::new(tool.program);
-        cmd.args(&args).env("MIYU_PICK_TITLE", title).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::null()).kill_on_drop(true);
+        cmd.args(&args)
+            .env("MIYU_PICK_TITLE", title)
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .kill_on_drop(true);
         if let Some(dir) = start {
             cmd.env("MIYU_PICK_START", dir);
         }
@@ -88,10 +131,20 @@ pub async fn pick_dir(title: &str, start: Option<&str>) -> Picked {
         if !out.status.success() {
             return Picked::Cancelled;
         }
-        let path = String::from_utf8_lossy(&out.stdout).trim_end_matches(['\r', '\n']).to_owned();
+        let path = String::from_utf8_lossy(&out.stdout)
+            .trim_end_matches(['\r', '\n'])
+            .to_owned();
         // osascript 交的目录带结尾的 `/`；根目录留着
-        let path = if path.len() > 1 { path.trim_end_matches('/').to_owned() } else { path };
-        return if path.is_empty() { Picked::Cancelled } else { Picked::Path(path) };
+        let path = if path.len() > 1 {
+            path.trim_end_matches('/').to_owned()
+        } else {
+            path
+        };
+        return if path.is_empty() {
+            Picked::Cancelled
+        } else {
+            Picked::Path(path)
+        };
     }
     Picked::Unavailable
 }

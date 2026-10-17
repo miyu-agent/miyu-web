@@ -46,14 +46,20 @@ enum Watching {
 
 impl Default for Follow {
     fn default() -> Self {
-        Self { changed: broadcast::channel(4).0, watch: Mutex::new(Watching::NotYet), seeds: Arc::default() }
+        Self {
+            changed: broadcast::channel(4).0,
+            watch: Mutex::new(Watching::NotYet),
+            seeds: Arc::default(),
+        }
     }
 }
 
 impl Follow {
     /// 照这份清单盯（还没开始的开始盯）。
     fn set(&self, targets: Vec<PathBuf>) {
-        let Ok(mut watch) = self.watch.lock() else { return };
+        let Ok(mut watch) = self.watch.lock() else {
+            return;
+        };
         match &*watch {
             Watching::On(w) => {
                 if let Err(e) = w.set(targets) {
@@ -159,14 +165,22 @@ pub async fn events(stream: &mut TcpStream, site: &Site, query: &str) -> io::Res
 }
 
 /// 这张图的候选色：记号和上一次的一样的照记着的，不一样的读图算一遍（阻塞）。解不开的图是空的。
-fn seeds_of(cache: &SeedCache, sig: &str, image: &miyu_wallpaper::Wallpaper) -> io::Result<Vec<String>> {
+fn seeds_of(
+    cache: &SeedCache,
+    sig: &str,
+    image: &miyu_wallpaper::Wallpaper,
+) -> io::Result<Vec<String>> {
     if let Ok(cached) = cache.lock()
         && let Some((seen, seeds)) = cached.as_ref()
         && seen == sig
     {
         return Ok(seeds.clone());
     }
-    let seeds: Vec<String> = miyu_client::seeds::from_image(&image.read()?).unwrap_or_default().iter().map(|s| s.hex()).collect();
+    let seeds: Vec<String> = miyu_client::seeds::from_image(&image.read()?)
+        .unwrap_or_default()
+        .iter()
+        .map(|s| s.hex())
+        .collect();
     if let Ok(mut cached) = cache.lock() {
         *cached = Some((sig.to_owned(), seeds.clone()));
     }
@@ -182,10 +196,16 @@ enum Found {
 /// 先找 matugen 那一份，没有的找壁纸（阻塞：跑命令、读文件）；一起交回以后要盯的文件。
 fn look(cache: &SeedCache, dark: bool, data: bool) -> io::Result<(Option<Found>, Vec<PathBuf>)> {
     if let Some(m) = miyu_wallpaper::matugen::find() {
-        let found = if data { Found::Data(m.read()?, JSON) } else { Found::Sig(m.signature()?, "matugen", None) };
+        let found = if data {
+            Found::Data(m.read()?, JSON)
+        } else {
+            Found::Sig(m.signature()?, "matugen", None)
+        };
         return Ok((Some(found), watch_list()));
     }
-    let Some(w) = miyu_wallpaper::find(dark)? else { return Ok((None, watch_list())) };
+    let Some(w) = miyu_wallpaper::find(dark)? else {
+        return Ok((None, watch_list()));
+    };
     let found = if data {
         Found::Data(w.read()?, w.mime)
     } else {

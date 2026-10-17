@@ -1,11 +1,12 @@
 // @ts-check
 //! 预览工作区（蓝图 `web.md`「预览工作区」，照旧版 `index.html:314-362`、`app.js:5475-6448`、`styles.css:4893-5476`）：
-//! 右边一栏，打开时顶替会话概况；放这个会话的产物（`model/artifacts.js`），一次看一个。
+//! 右边一栏，打开时顶替会话概况；放这个会话她 `show` 过的东西（`model/artifacts.js`，核心 D-5），一次看一个。
 //!
-//! - 头上一行：预览、源码的切换（两样都有才露）；标题按钮（名字、类型，点开是全部产物的列表）；复制、下载、最大化、关；
+//! - 头上一行：预览、源码的切换（两样都有才露）；标题按钮（标题、类型，点开是展示过的全部，当前的打勾）；复制、下载、最大化、关；
 //! - 按类型画：Markdown 照她的回答那一套；代码上色、带行号；HTML 在沙盒 iframe 里直接跑（`srcdoc`，只给脚本和弹窗，
-//!   内容安全策略不许联网，照旧版）；图片滚轮缩放、拖动；视频原生控制条；别的当文字；
-//! - 文件的字经桥的 `/file` 取（以后是核心的网页模块）；同一个文件改过（序号变了）才重取；
+//!   内容安全策略不许联网，照旧版）；图片滚轮缩放、拖动；PDF 交给浏览器自己的阅读器；文字照原文；
+//! - 内容是展示那一刻存下的 blob，经桥的 `/blob` 取；同一个路径再展示（blob 变了）才重取；对话里点那张卡片、灯箱里「在右栏打开」
+//!   经 `reveal` 打开它；
 //! - 宽度能拖，记在这个浏览器里；来了新的、工作区关着时，开关按钮上一个圆点；窗口够宽时自动打开。
 //! - 扩展的界面块放进来时（挂载位 `stage.panel`，软件包 `widgets`；2026-10-15 项目主人定）这一栏顶上两个标签「工作区」「面板」，开关按钮
 //!   产物、面板有一样就露；面板那一页露没露告诉 `panelShown`（界面块照它订阅、叫不叫程序干活）。没有界面块的和原来一样。
@@ -13,8 +14,8 @@
 import { h, icon, replace, setUrl } from './dom.js';
 import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
-import { artifacts, artifactLanguage } from '../model/artifacts.js';
-import { fileUrl } from '../core/host.js';
+import { shownList, panelList, codeLanguage } from '../model/artifacts.js';
+import { blobUrl } from '../core/host.js';
 import { renderMarkdown } from '../markdown/render.js';
 import { paint } from '../markdown/highlight.js';
 import { copy } from '../markdown/build.js';
@@ -25,27 +26,23 @@ const WIDTH = 'artifacts_width';
 
 export class Artifacts {
   /**
-   * @param {import('../core/connection.js').Connection} conn 问核心约定目录的真实位置（`fs.realpath`，核心施工 W-3）
    * @param {HTMLElement} shell 整页（`.app-shell`）：开关时换它的类、宽度
    * @param {(text: string, good?: boolean) => void} say 提示（复制了几个字）
    * @param {() => void} changed 开、关以后整页重画（会话概况要让位）
    * @param {import('./rich.js').Ext} ext 软件包接进来的：Markdown 预览里的代码块、图片照它（mermaid、灯箱这类）
    * @param {(shown: boolean) => void} [panelShown] 「面板」那一页露出来、收起来
    */
-  constructor(conn, shell, say, changed, ext, panelShown = () => {}) {
+  constructor(shell, say, changed, ext, panelShown = () => {}) {
     this.ext = ext;
-    this.conn = conn;
     this.shell = shell;
     this.say = say;
     this.changed = changed;
     this.open = false;
     this.maximized = false;
     this.mode = 'preview';
-    /** @type {import('../model/artifacts.js').Artifact[]} */
+    /** @type {import('../model/artifacts.js').Shown[]} */
     this.list = [];
     this.current = /** @type {string|null} */ (null);
-    /** 每个会话约定目录的真实位置：`会话` → 位置（问过还没回的是 `undefined`）。 */
-    this.dirs = new Map();
     /** 每个会话看过的最大序号：比它新的算「来了新的」。 */
     this.seen = new Map();
     this.where = /** @type {import('./rich.js').Where} */ ({ session: null, home: null, cwd: null });
@@ -96,19 +93,18 @@ export class Artifacts {
   }
 
   /**
-   * 照这个会话的事件更新：列表、开关按钮、自动打开。
-   * @param {any[]} events
+   * 照这个会话的条目更新：列表、开关按钮、自动打开。
+   * @param {any[]} entries 视图里的条目
    * @param {import('./rich.js').Where} where
    */
-  update(events, where) {
+  update(entries, where) {
     this.where = where;
     const session = where.session;
-    const dir = session ? this.dirOf(session, where.cwd) : null;
-    this.list = artifacts(events, dir ?? null);
+    this.list = panelList(shownList(entries));
     const newest = this.list[0]?.seq ?? 0;
     const seen = session ? this.seen.get(session) : undefined;
-    // 打开会话时已经有的不算新来的：约定目录的位置问到了（不是 undefined）才记下起点
-    if (session && dir !== undefined && seen === undefined) this.seen.set(session, newest);
+    // 打开会话时已经有的不算新来的
+    if (session && seen === undefined) this.seen.set(session, newest);
     const fresh = session != null && seen !== undefined && newest > seen;
     if (fresh && session) {
       this.seen.set(session, newest);
@@ -124,17 +120,12 @@ export class Artifacts {
     if (this.open && this.tab === 'work') this.draw();
   }
 
-  /** 约定目录的真实位置：问过的直接给；没问过的问核心（回来以后整页重画一次），还没回的是 `undefined`。 */
-  dirOf(session, cwd) {
-    if (!cwd) return null;
-    const key = `${session}\n${cwd}`;
-    if (!this.dirs.has(key)) {
-      this.dirs.set(key, undefined);
-      this.conn.request('fs.realpath', { path: res.artifacts.dir, cwd })
-        .then((r) => { this.dirs.set(key, r?.path ?? null); this.changed(); })
-        .catch((err) => console.error(`问不到产物目录的真实位置：${err.message}`));
-    }
-    return this.dirs.get(key);
+  /** 打开展示过的那一个（对话里点了它的卡片、灯箱里点了「在右栏打开」）；还没进列表的（条目刚到）记下，进了列表再看它。 @param {string} path */
+  reveal(path) {
+    this.current = path;
+    this.tab = 'work';
+    if (this.open) this.draw(true);
+    else this.setOpen(true);
   }
 
   /** 开、关。 */
@@ -231,33 +222,35 @@ export class Artifacts {
     const a = this.list.find((x) => x.path === this.current);
     const session = this.where.session;
     if (!a || !session) return;
-    const sig = `${a.path}\n${a.seq}\n${this.mode}`;
+    const sig = `${a.path}\n${a.blob}\n${this.mode}`;
     if (!force && sig === this.drawn) return;
     this.drawn = sig;
     const hasPreview = a.kind !== 'code' && a.kind !== 'text';
-    const hasSource = a.kind !== 'image' && a.kind !== 'video';
+    const hasSource = a.kind !== 'image' && a.kind !== 'pdf';
     const mode = hasPreview && hasSource ? this.mode : hasPreview ? 'preview' : 'source';
     this.modes.hidden = !(hasPreview && hasSource);
     this.previewButton.classList.toggle('is-active', mode === 'preview');
     this.sourceButton.classList.toggle('is-active', mode === 'source');
-    this.title.textContent = a.name;
+    this.title.textContent = a.title ?? a.name;
+    this.title.parentElement?.setAttribute('title', a.path);
     this.badge.textContent = t(`artifacts.types.${a.kind}`);
-    setUrl(this.download, 'href', fileUrl(a.path, true));
+    setUrl(this.download, 'href', blobUrl(a.blob, blobType(a), { download: true, name: a.name }));
     this.drawMenu();
     const token = ++this.token;
-    // 地址可能要等（直接连网页软件的先换票据）；带上序号，改过的不吃浏览器的缓存
-    const base = await fileUrl(a.path);
+    this.text = null;
+    // 地址可能要等（直接连网页软件的先换票据）；blob 按内容定，不会变
+    const url = await blobUrl(a.blob, blobType(a));
     if (token !== this.token) return;
-    const url = `${base}${base.includes('?') ? '&' : '?'}v=${a.seq}`;
-    if (a.kind === 'image' && mode === 'preview') return replace(this.view, imageStage(url, a.name));
-    if (a.kind === 'video') return replace(this.view, h('div.artifact-video', h('video', { src: url, controls: true, preload: 'metadata', playsinline: true })));
+    if (a.kind === 'image') return replace(this.view, imageStage(url, a.name));
+    // PDF 交给浏览器自己的阅读器
+    if (a.kind === 'pdf') return replace(this.view, h('iframe.artifact-frame.is-pdf', { src: url, title: a.name }));
     replace(this.view, h('div.artifact-loading', icon('loader-circle'), t('artifacts.loading')));
     fetch(url, { cache: 'no-store' })
       .then((r) => (r.ok ? r.text() : Promise.reject(new Error(`${r.status} ${r.statusText}`))))
       .then((text) => {
         if (token !== this.token) return;
         this.text = text;
-        replace(this.view, mode === 'source' ? source(text, a.path) : preview(a.kind, text, this.where, this.say, this.ext));
+        replace(this.view, mode === 'source' ? source(text, a) : preview(a.kind, text, this.where, this.say, this.ext));
       })
       .catch((err) => {
         if (token !== this.token) return;
@@ -265,20 +258,31 @@ export class Artifacts {
       });
   }
 
-  /** 全部产物的列表：当前的打勾，点哪个看哪个。 */
+  /** 展示过的全部：当前的打勾，点哪个看哪个。 */
   drawMenu() {
     replace(this.menu, this.list.map((a) => h(`button.artifact-resource-item${a.path === this.current ? '.is-current' : ''}`, {
-      type: 'button', role: 'menuitem',
+      type: 'button', role: 'menuitem', title: a.path,
       onclick: () => { this.current = a.path; hide(this.menu); this.draw(true); },
-    }, h('span.artifact-resource-name', a.name), h('small', t(`artifacts.types.${a.kind}`)), a.path === this.current ? icon('check') : h('span'))));
+    }, h('span.artifact-resource-name', a.title ?? a.name), h('small', t(`artifacts.types.${a.kind}`)), a.path === this.current ? icon('check') : h('span'))));
   }
 
-  /** 复制源码（图片、视频复制路径）。 */
+  /** 复制源码（图片、PDF 复制路径）。 */
   copySource() {
     const a = this.list.find((x) => x.path === this.current);
     if (!a) return;
-    copy(a.kind === 'image' || a.kind === 'video' ? a.path : this.text ?? '', this.say);
+    copy(a.kind === 'image' || a.kind === 'pdf' ? a.path : this.text ?? '', this.say);
   }
+}
+
+/**
+ * 取 blob 时写的媒体类型（桥只认 `media.json` 的 `blob_types`）：图片、PDF 照核心认的；字照 `text/plain` 取（页面拿去当字显示，HTML
+ * 在沙盒里跑，不在页面的来源里跑）；别的文件照 `application/octet-stream`。
+ * @param {import('../model/artifacts.js').Shown} a
+ */
+export function blobType(a) {
+  if (a.kind === 'image' || a.kind === 'pdf') return a.type;
+  if (a.kind === 'file') return 'application/octet-stream';
+  return 'text/plain';
 }
 
 /** 预览：Markdown 照她的回答那一套；HTML 在沙盒里跑。 */
@@ -294,11 +298,11 @@ function preview(kind, text, where, say, ext) {
   return h('iframe.artifact-frame', { sandbox: 'allow-scripts allow-modals', srcdoc: doc, title: 'artifact' });
 }
 
-/** 源码：左边行号，右边上色的代码（照旧版 `app.js:6204-6230`）。 */
-function source(text, path) {
+/** 源码：左边行号，右边上色的代码（照旧版 `app.js:6204-6230`）。HTML、Markdown 的源码照它们自己的写法上色。 */
+function source(text, a) {
   const lines = text.split('\n');
   const code = h('code', text);
-  const lang = artifactLanguage(path);
+  const lang = codeLanguage(a.language) ?? (a.kind === 'html' ? 'html' : a.kind === 'markdown' ? 'markdown' : null);
   if (lang) paint(code, lang, text, true);
   return h('div.artifact-source',
     h('div.artifact-line-numbers', { 'aria-hidden': 'true' }, lines.map((_, i) => h('span', String(i + 1)))),

@@ -12,6 +12,7 @@
 
 import { res, t } from '../util/res.js';
 import { short, hitRate, seconds, hhmm } from './format.js';
+import { shownOf } from './artifacts.js';
 import { speakerOf, moduleNote, peerNote, changeNote, modelNote, compactedNote, failureText, recapNote, compactFailedNote, workspaceNote } from './notes.js';
 
 /** 权限级别：只读的写 `read_only`，别的照 `level`（`tui.md`「正文」第 4 条）。 @param {any} p */
@@ -68,7 +69,7 @@ export function itemsOf(entries, status, opts = {}) {
       }
       case 'group':
         spoke.add(e.turn);
-        items.push(segmentOf(e, byId), ...cancelledApprovals(e, byId));
+        items.push(segmentOf(e, byId), ...cancelledApprovals(e, byId), ...shownItems(e, byId));
         break;
       case 'end':
         items.push(endItem(e, status));
@@ -113,6 +114,16 @@ function mediaItem(e) {
     alt: typeof e.alt === 'string' && e.alt ? e.alt : null,
     sticker: !!e.sticker,
   };
+}
+
+/**
+ * 这一段里她 `show` 过的（核心 D-5）：一样一条，接在这一段后面、画在正文里（2026-10-17 项目主人定：和她发的图一样）。图片画缩略图，
+ * 别的画一张卡片；没展示成的那一步照出错画，这里不出。
+ * @param {any} g @param {Map<string, any>} byId
+ */
+function shownItems(g, byId) {
+  return (g.steps ?? []).map((/** @type {string} */ id) => shownOf(byId.get(id))).filter(Boolean)
+    .map((/** @type {any} */ s) => ({ type: 'shown', key: `${s.id}.shown`, turn: s.turn, shown: s }));
 }
 
 /** 在跑的那一轮：最后一条带 `turn`、这一轮还没有 `end` 的。 @param {any[]} entries */

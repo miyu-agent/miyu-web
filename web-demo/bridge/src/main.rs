@@ -62,8 +62,16 @@ async fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let port = args.iter().find_map(|a| a.parse().ok()).unwrap_or(8765);
     // 打开时直接到哪个软件的后台页：只认包编号的写法（字母、数字、`-`、`_`、`.`），别的不带
-    let launch = args.iter().position(|a| a == "--package").and_then(|i| args.get(i + 1))
-        .filter(|id| !id.is_empty() && id.bytes().all(|b| b.is_ascii_alphanumeric() || b"-_.".contains(&b)))
+    let launch = args
+        .iter()
+        .position(|a| a == "--package")
+        .and_then(|i| args.get(i + 1))
+        .filter(|id| {
+            !id.is_empty()
+                && id
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b"-_.".contains(&b))
+        })
         .map(|id| format!("&package={id}"))
         .unwrap_or_default();
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..");
@@ -88,8 +96,19 @@ async fn main() {
         Ok(t) => t,
         Err(e) => return eprintln!("{e}"),
     };
-    let site = Arc::new(Site { dir, key, port, types, pages: pages::Tickets::default(), page_types, wallpaper: wallpaper::Follow::default() });
-    println!("网页演示（真核心）：http://127.0.0.1:{port}/#k={}{launch}", site.key);
+    let site = Arc::new(Site {
+        dir,
+        key,
+        port,
+        types,
+        pages: pages::Tickets::default(),
+        page_types,
+        wallpaper: wallpaper::Follow::default(),
+    });
+    println!(
+        "网页演示（真核心）：http://127.0.0.1:{port}/#k={}{launch}",
+        site.key
+    );
     println!("这个链接这一次启动有效；只在本机能打开。Ctrl+C 停。");
     loop {
         match listener.accept().await {

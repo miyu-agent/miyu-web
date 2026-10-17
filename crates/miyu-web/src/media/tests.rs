@@ -1,6 +1,7 @@
 //! 分段、下载的名字（施工 W-10）。
 
 use super::range::{Span, attachment, span};
+use super::{PDF, SANDBOX, policy};
 
 #[test]
 fn one_range_or_the_whole() {
@@ -52,4 +53,12 @@ fn a_download_name_keeps_its_last_part_escaped() {
         attachment(Some("a!#$&+-.^_`|~z")),
         "attachment; filename*=UTF-8''a!#$&+-.^_`|~z"
     );
+}
+
+#[test]
+fn only_pdf_leaves_the_sandbox() {
+    assert_eq!(policy("image/png"), SANDBOX);
+    assert_eq!(policy("text/html; charset=utf-8"), SANDBOX);
+    assert_eq!(policy("application/pdf"), PDF);
+    assert!(!PDF.contains("sandbox") && PDF.contains("default-src 'none'"));
 }

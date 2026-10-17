@@ -1,62 +1,84 @@
 // @ts-check
-//! 预览工作区里放什么（蓝图 `web.md`「预览工作区」第 1 条）：这个会话里 `write`、`edit` 改过的文件，路径落在工作目录下约定的
-//! 目录（`artifacts.json` 的 `dir`）里的。
+//! 预览工作区里放什么（蓝图 `web.md`「预览工作区」第 1 条；核心 D-5，设计 35「展示」）：这个会话里她 `show` 过的东西。照视图里工具条目的
+//! `shown` 那一格认（`{path, blob, name, media_type, size, title?, language?, width?, height?}`），不监视文件：内容是展示那一刻存下的
+//! blob，她以后改了、删了那个文件，展示过的那一份不变。
 //!
-//! 设计上产物是 `artifact`、`present_artifact` 两件工具，网页头经提供者接口提供（设计 10 第四节）；接口排在 M9 之后，演示先让
-//! 她用 `write` 写进约定的目录（2026-09-30 项目主人定）。照日志认，不监视目录：日志是真相，刷新以后照样重建（和核心施工的会话定）。
+//! - 同一个 `path`（核心换成真实位置的绝对路径）再展示一次，换掉那一张，排到最前；
+//! - 撤掉的那一轮的条目核心藏起来（`hidden`），跟着就没了；
+//! - 最后展示的在前。
 //!
-//! - 效果里的路径是换成真实位置以后的绝对路径（`kernel/events-bodies.md`「效果」），约定的目录也要先换成真实位置再比（核心的
-//!   `fs.realpath`，核心施工 W-3）；
-//! - 撤销掉的那几轮的效果不算，恢复了又算；删掉的（`file.trashed`）不算，删了又写的算；
-//! - 一个文件一项，最后改的在前。
-
-import { res } from '../util/res.js';
+//! 原来演示用的「她用 `write` 写进工作目录下 `artifacts/` 的文件」那一套去掉了（2026-10-17 项目主人定：有了 `show`，右栏只放展示过的）。
 
 /**
- * @typedef {{path: string, name: string, kind: string, seq: number, turn: number|null}} Artifact
- *   `name` 是相对约定目录的路径；`kind` 是 `markdown`、`html`、`image`、`video`、`code`、`text`
+ * @typedef {{path: string, blob: string, name: string, title: string|null, kind: string, type: string, size: number|null,
+ *   language: string|null, width: number|null, height: number|null, id: string, seq: number, turn: number|null}} Shown
+ *   `kind` 是 `image`、`pdf`、`html`、`markdown`、`code`、`text`、`file`（别的文件：只能下载，不进右栏）；`type` 是核心认的媒体类型
  */
 
+/** 条目编号里的序号（`e12` → 12）。 @param {string} id */
+const seqOf = (id) => Number.parseInt(String(id).replace(/^[a-z]+/, ''), 10) || 0;
+
 /**
- * 这个会话的产物。`dir` 是约定目录的真实位置；还不知道的（桥还没回）是 `null`，一项都没有。
- * @param {any[]} events 持久事件，照序号
- * @param {string|null} dir
- * @returns {Artifact[]}
+ * 一条工具条目带的展示；不是展示、没展示成（没有 `shown`、没有 `blob`）的是 `null`。
+ * @param {any} e 视图里的条目
+ * @returns {Shown|null}
  */
-export function artifacts(events, dir) {
-  if (!dir) return [];
-  const prefix = dir.endsWith('/') ? dir : `${dir}/`;
-  const reverted = new Set();
-  /** @type {{path: string, seq: number, turn: number|null, gone: boolean}[]} */
-  const changes = [];
-  for (const e of events) {
-    if (e.kind === 'turn.reverted') for (const n of e.body.turns) reverted.add(n);
-    if (e.kind === 'turn.unreverted') for (const n of e.body.turns) reverted.delete(n);
-    if (e.kind !== 'tool.result') continue;
-    for (const fx of e.body.effects ?? []) {
-      if ((fx.kind === 'file.changed' || fx.kind === 'file.trashed') && fx.path?.startsWith(prefix)) {
-        changes.push({ path: fx.path, seq: e.seq, turn: e.turn ?? null, gone: fx.kind === 'file.trashed' });
-      }
-    }
-  }
-  /** @type {Map<string, {seq: number, turn: number|null, gone: boolean}>} 每个文件最后那一次（撤销掉的不算） */
+export function shownOf(e) {
+  const s = e?.kind === 'tool' ? e.shown : null;
+  if (!s || typeof s.blob !== 'string' || !s.blob || typeof s.path !== 'string') return null;
+  const type = typeof s.media_type === 'string' ? s.media_type : 'application/octet-stream';
+  const language = typeof s.language === 'string' && s.language ? s.language : null;
+  return {
+    path: s.path,
+    blob: s.blob,
+    name: typeof s.name === 'string' && s.name ? s.name : s.path.split('/').pop() ?? s.path,
+    title: typeof s.title === 'string' && s.title ? s.title : null,
+    kind: shownKind(type, language),
+    type,
+    size: Number.isFinite(s.size) ? s.size : null,
+    language,
+    width: Number.isFinite(s.width) ? s.width : null,
+    height: Number.isFinite(s.height) ? s.height : null,
+    id: e.id,
+    seq: seqOf(e.id),
+    turn: e.turn ?? null,
+  };
+}
+
+/**
+ * 这个会话展示过的：一个路径一项（最后那一次），最后展示的在前。藏起来的（撤掉的那一轮）不算。
+ * @param {any[]} entries 视图里的条目，照显示的先后
+ * @returns {Shown[]}
+ */
+export function shownList(entries) {
+  /** @type {Map<string, Shown>} */
   const last = new Map();
-  for (const c of changes) if (!reverted.has(c.turn)) last.set(c.path, c);
-  return [...last.entries()]
-    .filter(([, c]) => !c.gone)
-    .sort((a, b) => b[1].seq - a[1].seq)
-    .map(([path, c]) => ({ path, name: path.slice(prefix.length), kind: artifactKind(path), seq: c.seq, turn: c.turn }));
+  for (const e of entries) {
+    if (e.hidden) continue;
+    const s = shownOf(e);
+    if (!s) continue;
+    last.delete(s.path);
+    last.set(s.path, s);
+  }
+  return [...last.values()].sort((a, b) => b.seq - a.seq);
 }
 
-/** 照扩展名认类型（`artifacts.json` 的 `kinds`）；认不出的当文字。 */
-export function artifactKind(path) {
-  const ext = /\.([^./]+)$/.exec(path)?.[1]?.toLowerCase() ?? '';
-  for (const [kind, exts] of Object.entries(res.artifacts.kinds)) if (exts.includes(ext)) return kind;
-  return 'text';
+/** 右栏里看得了的（别的文件只在对话里一张卡片，能下载）。 @param {Shown[]} list */
+export const panelList = (list) => list.filter((s) => s.kind !== 'file');
+
+/**
+ * 照核心认的媒体类型分种类（设计 35 第二节第 3 条）：图片、PDF、HTML、Markdown；`text/plain` 认得出语言的是代码，别的是文字；
+ * 别的都是文件。
+ * @param {string} type @param {string|null} [language]
+ */
+export function shownKind(type, language = null) {
+  if (type.startsWith('image/')) return 'image';
+  if (type === 'application/pdf') return 'pdf';
+  if (type === 'text/html') return 'html';
+  if (type === 'text/markdown') return 'markdown';
+  if (type === 'text/plain') return language ? 'code' : 'text';
+  return 'file';
 }
 
-/** 代码按哪种语言上色（`artifacts.json` 的 `languages`）；没有的是 `null`，不上色。 */
-export function artifactLanguage(path) {
-  const ext = /\.([^./]+)$/.exec(path)?.[1]?.toLowerCase() ?? '';
-  return res.artifacts.languages[ext] ?? null;
-}
+/** 代码按哪种语言上色：核心给的语言名是 Markdown 代码块的写法，和回答里的代码块同一套（`markdown/highlight.js` 认）。 @param {string|null} language */
+export const codeLanguage = (language) => (language ? language.toLowerCase() : null);

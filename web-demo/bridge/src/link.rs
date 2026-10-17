@@ -17,8 +17,8 @@ use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
 use tokio_tungstenite::tungstenite::http::StatusCode;
 
-use miyu_client::places::Env;
 use miyu_client::places::DataRoot;
+use miyu_client::places::Env;
 
 use crate::Site;
 
@@ -27,9 +27,17 @@ pub async fn run(stream: TcpStream, site: Arc<Site>) {
     let (key, port) = (site.key.clone(), site.port);
     #[expect(clippy::result_large_err, reason = "回调的签名是 tungstenite 定的")]
     let check = move |req: &Request, resp: Response| -> Result<Response, ErrorResponse> {
-        let origin = req.headers().get("origin").and_then(|v| v.to_str().ok()).unwrap_or("");
-        let origin_ok = origin == format!("http://127.0.0.1:{port}") || origin == format!("http://localhost:{port}");
-        let key_ok = req.uri().query().is_some_and(|q| q.split('&').any(|kv| kv == format!("k={key}")));
+        let origin = req
+            .headers()
+            .get("origin")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("");
+        let origin_ok = origin == format!("http://127.0.0.1:{port}")
+            || origin == format!("http://localhost:{port}");
+        let key_ok = req
+            .uri()
+            .query()
+            .is_some_and(|q| q.split('&').any(|kv| kv == format!("k={key}")));
         if origin_ok && key_ok {
             return Ok(resp);
         }
@@ -37,12 +45,15 @@ pub async fn run(stream: TcpStream, site: Arc<Site>) {
         *refused.status_mut() = StatusCode::FORBIDDEN;
         Err(refused)
     };
-    let Ok(ws) = accept_hdr_async(stream, check).await else { return };
+    let Ok(ws) = accept_hdr_async(stream, check).await else {
+        return;
+    };
     let (mut sink, mut source) = ws.split();
     let connected = match connect().await {
         Ok(ok) => ok,
         Err(reason) => {
-            let note = json!({"jsonrpc": "2.0", "method": "bridge.error", "params": {"message": reason}});
+            let note =
+                json!({"jsonrpc": "2.0", "method": "bridge.error", "params": {"message": reason}});
             if let Err(e) = sink.send(Message::text(note.to_string())).await {
                 eprintln!("{reason}；告诉页面时又出错了：{e}");
             }
@@ -80,15 +91,23 @@ pub async fn run(stream: TcpStream, site: Arc<Site>) {
     };
     while let Some(Ok(frame)) = source.next().await {
         let Message::Text(text) = frame else {
-            if matches!(frame, Message::Close(_)) { break }
+            if matches!(frame, Message::Close(_)) {
+                break;
+            }
             continue;
         };
-        let Ok(mut message) = serde_json::from_str::<Value>(text.as_str()) else { continue };
+        let Ok(mut message) = serde_json::from_str::<Value>(text.as_str()) else {
+            continue;
+        };
         // 只动握手：塞上本机令牌（浏览器读不到，也不该读到）；别的照转
         if message["method"].as_str() == Some("hello") {
             message["params"]["token"] = json!(token);
         }
-        if writer.write_all(format!("{message}\n").as_bytes()).await.is_err() {
+        if writer
+            .write_all(format!("{message}\n").as_bytes())
+            .await
+            .is_err()
+        {
             break;
         }
     }
@@ -114,10 +133,14 @@ pub(crate) async fn connect() -> Result<Connected, String> {
         })
         .await
         .map_err(|e| format!("拉不起核心：{e}"))?,
-        None => miyu_client::connect::connect(&root).await.map_err(|e| match e {
-            miyu_client::connect::ConnectError::NotRunning => "核心没在跑：启动桥时设 MIYU_CORE_BIN 指向重制版的 miyu".to_string(),
-            e => format!("连不上核心：{e}"),
-        })?,
+        None => miyu_client::connect::connect(&root)
+            .await
+            .map_err(|e| match e {
+                miyu_client::connect::ConnectError::NotRunning => {
+                    "核心没在跑：启动桥时设 MIYU_CORE_BIN 指向重制版的 miyu".to_string()
+                }
+                e => format!("连不上核心：{e}"),
+            })?,
     };
     Ok(connected)
 }

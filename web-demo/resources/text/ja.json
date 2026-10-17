@@ -174,7 +174,7 @@
     "maximize": "最大化",
     "restore": "元のサイズに戻す",
     "close": "閉じる",
-    "list": "成果物一覧",
+    "list": "表示したもの",
     "loading": "読み込み中…",
     "failed": "ファイルを読み込めませんでした",
     "resize": "ドラッグで幅を変更",
@@ -182,14 +182,16 @@
       "markdown": "MD",
       "html": "HTML",
       "image": "画像",
-      "video": "動画",
       "code": "コード",
-      "text": "テキスト"
+      "text": "テキスト",
+      "pdf": "PDF",
+      "file": "ファイル"
     },
     "failed_with": "ファイルを読み込めませんでした：{reason}",
     "tab_work": "ワークスペース",
     "tab_panel": "パネル",
-    "empty": "成果物はまだありません"
+    "empty": "まだ何も表示していません",
+    "download_named": "{name} をダウンロード"
   },
   "commands": {
     "nothing_to_clear": "コンテキストは空です。",

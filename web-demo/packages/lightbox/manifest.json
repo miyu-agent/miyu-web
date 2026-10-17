@@ -15,7 +15,9 @@
   "description": {
     "zh": "对话里的图片、mermaid 图点开放大看；停用了点图在新标签页开。"
   },
-  "inject": [],
+  "inject": [
+    "host"
+  ],
   "provides": {
     "services": [
       "lightbox"
@@ -29,23 +31,32 @@
     "zh": {
       "label": "图片预览",
       "close": "关闭预览",
-      "workspace": "在预览工作区打开",
+      "workspace": "在右栏打开",
       "external": "在新标签页打开",
-      "download": "下载"
+      "download": "下载",
+      "copy": "复制图片",
+      "copied": "已复制",
+      "copy_failed": "复制失败"
     },
     "en": {
       "label": "Image preview",
       "close": "Close preview",
-      "workspace": "Open in preview workspace",
+      "workspace": "Open in side panel",
       "external": "Open in new tab",
-      "download": "Download"
+      "download": "Download",
+      "copy": "Copy image",
+      "copied": "Copied",
+      "copy_failed": "Couldn't copy"
     },
     "ja": {
       "label": "画像プレビュー",
       "close": "プレビューを閉じる",
-      "workspace": "プレビューワークスペースで開く",
+      "workspace": "右パネルで開く",
       "external": "新しいタブで開く",
-      "download": "ダウンロード"
+      "download": "ダウンロード",
+      "copy": "画像をコピー",
+      "copied": "コピーしました",
+      "copy_failed": "コピーできませんでした"
     }
   }
 }

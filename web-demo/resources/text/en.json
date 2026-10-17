@@ -174,7 +174,7 @@
     "maximize": "Maximize",
     "restore": "Restore",
     "close": "Close",
-    "list": "Artifacts",
+    "list": "Shown items",
     "loading": "Loading…",
     "failed": "Failed to load file",
     "resize": "Drag to resize",
@@ -182,14 +182,16 @@
       "markdown": "MD",
       "html": "HTML",
       "image": "Image",
-      "video": "Video",
       "code": "Code",
-      "text": "Text"
+      "text": "Text",
+      "pdf": "PDF",
+      "file": "File"
     },
     "failed_with": "Failed to load file: {reason}",
     "tab_work": "Workspace",
     "tab_panel": "Panel",
-    "empty": "No artifacts yet"
+    "empty": "Nothing shown yet",
+    "download_named": "Download {name}"
   },
   "commands": {
     "nothing_to_clear": "The context is empty",

@@ -180,7 +180,8 @@ export function browserHost() {
     restart: () => location.reload(),
     /** 接住页面里的链接：浏览器自己会办，什么都不做；交回怎么不接。 */
     intercept: (/** @type {HTMLElement} */ root) => () => {},
-    clipboard: { write: (/** @type {string} */ text) => navigator.clipboard.writeText(text) },
+    // 写字；写一张图（灯箱的「复制图片」，PNG：剪贴板普遍只收它）
+    clipboard: { write: (/** @type {string} */ text) => navigator.clipboard.writeText(text), image: (/** @type {Blob} */ png) => navigator.clipboard.write([new ClipboardItem({ [png.type]: png })]) },
     store,
   };
 }

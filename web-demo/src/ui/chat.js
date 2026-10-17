@@ -16,6 +16,7 @@ import { noteNode } from './notes.js';
 import { CompactingRow } from './compacting.js';
 import { group } from '../model/group.js';
 import { imageCard, stickerCard } from './media.js';
+import { shownNode } from './shown.js';
 import { blobUrl } from '../core/host.js';
 
 export class Chat {
@@ -380,6 +381,8 @@ function itemNode(it, chat) {
   if (it.type === 'note') return it.slot ? slotNode(it, chat) : noteNode(it, chat.where, chat.markdown);
   if (it.type === 'waiting') return waitingNode();
   if (it.type === 'media') return mediaNode(it, chat);
+  // 她 show 过的（核心 D-5）：图片缩略图，别的一张卡片，点了在右栏打开
+  if (it.type === 'shown') return shownNode(it.shown, { lightbox: chat.ext?.lightbox, reveal: chat.on.reveal });
   const node = h('div.reply.markdown-body');
   renderMarkdown(node, it.text, { say: chat.markdown.say, hooks: chat.markdown.hooks(it.scope), streaming: it.streaming });
   return node;

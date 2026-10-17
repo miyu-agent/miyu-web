@@ -27,18 +27,29 @@ pub async fn serve(mut stream: TcpStream, site: &Site) -> io::Result<()> {
         buf.extend_from_slice(&chunk[..n]);
     }
     // 请求头到空行为止
-    let end = buf.windows(4).position(|w| w == b"\r\n\r\n").map_or(buf.len(), |i| i + 4);
+    let end = buf
+        .windows(4)
+        .position(|w| w == b"\r\n\r\n")
+        .map_or(buf.len(), |i| i + 4);
     let head = String::from_utf8_lossy(&buf[..end]);
     let mut parts = head.split_whitespace();
     let (method, target) = (parts.next().unwrap_or(""), parts.next().unwrap_or("/"));
     let path = target.split(['?', '#']).next().unwrap_or("/");
-    let query = target.split_once('?').map_or("", |(_, q)| q.split('#').next().unwrap_or(""));
+    let query = target
+        .split_once('?')
+        .map_or("", |(_, q)| q.split('#').next().unwrap_or(""));
     if method == "POST" && path == "/page" {
         let body = body(&mut stream, &buf[end..], &head).await?;
         return crate::pages::issue(&mut stream, site, &head, &body).await;
     }
     if method != "GET" {
-        return reply(&mut stream, "405 Method Not Allowed", "text/plain; charset=utf-8", b"only GET").await;
+        return reply(
+            &mut stream,
+            "405 Method Not Allowed",
+            "text/plain; charset=utf-8",
+            b"only GET",
+        )
+        .await;
     }
     if path.starts_with("/p/") {
         return crate::pages::serve(&mut stream, site, path).await;
@@ -50,11 +61,24 @@ pub async fn serve(mut stream: TcpStream, site: &Site) -> io::Result<()> {
         // 选目录（`dialog.rs`）：带口令才开；`start` 是从哪个目录开始，`title` 是对话框的标题
         let q = media::params(query);
         if q.get("k") != Some(&site.key) {
-            return reply(&mut stream, "403 Forbidden", "text/plain; charset=utf-8", b"").await;
+            return reply(
+                &mut stream,
+                "403 Forbidden",
+                "text/plain; charset=utf-8",
+                b"",
+            )
+            .await;
         }
         let start = q.get("start").filter(|s| !s.is_empty()).map(String::as_str);
-        let picked = crate::dialog::pick_dir(q.get("title").map_or("", String::as_str), start).await;
-        return reply(&mut stream, "200 OK", "application/json; charset=utf-8", picked.json().as_bytes()).await;
+        let picked =
+            crate::dialog::pick_dir(q.get("title").map_or("", String::as_str), start).await;
+        return reply(
+            &mut stream,
+            "200 OK",
+            "application/json; charset=utf-8",
+            picked.json().as_bytes(),
+        )
+        .await;
     }
     if path == "/wallpaper/events" {
         return crate::wallpaper::events(&mut stream, site, query).await;
@@ -65,15 +89,39 @@ pub async fn serve(mut stream: TcpStream, site: &Site) -> io::Result<()> {
     if path == "/key" {
         // 页面连不上时问一句口令对不对（蓝图 `web.md`「连核心」第 9 条）：只回对不对，别的不说
         let ok = media::params(query).get("k") == Some(&site.key);
-        return reply(&mut stream, if ok { "204 No Content" } else { "403 Forbidden" }, "text/plain; charset=utf-8", b"").await;
+        return reply(
+            &mut stream,
+            if ok {
+                "204 No Content"
+            } else {
+                "403 Forbidden"
+            },
+            "text/plain; charset=utf-8",
+            b"",
+        )
+        .await;
     }
     let path = decode(if path == "/" { "/index.html" } else { path });
     let Some(file) = resolve(dir, &path) else {
-        return reply(&mut stream, "404 Not Found", "text/plain; charset=utf-8", b"not found").await;
+        return reply(
+            &mut stream,
+            "404 Not Found",
+            "text/plain; charset=utf-8",
+            b"not found",
+        )
+        .await;
     };
     match tokio::fs::read(&file).await {
         Ok(body) => reply(&mut stream, "200 OK", kind(&file), &body).await,
-        Err(_) => reply(&mut stream, "404 Not Found", "text/plain; charset=utf-8", b"not found").await,
+        Err(_) => {
+            reply(
+                &mut stream,
+                "404 Not Found",
+                "text/plain; charset=utf-8",
+                b"not found",
+            )
+            .await
+        }
     }
 }
 
@@ -82,10 +130,17 @@ const BODY_MAX: usize = 16 * 1024;
 
 /// 读请求的正文：照 `Content-Length`，已经读进来的接着读，最多 `BODY_MAX`。
 async fn body(stream: &mut TcpStream, got: &[u8], head: &str) -> io::Result<Vec<u8>> {
-    let len = head.lines().find_map(|l| {
-        let (name, value) = l.split_once(':')?;
-        name.trim().eq_ignore_ascii_case("content-length").then(|| value.trim().parse::<usize>().ok()).flatten()
-    }).unwrap_or(0).min(BODY_MAX);
+    let len = head
+        .lines()
+        .find_map(|l| {
+            let (name, value) = l.split_once(':')?;
+            name.trim()
+                .eq_ignore_ascii_case("content-length")
+                .then(|| value.trim().parse::<usize>().ok())
+                .flatten()
+        })
+        .unwrap_or(0)
+        .min(BODY_MAX);
     let mut body = got[..got.len().min(len)].to_vec();
     let mut chunk = [0u8; 2048];
     while body.len() < len {
@@ -101,7 +156,8 @@ async fn body(stream: &mut TcpStream, got: &[u8], head: &str) -> io::Result<Vec<
 /// 路径换成页面目录里的文件：带 `..` 的、跑到目录外的、不是文件的都不给。
 fn resolve(dir: &Path, path: &str) -> Option<std::path::PathBuf> {
     // 桥自己的源码和编出来的东西不给
-    if path.split('/').any(|seg| seg == "..") || path.trim_start_matches('/').starts_with("bridge/") {
+    if path.split('/').any(|seg| seg == "..") || path.trim_start_matches('/').starts_with("bridge/")
+    {
         return None;
     }
     let file = dir.join(path.trim_start_matches('/')).canonicalize().ok()?;
@@ -142,7 +198,12 @@ fn kind(file: &Path) -> &'static str {
     }
 }
 
-pub(crate) async fn reply(stream: &mut TcpStream, status: &str, kind: &str, body: &[u8]) -> io::Result<()> {
+pub(crate) async fn reply(
+    stream: &mut TcpStream,
+    status: &str,
+    kind: &str,
+    body: &[u8],
+) -> io::Result<()> {
     let head = format!(
         "HTTP/1.1 {status}\r\nContent-Type: {kind}\r\nContent-Length: {}\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n",
         body.len()
