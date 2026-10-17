@@ -7,7 +7,7 @@
 
 /**
  * @typedef {{key: string, label: string, hint?: string, control: string, value: any, options?: {value: string, label: string}[],
- *   placeholder?: string, default?: {text?: string}, min?: number, max?: number, integer?: boolean}} Field
+ *   placeholder?: string, default?: {text?: string, value?: any}, min?: number, max?: number, integer?: boolean}} Field
  * @typedef {{type: 'form', id: string, fields: Field[], submit: {label: string, call: string, params?: any}}} Form
  * @typedef {{base: Record<string, any>, edits: Record<string, any>, started: Record<string, any>, conflicts: Set<string>,
  *   problems: Record<string, string>, message: string|null, saving: boolean, saved: number}} State

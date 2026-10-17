@@ -37,10 +37,13 @@ function control(field, value, hooks) {
   const type = (/** @type {any} */ v) => hooks.set(field.key, v, true);
   const shown = value == null ? (field.default?.text ?? '') : '';
   switch (field.control) {
-    case 'toggle':
-      return h(`button.wg-switch${value === true ? '.is-on' : ''}${value == null ? '.is-default' : ''}`, {
-        type: 'button', role: 'switch', 'aria-checked': String(value === true), 'aria-label': field.label, onclick: () => set(value !== true),
+    case 'toggle': {
+      // 沿用默认的照默认的值画（`default.value`，没给的当关），点一下从它翻过来
+      const on = value == null ? fallback(field) === true : value === true;
+      return h(`button.wg-switch${on ? '.is-on' : ''}${value == null ? '.is-default' : ''}`, {
+        type: 'button', role: 'switch', 'aria-checked': String(on), 'aria-label': field.label, onclick: () => set(!on),
       }, h('i'), value == null && shown ? h('span.wg-f-faint', shown) : null);
+    }
     case 'select': return segmented(field) ? segments(field, value, set, shown) : dropdown(field, value, set, shown);
     case 'textarea': {
       const box = /** @type {HTMLTextAreaElement} */ (h('textarea.wg-input.wg-textarea', { rows: 3, placeholder: shown || field.placeholder || '', 'aria-label': field.label }));
@@ -71,6 +74,9 @@ function control(field, value, hooks) {
   }
 }
 
+/** 沿用默认时默认的值（`default.value`，核心 X-15 再补的补；没给的是 `undefined`）。 @param {import('./forms.js').Field} field */
+const fallback = (field) => field.default?.value;
+
 /** 数字认不出时说要什么样的。 @param {import('./forms.js').Field} field @param {Hooks['t']} t */
 function rangeText(field, t) {
   const kind = field.integer ? t('form.integer') : t('form.number');
@@ -78,11 +84,12 @@ function rangeText(field, t) {
   return kind;
 }
 
-/** 选项少的下拉：一排分段按钮；`null` 的哪个都不按下，后面接默认的字。 */
+/** 选项少的下拉：一排分段按钮；`null` 的把默认那一档（`default.value`）画成淡的选中，后面接默认的字。 */
 function segments(field, value, set, shown) {
+  const auto = value == null ? fallback(field) : undefined;
   return h('div.wg-segs-line',
     h('div.wg-segs', { role: 'radiogroup', 'aria-label': field.label },
-      ...(field.options ?? []).map((o) => h(`button.wg-seg${value === o.value ? '.is-on' : ''}`, {
+      ...(field.options ?? []).map((o) => h(`button.wg-seg${value === o.value ? '.is-on' : ''}${auto === o.value ? '.is-default' : ''}`, {
         type: 'button', role: 'radio', 'aria-checked': String(value === o.value), onclick: () => set(o.value),
       }, o.label))),
     value == null && shown ? h('span.wg-f-faint', shown) : null);
