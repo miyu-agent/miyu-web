@@ -50,3 +50,96 @@
 .wg-tone-bad { color: var(--t-error); }
 @keyframes wg-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .wg-mark-doing .icon { animation: none; } }
+
+/* ── 整页里能改的（蓝图第 7 条；样子照接入QQ 会话的 venue-cards.html，版式 A）：左边列表、右边详情卡片，不描边，靠底色分 ── */
+.wg-page.is-forms { padding: 16px 20px 40px; }
+.wg-forms { position: relative; max-width: 1180px; margin: 0 auto; outline: none; }
+.wg-forms-body { display: grid; gap: 12px; }
+.wg-f-notice { margin-bottom: 10px; padding: 8px 12px; border-radius: 10px; background: color-mix(in srgb, var(--t-warn) 12%, var(--surface-1)); color: var(--text); font-size: 13px; }
+.wg-sections { display: grid; gap: 12px; }
+.wg-sec-top { display: flex; justify-content: flex-end; min-height: 0; }
+.wg-sec-top:empty { display: none; }
+.wg-sec-main { display: grid; gap: 16px; align-items: start; }
+.wg-sections.is-wide .wg-sec-main { grid-template-columns: 300px minmax(0, 1fr); }
+.wg-sec-list { display: grid; gap: 2px; align-content: start; }
+.wg-sec-search { margin-bottom: 8px; }
+.wg-sec-item { display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; padding: 8px 10px; border: 0; border-radius: 10px; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.wg-sec-item:hover { background: color-mix(in srgb, var(--surface-2) 60%, transparent); }
+.wg-sec-item.is-on { background: var(--surface-2); }
+.wg-avatar { display: grid; flex: none; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 18%, var(--surface-1)); color: var(--accent); font-size: 14px; font-weight: 600; }
+.wg-avatar.is-big { width: 44px; height: 44px; font-size: 18px; }
+.wg-sec-text { display: grid; flex: 1; min-width: 0; }
+.wg-sec-title { overflow: hidden; font-size: 13.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.wg-sec-name { overflow: hidden; font-size: 18px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.wg-sec-sub { overflow: hidden; color: var(--text-faint); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.wg-badge { flex: none; padding: 1px 7px; border-radius: 6px; background: var(--surface-2); color: var(--text-soft); font-size: 11.5px; }
+.wg-sec-item.is-on .wg-badge { background: var(--surface-1); }
+.wg-badge.wg-tone-warn { background: color-mix(in srgb, var(--t-warn) 14%, transparent); }
+.wg-badge.wg-tone-bad { background: color-mix(in srgb, var(--t-error) 14%, transparent); }
+.wg-badge.wg-tone-good { background: color-mix(in srgb, var(--t-good) 14%, transparent); }
+.wg-badge.wg-tone-accent { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.wg-dot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--text-faint); }
+.wg-dot.is-good { background: var(--t-good); }
+.wg-dot.is-warn { background: var(--t-warn); }
+.wg-dot.is-bad { background: var(--t-error); }
+.wg-sec-detail { display: grid; gap: 14px; min-width: 0; padding: 18px 20px 20px; border-radius: 16px; background: var(--surface-1); }
+.wg-sec-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.wg-sec-back { display: inline-flex; justify-self: start; align-items: center; gap: 4px; padding: 2px 4px; margin: -6px 0 -4px -4px; border: 0; border-radius: 6px; background: none; color: var(--text-soft); font: inherit; font-size: 13px; cursor: pointer; }
+.wg-sec-back .icon { width: 15px; height: 15px; }
+.wg-sec-detail .wg-button { --wg-raised: var(--surface-2); }
+.wg-add { position: relative; }
+.wg-primary { height: 32px; padding: 0 14px; border: 0; border-radius: 8px; background: var(--accent); color: var(--on-primary); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.wg-primary:disabled, .wg-button:disabled { opacity: 0.45; cursor: default; }
+.wg-menu { position: absolute; z-index: 5; top: calc(100% + 6px); right: 0; display: grid; min-width: 220px; max-height: 320px; padding: 6px; overflow-y: auto; border-radius: 12px; background: color-mix(in srgb, var(--surface-1) 92%, transparent); box-shadow: var(--float-shadow); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+.wg-menu-item { padding: 7px 10px; border: 0; border-radius: 8px; background: none; color: var(--text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.wg-menu-item:hover, .wg-menu-item:focus-visible { background: var(--surface-2); outline: none; }
+/* 一格：左边名字、中间控件、右边「默认」「恢复默认」 */
+.wg-form { display: grid; gap: 4px; }
+.wg-f-row { display: grid; grid-template-columns: 140px minmax(0, 1fr) auto; gap: 4px 14px; align-items: start; padding: 6px 0; }
+.wg-f-name { padding-top: 6px; }
+.wg-f-label { font-size: 13.5px; }
+.wg-f-hint { margin-top: 1px; color: var(--text-faint); font-size: 11.5px; line-height: 1.4; }
+.wg-f-control { display: grid; gap: 4px; min-width: 0; }
+.wg-f-tail { padding-top: 7px; font-size: 12px; white-space: nowrap; }
+.wg-f-default { color: var(--text-faint); }
+.wg-f-restore { padding: 0; border: 0; background: none; color: var(--text-soft); font: inherit; cursor: pointer; }
+.wg-f-restore:hover { color: var(--accent); }
+.wg-f-faint { color: var(--text-faint); font-size: 12.5px; }
+.wg-f-problem { color: var(--t-error); font-size: 12px; }
+.wg-f-conflict { color: var(--t-warn); font-size: 12px; }
+.wg-f-message { padding: 6px 0 0; color: var(--t-error); font-size: 12.5px; white-space: pre-wrap; }
+.wg-f-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding-top: 10px; }
+.wg-f-saved { color: var(--t-good); font-size: 12.5px; animation: fade-out 0.4s ease-in 1.8s both; }
+.wg-input { width: 100%; min-width: 0; height: 34px; padding: 0 10px; border: 0; border-radius: 8px; background: var(--surface-2); color: var(--text); font: inherit; font-size: 13.5px; outline: none; }
+.wg-input:focus { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); }
+.wg-input::placeholder { color: var(--text-faint); }
+.wg-textarea { height: auto; min-height: 64px; padding: 8px 10px; line-height: 1.5; resize: vertical; }
+.wg-select { padding-right: 28px; cursor: pointer; }
+.wg-segs { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; justify-self: start; padding: 2px; border-radius: 9px; background: var(--surface-2); }
+.wg-segs-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.wg-seg { height: 30px; padding: 0 12px; border: 0; border-radius: 7px; background: none; color: var(--text-soft); font: inherit; font-size: 13px; cursor: pointer; }
+.wg-seg.is-on { background: var(--surface-1); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgb(0 0 0 / 0.12); }
+.wg-switch { display: inline-flex; align-items: center; gap: 10px; justify-self: start; height: 34px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.wg-switch > i { position: relative; width: 34px; height: 20px; border-radius: 10px; background: var(--surface-3); transition: background 0.15s ease; }
+.wg-switch > i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--surface-1); box-shadow: 0 1px 2px rgb(0 0 0 / 0.2); transition: transform 0.15s ease; }
+.wg-switch.is-on > i { background: var(--accent); }
+.wg-switch.is-on > i::after { transform: translateX(14px); }
+.wg-switch.is-default > i { opacity: 0.55; }
+.wg-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 34px; }
+.wg-chip { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 4px 0 9px; border-radius: 7px; background: var(--surface-2); font-size: 13px; }
+.wg-chip-x { display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--text-faint); cursor: pointer; }
+.wg-chip-x:hover { color: var(--text); }
+.wg-chip-x .icon { width: 12px; height: 12px; }
+.wg-chip-add { height: 26px; padding: 0 9px; border: 0; border-radius: 7px; background: none; color: var(--text-soft); font: inherit; font-size: 13px; cursor: pointer; }
+.wg-chip-add:hover { background: var(--surface-2); }
+.wg-chip-input { width: 160px; height: 26px; }
+.wg-button.is-danger { color: var(--t-error); }
+/* 没保存就离开：盖住整页问一句 */
+.wg-confirm { position: fixed; z-index: 30; inset: 0; display: grid; place-items: center; background: var(--scrim, rgb(0 0 0 / 0.32)); }
+.wg-confirm-card { display: grid; gap: 4px; width: min(360px, calc(100vw - 32px)); padding: 18px 20px 14px; border-radius: 14px; background: var(--surface-1); box-shadow: var(--float-shadow); }
+.wg-confirm-card p { margin: 0; font-size: 14px; }
+@media (max-width: 560px) {
+  .wg-f-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .wg-f-name { grid-column: 1 / -1; padding-top: 0; }
+  .wg-sec-detail { padding: 14px; }
+}

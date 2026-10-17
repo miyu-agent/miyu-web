@@ -20,16 +20,20 @@ export class FullPage {
     this.el = null;
     /** @type {FrameHost|null} */
     this.frame = null;
-    /** 开着的界面块整页（软件包 `widgets` 交的） @type {{el: HTMLElement, close: () => void}|null} */
+    /** 开着的界面块整页（软件包 `widgets` 交的；`leave` 是关之前问一句：有改了没存的） @type {{el: HTMLElement, close: () => void, leave?: () => Promise<boolean>, escape?: () => boolean}|null} */
     this.blocks = null;
     /** 开着的是哪一页（`package` 加 `widget`） */
     this.shown = '';
+    /** 开界面块整页时软件包 `widgets` 还没起来（直接带着网址打开页面时会这样）：等它起来了重开（`index.js` 听 `service.set`） */
+    this.awaitWidgets = false;
     /** 打开前的标题 */
     this.title = '';
     this.onKey = (/** @type {KeyboardEvent} */ e) => {
       if (e.key !== 'Escape' || e.defaultPrevented) return;
       e.preventDefault();
-      this.back();
+      // 界面块整页里能改的那一页先管（窄的看详情时回列表）
+      if (this.blocks?.escape?.()) return;
+      this.leave();
     };
   }
 
@@ -53,12 +57,13 @@ export class FullPage {
     const widget = route.widget ? (p?.widgets ?? []).find((/** @type {any} */ w) => w.id === route.widget && w.place === 'page') : null;
     const name = widget?.title ? `${p?.name ?? route.package} · ${widget.title}` : p?.name ?? route.package;
     const bar = h('header.bs-bar',
-      h('button.icon-button.bs-back', { type: 'button', title: t('back'), 'aria-label': t('back'), onclick: () => this.back() }, icon('arrow-left')),
+      h('button.icon-button.bs-back', { type: 'button', title: t('back'), 'aria-label': t('back'), onclick: () => this.leave() }, icon('arrow-left')),
       h('span.bs-face', icon(p?.icon && hasIcon(p.icon) ? p.icon : 'package')),
       h('span.bs-name', name));
     /** @type {HTMLElement} */
     let body;
     if (route.widget) {
+      this.awaitWidgets = !!widget && p?.enabled !== false && !this.ctx.widgets;
       if (widget && p?.enabled !== false && this.ctx.widgets) {
         this.blocks = this.ctx.widgets.page(route.package, route.widget);
         body = /** @type {HTMLElement} */ (this.blocks?.el);
@@ -81,6 +86,12 @@ export class FullPage {
     document.addEventListener('keydown', this.onKey);
     this.title = document.title;
     document.title = name;
+  }
+
+  /** 点了返回、按了 `Esc`：界面块整页里有改了没存的先问一句（核心 `widgets.md`「整页里能改」第 6 条），放弃了才返回。 */
+  async leave() {
+    if (this.blocks?.leave && !(await this.blocks.leave())) return;
+    this.back();
   }
 
   /** 关掉：通道收掉、标题换回来。 */

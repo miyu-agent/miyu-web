@@ -7,6 +7,7 @@
 
 import { Blocks, showingOf, keyOf, LIMITS } from './model.js';
 import { drawBlock, fill, drawStatus } from './render.js';
+import { PageView, editable } from './sections.js';
 import { h, hasIcon } from '../../src/lib/dom.js';
 
 /** @param {any} ctx */
@@ -17,7 +18,7 @@ export function apply(ctx) {
   let session = ctx.chat.current?.() ?? null;
   /** 右边一栏露着、在看「面板」那一页 */
   let panel = false;
-  /** 开着的界面块整页 @type {{package: string, widget: string, el: HTMLElement}|null} */
+  /** 开着的界面块整页（有能改的段的，`view` 是画它的那一份，人改到哪了记在里面） @type {{package: string, widget: string, el: HTMLElement, view: PageView|null}|null} */
   let page = null;
   let queued = false;
   let alive = true;
@@ -77,9 +78,25 @@ export function apply(ctx) {
     if (!spans.length && statusUndo) { statusUndo(); statusUndo = null; }
     statusBox.replaceChildren(.../** @type {HTMLElement[]} */ (spans));
   };
+  /** 整页里能改的段：保存、加一项经 `package.call` 调放这一页的包，交回包的回应（拒了的抛出去，照核心的话写）。 */
+  const call = (/** @type {any} */ block, /** @type {string} */ method, /** @type {any} */ params) =>
+    ctx.core.request('package.call', { package: block.package, method, params });
   const drawPage = () => {
     if (!page) return;
     const b = blocks.get(page.package, page.widget);
+    // 有能改的段（`sections`、`form`，核心 X-15 再补）：交给 `PageView`，它记着选中哪一项、人改到哪了
+    if (b && editable(b.content)) {
+      if (!page.view) {
+        page.view = new PageView({ text: t, act, call });
+        page.el.replaceChildren(page.view.el);
+        page.el.classList.add('is-forms');
+      }
+      page.view.update(b);
+      return;
+    }
+    page.view?.close();
+    if (page.view) page.el.classList.remove('is-forms');
+    page.view = null;
     if (!b) page.el.replaceChildren(h('p.bs-empty', t('page_gone')));
     else if (page.el.firstElementChild?.classList.contains('wg-block')) fill(/** @type {HTMLElement} */ (page.el.firstElementChild), b, { rows: Infinity, text: t, act, head: false });
     else page.el.replaceChildren(drawBlock(b, { rows: Infinity, text: t, act, head: false }));
@@ -149,12 +166,17 @@ export function apply(ctx) {
      */
     page: (pkg, widget) => {
       const el = h('div.wg-page');
-      page = { package: pkg, widget, el };
+      page = { package: pkg, widget, el, view: null };
       subscribe();
       return {
         el,
+        // 关之前问一句：有改了没存的问放弃不放弃，交回能不能关
+        leave: () => (page?.el === el && page.view ? page.view.leave() : Promise.resolve(true)),
+        // 按了 `Esc`：能改的那一页窄的看详情时回列表，交回管了没有
+        escape: () => (page?.el === el && page.view ? page.view.escape() : false),
         close: () => {
           if (page?.el !== el) return;
+          page.view?.close();
           page = null;
           subscribe();
         },

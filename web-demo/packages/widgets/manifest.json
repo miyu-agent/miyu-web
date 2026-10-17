@@ -41,7 +41,34 @@
       "expand": "展开（还有 {rows} 行）",
       "more_blocks": "还有 {count} 块",
       "copied": "已复制",
-      "page_gone": "这一页没有了：软件卸载、停用了，或者不再提供它"
+      "page_gone": "这一页没有了：软件卸载、停用了，或者不再提供它",
+      "form": {
+        "default": "默认",
+        "restore": "恢复默认",
+        "revert": "还原",
+        "save": "保存",
+        "saving": "保存中…",
+        "saved": "已保存",
+        "save_failed": "保存失败：{why}",
+        "conflict": "已在别处修改",
+        "gone": "「{title}」已不在了，没保存的修改丢掉了",
+        "unsaved": "有没保存的修改",
+        "discard": "放弃修改",
+        "keep": "继续编辑",
+        "back": "返回",
+        "search": "找",
+        "add_item": "＋ 加一个",
+        "remove": "去掉 {text}",
+        "number": "要填数字",
+        "integer": "要填整数",
+        "range": "{kind}，{min} 到 {max}",
+        "state": {
+          "good": "好",
+          "warn": "要留意",
+          "bad": "有问题",
+          "off": "关着"
+        }
+      }
     },
     "en": {
       "not_running": "Not running",
@@ -49,7 +76,34 @@
       "expand": "Show {rows} more lines",
       "more_blocks": "{count} more",
       "copied": "Copied",
-      "page_gone": "This page is gone: the package was removed, turned off, or no longer provides it"
+      "page_gone": "This page is gone: the package was removed, turned off, or no longer provides it",
+      "form": {
+        "default": "Default",
+        "restore": "Reset",
+        "revert": "Revert",
+        "save": "Save",
+        "saving": "Saving…",
+        "saved": "Saved",
+        "save_failed": "Couldn't save: {why}",
+        "conflict": "Changed elsewhere",
+        "gone": "“{title}” is gone; unsaved changes were dropped",
+        "unsaved": "You have unsaved changes",
+        "discard": "Discard",
+        "keep": "Keep editing",
+        "back": "Back",
+        "search": "Search",
+        "add_item": "+ Add",
+        "remove": "Remove {text}",
+        "number": "Enter a number",
+        "integer": "Enter a whole number",
+        "range": "{kind}, {min} to {max}",
+        "state": {
+          "good": "Good",
+          "warn": "Needs attention",
+          "bad": "Problem",
+          "off": "Off"
+        }
+      }
     },
     "ja": {
       "not_running": "停止中",
@@ -57,7 +111,34 @@
       "expand": "展開（残り {rows} 行）",
       "more_blocks": "ほか {count} 件",
       "copied": "コピーしました",
-      "page_gone": "このページはありません：ソフトが削除・停止されたか、提供されなくなりました"
+      "page_gone": "このページはありません：ソフトが削除・停止されたか、提供されなくなりました",
+      "form": {
+        "default": "既定",
+        "restore": "既定に戻す",
+        "revert": "元に戻す",
+        "save": "保存",
+        "saving": "保存中…",
+        "saved": "保存しました",
+        "save_failed": "保存できませんでした：{why}",
+        "conflict": "ほかの場所で変更されました",
+        "gone": "「{title}」はなくなりました。未保存の変更は破棄しました",
+        "unsaved": "保存していない変更があります",
+        "discard": "破棄",
+        "keep": "編集を続ける",
+        "back": "戻る",
+        "search": "検索",
+        "add_item": "＋ 追加",
+        "remove": "{text} を削除",
+        "number": "数字を入力",
+        "integer": "整数を入力",
+        "range": "{kind}（{min}〜{max}）",
+        "state": {
+          "good": "良好",
+          "warn": "要注意",
+          "bad": "問題あり",
+          "off": "オフ"
+        }
+      }
     }
   }
 }

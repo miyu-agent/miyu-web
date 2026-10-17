@@ -39,8 +39,8 @@ export function fill(el, block, opts) {
   el.replaceChildren(...[head, ...body, more].filter(Boolean));
 }
 
-/** 一段。 @param {any} seg @param {import('./model.js').Block} block @param {Opts} opts */
-function segment(seg, block, opts) {
+/** 一段（整页里能改的那一页也照它画别的六种）。 @param {any} seg @param {import('./model.js').Block} block @param {Opts} opts */
+export function segment(seg, block, opts) {
   switch (seg.type) {
     case 'heading': return h('div.wg-heading', String(seg.text ?? ''));
     case 'text': return h(`div.wg-text.wg-tone-${toneOf(seg.tone)}`, String(seg.text ?? ''));

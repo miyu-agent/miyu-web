@@ -31,6 +31,12 @@ export function apply(ctx) {
     sync();
   };
   ctx.effect(() => nav.watch(sync));
+  // 带着界面块整页的网址打开页面：软件包 `widgets` 可能比这里晚起来，起来了重开这一页
+  ctx.on('service.set', (/** @type {string} */ name) => {
+    if (name !== 'widgets' || !page.awaitWidgets) return;
+    page.close();
+    sync();
+  });
   ctx.effect(() => () => page.close());
   ctx.provide('backstage', {
     /** 打开一个软件的页面（界面块的整页另带 `widget`）。 @param {string} id @param {string|null} [widget] */
