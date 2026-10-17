@@ -177,6 +177,65 @@ export function sandboxScreen(g) {
           await core.request('config.set', { layer: 'personal', changes: [{ key: 'permission.level', value: chosen }] });
           now = chosen;
         }
+        g.go('embed', 1);
+        return null;
+      },
+    },
+  };
+}
+
+/** 内置语义模型那一项（个人设置）：`local` 开、`off` 只用关键词 */
+export const EMBED_KEY = 'models.embedding';
+
+/**
+ * 装没装内置语义模型的包：`config.schema` 里这一项的 `local` 选项不带 `available: false`（2026-10-18 shorin-ee 转来）。旧核心没有这一项、
+ * 问不到的当没装。
+ * @param {any} core @returns {Promise<boolean>}
+ */
+export async function embedInstalled(core) {
+  try {
+    const schema = await core.request('config.schema', { keys: [EMBED_KEY] });
+    const item = schema?.items?.find((/** @type {any} */ i) => i.key === EMBED_KEY);
+    const local = (item?.options ?? []).find((/** @type {any} */ o) => o.value === 'local');
+    return !!local && local.available !== false;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 内置语义模型（第 9 条下面最后一款；2026-10-18 项目主人要的）：装了才有这一屏（`guide.js` 照 `embedInstalled`）。两行「是」「否」，先选中
+ * 现在的（写着 `off` 的是否，别的、没写的是是：核心不写就是 `local`）；「下一步」和现在的不一样的写个人设置。
+ * @param {import('./guide.js').Guide} g
+ */
+export function embedScreen(g) {
+  const t = g.t;
+  const core = g.ctx.core;
+  let now = 'local';
+  let chosen = now;
+  const list = h('div.wl-langs');
+  const draw = () => replace(list, ['local', 'off'].map((v) => h(`button.wl-lang${v === chosen ? '.is-on' : ''}`, { type: 'button', onclick: () => { chosen = v; draw(); } },
+    h('span.wl-lang-name', t(`embed.${v}`)), h('span.wl-lang-note', t(`embed.${v}_note`)),
+    v === chosen ? h('span.wl-check', icon('check')) : null)));
+  draw();
+  // 读现在写着的（中途关了重来的、设置页改过的）：写着关的换过去
+  core.request('config.get', { keys: [EMBED_KEY] }).then((/** @type {any} */ got) => {
+    if (got?.items?.[EMBED_KEY]?.value !== 'off' || chosen !== 'local' || now !== 'local') return;
+    now = chosen = 'off';
+    draw();
+  }).catch(() => {});
+  return {
+    title: t('embed.title'),
+    sub: t('embed.sub'),
+    body: list,
+    focus: /** @type {HTMLElement|null} */ (list.querySelector('.wl-lang.is-on')),
+    next: {
+      ready: () => true,
+      run: async () => {
+        if (chosen !== now) {
+          await core.request('config.set', { layer: 'personal', changes: [{ key: EMBED_KEY, value: chosen }] });
+          now = chosen;
+        }
         g.go('done', 1);
         return null;
       },

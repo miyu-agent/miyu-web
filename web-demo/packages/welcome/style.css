@@ -25,7 +25,8 @@
 @keyframes wl-in-fwd { from { opacity: 0; transform: translateX(12px); } }
 @keyframes wl-in-back { from { opacity: 0; transform: translateX(-12px); } }
 .wl-title { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.4; }
-.wl-sub { margin: 4px 0 0; color: var(--text-soft); font-size: 14px; }
+/* 右边给站在第一行选项上的吉祥物让出地方：长的说明（语义模型那一屏）折行时不压在她身上 */
+.wl-sub { margin: 4px 0 0; padding-right: 72px; color: var(--text-soft); font-size: 14px; }
 .wl-body { margin-top: 18px; }
 .wl-wait { display: flex; justify-content: center; margin: 40px 0; color: var(--text-faint); }
 .wl-wait svg { width: 20px; height: 20px; animation: set-spin 0.9s linear infinite; }

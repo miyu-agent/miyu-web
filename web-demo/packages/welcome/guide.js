@@ -4,12 +4,12 @@
 //! （步骤条）、上一步、下一步，管 `Enter`、`↑` `↓`、换屏的动画和吉祥物站哪。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { helloScreen, languageScreen, profileScreen, sandboxScreen, doneScreen, STEP_KEY, DONE_KEY } from './screens.js';
+import { helloScreen, languageScreen, profileScreen, sandboxScreen, embedScreen, embedInstalled, doneScreen, STEP_KEY, DONE_KEY } from './screens.js';
 
 /** 步子的先后；`back` 是上一步回到哪 */
-const BACK = /** @type {Record<string, string|null>} */ ({ hello: null, language: 'hello', model: 'language', persona: 'model', theme: 'persona', profile: 'theme', preset: 'profile', sandbox: 'preset', done: 'sandbox' });
-/** 进步骤条的几步 */
-export const NUMBERED = ['language', 'model', 'persona', 'theme', 'profile', 'preset', 'sandbox'];
+const BACK = /** @type {Record<string, string|null>} */ ({ hello: null, language: 'hello', model: 'language', persona: 'model', theme: 'persona', profile: 'theme', preset: 'profile', sandbox: 'preset', embed: 'sandbox', done: 'embed' });
+/** 进步骤条的几步（`embed` 只在装了内置语义模型时列，`Guide.numbered`） */
+export const NUMBERED = ['language', 'model', 'persona', 'theme', 'profile', 'preset', 'sandbox', 'embed'];
 /** 换一屏要选中的选项（`↑` `↓` 换着选的：选了就是它；别的只挪焦点） */
 const CHOICES = '.ob-row:not([disabled]), .wl-lang, .setup-choice, .ob-model';
 const SELECTS = new Set(['wl-lang', 'setup-choice', 'ob-model']);
@@ -68,6 +68,13 @@ export class Guide {
     this.onScroll = () => this.ctx.mascot?.refresh?.();
     // 步骤条放不放得下照这一栏多宽：窗口变了重新量（`fitSteps`）
     this.onResize = new ResizeObserver(() => this.fitSteps());
+    /** 装没装内置语义模型（没装的跳过那一屏、步骤条不列）：打开时问一次，问到之前当没装 */
+    this.embed = false;
+  }
+
+  /** 步骤条列的几步。 */
+  numbered() {
+    return NUMBERED.filter((s) => s !== 'embed' || this.embed);
   }
 
   /**
@@ -100,6 +107,11 @@ export class Guide {
     document.addEventListener('focusin', this.onFocus);
     this.page.addEventListener('scroll', this.onScroll, { passive: true });
     this.go(step in BACK ? step : 'hello', 1);
+    // 装没装内置语义模型：问到了重画步骤条（「语义模型」那一段）
+    embedInstalled(this.ctx.core).then((yes) => {
+      this.embed = yes;
+      if (!this.head.hidden) this.drawSteps();
+    });
     // 吉祥物的包比这个包晚加载：来了再让它上舞台
     const wait = (/** @type {number} */ tries) => {
       if (this.stageKind || !this.layer.isConnected) return;
@@ -182,6 +194,13 @@ export class Guide {
       }
       this.show(profileScreen(this), dir);
     } else if (step === 'sandbox') this.show(sandboxScreen(this), dir);
+    else if (step === 'embed') {
+      // 没装内置语义模型（或者还没问到）：再问一次，没装的跳过这一屏
+      if (!this.embed) this.embed = await embedInstalled(this.ctx.core);
+      if (this.step !== step) return;
+      if (!this.embed) return this.go(dir > 0 ? 'done' : 'sandbox', dir);
+      this.show(embedScreen(this), dir);
+    }
     else if (step === 'done') this.show(doneScreen(this), dir);
   }
 
@@ -211,7 +230,7 @@ export class Guide {
     replace(node, ...parts.filter(Boolean));
     this.layer.classList.toggle('is-hello', this.step === 'hello');
     this.layer.classList.toggle('is-center', !!screen.center);
-    this.head.hidden = !NUMBERED.includes(this.step);
+    this.head.hidden = !this.numbered().includes(this.step);
     this.drawSteps();
     // 还在读的那一下：吉祥物照上一屏的台子站着（先记下来再换掉）
     const waiting = screen.kind === 'wait';
@@ -234,7 +253,7 @@ export class Guide {
   /** 步骤条：现在这一步加粗，中间短线。 */
   drawSteps() {
     // 这次起页面时设了账号的（直接连网页软件、一次性码连上的）：最前面多一段「账号」，算走过（蓝图「连核心」第 1 条下面几款）
-    const list = this.ctx.host?.signedUp ? ['account', ...NUMBERED] : NUMBERED;
+    const list = this.ctx.host?.signedUp ? ['account', ...this.numbered()] : this.numbered();
     const at = list.indexOf(this.step);
     replace(this.steps, list.map((s, i) => {
       const name = this.t(`steps.${s}`);
