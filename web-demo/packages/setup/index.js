@@ -166,7 +166,7 @@ export function apply(ctx) {
     menu.show(personaBtn, {
       title: t('choose_persona'),
       rows: [
-        // 第一行「无人格」：不带人格（2026-10-08 项目主人：人格可以留空，这一项叫「无人格」；没有人格的会话记忆不生效，知识库照样能查）
+        // 第一行「无人格」：不带人格（2026-10-08 项目主人：人格可以留空，这一项叫「无人格」；没有人格的会话记忆单独一份（核心 P-12，原来不生效），知识库照样能查）
         { title: t('no_persona'), desc: t('no_persona_desc'), current: chosen == null, pick: () => chat.setDraft({ persona: false }) },
         ...catalog.personas.map((p) => ({
         title: personaName(p),
