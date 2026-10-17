@@ -211,7 +211,13 @@
     "recap_working": "Recapping…",
     "stop_idle": "Nothing is running",
     "needs_session": "Start a session first",
-    "running": "Running {name}…"
+    "running": "Running {name}…",
+    "needs_words": {
+      "goal": "Enter a goal"
+    },
+    "empty_fixed": {
+      "goal": "No goal."
+    }
   },
   "language": {
     "title": "Interface language",

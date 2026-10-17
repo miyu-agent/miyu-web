@@ -211,7 +211,13 @@
     "recap_working": "振り返っています…",
     "stop_idle": "実行中ではありません",
     "needs_session": "会話を始めてから使えます",
-    "running": "{name} を実行中…"
+    "running": "{name} を実行中…",
+    "needs_words": {
+      "goal": "目標を入力してください"
+    },
+    "empty_fixed": {
+      "goal": "長期目標はありません。"
+    }
   },
   "language": {
     "title": "表示言語",

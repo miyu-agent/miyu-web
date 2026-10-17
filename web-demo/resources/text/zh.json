@@ -211,7 +211,13 @@
     "recap_working": "正在回顾…",
     "stop_idle": "未在运行",
     "needs_session": "需要先开始会话",
-    "running": "正在执行 {name}…"
+    "running": "正在执行 {name}…",
+    "needs_words": {
+      "goal": "请输入目标内容"
+    },
+    "empty_fixed": {
+      "goal": "无长期目标。"
+    }
   },
   "language": {
     "title": "界面语言",

@@ -18,9 +18,9 @@ export function progress(todos) {
 export const allDone = (todos) => todos.length > 0 && todos.every((x) => x.state === 'done');
 
 /**
- * 收成几行。`full` 时全部列出（长的由界面折行）；做完的不管放不放得下都收成一行「已完成 N 项」（2026-10-17 项目主人：只要有一项
- * 做完就收进去，原来项数不超过 `rows` 的一项一行、做完的一直挂着），接着在做的和后面的，放不下的收成最后一行（`tui.md` 第 4 条）。
- * 全做完了（收掉前停着让人看的那一会儿）留最后一项，前面的收成一行，好看到它打勾。
+ * 收成几行。`full` 时全部列出（长的由界面折行）；做完两项及以上的不管放不放得下都收成一行「已完成 N 项」，只做完一项的照原样
+ * 一行打勾（2026-10-17 项目主人：原来项数不超过 `rows` 的一项一行、做完的一直挂着；同一天又定一项的不收），接着在做的和后面的，
+ * 放不下的收成最后一行（`tui.md` 第 4 条）。全做完了（收掉前停着让人看的那一会儿）留最后一项，前面的收成一行，好看到它打勾。
  * @param {Todo[]} todos
  * @param {number} rows 最多几行（`layout.json` 的 `todo_rows`）
  * @param {boolean} full
@@ -29,11 +29,12 @@ export const allDone = (todos) => todos.length > 0 && todos.every((x) => x.state
 export function fold(todos, rows, full) {
   const items = (list) => list.map((todo) => /** @type {Row} */ ({ kind: 'item', todo }));
   if (full) return items(todos);
-  if (allDone(todos)) return todos.length > 1 ? [{ kind: 'folded', count: todos.length - 1 }, ...items(todos.slice(-1))] : items(todos);
-  const open = todos.filter((x) => x.state !== 'done');
-  const done = todos.length - open.length;
+  if (allDone(todos)) return todos.length > 2 ? [{ kind: 'folded', count: todos.length - 1 }, ...items(todos.slice(-1))] : items(todos);
+  const done = todos.filter((x) => x.state === 'done').length;
+  // 只做完一项的不收：那一项照原样打勾，和没做完的一起照先后列
+  const open = done >= 2 ? todos.filter((x) => x.state !== 'done') : todos;
   /** @type {Row[]} */
-  const out = done > 0 ? [{ kind: 'folded', count: done }] : [];
+  const out = done >= 2 ? [{ kind: 'folded', count: done }] : [];
   const room = Math.max(0, rows - out.length);
   const shown = open.length <= room ? open.length : Math.max(0, room - 1);
   out.push(...items(open.slice(0, shown)));

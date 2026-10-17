@@ -322,6 +322,22 @@ export class Composer {
       this.say(t('commands.needs_session'));
       return;
     }
+    // 空会话里只打了开会话的命令（`/goal`）：提示写上内容，框里留着 `/goal `、光标在后面（2026-10-17 项目主人）
+    if (line.kind === 'needs_words') {
+      this.say(t(`commands.needs_words.${line.spec.name}`) === `commands.needs_words.${line.spec.name}` ? t('commands.needs_session') : t(`commands.needs_words.${line.spec.name}`));
+      this.set(`/${line.spec.name} `);
+      return;
+    }
+    // 它的固定写法（`/goal pause`）：还没有会话就还没有那样东西，照核心「没有」的那一句（核心资源的 `commands/goal-none`，`human.get`
+    // 不给，网页照抄一份，测试对着核心的资源查），不开会话
+    if (line.kind === 'empty_fixed') {
+      const key = `commands.empty_fixed.${line.spec.name}`;
+      this.say(t(key) === key ? t('commands.needs_session') : t(key));
+      // 和开着的会话里核心拒了的命令一样：记进输入历史、清掉框
+      this.remember(text);
+      this.set('');
+      return;
+    }
     const parts = this.payload();
     if (parts.some((p) => p.busy())) {
       this.say(t('payload_busy'));

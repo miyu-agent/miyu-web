@@ -26,8 +26,9 @@ test('做完几项、一共几项；全做完了才算做完，没有待办不�
   assert.ok(!allDone([]), '没有待办不算做完');
 });
 
-test('放得下的也是：做完的收成一行，没做完的一项一行；一项都没做完的全列', () => {
+test('放得下的也是：做完两项及以上的收成一行，没做完的一项一行；只做完一项的照原样打勾；一项都没做完的全列', () => {
   assert.deepEqual(show(fold(todos(5, 2), config.rows, false)), ['folded:2', 'active:第3项', 'pending:第4项', 'pending:第5项']);
+  assert.deepEqual(show(fold(todos(3, 1), config.rows, false)), ['done:第1项', 'active:第2项', 'pending:第3项'], '只做完一项的不收');
   assert.deepEqual(show(fold(todos(5, 4), config.rows, false)), ['folded:4', 'active:第5项'], '做完四项的不再一直挂着');
   assert.deepEqual(show(fold(todos(3), config.rows, false)), ['active:第1项', 'pending:第2项', 'pending:第3项']);
 });
@@ -51,6 +52,7 @@ test('放不下、剩下的正好放得下：不写还有几项', () => {
 test('全做完了（停着让人看的那一会儿）：留最后一项看它打勾，前面的收成一行', () => {
   assert.deepEqual(show(fold(todos(9, 9), 5, false)), ['folded:8', 'done:第9项']);
   assert.deepEqual(show(fold(todos(3, 3), 5, false)), ['folded:2', 'done:第3项']);
+  assert.deepEqual(show(fold(todos(2, 2), 5, false)), ['done:第1项', 'done:第2项'], '收了也只省一行的不收');
   assert.deepEqual(show(fold(todos(1, 1), 5, false)), ['done:第1项'], '只有一项的不收');
 });
 

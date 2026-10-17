@@ -38,8 +38,9 @@ export function mergeSpecs(local, core) {
   return [...local, ...core.filter((s) => ![s.name, ...(s.aliases ?? [])].some((n) => taken.has(n)))];
 }
 /**
- * @typedef {{kind: 'command', spec: Spec, words: string|null}|{kind: 'unlisted', name: string, words: string|null}|{kind: 'unknown'}|{kind: 'later'}|{kind: 'talk'}} Line
- *   回车时框里那一行是什么（`later`：空会话里打了核心的命令；`unlisted`：列表里没有的名字，`words` 是后面的字，没写的是 `null`）
+ * @typedef {{kind: 'command', spec: Spec, words: string|null}|{kind: 'unlisted', name: string, words: string|null}|{kind: 'unknown'}|{kind: 'later'}|{kind: 'needs_words', spec: Spec}|{kind: 'empty_fixed', spec: Spec}|{kind: 'talk'}} Line
+ *   回车时框里那一行是什么（`later`：空会话里打了核心的命令；`unlisted`：列表里没有的名字，`words` 是后面的字，没写的是 `null`；
+ *   `needs_words`：空会话里打了开会话的命令（`/goal`）没写字；`empty_fixed`：空会话里打了它的一种固定写法（`/goal pause`））
  */
 
 /** 框里的字像不像命令：像的交回命令名（刚打一个 `/` 的是空的），不像的是 `null`。名字要紧挨着 `/`。 */
@@ -90,9 +91,14 @@ export function read(list, value, later = new Set(), opens = new Set()) {
   const spec = find(list, name);
   // 空会话里列着的核心的命令（2026-10-17 项目主人：新会话里打 / 要弹出来）：带着字、开会话的（`/goal <目标>`）先开会话再交核心；
   // 正好是一种固定写法的（`/goal pause`，核心的 `usage` 里有、不带占位）和别的一样提示开了会话才能用，不为它白开一个会话
+  // 开会话的（`/goal`）没写字的提示写上内容（2026-10-17 项目主人：原来提示需要先开始会话），它的固定写法照核心「没有」的那一句，
+  // 都不开会话
   if (spec?.later) {
+    const opening = opens.has(spec.name.toLowerCase());
     const fixed = words && (spec.usage ?? []).some((u) => u.form === `/${spec.name} ${words}`);
-    return words && !fixed && opens.has(spec.name.toLowerCase()) ? { kind: 'unlisted', name: spec.name, words } : { kind: 'later' };
+    if (opening && !words) return { kind: 'needs_words', spec };
+    if (opening && fixed) return { kind: 'empty_fixed', spec };
+    return words && opening ? { kind: 'unlisted', name: spec.name, words } : { kind: 'later' };
   }
   if (spec && !words) return { kind: 'command', spec, words: null };
   if (spec?.args) return { kind: 'command', spec, words };

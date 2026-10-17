@@ -195,7 +195,7 @@ test('有几种写法的命令（核心 O-6 四补的 usage）：只收它自己
   assert.equal(dream.usage, undefined, '没有 usage 的照旧');
 });
 
-test('空会话里列着的核心的命令（later）：带着字、开会话的先开会话再交核心，别的提示开了会话才能用', async () => {
+test('空会话里列着的核心的命令（later）：带着字、开会话的先开会话再交核心；只打名字的提示写上内容，固定写法照核心「没有」的那一句；别的提示开了会话才能用', async () => {
   const { coreSpecs, read } = await import('../src/model/commands.js');
   const list = coreSpecs([
     { name: 'goal', summary: '长期目标', argument: '<目标>', usage: [{ form: '/goal', summary: '看进度' }, { form: '/goal <目标>', summary: '设定' }, { form: '/goal pause', summary: '暂停' }] },
@@ -203,9 +203,21 @@ test('空会话里列着的核心的命令（later）：带着字、开会话的
   ]).map((s) => ({ ...s, later: true }));
   const opens = new Set(['goal']);
   assert.deepEqual(read(list, '/goal 写完文档', new Set(), opens), { kind: 'unlisted', name: 'goal', words: '写完文档' });
-  assert.deepEqual(read(list, '/goal', new Set(), opens), { kind: 'later' });
-  assert.deepEqual(read(list, '/goal pause', new Set(), opens), { kind: 'later' }, '固定写法不为它白开一个会话');
+  assert.equal(read(list, '/goal', new Set(), opens).kind, 'needs_words', '只打 /goal：提示写上内容，不开会话');
+  assert.equal(read(list, '/goal pause', new Set(), opens).kind, 'empty_fixed', '固定写法照核心「没有」的那一句，不为它白开一个会话');
   assert.deepEqual(read(list, '/goal 暂停一下这个思路', new Set(), opens).kind, 'unlisted', '目标里有「暂停」两个字的照目标');
   assert.deepEqual(read(list, '/dream', new Set(), opens), { kind: 'later' });
   assert.deepEqual(read(list, '/dream 现在', new Set(), opens), { kind: 'later' });
+});
+
+test('空会话里 /goal 的固定写法照核心「没有目标」的那一句：网页照抄的那一份和核心资源的一字不差', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const dir = process.env.MIYU_RESOURCES;
+  assert.ok(dir, '没设 MIYU_RESOURCES');
+  for (const lang of ['zh', 'en', 'ja']) {
+    const core = JSON.parse(readFileSync(join(/** @type {string} */ (dir), 'core', 'human', `${lang}.json`), 'utf8')).said['commands/goal-none'];
+    const web = JSON.parse(readFileSync(new URL(`../resources/text/${lang}.json`, import.meta.url), 'utf8')).commands.empty_fixed.goal;
+    assert.equal(web, core, lang);
+  }
 });
