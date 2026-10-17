@@ -214,6 +214,8 @@ export function details(step) {
   // 记忆、知识库（2026-10-17 项目主人在终端定的）：画给人看的，不画给模型的原文；忘掉、删文档点不开（`quiet`）
   const kind = kindOf(step.name);
   if (kind === 'quiet') return [];
+  // 翻记忆、查知识库、读文档：照核心给人看的结构化结果（`detail`，10-17）；老日志、出错的没有，照下面一般的画
+  if (step.detail && step.status === 'ok' && (kind === 'memory_search' || kind === 'kb_search' || kind === 'kb_read')) return found(kind, step.detail);
   if (kind === 'remember' || kind === 'kb_save') {
     const text = arg(step, 'text');
     const label = kind === 'remember' ? 'timeline.remembered' : step.parsed?.append === true ? 'timeline.appended' : 'timeline.saved';
@@ -256,6 +258,31 @@ export function details(step) {
   const shown = lines && !lines.more ? ['command', 'description'] : lines ? ['description'] : [];
   const args = pretty(step, shown);
   return [...(args ? [{ kind: /** @type {const} */ ('text'), label: t('timeline.args'), text: args }] : []), ...result];
+}
+
+/**
+ * 翻记忆、查知识库、读文档点开画什么（和终端一样，2026-10-17）：记忆一条一行「日期 · 内容」（作废的划线）；对话片段、知识库的命中一段一块，
+ * 头一行是哪来的，下面接原文；读到的那一页照 Markdown。
+ * @param {string} kind @param {any} d
+ */
+function found(kind, d) {
+  const str = (/** @type {any} */ v) => (typeof v === 'string' ? v : '');
+  if (kind === 'kb_read') return str(d.text) ? [{ kind: /** @type {const} */ ('markdown'), label: t('timeline.content'), text: str(d.text) }] : [];
+  if (kind === 'kb_search') {
+    const hits = Array.isArray(d.hits) ? d.hits : [];
+    const where = (/** @type {any} */ x) => {
+      const at = str(x.heading) || (Number.isInteger(x.page) ? t('timeline.page', { page: x.page }) : '');
+      return [`${str(x.kb)} / ${str(x.path)}`, at].filter(Boolean).join(' · ');
+    };
+    return hits.length ? [{ kind: /** @type {const} */ ('blocks'), label: t('timeline.hits'), blocks: hits.map((x) => ({ head: where(x), text: str(x.snippet) })) }] : [];
+  }
+  const memories = Array.isArray(d.memories) ? d.memories : [];
+  const turns = Array.isArray(d.turns) ? d.turns : [];
+  return [
+    ...(memories.length ? [{ kind: /** @type {const} */ ('rows'), label: t('timeline.memories'), rows: memories.map((m) => ({ head: str(m.date), text: str(m.text), struck: m.forgotten === true })) }] : []),
+    ...(turns.length ? [{ kind: /** @type {const} */ ('blocks'), label: t('timeline.turns'),
+      blocks: turns.map((x) => ({ head: [str(x.date), str(x.session) ? t('timeline.message_session', { id: shortSession(str(x.session)) }) : ''].filter(Boolean).join(' · '), text: str(x.text) })) }] : []),
+  ];
 }
 
 /** 参数里的一个字符串，没有的是 `null`。 */

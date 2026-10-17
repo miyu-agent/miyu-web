@@ -10,7 +10,10 @@
     "kb_save": "kb_save",
     "kb_edit": "kb_edit",
     "forget": "quiet",
-    "kb_delete": "quiet"
+    "kb_delete": "quiet",
+    "memory_search": "memory_search",
+    "kb_search": "kb_search",
+    "kb_read": "kb_read"
   },
   "icons": {
     "shell": "square-terminal",

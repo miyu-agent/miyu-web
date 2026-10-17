@@ -237,6 +237,8 @@ export function stepOf(e) {
     images: e.images ?? [],
     approval: e.approval ?? null,
     files: e.files ?? [],
+    // 给人看的结构化结果（核心 10-17：翻记忆、查知识库、读文档；老日志、出错的没有）
+    detail: e.detail && typeof e.detail === 'object' ? e.detail : null,
     // 读的是技能的 SKILL.md（视图条目的 `skill`，`{name, title}`）：那一行写「使用技能 · 显示名」
     skill: e.skill && typeof e.skill.name === 'string' ? { name: e.skill.name, title: typeof e.skill.title === 'string' && e.skill.title ? e.skill.title : e.skill.name } : null,
   };

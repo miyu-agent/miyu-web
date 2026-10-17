@@ -190,6 +190,15 @@
   max-height: 300px; margin: 0; overflow-x: hidden; overflow-y: auto; color: var(--text);
   font: 11.5px/1.65 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere;
 }
+/* 翻记忆、查知识库、读文档（核心给人看的 detail，照终端）：记忆一条一行「日期 · 内容」，作废的划线；对话片段、命中一段一块，头一行是哪来的 */
+.tl-found-row { font: 11.5px/1.65 var(--mono); overflow-wrap: anywhere; }
+.tl-found-row .tl-found-head { color: var(--text-faint); }
+.tl-found-row .tl-found-head::after { content: ' · '; }
+.tl-found-row.is-struck .tl-found-text { color: var(--text-faint); text-decoration: line-through; }
+.tl-found-block + .tl-found-block { margin-top: 8px; }
+.tl-found-block > .tl-found-head { color: var(--text-faint); font: 11px/1.6 var(--mono); }
+.tl-found-doc { max-height: 300px; overflow: auto; font-size: 13px; }
+
 
 /* 差异（旧版 diff.js、styles.css:2861-2967）：一张卡片，头一行做了什么、路径、加减；一行一行，加的绿底、删的红底 */
 .diff-file { overflow: hidden; border-radius: var(--radius); background: var(--surface-1); box-shadow: var(--bubble-shadow); font: 400 11px var(--mono); }

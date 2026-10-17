@@ -11,6 +11,7 @@ import { spring } from '../lib/motion.js';
 import { res, t, moreIcons } from '../util/res.js';
 import { row, peek, messagePeek, thinkingTail, commandLines, details, kindOf, quiet } from '../model/words.js';
 import { imageCard } from './media.js';
+import { renderMarkdown } from '../markdown/render.js';
 import { blobUrl } from '../core/host.js';
 
 export class StepView {
@@ -252,11 +253,11 @@ export class StepView {
     this.drawThumbs(step, open);
     if (!open) return;
     // 照条目画的（核心 9-8）：条目里没有结果原文，点开时问一次核心（`view.detail` 的 `output`），问到了重画
-    if (step.title && !step.output && step.state === 'done') {
+    if (step.title && !step.output && step.state === 'done' && !(step.detail && step.status === 'ok')) {
       if (this.output == null) this.fetchOutput(step);
       step = { ...step, output: this.output ?? '' };
     }
-    const body = JSON.stringify([step.output, step.status, step.args, step.said]);
+    const body = JSON.stringify([step.output, step.status, step.args, step.said, step.detail ?? null]);
     if (body === this.drawnBody) return;
     this.drawnBody = body;
     /** @type {[any, HTMLElement][]} 差异卡片：问到核心算好的差异以后换掉 */
@@ -267,7 +268,16 @@ export class StepView {
         cards.push([s, card]);
         return card;
       }
-      return s.kind === 'images' ? this.imagesNode(s) : h('div.tl-detail', h('div.tl-label', s.label), h('pre', s.text));
+      if (s.kind === 'images') return this.imagesNode(s);
+      // 翻记忆、查知识库、读文档（核心给人看的 `detail`）：记忆一条一行，对话片段、命中一段一块，读到的那一页照 Markdown
+      if (s.kind === 'rows') return h('div.tl-detail', h('div.tl-label', s.label), ...s.rows.map((r) => h(`div.tl-found-row${r.struck ? '.is-struck' : ''}`, r.head ? h('span.tl-found-head', r.head) : null, h('span.tl-found-text', r.text))));
+      if (s.kind === 'blocks') return h('div.tl-detail', h('div.tl-label', s.label), ...s.blocks.map((b) => h('div.tl-found-block', b.head ? h('div.tl-found-head', b.head) : null, h('pre', b.text))));
+      if (s.kind === 'markdown') {
+        const md = h('div.markdown-body.tl-found-doc');
+        renderMarkdown(md, s.text, { streaming: false });
+        return h('div.tl-detail', h('div.tl-label', s.label), md);
+      }
+      return h('div.tl-detail', h('div.tl-label', s.label), h('pre', s.text));
     }));
     if (cards.length) this.fullDiff(step, cards);
   }

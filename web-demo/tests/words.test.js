@@ -115,6 +115,23 @@ test('记忆、知识库点开画给人看的（2026-10-17 项目主人在终端
   assert.deepEqual(failed.map((d) => d.label), ['记下的', '结果']);
 });
 
+test('翻记忆、查知识库、读文档照核心给人看的 detail（10-17，和终端一样）；没有 detail 的（老日志、出错）照一般的画', () => {
+  const sid = 'sess-0123456789abcdef';
+  const m = details(tool('memory_search', { query: '动物' }, { output: 'm9 fact 2026-10-17: …', detail: {
+    memories: [{ id: 'm9', class: 'user', date: '2026-10-17', text: '最喜欢猫' }, { id: 'm3', class: 'user', date: '2026-10-01', text: '喜欢狗', forgotten: true }],
+    turns: [{ date: '2026-10-12', session: sid, text: '你：我家有只猫\n她：真好' }] } }));
+  assert.deepEqual(m.map((d) => [d.kind, d.label]), [['rows', '记忆'], ['blocks', '对话']]);
+  assert.deepEqual(/** @type {any} */ (m[0]).rows, [{ head: '2026-10-17', text: '最喜欢猫', struck: false }, { head: '2026-10-01', text: '喜欢狗', struck: true }]);
+  assert.match(/** @type {any} */ (m[1]).blocks[0].head, /^2026-10-12 · 会话 /);
+  assert.deepEqual(details(tool('memory_search', { query: 'x' }, { detail: { memories: [], turns: [] } })), [], '没找到的点开没东西（标题写了没找到）');
+  const k = details(tool('kb_search', { query: '苹果' }, { detail: { hits: [{ kb: 'notes', path: 'fruit.md', heading: '苹果', snippet: '红的' }, { kb: 'notes', path: 'a.pdf', page: 2, snippet: '第二页' }, { kb: 'n', path: 'b.md', snippet: 's' }] } }));
+  assert.deepEqual(/** @type {any} */ (k[0]).blocks.map((b) => b.head), ['notes / fruit.md · 苹果', 'notes / a.pdf · 第 2 页', 'n / b.md']);
+  assert.deepEqual(details(tool('kb_read', { kb: 'notes', path: 'fruit.md' }, { output: '# 水果\n(Page 1 of 3.)', detail: { kb: 'notes', path: 'fruit.md', page: 1, pages: 3, text: '# 水果' } })),
+    [{ kind: 'markdown', label: '内容', text: '# 水果' }], '不带 (Page 1 of 3.)');
+  assert.deepEqual(details(tool('memory_search', { query: '动物' }, { output: 'raw' })).map((d) => d.label), ['参数', '结果'], '老日志照一般的画');
+  assert.deepEqual(details(tool('kb_read', { path: 'x' }, { status: 'error', output: 'No such document.', detail: null })).map((d) => d.label), ['参数', '结果']);
+});
+
 test('读图的结果：点开时「结果」下面是那几张图（照 blob 取，蓝图「图片」第 2 条）；没有字的也有「结果」', () => {
   const images = [{ blob: `sha256:${'a'.repeat(64)}`, media_type: 'image/png', width: 800, height: 600 }];
   const d = details(tool('read', { file_path: '/tmp/a.png' }, { output: '', images }));
