@@ -110,6 +110,8 @@
 .tl-window:hover, .tl-thought-body:hover { color: var(--tl-think-hi); }
 
 /* 一段里只有这一步、人点开了那一段（tui.md「时间线」第 15 条）：不画那一行，只留图标，和内容第一行对齐 */
+/* 点不开的一步（忘掉、删知识库文档）：指针不变手 */
+.tl-step.is-quiet > .tl-row { cursor: default; }
 .tl-step.is-bare > .tl-row {
   position: absolute; top: 0; left: 0; width: var(--tl-col); min-height: 0; height: 21px; padding: 0; pointer-events: none;
 }

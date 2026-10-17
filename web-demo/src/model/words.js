@@ -7,7 +7,7 @@
 
 import { res, t } from '../util/res.js';
 import { toolDuration } from './format.js';
-import { fromArgs } from './diff.js';
+import { fromArgs, compare } from './diff.js';
 
 /** 留言发给父会话时 `to` 写的（`tools/send_message.md`） */
 const PARENT = 'parent';
@@ -188,6 +188,9 @@ export function commandLines(step) {
   return lines.length > rows ? { lines: lines.slice(0, rows - 1), more: true } : { lines, more: false };
 }
 
+/** 点不开的一步（忘掉、删知识库文档：标题那一句就够，2026-10-17 项目主人在终端定的）。 */
+export const quiet = (step) => step.kind === 'tool' && kindOf(step.name) === 'quiet';
+
 /**
  * 点开一步看到的细节，一段一段（照旧版 `app.js:8673-8696`）：「参数」一行一个 `键: 值`，再是「结果」；编辑、写入是
  * 差异卡片，做成了不写结果。没有的段不写。执行命令点开时命令那几行留着（`tui.md`「时间线」第 14 条：命令、空行、
@@ -202,7 +205,25 @@ export function details(step) {
     // 结果里的图：接在「结果」下面；没有字的只有图，也写「结果」（蓝图「图片」第 2 条）
     ...(step.images?.length ? [{ kind: /** @type {const} */ ('images'), label: output ? '' : t('timeline.result'), images: step.images }] : []),
   ];
-  const diff = kindOf(step.name) === 'edit' ? fromArgs(step.parsed) : null;
+  // 记忆、知识库（2026-10-17 项目主人在终端定的）：画给人看的，不画给模型的原文；忘掉、删文档点不开（`quiet`）
+  const kind = kindOf(step.name);
+  if (kind === 'quiet') return [];
+  if (kind === 'remember' || kind === 'kb_save') {
+    const text = arg(step, 'text');
+    const label = kind === 'remember' ? 'timeline.remembered' : step.parsed?.append === true ? 'timeline.appended' : 'timeline.saved';
+    const card = text ? [{ kind: /** @type {const} */ ('text'), label: t(label), text }] : [];
+    return step.status === 'ok' ? card : [...card, ...result];
+  }
+  if (kind === 'kb_edit') {
+    const old = arg(step, 'old');
+    const now = arg(step, 'new');
+    if (old != null && now != null) {
+      const one = compare(old, now);
+      const card = { kind: /** @type {const} */ ('diff'), op: t('timeline.changed'), created: false, path: arg(step, 'path') ?? '', diff: { ...one, lines: one.lines.map((l) => ({ ...l, number: null })) } };
+      return step.status === 'ok' ? [card] : [card, ...result];
+    }
+  }
+  const diff = kind === 'edit' ? fromArgs(step.parsed) : null;
   if (diff) {
     // 新建的照核心给的改了哪些文件（9-8 三补的 `created`）
     const created = (step.files ?? []).some((f) => f.action === 'created');

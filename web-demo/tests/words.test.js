@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes, ms } from './support.js';
 import { res } from '../src/util/res.js';
-import { row, peek, messagePeek, thinkingTail, commandLines, details } from '../src/model/words.js';
+import { row, peek, messagePeek, thinkingTail, commandLines, details, quiet } from '../src/model/words.js';
 
 loadRes();
 
@@ -92,6 +92,25 @@ test('点开的细节：参数一行一个「键: 值」，再是结果；没有
     { kind: 'text', label: '结果', text: 'a\nb' },
   ]);
   assert.deepEqual(details(tool('read', {}, { output: '' })), []);
+});
+
+test('记忆、知识库点开画给人看的（2026-10-17 项目主人在终端定的）：记下的、写进去的、差异；忘掉、删文档点不开；出错的接着结果', () => {
+  assert.deepEqual(details(tool('remember', { text: 'shorin 最喜欢的动物是猫。', class: 'user' }, { output: 'Saved as m9.' })),
+    [{ kind: 'text', label: '记下的', text: 'shorin 最喜欢的动物是猫。' }], '不画 Saved as m9.');
+  assert.deepEqual(details(tool('kb_save', { kb: 'notes', path: 'fruit.md', text: '# 水果' }, { output: 'Saved fruit.md in notes.' })),
+    [{ kind: 'text', label: '写进去的', text: '# 水果' }]);
+  assert.equal(details(tool('kb_save', { kb: 'notes', path: 'fruit.md', text: '- 梨', append: true }))[0].label, '接在后面的');
+  const [card] = details(tool('kb_edit', { kb: 'notes', path: 'fruit.md', old: '苹果', new: '香蕉' }, { output: 'Edited fruit.md in notes.' }));
+  assert.equal(card.kind, 'diff');
+  assert.equal(/** @type {any} */ (card).path, 'fruit.md');
+  assert.deepEqual(/** @type {any} */ (card).diff.lines.map((l) => [l.mark, l.text, l.number]), [['removed', '苹果', null], ['added', '香蕉', null]]);
+  for (const name of ['forget', 'kb_delete']) {
+    assert.deepEqual(details(tool(name, { id: 'm9' }, { output: 'Retired m9.' })), [], name);
+    assert.ok(quiet(tool(name, { id: 'm9' })), name);
+  }
+  assert.ok(!quiet(tool('remember', {})));
+  const failed = details(tool('remember', { text: '很长' }, { status: 'error', output: 'Too long.' }));
+  assert.deepEqual(failed.map((d) => d.label), ['记下的', '结果']);
 });
 
 test('读图的结果：点开时「结果」下面是那几张图（照 blob 取，蓝图「图片」第 2 条）；没有字的也有「结果」', () => {

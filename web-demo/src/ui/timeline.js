@@ -11,6 +11,7 @@ import { res, t } from '../util/res.js';
 import { active } from '../model/timeline.js';
 import { seconds, jobDuration } from '../model/format.js';
 import { StepView, guard } from './steps.js';
+import { quiet } from '../model/words.js';
 
 export class SegmentView {
   /**
@@ -61,7 +62,8 @@ export class SegmentView {
    */
   bare() {
     const s = this.segment;
-    return !!s && s.finished && s.steps.length === 1 && this.open != null;
+    // 点不开的那一步（忘掉、删知识库文档）没有内容可铺，照常画那一行
+    return !!s && s.finished && s.steps.length === 1 && this.open != null && !quiet(s.steps[0]);
   }
 
   /** @param {import('../model/timeline.js').Segment} segment */

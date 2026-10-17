@@ -9,7 +9,7 @@ import { fromUnified, samePath } from '../model/diff.js';
 import { h, icon, replace, hasIcon } from './dom.js';
 import { spring } from '../lib/motion.js';
 import { res, t, moreIcons } from '../util/res.js';
-import { row, peek, messagePeek, thinkingTail, commandLines, details, kindOf } from '../model/words.js';
+import { row, peek, messagePeek, thinkingTail, commandLines, details, kindOf, quiet } from '../model/words.js';
 import { imageCard } from './media.js';
 import { blobUrl } from '../core/host.js';
 
@@ -43,6 +43,8 @@ export class StepView {
         this.foldSegment();
         return;
       }
+      // 点不开的（忘掉、删知识库文档）
+      if (quiet(this.step)) return;
       this.row.dispatchEvent(new CustomEvent('tl-toggle', { bubbles: true }));
       this.open = !this.opened();
       this.update(this.step, this.spinning, this.live);
@@ -108,6 +110,7 @@ export class StepView {
     const open = this.opened();
     this.el.classList.toggle('is-open', open);
     this.el.classList.toggle('is-bare', this.bare);
+    this.el.classList.toggle('is-quiet', quiet(step));
     this.el.classList.toggle('is-failed', r.failed);
     this.el.classList.toggle('is-live', step.state !== 'done');
     this.el.classList.toggle('is-preparing', step.state === 'preparing');
