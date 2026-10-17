@@ -105,7 +105,7 @@
       "failed": "保存失败：{reason}",
       "embed": {
         "title": "是否开启内置语义模型",
-        "sub": "大幅提高记忆、知识库、表情包等内容的检索质量，但是会提高大约 160 MB 内存占用（空闲 10 分钟后释放），每次检索增加约 10 毫秒 CPU 开销",
+        "sub": "大幅提高记忆、知识库、表情包等内容的检索质量，但是会提高大约 170 MB 内存占用（空闲 10 分钟后释放），每次检索增加约 10 毫秒 CPU 开销",
         "local": "是",
         "local_note": "推荐",
         "off": "否",
@@ -165,7 +165,7 @@
       "failed": "Save failed: {reason}",
       "embed": {
         "title": "Turn on the built-in semantic model?",
-        "sub": "Greatly improves search quality for memories, the knowledge base, stickers and more, but uses about 160 MB more memory (released after 10 minutes idle) and adds about 10 ms of CPU per search",
+        "sub": "Greatly improves search quality for memories, the knowledge base, stickers and more, but uses about 170 MB more memory (released after 10 minutes idle) and adds about 10 ms of CPU per search",
         "local": "Yes",
         "local_note": "Recommended",
         "off": "No",
@@ -225,7 +225,7 @@
       "failed": "保存に失敗しました：{reason}",
       "embed": {
         "title": "内蔵の意味モデルを使いますか",
-        "sub": "記憶・ナレッジベース・スタンプなどの検索精度が大きく上がります。その代わりメモリを約 160 MB 多く使い（10 分使わないと解放）、検索ごとに CPU を約 10 ミリ秒使います",
+        "sub": "記憶・ナレッジベース・スタンプなどの検索精度が大きく上がります。その代わりメモリを約 170 MB 多く使い（10 分使わないと解放）、検索ごとに CPU を約 10 ミリ秒使います",
         "local": "はい",
         "local_note": "おすすめ",
         "off": "いいえ",
