@@ -263,6 +263,9 @@ export class Store {
     const before = s.todos ?? [];
     s.todos = status.todos ?? [];
     if (s.todos.length) s.todosDone = null;
+    // 因为全做完了清空的：核心 9-8 九补起状态里带清空前那一份（`todos_done`，只在清空的时候有）；照「从有到空、同时带着它」那一下认，
+    // 之后的状态里这一格还在的不再播（前一份已经是空的）。老核心没有这一格的照前后两份认（前一份就全做完了的）
+    else if (before.length && Array.isArray(status.todos_done) && status.todos_done.length) s.todosDone = status.todos_done;
     else if (before.length && before.every((t) => t.status === 'completed')) s.todosDone = before;
     if (status.model) s.model = status.model;
     if (was !== 'idle' && status.state === 'idle' && s.id !== this.viewing) this.unread.add(s.id);

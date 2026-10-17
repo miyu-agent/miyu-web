@@ -136,6 +136,14 @@ test('会话状态换了：待办、模型跟着换；待办做完清空的留�
   status({ todos: [{ content: 'a', status: 'completed' }] });
   status({ todos: [] });
   assert.deepEqual(s.todosDone, [{ content: 'a', status: 'completed' }], '全做完了清空的');
+  // 一下子全做完（中间没有全打勾的那一份）：照核心 9-8 九补的 todos_done
+  status({ todos: [{ content: 'b', status: 'completed' }, { content: 'c', status: 'in_progress' }] });
+  assert.equal(s.todosDone, null);
+  status({ todos: [], todos_done: [{ content: 'b', status: 'completed' }, { content: 'c', status: 'completed' }] });
+  assert.deepEqual(s.todosDone?.map((t) => t.content), ['b', 'c'], '照 todos_done');
+  const kept = s.todosDone;
+  status({ todos: [], todos_done: [{ content: 'b', status: 'completed' }, { content: 'c', status: 'completed' }] });
+  assert.equal(s.todosDone, kept, '之后的状态里还带着的不当新的');
   store.view('other');
   store.push('view.status', { session: 'S', status: { state: 'idle' } });
   assert.equal(store.summary('S').unread, true);
