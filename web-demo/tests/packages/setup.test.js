@@ -99,6 +99,10 @@ test('人格点「保存」发什么：只发变了的，提示词带读进来�
   const before = { name: 'Miyu', summary: '陪你聊天', persona: '你是 Miyu', reminders: '', pairs: [{ user: '累', assistant: '歇会儿' }], versions: { persona: 'sha256:a', reminders: null, examples: 'sha256:e' } };
   assert.equal(personaSave(before, { ...before, persona: '你是 Miyu  ', pairs: [...before.pairs, { user: '', assistant: '' }] }), null);
   assert.deepEqual(personaSave(before, { ...before, name: '小美' }), { changes: [{ key: 'persona.name', value: '小美' }] });
+  // 子代理可选（核心 P-10 补）：拨了才发，没读到这一格的当关着
+  assert.deepEqual(personaSave(before, { ...before, subagent: true }), { changes: [{ key: 'persona.subagent', value: true }] });
+  assert.deepEqual(personaSave({ ...before, subagent: true }, { ...before, subagent: false }), { changes: [{ key: 'persona.subagent', value: false }] });
+  assert.equal(personaSave(before, { ...before, subagent: false }), null);
   assert.deepEqual(personaSave(before, { ...before, persona: '', reminders: '别变成客服腔' }), {
     prompts: { persona: { text: '', expect: 'sha256:a' }, reminders: { text: '别变成客服腔', expect: null } },
   });

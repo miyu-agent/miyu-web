@@ -6,7 +6,7 @@
 //! 最上面三行是外观（头像、主题色、背景图，`appearance.js`）：换、删当场存，不等「保存」。
 
 import { h, replace } from '../../src/lib/dom.js';
-import { field, area, twoClick } from './form.js';
+import { field, switchField, area, twoClick } from './form.js';
 import { Pairs } from './pairs.js';
 import { personaSave, halfPair } from './model.js';
 import { Appearance } from './appearance.js';
@@ -68,6 +68,7 @@ export class PersonaEditor {
         persona: persona?.text ?? '',
         reminders: reminders?.text ?? '',
         pairs: Array.isArray(examples?.pairs) ? examples.pairs : [],
+        subagent: got?.subagent === true,
         versions: { persona: persona?.version ?? null, reminders: reminders?.version ?? null, examples: examples?.version ?? null },
       };
       this.draw(this.before);
@@ -88,6 +89,9 @@ export class PersonaEditor {
     this.pairs = new Pairs(d.pairs, { you: t('edit.you'), them, add: t('edit.add_pair'), drop: t('edit.drop_pair'), userHint: t('edit.user_hint'), replyHint: t('edit.reply_hint') }, () => this.sync());
     this.name.addEventListener('input', () => { this.pairs?.rename(them()); this.sync(); });
     for (const a of [this.summary, this.persona, this.reminders]) a.addEventListener('input', () => this.sync());
+    // 子代理可选（核心 P-10 补，2026-10-17 项目主人：默认关，开了的人格才在派子代理时可挑）：同别的格，点「保存」才存
+    this.subagentOn = !!d.subagent;
+    const subagent = this.kit.toggle(this.subagentOn, (on) => { this.subagentOn = on; this.sync(); return true; });
     this.note = h('p.setup-error', { hidden: true });
     this.saveBtn = this.kit.button(t('edit.save'), { primary: true }, () => this.save());
     const remove = this.remove ? twoClick(this.kit, t(`edit.${this.remove}`), t(`edit.${this.remove}_again`), () => this.drop()) : null;
@@ -101,6 +105,7 @@ export class PersonaEditor {
       field(t('edit.persona'), this.persona),
       field(t('edit.examples'), this.pairs.el),
       field(t('edit.reminders'), this.reminders),
+      switchField(t('edit.subagent'), subagent),
       this.note,
       h('div.setup-foot', remove, h('span.setup-grow'), this.kit.button(t('edit.cancel'), {}, () => this.hooks.close()), this.saveBtn));
     this.sync();
@@ -109,7 +114,7 @@ export class PersonaEditor {
   /** 编辑器里现在写的。 @returns {PersonaDraft} */
   current() {
     const b = /** @type {PersonaDraft} */ (this.before);
-    return { ...b, name: this.name?.value ?? b.name, summary: this.summary?.value ?? b.summary, persona: this.persona?.value ?? b.persona, reminders: this.reminders?.value ?? b.reminders, pairs: this.pairs?.value() ?? b.pairs };
+    return { ...b, name: this.name?.value ?? b.name, summary: this.summary?.value ?? b.summary, persona: this.persona?.value ?? b.persona, reminders: this.reminders?.value ?? b.reminders, pairs: this.pairs?.value() ?? b.pairs, subagent: this.subagentOn ?? b.subagent };
   }
 
   /** 改了没存。 */

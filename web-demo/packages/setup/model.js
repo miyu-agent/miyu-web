@@ -122,8 +122,8 @@ export function summaryChange(kind, before, after) {
 }
 
 /**
- * 编辑器里的人格（详情的四样）和读进来时提示词的版本（存的时候当 `expect` 带回去，防覆盖别处的改动）。
- * @typedef {{name: string, summary: string, persona: string, reminders: string, pairs: Pair[], versions: {persona: string|null, reminders: string|null, examples: string|null}}} PersonaDraft
+ * 编辑器里的人格（详情的四样、「子代理可选」）和读进来时提示词的版本（存的时候当 `expect` 带回去，防覆盖别处的改动）。
+ * @typedef {{name: string, summary: string, persona: string, reminders: string, pairs: Pair[], subagent?: boolean, versions: {persona: string|null, reminders: string|null, examples: string|null}}} PersonaDraft
  */
 
 /** 示范对话要存的那几对：字前后的空白去掉，两头都空的不要。 @param {Pair[]} pairs @returns {Pair[]} */
@@ -151,6 +151,8 @@ export function personaSave(before, after) {
   const name = after.name.trim();
   if (name && name !== before.name) changes.push({ key: 'persona.name', value: name });
   changes.push(...summaryChange('persona', before.summary, after.summary));
+  // 子代理可选（核心 P-10 补）：拨了才发；没读到这一格的（引导里新建的）当关着
+  if (!!after.subagent !== !!before.subagent) changes.push({ key: 'persona.subagent', value: !!after.subagent });
   if (changes.length) out.changes = changes;
   const prompts = {};
   for (const key of /** @type {const} */ (['persona', 'reminders'])) {

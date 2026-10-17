@@ -23,6 +23,13 @@ import { h } from '../../src/lib/dom.js';
  */
 export const field = (name, control, desc = null) => h('div.setup-field', h('div.setup-field-name', h('span', name), desc ? h('small', desc) : null), h('div.setup-field-control', control));
 
+/** 一行开关：名字和开关上下居中（字的框照文字框留了上边距，开关矮，对不齐）。 @param {string} name @param {HTMLElement} control */
+export const switchField = (name, control) => {
+  const el = field(name, control);
+  el.classList.add('is-switch');
+  return el;
+};
+
 /**
  * 多行框：跟着字长高；输入时打记号（设置页重画时不冲掉正在写的，`settings` 的 `editing`）。
  * @param {string} text @param {string} hint 空着时的占位字 @param {number} [rows] 最少几行
