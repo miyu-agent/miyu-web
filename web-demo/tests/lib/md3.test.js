@@ -56,6 +56,17 @@ test('有含义的颜色色相不变、往主色靠一点；不带颜色的取�
   assert.equal(light.page.code_ink, DESIGN.light.page.code_ink, '算式照抄');
 });
 
+test('终端的粗体取主色、行内代码取第三色（2026-10-17 项目主人在终端定的）：和终端照绿主色 #2fab34 量的一样', () => {
+  const dark = themeOf('#2fab34', 'dark');
+  const light = themeOf('#2fab34', 'light');
+  assert.deepEqual([dark.tui.md_bold, dark.tui.md_code], ['#4fc74d', '#a0d1ff'], '深色');
+  // 浅色网页照晨光、终端照 Tokyo Night Day（10-14 定），明度不一样，只看取的哪条色板
+  const hue = (/** @type {string} */ hex) => Hct.fromInt(argbFromHex(hex)).hue;
+  assert.ok(Math.abs(hue(light.tui.md_bold) - hue(light.tui.accent)) < 5, `浅色粗体取主色：${light.tui.md_bold}`);
+  assert.ok(Math.abs(hue(light.tui.md_code) - hue(dark.tui.md_code)) < 5, `浅色行内代码取第三色：${light.tui.md_code}`);
+  assert.ok(Hct.fromInt(argbFromHex(dark.tui.md_math)).chroma < 12, '公式照旧是中性的');
+});
+
 test('色块上的勾：浅的颜色上用深的，深的颜色上用白的', () => {
   assert.equal(inkOf('#ffe08a'), '#1a1b20');
   assert.equal(inkOf('#3368c0'), '#ffffff');

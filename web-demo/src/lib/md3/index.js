@@ -6,8 +6,8 @@
 //!
 //! 每一格怎么来（2026-10-14 项目主人定，两个头同一套，终端的方案页「终端配色方案」）：
 //! - 归了色板的（`KIND`）：照原色表里这一格的明度（HCT 的 tone），从那条色板取同一明度的颜色：明暗层次和默认主题一样，只换色相。
-//!   底、正文、思考、粗体、行内代码一类归中性；暗字、线、斜体、引用、注释一类归中性变体；强调色、链接、表头归主色；`gold` 归次色；
-//!   `ribbon`、图片归第三色；吉祥物头归中性、耳朵归中性变体、眼睛归主色、鳍归第三色（原来照抄）。不再用 MD3 的角色。
+//!   底、正文、思考一类归中性；暗字、线、斜体、引用、注释一类归中性变体；强调色、链接、表头、终端的粗体归主色；`gold` 归次色；
+//!   `ribbon`、图片、终端的行内代码归第三色（粗体、行内代码 2026-10-17 项目主人在终端定的：原来归中性，和正文一个颜色）；吉祥物头归中性、耳朵归中性变体、眼睛归主色、鳍归第三色（原来照抄）。不再用 MD3 的角色。
 //! - 有含义的颜色（出错、增删、警告、代码着色……，没归色板的 `#rrggbb`）：色相往主色靠一点（`Blend.harmonize`，最多转 15°），明度、彩度照原色表。
 //! - 阴影、遮罩照原色表的样子，浅色的影换成这一套的字色；写成算式的照抄。
 //! 浅色那一份照晨光的明度（底色近白，项目主人 10-14 定；终端照 Tokyo Night Day），深色照 tokyonight（两个头一样）。
@@ -32,12 +32,12 @@ const KIND = {
     gold: 's', ribbon: 't',
   },
   tui: {
-    thought: 'n', thought_hover: 'n', shade: 'n', md_bold: 'n', md_code: 'n', md_math: 'n', diagram_backdrop: 'n',
+    thought: 'n', thought_hover: 'n', shade: 'n', md_math: 'n', diagram_backdrop: 'n',
     mascot_head: 'n', mascot_head_shade: 'n', mascot_outline: 'n',
     dim: 'nv', hover: 'nv', md_italic: 'nv', md_quote: 'nv', diagram_text: 'nv', diagram_line: 'nv', code_comment: 'nv', code_operator: 'nv',
     mascot_ear: 'nv', mascot_ear_shade: 'nv',
-    accent: 'p', workspace: 'p', md_link: 'p', md_url: 'p', md_table_head: 'p', mascot_eye: 'p',
-    md_image: 't', mascot_fin: 't', mascot_fin_shade: 't',
+    accent: 'p', workspace: 'p', md_bold: 'p', md_link: 'p', md_url: 'p', md_table_head: 'p', mascot_eye: 'p',
+    md_code: 't', md_image: 't', mascot_fin: 't', mascot_fin_shade: 't',
   },
 };
 

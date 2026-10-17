@@ -505,7 +505,7 @@
     },
     "light_t_md_bold": {
       "type": "color",
-      "default": "#1f1b14",
+      "default": "#8e4e00",
       "name": {
         "zh": "浅色 终端色 md_bold"
       },
@@ -521,7 +521,7 @@
     },
     "light_t_md_code": {
       "type": "color",
-      "default": "#8e4e00",
+      "default": "#1f1b14",
       "name": {
         "zh": "浅色 终端色 md_code"
       },
@@ -1249,7 +1249,7 @@
     },
     "dark_t_md_bold": {
       "type": "color",
-      "default": "#c0caf5",
+      "default": "#e5a07a",
       "name": {
         "zh": "深色 终端色 md_bold"
       },
@@ -1265,7 +1265,7 @@
     },
     "dark_t_md_code": {
       "type": "color",
-      "default": "#e5a07a",
+      "default": "#c0caf5",
       "name": {
         "zh": "深色 终端色 md_code"
       },
