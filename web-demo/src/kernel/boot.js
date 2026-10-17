@@ -218,6 +218,7 @@ export async function boot(root) {
         route: host.route,
         open: host.open,
         clipboard: host.clipboard,
+        notify: host.notify,
         wallpaper: host.wallpaper,
         wallpaperChanges: host.wallpaperChanges,
       });

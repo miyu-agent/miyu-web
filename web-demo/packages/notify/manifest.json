@@ -1,0 +1,51 @@
+{
+  "id": "notify",
+  "version": "0.1.0",
+  "name": {
+    "zh": "系统通知",
+    "en": "Notifications",
+    "ja": "通知"
+  },
+  "summary": {
+    "zh": "标签页不在前台时，回答完、她提问、要你确认时弹通知",
+    "en": "Notify when a turn finishes, she asks, or needs your approval while the tab is in the background",
+    "ja": "タブが裏にあるとき、回答の完了・質問・確認待ちを通知"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "浏览器的系统通知：一轮做完了、她在问、要人确认时，这个标签页不在前台才弹，点了回到那个会话；第一次在输入框里发话时问一次权限。标签页关了以后的推送不做。"
+  },
+  "inject": [
+    "sessions",
+    "host",
+    "chat",
+    "storage"
+  ],
+  "settings": {},
+  "text": {
+    "zh": {
+      "done": "回答完了：{text}",
+      "done_plain": "这一轮做完了",
+      "ask": "她在问你：{text}",
+      "ask_plain": "她有问题要问你",
+      "approve": "等你确认：要用 {tool}",
+      "approve_plain": "有一件事等你确认"
+    },
+    "en": {
+      "done": "Done: {text}",
+      "done_plain": "This turn is done",
+      "ask": "She's asking: {text}",
+      "ask_plain": "She has a question for you",
+      "approve": "Needs your approval: {tool}",
+      "approve_plain": "Something needs your approval"
+    },
+    "ja": {
+      "done": "回答しました：{text}",
+      "done_plain": "このターンが終わりました",
+      "ask": "質問があります：{text}",
+      "ask_plain": "あなたに質問があります",
+      "approve": "確認待ち：{tool} を使います",
+      "approve_plain": "確認が必要なことがあります"
+    }
+  }
+}

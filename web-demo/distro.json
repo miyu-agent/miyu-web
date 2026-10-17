@@ -17,6 +17,7 @@
     { "id": "attachments" },
     { "id": "jobs" },
     { "id": "goal" },
+    { "id": "notify" },
     { "id": "settings" },
     { "id": "backstage" },
     { "id": "widgets" },

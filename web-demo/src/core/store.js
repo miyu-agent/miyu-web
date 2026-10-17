@@ -47,6 +47,8 @@ export class Store {
     /** 后台开始提前压缩了（会话状态的 `preparing` 从没有变成有，核心 6-11 三补）：界面弹一句；重新订阅换上的不算 @type {(session: string) => void} */
     this.preparing = () => {};
     this.listeners = new Set();
+    /** 要人留意的（系统通知照它，蓝图「系统通知」）：一轮做完了、她在问、要人确认 @type {Set<(session: string, what: 'done'|'ask'|'approve', detail: any) => void>} */
+    this.attention = new Set();
     conn.onPush((method, params) => this.push(method, params));
     this.index.on((id, before, after) => this.entryChanged(id, before, after));
   }
@@ -250,6 +252,8 @@ export class Store {
   viewPush(s, method, p) {
     const log = s.view;
     const was = log.status?.state ?? 'idle';
+    /** 这一下之前就在等的（照工具调用的编号）：新冒出来的才算她在问、要人确认 */
+    const waited = new Set((log.status?.waiting ?? []).map((/** @type {any} */ w) => w.call));
     const wasPreparing = !!log.status?.preparing;
     if (method === 'view.update' && p.entry?.withdrawn && !log.list.find((e) => e.id === p.entry.id)?.withdrawn) this.withdrawn(s.id, p.entry.text ?? '');
     log.apply(method, p);
@@ -263,6 +267,26 @@ export class Store {
     if (status.model) s.model = status.model;
     if (was !== 'idle' && status.state === 'idle' && s.id !== this.viewing) this.unread.add(s.id);
     if (!wasPreparing && status.preparing) this.preparing(s.id);
+    // 要人留意的：重新订阅换上的那一份不走这里（`subscribeView`），读进来、重连时不会把旧的再报一遍
+    if (was !== 'idle' && status.state === 'idle') this.notice(s.id, 'done', null);
+    for (const w of status.waiting ?? []) if (!waited.has(w.call)) this.notice(s.id, w.what === 'approve' ? 'approve' : 'ask', w);
+  }
+
+  /** 听要人留意的；交回怎么不听。 @param {(session: string, what: 'done'|'ask'|'approve', detail: any) => void} fn */
+  onAttention(fn) {
+    this.attention.add(fn);
+    return () => { this.attention.delete(fn); };
+  }
+
+  /** 告诉听着的（一个出了错不影响别的）。 @param {string} id @param {'done'|'ask'|'approve'} what @param {any} detail */
+  notice(id, what, detail) {
+    for (const fn of this.attention) {
+      try {
+        fn(id, what, detail);
+      } catch (err) {
+        console.error(`要人留意的那一下出了错：${/** @type {Error} */ (err).message}`);
+      }
+    }
   }
 
   /**
