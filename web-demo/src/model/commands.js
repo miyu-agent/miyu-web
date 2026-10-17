@@ -125,7 +125,7 @@ export function refusalText(err) {
 
 /**
  * 列表里没有的命令交核心被拒了以后，要不要照普通的话发：只有核心认不出（原因码 `unknown_command`）、后面带着字的（`/etc 目录是干什么的`）。
- * 只认原因码：数字码 -32010 别的拒绝也用（`memory_unavailable`），照它判会把无人格会话里的 `/remember 内容` 发给她。
+ * 只认原因码：数字码 -32010 别的拒绝也用（`memory_unavailable`），照它判会把没开记忆的会话里的 `/remember 内容` 发给她。
  * @param {string|null|undefined} reason @param {string|null} words
  */
 export function talkAfterRefusal(reason, words) {
