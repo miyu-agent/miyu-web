@@ -132,6 +132,7 @@ test('翻记忆、查知识库、读文档照核心给人看的 detail（10-17�
   assert.ok(!quiet(tool('memory_search', { query: 'x' })), '老日志没有 detail 的照旧能点开');
   const k = details(tool('kb_search', { query: '苹果' }, { detail: { hits: [{ kb: 'notes', path: 'fruit.md', heading: '苹果', snippet: '红的' }, { kb: 'notes', path: 'a.pdf', page: 2, snippet: '第二页' }, { kb: 'n', path: 'b.md', snippet: 's' }] } }));
   assert.deepEqual(/** @type {any} */ (k[0]).blocks.map((b) => b.head), ['notes / fruit.md · 苹果', 'notes / a.pdf · 第 2 页', 'n / b.md']);
+  assert.ok(/** @type {any} */ (k[0]).blocks.every((b) => b.md), '片段是文档原文，照 Markdown 画');
   assert.deepEqual(details(tool('kb_read', { kb: 'notes', path: 'fruit.md' }, { output: '# 水果\n(Page 1 of 3.)', detail: { kb: 'notes', path: 'fruit.md', page: 1, pages: 3, text: '# 水果' } })),
     [{ kind: 'markdown', label: '内容', text: '# 水果' }], '不带 (Page 1 of 3.)');
   assert.deepEqual(details(tool('memory_search', { query: '动物' }, { output: 'raw' })).map((d) => d.label), ['参数', '结果'], '老日志照一般的画');

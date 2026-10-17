@@ -268,7 +268,7 @@ export function details(step) {
 
 /**
  * 翻记忆、查知识库、读文档点开画什么（和终端一样，2026-10-17）：记忆一条一行「日期 · 内容」（作废的划线）；对话片段、知识库的命中一段一块，
- * 头一行是哪来的，下面接原文；读到的那一页照 Markdown。
+ * 头一行是哪来的，下面接原文；读到的那一页、知识库的片段（文档原文，带着 `**粗体**` 这些）照 Markdown（照终端 dde770c）。
  * @param {string} kind @param {any} d
  */
 function found(kind, d) {
@@ -280,7 +280,7 @@ function found(kind, d) {
       const at = str(x.heading) || (Number.isInteger(x.page) ? t('timeline.page', { page: x.page }) : '');
       return [`${str(x.kb)} / ${str(x.path)}`, at].filter(Boolean).join(' · ');
     };
-    return hits.length ? [{ kind: /** @type {const} */ ('blocks'), label: t('timeline.hits'), blocks: hits.map((x) => ({ head: where(x), text: str(x.snippet) })) }] : [];
+    return hits.length ? [{ kind: /** @type {const} */ ('blocks'), label: t('timeline.hits'), blocks: hits.map((x) => ({ head: where(x), text: str(x.snippet), md: true })) }] : [];
   }
   const memories = Array.isArray(d.memories) ? d.memories : [];
   const turns = Array.isArray(d.turns) ? d.turns : [];

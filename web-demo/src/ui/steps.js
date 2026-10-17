@@ -271,15 +271,18 @@ export class StepView {
       if (s.kind === 'images') return this.imagesNode(s);
       // 翻记忆、查知识库、读文档（核心给人看的 `detail`）：记忆一条一行，对话片段、命中一段一块，读到的那一页照 Markdown
       if (s.kind === 'rows') return h('div.tl-detail', h('div.tl-label', s.label), ...s.rows.map((r) => h(`div.tl-found-row${r.struck ? '.is-struck' : ''}`, r.head ? h('span.tl-found-head', r.head) : null, h('span.tl-found-text', r.text))));
-      if (s.kind === 'blocks') return h('div.tl-detail', h('div.tl-label', s.label), ...s.blocks.map((b) => h('div.tl-found-block', b.head ? h('div.tl-found-head', b.head) : null, h('pre', b.text))));
-      if (s.kind === 'markdown') {
-        const md = h('div.markdown-body.tl-found-doc');
-        renderMarkdown(md, s.text, { streaming: false });
-        return h('div.tl-detail', h('div.tl-label', s.label), md);
-      }
+      if (s.kind === 'blocks') return h('div.tl-detail', h('div.tl-label', s.label), ...s.blocks.map((b) => h('div.tl-found-block', b.head ? h('div.tl-found-head', b.head) : null, b.md ? this.markdownNode(b.text) : h('pre', b.text))));
+      if (s.kind === 'markdown') return h('div.tl-detail', h('div.tl-label', s.label), this.markdownNode(s.text));
       return h('div.tl-detail', h('div.tl-label', s.label), h('pre', s.text));
     }));
     if (cards.length) this.fullDiff(step, cards);
+  }
+
+  /** 知识库的文档（读到的那一页、查到的片段）照 Markdown 画，里面的图不画（`styles/timeline.css`）。 @param {string} text */
+  markdownNode(text) {
+    const md = h('div.markdown-body.tl-found-doc');
+    renderMarkdown(md, text, { streaming: false });
+    return md;
   }
 
   /** 问核心这一步的结果原文（`view.detail` 的 `output`，同一次调用只问一次，`ui/app.js` 记着）；问到了照新的字重画。 @param {any} step */
