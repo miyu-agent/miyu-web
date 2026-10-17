@@ -188,8 +188,14 @@ export function commandLines(step) {
   return lines.length > rows ? { lines: lines.slice(0, rows - 1), more: true } : { lines, more: false };
 }
 
-/** 点不开的一步（忘掉、删知识库文档：标题那一句就够，2026-10-17 项目主人在终端定的）。 */
-export const quiet = (step) => step.kind === 'tool' && kindOf(step.name) === 'quiet';
+/** 点不开的一步（忘掉、删知识库文档：标题那一句就够，2026-10-17 项目主人在终端定的；什么都没找到的翻记忆、查知识库也是）。 */
+export const quiet = (step) => step.kind === 'tool' && (kindOf(step.name) === 'quiet' || emptyFound(step));
+
+/** 翻记忆、查知识库、读文档什么都没找到（核心给的 `detail` 是空的）：标题那一句写了「没找到」，点开只是一块空的，点不开（照终端 0d3e045）。 */
+function emptyFound(step) {
+  const kind = kindOf(step.name);
+  return !!step.detail && step.status === 'ok' && (kind === 'memory_search' || kind === 'kb_search' || kind === 'kb_read') && !found(kind, step.detail).length;
+}
 
 /**
  * 点开的内容不说是哪一步、结果是什么的（记住、记进知识库：只有写进去的字）：只有它一步的一段点开时照常画那一步的标题行，

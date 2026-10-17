@@ -124,6 +124,10 @@ test('翻记忆、查知识库、读文档照核心给人看的 detail（10-17�
   assert.deepEqual(/** @type {any} */ (m[0]).rows, [{ head: '2026-10-17', text: '最喜欢猫', struck: false }, { head: '2026-10-01', text: '喜欢狗', struck: true }]);
   assert.match(/** @type {any} */ (m[1]).blocks[0].head, /^2026-10-12 · 会话 /);
   assert.deepEqual(details(tool('memory_search', { query: 'x' }, { detail: { memories: [], turns: [] } })), [], '没找到的点开没东西（标题写了没找到）');
+  assert.ok(quiet(tool('memory_search', { query: 'x' }, { detail: { memories: [], turns: [] } })), '没找到的点不开');
+  assert.ok(quiet(tool('kb_search', { query: 'x' }, { detail: { hits: [] } })));
+  assert.ok(!quiet(tool('kb_search', { query: 'x' }, { detail: { hits: [{ kb: 'n', path: 'a', snippet: 's' }] } })));
+  assert.ok(!quiet(tool('memory_search', { query: 'x' })), '老日志没有 detail 的照旧能点开');
   const k = details(tool('kb_search', { query: '苹果' }, { detail: { hits: [{ kb: 'notes', path: 'fruit.md', heading: '苹果', snippet: '红的' }, { kb: 'notes', path: 'a.pdf', page: 2, snippet: '第二页' }, { kb: 'n', path: 'b.md', snippet: 's' }] } }));
   assert.deepEqual(/** @type {any} */ (k[0]).blocks.map((b) => b.head), ['notes / fruit.md · 苹果', 'notes / a.pdf · 第 2 页', 'n / b.md']);
   assert.deepEqual(details(tool('kb_read', { kb: 'notes', path: 'fruit.md' }, { output: '# 水果\n(Page 1 of 3.)', detail: { kb: 'notes', path: 'fruit.md', page: 1, pages: 3, text: '# 水果' } })),
