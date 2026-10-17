@@ -106,7 +106,7 @@ export class SegmentView {
         view = new StepView(step, this.where, this.fresh, () => this.toggle());
         this.views.set(step.key, view);
       }
-      // 点开的内容不带标题的（记住、记进知识库）：照常画标题行，这一步先开着
+      // 只有一步的一段点开：工具照常画标题行、这一步先开着（10-18），只有思考的直接铺开
       view.bare = bare && !keepsHead(step);
       view.lead = bare && keepsHead(step);
       view.update(step, spinning === j, !segment.finished);

@@ -36,7 +36,7 @@ export class StepView {
     this.time = h('span.tl-time');
     /** 一段里只有这一步、人点开了那一段：不画这一行，直接铺开内容（`timeline.js` 的 `bare`）。 */
     this.bare = false;
-    /** 只有这一步、人点开了那一段，但照常画标题行的（记住、记进知识库，`words.js` 的 `keepsHead`）：没点过这一步的先开着。 */
+    /** 只有这一步、人点开了那一段的工具（照常画标题行，`words.js` 的 `keepsHead`）：没点过这一步的先开着。 */
     this.lead = false;
     // 先告诉对话区钉住被点的这一行（内容往下长，`follow.js`），再开、关
     const toggle = guard(() => {
