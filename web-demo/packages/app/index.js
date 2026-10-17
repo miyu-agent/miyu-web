@@ -48,6 +48,8 @@ export function apply(ctx) {
     persona: (id) => app.store.sessions.get(id)?.view.status?.persona ?? app.store.index.get(id)?.persona ?? null,
     /** 会话用的人格画成什么样：交一个函数（会话 → `{name, avatar}`；无人格 `null`；还不知道 `undefined`），软件包 `setup` 给 */
     look: (fn) => app.setLooker(fn),
+    /** 一个会话用的人格画成什么样（照 `look` 登记的那个函数：`{name, avatar}`；无人格 `null`；还不知道 `undefined`）：系统通知的图标照它 */
+    lookOf: (id) => (app.looker ? app.looker(id) : undefined),
     /** 人格列表、新会话选的人格变了：照 `look` 重新取一次 */
     refreshLook: () => app.syncLook(),
     /** 会话用的预设（核心 P-2：会话状态的 `preset`，没读进来的照会话表；以前的会话没有，是 `null`） */

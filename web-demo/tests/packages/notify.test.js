@@ -1,35 +1,29 @@
 // @ts-check
-//! 系统通知写什么（软件包 `notify` 的 `model.js`）：标题照会话的标题；做完了写最后一段回答的第一行，在等回答的写第一个问题，要人确认写工具；
-//! 子会话、一次性的会话不弹。
+//! 系统通知写什么（软件包 `notify` 的 `model.js`，2026-10-17 项目主人定）：标题照会话的标题；正文只写为什么通知，不带 AI 写的字；
+//! 图标是人格的头像，没有的用 Miyu 的；子会话、一次性的会话不弹。
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { noteOf, oneLine, BODY_MAX } from '../../packages/notify/model.js';
+import { noteOf } from '../../packages/notify/model.js';
 
-const zh = JSON.parse(readFileSync(new URL('../../packages/notify/manifest.json', import.meta.url), 'utf8')).text.zh;
-const t = (path, fields = {}) => String(zh[path] ?? path).replace(/\{(\w+)\}/g, (_, k) => String(fields[k]));
+const manifest = JSON.parse(readFileSync(new URL('../../packages/notify/manifest.json', import.meta.url), 'utf8'));
+const t = (path) => String(manifest.text.zh[path] ?? path);
+const MIYU = 'http://x/resources/assets/miyu-avatar.png';
 
-test('做完了：写最后一段回答的第一行；没有回答的写这一轮做完了；没标题的照第一句、再没有写 Miyu', () => {
-  const list = [{ id: 'm1', kind: 'reply', text: '旧的' }, { id: 'm2', kind: 'reply', text: '\n  改好了，测试都过了。\n第二行' }];
-  assert.deepEqual(noteOf('done', { title: '修登录页' }, list, null, t), { title: '修登录页', body: '回答完了：改好了，测试都过了。' });
-  assert.deepEqual(noteOf('done', { preview: '帮我看看' }, [], null, t), { title: '帮我看看', body: '这一轮做完了' });
-  assert.equal(noteOf('done', null, [], null, t)?.title, 'Miyu');
+test('正文只写为什么：回答完了、等你回答、等你确认；三种语言都有', () => {
+  assert.deepEqual(['done', 'ask', 'approve'].map((w) => noteOf(/** @type {any} */ (w), { title: 'a' }, null, MIYU, t)?.body), ['回答完了', '等你回答', '等你确认']);
+  for (const lang of ['zh', 'en', 'ja']) for (const w of ['done', 'ask', 'approve']) assert.ok(manifest.text[lang][w], `${lang} ${w}`);
 });
 
-test('等回答：写第一个问题；要人确认：写工具；读不懂的写一句泛的', () => {
-  const list = [
-    { id: 'b1.0', kind: 'tool', name: 'ask_user', args: JSON.stringify({ questions: [{ question: '旧的 build 目录怎么处理？' }] }) },
-    { id: 'b1.1', kind: 'tool', name: 'shell', args: '{}' },
-  ];
-  assert.equal(noteOf('ask', { title: 'x' }, list, { what: 'ask', entry: 'b1.0' }, t)?.body, '等你回答：旧的 build 目录怎么处理？');
-  assert.equal(noteOf('ask', { title: 'x' }, [], { entry: 'nope' }, t)?.body, '有问题等你回答');
-  assert.equal(noteOf('approve', { title: 'x' }, list, { what: 'approve', entry: 'b1.1' }, t)?.body, '等你确认：要用 shell');
-  assert.equal(noteOf('approve', { title: 'x' }, [], { entry: 'nope' }, t)?.body, '有一件事等你确认');
+test('标题照会话的标题，没有的照第一句，再没有写 Miyu；图标是人格的头像，没有的用 Miyu 的', () => {
+  assert.deepEqual(noteOf('done', { title: '修登录页' }, { avatar: 'blob:x/1' }, MIYU, t), { title: '修登录页', body: '回答完了', icon: 'blob:x/1' });
+  assert.equal(noteOf('done', { preview: '帮我看看' }, null, MIYU, t)?.title, '帮我看看');
+  assert.equal(noteOf('done', null, undefined, MIYU, t)?.title, 'Miyu');
+  assert.equal(noteOf('ask', { title: 'a' }, { avatar: null }, MIYU, t)?.icon, MIYU, '人格没有头像的用 Miyu 的');
 });
 
-test('子会话、一次性的会话不弹；长的截成一行', () => {
-  assert.equal(noteOf('done', { title: 'a', parent: 's1' }, [], null, t), null);
-  assert.equal(noteOf('done', { title: 'a', oneshot: true }, [], null, t), null);
-  assert.equal(oneLine('x'.repeat(300)).length, BODY_MAX);
+test('子会话、一次性的会话不弹', () => {
+  assert.equal(noteOf('done', { title: 'a', parent: 's1' }, null, MIYU, t), null);
+  assert.equal(noteOf('done', { title: 'a', oneshot: true }, null, MIYU, t), null);
 });

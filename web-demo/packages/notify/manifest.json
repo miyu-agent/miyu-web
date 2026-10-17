@@ -24,28 +24,19 @@
   "settings": {},
   "text": {
     "zh": {
-      "done": "回答完了：{text}",
-      "done_plain": "这一轮做完了",
-      "ask": "等你回答：{text}",
-      "ask_plain": "有问题等你回答",
-      "approve": "等你确认：要用 {tool}",
-      "approve_plain": "有一件事等你确认"
+      "done": "回答完了",
+      "ask": "等你回答",
+      "approve": "等你确认"
     },
     "en": {
-      "done": "Done: {text}",
-      "done_plain": "This turn is done",
-      "ask": "Waiting for your answer: {text}",
-      "ask_plain": "A question is waiting for your answer",
-      "approve": "Needs your approval: {tool}",
-      "approve_plain": "Something needs your approval"
+      "done": "Done",
+      "ask": "Waiting for your answer",
+      "approve": "Waiting for your approval"
     },
     "ja": {
-      "done": "回答しました：{text}",
-      "done_plain": "このターンが終わりました",
-      "ask": "回答待ち：{text}",
-      "ask_plain": "回答待ちの質問があります",
-      "approve": "確認待ち：{tool} を使います",
-      "approve_plain": "確認が必要なことがあります"
+      "done": "回答しました",
+      "ask": "回答待ち",
+      "approve": "確認待ち"
     }
   }
 }
