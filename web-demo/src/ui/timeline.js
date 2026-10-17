@@ -11,7 +11,7 @@ import { res, t } from '../util/res.js';
 import { active } from '../model/timeline.js';
 import { seconds, jobDuration } from '../model/format.js';
 import { StepView, guard } from './steps.js';
-import { quiet } from '../model/words.js';
+import { quiet, keepsHead } from '../model/words.js';
 
 export class SegmentView {
   /**
@@ -106,7 +106,9 @@ export class SegmentView {
         view = new StepView(step, this.where, this.fresh, () => this.toggle());
         this.views.set(step.key, view);
       }
-      view.bare = bare;
+      // 点开的内容不带标题的（记住、记进知识库）：照常画标题行，这一步先开着
+      view.bare = bare && !keepsHead(step);
+      view.lead = bare && keepsHead(step);
       view.update(step, spinning === j, !segment.finished);
       keep.add(step.key);
       const want = prev ? prev.nextSibling : this.steps.firstChild;

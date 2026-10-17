@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes, ms } from './support.js';
 import { res } from '../src/util/res.js';
-import { row, peek, messagePeek, thinkingTail, commandLines, details, quiet } from '../src/model/words.js';
+import { row, peek, messagePeek, thinkingTail, commandLines, details, quiet, keepsHead } from '../src/model/words.js';
 
 loadRes();
 
@@ -109,6 +109,8 @@ test('记忆、知识库点开画给人看的（2026-10-17 项目主人在终端
     assert.ok(quiet(tool(name, { id: 'm9' })), name);
   }
   assert.ok(!quiet(tool('remember', {})));
+  assert.ok(keepsHead(tool('remember', {})) && keepsHead(tool('kb_save', {})), '只有它一步的一段点开时照常画标题行');
+  assert.ok(!keepsHead(tool('edit', {})) && !keepsHead(tool('kb_edit', {})), '差异卡片自己带标题');
   const failed = details(tool('remember', { text: '很长' }, { status: 'error', output: 'Too long.' }));
   assert.deepEqual(failed.map((d) => d.label), ['记下的', '结果']);
 });

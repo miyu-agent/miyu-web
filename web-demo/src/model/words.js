@@ -192,6 +192,12 @@ export function commandLines(step) {
 export const quiet = (step) => step.kind === 'tool' && kindOf(step.name) === 'quiet';
 
 /**
+ * 点开的内容不说是哪一步、结果是什么的（记住、记进知识库：只有写进去的字）：只有它一步的一段点开时照常画那一步的标题行，
+ * 下面接着内容（2026-10-17 项目主人：原来省掉标题行，看不出是「记住」、也看不到「记成 m9」）。
+ */
+export const keepsHead = (step) => step.kind === 'tool' && ['remember', 'kb_save'].includes(kindOf(step.name) ?? '');
+
+/**
  * 点开一步看到的细节，一段一段（照旧版 `app.js:8673-8696`）：「参数」一行一个 `键: 值`，再是「结果」；编辑、写入是
  * 差异卡片，做成了不写结果。没有的段不写。执行命令点开时命令那几行留着（`tui.md`「时间线」第 14 条：命令、空行、
  * 输出），参数里不再写 `command`（那几行写着）、`description`（标题上写着），命令被截了的才把全文写进参数。

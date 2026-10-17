@@ -28,7 +28,15 @@
     "ask_user": "circle-help",
     "todowrite": "list-todo",
     "session_usage": "gauge",
-    "load_tools": "download"
+    "load_tools": "download",
+    "remember": "brain",
+    "forget": "brain",
+    "memory_search": "brain",
+    "kb_search": "library",
+    "kb_read": "library",
+    "kb_save": "library",
+    "kb_edit": "library",
+    "kb_delete": "library"
   },
   "icon_default": "wrench",
   "thinking_rows": 10,

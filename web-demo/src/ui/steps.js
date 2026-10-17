@@ -35,6 +35,8 @@ export class StepView {
     this.time = h('span.tl-time');
     /** 一段里只有这一步、人点开了那一段：不画这一行，直接铺开内容（`timeline.js` 的 `bare`）。 */
     this.bare = false;
+    /** 只有这一步、人点开了那一段，但照常画标题行的（记住、记进知识库，`words.js` 的 `keepsHead`）：没点过这一步的先开着。 */
+    this.lead = false;
     // 先告诉对话区钉住被点的这一行（内容往下长，`follow.js`），再开、关
     const toggle = guard(() => {
       // 铺开画的（一段里只有这一步、人点开了那一段）：这一步一直开着，点内容收起整段（2026-09-30 项目主人：原来只能点那一段的
@@ -91,6 +93,7 @@ export class StepView {
   opened() {
     if (this.bare) return true;
     if (this.open != null) return this.open;
+    if (this.lead) return true;
     const expand = res.timeline.expand;
     const kind = this.thought ? 'thought' : kindOf(this.step.name);
     return kind ? !!expand[kind] : false;
