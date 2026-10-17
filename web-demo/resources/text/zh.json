@@ -191,7 +191,9 @@
     "tab_work": "工作区",
     "tab_panel": "面板",
     "empty": "还没有展示过东西",
-    "download_named": "下载 {name}"
+    "download_named": "下载 {name}",
+    "remove": "从列表移除",
+    "remove_named": "从列表移除 {name}"
   },
   "commands": {
     "nothing_to_clear": "上下文为空。",

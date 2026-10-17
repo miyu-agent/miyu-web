@@ -14,7 +14,7 @@
 import { h, icon, replace, setUrl } from './dom.js';
 import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
-import { shownList, panelList, codeLanguage } from '../model/artifacts.js';
+import { shownList, panelList, codeLanguage, undismissed } from '../model/artifacts.js';
 import { blobUrl } from '../core/host.js';
 import { renderMarkdown } from '../markdown/render.js';
 import { paint } from '../markdown/highlight.js';
@@ -23,6 +23,10 @@ import { richHooks } from './rich.js';
 
 /** 拖到多宽，记在这台设备上的名字（内核的 `storage` 会带上账号；这个终端的状态） */
 const WIDTH = 'artifacts_width';
+/** 下拉里删掉的（2026-10-17 项目主人定：只是从右栏拿掉，不删文件、不动正文；按会话记在这个浏览器里）：会话 → 路径 → 删的时候那一次展示的序号 */
+const DISMISSED = 'artifacts_dismissed';
+/** 删掉的最多记几个会话的（多了扔掉最早记的） */
+const DISMISSED_SESSIONS = 200;
 
 export class Artifacts {
   /**
@@ -51,6 +55,12 @@ export class Artifacts {
     this.text = /** @type {string|null} */ (null);
     this.token = 0;
     this.panelShown = panelShown;
+    /** @type {Record<string, Record<string, number>>} 下拉里删掉的：会话 → 路径 → 删的时候那一次展示的序号 */
+    this.dismissed = readDismissed(ext.storage?.get(DISMISSED, null));
+    /** 最近一次照的条目（删了一样以后照它重算） @type {any[]} */
+    this.entries = [];
+    /** @type {ReturnType<typeof setTimeout>|undefined} 收起的那一下挂的类，走完拿掉 */
+    this.leavingTimer = undefined;
     /** 看哪一页：`work` 产物、`panel` 界面块 */
     this.tab = 'work';
     /** 面板里挂着几件（`stage.panel`） */
@@ -99,8 +109,9 @@ export class Artifacts {
    */
   update(entries, where) {
     this.where = where;
+    this.entries = entries;
     const session = where.session;
-    this.list = panelList(shownList(entries));
+    this.list = undismissed(panelList(shownList(entries)), session ? this.dismissed[session] : undefined);
     const newest = this.list[0]?.seq ?? 0;
     const seen = session ? this.seen.get(session) : undefined;
     // 打开会话时已经有的不算新来的
@@ -136,6 +147,11 @@ export class Artifacts {
     // 那一列长出来、收回去，里面跟着淡入淡出（蓝图「动效」）
     if (this.open) show(this.el);
     else hide(this.el);
+    // 收起时那一列照收起的曲线走（`artifacts.css`），走完拿掉
+    clearTimeout(this.leavingTimer);
+    const was = this.shell.classList.contains('has-artifacts');
+    this.shell.classList.toggle('is-artifacts-leaving', was && !this.open);
+    if (was && !this.open) this.leavingTimer = setTimeout(() => this.shell.classList.remove('is-artifacts-leaving'), 400);
     this.shell.classList.toggle('has-artifacts', this.open);
     this.toggle.classList.toggle('is-active', this.open);
     if (this.open) this.toggle.classList.remove('has-new');
@@ -208,9 +224,11 @@ export class Artifacts {
   resize(/** @type {PointerEvent} */ e) {
     const handle = /** @type {HTMLElement} */ (e.currentTarget);
     handle.setPointerCapture(e.pointerId);
+    this.shell.classList.add('is-artifact-resizing');
     const move = (/** @type {PointerEvent} */ m) => this.setWidth((innerWidth - m.clientX) / innerWidth);
     const up = () => {
       handle.removeEventListener('pointermove', move);
+      this.shell.classList.remove('is-artifact-resizing');
       this.ext.storage?.set(WIDTH, this.ratio);
     };
     handle.addEventListener('pointermove', move);
@@ -258,12 +276,44 @@ export class Artifacts {
       });
   }
 
-  /** 展示过的全部：当前的打勾，点哪个看哪个。 */
+  /** 展示过的全部：当前的打勾，点哪个看哪个；悬停露出右边的 ✕，点了从右栏拿掉这一样。 */
   drawMenu() {
-    replace(this.menu, this.list.map((a) => h(`button.artifact-resource-item${a.path === this.current ? '.is-current' : ''}`, {
-      type: 'button', role: 'menuitem', title: a.path,
-      onclick: () => { this.current = a.path; hide(this.menu); this.draw(true); },
-    }, h('span.artifact-resource-name', a.title ?? a.name), h('small', t(`artifacts.types.${a.kind}`)), a.path === this.current ? icon('check') : h('span'))));
+    replace(this.menu, this.list.map((a) => h('div.artifact-resource-row',
+      h(`button.artifact-resource-item${a.path === this.current ? '.is-current' : ''}`, {
+        type: 'button', role: 'menuitem', title: a.path,
+        onclick: () => { this.current = a.path; hide(this.menu); this.draw(true); },
+      }, h('span.artifact-resource-name', a.title ?? a.name), h('small', t(`artifacts.types.${a.kind}`)), a.path === this.current ? icon('check') : h('span')),
+      h('button.icon-button.artifact-resource-remove', {
+        type: 'button', title: t('artifacts.remove'), 'aria-label': t('artifacts.remove_named', { name: a.title ?? a.name }),
+        onclick: (/** @type {MouseEvent} */ e) => { e.stopPropagation(); this.dismiss(a.path); },
+      }, icon('x')))));
+  }
+
+  /**
+   * 从右栏拿掉一样（2026-10-17 项目主人定）：不删文件，正文里的缩略图、卡片照旧；按会话记在这个浏览器里，刷新以后还是拿掉的；同一个
+   * 路径再展示一次（序号比记下的新）就回来。拿掉的是正在看的，换成最新的那一样；一样都不剩的收起来。
+   * @param {string} path
+   */
+  dismiss(path) {
+    const session = this.where.session;
+    const item = this.list.find((x) => x.path === path);
+    if (!session || !item) return;
+    const mine = { ...(this.dismissed[session] ?? {}), [path]: item.seq };
+    // 重新放到最后（最近记的），多了扔掉最早记的会话
+    const { [session]: _, ...rest } = this.dismissed;
+    const all = Object.entries({ ...rest, [session]: mine });
+    this.dismissed = Object.fromEntries(all.slice(-DISMISSED_SESSIONS));
+    this.ext.storage?.set(DISMISSED, this.dismissed);
+    this.list = this.list.filter((x) => x.path !== path);
+    if (this.current === path) this.current = this.list[0]?.path ?? null;
+    this.syncChrome();
+    if (!this.hasContent()) {
+      hide(this.menu);
+      this.setOpen(false);
+      return;
+    }
+    this.drawMenu();
+    if (this.open && this.tab === 'work') this.draw(true);
   }
 
   /** 复制源码（图片、PDF 复制路径）。 */
@@ -272,6 +322,12 @@ export class Artifacts {
     if (!a) return;
     copy(a.kind === 'image' || a.kind === 'pdf' ? a.path : this.text ?? '', this.say);
   }
+}
+
+/** 记着的删掉的那一份读回来：读不懂的当没有。 @param {any} got @returns {Record<string, Record<string, number>>} */
+function readDismissed(got) {
+  if (!got || typeof got !== 'object' || Array.isArray(got)) return {};
+  return Object.fromEntries(Object.entries(got).filter(([, v]) => v && typeof v === 'object' && !Array.isArray(v)));
 }
 
 /**

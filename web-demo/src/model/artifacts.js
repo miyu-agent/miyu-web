@@ -67,6 +67,12 @@ export function shownList(entries) {
 export const panelList = (list) => list.filter((s) => s.kind !== 'file');
 
 /**
+ * 下拉里删掉的不列（2026-10-17 项目主人定）：记着删的时候那一次展示的序号，同一个路径后来又展示了（序号更新）的照旧列。
+ * @param {Shown[]} list @param {Record<string, number>|undefined} dismissed 路径 → 删的时候的序号
+ */
+export const undismissed = (list, dismissed) => (dismissed ? list.filter((s) => !(Number(dismissed[s.path]) >= s.seq)) : list);
+
+/**
  * 照核心认的媒体类型分种类（设计 35 第二节第 3 条）：图片、PDF、HTML、Markdown；`text/plain` 认得出语言的是代码，别的是文字；
  * 别的都是文件。
  * @param {string} type @param {string|null} [language]

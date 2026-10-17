@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { shownOf, shownList, panelList, shownKind, codeLanguage } from '../src/model/artifacts.js';
+import { shownOf, shownList, panelList, shownKind, codeLanguage, undismissed } from '../src/model/artifacts.js';
 
 loadRes();
 
@@ -47,4 +47,12 @@ test('没写名字的照路径最后一截；不是工具条目的是 null', () 
   assert.equal(s?.name, 'n.txt');
   assert.equal(s?.seq, 9);
   assert.equal(shownOf({ id: 'm1', kind: 'reply', shown: { path: '/x', blob: HASH('c') } }), null);
+});
+
+test('下拉里删掉的不列；同一个路径后来又展示了（序号更新）的照旧列', () => {
+  const list = shownList([step('b1.0', '/w/a.png', 'image/png'), step('b2.0', '/w/r.html', 'text/html'), step('b3.0', '/w/m.md', 'text/markdown')]);
+  assert.deepEqual(undismissed(list, { '/w/r.html': 2 }).map((s) => s.path), ['/w/m.md', '/w/a.png']);
+  assert.deepEqual(undismissed(list, undefined).length, 3);
+  const again = shownList([step('b1.0', '/w/a.png', 'image/png'), step('b2.0', '/w/r.html', 'text/html'), step('b5.0', '/w/r.html', 'text/html')]);
+  assert.deepEqual(undismissed(again, { '/w/r.html': 2 }).map((s) => s.path), ['/w/r.html', '/w/a.png'], '又展示了一次，回来');
 });

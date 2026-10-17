@@ -191,7 +191,9 @@
     "tab_work": "ワークスペース",
     "tab_panel": "パネル",
     "empty": "まだ何も表示していません",
-    "download_named": "{name} をダウンロード"
+    "download_named": "{name} をダウンロード",
+    "remove": "リストから外す",
+    "remove_named": "{name} をリストから外す"
   },
   "commands": {
     "nothing_to_clear": "コンテキストは空です。",

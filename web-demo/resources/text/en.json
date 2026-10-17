@@ -191,7 +191,9 @@
     "tab_work": "Workspace",
     "tab_panel": "Panel",
     "empty": "Nothing shown yet",
-    "download_named": "Download {name}"
+    "download_named": "Download {name}",
+    "remove": "Remove from list",
+    "remove_named": "Remove {name} from list"
   },
   "commands": {
     "nothing_to_clear": "The context is empty",
