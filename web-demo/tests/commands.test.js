@@ -161,7 +161,7 @@ test('空会话里打 /goal <目标>（opens_session）：交外面先开会话�
 test('列表里没有的命令被核心拒了：只有认不出、带着字的照话发；数字码一样的别的拒绝不发（2026-10-12）', () => {
   assert.equal(talkAfterRefusal('unknown_command', '目录是干什么的'), true);
   assert.equal(talkAfterRefusal('unknown_command', null), false, '不带字的写拒绝那一句');
-  assert.equal(talkAfterRefusal('memory_unavailable', '喜欢猫'), false, '无人格会话里的 /remember 内容不发给她');
+  assert.equal(talkAfterRefusal('memory_unavailable', '喜欢猫'), false, '没开记忆的会话里的 /remember 内容不发给她');
   assert.equal(talkAfterRefusal(null, '喜欢猫'), false);
 });
 
