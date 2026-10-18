@@ -53,7 +53,6 @@
   ],
   "text": {
     "zh": {
-      "brand": "Miyu",
       "steps": {
         "account": "账号",
         "language": "语言",
@@ -62,7 +61,6 @@
         "theme": "主题",
         "profile": "关于你",
         "preset": "预设",
-        "sandbox": "沙盒",
         "embed": "语义模型"
       },
       "hello": {
@@ -86,14 +84,6 @@
         "about_hint": "职业、兴趣、希望 AI 留意的事",
         "language": "{name}（可选）"
       },
-      "sandbox": {
-        "title": "沙盒",
-        "sub": "新会话照它开局，可在设置中修改",
-        "workspace": "开",
-        "workspace_note": "工作区里读写，命令在沙盒里运行",
-        "full": "关",
-        "full_note": "完全放开，不再确认"
-      },
       "done": {
         "title": "设置完成",
         "model": "模型 {name}",
@@ -104,15 +94,16 @@
       "failed": "保存失败：{reason}",
       "embed": {
         "title": "是否开启内置语义模型",
-        "sub": "大幅提高记忆、知识库、表情包等内容的检索质量，但是会提高大约 170 MB 内存占用（空闲 10 分钟后释放），每次检索增加约 10 毫秒 CPU 开销",
+        "sub": "大幅提高记忆、知识库、表情包等内容的检索质量，但是会大幅提高内存占用，每次检索增加 CPU 开销",
         "local": "是",
         "local_note": "推荐",
         "off": "否",
         "off_note": "只用关键词检索"
-      }
+      },
+      "skip": "跳过",
+      "where": "第 {at} 步，共 {total} 步 · {name}"
     },
     "en": {
-      "brand": "Miyu",
       "steps": {
         "account": "Account",
         "language": "Language",
@@ -121,7 +112,6 @@
         "theme": "Theme",
         "profile": "About you",
         "preset": "Preset",
-        "sandbox": "Sandbox",
         "embed": "Semantic model"
       },
       "hello": {
@@ -145,14 +135,6 @@
         "about_hint": "Work, interests, things the AI should keep in mind",
         "language": "{name} (optional)"
       },
-      "sandbox": {
-        "title": "Sandbox",
-        "sub": "New sessions start this way. Editable in Settings",
-        "workspace": "On",
-        "workspace_note": "Read and write in the workspace, run commands in the sandbox",
-        "full": "Off",
-        "full_note": "Full access, no confirmations"
-      },
       "done": {
         "title": "Setup complete",
         "model": "Model {name}",
@@ -163,15 +145,16 @@
       "failed": "Save failed: {reason}",
       "embed": {
         "title": "Turn on the built-in semantic model?",
-        "sub": "Greatly improves search quality for memories, the knowledge base, stickers and more, but uses about 170 MB more memory (released after 10 minutes idle) and adds about 10 ms of CPU per search",
+        "sub": "Greatly improves search quality for memories, the knowledge base, stickers and more, but uses much more memory and adds CPU time to each search",
         "local": "Yes",
         "local_note": "Recommended",
         "off": "No",
         "off_note": "Keyword search only"
-      }
+      },
+      "skip": "Skip",
+      "where": "Step {at} of {total} · {name}"
     },
     "ja": {
-      "brand": "Miyu",
       "steps": {
         "account": "アカウント",
         "language": "言語",
@@ -180,7 +163,6 @@
         "theme": "テーマ",
         "profile": "あなたについて",
         "preset": "プリセット",
-        "sandbox": "サンドボックス",
         "embed": "意味モデル"
       },
       "hello": {
@@ -204,14 +186,6 @@
         "about_hint": "仕事、趣味、AI に気をつけてほしいこと",
         "language": "{name}（任意）"
       },
-      "sandbox": {
-        "title": "サンドボックス",
-        "sub": "新しいセッションはこの設定で始まります。設定で変更できます",
-        "workspace": "オン",
-        "workspace_note": "ワークスペース内で読み書きし、コマンドはサンドボックスで実行",
-        "full": "オフ",
-        "full_note": "フルアクセス、確認なし"
-      },
       "done": {
         "title": "設定完了",
         "model": "モデル {name}",
@@ -222,12 +196,14 @@
       "failed": "保存に失敗しました：{reason}",
       "embed": {
         "title": "内蔵の意味モデルを使いますか",
-        "sub": "記憶・ナレッジベース・スタンプなどの検索精度が大きく上がります。その代わりメモリを約 170 MB 多く使い（10 分使わないと解放）、検索ごとに CPU を約 10 ミリ秒使います",
+        "sub": "記憶・ナレッジベース・スタンプなどの検索精度が大きく上がります。その代わりメモリを大きく使い、検索ごとに CPU を使います",
         "local": "はい",
         "local_note": "おすすめ",
         "off": "いいえ",
         "off_note": "キーワード検索のみ"
-      }
+      },
+      "skip": "スキップ",
+      "where": "ステップ {at} / {total} · {name}"
     }
   }
 }

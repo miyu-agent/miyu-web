@@ -32,6 +32,8 @@ export class PersonaStep {
     this.t = (/** @type {string} */ key, /** @type {any} */ fields) => ctx.text(key, fields);
     /** 改的是哪个人格（中途关了重来的那一个），新建的是 `null` */
     this.id = /** @type {string|null} */ (null);
+    /** 名称空着、点了「跳过」：引导不记这一步 */
+    this.skipped = false;
     /** @type {PersonaDraft} */
     this.before = blank();
     /** 选了还没存的头像：blob 的哈希、预览的地址 */
@@ -101,9 +103,22 @@ export class PersonaStep {
       title: t(this.id ? 'welcome.persona_edit' : 'welcome.persona_title'),
       sub: t('welcome.persona_sub'),
       body,
-      next: { ready: () => !!this.name?.value.trim(), run: () => this.save() },
+      // 新建的、名称空着：主按钮写「跳过」，点了不存、不设默认人格（2026-10-19 项目主人：没填的能跳过）
+      next: {
+        label: () => (this.blank() ? t('welcome.skip') : undefined),
+        ready: () => this.blank() || !!this.name?.value.trim(),
+        run: async () => {
+          this.skipped = this.blank();
+          return this.skipped ? null : this.save();
+        },
+      },
       focus: this.name,
     };
+  }
+
+  /** 还没存过人格、名称也空着：这一步能跳过。 */
+  blank() {
+    return !this.id && !this.name?.value.trim();
   }
 
   /** 头像那一格：圆的图（还没选的画名字的第一个字），「选择图片」。 */

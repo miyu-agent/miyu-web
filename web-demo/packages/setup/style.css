@@ -302,3 +302,16 @@
 .setup-choice-wrap.is-on > .setup-choice { background: transparent; }
 .setup-choice-open { display: grid; padding: 0 14px 12px; gap: 4px; animation: fade-in var(--motion-in) var(--ease-out) both; }
 .setup-editor.is-welcome { padding: 0; }
+
+/* 引导「主题」那一屏的配色方案（2026-10-19 项目主人）：一套一块，上面一小块照这一套的颜色画的样子，下面名字；选中的一圈主色 */
+.setup-palettes { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+.setup-palette {
+  display: grid; gap: 8px; padding: 8px 8px 10px; border: 0; border-radius: 14px; background: var(--surface-1); color: var(--text);
+  font: 13px var(--sans); cursor: pointer; box-shadow: var(--card-shadow); transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.setup-palette:hover, .setup-palette:focus-visible { outline: 0; transform: translateY(-1px); box-shadow: var(--float-shadow); }
+.setup-palette.is-on { box-shadow: 0 0 0 2px var(--accent), var(--card-shadow); }
+.setup-palette-sample { display: flex; align-items: flex-end; gap: 5px; height: 44px; padding: 8px; border-radius: 9px; box-sizing: border-box; }
+.setup-palette-sample i { flex: 1; height: 8px; border-radius: 4px; }
+.setup-palette-sample i:first-child { flex: 2; height: 14px; }
+.setup-palette-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

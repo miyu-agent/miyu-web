@@ -112,6 +112,7 @@ export function profileScreen(g) {
     if (err?.reason !== 'unknown_config_key') console.error(`回复语言那一行画不了：${err?.message ?? err}`);
   });
   name.addEventListener('input', () => g.sync());
+  about.addEventListener('input', () => g.sync());
   const body = h('div.wl-profile', languageRow, row(t('profile.name'), name), row(t('profile.about'), about));
   return {
     title: t('profile.title'),
@@ -121,7 +122,9 @@ export function profileScreen(g) {
     // 第一块是窄的下拉、名字就在它上面：站在整张表的上沿靠右，不挡字
     perch: body,
     next: {
-      ready: () => !!name.value.trim(),
+      // 都空着、原来也没写的：主按钮写「跳过」，点了什么都不写（2026-10-19 项目主人）
+      label: () => (!name.value.trim() && !about.value.trim() && !now.name && !now.about ? t('skip') : t('next')),
+      ready: () => true,
       run: async () => {
         /** @type {{key: string, value?: string, unset?: boolean}[]} */
         const changes = [];
@@ -136,47 +139,6 @@ export function profileScreen(g) {
           now.language = (language ?? '').trim();
         }
         g.go('preset', 1);
-        return null;
-      },
-    },
-  };
-}
-
-/**
- * 沙盒（第 9 条下面一款；核心 8-32，2026-10-13 项目主人：默认开）：两行「开」「关」，先选中现在的（没写的是开）。「下一步」和现在的不一样的
- * 写个人设置的 `permission.level`：开是 `workspace`，关是 `full`。新会话照它开局。
- * @param {import('./guide.js').Guide} g
- */
-export function sandboxScreen(g) {
-  const t = g.t;
-  const core = g.ctx.core;
-  let now = 'workspace';
-  let chosen = now;
-  const list = h('div.wl-langs');
-  const draw = () => replace(list, ['workspace', 'full'].map((v) => h(`button.wl-lang${v === chosen ? '.is-on' : ''}`, { type: 'button', onclick: () => { chosen = v; draw(); } },
-    h('span.wl-lang-name', t(`sandbox.${v}`)), h('span.wl-lang-note', t(`sandbox.${v}_note`)),
-    v === chosen ? h('span.wl-check', icon('check')) : null)));
-  draw();
-  // 读现在写着的（中途关了重来的、设置页改过的）：是关的换过去
-  core.request('config.get', { keys: ['permission.level'] }).then((/** @type {any} */ got) => {
-    const value = got?.items?.['permission.level']?.value;
-    if (value !== 'full' || chosen !== 'workspace' || now !== 'workspace') return;
-    now = chosen = 'full';
-    draw();
-  }).catch(() => {});
-  return {
-    title: t('sandbox.title'),
-    sub: t('sandbox.sub'),
-    body: list,
-    focus: /** @type {HTMLElement|null} */ (list.querySelector('.wl-lang.is-on')),
-    next: {
-      ready: () => true,
-      run: async () => {
-        if (chosen !== now) {
-          await core.request('config.set', { layer: 'personal', changes: [{ key: 'permission.level', value: chosen }] });
-          now = chosen;
-        }
-        g.go('embed', 1);
         return null;
       },
     },
@@ -251,11 +213,13 @@ export function doneScreen(g) {
   const r = g.result;
   const model = r.model ? r.model.model || r.model.name : '';
   const parts = [model ? t('done.model', { name: model }) : null, r.persona ? t('done.persona', { name: r.persona }) : null, r.preset ? t('done.preset', { name: r.preset }) : null].filter(Boolean);
+  // 走完的几样一样一个小胶囊（跳过了的不写），吉祥物四周一圈小光点散开一次（2026-10-19 项目主人：完成那一屏原来没对齐、太素）
   return {
     title: t('done.title'),
-    sub: parts.join(' · '),
     center: true,
-    body: h('span'),
+    kind: 'done',
+    body: h('div.wl-done', h('div.wl-burst', { 'aria-hidden': 'true' }, Array.from({ length: 12 }, (_, i) => h('i', { style: `--i: ${i}` }))),
+      parts.length ? h('div.wl-pills', parts.map((p) => h('span.wl-pill', p))) : null),
     next: {
       label: t('done.start'),
       ready: () => true,

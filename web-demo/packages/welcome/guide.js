@@ -4,12 +4,12 @@
 //! （步骤条）、上一步、下一步，管 `Enter`、`↑` `↓`、换屏的动画和吉祥物站哪。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { helloScreen, languageScreen, profileScreen, sandboxScreen, embedScreen, embedInstalled, doneScreen, STEP_KEY, DONE_KEY } from './screens.js';
+import { helloScreen, languageScreen, profileScreen, embedScreen, embedInstalled, doneScreen, STEP_KEY, DONE_KEY } from './screens.js';
 
 /** 步子的先后；`back` 是上一步回到哪 */
-const BACK = /** @type {Record<string, string|null>} */ ({ hello: null, language: 'hello', model: 'language', persona: 'model', theme: 'persona', profile: 'theme', preset: 'profile', sandbox: 'preset', embed: 'sandbox', done: 'embed' });
-/** 进步骤条的几步（`embed` 只在装了内置语义模型时列，`Guide.numbered`） */
-export const NUMBERED = ['language', 'model', 'persona', 'theme', 'profile', 'preset', 'sandbox', 'embed'];
+const BACK = /** @type {Record<string, string|null>} */ ({ hello: null, language: 'hello', model: 'language', persona: 'model', theme: 'persona', profile: 'theme', preset: 'profile', embed: 'preset', done: 'embed' });
+/** 进步骤条的几步（`embed` 只在装了内置语义模型时列，`Guide.numbered`；沙盒那一步 2026-10-19 项目主人去掉了） */
+export const NUMBERED = ['language', 'model', 'persona', 'theme', 'profile', 'preset', 'embed'];
 /** 换一屏要选中的选项（`↑` `↓` 换着选的：选了就是它；别的只挪焦点） */
 const CHOICES = '.ob-row:not([disabled]), .wl-lang, .setup-choice, .ob-model';
 const SELECTS = new Set(['wl-lang', 'setup-choice', 'ob-model']);
@@ -47,7 +47,9 @@ export class Guide {
     this.ids = /** @type {{persona?: string|null, preset?: string|null}} */ ({});
     this.slot = h('div.wl-slot');
     this.steps = h('ol.wl-steps');
-    this.head = h('div.wl-head', h('span.wl-brand', this.t('brand')), this.steps);
+    /** 标题上面那一行小字：「第 3 步，共 7 步 · 人格」 */
+    this.where = h('p.wl-where');
+    this.head = h('div.wl-head', this.steps);
     this.page = h('div.wl-page', h('div.wl-col', this.head, this.slot));
     this.layer = h('div.wl-layer', { role: 'dialog', 'aria-modal': 'true' }, sky(ctx.config.stars), this.page);
     /** @type {HTMLButtonElement|null} */
@@ -66,8 +68,8 @@ export class Guide {
       if (!this.layer.contains(/** @type {Node} */ (e.target))) this.focusScreen();
     };
     this.onScroll = () => this.ctx.mascot?.refresh?.();
-    // 步骤条放不放得下照这一栏多宽：窗口变了重新量（`fitSteps`）
-    this.onResize = new ResizeObserver(() => this.fitSteps());
+    // 窗口变了：吉祥物照新的台子站（原来也量步骤条放不放得下，换成小点以后不用量了）
+    this.onResize = new ResizeObserver(() => {});
     /** 装没装内置语义模型（没装的跳过那一屏、步骤条不列）：打开时问一次，问到之前当没装 */
     this.embed = false;
   }
@@ -159,8 +161,8 @@ export class Guide {
       });
       flow.start();
     } else if (step === 'persona' || step === 'theme' || step === 'preset') {
-      // 主题照人格那一步存好的人格（2026-10-13）；没存成的（不会走到这里）跳过
-      if (step === 'theme' && !this.ids.persona) return this.go(dir > 0 ? 'preset' : 'persona', dir);
+      // 主题照人格那一步存好的人格（2026-10-13）；人格跳过了的（2026-10-19）跳过主题，往下是「关于你」
+      if (step === 'theme' && !this.ids.persona) return this.go(dir > 0 ? 'profile' : 'persona', dir);
       this.show({ title: '', body: h('p.wl-wait', icon('loader-circle')), next: null, kind: 'wait' }, dir);
       const [personas] = await Promise.all([this.service('personas'), this.service('settings')]);
       if (this.step !== step) return;
@@ -173,14 +175,16 @@ export class Guide {
         ...screen,
         next: {
           ready: screen.next.ready,
+          label: screen.next.label,
           run: async () => {
             const why = await screen.next.run();
             if (why) return why;
-            if (step !== 'theme') {
+            // 人格没填、点了「跳过」的不记（主题那一屏跟着跳过，完成那一屏不写人格；2026-10-19 项目主人）
+            if (step !== 'theme' && !part.skipped) {
               this.result[step] = part.label();
               this.ids[step] = part.id;
             }
-            this.go(step === 'persona' ? 'theme' : step === 'theme' ? 'profile' : 'sandbox', 1);
+            this.go(step === 'persona' ? 'theme' : step === 'theme' ? 'profile' : 'embed', 1);
             return null;
           },
         },
@@ -193,12 +197,11 @@ export class Guide {
         if (this.step !== step) return;
       }
       this.show(profileScreen(this), dir);
-    } else if (step === 'sandbox') this.show(sandboxScreen(this), dir);
-    else if (step === 'embed') {
+    } else if (step === 'embed') {
       // 没装内置语义模型（或者还没问到）：再问一次，没装的跳过这一屏
       if (!this.embed) this.embed = await embedInstalled(this.ctx.core);
       if (this.step !== step) return;
-      if (!this.embed) return this.go(dir > 0 ? 'done' : 'sandbox', dir);
+      if (!this.embed) return this.go(dir > 0 ? 'done' : 'preset', dir);
       this.show(embedScreen(this), dir);
     }
     else if (step === 'done') this.show(doneScreen(this), dir);
@@ -223,12 +226,14 @@ export class Guide {
     const foot = back || this.nextBtn
       ? h('div.wl-foot', back ? h('button.wl-link', { type: 'button', onclick: back }, icon('chevron-left'), h('span', this.t('back'))) : h('span'), this.nextBtn)
       : null;
-    const parts = [screen.title ? h('h1.wl-title', screen.title) : null, screen.sub ? h('p.wl-sub', screen.sub) : null, h('div.wl-body', screen.body), this.error, foot];
+    this.where.textContent = this.whereText();
+    const parts = [this.where.textContent ? this.where : null, screen.title ? h('h1.wl-title', screen.title) : null, screen.sub ? h('p.wl-sub', screen.sub) : null, h('div.wl-body', screen.body), this.error, foot];
     const old = /** @type {HTMLElement|null} */ (after ? this.slot.querySelector(':scope > .wl-screen') : null);
     const node = old ?? h(`div.wl-screen.is-${dir > 0 ? 'fwd' : 'back'}`);
     node.classList.toggle('is-center', !!screen.center);
     replace(node, ...parts.filter(Boolean));
     this.layer.classList.toggle('is-hello', this.step === 'hello');
+    this.layer.classList.toggle('is-done', this.step === 'done');
     this.layer.classList.toggle('is-center', !!screen.center);
     this.head.hidden = !this.numbered().includes(this.step);
     this.drawSteps();
@@ -250,25 +255,24 @@ export class Guide {
     target?.focus({ preventScroll: true });
   }
 
-  /** 步骤条：现在这一步加粗，中间短线。 */
-  drawSteps() {
-    // 这次起页面时设了账号的（直接连网页软件、一次性码连上的）：最前面多一段「账号」，算走过（蓝图「连核心」第 1 条下面几款）
-    const list = this.ctx.host?.signedUp ? ['account', ...this.numbered()] : this.numbered();
-    const at = list.indexOf(this.step);
-    replace(this.steps, list.map((s, i) => {
-      const name = this.t(`steps.${s}`);
-      return h(`li${i === at ? '.is-now' : ''}`, { title: name }, h('span', String(i + 1), h('span.wl-step-name', ` ${name}`)));
-    }));
-    this.onResize.observe(this.head);
-    this.fitSteps();
+  /** 走到哪了：几步的列表（设了账号进来的最前面多一段「账号」，算走过）。 */
+  stepList() {
+    return this.ctx.host?.signedUp ? ['account', ...this.numbered()] : this.numbered();
   }
 
-  /**
-   * 步骤条一行放不下（英文、日文的名字长，2026-10-16 照验收：原来折成两行）：别的几步只写编号，现在这一步照旧写名字，悬停看名字。
-   */
-  fitSteps() {
-    this.steps.classList.remove('is-tight');
-    if (this.head.scrollWidth > this.head.clientWidth || this.steps.scrollWidth > this.steps.clientWidth) this.steps.classList.add('is-tight');
+  /** 步骤条：一排小点，现在这一步是主色的胶囊（2026-10-19 项目主人：原来一长串名字太素）；悬停一个点写那一步的名字。 */
+  drawSteps() {
+    const list = this.stepList();
+    const at = list.indexOf(this.step);
+    replace(this.steps, list.map((s, i) => h(`li${i === at ? '.is-now' : i < at ? '.is-done' : ''}`, { title: this.t(`steps.${s}`), 'aria-current': i === at ? 'step' : null })));
+    this.steps.setAttribute('aria-label', this.whereText());
+  }
+
+  /** 标题上面那一行：「第 3 步，共 7 步 · 人格」；不在步骤条上的几屏（欢迎、完成）是空的。 */
+  whereText() {
+    const list = this.stepList();
+    const at = list.indexOf(this.step);
+    return at < 0 ? '' : this.t('where', { at: at + 1, total: list.length, name: this.t(`steps.${this.step}`) });
   }
 
   /** 主按钮能不能点、写什么（测试连接那一屏的跟着测的结果变）。 */

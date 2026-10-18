@@ -205,7 +205,7 @@
         "name": "名称",
         "name_hint": "名称",
         "summary": "简单描述",
-        "summary_hint": "一句话，显示在列表和菜单中，AI 挑人格时也会看到",
+        "summary_hint": "一句话，显示在列表和菜单中",
         "new_persona": "新建人格",
         "new_preset": "新建预设",
         "create": "创建",
@@ -268,7 +268,7 @@
       "welcome": {
         "name_hint": "名称",
         "persona_title": "创建人格",
-        "persona_edit": "编辑人格",
+        "persona_edit": "设置人格",
         "persona_sub": "人格决定AI的说话方式和记忆，可在设置中修改",
         "theme_title": "选择主题",
         "theme_sub": "可在设置中修改",
@@ -276,13 +276,15 @@
         "scheme_auto": "跟随系统",
         "scheme_light": "浅色",
         "scheme_dark": "深色",
-        "colors": "配色",
+        "colors": "主色",
         "avatar_pick": "选择图片",
         "preset_title": "选择预设",
         "preset_sub": "预设决定启用哪些功能，可在设置中修改，也可为每个会话单独选择",
         "custom": "自定义",
         "custom_hint": "选择启用的功能",
-        "save_failed": "保存失败"
+        "save_failed": "保存失败",
+        "palette": "配色方案",
+        "skip": "跳过"
       }
     },
     "en": {
@@ -339,7 +341,7 @@
         "name": "Name",
         "name_hint": "Name",
         "summary": "Short description",
-        "summary_hint": "One line, shown in lists and menus and to the AI when it picks a persona",
+        "summary_hint": "One line, shown in lists and menus",
         "new_persona": "New persona",
         "new_preset": "New preset",
         "create": "Create",
@@ -402,7 +404,7 @@
       "welcome": {
         "name_hint": "Name",
         "persona_title": "Create persona",
-        "persona_edit": "Edit persona",
+        "persona_edit": "Set up persona",
         "persona_sub": "The persona sets how the AI speaks and what it remembers. Editable in Settings",
         "theme_title": "Choose a theme",
         "theme_sub": "Editable in Settings",
@@ -410,13 +412,15 @@
         "scheme_auto": "System",
         "scheme_light": "Light",
         "scheme_dark": "Dark",
-        "colors": "Colors",
+        "colors": "Main color",
         "avatar_pick": "Choose image",
         "preset_title": "Select preset",
         "preset_sub": "A preset decides which features are enabled. Editable in Settings, or choose per session",
         "custom": "Custom",
         "custom_hint": "Choose which features are enabled",
-        "save_failed": "Save failed"
+        "save_failed": "Save failed",
+        "palette": "Color scheme",
+        "skip": "Skip"
       }
     },
     "ja": {
@@ -473,7 +477,7 @@
         "name": "名前",
         "name_hint": "名前をつける",
         "summary": "簡単な説明",
-        "summary_hint": "一言で。一覧とメニューに表示され、AI が人格を選ぶときにも見ます",
+        "summary_hint": "一言で。一覧とメニューに表示されます",
         "new_persona": "人格を作る",
         "new_preset": "プリセットを作る",
         "create": "作成",
@@ -536,7 +540,7 @@
       "welcome": {
         "name_hint": "名前",
         "persona_title": "人格を作成",
-        "persona_edit": "人格を編集",
+        "persona_edit": "人格を設定",
         "persona_sub": "人格は AI の話し方と記憶を決めます。設定で変更できます",
         "theme_title": "テーマを選ぶ",
         "theme_sub": "設定で変更できます",
@@ -544,13 +548,15 @@
         "scheme_auto": "システムに合わせる",
         "scheme_light": "ライト",
         "scheme_dark": "ダーク",
-        "colors": "配色",
+        "colors": "メインカラー",
         "avatar_pick": "画像を選択",
         "preset_title": "プリセットを選択",
         "preset_sub": "プリセットで有効にする機能を決めます。設定で変更でき、セッションごとにも選べます",
         "custom": "カスタム",
         "custom_hint": "有効にする機能を選択",
-        "save_failed": "保存に失敗しました"
+        "save_failed": "保存に失敗しました",
+        "palette": "配色テーマ",
+        "skip": "スキップ"
       }
     }
   }
