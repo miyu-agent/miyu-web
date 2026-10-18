@@ -300,6 +300,12 @@ export function moveMember(list, i, dir) {
   return next;
 }
 
+/** 删一家供应商：它在这一层写着的几项（`providers.<id>.*`）各一条 `unset`（2026-10-19 项目主人：设置页原来少了删除）。 @param {string} id @param {{items: Record<string, Entry>}} got @param {string} layer */
+export function providerRemoval(id, got, layer) {
+  const prefix = `providers.${keySegment(id)}.`;
+  return Object.keys(got.items ?? {}).filter((k) => k.startsWith(prefix) && writtenIn(got.items[k], layer)).map((k) => ({ key: k, unset: true, expect: expectFor(got.items[k], layer) }));
+}
+
 /** 删一个池：它在这一层写着的几项（`pools.<id>.*`）各一条 `unset`。 @param {string} id @param {{items: Record<string, Entry>}} got @param {string} layer */
 export function poolRemoval(id, got, layer) {
   const prefix = `pools.${keySegment(id)}.`;

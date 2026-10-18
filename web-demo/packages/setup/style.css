@@ -300,7 +300,7 @@
 .setup-choice-wrap { border-radius: 12px; }
 .setup-choice-wrap.is-on { background: var(--surface-3); }
 .setup-choice-wrap.is-on > .setup-choice { background: transparent; }
-.setup-choice-open { display: grid; padding: 0 14px 12px; gap: 4px; animation: fade-in var(--motion-in) var(--ease-out) both; }
+.setup-choice-open { display: grid; padding: 0 14px 12px; gap: 4px; }
 .setup-editor.is-welcome { padding: 0; }
 
 /* 引导「主题」那一屏的配色方案（2026-10-19 项目主人）：一套一块，上面一小块照这一套的颜色画的样子，下面名字；选中的一圈主色 */

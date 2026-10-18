@@ -170,6 +170,18 @@ test('供应商的表：编号的写法、密钥存成的新名字、要发的�
   assert.deepEqual(poolRemoval('fast', pools, 'personal'), [{ key: 'pools.fast.models', unset: true, expect: { value: [] } }], '只删这一层写着的，不碰同前缀的别的池');
 });
 
+test('删一家供应商：这一层写着的 providers.<id>.* 各一条 unset，不碰同前缀的别家、别的层（2026-10-19）', async () => {
+  const { providerRemoval } = await import('../../packages/settings/model.js');
+  const at = (layer, value) => ({ layers: [{ origin: { layer }, used: true, value }], value });
+  const got = { items: {
+    'providers.dev.base_url': at('personal', 'https://x/v1'), 'providers.dev.key': at('personal', { env: 'K' }),
+    'providers.dev2.base_url': at('personal', 'https://y/v1'), 'providers.sys.base_url': at('system', 'https://z/v1'),
+  } };
+  assert.deepEqual(providerRemoval('dev', got, 'personal').map((c) => c.key), ['providers.dev.base_url', 'providers.dev.key']);
+  assert.ok(providerRemoval('dev', got, 'personal').every((c) => c.unset === true));
+  assert.deepEqual(providerRemoval('sys', got, 'personal'), [], '别的层写的不删');
+});
+
 test('找模型：显示名、模型名、供应商名都算，空格分开的几段都要有，不分大小写；空的全给', async () => {
   const { filterModels } = await import('../../packages/settings/model.js');
   const rows = [

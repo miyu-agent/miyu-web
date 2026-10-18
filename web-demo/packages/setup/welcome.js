@@ -6,6 +6,7 @@
 //! 每一屏交 `{title, sub, body, next: {ready, run}, focus}`，上一步、下一步的按钮由引导画；`run` 交回出错的字，成了是 `null`。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { unfold } from '../../src/lib/motion.js';
 import { field, area } from './form.js';
 import { Pairs } from './pairs.js';
 import { personaSave, halfPair, personaName, presetName } from './model.js';
@@ -294,12 +295,22 @@ export class PresetStep {
       const custom = this.chosen === 'custom';
       const head = h(`button.setup-choice${custom ? '.is-on' : ''}`, { type: 'button', onclick: () => { if (custom) return; this.chosen = 'custom'; draw(); this.host.ready(); this.customName?.focus(); } },
         h('span.setup-choice-name', t('welcome.custom')), custom ? null : h('span.setup-choice-hint', t('welcome.custom_hint')), custom ? h('span.setup-choice-check', '✓') : null);
-      const open = custom ? h('div.setup-choice-open',
-        field(t('edit.name'), /** @type {HTMLElement} */ (this.customName)),
-        h('div.setup-features', (this.all ?? []).map((f) => h('div.setup-feature', h('span.setup-feature-name', { title: f.summary ?? null }, f.name ?? f.id),
-          this.kit.toggle(this.customOn.get(f.id) !== false, (v) => { this.customOn.set(f.id, v); return true; }))))) : null;
-      replace(box, cards, h(`div.setup-choice-wrap${custom ? '.is-on' : ''}`, head, open));
+      // 自定义展开的那一块一直在、照「动效」长出来、收回去（2026-10-19 项目主人：原来收起没有动画，换了一张就整块没了）
+      wrap.classList.toggle('is-on', custom);
+      // 展开的那一块不挪开再放回（挪了过渡就断了）：只换头上那一行、前面几张卡片
+      if (wrap.firstChild && wrap.firstChild !== open) wrap.replaceChild(head, wrap.firstChild);
+      else wrap.prepend(head);
+      if (!open.isConnected || open.parentNode !== wrap) wrap.append(open);
+      unfold(open, custom);
+      for (const el of [...box.children]) if (el !== wrap) el.remove();
+      if (!wrap.isConnected) box.append(wrap);
+      for (const c of cards) box.insertBefore(c, wrap);
     };
+    const wrap = h('div.setup-choice-wrap');
+    const open = h('div.unfold.setup-choice-unfold', h('div.unfold-inner', h('div.setup-choice-open',
+      field(t('edit.name'), /** @type {HTMLElement} */ (this.customName)),
+      h('div.setup-features', (this.all ?? []).map((f) => h('div.setup-feature', h('span.setup-feature-name', { title: f.summary ?? null }, f.name ?? f.id),
+        this.kit.toggle(this.customOn.get(f.id) !== false, (v) => { this.customOn.set(f.id, v); return true; })))))));
     draw();
     return {
       title: t('welcome.preset_title'),

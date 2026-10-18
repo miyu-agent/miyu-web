@@ -5,7 +5,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { hasLogos, logoEl } from '../../src/lib/logo.js';
-import { duplicates, inputText, providerName, hostOf, whereOf, sameNamed, layerFor, secretName, keyChange } from './model.js';
+import { duplicates, inputText, providerName, hostOf, whereOf, sameNamed, layerFor, secretName, keyChange, providerRemoval } from './model.js';
 import { modelName, metaOf, sharedState, loadingRow, searchable, refreshProvider, testLine } from './model-bits.js';
 import { openForm } from './provider-form.js';
 import { openAdd } from './add-provider.js';
@@ -84,11 +84,51 @@ function head(dialog, p, logos) {
   const shared = sharedState(p.models ?? []);
   return h('div.set-prov-head',
     h('div.set-prov-title', logo, h('div', h('strong', providerName(p)), h('span', { title: address }, address)),
-      h('div.set-prov-buttons', test, h('button.set-btn', { type: 'button', onclick: openForm(dialog, p.id) }, ctx.text('models.edit')))),
+      h('div.set-prov-buttons', test, h('button.set-btn', { type: 'button', onclick: openForm(dialog, p.id) }, ctx.text('models.edit')), removeButton(dialog, p))),
     // 核心推不出接口、先照 openai-chat 用的（`driver_from: default`，核心 8-26）：写明是猜的，猜错了请求会出错
     p.driver_from === 'default' ? h('p.set-prov-note', ctx.text('models.driver_guess_line', { driver: p.driver ?? '' })) : null,
     shared && shared !== 'no_key' ? h('p.set-prov-warn', ctx.text(`models.states.${shared}`)) : null,
     result);
+}
+
+/**
+ * 「删除」（2026-10-19 项目主人：原来少了删除）：点一下变「确认删除」，三秒内再点才删，照写着这一家的那一层把 `providers.<id>.*` 各 `unset`；
+ * 默认模型用的是它的，确认那一下旁边一行暗红字。这一层没写它的（别的层写的、核心自带的）不出这个按钮。
+ * @param {any} dialog @param {any} p
+ */
+function removeButton(dialog, p) {
+  const ctx = dialog.ctx;
+  const template = dialog.schema.items.find((/** @type {any} */ i) => i.key === 'providers.<id>.driver');
+  const layer = layerFor(template ?? { layers: ['personal'] });
+  const removal = providerRemoval(p.id, dialog.got, layer);
+  if (!removal.length) return null;
+  const chat = dialog.got?.items?.['models.chat']?.value;
+  const inUse = typeof chat === 'string' && chat.startsWith(`${p.id}/`);
+  const note = h('small.set-prov-danger', { hidden: true }, ctx.text('models.remove_in_use'));
+  let armed = /** @type {ReturnType<typeof setTimeout>|null} */ (null);
+  const button = h('button.set-btn', { type: 'button', onclick: async () => {
+    if (!armed) {
+      button.textContent = ctx.text('models.remove_confirm');
+      button.classList.add('is-danger', 'is-armed');
+      note.hidden = !inUse;
+      armed = setTimeout(() => { armed = null; button.textContent = ctx.text('models.remove'); button.classList.remove('is-danger', 'is-armed'); note.hidden = true; }, 3000);
+      return;
+    }
+    clearTimeout(armed);
+    armed = null;
+    button.setAttribute('disabled', '');
+    const why = await dialog.saveMany(layer, removal);
+    if (why) {
+      button.removeAttribute('disabled');
+      note.textContent = why;
+      note.hidden = false;
+      return;
+    }
+    dialog.provider = null;
+    dialog.modelDetail = null;
+    dialog.drawBody();
+  } }, ctx.text('models.remove'));
+  return h('span.set-prov-remove', button, note);
 }
 
 /**

@@ -402,3 +402,6 @@
 /* 跳到软件独立整页的链接（「软件后台」的一行、信息页的「打开页面」）：长得和行、按钮一样，按着 Ctrl 点开在新标签页 */
 a.set-link { color: inherit; text-decoration: none; }
 a.set-btn.set-link { display: inline-flex; align-items: center; }
+/* 删除一家供应商（2026-10-19）：确认那一下按钮下面一行暗红字（默认模型在用它） */
+.set-prov-remove { position: relative; display: inline-flex; }
+.set-prov-danger { position: absolute; top: calc(100% + 4px); right: 0; color: var(--danger); font-size: 11.5px; white-space: nowrap; }

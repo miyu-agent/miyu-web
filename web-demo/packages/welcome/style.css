@@ -120,10 +120,11 @@
 .wl-layer .ob-row:hover, .wl-layer .ob-row:focus-visible { background: var(--surface-1); transform: translateY(-1px); box-shadow: var(--float-shadow); }
 .wl-layer .ob-row.is-off { background: transparent; box-shadow: none; transform: none; }
 .wl-layer .ob-list > .ob-rows:first-child, .wl-layer .ob-scroll {
-  max-height: min(50vh, 460px); overflow-y: auto; margin: -6px -10px; padding: 6px 10px;
+  max-height: min(50vh, 460px); overflow-y: auto; margin: -6px -10px; padding: 6px 10px 24px;
   -webkit-mask-image: linear-gradient(transparent, #000 14px, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(transparent, #000 14px, #000 calc(100% - 22px), transparent);
 }
-.wl-layer .ob-model-list { -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), transparent); }
+/* 底下留出淡出那一截：最后一个模型不压在淡出里（2026-10-19 项目主人：deepseek-v4-pro 被羽化了） */
+.wl-layer .ob-model-list { padding-bottom: 24px; -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), transparent); }
 .wl-layer .setup-choice { border-radius: 14px; background: var(--surface-1); box-shadow: var(--card-shadow); }
 .wl-layer .setup-choice:hover { background: var(--surface-1); box-shadow: var(--float-shadow); }
 .wl-layer .setup-choice.is-on, .wl-layer .setup-choice-wrap.is-on { background: var(--surface-1); box-shadow: 0 0 0 2px var(--accent), var(--card-shadow); }

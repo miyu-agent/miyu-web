@@ -313,7 +313,10 @@
         "key_use_env": "改用环境变量",
         "key_use_paste": "改用 API Key",
         "count": "模型 {count}",
-        "unset": "未设置"
+        "unset": "未设置",
+        "remove": "删除",
+        "remove_confirm": "确认删除",
+        "remove_in_use": "默认模型在用它，删了要另选"
       },
       "changed": "已修改",
       "packages_web": "网页",
@@ -589,7 +592,10 @@
         "key_use_env": "Use an environment variable",
         "key_use_paste": "Use an API key",
         "count": "Models {count}",
-        "unset": "Not set"
+        "unset": "Not set",
+        "remove": "Delete",
+        "remove_confirm": "Confirm delete",
+        "remove_in_use": "The default model uses it; pick another after deleting"
       },
       "changed": "Modified",
       "packages_web": "Web",
@@ -865,7 +871,10 @@
         "key_use_env": "環境変数を使う",
         "key_use_paste": "API キーを使う",
         "count": "モデル {count}",
-        "unset": "未設定"
+        "unset": "未設定",
+        "remove": "削除",
+        "remove_confirm": "削除を確認",
+        "remove_in_use": "既定のモデルが使っています。削除後に選び直してください"
       },
       "changed": "変更済み",
       "packages_web": "ウェブ",

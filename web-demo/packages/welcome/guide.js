@@ -14,7 +14,8 @@ export const NUMBERED = ['language', 'model', 'persona', 'theme', 'profile', 'pr
 const CHOICES = '.ob-row:not([disabled]), .wl-lang, .setup-choice, .ob-model';
 const SELECTS = new Set(['wl-lang', 'setup-choice', 'ob-model']);
 /** 吉祥物站的那一块：这一屏内容里第一块看得见的（第一行选项、第一个框），站在它上沿靠右（2026-10-10 项目主人选的，同对话页站在输入框上） */
-const SURFACES = '.ob-row, .wl-lang, .setup-choice, .ob-input, .set-input, .setup-area, .set-select';
+// 一家一行的列表在自己的框里滚：站在框上（站在第一行上的，往下划会跟着那一行被弹上去，2026-10-19 项目主人）
+const SURFACES = '.ob-list > .ob-rows:first-child, .ob-row, .wl-lang, .setup-choice, .ob-input, .set-input, .setup-area, .set-select';
 /** 平常站的地方离那一块右边多远 */
 const HOME_RIGHT = 40;
 
