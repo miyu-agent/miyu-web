@@ -52,7 +52,9 @@ export class Guide {
     this.where = h('p.wl-where');
     this.head = h('div.wl-head', this.steps);
     this.page = h('div.wl-page', h('div.wl-col', this.head, this.slot));
-    this.layer = h('div.wl-layer', { role: 'dialog', 'aria-modal': 'true' }, sky(ctx.config.stars), this.page);
+    /** 最底下一条像素的地面（像素关卡，2026-10-19）：吉祥物在几步里站在它上面 */
+    this.ground = h('div.wl-ground', { 'aria-hidden': 'true' });
+    this.layer = h('div.wl-layer', { role: 'dialog', 'aria-modal': 'true' }, sky(ctx.config.stars), this.ground, this.page);
     /** @type {HTMLButtonElement|null} */
     this.nextBtn = null;
     this.error = h('p.wl-error', { hidden: true });
@@ -368,19 +370,12 @@ export class Guide {
     return true;
   }
 
-  /** 台子：站的那一块（居中的几屏是标题正上方一段）；别的选项、按钮那一排的上沿（拖下来松手落到它们上面）。 */
+  /** 台子：站的那一块（居中的几屏是标题正上方一段，别的几屏是最底下的地面）。 */
   platforms() {
     if (this.held) return this.held.platforms;
     const top = this.top();
     const list = top ? [top] : [];
-    if (this.stageKind === 'page') {
-      const first = this.first();
-      this.slot.querySelectorAll('.ob-row, .wl-lang, .setup-choice, .wl-foot').forEach((el, i) => {
-        if (el === first) return;
-        const r = el.getBoundingClientRect();
-        if (r.width && r.top > 0) list.push({ id: `wl-${this.shown}-${i}`, x1: r.left + 8, x2: r.right - 8, y: r.top });
-      });
-    }
+    // 几步里只有地面一块（像素关卡，2026-10-19）：原来选项、按钮那一排也是台子，跳回家时半路落在选项上下不来
     return list;
   }
 
@@ -391,7 +386,7 @@ export class Guide {
     return /** @type {HTMLElement|null} */ (this.slot.querySelector('.wl-body')?.querySelector(SURFACES) ?? null);
   }
 
-  /** 站的那一块：居中的那几屏（欢迎、完成）是标题正上方一段，别的是内容里第一块看得见的上沿。 */
+  /** 站的那一块：居中的那几屏（欢迎、完成）是标题正上方一段，别的是最底下的地面（没有地面的照旧是内容里第一块看得见的上沿）。 */
   top() {
     const id = `wl-top-${this.shown}`;
     if (this.screen?.center) {
@@ -401,18 +396,24 @@ export class Guide {
       const c = r.left + r.width / 2;
       return { id, x1: c - 80, x2: c + 80, y: r.top - 12 };
     }
+    // 几步里站在最底下的地面上（像素关卡，2026-10-19 项目主人挑的样子）；地面不在的照旧站在内容里第一块的上沿
+    const g = this.ground.getBoundingClientRect();
+    if (g.width) return { id, x1: g.left + 16, x2: g.right - 16, y: g.top };
     const r = this.first()?.getBoundingClientRect();
     if (!r?.width) return null;
     return { id, x1: r.left + 8, x2: r.right - 8, y: r.top };
   }
 
-  /** 平常站哪：居中的几屏在标题正上方；别的在第一块的上沿靠右。 */
+  /** 平常站哪：居中的几屏在标题正上方；别的在地面上、内容一列的右边。 */
   home() {
     if (this.held) return this.held.home;
     const platform = this.top();
     if (!platform) return null;
     if (this.screen?.center) return { x: (platform.x1 + platform.x2) / 2, platform };
-    return { x: platform.x2 + 8 - HOME_RIGHT, platform };
+    // 站在地面上：内容一列的右边（窄的窗口里靠右边）
+    const col = /** @type {HTMLElement|null} */ (this.page.querySelector('.wl-col'))?.getBoundingClientRect();
+    const right = col ? Math.min(col.right + 56, platform.x2 - 24) : platform.x2 - HOME_RIGHT;
+    return { x: right, platform };
   }
 
   /** 走完（完成那一屏的「开始聊天」）：写 `ui.welcomed`，收起，进一个新的空会话。 */

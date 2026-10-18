@@ -64,8 +64,8 @@
         "embed": "语义模型"
       },
       "hello": {
-        "title": "欢迎使用 Miyu",
-        "start": "开始",
+        "title": "Miyu",
+        "start": "PRESS ENTER",
         "hint": "按 Enter 开始"
       },
       "language": {
@@ -85,11 +85,12 @@
         "language": "{name}（可选）"
       },
       "done": {
-        "title": "设置完成",
+        "title": "CLEAR!",
         "model": "模型 {name}",
         "persona": "人格 {name}",
         "preset": "预设 {name}",
-        "start": "开始聊天"
+        "start": "▶ 开始聊天",
+        "got": "获得"
       },
       "failed": "保存失败：{reason}",
       "embed": {
@@ -101,7 +102,7 @@
         "off_note": "只用关键词检索"
       },
       "skip": "跳过",
-      "where": "第 {at} 步，共 {total} 步 · {name}"
+      "where": "STAGE {at}/{total}"
     },
     "en": {
       "steps": {
@@ -115,8 +116,8 @@
         "embed": "Semantic model"
       },
       "hello": {
-        "title": "Welcome to Miyu",
-        "start": "Start",
+        "title": "Miyu",
+        "start": "PRESS ENTER",
         "hint": "Press Enter to start"
       },
       "language": {
@@ -136,11 +137,12 @@
         "language": "{name} (optional)"
       },
       "done": {
-        "title": "Setup complete",
+        "title": "CLEAR!",
         "model": "Model {name}",
         "persona": "Persona {name}",
         "preset": "Preset {name}",
-        "start": "Start chatting"
+        "start": "▶ Start chatting",
+        "got": "Got"
       },
       "failed": "Save failed: {reason}",
       "embed": {
@@ -152,7 +154,7 @@
         "off_note": "Keyword search only"
       },
       "skip": "Skip",
-      "where": "Step {at} of {total} · {name}"
+      "where": "STAGE {at}/{total}"
     },
     "ja": {
       "steps": {
@@ -166,8 +168,8 @@
         "embed": "意味モデル"
       },
       "hello": {
-        "title": "Miyu へようこそ",
-        "start": "始める",
+        "title": "Miyu",
+        "start": "PRESS ENTER",
         "hint": "Enter で開始"
       },
       "language": {
@@ -187,11 +189,12 @@
         "language": "{name}（任意）"
       },
       "done": {
-        "title": "設定完了",
+        "title": "CLEAR!",
         "model": "モデル {name}",
         "persona": "人格 {name}",
         "preset": "プリセット {name}",
-        "start": "チャットを始める"
+        "start": "▶ 話しはじめる",
+        "got": "ゲット"
       },
       "failed": "保存に失敗しました：{reason}",
       "embed": {
@@ -203,7 +206,7 @@
         "off_note": "キーワード検索のみ"
       },
       "skip": "スキップ",
-      "where": "ステップ {at} / {total} · {name}"
+      "where": "STAGE {at}/{total}"
     }
   }
 }

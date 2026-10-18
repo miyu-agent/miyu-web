@@ -219,7 +219,7 @@ export function doneScreen(g) {
     center: true,
     kind: 'done',
     body: h('div.wl-done', h('div.wl-burst', { 'aria-hidden': 'true' }, Array.from({ length: 12 }, (_, i) => h('i', { style: `--i: ${i}` }))),
-      parts.length ? h('div.wl-pills', parts.map((p) => h('span.wl-pill', p))) : null),
+      parts.length ? h('div.wl-pills', parts.map((p) => h('span.wl-pill', t('done.got'), ' ', h('b', p)))) : null),
     next: {
       label: t('done.start'),
       ready: () => true,
