@@ -21,7 +21,7 @@ const BACKGROUND_BYTES = 5 * 1024 * 1024;
 /** 人格没设透明度时画多少（蓝图第 6 条：盖 80% 的底色） */
 const OPACITY_DEFAULT = 20;
 /** 「模糊」打开时先存的程度（蓝图「跟着人格的外观」第 6 条） */
-const BLUR_ON = 40;
+const BLUR_ON = 5;
 
 export class Appearance {
   /**
@@ -129,7 +129,7 @@ export class Appearance {
   }
 
   /**
-   * 「模糊」开关，开了下面一行「模糊程度」滑杆：开存 40、关删掉；拖的时候整页当场跟着变，松手存（2026-10-19 项目主人要的）。
+   * 「模糊」开关，开了下面一行「模糊程度」滑杆：开存 5、关删掉；拖的时候整页当场跟着变，松手存（2026-10-19 项目主人要的）。
    */
   blurRows() {
     const t = this.t;
