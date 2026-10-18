@@ -67,7 +67,6 @@
       },
       "hello": {
         "title": "欢迎使用 Miyu",
-        "sub": "配置模型、人格和预设",
         "start": "开始",
         "hint": "按 Enter 开始"
       },
@@ -127,7 +126,6 @@
       },
       "hello": {
         "title": "Welcome to Miyu",
-        "sub": "Set up a model, persona and preset",
         "start": "Start",
         "hint": "Press Enter to start"
       },
@@ -187,7 +185,6 @@
       },
       "hello": {
         "title": "Miyu へようこそ",
-        "sub": "モデル・人格・プリセットを設定します",
         "start": "始める",
         "hint": "Enter で開始"
       },

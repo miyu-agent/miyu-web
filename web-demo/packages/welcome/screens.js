@@ -17,7 +17,6 @@ export function helloScreen(g) {
   const t = g.t;
   return {
     title: t('hello.title'),
-    sub: t('hello.sub'),
     center: true,
     body: h('p.wl-hint', t('hello.hint')),
     next: { label: t('hello.start'), ready: () => true, run: async () => { g.go('language', 1); return null; } },
