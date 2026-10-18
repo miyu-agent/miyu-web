@@ -49,10 +49,10 @@
       "remembered": "已记住",
       "classes": {
         "all": "全部",
-        "user": "关于你",
-        "feedback": "你的要求",
+        "user": "关于用户",
+        "feedback": "对 AI 的要求",
         "episode": "发生过的事",
-        "reference": "资料在哪"
+        "reference": "资料位置"
       },
       "show_retired": "显示作废的",
       "used": "用到 {n} 次",
@@ -128,8 +128,8 @@
       "remembered": "Remembered",
       "classes": {
         "all": "All",
-        "user": "About you",
-        "feedback": "Your requests",
+        "user": "About the user",
+        "feedback": "Requests for the AI",
         "episode": "What happened",
         "reference": "Where things are"
       },
@@ -207,8 +207,8 @@
       "remembered": "覚えました",
       "classes": {
         "all": "すべて",
-        "user": "あなたについて",
-        "feedback": "あなたの要望",
+        "user": "ユーザーについて",
+        "feedback": "AI への要望",
         "episode": "出来事",
         "reference": "資料の場所"
       },

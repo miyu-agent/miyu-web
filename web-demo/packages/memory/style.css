@@ -1,6 +1,5 @@
 /* 记忆页（蓝图 web.md「记忆页」）：控件照设置页（set-input、set-btn、set-switch）；一条一行、行之间一道细线，悬停 surface_2；
-   类别一个颜色的小圆点：关于你 accent、你的要求 gold、发生过的事 online、资料在哪紫色（跟着明暗） */
-.mem-page { --mem-user: var(--accent); --mem-feedback: var(--gold); --mem-episode: var(--online); --mem-reference: light-dark(#7a5cc0, #bb9af7); }
+   类别不配颜色，写在每一行右边的暗字里（2026-10-19 项目主人：四个颜色的圆点没什么意义） */
 .mem-list-page, .mem-detail-page { display: grid; gap: 14px; }
 .mem-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .mem-find { display: flex; flex: 1; align-items: center; gap: 6px; min-width: 180px; height: 30px; padding: 0 10px; border-radius: 8px; background: var(--surface-2); color: var(--text-faint); transition: background-color 0.15s ease, box-shadow 0.15s ease; }
@@ -20,24 +19,17 @@
 .mem-chip.is-on { background: var(--accent-soft); color: var(--accent); }
 .mem-n { opacity: 0.7; font-variant-numeric: tabular-nums; }
 .mem-retired { display: inline-flex; align-items: center; gap: 7px; margin-left: auto; color: var(--text-soft); font-size: 12.5px; cursor: pointer; }
-.mem-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--mem-c, var(--text-faint)); }
-.is-user { --mem-c: var(--mem-user); }
-.is-feedback { --mem-c: var(--mem-feedback); }
-.is-episode { --mem-c: var(--mem-episode); }
-.is-reference { --mem-c: var(--mem-reference); }
 
 /* 一条一行 */
 .mem-list { display: grid; }
-.mem-row { display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 11px 10px; border-radius: 10px; cursor: pointer; }
+.mem-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 11px 10px; border-radius: 10px; cursor: pointer; }
 .mem-row + .mem-row { box-shadow: 0 -1px 0 var(--line); }
 .mem-row:hover, .mem-row:focus-visible { background: var(--surface-2); box-shadow: none; outline: 0; }
 .mem-row:hover + .mem-row, .mem-row:focus-visible + .mem-row { box-shadow: none; }
-.mem-row > .mem-dot { margin-top: 7px; }
 .mem-text { min-width: 0; display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; color: var(--text); font-size: 13.5px; line-height: 1.6; overflow-wrap: anywhere; }
 .mem-text mark { padding: 0 1px; border-radius: 3px; background: color-mix(in srgb, var(--gold) 28%, transparent); color: inherit; }
 .mem-meta { display: grid; justify-items: end; gap: 1px; color: var(--text-faint); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .mem-row.is-retired .mem-text { color: var(--text-faint); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--text-faint) 60%, transparent); }
-.mem-row.is-retired > .mem-dot { background: var(--surface-3); }
 .mem-side { display: grid; justify-items: end; align-items: start; min-height: 36px; }
 .mem-side > * { grid-area: 1 / 1; }
 .mem-restore { visibility: hidden; }
@@ -73,7 +65,6 @@
 .mem-hint { color: var(--text-faint); font-size: 12px; }
 .mem-plain { padding-top: 6px; color: var(--text); font-size: 13.5px; }
 .mem-plain.is-faint { color: var(--text-faint); }
-.mem-class { display: inline-flex; align-items: center; gap: 7px; padding-top: 6px; font-size: 13.5px; }
 .mem-sources { display: grid; justify-items: start; gap: 3px; padding-top: 5px; }
 .mem-source { padding: 0; border: 0; background: none; color: var(--accent); font: 13px var(--sans); cursor: pointer; }
 .mem-source:hover { text-decoration: underline; }

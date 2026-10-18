@@ -207,7 +207,7 @@ export class MemoryPage {
     const add = h('button.set-btn.is-primary', { type: 'button', disabled: !this.persona, onclick: () => { this.adding = !this.adding; this.draw(); this.el.querySelector('.mem-add textarea')?.focus(); } }, icon('plus'), t('add'));
     const chips = h('div.mem-chips',
       ['all', ...CLASSES].map((k) => h(`button.mem-chip${this.cls === k ? '.is-on' : ''}${k === 'all' ? '' : `.is-${k}`}`, { type: 'button', onclick: () => { this.cls = k; this.draw(); } },
-        k === 'all' ? null : h('i.mem-dot'), t(`classes.${k}`), h('span.mem-n', String(c[k] ?? 0)))),
+        t(`classes.${k}`), h('span.mem-n', String(c[k] ?? 0)))),
       h('label.mem-retired', this.kit.toggle(this.retired, (/** @type {boolean} */ on) => { this.retired = on; this.reload(); return true; }), h('span', t('show_retired'))));
     const rows = shown.length
       ? shown.map((m) => this.row(m))
@@ -228,12 +228,11 @@ export class MemoryPage {
   row(m) {
     const t = this.t;
     const at = m.at ? Date.parse(m.at) : NaN;
-    return h(`div.mem-row${isRetired(m) ? '.is-retired' : ''}.is-${m.class}`, { role: 'button', tabindex: '0', onclick: () => this.openDetail(m.id), onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter') this.openDetail(m.id); } },
-      h('i.mem-dot', { title: t(`classes.${m.class}`) }),
+    return h(`div.mem-row${isRetired(m) ? '.is-retired' : ''}`, { role: 'button', tabindex: '0', onclick: () => this.openDetail(m.id), onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter') this.openDetail(m.id); } },
       h('span.mem-text', this.marked(m.text)),
       // 右边一格：日期、用到几次；作废的悬停时换成「找回」（同一格，不挤下一行）
       h('span.mem-side',
-        h('span.mem-meta', h('span', Number.isFinite(at) ? agoText(at, Date.now(), this.t) : ''), h('span', m.used ? t('used', { n: m.used }) : t('unused'))),
+        h('span.mem-meta', h('span', [t(`classes.${m.class}`), Number.isFinite(at) ? agoText(at, Date.now(), this.t) : ''].filter(Boolean).join(' · ')), h('span', m.used ? t('used', { n: m.used }) : t('unused'))),
         isRetired(m)
           ? h('button.set-btn.mem-restore', { type: 'button', onclick: (/** @type {Event} */ e) => { e.stopPropagation(); this.restore(m.id); } }, icon('rotate-ccw'), t('restore'))
           : null));
@@ -253,10 +252,10 @@ export class MemoryPage {
     const kw = hasKeywords(this.list) ? /** @type {HTMLInputElement} */ (h('input.set-input.mem-kw', { type: 'text', placeholder: t('add_keywords'), spellcheck: 'false', autocomplete: 'off' })) : null;
     const count = h('span.mem-count', `0 / ${TEXT_MAX}`);
     const ok = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'submit', disabled: true }, t('remember')));
-    const kinds = h('div.mem-chips', CLASSES.map((k) => h(`button.mem-chip.is-${k}${k === cls ? '.is-on' : ''}`, { type: 'button', onclick: (/** @type {Event} */ e) => {
+    const kinds = h('div.mem-chips', CLASSES.map((k) => h(`button.mem-chip${k === cls ? '.is-on' : ''}`, { type: 'button', onclick: (/** @type {Event} */ e) => {
       cls = k;
       for (const b of kinds.children) b.classList.toggle('is-on', b === e.currentTarget);
-    } }, h('i.mem-dot'), t(`classes.${k}`))));
+    } }, t(`classes.${k}`))));
     const sync = () => {
       const n = chars(area.value.trim());
       count.textContent = `${n} / ${TEXT_MAX}`;
@@ -340,7 +339,7 @@ export class MemoryPage {
       h('p.mem-gone', { hidden: true }, t('detail.gone')),
       row(t('detail.text'), [area, count]),
       kw ? row(t('detail.keywords'), [kw, h('div.mem-kw-foot', h('span.mem-hint', t('detail.keywords_note')), kwCount)]) : null,
-      row(t('detail.class'), h('span.mem-class.is-' + m.class, h('i.mem-dot'), t(`classes.${m.class}`))),
+      row(t('detail.class'), h('span.mem-plain', t(`classes.${m.class}`))),
       row(t('detail.at'), h('span.mem-plain', [Number.isFinite(at) ? new Date(at).toLocaleDateString() : '', t(m.by === 'person' ? 'detail.by_person' : 'detail.by_tool')].filter(Boolean).join(' · '))),
       row(t('detail.used'), h(`span.mem-plain${m.used ? '' : '.is-faint'}`, m.used ? t('detail.used_n', { n: m.used, when: Number.isFinite(usedAt) ? agoText(usedAt, Date.now(), this.t) : '' }) : t('unused'))),
       row(t('detail.sources'), sources.length ? h('div.mem-sources', sources) : h('span.mem-plain.is-faint', t('detail.no_source'))),
