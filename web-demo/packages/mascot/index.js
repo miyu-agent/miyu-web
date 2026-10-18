@@ -45,10 +45,25 @@ export function apply(ctx) {
   let stage = null;
   /** 台子：舞台的那几段，或者输入框那几段；再加整页的底边 */
   const platforms = () => [...(stage ? stage.platforms() : composerPlatforms()), { id: 'floor', x1: 0, x2: innerWidth, y: innerHeight }];
+  /**
+   * 输入框被对话区里整页的东西盖住了（全部会话、软件后台这类占对话区那一块的页面）：看框正中那一点最上面是谁，是对话区里、又不是框
+   * 和吉祥物自己的就是盖住了。弹窗（设置这类）挂在对话区外面，不算（2026-10-19 项目主人：全部会话里它站在看不见的输入框那里）。
+   * @param {DOMRect} r
+   */
+  let wasCovered = false;
+  const covered = (r) => {
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return !!hit && !box.contains(hit) && !layer.contains(hit) && !!box.closest('.stage')?.contains(hit);
+  };
   /** 输入框的上边沿（两头圆角那一段不算）、开着的浮层的上边沿（顶得上去） */
   const composerPlatforms = () => {
     const edge = c.home.edge;
     const r = box.getBoundingClientRect();
+    const now = !!r.width && covered(r);
+    // 盖的那一页收了：当场跳回输入框（不等在地上待够）
+    if (wasCovered && !now) queueMicrotask(() => behavior.goHome());
+    wasCovered = now;
+    if (now) return [];
     /** @type {import('./world.js').Platform[]} */
     // 输入框是实心的（`bottom`）：框往上长越过了往下掉的脚，把它顶上去，不从框里穿过去
     const list = r.width ? [{ id: 'composer', x1: r.left + edge, x2: r.right - edge, y: r.top, bottom: r.bottom }] : [];
@@ -88,7 +103,7 @@ export function apply(ctx) {
     avoid: () => {
       if (stage) return null;
       const r = box.getBoundingClientRect();
-      return r.width ? { x1: r.left - size().w / 2, x2: r.right + size().w / 2 } : null;
+      return r.width && !covered(r) ? { x1: r.left - size().w / 2, x2: r.right + size().w / 2 } : null;
     },
     hold: (kind) => props.hold(kind),
     nextProp: () => props.next(),
