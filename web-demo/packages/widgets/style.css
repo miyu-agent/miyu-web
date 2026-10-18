@@ -53,7 +53,7 @@
 
 /* ── 整页里能改的（蓝图第 7 条；样子照接入QQ 会话的 venue-cards.html，版式 A）：左边列表、右边详情卡片，不描边，靠底色分 ── */
 .wg-page.is-forms { padding: 16px 20px 40px; }
-.wg-forms { position: relative; max-width: 1180px; margin: 0 auto; outline: none; }
+.wg-forms { --wg-raised: var(--surface-2); position: relative; max-width: 1180px; margin: 0 auto; outline: none; }
 .wg-forms-body { display: grid; gap: 12px; }
 .wg-f-notice { margin-bottom: 10px; padding: 8px 12px; border-radius: 10px; background: color-mix(in srgb, var(--t-warn) 12%, var(--surface-1)); color: var(--text); font-size: 13px; }
 .wg-sections { display: grid; gap: 12px; }

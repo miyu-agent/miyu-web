@@ -269,6 +269,12 @@ export class StepView {
         return card;
       }
       if (s.kind === 'images') return this.imagesNode(s);
+      // 通用的结构化结果（核心 W-11 补）：链接一条一块，能点、新标签页打开；表格照回答里的 Markdown 表格画
+      if (s.kind === 'links') return h('div.tl-detail', h('div.tl-label', s.label), h('div.tl-links', s.links.map((l) =>
+        h('div.tl-link-card', h('a.tl-link', { href: l.url, target: '_blank', rel: 'noopener noreferrer' }, l.title),
+          l.meta ? h('div.tl-link-meta', l.meta) : null, l.snippet ? h('div.tl-link-snippet', l.snippet) : null))));
+      if (s.kind === 'table') return h('div.tl-detail', h('div.tl-label', s.label), h('div.markdown-body.tl-table', h('div.markdown-table-scroll',
+        h('table', h('thead', h('tr', s.columns.map((c) => h('th', c)))), h('tbody', s.rows.map((r) => h('tr', r.map((c) => h('td', c)))))))));
       // 翻记忆、查知识库、读文档（核心给人看的 `detail`）：记忆一条一行，对话片段、命中一段一块，读到的那一页照 Markdown
       if (s.kind === 'rows') return h('div.tl-detail', h('div.tl-label', s.label), ...s.rows.map((r) => h(`div.tl-found-row${r.struck ? '.is-struck' : ''}`, r.head ? h('span.tl-found-head', r.head) : null, h('span.tl-found-text', r.text))));
       if (s.kind === 'blocks') return h('div.tl-detail', h('div.tl-label', s.label), ...s.blocks.map((b) => h('div.tl-found-block', b.head ? h('div.tl-found-head', b.head) : null, b.md ? this.markdownNode(b.text) : h('pre', b.text))));
@@ -333,7 +339,9 @@ export class StepView {
     return h('div.tl-detail', s.label ? h('div.tl-label', s.label) : null,
       h('div.tl-images', { style: `--media-max: ${res.layout.result_image_max}px` }, s.images.map((img) =>
         // 不照记的宽高先占地方：记的是原图的，blob 可能缩过、比例对不上，框会多出一截空（照图自己的比例画）
-        imageCard({ url: blobUrl(img.blob, img.media_type), name, lightbox: this.where.lightbox }))));
+        // 通用结构化结果的图（核心 W-11 补）带一句说明：写在图下面
+        img.caption ? h('figure.tl-figure', imageCard({ url: blobUrl(img.blob, img.media_type), name, lightbox: this.where.lightbox }), h('figcaption', img.caption))
+          : imageCard({ url: blobUrl(img.blob, img.media_type), name, lightbox: this.where.lightbox }))));
   }
 
   /** 节点里的图标：变了才换（在想的原子图标在呼吸，别打断）。 */

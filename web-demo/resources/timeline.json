@@ -39,7 +39,8 @@
     "kb_read": "library",
     "kb_save": "library",
     "kb_edit": "library",
-    "kb_delete": "library"
+    "kb_delete": "library",
+    "web_fetch": "globe"
   },
   "icon_default": "wrench",
   "thinking_rows": 10,

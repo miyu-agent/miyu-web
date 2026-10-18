@@ -200,6 +200,16 @@
 .tl-found-doc { max-height: 300px; overflow: auto; font-size: 13px; }
 /* 读到的那一页里的图不画（照终端；文档里的图是知识库里的相对路径，网页取不到） */
 .tl-found-doc img { display: none; }
+/* 通用的结构化结果（核心 W-11 补）：链接一条一块，表格照 Markdown 表格，图下面一句说明 */
+.tl-links { display: grid; gap: 10px; }
+.tl-link { color: var(--accent); font-size: 13px; font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
+.tl-link:hover { text-decoration: underline; }
+.tl-link-meta { margin-top: 1px; color: var(--text-faint); font-size: 11.5px; }
+.tl-link-snippet { margin-top: 2px; color: var(--text-soft); font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
+.tl-table { font-size: 12.5px; }
+.tl-table .markdown-table-scroll { margin: 0; }
+.tl-figure { display: grid; gap: 4px; margin: 0; }
+.tl-figure figcaption { color: var(--text-faint); font-size: 11.5px; }
 
 
 /* 差异（旧版 diff.js、styles.css:2861-2967）：一张卡片，头一行做了什么、路径、加减；一行一行，加的绿底、删的红底 */

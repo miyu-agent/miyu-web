@@ -263,7 +263,9 @@ export function details(step) {
   const lines = commandLines(step);
   const shown = lines && !lines.more ? ['command', 'description'] : lines ? ['description'] : [];
   const args = pretty(step, shown);
-  return [...(args ? [{ kind: /** @type {const} */ ('text'), label: t('timeline.args'), text: args }] : []), ...result];
+  // 通用的结构化结果（核心 W-11 补：links、table、images）：换掉「结果」那一块，参数照旧
+  const card = step.status === 'ok' ? generic(step.detail) : null;
+  return [...(args ? [{ kind: /** @type {const} */ ('text'), label: t('timeline.args'), text: args }] : []), ...(card ? [card] : result)];
 }
 
 /**
@@ -289,6 +291,30 @@ function found(kind, d) {
     ...(turns.length ? [{ kind: /** @type {const} */ ('blocks'), label: t('timeline.turns'),
       blocks: turns.map((x) => ({ head: [str(x.date), str(x.session) ? t('timeline.message_session', { id: shortSession(str(x.session)) }) : ''].filter(Boolean).join(' · '), text: str(x.text) })) }] : []),
   ];
+}
+
+/**
+ * 三种通用形状的 `detail`（核心 W-11 补，2026-10-18）画成哪一种卡：链接列表、表格、图片；认不出、空的交 `null`（照一般的画）。
+ * @param {any} d
+ */
+function generic(d) {
+  const str = (/** @type {any} */ v) => (typeof v === 'string' ? v : '');
+  const label = t('timeline.result');
+  if (d?.kind === 'links' && Array.isArray(d.links)) {
+    const links = d.links.filter((/** @type {any} */ x) => /^https?:\/\//i.test(str(x?.url)))
+      .map((/** @type {any} */ x) => ({ title: str(x.title) || str(x.url), url: str(x.url), snippet: str(x.snippet), meta: [str(x.site), str(x.date)].filter(Boolean).join(' · ') }));
+    return links.length ? { kind: /** @type {const} */ ('links'), label, links } : null;
+  }
+  if (d?.kind === 'table' && Array.isArray(d.columns) && Array.isArray(d.rows)) {
+    const cell = (/** @type {any} */ v) => (v == null ? '' : String(v));
+    return d.columns.length ? { kind: /** @type {const} */ ('table'), label, columns: d.columns.map(cell), rows: d.rows.filter(Array.isArray).map((/** @type {any[]} */ r) => r.map(cell)) } : null;
+  }
+  if (d?.kind === 'images' && Array.isArray(d.images)) {
+    const images = d.images.filter((/** @type {any} */ x) => str(x?.blob) && /^image\//.test(str(x?.media_type)))
+      .map((/** @type {any} */ x) => ({ blob: x.blob, media_type: x.media_type, caption: str(x.caption) }));
+    return images.length ? { kind: /** @type {const} */ ('images'), label, images } : null;
+  }
+  return null;
 }
 
 /** 参数里的一个字符串，没有的是 `null`。 */

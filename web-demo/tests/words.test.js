@@ -139,6 +139,26 @@ test('翻记忆、查知识库、读文档照核心给人看的 detail（10-17�
   assert.deepEqual(details(tool('kb_read', { path: 'x' }, { status: 'error', output: 'No such document.', detail: null })).map((d) => d.label), ['参数', '结果']);
 });
 
+test('通用的结构化结果（核心 W-11 补）：links、table、images 换掉「结果」，参数照旧；认不出的、出错的照一般的画', () => {
+  const links = details(tool('ext_search', { q: '猫' }, { output: 'raw', detail: { kind: 'links', links: [
+    { title: '猫的百科', url: 'https://example.org/cat', snippet: '猫是……', site: 'example.org', date: '2026-10-01' },
+    { title: '坏的', url: 'javascript:alert(1)' },
+    { url: 'http://a.test/' },
+  ] } }));
+  assert.deepEqual(links.map((d) => d.label), ['参数', '结果']);
+  assert.deepEqual(/** @type {any} */ (links[1]).links, [
+    { title: '猫的百科', url: 'https://example.org/cat', snippet: '猫是……', meta: 'example.org · 2026-10-01' },
+    { title: 'http://a.test/', url: 'http://a.test/', snippet: '', meta: '' },
+  ], '只收 http、https；没标题的写网址');
+  const table = details(tool('ext_q', {}, { detail: { kind: 'table', columns: ['名', '数'], rows: [['a', 1], ['b', null], 'x'] } }));
+  assert.deepEqual(/** @type {any} */ (table[0]), { kind: 'table', label: '结果', columns: ['名', '数'], rows: [['a', '1'], ['b', '']] });
+  const blob = `sha256:${'b'.repeat(64)}`;
+  const images = details(tool('ext_img', {}, { detail: { kind: 'images', images: [{ blob, media_type: 'image/png', caption: '一张图' }, { blob, media_type: 'text/plain' }] } }));
+  assert.deepEqual(/** @type {any} */ (images[0]).images, [{ blob, media_type: 'image/png', caption: '一张图' }]);
+  assert.deepEqual(details(tool('ext_x', {}, { output: 'raw', detail: { kind: 'chart' } })).map((d) => d.label), ['结果'], '认不出的形状照一般的画');
+  assert.deepEqual(details(tool('ext_x', {}, { status: 'error', output: 'boom', detail: { kind: 'links', links: [{ title: 't', url: 'https://x.test' }] } })).map((d) => d.text), ['boom'], '出错的照原文');
+});
+
 test('读图的结果：点开时「结果」下面是那几张图（照 blob 取，蓝图「图片」第 2 条）；没有字的也有「结果」', () => {
   const images = [{ blob: `sha256:${'a'.repeat(64)}`, media_type: 'image/png', width: 800, height: 600 }];
   const d = details(tool('read', { file_path: '/tmp/a.png' }, { output: '', images }));
