@@ -36,6 +36,10 @@ export class MemoryPage {
     this.adding = false;
     /** 开着详情的那一条 @type {string|null} */
     this.open = null;
+    /** 开着详情的那一条最后一次见到的样子：改完不再命中搜索、掉出列表的，详情照它接着画 @type {import('./model.js').Memory|null} */
+    this.seen = null;
+    /** 核心认不认关键词（R-15 上）：读到过一条带这一格的就一直算认（搜不到东西、列表空着时也不收起关键词那一行） */
+    this.keywords = false;
     this.dreaming = false;
     /** 出错（没装记忆、这里没有记忆）：整页一张卡 @type {string|null} */
     this.problem = null;
@@ -113,6 +117,7 @@ export class MemoryPage {
         : await this.ctx.core.request('memory.list', { persona, forgotten: this.retired, limit: Math.min(500, this.limit) });
       if (persona !== this.persona || q !== this.query.trim()) return;
       this.list = Array.isArray(got?.memories) ? got.memories : [];
+      this.keywords = this.keywords || hasKeywords(this.list);
       this.problem = null;
     } catch (err) {
       const why = /** @type {any} */ (err)?.data?.reason;
@@ -249,7 +254,7 @@ export class MemoryPage {
     const t = this.t;
     let cls = 'user';
     const area = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.set-area.mem-area', { placeholder: t('add_hint', { n: TEXT_MAX }), rows: '3' }));
-    const kw = hasKeywords(this.list) ? /** @type {HTMLInputElement} */ (h('input.set-input.mem-kw', { type: 'text', placeholder: t('add_keywords'), spellcheck: 'false', autocomplete: 'off' })) : null;
+    const kw = this.keywords ? /** @type {HTMLInputElement} */ (h('input.set-input.mem-kw', { type: 'text', placeholder: t('add_keywords'), spellcheck: 'false', autocomplete: 'off' })) : null;
     const count = h('span.mem-count', `0 / ${TEXT_MAX}`);
     const ok = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'submit', disabled: true }, t('remember')));
     const kinds = h('div.mem-chips', CLASSES.map((k) => h(`button.mem-chip${k === cls ? '.is-on' : ''}`, { type: 'button', onclick: (/** @type {Event} */ e) => {
@@ -300,15 +305,16 @@ export class MemoryPage {
 
   detail() {
     const t = this.t;
-    const m = this.list.find((x) => x.id === this.open);
+    const m = this.list.find((x) => x.id === this.open) ?? (this.seen?.id === this.open ? this.seen : null);
     if (!m) {
       this.open = null;
       return this.page();
     }
+    this.seen = m;
     const name = this.personas.find((p) => p.persona === this.persona)?.name ?? '';
     const ro = isRetired(m);
     const area = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.set-area.mem-area', { disabled: ro }, m.text));
-    const withKw = hasKeywords(this.list);
+    const withKw = this.keywords || hasKeywords([m]);
     const kw = withKw ? /** @type {HTMLInputElement} */ (h('input.set-input.mem-kw', { type: 'text', value: m.keywords ?? '', placeholder: t('detail.keywords_hint'), spellcheck: 'false', autocomplete: 'off', disabled: ro })) : null;
     const count = h('span.mem-count', `${chars(m.text)} / ${TEXT_MAX}`);
     const kwCount = kw ? h('span.mem-count', `${chars(m.keywords ?? '')} / ${KEYWORDS_MAX}`) : null;
@@ -355,6 +361,8 @@ export class MemoryPage {
         const got = await this.ctx.core.request('memory.update', { persona: this.persona, ...change });
         this.kit.toast(t('detail.saved'));
         this.open = got?.id ?? m.id;
+        // 先照改了的记下：重读以后它不在列表里（不再命中搜索）的照这一份画
+        this.seen = { ...m, id: this.open, ...('text' in change ? { text: change.text } : {}), ...('keywords' in change ? { keywords: change.keywords || null } : {}) };
         delete area.dataset.dirty;
         if (kw) delete kw.dataset.dirty;
         await this.reload();
