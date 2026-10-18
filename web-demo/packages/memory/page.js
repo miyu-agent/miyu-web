@@ -4,7 +4,7 @@
 //! `memory` 流，推来的重读（停 300 毫秒并成一次）。一页是一个常驻的对象：设置页重画、关了再开交回的是同一块，写了一半的字还在。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { CLASSES, TEXT_MAX, KEYWORDS_MAX, chars, counts, visible, hasKeywords, updateOf, canSave, saveNote, shortId, agoText } from './model.js';
+import { CLASSES, TEXT_MAX, KEYWORDS_MAX, chars, counts, visible, hasKeywords, updateOf, canSave, saveNote, shortId, agoText, isRetired } from './model.js';
 
 /** 一次列几条（滚到底再多读一批） */
 const PAGE = 200;
@@ -117,7 +117,8 @@ export class MemoryPage {
     } catch (err) {
       const why = /** @type {any} */ (err)?.data?.reason;
       this.problem = why === 'memory_not_installed' ? 'missing' : why === 'memory_unavailable' ? 'unavailable'
-        : why === 'unknown_persona' && persona === NO_PERSONA ? 'old_core' : null;
+        // 不认 `_none` 的旧核心：回 `unknown_persona`，或者人格编号写法不对的 `bad_params`
+        : (why === 'unknown_persona' || why === 'bad_params' || /** @type {any} */ (err)?.code === -32602) && persona === NO_PERSONA ? 'old_core' : null;
       if (!this.problem) this.say(/** @type {any} */ (err)?.message ?? String(err));
       this.list = [];
     }
@@ -212,7 +213,7 @@ export class MemoryPage {
       ? shown.map((m) => this.row(m))
       : h('p.mem-empty', this.list.length || this.query.trim() ? t('no_match') : t('empty', { name }));
     const more = this.list.length >= this.limit ? h('button.mem-more', { type: 'button', onclick: () => { this.limit += PAGE; this.reload(); } }, t('more')) : null;
-    const retiredCount = this.retired ? this.list.filter((m) => m.retired).length : 0;
+    const retiredCount = this.retired ? this.list.filter(isRetired).length : 0;
     const clear = h(`button.set-btn.is-danger.mem-clear${this.armed ? '.is-armed' : ''}`, { type: 'button', disabled: !c.all, onclick: () => this.clear() },
       icon('trash-2'), this.armed ? t('clear_confirm', { name }) : t('clear'));
     return h('div.mem-list-page',
@@ -227,13 +228,15 @@ export class MemoryPage {
   row(m) {
     const t = this.t;
     const at = m.at ? Date.parse(m.at) : NaN;
-    return h(`div.mem-row${m.retired ? '.is-retired' : ''}.is-${m.class}`, { role: 'button', tabindex: '0', onclick: () => this.openDetail(m.id), onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter') this.openDetail(m.id); } },
+    return h(`div.mem-row${isRetired(m) ? '.is-retired' : ''}.is-${m.class}`, { role: 'button', tabindex: '0', onclick: () => this.openDetail(m.id), onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter') this.openDetail(m.id); } },
       h('i.mem-dot', { title: t(`classes.${m.class}`) }),
       h('span.mem-text', this.marked(m.text)),
-      m.retired
-        ? h('button.set-btn.mem-restore', { type: 'button', onclick: (/** @type {Event} */ e) => { e.stopPropagation(); this.restore(m.id); } }, icon('rotate-ccw'), t('restore'))
-        : null,
-      h('span.mem-meta', h('span', Number.isFinite(at) ? agoText(at, Date.now(), this.t) : ''), h('span', m.used ? t('used', { n: m.used }) : t('unused'))));
+      // 右边一格：日期、用到几次；作废的悬停时换成「找回」（同一格，不挤下一行）
+      h('span.mem-side',
+        h('span.mem-meta', h('span', Number.isFinite(at) ? agoText(at, Date.now(), this.t) : ''), h('span', m.used ? t('used', { n: m.used }) : t('unused'))),
+        isRetired(m)
+          ? h('button.set-btn.mem-restore', { type: 'button', onclick: (/** @type {Event} */ e) => { e.stopPropagation(); this.restore(m.id); } }, icon('rotate-ccw'), t('restore'))
+          : null));
   }
 
   /** 搜到的字淡黄底标出来 @param {string} text */
@@ -304,7 +307,7 @@ export class MemoryPage {
       return this.page();
     }
     const name = this.personas.find((p) => p.persona === this.persona)?.name ?? '';
-    const ro = !!m.retired;
+    const ro = isRetired(m);
     const area = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.set-area.mem-area', { disabled: ro }, m.text));
     const withKw = hasKeywords(this.list);
     const kw = withKw ? /** @type {HTMLInputElement} */ (h('input.set-input.mem-kw', { type: 'text', value: m.keywords ?? '', placeholder: t('detail.keywords_hint'), spellcheck: 'false', autocomplete: 'off', disabled: ro })) : null;
@@ -333,7 +336,7 @@ export class MemoryPage {
     const sources = (m.sources ?? []).map((s) => h('button.mem-source', { type: 'button', onclick: () => { this.ctx.chat?.open?.(s.session); this.ctx.settings?.close?.(); } },
       t('detail.source', { id: shortId(s.session), turn: s.turn })));
     const form = h('form.mem-detail',
-      ro ? h('div.mem-retired-banner', h('span', t('detail.retired', { why: m.retired })), h('button.set-btn', { type: 'button', onclick: () => this.restore(m.id) }, icon('rotate-ccw'), t('restore'))) : null,
+      ro ? h('div.mem-retired-banner', h('span', m.retired ? t('detail.retired', { why: m.retired }) : t('detail.retired_plain')), h('button.set-btn', { type: 'button', onclick: () => this.restore(m.id) }, icon('rotate-ccw'), t('restore'))) : null,
       h('p.mem-gone', { hidden: true }, t('detail.gone')),
       row(t('detail.text'), [area, count]),
       kw ? row(t('detail.keywords'), [kw, h('div.mem-kw-foot', h('span.mem-hint', t('detail.keywords_note')), kwCount)]) : null,

@@ -5,6 +5,9 @@
 /** 类别的先后（核心 `memory.md`「一条记忆」） */
 export const CLASSES = /** @type {const} */ (['user', 'feedback', 'episode', 'reference']);
 
+/** 作废了没有：核心作废时没写原因的给空字符串，不是 `null` 就算作废 @param {{retired?: string|null}} m */
+export const isRetired = (m) => m.retired != null;
+
 /** 一条最多几个字、关键词最多几个字（核心 R-15 上） */
 export const TEXT_MAX = 120;
 export const KEYWORDS_MAX = 200;
@@ -23,7 +26,7 @@ export function counts(list) {
   const out = { all: 0 };
   for (const c of CLASSES) out[c] = 0;
   for (const m of list) {
-    if (m.retired) continue;
+    if (isRetired(m)) continue;
     out.all += 1;
     if (m.class in out) out[m.class] += 1;
   }
@@ -35,7 +38,7 @@ export function counts(list) {
  * @param {Memory[]} list @param {{cls: string, retired: boolean}} f
  */
 export function visible(list, f) {
-  return list.filter((m) => (f.retired || !m.retired) && (f.cls === 'all' || m.class === f.cls));
+  return list.filter((m) => (f.retired || !isRetired(m)) && (f.cls === 'all' || m.class === f.cls));
 }
 
 /** 核心给的记忆带不带关键词这一格（R-15 上以前的没有）：有一条带了就算有 @param {Memory[]} list */

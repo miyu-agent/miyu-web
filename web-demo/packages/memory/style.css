@@ -38,9 +38,11 @@
 .mem-meta { display: grid; justify-items: end; gap: 1px; color: var(--text-faint); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .mem-row.is-retired .mem-text { color: var(--text-faint); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--text-faint) 60%, transparent); }
 .mem-row.is-retired > .mem-dot { background: var(--surface-3); }
-.mem-restore { display: none; }
-.mem-row.is-retired:hover .mem-restore, .mem-row.is-retired:focus-within .mem-restore { display: inline-flex; }
-.mem-row.is-retired:hover .mem-meta, .mem-row.is-retired:focus-within .mem-meta { display: none; }
+.mem-side { display: grid; justify-items: end; align-items: start; min-height: 36px; }
+.mem-side > * { grid-area: 1 / 1; }
+.mem-restore { visibility: hidden; }
+.mem-row.is-retired:hover .mem-restore, .mem-row.is-retired:focus-within .mem-restore { visibility: visible; }
+.mem-row.is-retired:hover .mem-meta, .mem-row.is-retired:focus-within .mem-meta { visibility: hidden; }
 .mem-empty { margin: 0; padding: 34px 0; color: var(--text-faint); font-size: 13px; text-align: center; }
 .mem-more { justify-self: center; margin-top: 8px; border: 0; background: none; color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer; }
 .mem-more:hover { color: var(--text); }

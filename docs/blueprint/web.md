@@ -701,7 +701,7 @@
 7. 最底下一行：左边暗字「N 条在用 · N 条作废」，右边「清空这一份」（危险色）：点一下变「确认清空 X 的全部记忆」，三秒内再点才清（`memory.forget` 的 `clear: "me"`），提示「已清空 N 条（找不回来）」。
 8. 跟着变：这一页开着时订阅那一份的 `memory` 流（`subscribe {stream: "memory", persona}`），推来 `memory.event` 的重读列表（停 300 毫秒并成一次；正在详情里改着的不冲掉写了一半的字，那一条在别处被改掉、作废了的，详情顶上写一行「这一条在别处改过了」）；换了一份、关了设置退订；掉了队（`resync`）重订。
 9. 出错：没装记忆（`memory_not_installed`）整页一张卡「记忆没有安装」，下面「到软件包里安装」跳「软件包」页；这一份没有记忆（`memory_unavailable`）写「这里没有记忆」。
-10. 无人格那一份：`memory.*`、`memory` 流写 `"persona": "_none"`（核心 P-12 的 NO_PERSONA，人格编号都以小写字母开头、撞不上；2026-10-19 shorin-ee 定，`null` 等于没写、会照默认人格找，不用）；`persona.list` 里没有它，下拉里网页自己加一项「无人格」。一个无人格会话都没开过的也能列、能记。不认 `_none` 的旧核心回 `unknown_persona`：那一份写「这一版核心还不支持无人格的记忆」。
+10. 无人格那一份：`memory.*`、`memory` 流写 `"persona": "_none"`（核心 P-12 的 NO_PERSONA，人格编号都以小写字母开头、撞不上；2026-10-19 shorin-ee 定，`null` 等于没写、会照默认人格找，不用）；`persona.list` 里没有它，下拉里网页自己加一项「无人格」。一个无人格会话都没开过的也能列、能记。不认 `_none` 的旧核心回 `unknown_persona` 或 `bad_params`：那一份写「这一版核心还不支持无人格的记忆」。
 11. 旧核心：一条记忆里没有 `keywords` 这一格的（R-15 上以前），详情里不画「关键词」那一行，「记一条」里也不画。
 
 **第一次引导**（软件包 `welcome`；2026-10-08 项目主人看过样板定：欢迎 → 界面语言 → 模型 → 人格 → 预设 → 完成，人格必须建、不能跳过，过程中吉祥物陪着；2026-10-10 定放「界面语言」这一步。核心的方法：`ui.welcomed`（8-11 四补）、`provider.detect`、`provider.catalog {featured: true}`、`provider.test`（8-11、8-11 再补），`persona.set`、`preset.set` 不写编号新建（P-3），走法照 `cli/setup.md`，写的东西和 `miyu setup` 一样）：

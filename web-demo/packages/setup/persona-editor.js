@@ -126,7 +126,7 @@ export class PersonaEditor {
     }));
     // 数一下没作废的（读不到的只写「查看」）
     this.ctx.core.request('memory.list', { persona: this.id, limit: 500 }).then((r) => {
-      const n = Array.isArray(r?.memories) ? r.memories.filter((/** @type {any} */ m) => !m.retired).length : null;
+      const n = Array.isArray(r?.memories) ? r.memories.filter((/** @type {any} */ m) => m.retired == null).length : null;
       if (n != null) btn.textContent = t('edit.memory_count', { n });
     }, () => {});
     return field(t('edit.memory'), btn);

@@ -98,7 +98,8 @@
         "saved": "已保存",
         "forget": "作废",
         "retired": "已作废：{why}",
-        "gone": "这一条在别处改过了"
+        "gone": "这一条在别处改过了",
+        "retired_plain": "已作废"
       },
       "ago": {
         "now": "刚才",
@@ -176,7 +177,8 @@
         "saved": "Saved",
         "forget": "Retire",
         "retired": "Retired: {why}",
-        "gone": "This one was changed elsewhere"
+        "gone": "This one was changed elsewhere",
+        "retired_plain": "Retired"
       },
       "ago": {
         "now": "Just now",
@@ -254,7 +256,8 @@
         "saved": "保存しました",
         "forget": "無効化",
         "retired": "無効化済み：{why}",
-        "gone": "この記憶はほかで変更されています"
+        "gone": "この記憶はほかで変更されています",
+        "retired_plain": "無効化済み"
       },
       "ago": {
         "now": "たった今",
