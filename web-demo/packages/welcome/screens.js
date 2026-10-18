@@ -213,13 +213,15 @@ export function doneScreen(g) {
   const r = g.result;
   const model = r.model ? r.model.model || r.model.name : '';
   const parts = [model ? t('done.model', { name: model }) : null, r.persona ? t('done.persona', { name: r.persona }) : null, r.preset ? t('done.preset', { name: r.preset }) : null].filter(Boolean);
-  // 走完的几样一样一个小胶囊（跳过了的不写），吉祥物四周一圈小光点散开一次（2026-10-19 项目主人：完成那一屏原来没对齐、太素）
+  // 走完的几样一样一行（跳过了的不写），隔 0.3 秒一行弹上来，每弹一行吉祥物跳一下（同 style.css 的时刻；2026-10-19 项目主人：原来的礼花不适合）
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    parts.forEach((_, i) => setTimeout(() => { if (g.step === 'done' && g.layer.isConnected) g.ctx.mascot?.hop?.(); }, 450 + i * 300 + 120));
+  }
   return {
     title: t('done.title'),
     center: true,
     kind: 'done',
-    body: h('div.wl-done', h('div.wl-burst', { 'aria-hidden': 'true' }, Array.from({ length: 12 }, (_, i) => h('i', { style: `--i: ${i}` }))),
-      parts.length ? h('div.wl-pills', parts.map((p) => h('span.wl-pill', t('done.got'), ' ', h('b', p)))) : null),
+    body: h('div.wl-done', parts.length ? h('div.wl-pills', parts.map((p, i) => h('span.wl-pill', { style: `--i: ${i}` }, t('done.got'), ' ', h('b', p)))) : null),
     next: {
       label: t('done.start'),
       ready: () => true,

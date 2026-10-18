@@ -1,17 +1,24 @@
 /* 第一次引导（软件包 welcome；蓝图 web.md「第一次引导」第 2、3、10 条）：「像素关卡」（2026-10-19 项目主人从四套样板里挑的）。
-   盖着整页的一层（在吉祥物那一层下面），不管明暗都是这一套深夜的样子：在这一层里把主题的那几格换成定死的一套，别的包画的控件
-   （设置包的框、开关，人格包的表）跟着变深；再给它们换成直角、像素的阶梯角。字随包带着（fonts/，SIL OFL 1.1） */
+   盖着整页的一层（在吉祥物那一层下面）。颜色照主题（2026-10-19 项目主人：主题那一屏换了整个引导跟着当场变）：像素的那几格
+   （--px-*）从主题的几格掺出来，再在这一层下面把主题的几格换成它们，别的包画的控件（设置包的框、开关，人格包的表）跟着换；再给它们
+   换成直角、像素的阶梯角。字随包带着（fonts/，SIL OFL 1.1） */
 @font-face { font-family: "Miyu Pixel CJK"; src: url("fonts/zcool-qingke.woff2") format("woff2"); font-display: swap; }
 @font-face { font-family: "Miyu Pixel"; src: url("fonts/press-start.ttf") format("truetype"); font-display: swap; }
 
 .wl-layer {
-  --px-bg: #141631; --px-cell: #1d2047; --px-cell-hi: #262a5c; --px-cell-on: #2f3570; --px-edge: #3b42a0; --px-ground: #2a2f6b; --px-ground-2: #252a60;
-  --px-tx: #eef0ff; --px-soft: #b9bde6; --px-dim: #8d92c4; --px-yel: #ffd75e; --px-yel-dark: #c99a1e; --px-yel-ink: #241c05; --px-blu: #7aa2ff; --px-blu-dark: #3b42a0;
+  --px-bg: var(--surface);
+  --px-cell: color-mix(in srgb, var(--accent) 10%, var(--surface-2)); --px-cell-hi: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
+  --px-cell-on: color-mix(in srgb, var(--accent) 26%, var(--surface-2)); --px-edge: color-mix(in srgb, var(--accent) 45%, var(--surface-3));
+  --px-ground: color-mix(in srgb, var(--accent) 24%, var(--surface-3)); --px-ground-2: color-mix(in srgb, var(--accent) 16%, var(--surface-3));
+  --px-tx: var(--text); --px-soft: var(--text-soft); --px-dim: color-mix(in srgb, var(--text-soft) 78%, var(--surface));
+  /* 黄照明暗各一份：浅底上原来那个黄看不清 */
+  --px-yel: light-dark(#e0a300, #ffd75e); --px-yel-dark: light-dark(#9c6f00, #c99a1e); --px-yel-ink: #241c05;
+  --px-blu: var(--accent); --px-blu-dark: color-mix(in srgb, var(--accent) 55%, #000); --px-ink: var(--on-primary);
+  --px-star: light-dark(color-mix(in srgb, var(--text) 30%, transparent), #ffffff);
   --px-head: "Miyu Pixel CJK", var(--sans); --px-font: "Miyu Pixel", ui-monospace, monospace;
   /* 真的主题记一份：主题那一屏的小窗口照它画（下面一层换成像素的那一套） */
   --keep-surface: var(--surface); --keep-sidebar: var(--sidebar-bg); --keep-surface-1: var(--surface-1); --keep-surface-2: var(--surface-2);
-  --keep-text: var(--text); --keep-text-soft: var(--text-soft); --keep-accent: var(--accent); --keep-on-primary: var(--on-primary);
-  color-scheme: dark;
+  --keep-text: var(--text); --keep-text-soft: var(--text-soft); --keep-accent: var(--accent); --keep-accent-soft: var(--accent-soft);
   position: fixed; z-index: 38; inset: 0; overflow: hidden; background: var(--px-bg); color: var(--px-tx); font-family: var(--sans);
   animation: fade-in var(--motion-in) var(--ease-out) both;
 }
@@ -19,7 +26,7 @@
 .wl-layer > * {
   --surface: var(--px-bg); --surface-1: var(--px-cell); --surface-2: var(--px-cell-hi); --surface-3: var(--px-cell-on);
   --text: var(--px-tx); --text-soft: var(--px-soft); --text-faint: var(--px-dim); --line: var(--px-edge); --line-strong: var(--px-edge);
-  --accent: var(--px-blu); --on-primary: #0b1030; --accent-soft: #2f3570; --card-shadow: none; --float-shadow: none; --danger: #ff7a7a; --online: #9be36a;
+  --accent-soft: var(--px-cell-on); --card-shadow: none; --float-shadow: none;
 }
 .wl-layer.is-leaving { animation: wl-out 0.28s var(--ease-in) both; pointer-events: none; will-change: opacity; }
 @keyframes wl-out { to { opacity: 0; } }
@@ -39,8 +46,8 @@
 .wl-steps li.is-done, .wl-steps li.is-now { background: var(--px-yel); box-shadow: inset -2px -2px 0 var(--px-yel-dark); }
 .wl-steps li.is-now { animation: wl-blink 1s steps(2) infinite; }
 
-/* 一屏：整块一格一格地挪进来，不糊开、不弹 */
-.wl-screen { display: grid; gap: 0; animation: wl-in-fwd 0.2s steps(4) both; }
+/* 一屏：整块平滑地挪进来、淡入，不糊开、不弹（2026-10-19 项目主人：原来 steps(4) 一格一格挪，看着像掉帧） */
+.wl-screen { display: grid; gap: 0; animation: wl-in-fwd 0.24s var(--ease-out) both; }
 .wl-screen.is-back { animation-name: wl-in-back; }
 @keyframes wl-in-fwd { from { opacity: 0; transform: translateX(16px); } }
 @keyframes wl-in-back { from { opacity: 0; transform: translateX(-16px); } }
@@ -61,7 +68,7 @@
   min-width: 128px; height: 38px; padding: 0 18px; border: 0; border-radius: 0; background: var(--px-cell-on); color: var(--px-tx);
   font: 10px var(--px-head); font-size: 15px; cursor: pointer; box-shadow: 0 4px 0 var(--px-ground); transform: translateY(0);
 }
-.wl-btn.is-primary { background: var(--px-blu); color: #0b1030; box-shadow: 0 4px 0 var(--px-blu-dark); }
+.wl-btn.is-primary { background: var(--px-blu); color: var(--px-ink); box-shadow: 0 4px 0 var(--px-blu-dark); }
 .wl-btn.is-primary:hover { filter: brightness(1.08); }
 .wl-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 var(--px-blu-dark); }
 .wl-btn.is-primary:focus-visible { outline: 3px solid var(--px-yel); outline-offset: 3px; }
@@ -78,7 +85,8 @@
 .wl-layer.is-hello .wl-hint { animation: wl-blink 1s steps(2) infinite; }
 .wl-layer.is-hello .wl-btn.is-primary { min-width: 168px; height: 48px; font-size: 20px; }
 .wl-layer.is-hello .wl-foot + .wl-body, .wl-layer.is-hello .wl-body { margin-top: 16px; }
-/* 完成：CLEAR!，下面一样一行获得的东西；四处掉几颗彩色的像素方块 */
+/* 完成：像拿到道具（2026-10-19 项目主人：原来掉彩色方块的礼花不适合）：CLEAR! 落下来顿一下，「获得 …」隔 0.3 秒一行弹上来，最后出按钮；
+   只动透明度和位移 */
 .wl-layer.is-done .wl-screen.is-center { padding-top: 70px; }
 .wl-layer.is-done .wl-title { color: var(--px-yel); font: 22px/1.4 var(--px-font); text-shadow: 3px 3px 0 #b5410f; }
 .wl-layer.is-done .wl-screen.is-center .wl-body { order: 1; margin-top: 20px; }
@@ -86,12 +94,16 @@
 .wl-pills { display: grid; justify-items: center; gap: 8px; }
 .wl-pill { color: var(--px-dim); font-size: 13.5px; }
 .wl-pill b { color: var(--px-tx); font-weight: 500; }
-.wl-burst { position: fixed; inset: 0; pointer-events: none; }
-.wl-burst i { position: absolute; top: -10px; left: calc(6% + var(--i) * 7.6%); width: 6px; height: 6px; background: var(--px-yel); animation: wl-fall 1.6s calc(var(--i) * 0.07s) steps(16) both; }
-.wl-burst i:nth-child(3n) { background: var(--px-blu); }
-.wl-burst i:nth-child(4n) { background: #ff8a5c; }
-.wl-burst i:nth-child(5n) { background: #9be36a; }
-@keyframes wl-fall { 0% { transform: translateY(0); opacity: 1; } 85% { opacity: 1; } 100% { transform: translateY(calc(var(--d, 46vh) + var(--i) * 3vh)); opacity: 0; } }
+.wl-layer.is-done .wl-screen { animation: none; }
+.wl-layer.is-done .wl-title { animation: wl-drop 0.42s cubic-bezier(0.3, 1.5, 0.6, 1) both; }
+.wl-pill { animation: wl-pop 0.32s calc(0.45s + var(--i) * 0.3s) cubic-bezier(0.3, 1.6, 0.6, 1) both; }
+.wl-layer.is-done .wl-foot { animation: wl-rise 0.3s 0.45s var(--ease-out) both; }
+.wl-layer.is-done .wl-screen:has(.wl-pill:nth-child(1)) .wl-foot { animation-delay: 0.75s; }
+.wl-layer.is-done .wl-screen:has(.wl-pill:nth-child(2)) .wl-foot { animation-delay: 1.05s; }
+.wl-layer.is-done .wl-screen:has(.wl-pill:nth-child(3)) .wl-foot { animation-delay: 1.35s; }
+@keyframes wl-drop { from { opacity: 0; transform: translateY(-36px); } }
+@keyframes wl-pop { from { opacity: 0; transform: translateY(14px); } }
+@keyframes wl-rise { from { opacity: 0; transform: translateY(8px); } }
 @keyframes wl-blink { 50% { opacity: 0.25; } }
 
 /* 选项：一块格子、直角，四边垫 3px 的阴影成像素的阶梯角，不描边；选中的整块换成黄色、左边一个闪着的 ▶ */
@@ -167,27 +179,26 @@
 /* 星点：稀稀的白点慢慢闪（原来那两团糊开的光去掉了） */
 .wl-sky { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .wl-glow { display: none; }
-.wl-star { position: absolute; width: 2px; height: 2px; background: #ffffff; animation: wl-twinkle 6s steps(3) infinite; }
+.wl-star { position: absolute; width: 2px; height: 2px; background: var(--px-star); animation: wl-twinkle 6s steps(3) infinite; }
 @keyframes wl-twinkle { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.7; } }
 @media (prefers-reduced-motion: reduce) {
-  .wl-star, .wl-screen, .wl-layer, .wl-burst i, .wl-steps li.is-now, .wl-lang.is-on::before, .wl-layer .setup-choice.is-on::before,
+  .wl-star, .wl-screen, .wl-layer, .wl-pill, .wl-layer.is-done .wl-title, .wl-layer.is-done .wl-foot, .wl-steps li.is-now, .wl-lang.is-on::before, .wl-layer .setup-choice.is-on::before,
   .wl-layer .ob-model.is-on::before, .wl-layer.is-hello .wl-hint { animation: none; }
-  .wl-burst { display: none; }
 }
 
-/* 主题那一屏的小窗口：缩小的对话页，照真的主题画（--keep-*），换了当场跟着变（2026-10-19 项目主人：换了看不到效果） */
+/* 主题那一屏的小窗口：缩小的对话页，照真的主题画（--keep-*），和整页一起变；主色铺得开一点（2026-10-19 项目主人：原来只有发送键一小块看得出） */
 .wl-preview {
   --surface: var(--keep-surface); --sidebar-bg: var(--keep-sidebar); --surface-1: var(--keep-surface-1); --surface-2: var(--keep-surface-2);
-  --text: var(--keep-text); --text-soft: var(--keep-text-soft); --accent: var(--keep-accent);
+  --text: var(--keep-text); --text-soft: var(--keep-text-soft); --accent: var(--keep-accent); --accent-soft: var(--keep-accent-soft);
   display: grid; grid-template-columns: 64px 1fr; height: 132px; margin: 0 3px 22px; overflow: hidden; background: var(--surface);
   box-shadow: 0 -3px 0 0 var(--px-cell-on), 0 3px 0 0 var(--px-cell-on), -3px 0 0 0 var(--px-cell-on), 3px 0 0 0 var(--px-cell-on);
-  transition: background-color 0.3s steps(3);
 }
 .wl-preview-side { display: grid; align-content: start; gap: 6px; padding: 12px 8px; background: var(--sidebar-bg); }
 .wl-preview-side i { height: 7px; background: var(--surface-2); }
-.wl-preview-side i:first-child { background: color-mix(in srgb, var(--accent) 45%, var(--surface-2)); }
+.wl-preview-side i:first-child { background: var(--accent-soft); }
+.wl-preview-side i:first-child::after { content: ""; display: block; width: 40%; height: 100%; background: var(--accent); opacity: 0.7; }
 .wl-preview-chat { position: relative; display: grid; align-content: start; gap: 8px; padding: 14px 14px 0; }
-.wl-preview-chat .me { justify-self: end; width: 120px; height: 18px; background: var(--surface-1); }
+.wl-preview-chat .me { justify-self: end; width: 120px; height: 18px; background: var(--accent-soft); }
 .wl-preview-chat .ai { width: 70%; height: 7px; background: var(--text-soft); opacity: 0.55; }
 .wl-preview-chat .ai.short { width: 46%; }
 .wl-preview-chat .box { position: absolute; left: 14px; right: 14px; bottom: 12px; height: 26px; background: var(--surface-1); }

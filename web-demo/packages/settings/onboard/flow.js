@@ -296,7 +296,10 @@ export class ProviderFlow {
       state.force = false;
       state.chosen = null;
       models.hidden = true;
-      result.hidden = true;
+      // 测着的那一两秒写一行在做什么（2026-10-19 项目主人：原来空着像卡住了）
+      result.hidden = false;
+      result.className = 'ob-result is-busy';
+      replace(result, icon('loader-circle'), h('span', name ? t('onboard.test_busy', { name }) : t('onboard.test_busy_plain')));
       this.host.ready();
       this.host.mascot?.busy(true);
       let got;

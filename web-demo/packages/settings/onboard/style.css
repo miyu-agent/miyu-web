@@ -36,6 +36,8 @@
 .ob-result svg { width: 15px; height: 15px; flex: none; }
 .ob-result.is-good { display: flex; align-items: center; gap: 6px; color: var(--online); }
 .ob-result.is-bad { color: var(--danger); }
+.ob-result.is-busy { display: flex; align-items: center; gap: 6px; color: var(--text-faint); }
+.ob-result.is-busy svg { animation: set-spin 0.9s linear infinite; }
 .ob-result-line { display: flex; align-items: center; gap: 6px; }
 .ob-result-raw {
   display: -webkit-box; overflow: hidden; margin: 0 0 0 21px; color: var(--text-faint); font-size: 12px; overflow-wrap: anywhere;
