@@ -5,7 +5,7 @@
 //! - 明暗：网页的设置项 `scheme`（软件包 `theme`），当场换。
 //! 每存一样重读人格列表，整页照这个人格新的样子画（发 `look.changed`，软件包 `theme-persona` 照它变）。「下一步」不存别的。
 
-import { h, replace } from '../../src/lib/dom.js';
+import { h, replace, icon } from '../../src/lib/dom.js';
 import { field } from './form.js';
 import { Appearance } from './appearance.js';
 import { personaName } from './model.js';
@@ -71,8 +71,8 @@ export class ThemeStep {
       field(t('edit.avatar'), this.look.avatarBox),
       field(t('welcome.scheme'), this.schemeBox),
       field(t('welcome.palette'), this.paletteBox),
-      // 「主色」只在跟随头像那一套有（照头像取色、能自选；2026-10-19 项目主人：原来叫「配色」）
-      this.persona && this.palette === PERSONA_PALETTE ? field(t('welcome.colors'), this.look.seedBox) : null,
+      // 「主色」：照主色生成的那几套都有（跟随人格照头像取、能自选；跟随壁纸照壁纸取；2026-10-19 项目主人：原来叫「配色」，md3 配色的时候都出现）
+      this.mainColor(),
       this.note);
     this.body = body;
     return {
@@ -107,6 +107,27 @@ export class ThemeStep {
           h('i', { style: { background: colors.accent ?? '' } }), h('i', { style: { background: colors.text ?? '', opacity: '0.55' } }), h('i', { style: { background: colors.gold ?? colors.accent ?? '' } })),
         h('span.setup-palette-name', String(p.name ?? p.id)));
     }));
+  }
+
+  /** 「主色」那一行：跟随人格的是这个人格的那一排（头像取的、能自选）；别的照那一套给的候选色（跟随壁纸照壁纸取的）；没有候选的（默认）不画。 */
+  mainColor() {
+    const t = this.t;
+    if (this.persona && this.palette === PERSONA_PALETTE) return field(t('welcome.colors'), this.look.seedBox);
+    const palette = this.ctx.slots.list('theme.palettes').find((/** @type {any} */ p) => p.id === this.palette);
+    const seeds = typeof palette?.seeds === 'function' ? palette.seeds() : null;
+    if (!seeds?.colors?.length) return null;
+    const box = h('div.setup-seed-box');
+    const paint = () => replace(box, seeds.colors.map((/** @type {string} */ hex) => h(`button.setup-swatch${hex === seeds.current ? '.is-on' : ''}`, {
+      type: 'button', title: hex, 'aria-label': hex, 'aria-pressed': String(hex === seeds.current), style: { background: hex },
+      onclick: async () => {
+        if (hex === seeds.current) return;
+        await Promise.resolve(seeds.pick(hex)).catch((/** @type {any} */ err) => this.say(err?.message ?? String(err)));
+        seeds.current = hex;
+        paint();
+      },
+    }, hex === seeds.current ? icon('check') : null)));
+    paint();
+    return field(t('welcome.colors'), box);
   }
 
   /** 换一套配色方案：写网页的设置项 `palette`，整页当场换。 @param {string} id */

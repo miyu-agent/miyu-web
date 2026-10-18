@@ -63,11 +63,14 @@ export function parse(source, { line } = {}) {
     const fence = FENCE_OPEN.exec(text);
     if (fence) {
       const body = [];
+      const start = i;
       i += 1;
       while (i < lines.length && !FENCE_CLOSE.test(lines[i])) body.push(lines[i++]);
       const closed = i < lines.length;
       if (closed) i += 1;
-      blocks.push({ type: 'code', lang: LANG.test(fence[1]) ? fence[1] : '', text: body.join('\n'), closed });
+      // 语言写 math 的围起来的一段是独占几行的公式（2026-10-19 项目主人让终端认，两个头一样）；还没收的照代码画，收了再排；`latex` 照源码画
+      if (closed && fence[1].toLowerCase() === 'math') blocks.push({ type: 'math', tex: body.join('\n'), raw: lines.slice(start, i).join('\n') });
+      else blocks.push({ type: 'code', lang: LANG.test(fence[1]) ? fence[1] : '', text: body.join('\n'), closed });
       continue;
     }
     const value = claim(i);

@@ -43,6 +43,9 @@ test('独占几行的公式：$$…$$、\\[…\\]，一行里的也认；没收�
   assert.deepEqual(parse('$$\nx^2\n+ 1\n$$'), [{ type: 'math', tex: 'x^2\n+ 1', raw: '$$\nx^2\n+ 1\n$$' }]);
   assert.deepEqual(parse('$$e=mc^2$$'), [{ type: 'math', tex: 'e=mc^2', raw: '$$e=mc^2$$' }]);
   assert.deepEqual(parse('\\[\na\n\\]\n后面'), [{ type: 'math', tex: 'a', raw: '\\[\na\n\\]' }, para('后面')]);
+  assert.deepEqual(parse('```math\nx^2 + 1\n```'), [{ type: 'math', tex: 'x^2 + 1', raw: '```math\nx^2 + 1\n```' }], '```math 是公式（2026-10-19）');
+  assert.equal(parse('```math\nx^2')[0].type, 'code', '还没收完的照代码');
+  assert.equal(parse('```latex\nx^2\n```')[0].type, 'code', 'latex 照源码');
   assert.deepEqual(parse('$$\nx^2'), [para('$$', BR, 'x^2')]);
 });
 
