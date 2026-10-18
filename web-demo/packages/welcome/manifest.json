@@ -65,8 +65,8 @@
       },
       "hello": {
         "title": "Miyu",
-        "start": "PRESS ENTER",
-        "hint": "按 Enter 开始"
+        "start": "开始",
+        "hint": "PRESS ENTER"
       },
       "language": {
         "title": "界面语言",
@@ -117,8 +117,8 @@
       },
       "hello": {
         "title": "Miyu",
-        "start": "PRESS ENTER",
-        "hint": "Press Enter to start"
+        "start": "Start",
+        "hint": "PRESS ENTER"
       },
       "language": {
         "title": "Interface language",
@@ -169,8 +169,8 @@
       },
       "hello": {
         "title": "Miyu",
-        "start": "PRESS ENTER",
-        "hint": "Enter で開始"
+        "start": "スタート",
+        "hint": "PRESS ENTER"
       },
       "language": {
         "title": "表示言語",

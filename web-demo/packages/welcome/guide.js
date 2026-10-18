@@ -416,16 +416,20 @@ export class Guide {
     return { x: right, platform };
   }
 
-  /** 走完（完成那一屏的「开始聊天」）：写 `ui.welcomed`，收起，进一个新的空会话。 */
+  /**
+   * 走完（完成那一屏的「开始聊天」）：写 `ui.welcomed`，先在盖着的底下进一个新的空会话（排版、画好），隔两帧再淡出收起
+   * （2026-10-19 项目主人：边淡出边换会话掉帧）。
+   */
   async finish() {
     await this.ctx.core.request('config.set', { layer: 'personal', changes: [{ key: 'ui.welcomed', value: true }] });
     this.ctx.storage.set(STEP_KEY, null);
     this.ctx.storage.set(DONE_KEY, true);
-    this.close();
     this.ctx.chat.open(null);
     // 新会话照刚设的默认人格、预设（不照上一次的会话）
     const pick = Object.fromEntries(Object.entries(this.ids).filter(([, v]) => v));
     if (Object.keys(pick).length) this.ctx.chat.setDraft(pick);
+    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    this.close();
     this.ctx.composer.focus();
     return null;
   }

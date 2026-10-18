@@ -68,6 +68,10 @@ export class ThemeStep {
     this.paintScheme();
     this.paintPalettes();
     const body = h('div.setup-editor.is-welcome',
+      // 小窗口：缩小的对话页，照真的主题画，换了当场跟着变（2026-10-19 项目主人：引导页自己是像素的那一套，换了看不到效果）
+      h('div.wl-preview', { 'aria-hidden': 'true' },
+        h('div.wl-preview-side', h('i'), h('i'), h('i')),
+        h('div.wl-preview-chat', h('i.me'), h('i.ai'), h('i.ai'), h('i.ai.short'), h('i.box'), h('i.send'))),
       field(t('edit.avatar'), this.look.avatarBox),
       field(t('welcome.scheme'), this.schemeBox),
       field(t('welcome.palette'), this.paletteBox),
@@ -136,8 +140,9 @@ export class ThemeStep {
     this.palette = id;
     await this.ctx.packages.set('theme', { config: { palette: id } }).catch((/** @type {any} */ err) => this.say(err?.message ?? String(err)));
     // 「主色」那一行跟着出、收：整张表重画
-    const next = this.screen().body;
-    this.body.replaceWith(next);
+    // 先记下摆着的那张：screen() 会把几格挪进新的一张、换掉 this.body
+    const old = this.body;
+    old.replaceWith(this.screen().body);
     this.relook();
   }
 

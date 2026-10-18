@@ -10,7 +10,7 @@ export const STEP_KEY = 'welcome.step';
 export const DONE_KEY = 'welcome.done';
 
 /**
- * 欢迎（第 3 条）：吉祥物站在标题上面（放大，舞台在 `guide.js`），标题、一行说明、「开始」，下面暗色「按 Enter 开始」。
+ * 欢迎（第 3 条）：吉祥物站在标题上面（放大，舞台在 `guide.js`），标题、「开始」，下面一闪一闪的「PRESS ENTER」。
  * @param {import('./guide.js').Guide} g
  */
 export function helloScreen(g) {

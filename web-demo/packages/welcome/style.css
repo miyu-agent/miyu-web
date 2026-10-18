@@ -8,15 +8,20 @@
   --px-bg: #141631; --px-cell: #1d2047; --px-cell-hi: #262a5c; --px-cell-on: #2f3570; --px-edge: #3b42a0; --px-ground: #2a2f6b; --px-ground-2: #252a60;
   --px-tx: #eef0ff; --px-soft: #b9bde6; --px-dim: #8d92c4; --px-yel: #ffd75e; --px-yel-dark: #c99a1e; --px-yel-ink: #241c05; --px-blu: #7aa2ff; --px-blu-dark: #3b42a0;
   --px-head: "Miyu Pixel CJK", var(--sans); --px-font: "Miyu Pixel", ui-monospace, monospace;
-  /* 主题的几格：别的包的控件照它们画 */
-  --surface: var(--px-bg); --surface-1: var(--px-cell); --surface-2: var(--px-cell-hi); --surface-3: var(--px-cell-on);
-  --text: var(--px-tx); --text-soft: var(--px-soft); --text-faint: var(--px-dim); --line: var(--px-edge); --line-strong: var(--px-edge);
-  --accent: var(--px-blu); --on-primary: #0b1030; --accent-soft: #2f3570; --card-shadow: none; --float-shadow: none; --danger: #ff7a7a; --online: #9be36a;
+  /* 真的主题记一份：主题那一屏的小窗口照它画（下面一层换成像素的那一套） */
+  --keep-surface: var(--surface); --keep-sidebar: var(--sidebar-bg); --keep-surface-1: var(--surface-1); --keep-surface-2: var(--surface-2);
+  --keep-text: var(--text); --keep-text-soft: var(--text-soft); --keep-accent: var(--accent); --keep-on-primary: var(--on-primary);
   color-scheme: dark;
   position: fixed; z-index: 38; inset: 0; overflow: hidden; background: var(--px-bg); color: var(--px-tx); font-family: var(--sans);
   animation: fade-in var(--motion-in) var(--ease-out) both;
 }
-.wl-layer.is-leaving { animation: wl-out 0.28s var(--ease-in) both; pointer-events: none; }
+/* 主题的几格换成像素的那一套：别的包的控件（浮层也挂在这一层下面）照它们画 */
+.wl-layer > * {
+  --surface: var(--px-bg); --surface-1: var(--px-cell); --surface-2: var(--px-cell-hi); --surface-3: var(--px-cell-on);
+  --text: var(--px-tx); --text-soft: var(--px-soft); --text-faint: var(--px-dim); --line: var(--px-edge); --line-strong: var(--px-edge);
+  --accent: var(--px-blu); --on-primary: #0b1030; --accent-soft: #2f3570; --card-shadow: none; --float-shadow: none; --danger: #ff7a7a; --online: #9be36a;
+}
+.wl-layer.is-leaving { animation: wl-out 0.28s var(--ease-in) both; pointer-events: none; will-change: opacity; }
 @keyframes wl-out { to { opacity: 0; } }
 .wl-page { position: relative; z-index: 1; height: 100%; overflow-y: auto; }
 /* 一列 560px，整体上下、左右都居中；最底下给地面留出地方 */
@@ -68,11 +73,11 @@
 .wl-screen.is-center .wl-body { order: 3; margin-top: 14px; }
 .wl-screen.is-center .wl-foot { order: 2; margin-top: 24px; }
 .wl-layer.is-hello .wl-title { font-size: 44px; }
-/* 欢迎页的主按钮就是一闪一闪的「PRESS ENTER」 */
-.wl-layer.is-hello .wl-btn.is-primary { min-width: 0; height: auto; padding: 8px 6px; background: transparent; box-shadow: none; color: var(--px-yel); font: 11px var(--px-font); animation: wl-blink 1s steps(2) infinite; }
-.wl-layer.is-hello .wl-btn.is-primary:active { transform: none; }
-.wl-layer.is-hello .wl-btn.is-primary:focus-visible { outline: 0; }
-.wl-hint { display: none; }
+/* 欢迎页：主按钮「开始」，下面一闪一闪的「PRESS ENTER」（2026-10-19 项目主人：上面还要有个开始） */
+.wl-hint { margin: 0; color: var(--px-yel); font: 10px var(--px-font); }
+.wl-layer.is-hello .wl-hint { animation: wl-blink 1s steps(2) infinite; }
+.wl-layer.is-hello .wl-btn.is-primary { min-width: 168px; height: 48px; font-size: 20px; }
+.wl-layer.is-hello .wl-foot + .wl-body, .wl-layer.is-hello .wl-body { margin-top: 16px; }
 /* 完成：CLEAR!，下面一样一行获得的东西；四处掉几颗彩色的像素方块 */
 .wl-layer.is-done .wl-screen.is-center { padding-top: 70px; }
 .wl-layer.is-done .wl-title { color: var(--px-yel); font: 22px/1.4 var(--px-font); text-shadow: 3px 3px 0 #b5410f; }
@@ -98,10 +103,17 @@
 }
 .wl-lang { display: flex; align-items: center; gap: 10px; min-height: 46px; margin: 3px; padding: 0 14px 0 30px; font: 14.5px var(--sans); text-align: left; cursor: pointer; }
 .wl-lang:hover, .wl-lang:focus-visible, .wl-layer .ob-row:hover, .wl-layer .ob-row:focus-visible, .wl-layer .setup-choice:hover, .wl-layer .ob-model:hover { outline: 0; --px-c: var(--px-cell-hi); background: var(--px-c); }
-.wl-lang.is-on, .wl-layer .setup-choice.is-on, .wl-layer .ob-model.is-on { --px-c: var(--px-yel); background: var(--px-c); color: var(--px-yel-ink); }
+.wl-lang.is-on, .wl-layer .ob-model.is-on { --px-c: var(--px-yel); background: var(--px-c); color: var(--px-yel-ink); }
+/* 大块的预设卡片选中的不整块涂黄（2026-10-19 项目主人：配色太重）：底亮一档，四边一圈 3px 的黄色像素阶梯框，名字变黄 */
+.wl-layer .setup-choice.is-on {
+  --px-c: var(--px-cell-hi); background: var(--px-c); color: var(--px-tx);
+  box-shadow: 0 -3px 0 0 var(--px-yel), 0 3px 0 0 var(--px-yel), -3px 0 0 0 var(--px-yel), 3px 0 0 0 var(--px-yel), inset 0 0 0 3px var(--px-c);
+}
+.wl-layer .setup-choice.is-on .setup-choice-name { color: var(--px-yel); }
 .wl-lang::before, .wl-layer .setup-choice::before, .wl-layer .ob-model::before { content: "▶"; position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: transparent; font: 9px var(--px-font); }
 .wl-lang.is-on::before, .wl-layer .setup-choice.is-on::before, .wl-layer .ob-model.is-on::before { color: var(--px-yel-ink); animation: wl-blink 1s steps(2) infinite; }
-.wl-lang.is-on .wl-lang-note, .wl-layer .setup-choice.is-on .setup-choice-hint, .wl-layer .ob-model.is-on .ob-model-note { color: #5c4a14; }
+.wl-layer .setup-choice.is-on::before { color: var(--px-yel); }
+.wl-lang.is-on .wl-lang-note, .wl-layer .ob-model.is-on .ob-model-note { color: #5c4a14; }
 .wl-check, .wl-layer .setup-choice-check, .wl-layer .ob-model-check { display: none; }
 .wl-tag { padding: 2px 6px; background: var(--px-cell-on); color: var(--px-soft); font-size: 11.5px; }
 .wl-lang.is-on .wl-tag { background: rgb(0 0 0 / 0.12); color: var(--px-yel-ink); }
@@ -117,7 +129,6 @@
 .wl-layer .ob-model { min-height: 38px; margin: 3px; padding-left: 30px; }
 .wl-layer .setup-choices { gap: 14px; }
 .wl-layer .setup-choice { margin: 3px; padding-left: 30px; }
-.wl-layer .setup-choice.is-on .setup-chip { background: rgb(0 0 0 / 0.1); color: var(--px-yel-ink); }
 .wl-layer .setup-chip { border-radius: 0; }
 .wl-layer .setup-choice-wrap, .wl-layer .setup-choice-wrap.is-on { border-radius: 0; background: transparent; box-shadow: none; }
 .wl-layer .setup-choice-open { padding: 10px 14px 12px; margin: 6px 3px 0; background: var(--px-cell); }
@@ -129,13 +140,14 @@
 .wl-layer .ob-model-list { -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), transparent); }
 
 /* 输入框、下拉、开关：深色格子、直角、像素阶梯角，聚焦的四边换成蓝色 */
-.wl-layer .set-input, .wl-layer .ob-input, .wl-layer .setup-area, .wl-layer .set-select, .wl-layer .wl-area, .wl-layer .ob-search {
+.wl-layer .set-input:not(.set-menu-search), .wl-layer .ob-input, .wl-layer .setup-area, .wl-layer .set-select, .wl-layer .wl-area, .wl-layer .ob-search {
   --px-c: var(--px-cell); border: 0; border-radius: 0; background: var(--px-c); color: var(--px-tx);
   box-shadow: 0 -3px 0 0 var(--px-c), 0 3px 0 0 var(--px-c), -3px 0 0 0 var(--px-c), 3px 0 0 0 var(--px-c);
 }
-.wl-layer .set-input:focus, .wl-layer .ob-input:focus, .wl-layer .setup-area:focus, .wl-layer .wl-area:focus, .wl-layer .ob-search:focus, .wl-layer .set-select:focus-visible {
+.wl-layer .set-input:not(.set-menu-search):focus, .wl-layer .ob-input:focus, .wl-layer .setup-area:focus, .wl-layer .wl-area:focus, .wl-layer .ob-search:focus, .wl-layer .set-select:focus-visible {
   outline: 0; box-shadow: 0 -3px 0 0 var(--px-blu), 0 3px 0 0 var(--px-blu), -3px 0 0 0 var(--px-blu), 3px 0 0 0 var(--px-blu);
 }
+.wl-layer .setup-area, .wl-layer .wl-area { max-height: 40vh; overflow-y: auto; }
 .wl-layer .set-switch { border-radius: 0; }
 .wl-layer .set-switch::after, .wl-layer .set-switch > * { border-radius: 0; }
 .wl-layer .set-btn, .wl-layer .setup-btn, .wl-layer .setup-add { border-radius: 0; }
@@ -159,6 +171,24 @@
 @keyframes wl-twinkle { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.7; } }
 @media (prefers-reduced-motion: reduce) {
   .wl-star, .wl-screen, .wl-layer, .wl-burst i, .wl-steps li.is-now, .wl-lang.is-on::before, .wl-layer .setup-choice.is-on::before,
-  .wl-layer .ob-model.is-on::before, .wl-layer.is-hello .wl-btn.is-primary { animation: none; }
+  .wl-layer .ob-model.is-on::before, .wl-layer.is-hello .wl-hint { animation: none; }
   .wl-burst { display: none; }
 }
+
+/* 主题那一屏的小窗口：缩小的对话页，照真的主题画（--keep-*），换了当场跟着变（2026-10-19 项目主人：换了看不到效果） */
+.wl-preview {
+  --surface: var(--keep-surface); --sidebar-bg: var(--keep-sidebar); --surface-1: var(--keep-surface-1); --surface-2: var(--keep-surface-2);
+  --text: var(--keep-text); --text-soft: var(--keep-text-soft); --accent: var(--keep-accent);
+  display: grid; grid-template-columns: 64px 1fr; height: 132px; margin: 0 3px 22px; overflow: hidden; background: var(--surface);
+  box-shadow: 0 -3px 0 0 var(--px-cell-on), 0 3px 0 0 var(--px-cell-on), -3px 0 0 0 var(--px-cell-on), 3px 0 0 0 var(--px-cell-on);
+  transition: background-color 0.3s steps(3);
+}
+.wl-preview-side { display: grid; align-content: start; gap: 6px; padding: 12px 8px; background: var(--sidebar-bg); }
+.wl-preview-side i { height: 7px; background: var(--surface-2); }
+.wl-preview-side i:first-child { background: color-mix(in srgb, var(--accent) 45%, var(--surface-2)); }
+.wl-preview-chat { position: relative; display: grid; align-content: start; gap: 8px; padding: 14px 14px 0; }
+.wl-preview-chat .me { justify-self: end; width: 120px; height: 18px; background: var(--surface-1); }
+.wl-preview-chat .ai { width: 70%; height: 7px; background: var(--text-soft); opacity: 0.55; }
+.wl-preview-chat .ai.short { width: 46%; }
+.wl-preview-chat .box { position: absolute; left: 14px; right: 14px; bottom: 12px; height: 26px; background: var(--surface-1); }
+.wl-preview-chat .send { position: absolute; right: 20px; bottom: 17px; width: 16px; height: 16px; background: var(--accent); }
