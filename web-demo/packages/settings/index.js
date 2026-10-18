@@ -34,6 +34,10 @@ export function apply(ctx) {
     kit: (panel, toast) => sectionKit({ panel, ctx, toast }),
     /** @param {import('./onboard/flow.js').Host} host */
     providers: (host) => new ProviderFlow(ctx, host, 'welcome'),
+    /** 打开设置、到某一页（别的包挂的页：记忆页的 `/memory`、人格详情的「记忆 N 条」） @param {string|null} [page] */
+    open: (page) => open(page ?? null),
+    /** 关上（记忆详情里点出处打开那个会话） */
+    close: () => dialog?.close(),
   });
   // 「默认界面」（`ui.head`，核心 9-3）：下拉的选项照核心的软件包清单（界面包），名字照清单
   ctx.slots.mount('settings.editor', {

@@ -13,6 +13,7 @@
     { "id": "todo" },
     { "id": "asking" },
     { "id": "setup" },
+    { "id": "memory" },
     { "id": "pulse" },
     { "id": "attachments" },
     { "id": "jobs" },

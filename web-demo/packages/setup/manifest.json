@@ -31,7 +31,8 @@
     "host",
     "sessions",
     "packages",
-    "settings~"
+    "settings~",
+    "memory~"
   ],
   "settings": {
     "avatar_side": {
@@ -247,7 +248,10 @@
           "script": "脚本",
           "skill": "技能",
           "command": "斜杠命令"
-        }
+        },
+        "memory": "记忆",
+        "memory_open": "查看",
+        "memory_count": "{n} 条 · 查看"
       },
       "folders": {
         "open": "选择文件夹…",
@@ -385,7 +389,10 @@
           "script": "Scripts",
           "skill": "Skills",
           "command": "Slash commands"
-        }
+        },
+        "memory": "Memory",
+        "memory_open": "View",
+        "memory_count": "{n} · View"
       },
       "folders": {
         "open": "Select folder…",
@@ -523,7 +530,10 @@
           "script": "スクリプト",
           "skill": "スキル",
           "command": "スラッシュコマンド"
-        }
+        },
+        "memory": "記憶",
+        "memory_open": "表示",
+        "memory_count": "{n} 件 · 表示"
       },
       "folders": {
         "open": "フォルダを選ぶ…",

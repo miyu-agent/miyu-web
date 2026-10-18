@@ -106,9 +106,30 @@ export class PersonaEditor {
       field(t('edit.examples'), this.pairs.el),
       field(t('edit.reminders'), this.reminders),
       switchField(t('edit.subagent'), subagent),
+      this.memoryRow(),
       this.note,
       h('div.setup-foot', remove, h('span.setup-grow'), this.kit.button(t('edit.cancel'), {}, () => this.hooks.close()), this.saveBtn));
     this.sync();
+  }
+
+  /**
+   * 「记忆」一行（装了软件包 `memory` 才有，蓝图「记忆页」第 1 条）：右边「N 条 · 查看」，点了收起卡片、到设置页的记忆页、选上这个人格。
+   * 新建、还没存的人格没有。
+   */
+  memoryRow() {
+    const memory = this.ctx.memory;
+    if (!memory?.open || !this.id) return null;
+    const t = this.t;
+    const btn = /** @type {HTMLButtonElement} */ (this.kit.button(t('edit.memory_open'), {}, () => {
+      this.hooks.close();
+      memory.open(this.id);
+    }));
+    // 数一下没作废的（读不到的只写「查看」）
+    this.ctx.core.request('memory.list', { persona: this.id, limit: 500 }).then((r) => {
+      const n = Array.isArray(r?.memories) ? r.memories.filter((/** @type {any} */ m) => !m.retired).length : null;
+      if (n != null) btn.textContent = t('edit.memory_count', { n });
+    }, () => {});
+    return field(t('edit.memory'), btn);
   }
 
   /** 编辑器里现在写的。 @returns {PersonaDraft} */
