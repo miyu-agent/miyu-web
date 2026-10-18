@@ -84,6 +84,10 @@
   color: var(--text-faint); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; user-select: none;
 }
 .session-group-header .icon { width: 12px; height: 12px; }
+/* 栏头、细线也是定位的：拖会话时亮起来的那一块垫在它们下面（同选中的那一块垫在行下面） */
+.session-group-header, .session-sep, .session-drop-hint { position: relative; }
+/* 置顶和下面按时间分组的会话之间一道细线（蓝图「会话整理和项目」第 1 条） */
+.session-sep { height: 0; margin: 9px 8px 0; border-top: 1px solid var(--line); }
 /* 多选时这一行钉在列表顶上（蓝图 web.md「左栏」批量删除）：列表顶上那 4px 内边距挪进这一行，钉住的位置就是它原来的位置
    （一滚动不先挪一下，2026-10-01 项目主人指出）；上面的空用内边距垫，滚过去的项不从缝里露出来 */
 .sidebar.is-selecting .session-list { padding-top: 0; }
@@ -323,3 +327,15 @@
 .session-check .icon { width: 15px; height: 15px; color: var(--text-faint); }
 .session-item.is-selected { background: color-mix(in srgb, var(--accent) 10%, transparent); }
 .session-item.is-selected .session-check .icon { color: var(--accent); }
+
+/* 拖会话（蓝图「会话整理和项目」第 5 条，`ui/sidebar-drag.js`）：拖着的那一行原处淡下去，一张浮起来的小卡片跟着指针；能放的那一段
+   盖一层 accent_soft 加一圈 accent；还没有置顶的，拖起来时最上面临时露出一块虚线框 */
+.session-item.is-dragging { opacity: 0.35; }
+body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !important; user-select: none; }
+.session-ghost {
+  position: fixed; z-index: 100; top: 0; left: 0; display: flex; align-items: center; height: 30px; padding: 0 12px 0 37px; border-radius: 8px;
+  background: var(--surface-1); box-shadow: var(--float-shadow); color: var(--text); font-size: 12.5px; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; pointer-events: none;
+}
+.session-drop-zone { position: absolute; left: 0; right: 0; border-radius: 10px; background: color-mix(in srgb, var(--accent-soft) 70%, transparent); box-shadow: inset 0 0 0 1.5px var(--accent); pointer-events: none; }
+.session-drop-hint { display: grid; place-items: center; height: 34px; margin: 8px 2px 2px; border: 1px dashed var(--line-strong); border-radius: 8px; color: var(--text-faint); font-size: 12px; }

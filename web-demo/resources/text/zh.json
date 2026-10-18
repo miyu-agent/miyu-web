@@ -32,7 +32,14 @@
     "paused": "已中断，等待输入",
     "pin": "置顶",
     "unpin": "取消置顶",
-    "pinned": "置顶"
+    "pinned": "置顶",
+    "drop_pin": "拖到这里置顶",
+    "groups": {
+      "recent": "最近",
+      "week": "近 7 天",
+      "month": "近 30 天",
+      "older": "30 天前"
+    }
   },
   "crumbs": {
     "label": "子代理会话路径",

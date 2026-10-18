@@ -32,7 +32,14 @@
     "paused": "Interrupted, waiting for input",
     "pin": "Pin",
     "unpin": "Unpin",
-    "pinned": "Pinned"
+    "pinned": "Pinned",
+    "drop_pin": "Drop here to pin",
+    "groups": {
+      "recent": "Recent",
+      "week": "Past 7 days",
+      "month": "Past 30 days",
+      "older": "Older"
+    }
   },
   "crumbs": {
     "label": "Subagent session path",

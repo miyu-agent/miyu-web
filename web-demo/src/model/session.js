@@ -26,3 +26,38 @@ export function rank(rows) {
 export function startupSession(reply, ranked) {
   return reply?.items?.['ui.startup']?.value === 'recent' ? ranked[0] ?? null : null;
 }
+
+/** 左栏、全部会话按时间分的几组（蓝图 `web.md`「会话整理和项目」第 2 条），先后照这个 */
+export const TIME_GROUPS = /** @type {const} */ (['recent', 'week', 'month', 'older']);
+
+/** 本地时间的那一天从几点开始（毫秒） @param {number} ms */
+const dayOf = (ms) => {
+  const d = new Date(ms);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+};
+
+/**
+ * 一个时刻在哪一组：今天、昨天的「最近」，7 天以内的「近 7 天」，30 天以内的「近 30 天」，更早的「30 天前」（照本地时间的日子数）。
+ * @param {number} at @param {number} now
+ * @returns {typeof TIME_GROUPS[number]}
+ */
+export function timeGroup(at, now) {
+  const days = Math.round((dayOf(now) - dayOf(at)) / 86400000);
+  if (days < 2) return 'recent';
+  if (days < 7) return 'week';
+  if (days < 30) return 'month';
+  return 'older';
+}
+
+/**
+ * 照时间分组（顺序照原来的，排好的进来、排好的出去；没有会话的组不出来）。时刻照最近活动，不知道的照开的时刻（同 `rank`）。
+ * @template {{session: string, active?: number|null}} T
+ * @param {T[]} rows @param {number} now
+ * @returns {{group: typeof TIME_GROUPS[number], rows: T[]}[]}
+ */
+export function byTime(rows, now) {
+  /** @type {Map<string, T[]>} */
+  const out = new Map(TIME_GROUPS.map((g) => [g, []]));
+  for (const r of rows) out.get(timeGroup(r.active ?? uuidTime(r.session) ?? 0, now))?.push(r);
+  return TIME_GROUPS.map((group) => ({ group, rows: out.get(group) ?? [] })).filter((g) => g.rows.length);
+}

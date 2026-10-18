@@ -23,6 +23,8 @@ import { leave } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { toggle, range } from '../model/select.js';
 import { treeRows, capTops } from '../model/tree.js';
+import { TIME_GROUPS, byTime } from '../model/session.js';
+import { SessionDrag } from './sidebar-drag.js';
 
 /**
  * @typedef {{session: string, title: string|null, running: boolean, unread: boolean}} Item
@@ -60,9 +62,14 @@ export class Sidebar {
     this.actions = h('span.sidebar-slot');
     this.groupTitle = h('span', t('sidebar.sessions'));
     this.groupTools = h('span.session-group-tools');
-    /** 「会话」那一行、「置顶」那一栏的头：画在会话表里（和会话的行一起排，挪动时一起滑，蓝图「左栏」组头） */
-    this.groupHeader = h('div.session-group-header', { dataset: { key: 'group:sessions' } }, icon('message-circle'), this.groupTitle, this.groupTools);
-    this.pinnedHeader = h('div.session-group-header.is-pinned', { dataset: { key: 'group:pinned' } }, icon('pin'), h('span', t('sidebar.pinned')));
+    /** 「会话」那一行（多选时、一个会话都没有时）、「置顶」那一栏的头：画在会话表里（和会话的行一起排，挪动时一起滑，蓝图「左栏」组头）；
+     *  栏头不带图标（2026-10-19 项目主人） */
+    this.groupHeader = h('div.session-group-header', { dataset: { key: 'group:sessions' } }, this.groupTitle, this.groupTools);
+    this.pinnedHeader = h('div.session-group-header.is-pinned', { dataset: { key: 'group:pinned' } }, h('span', t('sidebar.pinned')));
+    /** 按时间分的几组的头（蓝图「会话整理和项目」第 2 条）：最近、近 7 天、近 30 天、30 天前；第一组的头上挂「查看全部会话」「多选」 */
+    this.timeHeaders = new Map(TIME_GROUPS.map((g) => [g, h('div.session-group-header', { dataset: { key: `group:${g}` } }, h('span', t(`sidebar.groups.${g}`)))]));
+    /** 置顶和下面的会话之间一道细线 */
+    this.sep = h('div.session-sep', { dataset: { key: 'group:sep' }, 'aria-hidden': 'true' });
     /** 左上角的头像、名字：正在看的会话用的人格（`setLook`），点了打开这个人格的编辑页 */
     this.face = h('span.brand-face');
     this.name = h('strong');
@@ -89,6 +96,9 @@ export class Sidebar {
     this.drawGroup();
     // 左栏宽了窄了（窄屏的抽屉、改窗口）：那一块跟着这一项的宽
     new ResizeObserver(() => this.placePill()).observe(this.items);
+    // 拖会话：放到置顶那一栏置顶，拖回下面取消置顶（`sidebar-drag.js`）
+    this.list = /** @type {HTMLElement|null} */ (this.items.closest('.session-list'));
+    new SessionDrag(this);
     // 点外面、按 Esc 关上菜单；没开菜单时 Esc 出多选
     document.addEventListener('click', (e) => {
       const target = /** @type {Element} */ (e.target);
@@ -167,19 +177,28 @@ export class Sidebar {
     // 多选时只列顶层的；平常照树排
     const tree = (list) => treeRows(list, (id) => this.on.kids(id), { current, open: this.openTree, done: this.doneOpen });
     const pinnedRows = pinned.length ? tree(pinned) : [];
+    // 平常按时间分组（多选时一整列）：一组一个头，组里照树排
+    const groups = this.selecting ? [] : byTime(cap.shown, Date.now()).map((g) => ({ group: g.group, rows: tree(g.rows) }));
     const rows = this.selecting
       ? tops.map((it) => ({ kind: /** @type {const} */ ('session'), session: it.session, depth: 0, item: it, hasKids: false, open: false }))
-      : [...pinnedRows, ...tree(cap.shown)];
-    const sig = JSON.stringify([rows, current, this.menuFor, this.renaming, this.selecting, [...this.selected], cap.more]);
+      : [...pinnedRows, ...groups.flatMap((g) => g.rows)];
+    const sig = JSON.stringify([rows, groups.map((g) => [g.group, g.rows.length]), current, this.menuFor, this.renaming, this.selecting, [...this.selected], cap.more]);
     if (sig !== this.drawn) {
       this.drawn = sig;
       const all = cap.more ? h('button.session-all', { type: 'button', onclick: () => this.on.viewAll() }, t('sidebar.view_all')) : null;
       const draw = (row) => (row.kind === 'session' ? this.item(row, row.session === current) : this.doneRow(row));
       const was = this.positions();
       const hadPinned = this.pinnedHeader.isConnected;
+      // 「查看全部会话」「多选」挂在第一组的头上（多选时、没有会话时照旧是「会话」那一行）
+      const head = groups.length ? /** @type {HTMLElement} */ (this.timeHeaders.get(groups[0].group)) : this.groupHeader;
+      head.append(this.groupTools);
       replace(this.items, [
         pinned.length ? this.pinnedHeader : null, ...pinnedRows.map(draw),
-        this.groupHeader, ...rows.slice(pinnedRows.length).map(draw), all]);
+        pinned.length && (groups.length || this.selecting) ? this.sep : null,
+        ...(groups.length
+          ? groups.flatMap((g) => [this.timeHeaders.get(g.group), ...g.rows.map(draw)])
+          : [this.groupHeader, ...rows.slice(pinnedRows.length).map(draw)]),
+        all]);
       this.slide(was, pinned.length > 0 && !hadPinned);
       this.placeMenu();
       this.drawGroup();
