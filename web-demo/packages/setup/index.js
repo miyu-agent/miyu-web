@@ -73,6 +73,7 @@ export function apply(ctx) {
     return p ? {
       persona: p.persona, name: personaName(p), avatar: catalog.avatars.url(p.persona, p.avatar), seed: p.seed ?? null, seeds: p.seeds ?? [],
       background: catalog.backgrounds.url(p.persona, p.background), opacity: p.background_opacity ?? null, focus: p.background_focus ?? null,
+      blur: p.background_blur ?? null,
     } : null;
   };
   chat.look(lookOf);
