@@ -146,6 +146,7 @@
     "message_session": "セッション {id}",
     "peek_sep": "·",
     "agent_subject": "{job} · {title}",
+    "via": "{name}（{via}）",
     "agent_pending": "{title}",
     "created": "新規作成",
     "trashed": "ごみ箱に移しました（差分はありません）",

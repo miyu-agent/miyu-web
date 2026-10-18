@@ -86,7 +86,7 @@ export function packageIcon(name) {
 }
 
 /**
- * 照核心给的标题那一句（9-8，`view.md`「标题那一句」）：显示名、对象、结果那一句都是核心照连接的语言写好的；派子代理写「编号 · 描述」，
+ * 照核心给的标题那一句（9-8，`view.md`「标题那一句」）：显示名、对象、结果那一句、经谁做的都是核心照连接的语言写好的；派子代理写「编号 · 描述」，
  * 留言的对象核心已经写成任务编号、「父会话」或「会话 短编号」；用时、走表、图标、出错照原来的规矩。
  * @param {any} step @param {string|null} kind @param {any} base
  */
@@ -95,7 +95,8 @@ function titled(step, kind, base) {
   if (step.state === 'preparing') return { ...base, icon: 'loader-circle', name: title.name ?? '', timer: step.start != null ? { since: step.start, format: 'tenths' } : null };
   const bad = failed(step);
   const icon = bad ? 'circle-alert' : res.timeline.icons[step.name] ?? packageIcon(step.name) ?? res.timeline.icon_default;
-  const name = title.name ?? step.name;
+  // 经谁做的（核心 3c40e3c3 的 `title.via`，例如网络搜索的来源 Exa）写在名字后面的括号里：「网络搜索（Exa）」（2026-10-19 项目主人定，照终端）
+  const name = title.via ? t('timeline.via', { name: title.name ?? step.name, via: title.via }) : title.name ?? step.name;
   const object = title.object ?? null;
   const said = title.said ?? null;
   // 用了技能（读了它的 SKILL.md，2026-10-12 项目主人）：「使用技能 · 写技能」，技能的图标；出错的照读文件的样子

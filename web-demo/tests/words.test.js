@@ -42,6 +42,8 @@ test('别的工具：名字、等宽的对象、结果那一句照核心的标�
   const r = row(tool('read', { file_path: '/home/me/notes.md' }, { title: { name: '读取', object: '~/notes.md', said: '12 行' } }));
   assert.deepEqual([r.icon, r.name, r.subject, r.said, r.mono, r.took], ['file-text', '读取', '~/notes.md', '12 行', true, null]);
   assert.equal(row(tool('read', { file_path: '/tmp/x' }, { title: { name: '读取', object: '/tmp/x' } })).said, null, '没有结果那一句的不写');
+  const via = row(tool('web_search', { query: 'Rust 1.90 release notes' }, { title: { name: '网络搜索', via: 'Exa', object: 'Rust 1.90 release notes', said: '8 条' } }));
+  assert.deepEqual([via.name, via.subject, via.said], ['网络搜索（Exa）', 'Rust 1.90 release notes', '8 条'], '经谁做的写在名字后面的括号里（核心 3c40e3c3）');
   const unknown = row(tool('mystery_tool', { x: 1 }));
   assert.deepEqual([unknown.icon, unknown.name, unknown.subject], ['wrench', 'mystery_tool', null]);
   assert.equal(row(tool('read', {})).name, res.human.tools.read.name, '没给标题的照显示名');

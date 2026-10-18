@@ -146,6 +146,7 @@
     "message_session": "Session {id}",
     "peek_sep": "·",
     "agent_subject": "{job} · {title}",
+    "via": "{name} ({via})",
     "agent_pending": "{title}",
     "created": "Created",
     "trashed": "Moved to trash, no diff",

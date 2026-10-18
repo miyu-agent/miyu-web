@@ -146,6 +146,7 @@
     "message_session": "会话 {id}",
     "peek_sep": "·",
     "agent_subject": "{job} · {title}",
+    "via": "{name}（{via}）",
     "agent_pending": "{title}",
     "created": "新建",
     "trashed": "已移至回收站，无差异",
