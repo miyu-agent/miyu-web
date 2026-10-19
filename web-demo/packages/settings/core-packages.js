@@ -1,6 +1,6 @@
 // @ts-check
-//! 「软件包」页上面核心的软件包（蓝图 `web.md`「设置页」第 13 条；核心 F-6 上，`package-pages.md`）：照 `package.list` 装了的一个一行，
-//! 按核心核实过的标记分段：接入（带 `connection` 的）、界面（`ui`）、功能（别的）。一行是图标、名字、一句说明，右边状态、开关、箭头：
+//! 「软件包」页（蓝图 `web.md`「设置页」第 13 条；核心 F-6 上，`package-pages.md`）：顶上搜索和一排筛选（2026-10-20 项目主人），
+//! 下面照 `package.list` 装了的一个一行（不再分段，一行右边一个小标签写它是哪一种），再下面网页自己的组件。一行是图标、名字、一句说明，右边状态、开关、箭头：
 //! 状态只写要人留意的（运行中、已停止、程序未安装……；好好的「已启用」、关着的「已停用」开关已经说了，不写），开关照 `enabled`
 //! （有这一格才有开关，发 `package.enable`、`package.disable`，核心照种类办），必需的写「必需」。点一行滑进它的信息页（`subpage.js`，
 //! 左上角箭头返回；2026-10-10 项目主人）：版本和状态、启用、它加的功能、权限（扩展的「运行」「权限」两行，`extensions.js`）、
@@ -8,39 +8,99 @@
 //! 带 MCP 服务的（扩展包、`bundle`，核心 X-4）多一组「MCP 服务」：一个服务一行写现在怎样（`mcp-servers.js`），组头「重启」（`package.restart`）；
 //! 个人设置里写的服务（F-9 补）在列表的段后面单列一组。
 
-import { h, icon, hasIcon } from '../../src/lib/dom.js';
+import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField } from './rows.js';
-import { splitKey, itemFor, mcpStopped, packageNames } from './model.js';
+import { splitKey, itemFor, mcpStopped, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf } from './model.js';
 import { openPage, probeSites } from './backstage.js';
 import { serverRow, homeMcpPart } from './mcp-servers.js';
 import { stateText } from './extensions.js';
 
-/** 段：照核心核实过的标记分，先后照这里 */
-const PARTS = /** @type {const} */ (['connection', 'ui', 'feature']);
+/** 搜索框停多久再筛（边打边筛；输入法选字时不筛） */
+const TYPE_MS = 120;
 /** 列表上不写的状态：开关已经说了 */
 const QUIET = new Set(['ready', 'off']);
 /** 写成红字的状态：程序不在、依赖的包缺了（核心 F-11：装着、不拉起） */
 const BAD = new Set(['program_missing', 'depends_missing']);
 
-/** @param {any} p */
-const partOf = (p) => (p.connection ? 'connection' : p.kind === 'ui' ? 'ui' : 'feature');
 
 /** 包的图标：清单写了、网页认得的照它，不然画一个通用的。 @param {any} p */
 const faceOf = (p) => h('span.set-pkg-face', icon(p.icon && hasIcon(p.icon) ? p.icon : 'package'));
 
-/** @param {any} dialog @param {any} page `config.schema` 的 `packages` 页 */
-export function drawCorePackages(dialog, page) {
+/**
+ * 整页：搜索、筛选、核心的软件包、个人设置里的 MCP 服务、对不上哪个包的组，最后网页自己的组件（`web`：`packages.js` 的 `drawPackages`）。
+ * 搜什么、筛哪个记在 `dialog.pkgView`（设置框重画、关了再开还是它）；打字、点筛选只换列表，搜索框不重画（光标、输入法不断）。
+ * @param {any} dialog @param {any} page `config.schema` 的 `packages` 页 @param {{node: HTMLElement, filter: (query: string) => Promise<number>, count: () => Promise<number>}} web
+ */
+export function drawCorePackages(dialog, page, web) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const packages = (dialog.packages ?? []).filter((p) => p.status);
   probeSites(dialog, packages);
-  const parts = PARTS.map((part) => {
-    const rows = packages.filter((p) => partOf(p) === part).map((p) => packageRow(dialog, p));
-    return rows.length ? h('section.set-part', h('h2.set-part-name', t(`pkg.part.${part}`)), h('section.set-group', h('div.set-rows', rows))) : null;
+  const view = (dialog.pkgView ??= { query: '', filter: 'all' });
+  const ids = new Set(packages.map((p) => p.package));
+  let webCount = 0;
+  const list = h('div.set-rows');
+  const coreGroup = h('section.set-group', list);
+  const empty = h('p.set-empty', { hidden: true }, t('pkg.no_match'));
+  const webPart = h('section.set-part', packages.length ? h('h2.set-part-name', t('packages_web')) : null, web.node);
+  const homeMcp = homeMcpPart(dialog);
+  // 对不上哪个包的组（核心自己的模块）照旧一组一组摊开；联网搜索的 key 这类照 `ownerOf` 认回它的包，挪进信息页
+  const rest = (page?.groups ?? []).filter((g) => g.items.every((item) => !ownerOf(item, ids)))
+    .map((g) => groupBlock(g.name, g.items.map((item) => coreRow(dialog, item)))).filter(Boolean);
+  const chips = h('div.set-pkg-chips', { role: 'tablist' });
+  const count = (/** @type {string} */ f) => (f === 'all' ? packages.length + webCount : f === 'web' ? webCount : packages.filter((p) => pkgKinds(p).includes(f)).length);
+  const drawChips = () => {
+    const shown = PKG_FILTERS.filter((f) => f === 'all' || count(f) > 0);
+    // 筛的那一个没了（包卸了）回到全部
+    if (!shown.includes(/** @type {any} */ (view.filter))) view.filter = 'all';
+    chips.hidden = shown.length < 2;
+    replace(chips, shown.map((f) => h(`button.set-pkg-chip${f === view.filter ? '.is-on' : ''}`, {
+      type: 'button', role: 'tab', 'aria-selected': String(f === view.filter),
+      onclick: () => {
+        view.filter = f;
+        drawChips();
+        update();
+      },
+    }, t(`pkg.filter.${f}`), h('span', String(count(f))))));
+  };
+  let round = 0;
+  const update = async () => {
+    const mine = ++round;
+    const core = view.filter !== 'web';
+    const rows = core ? packages.filter((p) => (view.filter === 'all' || pkgKinds(p).includes(view.filter)) && pkgMatch(view.query, p.name, p.summary, p.package)) : [];
+    replace(list, rows.map((p) => packageRow(dialog, p)));
+    coreGroup.hidden = !rows.length;
+    const plain = view.filter === 'all' && !view.query.trim();
+    if (homeMcp) homeMcp.hidden = !(plain || (view.filter === 'mcp' && !view.query.trim()));
+    for (const g of rest) g.hidden = !plain;
+    const webOn = view.filter === 'all' || view.filter === 'web';
+    webPart.hidden = !webOn;
+    const webRows = webOn ? await web.filter(view.query) : 0;
+    if (mine !== round) return;
+    webPart.hidden = !webOn || !webRows;
+    empty.hidden = rows.length + webRows > 0;
+  };
+  const input = /** @type {HTMLInputElement} */ (h('input.set-pkg-find-input', { type: 'search', value: view.query, placeholder: t('pkg.search'), 'aria-label': t('pkg.search'), spellcheck: 'false', autocomplete: 'off' }));
+  let composing = false;
+  /** @type {any} */
+  let timer = 0;
+  input.addEventListener('compositionstart', () => { composing = true; });
+  input.addEventListener('compositionend', () => { composing = false; input.dispatchEvent(new Event('input')); });
+  input.addEventListener('input', () => {
+    if (composing) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      view.query = input.value;
+      update();
+    }, TYPE_MS);
   });
-  // 对不上哪个包的组（核心自己的模块）照旧一组一组摊开
-  const all = new Set(packages.map((p) => p.package));
-  const rest = (page?.groups ?? []).filter((g) => !all.has(g.id)).map((g) => groupBlock(g.name, g.items.map((item) => coreRow(dialog, item)))).filter(Boolean);
-  return [...parts, homeMcpPart(dialog), ...rest].filter(Boolean);
+  const find = h('label.set-pkg-find', icon('search'), input);
+  drawChips();
+  update();
+  web.count().then((n) => {
+    webCount = n;
+    drawChips();
+  });
+  return [h('div.set-pkg-tools', find, chips), empty, coreGroup, homeMcp, ...rest, webPart].filter(Boolean);
 }
 
 /**
@@ -80,7 +140,7 @@ function packageRow(dialog, p) {
   },
   faceOf(p),
   h('div.set-text', h('div.set-name', h('span', p.name ?? id)), p.summary ? h('p.set-desc', p.summary) : null),
-  state, control ? h('div.set-control', control) : null,
+  state, h('span.set-pkg-tag', t(`pkg.kind.${pkgTag(p)}`)), control ? h('div.set-control', control) : null,
   h('span.set-pkg-arrow', icon('chevron-right')));
 }
 
@@ -133,8 +193,11 @@ function infoPage(dialog, id) {
   if (!p) return [h('p.set-empty', t('pkg.gone'))];
   const missing = p.status === 'program_missing';
   const site = !!dialog.sites?.get(id);
-  const group = (dialog.pages ?? []).find((x) => x.id === 'packages')?.groups.find((g) => g.id === id);
-  const settings = site ? [] : (group?.items ?? []).map((item) => coreRow(dialog, item)).filter(Boolean);
+  // 它的设置项：照每一项归哪个包（`ownerOf`），一组一块；组就是这个包的写「设置」，别的组（联网搜索的「API Key 和地址」）照组名
+  const ids = new Set((dialog.packages ?? []).map((/** @type {any} */ x) => x.package));
+  const groups = site ? [] : ((dialog.pages ?? []).find((/** @type {any} */ x) => x.id === 'packages')?.groups ?? [])
+    .map((/** @type {any} */ g) => ({ g, rows: g.items.filter((/** @type {any} */ item) => ownerOf(item, ids) === id).map((/** @type {any} */ item) => coreRow(dialog, item)).filter(Boolean) }))
+    .filter((/** @type {any} */ x) => x.rows.length);
   const ext = dialog.extensions;
   const head = dialog.extensions.entries.has(id)
     // 扩展的状态跟着推送换（`extensions.js` 照它重画这一块）
@@ -143,7 +206,7 @@ function infoPage(dialog, id) {
   return [
     head,
     missing ? null : mcpGroup(dialog, p),
-    settings.length ? groupBlock(t('pkg.settings'), settings) : null,
+    ...groups.map((/** @type {any} */ x) => groupBlock(x.g.id === id ? t('pkg.settings') : x.g.name, x.rows)),
     // 平台接入的（没有自己网页的）：终端管理员在这个平台上的号，接在它的设置项后面
     !site && !missing && p.connection?.platform ? ownerAccounts(dialog, p.connection.platform) : null,
   ].filter(Boolean);

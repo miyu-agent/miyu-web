@@ -4,7 +4,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
-import { buildPages, search, pagesWithErrors, layerFor, expectFor } from './model.js';
+import { buildPages, search, pagesWithErrors, layerFor, expectFor, navGroups } from './model.js';
 import { coreRow, groupBlock, banner } from './rows.js';
 import { drawLook } from './look.js';
 import { drawPackages } from './packages.js';
@@ -161,8 +161,18 @@ export class SettingsDialog {
   drawNav() {
     const bad = pagesWithErrors(this.pages);
     const icons = this.ctx.config.icons;
-    replace(this.nav, this.entries().map((e) => h(`button.set-tab${e.id === this.current && !this.query ? '.is-on' : ''}`, { type: 'button', onclick: () => this.show(e.id) },
-      icon(icons[e.id] ?? 'sliders-horizontal'), h('span', e.name), bad.has(e.id) ? h('i.set-dot') : null)));
+    const groupOf = navGroups(this.ctx.config.order, this.ctx.config.nav_groups ?? []);
+    let last = -1;
+    const items = [];
+    for (const e of this.entries()) {
+      // 组与组之间一道细线（2026-10-20 项目主人分的四组）；一页都没有的组不画
+      const group = groupOf(e.id);
+      if (last >= 0 && group !== last) items.push(h('hr.set-nav-rule'));
+      last = group;
+      items.push(h(`button.set-tab${e.id === this.current && !this.query ? '.is-on' : ''}`, { type: 'button', onclick: () => this.show(e.id) },
+        icon(icons[e.id] ?? 'sliders-horizontal'), h('span', e.name), bad.has(e.id) ? h('i.set-dot') : null));
+    }
+    replace(this.nav, items);
   }
 
   /** 点进一层（软件包的设置、软件后台页）：滑进去，页头写它的名字、左边返回箭头。 @param {string} title @param {() => any} render @param {{keep?: boolean, leave?: () => void}} [opts] */
@@ -217,12 +227,10 @@ export class SettingsDialog {
     // 高级：一组一行，点进去看（`advanced.js`，2026-10-19 项目主人：不平铺）
     else if (this.current === 'advanced' && page) kids = drawAdvanced(this, page);
     else if (this.current === 'packages') {
-      // 上面核心的软件包，按接入、界面、功能分段：一个包一行、点进去是它的信息页（`core-packages.js`）；下面一段网页自己的组件
-      const core = drawCorePackages(this, page);
+      // 顶上搜索、筛选，核心的软件包一个一行、点进去是它的信息页，最后一段网页自己的组件（`core-packages.js`）
       kids = [
         ...(page?.problems ?? []).map((p) => banner(p)),
-        ...core,
-        h('section.set-part', core.length ? h('h2.set-part-name', this.ctx.text('packages_web')) : null, drawPackages(this)),
+        ...drawCorePackages(this, page, drawPackages(this)),
       ];
     }
     else if (entry?.section) kids = entry.section.render?.(sectionKit(this)) ?? null;

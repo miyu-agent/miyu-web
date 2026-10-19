@@ -6,18 +6,22 @@
 import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { toggle } from './rows.js';
 import { packageSettings } from './look.js';
-import { editableKeys } from './model.js';
+import { editableKeys, pkgMatch } from './model.js';
 
 export function drawPackages(dialog) {
   const ctx = dialog.ctx;
   const el = h('div.set-rows');
+  let query = '';
+  /** @type {Promise<any[]>|null} */
+  let loading = null;
+  const all = () => (loading ??= ctx.packages.list().then((list) => list.filter((p) => p.manifest?.kind !== 'base' && p.id !== 'settings')));
+  // 照搜索框筛（软件包页顶上那一个，`core-packages.js`）：名字、一句说明、编号；交回剩几个
   const draw = async () => {
-    const all = (await ctx.packages.list()).filter((p) => p.manifest?.kind !== 'base' && p.id !== 'settings');
-    replace(el, all.map((p) => {
+    const shown = (await all()).filter((p) => pkgMatch(query, ctx.local(p.manifest?.name ?? p.id), ctx.local(p.manifest?.summary ?? ''), p.id));
+    replace(el, shown.map((p) => {
       const m = p.manifest ?? {};
       const why = problemOf(ctx, p);
       const on = p.state !== 'disabled';
-      // 有能改的设置项的点这一行滑进它的设置页（2026-10-10 项目主人），右边多一个箭头；一项都没有的（全是结构复杂的）不能点
       const hasSettings = editableKeys(m.settings).length > 0;
       return h(`div.set-row.set-pkg${hasSettings ? '.is-expandable' : ''}`, {
         onclick: (e) => {
@@ -25,7 +29,6 @@ export function drawPackages(dialog) {
           dialog.openSub(ctx.local(m.name ?? p.id), () => webPackagePage(dialog, p.id));
         },
       },
-      // 前面一个图标，同上面核心的软件包（2026-10-19 项目主人：软件包页 UI 不统一）：清单写了、认得的照它，不然画拼图
       h('span.set-pkg-face', icon(m.icon && hasIcon(m.icon) ? m.icon : 'puzzle')),
       h('div.set-text',
         h('div.set-name', h('span', ctx.local(m.name ?? p.id))),
@@ -33,14 +36,26 @@ export function drawPackages(dialog) {
         why ? h('p.set-problem.is-error', why) : null),
       h('div.set-control', toggle(on, async () => {
         await ctx.packages.set(p.id, { disabled: on });
+        loading = null;
         await draw();
       })),
-      // 没有设置页的也留着箭头那一格：开关上下对齐
       h('span.set-pkg-arrow', hasSettings ? icon('chevron-right') : null));
     }));
+    return shown.length;
   };
-  draw().catch((err) => replace(el, h('p.set-empty.is-bad', err.message)));
-  return h('section.set-group', el);
+  const node = h('section.set-group', el);
+  return {
+    node,
+    /** @param {string} text */
+    filter: (text) => {
+      query = text;
+      return draw().catch((err) => {
+        replace(el, h('p.set-empty.is-bad', err.message));
+        return 1;
+      });
+    },
+    count: () => all().then((list) => list.length, () => 0),
+  };
 }
 
 /** 等着的、故障的包为什么（好好的是空的）。 @param {any} ctx @param {any} p */
