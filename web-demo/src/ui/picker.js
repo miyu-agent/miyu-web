@@ -1,6 +1,7 @@
 // @ts-check
 //! 选一样的浮层（蓝图 `web.md`「界面语言」第 3 条，照 `tui.md`「界面语言」）：浮在输入框上面，和命令列表同一个位置、同一个样子，
-//! 进出照「动效」。头一行标题、右边暗色写按键；下面一行一样，现在的那一行右边暗色写「当前」，打开时选中它。
+//! 进出照「动效」。头一行标题、右边暗色写按键；下面一行一样（可以带一句暗色说明，写错的暗着、选不了），现在的那一行右边暗色写「当前」，打开时选中它
+//! （没有现在的选中头一行）。软件包经输入框服务的 `pick` 用它（`/persona`、`/preset`）。
 //!
 //! `↑` `↓` 选（到头绕回去）、`Enter` 选定、`Esc` 关；鼠标悬停选中，点一下选定；点浮层外面关。开着时这几个键在整页最先接走
 //! （焦点还在输入框里，不然 `Enter` 会把框里的字发出去）。
@@ -9,8 +10,8 @@ import { h, replace } from './dom.js';
 import { show, hide } from '../lib/motion.js';
 
 /**
- * @typedef {{title: string, hint: string, note: string, items: {label: string}[], current: number,
- *   choose: (index: number) => void}} Ask 标题、按键的提示、「当前」怎么写、一行一样、现在是哪一行、选定了做什么
+ * @typedef {{title: string, hint: string, note: string, items: {label: string, desc?: string, off?: boolean}[], current: number,
+ *   choose: (index: number) => void}} Ask 标题、按键的提示、「当前」怎么写、一行一样（说明、选不了）、现在是哪一行（没有是 -1）、选定了做什么
  */
 
 export class Picker {
@@ -44,14 +45,14 @@ export class Picker {
     this.ask = ask;
     this.title.textContent = ask.title;
     this.hint.textContent = ask.hint;
-    replace(this.list, ask.items.map((item, i) => h('div.picker-row', {
+    replace(this.list, ask.items.map((item, i) => h(`div.picker-row${item.off ? '.is-off' : ''}`, {
       role: 'option',
       // 焦点留在输入框里
       onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(),
       onmousemove: (/** @type {MouseEvent} */ e) => this.hover(e, i),
       onclick: () => this.pick(i),
-    }, h('span.picker-label', item.label), i === ask.current ? h('span.picker-note', ask.note) : null)));
-    this.mark(ask.current);
+    }, h('span.picker-label', item.label, item.desc ? h('span.picker-desc', item.desc) : null), i === ask.current ? h('span.picker-note', ask.note) : null)));
+    this.mark(Math.max(0, ask.current));
     show(this.el);
     document.addEventListener('keydown', this.onKey, true);
     document.addEventListener('pointerdown', this.onDown, true);
@@ -68,6 +69,7 @@ export class Picker {
   /** 选定一行：先关掉，再照它做。 */
   pick(i) {
     const ask = this.ask;
+    if (ask?.items[i]?.off) return;
     this.close();
     ask?.choose(i);
   }

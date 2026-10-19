@@ -334,12 +334,15 @@
         "switch_confirm": "切换前会压缩上下文以避免缓存断裂导致的额外消耗，确认切换吗？",
         "cancel": "取消",
         "confirm": "确认",
-        "back": "返回"
+        "back": "返回",
+        "confirm_switch": "确认切换"
       },
       "follow_default": "跟随默认",
       "command_persona": "换人格",
       "command_preset": "换预设",
-      "project_fixed": "这个会话在项目里，人格和预设由项目定"
+      "project_fixed": "这个会话在项目里，人格和预设由项目定",
+      "picker_hint": "↑↓ 选择 · Enter 确定 · Esc 关闭",
+      "picker_current": "当前"
     },
     "en": {
       "choose_persona": "Select persona",
@@ -523,12 +526,15 @@
         "switch_confirm": "The conversation will be compacted before switching, to avoid extra cost from a broken cache. Switch now?",
         "cancel": "Cancel",
         "confirm": "Confirm",
-        "back": "Back"
+        "back": "Back",
+        "confirm_switch": "Switch"
       },
       "follow_default": "Follow default",
       "command_persona": "Switch persona",
       "command_preset": "Switch preset",
-      "project_fixed": "This session is in a project; the project sets its persona and preset"
+      "project_fixed": "This session is in a project; the project sets its persona and preset",
+      "picker_hint": "↑↓ select · Enter confirm · Esc close",
+      "picker_current": "current"
     },
     "ja": {
       "choose_persona": "人格を選ぶ",
@@ -712,12 +718,15 @@
         "switch_confirm": "キャッシュが切れて余分なコストがかからないよう、切り替える前に会話を圧縮します。切り替えますか？",
         "cancel": "キャンセル",
         "confirm": "確認",
-        "back": "戻る"
+        "back": "戻る",
+        "confirm_switch": "切り替える"
       },
       "follow_default": "デフォルトに従う",
       "command_persona": "人格を切り替え",
       "command_preset": "プリセットを切り替え",
-      "project_fixed": "このセッションはプロジェクト内のため、人格とプリセットはプロジェクトが決めます"
+      "project_fixed": "このセッションはプロジェクト内のため、人格とプリセットはプロジェクトが決めます",
+      "picker_hint": "↑↓ 選択 · Enter 決定 · Esc 閉じる",
+      "picker_current": "現在"
     }
   }
 }

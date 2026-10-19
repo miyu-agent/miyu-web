@@ -238,34 +238,28 @@ export function apply(ctx) {
 
   /**
    * 会话中途换人格（核心 P-13 的 `session.configure`）：一个人格一行（第一行无人格），现在的打勾；选了先问一句（换之前核心先压缩一轮）。
-   * 从左上角的卡片翻进来的开在它下面、带返回；`/persona` 打开的（`below` 是假的）开在输入框上面、没有返回（2026-10-20 项目主人：用列表就行）。
-   * @param {HTMLElement} anchor @param {string} session @param {string|null} now @param {(() => void)|undefined} back @param {boolean} [below]
+   * @param {HTMLElement} anchor @param {string} session @param {string|null} now @param {() => void} back
    */
-  const switchPersona = (anchor, session, now, back, below = true) => {
-    const here = () => switchPersona(anchor, session, now, back, below);
+  const switchPersona = (anchor, session, now, back) => {
     infoMenu.show(anchor, {
-      title: t('info.switch_persona'), below, back,
+      title: t('info.switch_persona'), below: true, back,
       rows: [
-        { title: t('no_persona'), desc: t('no_persona_desc'), current: now == null, keep: true, pick: () => { if (now != null) confirmSwitch(anchor, session, { persona: null }, here, below); } },
+        { title: t('no_persona'), desc: t('no_persona_desc'), current: now == null, keep: true, pick: () => { if (now != null) confirmSwitch(anchor, session, { persona: null }, back); } },
         ...(catalog.personas ?? []).map((p) => ({
           title: personaName(p), desc: p.problem ? t('persona_bad') : p.summary ?? '', current: p.persona === now, off: !!p.problem, keep: true,
-          pick: () => { if (p.persona !== now) confirmSwitch(anchor, session, { persona: p.persona }, here, below); },
+          pick: () => { if (p.persona !== now) confirmSwitch(anchor, session, { persona: p.persona }, back); },
         })),
       ],
     });
   };
 
-  /**
-   * 会话中途换预设：一个预设一行，现在的打勾；选了先问一句。开在哪同换人格。
-   * @param {HTMLElement} anchor @param {string} session @param {string|null} now @param {(() => void)|undefined} back @param {boolean} [below]
-   */
-  const switchPreset = (anchor, session, now, back, below = true) => {
-    const here = () => switchPreset(anchor, session, now, back, below);
+  /** 会话中途换预设：一个预设一行，现在的打勾；选了先问一句。 @param {HTMLElement} anchor @param {string} session @param {string|null} now @param {() => void} back */
+  const switchPreset = (anchor, session, now, back) => {
     infoMenu.show(anchor, {
-      title: t('info.switch_preset'), below, back,
+      title: t('info.switch_preset'), below: true, back,
       rows: (catalog.presets ?? []).map((p) => ({
         title: presetName(p), desc: p.problem ? t('preset_bad') : '', current: p.preset === now, off: !!p.problem, keep: true,
-        pick: () => { if (p.preset !== now) confirmSwitch(anchor, session, { preset: p.preset }, here, below); },
+        pick: () => { if (p.preset !== now) confirmSwitch(anchor, session, { preset: p.preset }, back); },
       })),
     });
   };
@@ -273,9 +267,9 @@ export function apply(ctx) {
   /**
    * 换之前问一句（2026-10-19 项目主人定的字）：「切换前会压缩上下文以避免缓存断裂导致的额外消耗，确认切换吗？」，「取消」「确认」。确认了发
    * `session.configure`；回答进行中的（`turn_running`）、人格没了的照核心的话说一句。
-   * @param {HTMLElement} anchor @param {string} session @param {{persona?: string|null, preset?: string}} change @param {() => void} back @param {boolean} [below]
+   * @param {HTMLElement} anchor @param {string} session @param {{persona?: string|null, preset?: string}} change @param {() => void} back
    */
-  const confirmSwitch = (anchor, session, change, back, below = true) => {
+  const confirmSwitch = (anchor, session, change, back) => {
     // 没有能压缩的（核心的 `compactable` 是假）：不问、直接换（2026-10-20 项目主人：没什么可压缩的，切换就不应该提示要压缩；终端一样）
     if (ctx.chat.compactable?.(session) === false) {
       infoMenu.close();
@@ -284,7 +278,7 @@ export function apply(ctx) {
     }
     const button = (/** @type {string} */ label, /** @type {boolean} */ primary, /** @type {() => void} */ onclick) => h(`button.setup-menu-btn${primary ? '.is-primary' : ''}`, { type: 'button', onclick }, label);
     infoMenu.show(anchor, {
-      title: t(change.preset ? 'info.switch_preset' : 'info.switch_persona'), below, back,
+      title: t(change.preset ? 'info.switch_preset' : 'info.switch_persona'), below: true, back,
       rows: [],
       note: t('info.switch_confirm'),
       foot: [
@@ -301,41 +295,42 @@ export function apply(ctx) {
     });
   };
 
+  /**
+   * 人格的几行：第一行「无人格」，再一个人格一行（写错的暗着）；选了交 `pick`（无人格是 `null`）。输入框上面的「选择人格」菜单、`/persona` 的列表都照它。
+   * @param {string|null} chosen @param {(persona: string|null) => void} pick
+   */
+  const personaRows = (chosen, pick) => [
+    // 第一行「无人格」：不带人格（2026-10-08 项目主人：人格可以留空，这一项叫「无人格」；没有人格的会话记忆单独一份（核心 P-12，原来不生效），知识库照样能查）
+    { title: t('no_persona'), desc: t('no_persona_desc'), current: chosen == null, pick: () => pick(null) },
+    ...(catalog.personas ?? []).map((p) => ({
+      title: personaName(p),
+      desc: p.problem ? t('persona_bad') : p.summary ?? '',
+      tip: p.problem ? catalog.problemOf('persona', p).map((x) => problemText(ctx, x)).join('\n') : undefined,
+      current: p.persona === chosen && !p.problem,
+      off: !!p.problem,
+      pick: () => pick(p.persona),
+    })),
+  ];
+
+  /** 预设的几行：照 `preset.list`，一行一个名字（预设不写说明）；写错的暗着。 @param {string|null} chosen @param {(preset: string) => void} pick */
+  const presetRows = (chosen, pick) => (catalog.presets ?? []).map((p) => ({
+    title: presetName(p),
+    desc: p.problem ? t('preset_bad') : '',
+    tip: p.problem ? catalog.problemOf('preset', p).map((x) => problemText(ctx, x)).join('\n') : undefined,
+    current: p.preset === chosen && !p.problem,
+    off: !!p.problem,
+    pick: () => pick(p.preset),
+  }));
+
   const openPersonas = () => {
     if (!catalog.personas) return;
-    const chosen = inUse().persona;
-    menu.show(personaBtn, {
-      title: t('choose_persona'),
-      rows: [
-        // 第一行「无人格」：不带人格（2026-10-08 项目主人：人格可以留空，这一项叫「无人格」；没有人格的会话记忆单独一份（核心 P-12，原来不生效），知识库照样能查）
-        { title: t('no_persona'), desc: t('no_persona_desc'), current: chosen == null, pick: () => chat.setDraft({ persona: false }) },
-        ...catalog.personas.map((p) => ({
-        title: personaName(p),
-        desc: p.problem ? t('persona_bad') : p.summary ?? '',
-        tip: p.problem ? catalog.problemOf('persona', p).map((x) => problemText(ctx, x)).join('\n') : undefined,
-        current: p.persona === chosen && !p.problem,
-        off: !!p.problem,
-        pick: () => chat.setDraft({ persona: p.persona }),
-      })),
-      ],
-    });
+    menu.show(personaBtn, { title: t('choose_persona'), rows: personaRows(inUse().persona ?? null, (p) => chat.setDraft({ persona: p ?? false })) });
   };
 
-  /** 预设的菜单：照 `preset.list`，一行一个名字（预设不写说明）；写错的暗着。 */
+  /** 预设的菜单。 */
   const openPresets = () => {
     if (!catalog.presets) return;
-    const chosen = inUse().preset;
-    menu.show(presetBtn, {
-      title: t('choose_preset'),
-      rows: catalog.presets.map((p) => ({
-        title: presetName(p),
-        desc: p.problem ? t('preset_bad') : '',
-        tip: p.problem ? catalog.problemOf('preset', p).map((x) => problemText(ctx, x)).join('\n') : undefined,
-        current: p.preset === chosen && !p.problem,
-        off: !!p.problem,
-        pick: () => chat.setDraft({ preset: p.preset }),
-      })),
-    });
+    menu.show(presetBtn, { title: t('choose_preset'), rows: presetRows(inUse().preset ?? null, (p) => chat.setDraft({ preset: p })) });
   };
 
   /** 核心拒了换目录的原因写给人看的一句（`fs.list`、`session.set_workspace` 同一套原因码）。 @param {any} err */
@@ -450,23 +445,56 @@ export function apply(ctx) {
     draw(true);
   });
   /**
-   * `/persona`、`/preset`（2026-10-20 项目主人：网页还不支持，加上；不开左上角的卡片，用列表就行）：空会话里开输入框上面「选择人格」「选择预设」的那个列表
-   * （选的是新会话用的）；开着的会话开在输入框上面的换人格、换预设的列表（照会话信息卡片里那一页：现在的打勾，选了先问一句再换，核心 P-13）。
+   * 几行选项交给输入框上面的列表（同 `/language`、会话列表那一个位置那一个样子：`↑` `↓` 选、`Enter` 定、`Esc` 关）。
+   * @param {string} title @param {{title: string, desc?: string, current?: boolean, off?: boolean, pick: () => void}[]} rows
+   */
+  const listOf = (title, rows) => ctx.composer.pick({
+    title, hint: t('picker_hint'), note: t('picker_current'),
+    items: rows.map((r) => ({ label: r.title, desc: r.desc || '', off: !!r.off })),
+    current: rows.findIndex((r) => r.current),
+    choose: (/** @type {number} */ i) => rows[i]?.pick(),
+  });
+
+  /**
+   * 换之前问一句（同会话信息卡片里的那一句），也在输入框上面的列表里问：「确认切换」「取消」。确认了发 `session.configure`。
+   * @param {string} session @param {{persona?: string|null, preset?: string}} change
+   */
+  const confirmInList = (session, change) => listOf(t('info.switch_confirm'), [
+    { title: t('info.confirm_switch'), pick: async () => {
+      try {
+        await ctx.core.request('session.configure', { session, ...change });
+      } catch (err) {
+        ctx.composer.say(/** @type {any} */ (err)?.message ?? String(err));
+      }
+    } },
+    { title: t('info.cancel'), pick: () => {} },
+  ]);
+
+  /**
+   * `/persona`、`/preset`（2026-10-20 项目主人：网页还不支持，加上；不开左上角的卡片，用列表就行——要的是输入框上面那种列表）：空会话里列人格、预设，
+   * 选的是新会话用的（同「选择人格」「选择预设」）；开着的会话列换人格、换预设（现在的写「当前」，选了别的先问一句再换，核心 P-13）。
    * 在项目里的会话人格、预设由项目定，不换。
    * @param {'persona'|'preset'} kind
    */
   const pickFor = async (kind) => {
     if (!catalog.personas || !catalog.presets) await catalog.load().catch(() => {});
     const session = chat.current();
-    if (!session) return kind === 'persona' ? openPersonas() : openPresets();
+    if (!session) {
+      if (kind === 'persona') listOf(t('choose_persona'), personaRows(inUse().persona ?? null, (p) => chat.setDraft({ persona: p ?? false })));
+      else listOf(t('choose_preset'), presetRows(inUse().preset ?? null, (p) => chat.setDraft({ preset: p })));
+      return;
+    }
     if (chat.projectOf?.(session)) {
       ctx.composer.say(t('project_fixed'));
       return;
     }
-    if (kind === 'persona' ? !catalog.personas : !catalog.presets) return;
-    const anchor = ctx.composer.box;
-    if (kind === 'persona') switchPersona(anchor, session, chat.persona(session), undefined, false);
-    else switchPreset(anchor, session, chat.preset(session), undefined, false);
+    if (kind === 'persona') {
+      const now = chat.persona(session);
+      listOf(t('info.switch_persona'), personaRows(now, (p) => { if (p !== now) confirmInList(session, { persona: p }); }));
+    } else {
+      const now = chat.preset(session);
+      listOf(t('info.switch_preset'), presetRows(now, (p) => { if (p !== now) confirmInList(session, { preset: p }); }));
+    }
   };
   ctx.commands.register({ name: 'persona', summary: t('command_persona') }, () => pickFor('persona'));
   ctx.commands.register({ name: 'preset', summary: t('command_preset') }, () => pickFor('preset'));
