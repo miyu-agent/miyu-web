@@ -2,9 +2,9 @@
 //! 全部会话（蓝图 `web.md`「全部会话」「会话整理和项目」第 6、7 条，照 Claude 网页端的 Chats 页）：左栏「查看全部」、`/sessions` 打开，占对话区
 //! 那一块（左栏照旧在）。核心有项目的，顶上切「会话」「项目」两页（分段切换，照模型菜单的），点一张项目卡片进那个项目的页（`projects-page.js`）。
 //!
-//! 「会话」那一页：大标题、搜索、多选、新会话；下面一排筛选（全部、每个项目一个、不在项目里、在跑、没看过），右边「按最近活动 ▾」点了换「按创建时间」；
-//! 列表照左栏的时间分组（最近、近 7 天、近 30 天、30 天前），组头滚的时候贴在顶上。一个顶层会话一行：标题、项目的小标签（文件夹加名字）、派过几个
-//! 子代理（在跑的写「N 个子代理在跑」）、有后台任务在跑的写几个、什么时候。全部照会话表取（核心 9-5），不读每个会话的日志；读过的会话标题、在不在跑
+//! 「会话」那一页：大标题、搜索、多选、新会话；下面一排筛选（全部、在跑、没看过），右边「按最近活动 ▾」点了换「按创建时间」；列表照左栏的时间分组
+//! （最近、近 7 天、近 30 天、30 天前），组头滚的时候贴在顶上。只列不在项目里的（2026-10-19 项目主人：项目的会话去项目那一页看，不要项目的筛选、
+//! 小标签）。一个顶层会话一行：标题、派过几个子代理（在跑的写「N 个子代理在跑」）、有后台任务在跑的写几个、什么时候。全部照会话表取（核心 9-5），不读每个会话的日志；读过的会话标题、在不在跑
 //! 照读到的。会话表、在跑、后台任务变了才重画（`refresh`）。多选照左栏：勾选框、`Shift` 连选、全选、删除（不问）、退出。`Esc` 关上（项目页先回
 //! 「项目」那一页）。
 
@@ -169,11 +169,15 @@ export class SessionsPage {
     replace(this.switcher, h('i.sessions-switch-thumb'), tab('sessions'), tab('projects'));
   }
 
+  /** 「会话」那一页列的：不在项目里的，照筛选、搜索留下的 */
+  loose() {
+    const known = new Set(this.projects().map((p) => p.project));
+    return filterRows(filterRows(this.rows(), 'loose', '', known), this.filter, this.query, known);
+  }
+
   /** 「会话」那一页筛完搜完的（照列出来的先后） */
   shown() {
-    const known = new Set(this.projects().map((p) => p.project));
-    const kept = filterRows(this.rows(), this.filter, this.query, known);
-    return groupRows(kept, this.sort, Date.now()).flatMap((g) => g.rows);
+    return groupRows(this.loose(), this.sort, Date.now()).flatMap((g) => g.rows);
   }
 
   /** 开着时会话表、在跑、后台任务、项目变了：重画（没变的不动，对话区每来一段字都会叫一次）。 */
@@ -205,12 +209,11 @@ export class SessionsPage {
       const p = /** @type {import('../core/projects.js').Project} */ (this.projects().find((x) => x.project === this.projectId));
       const rows = this.rows().filter((r) => r.project === p.project);
       replace(this.bar, projectView(this, p));
-      replace(this.list, this.groups(rows, false));
+      replace(this.list, this.groups(rows));
       return;
     }
     replace(this.bar, this.filters());
-    const known = new Set(this.projects().map((p) => p.project));
-    replace(this.list, this.groups(filterRows(this.rows(), this.filter, this.query, known), true));
+    replace(this.list, this.groups(this.loose()));
   }
 
   /** 一排筛选、右边的排法。 */
@@ -220,12 +223,9 @@ export class SessionsPage {
         type: 'button', 'aria-pressed': String(this.filter === f), style: color ? `--project-color: ${color}` : null,
         onclick: () => { this.filter = f; this.draw(); },
       }, label);
-    const projects = this.projects();
     return h('div.sessions-filters',
       h('div.sessions-chips',
         chip('all', t('sessions_page.filter_all')),
-        ...projects.map((p) => chip(`project:${p.project}`, [icon('folder'), h('span', p.name)], this.on.color(p.color))),
-        projects.length ? chip('loose', t('sessions_page.filter_loose')) : null,
         chip('running', t('sessions_page.filter_running')),
         chip('unread', t('sessions_page.filter_unread'))),
       h('button.sessions-sort', { type: 'button', onclick: () => { this.sort = this.sort === 'active' ? 'created' : 'active'; this.draw(); } },
@@ -234,25 +234,24 @@ export class SessionsPage {
 
   /**
    * 照时间分组的列表：一组一个头（滚的时候贴在顶上），组里一个会话一行。
-   * @param {Row[]} rows @param {boolean} tags 带不带项目的小标签（项目页里不带）
+   * @param {Row[]} rows
    */
-  groups(rows, tags) {
+  groups(rows) {
     const now = Date.now();
     const groups = groupRows(rows, this.sort, now);
     const order = groups.flatMap((g) => g.rows.map((r) => r.session));
-    const byId = new Map(this.projects().map((p) => [p.project, p]));
     if (!groups.length) return [h('div.sessions-empty', t(this.query || this.filter !== 'all' ? 'sessions_page.no_match' : 'sessions_page.empty'))];
     return groups.flatMap((g) => [
       h('div.sessions-group', t(`sidebar.groups.${g.group}`)),
-      ...g.rows.map((r) => this.row(r, order, tags ? byId.get(r.project ?? '') ?? null : null, now)),
+      ...g.rows.map((r) => this.row(r, order, now)),
     ]);
   }
 
   /**
-   * 一行：标题、项目的小标签、子代理、后台任务、什么时候；多选时前面一个勾选框。
-   * @param {Row} r @param {string[]} order @param {import('../core/projects.js').Project|null} project @param {number} now
+   * 一行：标题、子代理、后台任务、什么时候；多选时前面一个勾选框。
+   * @param {Row} r @param {string[]} order @param {number} now
    */
-  row(r, order, project, now) {
+  row(r, order, now) {
     const on = this.selected.has(r.session);
     const click = (/** @type {MouseEvent} */ e) => {
       if (this.selecting) {
@@ -264,12 +263,10 @@ export class SessionsPage {
       this.close();
       this.on.open(r.session);
     };
-    const color = project ? this.on.color(project.color) : null;
     return h(`button.sessions-row${on ? '.is-selected' : ''}`, { type: 'button', dataset: { session: r.session }, onclick: click },
       this.selecting ? h('span.sessions-check', icon(on ? 'square-check' : 'square')) : null,
       r.running ? h('span.session-run-spinner.sessions-run') : r.unread ? h('i.session-unread-dot.sessions-unread') : null,
       h(`span.sessions-name${r.title ? '' : '.is-untitled'}`, r.title ?? t('sessions_page.untitled')),
-      project ? h('span.sessions-project', { style: color ? `--project-color: ${color}` : null }, icon('folder'), h('span', project.name)) : null,
       agents(this.on.agents(r.session), this.on.agentsRunning(r.session)),
       jobs(this.on.jobs(r.session)),
       h('span.sessions-when', ago(timeOf(r, this.sort), now)));

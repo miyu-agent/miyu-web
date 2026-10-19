@@ -126,8 +126,10 @@ export function apply(ctx) {
     const draft = chat.draft();
     const cwd = chat.workdir();
     const used = session ? null : inUse();
+    // 项目里的会话（在项目里新建的空会话也算）：人格、预设、工作区建项目时定好了，不画这三样（2026-10-19 项目主人：只要左上角项目的小标），用不了要选的照旧露出来
+    const inProject = !!chat.projectOf?.(session);
     const sig = JSON.stringify([session, draft, cwd, catalog.personas?.length ?? -1, catalog.presets?.length ?? -1, catalog.personaDefault, catalog.presetDefault,
-      used, session ? [chat.persona(session), chat.preset(session)] : null]);
+      used, session ? [chat.persona(session), chat.preset(session)] : null, inProject]);
     if (!force && sig === drawn) return;
     drawn = sig;
     if (!session) {
@@ -151,11 +153,20 @@ export function apply(ctx) {
       presetBtn.classList.toggle('is-need', needPreset);
       personaBtn.classList.toggle('is-need', needPersona);
       ctx.composer.lock(needPreset ? t('locked_preset') : needPersona ? t('locked') : null);
+      if (inProject && !needPreset && !needPersona) {
+        row.hidden = true;
+        menu.close();
+      }
       return;
     }
     row.hidden = true;
     menu.close();
     ctx.composer.lock(null);
+    if (inProject) {
+      info.hidden = true;
+      infoMenu.close();
+      return;
+    }
     const persona = chat.persona(session);
     const preset = chat.preset(session);
     const path = tilde(cwd, home());

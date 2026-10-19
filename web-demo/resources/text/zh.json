@@ -47,9 +47,9 @@
     "project_menu": "项目菜单",
     "project_open": "打开项目",
     "project_new_session": "在项目里新建会话",
-    "project_settings": "项目设置…",
-    "project_delete": "删除项目…",
-    "project_delete_confirm": "再点一次删除（会话移出项目）",
+    "project_settings": "项目设置",
+    "project_delete": "删除项目",
+    "project_delete_confirm": "确认删除",
     "move_to_project": "移到项目",
     "move_out": "移出项目",
     "here": "{name}（在这里）"
@@ -391,7 +391,6 @@
     "tab_sessions": "会话",
     "tab_projects": "项目",
     "filter_all": "全部",
-    "filter_loose": "不在项目里",
     "filter_running": "在跑",
     "filter_unread": "没看过",
     "sort_active": "按最近活动",
@@ -493,7 +492,7 @@
     "all": "全部项目",
     "settings": "项目设置",
     "new_session": "在项目里新建",
-    "defaults": "在这个项目里新建的会话照这几样",
+    "defaults": "此项目里新建会话的默认配置",
     "workspace": "工作区目录",
     "default_workspace": "默认工作区",
     "persona": "人格",
@@ -504,6 +503,10 @@
     "none": "无",
     "messages": "留言",
     "messages_inside": "只在项目里",
-    "messages_open": "能和项目外的会话互相留言"
+    "messages_open": "能和项目外的会话互相留言",
+    "back": "全部项目"
+  },
+  "project_chip": {
+    "title": "项目：{name}（点了打开项目）"
   }
 }

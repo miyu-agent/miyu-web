@@ -160,7 +160,9 @@ export class Sidebar {
     const button = (name, label, run, cls = '', disabled = false) =>
       h(`button.icon-button.session-group-button${cls}`, { type: 'button', title: label, 'aria-label': label, disabled, onclick: run }, icon(name));
     this.groupTitle.textContent = this.selecting ? t('sidebar.selected', { count: this.selected.size }) : t('sidebar.sessions');
-    const order = this.last[0].map((it) => it.session);
+    // 全选、删除照多选时列着的（不在项目里的）
+    const known = new Set(this.on.projects().list.map((p) => p.project));
+    const order = this.last[0].filter((it) => !(this.on.projects().supported && it.project && known.has(it.project))).map((it) => it.session);
     replace(this.groupTools, this.selecting
       ? [button('check-check', t('sidebar.select_all'), () => { this.selected = new Set(order); this.render(...this.last); }),
         button('trash-2', t('sidebar.delete'), () => this.removeAll(order.filter((id) => this.selected.has(id))), '.is-danger', this.selected.size === 0),
@@ -182,10 +184,11 @@ export class Sidebar {
     const projects = this.on.projects();
     const showProjects = projects.supported && !this.selecting;
     const known = new Set(projects.list.map((p) => p.project));
-    const inProject = (/** @type {any} */ it) => showProjects && !!it.project && known.has(it.project);
-    // 置顶的单开一栏、全部露出（多选时不分栏）；别的顶层最多露几个，正在看的不在里面的排在最后照样露（多选时全列，才勾得到）
+    const inProject = (/** @type {any} */ it) => projects.supported && !!it.project && known.has(it.project);
+    // 置顶的单开一栏、全部露出（多选时不分栏）；别的顶层最多露几个，正在看的不在里面的排在最后照样露（多选时全列，才勾得到）。
+    // 多选只列不在项目里的（2026-10-19 项目主人：点「最近」那一行的多选不该把项目的会话放进来）
     const pinned = this.selecting ? [] : kept.filter((it) => it.pinned);
-    const rest = this.selecting ? kept : kept.filter((it) => !it.pinned && !inProject(it));
+    const rest = this.selecting ? kept.filter((it) => !inProject(it)) : kept.filter((it) => !it.pinned && !inProject(it));
     const cap = this.selecting ? { shown: rest, more: false } : capTops(rest, pinned.some((it) => it.session === current) ? null : current, res.layout.sidebar_rows);
     const perProject = showProjects ? projectRows(kept, projects.list) : new Map();
     const tops = [...pinned, ...[...perProject.values()].flat(), ...cap.shown];
@@ -493,7 +496,8 @@ export class Sidebar {
 
   /** 点一项：勾上、去掉；`Shift` 点把上一次点的和这一项之间的都勾上。 */
   pick(id, shift) {
-    const order = this.last[0].map((it) => it.session);
+    const known = new Set(this.on.projects().list.map((p) => p.project));
+    const order = this.last[0].filter((it) => !(this.on.projects().supported && it.project && known.has(it.project))).map((it) => it.session);
     this.selected = shift ? range(this.selected, order, this.anchor, id) : toggle(this.selected, id);
     this.anchor = id;
     this.render(...this.last);

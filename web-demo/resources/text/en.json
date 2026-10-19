@@ -47,9 +47,9 @@
     "project_menu": "Project menu",
     "project_open": "Open project",
     "project_new_session": "New session in project",
-    "project_settings": "Project settings…",
-    "project_delete": "Delete project…",
-    "project_delete_confirm": "Click again to delete (sessions move out)",
+    "project_settings": "Project settings",
+    "project_delete": "Delete project",
+    "project_delete_confirm": "Confirm delete",
     "move_to_project": "Move to project",
     "move_out": "Remove from project",
     "here": "{name} (here)"
@@ -391,7 +391,6 @@
     "tab_sessions": "Sessions",
     "tab_projects": "Projects",
     "filter_all": "All",
-    "filter_loose": "Not in a project",
     "filter_running": "Running",
     "filter_unread": "Unread",
     "sort_active": "Recent activity",
@@ -493,7 +492,7 @@
     "all": "All projects",
     "settings": "Project settings",
     "new_session": "New in project",
-    "defaults": "New sessions in this project use",
+    "defaults": "Defaults for new sessions in this project",
     "workspace": "Workspace folder",
     "default_workspace": "Default workspace",
     "persona": "Persona",
@@ -504,6 +503,10 @@
     "none": "None",
     "messages": "Messages",
     "messages_inside": "Only within the project",
-    "messages_open": "Can message sessions outside the project"
+    "messages_open": "Can message sessions outside the project",
+    "back": "All projects"
+  },
+  "project_chip": {
+    "title": "Project: {name} (click to open)"
   }
 }

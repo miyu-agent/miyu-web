@@ -1,8 +1,8 @@
 // @ts-check
 //! 全部会话的「项目」那一页和一个项目的页（蓝图 `web.md`「会话整理和项目」第 6、7 条）：
 //! - 「项目」那一页：一个项目一张卡片，名字前面项目颜色的文件夹、说明、「N 个会话 · 最近活动」（不画字母方块），最后一张虚线的「新建项目」；搜索照名字、说明筛。
-//! - 项目页：顶上一行「全部项目 / 名字」可点回去；大标题前面项目颜色的文件夹；右边「项目设置」「在项目里新建」；说明；「在这个项目里新建的会话照这几样」
-//!   一块（`surface_2` 底）：工作区目录、人格、预设、附加提示词、留言；下面它的会话（同全部会话的一行，不带项目标签，`sessions-page.js` 画）。
+//! - 项目页：顶上一个返回的箭头「‹ 全部项目」；大标题前面项目颜色的文件夹；右边「项目设置」「在项目里新建」；说明；「在这个项目里新建的会话照这几样」
+//!   （「此项目里新建会话的默认配置」，`surface_2` 底）：工作区目录、人格、预设、附加提示词、留言；下面它的会话（同全部会话的一行，不带项目标签，`sessions-page.js` 画）。
 
 import { h, icon } from './dom.js';
 import { t } from '../util/res.js';
@@ -44,10 +44,8 @@ export function projectView(page, p) {
   const line = (/** @type {string} */ name, /** @type {Node|string} */ value, /** @type {boolean} */ faint = false) =>
     h('div.project-default', h('span.project-default-name', name), h(`span.project-default-value${faint ? '.is-faint' : ''}`, value));
   return h('div.project-page', { style: color ? `--project-color: ${color}` : null },
-    h('nav.project-crumbs',
-      h('button.project-crumb', { type: 'button', onclick: () => page.go('projects') }, t('project_page.all')),
-      h('span.project-crumb-sep', '/'),
-      h('span.project-crumb.is-here', p.name)),
+    // 回「项目」那一页：一个返回的箭头（2026-10-19 项目主人：原来「全部项目 / 名字」一行，换成返回的箭头更合理）
+    h('button.project-back', { type: 'button', onclick: () => page.go('projects') }, icon('chevron-left'), h('span', t('project_page.back'))),
     h('header.project-head',
       h('h1.project-title', icon('folder'), h('span', p.name)),
       h('div.sessions-tools',

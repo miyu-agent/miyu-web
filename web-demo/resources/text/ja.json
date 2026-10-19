@@ -47,9 +47,9 @@
     "project_menu": "プロジェクトのメニュー",
     "project_open": "プロジェクトを開く",
     "project_new_session": "プロジェクトで新しいセッション",
-    "project_settings": "プロジェクトの設定…",
-    "project_delete": "プロジェクトを削除…",
-    "project_delete_confirm": "もう一度クリックで削除（セッションは外に出ます）",
+    "project_settings": "プロジェクトの設定",
+    "project_delete": "プロジェクトを削除",
+    "project_delete_confirm": "削除を確定",
     "move_to_project": "プロジェクトへ移動",
     "move_out": "プロジェクトから外す",
     "here": "{name}（ここ）"
@@ -391,7 +391,6 @@
     "tab_sessions": "セッション",
     "tab_projects": "プロジェクト",
     "filter_all": "すべて",
-    "filter_loose": "プロジェクト外",
     "filter_running": "実行中",
     "filter_unread": "未読",
     "sort_active": "最近の活動順",
@@ -493,7 +492,7 @@
     "all": "すべてのプロジェクト",
     "settings": "プロジェクトの設定",
     "new_session": "プロジェクトで新規作成",
-    "defaults": "このプロジェクトで新しく作るセッションの設定",
+    "defaults": "このプロジェクトで新しく作るセッションの既定",
     "workspace": "ワークスペースのフォルダ",
     "default_workspace": "既定のワークスペース",
     "persona": "人格",
@@ -504,6 +503,10 @@
     "none": "なし",
     "messages": "メッセージ",
     "messages_inside": "プロジェクト内のみ",
-    "messages_open": "プロジェクト外のセッションともやり取りできる"
+    "messages_open": "プロジェクト外のセッションともやり取りできる",
+    "back": "すべてのプロジェクト"
+  },
+  "project_chip": {
+    "title": "プロジェクト：{name}（クリックで開く）"
   }
 }

@@ -252,7 +252,9 @@ export class App {
     ctx.slots.declare('composer.above', 'list');
     ctx.effect(() => mountList(this.dockAbove, ctx.slots, 'composer.above', failedSlot));
     // 子代理的会话顶上那条路径：点了回派它的那一层、进路径上的会话
-    this.crumbs = new Crumbs((id) => this.open(id), (id) => this.sessionsPage.openProject(id));
+    this.crumbs = new Crumbs((id) => this.open(id));
+    /** 左上角的项目小标（挂在 `stage.info`，在软件包 setup 那一条前面）：项目颜色的文件夹加名字，点了进项目页 */
+    this.projectChip = h('button.stage-project', { type: 'button', hidden: true, onclick: () => { if (this.projectChip.dataset.project) this.sessionsPage.openProject(this.projectChip.dataset.project); } });
     this.scrim = h('button.page-scrim', { type: 'button', 'aria-label': t('sidebar.collapse'), onclick: () => this.drawer(false) });
     // 收起着时最左边那一条：指针进来左栏临时浮出来，离开了滑回去（蓝图「左栏」的「临时浮出」）
     const zone = h('div.sidebar-peek-zone', { style: `--peek-zone: ${res.layout.sidebar_peek.zone}px` });
@@ -327,6 +329,7 @@ export class App {
     ctx.effect(() => mountList(this.stageRight, ctx.slots, 'stage.right', failedSlot));
     ctx.slots.declare('stage.info', 'list');
     ctx.effect(() => mountList(this.stageInfo, ctx.slots, 'stage.info', failedSlot));
+    ctx.slots.mount('stage.info', { id: 'project', order: 5, render: () => this.projectChip });
     this.root.classList.toggle('is-sidebar-collapsed', !!ctx.storage.get(COLLAPSED, false));
     // 按页读（核心 9-6 下）：往上滚到顶自动读更早的一页（2026-10-08 项目主人定）
     this.chat.el.addEventListener('scroll', () => this.maybeOlder(), { passive: true });
@@ -444,6 +447,29 @@ export class App {
     } catch (err) {
       this.composer.say(refusalText(err));
     }
+  }
+
+  /**
+   * 画左上角的项目小标：不在项目里的藏起来。
+   * @param {import('../core/projects.js').Project|null} p
+   */
+  drawProjectChip(p) {
+    const chip = this.projectChip;
+    const color = p ? colorOf(p.color, !!this.ctx.theme?.dark()) : null;
+    const sig = p ? JSON.stringify([p.project, p.name, color]) : '';
+    if (chip.dataset.sig === sig) return;
+    chip.dataset.sig = sig;
+    chip.hidden = !p;
+    chip.dataset.project = p?.project ?? '';
+    if (!p) return;
+    chip.title = t('project_chip.title', { name: p.name });
+    chip.style.setProperty('--project-color', color ?? 'var(--text-faint)');
+    chip.replaceChildren(icon('folder'), h('span', p.name));
+  }
+
+  /** 一个会话（子代理的照它最上面那个主会话）在哪个项目；`null` 是还没开的新会话，照选的。 @param {string|null} id */
+  projectOfSession(id) {
+    return this.projectOf(id ? pathOf(id, (x) => this.parentOf(x)).map((session) => ({ session })) : []);
   }
 
   /** 正在看的会话（子代理的照它最上面那个主会话）在哪个项目；还没开的新会话照选的。 */
@@ -938,9 +964,9 @@ export class App {
     this.sessionsPage?.refresh();
     this.composer?.sessionList.refresh();
     const path = this.current ? pathOf(this.current, (id) => this.parentOf(id)).map((id) => ({ session: id, title: this.titleOf(id) })) : [];
-    // 项目里的会话：路径前面多一段「项目名 /」（点了进项目页），在项目里新建的空会话写「项目名 / 新会话」（第 9、11 条）
-    const project = this.projectOf(path);
-    this.crumbs.draw(path, project ? { project: project.project, name: project.name, color: colorOf(project.color, !!this.ctx.theme?.dark()) } : null);
+    this.crumbs.draw(path);
+    // 项目里的会话（在项目里新建的空会话也算）：左上角一个项目的小标，点了进项目页（第 11 条）
+    this.drawProjectChip(this.projectOf(path));
     this.back?.draw(path.length > 1 ? path[path.length - 2] : null);
     // 回答里的本机地址、结果里的图照这个会话取（工作目录照 `session.created`）
     this.chat.setWhere(this.current, this.current ? this.workdir() : null);

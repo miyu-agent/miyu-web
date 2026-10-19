@@ -80,8 +80,6 @@
 }
 .sessions-chip:hover { background: var(--surface-3); color: var(--text); }
 .sessions-chip.is-on { background: var(--accent-soft); color: var(--accent); }
-.sessions-chip .icon { width: 13px; height: 13px; color: var(--project-color, currentColor); }
-.sessions-chip span { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sessions-sort { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 8px; border: 0; border-radius: 8px; background: none; color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer; }
 .sessions-sort:hover { background: var(--surface-2); color: var(--text); }
 .sessions-sort .icon { width: 13px; height: 13px; }
@@ -91,13 +89,6 @@
   font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em;
 }
 .sessions-unread { flex: none; }
-/* 项目的小标签：文件夹加名字，surface_2 底 */
-.sessions-project {
-  display: inline-flex; flex: none; max-width: 180px; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 6px; background: var(--surface-2);
-  color: var(--text-soft); font-size: 12px;
-}
-.sessions-project .icon { width: 12px; height: 12px; flex: none; color: var(--project-color, var(--text-faint)); }
-.sessions-project span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sessions-agents.is-running { color: var(--gold); }
 
 /* 「项目」那一页：一个项目一张卡片，最后一张虚线的「新建项目」 */
@@ -121,11 +112,9 @@
 
 /* 项目页：路径、标题（项目颜色的文件夹）、两个按钮、说明、新建会话照的那几样 */
 .project-page { display: grid; gap: 14px; margin-bottom: 18px; }
-.project-crumbs { display: flex; align-items: center; gap: 6px; font-size: 13px; }
-.project-crumb { padding: 2px 6px; margin-left: -6px; border: 0; border-radius: 6px; background: none; color: var(--text-soft); font: inherit; cursor: pointer; }
-button.project-crumb:hover { background: var(--surface-2); color: var(--text); }
-.project-crumb.is-here { margin-left: 0; padding: 0; color: var(--text); }
-.project-crumb-sep { color: var(--text-faint); }
+.project-back { display: inline-flex; justify-self: start; align-items: center; gap: 3px; height: 28px; padding: 0 9px 0 4px; margin-left: -4px; border: 0; border-radius: 7px; background: none; color: var(--text-soft); font: 13px var(--sans); cursor: pointer; }
+.project-back:hover { background: var(--surface-2); color: var(--text); }
+.project-back .icon { width: 15px; height: 15px; }
 .project-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .project-title { display: flex; min-width: 0; align-items: center; gap: 10px; margin: 0; color: var(--text); font: 600 26px/1.2 var(--serif); }
 .project-title .icon { width: 24px; height: 24px; flex: none; color: var(--project-color, var(--text-faint)); }

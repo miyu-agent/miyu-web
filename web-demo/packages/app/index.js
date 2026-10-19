@@ -58,6 +58,8 @@ export function apply(ctx) {
     /** 项目（核心 H-1）：现在的一张表、一个项目；没有的是 `null` */
     projects: () => app.store.projects.list,
     project: (id) => app.store.projects.get(id),
+    /** 一个会话在哪个项目（子代理的照它的主会话；`null` 是还没开的新会话，照选的）；不在的是 `null`：在项目里的不画人格、预设、工作区（项目定好了） */
+    projectOf: (session) => app.projectOfSession(session),
     /** 项目的十二种颜色（存的是浅色那一种）、一种颜色照现在的深浅画成什么（新建项目、项目设置那一个窗口，软件包 setup） */
     projectPalette: () => PALETTE,
     projectColor: (color) => colorOf(color, !!ctx.theme?.dark()),

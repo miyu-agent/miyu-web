@@ -22,13 +22,16 @@ export class SessionDrag {
   constructor(bar) {
     this.bar = bar;
     /** @type {null|{id: string, pinned: boolean, project: string|null, row: HTMLElement, x: number, y: number, dx: number, dy: number, on: boolean,
-     *   ghost: HTMLElement|null, zone: string|null, hint: HTMLElement|null, mark: HTMLElement|null, scroll: any}} */
+     *   ghost: HTMLElement|null, zone: string|null, hint: HTMLElement|null, mark: HTMLElement|null, lit?: HTMLElement|null, scroll: any}} */
     this.drag = null;
     bar.items.addEventListener('pointerdown', (e) => this.down(e));
     addEventListener('pointermove', (e) => this.move(e));
     addEventListener('pointerup', () => this.end(false));
     addEventListener('pointercancel', () => this.end(true));
     addEventListener('keydown', (e) => { if (e.key === 'Escape' && this.drag?.on) this.end(true); });
+    // 拖着的时候切走了（别的窗口拿了焦点、页面到了后台）：收不到松手，当取消（2026-10-19 项目主人：切回来卡在半路）
+    addEventListener('blur', () => this.end(true));
+    document.addEventListener('visibilitychange', () => { if (document.hidden) this.end(true); });
   }
 
   /** @param {PointerEvent} e */
@@ -50,6 +53,11 @@ export class SessionDrag {
   move(e) {
     const d = this.drag;
     if (!d) return;
+    // 指针回来时已经松开了（在别处松的手）：当取消
+    if (e.buttons === 0) {
+      this.end(true);
+      return;
+    }
     if (!d.on) {
       if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < START_PX) return;
       this.start(d);
@@ -93,16 +101,23 @@ export class SessionDrag {
     return zone && zone !== this.home() ? zone : null;
   }
 
-  /** 亮起那一块：一张盖在那一段上面的框（行是平铺的，没有包着一段的元素；项目是整块一个元素） @param {string|null} zone */
+  /**
+   * 亮起那一块（`accent_soft` 底、一圈 `accent`）：只有一个元素的（一个项目、临时那一块「拖到这里置顶」）给它自己加 `is-drop-on`，照它自己的圆角、
+   * 边画，和虚线框对得上；好几行的（置顶那一栏、下面的会话）盖一张贴着这几行四边的框（行是平铺的，没有包着一段的元素）。不算「查看全部」。
+   * @param {string|null} zone
+   */
   mark(zone) {
     const d = this.drag;
     if (!d || d.zone === zone) return;
     d.zone = zone;
-    d.mark?.remove();
-    d.mark = null;
+    this.unmark();
     if (!zone) return;
-    // 置顶的是临时那一块（有的话）；不算「查看全部」
-    const part = [...this.bar.items.children].filter((el) => el instanceof HTMLElement && el.dataset.zone === zone && (!d.hint || zone !== 'pin' || el === d.hint));
+    const part = /** @type {HTMLElement[]} */ ([...this.bar.items.children]).filter((el) => el.dataset.zone === zone && (!d.hint || zone !== 'pin' || el === d.hint));
+    if (part.length === 1) {
+      part[0].classList.add('is-drop-on');
+      d.lit = part[0];
+      return;
+    }
     const boxes = part.map((el) => el.getBoundingClientRect()).filter((r) => r.height);
     if (!boxes.length) return;
     // 盖在会话表那一层（`.session-track`，相对它定位）上
@@ -110,8 +125,20 @@ export class SessionDrag {
     const host = track.getBoundingClientRect();
     const top = Math.min(...boxes.map((r) => r.top)) - host.top;
     const bottom = Math.max(...boxes.map((r) => r.bottom)) - host.top;
-    d.mark = h('div.session-drop-zone', { style: `top: ${top - 2}px; height: ${bottom - top + 4}px` });
+    const left = Math.min(...boxes.map((r) => r.left)) - host.left;
+    const right = Math.max(...boxes.map((r) => r.right)) - host.left;
+    d.mark = h('div.session-drop-zone', { style: `top: ${top}px; height: ${bottom - top}px; left: ${left}px; width: ${right - left}px` });
     track.prepend(d.mark);
+  }
+
+  /** 收起亮着的那一块 */
+  unmark() {
+    const d = this.drag;
+    if (!d) return;
+    d.mark?.remove();
+    d.mark = null;
+    d.lit?.classList.remove('is-drop-on');
+    d.lit = null;
   }
 
   /** 拖到左栏上下边上：跟着滚 @param {number} y */
@@ -128,11 +155,11 @@ export class SessionDrag {
   /** 松手（`cancel` 的是取消）：放进亮着的那一块；拖过的那一下不算点开 @param {boolean} cancel */
   end(cancel) {
     const d = this.drag;
+    if (d?.on) this.unmark();
     this.drag = null;
     if (!d?.on) return;
     clearInterval(d.scroll);
     d.ghost?.remove();
-    d.mark?.remove();
     d.hint?.remove();
     d.row.classList.remove('is-dragging');
     document.body.classList.remove('is-dragging-session');
