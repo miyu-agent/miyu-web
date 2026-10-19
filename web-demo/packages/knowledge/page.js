@@ -240,10 +240,13 @@ export class KnowledgePage {
       e.preventDefault();
       if (ok.disabled) return;
       ok.disabled = true;
+      // 挂的文件夹要先建好索引才回（头一次还要装载语义模型），按钮上写着在办
+      ok.textContent = t(folder ? 'mounting' : 'creating');
       const fields = { name: name.value.trim(), ...(desc.value.trim() ? { description: desc.value.trim() } : {}), auto };
       const made = await this.make(fields, folder ? folder.value.trim() : null);
       if (!made) {
         ok.disabled = false;
+        ok.textContent = t(folder ? 'do_mount' : 'do_create');
         return;
       }
       this.creating = false;
@@ -296,6 +299,8 @@ export class KnowledgePage {
     const list = !docs ? null
       : docs.gone ? h('p.kb-empty.is-bad', t('folder_gone', { path: b.mount ?? '' }))
       : rows.length ? h('div.kb-docs', rows) : h('p.kb-empty', t('docs_empty'));
+    // 底下的数同卡片上的（核心数的是读得了的）：读不了的不算篇数，以前进过索引留着的旧块照算
+    const readable = (docs?.documents ?? []).filter((d) => !d.reason).length;
     const chunks = (docs?.documents ?? []).reduce((n, d) => n + (d.chunks ?? 0), 0);
     const del = deletable(b)
       ? h(`button.set-btn.is-danger${this.armed === 'base' ? '.is-armed' : ''}`, { type: 'button', onclick: () => this.deleteBase(b) },
@@ -308,7 +313,7 @@ export class KnowledgePage {
       this.card(b, false),
       own ? this.dropZone(b) : null,
       list,
-      h('div.kb-foot', h('span', t('foot', { docs: docs?.documents.length ?? b.documents ?? 0, chunks: docs ? chunks : b.chunks ?? 0 })), h('span.kb-foot-actions', reindex, del)));
+      h('div.kb-foot', h('span', t('foot', { docs: docs ? readable : b.documents ?? 0, chunks: docs ? chunks : b.chunks ?? 0 })), h('span.kb-foot-actions', reindex, del)));
   }
 
   /**

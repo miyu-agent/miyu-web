@@ -30,10 +30,8 @@
 
 /* 搜到的段 */
 .kb-hits { display: grid; }
-.kb-hit { display: grid; gap: 4px; padding: 11px 10px; border-radius: 10px; cursor: pointer; }
-.kb-hit + .kb-hit { box-shadow: 0 -1px 0 var(--line); }
-.kb-hit:hover, .kb-hit:focus-visible { background: var(--surface-2); box-shadow: none; outline: 0; }
-.kb-hit:hover + .kb-hit, .kb-hit:focus-visible + .kb-hit { box-shadow: none; }
+.kb-hit { position: relative; display: grid; gap: 4px; padding: 11px 10px; border-radius: 10px; cursor: pointer; }
+.kb-hit:hover, .kb-hit:focus-visible { background: var(--surface-2); outline: 0; }
 .kb-hit-head { overflow: hidden; color: var(--text-faint); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .kb-snippet { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 4; -webkit-box-orient: vertical; color: var(--text); font-size: 13px; line-height: 1.6; }
 .kb-snippet > * { margin: 0 !important; }
@@ -66,11 +64,12 @@
 .kb-drop-pick { padding: 0; border: 0; background: none; color: var(--accent); font: 13px var(--sans); cursor: pointer; }
 .kb-drop-pick:hover { text-decoration: underline; }
 .kb-docs { display: grid; }
-.kb-doc { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 10px; align-items: center; min-height: 40px; padding: 7px 10px; border-radius: 10px; }
-.kb-doc + .kb-doc { box-shadow: 0 -1px 0 var(--line); }
+.kb-doc { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 10px; align-items: center; min-height: 40px; padding: 7px 10px; border-radius: 10px; }
 .kb-doc.is-link { cursor: pointer; }
-.kb-doc.is-link:hover, .kb-doc.is-link:focus-visible { background: var(--surface-2); box-shadow: none; outline: 0; }
-.kb-doc:hover + .kb-doc, .kb-doc:focus-visible + .kb-doc { box-shadow: none; }
+.kb-doc.is-link:hover, .kb-doc.is-link:focus-visible { background: var(--surface-2); outline: 0; }
+/* 行之间一道直的细线（圆角的行用阴影画线，角上会弯）；悬停的那一行上下的线藏起来 */
+.kb-doc + .kb-doc::before, .kb-hit + .kb-hit::before { position: absolute; top: 0; right: 10px; left: 10px; height: 1px; background: var(--line); content: ''; }
+.kb-doc:hover::before, .kb-doc:hover + .kb-doc::before, .kb-hit:hover::before, .kb-hit:hover + .kb-hit::before { display: none; }
 .kb-doc-icon { display: grid; color: var(--text-faint); }
 .kb-doc-icon .icon { width: 16px; height: 16px; }
 .kb-doc.is-uploading .kb-doc-icon .icon { animation: set-spin 0.9s linear infinite; }
