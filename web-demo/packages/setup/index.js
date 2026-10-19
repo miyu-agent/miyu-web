@@ -181,7 +181,7 @@ export function apply(ctx) {
     const path = tilde(cwd, home());
     // 主会话（2026-10-19 项目主人第三版）：左上角写标题（项目里的前面多「项目名 /」，点项目名进项目页），点标题出菜单：人格、预设、工作区（原来平铺在这一条上）
     if (!chat.parentOf?.(session)) {
-      const titleBtn = h('button.setup-info-part.is-title', { type: 'button', title: title ?? '', 'aria-haspopup': 'menu', onclick: () => openInfo(titleBtn, persona, preset, path) },
+      const titleBtn = h('button.setup-info-part.is-title', { type: 'button', title: title ?? '', 'aria-haspopup': 'menu', onclick: () => openInfo(titleBtn, session, persona, preset, path) },
         h('span', title ?? t('info.untitled')), icon('chevron-right'));
       pathBtn = titleBtn;
       replace(info, project ? [projectPart(project), h('span.setup-info-slash', '/')] : null, titleBtn);
@@ -204,22 +204,84 @@ export function apply(ctx) {
   }, icon('folder'), h('span', p.name));
 
   /**
-   * 点标题出的卡片「会话信息」（2026-10-19 项目主人：只要信息、不要图标，原来那几个会话的操作去掉）：三行一样高，左边暗字、右边值——人格（点了开
-   * 它的编辑卡片）、预设（只看）、工作区（完整路径，长的换行写全；行末一个文件夹图标，点了直接开系统的选目录对话框换工作区，不再翻到另一个菜单）。
-   * @param {HTMLElement} anchor @param {string|null} persona @param {string|null} preset @param {string} path
+   * 点标题出的卡片「会话信息」（2026-10-19 项目主人：只要信息、不要图标）：三行一样高，左边暗字、右边值——人格、预设（点了翻到换人格、换预设的那一页，会话
+   * 中途换，核心 P-13；人格那一行末尾一个铅笔开它的编辑卡片）、工作区（完整路径，长的换行写全；行末一个文件夹图标，点了直接开系统的选目录对话框换工作区）。
+   * @param {HTMLElement} anchor @param {string} session @param {string|null} persona @param {string|null} preset @param {string} path
    */
-  const openInfo = (anchor, persona, preset, path) => {
+  const openInfo = (anchor, session, persona, preset, path) => {
     if (infoMenu.open) return infoMenu.close();
+    showInfo(anchor, session, persona, preset, path);
+  };
+  /** @param {HTMLElement} anchor @param {string} session @param {string|null} persona @param {string|null} preset @param {string} path */
+  const showInfo = (anchor, session, persona, preset, path) => {
+    const back = () => showInfo(anchor, session, persona, preset, path);
     infoMenu.show(anchor, {
       title: '',
       below: true,
       rows: [
-        { label: t('info.persona'), title: persona ? nameOf(persona) : t('no_persona'), more: !!persona, still: !persona, pick: () => { if (persona && ctx.settings) editPersona(ctx, catalog, persona, ctx.settings.kit); } },
-        ...(preset ? [{ label: t('info.preset'), title: presetNameOf(preset), still: true, pick: () => {} }] : []),
+        {
+          label: t('info.persona'), title: persona ? nameOf(persona) : t('no_persona'), more: !!catalog.personas, keep: true,
+          pick: () => { if (catalog.personas) switchPersona(anchor, session, persona, back); },
+          ...(persona && ctx.settings ? { action: { icon: 'pencil', title: t('info.edit_persona'), run: () => { infoMenu.close(); editPersona(ctx, catalog, persona, ctx.settings.kit); } } } : {}),
+        },
+        { label: t('info.preset'), title: preset ? presetNameOf(preset) : t('info.preset_default'), more: !!catalog.presets, keep: true, pick: () => { if (catalog.presets) switchPreset(anchor, session, preset, back); } },
         {
           label: t('info.workspace'), title: path, still: true, wrap: true, pick: () => {},
           action: { icon: 'folder-open', title: ctx.text('folders.open_short'), run: () => browse(ctx, infoMenu, anchor, true, chat.workdir(), pickDir, (p) => tilde(p, home())) },
         },
+      ],
+    });
+  };
+
+  /**
+   * 会话中途换人格（核心 P-13 的 `session.configure`）：一个人格一行（第一行无人格），现在的打勾；选了先问一句（换之前核心先压缩一轮）。
+   * @param {HTMLElement} anchor @param {string} session @param {string|null} now @param {() => void} back
+   */
+  const switchPersona = (anchor, session, now, back) => {
+    infoMenu.show(anchor, {
+      title: t('info.switch_persona'), below: true, back,
+      rows: [
+        { title: t('no_persona'), desc: t('no_persona_desc'), current: now == null, keep: true, pick: () => { if (now != null) confirmSwitch(anchor, session, { persona: null }, back); } },
+        ...(catalog.personas ?? []).map((p) => ({
+          title: personaName(p), desc: p.problem ? t('persona_bad') : p.summary ?? '', current: p.persona === now, off: !!p.problem, keep: true,
+          pick: () => { if (p.persona !== now) confirmSwitch(anchor, session, { persona: p.persona }, back); },
+        })),
+      ],
+    });
+  };
+
+  /** 会话中途换预设：一个预设一行，现在的打勾；选了先问一句。 @param {HTMLElement} anchor @param {string} session @param {string|null} now @param {() => void} back */
+  const switchPreset = (anchor, session, now, back) => {
+    infoMenu.show(anchor, {
+      title: t('info.switch_preset'), below: true, back,
+      rows: (catalog.presets ?? []).map((p) => ({
+        title: presetName(p), desc: p.problem ? t('preset_bad') : '', current: p.preset === now, off: !!p.problem, keep: true,
+        pick: () => { if (p.preset !== now) confirmSwitch(anchor, session, { preset: p.preset }, back); },
+      })),
+    });
+  };
+
+  /**
+   * 换之前问一句（2026-10-19 项目主人定的字）：「切换前会压缩上下文以避免缓存断裂导致的额外消耗，确认切换吗？」，「取消」「确认」。确认了发
+   * `session.configure`；回答进行中的（`turn_running`）、人格没了的照核心的话说一句。
+   * @param {HTMLElement} anchor @param {string} session @param {{persona?: string|null, preset?: string}} change @param {() => void} back
+   */
+  const confirmSwitch = (anchor, session, change, back) => {
+    const button = (/** @type {string} */ label, /** @type {boolean} */ primary, /** @type {() => void} */ onclick) => h(`button.setup-menu-btn${primary ? '.is-primary' : ''}`, { type: 'button', onclick }, label);
+    infoMenu.show(anchor, {
+      title: t(change.preset ? 'info.switch_preset' : 'info.switch_persona'), below: true, back,
+      rows: [],
+      note: t('info.switch_confirm'),
+      foot: [
+        button(t('info.cancel'), false, () => infoMenu.close()),
+        button(t('info.confirm'), true, async () => {
+          infoMenu.close();
+          try {
+            await ctx.core.request('session.configure', { session, ...change });
+          } catch (err) {
+            ctx.composer.say(/** @type {any} */ (err)?.message ?? String(err));
+          }
+        }),
       ],
     });
   };

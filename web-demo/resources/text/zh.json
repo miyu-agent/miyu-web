@@ -401,7 +401,9 @@
     "sort_created": "按创建时间",
     "agents_running": "{count} 个子代理在跑",
     "project_meta": "{count} 个会话 · {when}",
-    "project_none": "还没有会话"
+    "project_none": "还没有会话",
+    "tokens": "Σ{tokens}",
+    "tokens_hint": "连同子代理一共用了 {tokens} token"
   },
   "turn_end": {
     "restarted": "已重启",
