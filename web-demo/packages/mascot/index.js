@@ -30,7 +30,10 @@ export function apply(ctx) {
   const c = ctx.config;
   const sprite = new Sprite(c);
   const props = new Props(c, () => sprite.colors);
-  const body = h('div.mascot-body', sprite.canvas, props.el);
+  // 睡着时头上冒的 Zz（整理记忆时，`mascot.sleep`）：一个小 z、一个大 Z，像素画的，往右上飘着淡掉（`style.css`）
+  const zz = h('span.mascot-zz', { hidden: true, 'aria-hidden': 'true' });
+  zz.innerHTML = [3, 4].map((n) => pixelZ(n, c.pixel)).join('');
+  const body = h('div.mascot-body', sprite.canvas, props.el, zz);
   // 放大（舞台的 `scale`）套在外面一层，绕着脚缩放、慢慢变过去；挪位置的在最外层，不跟着缓
   const scaler = h('div.mascot-scale', body);
   // 放到第一个位置之前藏着：不然刷新时先在左上角露一帧
@@ -81,6 +84,7 @@ export function apply(ctx) {
   };
   const behavior = new Behavior(c, {
     draw: (pose) => sprite.draw(pose),
+    sleeping: (on) => { zz.hidden = !on; },
     place: ({ x, y, rot }) => {
       // 脚底是画布里最下面一行有东西的底边：照它对到台子上，歪绕着脚（蹲、抻在模型里画，不拉伸图片）
       const foot = (sprite.bottom + 1) * c.pixel;
@@ -200,6 +204,8 @@ export function apply(ctx) {
     busy();
     behavior.setJobs(v.session ? runningDeepStatus(v.session, (sid) => (sid === v.session ? v.status : ctx.sessions.sessions.get(sid)?.view.status ?? null)) : 0);
   });
+  /** 叫它睡着的有几处（`sleep`） */
+  let sleepers = 0;
   ctx.provide('mascot', {
     /** 换到这个舞台上（跳过去）；交回撤销的函数，撤了跳回输入框。 @param {Stage} next */
     stage: (next) => {
@@ -235,6 +241,14 @@ export function apply(ctx) {
      * 和最下面一行有东西的在第几行（脚踩在哪）。同一块画布，下次再要会画成别的样子：拿到当场画走。
      * @param {Partial<import('./model.js').Pose>} [pose]
      */
+    /**
+     * 睡着、醒来（整理记忆的时候，和整理那一块舞台上的一起睡）：几处同时叫睡的，最后一处叫醒才醒。
+     * @param {boolean} on
+     */
+    sleep: (on) => {
+      sleepers = Math.max(0, sleepers + (on ? 1 : -1));
+      behavior.setAsleep(sleepers > 0);
+    },
     portrait: (pose = {}) => {
       still.draw({ yaw: 0, pitch: 0, blink: false, ear: 0, ...pose });
       return { canvas: still.canvas, bottom: still.bottom };
@@ -253,3 +267,12 @@ function measure(text, font) {
 }
 /** @type {HTMLCanvasElement|undefined} */
 measure.canvas = undefined;
+
+/** 一个像素画的 Z（`n` 格见方，一格 `px` 像素）：上下两横、中间一道斜线 @param {number} n @param {number} px */
+function pixelZ(n, px) {
+  const cells = [];
+  for (let x = 0; x < n; x++) cells.push([x, 0], [x, n - 1]);
+  for (let k = 1; k < n - 1; k++) cells.push([n - 1 - k, k]);
+  const rects = cells.map(([x, y]) => `<rect x="${x}" y="${y}" width="1" height="1"/>`).join('');
+  return `<svg viewBox="0 0 ${n} ${n}" width="${n * px}" height="${n * px}" shape-rendering="crispEdges">${rects}</svg>`;
+}

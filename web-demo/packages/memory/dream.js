@@ -50,6 +50,9 @@ export class DreamCard {
       h('div.dream-feed', this.list),
       h('div.dream-stage', this.canvas));
     this.g = /** @type {CanvasRenderingContext2D} */ (this.canvas.getContext('2d'));
+    // 输入框上那只跟着一起睡（2026-10-20 项目主人：一起睡），天亮了和舞台上的一起醒
+    this.sleeping = true;
+    ctx.mascot?.sleep?.(true);
     this.W = 400;
     this.frame = 0;
     this.sync();
@@ -63,9 +66,17 @@ export class DreamCard {
     this.frame = requestAnimationFrame(tick);
   }
 
-  /** 不要了：停掉动画 */
+  /** 不要了：停掉动画；还睡着的叫醒 */
   dispose() {
     cancelAnimationFrame(this.frame);
+    this.wake();
+  }
+
+  /** 叫醒输入框上那只（只叫一次） */
+  wake() {
+    if (!this.sleeping) return;
+    this.sleeping = false;
+    this.ctx.mascot?.sleep?.(false);
   }
 
   /**
@@ -82,6 +93,7 @@ export class DreamCard {
   finish(got) {
     this.finished = true;
     this.doneAt = performance.now();
+    setTimeout(() => this.wake(), 450);
     this.title.textContent = this.t('dream.done');
     this.batch.textContent = this.t('dream.result', { given: got?.given ?? 0, revised: got?.revised ?? 0, retired: got?.retired ?? 0 });
     this.tally.textContent = '';

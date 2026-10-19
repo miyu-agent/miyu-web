@@ -22,3 +22,10 @@
   .mascot-prop, .mascot-prop.is-leaving { animation: none; }
   .mascot-scale { transition: none; }
 }
+
+/* 睡着时头上冒的 Zz（`mascot.sleep`）：小 z 先、大 Z 晚半拍，往右上飘着淡掉；颜色照轮廓色淡一点 */
+.mascot-zz { position: absolute; top: -2px; right: -6px; pointer-events: none; }
+.mascot-zz svg { position: absolute; fill: color-mix(in srgb, var(--t-mascot-outline) 70%, transparent); animation: mascot-zz 1.6s linear infinite; opacity: 0; }
+.mascot-zz svg + svg { animation-delay: 0.8s; }
+@keyframes mascot-zz { 0% { opacity: 1; transform: translate(0, 0); } 100% { opacity: 0; transform: translate(16px, -20px); } }
+@media (prefers-reduced-motion: reduce) { .mascot-zz svg { animation: none; opacity: 0.8; } .mascot-zz svg + svg { transform: translate(8px, -10px); } }

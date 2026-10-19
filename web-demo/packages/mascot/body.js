@@ -53,6 +53,8 @@ export class Body {
     this.landDepth = 0;
     /** 这一帧蹲多深（缓过去，负的是抻长）；整个身子转了多少度（侧身走路，缓过去） */
     this.crouch = 0;
+    /** 睡着（一呼一吸，`crouchAim`） */
+    this.sleeping = false;
     this.turn = 0;
     /** 按着：什么时候按下的、抓的地方离脚多远、上一次指针在哪、什么时候、指针的速度、挪够了没有（没挪够的是在蓄力） */
     this.drag = /** @type {{t0: number, dx: number, dy: number, x: number, y: number, t: number, vx: number, vy: number, moved: boolean}|null} */ (null);
@@ -406,6 +408,8 @@ export class Body {
     }
     // 走着：两只脚都着地的那一下蹲一点，一只脚抬起来的时候抻一点（身子跟着步子一上一下）
     if (this.walkTo != null) return c.walk.step_crouch * Math.cos(2 * this.phase(now));
+    // 睡着：一呼一吸，每 1.6 秒沉一下、起来（整理记忆时，`behavior.js` 的 `setAsleep`）
+    if (this.sleeping) return Math.floor(now / 1600) % 2 ? 0.12 : 0;
     return 0;
   }
 
