@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { counts, visible, isRetired, updateOf, canSave, saveNote, chars, hasKeywords, shortId, TEXT_MAX } from '../../packages/memory/model.js';
+import { counts, visible, isRetired, updateOf, canSave, saveNote, chars, hasKeywords, shortId, TEXT_MAX, tidying } from '../../packages/memory/model.js';
 
 const m = (id, cls, text, extra = {}) => ({ id, class: cls, text, ...extra });
 const list = [
@@ -54,4 +54,19 @@ test('字数照码点、关键词这一格认不认、短编号', () => {
   assert.equal(hasKeywords([m('m9', 'user', 'x')]), false, '老核心的记忆没有这一格');
   assert.equal(hasKeywords([m('m9', 'user', 'x', { keywords: null })]), true, '有这一格、空着的也算认');
   assert.equal(shortId('0199ab12-3456-7def-8abc-1234567890ab'), '567890ab');
+});
+
+test('后台在整理：不是人叫的 merging 记下，同一批 merged、merge_failed 划掉；人叫的不算', () => {
+  const ev = (kind, body) => ({ kind, body });
+  let open = new Set();
+  open = tidying(open, ev('ext.memory.merging', { upto: 10, fresh: 3, left: 5, manual: false }));
+  open = tidying(open, ev('ext.memory.merging', { upto: 20, fresh: 2, left: 2, manual: true }));
+  assert.deepEqual([...open], [10]);
+  open = tidying(open, ev('ext.memory.saved', { text: 'x' }));
+  assert.deepEqual([...open], [10]);
+  open = tidying(open, ev('ext.memory.merging', { upto: 30, fresh: 2, left: 2 }));
+  open = tidying(open, ev('ext.memory.merged', { upto: 10, given: 3 }));
+  assert.deepEqual([...open], [30]);
+  open = tidying(open, ev('ext.memory.merge_failed', { upto: 30, why: 'interrupted' }));
+  assert.equal(open.size, 0);
 });

@@ -77,6 +77,20 @@ export function saveNote(change) {
   return 'text' in change ? 'detail.note_new' : 'detail.note_same';
 }
 
+/**
+ * 后台自己在整理的几批（蓝图「记忆页」第 12 条）：`ext.memory.merging` 不是人叫的（`manual` 假）记下 `upto`，同一个 `upto` 的
+ * `merged`、`merge_failed` 划掉。交回新的一份（没变的交回原来那份）。
+ * @param {Set<number|string>} open @param {any} event 记忆日志的一行（`memory.event` 的 `event`）
+ */
+export function tidying(open, event) {
+  const kind = event?.kind;
+  const upto = event?.body?.upto;
+  if (upto == null) return open;
+  if (kind === 'ext.memory.merging' && event.body.manual !== true) return new Set([...open, upto]);
+  if ((kind === 'ext.memory.merged' || kind === 'ext.memory.merge_failed') && open.has(upto)) return new Set([...open].filter((u) => u !== upto));
+  return open;
+}
+
 /** 出处那一行的短编号：会话编号最后 8 位 @param {string} session */
 export const shortId = (session) => String(session).replace(/-/g, '').slice(-8);
 
