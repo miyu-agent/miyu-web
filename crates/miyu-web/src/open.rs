@@ -59,7 +59,7 @@ pub async fn open(
     let mut core = match Core::connect(root, &launch.core, "miyu-web").await {
         Ok(core) => core,
         Err(reason) => {
-            say(err, &Language::En.no_core(&reason));
+            say(err, &Language::En.no_core(&reason.to_string()));
             return 1;
         }
     };
@@ -75,7 +75,7 @@ pub async fn open(
                 0
             }
             Err(reason) => {
-                say(err, &language.no_core(&reason));
+                say(err, &language.no_core(&reason.to_string()));
                 1
             }
         };
@@ -94,7 +94,7 @@ pub async fn open(
     let issued = match core.call("code", "account.setup_code", json!({})).await {
         Ok(issued) => issued,
         Err(reason) => {
-            say(err, &language.no_core(&reason));
+            say(err, &language.no_core(&reason.to_string()));
             return 1;
         }
     };
