@@ -399,3 +399,6 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
 @media (prefers-reduced-motion: reduce) {
   .sb-section-body, .sb-chevron { transition: none; }
 }
+/* 展开着的项目不写 `(N)`；选中的那一块当场拿掉（刚收进去的，不淡出） */
+.project.is-open > .project-row .session-count { display: none; }
+.session-pill.is-gone { transition: none; }

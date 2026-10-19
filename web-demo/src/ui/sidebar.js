@@ -74,7 +74,6 @@ export class Sidebar {
     this.doneOpen = /** @type {Set<string>} */ (new Set());
     /** 项目：人点过的展开、收起（这个标签页里记着；没点过的照里面有没有在跑的）；刚点的那一个（画完缓过去）；菜单里点了一下「删除项目」的 */
     this.projectOpen = /** @type {Map<string, boolean>} */ (new Map());
-    this.flipping = /** @type {{id: string, open: boolean}|null} */ (null);
     this.armed = /** @type {string|null} */ (null);
     /** 会话的菜单翻到了「移到项目」那一页 */
     this.moving = false;
@@ -238,16 +237,15 @@ export class Sidebar {
       const count = list.reduce((n, it) => n + (it.running ? 1 : 0) + this.busyBelow(it.session), 0);
       const here = !!topOf && kept.some((it) => it.session === topOf && it.project === p.project);
       const open = this.projectOpen.get(p.project) ?? (count > 0 || here);
-      // 刚点了收起的这一次还画着里面的会话（缓过去以后再画一遍拿掉）
-      const closing = this.flipping?.id === p.project && !open;
-      return { project: p, open, count, rows: open || closing ? tree(list) : [] };
+      // 收着的也画着里面的会话（藏在收起来的那一截里）：展开、收起只在原地换样子，高度缓过去，中途重画也不打断（2026-10-19 项目主人：收起动画有问题）
+      return { project: p, open, count, rows: tree(list) };
     }) : [];
     // 「会话」那一栏照时间分组（多选时一整列）：「最近」那一组没有自己的头（就是这一栏的头），别的一组一个头，组里照树排
     const groups = this.selecting ? [] : byTime(cap.shown, Date.now()).map((g) => ({ group: g.group, rows: tree(g.rows) }));
     const rows = this.selecting
       ? cap.shown.map((it) => ({ kind: /** @type {const} */ ('session'), session: it.session, depth: 0, item: it, hasKids: false, open: false }))
       : [...pinnedRows, ...blocks.flatMap((b) => b.rows), ...groups.flatMap((g) => g.rows)];
-    const sig = JSON.stringify([rows, groups.map((g) => [g.group, g.rows.length]), blocks.map((b) => [b.project, b.open, b.count, b.rows.length]), showProjects,
+    const sig = JSON.stringify([rows, groups.map((g) => [g.group, g.rows.length]), blocks.map((b) => [b.project, b.count, b.rows.length]), showProjects,
       current, this.menuFor, this.moving, this.armed, this.renaming, this.selecting, [...this.selected], cap.more, this.on.dark()]);
     if (sig !== this.drawn) {
       this.drawn = sig;
@@ -257,7 +255,7 @@ export class Sidebar {
       const bar = {
         menuFor: this.menuFor, armed: this.armed, dark: this.on.dark(), draw, on: this.on,
         toggleMenu: (/** @type {string|null} */ key) => this.toggleMenu(key),
-        flip: (/** @type {string} */ id, /** @type {boolean} */ open) => { this.projectOpen.set(id, open); this.flipping = { id, open }; this.render(...this.last); },
+        flip: (/** @type {string} */ id, /** @type {boolean} */ open) => this.flipProject(id, open),
         arm: (/** @type {string} */ id) => { this.armed = id; this.render(...this.last); },
       };
       // 一栏一块：头、下面收起来的那一截；整块是放得下会话的一块（拖会话，`sidebar-drag.js` 照 `data-zone`，亮的时候整块亮）
@@ -273,7 +271,6 @@ export class Sidebar {
         section('sessions', this.groupHeader, [...sessionsBody, all], 'loose'),
       ]);
       this.slide(was);
-      this.unfold();
       this.placeMenu();
       this.drawGroup();
       this.placePill();
@@ -295,31 +292,26 @@ export class Sidebar {
     const el = this.items.querySelector(`.sb-section[data-section="${key}"]`);
     el?.classList.toggle('is-folded', this.folded.has(key));
     // 选中的那一块跟着这一项露没露（重画时照 `folded` 画，不用另记）
+    this.placePill(true);
     setTimeout(() => this.placePill(), res.layout.sidebar_move_ms + 20);
-    this.placePill();
   }
 
   /**
-   * 刚点了展开、收起的项目：画出来的是点完的样子，先摆回点之前的再换过去，里面那一块的高度缓过去（`.project-kids` 的 `grid-template-rows`）。
-   * 减少动画的直接换。
+   * 展开、收起一个项目（点那一行）：原地换样子，里面那一块的高度缓过去（`.project-kids` 的 `grid-template-rows`）；人点过的记着（这个标签页）。
+   * @param {string} id @param {boolean} open
    */
-  unfold() {
-    const f = this.flipping;
-    this.flipping = null;
-    if (!f || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const el = this.items.querySelector(`.project[data-project="${CSS.escape(f.id)}"]`);
-    if (!(el instanceof HTMLElement)) return;
-    // 收起：里面的会话这一次还画着（画完再拿掉）
+  flipProject(id, open) {
+    this.projectOpen.set(id, open);
+    const el = this.items.querySelector(`.project[data-project="${CSS.escape(id)}"]`);
+    if (!(el instanceof HTMLElement)) return this.render(...this.last);
+    // 缓的时候里面那一截裁着（展开着、不在缓的时候不裁，里面会话的菜单才往下开得出来）
     el.classList.add('is-folding');
-    el.classList.toggle('is-open', !f.open);
-    void el.offsetHeight;
-    el.classList.toggle('is-open', f.open);
+    el.classList.toggle('is-open', open);
+    el.querySelector('.project-row .session-item-main')?.setAttribute('aria-expanded', String(open));
+    this.placePill(true);
     setTimeout(() => {
       el.classList.remove('is-folding');
-      if (!f.open) {
-        this.drawn = '';
-        this.render(...this.last);
-      }
+      this.placePill();
     }, res.layout.sidebar_move_ms + 20);
   }
 
@@ -370,12 +362,14 @@ export class Sidebar {
    * 选中的那一块挪到正在看的那一项底下：原来就露着的滑过去，原来没露的直接放到位再淡入；正在看的不在表里的淡出。位置照
    * `offset*`（整页放大后的 CSS 像素），和这一项一样大。
    */
-  placePill() {
+  placePill(instant = false) {
     const row = this.items.querySelector('.session-item.active');
     const pill = this.pill;
-    // 收着的那一栏、收着的项目里的不露
+    // 收着的那一栏、收着的项目里的不露；刚收进去的当场拿掉，不在原地淡出（2026-10-19 项目主人：收起后原地留一块底）
     if (!(row instanceof HTMLElement) || this.selecting || row.closest('.is-folded, .project:not(.is-open)')) {
+      if (instant) pill.classList.add('is-gone');
       pill.classList.remove('is-on');
+      if (instant) requestAnimationFrame(() => pill.classList.remove('is-gone'));
       return;
     }
     const was = pill.classList.contains('is-on');

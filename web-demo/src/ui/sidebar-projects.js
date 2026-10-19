@@ -40,7 +40,8 @@ export function projectBlock(bar, block) {
         onclick: () => bar.flip(id, !block.open),
       },
         h('span.session-lead.project-folder', icon('folder')),
-        h('span.session-copy', !block.open && block.count ? h('span.session-count', t('sidebar.kids', { count: block.count })) : null, h('strong', p.name))),
+        // 收着的、里面有在跑的写 `(N)`（展开着的照样式藏起来：展开、收起不重画）
+        h('span.session-copy', block.count ? h('span.session-count', t('sidebar.kids', { count: block.count })) : null, h('strong', p.name))),
       h('span.session-trailing',
         h('button.session-menu-button', {
           type: 'button', title: t('sidebar.project_menu'), 'aria-haspopup': 'menu', 'aria-expanded': String(menuOpen),
