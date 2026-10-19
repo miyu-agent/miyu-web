@@ -290,3 +290,5 @@
 .crumb.is-project { display: inline-flex; align-items: center; gap: 5px; }
 .crumb.is-project .icon { width: 13px; height: 13px; flex: none; color: var(--project-color, var(--text-faint)); }
 .crumb.is-project span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* 空会话（在项目里新建的「项目名 › 新会话」）：输入框居中时路径照旧贴在对话区顶上，不跟着挤到中间 */
+.stage.is-empty .chat-crumbs { position: absolute; top: 0; left: 0; right: 0; z-index: 3; }

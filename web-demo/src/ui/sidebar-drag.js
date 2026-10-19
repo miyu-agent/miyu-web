@@ -87,6 +87,8 @@ export class SessionDrag {
   zoneAt(x, y) {
     const el = document.elementFromPoint(x, y);
     if (!this.drag || !el || !this.bar.items.contains(el)) return null;
+    // 落在两行之间的缝里：照旧亮着刚才那一块，不闪
+    if (el === this.bar.items) return this.drag.zone;
     const zone = /** @type {HTMLElement|null} */ (el.closest('[data-zone]'))?.dataset.zone ?? null;
     return zone && zone !== this.home() ? zone : null;
   }
