@@ -477,7 +477,9 @@
       },
       "main_color": "主色",
       "main_color_auto": "自动",
-      "advanced_more": "{names}等"
+      "advanced_more": "{names}等",
+      "search_pages": "页面",
+      "search_packages": "软件包"
     },
     "en": {
       "title": "Settings",
@@ -787,7 +789,9 @@
       },
       "main_color": "Main color",
       "main_color_auto": "Auto",
-      "advanced_more": "{names} and more"
+      "advanced_more": "{names} and more",
+      "search_pages": "Pages",
+      "search_packages": "Packages"
     },
     "ja": {
       "title": "設定",
@@ -1097,7 +1101,9 @@
       },
       "main_color": "メインカラー",
       "main_color_auto": "自動",
-      "advanced_more": "{names} など"
+      "advanced_more": "{names} など",
+      "search_pages": "ページ",
+      "search_packages": "パッケージ"
     }
   },
   "styles": [

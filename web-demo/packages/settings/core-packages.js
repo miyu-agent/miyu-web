@@ -144,8 +144,8 @@ function packageRow(dialog, p) {
   h('span.set-pkg-arrow', icon('chevron-right')));
 }
 
-/** 进一个包的信息页。 @param {any} dialog @param {string} id */
-function openInfo(dialog, id) {
+/** 进一个包的信息页（设置页的搜索点了软件包也走它）。 @param {any} dialog @param {string} id */
+export function openInfo(dialog, id) {
   const p = (dialog.packages ?? []).find((x) => x.package === id);
   dialog.openSub(p?.name ?? id, () => infoPage(dialog, id));
 }

@@ -256,6 +256,9 @@
 .set-price.is-currency .set-input { width: 100%; font-family: var(--mono); text-transform: uppercase; }
 /* 软件包一行：点了滑进它的设置页，右边一个箭头 */
 .set-pkg.is-expandable { cursor: pointer; }
+/* 能点进去的一行悬停铺淡底（同「深度」：能点的悬停深一档；2026-10-20 项目主人：软件包这一行鼠标悬浮没有效果）；底色往两边多出 10px，字不挪 */
+.set-row.set-pkg, .set-row.is-expandable { margin-inline: -10px; padding-inline: 10px; border-radius: 10px; transition: background-color 0.15s ease; }
+.set-row.is-expandable:hover { background: color-mix(in srgb, var(--surface-2) 70%, transparent); }
 .set-pkg.is-expandable:hover .set-name { color: var(--text); }
 .set-pkg-arrow { display: inline-grid; flex: none; width: 16px; place-items: center; color: var(--text-faint); }
 .set-pkg.is-expandable:hover .set-pkg-arrow { color: var(--text-soft); }

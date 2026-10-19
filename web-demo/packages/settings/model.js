@@ -141,7 +141,7 @@ export function search(pages, query) {
   for (const page of pages) {
     for (const group of page.groups) {
       for (const item of group.items) {
-        const hay = `${item.name}\n${item.key}\n${item.description}`.toLowerCase();
+        const hay = `${item.name}\n${item.key}\n${item.description}\n${group.name}`.toLowerCase();
         if (hay.includes(q)) out.push({ page, group, item });
       }
     }
