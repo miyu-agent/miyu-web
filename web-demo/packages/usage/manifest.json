@@ -13,7 +13,7 @@
   },
   "kind": "optional",
   "description": {
-    "zh": "设置页多一页「用量」：今天、7 天、30 天、全部、自定义，四格数（花费、请求、token、缓存命中），一张 token 柱子（一天的一小时一根），一张能切按模型、会话、用途、场所、每一列都能排、点一行展开细则的表。数照核心的用量汇总，花费照币种各加各的。"
+    "zh": "设置页多一页「用量」：今天、7 天、30 天、全部、自定义，四格数（花费、请求、token、缓存命中），一张 token 柱子（一天的一小时一根），一张能切按模型、会话、用途、场所、每一列都能排、点一行浮出细则的表。数照核心的用量汇总，花费照币种各加各的。"
   },
   "inject": [
     "slots",
@@ -44,7 +44,6 @@
         "hit": "缓存命中"
       },
       "unpriced_more": "另有 {n} 次没有价格",
-      "all_priced": "全部有价格",
       "times": "{n} 次",
       "sessions": "{n} 个会话",
       "in_out": "输入 {input} · 输出 {output}",
@@ -91,15 +90,11 @@
         "requests": "请求",
         "tokens": "token",
         "hit": "命中",
-        "output": "输出",
         "cost": "花费"
       },
       "unpriced_part": "另 {n} 次没有价格",
       "unpriced_only": "{n} 次没有价格",
       "show_all": "显示全部 {n} 个",
-      "note": {
-        "model": "本机的模型价格是 0；没配价格的模型只数次数，不估钱。"
-      },
       "purpose": {
         "chat": "对话",
         "recap": "回顾",
@@ -137,14 +132,14 @@
       },
       "detail": {
         "tokens": "命中 {hit} · 没命中 {miss} · 写缓存 {write} · 输出 {out}",
-        "cost": "花费 {cost} · {rest}",
+        "cost": "花费 {cost}",
         "by": {
           "model": "按模型",
           "purpose": "按用途"
         },
         "open": "打开会话"
       },
-      "no_cost": "没有用量"
+      "close": "关闭"
     },
     "en": {
       "title": "Usage",
@@ -165,7 +160,6 @@
         "hit": "Cache hits"
       },
       "unpriced_more": "{n} more without a price",
-      "all_priced": "All priced",
       "times": "{n}",
       "sessions": "{n} sessions",
       "in_out": "In {input} · out {output}",
@@ -212,15 +206,11 @@
         "requests": "Requests",
         "tokens": "Tokens",
         "hit": "Cached",
-        "output": "Output",
         "cost": "Cost"
       },
       "unpriced_part": "{n} more without a price",
       "unpriced_only": "{n} without a price",
       "show_all": "Show all {n}",
-      "note": {
-        "model": "Local models cost 0. Models without a price are only counted, not costed."
-      },
       "purpose": {
         "chat": "Chat",
         "recap": "Recap",
@@ -258,14 +248,14 @@
       },
       "detail": {
         "tokens": "Cached {hit} · uncached {miss} · cache writes {write} · output {out}",
-        "cost": "Cost {cost} · {rest}",
+        "cost": "Cost {cost}",
         "by": {
           "model": "By model",
           "purpose": "By purpose"
         },
         "open": "Open session"
       },
-      "no_cost": "no usage"
+      "close": "Close"
     },
     "ja": {
       "title": "使用量",
@@ -286,7 +276,6 @@
         "hit": "キャッシュヒット"
       },
       "unpriced_more": "ほかに価格なし {n} 回",
-      "all_priced": "すべて価格あり",
       "times": "{n} 回",
       "sessions": "{n} セッション",
       "in_out": "入力 {input} · 出力 {output}",
@@ -333,15 +322,11 @@
         "requests": "リクエスト",
         "tokens": "トークン",
         "hit": "ヒット",
-        "output": "出力",
         "cost": "費用"
       },
       "unpriced_part": "ほかに価格なし {n} 回",
       "unpriced_only": "価格なし {n} 回",
       "show_all": "すべて表示（{n}）",
-      "note": {
-        "model": "ローカルモデルの価格は 0。価格が設定されていないモデルは回数だけ数え、費用は見積もりません。"
-      },
       "purpose": {
         "chat": "会話",
         "recap": "振り返り",
@@ -379,14 +364,14 @@
       },
       "detail": {
         "tokens": "ヒット {hit} · ヒットなし {miss} · キャッシュ書き込み {write} · 出力 {out}",
-        "cost": "費用 {cost} · {rest}",
+        "cost": "費用 {cost}",
         "by": {
           "model": "モデル別",
           "purpose": "用途別"
         },
         "open": "セッションを開く"
       },
-      "no_cost": "使用量なし"
+      "close": "閉じる"
     }
   }
 }

@@ -1,12 +1,12 @@
 // @ts-check
 //! 设置页的「用量」一页（蓝图 `web.md`「用量页」；挂进设置页的 `settings.section`）：页头选时间段（今天、7 天、30 天、全部、自定义），
 //! 四格数（花费、请求、token、缓存命中），一张三段叠起来的柱子（一天的一小时一根，长的一天一根，太长的一月一根），一张能切分组、
-//! 每一列都能排、点一行就地展开细则的表。一页是一个常驻的对象：设置页重画、关了再开交回的是同一块，时间段、分页签、排法跟着它。
+//! 每一列都能排的表，点一行在它下面浮一个小窗写细则。一页是一个常驻的对象：设置页重画、关了再开交回的是同一块，时间段、分页签、排法跟着它。
 //! 用量没有流：打开、换时间段、点刷新时重读。
 
-import { h, icon, replace } from '../../src/lib/dom.js';
+import { h, icon, replace, offsetIn } from '../../src/lib/dom.js';
 import { short, hitRate, hhmm } from '../../src/lib/format.js';
-import { input, total, sum, money, offsetOf, spanOf, spanParams, daysBetween, dayKey, hours, hourBars, dayBars, allBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, venueOf, splitModel } from './model.js';
+import { input, total, sum, money, amountText, offsetOf, spanOf, spanParams, daysBetween, dayKey, hours, hourBars, dayBars, allBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, venueOf, splitModel } from './model.js';
 
 /** 分组表先列几行 */
 const FIRST = 10;
@@ -22,7 +22,7 @@ const NS = 'http://www.w3.org/2000/svg';
 
 const RANGES = /** @type {Range[]} */ (['1', '7', '30', 'all', 'custom']);
 const GROUPS = /** @type {Group[]} */ (['model', 'session', 'purpose', 'venue']);
-const COLUMNS = /** @type {Column[]} */ (['name', 'requests', 'tokens', 'hit', 'output', 'cost']);
+const COLUMNS = /** @type {Column[]} */ (['name', 'requests', 'tokens', 'hit', 'cost']);
 
 export class UsagePage {
   /** @param {any} ctx `usage` 包的 ctx */
@@ -41,8 +41,18 @@ export class UsagePage {
     /** @type {{by: Column, desc: boolean}} */
     this.sort = { by: 'tokens', desc: true };
     this.all = false;
-    /** 展开着的那一行（分组那一格的值） @type {string|null|undefined} */
+    /** 浮着细则的那一行（分组那一格的值；`undefined` 是没开） @type {string|null|undefined} */
     this.open = undefined;
+    /** 这一回画出来的那一行（浮窗照它摆） @type {{row: Row, el: HTMLElement}|null} */
+    this.openRow = null;
+    // 浮窗开着：`Esc` 先关它（设置框找带 `data-set-dismiss` 的发 `set-dismiss`），点外面也关（点别的行是换一行）
+    this.el.addEventListener('set-dismiss', () => this.closePop());
+    document.addEventListener('pointerdown', (e) => {
+      if (this.open === undefined) return;
+      const target = /** @type {Element|null} */ (e.target);
+      if (target?.closest?.('.use-pop, .use-row')) return;
+      this.closePop();
+    }, true);
     /** 拆开的行：照（时间段、分组、拆的那一样）记着，同一段时间问过的不再问 @type {Map<string, Row[]|'loading'>} */
     this.splits = new Map();
     /** 读到的：合计、会话数、柱子、分组的行；`null` 是还没读完 @type {{total: Row, sessions: number, bars: Bar[], unit: 'hour'|'day'|'month', rows: Row[], at: number}|null} */
@@ -189,7 +199,32 @@ export class UsagePage {
       replace(this.el, h('div.use-problem', h('p', this.t('errors.old_core'))));
       return;
     }
+    this.openRow = null;
     replace(this.el, this.head(), this.range === 'custom' ? this.picker() : null, this.tiles(), this.bars(), this.table());
+    const at = this.openRow;
+    if (!at) {
+      this.open = undefined;
+      delete this.el.dataset.setDismiss;
+      return;
+    }
+    // 细则的小窗：浮在那一行下面，靠右（照这一页自己的 CSS 像素量，整页放大以后也对）
+    const pop = this.detail(at.row);
+    this.el.append(pop);
+    pop.style.top = `${offsetIn(at.el, this.el) + at.el.offsetHeight + 4}px`;
+    this.el.dataset.setDismiss = '1';
+  }
+
+  /** 收起细则的小窗：只拿掉它（不重画：点外面关的那一下，点的那个按钮还要收到这一下点击） */
+  closePop() {
+    if (this.open === undefined) return;
+    this.open = undefined;
+    this.openRow = null;
+    this.el.querySelector('.use-pop')?.remove();
+    for (const row of this.el.querySelectorAll('.use-row.is-open')) {
+      row.classList.remove('is-open');
+      row.setAttribute('aria-expanded', 'false');
+    }
+    delete this.el.dataset.setDismiss;
   }
 
   head() {
@@ -241,7 +276,7 @@ export class UsagePage {
       h('span.use-tile-v', { title: value }, d ? value : '—'),
       h(`span.use-tile-s${warn ? '.is-warn' : ''}`, { title: sub }, d ? sub : ''));
     return h('div.use-tiles',
-      tile('cost', cost || '—', row.unpriced ? this.t('unpriced_more', { n: row.unpriced.toLocaleString() }) : row.requests ? this.t('all_priced') : '', row.unpriced > 0),
+      tile('cost', cost || '—', row.unpriced ? this.t('unpriced_more', { n: row.unpriced.toLocaleString() }) : '', row.unpriced > 0),
       tile('requests', this.t('times', { n: row.requests.toLocaleString() }), this.t('sessions', { n: d?.sessions ?? 0 })),
       tile('tokens', short(total(u)), this.t('in_out', { input: short(input(u)), output: short(u.output) })),
       tile('hit', `${hitRate(u.cache_read, input(u))}%`, this.t('hit_sub', { n: short(u.cache_read) })));
@@ -370,12 +405,11 @@ export class UsagePage {
     for (const r of shown) {
       const value = r[this.group];
       const open = this.open === value;
-      const cost = money(r.amounts);
       const toggle = () => {
         this.open = open ? undefined : value;
         this.draw();
       };
-      body.append(h(`tr.use-row${open ? '.is-open' : ''}`, {
+      const tr = h(`tr.use-row${open ? '.is-open' : ''}`, {
         tabindex: '0', 'aria-expanded': String(open),
         onclick: toggle,
         onkeydown: (/** @type {KeyboardEvent} */ e) => {
@@ -388,9 +422,9 @@ export class UsagePage {
       h('td.num', r.requests.toLocaleString()),
       h('td.num', short(total(r.usage))),
       h('td.num', `${hitRate(r.usage.cache_read, input(r.usage))}%`),
-      h('td.num', short(r.usage.output)),
-      h('td.num', cost ? [cost, r.unpriced ? h('div.use-more', this.t('unpriced_part', { n: r.unpriced })) : null] : this.noCost(r))));
-      if (open) body.append(h('tr.use-detail', h('td', { colspan: String(COLUMNS.length) }, this.detail(r))));
+      h('td.num', r.amounts.length ? [r.amounts.map((a) => h('div', amountText(a))), r.unpriced ? h('div.use-more', this.t('unpriced_part', { n: r.unpriced })) : null] : this.noCost(r)));
+      if (open) this.openRow = { row: r, el: tr };
+      body.append(tr);
     }
     const table = h('table.use-table',
       h('colgroup', COLUMNS.map((c) => h(`col.use-col-${c}`))),
@@ -400,20 +434,20 @@ export class UsagePage {
     if (!this.all && rows.length > FIRST) {
       block.append(h('button.use-all', { type: 'button', onclick: () => { this.all = true; this.draw(); } }, this.t('show_all', { n: rows.length })));
     }
-    if (this.group === 'model') block.append(h('p.use-note', this.t('note.model')));
     return block;
   }
 
-  /** 展开的那一块：四项 token、花费，照另一样拆开；本机能打开的会话一个「打开会话」 @param {Row} r */
+  /** 细则的小窗：名字，四项 token、花费，照另一样拆开；本机能打开的会话一个「打开会话」 @param {Row} r */
   detail(r) {
     const u = r.usage;
     const cost = money(r.amounts);
     const value = r[this.group];
     const parts = [
+      h('div.use-pop-head', this.name(r), h('button.icon-button.use-pop-close', { type: 'button', title: this.t('close'), 'aria-label': this.t('close'), onclick: () => this.closePop() }, icon('x'))),
       h('p.use-detail-line', this.t('detail.tokens', { hit: exact(u.cache_read), miss: exact(u.uncached), write: exact(u.cache_write), out: exact(u.output) })),
       h('p.use-detail-line', cost
-        ? this.t('detail.cost', { cost, rest: r.unpriced ? this.t('unpriced_more', { n: r.unpriced }) : this.t('all_priced') })
-        : r.unpriced ? this.t('unpriced_only', { n: r.unpriced }) : this.t('detail.cost', { cost: '—', rest: this.t('no_cost') })),
+        ? [this.t('detail.cost', { cost }), r.unpriced ? ` · ${this.t('unpriced_more', { n: r.unpriced })}` : '']
+        : r.unpriced ? this.t('unpriced_only', { n: r.unpriced }) : this.t('detail.cost', { cost: '—' })),
     ];
     for (const sub of splitsOf(this.group)) {
       const got = this.split(sub);
@@ -438,7 +472,7 @@ export class UsagePage {
         },
       }, this.t('detail.open'))));
     }
-    return h('div.use-detail-box', { onclick: (/** @type {Event} */ e) => e.stopPropagation() }, parts);
+    return h('div.use-pop', { role: 'dialog' }, parts);
   }
 
   /** 没有金额的那一格：有没价格的写几次，都没有（用量是 0 的请求）写 `—` @param {Row} r */
