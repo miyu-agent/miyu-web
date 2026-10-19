@@ -37,7 +37,8 @@ export function projectBlock(bar, block) {
     h(`div.session-item.project-row${menuOpen ? '.is-menu-open' : ''}`, { dataset: { projectRow: id } },
       h('button.session-item-main', {
         type: 'button', title: p.name, 'aria-expanded': String(block.open),
-        onclick: () => bar.flip(id, !block.open),
+        // 照现在是开是关（展开、收起原地换样子，不重画）
+        onclick: (/** @type {MouseEvent} */ e) => bar.flip(id, !(/** @type {HTMLElement} */ (e.currentTarget)).closest('.project')?.classList.contains('is-open')),
       },
         h('span.session-lead.project-folder', icon('folder')),
         // 收着的、里面有在跑的写 `(N)`（展开着的照样式藏起来：展开、收起不重画）
