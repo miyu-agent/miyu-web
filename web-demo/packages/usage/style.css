@@ -1,0 +1,69 @@
+/* 用量页（蓝图 web.md「用量页」，2026-10-20 样板 A）：同记忆页、知识库页——四格数是 surface 底的小块，柱子三段（命中、没命中、输出），
+   分组表一行一道细线；控件不画描边 */
+.use-page { display: grid; gap: 16px; min-width: 0; }
+.use-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.use-stamp { color: var(--text-faint); font-size: 12px; }
+.use-refresh .icon { width: 14px; height: 14px; }
+.use-seg { display: inline-flex; margin-left: auto; padding: 2px; border-radius: 9px; background: var(--surface-2); }
+.use-seg button { height: 26px; padding: 0 10px; border: 0; border-radius: 7px; background: none; color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer; }
+.use-seg button:hover { color: var(--text); }
+.use-seg button.is-on { background: var(--surface-1); color: var(--text); box-shadow: var(--card-shadow); }
+.use-page button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.use-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.use-tile { display: grid; gap: 2px; min-width: 0; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); }
+.use-tile-k { color: var(--text-faint); font-size: 12px; }
+.use-tile-v, .use-tile-s { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.use-tile-v { color: var(--text); font-size: 19px; font-weight: 600; }
+.use-tile-s { min-height: 1.4em; color: var(--text-faint); font-size: 11.5px; }
+.use-tile-s.is-warn { color: var(--gold); }
+
+.use-block { display: grid; gap: 8px; min-width: 0; }
+.use-block-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.use-block-head h3 { margin: 0; color: var(--text); font-size: 13.5px; }
+.use-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-left: auto; color: var(--text-soft); font-size: 12px; }
+.use-legend i { display: inline-block; width: 9px; height: 9px; margin-right: 5px; border-radius: 2px; vertical-align: -1px; }
+.use-c-hit { background: color-mix(in srgb, var(--accent) 32%, var(--surface-1)); fill: color-mix(in srgb, var(--accent) 32%, var(--surface-1)); }
+.use-c-new { background: var(--accent); fill: var(--accent); }
+.use-c-out { background: var(--gold); fill: var(--gold); }
+.use-chart { position: relative; min-height: 190px; }
+.use-chart svg { display: block; width: 100%; height: 190px; overflow: visible; }
+.use-chart text { fill: var(--text-faint); font: 10.5px var(--sans); font-variant-numeric: tabular-nums; }
+.use-chart text.is-now { fill: var(--text-soft); }
+.use-grid { stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.use-hot { fill: var(--surface-2); opacity: 0; }
+.use-hot.is-on { opacity: 1; }
+.use-tip { position: absolute; z-index: 3; top: -8px; display: grid; gap: 2px; padding: 8px 10px; border-radius: 8px; background: var(--surface-1); box-shadow: var(--card-shadow); color: var(--text); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; pointer-events: none; transform: translateY(-100%); }
+.use-tip b { font-size: 12.5px; }
+.use-tip span { color: var(--text-soft); }
+.use-empty { margin: 0; padding: 30px 0; border-radius: 10px; background: var(--surface-2); color: var(--text-faint); font-size: 12.5px; text-align: center; }
+
+.use-tabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 1px solid var(--line); }
+.use-tab { height: 30px; margin-bottom: -1px; padding: 0 10px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--text-soft); font: 13px var(--sans); cursor: pointer; }
+.use-tab:hover { color: var(--text); }
+.use-tab.is-on { border-bottom-color: var(--accent); color: var(--text); font-weight: 600; }
+.use-scroll { min-width: 0; overflow-x: auto; }
+.use-table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.use-table th { padding: 6px 8px; color: var(--text-faint); font-size: 12px; font-weight: 500; text-align: left; white-space: nowrap; }
+.use-table th button { padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.use-table th button:hover, .use-table th button.is-on { color: var(--text); }
+.use-table th.num, .use-table td.num { text-align: right; }
+.use-table td { padding: 7px 8px; border-top: 1px solid var(--line); color: var(--text); white-space: nowrap; }
+.use-table td.use-name { min-width: 150px; white-space: normal; }
+.use-name-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; }
+.use-sub, .use-faint, .use-more { color: var(--text-faint); }
+.use-sub, .use-more { font-size: 11.5px; }
+.use-share { height: 3px; margin-top: 4px; overflow: hidden; border-radius: 2px; background: var(--surface-2); }
+.use-share i { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
+.use-link { padding: 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.use-link:hover { color: var(--accent); text-decoration: underline; }
+.use-all { justify-self: start; padding: 0; border: 0; background: none; color: var(--accent); font: 12.5px var(--sans); cursor: pointer; }
+.use-all:hover { text-decoration: underline; }
+.use-note { margin: 0; color: var(--text-faint); font-size: 12.5px; }
+.use-chart .use-empty { display: grid; box-sizing: border-box; height: 190px; padding: 0; place-items: center; }
+.use-problem { padding: 34px 0; color: var(--text-faint); font-size: 13px; text-align: center; }
+
+@media (max-width: 640px) {
+  .use-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .use-seg { margin-left: 0; }
+}

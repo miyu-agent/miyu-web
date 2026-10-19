@@ -1,0 +1,356 @@
+{
+  "id": "usage",
+  "version": "0.1.0",
+  "name": {
+    "zh": "用量",
+    "en": "Usage",
+    "ja": "使用量"
+  },
+  "summary": {
+    "zh": "在设置里看用量和花费：按天、按模型、按会话、按用途",
+    "en": "See usage and cost in Settings: by day, model, session and purpose",
+    "ja": "設定で使用量と費用を確認：日別・モデル別・セッション別・用途別"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "设置页多一页「用量」：今天、7 天、30 天、全部，四格数（花费、请求、token、缓存命中），一张每天（今天每小时）的 token 柱子，一张能切按模型、会话、用途、场所的表。数照核心的用量汇总，花费照币种各加各的。"
+  },
+  "inject": [
+    "slots",
+    "core",
+    "chat~",
+    "settings~"
+  ],
+  "styles": [
+    "style.css"
+  ],
+  "text": {
+    "zh": {
+      "title": "用量",
+      "loading": "正在读…",
+      "updated": "{time} 更新",
+      "refresh": "刷新",
+      "range": {
+        "1": "今天",
+        "7": "7 天",
+        "30": "30 天",
+        "all": "全部"
+      },
+      "tile": {
+        "cost": "花费",
+        "requests": "请求",
+        "tokens": "token",
+        "hit": "缓存命中"
+      },
+      "unpriced_more": "另有 {n} 次没有价格",
+      "all_priced": "全部有价格",
+      "times": "{n} 次",
+      "sessions": "{n} 个会话",
+      "in_out": "输入 {input} · 输出 {output}",
+      "hit_sub": "命中 {n}",
+      "chart": {
+        "hourly": "每小时的 token",
+        "daily": "每天的 token",
+        "monthly": "每月的 token"
+      },
+      "legend": {
+        "hit": "缓存命中",
+        "new": "没命中的输入",
+        "out": "输出"
+      },
+      "empty": {
+        "ever": "还没有用量",
+        "range": "这段时间没有请求"
+      },
+      "axis": {
+        "hour": "{hour} 时",
+        "today": "今天",
+        "day": "{month}/{day}",
+        "month": "{year}/{month}",
+        "this_month": "本月"
+      },
+      "tip": {
+        "hour": "{hour} 时",
+        "day": "{month} 月 {day} 日",
+        "month": "{year} 年 {month} 月",
+        "none": "这一段没有请求",
+        "requests": "{n} 次请求 · {tokens} token",
+        "hit": "命中 {percent}% · 输出 {output}",
+        "no_price": "没有价格",
+        "unpriced_more": " · 另有 {n} 次没有价格"
+      },
+      "group": {
+        "model": "按模型",
+        "session": "按会话",
+        "purpose": "按用途",
+        "venue": "按场所"
+      },
+      "col": {
+        "model": "模型",
+        "session": "会话",
+        "purpose": "用途",
+        "venue": "场所",
+        "requests": "请求",
+        "tokens": "token",
+        "hit": "命中",
+        "output": "输出",
+        "cost": "花费"
+      },
+      "unpriced_part": "另 {n} 次没有价格",
+      "unpriced_only": "{n} 次没有价格",
+      "show_all": "显示全部 {n} 个",
+      "note": {
+        "model": "本机的模型价格是 0；没配价格的模型只数次数，不估钱。"
+      },
+      "purpose": {
+        "chat": "对话",
+        "recap": "回顾",
+        "title": "起标题",
+        "vision": "看图",
+        "memory": "记忆",
+        "embedding": "向量"
+      },
+      "purpose_sub": {
+        "chat": "主请求和压缩摘要",
+        "recap": "",
+        "title": "",
+        "vision": "替不能看图的模型转述",
+        "memory": "抽记忆、整理、补关键词",
+        "embedding": "记忆和知识库检索用"
+      },
+      "other": "其他",
+      "other_hint": "不在会话里的请求：记忆、向量、看图",
+      "deleted": "已删除的会话",
+      "untitled": "未命名的会话",
+      "subagent": "子代理",
+      "oneshot": "一次性",
+      "venue_session": "场所会话",
+      "venue": {
+        "local": "本机",
+        "qq_group": "QQ 群 {id}",
+        "qq_private": "QQ 私聊 {id}"
+      },
+      "errors": {
+        "old_core": "这一版核心还没有用量统计"
+      }
+    },
+    "en": {
+      "title": "Usage",
+      "loading": "Loading…",
+      "updated": "Updated {time}",
+      "refresh": "Refresh",
+      "range": {
+        "1": "Today",
+        "7": "7 days",
+        "30": "30 days",
+        "all": "All"
+      },
+      "tile": {
+        "cost": "Cost",
+        "requests": "Requests",
+        "tokens": "Tokens",
+        "hit": "Cache hits"
+      },
+      "unpriced_more": "{n} more without a price",
+      "all_priced": "All priced",
+      "times": "{n}",
+      "sessions": "{n} sessions",
+      "in_out": "In {input} · out {output}",
+      "hit_sub": "{n} from cache",
+      "chart": {
+        "hourly": "Tokens per hour",
+        "daily": "Tokens per day",
+        "monthly": "Tokens per month"
+      },
+      "legend": {
+        "hit": "Cached input",
+        "new": "Uncached input",
+        "out": "Output"
+      },
+      "empty": {
+        "ever": "No usage yet",
+        "range": "No requests in this period"
+      },
+      "axis": {
+        "hour": "{hour}:00",
+        "today": "Today",
+        "day": "{month}/{day}",
+        "month": "{month}/{year}",
+        "this_month": "This month"
+      },
+      "tip": {
+        "hour": "{hour}:00",
+        "day": "{month}/{day}",
+        "month": "{month}/{year}",
+        "none": "No requests",
+        "requests": "{n} requests · {tokens} tokens",
+        "hit": "{percent}% cached · {output} out",
+        "no_price": "No price",
+        "unpriced_more": " · {n} more without a price"
+      },
+      "group": {
+        "model": "By model",
+        "session": "By session",
+        "purpose": "By purpose",
+        "venue": "By venue"
+      },
+      "col": {
+        "model": "Model",
+        "session": "Session",
+        "purpose": "Purpose",
+        "venue": "Venue",
+        "requests": "Requests",
+        "tokens": "Tokens",
+        "hit": "Cached",
+        "output": "Output",
+        "cost": "Cost"
+      },
+      "unpriced_part": "{n} more without a price",
+      "unpriced_only": "{n} without a price",
+      "show_all": "Show all {n}",
+      "note": {
+        "model": "Local models cost 0. Models without a price are only counted, not costed."
+      },
+      "purpose": {
+        "chat": "Chat",
+        "recap": "Recap",
+        "title": "Titles",
+        "vision": "Images",
+        "memory": "Memory",
+        "embedding": "Embeddings"
+      },
+      "purpose_sub": {
+        "chat": "Main requests and compaction summaries",
+        "recap": "",
+        "title": "",
+        "vision": "Describing images for models that can't see",
+        "memory": "Extracting, tidying, tagging",
+        "embedding": "For memory and knowledge search"
+      },
+      "other": "Other",
+      "other_hint": "Requests outside any session: memory, embeddings, images",
+      "deleted": "Deleted session",
+      "untitled": "Untitled session",
+      "subagent": "subagent",
+      "oneshot": "one-off",
+      "venue_session": "venue session",
+      "venue": {
+        "local": "This computer",
+        "qq_group": "QQ group {id}",
+        "qq_private": "QQ private chat {id}"
+      },
+      "errors": {
+        "old_core": "This core version has no usage statistics yet"
+      }
+    },
+    "ja": {
+      "title": "使用量",
+      "loading": "読み込み中…",
+      "updated": "{time} 更新",
+      "refresh": "更新",
+      "range": {
+        "1": "今日",
+        "7": "7 日",
+        "30": "30 日",
+        "all": "すべて"
+      },
+      "tile": {
+        "cost": "費用",
+        "requests": "リクエスト",
+        "tokens": "トークン",
+        "hit": "キャッシュヒット"
+      },
+      "unpriced_more": "ほかに価格なし {n} 回",
+      "all_priced": "すべて価格あり",
+      "times": "{n} 回",
+      "sessions": "{n} セッション",
+      "in_out": "入力 {input} · 出力 {output}",
+      "hit_sub": "ヒット {n}",
+      "chart": {
+        "hourly": "1 時間ごとのトークン",
+        "daily": "1 日ごとのトークン",
+        "monthly": "1 か月ごとのトークン"
+      },
+      "legend": {
+        "hit": "キャッシュヒット",
+        "new": "ヒットしなかった入力",
+        "out": "出力"
+      },
+      "empty": {
+        "ever": "まだ使用量がありません",
+        "range": "この期間のリクエストはありません"
+      },
+      "axis": {
+        "hour": "{hour} 時",
+        "today": "今日",
+        "day": "{month}/{day}",
+        "month": "{year}/{month}",
+        "this_month": "今月"
+      },
+      "tip": {
+        "hour": "{hour} 時",
+        "day": "{month} 月 {day} 日",
+        "month": "{year} 年 {month} 月",
+        "none": "リクエストなし",
+        "requests": "{n} 回 · {tokens} トークン",
+        "hit": "ヒット {percent}% · 出力 {output}",
+        "no_price": "価格なし",
+        "unpriced_more": " · ほかに価格なし {n} 回"
+      },
+      "group": {
+        "model": "モデル別",
+        "session": "セッション別",
+        "purpose": "用途別",
+        "venue": "場所別"
+      },
+      "col": {
+        "model": "モデル",
+        "session": "セッション",
+        "purpose": "用途",
+        "venue": "場所",
+        "requests": "リクエスト",
+        "tokens": "トークン",
+        "hit": "ヒット",
+        "output": "出力",
+        "cost": "費用"
+      },
+      "unpriced_part": "ほかに価格なし {n} 回",
+      "unpriced_only": "価格なし {n} 回",
+      "show_all": "すべて表示（{n}）",
+      "note": {
+        "model": "ローカルモデルの価格は 0。価格が設定されていないモデルは回数だけ数え、費用は見積もりません。"
+      },
+      "purpose": {
+        "chat": "会話",
+        "recap": "振り返り",
+        "title": "タイトル付け",
+        "vision": "画像",
+        "memory": "記憶",
+        "embedding": "ベクトル"
+      },
+      "purpose_sub": {
+        "chat": "メインのリクエストと圧縮の要約",
+        "recap": "",
+        "title": "",
+        "vision": "画像を見られないモデルの代わりに説明",
+        "memory": "記憶の抽出・整理・キーワード付け",
+        "embedding": "記憶とナレッジの検索用"
+      },
+      "other": "その他",
+      "other_hint": "セッション外のリクエスト：記憶・ベクトル・画像",
+      "deleted": "削除されたセッション",
+      "untitled": "無題のセッション",
+      "subagent": "サブエージェント",
+      "oneshot": "単発",
+      "venue_session": "場所のセッション",
+      "venue": {
+        "local": "このコンピューター",
+        "qq_group": "QQ グループ {id}",
+        "qq_private": "QQ 個人チャット {id}"
+      },
+      "errors": {
+        "old_core": "このバージョンのコアにはまだ使用量の統計がありません"
+      }
+    }
+  }
+}
