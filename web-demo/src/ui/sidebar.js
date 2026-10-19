@@ -22,7 +22,7 @@ import { h, icon, replace } from './dom.js';
 import { leave } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { toggle, range } from '../model/select.js';
-import { treeRows, capTops } from '../model/tree.js';
+import { treeRows, capTops, pathOf } from '../model/tree.js';
 import { TIME_GROUPS, byTime } from '../model/session.js';
 import { SessionDrag } from './sidebar-drag.js';
 import { projectsHeader, projectBlock, menuKey } from './sidebar-projects.js';
@@ -35,7 +35,7 @@ import { projectRows, colorOf } from '../model/project.js';
  *   kids: (id: string) => {session: string, title: string|null, running: boolean, paused?: boolean}[], viewAll: () => void,
  *   shown: (ids: string[]) => void, place: (id: string, patch: {pinned?: boolean, project?: string|null}) => Promise<void>,
  *   projects: () => {supported: boolean, list: import('../core/projects.js').Project[]}, viewProjects: () => void, editProject: (id: string|null) => void,
- *   openProject: (id: string) => void, newIn: (id: string) => void, deleteProject: (id: string) => void,
+ *   openProject: (id: string) => void, newIn: (id: string) => void, deleteProject: (id: string) => void, parentOf?: (id: string) => string|null,
  *   theme: () => void, dark: () => boolean, copyId: (id: string) => void, notYet: (name: string) => void}} Handlers
  */
 
@@ -201,11 +201,13 @@ export class Sidebar {
     // 多选时只列顶层的；平常照树排
     const tree = (list) => treeRows(list, (id) => this.on.kids(id), { current, open: this.openTree, done: this.doneOpen });
     const pinnedRows = pinned.length ? tree(pinned) : [];
-    // 一个项目一块：收着的、里面有在跑的写 `(N)`；默认有在跑的展开，别的照人点的
+    // 一个项目一块：收着的、里面有在跑的写 `(N)`；默认有在跑的、正在看的在里面的展开（同子代理的树），人点过的照人点的
+    const topOf = current ? pathOf(current, (id) => this.on.parentOf?.(id) ?? null)[0] : null;
     const blocks = showProjects ? projects.list.map((p) => {
       const list = perProject.get(p.project) ?? [];
       const count = list.reduce((n, it) => n + (it.running ? 1 : 0) + this.busyBelow(it.session), 0);
-      const open = this.projectOpen.get(p.project) ?? count > 0;
+      const here = !!topOf && kept.some((it) => it.session === topOf && it.project === p.project);
+      const open = this.projectOpen.get(p.project) ?? (count > 0 || here);
       // 刚点了收起的这一次还画着里面的会话（缓过去以后再画一遍拿掉）
       const closing = this.flipping?.id === p.project && !open;
       return { project: p, open, count, rows: open || closing ? tree(list) : [] };

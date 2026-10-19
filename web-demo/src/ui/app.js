@@ -123,6 +123,8 @@ export class App {
       editProject: (id) => this.ctx.emit('project.edit', { project: id ? this.store.projects.get(id) : null, count: this.store.projects.list.length }),
       newIn: (id) => this.newIn(id),
       deleteProject: (id) => this.deleteProject(id),
+      // 子代理的会话照它最上面的主会话算在哪个项目（正在看的在里面的项目展开）
+      parentOf: (id) => this.parentOf(id),
       dropped: (id) => {
         // 它下面的子代理的会话跟着它一起没了（核心删父会话连子会话一起挪进回收处）
         const kids = this.descendants(id);
