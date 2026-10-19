@@ -3,6 +3,7 @@
 //! 预设那几屏由别的包交来。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { bytes } from '../../src/lib/format.js';
 
 /** 这台设备上记一笔走到哪一步（换了界面语言要重载页面，重载完接着走） */
 export const STEP_KEY = 'welcome.step';
@@ -149,50 +150,121 @@ export function profileScreen(g) {
 export const EMBED_KEY = 'models.embedding';
 
 /**
- * 装没装内置语义模型的包：`config.schema` 里这一项的 `local` 选项不带 `available: false`（2026-10-18 shorin-ee 转来）。旧核心没有这一项、
- * 问不到的当没装。
- * @param {any} core @returns {Promise<boolean>}
+ * 内置语义模型的包（`embed`）装没装、没装的能不能从软件源装（核心 G-8，`docs/construction/G-8-引导里下语义模型.md`）：
+ * - 装了：`config.schema` 里这一项的 `local` 选项不带 `available: false`（2026-10-18 shorin-ee 转来），交 `{installed: true}`；
+ * - 没装：`package.install {"source": "embed", "preview": true}` 看一眼，交 `{installed: false, size}`（要下的字节数，照回应的 `download`）；
+ *   连不上软件源（`source_unreachable`）的大小交 `null`，这一屏照样出，点「是」装的时候照核心的原话说装不上；
+ * - 旧核心没有这一项、软件源里没有、没有本机能用的文件、旧核心不认 `source` 的：交 `null`，这一屏跳过。
+ * @param {any} core @returns {Promise<{installed: true}|{installed: false, size: number|null}|null>}
  */
-export async function embedInstalled(core) {
+export async function embedState(core) {
+  let item;
   try {
     const schema = await core.request('config.schema', { keys: [EMBED_KEY] });
-    const item = schema?.items?.find((/** @type {any} */ i) => i.key === EMBED_KEY);
-    const local = (item?.options ?? []).find((/** @type {any} */ o) => o.value === 'local');
-    return !!local && local.available !== false;
+    item = schema?.items?.find((/** @type {any} */ i) => i.key === EMBED_KEY);
   } catch {
-    return false;
+    return null;
+  }
+  const local = (item?.options ?? []).find((/** @type {any} */ o) => o.value === 'local');
+  if (!local) return null;
+  if (local.available !== false) return { installed: true };
+  try {
+    const got = await core.request('package.install', { source: EMBED_PACKAGE, preview: true });
+    return { installed: false, size: typeof got?.download === 'number' ? got.download : null };
+  } catch (err) {
+    return /** @type {any} */ (err)?.reason === 'source_unreachable' ? { installed: false, size: null } : null;
   }
 }
 
+/** 内置语义模型的包的编号（官方软件源里的 `miyu-agent/miyu-embed`） */
+export const EMBED_PACKAGE = 'embed';
+
 /**
- * 内置语义模型（第 9 条下面最后一款；2026-10-18 项目主人要的）：装了才有这一屏（`guide.js` 照 `embedInstalled`）。两行「是」「否」，先选中
- * 现在的（写着 `off` 的是否，别的、没写的是是：核心不写就是 `local`）；「下一步」和现在的不一样的写个人设置。
- * @param {import('./guide.js').Guide} g
+ * 装不上的那一句：`source_unreachable`、`download_failed` 的原因在 `data.why`（英文，照原话），别的照核心的话。
+ * @param {any} err @returns {string}
  */
-export function embedScreen(g) {
+export function installWhy(err) {
+  const why = err?.data?.why;
+  return typeof why === 'string' && why ? why : err?.message ?? String(err);
+}
+
+/**
+ * 内置语义模型（第 9 条下面最后一款；2026-10-18 项目主人要的，下载那一半照核心 G-8）：`guide.js` 照 `embedState` 决定出不出这一屏。两行「是」
+ * 「否」。装了的：先选中现在的（写着 `off` 的是否，别的、没写的是是：核心不写就是 `local`），「下一步」和现在的不一样的写个人设置。没装的：
+ * 「是」暗字「推荐 · 需下载 57 MB」，先选中「是」；选「是」点「下一步」从软件源装，这一块换成进度条（`package.progress`），装好往下走；
+ * 装不上的照原话说一句，按钮换成「继续」，再点往下走（以后在软件包页里装）。没装的选「否」什么都不写（设置页那一行照旧说「未安装」）。
+ * @param {import('./guide.js').Guide} g
+ * @param {{installed: true}|{installed: false, size: number|null}} state
+ */
+export function embedScreen(g, state) {
   const t = g.t;
   const core = g.ctx.core;
   let now = 'local';
   let chosen = now;
+  /** 装不上过一回：再点「继续」往下走，不再试 */
+  let failed = false;
   const list = h('div.wl-langs');
+  const note = (/** @type {string} */ v) => v === 'local' && !state.installed && state.size != null
+    ? t('embed.local_note_download', { size: bytes(state.size) })
+    : t(`embed.${v}_note`);
   const draw = () => replace(list, ['local', 'off'].map((v) => h(`button.wl-lang${v === chosen ? '.is-on' : ''}`, { type: 'button', onclick: () => { chosen = v; draw(); } },
-    h('span.wl-lang-name', t(`embed.${v}`)), h('span.wl-lang-note', t(`embed.${v}_note`)),
+    h('span.wl-lang-name', t(`embed.${v}`)), h('span.wl-lang-note', note(v)),
     v === chosen ? h('span.wl-check', icon('check')) : null)));
   draw();
+  const body = h('div.wl-embed', list);
   // 读现在写着的（中途关了重来的、设置页改过的）：写着关的换过去
-  core.request('config.get', { keys: [EMBED_KEY] }).then((/** @type {any} */ got) => {
-    if (got?.items?.[EMBED_KEY]?.value !== 'off' || chosen !== 'local' || now !== 'local') return;
-    now = chosen = 'off';
-    draw();
-  }).catch(() => {});
+  if (state.installed) {
+    core.request('config.get', { keys: [EMBED_KEY] }).then((/** @type {any} */ got) => {
+      if (got?.items?.[EMBED_KEY]?.value !== 'off' || chosen !== 'local' || now !== 'local') return;
+      now = chosen = 'off';
+      draw();
+    }).catch(() => {});
+  }
+  /** 从软件源装：这一块换成进度条，装好交 `null`，装不上交那一句 */
+  const install = async () => {
+    const bar = h('i');
+    const words = h('span.wl-dl-words', t('embed.downloading'));
+    const meter = h('div.wl-dl', h('div.wl-dl-bar', bar), words);
+    replace(body, meter);
+    const onPush = (/** @type {string} */ method, /** @type {any} */ p) => {
+      if (method !== 'package.progress' || !p || typeof p.done !== 'number') return;
+      const total = typeof p.total === 'number' && p.total > 0 ? p.total : null;
+      bar.style.width = total ? `${Math.min(100, (p.done / total) * 100).toFixed(1)}%` : '0%';
+      words.textContent = total ? t('embed.progress', { done: bytes(p.done), total: bytes(total) }) : t('embed.downloading');
+    };
+    core.onPush(onPush);
+    try {
+      await core.request('package.install', { source: EMBED_PACKAGE });
+      return null;
+    } catch (err) {
+      replace(body, list);
+      return t('embed.failed', { why: installWhy(err) });
+    } finally {
+      core.pushes?.delete(onPush);
+    }
+  };
   return {
     title: t('embed.title'),
     sub: t('embed.sub'),
-    body: list,
+    body,
     focus: /** @type {HTMLElement|null} */ (list.querySelector('.wl-lang.is-on')),
     next: {
       ready: () => true,
+      label: () => (failed ? t('embed.continue') : t('next')),
       run: async () => {
+        if (!state.installed) {
+          if (chosen === 'local' && !failed) {
+            const why = await install();
+            if (why) {
+              failed = true;
+              return why;
+            }
+            // 下的时候点了「上一步」走开了的：装好了也不拉回来
+            if (g.step !== 'embed') return null;
+          }
+          g.go('done', 1);
+          return null;
+        }
         if (chosen !== now) {
           await core.request('config.set', { layer: 'personal', changes: [{ key: EMBED_KEY, value: chosen }] });
           now = chosen;

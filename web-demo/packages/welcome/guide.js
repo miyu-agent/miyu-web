@@ -4,11 +4,11 @@
 //! （步骤条）、上一步、下一步，管 `Enter`、`↑` `↓`、换屏的动画和吉祥物站哪。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { helloScreen, languageScreen, profileScreen, embedScreen, embedInstalled, doneScreen, STEP_KEY, DONE_KEY } from './screens.js';
+import { helloScreen, languageScreen, profileScreen, embedScreen, embedState, doneScreen, STEP_KEY, DONE_KEY } from './screens.js';
 
 /** 步子的先后；`back` 是上一步回到哪 */
 const BACK = /** @type {Record<string, string|null>} */ ({ hello: null, language: 'hello', model: 'language', persona: 'model', theme: 'persona', profile: 'theme', preset: 'profile', embed: 'preset', done: 'embed' });
-/** 进步骤条的几步（`embed` 只在装了内置语义模型时列，`Guide.numbered`；沙盒那一步 2026-10-19 项目主人去掉了） */
+/** 进步骤条的几步（`embed` 只在那一屏出的时候列，`Guide.numbered`；沙盒那一步 2026-10-19 项目主人去掉了） */
 export const NUMBERED = ['language', 'model', 'persona', 'theme', 'profile', 'preset', 'embed'];
 /** 换一屏要选中的选项（`↑` `↓` 换着选的：选了就是它；别的只挪焦点） */
 const CHOICES = '.ob-row:not([disabled]), .wl-lang, .setup-choice, .ob-model';
@@ -73,8 +73,9 @@ export class Guide {
     this.onScroll = () => this.ctx.mascot?.refresh?.();
     // 窗口变了：吉祥物照新的台子站（原来也量步骤条放不放得下，换成小点以后不用量了）
     this.onResize = new ResizeObserver(() => {});
-    /** 装没装内置语义模型（没装的跳过那一屏、步骤条不列）：打开时问一次，问到之前当没装 */
-    this.embed = false;
+    /** 内置语义模型那一屏出不出（`embedState`：装了的问开不开，没装、软件源里有的问下不下；都不是的跳过、步骤条不列）：打开时问一次，
+     *  问到之前当不出；走到那一步再问一次 @type {Awaited<ReturnType<typeof embedState>>} */
+    this.embed = null;
   }
 
   /** 步骤条列的几步。 */
@@ -112,9 +113,9 @@ export class Guide {
     document.addEventListener('focusin', this.onFocus);
     this.page.addEventListener('scroll', this.onScroll, { passive: true });
     this.go(step in BACK ? step : 'hello', 1);
-    // 装没装内置语义模型：问到了重画步骤条（「语义模型」那一段）
-    embedInstalled(this.ctx.core).then((yes) => {
-      this.embed = yes;
+    // 内置语义模型那一屏出不出：问到了重画步骤条（「语义模型」那一段）
+    embedState(this.ctx.core).then((got) => {
+      this.embed = got;
       if (!this.head.hidden) this.drawSteps();
     });
     // 吉祥物的包比这个包晚加载：来了再让它上舞台
@@ -201,11 +202,15 @@ export class Guide {
       }
       this.show(profileScreen(this), dir);
     } else if (step === 'embed') {
-      // 没装内置语义模型（或者还没问到）：再问一次，没装的跳过这一屏
-      if (!this.embed) this.embed = await embedInstalled(this.ctx.core);
+      // 再问一次（装没装、软件源里有没有，打开以后可能变了）：不出的跳过这一屏
+      const got = await embedState(this.ctx.core);
       if (this.step !== step) return;
-      if (!this.embed) return this.go(dir > 0 ? 'done' : 'preset', dir);
-      this.show(embedScreen(this), dir);
+      this.embed = got;
+      if (!got) {
+        this.drawSteps();
+        return this.go(dir > 0 ? 'done' : 'preset', dir);
+      }
+      this.show(embedScreen(this, got), dir);
     }
     else if (step === 'done') this.show(doneScreen(this), dir);
   }

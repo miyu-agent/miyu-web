@@ -99,7 +99,12 @@
         "local": "是",
         "local_note": "推荐",
         "off": "否",
-        "off_note": "只用关键词检索"
+        "off_note": "只用关键词检索",
+        "local_note_download": "推荐 · 需下载 {size}",
+        "downloading": "正在下载…",
+        "progress": "正在下载 {done} / {total}",
+        "failed": "下载失败：{why}\n可以以后在设置的软件包页里安装",
+        "continue": "继续"
       },
       "skip": "跳过",
       "where": "STAGE {at}/{total}"
@@ -151,7 +156,12 @@
         "local": "Yes",
         "local_note": "Recommended",
         "off": "No",
-        "off_note": "Keyword search only"
+        "off_note": "Keyword search only",
+        "local_note_download": "Recommended · {size} download",
+        "downloading": "Downloading…",
+        "progress": "Downloading {done} / {total}",
+        "failed": "Download failed: {why}\nYou can install it later from the Packages page in Settings",
+        "continue": "Continue"
       },
       "skip": "Skip",
       "where": "STAGE {at}/{total}"
@@ -203,7 +213,12 @@
         "local": "はい",
         "local_note": "おすすめ",
         "off": "いいえ",
-        "off_note": "キーワード検索のみ"
+        "off_note": "キーワード検索のみ",
+        "local_note_download": "おすすめ · {size} のダウンロード",
+        "downloading": "ダウンロード中…",
+        "progress": "ダウンロード中 {done} / {total}",
+        "failed": "ダウンロードに失敗しました：{why}\nあとで設定のパッケージページからインストールできます",
+        "continue": "続ける"
       },
       "skip": "スキップ",
       "where": "STAGE {at}/{total}"
