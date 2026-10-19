@@ -119,18 +119,22 @@ function switchFor(dialog, p) {
  * @param {any} dialog @param {string} id
  */
 /**
- * 信息页上的按钮：打开后台页；问到它有自己的网页的，接着露一个「在新标签页打开」。
+ * 信息页上的「打开页面」：有自己网页的（接入通讯平台的页面服务，`status` 问得到端口）点了在新标签页打开那个网页（2026-10-19 项目主人：只留一个「打开页面」，
+ * 新标签页打开就够了）；别的照旧跳到后台页的独立整页。
  * @param {any} dialog @param {string} id
  */
 function siteActions(dialog, id) {
   const t = (/** @type {string} */ key) => dialog.ctx.text(key);
   const pages = dialog.ctx.backstage;
-  const row = h('div.set-pkg-actions', h('a.set-btn.set-link', { href: pages.href(id), onclick: (/** @type {MouseEvent} */ e) => openPage(dialog, id, e) }, t('pkg.open_backstage')));
-  pages.site?.port(id).then((/** @type {number|null} */ port) => {
-    if (!port || !row.isConnected) return;
-    row.append(h('button.set-btn', { type: 'button', onclick: () => pages.site.open(id).then((/** @type {string|null} */ why) => { if (why) dialog.toast(why); }) }, t('pkg.open_site')));
-  });
-  return row;
+  /** 问到了端口就是有自己的网页 */
+  let site = false;
+  pages.site?.port(id).then((/** @type {number|null} */ port) => { site = !!port; });
+  const open = (/** @type {MouseEvent} */ e) => {
+    if (!site) return openPage(dialog, id, e);
+    e.preventDefault();
+    pages.site.open(id).then((/** @type {string|null} */ why) => { if (why) dialog.toast(why); });
+  };
+  return h('div.set-pkg-actions', h('a.set-btn.set-link', { href: pages.href(id), onclick: open }, t('pkg.open_backstage')));
 }
 
 function infoPage(dialog, id) {
