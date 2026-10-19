@@ -327,7 +327,8 @@
         "new_session": "新会话",
         "open_project": "打开项目",
         "workspace": "工作区"
-      }
+      },
+      "follow_default": "跟随默认"
     },
     "en": {
       "choose_persona": "Select persona",
@@ -504,7 +505,8 @@
         "new_session": "New session",
         "open_project": "Open project",
         "workspace": "Workspace"
-      }
+      },
+      "follow_default": "Follow default"
     },
     "ja": {
       "choose_persona": "人格を選ぶ",
@@ -681,7 +683,8 @@
         "new_session": "新しいセッション",
         "open_project": "プロジェクトを開く",
         "workspace": "ワークスペース"
-      }
+      },
+      "follow_default": "デフォルトに従う"
     }
   }
 }
