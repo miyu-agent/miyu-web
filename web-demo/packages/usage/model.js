@@ -65,18 +65,48 @@ export function midnight(now, back = 0) {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate() - back);
 }
 
-/**
- * 时间段从哪起（`from`，核心认的时刻）：今天是今天 0 点，7 天、30 天是往前第 6、29 天的 0 点，全部不写。
- * @param {'1'|'7'|'30'|'all'} range @param {Date} now @returns {string|null}
- */
-export function fromOf(range, now) {
-  if (range === 'all') return null;
-  return midnight(now, Number(range) - 1).toISOString();
+/** `2026-10-20` 读成本地那一天的 0 点；写法不对的是 `null` @param {string} text */
+export function parseDay(text) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(text ?? ''));
+  if (!m) return null;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return dayKey(d) === text ? d : null;
 }
 
-/** 今天一小时一段（本地整点），24 段：`{from, until}` 照核心的时刻写 @param {Date} now */
-export function hours(now) {
-  const base = midnight(now);
+/** 两天之间几天（连头带尾） @param {Date} a @param {Date} b */
+export const daysBetween = (a, b) => Math.round((midnight(b).getTime() - midnight(a).getTime()) / 86400000) + 1;
+
+/** 往后挪几天 @param {Date} d @param {number} n */
+const shift = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+
+/**
+ * 时间段：从哪天 0 点起、到哪天 0 点止（不含）。今天、7 天、30 天到明天 0 点（以后的也没有）；全部两头都不写；自定义照选的两天，
+ * 选反了的对调，晚于今天的当今天。
+ * @param {'1'|'7'|'30'|'all'|'custom'} range @param {Date} now @param {{from: string, to: string}|null} [custom]
+ * @returns {{from: Date|null, until: Date|null}}
+ */
+export function spanOf(range, now, custom = null) {
+  if (range === 'all') return { from: null, until: null };
+  if (range === 'custom') {
+    const today = midnight(now);
+    let a = parseDay(custom?.from ?? '') ?? today;
+    let b = parseDay(custom?.to ?? '') ?? today;
+    if (a > b) [a, b] = [b, a];
+    if (b > today) b = today;
+    if (a > b) a = b;
+    return { from: a, until: shift(b, 1) };
+  }
+  return { from: midnight(now, Number(range) - 1), until: null };
+}
+
+/** 照时间段写进请求的那两格（核心认的时刻）；没有的不写 @param {{from: Date|null, until: Date|null}} span */
+export function spanParams(span) {
+  return { ...(span.from ? { from: span.from.toISOString() } : {}), ...(span.until ? { until: span.until.toISOString() } : {}) };
+}
+
+/** 一天一小时一段（本地整点），24 段：`{from, until}` 照核心的时刻写 @param {Date} day */
+export function hours(day) {
+  const base = midnight(day);
   return Array.from({ length: 24 }, (_, i) => {
     const from = new Date(base.getFullYear(), base.getMonth(), base.getDate(), i);
     const until = new Date(base.getFullYear(), base.getMonth(), base.getDate(), i + 1);
@@ -85,45 +115,47 @@ export function hours(now) {
 }
 
 /**
- * 今天的柱子：一小时一根；现在这一小时标出来，之后的空着。
- * @param {(Row|null)[]} rows 24 个，照 `hours` 的先后 @param {Date} now @param {(key: string, fields?: any) => string} t @returns {Bar[]}
+ * 一天的柱子：一小时一根；是今天的，现在这一小时标出来，之后的空着。悬停写「15:00～16:00」。
+ * @param {(Row|null)[]} rows 24 个，照 `hours` 的先后 @param {Date} day @param {Date} now @param {(key: string, fields?: any) => string} t @returns {Bar[]}
  */
-export function hourBars(rows, now, t) {
+export function hourBars(rows, day, now, t) {
+  const today = dayKey(day) === dayKey(now);
   return rows.map((row, i) => ({
     key: String(i),
     label: i % 6 === 0 ? t('axis.hour', { hour: i }) : '',
-    title: t('tip.hour', { hour: i }),
-    row: i > now.getHours() || !row || !row.requests ? null : row,
-    now: i === now.getHours(),
+    title: t('tip.hour', { from: `${pad(i)}:00`, to: `${pad(i + 1)}:00` }),
+    row: (today && i > now.getHours()) || !row || !row.requests ? null : row,
+    now: today && i === now.getHours(),
   }));
 }
 
 /**
- * 照天的柱子：`n` 天，最后一根是今天；横轴每隔几天写一个，最后一根写「今天」。
- * @param {Row[]} rows `group: ["day"]` 的行 @param {number} n @param {Date} now @param {(key: string, fields?: any) => string} t @returns {Bar[]}
+ * 照天的柱子：从 `start` 起 `n` 天；横轴每隔几天写一个，最后一根总写，今天写「今天」。
+ * @param {Row[]} rows `group: ["day"]` 的行 @param {Date} start @param {number} n @param {Date} now @param {(key: string, fields?: any) => string} t @returns {Bar[]}
  */
-export function dayBars(rows, n, now, t) {
+export function dayBars(rows, start, n, now, t) {
   const by = new Map(rows.map((r) => [r.day, r]));
   const every = n <= 7 ? 1 : n <= 31 ? 5 : 15;
+  const today = dayKey(now);
   return Array.from({ length: n }, (_, i) => {
-    const d = midnight(now, n - 1 - i);
+    const d = shift(start, i);
     const key = dayKey(d);
-    const last = i === n - 1;
+    const labelled = (n - 1 - i) % every === 0;
     return {
       key,
-      label: last ? t('axis.today') : (n - 1 - i) % every === 0 ? t('axis.day', { month: d.getMonth() + 1, day: d.getDate() }) : '',
+      label: labelled ? (key === today ? t('axis.today') : t('axis.day', { month: d.getMonth() + 1, day: d.getDate() })) : '',
       title: t('tip.day', { month: d.getMonth() + 1, day: d.getDate() }),
       row: by.get(key) ?? null,
-      now: last,
+      now: key === today,
     };
   });
 }
 
 /**
- * 照月的柱子：最早有请求的那个月到这个月，天加成月；最后一根写「本月」。
- * @param {Row[]} rows `group: ["day"]` 的行 @param {Date} now @param {(key: string, fields?: any) => string} t @returns {Bar[]}
+ * 照月的柱子：从 `start` 那个月（没写的照最早有请求的那个月）到 `end` 那个月，天加成月；这个月写「本月」。
+ * @param {Row[]} rows `group: ["day"]` 的行 @param {Date|null} start @param {Date} end @param {Date} now @param {(key: string, fields?: any) => string} t @returns {Bar[]}
  */
-export function monthBars(rows, now, t) {
+export function monthBars(rows, start, end, now, t) {
   /** @type {Map<string, Row[]>} */
   const by = new Map();
   for (const r of rows) {
@@ -131,36 +163,47 @@ export function monthBars(rows, now, t) {
     const k = r.day.slice(0, 7);
     by.set(k, [...(by.get(k) ?? []), r]);
   }
-  const first = [...by.keys()].sort()[0] ?? monthKey(now);
+  const first = start ? monthKey(start) : [...by.keys()].sort()[0] ?? monthKey(end);
   const [y0, m0] = first.split('-').map(Number);
+  const last = monthKey(end);
   const bars = [];
-  for (let d = new Date(y0, m0 - 1, 1); d <= now; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) {
+  for (let d = new Date(y0, m0 - 1, 1); monthKey(d) <= last; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) {
     const key = monthKey(d);
     const list = by.get(key);
     bars.push({ key, label: '', title: t('tip.month', { year: d.getFullYear(), month: d.getMonth() + 1 }), row: list ? sum(list) : null, now: key === monthKey(now) });
   }
   const every = Math.max(1, Math.ceil(bars.length / 8));
   bars.forEach((b, i) => {
-    const last = i === bars.length - 1;
     const [y, m] = b.key.split('-').map(Number);
-    if (last) b.label = t('axis.this_month');
-    else if ((bars.length - 1 - i) % every === 0) b.label = t('axis.month', { year: y, month: m });
+    if ((bars.length - 1 - i) % every === 0) b.label = b.now ? t('axis.this_month') : t('axis.month', { year: y, month: m });
   });
   return bars;
 }
 
 /**
- * 「全部」照天还是照月：最早有请求的那天到今天不超过 90 天照天，超过的照月。一天都没有的是空的。
+ * 「全部」照天还是照月：最早有请求的那天到今天不超过 90 天照天（至少 7 根），超过的照月。一天都没有的是空的。
  * @param {Row[]} rows `group: ["day"]` 的行 @param {Date} now @param {(key: string, fields?: any) => string} t
  * @returns {{monthly: boolean, bars: Bar[]}}
  */
 export function allBars(rows, now, t) {
   const days = rows.map((r) => r.day).filter((d) => typeof d === 'string').sort();
   if (!days.length) return { monthly: false, bars: [] };
-  const [y, m, d] = days[0].split('-').map(Number);
-  const span = Math.round((midnight(now).getTime() - new Date(y, m - 1, d).getTime()) / 86400000) + 1;
-  if (span > MONTHLY_AFTER) return { monthly: true, bars: monthBars(rows, now, t) };
-  return { monthly: false, bars: dayBars(rows, Math.max(span, 7), now, t) };
+  const first = /** @type {Date} */ (parseDay(days[0]));
+  const span = daysBetween(first, now);
+  if (span > MONTHLY_AFTER) return { monthly: true, bars: monthBars(rows, null, now, now, t) };
+  const n = Math.max(span, 7);
+  return { monthly: false, bars: dayBars(rows, midnight(now, n - 1), n, now, t) };
+}
+
+/**
+ * 自定义的两天之间（一天的另照小时画）：不超过 90 天照天，超过的照月。
+ * @param {Row[]} rows `group: ["day"]` 的行 @param {Date} from @param {Date} to 最后一天（含） @param {Date} now @param {(key: string, fields?: any) => string} t
+ * @returns {{monthly: boolean, bars: Bar[]}}
+ */
+export function rangeBars(rows, from, to, now, t) {
+  const n = daysBetween(from, to);
+  if (n > MONTHLY_AFTER) return { monthly: true, bars: monthBars(rows, from, to, now, t) };
+  return { monthly: false, bars: dayBars(rows, from, n, now, t) };
 }
 
 /** 纵轴四格，一格多少：1、2、2.5、5 乘十的几次方里，四格盖得住最高那根的最小的（至少 1）。 @param {number} max */
@@ -172,11 +215,48 @@ export function niceStep(max) {
   return Math.max(1, 10 * p);
 }
 
-/** 照 token 或请求从大到小排；一样的照名字（分组那一格）排，`null` 在后 @param {Row[]} rows @param {'tokens'|'requests'} by @param {string} group */
-export function sorted(rows, by, group) {
-  const v = (/** @type {Row} */ r) => (by === 'requests' ? r.requests : total(r.usage));
-  return [...rows].sort((a, b) => v(b) - v(a) || (a[group] === null ? 1 : b[group] === null ? -1 : String(a[group]).localeCompare(String(b[group]))));
+/**
+ * 表的排法：照哪一列、正着还是倒着。数的那几列（请求、token、命中率、输出、花费）倒着是从大到小，名字照 `nameOf` 的字；
+ * 花费照币种的先后（`order`，核心给的合计里的先后）一种一种比，只有没价格的最小。一样的照名字，`null` 那一行总在最后。
+ * @typedef {'name'|'requests'|'tokens'|'hit'|'output'|'cost'} Column
+ * @param {Row[]} rows @param {{by: Column, desc: boolean}} sort @param {string} group @param {string[]} [order] @param {(r: Row) => string} [nameOf]
+ */
+export function sorted(rows, sort, group, order = [], nameOf = (r) => String(r[group])) {
+  const costs = (/** @type {Row} */ r) => {
+    if (!r.amounts?.length) return [-1];
+    const all = [...order, ...r.amounts.map((a) => a.currency).filter((c) => !order.includes(c))];
+    return all.map((c) => r.amounts.find((a) => a.currency === c)?.amount ?? 0);
+  };
+  /** @type {(r: Row) => number|number[]} */
+  const value = {
+    requests: (/** @type {Row} */ r) => r.requests,
+    tokens: (/** @type {Row} */ r) => total(r.usage),
+    hit: (/** @type {Row} */ r) => (input(r.usage) ? r.usage.cache_read / input(r.usage) : 0),
+    output: (/** @type {Row} */ r) => r.usage.output ?? 0,
+    cost: costs,
+    name: () => 0,
+  }[sort.by];
+  const byName = (/** @type {Row} */ a, /** @type {Row} */ b) => nameOf(a).localeCompare(nameOf(b), 'zh');
+  const cmp = (/** @type {Row} */ a, /** @type {Row} */ b) => {
+    if (sort.by === 'name') return byName(a, b);
+    const va = value(a), vb = value(b);
+    if (Array.isArray(va) && Array.isArray(vb)) {
+      for (let i = 0; i < Math.max(va.length, vb.length); i++) if ((va[i] ?? 0) !== (vb[i] ?? 0)) return (va[i] ?? 0) - (vb[i] ?? 0);
+      return 0;
+    }
+    return /** @type {number} */ (va) - /** @type {number} */ (vb);
+  };
+  return [...rows].sort((a, b) => {
+    if ((a[group] === null) !== (b[group] === null)) return a[group] === null ? 1 : -1;
+    return (sort.desc ? -cmp(a, b) : cmp(a, b)) || byName(a, b);
+  });
 }
+
+/** 展开一行时照什么拆开：模型拆成用途、会话拆成模型和用途、用途拆成模型、场所拆成模型 @param {string} group @returns {string[]} */
+export const splitsOf = (group) => ({ model: ['purpose'], session: ['model', 'purpose'], purpose: ['model'], venue: ['model'] })[group] ?? [];
+
+/** 精确的数（千分位） @param {number} n */
+export const exact = (n) => Math.round(n).toLocaleString('en-US');
 
 /** 用途写成什么（文字表里的键）：`null` 是对话；认得的照它；别的交回 `null`，照原样写 @param {string|null} purpose */
 export function purposeKey(purpose) {

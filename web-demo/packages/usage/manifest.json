@@ -13,7 +13,7 @@
   },
   "kind": "optional",
   "description": {
-    "zh": "设置页多一页「用量」：今天、7 天、30 天、全部，四格数（花费、请求、token、缓存命中），一张每天（今天每小时）的 token 柱子，一张能切按模型、会话、用途、场所的表。数照核心的用量汇总，花费照币种各加各的。"
+    "zh": "设置页多一页「用量」：今天、7 天、30 天、全部、自定义，四格数（花费、请求、token、缓存命中），一张 token 柱子（一天的一小时一根），一张能切按模型、会话、用途、场所、每一列都能排、点一行展开细则的表。数照核心的用量汇总，花费照币种各加各的。"
   },
   "inject": [
     "slots",
@@ -34,7 +34,8 @@
         "1": "今天",
         "7": "7 天",
         "30": "30 天",
-        "all": "全部"
+        "all": "全部",
+        "custom": "自定义"
       },
       "tile": {
         "cost": "花费",
@@ -70,14 +71,11 @@
         "this_month": "本月"
       },
       "tip": {
-        "hour": "{hour} 时",
+        "hour": "{from}～{to}",
         "day": "{month} 月 {day} 日",
         "month": "{year} 年 {month} 月",
         "none": "这一段没有请求",
-        "requests": "{n} 次请求 · {tokens} token",
-        "hit": "命中 {percent}% · 输出 {output}",
-        "no_price": "没有价格",
-        "unpriced_more": " · 另有 {n} 次没有价格"
+        "no_price": "没有价格"
       },
       "group": {
         "model": "按模型",
@@ -132,7 +130,21 @@
       },
       "errors": {
         "old_core": "这一版核心还没有用量统计"
-      }
+      },
+      "custom": {
+        "from": "从",
+        "to": "到"
+      },
+      "detail": {
+        "tokens": "命中 {hit} · 没命中 {miss} · 写缓存 {write} · 输出 {out}",
+        "cost": "花费 {cost} · {rest}",
+        "by": {
+          "model": "按模型",
+          "purpose": "按用途"
+        },
+        "open": "打开会话"
+      },
+      "no_cost": "没有用量"
     },
     "en": {
       "title": "Usage",
@@ -143,7 +155,8 @@
         "1": "Today",
         "7": "7 days",
         "30": "30 days",
-        "all": "All"
+        "all": "All",
+        "custom": "Custom"
       },
       "tile": {
         "cost": "Cost",
@@ -179,14 +192,11 @@
         "this_month": "This month"
       },
       "tip": {
-        "hour": "{hour}:00",
+        "hour": "{from}–{to}",
         "day": "{month}/{day}",
         "month": "{month}/{year}",
         "none": "No requests",
-        "requests": "{n} requests · {tokens} tokens",
-        "hit": "{percent}% cached · {output} out",
-        "no_price": "No price",
-        "unpriced_more": " · {n} more without a price"
+        "no_price": "No price"
       },
       "group": {
         "model": "By model",
@@ -241,7 +251,21 @@
       },
       "errors": {
         "old_core": "This core version has no usage statistics yet"
-      }
+      },
+      "custom": {
+        "from": "From",
+        "to": "to"
+      },
+      "detail": {
+        "tokens": "Cached {hit} · uncached {miss} · cache writes {write} · output {out}",
+        "cost": "Cost {cost} · {rest}",
+        "by": {
+          "model": "By model",
+          "purpose": "By purpose"
+        },
+        "open": "Open session"
+      },
+      "no_cost": "no usage"
     },
     "ja": {
       "title": "使用量",
@@ -252,7 +276,8 @@
         "1": "今日",
         "7": "7 日",
         "30": "30 日",
-        "all": "すべて"
+        "all": "すべて",
+        "custom": "カスタム"
       },
       "tile": {
         "cost": "費用",
@@ -288,14 +313,11 @@
         "this_month": "今月"
       },
       "tip": {
-        "hour": "{hour} 時",
+        "hour": "{from}～{to}",
         "day": "{month} 月 {day} 日",
         "month": "{year} 年 {month} 月",
         "none": "リクエストなし",
-        "requests": "{n} 回 · {tokens} トークン",
-        "hit": "ヒット {percent}% · 出力 {output}",
-        "no_price": "価格なし",
-        "unpriced_more": " · ほかに価格なし {n} 回"
+        "no_price": "価格なし"
       },
       "group": {
         "model": "モデル別",
@@ -350,7 +372,21 @@
       },
       "errors": {
         "old_core": "このバージョンのコアにはまだ使用量の統計がありません"
-      }
+      },
+      "custom": {
+        "from": "開始",
+        "to": "終了"
+      },
+      "detail": {
+        "tokens": "ヒット {hit} · ヒットなし {miss} · キャッシュ書き込み {write} · 出力 {out}",
+        "cost": "費用 {cost} · {rest}",
+        "by": {
+          "model": "モデル別",
+          "purpose": "用途別"
+        },
+        "open": "セッションを開く"
+      },
+      "no_cost": "使用量なし"
     }
   }
 }
