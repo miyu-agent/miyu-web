@@ -366,7 +366,7 @@
         "depends_missing": "缺少依赖：{names}",
         "depended": "{names} 依赖它，无法卸载",
         "sep": "、",
-        "repository": "仓库",
+        "upstream": "上游",
         "from": {
           "shipped": "出厂",
           "official": "官方软件源",
@@ -655,7 +655,7 @@
         "depends_missing": "Missing dependencies: {names}",
         "depended": "Can't uninstall: required by {names}",
         "sep": ", ",
-        "repository": "Repository",
+        "upstream": "Upstream",
         "from": {
           "shipped": "Built-in",
           "official": "Official source",
@@ -944,7 +944,7 @@
         "depends_missing": "依存パッケージ不足：{names}",
         "depended": "{names} が依存しているため、アンインストールできません",
         "sep": "、",
-        "repository": "リポジトリ",
+        "upstream": "アップストリーム",
         "from": {
           "shipped": "標準搭載",
           "official": "公式ソース",

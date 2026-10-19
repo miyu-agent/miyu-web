@@ -121,9 +121,10 @@ function switchFor(dialog, p) {
  * @param {any} dialog @param {string} id
  */
 /**
- * 一个包的信息页（2026-10-19 项目主人选的「极简：只有信息和动作」）：顶上一块——图标、名字、一句说明，下面一行暗字「版本 · 来源 · 状态」（来源照核心的
- * `from`：出厂、官方软件源、社区软件源、本地；状态只写要留意的，红字是程序不在、依赖缺了），右边开关（必需的写「必需」）；再一行动作：打开页面（有后台页的；
- * 有自己网页的点了在新标签页开它）、重启（在跑的扩展、带 MCP 服务的包）、查看输出（停下的扩展）、仓库（`repository`）、卸载（点两下）。功能、权限不再列。
+ * 一个包的信息页（2026-10-19 项目主人选的「极简：只有信息和动作」）：顶上一块——图标、名字、一句说明，下面一行暗字「版本 · 来源 · 作者 · 状态」（核心 F-12：
+ * 来源照 `from`：出厂、官方软件源、社区软件源、本地，不照 `source`（那是装时的本机路径）；作者照 `author`；状态只写要留意的，红字是程序不在、依赖缺了），
+ * 再一行上游仓库的地址（`upstream`，https 的才画成链接，新标签页开；2026-10-19 项目主人：每个软件包的页面都要有上游仓库地址），右边开关（必需的写「必需」）；
+ * 再一行动作：打开页面（有后台页的；有自己网页的点了在新标签页开它）、重启（在跑的扩展、带 MCP 服务的包）、查看输出（停下的扩展）、卸载（点两下）。功能、权限不再列。
  * 下面：要批准权限的那一块（开的那一下还有没批的）、停下的扩展的输出、带的 MCP 服务；没有自己网页的再接它的设置项（有自己网页的，设置在它自己的网页里）。
  * @param {any} dialog @param {string} id
  */
@@ -164,7 +165,9 @@ function infoCard(dialog, p, e) {
     : QUIET.has(p.status) ? null : t(`pkg.status.${p.status}`);
   const alarm = bad || (e && e.on && e.state === 'stopped');
   const from = typeof p.from === 'string' ? t(`pkg.from.${p.from}`) : null;
-  const meta = [p.version ? t('pkg.version', { version: p.version }) : null, from && !from.startsWith('pkg.') ? from : null].filter(Boolean).join(' · ');
+  const author = typeof p.author === 'string' && p.author.trim() ? p.author.trim() : null;
+  const meta = [p.version ? t('pkg.version', { version: p.version }) : null, from && !from.startsWith('pkg.') ? from : null, author].filter(Boolean).join(' · ');
+  const upstream = typeof p.upstream === 'string' && /^https:\/\/[^\s]+$/.test(p.upstream) ? p.upstream : null;
   const control = p.required ? h('span.set-pkg-status', t('pkg.required'))
     : e ? toggle(e.on, (on) => (on ? dialog.extensions.turnOn(e) : dialog.extensions.act('extension.disable', { package: id })))
     : 'enabled' in p ? switchFor(dialog, p) : null;
@@ -175,8 +178,6 @@ function infoCard(dialog, p, e) {
     e && e.state === 'running' ? h('button.set-btn', { type: 'button', onclick: () => dialog.extensions.act('extension.restart', { package: id }) }, t('ext.restart')) : null,
     e && e.on && e.state === 'stopped' && stderr
       ? h('button.set-btn', { type: 'button', onclick: () => { dialog.extensions.toggleSet(dialog.extensions.showing, id); dialog.extensions.redraw(id); } }, t(showing ? 'ext.hide_output' : 'ext.show_output')) : null,
-    typeof p.repository === 'string' && /^https:\/\//.test(p.repository)
-      ? h('a.set-btn.is-anchor', { href: p.repository, target: '_blank', rel: 'noopener noreferrer' }, icon('external-link'), h('span', t('pkg.repository'))) : null,
     removeButton(dialog, p),
   ].filter(Boolean);
   const caps = e?.capabilities ?? [];
@@ -189,6 +190,8 @@ function infoCard(dialog, p, e) {
         h('div.set-pkg-card-name', p.name ?? id),
         p.summary ? h('p.set-pkg-card-desc', p.summary) : null,
         meta || status ? h('p.set-pkg-card-meta', meta, meta && status ? ' · ' : null, status ? h(`span${alarm ? '.is-bad' : ''}`, status) : null) : null,
+        upstream ? h('p.set-pkg-card-meta.set-pkg-upstream', h('span', t('pkg.upstream')),
+          h('a', { href: upstream, target: '_blank', rel: 'noopener noreferrer', title: upstream }, h('span', upstream.replace(/^https:\/\//, '').replace(/\/$/, '')), icon('external-link'))) : null,
         actions.length ? h('div.set-pkg-card-actions', actions) : null),
       control ? h('div.set-control', control) : null),
     showing && stderr ? h('pre.set-ext-output', stderr) : null,
