@@ -303,7 +303,7 @@ export class SessionsPage {
 }
 
 /**
- * 会话表那一项里核心给的上下文用量（`context: {used, window}`，等核心补）。 @param {any} s
+ * 会话表那一项里核心给的上下文用量（`context: {used, window?}`，核心 f3f30d85：最近一次主请求的输入；没说过话的、刚压完的不写，窗口查不到的不写）。 @param {any} s
  * @returns {{used: number, window: number|null}|null}
  */
 function contextOf(s) {
