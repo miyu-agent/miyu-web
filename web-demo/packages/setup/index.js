@@ -87,6 +87,8 @@ export function apply(ctx) {
     } : null;
   };
   chat.look(lookOf);
+  // 以前那几轮是哪个人格回的（核心 70d6ff7d）：对话区照编号问；人格列表没读完的当还不知道
+  chat.lookFor?.((/** @type {string} */ id) => (catalog.personas ? lookFor(id) : undefined));
   // 第一次引导里人格、预设那两屏（蓝图「第一次引导」第 8、9 条）：控件照引导交来的 `kit`（设置页那一套）
   ctx.provide('personas', {
     /** 一个人格、预设的名字（全部会话里的项目页照它写；没读到的写编号） @param {string} id */

@@ -180,6 +180,7 @@
 }
 /* 无人格的会话：她那一轮不画头像和名字，内容、提示行、压缩的进度不缩进（2026-10-10 项目主人） */
 .timeline.is-bare .assistant-message, .timeline.is-bare .note, .timeline.is-bare .compacting, .timeline.is-bare .chat-tail { padding-left: 0; }
+.assistant-message.is-bare { padding-left: 0; }
 .assistant-content { color: var(--text); font-size: 15px; line-height: 1.75; }
 .assistant-content > * + * { margin-top: 10px; }
 

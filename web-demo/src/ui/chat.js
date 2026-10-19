@@ -40,6 +40,8 @@ export class Chat {
     this.list = h('div.timeline');
     /** 她那一轮头上画的（会话用的人格的名字、头像，`setLook`）；`null` 是无人格的会话：不画头像和名字，内容不缩进 */
     this.look = /** @type {Look|null} */ (res.persona);
+    /** 一个人格画成什么样（`setLookFor`，软件包 `setup` 交来）：她那一块带了 `persona` 的照它画；没交的照会话现在的 @type {((id: string) => Look|null|undefined)|null} */
+    this.lookFor = null;
     /** 正文末尾、最后一轮下面（挂载位 `chat.tail`：确认和提问了结以后留的）：一直是正文那一列的最后一个，画的时候不动它 */
     this.tail = h('div.chat-tail');
     /** 压缩的进度那一行（`compacting.js`）：正文末尾、`chat.tail` 前面，一直是同一个节点 */
@@ -143,6 +145,24 @@ export class Chat {
   setLook(look) {
     this.look = look;
     this.list.classList.toggle('is-bare', !look);
+  }
+
+  /** @param {(id: string) => Look|null|undefined} fn */
+  setLookFor(fn) {
+    this.lookFor = fn;
+  }
+
+  /**
+   * 她这一块头上画谁（核心 70d6ff7d：回复条目带着这一轮的人格）：没带的、还不知道人格列表的照会话现在的；无人格的轮是 `null`；
+   * 人格删掉了的只写编号。
+   * @param {import('../model/group.js').Block} block @returns {Look|null}
+   */
+  lookOf(block) {
+    if (block.persona === undefined || !this.lookFor) return this.look;
+    if (block.persona === null) return null;
+    if (block.persona === this.look?.persona) return this.look;
+    const got = this.lookFor(block.persona);
+    return got === undefined ? this.look : got ?? { persona: block.persona, name: block.persona };
   }
 
   reset() {
@@ -265,12 +285,13 @@ export class Chat {
 
   /** 一块：你的（别人的）一句话、她的一轮，或者不挂在她头下的一行。没变的直接用记着的节点。 */
   block(block) {
-    const sig = block.kind === 'her' ? `her${block.cont ? '+' : ''}|${this.look ? `${this.look.name}|${this.look.avatar ?? ''}` : '-'}` : JSON.stringify(block.item);
+    const look = block.kind === 'her' ? this.lookOf(block) : null;
+    const sig = block.kind === 'her' ? `her${block.cont ? '+' : ''}|${look ? `${look.name}|${look.avatar ?? ''}` : '-'}` : JSON.stringify(block.item);
     let rec = this.blocks.get(block.key);
     if (!rec || rec.sig !== sig) {
       const node = block.kind === 'user'
         ? userNode(block.item, this.on, { session: this.where.session, lightbox: this.ext.lightbox, mine: this.mine(block.item), titleOf: this.ext.titleOf })
-        : block.kind === 'note' ? (block.item.slot ? slotNode(block.item, this) : noteNode(block.item, this.where, this.markdown)) : herNode(!!block.cont, this.look);
+        : block.kind === 'note' ? (block.item.slot ? slotNode(block.item, this) : noteNode(block.item, this.where, this.markdown)) : herNode(!!block.cont, look);
       rec?.node.replaceWith(node);
       // 记下这是哪一块：钉在它后面的照它找（`anchor`）
       node.dataset.block = block.key;
@@ -350,7 +371,8 @@ function slotNode(it, chat) {
  * @param {boolean} cont @param {Look|null} look
  */
 function herNode(cont, look) {
-  if (cont || !look) return h(`article.assistant-message${cont ? '.is-cont' : ''}`, h('div.assistant-content'));
+  // 无人格的一轮夹在有人格的会话里（中途换过）：这一块不画头、不缩进
+  if (cont || !look) return h(`article.assistant-message${cont ? '.is-cont' : ''}${look ? '' : '.is-bare'}`, h('div.assistant-content'));
   const face = look.avatar ? h('img', { src: look.avatar, alt: '' }) : h('span.assistant-initial', { 'aria-hidden': 'true' }, [...look.name][0] ?? '');
   return h('article.assistant-message', h('header.assistant-label', face, h('strong', look.name)), h('div.assistant-content'));
 }
