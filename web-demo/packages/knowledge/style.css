@@ -1,0 +1,107 @@
+/* 知识库页（蓝图 web.md「知识库页」）：样子同记忆页（packages/memory/style.css）——控件照设置页（set-input、set-btn、set-switch），
+   卡片是 surface_1 加软影，一行一行的清单行之间一道细线、悬停 surface_2；控件不画描边 */
+.kb-list-page, .kb-base-page, .kb-read-page { display: grid; gap: 14px; }
+.kb-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.kb-find { display: flex; flex: 1; align-items: center; gap: 6px; min-width: 180px; height: 30px; padding: 0 10px; border-radius: 8px; background: var(--surface-2); color: var(--text-faint); transition: background-color 0.15s ease, box-shadow 0.15s ease; }
+.kb-find:hover { background: var(--surface-3); }
+.kb-find:focus-within { background: var(--surface-1); box-shadow: var(--card-shadow); }
+.kb-find .icon { width: 14px; height: 14px; flex: none; }
+.kb-find-input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: 13px var(--sans); }
+.kb-find-input::-webkit-search-cancel-button { display: none; }
+.kb-page .set-btn .icon { width: 14px; height: 14px; }
+.kb-empty { margin: 0; padding: 34px 0; color: var(--text-faint); font-size: 13px; text-align: center; }
+.kb-empty.is-bad { color: var(--danger); }
+
+/* 一个库的卡片 */
+.kb-cards { display: grid; gap: 10px; }
+.kb-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 14px 16px; border-radius: 14px; background: var(--surface-1); box-shadow: var(--card-shadow); }
+.kb-card.is-link { cursor: pointer; transition: background-color 0.15s ease; }
+.kb-card.is-link:hover, .kb-card.is-link:focus-visible { background: color-mix(in srgb, var(--surface-1) 70%, var(--surface-2)); outline: 0; }
+.kb-card.is-fresh { animation: kb-fresh 1.6s var(--ease-out); }
+@keyframes kb-fresh { from { background: var(--accent-soft); } }
+.kb-card-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 10px; background: var(--surface-2); color: var(--text-soft); }
+.kb-card-icon .icon { width: 18px; height: 18px; }
+.kb-card-text { display: grid; gap: 3px; min-width: 0; }
+.kb-card-name { color: var(--text); font-size: 14.5px; font-weight: 600; }
+.kb-card-desc { margin: 0; color: var(--text-soft); font-size: 13px; line-height: 1.5; }
+.kb-card-meta { margin: 0; overflow: hidden; color: var(--text-faint); font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+.kb-card-meta.is-bad { color: var(--danger); white-space: normal; }
+.kb-auto { display: inline-flex; align-items: center; gap: 8px; color: var(--text-soft); font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+
+/* 搜到的段 */
+.kb-hits { display: grid; }
+.kb-hit { display: grid; gap: 4px; padding: 11px 10px; border-radius: 10px; cursor: pointer; }
+.kb-hit + .kb-hit { box-shadow: 0 -1px 0 var(--line); }
+.kb-hit:hover, .kb-hit:focus-visible { background: var(--surface-2); box-shadow: none; outline: 0; }
+.kb-hit:hover + .kb-hit, .kb-hit:focus-visible + .kb-hit { box-shadow: none; }
+.kb-hit-head { overflow: hidden; color: var(--text-faint); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.kb-snippet { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 4; -webkit-box-orient: vertical; color: var(--text); font-size: 13px; line-height: 1.6; }
+.kb-snippet > * { margin: 0 !important; }
+.kb-snippet img, .kb-doc-body img { display: none; }
+.kb-plain { margin: 0; white-space: pre-wrap; font: inherit; }
+.kb-page mark { padding: 0 1px; border-radius: 3px; background: color-mix(in srgb, var(--gold) 28%, transparent); color: inherit; }
+
+/* 新建 */
+.kb-create { display: grid; gap: 8px; padding: 12px; border-radius: 12px; background: var(--surface-1); box-shadow: var(--card-shadow); }
+.kb-create .set-input { width: 100%; }
+.kb-tabs { display: flex; gap: 6px; }
+.kb-tab { height: 26px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--surface-2); color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer; }
+.kb-tab:hover { background: var(--surface-3); color: var(--text); }
+.kb-tab.is-on { background: var(--accent-soft); color: var(--accent); }
+.kb-folder { display: flex; gap: 6px; }
+.kb-folder .set-input { flex: 1; min-width: 0; }
+.kb-pick { flex: none; }
+.kb-create-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.kb-create-foot .kb-auto { margin-right: auto; }
+
+/* 一个库里面 */
+.kb-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.kb-back { display: inline-flex; flex: none; align-items: center; gap: 3px; height: 28px; padding: 0 8px 0 4px; border: 0; border-radius: 7px; background: none; color: var(--text-soft); font: 13px var(--sans); cursor: pointer; }
+.kb-back:hover { background: var(--surface-2); color: var(--text); }
+.kb-back .icon { width: 15px; height: 15px; }
+.kb-head-id { overflow: hidden; color: var(--text-faint); font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+.kb-drop { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 16px; border: 1.5px dashed var(--line-strong); border-radius: 12px; color: var(--text-faint); font-size: 13px; transition: background-color 0.15s ease, border-color 0.15s ease; }
+.kb-drop .icon { width: 16px; height: 16px; }
+.kb-drop.is-over { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.kb-drop-pick { padding: 0; border: 0; background: none; color: var(--accent); font: 13px var(--sans); cursor: pointer; }
+.kb-drop-pick:hover { text-decoration: underline; }
+.kb-docs { display: grid; }
+.kb-doc { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 10px; align-items: center; min-height: 40px; padding: 7px 10px; border-radius: 10px; }
+.kb-doc + .kb-doc { box-shadow: 0 -1px 0 var(--line); }
+.kb-doc.is-link { cursor: pointer; }
+.kb-doc.is-link:hover, .kb-doc.is-link:focus-visible { background: var(--surface-2); box-shadow: none; outline: 0; }
+.kb-doc:hover + .kb-doc, .kb-doc:focus-visible + .kb-doc { box-shadow: none; }
+.kb-doc-icon { display: grid; color: var(--text-faint); }
+.kb-doc-icon .icon { width: 16px; height: 16px; }
+.kb-doc.is-uploading .kb-doc-icon .icon { animation: set-spin 0.9s linear infinite; }
+.kb-doc-text { display: grid; gap: 1px; min-width: 0; }
+.kb-doc-path { overflow: hidden; color: var(--text); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.kb-doc-note { color: var(--text-faint); font-size: 12px; }
+.kb-doc-note.is-bad { color: var(--danger); }
+.kb-doc.is-folder .kb-doc-path { color: var(--text-soft); }
+.kb-doc-meta { color: var(--text-faint); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.kb-remove { visibility: hidden; height: 26px; padding: 0 8px; }
+.kb-doc:hover .kb-remove, .kb-doc:focus-within .kb-remove, .kb-remove.is-armed { visibility: visible; }
+.kb-remove.is-armed, .kb-foot .is-armed { background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.kb-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--text-faint); font-size: 12.5px; }
+.kb-foot-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.kb-reindex:disabled { opacity: 0.75; cursor: default; }
+.kb-reindex:disabled .icon { animation: set-spin 0.9s linear infinite; }
+
+/* 看原文 */
+.kb-read-card { display: grid; gap: 14px; padding: 18px 20px; border-radius: 14px; background: var(--surface-1); box-shadow: var(--card-shadow); }
+.kb-read { min-height: 60px; min-width: 0; overflow-wrap: anywhere; }
+.kb-doc-body { font-size: 14px; }
+.kb-found { border-radius: 4px; animation: kb-found 2.4s var(--ease-out); }
+@keyframes kb-found { from { background: color-mix(in srgb, var(--gold) 30%, transparent); } }
+.kb-pager { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.kb-pager:empty { display: none; }
+.kb-pager-at { color: var(--text-faint); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.kb-problem { padding: 18px; border-radius: 14px; background: var(--surface-1); box-shadow: var(--card-shadow); color: var(--text-soft); }
+.kb-problem p { margin: 0; }
+@media (max-width: 640px) {
+  .kb-card { grid-template-columns: minmax(0, 1fr); }
+  .kb-card-icon { display: none; }
+  .kb-doc { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .kb-doc-meta { display: none; }
+}

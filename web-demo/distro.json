@@ -15,6 +15,7 @@
     { "id": "setup" },
     { "id": "memory" },
     { "id": "usage" },
+    { "id": "knowledge" },
     { "id": "pulse" },
     { "id": "attachments" },
     { "id": "jobs" },

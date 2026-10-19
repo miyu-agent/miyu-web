@@ -31,10 +31,12 @@ export function pick() {
  * 拖文件（蓝图 `web.md`「附件」第 1 条）：文件一拖进窗口 `enter`，到了 `target` 上面、离开它 `over(真假)`，拖出窗口、松开了
  * `leave`；只有在 `target` 上松开才 `drop`（交回文件；附件给的是整页，在哪松开都收）。在别处松开什么都不做，页面也不跳去打开那个文件。拖的不是文件的不管。
  * 交回怎么不看。桌面端照窗口的拖放事件和落点做同一件事。
+ * `local` 的只听这一块自己（拖进、拖出它算 `enter`、`leave`；知识库页的「拖文件到这里」）：事件先到它，它收了的整页的那一份不再收。
  * @param {HTMLElement} target 收文件的那一块
  * @param {{enter: () => void, over: (inside: boolean) => void, leave: () => void, drop: (files: FileRef[]) => void}} on
+ * @param {{local?: boolean}} [opts]
  */
-export function watchDrop(target, on) {
+export function watchDrop(target, on, { local = false } = {}) {
   let depth = 0;
   let inside = false;
   const isFiles = (/** @type {DragEvent} */ e) => !!e.dataTransfer && [...e.dataTransfer.types].includes('Files');
@@ -70,14 +72,17 @@ export function watchDrop(target, on) {
     }],
     ['drop', (e) => {
       if (!isFiles(e)) return;
+      // 里面自己收文件的那一块（知识库页的「拖文件到这里」）先收了的（`preventDefault`）：这里只收尾，不再交一份
+      const claimed = e.defaultPrevented;
       e.preventDefault();
-      const yes = within(e);
+      const yes = within(e) && !claimed;
       end();
       if (yes) on.drop(refs(e.dataTransfer?.files ?? []));
     }],
   ];
-  for (const [name, fn] of events) document.addEventListener(name, /** @type {any} */ (fn));
-  return () => { for (const [name, fn] of events) document.removeEventListener(name, /** @type {any} */ (fn)); };
+  const where = local ? target : document;
+  for (const [name, fn] of events) where.addEventListener(name, /** @type {any} */ (fn));
+  return () => { for (const [name, fn] of events) where.removeEventListener(name, /** @type {any} */ (fn)); };
 }
 
 /**

@@ -153,6 +153,7 @@
         "personas": "user-round",
         "memory": "brain",
         "usage": "gauge",
+        "knowledge": "library",
         "models": "cpu",
         "presets": "toggle-right",
         "advanced": "wrench",
