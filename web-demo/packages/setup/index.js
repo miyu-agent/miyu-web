@@ -131,7 +131,7 @@ export function apply(ctx) {
     const inProject = !!project;
     const title = session ? chat.title?.(session) ?? null : null;
     const sig = JSON.stringify([session, draft, cwd, catalog.personas?.length ?? -1, catalog.presets?.length ?? -1, catalog.personaDefault, catalog.presetDefault,
-      used, session ? [chat.persona(session), chat.preset(session)] : null, project && [project.project, project.name, chat.projectColor?.(project.color)], title]);
+      used, session ? [chat.persona(session), chat.preset(session), chat.pinned?.(session)] : null, project && [project.project, project.name, chat.projectColor?.(project.color)], title]);
     if (!force && sig === drawn) return;
     drawn = sig;
     if (!session) {
@@ -171,7 +171,7 @@ export function apply(ctx) {
     const path = tilde(cwd, home());
     // 主会话（2026-10-19 项目主人第三版）：左上角写标题（项目里的前面多「项目名 /」，点项目名进项目页），点标题出菜单：人格、预设、工作区（原来平铺在这一条上）
     if (!chat.parentOf?.(session)) {
-      const titleBtn = h('button.setup-info-part.is-title', { type: 'button', title: title ?? '', 'aria-haspopup': 'menu', onclick: () => openInfo(titleBtn, persona, preset, path) },
+      const titleBtn = h('button.setup-info-part.is-title', { type: 'button', title: title ?? '', 'aria-haspopup': 'menu', onclick: () => openInfo(titleBtn, session, persona, preset, path) },
         h('span', title ?? t('info.untitled')), icon('chevron-right'));
       pathBtn = titleBtn;
       replace(info, project ? [projectPart(project), h('span.setup-info-slash', '/')] : null, titleBtn);
@@ -194,20 +194,85 @@ export function apply(ctx) {
   }, icon('folder'), h('span', p.name));
 
   /**
-   * 点标题出的菜单：人格（点了开它的编辑卡片）、预设、工作区（点了开换工作区的菜单）。
-   * @param {HTMLElement} anchor @param {string|null} persona @param {string|null} preset @param {string} path
+   * 点标题出的卡片「会话信息」（2026-10-19 项目主人选的「信息 + 操作」，不要图标）：上面三行一样高，左边暗字、右边值——人格（点了开它的编辑卡片）、
+   * 预设（只看）、工作区（下面一行完整路径，点了开换工作区的菜单）；细线下面是会话的操作，同左栏会话的 ⋮：重命名（标题原地换成输入框）、置顶、
+   * 移到项目（翻到一个项目一行的那一页）、移出项目、复制会话编号、删除（点一下原地换成「确认删除」，再点才删）。
+   * @param {HTMLElement} anchor @param {string} session @param {string|null} persona @param {string|null} preset @param {string} path
    */
-  const openInfo = (anchor, persona, preset, path) => {
+  const openInfo = (anchor, session, persona, preset, path) => {
     if (infoMenu.open) return infoMenu.close();
+    const pinned = !!chat.pinned?.(session);
+    const project = chat.projectOf?.(session) ?? null;
+    const projects = chat.projects?.() ?? [];
     infoMenu.show(anchor, {
-      title: t('info.menu'),
+      title: '',
       below: true,
       rows: [
-        { icon: 'user-round', title: persona ? nameOf(persona) : t('no_persona'), desc: t('info.persona'), pick: () => { if (persona && ctx.settings) editPersona(ctx, catalog, persona, ctx.settings.kit); } },
-        ...(preset ? [{ icon: 'toggle-right', title: presetNameOf(preset), desc: t('info.preset'), pick: () => {} }] : []),
-        { icon: 'folder', title: dirName(path), desc: path, pick: () => openWorkspaces(anchor, true) },
+        { label: t('info.persona'), title: persona ? nameOf(persona) : t('no_persona'), more: !!persona, still: !persona, pick: () => { if (persona && ctx.settings) editPersona(ctx, catalog, persona, ctx.settings.kit); } },
+        ...(preset ? [{ label: t('info.preset'), title: presetNameOf(preset), still: true, pick: () => {} }] : []),
+        { label: t('info.workspace'), title: dirName(path), desc: path, more: true, pick: () => openWorkspaces(anchor, true) },
+        { divider: true },
+        { title: t('info.rename'), pick: () => startRename(session) },
+        ...(chat.pin ? [{ title: t(pinned ? 'info.unpin' : 'info.pin'), pick: () => chat.pin(session, !pinned) }] : []),
+        ...(projects.length && chat.place ? [{ title: t('info.move'), more: true, keep: true, pick: () => openMove(anchor, session, persona, preset, path) }] : []),
+        ...(project && chat.place ? [{ title: t('info.move_out'), pick: () => chat.place(session, { project: null }) }] : []),
+        ...(chat.copyId ? [{ title: t('info.copy_id'), pick: () => chat.copyId(session) }] : []),
+        ...(chat.remove ? [{
+          title: t('info.delete'), danger: true, keep: true,
+          pick: (/** @type {HTMLElement} */ el) => {
+            if (!el.classList.contains('is-armed')) {
+              el.classList.add('is-armed');
+              el.querySelector('.setup-menu-title')?.replaceChildren(t('info.delete_confirm'));
+              return;
+            }
+            infoMenu.close();
+            chat.remove(session);
+          },
+        }] : []),
       ],
     });
+  };
+
+  /** 「移到项目」那一页：顶上一行返回，一个项目一行，在的那个写「（在这里）」暗着；移进去同时取消置顶。 */
+  const openMove = (/** @type {HTMLElement} */ anchor, /** @type {string} */ session, /** @type {string|null} */ persona, /** @type {string|null} */ preset, /** @type {string} */ path) => {
+    const here = chat.projectOf?.(session)?.project ?? null;
+    const pinned = !!chat.pinned?.(session);
+    const back = () => { infoMenu.close(); openInfo(anchor, session, persona, preset, path); };
+    infoMenu.show(anchor, {
+      title: t('info.move'),
+      below: true,
+      back,
+      rows: [
+        { title: t('info.back'), keep: true, pick: back },
+        { divider: true },
+        ...(chat.projects?.() ?? []).map((/** @type {any} */ p) => ({
+          title: p.project === here ? t('info.here', { name: p.name }) : p.name, off: p.project === here,
+          pick: () => chat.place(session, { project: p.project, ...(pinned ? { pinned: false } : {}) }),
+        })),
+      ],
+    });
+  };
+
+  /** 重命名：左上角的标题原地换成输入框（同左栏的重命名：Enter 改，空着的是去掉标题；Esc、点别处不改）。 @param {string} session */
+  const startRename = (session) => {
+    const btn = info.querySelector('.setup-info-part.is-title');
+    if (!(btn instanceof HTMLElement)) return;
+    const input = /** @type {HTMLInputElement} */ (h('input.setup-info-rename', { type: 'text', value: chat.title?.(session) ?? '', 'aria-label': t('info.rename') }));
+    let done = false;
+    const finish = (/** @type {boolean} */ commit) => {
+      if (done) return;
+      done = true;
+      if (commit) chat.rename?.(session, input.value);
+      draw(true);
+    };
+    input.addEventListener('keydown', (e) => {
+      if (e.isComposing || e.keyCode === 229) return;
+      if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finish(false); }
+    });
+    input.addEventListener('blur', () => finish(false));
+    btn.replaceWith(input);
+    requestAnimationFrame(() => { input.focus(); input.select(); });
   };
 
   const openPersonas = () => {
