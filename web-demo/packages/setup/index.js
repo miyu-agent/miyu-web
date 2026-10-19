@@ -48,9 +48,18 @@ export function apply(ctx) {
     const p = catalog.presets?.find((x) => x.preset === id);
     return p ? presetName(p) : id;
   };
+  /**
+   * 空会话的选择：还什么都没选的（新开的、刚打开页面的）照上一次的会话先算上（`draw` 随后真的选上）。头像、主题照它画，不先照默认人格画一帧
+   * （2026-10-19 项目主人：上一个会话是「无人格」，打开页面那一瞬间还闪一下默认人格的头像；终端同一个毛病，#171）。
+   */
+  const draftNow = () => {
+    const d = chat.draft();
+    if (chat.current() || d.project || d.persona != null || d.preset != null || d.cwd != null || !catalog.personas || !catalog.presets) return d;
+    return { ...d, ...(lastChoice(ctx.sessions.index.all(), catalog.personas, catalog.presets) ?? {}) };
+  };
   /** 空会话里实际会用的预设、人格（没选的照默认算；预设不再带默认人格，2026-10-08 项目主人） */
   const inUse = () => {
-    const draft = chat.draft();
+    const draft = draftNow();
     return { preset: presetInUse(draft.preset, catalog.presetDefault), persona: personaInUse(draft.persona, catalog.personaDefault, catalog.personas ?? []) };
   };
 
@@ -115,7 +124,6 @@ export function apply(ctx) {
   let drawn = '';
   const draw = (force = false) => {
     const session = chat.current();
-    chat.refreshLook();
     // 新的空会话（三样都还空着：人选过的哪怕是「无人格」「默认工作区」也不是空的）：人格、预设的列表读到了，照上一次的会话先选上；
     // 在项目里新建的不照上一次（项目没写的照默认，蓝图「会话整理和项目」第 9 条）
     const fresh = chat.draft();
@@ -123,6 +131,8 @@ export function apply(ctx) {
       const pick = lastChoice(ctx.sessions.index.all(), catalog.personas, catalog.presets);
       if (pick && Object.keys(pick).length) chat.setDraft(pick);
     }
+    // 先选上再画头像（`inUse` 照上一次的算，这里只是跟着选上的换）
+    chat.refreshLook();
     const draft = chat.draft();
     const cwd = chat.workdir();
     const used = session ? null : inUse();
