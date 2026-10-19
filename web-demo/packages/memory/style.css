@@ -113,7 +113,13 @@
 .dream-stage { height: 126px; background: #141833; }
 .dream-stage canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
 .chat-tail .dream-card { margin: 8px 0 4px; }
-@media (prefers-reduced-motion: reduce) { .dream-line { animation: none; } }
+/* 记忆页里的那一块：出来淡入升上来，收起淡出沉下去（正文末尾的照 `unfold` 长出来、收回去） */
+.mem-list-page .dream-card { animation: dream-in var(--motion-collapse) var(--ease-out); }
+.mem-list-page .dream-card.is-leaving { animation: dream-out var(--motion-out) var(--ease-in) both; }
+@keyframes dream-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes dream-out { to { opacity: 0; transform: translateY(6px); } }
+.chat-tail .dream-receipt { margin: 4px 0 2px; }
+@media (prefers-reduced-motion: reduce) { .dream-line, .mem-list-page .dream-card { animation: none; } }
 
 /* 合完收成的结果那一行（照终端：暗色 ✦ 打头，有改、删、摘要的能点开，列这一趟真正存下的） */
 .dream-receipt { display: grid; gap: 6px; margin: 6px 0 2px; border-radius: 10px; color: var(--text-faint); font-size: 13px; }
@@ -130,3 +136,10 @@
 .dream-receipt-item { display: flex; align-items: baseline; gap: 8px; min-width: 0; color: var(--text-soft); font-size: 12.5px; line-height: 1.55; }
 .dream-receipt-item s { color: var(--text-faint); }
 .dream-receipt-summary { white-space: pre-wrap; color: var(--text-soft); }
+
+/* 「记一条」：设置框正中的小窗（设置框磨砂了，`position: fixed` 照设置框那一块摆；后面淡遮罩） */
+.mem-modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 45%, transparent); animation: mem-modal-in 0.16s var(--ease-out); }
+@keyframes mem-modal-in { from { opacity: 0; } }
+.mem-modal .mem-add { width: min(520px, 100%); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); animation: mem-modal-pop 0.16s var(--ease-out); }
+@keyframes mem-modal-pop { from { transform: translateY(6px) scale(0.98); } }
+@media (prefers-reduced-motion: reduce) { .mem-modal, .mem-modal .mem-add { animation: none; } }

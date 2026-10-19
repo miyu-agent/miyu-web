@@ -5,6 +5,7 @@
 //! 提供服务 `memory`：别的包（人格详情）跳到某个人格的那一份。停用了没有这一页、没有 `/memory`，`/dream` 退回核心的。
 
 import { h } from '../../src/lib/dom.js';
+import { unfold } from '../../src/lib/motion.js';
 import { MemoryPage } from './page.js';
 import { DreamCard } from './dream.js';
 
@@ -12,6 +13,8 @@ import { DreamCard } from './dream.js';
 const SETTLE_MS = 1600;
 /** 核心多久还没回才把那一块挂出来（没有要整理的很快就回，不闪一下；真开始合了当场挂） */
 const SHOW_AFTER_MS = 500;
+/** 收回去要多久（`--motion-collapse` 0.26 秒，多留一点） */
+const FOLD_MS = 300;
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -77,7 +80,19 @@ async function dream(ctx, words) {
   const where = { session };
   const card = new DreamCard(ctx, new Map(), { stop: () => stop(ctx) });
   // 正文末尾那一格：先是整理那一块，合完换成结果那一行
-  const box = h('div.dream-slot', card.el);
+  // 进出照「动效」的占地方的一块（`unfold`：从 0 长出来、收回去；2026-10-20 项目主人：出现和消失没有过渡动画）
+  const inner = h('div.unfold-inner', card.el);
+  const box = h('div.dream-slot.unfold', inner);
+  /** 收回去，收完了做 `after` @param {() => void} after */
+  const fold = (after) => {
+    unfold(box, false);
+    setTimeout(after, FOLD_MS);
+  };
+  /** 换成 `node` 再长出来 @param {HTMLElement} node */
+  const grow = (node) => {
+    inner.replaceChildren(node);
+    requestAnimationFrame(() => requestAnimationFrame(() => unfold(box, true)));
+  };
   let away = false;
   const onPush = (/** @type {string} */ method, /** @type {any} */ params) => {
     if ((method === 'memory.event' || method === 'memory.dreaming') && params?.session === session) {
@@ -99,6 +114,7 @@ async function dream(ctx, words) {
     unmount = ctx.slots.mount('chat.tail', { id: `memory-dream-${session}`, render: () => box }) ?? (() => {});
     shown();
     ctx.chat?.reveal?.();
+    requestAnimationFrame(() => requestAnimationFrame(() => unfold(box, true)));
   };
   const later = setTimeout(mount, SHOW_AFTER_MS);
   // 两下 `Esc` 叫停：在前台、没在回答、框里没字时（照终端：第一下提示，第二下叫停）
@@ -118,7 +134,7 @@ async function dream(ctx, words) {
       away = true;
       ctx.composer?.claimEscape?.(null);
       card.wake();
-      box.replaceChildren();
+      fold(() => inner.replaceChildren());
       say(t('dream_background'));
     },
   };
@@ -132,7 +148,8 @@ async function dream(ctx, words) {
     running = null;
   };
   const drop = () => {
-    unmount?.();
+    const gone = unmount;
+    if (gone) fold(gone);
     receipts.delete(session);
   };
   try {
@@ -154,13 +171,15 @@ async function dream(ctx, words) {
     card.finish(got);
     release();
     // 收成结果那一行：前台的天亮一会儿再收，转到后台的当场留在正文末尾
+    // 收成结果那一行：那一块收回去，结果那一行长出来
     const settle = () => {
-      box.replaceChildren(card.receipt());
+      mount();
       shown();
+      grow(card.receipt());
       ctx.chat?.reveal?.();
     };
     if (away) settle();
-    else setTimeout(settle, SETTLE_MS);
+    else setTimeout(() => fold(settle), SETTLE_MS);
     receipts.set(session, drop);
   } catch (err) {
     release();

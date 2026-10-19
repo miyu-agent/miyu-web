@@ -3,6 +3,7 @@
 //! 一排类别筛选和「显示作废的」；一条一行，点开在同一页里换成详情（改内容和关键词、作废、找回）；底下清空这一份。开着时订阅那一份的
 //! `memory` 流，推来的重读（停 300 毫秒并成一次）。一页是一个常驻的对象：设置页重画、关了再开交回的是同一块，写了一半的字还在。
 
+import { leave } from '../../src/lib/motion.js';
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { DreamCard } from './dream.js';
 import { CLASSES, TEXT_MAX, KEYWORDS_MAX, chars, counts, visible, hasKeywords, updateOf, canSave, saveNote, shortId, agoText, isRetired, tidying } from './model.js';
@@ -24,6 +25,8 @@ export class MemoryPage {
     this.ctx = ctx;
     this.t = (/** @type {string} */ key, /** @type {any} */ fields) => ctx.text(key, fields);
     this.el = h('div.mem-page');
+    // `Esc`：「记一条」的小窗开着时先收起它（设置框找带 `data-set-dismiss` 的发 `set-dismiss`）
+    this.el.addEventListener('set-dismiss', () => { if (this.adding) this.closeAdd(); });
     /** @type {any} */
     this.kit = null;
     /** @type {{persona: string, name: string}[]} */
@@ -180,6 +183,10 @@ export class MemoryPage {
 
   draw() {
     if (!this.kit) return;
+    // 「记一条」的小窗里写着字的：不重画，免得冲掉（收起以后再画）
+    if (this.adding && /** @type {HTMLTextAreaElement|null} */ (this.el.querySelector('.mem-add textarea'))?.value.trim()) return;
+    if (this.adding) this.el.dataset.setDismiss = '1';
+    else delete this.el.dataset.setDismiss;
     // 正在详情里写着的：不重画那一张，免得冲掉写了一半的字；那一条在别处没了的写一行
     if (this.open && this.el.querySelector('.mem-detail')) {
       const still = this.list.find((m) => m.id === this.open);
@@ -223,8 +230,8 @@ export class MemoryPage {
     });
     find.addEventListener('compositionend', () => find.dispatchEvent(new Event('input')));
     const dream = h('button.set-btn.mem-dream', { type: 'button', disabled: this.dreaming || !this.persona, onclick: () => this.dream() },
-      icon(this.dreaming ? 'loader-circle' : 'sparkles'), t(this.dreaming ? 'dreaming' : 'dream'));
-    const add = h('button.set-btn.is-primary', { type: 'button', disabled: !this.persona, onclick: () => { this.adding = !this.adding; this.draw(); this.el.querySelector('.mem-add textarea')?.focus(); } }, icon('plus'), t('add'));
+      icon(this.dreaming ? 'loader-circle' : 'sparkles'), t(this.dreaming ? 'dreaming' : 'dream_action'));
+    const add = h('button.set-btn.is-primary', { type: 'button', disabled: !this.persona, onclick: () => { this.adding = true; this.draw(); this.el.querySelector('.mem-add textarea')?.focus(); } }, icon('plus'), t('add'));
     const chips = h('div.mem-chips',
       ['all', ...CLASSES].map((k) => h(`button.mem-chip${this.cls === k ? '.is-on' : ''}${k === 'all' ? '' : `.is-${k}`}`, { type: 'button', onclick: () => { this.cls = k; this.draw(); } },
         t(`classes.${k}`), h('span.mem-n', String(c[k] ?? 0)))),
@@ -240,10 +247,23 @@ export class MemoryPage {
       h('div.mem-tools', picker, h('label.mem-find', icon('search'), find), dream, add),
       this.tidyingLine(),
       this.card?.el ?? null,
-      this.adding ? this.addForm() : null,
       chips,
       h('div.mem-list', rows, more),
-      h('div.mem-foot', h('span', t(retiredCount ? 'foot_retired' : 'foot', { live: c.all, retired: retiredCount })), clear));
+      h('div.mem-foot', h('span', t(retiredCount ? 'foot_retired' : 'foot', { live: c.all, retired: retiredCount })), clear),
+      // 「记一条」在设置框正中弹一个小窗（2026-10-20 项目主人：新建以浮动窗口出现更好）：点外面（还没写字的）、`Esc`、「取消」收起
+      this.adding ? h('div.mem-modal', {
+        onclick: (/** @type {Event} */ e) => {
+          if (e.target !== e.currentTarget || /** @type {HTMLTextAreaElement|null} */ (this.el.querySelector('.mem-add textarea'))?.value.trim()) return;
+          this.closeAdd();
+        },
+      }, this.addForm()) : null);
+  }
+
+  /** 收起「记一条」的小窗（写着的字不要了） */
+  closeAdd() {
+    this.adding = false;
+    delete this.el.dataset.setDismiss;
+    this.draw();
   }
 
   /** 后台在整理的那一行（第 12 条）：没在整理的留一个藏着的空位，推来时只换它，不重画列表 */
@@ -297,7 +317,7 @@ export class MemoryPage {
     area.addEventListener('input', sync);
     kw?.addEventListener('input', sync);
     const form = h('form.mem-add', kinds, area, kw, h('div.mem-add-foot', count,
-      h('button.set-btn', { type: 'button', onclick: () => { this.adding = false; this.draw(); } }, t('cancel')), ok));
+      h('button.set-btn', { type: 'button', onclick: () => this.closeAdd() }, t('cancel')), ok));
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (ok.disabled) return;
@@ -450,11 +470,12 @@ export class MemoryPage {
     this.ctx.core.request('memory.list', { persona, forgotten: true, limit: 500 }).then((got) => {
       for (const m of got?.memories ?? []) card.texts.set(m.id, m.text);
     }, () => {});
+    // 收起：照「动效」退场（`is-leaving` 的动画走完再拿掉）
     const drop = () => {
       if (this.card !== card) return;
       this.card = null;
       card.dispose();
-      card.el.remove();
+      leave(card.el, () => card.el.remove());
     };
     try {
       const got = await this.ctx.core.request('memory.dream', { persona });
