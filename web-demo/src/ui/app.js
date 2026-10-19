@@ -442,8 +442,14 @@ export class App {
     if (p) this.setDraft(draftOf(p));
   }
 
-  /** 删项目：里面的会话核心挪出来，不删会话。 @param {string} id */
+  /**
+   * 删项目，连里面的会话一起删（2026-10-19 项目主人：删除后会话应该一起被删除，不是移出去）：先照左栏删会话那样一个个删（收起来的动画、子代理跟着删），
+   * 再删项目（核心的 `project.delete` 只把会话挪出来，没删成的会话就留在外面）。
+   * @param {string} id
+   */
   async deleteProject(id) {
+    const ids = this.store.index.all().filter((e) => e.project === id && !e.parent && !e.oneshot).map((e) => e.session);
+    if (ids.length) await this.sidebar.removeAll(ids);
     try {
       await this.store.conn.request('project.delete', { project: id });
       if (this.draft.project === id) this.setDraft({ project: null });

@@ -55,7 +55,8 @@
     "all_sessions_nav": "すべてのセッション",
     "new_session_nav": "新しいセッション",
     "cancel": "キャンセル",
-    "project_delete_ask": "プロジェクト「{name}」を削除しますか？中のセッションはプロジェクトの外に出るだけで、削除されません。"
+    "project_delete_ask": "プロジェクト「{name}」を削除しますか？",
+    "project_delete_yes": "削除する"
   },
   "crumbs": {
     "label": "サブエージェントのセッションの位置",

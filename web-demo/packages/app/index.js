@@ -60,6 +60,8 @@ export function apply(ctx) {
     project: (id) => app.store.projects.get(id),
     /** 一个会话在哪个项目（子代理的照它的主会话；`null` 是还没开的新会话，照选的）；不在的是 `null`：在项目里的不画人格、预设、工作区（项目定好了） */
     projectOf: (session) => app.projectOfSession(session),
+    /** 删项目，连里面的会话一起删（项目设置那一个窗口的「删除项目」） */
+    deleteProject: (id) => app.deleteProject(id),
     /** 打开一个项目的页（左上角的项目名） */
     openProject: (id) => app.sessionsPage.openProject(id),
     /** 会话的标题（左上角）：改过的、照第一句话的；都没有是 `null` */

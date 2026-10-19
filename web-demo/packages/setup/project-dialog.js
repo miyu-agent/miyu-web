@@ -3,7 +3,7 @@
 //! 控件照设置页的（服务 `settings` 的 `kit`：不画描边，聚焦亮底加软影）。一行一项：名称（必填，最多 40 字）、说明（最多 80 字）、颜色（十二色一排，
 //! 最后一块「+」自选）、工作区目录（同新会话的工作区菜单：默认工作区、最近用过的，右上角开系统的选目录对话框）、人格、预设（下拉，「默认」照配置）、
 //! 附加提示词（几行的框）、留言（开关「能和项目外的会话互相留言」，默认关）。底下「取消」「创建 / 保存」；项目设置左下角「删除项目」点两下才删
-//! （里面的会话移出项目，不删会话）。核心拒了的照它的话写在底下；`bad_params` 带 `data.field` 的写在那一格下面。
+//! （里面的会话一起删）。核心拒了的照它的话写在底下；`bad_params` 带 `data.field` 的写在那一格下面。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { floatCard } from './float.js';
@@ -176,13 +176,10 @@ export async function editProject(ctx, catalog, what, workspaces) {
       } else say(err?.message ?? String(err));
     }
   };
+  // 删项目连里面的会话一起删（整页的 `deleteProject`，同左栏的菜单；2026-10-19 项目主人）
   const remove = editing ? twoClick(kit, t('delete'), t('delete_again'), async () => {
-    try {
-      await ctx.core.request('project.delete', { project: editing.project });
-      close();
-    } catch (err) {
-      say(err?.message ?? String(err));
-    }
+    close();
+    await chat.deleteProject?.(editing.project);
   }) : null;
 
   card.setBody(h('div.setup-editor.project-editor',

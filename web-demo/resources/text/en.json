@@ -55,7 +55,8 @@
     "all_sessions_nav": "All sessions",
     "new_session_nav": "New session",
     "cancel": "Cancel",
-    "project_delete_ask": "Delete project “{name}”? Its sessions move out of the project and are not deleted."
+    "project_delete_ask": "Delete project “{name}”?",
+    "project_delete_yes": "Delete"
   },
   "crumbs": {
     "label": "Subagent session path",

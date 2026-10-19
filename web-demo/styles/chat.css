@@ -286,3 +286,5 @@
 /* 正文最上面一行（按页读，蓝图 web.md「连核心」第 3a 条）：读更早的一页时「正在读更早的…」，翻到头了「已经是开头」；暗色、居中 */
 .chat-older { padding: 14px 0 4px; color: var(--text-faint); font-size: 12px; text-align: center; }
 .chat-older[hidden] { display: none; }
+/* 全部会话那一页（项目页）开着：左上角那一条（会话标题、项目名）不画（2026-10-19 项目主人：从项目会话点进项目页，原来会话的那一条还在） */
+.stage:has(> .sessions-page:not([hidden]):not(.is-leaving)) .stage-info { display: none; }

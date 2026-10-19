@@ -2,7 +2,7 @@
 //! 左栏「项目」那一栏里的一个个项目（蓝图 `web.md`「会话整理和项目」第 3、4 条；栏头在 `sidebar.js`，悬停露 +）。一个项目一行：
 //! 记号那一格是项目颜色的文件夹，名字（收着、里面有在跑的前面写 `(N)`），悬停露 ⋯（打开项目、在项目里新建会话、项目设置…、删除项目…），最右
 //! 一个展开箭头（没悬停、没展开时不画）。点这一行就地展开、收起（高度缓过去）；展开着的列出全部会话，照普通会话的样子、和项目名左边
-//! 对齐，子代理照旧缩进挂树线。删除项目：菜单收起，再弹出一个问一句的小菜单（里面的会话移出项目、不删）。
+//! 对齐，子代理照旧缩进挂树线。删除项目：菜单收起，再弹出一个问一句的小菜单，确认了连里面的会话一起删。
 
 import { h, icon } from './dom.js';
 import { t } from '../util/res.js';
@@ -50,12 +50,12 @@ export function projectBlock(bar, block) {
         }, icon('ellipsis'))),
       h('span.project-chevron', { 'aria-hidden': 'true' }, icon('chevron-right')),
       menuOpen && armed
-        // 第二个菜单：问一句（会话移出项目、不删），「取消」「删除」
+        // 第二个菜单：问一句「确认删除项目「名字」？」，「取消」「确认删除」（连里面的会话一起删）
         ? h('div.session-menu.is-confirm', { role: 'dialog' },
           h('p.session-confirm-text', t('sidebar.project_delete_ask', { name: p.name })),
           h('div.session-confirm-actions',
             h('button', { type: 'button', onclick: () => bar.toggleMenu(null) }, t('sidebar.cancel')),
-            h('button.is-danger', { type: 'button', onclick: () => { bar.toggleMenu(null); bar.on.deleteProject(id); } }, t('sidebar.project_delete'))))
+            h('button.is-danger', { type: 'button', onclick: () => { bar.toggleMenu(null); bar.on.deleteProject(id); } }, t('sidebar.project_delete_yes'))))
         : menuOpen ? h('div.session-menu', { role: 'menu' },
           item(t('sidebar.project_open'), null, () => { bar.toggleMenu(null); bar.on.openProject(id); }),
           item(t('sidebar.project_new_session'), null, () => { bar.toggleMenu(null); bar.on.newIn(id); }),
