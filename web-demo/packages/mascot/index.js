@@ -47,13 +47,17 @@ export function apply(ctx) {
   const platforms = () => [...(stage ? stage.platforms() : composerPlatforms()), { id: 'floor', x1: 0, x2: innerWidth, y: innerHeight }];
   /**
    * 输入框被对话区里整页的东西盖住了（全部会话、软件后台这类占对话区那一块的页面）：看框正中那一点最上面是谁，是对话区里、又不是框
-   * 和吉祥物自己的就是盖住了。弹窗（设置这类）挂在对话区外面，不算（2026-10-19 项目主人：全部会话里它站在看不见的输入框那里）。
+   * 和吉祥物自己的就是盖住了。弹窗（设置、新建项目这类）挂在对话区外面，跳过它们往下看（2026-10-19 项目主人：全部会话里它站在看不见的输入框那里；
+   * 全部会话上面开着新建项目的窗口时，原来最上面是窗口后面那层底、不在对话区里，当成没盖住，跳回了输入框）。
    * @param {DOMRect} r
    */
   let wasCovered = false;
   const covered = (r) => {
-    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-    return !!hit && !box.contains(hit) && !layer.contains(hit) && !!box.closest('.stage')?.contains(hit);
+    const stageEl = box.closest('.stage');
+    if (!stageEl) return false;
+    // 这一点上叠着的从上往下：对话区外面的（弹窗、吉祥物那一层）跳过，对话区里最上面的不是输入框就是盖住了
+    const hit = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find((el) => stageEl.contains(el) && !layer.contains(el));
+    return !!hit && !box.contains(hit);
   };
   /** 输入框的上边沿（两头圆角那一段不算）、开着的浮层的上边沿（顶得上去） */
   const composerPlatforms = () => {
