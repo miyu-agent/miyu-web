@@ -13,6 +13,7 @@ import { show, hide, leave } from '../lib/motion.js';
 import { t } from '../util/res.js';
 import { toggle, range } from '../model/select.js';
 import { ago } from '../model/ago.js';
+import { short } from '../lib/format.js';
 import { filterRows, groupRows, timeOf } from '../model/session-filter.js';
 import { projectCards, projectView } from './projects-page.js';
 
@@ -127,6 +128,8 @@ export class SessionsPage {
       session: s.session, title: s.title ?? this.on.titleOf(s.session), project: s.project ?? null,
       active: s.last_active ? Date.parse(s.last_active) : this.on.active(s.session),
       running: this.on.running(s.session), unread: this.on.unread(s.session),
+      // 连同它派出去的子会话一共用了多少 token（核心 d98f5e03 的 `tokens`，0 的不写；2026-10-19 项目主人要每一行写上）
+      tokens: typeof s.tokens === 'number' && s.tokens > 0 ? s.tokens : 0,
     }));
   }
 
@@ -189,7 +192,7 @@ export class SessionsPage {
 
   /** 画的东西拼成一串比 */
   liveSig() {
-    const rows = this.rows().map((r) => [r.session, r.title, r.project, r.active, r.running, r.unread, this.on.jobs(r.session), this.on.agents(r.session), this.on.agentsRunning(r.session)]);
+    const rows = this.rows().map((r) => [r.session, r.title, r.project, r.active, r.running, r.unread, r.tokens, this.on.jobs(r.session), this.on.agents(r.session), this.on.agentsRunning(r.session)]);
     return JSON.stringify([rows, this.on.projects()]);
   }
 
@@ -272,6 +275,7 @@ export class SessionsPage {
       h(`span.sessions-name${r.title ? '' : '.is-untitled'}`, r.title ?? t('sessions_page.untitled')),
       agents(this.on.agents(r.session), this.on.agentsRunning(r.session)),
       jobs(this.on.jobs(r.session)),
+      r.tokens ? h('span.sessions-tokens', { title: t('sessions_page.tokens_hint', { tokens: r.tokens.toLocaleString() }) }, t('sessions_page.tokens', { tokens: short(r.tokens) })) : null,
       h('span.sessions-when', ago(timeOf(r, this.sort), now)));
   }
 

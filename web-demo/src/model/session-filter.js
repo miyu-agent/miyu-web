@@ -7,7 +7,7 @@ import { byTime } from './session.js';
 
 /**
  * 一行要的：会话表的一项加上读进来的状态。
- * @typedef {{session: string, title: string|null, project: string|null, active: number|null, running: boolean, unread: boolean}} Row
+ * @typedef {{session: string, title: string|null, project: string|null, active: number|null, running: boolean, unread: boolean, tokens?: number}} Row
  * @typedef {'all'|'loose'|'running'|'unread'|`project:${string}`} Filter
  * @typedef {'active'|'created'} Sort
  */

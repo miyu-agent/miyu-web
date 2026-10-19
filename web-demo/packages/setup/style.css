@@ -367,3 +367,7 @@
 .setup-menu-row.is-wrap .setup-menu-title { overflow: visible; white-space: normal; overflow-wrap: anywhere; line-height: 1.45; }
 .setup-menu-row.is-pair { max-width: 420px; }
 .setup-menu-action.is-inline { flex: none; align-self: center; margin: -4px -4px -4px 4px; }
+/* 问一句的一屏（会话中途换人格、预设前的确认） */
+.setup-menu.is-ask { max-width: min(360px, calc(100vw - 32px)); }
+.setup-menu.is-ask .setup-menu-note { padding: 4px 10px 8px; color: var(--text); font-size: 13px; line-height: 1.6; }
+.setup-menu.is-ask .setup-menu-foot { justify-content: flex-end; }

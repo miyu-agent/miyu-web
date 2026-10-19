@@ -403,7 +403,9 @@
     "sort_created": "Date created",
     "agents_running": "{count} subagents running",
     "project_meta": "{count} sessions · {when}",
-    "project_none": "No sessions yet"
+    "project_none": "No sessions yet",
+    "tokens": "Σ{tokens}",
+    "tokens_hint": "{tokens} tokens used, including subagents"
   },
   "turn_end": {
     "restarted": "Restarted",

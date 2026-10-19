@@ -72,6 +72,8 @@ export class Menu {
       h('div.setup-menu-list', nodes, view.note ? h('div.setup-menu-note', view.note) : null),
       view.foot?.length ? h('div.setup-menu-foot', view.foot) : null);
     this.el.classList.toggle('is-below', !!view.below);
+    // 只有一句话和按钮的一屏（问一句的：换人格前的确认）：话照正文的颜色、大一点
+    this.el.classList.toggle('is-ask', !view.rows.length && !!view.note);
     this.el.style.left = `${anchor.offsetLeft}px`;
     const wasOpen = !this.el.hidden;
     this.el.hidden = false;

@@ -6,7 +6,7 @@
 /**
  * 表里的一项，和 `session.list` 的一样：有的才写。
  * @typedef {{session: string, busy?: boolean, cwd?: string, last_active?: string, oneshot?: boolean, parent?: string|null,
- *   pinned?: boolean, project?: string, title?: string, preview?: string}} Entry
+ *   pinned?: boolean, project?: string, title?: string, preview?: string, tokens?: number}} Entry
  */
 
 /** 一项变了：之前的、之后的（删掉的是 `null`，新来的之前是 `null`）。 @typedef {(id: string, before: Entry|null, after: Entry|null) => void} Change */
