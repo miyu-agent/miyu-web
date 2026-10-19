@@ -144,7 +144,8 @@ export class Chat {
    */
   setLook(look) {
     this.look = look;
-    this.list.classList.toggle('is-bare', !look);
+    // 无人格、人格没有头像：不缩进（压缩的进度、正文末尾那一格照它；她那一轮、提示行照各自的）
+    this.list.classList.toggle('is-bare', !look?.avatar);
   }
 
   /** @param {(id: string) => Look|null|undefined} fn */
@@ -242,9 +243,9 @@ export class Chat {
     const tail = blocks.findLastIndex((b) => this.blocks.has(b.key));
     // 提示行（后台命令完成、压缩……）缩不缩进跟着它前面那一块她的回复（中途换了人格，旧的回复照回复时的人格画，2026-10-20 项目主人：
     // 从无人格换到有人格，旧回复没有头、提示行却缩了进去）；前面还没有她的回复的照现在的人格
-    let bare = !this.look;
+    let bare = !this.look?.avatar;
     for (const [i, block] of blocks.entries()) {
-      if (block.kind === 'her') bare = !this.lookOf(block);
+      if (block.kind === 'her') bare = !this.lookOf(block)?.avatar;
       const own = block.kind === 'user' && this.mine(block.item);
       const appended = !this.blocks.has(block.key) && i > tail;
       const freshNote = this.settled && block.kind === 'note' && block.item.compaction === 'clear' && appended;
@@ -376,10 +377,12 @@ function slotNode(it, chat) {
  * @param {boolean} cont @param {Look|null} look
  */
 function herNode(cont, look) {
-  // 无人格的一轮夹在有人格的会话里（中途换过）：这一块不画头、不缩进
-  if (cont || !look) return h(`article.assistant-message${cont ? '.is-cont' : ''}${look ? '' : '.is-bare'}`, h('div.assistant-content'));
-  const face = look.avatar ? h('img', { src: look.avatar, alt: '' }) : h('span.assistant-initial', { 'aria-hidden': 'true' }, [...look.name][0] ?? '');
-  return h('article.assistant-message', h('header.assistant-label', face, h('strong', look.name)), h('div.assistant-content'));
+  // 无人格的一轮夹在有人格的会话里（中途换过）：这一块不画头、不缩进；没有头像的人格只写名字、不缩进（2026-10-20 项目主人：明明没设头像却有头像——
+  // 原来画名字的第一个字）
+  const flat = !look?.avatar;
+  if (cont || !look) return h(`article.assistant-message${cont ? '.is-cont' : ''}${flat ? '.is-bare' : ''}`, h('div.assistant-content'));
+  const face = flat ? null : h('img', { src: look.avatar, alt: '' });
+  return h(`article.assistant-message${flat ? '.is-bare' : ''}`, h('header.assistant-label', face, h('strong', look.name)), h('div.assistant-content'));
 }
 
 /**

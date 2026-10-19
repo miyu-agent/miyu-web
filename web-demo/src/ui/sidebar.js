@@ -159,7 +159,8 @@ export class Sidebar {
    * @param {import('./chat.js').Look|null} look
    */
   setLook(look) {
-    this.face.hidden = !look;
+    // 没有头像的人格只写名字（2026-10-20 项目主人：明明没设头像却有头像——原来画名字的第一个字）
+    this.face.hidden = !look?.avatar;
     this.identity.disabled = !look;
     if (!look) {
       replace(this.face);
@@ -167,7 +168,7 @@ export class Sidebar {
       this.identity.removeAttribute('title');
       return;
     }
-    replace(this.face, look.avatar ? h('img.brand-avatar', { src: look.avatar, alt: '' }) : h('span.brand-avatar.is-initial', { 'aria-hidden': 'true' }, [...look.name][0] ?? ''));
+    replace(this.face, look.avatar ? h('img.brand-avatar', { src: look.avatar, alt: '' }) : null);
     this.name.textContent = look.name;
     this.identity.title = t('sidebar.edit_persona');
   }
