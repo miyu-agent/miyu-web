@@ -15,9 +15,10 @@
  *   crouch_drop?: number, crouch_squish?: number}} Look 迈步时鳍抬多高、前后迈多远（`stride_lift`、`stride_swing`）；蹲到底头往下沉
  *   多少、压扁多少（头的半径为 1）
  * @typedef {{yaw: number, pitch: number, blink: boolean, ear: number, stride?: number, crouch?: number, mouth?: number, turn?: number,
- *   lamp?: boolean}} Pose
+ *   lamp?: boolean, sleep?: boolean}} Pose
  *   这一帧：头朝哪、闭没闭眼、耳朵往外多歪（弧度）、迈到哪（-1 到 1：正的左鳍往前迈、抬起来，负的右鳍）、蹲多深（0 到 1；负的往上
- *   抻长）、嘴张多大（0 合着、1 张到最大）、整个身子转多少度（侧身走路；鳍也跟着转，`yaw` 是头在这上面再看哪）、肚子上的灯亮没亮
+ *   抻长）、嘴张多大（0 合着、1 张到最大）、整个身子转多少度（侧身走路；鳍也跟着转，`yaw` 是头在这上面再看哪）、肚子上的灯亮没亮、
+ *   睡着没有（`sleep`：眼睛画成闭着的一道横线，整理记忆时睡着的那一只；`blink` 是眨眼，眼睛整个不画）
  * @typedef {{part: Part|'eye'|'line'|'mouth'|'belly'|'lamp', level: number}} Cell 一格：哪一块、第几档亮（0 最暗）；`line` 是嘴那道锯齿线，
  *   `mouth` 是张开的嘴里，`belly` 是肚子上那盏灯的圈，`lamp` 是灯亮着时圈里
  */
@@ -54,7 +55,7 @@ export function render(look, pose, grid) {
         // 蹲下以后头沉下去、压扁了：打中的那一点换回头原来的坐标再对脸
         const p = hit.point;
         const local = [p[0] / bend.sx, (p[1] + bend.drop) / bend.sy, p[2]];
-        const mark = hit.part === 'head' ? onFace(look.face, local, pose.blink, pose.mouth ?? 0, !!pose.lamp) : null;
+        const mark = hit.part === 'head' ? onFace(look.face, local, pose.blink, pose.mouth ?? 0, !!pose.lamp, !!pose.sleep) : null;
         if (mark) {
           tally[mark] += 1;
           continue;
@@ -150,10 +151,16 @@ function shoot(pieces, head, x, y) {
  * 头上这一点落没落在脸上：只看正面，位置用头朝前时的 x、y。闭着眼时没有眼睛。嘴是那道锯齿线：`open`（0 到 1）张开时上下两排
  * 各往外挪一半，中间是嘴里；肚子上的圈是一盏灯：一圈线，亮着时圈里是灯（2026-09-30 项目主人定：那个圈不是嘴，当作灯，会闪）。
  */
-function onFace(face, p, blink, open, lamp) {
+function onFace(face, p, blink, open, lamp, sleep = false) {
   if (p[2] <= 0) return null;
   const q = [p[0], p[1]];
-  if (!blink && face.eyes.some(([a, b]) => segment(q, a, b) < face.eye_width)) return 'eye';
+  // 睡着：眼睛那一段从下往上一小半处一道横线（左右各伸出 `eye_width` 的一倍半；再低会挨着嘴那道锯齿线）
+  if (sleep && face.eyes.some(([a, b]) => {
+    const y = Math.min(a[1], b[1]) + Math.abs(b[1] - a[1]) * 0.45;
+    const w = face.eye_width * 1.5;
+    return segment(q, [a[0] - w, y], [a[0] + w, y]) < face.eye_width * 0.4;
+  })) return 'eye';
+  if (!blink && !sleep && face.eyes.some(([a, b]) => segment(q, a, b) < face.eye_width)) return 'eye';
   const line = face.line;
   const half = (open * face.mouth_gap) / 2;
   const [x0, x1] = [line[0][0], line[line.length - 1][0]];

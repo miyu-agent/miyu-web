@@ -4,6 +4,7 @@
 //! `memory` 流，推来的重读（停 300 毫秒并成一次）。一页是一个常驻的对象：设置页重画、关了再开交回的是同一块，写了一半的字还在。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { DreamCard } from './dream.js';
 import { CLASSES, TEXT_MAX, KEYWORDS_MAX, chars, counts, visible, hasKeywords, updateOf, canSave, saveNote, shortId, agoText, isRetired, tidying } from './model.js';
 
 /** 一次列几条（滚到底再多读一批） */
@@ -12,6 +13,8 @@ const PAGE = 200;
 const TYPE_MS = 250;
 const PUSH_MS = 300;
 const ARM_MS = 3000;
+/** 人叫的整理合完以后那一块留几秒再收起（第 13 条） */
+const DREAM_KEEP_MS = 6000;
 /** 无人格那一份的编号（核心 P-12 的 NO_PERSONA；人格编号都以小写字母开头，撞不上） */
 export const NO_PERSONA = '_none';
 
@@ -43,6 +46,8 @@ export class MemoryPage {
     this.dreaming = false;
     /** 后台自己在整理的几批（`upto`）：有就在顶上一排下面写「正在整理…」（第 12 条） @type {Set<number|string>} */
     this.background = new Set();
+    /** 人叫的整理那一块（第 13 条；没在整理的是 `null`） @type {DreamCard|null} */
+    this.card = null;
     /** 出错（没装记忆、这里没有记忆）：整页一张卡 @type {string|null} */
     this.problem = null;
     this.loaded = false;
@@ -156,7 +161,10 @@ export class MemoryPage {
       if (this.el.isConnected) this.subscribe();
       return;
     }
-    if (method !== 'memory.event' || params?.persona !== this.subscribed) return;
+    if ((method !== 'memory.event' && method !== 'memory.dreaming') || params?.persona !== this.subscribed) return;
+    // 人叫的整理那一块：日志、模型写出来的决定都交给它（第 13 条）
+    this.card?.push(method, params);
+    if (method === 'memory.dreaming') return;
     if (!this.el.isConnected) {
       this.unsubscribe();
       return;
@@ -231,6 +239,7 @@ export class MemoryPage {
     return h('div.mem-list-page',
       h('div.mem-tools', picker, h('label.mem-find', icon('search'), find), dream, add),
       this.tidyingLine(),
+      this.card?.el ?? null,
       this.adding ? this.addForm() : null,
       chips,
       h('div.mem-list', rows, more),
@@ -424,14 +433,38 @@ export class MemoryPage {
     }
   }
 
+  /**
+   * 整理（第 2、13 条）：顶上一排下面展开那一块，日志、模型写出来的决定推来照它画；合完天亮、写结果，6 秒后收起。没有要整理的、
+   * 忙着的、出错的不留那一块，提示一句。
+   */
   async dream() {
+    const persona = this.persona;
     this.dreaming = true;
+    const card = new DreamCard(this.ctx, new Map(this.list.map((m) => [m.id, m.text])));
+    this.card = card;
     this.draw();
+    // 滚动区照编号写正文：先照列着的，再读一份整的（搜着、筛着的时候列着的不全）
+    this.ctx.core.request('memory.list', { persona, forgotten: true, limit: 500 }).then((got) => {
+      for (const m of got?.memories ?? []) card.texts.set(m.id, m.text);
+    }, () => {});
+    const drop = () => {
+      if (this.card !== card) return;
+      this.card = null;
+      card.dispose();
+      card.el.remove();
+    };
     try {
-      const got = await this.ctx.core.request('memory.dream', { persona: this.persona });
+      const got = await this.ctx.core.request('memory.dream', { persona });
       const n = (got?.given ?? 0) + (got?.retired ?? 0) + (got?.revised ?? 0);
-      this.kit.toast(n || got?.summary ? this.t('dreamed', { given: got?.given ?? 0, revised: got?.revised ?? 0, retired: got?.retired ?? 0 }) : this.t('dream_none'));
+      if (n || got?.summary) {
+        card.finish(got);
+        setTimeout(drop, DREAM_KEEP_MS);
+      } else {
+        drop();
+        this.kit.toast(this.t('dream_none'));
+      }
     } catch (err) {
+      drop();
       this.say(/** @type {any} */ (err)?.data?.reason === 'memory_busy' ? this.t('dream_busy') : this.refusal(err));
     }
     this.dreaming = false;

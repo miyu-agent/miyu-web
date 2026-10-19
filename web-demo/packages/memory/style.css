@@ -83,3 +83,29 @@
   .mem-label { padding-top: 0; }
   .mem-retired { margin-left: 0; }
 }
+
+/* 人叫的整理那一块（第 13 条，`dream.js`；2026-10-20 项目主人选的「日月轮转」）：头一行、五行滚动区（新的从下面浮上来、上面淡出）、
+   像素舞台（画布一格放大三倍，夜空是舞台自己的一套颜色；右上角的数也画在里面） */
+.dream-card { display: grid; border-radius: 14px; overflow: hidden; background: var(--surface-1); box-shadow: var(--card-shadow); }
+.dream-card[hidden] { display: none; }
+.dream-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; padding: 12px 16px 8px; }
+.dream-head b { color: var(--text); font-size: 13.5px; }
+.dream-batch { color: var(--text-faint); font-size: 12px; }
+.dream-tally { margin-left: auto; color: var(--text-faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+.dream-feed { position: relative; height: 130px; overflow: hidden; margin-bottom: 10px; padding: 0 16px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 30px); mask-image: linear-gradient(to bottom, transparent 0, #000 30px); }
+.dream-feed-list { position: absolute; right: 16px; bottom: 0; left: 16px; display: grid; }
+.dream-line { display: flex; align-items: center; gap: 8px; min-width: 0; height: 26px; color: var(--text-soft); font-size: 13px; white-space: nowrap; animation: dream-rise 0.45s var(--ease-out); }
+@keyframes dream-rise { from { opacity: 0; transform: translateY(8px); } }
+.dream-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.dream-line.is-read .dream-t, .dream-line s, .dream-why { color: var(--text-faint); }
+.dream-line.is-fail .dream-t { color: var(--gold); }
+.dream-k { display: inline-grid; flex: none; place-items: center; min-width: 30px; height: 18px; padding: 0 5px; border-radius: 5px; font-size: 11px; font-weight: 600; }
+.dream-k.is-read { background: var(--surface-2); color: var(--text-faint); }
+.dream-k.is-new { background: var(--accent-soft); color: var(--accent); }
+.dream-k.is-del { background: color-mix(in srgb, var(--ribbon) 13%, transparent); color: var(--ribbon); }
+.dream-k.is-kw { background: color-mix(in srgb, var(--gold) 14%, transparent); color: var(--gold); }
+.dream-k.is-sum { background: var(--surface-3); color: var(--text-soft); }
+.dream-stage { height: 126px; background: #141833; }
+.dream-stage canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.chat-tail .dream-card { margin: 8px 0 4px; }
+@media (prefers-reduced-motion: reduce) { .dream-line { animation: none; } }

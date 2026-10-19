@@ -13,7 +13,7 @@
   },
   "kind": "optional",
   "description": {
-    "zh": "设置页多一页「记忆」：一个人格一份（无人格也有一份），能搜、按类别筛、连作废的一起看；点开一条改内容和关键词、作废、找回；整理、清空这一份。/memory 直接打开。"
+    "zh": "设置页多一页「记忆」：一个人格一份（无人格也有一份），能搜、按类别筛、连作废的一起看；点开一条改内容和关键词、作废、找回；整理、清空这一份。/memory 直接打开。/dream 整理记忆，正文末尾看着它整理（日月轮转）。"
   },
   "provides": {
     "services": [
@@ -25,7 +25,9 @@
     "core",
     "commands",
     "chat",
-    "settings~"
+    "settings~",
+    "composer~",
+    "mascot~"
   ],
   "styles": [
     "style.css"
@@ -36,12 +38,35 @@
       "command": "打开记忆页",
       "none": "无人格",
       "search": "搜索记忆（内容、关键词）",
-      "dream": "整理",
+      "dream": {
+        "running": "正在整理",
+        "done": "整理完成",
+        "batch": "第 {n} 批",
+        "tally": "删 {del} · 改写 {new} · 补关键词 {kw}",
+        "sweep": "重看 {n} 条旧记忆",
+        "k": {
+          "read": "读入",
+          "new": "改写",
+          "del": "删",
+          "sum": "摘要",
+          "kw": "关键词"
+        },
+        "retire": {
+          "outdated": "过时",
+          "repeat": "重复",
+          "worthless": "用不着"
+        },
+        "kept": "留下「{text}」",
+        "summary": "摘要写到 {n} 字…",
+        "summary_done": "摘要写好了",
+        "retry": "这一批没合成，再试一次"
+      },
       "dreaming": "整理中…",
       "dreamed": "整理完成：检查 {given} 条，修改 {revised} 条，作废 {retired} 条",
       "dream_none": "没有要整理的",
       "dream_busy": "正在整理，稍等",
       "tidying": "正在整理…",
+      "dream_command": "整理记忆",
       "add": "记一条",
       "add_hint": "要记住的一句话，最多 {n} 字",
       "add_keywords": "关键词（可留空，逗号隔开）",
@@ -116,12 +141,35 @@
       "command": "Open the memory page",
       "none": "No persona",
       "search": "Search memories (text, keywords)",
-      "dream": "Tidy up",
+      "dream": {
+        "running": "Tidying",
+        "done": "Tidied",
+        "batch": "Batch {n}",
+        "tally": "Deleted {del} · Rewritten {new} · Keywords {kw}",
+        "sweep": "Reviewing {n} older memories",
+        "k": {
+          "read": "Read",
+          "new": "Rewrite",
+          "del": "Delete",
+          "sum": "Summary",
+          "kw": "Keywords"
+        },
+        "retire": {
+          "outdated": "outdated",
+          "repeat": "duplicate",
+          "worthless": "not useful"
+        },
+        "kept": "kept “{text}”",
+        "summary": "Summary: {n} characters…",
+        "summary_done": "Summary written",
+        "retry": "This batch didn’t go through. Trying again"
+      },
       "dreaming": "Tidying…",
       "dreamed": "Done: checked {given}, revised {revised}, retired {retired}",
       "dream_none": "Nothing to tidy",
       "dream_busy": "Already tidying, hold on",
       "tidying": "Tidying in the background…",
+      "dream_command": "Tidy up memories",
       "add": "Add",
       "add_hint": "One sentence to remember, up to {n} characters",
       "add_keywords": "Keywords (optional, comma-separated)",
@@ -196,12 +244,35 @@
       "command": "記憶ページを開く",
       "none": "人格なし",
       "search": "記憶を検索（内容・キーワード）",
-      "dream": "整理",
+      "dream": {
+        "running": "整理中",
+        "done": "整理完了",
+        "batch": "第 {n} バッチ",
+        "tally": "削除 {del} · 書き換え {new} · キーワード {kw}",
+        "sweep": "古い記憶を {n} 件見直し中",
+        "k": {
+          "read": "読込",
+          "new": "書換",
+          "del": "削除",
+          "sum": "要約",
+          "kw": "キーワード"
+        },
+        "retire": {
+          "outdated": "古い",
+          "repeat": "重複",
+          "worthless": "不要"
+        },
+        "kept": "「{text}」を残す",
+        "summary": "要約 {n} 文字…",
+        "summary_done": "要約を書きました",
+        "retry": "このバッチはまとまりませんでした。やり直します"
+      },
       "dreaming": "整理中…",
       "dreamed": "整理完了：{given} 件を確認、{revised} 件を修正、{retired} 件を無効化",
       "dream_none": "整理するものはありません",
       "dream_busy": "整理中です。少しお待ちください",
       "tidying": "バックグラウンドで整理中…",
+      "dream_command": "記憶を整理",
       "add": "追加",
       "add_hint": "覚えてほしい一文（{n} 文字まで）",
       "add_keywords": "キーワード（空欄可、カンマ区切り）",
