@@ -266,13 +266,13 @@ export class UsagePage {
     const row = d?.total ?? sum([]);
     const u = row.usage;
     const cost = money(row.amounts);
-    /** @param {string} key @param {string} value @param {string} sub @param {boolean} [warn] */
-    const tile = (key, value, sub, warn = false) => h('div.use-tile',
+    /** @param {string} key @param {string} value @param {string} sub */
+    const tile = (key, value, sub) => h('div.use-tile',
       h('span.use-tile-k', this.t(`tile.${key}`)),
       h('span.use-tile-v', { title: value }, d ? value : '—'),
-      h(`span.use-tile-s${warn ? '.is-warn' : ''}`, { title: sub }, d ? sub : ''));
+      h('span.use-tile-s', { title: sub }, d ? sub : ''));
     return h('div.use-tiles',
-      tile('cost', cost || '—', row.unpriced ? this.t('unpriced_more', { n: row.unpriced.toLocaleString() }) : '', row.unpriced > 0),
+      tile('cost', cost || '—', row.unpriced ? this.t('unpriced_more', { n: row.unpriced.toLocaleString() }) : ''),
       tile('requests', this.t('times', { n: row.requests.toLocaleString() }), this.t('sessions', { n: d?.sessions ?? 0 })),
       tile('tokens', short(total(u)), this.t('in_out', { input: short(input(u)), output: short(u.output) })),
       tile('hit', `${hitRate(u.cache_read, input(u))}%`, this.t('hit_sub', { n: short(u.cache_read) })));
@@ -442,13 +442,16 @@ export class UsagePage {
       h('div.use-pop-head', this.name(r), h('button.icon-button.use-pop-close', { type: 'button', title: this.t('close'), 'aria-label': this.t('close'), onclick: () => this.closePop() }, icon('x'))),
       h('div.use-stats',
         stat(this.t('col.requests'), this.t('times', { n: r.requests.toLocaleString() })),
-        stat(this.t('col.cost'), cost || (r.unpriced ? this.t('unpriced_only', { n: r.unpriced.toLocaleString() }) : '—'), cost && r.unpriced ? this.t('unpriced_more', { n: r.unpriced.toLocaleString() }) : ''),
+        cost
+          ? stat(this.t('col.cost'), cost, r.unpriced ? this.t('unpriced_more', { n: r.unpriced.toLocaleString() }) : '')
+          : stat(this.t('col.cost'), r.unpriced ? this.t('unpriced_only', { n: r.unpriced.toLocaleString() }) : '—', '', r.unpriced ? 'is-warn' : ''),
         stat(this.t('detail.hit_rate'), `${hitRate(u.cache_read, input(u))}%`)),
+      // 四项 token 和柱子同色（写缓存在柱子里算进没命中的输入）
       h('div.use-stats.is-four',
-        stat(this.t('legend.hit'), exact(u.cache_read)),
-        stat(this.t('detail.miss'), exact(u.uncached)),
-        stat(this.t('detail.write'), exact(u.cache_write)),
-        stat(this.t('legend.out'), exact(u.output))),
+        stat(this.t('legend.hit'), exact(u.cache_read), '', 'is-hit'),
+        stat(this.t('detail.miss'), exact(u.uncached), '', 'is-new'),
+        stat(this.t('detail.write'), exact(u.cache_write), '', 'is-new'),
+        stat(this.t('legend.out'), exact(u.output), '', 'is-out')),
     ];
     for (const sub of splitsOf(this.group)) {
       const got = this.split(sub);
@@ -542,8 +545,14 @@ export class UsagePage {
   }
 }
 
-/** 细则小窗里的一格：名目在上、数在下，可以再一行暗字 @param {string} name @param {string} value @param {string} [more] */
-const stat = (name, value, more = '') => h('div.use-stat', h('span.use-stat-k', name), h('span.use-stat-v', { title: value }, value), more ? h('span.use-stat-more', more) : null);
+/**
+ * 细则小窗里的一格：名目在上、数在下，可以再一行暗字；`tone` 是 token 那几格和柱子同色（`is-hit`、`is-new`、`is-out`），没价格的 `is-warn`。
+ * @param {string} name @param {string} value @param {string} [more] @param {string} [tone]
+ */
+const stat = (name, value, more = '', tone = '') => h(`div.use-stat${tone ? `.${tone}` : ''}`,
+  h('span.use-stat-k', tone && tone !== 'is-warn' ? h('i.use-stat-dot') : null, name),
+  h('span.use-stat-v', { title: value }, value),
+  more ? h('span.use-stat-more', more) : null);
 
 /** 列头的字和箭头：名字那一列箭头在后，数的那几列在前（字和下面的数右边对齐） @param {string} label @param {HTMLElement} arrow @param {boolean} after */
 const arrowed = (label, arrow, after) => (after ? [label, arrow] : [arrow, label]);
