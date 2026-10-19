@@ -589,7 +589,9 @@ export class App {
    * 照旧不动；`null` 是无人格（2026-10-10 项目主人：无人格的会话不应该显示头像和 AI 名称）。
    */
   syncLook() {
-    const look = this.looker ? this.looker(this.current) : res.persona;
+    // 软件包 setup 还没交画法的：当还不知道，照旧不动（左栏一开始只写名字、不画头像）。原来先照出厂的那一份画了带头像的一帧，人格包交来、
+    // 算出是无人格才换掉（2026-10-19 项目主人：上一个会话是无人格，打开页面那一瞬间闪一下默认人格的头像；终端同一个毛病）
+    const look = this.looker ? this.looker(this.current) : undefined;
     if (look === undefined) return;
     const sig = JSON.stringify(look);
     if (sig === this.lookSig) return;
