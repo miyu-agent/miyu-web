@@ -592,9 +592,13 @@ export class Sidebar {
   /** 会话表底下放不下的，菜单往上开（照旧版 `app.js:2466-2470`）。 */
   placeMenu() {
     const m = this.items.querySelector('.session-menu');
-    const list = this.items.parentElement;
-    if (!m || !list) return;
-    if (m.getBoundingClientRect().bottom > list.getBoundingClientRect().bottom - 4) m.classList.add('open-up');
+    const box = this.list ?? this.items.parentElement;
+    if (!m || !box) return;
+    // 下面放不下、上面放得下才往上开：左栏能滚的那一层顶上是交互区，往上开放不下的会被它盖住、点不到
+    const r = m.getBoundingClientRect();
+    const view = box.getBoundingClientRect();
+    const row = /** @type {HTMLElement} */ (m.parentElement).getBoundingClientRect();
+    if (r.bottom > view.bottom - 4 && row.top - r.height - 4 >= view.top) m.classList.add('open-up');
   }
 
   /** 有会话在跑就走表，没有就停。 */
