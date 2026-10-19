@@ -507,8 +507,5 @@
     "messages_inside": "Only within the project",
     "messages_open": "Can message sessions outside the project",
     "back": "All projects"
-  },
-  "project_chip": {
-    "title": "Project: {name} (click to open)"
   }
 }

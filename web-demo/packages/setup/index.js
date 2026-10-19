@@ -127,14 +127,18 @@ export function apply(ctx) {
     const cwd = chat.workdir();
     const used = session ? null : inUse();
     // 项目里的会话（在项目里新建的空会话也算）：人格、预设、工作区建项目时定好了，不画这三样（2026-10-19 项目主人：只要左上角项目的小标），用不了要选的照旧露出来
-    const inProject = !!chat.projectOf?.(session);
+    const project = chat.projectOf?.(session) ?? null;
+    const inProject = !!project;
+    const title = session ? chat.title?.(session) ?? null : null;
     const sig = JSON.stringify([session, draft, cwd, catalog.personas?.length ?? -1, catalog.presets?.length ?? -1, catalog.personaDefault, catalog.presetDefault,
-      used, session ? [chat.persona(session), chat.preset(session)] : null, inProject]);
+      used, session ? [chat.persona(session), chat.preset(session)] : null, project && [project.project, project.name, chat.projectColor?.(project.color)], title]);
     if (!force && sig === drawn) return;
     drawn = sig;
     if (!session) {
-      info.hidden = true;
+      // 在项目里新建的空会话：左上角「项目名 / 新会话」；别的空会话不画那一条
       infoMenu.close();
+      if (project) replace(info, projectPart(project), h('span.setup-info-slash', '/'), h('span.setup-info-part.is-title.is-new', h('span', t('info.new_session'))));
+      info.hidden = !project;
       row.hidden = false;
       personaBtn.hidden = !catalog.personas;
       replace(personaBtn, icon('user-round'), h('span', draft.persona === false ? t('no_persona') : draft.persona ? nameOf(draft.persona) : t('choose_persona')));
@@ -162,20 +166,48 @@ export function apply(ctx) {
     row.hidden = true;
     menu.close();
     ctx.composer.lock(null);
-    if (inProject) {
-      info.hidden = true;
-      infoMenu.close();
-      return;
-    }
     const persona = chat.persona(session);
     const preset = chat.preset(session);
     const path = tilde(cwd, home());
+    // 主会话（2026-10-19 项目主人第三版）：左上角写标题（项目里的前面多「项目名 /」，点项目名进项目页），点标题出菜单：人格、预设、工作区（原来平铺在这一条上）
+    if (!chat.parentOf?.(session)) {
+      const titleBtn = h('button.setup-info-part.is-title', { type: 'button', title: title ?? '', 'aria-haspopup': 'menu', onclick: () => openInfo(titleBtn, persona, preset, path) },
+        h('span', title ?? t('info.untitled')), icon('chevron-down'));
+      pathBtn = titleBtn;
+      replace(info, project ? [projectPart(project), h('span.setup-info-slash', '/')] : null, titleBtn);
+      info.hidden = false;
+      return;
+    }
+    // 子代理的会话（顶上有路径那一条写着标题）：照旧平铺人格 · 预设 · 工作目录
     const sep = () => h('span.setup-info-sep', '·');
     replace(info,
       persona ? [h('span.setup-info-part', icon('user-round'), h('b', nameOf(persona))), sep()] : null,
       preset ? [h('span.setup-info-part', icon('toggle-right'), h('b', presetNameOf(preset))), sep()] : null,
       pathBtn = h('button.setup-info-part.is-path', { type: 'button', title: path, onclick: () => openWorkspaces(pathBtn ?? info, true) }, icon('folder'), h('span', path)));
     info.hidden = false;
+  };
+
+  /** 左上角的项目名：项目颜色的文件夹加名字，点了进项目页 @param {any} p */
+  const projectPart = (p) => h('button.setup-info-part.is-project', {
+    type: 'button', title: t('info.open_project'), style: `--project-color: ${chat.projectColor?.(p.color) ?? 'var(--text-faint)'}`,
+    onclick: () => chat.openProject?.(p.project),
+  }, icon('folder'), h('span', p.name));
+
+  /**
+   * 点标题出的菜单：人格（点了开它的编辑卡片）、预设、工作区（点了开换工作区的菜单）。
+   * @param {HTMLElement} anchor @param {string|null} persona @param {string|null} preset @param {string} path
+   */
+  const openInfo = (anchor, persona, preset, path) => {
+    if (infoMenu.open) return infoMenu.close();
+    infoMenu.show(anchor, {
+      title: t('info.menu'),
+      below: true,
+      rows: [
+        { icon: 'user-round', title: persona ? nameOf(persona) : t('no_persona'), desc: t('info.persona'), pick: () => { if (persona && ctx.settings) editPersona(ctx, catalog, persona, ctx.settings.kit); } },
+        ...(preset ? [{ icon: 'toggle-right', title: presetNameOf(preset), desc: t('info.preset'), pick: () => {} }] : []),
+        { icon: 'folder', title: dirName(path), desc: path, pick: () => openWorkspaces(anchor, true) },
+      ],
+    });
   };
 
   const openPersonas = () => {

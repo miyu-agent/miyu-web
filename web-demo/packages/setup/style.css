@@ -340,3 +340,13 @@
 /* 附加提示词：跟着字长高，最高到窗口的一半左右，再多在框里滚（2026-10-19 项目主人：内容长了超出屏幕） */
 .project-editor .setup-area { min-height: 76px; max-height: min(42vh, 360px); overflow-y: auto; }
 .project-toggle { display: flex; align-items: center; gap: 10px; color: var(--text); font-size: 13px; }
+
+/* 左上角（2026-10-19 项目主人第三版）：标题（点了出菜单：人格、预设、工作区），项目里的前面「项目名 /」（点了进项目页） */
+.setup-info-part.is-title, .setup-info-part.is-project { padding: 0; border: 0; background: none; color: var(--text-soft); font: inherit; cursor: pointer; }
+.setup-info-part.is-title span { max-width: 320px; }
+.setup-info-part.is-title:hover, .setup-info-part.is-project:hover { color: var(--text); }
+.setup-info-part.is-title .icon { width: 12px; height: 12px; color: var(--text-faint); }
+.setup-info-part.is-title.is-new { cursor: default; color: var(--text-faint); }
+.setup-info-part.is-project .icon { color: var(--project-color); }
+.setup-info-part.is-project span { max-width: 180px; }
+.setup-info-slash { color: var(--text-faint); opacity: 0.6; }

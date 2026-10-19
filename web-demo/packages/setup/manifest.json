@@ -319,6 +319,14 @@
         "cancel": "取消",
         "delete": "删除项目",
         "delete_again": "再点一次删除"
+      },
+      "info": {
+        "menu": "会话信息",
+        "persona": "人格",
+        "preset": "预设",
+        "untitled": "未命名会话",
+        "new_session": "新会话",
+        "open_project": "打开项目"
       }
     },
     "en": {
@@ -488,6 +496,14 @@
         "cancel": "Cancel",
         "delete": "Delete project",
         "delete_again": "Click again to delete"
+      },
+      "info": {
+        "menu": "Session info",
+        "persona": "Persona",
+        "preset": "Preset",
+        "untitled": "Untitled session",
+        "new_session": "New session",
+        "open_project": "Open project"
       }
     },
     "ja": {
@@ -657,6 +673,14 @@
         "cancel": "キャンセル",
         "delete": "プロジェクトを削除",
         "delete_again": "もう一度クリックで削除"
+      },
+      "info": {
+        "menu": "セッション情報",
+        "persona": "人格",
+        "preset": "プリセット",
+        "untitled": "無題のセッション",
+        "new_session": "新しいセッション",
+        "open_project": "プロジェクトを開く"
       }
     }
   }

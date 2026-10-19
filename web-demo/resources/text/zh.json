@@ -507,8 +507,5 @@
     "messages_inside": "只在项目里",
     "messages_open": "能和项目外的会话互相留言",
     "back": "全部项目"
-  },
-  "project_chip": {
-    "title": "项目：{name}（点了打开项目）"
   }
 }

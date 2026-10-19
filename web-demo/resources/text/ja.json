@@ -507,8 +507,5 @@
     "messages_inside": "プロジェクト内のみ",
     "messages_open": "プロジェクト外のセッションともやり取りできる",
     "back": "すべてのプロジェクト"
-  },
-  "project_chip": {
-    "title": "プロジェクト：{name}（クリックで開く）"
   }
 }
