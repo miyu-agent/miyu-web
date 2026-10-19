@@ -172,7 +172,7 @@ export function apply(ctx) {
     // 主会话（2026-10-19 项目主人第三版）：左上角写标题（项目里的前面多「项目名 /」，点项目名进项目页），点标题出菜单：人格、预设、工作区（原来平铺在这一条上）
     if (!chat.parentOf?.(session)) {
       const titleBtn = h('button.setup-info-part.is-title', { type: 'button', title: title ?? '', 'aria-haspopup': 'menu', onclick: () => openInfo(titleBtn, persona, preset, path) },
-        h('span', title ?? t('info.untitled')), icon('chevron-down'));
+        h('span', title ?? t('info.untitled')), icon('chevron-right'));
       pathBtn = titleBtn;
       replace(info, project ? [projectPart(project), h('span.setup-info-slash', '/')] : null, titleBtn);
       info.hidden = false;

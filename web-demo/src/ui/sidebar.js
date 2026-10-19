@@ -102,7 +102,7 @@ export class Sidebar {
       h('button.sidebar-nav-row', { type: 'button', dataset: { nav: key }, onclick: run }, icon(name), h('span', label));
     this.navProjects = navRow('folder', t('sidebar.projects'), () => on.viewProjects(), 'projects');
     this.nav = h('nav.sidebar-nav',
-      navRow('square-pen', t('sidebar.new_session_nav'), () => on.newSession(), 'new'),
+      navRow('plus', t('sidebar.new_session_nav'), () => on.newSession(), 'new'),
       navRow('messages-square', t('sidebar.all_sessions_nav'), () => on.viewAll(), 'sessions'),
       this.navProjects);
     /** 左上角的头像、名字：正在看的会话用的人格（`setLook`），点了打开这个人格的编辑页 */
@@ -246,7 +246,7 @@ export class Sidebar {
       ? cap.shown.map((it) => ({ kind: /** @type {const} */ ('session'), session: it.session, depth: 0, item: it, hasKids: false, open: false }))
       : [...pinnedRows, ...blocks.flatMap((b) => b.rows), ...groups.flatMap((g) => g.rows)];
     const sig = JSON.stringify([rows, groups.map((g) => [g.group, g.rows.length]), blocks.map((b) => [b.project, b.count, b.rows.length]), showProjects,
-      current, this.menuFor, this.moving, this.armed, this.renaming, this.selecting, [...this.selected], cap.more, this.on.dark()]);
+      current, this.menuFor, this.moving, this.renaming, this.selecting, [...this.selected], cap.more, this.on.dark()]);
     if (sig !== this.drawn) {
       this.drawn = sig;
       const all = cap.more ? h('button.session-all', { type: 'button', onclick: () => this.on.viewAll() }, t('sidebar.view_all')) : null;
@@ -256,7 +256,8 @@ export class Sidebar {
         menuFor: this.menuFor, armed: this.armed, dark: this.on.dark(), draw, on: this.on,
         toggleMenu: (/** @type {string|null} */ key) => this.toggleMenu(key),
         flip: (/** @type {string} */ id, /** @type {boolean} */ open) => this.flipProject(id, open),
-        arm: (/** @type {string} */ id) => { this.armed = id; this.render(...this.last); },
+        // 删除项目点了第一下：原地换那一项的字，菜单不重画（2026-10-19 项目主人：原来整个重画，菜单重新弹一次，像卡了）
+        arm: (/** @type {string} */ id, /** @type {HTMLElement} */ button) => { this.armed = id; button.querySelector('span')?.replaceChildren(t('sidebar.project_delete_confirm')); button.classList.add('is-armed'); },
       };
       // 一栏一块：头、下面收起来的那一截；整块是放得下会话的一块（拖会话，`sidebar-drag.js` 照 `data-zone`，亮的时候整块亮）
       const section = (/** @type {string} */ key, /** @type {HTMLElement} */ head, /** @type {(Node|null)[]} */ body, /** @type {string|null} */ zone) =>
@@ -290,10 +291,15 @@ export class Sidebar {
     else this.folded.add(key);
     this.on.prefs?.set(FOLDED, [...this.folded]);
     const el = this.items.querySelector(`.sb-section[data-section="${key}"]`);
+    // 缓的时候里面那一截裁着（展开时原来一下子全露出来，没有动画：2026-10-19 项目主人）
+    el?.classList.add('is-folding');
     el?.classList.toggle('is-folded', this.folded.has(key));
     // 选中的那一块跟着这一项露没露（重画时照 `folded` 画，不用另记）
     this.placePill(true);
-    setTimeout(() => this.placePill(), res.layout.sidebar_move_ms + 20);
+    setTimeout(() => {
+      el?.classList.remove('is-folding');
+      this.placePill();
+    }, res.layout.sidebar_move_ms + 20);
   }
 
   /**
@@ -335,25 +341,34 @@ export class Sidebar {
   }
 
   /**
-   * 换了先后（置顶、取消置顶，照最近活动重排）：原来就在的行从原来的位置滑到新位置，别的行跟着让开、收拢；新出来的淡入（「置顶」那一栏刚出来的
-   * 栏头从上面落 3px）。减少动画的不滑。
+   * 换了先后（置顶、取消置顶、移进项目，照最近活动重排）：只有真换了位置的行从原来的位置滑到新位置（先后照旧、只是因为上面多了、少了一行才挪的
+   * 不滑，直接到位：2026-10-19 项目主人：拖进置顶时项目里的会话也跟着动），新出来的淡入（「置顶」那一栏刚出来的栏头从上面落 3px）。减少动画的不滑。
    * @param {Map<string, number>} was
    */
   slide(was) {
     if (!was.size || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const ms = res.layout.sidebar_move_ms;
     const easing = 'cubic-bezier(0.2, 0, 0, 1)';
+    /** @type {[HTMLElement, string][]} */
+    const now = [];
     const seen = new Set();
     for (const el of this.items.querySelectorAll('[data-session], [data-key]')) {
       if (!(el instanceof HTMLElement) || el.closest('.is-folded, .project:not(.is-open) .project-kids')) continue;
       const key = el.dataset.session ?? el.dataset.key;
       if (!key || seen.has(key)) continue;
       seen.add(key);
+      now.push([el, key]);
+    }
+    // 原来、现在都在的那些里，先后没变的最长一串不动
+    const before = [...was.entries()].sort((x, y) => x[1] - y[1]).map(([k]) => k).filter((k) => seen.has(k));
+    const after = now.map(([, k]) => k).filter((k) => was.has(k));
+    const still = steady(before, after);
+    for (const [el, key] of now) {
       const from = was.get(key);
-      if (from != null && from !== el.offsetTop) {
-        el.animate([{ transform: `translateY(${from - el.offsetTop}px)` }, { transform: 'none' }], { duration: ms, easing });
-      } else if (from == null) {
+      if (from == null) {
         el.animate(key === 'group:pin' ? [{ opacity: 0, transform: 'translateY(-3px)' }, { opacity: 1, transform: 'none' }] : [{ opacity: 0 }, { opacity: 1 }], { duration: ms, easing });
+      } else if (!still.has(key) && from !== el.offsetTop) {
+        el.animate([{ transform: `translateY(${from - el.offsetTop}px)` }, { transform: 'none' }], { duration: ms, easing });
       }
     }
   }
@@ -643,4 +658,25 @@ function treeLines(row) {
   if (!row.depth) return null;
   const guides = (row.guides ?? []).map((on, i) => (on ? h('i.tree-guide', { style: `--level: ${i + 1}` }) : null));
   return h('span.tree-lines', { 'aria-hidden': 'true' }, ...guides, h(`i.tree-elbow${row.last ? '.is-last' : ''}`, { style: `--level: ${row.depth}` }));
+}
+
+/**
+ * 两串编号里先后没变的最长一串（最长公共子序列），换先后时这些行不滑。
+ * @param {string[]} a @param {string[]} b @returns {Set<string>}
+ */
+function steady(a, b) {
+  const n = a.length;
+  const m = b.length;
+  const dp = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+  const out = new Set();
+  for (let i = 0, j = 0; i < n && j < m;) {
+    if (a[i] === b[j]) {
+      out.add(a[i]);
+      i++;
+      j++;
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) i++;
+    else j++;
+  }
+  return out;
 }

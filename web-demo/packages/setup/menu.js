@@ -63,6 +63,8 @@ export class Menu {
     this.el.style.left = `${anchor.offsetLeft}px`;
     const wasOpen = !this.el.hidden;
     this.el.hidden = false;
+    // 开着菜单的那个按钮：箭头跟着朝下（左上角的标题）
+    if (anchor.getAttribute('aria-haspopup') === 'menu') anchor.setAttribute('aria-expanded', 'true');
     this.fit();
     this.mark(Math.max(0, this.items.findIndex((x) => x.row.current && !x.row.off)));
     if (!wasOpen) {
@@ -85,6 +87,7 @@ export class Menu {
     if (this.el.hidden) return;
     this.el.hidden = true;
     this.view = null;
+    this.anchor?.removeAttribute('aria-expanded');
     document.removeEventListener('keydown', this.onKey, true);
     document.removeEventListener('pointerdown', this.onDown, true);
   }

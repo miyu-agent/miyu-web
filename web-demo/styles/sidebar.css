@@ -369,13 +369,13 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
    照选中的会话的样子 */
 .sidebar-nav { display: grid; gap: 1px; padding: 0 8px 6px; }
 .sidebar-nav-row {
-  display: flex; align-items: center; gap: 9px; height: 32px; padding: 0 9px; border: 0; border-radius: var(--radius); background: none;
-  color: var(--text); font: 13px var(--sans); text-align: left; cursor: pointer; transition: background-color 160ms ease;
+  display: flex; align-items: center; gap: 9px; height: 30px; padding: 0 9px; border: 0; border-radius: var(--radius); background: none;
+  color: var(--text); font: 12.5px var(--sans); text-align: left; cursor: pointer; transition: background-color 160ms ease;
 }
 .sidebar-nav-row[hidden] { display: none; }
 .sidebar-nav-row:hover { background: color-mix(in srgb, var(--text) 3.5%, transparent); }
 .sidebar-nav-row.is-on { background: var(--sidebar-active); box-shadow: var(--sidebar-active-shadow); }
-.sidebar-nav-row .icon { width: 16px; height: 16px; flex: none; color: var(--text-soft); }
+.sidebar-nav-row .icon { width: 15px; height: 15px; flex: none; color: var(--text-soft); }
 /* 一栏一块（置顶、项目、会话）：栏与栏之间用间距分开，不画细线（同一天项目主人）；收起的那一截高度缓过去；整块是放会话的一块，拖的时候整块亮 */
 .sb-section { display: grid; border-radius: 10px; transition: background-color 120ms ease, box-shadow 120ms ease; }
 .sb-section + .sb-section { margin-top: 10px; }
@@ -383,7 +383,7 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
 .sb-section-body { display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--motion-slide) var(--ease-out); }
 .sb-section.is-folded > .sb-section-body { grid-template-rows: 0fr; }
 .sb-section-inner { display: grid; gap: var(--item-gap); min-height: 0; }
-.sb-section.is-folded .sb-section-inner { overflow: hidden; }
+.sb-section.is-folded .sb-section-inner, .sb-section.is-folding .sb-section-inner { overflow: hidden; }
 .sb-section.is-drop-on { background: color-mix(in srgb, var(--accent-soft) 70%, transparent); box-shadow: inset 0 0 0 1.5px var(--accent); }
 /* 栏头：点了收起、展开，箭头悬停才露（收着的朝右） */
 .sb-head { cursor: pointer; border-radius: 6px; }
@@ -391,6 +391,8 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
 .sb-chevron { display: grid; place-items: center; color: var(--text-faint); opacity: 0; transition: opacity 120ms ease, transform var(--motion-slide) var(--ease-out); }
 .sb-chevron .icon { width: 12px; height: 12px; }
 .sb-head:hover .sb-chevron, .sb-head:focus-visible .sb-chevron { opacity: 1; }
+/* 收着的一直露着朝右的箭头：提示能展开（2026-10-19 项目主人） */
+.sb-section.is-folded > .sb-head .sb-chevron { opacity: 1; }
 .sb-section.is-folded .sb-chevron { transform: rotate(-90deg); }
 .sb-head > .session-group-tools { margin-left: auto; }
 .sidebar.is-selecting .sb-chevron { display: none; }

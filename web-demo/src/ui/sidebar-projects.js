@@ -12,7 +12,7 @@ import { colorOf } from '../model/project.js';
  * 左栏交给这一栏的。
  * @typedef {{project: import('../core/projects.js').Project, rows: any[], open: boolean, count: number}} Block
  * @typedef {{menuFor: string|null, armed: string|null, dark: boolean, toggleMenu: (key: string|null) => void, flip: (id: string, open: boolean) => void,
- *   draw: (row: any) => HTMLElement, arm: (id: string) => void,
+ *   draw: (row: any) => HTMLElement, arm: (id: string, button: HTMLElement) => void,
  *   on: {viewProjects: () => void, editProject: (id: string|null) => void, openProject: (id: string) => void, newIn: (id: string) => void,
  *     deleteProject: (id: string) => void}}} Bar
  */
@@ -54,15 +54,19 @@ export function projectBlock(bar, block) {
         item(t('sidebar.project_new_session'), null, () => { bar.toggleMenu(null); bar.on.newIn(id); }),
         item(t('sidebar.project_settings'), null, () => { bar.toggleMenu(null); bar.on.editProject(id); }),
         // 点两下才删（第一下换字，菜单不收）
-        item(t(armed ? 'sidebar.project_delete_confirm' : 'sidebar.project_delete'), 'trash-2', () => {
-          if (!armed) return bar.arm(id);
+        item(t(armed ? 'sidebar.project_delete_confirm' : 'sidebar.project_delete'), 'trash-2', (/** @type {MouseEvent} */ e) => {
+          const button = /** @type {HTMLElement} */ (e.currentTarget);
+          if (!button.classList.contains('is-armed')) {
+            e.stopPropagation();
+            return bar.arm(id, button);
+          }
           bar.toggleMenu(null);
           bar.on.deleteProject(id);
-        }, true)) : null),
+        }, true, armed)) : null),
     h('div.project-kids', kids));
 }
 
-/** 菜单的一项。 @param {string} label @param {string|null} name 图标 @param {() => void} run @param {boolean} [danger] */
-function item(label, name, run, danger = false) {
-  return h(`button${danger ? '.is-danger' : ''}`, { type: 'button', role: 'menuitem', onclick: run }, name ? icon(name) : null, h('span', label));
+/** 菜单的一项。 @param {string} label @param {string|null} name 图标 @param {(e: MouseEvent) => void} run @param {boolean} [danger] @param {boolean} [armed] */
+function item(label, name, run, danger = false, armed = false) {
+  return h(`button${danger ? '.is-danger' : ''}${armed ? '.is-armed' : ''}`, { type: 'button', role: 'menuitem', onclick: run }, name ? icon(name) : null, h('span', label));
 }
