@@ -1,29 +1,33 @@
 // @ts-check
-//! 人叫的整理的进度（`packages/memory/dream-model.js`，蓝图 `web.md`「记忆页」第 13 条，核心 R-21）：头一批的 left 是总数，
-//! 一批之内照推来的决定往前挪、最多九成，merged 走满；后台的不管；只重看旧记忆的照自己的批走；滚动区浮过哪几行。
+//! 人叫的整理的进度（`packages/memory/dream-model.js`，蓝图 `web.md`「记忆页」第 13 条，核心 R-21、R-22）：头一批的 left 是总数，
+//! 一批之内不挪（2026-10-20 项目主人：进度条是假的），merged 才走；后台的不管；只重看旧记忆的合完才满；叫停；滚动区浮过哪几行；结果点开列什么。
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DreamTrack, WITHIN } from '../../packages/memory/dream-model.js';
+import { DreamTrack } from '../../packages/memory/dream-model.js';
 
 const ev = (kind, body) => ({ kind, body });
 
-test('两批：头一批的 left 是总数，一批之内挪不过九成，merged 走满', () => {
+test('两批：头一批的 left 是总数，一批之内不挪，merged 才走；一共几批照 left ÷ fresh', () => {
   const tr = new DreamTrack();
   const read = tr.logged(ev('ext.memory.merging', { upto: 10, fresh: 4, left: 6, manual: true, given: ['m1', 'm2', 'm9'] }));
   assert.deepEqual(read.map((l) => l.kind === 'read' && l.id), ['m1', 'm2', 'm9']);
   assert.equal(tr.total, 6);
   assert.equal(tr.progress(), 0);
+  assert.equal(tr.planned(), 2);
+  assert.ok(tr.quiet(), '还没写出东西：做梦中');
   for (let i = 0; i < 30; i++) tr.dreaming({ upto: 10, kind: 'revised', id: 'm1', text: 'x' });
-  assert.ok(tr.progress() < (4 * WITHIN) / 6 + 1e-9, String(tr.progress()));
-  assert.ok(tr.progress() > 0.5);
+  assert.equal(tr.progress(), 0, '写了几条决定也不挪');
+  assert.ok(!tr.quiet());
   tr.logged(ev('ext.memory.merged', { upto: 10, given: 4 }));
   assert.equal(tr.progress(), 4 / 6);
   tr.logged(ev('ext.memory.merging', { upto: 20, fresh: 2, left: 2, manual: true, given: ['m5'] }));
   assert.equal(tr.total, 6, '后面一批的 left 不改总数');
+  assert.equal(tr.planned(), 2);
   tr.logged(ev('ext.memory.merged', { upto: 20 }));
   assert.equal(tr.progress(), 1);
   assert.equal(tr.batches, 2);
+  assert.equal(tr.planned(), 2);
 });
 
 test('后台自己整理的、别的批推来的不管', () => {
@@ -47,14 +51,15 @@ test('推来的决定、补的关键词变成滚动区的行，数跟着加', ()
   assert.deepEqual(tr.tally, { del: 2, new: 1, kw: 1 });
 });
 
-test('只重看旧记忆（fresh、left 都是 0）：照这一批自己的决定走', () => {
+test('只重看旧记忆（fresh、left 都是 0）：合完了才满', () => {
   const tr = new DreamTrack();
   tr.logged(ev('ext.memory.merging', { upto: 9, fresh: 0, left: 0, manual: true, given: ['m1', 'm2', 'm3'] }));
   assert.equal(tr.total, 0);
   assert.equal(tr.given, 3);
   assert.equal(tr.progress(), 0);
   tr.dreaming({ upto: 9, kind: 'retired', id: 'm1', retire: 'outdated', why: '' });
-  assert.ok(tr.progress() > 0 && tr.progress() < WITHIN);
+  assert.equal(tr.progress(), 0);
+  assert.equal(tr.planned(), 1);
   tr.logged(ev('ext.memory.merged', { upto: 9 }));
   assert.equal(tr.progress(), 1);
 });
@@ -70,4 +75,35 @@ test('这一批没合成：一行提示，这一批里挪的退回去重来', ()
 test('老核心不带 given：写一行这一批几条', () => {
   const tr = new DreamTrack();
   assert.deepEqual(tr.logged(ev('ext.memory.merging', { upto: 1, fresh: 12, left: 12, manual: true })), [{ kind: 'batch', count: 12 }]);
+});
+
+test('叫停（R-22）：正在合的那一批记 merge_failed why stopped，写一行放下了，不写「再试一次」；合完的批照算', () => {
+  const tr = new DreamTrack();
+  tr.logged(ev('ext.memory.merging', { upto: 10, fresh: 4, left: 8, manual: true, given: [] }));
+  tr.logged(ev('ext.memory.merged', { upto: 10 }));
+  tr.logged(ev('ext.memory.merging', { upto: 20, fresh: 4, left: 4, manual: true, given: [] }));
+  assert.deepEqual(tr.logged(ev('ext.memory.merge_failed', { upto: 20, why: 'stopped' })), [{ kind: 'stopped' }]);
+  assert.ok(tr.stopped);
+  assert.equal(tr.batch, null);
+  assert.equal(tr.progress(), 0.5);
+  assert.ok(!tr.quiet());
+});
+
+test('结果点开列的：合着的时候日志里真正存下的（改、作废、最后一份摘要），合着以外的、新记的不算', () => {
+  const tr = new DreamTrack();
+  tr.logged(ev('ext.memory.saved', { text: '早先抽到的', replaces: 'm0' }));
+  tr.logged(ev('ext.memory.merging', { upto: 5, fresh: 2, left: 2, manual: true, given: ['m1', 'm2'] }));
+  tr.logged(ev('ext.memory.saved', { text: '别的会话新记的' }));
+  tr.logged(ev('ext.memory.saved', { text: '改成这样', replaces: 'm1' }));
+  tr.logged(ev('ext.memory.retired', { id: 'm2', kind: 'repeat', kept: 'm1', why: '说的是一件事' }));
+  tr.logged(ev('ext.memory.retired', { id: 'm7', why: '人删的' }));
+  tr.logged(ev('ext.memory.summary', { text: '第一版', upto: 5 }));
+  tr.logged(ev('ext.memory.summary', { text: '第二版', upto: 5 }));
+  tr.logged(ev('ext.memory.merged', { upto: 5 }));
+  tr.logged(ev('ext.memory.saved', { text: '合完以后的', replaces: 'm3' }));
+  assert.deepEqual(tr.saved, [
+    { kind: 'new', id: 'm1', text: '改成这样' },
+    { kind: 'del', id: 'm2', retire: 'repeat', kept: 'm1', why: '说的是一件事' },
+    { kind: 'summary', text: '第二版' },
+  ]);
 });

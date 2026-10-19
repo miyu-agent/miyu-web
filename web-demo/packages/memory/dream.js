@@ -1,8 +1,10 @@
 // @ts-check
 //! 人叫的整理那一块（蓝图 `web.md`「记忆页」第 13 条；2026-10-20 项目主人选的「日月轮转」）：头一行、五行滚动区、像素舞台（夜空里
 //! 月亮落下、太阳升起，开着吉祥物的它在左边原地睡着；右上角像素数字「合了 / 一共」）。记忆页的「整理」、`/dream` 都用它。数据照 `dream-model.js`。
+//! 合完了（或者叫停了，核心 R-22）收成结果那一行（`receipt`），点开列这一趟真正存下的。
 
-import { h } from '../../src/lib/dom.js';
+import { h, icon } from '../../src/lib/dom.js';
+import { clock } from '../../src/lib/format.js';
 import { DreamTrack } from './dream-model.js';
 
 /** 舞台多少格高、地面从第几格起（一格放大成 3px，舞台高 126px） */
@@ -37,16 +39,24 @@ export class DreamCard {
     /** 平滑地追着进度走的那个数（舞台照它画） */
     this.shown = 0;
     this.finished = false;
+    /** 叫停了（`memory.dream` 回了 `stopped`）：天不亮，收成「整理已中断」 */
+    this.stopped = false;
     this.doneAt = 0;
+    this.startedAt = performance.now();
+    /** 合完的回应（结果那一行照它写） @type {any} */
+    this.got = null;
     /** 摘要那一行（同一行跟着改） @type {HTMLElement|null} */
     this.summaryLine = null;
     this.title = h('b', this.t('dream.running'));
     this.batch = h('span.dream-batch');
     this.tally = h('span.dream-tally');
+    /** 「做梦中… · 1m 20s」：整理了多久，每秒走一下，合完停住；这一批她还一个字都没写出来时前面写「做梦中…」 */
+    this.time = h('span.dream-time');
+    this.second = -1;
     this.list = h('div.dream-feed-list');
     this.canvas = /** @type {HTMLCanvasElement} */ (h('canvas', { width: 400, height: H }));
     this.el = h('section.dream-card', { 'aria-live': 'polite' },
-      h('div.dream-head', this.title, this.batch, this.tally),
+      h('div.dream-head', this.title, this.batch, this.time, this.tally),
       h('div.dream-feed', this.list),
       h('div.dream-stage', this.canvas));
     this.g = /** @type {CanvasRenderingContext2D} */ (this.canvas.getContext('2d'));
@@ -60,6 +70,7 @@ export class DreamCard {
       if (this.el.isConnected) {
         this.fit();
         this.draw(now);
+        this.clock(now);
       }
       this.frame = requestAnimationFrame(tick);
     };
@@ -89,22 +100,90 @@ export class DreamCard {
     if (lines.length || method === 'memory.event') this.sync();
   }
 
-  /** 合完了（`memory.dream` 的回应）：天亮，头一行换成结果。 @param {{given?: number, revised?: number, retired?: number}} got */
+  /**
+   * 合完了（`memory.dream` 的回应）：天亮，头一行换成结果；叫停了的（`stopped`，核心 R-22）天不亮，写「整理已中断」，照样醒一下。
+   * @param {{given?: number, revised?: number, retired?: number, stopped?: boolean}} got
+   */
   finish(got) {
     this.finished = true;
+    this.got = got ?? {};
+    this.stopped = got?.stopped === true;
     this.doneAt = performance.now();
     setTimeout(() => this.wake(), 450);
-    this.title.textContent = this.t('dream.done');
-    this.batch.textContent = this.t('dream.result', { given: got?.given ?? 0, revised: got?.revised ?? 0, retired: got?.retired ?? 0 });
+    this.title.textContent = this.t(this.stopped ? 'dream.stopped_title' : 'dream.done');
+    this.batch.textContent = this.counted() ? this.t('dream.result', { given: got?.given ?? 0, revised: got?.revised ?? 0, retired: got?.retired ?? 0 }) : '';
     this.tally.textContent = '';
     this.sync();
+  }
+
+  /** 合完了的有没有数可写（叫停在头一批里的什么都没合完） */
+  counted() {
+    const g = this.got ?? {};
+    return !this.stopped || (g.given ?? 0) + (g.revised ?? 0) + (g.retired ?? 0) > 0;
+  }
+
+  /** 结果那一句（同核心 `/dream` 的回执）：合完的「整理完成：检查…」，叫停的「整理已中断：…其余下次再整理。」，一批都没合完的「整理已中断，下次再整理。」 */
+  resultText() {
+    const g = this.got ?? {};
+    const fields = { given: g.given ?? 0, revised: g.revised ?? 0, retired: g.retired ?? 0 };
+    if (!this.stopped) return this.t('dreamed', fields);
+    return this.counted() ? this.t('dream.stopped', fields) : this.t('dream.stopped_none');
+  }
+
+  /**
+   * 收成结果那一行（2026-10-20 项目主人在终端定的，网页照着）：暗色 ✦ 打头的一行；这一趟有改、删、摘要的能点开，列日志里真正存下的
+   * （写法同滚动区，摘要写全文）。只在这一次打开的正文里，不进会话记录。
+   */
+  receipt() {
+    const items = this.track.saved;
+    const text = (/** @type {string} */ id) => this.texts.get(id) ?? id;
+    const t = this.t;
+    const tag = (/** @type {string} */ kind) => h(`span.dream-k.is-${kind}`, t(`dream.k.${kind}`));
+    const list = h('div.dream-receipt-list', { hidden: true }, items.map((s) => {
+      if (s.kind === 'new') return h('div.dream-receipt-item', tag('new'), h('span', h('s', text(s.id)), ' → ', s.text));
+      if (s.kind === 'del') {
+        const label = s.retire ? t(`dream.retire.${s.retire}`) : null;
+        return h('div.dream-receipt-item', tag('del'), h('span', h('s', text(s.id)), label ? h('span.dream-why', ` · ${label}`) : null, s.kept ? h('span.dream-why', ` · ${t('dream.kept', { text: text(s.kept) })}`) : null));
+      }
+      return h('div.dream-receipt-item', tag('sum'), h('span.dream-receipt-summary', s.text));
+    }));
+    const head = h(`div.dream-receipt-head${items.length ? '.is-link' : ''}`, items.length ? { role: 'button', tabindex: '0', 'aria-expanded': 'false' } : null,
+      h('span.dream-receipt-mark', '✦'), h('span.dream-receipt-text', this.resultText()), items.length ? h('span.dream-receipt-arrow', icon('chevron-right')) : null);
+    const box = h('div.dream-receipt', head, list);
+    if (items.length) {
+      const toggle = () => {
+        list.hidden = !list.hidden;
+        box.classList.toggle('is-open', !list.hidden);
+        head.setAttribute('aria-expanded', String(!list.hidden));
+      };
+      head.addEventListener('click', toggle);
+      head.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        toggle();
+      });
+    }
+    return box;
+  }
+
+  /** 头一行的用时：每秒走一下，合完停住；这一批还没写出东西时前面写「做梦中…」 @param {number} now */
+  clock(now) {
+    if (this.finished) return;
+    const sec = Math.floor((now - this.startedAt) / 1000);
+    const quiet = this.track.quiet();
+    const key = sec * 2 + (quiet ? 1 : 0);
+    if (key === this.second) return;
+    this.second = key;
+    this.time.textContent = `${quiet ? `${this.t('dream.dreaming')} · ` : ''}${clock(sec)}`;
   }
 
   /** 头一行（只重看旧记忆的批写「重看 N 条旧记忆」，没有「合了 / 一共」可数） */
   sync() {
     const tr = this.track;
     if (this.finished) return;
-    this.batch.textContent = !tr.batches ? '' : tr.total ? this.t('dream.batch', { n: tr.batches }) : this.t('dream.sweep', { n: tr.given });
+    const planned = tr.planned();
+    this.batch.textContent = !tr.batches ? '' : !tr.total ? this.t('dream.sweep', { n: tr.given })
+      : planned && planned > 1 ? this.t('dream.batch_of', { n: tr.batches, m: planned }) : this.t('dream.batch', { n: tr.batches });
     this.tally.textContent = this.t('dream.tally', tr.tally);
   }
 
@@ -131,6 +210,7 @@ export class DreamCard {
       row = h('div.dream-line', tag('sum'), h('span.dream-t', line.done ? t('dream.summary_done') : t('dream.summary', { n: line.chars })));
       this.summaryLine = row;
     } else if (line.kind === 'kw') row = h('div.dream-line', tag('kw'), h('span.dream-t', text(line.id), h('span.dream-why', ` · ${line.keywords}`)));
+    else if (line.kind === 'stopped') row = h('div.dream-line.is-fail', h('span.dream-t', t('dream.stopped_line')));
     else row = h('div.dream-line.is-fail', h('span.dream-t', t('dream.retry')));
     // 新的一批：摘要那一行重新起
     if ((line.kind === 'read' || line.kind === 'batch') && this.summaryLine) this.summaryLine = null;
@@ -155,10 +235,12 @@ export class DreamCard {
     const g = this.g;
     const W = this.W;
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const target = this.finished ? 1 : this.track.progress();
+    // 叫停了的停在合完的那一处，天不亮
+    const dawn = this.finished && !this.stopped;
+    const target = dawn ? 1 : this.track.progress();
     this.shown += (target - this.shown) * 0.05;
     const t = this.shown;
-    const day = this.finished ? Math.min(1, (now - this.doneAt) / 900) : 0;
+    const day = dawn ? Math.min(1, (now - this.doneAt) / 900) : 0;
     const top = day ? mix(SKY.dawn[0], SKY.day[0], day) : mix3(SKY.night[0], SKY.late[0], SKY.dawn[0], t);
     const bottom = day ? mix(SKY.dawn[1], SKY.day[1], day) : mix3(SKY.night[1], SKY.late[1], SKY.dawn[1], t);
     // 天：几档色带（像素的渐变）
@@ -198,7 +280,7 @@ export class DreamCard {
     g.fillRect(0, GROUND, W, 1);
     // 右上角「合了 / 一共」：夜里浅色，天亮了深色
     const tr = this.track;
-    if (tr.total) digits(g, `${this.finished ? tr.total : tr.merged}/${tr.total}`, W - 3, 3, mix(SKY.digitNight, SKY.digitDay, Math.max(day, green)));
+    if (tr.total) digits(g, `${dawn ? tr.total : tr.merged}/${tr.total}`, W - 3, 3, mix(SKY.digitNight, SKY.digitDay, Math.max(day, green)));
     this.mascot(now, reduce);
   }
 

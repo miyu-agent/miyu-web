@@ -659,6 +659,8 @@ export class App {
       await this.ensureSession();
       // 工作区是会话的属性（核心 9-7）：说话不再带 `cwd`
       await this.store.send(/** @type {string} */ (this.current), text, extra);
+      // 说了一句（软件包照它办：整理记忆时人一说话就把她叫醒，整理转到后台）
+      this.ctx.emit('message.sent', { session: this.current });
       return true;
     } catch (err) {
       const why = refusalText(err);

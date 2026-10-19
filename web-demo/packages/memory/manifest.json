@@ -61,7 +61,13 @@
         "summary_done": "摘要写好了",
         "retry": "这一批没合成，再试一次",
         "result": "检查 {given} 条，修改 {revised} 条，作废 {retired} 条",
-        "batch_read": "这一批 {n} 条记忆"
+        "batch_read": "这一批 {n} 条记忆",
+        "batch_of": "第 {n} 批 / 共 {m} 批",
+        "dreaming": "做梦中…",
+        "stopped_title": "整理已中断",
+        "stopped": "整理已中断：检查 {given} 条，修改 {revised} 条，作废 {retired} 条，其余下次再整理。",
+        "stopped_none": "整理已中断，下次再整理。",
+        "stopped_line": "这一批放下了，下次再整理"
       },
       "dreaming": "整理中…",
       "dreamed": "整理完成：检查 {given} 条，修改 {revised} 条，作废 {retired} 条",
@@ -136,7 +142,11 @@
         "days": "{n} 天前",
         "date": "{m} 月 {d} 日",
         "full": "{y} 年 {m} 月 {d} 日"
-      }
+      },
+      "dream_esc_hint": "再按一次 Esc 停止整理",
+      "dream_background": "整理转到后台继续",
+      "dream_usage": "用法：/dream 整理记忆，/dream stop 停止整理",
+      "dream_stop_none": "没有在整理"
     },
     "en": {
       "title": "Memory",
@@ -166,7 +176,13 @@
         "summary_done": "Summary written",
         "retry": "This batch didn’t go through. Trying again",
         "result": "Checked {given}, revised {revised}, retired {retired}",
-        "batch_read": "{n} memories in this batch"
+        "batch_read": "{n} memories in this batch",
+        "batch_of": "Batch {n} of {m}",
+        "dreaming": "Dreaming…",
+        "stopped_title": "Tidying stopped",
+        "stopped": "Tidying stopped: checked {given}, revised {revised}, retired {retired}. The rest next time.",
+        "stopped_none": "Tidying stopped. It will continue next time.",
+        "stopped_line": "This batch was set aside for next time"
       },
       "dreaming": "Tidying…",
       "dreamed": "Done: checked {given}, revised {revised}, retired {retired}",
@@ -241,7 +257,11 @@
         "days": "{n} d ago",
         "date": "{m}/{d}",
         "full": "{y}-{m}-{d}"
-      }
+      },
+      "dream_esc_hint": "Press Esc again to stop tidying",
+      "dream_background": "Tidying continues in the background",
+      "dream_usage": "Usage: /dream to tidy memories, /dream stop to stop",
+      "dream_stop_none": "Not tidying right now"
     },
     "ja": {
       "title": "記憶",
@@ -271,7 +291,13 @@
         "summary_done": "要約を書きました",
         "retry": "このバッチはまとまりませんでした。やり直します",
         "result": "{given} 件を確認、{revised} 件を修正、{retired} 件を無効化",
-        "batch_read": "このバッチの記憶 {n} 件"
+        "batch_read": "このバッチの記憶 {n} 件",
+        "batch_of": "第 {n} 回 / 全 {m} 回",
+        "dreaming": "夢の中…",
+        "stopped_title": "整理を中断しました",
+        "stopped": "整理を中断しました：{given} 件を確認、{revised} 件を修正、{retired} 件を廃止。残りは次回整理します。",
+        "stopped_none": "整理を中断しました。次回続けます。",
+        "stopped_line": "この回は次回に回しました"
       },
       "dreaming": "整理中…",
       "dreamed": "整理完了：{given} 件を確認、{revised} 件を修正、{retired} 件を無効化",
@@ -346,7 +372,11 @@
         "days": "{n} 日前",
         "date": "{m} 月 {d} 日",
         "full": "{y} 年 {m} 月 {d} 日"
-      }
+      },
+      "dream_esc_hint": "もう一度 Esc を押すと整理を止めます",
+      "dream_background": "整理はバックグラウンドで続きます",
+      "dream_usage": "使い方：/dream で記憶を整理、/dream stop で停止",
+      "dream_stop_none": "整理していません"
     }
   }
 }
