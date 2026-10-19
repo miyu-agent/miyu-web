@@ -382,7 +382,7 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
 .sb-section.is-folded .sb-section-inner, .sb-section.is-folding .sb-section-inner { overflow: hidden; }
 .sb-section.is-drop-on { background: color-mix(in srgb, var(--accent-soft) 70%, transparent); box-shadow: inset 0 0 0 1.5px var(--accent); }
 /* 栏头：点了收起、展开，箭头悬停才露（收着的朝右） */
-.sb-head { cursor: pointer; border-radius: 6px; }
+.sb-head { min-height: 22px; cursor: pointer; border-radius: 6px; }
 .sb-head:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .sb-chevron { display: grid; place-items: center; color: var(--text-faint); opacity: 0; transition: opacity 120ms ease, transform var(--motion-slide) var(--ease-out); }
 .sb-chevron .icon { width: 12px; height: 12px; }
