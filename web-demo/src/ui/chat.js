@@ -240,13 +240,17 @@ export class Chat {
     const blocks = group(items);
     // 新冒出来的块只有排在原来最后一块后面的才算刚来的：往上翻读进来的更早的一页（核心 9-6 下）接在前面，不算你新说的、不拽视口
     const tail = blocks.findLastIndex((b) => this.blocks.has(b.key));
+    // 提示行（后台命令完成、压缩……）缩不缩进跟着它前面那一块她的回复（中途换了人格，旧的回复照回复时的人格画，2026-10-20 项目主人：
+    // 从无人格换到有人格，旧回复没有头、提示行却缩了进去）；前面还没有她的回复的照现在的人格
+    let bare = !this.look;
     for (const [i, block] of blocks.entries()) {
+      if (block.kind === 'her') bare = !this.lookOf(block);
       const own = block.kind === 'user' && this.mine(block.item);
       const appended = !this.blocks.has(block.key) && i > tail;
       const freshNote = this.settled && block.kind === 'note' && block.item.compaction === 'clear' && appended;
       // 你新说的一句（不是刚打开会话时读回来的、不是往上翻读进来的）：回到最底下，照最新的露；别人说的不拽视口
       const fresh = this.settled && own && appended;
-      const node = this.block(block);
+      const node = this.block(block, bare);
       // 你新说的一句：回到最底下；重做的落回原来的位置（`follow.js`）。等它画进页面再放
       if (fresh) arrivals.push(node);
       // 你的话里只有开这一轮的那一句能编辑（排进来的、别人说的没有，蓝图「排队的消息」第 5 条、「不是你说的话」）
@@ -283,15 +287,16 @@ export class Chat {
     return !s || (s.kind === 'person' && (this.ext.account == null || s.account === this.ext.account));
   }
 
-  /** 一块：你的（别人的）一句话、她的一轮，或者不挂在她头下的一行。没变的直接用记着的节点。 */
-  block(block) {
+  /** 一块：你的（别人的）一句话、她的一轮，或者不挂在她头下的一行（`bare`：前面那一块她的回复没有头，这一行不缩进）。没变的直接用记着的节点。 */
+  block(block, bare = false) {
     const look = block.kind === 'her' ? this.lookOf(block) : null;
-    const sig = block.kind === 'her' ? `her${block.cont ? '+' : ''}|${look ? `${look.name}|${look.avatar ?? ''}` : '-'}` : JSON.stringify(block.item);
+    const sig = block.kind === 'her' ? `her${block.cont ? '+' : ''}|${look ? `${look.name}|${look.avatar ?? ''}` : '-'}` : `${block.kind === 'note' && bare ? 'bare|' : ''}${JSON.stringify(block.item)}`;
     let rec = this.blocks.get(block.key);
     if (!rec || rec.sig !== sig) {
       const node = block.kind === 'user'
         ? userNode(block.item, this.on, { session: this.where.session, lightbox: this.ext.lightbox, mine: this.mine(block.item), titleOf: this.ext.titleOf })
         : block.kind === 'note' ? (block.item.slot ? slotNode(block.item, this) : noteNode(block.item, this.where, this.markdown)) : herNode(!!block.cont, look);
+      if (block.kind === 'note') node.classList.toggle('is-bare', bare);
       rec?.node.replaceWith(node);
       // 记下这是哪一块：钉在它后面的照它找（`anchor`）
       node.dataset.block = block.key;
