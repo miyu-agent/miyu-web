@@ -49,12 +49,13 @@
     "project_new_session": "New session in project",
     "project_settings": "Project settings",
     "project_delete": "Delete project",
-    "project_delete_confirm": "Confirm delete",
     "move_to_project": "Move to project",
     "move_out": "Remove from project",
     "here": "{name} (here)",
     "all_sessions_nav": "All sessions",
-    "new_session_nav": "New session"
+    "new_session_nav": "New session",
+    "cancel": "Cancel",
+    "project_delete_ask": "Delete project “{name}”? Its sessions move out of the project and are not deleted."
   },
   "crumbs": {
     "label": "Subagent session path",

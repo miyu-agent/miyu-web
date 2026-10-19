@@ -4,7 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { PALETTE, colorOf, nextColor, projectRows, draftOf, PROJECT_ROWS } from '../src/model/project.js';
+import { PALETTE, colorOf, nextColor, projectRows, draftOf } from '../src/model/project.js';
 import { formOf, formProblem, createParams, updateParams } from '../packages/setup/project-form.js';
 
 test('颜色：十二种，存浅色那一种；深色里画亮一档的，自选的照原样，没设的是 null', () => {
@@ -17,7 +17,7 @@ test('颜色：十二种，存浅色那一种；深色里画亮一档的，自�
   assert.equal(nextColor(12), PALETTE[0][0], '轮着来');
 });
 
-test('左栏一个项目露最近的几个：照排好的先后，置顶的不算，别的项目的不混进来', () => {
+test('左栏一个项目展开列全部：照排好的先后，置顶的不算，别的项目的不混进来', () => {
   const rows = [
     { session: 'pin', project: 'A', pinned: true },
     ...Array.from({ length: 7 }, (_, i) => ({ session: `a${i}`, project: 'A' })),
@@ -25,7 +25,7 @@ test('左栏一个项目露最近的几个：照排好的先后，置顶的不�
     { session: 'x', project: null },
   ];
   const got = projectRows(rows, [{ project: 'A' }, { project: 'B' }, { project: 'C' }]);
-  assert.deepEqual(got.get('A')?.map((r) => r.session), ['a0', 'a1', 'a2', 'a3', 'a4'].slice(0, PROJECT_ROWS));
+  assert.deepEqual(got.get('A')?.map((r) => r.session), ['a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6']);
   assert.deepEqual(got.get('B')?.map((r) => r.session), ['b0']);
   assert.deepEqual(got.get('C'), [], '没有会话的项目交空的');
 });

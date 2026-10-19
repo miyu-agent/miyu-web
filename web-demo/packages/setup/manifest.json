@@ -326,17 +326,7 @@
         "untitled": "未命名会话",
         "new_session": "新会话",
         "open_project": "打开项目",
-        "workspace": "工作区",
-        "rename": "重命名",
-        "pin": "置顶",
-        "unpin": "取消置顶",
-        "move": "移到项目",
-        "move_out": "移出项目",
-        "copy_id": "复制会话编号",
-        "delete": "删除",
-        "delete_confirm": "确认删除",
-        "back": "返回",
-        "here": "{name}（在这里）"
+        "workspace": "工作区"
       }
     },
     "en": {
@@ -513,17 +503,7 @@
         "untitled": "Untitled session",
         "new_session": "New session",
         "open_project": "Open project",
-        "workspace": "Workspace",
-        "rename": "Rename",
-        "pin": "Pin",
-        "unpin": "Unpin",
-        "move": "Move to project",
-        "move_out": "Remove from project",
-        "copy_id": "Copy session ID",
-        "delete": "Delete",
-        "delete_confirm": "Confirm delete",
-        "back": "Back",
-        "here": "{name} (here)"
+        "workspace": "Workspace"
       }
     },
     "ja": {
@@ -700,17 +680,7 @@
         "untitled": "無題のセッション",
         "new_session": "新しいセッション",
         "open_project": "プロジェクトを開く",
-        "workspace": "ワークスペース",
-        "rename": "名前を変更",
-        "pin": "ピン留め",
-        "unpin": "ピン留めを外す",
-        "move": "プロジェクトへ移動",
-        "move_out": "プロジェクトから外す",
-        "copy_id": "セッション ID をコピー",
-        "delete": "削除",
-        "delete_confirm": "削除を確定",
-        "back": "戻る",
-        "here": "{name}（ここ）"
+        "workspace": "ワークスペース"
       }
     }
   }

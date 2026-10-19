@@ -189,7 +189,7 @@ test('读进来了的会话：标题、置顶照会话表；在不在跑照会�
   assert.deepEqual([store.summary('L').title, store.summary('L').pinned], ['改过的名字', false]);
 });
 
-test('项目（核心 H-1、H-2）：起来时订阅项目表；项目里的会话不占最近活动的那几个，每个项目最近的几个照样读进左栏；推来的改、删跟着变', async () => {
+test('项目（核心 H-1、H-2）：起来时订阅项目表；项目里的会话不占最近活动的那几个，项目里的全部读进左栏；推来的改、删跟着变', async () => {
   const at = (h) => `2026-10-01T${String(h).padStart(2, '0')}:00:00.000Z`;
   const listed = [
     { session: 'loose', parent: null, last_active: at(1) },
@@ -200,7 +200,7 @@ test('项目（核心 H-1、H-2）：起来时订阅项目表；项目里的会�
   await store.boot();
   assert.equal(store.projects.supported, true);
   assert.deepEqual(store.projects.list.map((p) => p.name), ['网页']);
-  assert.deepEqual(store.order, ['loose', 'pin', 'p6', 'p5', 'p4', 'p3', 'p2'], '最近活动的照不在项目里的排；置顶的照列；项目里最近的五个');
+  assert.deepEqual(store.order, ['loose', 'pin', 'p6', 'p5', 'p4', 'p3', 'p2', 'p1', 'p0'], '最近活动的照不在项目里的排；置顶的照列；项目里的全部');
   assert.equal(store.summary('p6').project, 'P');
   assert.equal(store.summary('loose').project, null);
   push('projects.changed', { project: { project: 'P', name: '网页 2', color: '#3a63c9' } });

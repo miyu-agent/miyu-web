@@ -363,4 +363,7 @@
 .setup-menu-row.is-danger .setup-menu-title { color: var(--danger); }
 .setup-menu-row.is-danger.is-selected { background: color-mix(in srgb, var(--danger) 12%, transparent); }
 .setup-menu-divider { height: 1px; margin: 5px 6px; background: var(--line); }
-.setup-info-rename { width: min(320px, 50vw); height: 24px; padding: 0 8px; border: 0; border-radius: 7px; outline: 0; background: var(--surface-1); box-shadow: var(--composer-shadow); color: var(--text); font: 12.5px var(--sans); }
+/* 值长的换行写全（工作区的完整路径）；行末的图标按钮（换工作区） */
+.setup-menu-row.is-wrap .setup-menu-title { overflow: visible; white-space: normal; overflow-wrap: anywhere; line-height: 1.45; }
+.setup-menu-row.is-pair { max-width: 420px; }
+.setup-menu-action.is-inline { flex: none; align-self: center; margin: -4px -4px -4px 4px; }

@@ -49,12 +49,13 @@
     "project_new_session": "プロジェクトで新しいセッション",
     "project_settings": "プロジェクトの設定",
     "project_delete": "プロジェクトを削除",
-    "project_delete_confirm": "削除を確定",
     "move_to_project": "プロジェクトへ移動",
     "move_out": "プロジェクトから外す",
     "here": "{name}（ここ）",
     "all_sessions_nav": "すべてのセッション",
-    "new_session_nav": "新しいセッション"
+    "new_session_nav": "新しいセッション",
+    "cancel": "キャンセル",
+    "project_delete_ask": "プロジェクト「{name}」を削除しますか？中のセッションはプロジェクトの外に出るだけで、削除されません。"
   },
   "crumbs": {
     "label": "サブエージェントのセッションの位置",

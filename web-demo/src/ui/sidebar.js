@@ -67,8 +67,9 @@ export class Sidebar {
     this.selecting = false;
     this.selected = /** @type {Set<string>} */ (new Set());
     this.anchor = /** @type {string|null} */ (null);
-    /** 正在删的：不再画（在收的动画里） */
+    /** 正在删的：不再画（在收的动画里）；还有几批在收（收的时候不重画） */
     this.removing = /** @type {Set<string>} */ (new Set());
+    this.leaving = 0;
     /** 树：人点过的开关（会话 → 开着没有）、点开了「已完成 N 个」的会话；这个标签页里记着 */
     this.openTree = /** @type {Map<string, boolean>} */ (new Map());
     this.doneOpen = /** @type {Set<string>} */ (new Set());
@@ -206,6 +207,8 @@ export class Sidebar {
    */
   render(items, current) {
     this.last = [items, current];
+    // 有行在收（删除的动画）：先记着，收完再画
+    if (this.leaving) return;
     const kept = items.filter((it) => !this.removing.has(it.session));
     // 项目（核心有项目、有项目、不在多选时；2026-10-19 项目主人：没有项目时不显示「项目」那一栏）：项目里的会话在它的项目下面，不在下面「会话」那一栏里；
     // 不认得的项目（刚删掉的）的照不在项目里
@@ -256,8 +259,13 @@ export class Sidebar {
         menuFor: this.menuFor, armed: this.armed, dark: this.on.dark(), draw, on: this.on,
         toggleMenu: (/** @type {string|null} */ key) => this.toggleMenu(key),
         flip: (/** @type {string} */ id, /** @type {boolean} */ open) => this.flipProject(id, open),
-        // 删除项目点了第一下：原地换那一项的字，菜单不重画（2026-10-19 项目主人：原来整个重画，菜单重新弹一次，像卡了）
-        arm: (/** @type {string} */ id, /** @type {HTMLElement} */ button) => { this.armed = id; button.querySelector('span')?.replaceChildren(t('sidebar.project_delete_confirm')); button.classList.add('is-armed'); },
+        // 删除项目点了：这个菜单收起，再弹出一个问一句的小菜单（2026-10-19 项目主人：要有第二个菜单当反馈，但要流畅地出来，原来像卡了）
+        arm: (/** @type {string} */ id) => {
+          const open = this.items.querySelector('.session-menu');
+          const next = () => { this.armed = id; this.drawn = ''; this.render(...this.last); };
+          if (open instanceof HTMLElement) leave(open, next);
+          else next();
+        },
       };
       // 一栏一块：头、下面收起来的那一截；整块是放得下会话的一块（拖会话，`sidebar-drag.js` 照 `data-zone`，亮的时候整块亮）
       const section = (/** @type {string} */ key, /** @type {HTMLElement} */ head, /** @type {(Node|null)[]} */ body, /** @type {string|null} */ zone) =>
@@ -291,15 +299,10 @@ export class Sidebar {
     else this.folded.add(key);
     this.on.prefs?.set(FOLDED, [...this.folded]);
     const el = this.items.querySelector(`.sb-section[data-section="${key}"]`);
-    // 缓的时候里面那一截裁着（展开时原来一下子全露出来，没有动画：2026-10-19 项目主人）
-    el?.classList.add('is-folding');
-    el?.classList.toggle('is-folded', this.folded.has(key));
+    if (el instanceof HTMLElement) foldAnim(el, /** @type {HTMLElement} */ (el.querySelector(':scope > .sb-section-body')), !this.folded.has(key), 'is-folded', true, this.list);
     // 选中的那一块跟着这一项露没露（重画时照 `folded` 画，不用另记）
     this.placePill(true);
-    setTimeout(() => {
-      el?.classList.remove('is-folding');
-      this.placePill();
-    }, res.layout.sidebar_move_ms + 20);
+    setTimeout(() => this.placePill(), res.layout.sidebar_move_ms + 20);
   }
 
   /**
@@ -310,15 +313,10 @@ export class Sidebar {
     this.projectOpen.set(id, open);
     const el = this.items.querySelector(`.project[data-project="${CSS.escape(id)}"]`);
     if (!(el instanceof HTMLElement)) return this.render(...this.last);
-    // 缓的时候里面那一截裁着（展开着、不在缓的时候不裁，里面会话的菜单才往下开得出来）
-    el.classList.add('is-folding');
-    el.classList.toggle('is-open', open);
+    foldAnim(el, /** @type {HTMLElement} */ (el.querySelector(':scope > .project-kids')), open, 'is-open', false, this.list);
     el.querySelector('.project-row .session-item-main')?.setAttribute('aria-expanded', String(open));
     this.placePill(true);
-    setTimeout(() => {
-      el.classList.remove('is-folding');
-      this.placePill();
-    }, res.layout.sidebar_move_ms + 20);
+    setTimeout(() => this.placePill(), res.layout.sidebar_move_ms + 20);
   }
 
   /** 一个会话下面（一层层往下）在跑的子代理有几个（项目收着时名字前面的 `(N)`）。 @param {string} id */
@@ -571,6 +569,8 @@ export class Sidebar {
     // 多选时点删除：多选当场退出（勾选框换回记号），同时这几项开始收（蓝图「批量删除」）
     if (this.selecting) this.select(false);
     for (const id of ids) this.removing.add(id);
+    // 收的这一会儿不重画（2026-10-19 项目主人：删会话的动画会闪、会卡）：原来菜单收起、推送来了都会整个重画，正在收的那一行当场没了，下面的跳上来
+    this.leaving += 1;
     const gone = Promise.all(ids.map((id) => new Promise((resolve) => {
       const el = this.items.querySelector(`[data-session="${CSS.escape(id)}"]`);
       if (el instanceof HTMLElement) leave(collapsing(el), () => { el.remove(); resolve(undefined); });
@@ -578,6 +578,7 @@ export class Sidebar {
     })));
     const done = await this.on.removeMany(ids);
     await gone;
+    this.leaving -= 1;
     for (const id of ids) this.removing.delete(id);
     for (const id of done) {
       this.selected.delete(id);
@@ -679,4 +680,24 @@ function steady(a, b) {
     else j++;
   }
   return out;
+}
+
+/**
+ * 一栏、一个项目展开、收起的动画（2026-10-19 项目主人：「会话」那一栏和「置顶」的动画完全不一样）：高度只缓看得见的那一截（从它的顶到左栏底边，
+ * 比窗口还长的那一栏原来大半截在窗口外面缓，看着像先停一下再一下子收掉），看不见的直接到位。缓的时候裁着（`is-folding`）。减少动画的直接换。
+ * @param {HTMLElement} host 收起、展开的那一块 @param {HTMLElement} body 里面那一截 @param {boolean} open 展开
+ * @param {string} cls 照它换样子的类 @param {boolean} clsMeansFolded 这个类是收着（`is-folded`）还是开着（`is-open`）
+ * @param {HTMLElement|null} list 左栏能滚的那一层
+ */
+function foldAnim(host, body, open, cls, clsMeansFolded, list) {
+  const apply = () => host.classList.toggle(cls, clsMeansFolded ? !open : open);
+  if (!body || matchMedia('(prefers-reduced-motion: reduce)').matches) return apply();
+  const full = body.scrollHeight;
+  const bottom = list ? list.getBoundingClientRect().bottom : innerHeight;
+  const visible = Math.max(0, Math.min(full, bottom - body.getBoundingClientRect().top));
+  host.classList.add('is-folding');
+  apply();
+  const anim = body.animate(open ? [{ height: '0px' }, { height: `${visible}px` }] : [{ height: `${visible}px` }, { height: '0px' }],
+    { duration: res.layout.sidebar_move_ms, easing: 'cubic-bezier(0.2, 0, 0, 1)' });
+  anim.onfinish = anim.oncancel = () => host.classList.remove('is-folding');
 }

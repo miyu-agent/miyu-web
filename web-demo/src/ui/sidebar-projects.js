@@ -1,8 +1,8 @@
 // @ts-check
 //! 左栏「项目」那一栏里的一个个项目（蓝图 `web.md`「会话整理和项目」第 3、4 条；栏头在 `sidebar.js`，悬停露 +）。一个项目一行：
 //! 记号那一格是项目颜色的文件夹，名字（收着、里面有在跑的前面写 `(N)`），悬停露 ⋯（打开项目、在项目里新建会话、项目设置…、删除项目…），最右
-//! 一个展开箭头（没悬停、没展开时不画）。点这一行就地展开、收起（高度缓过去）；展开着的露最近活动的几个会话，照普通会话的样子、和项目名左边
-//! 对齐，子代理照旧缩进挂树线。删除项目在菜单里点两下：第一下换成「再点一次删除」，里面的会话移出项目、不删。
+//! 一个展开箭头（没悬停、没展开时不画）。点这一行就地展开、收起（高度缓过去）；展开着的列出全部会话，照普通会话的样子、和项目名左边
+//! 对齐，子代理照旧缩进挂树线。删除项目：菜单收起，再弹出一个问一句的小菜单（里面的会话移出项目、不删）。
 
 import { h, icon } from './dom.js';
 import { t } from '../util/res.js';
@@ -12,7 +12,7 @@ import { colorOf } from '../model/project.js';
  * 左栏交给这一栏的。
  * @typedef {{project: import('../core/projects.js').Project, rows: any[], open: boolean, count: number}} Block
  * @typedef {{menuFor: string|null, armed: string|null, dark: boolean, toggleMenu: (key: string|null) => void, flip: (id: string, open: boolean) => void,
- *   draw: (row: any) => HTMLElement, arm: (id: string, button: HTMLElement) => void,
+ *   draw: (row: any) => HTMLElement, arm: (id: string) => void,
  *   on: {viewProjects: () => void, editProject: (id: string|null) => void, openProject: (id: string) => void, newIn: (id: string) => void,
  *     deleteProject: (id: string) => void}}} Bar
  */
@@ -49,24 +49,22 @@ export function projectBlock(bar, block) {
           onclick: () => bar.toggleMenu(menuOpen ? null : key),
         }, icon('ellipsis'))),
       h('span.project-chevron', { 'aria-hidden': 'true' }, icon('chevron-right')),
-      menuOpen ? h('div.session-menu', { role: 'menu' },
-        item(t('sidebar.project_open'), null, () => { bar.toggleMenu(null); bar.on.openProject(id); }),
-        item(t('sidebar.project_new_session'), null, () => { bar.toggleMenu(null); bar.on.newIn(id); }),
-        item(t('sidebar.project_settings'), null, () => { bar.toggleMenu(null); bar.on.editProject(id); }),
-        // 点两下才删（第一下换字，菜单不收）
-        item(t(armed ? 'sidebar.project_delete_confirm' : 'sidebar.project_delete'), 'trash-2', (/** @type {MouseEvent} */ e) => {
-          const button = /** @type {HTMLElement} */ (e.currentTarget);
-          if (!button.classList.contains('is-armed')) {
-            e.stopPropagation();
-            return bar.arm(id, button);
-          }
-          bar.toggleMenu(null);
-          bar.on.deleteProject(id);
-        }, true, armed)) : null),
+      menuOpen && armed
+        // 第二个菜单：问一句（会话移出项目、不删），「取消」「删除」
+        ? h('div.session-menu.is-confirm', { role: 'dialog' },
+          h('p.session-confirm-text', t('sidebar.project_delete_ask', { name: p.name })),
+          h('div.session-confirm-actions',
+            h('button', { type: 'button', onclick: () => bar.toggleMenu(null) }, t('sidebar.cancel')),
+            h('button.is-danger', { type: 'button', onclick: () => { bar.toggleMenu(null); bar.on.deleteProject(id); } }, t('sidebar.project_delete'))))
+        : menuOpen ? h('div.session-menu', { role: 'menu' },
+          item(t('sidebar.project_open'), null, () => { bar.toggleMenu(null); bar.on.openProject(id); }),
+          item(t('sidebar.project_new_session'), null, () => { bar.toggleMenu(null); bar.on.newIn(id); }),
+          item(t('sidebar.project_settings'), null, () => { bar.toggleMenu(null); bar.on.editProject(id); }),
+          item(t('sidebar.project_delete'), 'trash-2', (/** @type {MouseEvent} */ e) => { e.stopPropagation(); bar.arm(id); }, true)) : null),
     h('div.project-kids', kids));
 }
 
-/** 菜单的一项。 @param {string} label @param {string|null} name 图标 @param {(e: MouseEvent) => void} run @param {boolean} [danger] @param {boolean} [armed] */
-function item(label, name, run, danger = false, armed = false) {
-  return h(`button${danger ? '.is-danger' : ''}${armed ? '.is-armed' : ''}`, { type: 'button', role: 'menuitem', onclick: run }, name ? icon(name) : null, h('span', label));
+/** 菜单的一项。 @param {string} label @param {string|null} name 图标 @param {(e: MouseEvent) => void} run @param {boolean} [danger] */
+function item(label, name, run, danger = false) {
+  return h(`button${danger ? '.is-danger' : ''}`, { type: 'button', role: 'menuitem', onclick: run }, name ? icon(name) : null, h('span', label));
 }

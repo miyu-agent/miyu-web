@@ -346,7 +346,9 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
 .project-chevron .icon { width: 13px; height: 13px; }
 .project-row:hover .project-chevron, .project-row:focus-within .project-chevron, .project.is-open .project-chevron { opacity: 1; }
 .project.is-open .project-chevron { transform: rotate(90deg); }
-.project-kids { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--motion-slide) var(--ease-out); }
+.project-kids { display: grid; grid-template-rows: 0fr; }
+/* 展开、收起的高度由 `sidebar.js` 的 `foldAnim` 缓（只缓看得见的那一截），缓的时候裁着 */
+.sb-section.is-folding > .sb-section-body, .project.is-folding > .project-kids { overflow: hidden; }
 .project.is-open .project-kids { grid-template-rows: 1fr; }
 .project-kids-inner { display: grid; gap: var(--item-gap); min-height: 0; overflow: hidden; }
 .project.is-open .project-kids-inner { padding-top: var(--item-gap); }
@@ -354,7 +356,7 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
 .project.is-open:not(.is-folding) .project-kids-inner { overflow: visible; }
 .project-empty { position: relative; display: block; padding: 3px 11px 5px 29px; color: var(--text-faint); font-size: 12px; }
 @media (prefers-reduced-motion: reduce) {
-  .project-kids, .project-chevron { transition: none; }
+  .project-chevron { transition: none; }
 }
 /* 菜单里带图标的一项（删除项目）；「移到项目」那一页：顶上一行返回，一个项目一行（项目颜色的文件夹） */
 .session-menu button { display: flex; align-items: center; gap: 7px; }
@@ -380,7 +382,7 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
 .sb-section { display: grid; border-radius: 10px; transition: background-color 120ms ease, box-shadow 120ms ease; }
 .sb-section + .sb-section { margin-top: 10px; }
 .sb-section > .session-group-header { margin-top: 6px; }
-.sb-section-body { display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--motion-slide) var(--ease-out); }
+.sb-section-body { display: grid; grid-template-rows: 1fr; }
 .sb-section.is-folded > .sb-section-body { grid-template-rows: 0fr; }
 .sb-section-inner { display: grid; gap: var(--item-gap); min-height: 0; }
 .sb-section.is-folded .sb-section-inner, .sb-section.is-folding .sb-section-inner { overflow: hidden; }
@@ -399,7 +401,7 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
 /* 「会话」那一栏里按时间分的组头（近 7 天、近 30 天、30 天前）：比栏头小一点的间距 */
 .session-group-header.is-time { margin-top: 10px; }
 @media (prefers-reduced-motion: reduce) {
-  .sb-section-body, .sb-chevron { transition: none; }
+  .sb-chevron { transition: none; }
 }
 /* 展开着的项目不写 `(N)`；选中的那一块当场拿掉（刚收进去的，不淡出） */
 .project.is-open > .project-row .session-count { display: none; }

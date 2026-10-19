@@ -9,7 +9,6 @@
 import { res } from '../util/res.js';
 import { SessionIndex } from './session-index.js';
 import { ProjectList } from './projects.js';
-import { PROJECT_ROWS } from '../model/project.js';
 import { ViewLog, VIEW_PUSHES } from './view.js';
 
 /**
@@ -60,7 +59,7 @@ export class Store {
 
   /**
    * 左栏列哪些（蓝图 `web.md`「左栏」）：顶层的会话（不是一次性的、不是子会话）照最近活动的几个（`layout.json` 的 `listed_sessions`），
-   * 加上置顶的、每个项目最近活动的几个（`PROJECT_ROWS`，项目展开时露的）、全部会话那一页开过的；先后由界面排（`rank`）。
+   * 加上置顶的、项目里的（项目展开时全部列出来）、全部会话那一页开过的；先后由界面排（`rank`）。
    */
   get order() {
     const top = this.index.all().filter((e) => !e.oneshot && !e.parent);
@@ -69,15 +68,8 @@ export class Store {
     // 项目里的会话不在下面按时间的那几组里（蓝图「会话整理和项目」第 4 条），不占那几个的数
     const recent = sorted.filter((e) => !e.project).slice(0, res.layout.listed_sessions).map((e) => e.session);
     const pinned = top.filter((e) => e.pinned).map((e) => e.session);
-    /** @type {Map<string, string[]>} */
-    const inProject = new Map();
-    for (const e of sorted) {
-      if (!e.project || e.pinned) continue;
-      const list = inProject.get(e.project) ?? [];
-      if (list.length < PROJECT_ROWS) list.push(e.session);
-      inProject.set(e.project, list);
-    }
-    return [...new Set([...recent, ...pinned, ...[...inProject.values()].flat(), ...this.extra])];
+    const inProject = sorted.filter((e) => e.project && !e.pinned).map((e) => e.session);
+    return [...new Set([...recent, ...pinned, ...inProject, ...this.extra])];
   }
 
   /**

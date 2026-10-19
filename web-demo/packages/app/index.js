@@ -66,13 +66,6 @@ export function apply(ctx) {
     title: (id) => app.titleOf(id),
     /** 派它的会话（子代理的会话有，主会话是 `null`） */
     parentOf: (id) => app.parentOf(id),
-    /** 会话的操作（左上角的「会话信息」，同左栏会话的 ⋮）：置顶、移进移出项目、改名、复制编号、删除 */
-    pinned: (id) => !!app.store.summary(id).pinned,
-    pin: (id, on) => app.sidebar.on.pin(id, on),
-    place: (id, patch) => app.sidebar.on.place(id, patch),
-    rename: (id, title) => app.sidebar.on.rename(id, title),
-    copyId: (id) => app.sidebar.on.copyId(id),
-    remove: (id) => app.sidebar.removeAll([id]),
     /** 项目的十二种颜色（存的是浅色那一种）、一种颜色照现在的深浅画成什么（新建项目、项目设置那一个窗口，软件包 setup） */
     projectPalette: () => PALETTE,
     projectColor: (color) => colorOf(color, !!ctx.theme?.dark()),

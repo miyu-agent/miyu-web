@@ -8,8 +8,9 @@ import { h, icon, replace } from '../../src/lib/dom.js';
 
 /**
  * @typedef {{title: string, desc?: string, icon?: string, current?: boolean, off?: boolean, tip?: string, label?: string, more?: boolean, still?: boolean,
- *   danger?: boolean, keep?: boolean, pick: (el: HTMLElement) => void}} Row
- *   `label` 是左边暗字的名字（名字、值一行的样子，左上角的「会话信息」），`more` 末尾一个 ›，`still` 只是看的、点不了、不亮，`keep` 点了不收菜单
+ *   danger?: boolean, keep?: boolean, wrap?: boolean, action?: {icon: string, title: string, run: () => void}, pick: (el: HTMLElement) => void}} Row
+ *   `label` 是左边暗字的名字（名字、值一行的样子，左上角的「会话信息」），`more` 末尾一个 ›，`still` 只是看的、点不了、不亮，`keep` 点了不收菜单，
+ *   `wrap` 值太长换行写全（不截断），`action` 行末一个图标按钮
  * @typedef {{section: string}} Section
  * @typedef {{divider: true}} Divider 一道细线
  * @typedef {{title: string, rows: (Row|Section|Divider)[], note?: string, foot?: HTMLElement[], back?: () => void, below?: boolean, action?: {icon: string, title: string, run: () => void}}} View
@@ -51,12 +52,16 @@ export class Menu {
       if ('section' in r) return h('div.setup-menu-section', r.section);
       if ('divider' in r) return h('div.setup-menu-divider', { role: 'separator' });
       const text = h('div.setup-menu-text', h('span.setup-menu-title', r.title), r.desc ? h('span.setup-menu-desc', r.desc) : null);
-      const el = h(`div.setup-menu-row${r.current ? '.is-current' : ''}${r.off ? '.is-off' : ''}${r.label != null ? '.is-pair' : ''}${r.still ? '.is-still' : ''}${r.danger ? '.is-danger' : ''}`, {
+      const el = h(`div.setup-menu-row${r.current ? '.is-current' : ''}${r.off ? '.is-off' : ''}${r.label != null ? '.is-pair' : ''}${r.still ? '.is-still' : ''}${r.danger ? '.is-danger' : ''}${r.wrap ? '.is-wrap' : ''}`, {
         role: 'menuitem', title: r.tip ?? null,
         onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(),
         onmousemove: () => { if (!r.off && !r.still) this.mark(this.items.findIndex((x) => x.row === r)); },
         onclick: () => this.pick(r),
       }, r.icon ? icon(r.icon) : null, r.label != null ? h('span.setup-menu-label', r.label) : null, text,
+        r.action ? h('button.setup-menu-action.is-inline', {
+          type: 'button', title: r.action.title, 'aria-label': r.action.title, onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(),
+          onclick: (/** @type {MouseEvent} */ e) => { e.stopPropagation(); r.action?.run(); },
+        }, icon(r.action.icon)) : null,
         r.more ? h('span.setup-menu-more', icon('chevron-right')) : r.label != null ? null : icon('check'));
       if (!r.still) this.items.push({ el, row: r });
       return el;

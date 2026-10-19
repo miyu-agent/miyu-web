@@ -2,9 +2,6 @@
 //! 项目的几样纯逻辑（蓝图 `web.md`「会话整理和项目」；核心 H-1、H-2，`docs/reference/projects.md`）：十二种颜色、左栏里一个项目露哪几个会话、
 //! 在项目里开的新会话先选上什么。新建、项目设置那一张表在软件包 `setup`（`project-form.js`），颜色经服务 `chat` 交过去。
 
-/** 项目展开时露几个会话（第 3 条：最近活动的 5 个，更多的进项目页） */
-export const PROJECT_ROWS = 5;
-
 /**
  * 十二种颜色（第 8 条，2026-10-19 项目主人看过样品：「可选颜色不够多」以后加到十二种）：存进项目的是浅色那一种，深色里画成同一种颜色亮一档的
  * （照样品的两套）。先后照样品的那一排。
@@ -29,8 +26,8 @@ export function colorOf(color, dark) {
 export const nextColor = (count) => PALETTE[count % PALETTE.length][0];
 
 /**
- * 左栏里每个项目露的会话（第 3、4 条）：照排好的先后（`rank`），不算置顶的（置顶的项目会话在「置顶」里），最多 `PROJECT_ROWS` 个；没有的项目
- * 交空的。
+ * 左栏里每个项目露的会话（第 3、4 条）：照排好的先后（`rank`），不算置顶的（置顶的项目会话在「置顶」里），全部（2026-10-19 项目主人选的：展开就列
+ * 全部，原来只露最近 5 个、更多的要进项目页）；没有的项目交空的。
  * @template {{session: string, pinned?: boolean, project?: string|null}} T
  * @param {T[]} ranked @param {{project: string}[]} projects
  * @returns {Map<string, T[]>}
@@ -40,7 +37,7 @@ export function projectRows(ranked, projects) {
   const out = new Map(projects.map((p) => [p.project, []]));
   for (const r of ranked) {
     const list = r.project && !r.pinned ? out.get(r.project) : null;
-    if (list && list.length < PROJECT_ROWS) list.push(r);
+    if (list) list.push(r);
   }
   return out;
 }
