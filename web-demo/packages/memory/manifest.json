@@ -67,7 +67,9 @@
         "stopped_title": "整理已中断",
         "stopped": "整理已中断：检查 {given} 条，修改 {revised} 条，作废 {retired} 条，其余下次再整理。",
         "stopped_none": "整理已中断，下次再整理。",
-        "stopped_line": "这一批放下了，下次再整理"
+        "stopped_line": "这一批放下了，下次再整理",
+        "stop": "停止",
+        "stopping": "正在停止…"
       },
       "dreaming": "整理中…",
       "dreamed": "整理完成：检查 {given} 条，修改 {revised} 条，作废 {retired} 条",
@@ -146,7 +148,8 @@
       "dream_esc_hint": "再按一次 Esc 停止整理",
       "dream_background": "整理转到后台继续",
       "dream_usage": "用法：/dream 整理记忆，/dream stop 停止整理",
-      "dream_stop_none": "没有在整理"
+      "dream_stop_none": "没有在整理",
+      "dream_stopped": "已停止整理。"
     },
     "en": {
       "title": "Memory",
@@ -182,7 +185,9 @@
         "stopped_title": "Tidying stopped",
         "stopped": "Tidying stopped: checked {given}, revised {revised}, retired {retired}. The rest next time.",
         "stopped_none": "Tidying stopped. It will continue next time.",
-        "stopped_line": "This batch was set aside for next time"
+        "stopped_line": "This batch was set aside for next time",
+        "stop": "Stop",
+        "stopping": "Stopping…"
       },
       "dreaming": "Tidying…",
       "dreamed": "Done: checked {given}, revised {revised}, retired {retired}",
@@ -261,7 +266,8 @@
       "dream_esc_hint": "Press Esc again to stop tidying",
       "dream_background": "Tidying continues in the background",
       "dream_usage": "Usage: /dream to tidy memories, /dream stop to stop",
-      "dream_stop_none": "Not tidying right now"
+      "dream_stop_none": "Not tidying right now",
+      "dream_stopped": "Tidying stopped."
     },
     "ja": {
       "title": "記憶",
@@ -297,7 +303,9 @@
         "stopped_title": "整理を中断しました",
         "stopped": "整理を中断しました：{given} 件を確認、{revised} 件を修正、{retired} 件を廃止。残りは次回整理します。",
         "stopped_none": "整理を中断しました。次回続けます。",
-        "stopped_line": "この回は次回に回しました"
+        "stopped_line": "この回は次回に回しました",
+        "stop": "停止",
+        "stopping": "停止中…"
       },
       "dreaming": "整理中…",
       "dreamed": "整理完了：{given} 件を確認、{revised} 件を修正、{retired} 件を無効化",
@@ -376,7 +384,8 @@
       "dream_esc_hint": "もう一度 Esc を押すと整理を止めます",
       "dream_background": "整理はバックグラウンドで続きます",
       "dream_usage": "使い方：/dream で記憶を整理、/dream stop で停止",
-      "dream_stop_none": "整理していません"
+      "dream_stop_none": "整理していません",
+      "dream_stopped": "整理を停止しました。"
     }
   }
 }

@@ -30,8 +30,9 @@ export class DreamCard {
   /**
    * @param {any} ctx `memory` 包的 ctx
    * @param {Map<string, string>} texts 记忆编号 → 正文（打开时读的那一份；滚动区照它写）
+   * @param {{stop?: () => Promise<void>}} [opts] 头一行右边的「停止」叫停这一趟（核心 R-23 的 `memory.dream_stop`；人叫的整理才有）
    */
-  constructor(ctx, texts) {
+  constructor(ctx, texts, opts = {}) {
     this.ctx = ctx;
     this.t = (/** @type {string} */ key, /** @type {any} */ fields) => ctx.text(key, fields);
     this.texts = texts;
@@ -53,10 +54,25 @@ export class DreamCard {
     /** 「做梦中… · 1m 20s」：整理了多久，每秒走一下，合完停住；这一批她还一个字都没写出来时前面写「做梦中…」 */
     this.time = h('span.dream-time');
     this.second = -1;
+    /** 「停止」：点了写「正在停止…」、灰着；叫停成了等回应收成「整理已中断」，没成的（已经合完了）照原样 */
+    this.stopBtn = opts.stop ? h('button.dream-stop', {
+      type: 'button',
+      onclick: async () => {
+        const btn = /** @type {HTMLButtonElement} */ (this.stopBtn);
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.textContent = this.t('dream.stopping');
+        await opts.stop?.();
+        if (!this.finished) {
+          btn.disabled = false;
+          btn.textContent = this.t('dream.stop');
+        }
+      },
+    }, this.t('dream.stop')) : null;
     this.list = h('div.dream-feed-list');
     this.canvas = /** @type {HTMLCanvasElement} */ (h('canvas', { width: 400, height: H }));
     this.el = h('section.dream-card', { 'aria-live': 'polite' },
-      h('div.dream-head', this.title, this.batch, this.time, this.tally),
+      h('div.dream-head', this.title, this.batch, this.time, this.tally, this.stopBtn),
       h('div.dream-feed', this.list),
       h('div.dream-stage', this.canvas));
     this.g = /** @type {CanvasRenderingContext2D} */ (this.canvas.getContext('2d'));
@@ -109,6 +125,7 @@ export class DreamCard {
     this.got = got ?? {};
     this.stopped = got?.stopped === true;
     this.doneAt = performance.now();
+    this.stopBtn?.remove();
     setTimeout(() => this.wake(), 450);
     this.title.textContent = this.t(this.stopped ? 'dream.stopped_title' : 'dream.done');
     this.batch.textContent = this.counted() ? this.t('dream.result', { given: got?.given ?? 0, revised: got?.revised ?? 0, retired: got?.retired ?? 0 }) : '';

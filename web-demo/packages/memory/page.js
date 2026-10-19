@@ -440,7 +440,10 @@ export class MemoryPage {
   async dream() {
     const persona = this.persona;
     this.dreaming = true;
-    const card = new DreamCard(this.ctx, new Map(this.list.map((m) => [m.id, m.text])));
+    // 「停止」：叫停这一份这时人叫的整理（核心 R-23 的 `memory.dream_stop`）
+    const card = new DreamCard(this.ctx, new Map(this.list.map((m) => [m.id, m.text])), {
+      stop: () => this.ctx.core.request('memory.dream_stop', { persona }).then(() => {}, (/** @type {any} */ err) => { this.say(this.refusal(err)); }),
+    });
     this.card = card;
     this.draw();
     // 滚动区照编号写正文：先照列着的，再读一份整的（搜着、筛着的时候列着的不全）
@@ -456,7 +459,7 @@ export class MemoryPage {
     try {
       const got = await this.ctx.core.request('memory.dream', { persona });
       const n = (got?.given ?? 0) + (got?.retired ?? 0) + (got?.revised ?? 0);
-      if (n || got?.summary) {
+      if (n || got?.summary || got?.stopped === true) {
         card.finish(got);
         setTimeout(drop, DREAM_KEEP_MS);
       } else {

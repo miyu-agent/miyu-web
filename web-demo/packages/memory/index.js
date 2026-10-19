@@ -75,7 +75,7 @@ async function dream(ctx, words) {
     if (!session) return;
   }
   const where = { session };
-  const card = new DreamCard(ctx, new Map());
+  const card = new DreamCard(ctx, new Map(), { stop: () => stop(ctx) });
   // 正文末尾那一格：先是整理那一块，合完换成结果那一行
   const box = h('div.dream-slot', card.el);
   let away = false;
@@ -176,8 +176,9 @@ async function dream(ctx, words) {
 }
 
 /**
- * 叫停整理：交核心 `/dream stop`（只停整理；它的回执「已停止整理。」不当整理的结果，那一块照 `memory.dream` 回来的「整理已中断」收）。
- * 网页没在看着的（别的头叫的、没在整理的）照核心的原话说。
+ * 叫停整理：`memory.dream_stop {session}`（核心 R-23；只停整理，那一块照 `memory.dream` 回来的「整理已中断」收）；还没有这个方法的旧核心交
+ * `/dream stop`（R-22，它的回执「已停止整理。」不当整理的结果）。网页没在看着的（别的头叫的）照核心的原话说，没在整理的照核心的
+ * `not_dreaming` 那一句。
  * @param {any} ctx
  */
 async function stop(ctx) {
@@ -189,8 +190,15 @@ async function stop(ctx) {
   }
   const mine = !!running && running.session === session;
   try {
-    const got = await ctx.core.request('command.run', { session, text: '/dream stop' });
-    if (!mine && got?.said) say(got.said, true);
+    try {
+      await ctx.core.request('memory.dream_stop', { session });
+      if (!mine) say(ctx.text('dream_stopped'), true);
+    } catch (err) {
+      const e = /** @type {any} */ (err);
+      if (e?.code !== -32601 && e?.data?.reason !== 'unknown_method' && e?.reason !== 'unknown_method') throw err;
+      const got = await ctx.core.request('command.run', { session, text: '/dream stop' });
+      if (!mine && got?.said) say(got.said, true);
+    }
   } catch (err) {
     const e = /** @type {any} */ (err);
     say(e?.data?.message ?? e?.message ?? String(err));
