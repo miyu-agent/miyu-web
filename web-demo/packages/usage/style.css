@@ -66,30 +66,33 @@
 .use-table th.num, .use-table td.num { text-align: right; }
 .use-table th.num button { flex-direction: row; }
 .use-table td { padding: 7px 8px; border-top: 1px solid var(--line); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.use-table td.use-name { white-space: normal; }
 .use-row { cursor: pointer; transition: background-color 0.15s ease; }
 .use-row:hover, .use-row.is-open { background: color-mix(in srgb, var(--surface-2) 60%, transparent); }
 .use-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.use-name-row { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
-.use-name-row .use-name-line { flex: 0 1 auto; min-width: 0; }
-.use-chevron { display: inline-grid; flex: none; place-items: center; align-self: center; color: var(--text-faint); opacity: 0; transition: opacity 0.15s ease, transform 0.15s ease; }
-.use-chevron .icon { width: 13px; height: 13px; }
-.use-row:hover .use-chevron, .use-row:focus-visible .use-chevron { opacity: 1; }
-.use-row.is-open .use-chevron { opacity: 1; transform: rotate(90deg); }
-.use-name-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; }
+.use-name-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap; }
+/* 名字一律一行：放不下的截掉加 …（悬停那一格写全的），名字先保住，后面的暗字先让 */
+.use-name-line > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.use-name-line > :first-child { flex: 0 1 auto; }
+.use-name-line > .use-sub { flex: 0 10 auto; }
 .use-sub, .use-faint, .use-more { color: var(--text-faint); }
 .use-sub, .use-more { font-size: 11.5px; }
 .use-share { height: 3px; margin-top: 4px; overflow: hidden; border-radius: 2px; background: var(--surface-2); }
 .use-share i { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
-.use-page { position: relative; }
-.use-pop { position: absolute; z-index: 4; right: 0; display: grid; gap: 8px; width: min(380px, 100%); padding: 12px 14px; border-radius: 12px; background: var(--surface-1); box-shadow: var(--card-shadow), 0 12px 32px rgb(0 0 0 / 14%); box-sizing: border-box; }
-.use-pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--text); font-size: 13.5px; font-weight: 600; }
-.use-pop-head .use-name-line { min-width: 0; }
+.use-modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 45%, transparent); animation: use-fade 0.14s var(--ease-out); }
+@keyframes use-fade { from { opacity: 0; } }
+.use-pop { display: grid; gap: 12px; width: min(520px, 100%); max-height: 100%; overflow: auto; padding: 16px 18px 18px; border-radius: 14px; background: var(--surface-1); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); box-sizing: border-box; }
+.use-pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--text); font-size: 14px; font-weight: 600; }
+.use-pop-head .use-name-line { flex: 1; }
 .use-pop-close .icon { width: 14px; height: 14px; }
-.use-detail-line { margin: 0; color: var(--text-soft); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.use-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.use-stats.is-four { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: -4px; }
+.use-stat { display: grid; gap: 1px; min-width: 0; padding: 8px 10px; border-radius: 9px; background: var(--surface-2); }
+.use-stat-k { color: var(--text-faint); font-size: 11.5px; }
+.use-stat-v { overflow: hidden; color: var(--text); font-size: 13.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.use-stat-more { color: var(--gold); font-size: 11px; }
 .use-split { display: grid; gap: 3px; }
 .use-split-head { color: var(--text-faint); font-size: 12px; }
-.use-split-row { display: grid; grid-template-columns: minmax(0, 1fr) 60px 56px 86px; gap: 8px; font-size: 12.5px; }
+.use-split-row { display: grid; grid-template-columns: minmax(0, 1fr) 72px 60px 128px; align-items: baseline; white-space: nowrap; gap: 8px; font-size: 12.5px; }
 .use-split-row .num { text-align: right; }
 .use-split-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .use-detail-actions { display: flex; justify-content: flex-end; }

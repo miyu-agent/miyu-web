@@ -131,13 +131,14 @@
         "to": "到"
       },
       "detail": {
-        "tokens": "命中 {hit} · 没命中 {miss} · 写缓存 {write} · 输出 {out}",
-        "cost": "花费 {cost}",
         "by": {
           "model": "按模型",
           "purpose": "按用途"
         },
-        "open": "打开会话"
+        "open": "打开会话",
+        "hit_rate": "命中率",
+        "miss": "没命中",
+        "write": "写缓存"
       },
       "close": "关闭"
     },
@@ -247,13 +248,14 @@
         "to": "to"
       },
       "detail": {
-        "tokens": "Cached {hit} · uncached {miss} · cache writes {write} · output {out}",
-        "cost": "Cost {cost}",
         "by": {
           "model": "By model",
           "purpose": "By purpose"
         },
-        "open": "Open session"
+        "open": "Open session",
+        "hit_rate": "Hit rate",
+        "miss": "Uncached",
+        "write": "Cache writes"
       },
       "close": "Close"
     },
@@ -363,13 +365,14 @@
         "to": "終了"
       },
       "detail": {
-        "tokens": "ヒット {hit} · ヒットなし {miss} · キャッシュ書き込み {write} · 出力 {out}",
-        "cost": "費用 {cost}",
         "by": {
           "model": "モデル別",
           "purpose": "用途別"
         },
-        "open": "セッションを開く"
+        "open": "セッションを開く",
+        "hit_rate": "ヒット率",
+        "miss": "ヒットなし",
+        "write": "キャッシュ書き込み"
       },
       "close": "閉じる"
     }

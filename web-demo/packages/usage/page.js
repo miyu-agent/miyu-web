@@ -1,10 +1,10 @@
 // @ts-check
 //! 设置页的「用量」一页（蓝图 `web.md`「用量页」；挂进设置页的 `settings.section`）：页头选时间段（今天、7 天、30 天、全部、自定义），
 //! 四格数（花费、请求、token、缓存命中），一张三段叠起来的柱子（一天的一小时一根，长的一天一根，太长的一月一根），一张能切分组、
-//! 每一列都能排的表，点一行在它下面浮一个小窗写细则。一页是一个常驻的对象：设置页重画、关了再开交回的是同一块，时间段、分页签、排法跟着它。
+//! 每一列都能排的表，点一行在设置框正中弹一个小窗写细则。一页是一个常驻的对象：设置页重画、关了再开交回的是同一块，时间段、分页签、排法跟着它。
 //! 用量没有流：打开、换时间段、点刷新时重读。
 
-import { h, icon, replace, offsetIn } from '../../src/lib/dom.js';
+import { h, icon, replace } from '../../src/lib/dom.js';
 import { short, hitRate, hhmm } from '../../src/lib/format.js';
 import { input, total, sum, money, amountText, offsetOf, spanOf, spanParams, daysBetween, dayKey, hours, hourBars, dayBars, allBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, venueOf, splitModel } from './model.js';
 
@@ -41,18 +41,12 @@ export class UsagePage {
     /** @type {{by: Column, desc: boolean}} */
     this.sort = { by: 'tokens', desc: true };
     this.all = false;
-    /** 浮着细则的那一行（分组那一格的值；`undefined` 是没开） @type {string|null|undefined} */
+    /** 弹着细则的那一行（分组那一格的值；`undefined` 是没开） @type {string|null|undefined} */
     this.open = undefined;
-    /** 这一回画出来的那一行（浮窗照它摆） @type {{row: Row, el: HTMLElement}|null} */
+    /** 这一回画出来的那一行的数（小窗照它写） @type {Row|null} */
     this.openRow = null;
-    // 浮窗开着：`Esc` 先关它（设置框找带 `data-set-dismiss` 的发 `set-dismiss`），点外面也关（点别的行是换一行）
+    // 小窗开着：`Esc` 先关它（设置框找带 `data-set-dismiss` 的发 `set-dismiss`）
     this.el.addEventListener('set-dismiss', () => this.closePop());
-    document.addEventListener('pointerdown', (e) => {
-      if (this.open === undefined) return;
-      const target = /** @type {Element|null} */ (e.target);
-      if (target?.closest?.('.use-pop, .use-row')) return;
-      this.closePop();
-    }, true);
     /** 拆开的行：照（时间段、分组、拆的那一样）记着，同一段时间问过的不再问 @type {Map<string, Row[]|'loading'>} */
     this.splits = new Map();
     /** 读到的：合计、会话数、柱子、分组的行；`null` 是还没读完 @type {{total: Row, sessions: number, bars: Bar[], unit: 'hour'|'day'|'month', rows: Row[], at: number}|null} */
@@ -201,25 +195,27 @@ export class UsagePage {
     }
     this.openRow = null;
     replace(this.el, this.head(), this.range === 'custom' ? this.picker() : null, this.tiles(), this.bars(), this.table());
-    const at = this.openRow;
-    if (!at) {
+    const row = this.openRow;
+    if (!row) {
       this.open = undefined;
       delete this.el.dataset.setDismiss;
       return;
     }
-    // 细则的小窗：浮在那一行下面，靠右（照这一页自己的 CSS 像素量，整页放大以后也对）
-    const pop = this.detail(at.row);
-    this.el.append(pop);
-    pop.style.top = `${offsetIn(at.el, this.el) + at.el.offsetHeight + 4}px`;
+    // 细则的小窗：设置框正中弹出，后面一层淡的遮罩，点遮罩收起（设置框磨砂了，`position: fixed` 照设置框那一块摆）
+    this.el.append(h('div.use-modal', {
+      onclick: (/** @type {Event} */ e) => {
+        if (e.target === e.currentTarget) this.closePop();
+      },
+    }, this.detail(row)));
     this.el.dataset.setDismiss = '1';
   }
 
-  /** 收起细则的小窗：只拿掉它（不重画：点外面关的那一下，点的那个按钮还要收到这一下点击） */
+  /** 收起细则的小窗：只拿掉它，不重画 */
   closePop() {
     if (this.open === undefined) return;
     this.open = undefined;
     this.openRow = null;
-    this.el.querySelector('.use-pop')?.remove();
+    this.el.querySelector('.use-modal')?.remove();
     for (const row of this.el.querySelectorAll('.use-row.is-open')) {
       row.classList.remove('is-open');
       row.setAttribute('aria-expanded', 'false');
@@ -418,12 +414,12 @@ export class UsagePage {
           toggle();
         },
       },
-      h('td.use-name', h('div.use-name-row', this.name(r), h('span.use-chevron', icon('chevron-right'))), h('div.use-share', h('i', { style: { width: `${((total(r.usage) / whole) * 100).toFixed(1)}%` } }))),
+      h('td.use-name', { title: this.nameTitle(r) }, this.name(r), h('div.use-share', h('i', { style: { width: `${((total(r.usage) / whole) * 100).toFixed(1)}%` } }))),
       h('td.num', r.requests.toLocaleString()),
       h('td.num', short(total(r.usage))),
       h('td.num', `${hitRate(r.usage.cache_read, input(r.usage))}%`),
       h('td.num', r.amounts.length ? [r.amounts.map((a) => h('div', amountText(a))), r.unpriced ? h('div.use-more', this.t('unpriced_part', { n: r.unpriced.toLocaleString() })) : null] : this.noCost(r)));
-      if (open) this.openRow = { row: r, el: tr };
+      if (open) this.openRow = r;
       body.append(tr);
     }
     const table = h('table.use-table',
@@ -444,10 +440,15 @@ export class UsagePage {
     const value = r[this.group];
     const parts = [
       h('div.use-pop-head', this.name(r), h('button.icon-button.use-pop-close', { type: 'button', title: this.t('close'), 'aria-label': this.t('close'), onclick: () => this.closePop() }, icon('x'))),
-      h('p.use-detail-line', this.t('detail.tokens', { hit: exact(u.cache_read), miss: exact(u.uncached), write: exact(u.cache_write), out: exact(u.output) })),
-      h('p.use-detail-line', cost
-        ? [this.t('detail.cost', { cost }), r.unpriced ? ` · ${this.t('unpriced_more', { n: r.unpriced.toLocaleString() })}` : '']
-        : r.unpriced ? this.t('unpriced_only', { n: r.unpriced.toLocaleString() }) : this.t('detail.cost', { cost: '—' })),
+      h('div.use-stats',
+        stat(this.t('col.requests'), this.t('times', { n: r.requests.toLocaleString() })),
+        stat(this.t('col.cost'), cost || (r.unpriced ? this.t('unpriced_only', { n: r.unpriced.toLocaleString() }) : '—'), cost && r.unpriced ? this.t('unpriced_more', { n: r.unpriced.toLocaleString() }) : ''),
+        stat(this.t('detail.hit_rate'), `${hitRate(u.cache_read, input(u))}%`)),
+      h('div.use-stats.is-four',
+        stat(this.t('legend.hit'), exact(u.cache_read)),
+        stat(this.t('detail.miss'), exact(u.uncached)),
+        stat(this.t('detail.write'), exact(u.cache_write)),
+        stat(this.t('legend.out'), exact(u.output))),
     ];
     for (const sub of splitsOf(this.group)) {
       const got = this.split(sub);
@@ -490,6 +491,16 @@ export class UsagePage {
     return h('span', key ? this.t(`purpose.${key}`) : String(v));
   }
 
+  /** 名字那一格悬停写全的（一行放不下截掉的照它看） @param {Row} r */
+  nameTitle(r) {
+    const text = this.nameText(r);
+    if (this.group === 'model') {
+      const { provider } = splitModel(r.model);
+      return provider ? `${text} · ${provider}` : text;
+    }
+    return text;
+  }
+
   /** 分组那一格的字（照名字排、拆开的行照它） @param {Row} r @returns {string} */
   nameText(r) {
     const v = r[this.group];
@@ -530,6 +541,9 @@ export class UsagePage {
     return 'raw' in got ? got.raw : this.t(got.key, got.fields);
   }
 }
+
+/** 细则小窗里的一格：名目在上、数在下，可以再一行暗字 @param {string} name @param {string} value @param {string} [more] */
+const stat = (name, value, more = '') => h('div.use-stat', h('span.use-stat-k', name), h('span.use-stat-v', { title: value }, value), more ? h('span.use-stat-more', more) : null);
 
 /** 列头的字和箭头：名字那一列箭头在后，数的那几列在前（字和下面的数右边对齐） @param {string} label @param {HTMLElement} arrow @param {boolean} after */
 const arrowed = (label, arrow, after) => (after ? [label, arrow] : [arrow, label]);
