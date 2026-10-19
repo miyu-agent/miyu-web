@@ -8,6 +8,8 @@
 
 import { res } from '../util/res.js';
 import { SessionIndex } from './session-index.js';
+import { ProjectList } from './projects.js';
+import { PROJECT_ROWS } from '../model/project.js';
 import { ViewLog, VIEW_PUSHES } from './view.js';
 
 /**
@@ -34,6 +36,8 @@ export class Store {
     this.sessions = new Map();
     /** 会话表：全部会话，照核心推的跟着变 */
     this.index = new SessionIndex(conn);
+    /** 项目（核心 H-1）：左栏的「项目」那一栏、全部会话的「项目」那一页照它 */
+    this.projects = new ProjectList(conn);
     /** 全部会话那一页开的老会话：最近活动排不进左栏的也列上 */
     this.extra = /** @type {Set<string>} */ (new Set());
     /** 没看过的：别的会话一轮结束了（读进来的照会话状态回到 `idle`，没读的照会话表里 `busy` 去掉了） */
@@ -51,18 +55,29 @@ export class Store {
     this.attention = new Set();
     conn.onPush((method, params) => this.push(method, params));
     this.index.on((id, before, after) => this.entryChanged(id, before, after));
+    this.projects.on(() => this.changed());
   }
 
   /**
    * 左栏列哪些（蓝图 `web.md`「左栏」）：顶层的会话（不是一次性的、不是子会话）照最近活动的几个（`layout.json` 的 `listed_sessions`），
-   * 加上置顶的、全部会话那一页开过的；先后由界面排（`rank`）。
+   * 加上置顶的、每个项目最近活动的几个（`PROJECT_ROWS`，项目展开时露的）、全部会话那一页开过的；先后由界面排（`rank`）。
    */
   get order() {
     const top = this.index.all().filter((e) => !e.oneshot && !e.parent);
     const at = (e) => Date.parse(e.last_active ?? '') || 0;
-    const recent = [...top].sort((a, b) => at(b) - at(a)).slice(0, res.layout.listed_sessions).map((e) => e.session);
+    const sorted = [...top].sort((a, b) => at(b) - at(a));
+    // 项目里的会话不在下面按时间的那几组里（蓝图「会话整理和项目」第 4 条），不占那几个的数
+    const recent = sorted.filter((e) => !e.project).slice(0, res.layout.listed_sessions).map((e) => e.session);
     const pinned = top.filter((e) => e.pinned).map((e) => e.session);
-    return [...new Set([...recent, ...pinned, ...this.extra])];
+    /** @type {Map<string, string[]>} */
+    const inProject = new Map();
+    for (const e of sorted) {
+      if (!e.project || e.pinned) continue;
+      const list = inProject.get(e.project) ?? [];
+      if (list.length < PROJECT_ROWS) list.push(e.session);
+      inProject.set(e.project, list);
+    }
+    return [...new Set([...recent, ...pinned, ...[...inProject.values()].flat(), ...this.extra])];
   }
 
   /**
@@ -102,7 +117,7 @@ export class Store {
    * 核心拒绝列会话时抛出来；单个会话读不了的跳过。
    */
   async boot() {
-    await this.index.start();
+    await Promise.all([this.index.start(), this.projects.start()]);
     this.followParents();
     this.changed();
   }
@@ -165,16 +180,19 @@ export class Store {
    * # Errors
    * 核心拒绝时抛出来。
    */
-  async create(cwd, model = null, persona = null, preset = null, chosen = false) {
+  async create(cwd, model = null, persona = null, preset = null, chosen = false, project = null) {
     // 还没开的新会话里选过模型（核心施工 8-8）、人格（P-1）、预设（P-2）的，开的时候带上；不写的核心照默认（预设的默认人格、配置项）。
     // 人格是 `false` 的是明着不用人格，发 `null`（核心：不看预设、默认人格；2026-10-08 项目主人：人格可以留空）。
     // 目录是人选的（或者照上一次会话预选上的）带 `chosen`：太宽也照用，回应带 `wide`（核心 9-7 补，2026-10-09 项目主人：手动选的别自动切）
+    // 在项目里开的带 `project`（核心 H-2）：没写的人格、预设核心照项目的
     const who = persona === false ? { persona: null } : persona ? { persona } : {};
-    const { session, wide } = await this.conn.request('session.create', { cwd, ...(model ? { model } : {}), ...who, ...(preset ? { preset } : {}), ...(chosen ? { chosen: true } : {}) });
+    const { session, wide } = await this.conn.request('session.create', {
+      cwd, ...(model ? { model } : {}), ...who, ...(preset ? { preset } : {}), ...(chosen ? { chosen: true } : {}), ...(project ? { project } : {}),
+    });
     /** 刚开的这个会话的目录太宽（照人选的用着）：外面照它提醒一句 */
     this.createdWide = wide === true ? session : null;
     // 推送还没到时先记上，左栏当场有它
-    this.index.seed(session, { cwd });
+    this.index.seed(session, { cwd, ...(project ? { project } : {}) });
     await this.load(session);
     this.changed();
     return session;
@@ -206,7 +224,7 @@ export class Store {
     const e = this.index.get(id);
     const listed = Date.parse(e?.last_active ?? '');
     const state = s?.view.status?.state;
-    return { session: id, title: e?.title ?? e?.preview ?? null, running: state ? state !== 'idle' : !!e?.busy, created: null, pinned: !!e?.pinned, active: Number.isNaN(listed) ? null : listed, unread: this.unread.has(id) };
+    return { session: id, title: e?.title ?? e?.preview ?? null, running: state ? state !== 'idle' : !!e?.busy, created: null, pinned: !!e?.pinned, active: Number.isNaN(listed) ? null : listed, unread: this.unread.has(id), project: e?.project ?? null };
   }
 
   /**
@@ -294,7 +312,7 @@ export class Store {
       if (s.gone) continue;
       await this.catchUp(s).catch((err) => console.error(`会话 ${s.id} 重连以后补不上：${err.message}`));
     }
-    await this.index.start();
+    await Promise.all([this.index.start(), this.projects.start()]);
     this.followParents();
     this.changed();
   }

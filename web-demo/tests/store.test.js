@@ -10,8 +10,8 @@ loadRes();
 
 const AT = '2026-10-10T04:02:00.000Z';
 
-/** 一个假核心：会话表照 `listed`，订阅会话的记下来；推送由测试自己推（`push`）。 */
-function withIndex(listed) {
+/** 一个假核心：会话表照 `listed`、项目照 `projects`，订阅会话的记下来；推送由测试自己推（`push`）。 */
+function withIndex(listed, projects = []) {
   const loaded = [];
   /** @type {((method: string, params: any) => void)[]} */
   const pushes = [];
@@ -19,6 +19,7 @@ function withIndex(listed) {
     onPush: (fn) => pushes.push(fn),
     request: async (method, params) => {
       if (method === 'subscribe' && params.stream === 'sessions') return { sessions: listed };
+      if (method === 'subscribe' && params.stream === 'projects') return { projects };
       if (method === 'subscribe') loaded.push(params.session);
       return {};
     },
@@ -186,4 +187,46 @@ test('读进来了的会话：标题、置顶照会话表；在不在跑照会�
   assert.equal(store.summary('X').title, null);
   push('sessions.changed', { session: 'L', entry: { session: 'L', parent: null, title: '改过的名字', last_active: '2026-10-08T02:00:00.000Z' } });
   assert.deepEqual([store.summary('L').title, store.summary('L').pinned], ['改过的名字', false]);
+});
+
+test('项目（核心 H-1、H-2）：起来时订阅项目表；项目里的会话不占最近活动的那几个，每个项目最近的几个照样读进左栏；推来的改、删跟着变', async () => {
+  const at = (h) => `2026-10-01T${String(h).padStart(2, '0')}:00:00.000Z`;
+  const listed = [
+    { session: 'loose', parent: null, last_active: at(1) },
+    ...Array.from({ length: 7 }, (_, i) => ({ session: `p${i}`, parent: null, project: 'P', last_active: at(10 + i) })),
+    { session: 'pin', parent: null, project: 'P', pinned: true, last_active: at(20) },
+  ];
+  const { store, push } = withIndex(listed, [{ project: 'P', name: '网页' }]);
+  await store.boot();
+  assert.equal(store.projects.supported, true);
+  assert.deepEqual(store.projects.list.map((p) => p.name), ['网页']);
+  assert.deepEqual(store.order, ['loose', 'pin', 'p6', 'p5', 'p4', 'p3', 'p2'], '最近活动的照不在项目里的排；置顶的照列；项目里最近的五个');
+  assert.equal(store.summary('p6').project, 'P');
+  assert.equal(store.summary('loose').project, null);
+  push('projects.changed', { project: { project: 'P', name: '网页 2', color: '#3a63c9' } });
+  push('projects.changed', { project: { project: 'Q', name: '新的' } });
+  assert.deepEqual(store.projects.list.map((p) => p.name), ['网页 2', '新的'], '改了的原地换、新的接在后面');
+  push('projects.changed', { project: 'P', deleted: true });
+  assert.deepEqual(store.projects.list.map((p) => p.project), ['Q']);
+});
+
+test('旧核心没有项目的流：当没有项目，左栏不画那一栏', async () => {
+  const conn = {
+    onPush: () => {},
+    request: async (method, params) => {
+      if (method === 'subscribe' && params.stream === 'sessions') return { sessions: [] };
+      if (method === 'subscribe' && params.stream === 'projects') throw Object.assign(new Error('unknown stream'), { reason: 'bad_params' });
+      return {};
+    },
+  };
+  const store = new Store(/** @type {any} */ (conn));
+  const quiet = console.error;
+  console.error = () => {};
+  try {
+    await store.boot();
+  } finally {
+    console.error = quiet;
+  }
+  assert.equal(store.projects.supported, false);
+  assert.deepEqual(store.projects.list, []);
 });

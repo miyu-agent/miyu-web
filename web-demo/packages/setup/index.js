@@ -16,6 +16,7 @@ import { browse } from './folders.js';
 import { PersonaStep, PresetStep } from './welcome.js';
 import { ThemeStep } from './theme-step.js';
 import { editPersona } from './quick-edit.js';
+import { editProject } from './project-dialog.js';
 
 const RECENT = 'setup.recent';
 
@@ -79,6 +80,10 @@ export function apply(ctx) {
   chat.look(lookOf);
   // 第一次引导里人格、预设那两屏（蓝图「第一次引导」第 8、9 条）：控件照引导交来的 `kit`（设置页那一套）
   ctx.provide('personas', {
+    /** 一个人格、预设的名字（全部会话里的项目页照它写；没读到的写编号） @param {string} id */
+    personaName: (id) => nameOf(id),
+    /** @param {string} id */
+    presetName: (id) => presetNameOf(id),
     /** @param {import('./form.js').Kit} kit @param {import('./welcome.js').Host} host */
     persona: (kit, host) => new PersonaStep(ctx, kit, catalog, host),
     /** @param {import('./form.js').Kit} kit @param {import('./welcome.js').Host} host */
@@ -111,9 +116,10 @@ export function apply(ctx) {
   const draw = (force = false) => {
     const session = chat.current();
     chat.refreshLook();
-    // 新的空会话（三样都还空着：人选过的哪怕是「无人格」「默认工作区」也不是空的）：人格、预设的列表读到了，照上一次的会话先选上
+    // 新的空会话（三样都还空着：人选过的哪怕是「无人格」「默认工作区」也不是空的）：人格、预设的列表读到了，照上一次的会话先选上；
+    // 在项目里新建的不照上一次（项目没写的照默认，蓝图「会话整理和项目」第 9 条）
     const fresh = chat.draft();
-    if (!session && fresh.persona == null && fresh.preset == null && fresh.cwd == null && catalog.personas && catalog.presets) {
+    if (!session && !fresh.project && fresh.persona == null && fresh.preset == null && fresh.cwd == null && catalog.personas && catalog.presets) {
       const pick = lastChoice(ctx.sessions.index.all(), catalog.personas, catalog.presets);
       if (pick && Object.keys(pick).length) chat.setDraft(pick);
     }
@@ -270,6 +276,8 @@ export function apply(ctx) {
     if (!catalog.personas) await catalog.load().catch(() => {});
     editPersona(ctx, catalog, id, ctx.settings.kit);
   });
+  // 新建项目、项目设置（整页的左栏、项目页发来，蓝图「会话整理和项目」第 8 条）：人格、预设、工作区的选法和新会话的一样
+  ctx.on('project.edit', (/** @type {any} */ what) => editProject(ctx, catalog, what, { recent, recentKey: RECENT }));
   ctx.slots.mount('settings.editor', {
     id: 'setup-persona',
     key: 'persona.default',

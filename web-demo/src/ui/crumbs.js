@@ -9,37 +9,44 @@ import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 
 export class Crumbs {
-  /** @param {(id: string) => void} open 进一个会话 */
-  constructor(open) {
+  /** @param {(id: string) => void} open 进一个会话 @param {(id: string) => void} [openProject] 进项目页 */
+  constructor(open, openProject = () => {}) {
     this.open = open;
+    this.openProject = openProject;
     this.el = h('nav.chat-crumbs', { hidden: true, 'aria-label': t('crumbs.label') });
     this.drawn = '';
   }
 
   /**
-   * 照路径画；只有一段（主会话、新会话）的藏起来。
+   * 照路径画；只有一段（主会话、新会话）、又不在项目里的藏起来。在项目里的前面多一段项目名（点了进项目页，蓝图「会话整理和项目」第 11 条）；在项目里
+   * 新建的空会话（`path` 是空的）写「项目名 / 新会话」。
    * @param {{session: string, title: string|null}[]} path 从主会话一层层到这一个
+   * @param {{project: string, name: string, color?: string|null}|null} [project]
    */
-  draw(path) {
-    const sig = JSON.stringify(path);
+  draw(path, project = null) {
+    const sig = JSON.stringify([path, project]);
     if (sig === this.drawn) return;
     this.drawn = sig;
-    if (path.length < 2) {
+    if (path.length < 2 && !project) {
       if (!this.el.hidden) hide(this.el);
       return;
     }
     const keep = res.layout.crumbs_keep;
     // 太长的：留头一段和后面 `keep - 1` 段，中间收成一个 `…`
-    const shown = path.length > keep ? [path[0], null, ...path.slice(path.length - (keep - 1))] : path;
-    const parts = shown.flatMap((p, i) => {
-      const sep = i ? [h('span.crumb-sep', { 'aria-hidden': 'true' }, icon('chevron-right'))] : [];
+    const trail = path.length ? path : [{ session: '', title: t('crumbs.new_session') }];
+    const shown = trail.length > keep ? [trail[0], null, ...trail.slice(trail.length - (keep - 1))] : trail;
+    const head = project
+      ? [h('button.crumb.is-project', { type: 'button', title: project.name, style: project.color ? `--project-color: ${project.color}` : null, onclick: () => this.openProject(project.project) }, icon('folder'), h('span', project.name))]
+      : [];
+    const parts = [...head, ...shown.flatMap((p, i) => {
+      const sep = i || project ? [h('span.crumb-sep', { 'aria-hidden': 'true' }, icon('chevron-right'))] : [];
       if (!p) return [...sep, h('span.crumb-gap', '…')];
       const title = p.title ?? t('sidebar.untitled');
       const last = i === shown.length - 1;
       return [...sep, last
         ? h('span.crumb.is-here', { title, 'aria-current': 'page' }, title)
         : h('button.crumb', { type: 'button', title, onclick: () => this.open(p.session) }, title)];
-    });
+    })];
     replace(this.el, h('div.crumb-path', parts));
     if (this.el.hidden) show(this.el);
   }

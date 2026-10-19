@@ -279,7 +279,7 @@
 9. 在项目里新建会话：空会话照项目的工作区、人格、预设先选上（输入框上面那三颗照它写，人照样能改），顶上一条写「项目名 / 新会话」；发第一句时带 `project`。附加提示词跟着项目走（会话挪进挪出项目，下一轮照新的）。
 10. 留言（会话之间互相发）：项目里的会话默认只看得到、只能留言给同一个项目里的会话；不在项目里的只看得到不在项目里的；项目设置开了「能和项目外的会话互相留言」的不限。你（人）不受限。子代理照派它的会话所在的项目。这一条是核心定的规矩，网页只画开关。
 11. 对话区顶上：项目里的会话路径前面多一段「项目名 /」（点了进项目页）；子代理的会话「项目名 / 父会话 / 子代理」。
-12. 核心（待做，2026-10-19 发去）：项目这一样东西（编号、名称、说明、颜色、默认工作区、人格、预设、附加提示词、留言开关）的列、建、改、删和订阅；会话多一格 `project`（`session.create` 带、`session.set_meta` 改、会话表每项带）；新会话照项目的默认；附加提示词进她的系统提示；留言照第 10 条限范围。终端照同一套画。核心给了形状以后这一节补上方法名、格名。在那之前第 1、2、5（置顶那一半）条先做。
+12. 核心（2026-10-19 H-1、H-2 合了，`docs/reference/projects.md`、`sessions.md`；设计 38）：项目 `project.list`、`project.create`、`project.update`（写了值的换上，`unset` 列的回到没写，人格写 `null` 是无人格）、`project.delete`（里面的会话挪出来，回 `moved`），订阅 `{stream: "projects"}` 拿整张表、之后 `projects.changed`（删了的带 `deleted`）；一项的格 `project`、`name`、`description`、`color`（`#rrggbb`）、`workspace`（人看到的写法，空的是默认工作区）、`persona`（`null` 无人格，没有这一格照配置）、`preset`、`prompt`、`open`。会话多一格 `project`：`session.create` 带（没写的人格、预设照项目的；`cwd` 照项目的工作区填、带 `chosen`）、`session.set_meta` 改（编号移进去、`null` 移出来；置顶另写 `pinned: false`）、会话表每项带。网页这边（`core/projects.js` 订阅；`ui/sidebar-projects.js` 左栏那一栏；`ui/sidebar-drag.js` 照每行的 `data-zone` 认放哪；`packages/setup/project-dialog.js` 新建、项目设置；`ui/sessions-page.js`、`ui/projects-page.js` 全部会话两页和项目页）：旧核心订阅不了的当没有项目，左栏不画那一栏、全部会话不出两页的切换。颜色存十二种里浅色那一种，深色里画同一种亮一档的（`model/project.js` 的 `PALETTE`）。附加提示词进她的系统提示、留言照第 10 条限范围是核心 H-3（她那一侧），界面不用等。终端照同一套画。
 
 **对话区**（照旧版 `styles.css:1402-2442`、Claude 网页端）：
 

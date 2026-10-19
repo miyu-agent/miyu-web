@@ -1,8 +1,9 @@
 // @ts-check
 //! 左栏拖会话（蓝图 `web.md`「会话整理和项目」第 5 条）：左键按住一个顶层会话挪过 5px 拖起来，那一行变成一张浮起来的小卡片跟着指针，
 //! 原处淡下去；指针下面能放的那一块亮起来：「置顶」那一栏（置顶；还没有置顶的，拖起来时临时露出一块「拖到这里置顶」）、下面按时间
-//! 分组的会话（取消置顶）。项目（移进项目）等核心有了项目再加。拖到左栏上下边上 40px 以内左栏跟着滚；`Esc` 取消；拖过的那一下
-//! 不算点开。不用浏览器的拖放（Firefox 里不灵，2026-10-19 项目主人：拖动没成功）。
+//! 分组的会话（取消置顶、移出项目）、一个项目（移进去，同时取消置顶；核心 H-2）。哪一块放得下照左栏给每一行写的 `data-zone`（`pin`、`loose`、
+//! `project:<编号>`）。拖到左栏上下边上 40px 以内左栏跟着滚；`Esc` 取消；拖过的那一下不算点开。不用浏览器的拖放（Firefox 里不灵，2026-10-19
+//! 项目主人：拖动没成功）。
 
 import { h } from './dom.js';
 import { t } from '../util/res.js';
@@ -15,12 +16,13 @@ const SCROLL_PX = 8;
 export class SessionDrag {
   /**
    * @param {{items: HTMLElement, list: HTMLElement|null, selecting: boolean, renaming: string|null, last: [any[], string|null],
-   *   pinnedHeader: HTMLElement, sep: HTMLElement, on: {pin: (id: string, on: boolean) => Promise<void>}}} bar 左栏（`sidebar.js`）
+   *   pinnedHeader: HTMLElement, sep: HTMLElement, on: {pin: (id: string, on: boolean) => Promise<void>,
+   *   place: (id: string, patch: {pinned?: boolean, project?: string|null}) => Promise<void>}}} bar 左栏（`sidebar.js`）
    */
   constructor(bar) {
     this.bar = bar;
-    /** @type {null|{id: string, pinned: boolean, row: HTMLElement, x: number, y: number, dx: number, dy: number, on: boolean,
-     *   ghost: HTMLElement|null, zone: 'pin'|'loose'|null, hint: HTMLElement|null, mark: HTMLElement|null, scroll: any}} */
+    /** @type {null|{id: string, pinned: boolean, project: string|null, row: HTMLElement, x: number, y: number, dx: number, dy: number, on: boolean,
+     *   ghost: HTMLElement|null, zone: string|null, hint: HTMLElement|null, mark: HTMLElement|null, scroll: any}} */
     this.drag = null;
     bar.items.addEventListener('pointerdown', (e) => this.down(e));
     addEventListener('pointermove', (e) => this.move(e));
@@ -34,14 +36,14 @@ export class SessionDrag {
     const bar = this.bar;
     if (e.button !== 0 || bar.selecting || e.pointerType === 'touch') return;
     const target = /** @type {Element} */ (e.target);
-    // 菜单按钮、展开的箭头、改名的框不算
-    if (target.closest('.session-menu-button, .session-menu, .session-fold, .session-kids, input')) return;
+    // 菜单按钮、展开的箭头、改名的框、项目那一行不算
+    if (target.closest('.session-menu-button, .session-menu, .session-fold, .session-kids, input, .project-row')) return;
     const row = /** @type {HTMLElement|null} */ (target.closest('.session-item'));
     const id = row?.dataset.session;
     if (!row || !id || row.classList.contains('is-child') || bar.renaming === id) return;
     const item = bar.last[0].find((it) => it.session === id);
     if (!item) return;
-    this.drag = { id, pinned: !!item.pinned, row, x: e.clientX, y: e.clientY, dx: 0, dy: 0, on: false, ghost: null, zone: null, hint: null, mark: null, scroll: 0 };
+    this.drag = { id, pinned: !!item.pinned, project: item.project ?? null, row, x: e.clientX, y: e.clientY, dx: 0, dy: 0, on: false, ghost: null, zone: null, hint: null, mark: null, scroll: 0 };
   }
 
   /** @param {PointerEvent} e */
@@ -70,35 +72,26 @@ export class SessionDrag {
     d.row.classList.add('is-dragging');
     document.body.classList.add('is-dragging-session');
     if (!this.bar.pinnedHeader.isConnected && !d.pinned) {
-      d.hint = h('div.session-drop-hint', t('sidebar.drop_pin'));
+      d.hint = h('div.session-drop-hint', { dataset: { zone: 'pin' } }, t('sidebar.drop_pin'));
       this.bar.items.prepend(d.hint);
     }
   }
 
-  /** 指针下面是哪一块：置顶那一栏（头、行、临时露出来的那一块）还是下面的会话；放不了的（本来就在那边）交 `null` @param {number} x @param {number} y */
-  zoneAt(x, y) {
+  /** 这个会话现在在哪一块：置顶的在置顶，项目里的在它的项目，别的在下面 */
+  home() {
     const d = this.drag;
-    const bar = this.bar;
-    if (!d) return null;
-    const el = document.elementFromPoint(x, y);
-    if (!el || !bar.items.contains(el)) return null;
-    const pinnedIds = new Set(bar.last[0].filter((it) => it.pinned).map((it) => it.session));
-    const row = /** @type {HTMLElement|null} */ (el.closest('.session-item, .session-group-header, .session-drop-hint, .session-done-row'));
-    if (!row) return null;
-    // 在置顶那一栏里：它的头、临时那一块、置顶的会话（连同挂在它下面的子代理行，照它前面最近的顶层行算）
-    let zone = /** @type {'pin'|'loose'} */ ('loose');
-    if (row === bar.pinnedHeader || row.classList.contains('session-drop-hint')) zone = 'pin';
-    else {
-      const sepAt = bar.sep.isConnected ? [...bar.items.children].indexOf(bar.sep) : -1;
-      const at = [...bar.items.children].indexOf(row);
-      if (pinnedIds.size && (sepAt < 0 ? false : at < sepAt)) zone = 'pin';
-    }
-    if (zone === 'pin' && d.pinned) return null;
-    if (zone === 'loose' && !d.pinned) return null;
-    return zone;
+    return !d ? null : d.pinned ? 'pin' : d.project ? `project:${d.project}` : 'loose';
   }
 
-  /** 亮起那一块：一张盖在那一段上面的框（行是平铺的，没有包着一段的元素） @param {'pin'|'loose'|null} zone */
+  /** 指针下面是哪一块（`data-zone`）；放不了的（本来就在那边、项目那一栏的头）交 `null` @param {number} x @param {number} y */
+  zoneAt(x, y) {
+    const el = document.elementFromPoint(x, y);
+    if (!this.drag || !el || !this.bar.items.contains(el)) return null;
+    const zone = /** @type {HTMLElement|null} */ (el.closest('[data-zone]'))?.dataset.zone ?? null;
+    return zone && zone !== this.home() ? zone : null;
+  }
+
+  /** 亮起那一块：一张盖在那一段上面的框（行是平铺的，没有包着一段的元素；项目是整块一个元素） @param {string|null} zone */
   mark(zone) {
     const d = this.drag;
     if (!d || d.zone === zone) return;
@@ -106,12 +99,8 @@ export class SessionDrag {
     d.mark?.remove();
     d.mark = null;
     if (!zone) return;
-    // 置顶那一段：细线以上（还没有置顶的就是临时那一块）；下面那一段：细线以下（没有细线的是除了临时那一块的全部），不算「查看全部」
-    const kids = [...this.bar.items.children];
-    const sepAt = kids.indexOf(this.bar.sep);
-    const part = zone === 'pin'
-      ? (d.hint ? [d.hint] : kids.slice(0, sepAt >= 0 ? sepAt : kids.length))
-      : kids.slice(sepAt >= 0 ? sepAt + 1 : 0).filter((el) => el !== d.hint && !el.classList.contains('session-all'));
+    // 置顶的是临时那一块（有的话）；不算「查看全部」
+    const part = [...this.bar.items.children].filter((el) => el instanceof HTMLElement && el.dataset.zone === zone && (!d.hint || zone !== 'pin' || el === d.hint));
     const boxes = part.map((el) => el.getBoundingClientRect()).filter((r) => r.height);
     if (!boxes.length) return;
     // 盖在会话表那一层（`.session-track`，相对它定位）上
@@ -150,6 +139,9 @@ export class SessionDrag {
     addEventListener('click', eat, { capture: true, once: true });
     setTimeout(() => removeEventListener('click', eat, { capture: true }), 0);
     if (cancel || !d.zone) return;
-    this.bar.on.pin(d.id, d.zone === 'pin');
+    // 置顶：只改置顶（项目里的照旧在项目里）；下面：取消置顶、移出项目；项目：移进去，同时取消置顶
+    if (d.zone === 'pin') this.bar.on.pin(d.id, true);
+    else if (d.zone === 'loose') this.bar.on.place(d.id, { ...(d.pinned ? { pinned: false } : {}), ...(d.project ? { project: null } : {}) });
+    else this.bar.on.place(d.id, { project: d.zone.slice('project:'.length), ...(d.pinned ? { pinned: false } : {}) });
   }
 }

@@ -39,12 +39,26 @@
       "week": "近 7 天",
       "month": "近 30 天",
       "older": "30 天前"
-    }
+    },
+    "projects": "项目",
+    "all_projects": "全部项目",
+    "new_project": "新建项目",
+    "project_empty": "还没有会话，拖一个进来",
+    "project_menu": "项目菜单",
+    "project_open": "打开项目",
+    "project_new_session": "在项目里新建会话",
+    "project_settings": "项目设置…",
+    "project_delete": "删除项目…",
+    "project_delete_confirm": "再点一次删除（会话移出项目）",
+    "move_to_project": "移到项目",
+    "move_out": "移出项目",
+    "here": "{name}（在这里）"
   },
   "crumbs": {
     "label": "子代理会话路径",
     "back": "返回",
-    "back_to": "回到「{title}」"
+    "back_to": "回到「{title}」",
+    "new_session": "新会话"
   },
   "placeholder": "给 {name} 发消息",
   "placeholder_bare": "发消息",
@@ -373,7 +387,18 @@
     "empty": "暂无会话",
     "no_match": "无匹配结果",
     "jobs": "{count} 个后台任务",
-    "agents": "{count} 个子代理"
+    "agents": "{count} 个子代理",
+    "tab_sessions": "会话",
+    "tab_projects": "项目",
+    "filter_all": "全部",
+    "filter_loose": "不在项目里",
+    "filter_running": "在跑",
+    "filter_unread": "没看过",
+    "sort_active": "按最近活动",
+    "sort_created": "按创建时间",
+    "agents_running": "{count} 个子代理在跑",
+    "project_meta": "{count} 个会话 · {when}",
+    "project_none": "还没有会话"
   },
   "turn_end": {
     "restarted": "已重启",
@@ -463,5 +488,22 @@
   "older": {
     "loading": "正在加载更早的消息…",
     "start": "已到开头"
+  },
+  "project_page": {
+    "all": "全部项目",
+    "settings": "项目设置",
+    "new_session": "在项目里新建",
+    "defaults": "在这个项目里新建的会话照这几样",
+    "workspace": "工作区目录",
+    "default_workspace": "默认工作区",
+    "persona": "人格",
+    "preset": "预设",
+    "default": "默认",
+    "no_persona": "无人格",
+    "prompt": "附加提示词",
+    "none": "无",
+    "messages": "留言",
+    "messages_inside": "只在项目里",
+    "messages_open": "能和项目外的会话互相留言"
   }
 }

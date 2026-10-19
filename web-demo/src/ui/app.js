@@ -31,6 +31,7 @@ import { listFiles } from '../core/files.js';
 import { footerOf, footerLabel, effortLevels, effortLabel, effortOf, effortChange, defaultModelChange } from '../model/model-menu.js';
 import { Crumbs, BackButton } from './crumbs.js';
 import { pathOf } from '../model/tree.js';
+import { draftOf, colorOf } from '../model/project.js';
 
 /** 输入历史记在这台设备上的名字（蓝图「输入历史」第 1 条；内核的 `storage` 会带上账号） */
 const HISTORY = 'input_history';
@@ -62,8 +63,8 @@ export class App {
     /** 还没开的新会话里选的模型（换模型的菜单、`/model`）：开会话时带上 */
     this.pendingModel = /** @type {string|null} */ (null);
     /** 还没开的新会话里选的人格、预设、工作区（软件包 `setup` 经服务 `chat` 改）：开会话时带上，没选的照默认 */
-    // 人格 `null` 是没选（照默认的），`false` 是明着不用人格
-    this.draft = /** @type {{persona: string|false|null, preset: string|null, cwd: string|null}} */ ({ persona: null, preset: null, cwd: null });
+    // 人格 `null` 是没选（照默认的），`false` 是明着不用人格；`project` 是在哪个项目里新建的（蓝图「会话整理和项目」第 9 条，开会话时带上）
+    this.draft = /** @type {{persona: string|false|null, preset: string|null, cwd: string|null, project: string|null}} */ ({ persona: null, preset: null, cwd: null, project: null });
     /** 会话用的人格画成什么样（名字、头像）：软件包 `setup` 经 `chat.look` 交来；没人交的照旧的一份（`resources/persona.json`） */
     this.looker = /** @type {((session: string|null) => import('./chat.js').Look|null|undefined)|null} */ (null);
     /** 上一次交给对话区、输入框的（一样的不再交） */
@@ -105,6 +106,23 @@ export class App {
           this.composer.say(refusalText(err));
         }
       },
+      // 移进、移出项目（核心 H-2：`project` 是编号移进去、`null` 移出来），拖进项目时一起取消置顶
+      place: async (id, patch) => {
+        if (!Object.keys(patch).length) return;
+        try {
+          await this.store.conn.request('session.set_meta', { session: id, ...patch });
+        } catch (err) {
+          this.composer.say(refusalText(err));
+        }
+      },
+      projects: () => ({ supported: this.store.projects.supported, list: this.store.projects.list }),
+      // 全部会话的「项目」那一页、一个项目的页（占对话区那一块）
+      viewProjects: () => this.sessionsPage.open('projects'),
+      openProject: (id) => this.sessionsPage.openProject(id),
+      // 新建项目、项目设置：窗口由软件包 setup 画（人格、预设、工作区的下拉照它的）
+      editProject: (id) => this.ctx.emit('project.edit', { project: id ? this.store.projects.get(id) : null, count: this.store.projects.list.length }),
+      newIn: (id) => this.newIn(id),
+      deleteProject: (id) => this.deleteProject(id),
       dropped: (id) => {
         // 它下面的子代理的会话跟着它一起没了（核心删父会话连子会话一起挪进回收处）
         const kids = this.descendants(id);
@@ -234,7 +252,7 @@ export class App {
     ctx.slots.declare('composer.above', 'list');
     ctx.effect(() => mountList(this.dockAbove, ctx.slots, 'composer.above', failedSlot));
     // 子代理的会话顶上那条路径：点了回派它的那一层、进路径上的会话
-    this.crumbs = new Crumbs((id) => this.open(id));
+    this.crumbs = new Crumbs((id) => this.open(id), (id) => this.sessionsPage.openProject(id));
     this.scrim = h('button.page-scrim', { type: 'button', 'aria-label': t('sidebar.collapse'), onclick: () => this.drawer(false) });
     // 收起着时最左边那一条：指针进来左栏临时浮出来，离开了滑回去（蓝图「左栏」的「临时浮出」）
     const zone = h('div.sidebar-peek-zone', { style: `--peek-zone: ${res.layout.sidebar_peek.zone}px` });
@@ -271,14 +289,24 @@ export class App {
     // 全部会话：占对话区那一块（左栏「查看全部」、`/sessions`）
     this.sessionsPage = new SessionsPage({
       // 全部会话照会话表（核心推的跟着变）；标题、最近活动、在不在跑读进来了的照日志，没读的照会话表
-      list: async () => this.store.index.all(),
+      list: () => this.store.index.all(),
       titleOf: (id) => this.store.summary(id).title,
       active: (id) => this.store.summary(id).active,
       running: (id) => this.store.summary(id).running,
+      unread: (id) => this.store.summary(id).unread,
       jobs: (id) => this.jobsDeep(id),
       agents: (id) => this.descendants(id).length,
+      agentsRunning: (id) => this.descendants(id).filter((kid) => this.store.summary(kid).running).length,
       open: (id) => this.open(id, true),
       newSession: () => this.open(null),
+      newIn: (id) => this.newIn(id),
+      editProject: (id) => this.sidebar.on.editProject(id),
+      projects: () => ({ supported: this.store.projects.supported, list: this.store.projects.list }),
+      color: (c) => colorOf(c, !!this.ctx.theme?.dark()),
+      // 人格、预设的名字照软件包 setup 读到的列表（没装、没读到的写编号）
+      personaName: (id) => this.ctx.personas?.personaName?.(id) ?? id,
+      presetName: (id) => this.ctx.personas?.presetName?.(id) ?? id,
+      defaultWorkdir: () => this.cwd ?? '',
       removeMany: (ids) => this.sidebar.on.removeMany(ids),
       dropped: (id) => this.sidebar.on.dropped(id),
     });
@@ -397,6 +425,34 @@ export class App {
     });
   }
 
+  /**
+   * 在项目里新建会话（蓝图「会话整理和项目」第 9 条）：空会话照项目的工作区、人格、预设先选上（输入框上面那三颗照它写，人照样能改），发第一句时带
+   * `project`。
+   * @param {string} id
+   */
+  newIn(id) {
+    const p = this.store.projects.get(id);
+    this.open(null);
+    if (p) this.setDraft(draftOf(p));
+  }
+
+  /** 删项目：里面的会话核心挪出来，不删会话。 @param {string} id */
+  async deleteProject(id) {
+    try {
+      await this.store.conn.request('project.delete', { project: id });
+      if (this.draft.project === id) this.setDraft({ project: null });
+    } catch (err) {
+      this.composer.say(refusalText(err));
+    }
+  }
+
+  /** 正在看的会话（子代理的照它最上面那个主会话）在哪个项目；还没开的新会话照选的。 */
+  projectOf(path) {
+    const top = path[0]?.session ?? null;
+    const id = top ? this.store.index.get(top)?.project ?? null : this.draft.project;
+    return this.store.projects.get(id);
+  }
+
   /** 左栏的先后（`model/session.js` 的 `rank`）：置顶的在最前，别的照最近活动。 */
   ranked() {
     return rank(this.store.order.map((id) => this.store.summary(id))).map((x) => x.session);
@@ -413,7 +469,7 @@ export class App {
   open(id, listed = false) {
     this.pendingLevel = null;
     this.pendingModel = null;
-    this.draft = { persona: null, preset: null, cwd: null };
+    this.draft = { persona: null, preset: null, cwd: null, project: null };
     this.current = id;
     this.sessionsPage?.close();
     // 没读过的会话第一次打开时才读、订阅：子代理的不进会话表的顶层；全部会话那一页开的老会话进（`listed`）
@@ -582,10 +638,12 @@ export class App {
   /** 开会话（新会话说第一句话时）：带上选的目录、模型、人格、预设，开好了看它、把还没开时点过的权限级别这类发过去。 */
   async createSession() {
     const asked = this.draft.cwd;
-    this.current = await this.store.create(asked ?? this.cwd, this.pendingModel, this.draft.persona, this.draft.preset, !!asked);
+    // 在项目里新建的：项目刚删掉了的不带（照不在项目里开）
+    const project = this.store.projects.get(this.draft.project) ? this.draft.project : null;
+    this.current = await this.store.create(asked ?? this.cwd, this.pendingModel, this.draft.persona, this.draft.preset, !!asked, project);
     if (this.store.createdWide === this.current) this.ctx.emit('workdir.wide', { session: this.current, cwd: asked });
     this.pendingModel = null;
-    this.draft = { persona: null, preset: null, cwd: null };
+    this.draft = { persona: null, preset: null, cwd: null, project: null };
     this.store.view(this.current);
     // 还是这一段对话：跟着新会话走的软件包（演示待办）跟过去
     this.ctx.emit('session.created', { from: null, to: this.current });
@@ -880,7 +938,9 @@ export class App {
     this.sessionsPage?.refresh();
     this.composer?.sessionList.refresh();
     const path = this.current ? pathOf(this.current, (id) => this.parentOf(id)).map((id) => ({ session: id, title: this.titleOf(id) })) : [];
-    this.crumbs.draw(path);
+    // 项目里的会话：路径前面多一段「项目名 /」（点了进项目页），在项目里新建的空会话写「项目名 / 新会话」（第 9、11 条）
+    const project = this.projectOf(path);
+    this.crumbs.draw(path, project ? { project: project.project, name: project.name, color: colorOf(project.color, !!this.ctx.theme?.dark()) } : null);
     this.back?.draw(path.length > 1 ? path[path.length - 2] : null);
     // 回答里的本机地址、结果里的图照这个会话取（工作目录照 `session.created`）
     this.chat.setWhere(this.current, this.current ? this.workdir() : null);

@@ -25,13 +25,17 @@ import { toggle, range } from '../model/select.js';
 import { treeRows, capTops } from '../model/tree.js';
 import { TIME_GROUPS, byTime } from '../model/session.js';
 import { SessionDrag } from './sidebar-drag.js';
+import { projectsHeader, projectBlock, menuKey } from './sidebar-projects.js';
+import { projectRows, colorOf } from '../model/project.js';
 
 /**
  * @typedef {{session: string, title: string|null, running: boolean, unread: boolean}} Item
  * @typedef {{newSession: () => void, open: (id: string) => void, close: () => void,
  *   rename: (id: string, title: string) => Promise<void>, pin: (id: string, on: boolean) => Promise<void>, removeMany: (ids: string[]) => Promise<string[]>, dropped: (id: string) => void,
  *   kids: (id: string) => {session: string, title: string|null, running: boolean, paused?: boolean}[], viewAll: () => void,
- *   shown: (ids: string[]) => void,
+ *   shown: (ids: string[]) => void, place: (id: string, patch: {pinned?: boolean, project?: string|null}) => Promise<void>,
+ *   projects: () => {supported: boolean, list: import('../core/projects.js').Project[]}, viewProjects: () => void, editProject: (id: string|null) => void,
+ *   openProject: (id: string) => void, newIn: (id: string) => void, deleteProject: (id: string) => void,
  *   theme: () => void, dark: () => boolean, copyId: (id: string) => void, notYet: (name: string) => void}} Handlers
  */
 
@@ -51,6 +55,12 @@ export class Sidebar {
     /** 树：人点过的开关（会话 → 开着没有）、点开了「已完成 N 个」的会话；这个标签页里记着 */
     this.openTree = /** @type {Map<string, boolean>} */ (new Map());
     this.doneOpen = /** @type {Set<string>} */ (new Set());
+    /** 项目：人点过的展开、收起（这个标签页里记着；没点过的照里面有没有在跑的）；刚点的那一个（画完缓过去）；菜单里点了一下「删除项目」的 */
+    this.projectOpen = /** @type {Map<string, boolean>} */ (new Map());
+    this.flipping = /** @type {{id: string, open: boolean}|null} */ (null);
+    this.armed = /** @type {string|null} */ (null);
+    /** 会话的菜单翻到了「移到项目」那一页 */
+    this.moving = false;
     this.on = on;
     this.dot = h('i.status-dot.is-connecting');
     this.status = h('span', t('status.connecting'));
@@ -70,6 +80,8 @@ export class Sidebar {
     this.timeHeaders = new Map(TIME_GROUPS.map((g) => [g, h('div.session-group-header', { dataset: { key: `group:${g}` } }, h('span', t(`sidebar.groups.${g}`)))]));
     /** 置顶和下面的会话之间一道细线 */
     this.sep = h('div.session-sep', { dataset: { key: 'group:sep' }, 'aria-hidden': 'true' });
+    /** 「项目」那一栏的头（核心有项目才画） */
+    this.projectsHeader = projectsHeader(on);
     /** 左上角的头像、名字：正在看的会话用的人格（`setLook`），点了打开这个人格的编辑页 */
     this.face = h('span.brand-face');
     this.name = h('strong');
@@ -166,40 +178,69 @@ export class Sidebar {
   render(items, current) {
     this.last = [items, current];
     const kept = items.filter((it) => !this.removing.has(it.session));
+    // 项目（核心有项目、不在多选时）：项目里的会话在它的项目下面，不在下面按时间的几组里；不认得的项目（刚删掉的）的照不在项目里
+    const projects = this.on.projects();
+    const showProjects = projects.supported && !this.selecting;
+    const known = new Set(projects.list.map((p) => p.project));
+    const inProject = (/** @type {any} */ it) => showProjects && !!it.project && known.has(it.project);
     // 置顶的单开一栏、全部露出（多选时不分栏）；别的顶层最多露几个，正在看的不在里面的排在最后照样露（多选时全列，才勾得到）
     const pinned = this.selecting ? [] : kept.filter((it) => it.pinned);
-    const rest = this.selecting ? kept : kept.filter((it) => !it.pinned);
+    const rest = this.selecting ? kept : kept.filter((it) => !it.pinned && !inProject(it));
     const cap = this.selecting ? { shown: rest, more: false } : capTops(rest, pinned.some((it) => it.session === current) ? null : current, res.layout.sidebar_rows);
-    const tops = [...pinned, ...cap.shown];
-    if (this.menuFor && !tops.some((it) => it.session === this.menuFor)) this.menuFor = null;
+    const perProject = showProjects ? projectRows(kept, projects.list) : new Map();
+    const tops = [...pinned, ...[...perProject.values()].flat(), ...cap.shown];
+    if (this.menuFor && !this.menuFor.startsWith('project:') && !tops.some((it) => it.session === this.menuFor)) this.menuFor = null;
+    if (this.menuFor?.startsWith('project:') && !known.has(this.menuFor.slice(8))) this.menuFor = null;
+    if (!this.menuFor) this.moving = false;
+    if (!this.menuFor?.startsWith('project:')) this.armed = null;
     // 别处删掉了的不再勾着
     for (const id of [...this.selected]) if (!tops.some((it) => it.session === id)) this.selected.delete(id);
     // 多选时只列顶层的；平常照树排
     const tree = (list) => treeRows(list, (id) => this.on.kids(id), { current, open: this.openTree, done: this.doneOpen });
     const pinnedRows = pinned.length ? tree(pinned) : [];
+    // 一个项目一块：收着的、里面有在跑的写 `(N)`；默认有在跑的展开，别的照人点的
+    const blocks = showProjects ? projects.list.map((p) => {
+      const list = perProject.get(p.project) ?? [];
+      const count = list.reduce((n, it) => n + (it.running ? 1 : 0) + this.busyBelow(it.session), 0);
+      const open = this.projectOpen.get(p.project) ?? count > 0;
+      // 刚点了收起的这一次还画着里面的会话（缓过去以后再画一遍拿掉）
+      const closing = this.flipping?.id === p.project && !open;
+      return { project: p, open, count, rows: open || closing ? tree(list) : [] };
+    }) : [];
     // 平常按时间分组（多选时一整列）：一组一个头，组里照树排
     const groups = this.selecting ? [] : byTime(cap.shown, Date.now()).map((g) => ({ group: g.group, rows: tree(g.rows) }));
     const rows = this.selecting
       ? tops.map((it) => ({ kind: /** @type {const} */ ('session'), session: it.session, depth: 0, item: it, hasKids: false, open: false }))
-      : [...pinnedRows, ...groups.flatMap((g) => g.rows)];
-    const sig = JSON.stringify([rows, groups.map((g) => [g.group, g.rows.length]), current, this.menuFor, this.renaming, this.selecting, [...this.selected], cap.more]);
+      : [...pinnedRows, ...blocks.flatMap((b) => b.rows), ...groups.flatMap((g) => g.rows)];
+    const sig = JSON.stringify([rows, groups.map((g) => [g.group, g.rows.length]), blocks.map((b) => [b.project, b.open, b.count, b.rows.length]), showProjects,
+      current, this.menuFor, this.moving, this.armed, this.renaming, this.selecting, [...this.selected], cap.more, this.on.dark()]);
     if (sig !== this.drawn) {
       this.drawn = sig;
       const all = cap.more ? h('button.session-all', { type: 'button', onclick: () => this.on.viewAll() }, t('sidebar.view_all')) : null;
       const draw = (row) => (row.kind === 'session' ? this.item(row, row.session === current) : this.doneRow(row));
+      // 放得下会话的几块（拖会话，`sidebar-drag.js`）：置顶那一栏、下面的会话；项目的那一块在 `projectBlock` 里写
+      const zoned = (/** @type {HTMLElement} */ el, /** @type {string} */ zone) => { el.dataset.zone = zone; return el; };
       const was = this.positions();
       const hadPinned = this.pinnedHeader.isConnected;
       // 「查看全部会话」「多选」挂在第一组的头上（多选时、没有会话时照旧是「会话」那一行）
       const head = groups.length ? /** @type {HTMLElement} */ (this.timeHeaders.get(groups[0].group)) : this.groupHeader;
       head.append(this.groupTools);
+      const bar = {
+        menuFor: this.menuFor, armed: this.armed, dark: this.on.dark(), draw, on: this.on,
+        toggleMenu: (/** @type {string|null} */ key) => this.toggleMenu(key),
+        flip: (/** @type {string} */ id, /** @type {boolean} */ open) => { this.projectOpen.set(id, open); this.flipping = { id, open }; this.render(...this.last); },
+        arm: (/** @type {string} */ id) => { this.armed = id; this.render(...this.last); },
+      };
       replace(this.items, [
-        pinned.length ? this.pinnedHeader : null, ...pinnedRows.map(draw),
-        pinned.length && (groups.length || this.selecting) ? this.sep : null,
+        pinned.length ? zoned(this.pinnedHeader, 'pin') : null, ...pinnedRows.map((r) => zoned(draw(r), 'pin')),
+        ...(showProjects ? [this.projectsHeader, ...blocks.map((b) => projectBlock(bar, b))] : []),
+        (pinned.length || showProjects) && (groups.length || this.selecting) ? this.sep : null,
         ...(groups.length
-          ? groups.flatMap((g) => [this.timeHeaders.get(g.group), ...g.rows.map(draw)])
-          : [this.groupHeader, ...rows.slice(pinnedRows.length).map(draw)]),
+          ? groups.flatMap((g) => [zoned(/** @type {HTMLElement} */ (this.timeHeaders.get(g.group)), 'loose'), ...g.rows.map((r) => zoned(draw(r), 'loose'))])
+          : [zoned(this.groupHeader, 'loose'), ...rows.slice(pinnedRows.length + blocks.reduce((n, b) => n + b.rows.length, 0)).map((r) => zoned(draw(r), 'loose'))]),
         all]);
       this.slide(was, pinned.length > 0 && !hadPinned);
+      this.unfold();
       this.placeMenu();
       this.drawGroup();
       this.placePill();
@@ -207,6 +248,39 @@ export class Sidebar {
       this.on.shown(rows.flatMap((r) => (r.kind === 'session' && r.depth > 0 ? [r.session] : [])));
     }
     this.spin();
+  }
+
+  /**
+   * 刚点了展开、收起的项目：画出来的是点完的样子，先摆回点之前的再换过去，里面那一块的高度缓过去（`.project-kids` 的 `grid-template-rows`）。
+   * 减少动画的直接换。
+   */
+  unfold() {
+    const f = this.flipping;
+    this.flipping = null;
+    if (!f || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const el = this.items.querySelector(`.project[data-project="${CSS.escape(f.id)}"]`);
+    if (!(el instanceof HTMLElement)) return;
+    // 收起：里面的会话这一次还画着（画完再拿掉）
+    el.classList.add('is-folding');
+    el.classList.toggle('is-open', !f.open);
+    void el.offsetHeight;
+    el.classList.toggle('is-open', f.open);
+    setTimeout(() => {
+      el.classList.remove('is-folding');
+      if (!f.open) {
+        this.drawn = '';
+        this.render(...this.last);
+      }
+    }, res.layout.sidebar_move_ms + 20);
+  }
+
+  /** 一个会话下面（一层层往下）在跑的子代理有几个（项目收着时名字前面的 `(N)`）。 @param {string} id */
+  busyBelow(id, seen = new Set([id])) {
+    return this.on.kids(id).reduce((n, k) => {
+      if (seen.has(k.session)) return n;
+      seen.add(k.session);
+      return n + (k.running ? 1 : 0) + this.busyBelow(k.session, seen);
+    }, 0);
   }
 
   /** 表里每一行（会话、两栏的头）现在在哪：换先后以前记下，画完照它滑。 */
@@ -308,13 +382,34 @@ export class Sidebar {
           type: 'button', title: t('sidebar.menu'), 'aria-haspopup': 'menu', 'aria-expanded': String(open),
           onclick: () => this.toggleMenu(open ? null : id),
         }, icon('ellipsis-vertical'))),
-      open ? menu([
+      open ? (this.moving ? this.moveMenu(it) : menu([
         // 置顶只有顶层会话有（蓝图「左栏」菜单）
         ...(row.depth ? [] : [[t(it.pinned ? 'sidebar.unpin' : 'sidebar.pin'), false, () => this.on.pin(id, !it.pinned)]]),
+        // 移到项目（核心有项目、有项目、顶层会话才有；蓝图「会话整理和项目」第 5 条）：翻到一个项目一行的那一页；在项目里的多「移出项目」
+        ...(!row.depth && this.on.projects().supported && this.on.projects().list.length
+          ? [[t('sidebar.move_to_project'), false, () => { this.moving = true; this.render(...this.last); }, true]] : []),
+        ...(!row.depth && it.project && this.on.projects().supported ? [[t('sidebar.move_out'), false, () => this.on.place(id, { project: null })]] : []),
         [t('sidebar.copy_id'), false, () => this.on.copyId(id)],
         [t('sidebar.rename'), false, () => this.startRename(id)],
         [t('sidebar.delete'), true, () => this.removeAll([id])],
-      ], () => this.toggleMenu(null)) : null);
+      ], () => this.toggleMenu(null))) : null);
+  }
+
+  /**
+   * 会话的菜单翻到「移到项目」：顶上一行返回，下面一个项目一行（项目颜色的文件夹加名字），在的那个写「（在这里）」灰着。移进去同时取消置顶。
+   * @param {any} it
+   */
+  moveMenu(it) {
+    const back = h('button.session-menu-back', { type: 'button', onclick: () => { this.moving = false; this.render(...this.last); } }, icon('chevron-left'), h('span', t('sidebar.move_to_project')));
+    const dark = this.on.dark();
+    return h('div.session-menu.is-projects', { role: 'menu' }, back, this.on.projects().list.map((p) => {
+      const here = it.project === p.project;
+      const color = colorOf(p.color, dark);
+      return h('button.session-menu-project', {
+        type: 'button', role: 'menuitem', disabled: here, style: color ? `--project-color: ${color}` : null,
+        onclick: () => { this.toggleMenu(null); this.on.place(it.session, { project: p.project, ...(it.pinned ? { pinned: false } : {}) }); },
+      }, icon('folder'), h('span', here ? t('sidebar.here', { name: p.name }) : p.name));
+    }));
   }
 
   /** 「已完成 N 个」：一层里结束了的收成这一行，点了列出来、再点收起。 */
@@ -465,11 +560,12 @@ function frameNow() {
 
 /**
  * 会话的菜单：一项一个按钮，危险的红；点了先关菜单再做。
- * @param {[string, boolean, () => void][]} actions 字、是不是危险的、做什么
+ * @param {[string, boolean, () => void, boolean?][]} actions 字、是不是危险的、做什么、点了留着菜单
  */
 function menu(actions, close) {
-  return h('div.session-menu', { role: 'menu' }, actions.map(([label, danger, run]) =>
-    h(`button${danger ? '.is-danger' : ''}`, { type: 'button', role: 'menuitem', onclick: () => { close(); run(); } }, label)));
+  // 第四格是真的：点了不关菜单（翻到下一页）
+  return h('div.session-menu', { role: 'menu' }, actions.map(([label, danger, run, keep]) =>
+    h(`button${danger ? '.is-danger' : ''}`, { type: 'button', role: 'menuitem', onclick: (e) => { if (keep) { e.stopPropagation(); run(); return; } close(); run(); } }, label)));
 }
 
 /** 要收掉的一项：记下它现在多高，退场动画照它把高度收成 0（`sidebar.css` 的 `item-out`，蓝图「动效」）。 */

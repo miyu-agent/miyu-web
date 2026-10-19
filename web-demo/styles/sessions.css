@@ -57,3 +57,87 @@
   .sessions-inner { width: calc(100% - 26px); padding-top: 56px; }
   .sessions-search { width: 120px; }
 }
+
+/* 「会话」「项目」两页的切换（蓝图「会话整理和项目」第 6 条，照模型菜单的：两格，滑块跟着换） */
+.sessions-switch { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; margin: -12px 0 18px; padding: 3px; border-radius: 10px; background: var(--surface-2); }
+.sessions-switch[hidden] { display: none; }
+.sessions-tab {
+  position: relative; z-index: 1; min-width: 84px; padding: 5px 14px; border: 0; border-radius: 8px; background: none; color: var(--text-soft);
+  font: 13px var(--sans); cursor: pointer; transition: color var(--motion-in) ease;
+}
+.sessions-tab[aria-selected="true"] { color: var(--text); font-weight: 500; }
+.sessions-switch-thumb {
+  position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px); border-radius: 8px; background: var(--surface-1);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.1); transition: transform var(--motion-slide) var(--ease-out);
+}
+.sessions-switch.on-projects .sessions-switch-thumb { transform: translateX(100%); }
+/* 一排筛选、右边的排法 */
+.sessions-filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.sessions-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sessions-chip {
+  display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px; border: 0; border-radius: 999px; background: var(--surface-2);
+  color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease;
+}
+.sessions-chip:hover { background: var(--surface-3); color: var(--text); }
+.sessions-chip.is-on { background: var(--accent-soft); color: var(--accent); }
+.sessions-chip .icon { width: 13px; height: 13px; color: var(--project-color, currentColor); }
+.sessions-chip span { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sessions-sort { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 8px; border: 0; border-radius: 8px; background: none; color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer; }
+.sessions-sort:hover { background: var(--surface-2); color: var(--text); }
+.sessions-sort .icon { width: 13px; height: 13px; }
+/* 时间分组的组头：滚的时候贴在顶上 */
+.sessions-group {
+  position: sticky; top: 0; z-index: 2; padding: 14px 10px 6px; background: var(--surface); color: var(--text-faint);
+  font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em;
+}
+.sessions-unread { flex: none; }
+/* 项目的小标签：文件夹加名字，surface_2 底 */
+.sessions-project {
+  display: inline-flex; flex: none; max-width: 180px; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 6px; background: var(--surface-2);
+  color: var(--text-soft); font-size: 12px;
+}
+.sessions-project .icon { width: 12px; height: 12px; flex: none; color: var(--project-color, var(--text-faint)); }
+.sessions-project span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sessions-agents.is-running { color: var(--gold); }
+
+/* 「项目」那一页：一个项目一张卡片，最后一张虚线的「新建项目」 */
+.project-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.project-card {
+  display: grid; align-content: start; gap: 6px; min-height: 108px; padding: 16px; border: 0; border-radius: 14px; background: var(--surface-1);
+  box-shadow: var(--card-shadow); color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.project-card:hover { box-shadow: var(--float-shadow); }
+.project-card-name { display: flex; min-width: 0; align-items: center; gap: 8px; }
+.project-card-name .icon { width: 17px; height: 17px; flex: none; color: var(--project-color, var(--text-faint)); }
+.project-card-name strong { min-width: 0; overflow: hidden; font-size: 14.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.project-card-desc { display: -webkit-box; overflow: hidden; color: var(--text-soft); font-size: 13px; line-height: 1.5; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.project-card-meta { margin-top: auto; color: var(--text-faint); font-size: 12px; }
+.project-card.is-new {
+  place-content: center; justify-items: center; background: none; box-shadow: none; border: 1.5px dashed var(--line-strong); color: var(--text-soft);
+}
+.project-card.is-new:hover { border-color: var(--accent); color: var(--accent); box-shadow: none; }
+.project-card.is-new .icon { width: 18px; height: 18px; }
+.project-cards .sessions-empty { grid-column: 1 / -1; }
+
+/* 项目页：路径、标题（项目颜色的文件夹）、两个按钮、说明、新建会话照的那几样 */
+.project-page { display: grid; gap: 14px; margin-bottom: 18px; }
+.project-crumbs { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.project-crumb { padding: 2px 6px; margin-left: -6px; border: 0; border-radius: 6px; background: none; color: var(--text-soft); font: inherit; cursor: pointer; }
+button.project-crumb:hover { background: var(--surface-2); color: var(--text); }
+.project-crumb.is-here { margin-left: 0; padding: 0; color: var(--text); }
+.project-crumb-sep { color: var(--text-faint); }
+.project-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.project-title { display: flex; min-width: 0; align-items: center; gap: 10px; margin: 0; color: var(--text); font: 600 26px/1.2 var(--serif); }
+.project-title .icon { width: 24px; height: 24px; flex: none; color: var(--project-color, var(--text-faint)); }
+.project-title span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.project-desc { margin: 0; color: var(--text-soft); font-size: 14px; line-height: 1.6; }
+.project-defaults { display: grid; gap: 8px; padding: 14px 16px; border-radius: 12px; background: var(--surface-2); }
+.project-defaults-title { margin: 0 0 2px; color: var(--text-soft); font-size: 12.5px; font-weight: 600; }
+.project-default { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 12px; font-size: 13px; }
+.project-default-name { color: var(--text-faint); }
+.project-default-value { min-width: 0; color: var(--text); overflow-wrap: anywhere; }
+.project-default-value.is-faint { color: var(--text-faint); }
+.project-prompt { display: -webkit-box; overflow: hidden; white-space: pre-wrap; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+@media (max-width: 836px) {
+  .project-default { grid-template-columns: 1fr; gap: 2px; }
+}

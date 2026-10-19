@@ -339,3 +339,34 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
 }
 .session-drop-zone { position: absolute; left: 0; right: 0; border-radius: 10px; background: color-mix(in srgb, var(--accent-soft) 70%, transparent); box-shadow: inset 0 0 0 1.5px var(--accent); pointer-events: none; }
 .session-drop-hint { display: grid; place-items: center; height: 34px; margin: 8px 2px 2px; border: 1px dashed var(--line-strong); border-radius: 8px; color: var(--text-faint); font-size: 12px; }
+
+/* 项目（蓝图「会话整理和项目」第 3、4 条，`ui/sidebar-projects.js`）：一行照会话的样子，记号那一格是项目颜色的文件夹；右边 ⋯ 悬停才露，
+   最右一个展开箭头（没悬停、没展开时不画）；下面那一块高度缓过去（0.24 秒），收着的里面的会话不占地方 */
+.project-row .session-item-main { padding-right: 52px; }
+.project-folder .icon { width: 14px; height: 14px; color: var(--project-color, var(--text-faint)); }
+.project-row .session-trailing { right: 22px; padding: 0 2px; }
+.project-chevron {
+  position: absolute; top: 0; right: 7px; bottom: 0; display: grid; place-items: center; color: var(--text-faint); pointer-events: none;
+  opacity: 0; transition: opacity 120ms ease, transform var(--motion-slide) var(--ease-out);
+}
+.project-chevron .icon { width: 13px; height: 13px; }
+.project-row:hover .project-chevron, .project-row:focus-within .project-chevron, .project.is-open .project-chevron { opacity: 1; }
+.project.is-open .project-chevron { transform: rotate(90deg); }
+.project-kids { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--motion-slide) var(--ease-out); }
+.project.is-open .project-kids { grid-template-rows: 1fr; }
+.project-kids-inner { display: grid; gap: var(--item-gap); min-height: 0; overflow: hidden; }
+.project.is-open .project-kids-inner { padding-top: var(--item-gap); }
+/* 展开着、不在缓的时候不裁：里面会话的菜单往下开 */
+.project.is-open:not(.is-folding) .project-kids-inner { overflow: visible; }
+.project-empty { position: relative; display: block; padding: 3px 11px 5px 29px; color: var(--text-faint); font-size: 12px; }
+@media (prefers-reduced-motion: reduce) {
+  .project-kids, .project-chevron { transition: none; }
+}
+/* 菜单里带图标的一项（删除项目）；「移到项目」那一页：顶上一行返回，一个项目一行（项目颜色的文件夹） */
+.session-menu button { display: flex; align-items: center; gap: 7px; }
+.session-menu button .icon { width: 14px; height: 14px; flex: none; }
+.session-menu .session-menu-back { color: var(--text-soft); }
+.session-menu-project .icon { color: var(--project-color, var(--text-faint)); }
+.session-menu-project:disabled { color: var(--text-faint); cursor: default; }
+.session-menu-project:disabled:hover { background: transparent; }
+.session-menu.is-projects { max-height: 320px; overflow-y: auto; }

@@ -39,12 +39,26 @@
       "week": "過去 7 日",
       "month": "過去 30 日",
       "older": "それ以前"
-    }
+    },
+    "projects": "プロジェクト",
+    "all_projects": "すべてのプロジェクト",
+    "new_project": "新しいプロジェクト",
+    "project_empty": "まだセッションがありません。ここにドラッグ",
+    "project_menu": "プロジェクトのメニュー",
+    "project_open": "プロジェクトを開く",
+    "project_new_session": "プロジェクトで新しいセッション",
+    "project_settings": "プロジェクトの設定…",
+    "project_delete": "プロジェクトを削除…",
+    "project_delete_confirm": "もう一度クリックで削除（セッションは外に出ます）",
+    "move_to_project": "プロジェクトへ移動",
+    "move_out": "プロジェクトから外す",
+    "here": "{name}（ここ）"
   },
   "crumbs": {
     "label": "サブエージェントのセッションの位置",
     "back": "戻る",
-    "back_to": "「{title}」に戻る"
+    "back_to": "「{title}」に戻る",
+    "new_session": "新しいセッション"
   },
   "placeholder": "{name} にメッセージを送信",
   "placeholder_bare": "メッセージを送信",
@@ -373,7 +387,18 @@
     "empty": "セッションはまだありません",
     "no_match": "見つかりません",
     "jobs": "バックグラウンドタスク {count} 件",
-    "agents": "サブエージェント {count} 件"
+    "agents": "サブエージェント {count} 件",
+    "tab_sessions": "セッション",
+    "tab_projects": "プロジェクト",
+    "filter_all": "すべて",
+    "filter_loose": "プロジェクト外",
+    "filter_running": "実行中",
+    "filter_unread": "未読",
+    "sort_active": "最近の活動順",
+    "sort_created": "作成日順",
+    "agents_running": "サブエージェント {count} 件が実行中",
+    "project_meta": "{count} 件のセッション · {when}",
+    "project_none": "まだセッションがありません"
   },
   "turn_end": {
     "restarted": "再起動しました",
@@ -463,5 +488,22 @@
   "older": {
     "loading": "前の履歴を読み込み中…",
     "start": "ここが最初です"
+  },
+  "project_page": {
+    "all": "すべてのプロジェクト",
+    "settings": "プロジェクトの設定",
+    "new_session": "プロジェクトで新規作成",
+    "defaults": "このプロジェクトで新しく作るセッションの設定",
+    "workspace": "ワークスペースのフォルダ",
+    "default_workspace": "既定のワークスペース",
+    "persona": "人格",
+    "preset": "プリセット",
+    "default": "既定",
+    "no_persona": "人格なし",
+    "prompt": "追加の指示",
+    "none": "なし",
+    "messages": "メッセージ",
+    "messages_inside": "プロジェクト内のみ",
+    "messages_open": "プロジェクト外のセッションともやり取りできる"
   }
 }

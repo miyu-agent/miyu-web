@@ -39,12 +39,26 @@
       "week": "Past 7 days",
       "month": "Past 30 days",
       "older": "Older"
-    }
+    },
+    "projects": "Projects",
+    "all_projects": "All projects",
+    "new_project": "New project",
+    "project_empty": "No sessions yet — drag one here",
+    "project_menu": "Project menu",
+    "project_open": "Open project",
+    "project_new_session": "New session in project",
+    "project_settings": "Project settings…",
+    "project_delete": "Delete project…",
+    "project_delete_confirm": "Click again to delete (sessions move out)",
+    "move_to_project": "Move to project",
+    "move_out": "Remove from project",
+    "here": "{name} (here)"
   },
   "crumbs": {
     "label": "Subagent session path",
     "back": "Back",
-    "back_to": "Back to “{title}”"
+    "back_to": "Back to “{title}”",
+    "new_session": "New session"
   },
   "placeholder": "Message {name}",
   "placeholder_bare": "Message",
@@ -373,7 +387,18 @@
     "empty": "No sessions",
     "no_match": "No matches",
     "jobs": "Background tasks: {count}",
-    "agents": "Subagents: {count}"
+    "agents": "Subagents: {count}",
+    "tab_sessions": "Sessions",
+    "tab_projects": "Projects",
+    "filter_all": "All",
+    "filter_loose": "Not in a project",
+    "filter_running": "Running",
+    "filter_unread": "Unread",
+    "sort_active": "Recent activity",
+    "sort_created": "Date created",
+    "agents_running": "{count} subagents running",
+    "project_meta": "{count} sessions · {when}",
+    "project_none": "No sessions yet"
   },
   "turn_end": {
     "restarted": "Restarted",
@@ -463,5 +488,22 @@
   "older": {
     "loading": "Loading earlier messages…",
     "start": "Start of conversation"
+  },
+  "project_page": {
+    "all": "All projects",
+    "settings": "Project settings",
+    "new_session": "New in project",
+    "defaults": "New sessions in this project use",
+    "workspace": "Workspace folder",
+    "default_workspace": "Default workspace",
+    "persona": "Persona",
+    "preset": "Preset",
+    "default": "Default",
+    "no_persona": "No persona",
+    "prompt": "Extra instructions",
+    "none": "None",
+    "messages": "Messages",
+    "messages_inside": "Only within the project",
+    "messages_open": "Can message sessions outside the project"
   }
 }

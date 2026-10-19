@@ -316,3 +316,26 @@
 .setup-palette-sample i { flex: 1; height: 8px; border-radius: 4px; }
 .setup-palette-sample i:first-child { flex: 2; height: 14px; }
 .setup-palette-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 新建项目、项目设置（`project-dialog.js`，蓝图 web.md「会话整理和项目」第 8 条）：卡片宽一点，框照设置页（不画描边、聚焦亮底加软影） */
+.setup-float-scrim.is-project .setup-float { width: min(600px, 100%); }
+.project-cell { display: grid; gap: 4px; }
+.project-cell > .set-input { width: 100%; box-sizing: border-box; height: 34px; }
+.project-note { justify-self: end; color: var(--text-faint); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.project-note.is-over { justify-self: start; color: var(--danger); }
+.project-swatches { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 6px; }
+.project-swatch {
+  position: relative; display: grid; width: 22px; height: 22px; padding: 0; place-items: center; overflow: hidden; border: 0; border-radius: 7px;
+  background: var(--swatch, var(--surface-2)); color: var(--text-soft); cursor: pointer; transition: box-shadow 0.15s ease;
+}
+.project-swatch.is-on { box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--swatch, var(--accent)); }
+.project-swatch.is-pick:not(.is-on):hover { background: var(--surface-3); }
+.project-swatch .icon { width: 13px; height: 13px; }
+.project-swatch input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+.project-work-wrap { position: relative; }
+.project-work { display: inline-flex; max-width: 100%; align-items: center; gap: 7px; }
+.project-work .icon { width: 14px; height: 14px; flex: none; }
+.project-work span { flex: none; }
+.project-work small { min-width: 0; overflow: hidden; color: var(--text-faint); font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+.project-editor .setup-area { min-height: 76px; }
+.project-toggle { display: flex; align-items: center; gap: 10px; color: var(--text); font-size: 13px; }

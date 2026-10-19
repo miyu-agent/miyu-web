@@ -5,6 +5,7 @@
 import { App } from '../../src/ui/app.js';
 import { useConnection as linkCardsUse } from '../../src/ui/linkcards.js';
 import { codeBlock, copy } from '../../src/markdown/build.js';
+import { PALETTE, colorOf } from '../../src/model/project.js';
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -54,6 +55,12 @@ export function apply(ctx) {
     refreshLook: () => app.syncLook(),
     /** 会话用的预设（核心 P-2：会话状态的 `preset`，没读进来的照会话表；以前的会话没有，是 `null`） */
     preset: (id) => app.store.sessions.get(id)?.view.status?.preset ?? app.store.index.get(id)?.preset ?? null,
+    /** 项目（核心 H-1）：现在的一张表、一个项目；没有的是 `null` */
+    projects: () => app.store.projects.list,
+    project: (id) => app.store.projects.get(id),
+    /** 项目的十二种颜色（存的是浅色那一种）、一种颜色照现在的深浅画成什么（新建项目、项目设置那一个窗口，软件包 setup） */
+    projectPalette: () => PALETTE,
+    projectColor: (color) => colorOf(color, !!ctx.theme?.dark()),
   });
   // 输入框：提示、跟着发的东西变了、写字的那个框（附件这类包经它粘贴、提示）
   ctx.provide('composer', {
