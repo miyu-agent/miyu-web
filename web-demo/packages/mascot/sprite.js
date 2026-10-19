@@ -75,7 +75,7 @@ export class Sprite {
    */
   draw(pose) {
     const c = this.config;
-    const sig = [pose.yaw.toFixed(1), pose.pitch.toFixed(1), pose.blink, pose.ear.toFixed(2), (pose.stride ?? 0).toFixed(2), (pose.crouch ?? 0).toFixed(2), (pose.mouth ?? 0).toFixed(2), (pose.turn ?? 0).toFixed(1), !!pose.lamp].join('|');
+    const sig = [pose.yaw.toFixed(1), pose.pitch.toFixed(1), pose.blink, pose.ear.toFixed(2), (pose.stride ?? 0).toFixed(2), (pose.crouch ?? 0).toFixed(2), (pose.mouth ?? 0).toFixed(2), (pose.turn ?? 0).toFixed(1), !!pose.lamp, !!pose.hush].join('|');
     if (sig === this.drawn) return;
     this.drawn = sig;
     const cells = render(c.model, pose, { cols: c.cols, rows: c.rows, radius: c.radius, center_row: c.center_row });

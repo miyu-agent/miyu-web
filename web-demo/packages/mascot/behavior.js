@@ -181,6 +181,8 @@ export class Behavior {
     const want = standing && this.busy ? 'laptop' : standing && this.gameUntil > performance.now() ? 'console' : null;
     if (want === this.activity) return;
     this.activity = want;
+    // 抱着电脑不露嘴（2026-10-20 项目主人，终端同一条）
+    this.pose.hush = want === 'laptop';
     this.io.hold(want);
     clearInterval(this.propTimer);
     this.propTimer = 0;
