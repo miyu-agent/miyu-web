@@ -83,7 +83,7 @@ export class DreamCard {
     this.finished = true;
     this.doneAt = performance.now();
     this.title.textContent = this.t('dream.done');
-    this.batch.textContent = this.t('dreamed', { given: got?.given ?? 0, revised: got?.revised ?? 0, retired: got?.retired ?? 0 });
+    this.batch.textContent = this.t('dream.result', { given: got?.given ?? 0, revised: got?.revised ?? 0, retired: got?.retired ?? 0 });
     this.tally.textContent = '';
     this.sync();
   }
@@ -110,7 +110,9 @@ export class DreamCard {
     if (line.kind === 'read') row = h('div.dream-line.is-read', tag('read'), h('span.dream-t', text(line.id)));
     else if (line.kind === 'new') row = h('div.dream-line', tag('new'), h('span.dream-t', h('s', text(line.id)), ' → ', line.text));
     else if (line.kind === 'del') {
-      const why = [line.retire ? t(`dream.retire.${line.retire}`) : null, line.why || null, line.kept ? t('dream.kept', { text: text(line.kept) }) : null].filter(Boolean).join(' · ');
+      const label = line.retire ? t(`dream.retire.${line.retire}`) : null;
+      // 为什么和类别说的一样的（「用不着」）不写两遍
+      const why = [label, line.why && line.why !== label ? line.why : null, line.kept ? t('dream.kept', { text: text(line.kept) }) : null].filter(Boolean).join(' · ');
       row = h('div.dream-line', tag('del'), h('span.dream-t', h('s', text(line.id)), why ? h('span.dream-why', ` · ${why}`) : null));
     } else if (line.kind === 'sum') {
       row = h('div.dream-line', tag('sum'), h('span.dream-t', line.done ? t('dream.summary_done') : t('dream.summary', { n: line.chars })));

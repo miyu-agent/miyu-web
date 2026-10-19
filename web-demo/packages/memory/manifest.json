@@ -59,7 +59,8 @@
         "kept": "留下「{text}」",
         "summary": "摘要写到 {n} 字…",
         "summary_done": "摘要写好了",
-        "retry": "这一批没合成，再试一次"
+        "retry": "这一批没合成，再试一次",
+        "result": "检查 {given} 条，修改 {revised} 条，作废 {retired} 条"
       },
       "dreaming": "整理中…",
       "dreamed": "整理完成：检查 {given} 条，修改 {revised} 条，作废 {retired} 条",
@@ -162,7 +163,8 @@
         "kept": "kept “{text}”",
         "summary": "Summary: {n} characters…",
         "summary_done": "Summary written",
-        "retry": "This batch didn’t go through. Trying again"
+        "retry": "This batch didn’t go through. Trying again",
+        "result": "Checked {given}, revised {revised}, retired {retired}"
       },
       "dreaming": "Tidying…",
       "dreamed": "Done: checked {given}, revised {revised}, retired {retired}",
@@ -265,7 +267,8 @@
         "kept": "「{text}」を残す",
         "summary": "要約 {n} 文字…",
         "summary_done": "要約を書きました",
-        "retry": "このバッチはまとまりませんでした。やり直します"
+        "retry": "このバッチはまとまりませんでした。やり直します",
+        "result": "{given} 件を確認、{revised} 件を修正、{retired} 件を無効化"
       },
       "dreaming": "整理中…",
       "dreamed": "整理完了：{given} 件を確認、{revised} 件を修正、{retired} 件を無効化",
