@@ -10,6 +10,8 @@ import { DreamCard } from './dream.js';
 
 /** 合完以后那一块留多久再收成结果那一行 */
 const SETTLE_MS = 1600;
+/** 核心多久还没回才把那一块挂出来（没有要整理的很快就回，不闪一下；真开始合了当场挂） */
+const SHOW_AFTER_MS = 500;
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -60,6 +62,9 @@ async function dream(ctx, words) {
     return;
   }
   let session = ctx.chat?.current?.() ?? null;
+  // 空会话里打的：先开会话；没有要整理的再删掉它，回到原来的空会话（选好的人格、预设、工作区放回去）
+  const draft = session ? null : ctx.chat?.draft?.() ?? null;
+  const opened = !session;
   if (!session) {
     try {
       session = await ctx.chat?.ensure?.();
@@ -75,7 +80,10 @@ async function dream(ctx, words) {
   const box = h('div.dream-slot', card.el);
   let away = false;
   const onPush = (/** @type {string} */ method, /** @type {any} */ params) => {
-    if ((method === 'memory.event' || method === 'memory.dreaming') && params?.session === session) card.push(method, params);
+    if ((method === 'memory.event' || method === 'memory.dreaming') && params?.session === session) {
+      card.push(method, params);
+      if (card.track.batches) mount();
+    }
   };
   ctx.core.onPush(onPush);
   // 只在发起的那个会话里露出来（换到别的会话藏起来，换回来接着看）
@@ -83,9 +91,16 @@ async function dream(ctx, words) {
   const watch = setInterval(shown, 300);
   receipts.get(session)?.();
   receipts.delete(session);
-  const unmount = ctx.slots.mount('chat.tail', { id: `memory-dream-${session}`, render: () => box });
-  shown();
-  ctx.chat?.reveal?.();
+  // 挂那一块：真开始合了（头一条 `merging`）当场挂，不然等一会儿（没有要整理的很快就回，不闪一下）
+  /** @type {(() => void)|null} */
+  let unmount = null;
+  const mount = () => {
+    if (unmount) return;
+    unmount = ctx.slots.mount('chat.tail', { id: `memory-dream-${session}`, render: () => box }) ?? (() => {});
+    shown();
+    ctx.chat?.reveal?.();
+  };
+  const later = setTimeout(mount, SHOW_AFTER_MS);
   // 两下 `Esc` 叫停：在前台、没在回答、框里没字时（照终端：第一下提示，第二下叫停）
   const claim = () => ctx.composer?.claimEscape?.(away ? null : { hint: t('dream_esc_hint'), run: () => stop(ctx) });
   claim();
@@ -108,6 +123,7 @@ async function dream(ctx, words) {
     },
   };
   const release = () => {
+    clearTimeout(later);
     clearInterval(watch);
     card.dispose();
     ctx.core.pushes?.delete?.(onPush);
@@ -125,9 +141,16 @@ async function dream(ctx, words) {
     if (!n && !got?.summary && got?.stopped !== true) {
       release();
       drop();
+      // 为这一次开的会话：删掉，回到原来的空会话
+      if (opened && ctx.chat?.current?.() === session) {
+        await ctx.core.request('session.delete', { session }).catch(() => {});
+        ctx.chat?.open?.(null);
+        if (draft) ctx.chat?.setDraft?.(draft);
+      }
       say(t('dream_none'));
       return;
     }
+    mount();
     card.finish(got);
     release();
     // 收成结果那一行：前台的天亮一会儿再收，转到后台的当场留在正文末尾
@@ -142,6 +165,11 @@ async function dream(ctx, words) {
   } catch (err) {
     release();
     drop();
+    if (opened && ctx.chat?.current?.() === session) {
+      await ctx.core.request('session.delete', { session }).catch(() => {});
+      ctx.chat?.open?.(null);
+      if (draft) ctx.chat?.setDraft?.(draft);
+    }
     const why = /** @type {any} */ (err)?.data?.reason;
     say(why === 'memory_busy' ? t('dream_busy') : /** @type {any} */ (err)?.data?.message ?? /** @type {any} */ (err)?.message ?? String(err));
   }
