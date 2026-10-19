@@ -35,7 +35,8 @@
 .wl-col { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; width: min(560px, 100% - 32px); min-height: 100%; margin: 0 auto; padding: 56px 0 104px; }
 .wl-layer.is-center .wl-col { padding: 0 0 56px; }
 /* 地面：两种深蓝 16px 一格相间，上沿一道亮一点的边；吉祥物站在它上面 */
-.wl-ground { position: absolute; z-index: 0; left: 0; right: 0; bottom: 0; height: 56px; background: repeating-linear-gradient(90deg, var(--px-ground) 0 16px, var(--px-ground-2) 16px 32px); box-shadow: inset 0 4px 0 var(--px-edge); }
+/* 盖在内容上面一层（不接指针）：窗口矮、内容比窗口高的时候，滚上去的内容从地面后面过，不画在地面上（2026-10-19 项目主人：窗口高度不够时列表压在地面上、「下一步」被挤到地面底下） */
+.wl-ground { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; height: 56px; background: repeating-linear-gradient(90deg, var(--px-ground) 0 16px, var(--px-ground-2) 16px 32px); box-shadow: inset 0 4px 0 var(--px-edge); pointer-events: none; }
 
 /* 顶上关卡：「STAGE 3/7」，下面一排小方格 */
 .wl-head { display: grid; justify-items: center; gap: 8px; margin-bottom: 26px; }
@@ -59,6 +60,8 @@
 .wl-error { margin: 14px 0 0; color: var(--danger); font-size: 13px; text-align: center; white-space: pre-wrap; }
 /* 按钮：主按钮是蓝色的像素块，底下一道深的边当影子，按下去往下沉；「上一步」是暗字 */
 .wl-foot { display: flex; align-items: center; justify-content: center; gap: 22px; margin-top: 30px; }
+/* 窗口矮的时候「上一步」「下一步」钉在地面正上方，一直露着：底下垫一截页面的底色，往上淡出，滚过去的内容从它后面过；放得下的照常排在内容下面 */
+.wl-foot { position: sticky; bottom: 56px; z-index: 1; padding: 16px 8px 14px; margin: 30px -8px -14px; background: linear-gradient(transparent, var(--px-bg) 14px); }
 .wl-foot > span:empty { display: none; }
 .wl-link { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 8px; border: 0; background: transparent; color: var(--px-dim); font: 9px var(--px-font); cursor: pointer; }
 .wl-link:hover, .wl-link:focus-visible { outline: 0; color: var(--px-tx); }
