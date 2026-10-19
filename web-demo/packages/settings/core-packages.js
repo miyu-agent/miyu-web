@@ -118,6 +118,21 @@ function switchFor(dialog, p) {
  * 一个包的信息页（点进去的那一层）：每次画都照现在的列表、配置清单重取，开关、别处改了配置重画时跟着变。
  * @param {any} dialog @param {string} id
  */
+/**
+ * 信息页上的按钮：打开后台页；问到它有自己的网页的，接着露一个「在新标签页打开」。
+ * @param {any} dialog @param {string} id
+ */
+function siteActions(dialog, id) {
+  const t = (/** @type {string} */ key) => dialog.ctx.text(key);
+  const pages = dialog.ctx.backstage;
+  const row = h('div.set-pkg-actions', h('a.set-btn.set-link', { href: pages.href(id), onclick: (/** @type {MouseEvent} */ e) => openPage(dialog, id, e) }, t('pkg.open_backstage')));
+  pages.site?.port(id).then((/** @type {number|null} */ port) => {
+    if (!port || !row.isConnected) return;
+    row.append(h('button.set-btn', { type: 'button', onclick: () => pages.site.open(id).then((/** @type {string|null} */ why) => { if (why) dialog.toast(why); }) }, t('pkg.open_site')));
+  });
+  return row;
+}
+
 function infoPage(dialog, id) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const p = (dialog.packages ?? []).find((x) => x.package === id);
@@ -131,8 +146,9 @@ function infoPage(dialog, id) {
   const head = [
     p.summary ? h('p.set-sub-desc', p.summary) : null,
     line ? h(`p.set-pkg-line${bad ? '.is-bad' : ''}`, line) : null,
-    // 有后台页的：一个按钮跳到它的独立整页（软件包 `backstage`；停用了那个包的、程序不在、依赖缺了的不出）
-    p.page && !bad && dialog.ctx.backstage ? h('div.set-pkg-actions', h('a.set-btn.set-link', { href: dialog.ctx.backstage.href(id), onclick: (/** @type {MouseEvent} */ e) => openPage(dialog, id, e) }, t('pkg.open_backstage'))) : null,
+    // 有后台页的：一个按钮跳到它的独立整页（软件包 `backstage`；停用了那个包的、程序不在、依赖缺了的不出）；有自己网页的（接入通讯平台的页面服务，
+    // 问到了端口才露）再一个「在新标签页打开」（2026-10-19 项目主人：软件包页、软件后台、/im 三处）
+    p.page && !bad && dialog.ctx.backstage ? siteActions(dialog, id) : null,
   ];
   const group = (dialog.pages ?? []).find((x) => x.id === 'packages')?.groups.find((g) => g.id === id);
   const settings = (group?.items ?? []).map((item) => coreRow(dialog, item)).filter(Boolean);

@@ -7,6 +7,7 @@
 
 import { h, icon, hasIcon } from '../../src/lib/dom.js';
 import { FrameHost } from './frame.js';
+import { sitePort, openSite } from './external.js';
 
 export class FullPage {
   /**
@@ -60,6 +61,14 @@ export class FullPage {
       h('button.icon-button.bs-back', { type: 'button', title: t('back'), 'aria-label': t('back'), onclick: () => this.leave() }, icon('arrow-left')),
       h('span.bs-face', icon(p?.icon && hasIcon(p.icon) ? p.icon : 'package')),
       h('span.bs-name', name));
+    // 有自己网页的（接入通讯平台的页面服务）：顶栏右边一个「在新标签页打开」，问到了端口才露
+    if (!route.widget) {
+      sitePort(this.ctx.core, route.package).then((port) => {
+        if (!port || this.shown !== key) return;
+        bar.append(h('button.bs-site', { type: 'button', onclick: () => openSite(this.ctx, route.package).then((why) => { if (why) this.ctx.composer?.say(why); }) },
+          icon('external-link'), h('span', t('site.open'))));
+      });
+    }
     /** @type {HTMLElement} */
     let body;
     if (route.widget) {

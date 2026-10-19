@@ -364,7 +364,8 @@
         "covered": "被个人设置替代",
         "depends_missing": "缺少依赖：{names}",
         "depended": "{names} 依赖它，无法卸载",
-        "sep": "、"
+        "sep": "、",
+        "open_site": "在新标签页打开"
       },
       "onboard": {
         "title_list": "选择模型供应商",
@@ -645,7 +646,8 @@
         "covered": "Replaced by personal settings",
         "depends_missing": "Missing dependencies: {names}",
         "depended": "Can't uninstall: required by {names}",
-        "sep": ", "
+        "sep": ", ",
+        "open_site": "Open in new tab"
       },
       "onboard": {
         "title_list": "Select a model provider",
@@ -926,7 +928,8 @@
         "covered": "個人設定に置き換え済み",
         "depends_missing": "依存パッケージ不足：{names}",
         "depended": "{names} が依存しているため、アンインストールできません",
-        "sep": "、"
+        "sep": "、",
+        "open_site": "新しいタブで開く"
       },
       "onboard": {
         "title_list": "モデルプロバイダーを選択",

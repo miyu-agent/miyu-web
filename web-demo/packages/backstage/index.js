@@ -6,6 +6,7 @@
 
 import { FullPage } from './page.js';
 import { parseRoute, formatRoute } from './route.js';
+import { sitePort, openSite } from './external.js';
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -48,6 +49,18 @@ export function apply(ctx) {
     },
     /** 链接的地址（`<a href>`：按着 Ctrl、中键点开在新标签页）。 @param {string} id @param {string|null} [widget] */
     href: (id, widget = null) => formatRoute({ package: id, widget }),
+    /** 软件自己的网页（`external.js`：接入通讯平台的页面服务）：听在哪个端口（没有的 `null`）、在新标签页打开（交回打不开的原因） */
+    site: {
+      /** @param {string} id */
+      port: (id) => sitePort(ctx.core, id),
+      /** @param {string} id */
+      open: (id) => openSite(ctx, id),
+    },
+  });
+  // `/im`：在新标签页打开接入通讯平台自己的网页（2026-10-19 项目主人）；打不开的在输入框上面说一句
+  ctx.commands?.register({ name: 'im', summary: ctx.text('site.command') }, async () => {
+    const why = await openSite(ctx, 'im');
+    if (why) ctx.composer?.say(why);
   });
   sync();
 }

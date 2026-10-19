@@ -20,7 +20,10 @@
     "core",
     "host",
     "widgets~",
-    "icons?"
+    "icons?",
+    "commands",
+    "theme~",
+    "composer~"
   ],
   "provides": {
     "services": [
@@ -36,19 +39,37 @@
       "back": "返回",
       "gone": "这个软件没有页面，或者已经卸载、停用",
       "failed": "无法打开该软件的页面",
-      "forbidden": "仅可修改本软件的设置"
+      "forbidden": "仅可修改本软件的设置",
+      "site": {
+        "open": "在新标签页打开",
+        "no_web": "这个软件的网页没有开着（看看它的设置里的端口）",
+        "no_ticket": "拿不到登录票，打不开",
+        "command": "在新标签页打开接入通讯平台"
+      }
     },
     "en": {
       "back": "Back",
       "gone": "This package has no page, or it was removed or turned off",
       "failed": "Can't open this package's page",
-      "forbidden": "Only this package's settings can be changed"
+      "forbidden": "Only this package's settings can be changed",
+      "site": {
+        "open": "Open in new tab",
+        "no_web": "This package’s web page isn’t running (check the port in its settings)",
+        "no_ticket": "Couldn’t get a sign-in ticket",
+        "command": "Open Connect Messaging in a new tab"
+      }
     },
     "ja": {
       "back": "戻る",
       "gone": "このソフトにはページがないか、削除・停止されています",
       "failed": "このソフトのページを開けません",
-      "forbidden": "このソフト自身の設定だけ変更できます"
+      "forbidden": "このソフト自身の設定だけ変更できます",
+      "site": {
+        "open": "新しいタブで開く",
+        "no_web": "このソフトのウェブページが動いていません（設定のポートを確認してください）",
+        "no_ticket": "ログインチケットを取得できません",
+        "command": "メッセージング接続を新しいタブで開く"
+      }
     }
   }
 }
