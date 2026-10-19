@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sourceOf, writable, deletable, reasonKey, idFor, nextId, validId, sizeText, docIcon, hitHead, probeOf } from '../../packages/knowledge/model.js';
+import { sourceOf, writable, deletable, reasonKey, idFor, nextId, validId, sizeText, docIcon, hitHead, probeOf, treeOf, countOf } from '../../packages/knowledge/model.js';
 
 test('来源：随包的、挂的只读，随包的不能删', () => {
   const own = { id: 'notes' };
@@ -54,4 +54,25 @@ test('看原文滚到哪：片段头一行像样的字，去掉 Markdown 记号'
   assert.equal(probeOf('- **重要**：[链接](http://x) 后面'), '重要：链接 后面');
   assert.equal(probeOf('ab\n\n这一行足够长了，能拿来找到它在哪里'), '这一行足够长了，能拿来找到它在哪');
   assert.equal(probeOf(''), null);
+});
+
+test('文件树：照路径一层层分，文件夹在前、文件在后，各照名字排；读不了的子目录放在它那一层；数篇数不算读不了的子目录', () => {
+  const root = treeOf([
+    { path: '笔记/日语/语法.md' },
+    { path: 'README.md' },
+    { path: '笔记/日语/单词.md' },
+    { path: '笔记/a.txt' },
+    { path: '笔记/私密', dir: true, reason: 'unreadable' },
+    { path: '附件/图.pdf' },
+  ]);
+  assert.deepEqual(root.folders.map((f) => f.name), ['笔记', '附件']);
+  assert.deepEqual(root.docs.map((d) => d.name), ['README.md']);
+  const notes = root.folders[0];
+  assert.equal(notes.path, '笔记');
+  assert.deepEqual(notes.folders.map((f) => f.path), ['笔记/日语']);
+  assert.deepEqual(notes.docs.map((d) => [d.name, !!d.dir]), [['a.txt', false], ['私密', true]]);
+  assert.deepEqual(notes.folders[0].docs.map((d) => d.name).sort(), ['单词.md', '语法.md']);
+  assert.equal(countOf(notes), 3);
+  assert.equal(countOf(root), 5);
+  assert.deepEqual(treeOf([]), { name: '', path: '', folders: [], docs: [] });
 });

@@ -5,7 +5,7 @@
 /**
  * @typedef {{id: string, name?: string, description?: string, documents?: number, chunks?: number, auto?: boolean,
  *   error?: string, package?: string, mount?: string}} Base
- * @typedef {{path: string, kind?: string, size?: number, at?: string, chunks?: number, reason?: string, why?: string}} Doc
+ * @typedef {{path: string, name?: string, kind?: string, size?: number, at?: string, chunks?: number, reason?: string, why?: string}} Doc
  * @typedef {{kb: string, path: string, chunk?: number, heading?: string, text?: string, at?: string, page?: number}} Hit
  */
 
@@ -88,4 +88,47 @@ export function probeOf(snippet) {
     if ([...plain].length >= 4) return [...plain].slice(0, 16).join('');
   }
   return null;
+}
+
+/**
+ * 文档清单排成文件树（2026-10-20 项目主人：要能以文件树的形式展示，可展开收起）：照路径的 `/` 一层一层分；一层里文件夹在前、文件在后，各照名字排。
+ * 读不了的子目录（`kb.documents` 的 `folders`）带 `dir`，照文件放在它那一层（画成文件夹、写原因、点不开）。
+ * @typedef {{name: string, path: string, folders: TreeNode[], docs: (Doc & {dir?: boolean})[]}} TreeNode
+ * @param {(Doc & {dir?: boolean})[]} docs @returns {TreeNode}
+ */
+export function treeOf(docs) {
+  /** @type {TreeNode & {map?: Map<string, any>}} */
+  const root = { name: '', path: '', folders: [], docs: [] };
+  /** @type {Map<string, TreeNode>} */
+  const byPath = new Map([['', root]]);
+  const folderAt = (/** @type {string[]} */ parts) => {
+    let node = root;
+    for (let i = 0; i < parts.length; i++) {
+      const path = parts.slice(0, i + 1).join('/');
+      let next = byPath.get(path);
+      if (!next) {
+        next = { name: parts[i], path, folders: [], docs: [] };
+        byPath.set(path, next);
+        node.folders.push(next);
+      }
+      node = next;
+    }
+    return node;
+  };
+  for (const d of docs) {
+    const parts = String(d.path).split('/').filter(Boolean);
+    folderAt(parts.slice(0, -1)).docs.push({ ...d, name: parts.at(-1) ?? d.path });
+  }
+  const order = (/** @type {TreeNode} */ node) => {
+    node.folders.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+    node.docs.sort((a, b) => Number(!!a.dir) - Number(!!b.dir) || String(a.name).localeCompare(String(b.name), 'zh'));
+    node.folders.forEach(order);
+  };
+  order(root);
+  return root;
+}
+
+/** 一个文件夹里（连子文件夹）有几篇（读不了的子目录不算） @param {TreeNode} node @returns {number} */
+export function countOf(node) {
+  return node.docs.filter((d) => !d.dir).length + node.folders.reduce((n, f) => n + countOf(f), 0);
 }

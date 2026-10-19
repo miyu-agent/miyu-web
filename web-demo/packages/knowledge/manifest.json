@@ -36,7 +36,7 @@
       "desc_hint": "一句说明（可留空）",
       "folder_hint": "/home/… 或 ~/…",
       "pick_folder": "选择文件夹",
-      "auto": "自动想起",
+      "auto": "自动联想",
       "auto_hint": "聊天时自动从这个库里找相关的段落给 AI",
       "cancel": "取消",
       "do_create": "新建",
@@ -56,7 +56,7 @@
       "page": "第 {page} 页",
       "back_list": "知识库",
       "back": "返回",
-      "drop_text": "拖文件到这里，或者",
+      "drop_text": "拖文件或文件夹到这里，或者",
       "drop_pick": "选择文件",
       "uploading": "上传中…",
       "added": "已加入：{name}",
@@ -91,7 +91,11 @@
         "unknown_kb": "这个库已经不在了",
         "unknown_document": "这篇文档已经不在了",
         "old_core": "这一版核心还没有知识库，更新核心后再看"
-      }
+      },
+      "drop_or": "、",
+      "drop_pick_folder": "选择文件夹",
+      "dir_count": "{n} 篇",
+      "added_n": "已加入 {n} 篇"
     },
     "en": {
       "title": "Knowledge",
@@ -103,7 +107,7 @@
       "desc_hint": "One-line description (optional)",
       "folder_hint": "/home/… or ~/…",
       "pick_folder": "Choose folder",
-      "auto": "Auto recall",
+      "auto": "Auto-suggest",
       "auto_hint": "While chatting, automatically find relevant passages in this base for the AI",
       "cancel": "Cancel",
       "do_create": "Create",
@@ -123,7 +127,7 @@
       "page": "Page {page}",
       "back_list": "Knowledge",
       "back": "Back",
-      "drop_text": "Drop files here, or",
+      "drop_text": "Drop files or folders here, or",
       "drop_pick": "choose files",
       "uploading": "Uploading…",
       "added": "Added: {name}",
@@ -158,7 +162,11 @@
         "unknown_kb": "This base no longer exists",
         "unknown_document": "This document no longer exists",
         "old_core": "This core has no knowledge bases yet. Update the core and try again"
-      }
+      },
+      "drop_or": "/",
+      "drop_pick_folder": "choose a folder",
+      "dir_count": "{n} docs",
+      "added_n": "Added {n} documents"
     },
     "ja": {
       "title": "ナレッジ",
@@ -170,7 +178,7 @@
       "desc_hint": "ひとこと説明（空欄可）",
       "folder_hint": "/home/… または ~/…",
       "pick_folder": "フォルダを選択",
-      "auto": "自動で思い出す",
+      "auto": "自動で関連付け",
       "auto_hint": "会話中、このベースから関連する段落を自動で探して AI に渡します",
       "cancel": "キャンセル",
       "do_create": "作成",
@@ -190,7 +198,7 @@
       "page": "{page} ページ",
       "back_list": "ナレッジ",
       "back": "戻る",
-      "drop_text": "ここにファイルをドロップ、または",
+      "drop_text": "ファイルやフォルダをここにドロップ、または",
       "drop_pick": "ファイルを選択",
       "uploading": "アップロード中…",
       "added": "追加しました：{name}",
@@ -225,7 +233,11 @@
         "unknown_kb": "このベースはもうありません",
         "unknown_document": "この文書はもうありません",
         "old_core": "このコアにはまだナレッジベースがありません。コアを更新してください"
-      }
+      },
+      "drop_or": "・",
+      "drop_pick_folder": "フォルダを選択",
+      "dir_count": "{n} 件",
+      "added_n": "{n} 件を追加しました"
     }
   }
 }

@@ -5,7 +5,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { upload, serial } from '../../src/lib/upload.js';
-import { sourceOf, writable, deletable, reasonKey, idFor, nextId, sizeText, docIcon, hitHead, probeOf } from './model.js';
+import { sourceOf, writable, deletable, reasonKey, idFor, nextId, sizeText, docIcon, hitHead, probeOf, treeOf, countOf } from './model.js';
 
 /** 搜索框停多久再问、删除要几秒内再点一下、搜几段 */
 const TYPE_MS = 250;
@@ -51,6 +51,8 @@ export class KnowledgePage {
     /** @type {any} */
     this.armTimer = 0;
     this.reindexing = false;
+    /** 文件树里收起来的文件夹（照路径） @type {Set<string>} */
+    this.closed = new Set();
     /** 旧核心没有 `kb.*`：整页一张卡 */
     this.old = false;
     this.loaded = false;
@@ -142,7 +144,7 @@ export class KnowledgePage {
     }
     const v = this.view;
     replace(this.el, v.kind === 'base' ? this.basePage(v.id) : v.kind === 'read' ? this.readPage(v) : this.listPage());
-    if (this.view.kind === 'list') delete this.el.dataset.setDismiss;
+    if (this.view.kind === 'list' && !this.creating) delete this.el.dataset.setDismiss;
     else this.el.dataset.setDismiss = '1';
   }
 
@@ -160,11 +162,19 @@ export class KnowledgePage {
       }, TYPE_MS);
     });
     find.addEventListener('compositionend', () => find.dispatchEvent(new Event('input')));
-    const add = h('button.set-btn.is-primary', { type: 'button', onclick: () => { this.creating = !this.creating; this.draw(); this.el.querySelector('.kb-create input')?.focus(); } }, icon('plus'), t('create'));
+    const add = h('button.set-btn.is-primary', { type: 'button', onclick: () => { this.creating = true; this.draw(); this.el.querySelector('.kb-create input')?.focus(); } }, icon('plus'), t('create'));
+    // 新建在设置框正中弹一个小窗（2026-10-20 项目主人：新建以浮动窗口出现更好）：点外面（框里没写字的）、`Esc`、「取消」收起
+    const modal = this.creating ? h('div.kb-modal', {
+      onclick: (/** @type {Event} */ e) => {
+        if (e.target !== e.currentTarget || this.el.querySelector('.kb-create [data-dirty]')) return;
+        this.creating = false;
+        this.draw();
+      },
+    }, this.createForm()) : null;
     return h('div.kb-list-page',
       h('div.kb-tools', h('label.kb-find', icon('search'), find), add),
-      this.creating ? this.createForm() : null,
-      h('div.kb-body', this.listBody()));
+      h('div.kb-body', this.listBody()),
+      modal);
   }
 
   /** 卡片（搜索框空着）或搜到的段 */
@@ -291,14 +301,33 @@ export class KnowledgePage {
     }
     const own = writable(b);
     const docs = this.docs;
+    // 文档排成文件树（2026-10-20 项目主人）：文件夹一行（箭头、图标、名字、几篇），点了展开收起；里面的往右缩一层
+    const tree = docs ? treeOf([...docs.documents, ...docs.folders.map((d) => ({ ...d, dir: true }))]) : null;
+    /** @param {import('./model.js').TreeNode} node @param {number} depth @returns {HTMLElement[]} */
+    const rowsOf = (node, depth) => [
+      ...node.folders.flatMap((f) => {
+        const open = !this.closed.has(f.path);
+        const toggle = () => {
+          if (open) this.closed.add(f.path);
+          else this.closed.delete(f.path);
+          this.draw();
+        };
+        const row = h(`div.kb-doc.is-dir.is-link${open ? '.is-open' : ''}`, {
+          role: 'button', tabindex: '0', 'aria-expanded': String(open), style: { '--depth': String(depth) }, onclick: toggle,
+          onkeydown: (/** @type {KeyboardEvent} */ e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); toggle(); } },
+        }, h('span.kb-doc-icon', h('span.kb-dir-arrow', icon('chevron-right')), icon(open ? 'folder-open' : 'folder')),
+        h('div.kb-doc-text', h('span.kb-doc-path', f.name)), h('span.kb-doc-meta', t('dir_count', { n: countOf(f) })));
+        return [row, ...(open ? rowsOf(f, depth + 1) : [])];
+      }),
+      ...node.docs.map((d) => this.docRow(b, d, !!d.dir, depth)),
+    ];
     const rows = !docs ? [] : [
       ...this.uploading.map((name) => h('div.kb-doc.is-uploading', h('span.kb-doc-icon', icon('loader-circle')), h('div.kb-doc-text', h('span.kb-doc-path', name), h('span.kb-doc-note', t('uploading'))))),
-      ...docs.documents.map((d) => this.docRow(b, d)),
-      ...docs.folders.map((d) => this.docRow(b, d, true)),
+      ...(tree ? rowsOf(tree, 0) : []),
     ];
     const list = !docs ? null
       : docs.gone ? h('p.kb-empty.is-bad', t('folder_gone', { path: b.mount ?? '' }))
-      : rows.length ? h('div.kb-docs', rows) : h('p.kb-empty', t('docs_empty'));
+      : rows.length ? h(`div.kb-docs${tree?.folders.length ? '.has-dirs' : ''}`, rows) : h('p.kb-empty', t('docs_empty'));
     // 底下的数同卡片上的（核心数的是读得了的）：读不了的不算篇数，以前进过索引留着的旧块照算
     const readable = (docs?.documents ?? []).filter((d) => !d.reason).length;
     const chunks = (docs?.documents ?? []).reduce((n, d) => n + (d.chunks ?? 0), 0);
@@ -317,10 +346,11 @@ export class KnowledgePage {
   }
 
   /**
-   * 文档清单的一行：图标、路径，右边「大小 · 日期」；读不了的下面一行红字。自己建的库悬停右边一个删除。`folder` 的是读不了的子目录。
-   * @param {import('./model.js').Base} b @param {import('./model.js').Doc} d @param {boolean} [folder]
+   * 文档清单的一行：图标、名字（在文件树里只写这一层的名字，悬停写全路径），右边「大小 · 日期」；读不了的下面一行红字。自己建的库悬停右边一个删除。
+   * `folder` 的是读不了的子目录。`depth` 是在文件树的第几层（往右缩）。
+   * @param {import('./model.js').Base} b @param {import('./model.js').Doc} d @param {boolean} [folder] @param {number} [depth]
    */
-  docRow(b, d, folder = false) {
+  docRow(b, d, folder = false, depth = 0) {
     const t = this.t;
     const why = reasonKey(d);
     const at = d.at ? Date.parse(d.at) : NaN;
@@ -332,9 +362,9 @@ export class KnowledgePage {
       : null;
     const open = () => { if (!folder) this.openRead(b.id, d.path, 1, null); };
     return h(`div.kb-doc${folder ? '.is-folder' : '.is-link'}${why ? '.is-bad' : ''}`,
-      folder ? {} : { role: 'button', tabindex: '0', onclick: open, onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' && e.target === e.currentTarget) open(); } },
+      { style: { '--depth': String(depth) }, title: d.path, ...(folder ? {} : { role: 'button', tabindex: '0', onclick: open, onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' && e.target === e.currentTarget) open(); } }) },
       h('span.kb-doc-icon', icon(folder ? 'folder' : docIcon(d.kind))),
-      h('div.kb-doc-text', h('span.kb-doc-path', d.path), why ? h('span.kb-doc-note.is-bad', t(why)) : null),
+      h('div.kb-doc-text', h('span.kb-doc-path', d.name ?? d.path), why ? h('span.kb-doc-note.is-bad', t(why)) : null),
       meta ? h('span.kb-doc-meta', meta) : null,
       remove);
   }
@@ -343,15 +373,18 @@ export class KnowledgePage {
   dropZone(b) {
     const t = this.t;
     const files = this.ctx.host?.files;
+    // 文件、文件夹都收（2026-10-20 项目主人：要支持文件夹）：文件夹里的照它的相对路径一篇一篇加
     const zone = h('div.kb-drop', icon('file-plus'), h('span', t('drop_text')),
-      h('button.kb-drop-pick', { type: 'button', onclick: async () => this.addFiles(b, (await files?.pick?.()) ?? []) }, t('drop_pick')));
+      h('button.kb-drop-pick', { type: 'button', onclick: async () => this.addFiles(b, (await files?.pick?.()) ?? []) }, t('drop_pick')),
+      files?.pickFolder ? h('span', t('drop_or')) : null,
+      files?.pickFolder ? h('button.kb-drop-pick', { type: 'button', onclick: async () => this.addFiles(b, (await files.pickFolder()) ?? []) }, t('drop_pick_folder')) : null);
     // 只听这一块（`local`）：事件先到它，它收了的整页的附件那边不再收一份（`src/host/files.js` 的 `watchDrop`）；节点换掉了监听跟着没了
     files?.watchDrop?.(zone, {
       enter: () => zone.classList.add('is-over'),
       over: () => {},
       leave: () => zone.classList.remove('is-over'),
       drop: (/** @type {any[]} */ list) => this.addFiles(b, list),
-    }, { local: true });
+    }, { local: true, folders: true });
     return zone;
   }
 
@@ -405,6 +438,12 @@ export class KnowledgePage {
   }
 
   back() {
+    // 新建的小窗开着：先收起它
+    if (this.creating) {
+      this.creating = false;
+      this.draw();
+      return;
+    }
     const v = this.view;
     this.armed = null;
     if (v.kind === 'read') {
@@ -437,21 +476,23 @@ export class KnowledgePage {
     if (!list.length) return;
     const files = this.ctx.host?.files;
     const request = (/** @type {string} */ method, /** @type {any} */ params) => this.ctx.core.request(method, params);
-    this.uploading.push(...list.map((f) => f.name));
+    const pathOf = (/** @type {any} */ f) => f.relative || f.name;
+    this.uploading.push(...list.map(pathOf));
     this.draw();
     await Promise.all(list.map((f) => this.queue(async () => {
       try {
         const got = f.path
           ? await request('blob.put', { path: f.path })
           : await upload(request, { name: f.name, size: f.size }, null, (offset, length) => files.read(f, offset, length), { chunk: CHUNK, tries: TRIES });
-        await request('kb.add', { kb: b.id, path: f.name, blob: got.blob });
-        this.kit.toast(this.t('added', { name: f.name }));
+        await request('kb.add', { kb: b.id, path: pathOf(f), blob: got.blob });
+        if (list.length === 1) this.kit.toast(this.t('added', { name: pathOf(f) }));
       } catch (err) {
-        this.say(/** @type {any} */ (err)?.data?.reason === 'document_exists' ? this.t('exists', { name: f.name }) : this.refusal(err));
+        this.say(/** @type {any} */ (err)?.data?.reason === 'document_exists' ? this.t('exists', { name: pathOf(f) }) : this.refusal(err));
       }
-      const i = this.uploading.indexOf(f.name);
+      const i = this.uploading.indexOf(pathOf(f));
       if (i >= 0) this.uploading.splice(i, 1);
     })));
+    if (list.length > 1) this.kit.toast(this.t('added_n', { n: list.length }));
     await this.reload();
   }
 

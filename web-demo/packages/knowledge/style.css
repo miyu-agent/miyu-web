@@ -39,6 +39,12 @@
 .kb-plain { margin: 0; white-space: pre-wrap; font: inherit; }
 .kb-page mark { padding: 0 1px; border-radius: 3px; background: color-mix(in srgb, var(--gold) 28%, transparent); color: inherit; }
 
+/* 新建：设置框正中的小窗（设置框磨砂了，`position: fixed` 照设置框那一块摆；后面淡遮罩） */
+.kb-modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 45%, transparent); animation: kb-modal-in 0.16s var(--ease-out); }
+@keyframes kb-modal-in { from { opacity: 0; } }
+.kb-modal .kb-create { width: min(480px, 100%); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); animation: kb-modal-pop 0.16s var(--ease-out); }
+@keyframes kb-modal-pop { from { transform: translateY(6px) scale(0.98); } }
+@media (prefers-reduced-motion: reduce) { .kb-modal, .kb-modal .kb-create { animation: none; } }
 /* 新建 */
 .kb-create { display: grid; gap: 8px; padding: 12px; border-radius: 12px; background: var(--surface-1); box-shadow: var(--card-shadow); }
 .kb-create .set-input { width: 100%; }
@@ -66,6 +72,15 @@
 .kb-docs { display: grid; }
 .kb-doc { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 10px; align-items: center; min-height: 40px; padding: 7px 10px; border-radius: 10px; }
 .kb-doc.is-link { cursor: pointer; }
+/* 文件树（2026-10-20）：往右缩一层 18px；文件夹那一行前面一个箭头，开着的转下来 */
+.kb-doc { padding-left: calc(10px + var(--depth, 0) * 18px); }
+/* 有文件夹的：每一行都留出箭头那一格，同一层的文件、文件夹名字对齐 */
+.kb-docs.has-dirs .kb-doc { padding-left: calc(26px + var(--depth, 0) * 18px); }
+.kb-doc.is-dir .kb-doc-icon { display: flex; align-items: center; gap: 2px; margin-left: -16px; }
+.kb-dir-arrow { display: inline-grid; width: 14px; place-items: center; color: var(--text-faint); transition: transform 0.15s ease; }
+.kb-dir-arrow .icon { width: 12px; height: 12px; }
+.kb-doc.is-dir.is-open .kb-dir-arrow { transform: rotate(90deg); }
+.kb-doc.is-dir .kb-doc-path { font-weight: 500; }
 .kb-doc.is-link:hover, .kb-doc.is-link:focus-visible { background: var(--surface-2); outline: 0; }
 /* 行之间一道直的细线（圆角的行用阴影画线，角上会弯）；悬停的那一行上下的线藏起来 */
 .kb-doc + .kb-doc::before, .kb-hit + .kb-hit::before { position: absolute; top: 0; right: 10px; left: 10px; height: 1px; background: var(--line); content: ''; }
