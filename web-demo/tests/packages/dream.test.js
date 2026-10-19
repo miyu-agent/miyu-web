@@ -66,3 +66,8 @@ test('这一批没合成：一行提示，这一批里挪的退回去重来', ()
   assert.deepEqual(tr.logged(ev('ext.memory.merge_failed', { upto: 4, why: 'bad' })), [{ kind: 'fail' }]);
   assert.equal(tr.progress(), 0);
 });
+
+test('老核心不带 given：写一行这一批几条', () => {
+  const tr = new DreamTrack();
+  assert.deepEqual(tr.logged(ev('ext.memory.merging', { upto: 1, fresh: 12, left: 12, manual: true })), [{ kind: 'batch', count: 12 }]);
+});

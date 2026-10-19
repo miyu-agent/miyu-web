@@ -120,6 +120,7 @@ export class DreamCard {
     }
     let row;
     if (line.kind === 'read') row = h('div.dream-line.is-read', tag('read'), h('span.dream-t', text(line.id)));
+    else if (line.kind === 'batch') row = h('div.dream-line.is-read', tag('read'), h('span.dream-t', t('dream.batch_read', { n: line.count })));
     else if (line.kind === 'new') row = h('div.dream-line', tag('new'), h('span.dream-t', h('s', text(line.id)), ' → ', line.text));
     else if (line.kind === 'del') {
       const label = line.retire ? t(`dream.retire.${line.retire}`) : null;
@@ -132,7 +133,7 @@ export class DreamCard {
     } else if (line.kind === 'kw') row = h('div.dream-line', tag('kw'), h('span.dream-t', text(line.id), h('span.dream-why', ` · ${line.keywords}`)));
     else row = h('div.dream-line.is-fail', h('span.dream-t', t('dream.retry')));
     // 新的一批：摘要那一行重新起
-    if (line.kind === 'read' && this.summaryLine) this.summaryLine = null;
+    if ((line.kind === 'read' || line.kind === 'batch') && this.summaryLine) this.summaryLine = null;
     this.list.append(row);
     while (this.list.children.length > KEEP) this.list.firstElementChild?.remove();
   }

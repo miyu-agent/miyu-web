@@ -13,6 +13,7 @@ const STEP = 0.72;
 /**
  * 滚动区的一行。
  * @typedef {{kind: 'read', id: string}
+ *   | {kind: 'batch', count: number}
  *   | {kind: 'new', id: string, text: string}
  *   | {kind: 'del', id: string, retire: string|null, kept: string|null, why: string}
  *   | {kind: 'sum', chars: number, done: boolean}
@@ -51,6 +52,8 @@ export class DreamTrack {
       this.batch = { upto: body.upto, fresh, given, decided: 0 };
       this.batches += 1;
       this.given = given.length;
+      // 老核心（R-21 以前）不带 `given`：只写一行这一批几条，滚动区不空着
+      if (!Array.isArray(body.given)) return fresh ? [{ kind: 'batch', count: fresh }] : [];
       return given.map((id) => ({ kind: /** @type {const} */ ('read'), id }));
     }
     if (kind === 'ext.memory.merged' && this.batch && body.upto === this.batch.upto) {
