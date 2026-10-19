@@ -15,6 +15,7 @@ import { PackageFeed } from './packages-feed.js';
 import { drawCorePackages, followExtension } from './core-packages.js';
 import { drawBackstage } from './backstage.js';
 import { Subpage, swap } from './subpage.js';
+import { drawAdvanced } from './advanced.js';
 
 /** 上次看的那一页：这个终端记着（蓝图第 3 条），刷新就忘 */
 let lastPage = 'general';
@@ -213,6 +214,8 @@ export class SettingsDialog {
     let kids;
     if (this.current === 'models') kids = drawModels(this);
     else if (this.current === 'backstage') kids = drawBackstage(this);
+    // 高级：一组一行，点进去看（`advanced.js`，2026-10-19 项目主人：不平铺）
+    else if (this.current === 'advanced' && page) kids = drawAdvanced(this, page);
     else if (this.current === 'packages') {
       // 上面核心的软件包，按接入、界面、功能分段：一个包一行、点进去是它的信息页（`core-packages.js`）；下面一段网页自己的组件
       const core = drawCorePackages(this, page);

@@ -8,13 +8,14 @@ import { noteOf, envRef, inputText, listElement, layerFor, writtenIn, secretName
 
 /**
  * 一组：组名，下面一行行。
- * @param {string} name
+ * @param {string|null} name
  * @param {Node[]} rows
  */
 /** 一组：组名、几行；一行都没有的（专门的编辑器把行都藏了）整组不画。 */
 export const groupBlock = (name, rows) => {
   const shown = rows.filter(Boolean);
-  return shown.length ? h('section.set-group', h('h3.set-group-name', name), h('div.set-rows', shown)) : null;
+  // 组名是空的不画头一行（高级页点进去的那一层，页头已经写着组名）
+  return shown.length ? h('section.set-group', name ? h('h3.set-group-name', name) : null, h('div.set-rows', shown)) : null;
 };
 
 /** 对不上哪一项的问题：那一页顶上一条横幅。 */

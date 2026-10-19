@@ -107,7 +107,8 @@
       "of": "text",
       "default": {
         "catalog": "advanced",
-        "cooldown": "advanced"
+        "cooldown": "advanced",
+        "source": "advanced"
       },
       "name": {
         "zh": "挪到别的页的组（组 → 页）"
@@ -425,7 +426,8 @@
         "back": "上一步"
       },
       "main_color": "主色",
-      "main_color_auto": "自动"
+      "main_color_auto": "自动",
+      "advanced_more": "{names} 等"
     },
     "en": {
       "title": "Settings",
@@ -706,7 +708,8 @@
         "back": "Back"
       },
       "main_color": "Main color",
-      "main_color_auto": "Auto"
+      "main_color_auto": "Auto",
+      "advanced_more": "{names} and more"
     },
     "ja": {
       "title": "設定",
@@ -987,7 +990,8 @@
         "back": "戻る"
       },
       "main_color": "メインカラー",
-      "main_color_auto": "自動"
+      "main_color_auto": "自動",
+      "advanced_more": "{names} など"
     }
   },
   "styles": [

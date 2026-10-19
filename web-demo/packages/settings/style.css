@@ -378,7 +378,8 @@
 
 /* 「软件包」页分两段：核心的软件包、网页自己的组件（段名比组名大一档） */
 .set-part + .set-part { margin-top: 28px; }
-.set-part-name { margin: 4px 0 4px; color: var(--text); font-size: 14px; font-weight: 600; }
+/* 软件包页的段名（接入、功能、网页）：同别的页的组名（2026-10-19 项目主人：软件包页 UI 不统一，原来是粗黑的大字） */
+.set-part-name { margin: 4px 0 2px; color: var(--text-faint); font-size: 12px; font-weight: 600; }
 /* 段名下面一行暗色的说明（个人设置中的 MCP 服务：在哪里改） */
 .set-part-hint { margin: 0 0 8px; color: var(--text-faint); font-size: 12.5px; }
 

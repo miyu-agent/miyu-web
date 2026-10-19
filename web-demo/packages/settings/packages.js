@@ -3,7 +3,7 @@
 //! `description` 是写给开发的）、开关；好好的不写状态，等着的、故障的才写一行为什么。基础系统的包（停不了）不列，编号、提供的服务
 //! 不显示。有设置项的点这一行滑进它的设置页（`subpage.js`，左上角箭头返回）。
 
-import { h, icon, replace } from '../../src/lib/dom.js';
+import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { toggle } from './rows.js';
 import { packageSettings } from './look.js';
 import { editableKeys } from './model.js';
@@ -25,6 +25,8 @@ export function drawPackages(dialog) {
           dialog.openSub(ctx.local(m.name ?? p.id), () => webPackagePage(dialog, p.id));
         },
       },
+      // 前面一个图标，同上面核心的软件包（2026-10-19 项目主人：软件包页 UI 不统一）：清单写了、认得的照它，不然画拼图
+      h('span.set-pkg-face', icon(m.icon && hasIcon(m.icon) ? m.icon : 'puzzle')),
       h('div.set-text',
         h('div.set-name', h('span', ctx.local(m.name ?? p.id))),
         m.summary ? h('p.set-desc', ctx.local(m.summary)) : null,
