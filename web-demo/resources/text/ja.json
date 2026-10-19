@@ -404,8 +404,9 @@
     "agents_running": "サブエージェント {count} 件が実行中",
     "project_meta": "{count} 件のセッション · {when}",
     "project_none": "まだセッションがありません",
-    "tokens": "Σ{tokens}",
-    "tokens_hint": "サブエージェント込みで {tokens} トークン使用"
+    "context": "コンテキスト {used}/{window}",
+    "context_bare": "コンテキスト {used}",
+    "total": "合計 {tokens}"
   },
   "turn_end": {
     "restarted": "再起動しました",

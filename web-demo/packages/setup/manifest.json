@@ -333,7 +333,8 @@
         "switch_preset": "切换预设",
         "switch_confirm": "切换前会压缩上下文以避免缓存断裂导致的额外消耗，确认切换吗？",
         "cancel": "取消",
-        "confirm": "确认"
+        "confirm": "确认",
+        "back": "返回"
       },
       "follow_default": "跟随默认"
     },
@@ -518,7 +519,8 @@
         "switch_preset": "Switch preset",
         "switch_confirm": "The conversation will be compacted before switching, to avoid extra cost from a broken cache. Switch now?",
         "cancel": "Cancel",
-        "confirm": "Confirm"
+        "confirm": "Confirm",
+        "back": "Back"
       },
       "follow_default": "Follow default"
     },
@@ -703,7 +705,8 @@
         "switch_preset": "プリセットを切り替え",
         "switch_confirm": "キャッシュが切れて余分なコストがかからないよう、切り替える前に会話を圧縮します。切り替えますか？",
         "cancel": "キャンセル",
-        "confirm": "確認"
+        "confirm": "確認",
+        "back": "戻る"
       },
       "follow_default": "デフォルトに従う"
     }

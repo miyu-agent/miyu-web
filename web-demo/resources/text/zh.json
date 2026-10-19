@@ -404,8 +404,9 @@
     "agents_running": "{count} 个子代理在跑",
     "project_meta": "{count} 个会话 · {when}",
     "project_none": "还没有会话",
-    "tokens": "Σ{tokens}",
-    "tokens_hint": "连同子代理一共用了 {tokens} token"
+    "context": "上下文消耗 {used}/{window}",
+    "context_bare": "上下文消耗 {used}",
+    "total": "总计消耗 {tokens}"
   },
   "turn_end": {
     "restarted": "已重启",

@@ -404,8 +404,9 @@
     "agents_running": "{count} subagents running",
     "project_meta": "{count} sessions · {when}",
     "project_none": "No sessions yet",
-    "tokens": "Σ{tokens}",
-    "tokens_hint": "{tokens} tokens used, including subagents"
+    "context": "Context {used}/{window}",
+    "context_bare": "Context {used}",
+    "total": "Total {tokens}"
   },
   "turn_end": {
     "restarted": "Restarted",

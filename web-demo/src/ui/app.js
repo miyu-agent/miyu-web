@@ -301,6 +301,13 @@ export class App {
       jobs: (id) => this.jobsDeep(id),
       agents: (id) => this.descendants(id).length,
       agentsRunning: (id) => this.descendants(id).filter((kid) => this.store.summary(kid).running).length,
+      // 读进来的会话的上下文用量（同框下面那一行：`context.used`，窗口照 `context.window`、订阅回应的限额）
+      context: (id) => {
+        const s = this.store.sessions.get(id);
+        const used = s?.view.status?.context?.used ?? 0;
+        const window = s?.view.status?.context?.window ?? s?.limits?.window ?? null;
+        return used > 0 ? { used, window: window || null } : null;
+      },
       open: (id) => this.open(id, true),
       newSession: () => this.open(null),
       newIn: (id) => this.newIn(id),

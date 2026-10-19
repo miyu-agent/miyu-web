@@ -32,7 +32,7 @@ export function apply(ctx) {
   const presetBtn = h('button.setup-btn', { type: 'button', onclick: () => openPresets() });
   const workBtn = h('button.setup-btn', { type: 'button', onclick: () => openWorkspaces(workBtn, false) });
   const row = h('div.setup-row', { hidden: true }, personaBtn, presetBtn, workBtn, menu.el);
-  const infoMenu = new Menu();
+  const infoMenu = new Menu(t('info.back'));
   const info = h('div.setup-info', { hidden: true });
   const infoWrap = h('div.setup-info-wrap', info, infoMenu.el);
   /** 左上角那一条里的路径：工作区的菜单开在它下面、和它左边对齐（2026-10-09 项目主人指出原来开在整条的左边，错位了） @type {HTMLElement|null} */
@@ -211,7 +211,8 @@ export function apply(ctx) {
    * @param {HTMLElement} anchor @param {string} session @param {string|null} persona @param {string|null} preset @param {string} path
    */
   const openInfo = (anchor, session, persona, preset, path) => {
-    if (infoMenu.open) return infoMenu.close();
+    // 开着的时候再点：在翻进去的那一页的回到卡片（2026-10-19 项目主人），在卡片上的收起
+    if (infoMenu.open) return infoMenu.view?.back ? infoMenu.view.back() : infoMenu.close();
     showInfo(anchor, session, persona, preset, path);
   };
   /** @param {HTMLElement} anchor @param {string} session @param {string|null} persona @param {string|null} preset @param {string} path */

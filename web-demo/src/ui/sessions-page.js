@@ -22,6 +22,7 @@ import { projectCards, projectView } from './projects-page.js';
  * @typedef {{list: () => {session: string, title?: string, parent?: string|null, oneshot?: boolean, project?: string, last_active?: string}[],
  *   titleOf: (id: string) => string|null, active: (id: string) => number|null, running: (id: string) => boolean, unread: (id: string) => boolean,
  *   jobs: (id: string) => number, agents: (id: string) => number, agentsRunning: (id: string) => number,
+ *   context?: (id: string) => {used: number, window: number|null}|null,
  *   open: (id: string) => void, newSession: () => void, newIn: (id: string) => void, editProject: (id: string|null) => void,
  *   projects: () => {supported: boolean, list: import('../core/projects.js').Project[]}, color: (c: string|undefined) => string|null,
  *   personaName: (id: string) => string, presetName: (id: string) => string, defaultWorkdir: () => string,
@@ -130,6 +131,8 @@ export class SessionsPage {
       running: this.on.running(s.session), unread: this.on.unread(s.session),
       // 连同它派出去的子会话一共用了多少 token（核心 d98f5e03 的 `tokens`，0 的不写；2026-10-19 项目主人要每一行写上）
       tokens: typeof s.tokens === 'number' && s.tokens > 0 ? s.tokens : 0,
+      // 上下文窗口用了多少（核心在会话表里给了的照它，还没给的照读进来的会话状态算，同框下面那一行；都没有的是 `null`）
+      context: contextOf(s) ?? this.on.context?.(s.session) ?? null,
     }));
   }
 
@@ -192,7 +195,7 @@ export class SessionsPage {
 
   /** 画的东西拼成一串比 */
   liveSig() {
-    const rows = this.rows().map((r) => [r.session, r.title, r.project, r.active, r.running, r.unread, r.tokens, this.on.jobs(r.session), this.on.agents(r.session), this.on.agentsRunning(r.session)]);
+    const rows = this.rows().map((r) => [r.session, r.title, r.project, r.active, r.running, r.unread, r.tokens, r.context, this.on.jobs(r.session), this.on.agents(r.session), this.on.agentsRunning(r.session)]);
     return JSON.stringify([rows, this.on.projects()]);
   }
 
@@ -275,7 +278,7 @@ export class SessionsPage {
       h(`span.sessions-name${r.title ? '' : '.is-untitled'}`, r.title ?? t('sessions_page.untitled')),
       agents(this.on.agents(r.session), this.on.agentsRunning(r.session)),
       jobs(this.on.jobs(r.session)),
-      r.tokens ? h('span.sessions-tokens', { title: t('sessions_page.tokens_hint', { tokens: r.tokens.toLocaleString() }) }, t('sessions_page.tokens', { tokens: short(r.tokens) })) : null,
+      usage(r),
       h('span.sessions-when', ago(timeOf(r, this.sort), now)));
   }
 
@@ -297,6 +300,35 @@ export class SessionsPage {
     this.selected = new Set();
     this.draw();
   }
+}
+
+/**
+ * 会话表那一项里核心给的上下文用量（`context: {used, window}`，等核心补）。 @param {any} s
+ * @returns {{used: number, window: number|null}|null}
+ */
+function contextOf(s) {
+  const c = s?.context;
+  return c && typeof c.used === 'number' ? { used: c.used, window: typeof c.window === 'number' ? c.window : null } : null;
+}
+
+/**
+ * 用量（2026-10-19 项目主人：不用符号，写「上下文消耗 xx/xxx · 总计消耗 xk」）：上下文照最近一次请求、窗口知道的写「用了/窗口」，总计连同子代理；
+ * 没有的那一段不写，都没有的不画。悬停写准确的数。
+ * @param {Row & {context?: {used: number, window: number|null}|null}} r
+ */
+function usage(r) {
+  const parts = [];
+  const exact = [];
+  const c = r.context;
+  if (c && c.used > 0) {
+    parts.push(c.window ? t('sessions_page.context', { used: short(c.used), window: short(c.window) }) : t('sessions_page.context_bare', { used: short(c.used) }));
+    exact.push(c.window ? t('sessions_page.context', { used: c.used.toLocaleString(), window: c.window.toLocaleString() }) : t('sessions_page.context_bare', { used: c.used.toLocaleString() }));
+  }
+  if (r.tokens) {
+    parts.push(t('sessions_page.total', { tokens: short(r.tokens) }));
+    exact.push(t('sessions_page.total', { tokens: r.tokens.toLocaleString() }));
+  }
+  return parts.length ? h('span.sessions-tokens', { title: exact.join(' · ') }, parts.join(' · ')) : null;
 }
 
 /** 派过子代理的：机器人加「N 个子代理」（一层层往下都算，跑完了的也算）；有在跑的写「N 个子代理在跑」（gold）；没有的不写。 */

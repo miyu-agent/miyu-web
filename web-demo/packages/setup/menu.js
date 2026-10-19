@@ -19,7 +19,9 @@ import { h, icon, replace } from '../../src/lib/dom.js';
  */
 
 export class Menu {
-  constructor() {
+  /** @param {string} [backLabel] 返回箭头的提示 */
+  constructor(backLabel = '') {
+    this.backLabel = backLabel;
     this.el = h('div.setup-menu', { hidden: true, role: 'menu' });
     /** @type {{el: HTMLElement, row: Row}[]} */
     this.items = [];
@@ -67,7 +69,10 @@ export class Menu {
       return el;
     });
     replace(this.el,
-      view.title ? h('div.setup-menu-head', h('strong.setup-menu-name', view.title),
+      // 翻进来的一页（有 `back` 的）：标题前面一个返回的箭头（2026-10-19 项目主人：子菜单要有返回的箭头）
+      view.title ? h('div.setup-menu-head',
+        view.back ? h('button.setup-menu-back', { type: 'button', title: this.backLabel, 'aria-label': this.backLabel, onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(), onclick: () => view.back?.() }, icon('chevron-left')) : null,
+        h('strong.setup-menu-name', view.title),
         view.action ? h('button.setup-menu-action', { type: 'button', title: view.action.title, 'aria-label': view.action.title, onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(), onclick: () => view.action?.run() }, icon(view.action.icon)) : null) : null,
       h('div.setup-menu-list', nodes, view.note ? h('div.setup-menu-note', view.note) : null),
       view.foot?.length ? h('div.setup-menu-foot', view.foot) : null);

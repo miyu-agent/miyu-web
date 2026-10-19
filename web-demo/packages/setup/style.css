@@ -371,3 +371,7 @@
 .setup-menu.is-ask { max-width: min(360px, calc(100vw - 32px)); }
 .setup-menu.is-ask .setup-menu-note { padding: 4px 10px 8px; color: var(--text); font-size: 13px; line-height: 1.6; }
 .setup-menu.is-ask .setup-menu-foot { justify-content: flex-end; }
+/* 翻进来的那一页标题前面的返回箭头 */
+.setup-menu-back { display: grid; flex: none; place-items: center; width: 24px; height: 24px; margin: -3px 2px -3px -6px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--text-soft); cursor: pointer; }
+.setup-menu-back:hover { background: var(--surface-2); color: var(--text); }
+.setup-menu-back .icon { width: 15px; height: 15px; }
