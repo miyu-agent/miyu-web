@@ -103,7 +103,7 @@ export class Sidebar {
       h('button.sidebar-nav-row', { type: 'button', dataset: { nav: key }, onclick: run }, icon(name), h('span', label));
     this.navProjects = navRow('folder', t('sidebar.projects'), () => on.viewProjects(), 'projects');
     this.nav = h('nav.sidebar-nav',
-      navRow('square-pen', t('sidebar.new_session'), () => on.newSession(), 'new'),
+      navRow('square-pen', t('sidebar.new_session_nav'), () => on.newSession(), 'new'),
       navRow('messages-square', t('sidebar.all_sessions_nav'), () => on.viewAll(), 'sessions'),
       this.navProjects);
     /** 左上角的头像、名字：正在看的会话用的人格（`setLook`），点了打开这个人格的编辑页 */

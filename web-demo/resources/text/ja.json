@@ -53,7 +53,8 @@
     "move_to_project": "プロジェクトへ移動",
     "move_out": "プロジェクトから外す",
     "here": "{name}（ここ）",
-    "all_sessions_nav": "すべてのセッション"
+    "all_sessions_nav": "すべてのセッション",
+    "new_session_nav": "新しいセッション"
   },
   "crumbs": {
     "label": "サブエージェントのセッションの位置",

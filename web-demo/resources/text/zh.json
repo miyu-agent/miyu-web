@@ -53,7 +53,8 @@
     "move_to_project": "移到项目",
     "move_out": "移出项目",
     "here": "{name}（在这里）",
-    "all_sessions_nav": "全部会话"
+    "all_sessions_nav": "全部会话",
+    "new_session_nav": "新建会话"
   },
   "crumbs": {
     "label": "子代理会话路径",
