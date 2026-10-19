@@ -590,6 +590,37 @@ export class Sidebar {
     this.render(...this.last);
   }
 
+  /**
+   * 删项目（连里面的会话）的动画（2026-10-19 项目主人：确认删除以后菜单和项目那一块都没有动画）：菜单先收（`toggleMenu` 走完退场），再整块项目照删会话的样子
+   * 往左淡出、收起高度；这期间 `run` 删会话、删项目，收的时候不重画，都完了再画。交回删成的会话。
+   * @param {string} id @param {() => Promise<string[]>} run
+   */
+  async removeProject(id, run) {
+    this.leaving += 1;
+    let done = /** @type {string[]} */ ([]);
+    try {
+      const working = run();
+      // 等菜单收完（退场 0.12 秒左右）再收项目那一块：一个接一个，不叠在一起
+      await new Promise((r) => setTimeout(r, 140));
+      // 删的是最后一个项目：「项目」那一栏整栏一起收（不然删完那一栏的头一下子没了）
+      const block = this.items.querySelector(`.project[data-project="${CSS.escape(id)}"]`);
+      const only = this.items.querySelectorAll('.project').length === 1;
+      const el = only ? block?.closest('.sb-section') ?? block : block;
+      const gone = new Promise((resolve) => {
+        if (el instanceof HTMLElement) leave(collapsing(el), () => { el.remove(); resolve(undefined); });
+        else resolve(undefined);
+      });
+      done = await working;
+      await gone;
+    } finally {
+      this.leaving -= 1;
+    }
+    for (const sid of done) this.on.dropped(sid);
+    this.drawn = '';
+    this.render(...this.last);
+    return done;
+  }
+
   /** 会话表底下放不下的，菜单往上开（照旧版 `app.js:2466-2470`）。 */
   placeMenu() {
     const m = this.items.querySelector('.session-menu');

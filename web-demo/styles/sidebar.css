@@ -400,3 +400,5 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
 /* 展开着的项目不写 `(N)`；选中的那一块当场拿掉（刚收进去的，不淡出） */
 .project.is-open > .project-row .session-count { display: none; }
 .session-pill.is-gone { transition: none; }
+/* 删掉的项目（连里面的会话）：整块照删会话的样子往左淡出、收起高度（--h 由 sidebar.js 记下） */
+.project.is-leaving, .sb-section.is-leaving { overflow: hidden; pointer-events: none; animation: item-out var(--motion-collapse) ease-in-out both; }

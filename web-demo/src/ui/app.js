@@ -449,13 +449,17 @@ export class App {
    */
   async deleteProject(id) {
     const ids = this.store.index.all().filter((e) => e.project === id && !e.parent && !e.oneshot).map((e) => e.session);
-    if (ids.length) await this.sidebar.removeAll(ids);
-    try {
-      await this.store.conn.request('project.delete', { project: id });
-      if (this.draft.project === id) this.setDraft({ project: null });
-    } catch (err) {
-      this.composer.say(refusalText(err));
-    }
+    // 左栏：菜单收完，整块项目收起来；这期间删会话、删项目
+    await this.sidebar.removeProject(id, async () => {
+      const done = ids.length ? await this.sidebar.on.removeMany(ids) : [];
+      try {
+        await this.store.conn.request('project.delete', { project: id });
+        if (this.draft.project === id) this.setDraft({ project: null });
+      } catch (err) {
+        this.composer.say(refusalText(err));
+      }
+      return done;
+    });
   }
 
   /** 一个会话（子代理的照它最上面那个主会话）在哪个项目；`null` 是还没开的新会话，照选的。 @param {string|null} id */
