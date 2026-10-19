@@ -699,9 +699,12 @@ function foldAnim(host, body, open, cls, clsMeansFolded, list) {
   // 展开的先换成开着的样子再量（收着的时候里面那一截高是 0，原来量成 0，展开时先停一下再一下子开：2026-10-19 项目主人）；收起的先量再换。
   // 量完再裁（裁着量多出里面的外边距，缓完会跳一下）
   if (open) apply();
-  const full = body.getBoundingClientRect().height;
+  // 高照 CSS 像素（`offsetHeight`）：整页放大着（`--ui-scale`），`getBoundingClientRect` 量的是放大以后的，照它缓到头会多出一截、再缩回去
+  const rect = body.getBoundingClientRect();
+  const full = body.offsetHeight;
+  const scale = full ? rect.height / full : 1;
   const bottom = list ? list.getBoundingClientRect().bottom : innerHeight;
-  const visible = Math.max(0, Math.min(full, bottom - body.getBoundingClientRect().top));
+  const visible = Math.max(0, Math.min(full, (bottom - rect.top) / (scale || 1)));
   host.classList.add('is-folding');
   if (!open) apply();
   const anim = body.animate(open ? [{ height: '0px' }, { height: `${visible}px` }] : [{ height: `${visible}px` }, { height: '0px' }],
