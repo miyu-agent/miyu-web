@@ -410,3 +410,19 @@ a.set-btn.set-link { display: inline-flex; align-items: center; }
 /* 删除一家供应商（2026-10-19）：确认那一下按钮下面一行暗红字（默认模型在用它） */
 .set-prov-remove { position: relative; display: inline-flex; }
 .set-prov-danger { position: absolute; top: calc(100% + 4px); right: 0; color: var(--danger); font-size: 11.5px; white-space: nowrap; }
+
+/* 软件包信息页顶上那一块（2026-10-19 项目主人选的「极简：只有信息和动作」）：图标、名字、一句说明、「版本 · 来源 · 状态」、一行动作，右边开关 */
+.set-pkg-info { display: grid; gap: 10px; margin-bottom: 14px; }
+.set-pkg-card { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 14px; padding: 16px; border-radius: 12px; background: var(--surface-1); box-shadow: var(--card-shadow); }
+.set-pkg-card > .set-pkg-face { width: 40px; height: 40px; border-radius: 11px; }
+.set-pkg-card > .set-pkg-face .icon { width: 20px; height: 20px; }
+.set-pkg-card > .set-control { padding-top: 2px; }
+.set-pkg-card-text { display: grid; gap: 3px; min-width: 0; }
+.set-pkg-card-name { color: var(--text); font-size: 15px; font-weight: 600; }
+.set-pkg-card-desc { margin: 0; color: var(--text-soft); font-size: 13px; line-height: 1.5; }
+.set-pkg-card-meta { margin: 0; color: var(--text-faint); font-size: 12.5px; }
+.set-pkg-card-meta .is-bad { color: var(--danger); }
+.set-pkg-card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.set-pkg-card-actions .set-btn .icon { width: 14px; height: 14px; }
+/* 链接做的按钮（打开页面、仓库）：同按钮的样子，不画下划线 */
+a.set-btn.is-anchor { display: inline-flex; align-items: center; gap: 5px; color: var(--text); text-decoration: none; }

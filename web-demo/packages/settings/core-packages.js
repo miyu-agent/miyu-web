@@ -13,6 +13,7 @@ import { coreRow, groupBlock, toggle, textField } from './rows.js';
 import { splitKey, itemFor, mcpStopped, packageNames } from './model.js';
 import { openPage } from './backstage.js';
 import { serverRow, homeMcpPart } from './mcp-servers.js';
+import { stateText } from './extensions.js';
 
 /** 段：照核心核实过的标记分，先后照这里 */
 const PARTS = /** @type {const} */ (['connection', 'ui', 'feature']);
@@ -31,6 +32,7 @@ const faceOf = (p) => h('span.set-pkg-face', icon(p.icon && hasIcon(p.icon) ? p.
 export function drawCorePackages(dialog, page) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const packages = (dialog.packages ?? []).filter((p) => p.status);
+  probeSites(dialog, packages);
   const parts = PARTS.map((part) => {
     const rows = packages.filter((p) => partOf(p) === part).map((p) => packageRow(dialog, p));
     return rows.length ? h('section.set-part', h('h2.set-part-name', t(`pkg.part.${part}`)), h('section.set-group', h('div.set-rows', rows))) : null;
@@ -39,6 +41,26 @@ export function drawCorePackages(dialog, page) {
   const all = new Set(packages.map((p) => p.package));
   const rest = (page?.groups ?? []).filter((g) => !all.has(g.id)).map((g) => groupBlock(g.name, g.items.map((item) => coreRow(dialog, item)))).filter(Boolean);
   return [...parts, homeMcpPart(dialog), ...rest].filter(Boolean);
+}
+
+/**
+ * 哪些包有自己的网页（`status` 问得到端口，服务 `backstage` 的 `site`）：带后台页的问一次，记在 `dialog.sites`；问到了和原来不一样的重画（信息页照它决定
+ * 「打开页面」开哪个、列不列设置项）。
+ * @param {any} dialog @param {any[]} packages
+ */
+function probeSites(dialog, packages) {
+  const site = dialog.ctx.backstage?.site;
+  if (!site) return;
+  dialog.sites ??= new Map();
+  for (const p of packages) {
+    if (!p.page || dialog.sites.has(p.package)) continue;
+    dialog.sites.set(p.package, false);
+    site.port(p.package).then((/** @type {number|null} */ port) => {
+      if (!port) return;
+      dialog.sites.set(p.package, true);
+      dialog.drawBody();
+    });
+  }
 }
 
 /**
@@ -119,62 +141,94 @@ function switchFor(dialog, p) {
  * @param {any} dialog @param {string} id
  */
 /**
- * 信息页上的「打开页面」：有自己网页的（接入通讯平台的页面服务，`status` 问得到端口）点了在新标签页打开那个网页（2026-10-19 项目主人：只留一个「打开页面」，
- * 新标签页打开就够了）；别的照旧跳到后台页的独立整页。
+ * 一个包的信息页（2026-10-19 项目主人选的「极简：只有信息和动作」）：顶上一块——图标、名字、一句说明，下面一行暗字「版本 · 来源 · 状态」（来源照核心的
+ * `from`：出厂、官方软件源、社区软件源、本地；状态只写要留意的，红字是程序不在、依赖缺了），右边开关（必需的写「必需」）；再一行动作：打开页面（有后台页的；
+ * 有自己网页的点了在新标签页开它）、重启（在跑的扩展、带 MCP 服务的包）、查看输出（停下的扩展）、仓库（`repository`）、卸载（点两下）。功能、权限不再列。
+ * 下面：要批准权限的那一块（开的那一下还有没批的）、停下的扩展的输出、带的 MCP 服务；没有自己网页的再接它的设置项（有自己网页的，设置在它自己的网页里）。
  * @param {any} dialog @param {string} id
  */
-function siteActions(dialog, id) {
-  const t = (/** @type {string} */ key) => dialog.ctx.text(key);
-  const pages = dialog.ctx.backstage;
-  /** 问到了端口就是有自己的网页 */
-  let site = false;
-  pages.site?.port(id).then((/** @type {number|null} */ port) => { site = !!port; });
-  const open = (/** @type {MouseEvent} */ e) => {
-    if (!site) return openPage(dialog, id, e);
-    e.preventDefault();
-    pages.site.open(id).then((/** @type {string|null} */ why) => { if (why) dialog.toast(why); });
-  };
-  return h('div.set-pkg-actions', h('a.set-btn.set-link', { href: pages.href(id), onclick: open }, t('pkg.open_backstage')));
-}
-
 function infoPage(dialog, id) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const p = (dialog.packages ?? []).find((x) => x.package === id);
   if (!p) return [h('p.set-empty', t('pkg.gone'))];
   const missing = p.status === 'program_missing';
-  // 状态和版本：好好的「已启用」、关着的「已停用」开关已经说了，不写
-  // 依赖缺了的写缺的是哪几个（照列表里的名字，没装的照编号）
-  const status = p.status === 'depends_missing' && p.missing?.length ? t('pkg.depends_missing', { names: packageNames(dialog.packages, p.missing).join(t('pkg.sep')) }) : t(`pkg.status.${p.status}`);
-  const bad = BAD.has(p.status);
-  const line = [p.covered && !bad ? t('pkg.covered') : QUIET.has(p.status) ? null : status, p.version ? t('pkg.version', { version: p.version }) : null].filter(Boolean).join(' · ');
-  const head = [
-    p.summary ? h('p.set-sub-desc', p.summary) : null,
-    line ? h(`p.set-pkg-line${bad ? '.is-bad' : ''}`, line) : null,
-    // 有后台页的：一个按钮跳到它的独立整页（软件包 `backstage`；停用了那个包的、程序不在、依赖缺了的不出）；有自己网页的（接入通讯平台的页面服务，
-    // 问到了端口才露）再一个「在新标签页打开」（2026-10-19 项目主人：软件包页、软件后台、/im 三处）
-    p.page && !bad && dialog.ctx.backstage ? siteActions(dialog, id) : null,
-  ];
+  const site = !!dialog.sites?.get(id);
   const group = (dialog.pages ?? []).find((x) => x.id === 'packages')?.groups.find((g) => g.id === id);
-  const settings = (group?.items ?? []).map((item) => coreRow(dialog, item)).filter(Boolean);
-  // 程序不在的：没有开关、功能；设置项照核心给不给（扩展、小程序不给，界面照旧给）
-  if (missing) return [...head, settings.length ? groupBlock(t('pkg.settings'), settings) : null, removeButton(dialog, p)];
-  const isExt = dialog.extensions.entries.has(id);
-  // 只有一个功能、名字和软件一样的（人格记忆这种）不列：和页头说的重了
-  const own = (p.features ?? []).length === 1 && p.features[0].name === p.name;
-  // MCP 服务的功能（`mcp-<服务名>`）在「MCP 服务」那一组里已经有了，不再列
-  const features = (own ? [] : p.features ?? []).filter((f) => !(p.mcp?.length && String(f.id).startsWith('mcp-'))).map((f) => h('div.set-row', h('div.set-text', h('div.set-name', h('span', f.name ?? f.id)), f.summary ? h('p.set-desc', f.summary) : null)));
+  const settings = site ? [] : (group?.items ?? []).map((item) => coreRow(dialog, item)).filter(Boolean);
+  const ext = dialog.extensions;
+  const head = dialog.extensions.entries.has(id)
+    // 扩展的状态跟着推送换（`extensions.js` 照它重画这一块）
+    ? ext.custom(id, (/** @type {any} */ e) => infoCard(dialog, p, e))
+    : infoCard(dialog, p, null);
   return [
-    ...head,
-    // 扩展：运行、权限、要批准的那一块，再接设置项；别的：启用一行（有开关的），设置项另起一组
-    isExt ? h('section.set-group', dialog.extensions.body(id, settings))
-      : 'enabled' in p ? h('section.set-group', h('div.set-rows', h('div.set-row', h('div.set-text', h('div.set-name', h('span', t('enabled')))), h('div.set-control', switchFor(dialog, p))))) : null,
-    mcpGroup(dialog, p),
-    !isExt && settings.length ? groupBlock(t('pkg.settings'), settings) : null,
-    // 平台接入的：终端管理员在这个平台上的号，接在它的设置项后面
-    p.connection?.platform ? ownerAccounts(dialog, p.connection.platform) : null,
-    features.length ? groupBlock(t('pkg.features'), features) : null,
+    head,
+    missing ? null : mcpGroup(dialog, p),
+    settings.length ? groupBlock(t('pkg.settings'), settings) : null,
+    // 平台接入的（没有自己网页的）：终端管理员在这个平台上的号，接在它的设置项后面
+    !site && !missing && p.connection?.platform ? ownerAccounts(dialog, p.connection.platform) : null,
+  ].filter(Boolean);
+}
+
+/**
+ * 信息页顶上那一块。`e` 是扩展的状态（不是扩展的是 `null`）：开关、重启、查看输出、要批准的那一块照它。
+ * @param {any} dialog @param {any} p @param {any} e
+ */
+function infoCard(dialog, p, e) {
+  const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
+  const id = p.package;
+  const bad = BAD.has(p.status);
+  // 状态：扩展照它跑得怎样（停下的写为什么）；别的只写要留意的（好好的「已启用」、关着的「已停用」开关已经说了）
+  const status = e ? stateText(t, e)
+    : p.status === 'depends_missing' && p.missing?.length ? t('pkg.depends_missing', { names: packageNames(dialog.packages, p.missing).join(t('pkg.sep')) })
+    : p.covered && !bad ? t('pkg.covered')
+    : QUIET.has(p.status) ? null : t(`pkg.status.${p.status}`);
+  const alarm = bad || (e && e.on && e.state === 'stopped');
+  const from = typeof p.from === 'string' ? t(`pkg.from.${p.from}`) : null;
+  const meta = [p.version ? t('pkg.version', { version: p.version }) : null, from && !from.startsWith('pkg.') ? from : null].filter(Boolean).join(' · ');
+  const control = p.required ? h('span.set-pkg-status', t('pkg.required'))
+    : e ? toggle(e.on, (on) => (on ? dialog.extensions.turnOn(e) : dialog.extensions.act('extension.disable', { package: id })))
+    : 'enabled' in p ? switchFor(dialog, p) : null;
+  const stderr = e ? (Array.isArray(e.stderr) ? e.stderr.join('\n') : e.stderr ?? '') : '';
+  const showing = !!e && dialog.extensions.showing.has(id);
+  const actions = [
+    p.page && !bad && dialog.ctx.backstage ? openButton(dialog, id) : null,
+    e && e.state === 'running' ? h('button.set-btn', { type: 'button', onclick: () => dialog.extensions.act('extension.restart', { package: id }) }, t('ext.restart')) : null,
+    e && e.on && e.state === 'stopped' && stderr
+      ? h('button.set-btn', { type: 'button', onclick: () => { dialog.extensions.toggleSet(dialog.extensions.showing, id); dialog.extensions.redraw(id); } }, t(showing ? 'ext.hide_output' : 'ext.show_output')) : null,
+    typeof p.repository === 'string' && /^https:\/\//.test(p.repository)
+      ? h('a.set-btn.is-anchor', { href: p.repository, target: '_blank', rel: 'noopener noreferrer' }, icon('external-link'), h('span', t('pkg.repository'))) : null,
     removeButton(dialog, p),
-  ];
+  ].filter(Boolean);
+  const caps = e?.capabilities ?? [];
+  const unapproved = new Set(e?.unapproved ?? []);
+  const ask = e && (dialog.extensions.asking.has(id) || (e.on && e.reason === 'needs_approval')) ? dialog.extensions.approval(e, caps, unapproved) : null;
+  return h('div.set-pkg-info',
+    h('div.set-pkg-card',
+      faceOf(p),
+      h('div.set-pkg-card-text',
+        h('div.set-pkg-card-name', p.name ?? id),
+        p.summary ? h('p.set-pkg-card-desc', p.summary) : null,
+        meta || status ? h('p.set-pkg-card-meta', meta, meta && status ? ' · ' : null, status ? h(`span${alarm ? '.is-bad' : ''}`, status) : null) : null,
+        actions.length ? h('div.set-pkg-card-actions', actions) : null),
+      control ? h('div.set-control', control) : null),
+    showing && stderr ? h('pre.set-ext-output', stderr) : null,
+    ask);
+}
+
+/**
+ * 「打开页面」：有自己网页的（接入通讯平台的页面服务，`status` 问得到端口；`dialog.sites` 记着）点了在新标签页打开那个网页（2026-10-19 项目主人：只留一个
+ * 「打开页面」，新标签页打开就够了）；别的照旧跳到后台页的独立整页。
+ * @param {any} dialog @param {string} id
+ */
+function openButton(dialog, id) {
+  const t = (/** @type {string} */ key) => dialog.ctx.text(key);
+  const pages = dialog.ctx.backstage;
+  const open = (/** @type {MouseEvent} */ e) => {
+    if (!dialog.sites?.get(id)) return openPage(dialog, id, e);
+    e.preventDefault();
+    pages.site.open(id).then((/** @type {string|null} */ why) => { if (why) dialog.toast(why); });
+  };
+  return h('a.set-btn.is-anchor', { href: pages.href(id), onclick: open }, t('pkg.open_backstage'));
 }
 
 /**
@@ -199,7 +253,7 @@ function removeButton(dialog, p) {
       dialog.toast(refusal(dialog, err));
     }
   } }, t('pkg.uninstall'));
-  return h('div.set-pkg-foot', button);
+  return button;
 }
 
 /**

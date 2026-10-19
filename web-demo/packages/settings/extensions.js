@@ -31,6 +31,8 @@ export class Extensions {
     this.slots = new Map();
     /** 编号 → 这个包自己的设置项那几行（接在后面） @type {Map<string, Node[]>} */
     this.rows = new Map();
+    /** 编号 → 照状态画一块的画法（`custom`） @type {Map<string, (e: Entry) => Node>} */
+    this.drawers = new Map();
   }
 
   /** 订阅扩展的状态：回应就是全部，之后照推送换。 */
@@ -85,6 +87,18 @@ export class Extensions {
     return slot;
   }
 
+  /**
+   * 一块照扩展的状态画的（软件包信息页顶上那一块，`core-packages.js`）：推送来了照 `draw` 重画。
+   * @param {string} id @param {(e: Entry) => Node} draw
+   */
+  custom(id, draw) {
+    const slot = h('div.set-ext-custom');
+    this.slots.set(id, slot);
+    this.drawers.set(id, draw);
+    this.fill(id, slot);
+    return slot;
+  }
+
   /** @param {string} id */
   redraw(id) {
     const slot = this.slots.get(id);
@@ -95,6 +109,8 @@ export class Extensions {
   fill(id, slot) {
     const e = this.entries.get(id);
     if (!e) return;
+    const own = slot.classList.contains('set-ext-custom') ? this.drawers.get(id) : null;
+    if (own) return replace(slot, own(e));
     const t = (key, fields) => this.ctx.text(key, fields);
     const caps = e.capabilities ?? [];
     const unapproved = new Set(e.unapproved ?? []);
