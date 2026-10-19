@@ -11,7 +11,7 @@
 import { h, icon, hasIcon } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField } from './rows.js';
 import { splitKey, itemFor, mcpStopped, packageNames } from './model.js';
-import { openPage } from './backstage.js';
+import { openPage, probeSites } from './backstage.js';
 import { serverRow, homeMcpPart } from './mcp-servers.js';
 import { stateText } from './extensions.js';
 
@@ -41,26 +41,6 @@ export function drawCorePackages(dialog, page) {
   const all = new Set(packages.map((p) => p.package));
   const rest = (page?.groups ?? []).filter((g) => !all.has(g.id)).map((g) => groupBlock(g.name, g.items.map((item) => coreRow(dialog, item)))).filter(Boolean);
   return [...parts, homeMcpPart(dialog), ...rest].filter(Boolean);
-}
-
-/**
- * 哪些包有自己的网页（`status` 问得到端口，服务 `backstage` 的 `site`）：带后台页的问一次，记在 `dialog.sites`；问到了和原来不一样的重画（信息页照它决定
- * 「打开页面」开哪个、列不列设置项）。
- * @param {any} dialog @param {any[]} packages
- */
-function probeSites(dialog, packages) {
-  const site = dialog.ctx.backstage?.site;
-  if (!site) return;
-  dialog.sites ??= new Map();
-  for (const p of packages) {
-    if (!p.page || dialog.sites.has(p.package)) continue;
-    dialog.sites.set(p.package, false);
-    site.port(p.package).then((/** @type {number|null} */ port) => {
-      if (!port) return;
-      dialog.sites.set(p.package, true);
-      dialog.drawBody();
-    });
-  }
 }
 
 /**
