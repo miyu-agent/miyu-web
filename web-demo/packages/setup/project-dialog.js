@@ -192,7 +192,7 @@ export async function editProject(ctx, catalog, what, workspaces) {
     field(t('workspace'), h('div.project-work-wrap', workBtn, menu.el), t('workspace_desc')),
     field(t('persona'), persona),
     field(t('preset'), preset),
-    field(t('prompt'), h('div.project-cell', prompt, note('prompt')), t('prompt_desc')),
+    field(t('prompt'), h('div.project-cell', prompt, note('prompt'))),
     switchField(t('messages'), h('div.project-toggle', open, h('span', t('open')))),
     error,
     h('div.setup-foot', remove, h('span.setup-grow'), kit.button(t('cancel'), {}, close), ok)));

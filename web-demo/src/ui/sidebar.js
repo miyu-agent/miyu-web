@@ -25,7 +25,7 @@ import { toggle, range } from '../model/select.js';
 import { treeRows, capTops, pathOf } from '../model/tree.js';
 import { TIME_GROUPS, byTime } from '../model/session.js';
 import { SessionDrag } from './sidebar-drag.js';
-import { projectsHeader, projectBlock, menuKey } from './sidebar-projects.js';
+import { projectBlock } from './sidebar-projects.js';
 import { projectRows, colorOf } from '../model/project.js';
 
 /**
@@ -36,8 +36,25 @@ import { projectRows, colorOf } from '../model/project.js';
  *   shown: (ids: string[]) => void, place: (id: string, patch: {pinned?: boolean, project?: string|null}) => Promise<void>,
  *   projects: () => {supported: boolean, list: import('../core/projects.js').Project[]}, viewProjects: () => void, editProject: (id: string|null) => void,
  *   openProject: (id: string) => void, newIn: (id: string) => void, deleteProject: (id: string) => void, parentOf?: (id: string) => string|null,
+ *   prefs?: {get: (key: string, fallback: any) => any, set: (key: string, value: any) => void},
  *   theme: () => void, dark: () => boolean, copyId: (id: string) => void, notYet: (name: string) => void}} Handlers
  */
+
+/** 这台设备上记着收起了哪几栏 */
+const FOLDED = 'sidebar.folded';
+
+/**
+ * 一栏的头：名字，悬停露一个箭头（收着的朝右），右边这一栏的按钮；点头（不是点按钮）收起、展开。
+ * @param {Sidebar} bar @param {string} key @param {HTMLElement} title @param {HTMLElement|null} tools
+ */
+function sectionHead(bar, key, title, tools) {
+  const head = h('div.session-group-header.sb-head', {
+    dataset: { key: `group:${key}` }, role: 'button', tabindex: '0',
+    onclick: (/** @type {MouseEvent} */ e) => { if (!(/** @type {Element} */ (e.target)).closest('button')) bar.fold(key); },
+    onkeydown: (/** @type {KeyboardEvent} */ e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === head) { e.preventDefault(); bar.fold(key); } },
+  }, title, h('span.sb-chevron', { 'aria-hidden': 'true' }, icon('chevron-down')), tools);
+  return head;
+}
 
 export class Sidebar {
   /** @param {Handlers} on */
@@ -72,16 +89,23 @@ export class Sidebar {
     this.actions = h('span.sidebar-slot');
     this.groupTitle = h('span', t('sidebar.sessions'));
     this.groupTools = h('span.session-group-tools');
-    /** 「会话」那一行（多选时、一个会话都没有时）、「置顶」那一栏的头：画在会话表里（和会话的行一起排，挪动时一起滑，蓝图「左栏」组头）；
-     *  栏头不带图标（2026-10-19 项目主人） */
-    this.groupHeader = h('div.session-group-header', { dataset: { key: 'group:sessions' } }, this.groupTitle, this.groupTools);
-    this.pinnedHeader = h('div.session-group-header.is-pinned', { dataset: { key: 'group:pinned' } }, h('span', t('sidebar.pinned')));
-    /** 按时间分的几组的头（蓝图「会话整理和项目」第 2 条）：最近、近 7 天、近 30 天、30 天前；第一组的头上挂「查看全部会话」「多选」 */
-    this.timeHeaders = new Map(TIME_GROUPS.map((g) => [g, h('div.session-group-header', { dataset: { key: `group:${g}` } }, h('span', t(`sidebar.groups.${g}`)))]));
-    /** 置顶和下面的会话之间一道细线 */
-    this.sep = h('div.session-sep', { dataset: { key: 'group:sep' }, 'aria-hidden': 'true' });
-    /** 「项目」那一栏的头（核心有项目才画） */
-    this.projectsHeader = projectsHeader(on);
+    /** 收起了的几栏（置顶、项目、会话；这台设备上记着，2026-10-19 项目主人：三栏都能收起） @type {Set<string>} */
+    this.folded = new Set([].concat(on.prefs?.get(FOLDED, []) ?? []).filter((x) => typeof x === 'string'));
+    /** 三栏的头（栏头不带图标，2026-10-19 项目主人）：点了收起、展开，箭头悬停才露；「会话」那一栏的头多选时写「已选 N 个」、换成全选、删除、退出 */
+    this.groupHeader = sectionHead(this, 'sessions', this.groupTitle, this.groupTools);
+    this.pinnedHeader = sectionHead(this, 'pin', h('span', t('sidebar.pinned')), null);
+    this.projectsHeader = sectionHead(this, 'projects', h('span', t('sidebar.projects')), h('span.session-group-tools',
+      h('button.icon-button.session-group-button.is-select', { type: 'button', title: t('sidebar.new_project'), 'aria-label': t('sidebar.new_project'), onclick: () => on.editProject(null) }, icon('plus'))));
+    /** 「会话」那一栏里按时间分的几组的头（蓝图「会话整理和项目」第 2 条）：近 7 天、近 30 天、30 天前；「最近」那一组不另画头，就是「会话」那一栏的头 */
+    this.timeHeaders = new Map(TIME_GROUPS.map((g) => [g, h('div.session-group-header.is-time', { dataset: { key: `group:${g}` } }, h('span', t(`sidebar.groups.${g}`)))]));
+    /** 头上的交互区（2026-10-19 项目主人照 Claude 的左栏）：新建会话、全部会话、项目（核心有项目才有）；全部会话那一页开着时那一行亮着 */
+    const navRow = (/** @type {string} */ name, /** @type {string} */ label, /** @type {() => void} */ run, /** @type {string} */ key) =>
+      h('button.sidebar-nav-row', { type: 'button', dataset: { nav: key }, onclick: run }, icon(name), h('span', label));
+    this.navProjects = navRow('folder', t('sidebar.projects'), () => on.viewProjects(), 'projects');
+    this.nav = h('nav.sidebar-nav',
+      navRow('square-pen', t('sidebar.new_session'), () => on.newSession(), 'new'),
+      navRow('messages-square', t('sidebar.all_sessions_nav'), () => on.viewAll(), 'sessions'),
+      this.navProjects);
     /** 左上角的头像、名字：正在看的会话用的人格（`setLook`），点了打开这个人格的编辑页 */
     this.face = h('span.brand-face');
     this.name = h('strong');
@@ -93,8 +117,8 @@ export class Sidebar {
       h('header.brand-row',
         h('span.brand-toggle-slot', { 'aria-hidden': 'true' }),
         this.identity,
-        h('button.new-chat-button', { type: 'button', title: t('sidebar.new_session'), onclick: on.newSession }, icon('square-pen')),
         h('button.icon-button.sidebar-close', { type: 'button', title: t('sidebar.collapse'), onclick: on.close }, icon('x'))),
+      this.nav,
       h('nav.session-list', h('div.session-track', this.pill, this.items)),
       h('footer.sidebar-footer', h('div.sidebar-actions', this.actions, this.themeButton)));
     this.timer = 0;
@@ -121,6 +145,11 @@ export class Sidebar {
       if (this.menuFor) this.toggleMenu(null);
       else if (this.selecting) this.select(false);
     });
+  }
+
+  /** 全部会话那一页开着哪一页（`null` 是关着）：头上交互区那一行亮着。 @param {'sessions'|'projects'|null} view */
+  setPage(view) {
+    for (const row of this.nav.querySelectorAll('.sidebar-nav-row')) row.classList.toggle('is-on', /** @type {HTMLElement} */ (row).dataset.nav === view);
   }
 
   /** 连接的状态：在线、连接中、离线（圆点的颜色照它，蓝图「左栏」的「状态」）。 */
@@ -155,7 +184,7 @@ export class Sidebar {
     this.themeButton.title = t(dark ? 'sidebar.theme_to_light' : 'sidebar.theme_to_dark');
   }
 
-  /** 「会话」那一行：平常右边 ↗（开全部会话那一页）和多选两个按钮，指针移上去才露；多选时换成「已选 N 个」和全选、删除、退出（位置不动）。 */
+  /** 「会话」那一栏的头：平常右边一个多选按钮，指针移上去才露（全部会话在头上的交互区）；多选时换成「已选 N 个」和全选、删除、退出（位置不动）。 */
   drawGroup() {
     const button = (name, label, run, cls = '', disabled = false) =>
       h(`button.icon-button.session-group-button${cls}`, { type: 'button', title: label, 'aria-label': label, disabled, onclick: run }, icon(name));
@@ -167,8 +196,7 @@ export class Sidebar {
       ? [button('check-check', t('sidebar.select_all'), () => { this.selected = new Set(order); this.render(...this.last); }),
         button('trash-2', t('sidebar.delete'), () => this.removeAll(order.filter((id) => this.selected.has(id))), '.is-danger', this.selected.size === 0),
         button('x', t('sidebar.select_exit'), () => this.select(false))]
-      : [button('arrow-up-right', t('sidebar.all_sessions'), () => this.on.viewAll(), '.is-select'),
-        button('list-checks', t('sidebar.select'), () => this.select(true), '.is-select')]);
+      : [button('list-checks', t('sidebar.select'), () => this.select(true), '.is-select')]);
     this.el.classList.toggle('is-selecting', this.selecting);
   }
 
@@ -180,13 +208,15 @@ export class Sidebar {
   render(items, current) {
     this.last = [items, current];
     const kept = items.filter((it) => !this.removing.has(it.session));
-    // 项目（核心有项目、不在多选时）：项目里的会话在它的项目下面，不在下面按时间的几组里；不认得的项目（刚删掉的）的照不在项目里
+    // 项目（核心有项目、有项目、不在多选时；2026-10-19 项目主人：没有项目时不显示「项目」那一栏）：项目里的会话在它的项目下面，不在下面「会话」那一栏里；
+    // 不认得的项目（刚删掉的）的照不在项目里
     const projects = this.on.projects();
-    const showProjects = projects.supported && !this.selecting;
+    const showProjects = projects.supported && !this.selecting && projects.list.length > 0;
     const known = new Set(projects.list.map((p) => p.project));
     const inProject = (/** @type {any} */ it) => projects.supported && !!it.project && known.has(it.project);
+    this.navProjects.hidden = !projects.supported;
     // 置顶的单开一栏、全部露出（多选时不分栏）；别的顶层最多露几个，正在看的不在里面的排在最后照样露（多选时全列，才勾得到）。
-    // 多选只列不在项目里的（2026-10-19 项目主人：点「最近」那一行的多选不该把项目的会话放进来）
+    // 多选只列不在项目里的（2026-10-19 项目主人：点「会话」那一栏的多选不该把项目的会话放进来）
     const pinned = this.selecting ? [] : kept.filter((it) => it.pinned);
     const rest = this.selecting ? kept.filter((it) => !inProject(it)) : kept.filter((it) => !it.pinned && !inProject(it));
     const cap = this.selecting ? { shown: rest, more: false } : capTops(rest, pinned.some((it) => it.session === current) ? null : current, res.layout.sidebar_rows);
@@ -212,10 +242,10 @@ export class Sidebar {
       const closing = this.flipping?.id === p.project && !open;
       return { project: p, open, count, rows: open || closing ? tree(list) : [] };
     }) : [];
-    // 平常按时间分组（多选时一整列）：一组一个头，组里照树排
+    // 「会话」那一栏照时间分组（多选时一整列）：「最近」那一组没有自己的头（就是这一栏的头），别的一组一个头，组里照树排
     const groups = this.selecting ? [] : byTime(cap.shown, Date.now()).map((g) => ({ group: g.group, rows: tree(g.rows) }));
     const rows = this.selecting
-      ? tops.map((it) => ({ kind: /** @type {const} */ ('session'), session: it.session, depth: 0, item: it, hasKids: false, open: false }))
+      ? cap.shown.map((it) => ({ kind: /** @type {const} */ ('session'), session: it.session, depth: 0, item: it, hasKids: false, open: false }))
       : [...pinnedRows, ...blocks.flatMap((b) => b.rows), ...groups.flatMap((g) => g.rows)];
     const sig = JSON.stringify([rows, groups.map((g) => [g.group, g.rows.length]), blocks.map((b) => [b.project, b.open, b.count, b.rows.length]), showProjects,
       current, this.menuFor, this.moving, this.armed, this.renaming, this.selecting, [...this.selected], cap.more, this.on.dark()]);
@@ -223,28 +253,26 @@ export class Sidebar {
       this.drawn = sig;
       const all = cap.more ? h('button.session-all', { type: 'button', onclick: () => this.on.viewAll() }, t('sidebar.view_all')) : null;
       const draw = (row) => (row.kind === 'session' ? this.item(row, row.session === current) : this.doneRow(row));
-      // 放得下会话的几块（拖会话，`sidebar-drag.js`）：置顶那一栏、下面的会话；项目的那一块在 `projectBlock` 里写
-      const zoned = (/** @type {HTMLElement} */ el, /** @type {string} */ zone) => { el.dataset.zone = zone; return el; };
       const was = this.positions();
-      const hadPinned = this.pinnedHeader.isConnected;
-      // 「查看全部会话」「多选」挂在第一组的头上（多选时、没有会话时照旧是「会话」那一行）
-      const head = groups.length ? /** @type {HTMLElement} */ (this.timeHeaders.get(groups[0].group)) : this.groupHeader;
-      head.append(this.groupTools);
       const bar = {
         menuFor: this.menuFor, armed: this.armed, dark: this.on.dark(), draw, on: this.on,
         toggleMenu: (/** @type {string|null} */ key) => this.toggleMenu(key),
         flip: (/** @type {string} */ id, /** @type {boolean} */ open) => { this.projectOpen.set(id, open); this.flipping = { id, open }; this.render(...this.last); },
         arm: (/** @type {string} */ id) => { this.armed = id; this.render(...this.last); },
       };
+      // 一栏一块：头、下面收起来的那一截；整块是放得下会话的一块（拖会话，`sidebar-drag.js` 照 `data-zone`，亮的时候整块亮）
+      const section = (/** @type {string} */ key, /** @type {HTMLElement} */ head, /** @type {(Node|null)[]} */ body, /** @type {string|null} */ zone) =>
+        h(`div.sb-section${this.folded.has(key) && !this.selecting ? '.is-folded' : ''}`, { dataset: { section: key, ...(zone ? { zone } : {}) } },
+          head, h('div.sb-section-body', h('div.sb-section-inner', body)));
+      const sessionsBody = groups.length
+        ? groups.flatMap((g) => [g.group === 'recent' ? null : this.timeHeaders.get(g.group) ?? null, ...g.rows.map(draw)])
+        : rows.slice(pinnedRows.length + blocks.reduce((n, b) => n + b.rows.length, 0)).map(draw);
       replace(this.items, [
-        pinned.length ? zoned(this.pinnedHeader, 'pin') : null, ...pinnedRows.map((r) => zoned(draw(r), 'pin')),
-        ...(showProjects ? [this.projectsHeader, ...blocks.map((b) => projectBlock(bar, b))] : []),
-        (pinned.length || showProjects) && (groups.length || this.selecting) ? this.sep : null,
-        ...(groups.length
-          ? groups.flatMap((g) => [zoned(/** @type {HTMLElement} */ (this.timeHeaders.get(g.group)), 'loose'), ...g.rows.map((r) => zoned(draw(r), 'loose'))])
-          : [zoned(this.groupHeader, 'loose'), ...rows.slice(pinnedRows.length + blocks.reduce((n, b) => n + b.rows.length, 0)).map((r) => zoned(draw(r), 'loose'))]),
-        all]);
-      this.slide(was, pinned.length > 0 && !hadPinned);
+        pinned.length ? section('pin', this.pinnedHeader, pinnedRows.map(draw), 'pin') : null,
+        showProjects ? section('projects', this.projectsHeader, blocks.map((b) => projectBlock(bar, b)), null) : null,
+        section('sessions', this.groupHeader, [...sessionsBody, all], 'loose'),
+      ]);
+      this.slide(was);
       this.unfold();
       this.placeMenu();
       this.drawGroup();
@@ -253,6 +281,22 @@ export class Sidebar {
       this.on.shown(rows.flatMap((r) => (r.kind === 'session' && r.depth > 0 ? [r.session] : [])));
     }
     this.spin();
+  }
+
+  /**
+   * 收起、展开一栏（点栏头）：当场换（高度缓过去，`.sb-section-body` 的 `grid-template-rows`），记在这台设备上。多选时不收。
+   * @param {string} key
+   */
+  fold(key) {
+    if (this.selecting) return;
+    if (this.folded.has(key)) this.folded.delete(key);
+    else this.folded.add(key);
+    this.on.prefs?.set(FOLDED, [...this.folded]);
+    const el = this.items.querySelector(`.sb-section[data-section="${key}"]`);
+    el?.classList.toggle('is-folded', this.folded.has(key));
+    // 选中的那一块跟着这一项露没露（重画时照 `folded` 画，不用另记）
+    setTimeout(() => this.placePill(), res.layout.sidebar_move_ms + 20);
+    this.placePill();
   }
 
   /**
@@ -288,37 +332,38 @@ export class Sidebar {
     }, 0);
   }
 
-  /** 表里每一行（会话、两栏的头）现在在哪：换先后以前记下，画完照它滑。 */
+  /** 表里每一行（会话、栏头、项目）现在在哪：换先后以前记下，画完照它滑。 */
   positions() {
     const out = new Map();
-    for (const el of this.items.children) {
+    for (const el of this.items.querySelectorAll('[data-session], [data-key]')) {
       const key = el instanceof HTMLElement ? el.dataset.session ?? el.dataset.key : null;
-      if (key) out.set(key, /** @type {HTMLElement} */ (el).offsetTop);
+      if (key && !out.has(key)) out.set(key, /** @type {HTMLElement} */ (el).offsetTop);
     }
     return out;
   }
 
   /**
-   * 换了先后（置顶、取消置顶，照最近活动重排）：原来就在的行从原来的位置滑到新位置，别的行跟着让开、收拢；「置顶」那一栏刚出来的
-   * 栏头淡入、从上面落下来（蓝图「左栏」组头）。减少动画的不滑。
+   * 换了先后（置顶、取消置顶，照最近活动重排）：原来就在的行从原来的位置滑到新位置，别的行跟着让开、收拢；新出来的淡入（「置顶」那一栏刚出来的
+   * 栏头从上面落 3px）。减少动画的不滑。
    * @param {Map<string, number>} was
-   * @param {boolean} pinnedAppeared
    */
-  slide(was, pinnedAppeared) {
+  slide(was) {
     if (!was.size || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const ms = res.layout.sidebar_move_ms;
     const easing = 'cubic-bezier(0.2, 0, 0, 1)';
-    for (const el of this.items.children) {
-      if (!(el instanceof HTMLElement)) continue;
+    const seen = new Set();
+    for (const el of this.items.querySelectorAll('[data-session], [data-key]')) {
+      if (!(el instanceof HTMLElement) || el.closest('.is-folded, .project:not(.is-open) .project-kids')) continue;
       const key = el.dataset.session ?? el.dataset.key;
-      const from = key ? was.get(key) : undefined;
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      const from = was.get(key);
       if (from != null && from !== el.offsetTop) {
         el.animate([{ transform: `translateY(${from - el.offsetTop}px)` }, { transform: 'none' }], { duration: ms, easing });
-      } else if (from == null && key && key !== 'group:pinned') {
-        el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: ms, easing });
+      } else if (from == null) {
+        el.animate(key === 'group:pin' ? [{ opacity: 0, transform: 'translateY(-3px)' }, { opacity: 1, transform: 'none' }] : [{ opacity: 0 }, { opacity: 1 }], { duration: ms, easing });
       }
     }
-    if (pinnedAppeared) this.pinnedHeader.animate([{ opacity: 0, transform: 'translateY(-3px)' }, { opacity: 1, transform: 'none' }], { duration: ms, easing });
   }
 
   /**
@@ -328,7 +373,8 @@ export class Sidebar {
   placePill() {
     const row = this.items.querySelector('.session-item.active');
     const pill = this.pill;
-    if (!(row instanceof HTMLElement) || this.selecting) {
+    // 收着的那一栏、收着的项目里的不露
+    if (!(row instanceof HTMLElement) || this.selecting || row.closest('.is-folded, .project:not(.is-open)')) {
       pill.classList.remove('is-on');
       return;
     }

@@ -52,7 +52,8 @@
     "project_delete_confirm": "确认删除",
     "move_to_project": "移到项目",
     "move_out": "移出项目",
-    "here": "{name}（在这里）"
+    "here": "{name}（在这里）",
+    "all_sessions_nav": "全部会话"
   },
   "crumbs": {
     "label": "子代理会话路径",
@@ -391,8 +392,8 @@
     "tab_sessions": "会话",
     "tab_projects": "项目",
     "filter_all": "全部",
-    "filter_running": "在跑",
-    "filter_unread": "没看过",
+    "filter_running": "运行中",
+    "filter_unread": "未读",
     "sort_active": "按最近活动",
     "sort_created": "按创建时间",
     "agents_running": "{count} 个子代理在跑",

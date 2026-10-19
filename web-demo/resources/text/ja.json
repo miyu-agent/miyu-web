@@ -52,7 +52,8 @@
     "project_delete_confirm": "削除を確定",
     "move_to_project": "プロジェクトへ移動",
     "move_out": "プロジェクトから外す",
-    "here": "{name}（ここ）"
+    "here": "{name}（ここ）",
+    "all_sessions_nav": "すべてのセッション"
   },
   "crumbs": {
     "label": "サブエージェントのセッションの位置",

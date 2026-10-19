@@ -52,7 +52,8 @@
     "project_delete_confirm": "Confirm delete",
     "move_to_project": "Move to project",
     "move_out": "Remove from project",
-    "here": "{name} (here)"
+    "here": "{name} (here)",
+    "all_sessions_nav": "All sessions"
   },
   "crumbs": {
     "label": "Subagent session path",

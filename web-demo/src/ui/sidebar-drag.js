@@ -16,13 +16,13 @@ const SCROLL_PX = 8;
 export class SessionDrag {
   /**
    * @param {{items: HTMLElement, list: HTMLElement|null, selecting: boolean, renaming: string|null, last: [any[], string|null],
-   *   pinnedHeader: HTMLElement, sep: HTMLElement, on: {pin: (id: string, on: boolean) => Promise<void>,
+   *   pinnedHeader: HTMLElement, on: {pin: (id: string, on: boolean) => Promise<void>,
    *   place: (id: string, patch: {pinned?: boolean, project?: string|null}) => Promise<void>}}} bar 左栏（`sidebar.js`）
    */
   constructor(bar) {
     this.bar = bar;
     /** @type {null|{id: string, pinned: boolean, project: string|null, row: HTMLElement, x: number, y: number, dx: number, dy: number, on: boolean,
-     *   ghost: HTMLElement|null, zone: string|null, hint: HTMLElement|null, mark: HTMLElement|null, lit?: HTMLElement|null, scroll: any}} */
+     *   ghost: HTMLElement|null, zone: string|null, hint: HTMLElement|null, lit: HTMLElement|null, scroll: any}} */
     this.drag = null;
     bar.items.addEventListener('pointerdown', (e) => this.down(e));
     addEventListener('pointermove', (e) => this.move(e));
@@ -46,7 +46,7 @@ export class SessionDrag {
     if (!row || !id || row.classList.contains('is-child') || bar.renaming === id) return;
     const item = bar.last[0].find((it) => it.session === id);
     if (!item) return;
-    this.drag = { id, pinned: !!item.pinned, project: item.project ?? null, row, x: e.clientX, y: e.clientY, dx: 0, dy: 0, on: false, ghost: null, zone: null, hint: null, mark: null, scroll: 0 };
+    this.drag = { id, pinned: !!item.pinned, project: item.project ?? null, row, x: e.clientX, y: e.clientY, dx: 0, dy: 0, on: false, ghost: null, zone: null, hint: null, lit: null, scroll: 0 };
   }
 
   /** @param {PointerEvent} e */
@@ -63,7 +63,7 @@ export class SessionDrag {
       this.start(d);
     }
     e.preventDefault();
-    if (d.ghost) d.ghost.style.transform = `translate(${e.clientX - d.dx}px, ${e.clientY - d.dy}px) rotate(-1.5deg)`;
+    if (d.ghost) d.ghost.style.transform = `translate(${e.clientX - d.dx}px, ${e.clientY - d.dy}px) `;
     this.edgeScroll(e.clientY);
     this.mark(this.zoneAt(e.clientX, e.clientY));
   }
@@ -102,8 +102,8 @@ export class SessionDrag {
   }
 
   /**
-   * 亮起那一块（`accent_soft` 底、一圈 `accent`）：只有一个元素的（一个项目、临时那一块「拖到这里置顶」）给它自己加 `is-drop-on`，照它自己的圆角、
-   * 边画，和虚线框对得上；好几行的（置顶那一栏、下面的会话）盖一张贴着这几行四边的框（行是平铺的，没有包着一段的元素）。不算「查看全部」。
+   * 亮起那一块（`accent_soft` 底、一圈 `accent`）：每一块都是一个元素（一栏、一个项目、临时那一块「拖到这里置顶」），给它自己加 `is-drop-on`，
+   * 照它自己的圆角、边画（2026-10-19 项目主人：原来另盖一张框，和虚线框、里面的会话对不上）。
    * @param {string|null} zone
    */
   mark(zone) {
@@ -112,31 +112,16 @@ export class SessionDrag {
     d.zone = zone;
     this.unmark();
     if (!zone) return;
-    const part = /** @type {HTMLElement[]} */ ([...this.bar.items.children]).filter((el) => el.dataset.zone === zone && (!d.hint || zone !== 'pin' || el === d.hint));
-    if (part.length === 1) {
-      part[0].classList.add('is-drop-on');
-      d.lit = part[0];
-      return;
-    }
-    const boxes = part.map((el) => el.getBoundingClientRect()).filter((r) => r.height);
-    if (!boxes.length) return;
-    // 盖在会话表那一层（`.session-track`，相对它定位）上
-    const track = /** @type {HTMLElement} */ (this.bar.items.parentElement);
-    const host = track.getBoundingClientRect();
-    const top = Math.min(...boxes.map((r) => r.top)) - host.top;
-    const bottom = Math.max(...boxes.map((r) => r.bottom)) - host.top;
-    const left = Math.min(...boxes.map((r) => r.left)) - host.left;
-    const right = Math.max(...boxes.map((r) => r.right)) - host.left;
-    d.mark = h('div.session-drop-zone', { style: `top: ${top}px; height: ${bottom - top}px; left: ${left}px; width: ${right - left}px` });
-    track.prepend(d.mark);
+    const el = zone === 'pin' && d.hint ? d.hint : /** @type {HTMLElement|null} */ ([...this.bar.items.querySelectorAll('[data-zone]')].find((x) => x instanceof HTMLElement && x.dataset.zone === zone) ?? null);
+    if (!el) return;
+    el.classList.add('is-drop-on');
+    d.lit = el;
   }
 
   /** 收起亮着的那一块 */
   unmark() {
     const d = this.drag;
     if (!d) return;
-    d.mark?.remove();
-    d.mark = null;
     d.lit?.classList.remove('is-drop-on');
     d.lit = null;
   }

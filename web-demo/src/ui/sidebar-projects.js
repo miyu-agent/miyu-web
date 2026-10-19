@@ -1,5 +1,5 @@
 // @ts-check
-//! 左栏的「项目」那一栏（蓝图 `web.md`「会话整理和项目」第 3、4 条）：栏头悬停右边露 ↗（全部会话的「项目」那一页）、+（新建项目）；一个项目一行：
+//! 左栏「项目」那一栏里的一个个项目（蓝图 `web.md`「会话整理和项目」第 3、4 条；栏头在 `sidebar.js`，悬停露 +）。一个项目一行：
 //! 记号那一格是项目颜色的文件夹，名字（收着、里面有在跑的前面写 `(N)`），悬停露 ⋯（打开项目、在项目里新建会话、项目设置…、删除项目…），最右
 //! 一个展开箭头（没悬停、没展开时不画）。点这一行就地展开、收起（高度缓过去）；展开着的露最近活动的几个会话，照普通会话的样子、和项目名左边
 //! 对齐，子代理照旧缩进挂树线。删除项目在菜单里点两下：第一下换成「再点一次删除」，里面的会话移出项目、不删。
@@ -18,16 +18,7 @@ import { colorOf } from '../model/project.js';
  */
 
 /** 菜单开在一个项目上时 `menuFor` 写的：和会话的编号分开 @param {string} id */
-export const menuKey = (id) => `project:${id}`;
-
-/** 栏头：「项目」，悬停右边露 ↗、+。 @param {Bar['on']} on */
-export function projectsHeader(on) {
-  const button = (/** @type {string} */ name, /** @type {string} */ label, /** @type {() => void} */ run) =>
-    h('button.icon-button.session-group-button.is-select', { type: 'button', title: label, 'aria-label': label, onclick: run }, icon(name));
-  return h('div.session-group-header.is-projects', { dataset: { key: 'group:projects' } },
-    h('span', t('sidebar.projects')),
-    h('span.session-group-tools', button('arrow-up-right', t('sidebar.all_projects'), on.viewProjects), button('plus', t('sidebar.new_project'), () => on.editProject(null))));
-}
+const menuKey = (id) => `project:${id}`;
 
 /**
  * 一个项目：一行，下面一块收着、展开的会话。整块是一个放得下会话的地方（拖进去移进项目，`sidebar-drag.js` 照 `data-zone`）。

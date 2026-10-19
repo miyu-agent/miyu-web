@@ -24,7 +24,7 @@ import { projectCards, projectView } from './projects-page.js';
  *   open: (id: string) => void, newSession: () => void, newIn: (id: string) => void, editProject: (id: string|null) => void,
  *   projects: () => {supported: boolean, list: import('../core/projects.js').Project[]}, color: (c: string|undefined) => string|null,
  *   personaName: (id: string) => string, presetName: (id: string) => string, defaultWorkdir: () => string,
- *   removeMany: (ids: string[]) => Promise<string[]>, dropped: (id: string) => void}} PageActions
+ *   removeMany: (ids: string[]) => Promise<string[]>, dropped: (id: string) => void, page?: (view: 'sessions'|'projects'|null) => void}} PageActions
  */
 
 export class SessionsPage {
@@ -109,6 +109,7 @@ export class SessionsPage {
   close() {
     document.removeEventListener('keydown', this.onKey);
     if (this.isOpen()) hide(this.el);
+    this.on.page?.(null);
   }
 
   /** 进、出多选。 @param {boolean} on @param {boolean} [redraw] */
@@ -194,6 +195,8 @@ export class SessionsPage {
 
   draw() {
     this.live = this.liveSig();
+    // 左栏头上交互区亮哪一行：项目页、「项目」那一页亮「项目」
+    if (this.isOpen()) this.on.page?.(this.view === 'sessions' ? 'sessions' : 'projects');
     // 「项目」那一页、项目页不多选；要的项目没了（别处删了）回「项目」那一页
     if (this.view === 'project' && !this.projects().some((p) => p.project === this.projectId)) this.view = 'projects';
     if (this.view === 'projects' && !this.on.projects().supported) this.view = 'sessions';

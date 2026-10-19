@@ -35,7 +35,7 @@
 }
 
 .sidebar {
-  display: grid; grid-template-rows: auto minmax(0, 1fr) auto; width: 252px; min-height: 0;
+  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; width: 252px; min-height: 0;
   background: var(--sidebar-bg); box-shadow: inset -1px 0 0 var(--line); z-index: 20;
 }
 
@@ -60,13 +60,6 @@
 .brand-identity strong { font-family: var(--serif); font-size: 17px; font-weight: 600; letter-spacing: 0.04em; }
 .brand-identity > div > span { display: flex; min-width: 0; align-items: center; color: var(--text-soft); font-size: 11px; gap: 6px; }
 /* 新会话：和「收起」一个样子，透明、悬停铺一层淡底（2026-09-30 项目主人：原来 accent_soft 底的一块比 Claude 的丑） */
-.new-chat-button {
-  display: grid; width: 30px; height: 30px; flex: 0 0 30px; place-items: center; padding: 0; border: 0;
-  border-radius: var(--radius); background: transparent; color: var(--text-soft); cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-.new-chat-button:hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }
-.new-chat-button .icon { width: 16px; height: 16px; }
 /* 左栏的开关（桌面）：整页只有这一个，钉在左上角（头上一行第一个的位置：左 14、上 19），盖在左栏、浮出来的左栏、吉祥物上面；
    左栏在它底下滑进滑出，它自己不动、图标不换（2026-10-16 项目主人照 Claude） */
 .app-shell { position: relative; }
@@ -86,8 +79,6 @@
 .session-group-header .icon { width: 12px; height: 12px; }
 /* 栏头、细线也是定位的：拖会话时亮起来的那一块垫在它们下面（同选中的那一块垫在行下面） */
 .session-group-header, .session-sep, .session-drop-hint { position: relative; }
-/* 置顶和下面按时间分组的会话之间一道细线（蓝图「会话整理和项目」第 1 条） */
-.session-sep { height: 0; margin: 9px 8px 0; border-top: 1px solid var(--line); }
 /* 多选时这一行钉在列表顶上（蓝图 web.md「左栏」批量删除）：列表顶上那 4px 内边距挪进这一行，钉住的位置就是它原来的位置
    （一滚动不先挪一下，2026-10-01 项目主人指出）；上面的空用内边距垫，滚过去的项不从缝里露出来 */
 .sidebar.is-selecting .session-list { padding-top: 0; }
@@ -373,3 +364,38 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
 .session-menu-project:disabled { color: var(--text-faint); cursor: default; }
 .session-menu-project:disabled:hover { background: transparent; }
 .session-menu.is-projects { max-height: 320px; overflow-y: auto; }
+
+/* 头上的交互区（2026-10-19 项目主人照 Claude 的左栏）：新建会话、全部会话、项目，一行一个：16px 的图标加名字，悬停铺淡底，全部会话那一页开着的那一行
+   照选中的会话的样子 */
+.sidebar-nav { display: grid; gap: 1px; padding: 0 8px 6px; }
+.sidebar-nav-row {
+  display: flex; align-items: center; gap: 9px; height: 32px; padding: 0 9px; border: 0; border-radius: var(--radius); background: none;
+  color: var(--text); font: 13px var(--sans); text-align: left; cursor: pointer; transition: background-color 160ms ease;
+}
+.sidebar-nav-row[hidden] { display: none; }
+.sidebar-nav-row:hover { background: color-mix(in srgb, var(--text) 3.5%, transparent); }
+.sidebar-nav-row.is-on { background: var(--sidebar-active); box-shadow: var(--sidebar-active-shadow); }
+.sidebar-nav-row .icon { width: 16px; height: 16px; flex: none; color: var(--text-soft); }
+/* 一栏一块（置顶、项目、会话）：栏与栏之间用间距分开，不画细线（同一天项目主人）；收起的那一截高度缓过去；整块是放会话的一块，拖的时候整块亮 */
+.sb-section { display: grid; border-radius: 10px; transition: background-color 120ms ease, box-shadow 120ms ease; }
+.sb-section + .sb-section { margin-top: 10px; }
+.sb-section > .session-group-header { margin-top: 6px; }
+.sb-section-body { display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--motion-slide) var(--ease-out); }
+.sb-section.is-folded > .sb-section-body { grid-template-rows: 0fr; }
+.sb-section-inner { display: grid; gap: var(--item-gap); min-height: 0; }
+.sb-section.is-folded .sb-section-inner { overflow: hidden; }
+.sb-section.is-drop-on { background: color-mix(in srgb, var(--accent-soft) 70%, transparent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+/* 栏头：点了收起、展开，箭头悬停才露（收着的朝右） */
+.sb-head { cursor: pointer; border-radius: 6px; }
+.sb-head:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sb-chevron { display: grid; place-items: center; color: var(--text-faint); opacity: 0; transition: opacity 120ms ease, transform var(--motion-slide) var(--ease-out); }
+.sb-chevron .icon { width: 12px; height: 12px; }
+.sb-head:hover .sb-chevron, .sb-head:focus-visible .sb-chevron { opacity: 1; }
+.sb-section.is-folded .sb-chevron { transform: rotate(-90deg); }
+.sb-head > .session-group-tools { margin-left: auto; }
+.sidebar.is-selecting .sb-chevron { display: none; }
+/* 「会话」那一栏里按时间分的组头（近 7 天、近 30 天、30 天前）：比栏头小一点的间距 */
+.session-group-header.is-time { margin-top: 10px; }
+@media (prefers-reduced-motion: reduce) {
+  .sb-section-body, .sb-chevron { transition: none; }
+}

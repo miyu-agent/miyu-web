@@ -125,6 +125,8 @@ export class App {
       deleteProject: (id) => this.deleteProject(id),
       // 子代理的会话照它最上面的主会话算在哪个项目（正在看的在里面的项目展开）
       parentOf: (id) => this.parentOf(id),
+      // 收起了哪几栏：记在这台设备上（按账号分开，内核的 `storage`）
+      prefs: { get: (key, fallback) => ctx.storage.get(key, fallback), set: (key, value) => ctx.storage.set(key, value) },
       dropped: (id) => {
         // 它下面的子代理的会话跟着它一起没了（核心删父会话连子会话一起挪进回收处）
         const kids = this.descendants(id);
@@ -311,6 +313,8 @@ export class App {
       personaName: (id) => this.ctx.personas?.personaName?.(id) ?? id,
       presetName: (id) => this.ctx.personas?.presetName?.(id) ?? id,
       defaultWorkdir: () => this.cwd ?? '',
+      // 左栏头上的交互区：开着哪一页那一行亮着
+      page: (view) => this.sidebar.setPage(view),
       removeMany: (ids) => this.sidebar.on.removeMany(ids),
       dropped: (id) => this.sidebar.on.dropped(id),
     });
