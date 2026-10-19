@@ -365,7 +365,7 @@ export class UsagePage {
       h('div.use-tip-rule'),
       line(h('i'), this.t('col.requests'), this.t('times', { n: b.row.requests.toLocaleString() })),
       line(h('i'), this.t('col.cost'), cost || this.t('tip.no_price')),
-      cost && b.row.unpriced ? h('div.use-tip-more', this.t('unpriced_more', { n: b.row.unpriced })) : null,
+      cost && b.row.unpriced ? h('div.use-tip-more', this.t('unpriced_more', { n: b.row.unpriced.toLocaleString() })) : null,
     ];
   }
 
@@ -422,7 +422,7 @@ export class UsagePage {
       h('td.num', r.requests.toLocaleString()),
       h('td.num', short(total(r.usage))),
       h('td.num', `${hitRate(r.usage.cache_read, input(r.usage))}%`),
-      h('td.num', r.amounts.length ? [r.amounts.map((a) => h('div', amountText(a))), r.unpriced ? h('div.use-more', this.t('unpriced_part', { n: r.unpriced })) : null] : this.noCost(r)));
+      h('td.num', r.amounts.length ? [r.amounts.map((a) => h('div', amountText(a))), r.unpriced ? h('div.use-more', this.t('unpriced_part', { n: r.unpriced.toLocaleString() })) : null] : this.noCost(r)));
       if (open) this.openRow = { row: r, el: tr };
       body.append(tr);
     }
@@ -446,8 +446,8 @@ export class UsagePage {
       h('div.use-pop-head', this.name(r), h('button.icon-button.use-pop-close', { type: 'button', title: this.t('close'), 'aria-label': this.t('close'), onclick: () => this.closePop() }, icon('x'))),
       h('p.use-detail-line', this.t('detail.tokens', { hit: exact(u.cache_read), miss: exact(u.uncached), write: exact(u.cache_write), out: exact(u.output) })),
       h('p.use-detail-line', cost
-        ? [this.t('detail.cost', { cost }), r.unpriced ? ` · ${this.t('unpriced_more', { n: r.unpriced })}` : '']
-        : r.unpriced ? this.t('unpriced_only', { n: r.unpriced }) : this.t('detail.cost', { cost: '—' })),
+        ? [this.t('detail.cost', { cost }), r.unpriced ? ` · ${this.t('unpriced_more', { n: r.unpriced.toLocaleString() })}` : '']
+        : r.unpriced ? this.t('unpriced_only', { n: r.unpriced.toLocaleString() }) : this.t('detail.cost', { cost: '—' })),
     ];
     for (const sub of splitsOf(this.group)) {
       const got = this.split(sub);
@@ -477,7 +477,7 @@ export class UsagePage {
 
   /** 没有金额的那一格：有没价格的写几次，都没有（用量是 0 的请求）写 `—` @param {Row} r */
   noCost(r) {
-    return h('span.use-faint', r.unpriced ? this.t('unpriced_only', { n: r.unpriced }) : '—');
+    return h('span.use-faint', r.unpriced ? this.t('unpriced_only', { n: r.unpriced.toLocaleString() }) : '—');
   }
 
   /** 拆开的那一行写什么名字 @param {string} sub @param {any} v */

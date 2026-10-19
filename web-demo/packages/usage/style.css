@@ -58,7 +58,7 @@
 .use-scroll { min-width: 0; overflow-x: auto; }
 /* 列宽是定的：点列头排的时候不挪（箭头的位置一直留着） */
 .use-table { width: 100%; min-width: 480px; border-collapse: collapse; table-layout: fixed; font-size: 13px; font-variant-numeric: tabular-nums; }
-.use-col-requests, .use-col-tokens, .use-col-hit { width: 92px; } .use-col-cost { width: 112px; }
+.use-col-requests, .use-col-tokens, .use-col-hit { width: 92px; } .use-col-cost { width: 136px; }
 .use-table th { padding: 6px 8px; color: var(--text-faint); font-size: 12px; font-weight: 500; text-align: left; white-space: nowrap; }
 .use-table th button { display: inline-flex; align-items: center; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
 .use-table th button:hover, .use-table th button.is-on { color: var(--text); }
