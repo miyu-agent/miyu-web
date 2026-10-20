@@ -63,6 +63,10 @@
 .picker-desc { margin-left: 8px; color: var(--text-faint); font-size: 12px; }
 .picker-row.is-off { cursor: default; }
 .picker-row.is-off .picker-label { color: var(--text-faint); }
+.picker-action { display: none; flex: none; place-items: center; width: 24px; height: 24px; margin-right: -4px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--text-faint); cursor: pointer; }
+.picker-row.is-selected .picker-action { display: inline-grid; }
+.picker-action:hover { background: var(--surface-3); color: var(--text); }
+.picker-action .icon { width: 14px; height: 14px; }
 .picker-note { flex: none; color: var(--text-faint); font-size: 12px; }
 /* 帮助（/help）：两段，段名暗色加粗；一行左边命令、按键（等宽，一列对齐），右边说明；放不下自己滚 */
 .help-body { max-height: min(56vh, 460px); overflow-y: auto; overscroll-behavior: contain; padding: 0 10px 6px; }

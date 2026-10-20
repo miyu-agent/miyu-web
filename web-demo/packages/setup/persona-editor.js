@@ -13,7 +13,7 @@ import { Appearance } from './appearance.js';
 
 /**
  * @typedef {import('./model.js').PersonaDraft} PersonaDraft
- * @typedef {{saved: () => void, removed: (remains: boolean) => void, close: () => void}} Hooks
+ * @typedef {{saved: (how?: {look?: boolean}) => void, removed: (remains: boolean) => void, close: () => void}} Hooks
  */
 
 /** 核心拒了的给人看的那一句：写错的照 `data.message`（照连接的语言），别的照原话。 @param {any} err */
@@ -46,7 +46,8 @@ export class PersonaEditor {
       saved: () => {
         this.touched = true;
         this.sync();
-        this.hooks.saved();
+        // 只换了外观：模型看的字没变（列表那边不因它问要不要压缩，蓝图「人格、预设、工作区」第 10 条）
+        this.hooks.saved({ look: true });
       },
       say: (text) => this.say(text),
       name: () => this.name?.value.trim() || this.before?.name || '',

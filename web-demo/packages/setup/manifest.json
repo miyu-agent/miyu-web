@@ -328,6 +328,7 @@
         "open_project": "打开项目",
         "workspace": "工作区",
         "edit_persona": "编辑这个人格",
+        "edit_preset": "编辑这个预设",
         "preset_default": "默认",
         "switch_persona": "切换人格",
         "switch_preset": "切换预设",
@@ -335,13 +336,18 @@
         "cancel": "取消",
         "confirm": "确认",
         "back": "返回",
-        "confirm_switch": "确认切换"
+        "confirm_switch": "确认切换",
+        "changed_persona": "当前使用的人格发生变化，下一轮对话缓存全部失效，建议提前压缩上下文。",
+        "changed_preset": "当前使用的预设发生变化，下一轮对话缓存全部失效，建议提前压缩上下文。",
+        "yes": "是",
+        "no": "否"
       },
       "follow_default": "跟随默认",
       "command_persona": "换人格",
       "command_preset": "换预设",
       "project_fixed": "这个会话在项目里，人格和预设由项目定",
       "picker_hint": "↑↓ 选择 · Enter 确定 · Esc 关闭",
+      "picker_hint_edit": "↑↓ 选择 · Enter 确定 · Esc 关闭 · E 编辑",
       "picker_current": "当前"
     },
     "en": {
@@ -520,6 +526,7 @@
         "open_project": "Open project",
         "workspace": "Workspace",
         "edit_persona": "Edit this persona",
+        "edit_preset": "Edit this preset",
         "preset_default": "Default",
         "switch_persona": "Switch persona",
         "switch_preset": "Switch preset",
@@ -527,13 +534,18 @@
         "cancel": "Cancel",
         "confirm": "Confirm",
         "back": "Back",
-        "confirm_switch": "Switch"
+        "confirm_switch": "Switch",
+        "changed_persona": "The persona in use has changed. The cache will be invalidated on the next turn; consider compacting the context first.",
+        "changed_preset": "The preset in use has changed. The cache will be invalidated on the next turn; consider compacting the context first.",
+        "yes": "Yes",
+        "no": "No"
       },
       "follow_default": "Follow default",
       "command_persona": "Switch persona",
       "command_preset": "Switch preset",
       "project_fixed": "This session is in a project; the project sets its persona and preset",
       "picker_hint": "↑↓ select · Enter confirm · Esc close",
+      "picker_hint_edit": "↑↓ select · Enter confirm · Esc close · E edit",
       "picker_current": "current"
     },
     "ja": {
@@ -712,6 +724,7 @@
         "open_project": "プロジェクトを開く",
         "workspace": "ワークスペース",
         "edit_persona": "この人格を編集",
+        "edit_preset": "このプリセットを編集",
         "preset_default": "既定",
         "switch_persona": "人格を切り替え",
         "switch_preset": "プリセットを切り替え",
@@ -719,13 +732,18 @@
         "cancel": "キャンセル",
         "confirm": "確認",
         "back": "戻る",
-        "confirm_switch": "切り替える"
+        "confirm_switch": "切り替える",
+        "changed_persona": "使用中の人格が変更されました。次のターンでキャッシュはすべて無効になります。先にコンテキストを圧縮することをおすすめします。",
+        "changed_preset": "使用中のプリセットが変更されました。次のターンでキャッシュはすべて無効になります。先にコンテキストを圧縮することをおすすめします。",
+        "yes": "はい",
+        "no": "いいえ"
       },
       "follow_default": "デフォルトに従う",
       "command_persona": "人格を切り替え",
       "command_preset": "プリセットを切り替え",
       "project_fixed": "このセッションはプロジェクト内のため、人格とプリセットはプロジェクトが決めます",
       "picker_hint": "↑↓ 選択 · Enter 決定 · Esc 閉じる",
+      "picker_hint_edit": "↑↓ 選択 · Enter 決定 · Esc 閉じる · E 編集",
       "picker_current": "現在"
     }
   }

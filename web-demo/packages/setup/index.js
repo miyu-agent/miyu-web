@@ -15,7 +15,7 @@ import { ListPage, problemText } from './page.js';
 import { browse } from './folders.js';
 import { PersonaStep, PresetStep } from './welcome.js';
 import { ThemeStep } from './theme-step.js';
-import { editPersona } from './quick-edit.js';
+import { editPersona, editPreset } from './quick-edit.js';
 import { editProject } from './project-dialog.js';
 
 const RECENT = 'setup.recent';
@@ -249,6 +249,7 @@ export function apply(ctx) {
         { title: t('no_persona'), desc: t('no_persona_desc'), current: now == null, keep: true, pick: () => { if (now != null) confirmSwitch(anchor, session, { persona: null }, back); } },
         ...(catalog.personas ?? []).map((p) => ({
           title: personaName(p), desc: p.problem ? t('persona_bad') : p.summary ?? '', current: p.persona === now, off: !!p.problem, keep: true,
+          action: p.problem ? undefined : editAction('persona', p.persona, () => { if (anchor.isConnected) switchPersona(anchor, session, now, back); }, () => infoMenu.close()),
           pick: () => { if (p.persona !== now) confirmSwitch(anchor, session, { persona: p.persona }, back); },
         })),
       ],
@@ -261,6 +262,7 @@ export function apply(ctx) {
       title: t('info.switch_preset'), below: true, back,
       rows: (catalog.presets ?? []).map((p) => ({
         title: presetName(p), desc: p.problem ? t('preset_bad') : '', current: p.preset === now, off: !!p.problem, keep: true,
+        action: p.problem ? undefined : editAction('preset', p.preset, () => { if (anchor.isConnected) switchPreset(anchor, session, now, back); }, () => infoMenu.close()),
         pick: () => { if (p.preset !== now) confirmSwitch(anchor, session, { preset: p.preset }, back); },
       })),
     });
@@ -298,10 +300,54 @@ export function apply(ctx) {
   };
 
   /**
-   * 人格的几行：第一行「无人格」，再一个人格一行（写错的暗着）；选了交 `pick`（无人格是 `null`）。输入框上面的「选择人格」菜单、`/persona` 的列表都照它。
-   * @param {string|null} chosen @param {(persona: string|null) => void} pick
+   * 一行右边的编辑（蓝图「人格、预设、工作区」第 10 条；2026-10-20 项目主人：选人格、选预设的地方要能直接进那一项的编辑）：铅笔图标，键盘 `e`。
+   * 点了先收起列表（`before`），开那一项的编辑卡片，关了照 `reopen` 回到原来的列表；不算选了它。没有设置页的服务（编辑器的控件照它）不给。
+   * 改了、存了正在用的那一个的，回列表之前先问要不要压缩（`askCompact`）。
+   * @param {'persona'|'preset'} kind @param {string} id @param {(() => void)|undefined} reopen @param {() => void} [before]
    */
-  const personaRows = (chosen, pick) => [
+  const editAction = (kind, id, reopen, before) => {
+    if (!ctx.settings || !reopen) return undefined;
+    const back = reopen;
+    return {
+      icon: 'pencil', title: t(kind === 'persona' ? 'info.edit_persona' : 'info.edit_preset'), key: 'e',
+      run: () => {
+        before?.();
+        (kind === 'persona' ? editPersona : editPreset)(ctx, catalog, id, ctx.settings.kit, {
+          closed: ({ changed }) => {
+            const session = chat.current();
+            const using = session ? (kind === 'persona' ? chat.persona(session) : chat.preset(session)) : null;
+            // 没有能压缩的（`compactable` 是假）不问、直接回列表（终端一样）
+            if (changed && session && using === id && ctx.chat.compactable?.(session) !== false) askCompact(kind, session, back);
+            else back();
+          },
+        });
+      },
+    };
+  };
+
+  /**
+   * 改了、存了这个会话正在用的人格、预设（2026-10-20 项目主人定，终端一样）：先在输入框上面的列表里问一句「当前使用的预设发生变化，下一轮对话缓存
+   * 全部失效，建议提前压缩上下文。」，「是」收起列表、压缩一次（同 `/compact`，`session.compact`），「否」回到原来的列表。
+   * 空会话还没开会话，没有缓存，不问（调用的地方照 `chat.current()` 判了）。
+   * @param {'persona'|'preset'} kind @param {string} session @param {() => void} back
+   */
+  const askCompact = (kind, session, back) => listOf(t(kind === 'persona' ? 'info.changed_persona' : 'info.changed_preset'), [
+    { title: t('info.yes'), pick: async () => {
+      try {
+        await ctx.core.request('session.compact', { session });
+      } catch (err) {
+        ctx.composer.say(/** @type {any} */ (err)?.message ?? String(err));
+      }
+    } },
+    { title: t('info.no'), pick: back },
+  ]);
+
+  /**
+   * 人格的几行：第一行「无人格」，再一个人格一行（写错的暗着）；选了交 `pick`（无人格是 `null`）。输入框上面的「选择人格」菜单、`/persona` 的列表都照它。
+   * 给了 `reopen` 的每一行（「无人格」、写错的除外）右边多一个编辑（`editAction`）。
+   * @param {string|null} chosen @param {(persona: string|null) => void} pick @param {() => void} [reopen] @param {() => void} [before]
+   */
+  const personaRows = (chosen, pick, reopen, before) => [
     // 第一行「无人格」：不带人格（2026-10-08 项目主人：人格可以留空，这一项叫「无人格」；没有人格的会话记忆单独一份（核心 P-12，原来不生效），知识库照样能查）
     { title: t('no_persona'), desc: t('no_persona_desc'), current: chosen == null, pick: () => pick(null) },
     ...(catalog.personas ?? []).map((p) => ({
@@ -310,29 +356,34 @@ export function apply(ctx) {
       tip: p.problem ? catalog.problemOf('persona', p).map((x) => problemText(ctx, x)).join('\n') : undefined,
       current: p.persona === chosen && !p.problem,
       off: !!p.problem,
+      action: p.problem ? undefined : editAction('persona', p.persona, reopen, before),
       pick: () => pick(p.persona),
     })),
   ];
 
-  /** 预设的几行：照 `preset.list`，一行一个名字（预设不写说明）；写错的暗着。 @param {string|null} chosen @param {(preset: string) => void} pick */
-  const presetRows = (chosen, pick) => (catalog.presets ?? []).map((p) => ({
+  /**
+   * 预设的几行：照 `preset.list`，一行一个名字（预设不写说明）；写错的暗着。给了 `reopen` 的同人格多一个编辑。
+   * @param {string|null} chosen @param {(preset: string) => void} pick @param {() => void} [reopen] @param {() => void} [before]
+   */
+  const presetRows = (chosen, pick, reopen, before) => (catalog.presets ?? []).map((p) => ({
     title: presetName(p),
     desc: p.problem ? t('preset_bad') : '',
     tip: p.problem ? catalog.problemOf('preset', p).map((x) => problemText(ctx, x)).join('\n') : undefined,
     current: p.preset === chosen && !p.problem,
     off: !!p.problem,
+    action: p.problem ? undefined : editAction('preset', p.preset, reopen, before),
     pick: () => pick(p.preset),
   }));
 
   const openPersonas = () => {
     if (!catalog.personas) return;
-    menu.show(personaBtn, { title: t('choose_persona'), rows: personaRows(inUse().persona ?? null, (p) => chat.setDraft({ persona: p ?? false })) });
+    menu.show(personaBtn, { title: t('choose_persona'), rows: personaRows(inUse().persona ?? null, (p) => chat.setDraft({ persona: p ?? false }), openPersonas, () => menu.close()) });
   };
 
   /** 预设的菜单。 */
   const openPresets = () => {
     if (!catalog.presets) return;
-    menu.show(presetBtn, { title: t('choose_preset'), rows: presetRows(inUse().preset ?? null, (p) => chat.setDraft({ preset: p })) });
+    menu.show(presetBtn, { title: t('choose_preset'), rows: presetRows(inUse().preset ?? null, (p) => chat.setDraft({ preset: p }), openPresets, () => menu.close()) });
   };
 
   /** 核心拒了换目录的原因写给人看的一句（`fs.list`、`session.set_workspace` 同一套原因码）。 @param {any} err */
@@ -448,11 +499,12 @@ export function apply(ctx) {
   });
   /**
    * 几行选项交给输入框上面的列表（同 `/language`、会话列表那一个位置那一个样子：`↑` `↓` 选、`Enter` 定、`Esc` 关）。
-   * @param {string} title @param {{title: string, desc?: string, current?: boolean, off?: boolean, pick: () => void}[]} rows
+   * @param {string} title @param {{title: string, desc?: string, current?: boolean, off?: boolean, action?: any, pick: () => void}[]} rows
    */
   const listOf = (title, rows) => ctx.composer.pick({
-    title, hint: t('picker_hint'), note: t('picker_current'),
-    items: rows.map((r) => ({ label: r.title, desc: r.desc || '', off: !!r.off })),
+    // 有编辑的列表（人格、预设）提示里多「E 编辑」
+    title, hint: t(rows.some((r) => r.action) ? 'picker_hint_edit' : 'picker_hint'), note: t('picker_current'),
+    items: rows.map((r) => ({ label: r.title, desc: r.desc || '', off: !!r.off, ...(r.action ? { action: r.action } : {}) })),
     current: rows.findIndex((r) => r.current),
     choose: (/** @type {number} */ i) => rows[i]?.pick(),
   });
@@ -485,8 +537,8 @@ export function apply(ctx) {
     if (!catalog.personas || !catalog.presets) await catalog.load().catch(() => {});
     const session = chat.current();
     if (!session) {
-      if (kind === 'persona') listOf(t('choose_persona'), personaRows(inUse().persona ?? null, (p) => chat.setDraft({ persona: p ?? false })));
-      else listOf(t('choose_preset'), presetRows(inUse().preset ?? null, (p) => chat.setDraft({ preset: p })));
+      if (kind === 'persona') listOf(t('choose_persona'), personaRows(inUse().persona ?? null, (p) => chat.setDraft({ persona: p ?? false }), () => pickFor('persona')));
+      else listOf(t('choose_preset'), presetRows(inUse().preset ?? null, (p) => chat.setDraft({ preset: p }), () => pickFor('preset')));
       return;
     }
     if (chat.projectOf?.(session)) {
@@ -495,10 +547,10 @@ export function apply(ctx) {
     }
     if (kind === 'persona') {
       const now = chat.persona(session);
-      listOf(t('info.switch_persona'), personaRows(now, (p) => { if (p !== now) confirmInList(session, { persona: p }); }));
+      listOf(t('info.switch_persona'), personaRows(now, (p) => { if (p !== now) confirmInList(session, { persona: p }); }, () => pickFor('persona')));
     } else {
       const now = chat.preset(session);
-      listOf(t('info.switch_preset'), presetRows(now, (p) => { if (p !== now) confirmInList(session, { preset: p }); }));
+      listOf(t('info.switch_preset'), presetRows(now, (p) => { if (p !== now) confirmInList(session, { preset: p }); }, () => pickFor('preset')));
     }
   };
   ctx.commands.register({ name: 'persona', summary: t('command_persona') }, () => pickFor('persona'));

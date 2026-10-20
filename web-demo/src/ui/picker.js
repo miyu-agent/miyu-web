@@ -6,12 +6,14 @@
 //! `↑` `↓` 选（到头绕回去）、`Enter` 选定、`Esc` 关；鼠标悬停选中，点一下选定；点浮层外面关。开着时这几个键在整页最先接走
 //! （焦点还在输入框里，不然 `Enter` 会把框里的字发出去）。
 
-import { h, replace } from './dom.js';
+import { h, icon, replace } from './dom.js';
 import { show, hide } from '../lib/motion.js';
 
 /**
- * @typedef {{title: string, hint: string, note: string, items: {label: string, desc?: string, off?: boolean}[], current: number,
- *   choose: (index: number) => void}} Ask 标题、按键的提示、「当前」怎么写、一行一样（说明、选不了）、现在是哪一行（没有是 -1）、选定了做什么
+ * @typedef {{icon: string, title: string, key: string, run: () => void}} Action 一行右边的一个图标（选中的那一行才露），点了、移到这一行按 `key` 都是先关掉列表再 `run`，不算选了它
+ *   （人格、预设的编辑，蓝图「人格、预设、工作区」第 10 条）
+ * @typedef {{title: string, hint: string, note: string, items: {label: string, desc?: string, off?: boolean, action?: Action}[], current: number,
+ *   choose: (index: number) => void}} Ask 标题、按键的提示、「当前」怎么写、一行一样（说明、选不了、右边的图标）、现在是哪一行（没有是 -1）、选定了做什么
  */
 
 export class Picker {
@@ -29,6 +31,7 @@ export class Picker {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') this.mark((this.selected + (e.key === 'ArrowDown' ? 1 : n - 1)) % n);
       else if (e.key === 'Enter' && !e.isComposing) this.pick(this.selected);
       else if (e.key === 'Escape') this.close();
+      else if (!e.isComposing && !e.ctrlKey && !e.metaKey && !e.altKey && this.ask?.items[this.selected]?.action?.key === e.key) this.act(this.selected);
       else return;
       e.preventDefault();
       e.stopPropagation();
@@ -51,7 +54,12 @@ export class Picker {
       onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(),
       onmousemove: (/** @type {MouseEvent} */ e) => this.hover(e, i),
       onclick: () => this.pick(i),
-    }, h('span.picker-label', item.label, item.desc ? h('span.picker-desc', item.desc) : null), i === ask.current ? h('span.picker-note', ask.note) : null)));
+    }, h('span.picker-label', item.label, item.desc ? h('span.picker-desc', item.desc) : null), i === ask.current ? h('span.picker-note', ask.note) : null,
+    item.action ? h('button.picker-action', {
+      type: 'button', title: item.action.title, 'aria-label': item.action.title,
+      onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(),
+      onclick: (/** @type {MouseEvent} */ e) => { e.stopPropagation(); this.act(i); },
+    }, icon(item.action.icon)) : null)));
     this.mark(Math.max(0, ask.current));
     show(this.el);
     document.addEventListener('keydown', this.onKey, true);
@@ -72,6 +80,14 @@ export class Picker {
     if (ask?.items[i]?.off) return;
     this.close();
     ask?.choose(i);
+  }
+
+  /** 第 `i` 行右边的图标：先关掉，再照它做（不算选了它）。 @param {number} i */
+  act(i) {
+    const action = this.ask?.items[i]?.action;
+    if (!action) return;
+    this.close();
+    action.run();
   }
 
   /** 选中第 `i` 行。 */
