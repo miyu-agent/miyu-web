@@ -3,6 +3,8 @@
 //! （`config.set`），别处改了（`config.changed`）重读重画，正在改的那一项不被冲掉。各页怎么画在 `rows.js`、`look.js`、`models.js`。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { hasPrivate, privateGroup } from './privacy.js';
+import { ADD as PRIVATE_ADD, REMOVE as PRIVATE_REMOVE } from './privacy-model.js';
 import { leave } from '../../src/lib/motion.js';
 import { buildPages, search, pagesWithErrors, layerFor, expectFor, navGroups, pkgMatch, ownerOf } from './model.js';
 import { coreRow, groupBlock, banner } from './rows.js';
@@ -126,7 +128,10 @@ export class SettingsDialog {
     }
   }
 
-  /** 左栏的分页：核心的照 `pages`，网页的「软件包」，挂进 `settings.section` 的；先后照设置项 `order`。主题在通用页最上面，不单开一页。 */
+  /** 私密目录那两项 @param {any} item */
+const isPrivate = (item) => item.key === PRIVATE_ADD || item.key === PRIVATE_REMOVE;
+
+/** 左栏的分页：核心的照 `pages`，网页的「软件包」，挂进 `settings.section` 的；先后照设置项 `order`。主题在通用页最上面，不单开一页。 */
   entries() {
     const order = this.ctx.config.order;
     const named = (id) => this.ctx.text(`pages.${id}`);
@@ -267,7 +272,10 @@ export class SettingsDialog {
       kids = [
         ...page.problems.map((p) => banner(p)),
         this.current === 'general' ? drawLook(this) : null,
-        ...page.groups.map((g) => (this.extensions.entries.has(g.id)
+        ...page.groups.flatMap((g) => (hasPrivate(g.items)
+          // 私密目录（隐私与安全页，核心 5-15 下）：两项并成一张表；这一组别的项照通用的行
+          ? [privateGroup(this, g.name, g.items), groupBlock('', g.items.filter((i) => !isPrivate(i)).map((item) => coreRow(this, item)))]
+          : this.extensions.entries.has(g.id)
           ? h('section.set-group', h('h3.set-group-name', g.name), this.extensions.body(g.id, g.items.map((item) => coreRow(this, item)).filter(Boolean)))
           : groupBlock(g.name, g.items.map((item) => coreRow(this, item))))),
       ];

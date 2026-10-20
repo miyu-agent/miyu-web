@@ -78,6 +78,7 @@
       "default": [
         "general",
         "user",
+        "privacy",
         "models",
         "usage",
         "personas",
@@ -160,7 +161,8 @@
         "backstage": "gauge",
         "skills": "sparkles",
         "scripts": "square-terminal",
-        "mcp": "plug"
+        "mcp": "plug",
+        "privacy": "shield"
       },
       "name": {
         "zh": "分页的图标（Lucide 的名字；没配的用 sliders-horizontal）"
@@ -479,7 +481,16 @@
       "main_color_auto": "自动",
       "advanced_more": "{names}等",
       "search_pages": "页面",
-      "search_packages": "软件包"
+      "search_packages": "软件包",
+      "privacy": {
+        "shipped": "出厂",
+        "drop": "不再藏",
+        "add_hint": "例如 ~/.ssh 或 /srv/keys",
+        "add": "添加",
+        "already": "已经在列表里了",
+        "restore": "恢复默认",
+        "empty": "没有私密目录"
+      }
     },
     "en": {
       "title": "Settings",
@@ -791,7 +802,16 @@
       "main_color_auto": "Auto",
       "advanced_more": "{names} and more",
       "search_pages": "Pages",
-      "search_packages": "Packages"
+      "search_packages": "Packages",
+      "privacy": {
+        "shipped": "Built-in",
+        "drop": "Stop hiding",
+        "add_hint": "e.g. ~/.ssh or /srv/keys",
+        "add": "Add",
+        "already": "Already in the list",
+        "restore": "Restore defaults",
+        "empty": "No private folders"
+      }
     },
     "ja": {
       "title": "設定",
@@ -1103,7 +1123,16 @@
       "main_color_auto": "自動",
       "advanced_more": "{names} など",
       "search_pages": "ページ",
-      "search_packages": "パッケージ"
+      "search_packages": "パッケージ",
+      "privacy": {
+        "shipped": "既定",
+        "drop": "隠すのをやめる",
+        "add_hint": "例：~/.ssh や /srv/keys",
+        "add": "追加",
+        "already": "すでに一覧にあります",
+        "restore": "既定に戻す",
+        "empty": "プライベートフォルダはありません"
+      }
     }
   },
   "styles": [
