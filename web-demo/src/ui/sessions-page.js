@@ -13,7 +13,7 @@ import { show, hide, leave } from '../lib/motion.js';
 import { t } from '../util/res.js';
 import { toggle, range } from '../model/select.js';
 import { ago } from '../model/ago.js';
-import { short } from '../lib/format.js';
+import { short, contextPercent } from '../lib/format.js';
 import { filterRows, groupRows, timeOf } from '../model/session-filter.js';
 import { projectCards, projectView } from './projects-page.js';
 
@@ -312,8 +312,8 @@ function contextOf(s) {
 }
 
 /**
- * 用量（2026-10-19 项目主人：不用符号，写「上下文消耗 xx/xxx · 总计消耗 xk」）：上下文照最近一次请求、窗口知道的写「用了/窗口」，总计连同子代理；
- * 没有的那一段不写，都没有的不画。悬停写准确的数。
+ * 用量（2026-10-20 项目主人：写「5% · 累计 3.9k」，原来「上下文消耗 xx/xxx · 总计消耗 xk」看着乱）：前一段是上下文占窗口几成（不到 1% 的写「<1%」，
+ * 窗口不知道的写用了多少），后一段累计（连同子代理）；没有的那一段不写，都没有的不画。悬停写准确的数。
  * @param {Row & {context?: {used: number, window: number|null}|null}} r
  */
 function usage(r) {
@@ -321,11 +321,11 @@ function usage(r) {
   const exact = [];
   const c = r.context;
   if (c && c.used > 0) {
-    parts.push(c.window ? t('sessions_page.context', { used: short(c.used), window: short(c.window) }) : t('sessions_page.context_bare', { used: short(c.used) }));
+    parts.push(c.window ? contextPercent(c.used, c.window) : short(c.used));
     exact.push(c.window ? t('sessions_page.context', { used: c.used.toLocaleString(), window: c.window.toLocaleString() }) : t('sessions_page.context_bare', { used: c.used.toLocaleString() }));
   }
   if (r.tokens) {
-    parts.push(t('sessions_page.total', { tokens: short(r.tokens) }));
+    parts.push(t('sessions_page.total_short', { tokens: short(r.tokens) }));
     exact.push(t('sessions_page.total', { tokens: r.tokens.toLocaleString() }));
   }
   return parts.length ? h('span.sessions-tokens', { title: exact.join(' · ') }, parts.join(' · ')) : null;

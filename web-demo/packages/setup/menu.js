@@ -64,7 +64,8 @@ export class Menu {
           type: 'button', title: r.action.title, 'aria-label': r.action.title, onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(),
           onclick: (/** @type {MouseEvent} */ e) => { e.stopPropagation(); r.action?.run(); },
         }, icon(r.action.icon)) : null,
-        r.more ? h('span.setup-menu-more', icon('chevron-right')) : r.label != null ? null : icon('check'));
+        // 现在的那一项不打勾、名字照 accent 色，右边不留打勾的空档（2026-10-20 项目主人）
+        r.more ? h('span.setup-menu-more', icon('chevron-right')) : null);
       if (!r.still) this.items.push({ el, row: r });
       return el;
     });

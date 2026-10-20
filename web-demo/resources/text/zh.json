@@ -366,7 +366,7 @@
     },
     "changed": "已切换到 {to}（原模型出错）",
     "model_replaced": "{from} 不可用，已切换到 {to}",
-    "workspace": "工作区：{path}",
+    "workspace": "工作区切换：{path}",
     "default_workspace": "默认工作区",
     "module": {
       "round": "{name} · 第 {round} 轮",
@@ -406,7 +406,8 @@
     "project_none": "还没有会话",
     "context": "上下文消耗 {used}/{window}",
     "context_bare": "上下文消耗 {used}",
-    "total": "总计消耗 {tokens}"
+    "total": "总计消耗 {tokens}",
+    "total_short": "累计 {tokens}"
   },
   "turn_end": {
     "restarted": "已重启",
