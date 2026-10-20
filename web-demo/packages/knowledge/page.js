@@ -5,7 +5,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { upload, serial } from '../../src/lib/upload.js';
-import { sourceOf, writable, deletable, reasonKey, idFor, nextId, sizeText, docIcon, hitHead, probeOf, treeOf, countOf, pathsOf } from './model.js';
+import { sourceOf, writable, deletable, reasonKey, idFor, nextId, sizeText, docIcon, hitHead, probeOf, treeOf, countOf, pathsOf, removalOf } from './model.js';
 
 /** 搜索框停多久再问、删除要几秒内再点一下、搜几段 */
 const TYPE_MS = 250;
@@ -364,7 +364,7 @@ export class KnowledgePage {
         const armed = this.armed === `dir:${f.path}`;
         // 文件夹悬停右边一个删除（点两下），删里面的全部（2026-10-20 项目主人：要能按文件夹删）
         const remove = own && !this.selecting && inside.length
-          ? h(`button.set-btn.is-danger.kb-remove${armed ? '.is-armed' : ''}`, { type: 'button', title: t('remove_dir'), onclick: (/** @type {Event} */ e) => { e.stopPropagation(); this.removeMany(b, inside, `dir:${f.path}`); } },
+          ? h(`button.set-btn.is-danger.kb-remove${armed ? '.is-armed' : ''}`, { type: 'button', title: t('remove_dir'), onclick: (/** @type {Event} */ e) => { e.stopPropagation(); this.removeMany(b, inside, `dir:${f.path}`, [f.path]); } },
             icon('trash-2'), armed ? t('remove_confirm') : null)
           : null;
         const row = h(`div.kb-doc.is-dir.is-link${open ? '.is-open' : ''}${picked ? '.is-picked' : ''}`, {
@@ -416,7 +416,7 @@ export class KnowledgePage {
     }
     const n = this.selected.size;
     const armed = this.armed === 'many';
-    const del = btn('trash-2', armed ? t('remove_confirm') : t('remove'), () => { if (b) this.removeMany(b, [...this.selected], 'many'); }, `.is-danger${armed ? '.is-armed' : ''}`);
+    const del = btn('trash-2', armed ? t('remove_confirm') : t('remove'), () => { if (b) this.removeMany(b, [...this.selected], 'many', removalOf(tree, this.selected)); }, `.is-danger${armed ? '.is-armed' : ''}`);
     if (!n) del.setAttribute('disabled', '');
     return h('div.kb-sel',
       h('span.kb-sel-count', t('selected_n', { n })),
@@ -614,19 +614,29 @@ export class KnowledgePage {
   }
 
   /**
-   * 删几篇（多选、一个文件夹）：点两下（`key` 记着点的是哪个）；一篇篇 `kb.remove`（核心排着让 `path` 收文件夹、`paths` 收几个），删完提示几篇。
-   * @param {import('./model.js').Base} b @param {string[]} paths @param {string} key
+   * 删几样（多选、一个文件夹）：点两下（`key` 记着点的是哪个）。核心 b03598e2 起 `kb.remove` 的 `path` 收文件夹、`paths` 收几样（有一样不在的
+   * 一样都不删）：`targets` 照它交；旧核心不认 `paths` 的，照 `docs` 一篇篇删。删完提示几篇。
+   * @param {import('./model.js').Base} b @param {string[]} docs 要删的每一篇 @param {string} key @param {string[]} [targets] 交给核心的（文件夹、文档）
    */
-  async removeMany(b, paths, key) {
-    if (!paths.length || !this.arm(key)) return;
+  async removeMany(b, docs, key, targets = docs) {
+    if (!docs.length || !this.arm(key)) return;
     let done = 0;
-    for (const path of paths) {
-      try {
-        await this.ctx.core.request('kb.remove', { kb: b.id, path });
-        done += 1;
-      } catch (err) {
-        this.say(this.refusal(err));
-        break;
+    try {
+      await this.ctx.core.request('kb.remove', targets.length === 1 ? { kb: b.id, path: targets[0] } : { kb: b.id, paths: targets });
+      done = docs.length;
+    } catch (err) {
+      const old = /** @type {any} */ (err)?.data?.reason === 'bad_params' && targets.length > 1;
+      if (!old) this.say(this.refusal(err));
+      else {
+        for (const path of docs) {
+          try {
+            await this.ctx.core.request('kb.remove', { kb: b.id, path });
+            done += 1;
+          } catch (e) {
+            this.say(this.refusal(e));
+            break;
+          }
+        }
       }
     }
     this.selecting = false;

@@ -147,3 +147,22 @@ export function folderAt(root, path) {
   }
   return null;
 }
+
+/**
+ * 多选要删的几样换成核心 `kb.remove {paths}` 收的（核心 b03598e2）：整个文件夹都勾上的写文件夹（只写最上面那一层），别的写一篇篇；一样不在另一样里面。
+ * @param {TreeNode} root @param {Set<string>} picked 勾上的文档路径 @returns {string[]}
+ */
+export function removalOf(root, picked) {
+  /** @type {string[]} */
+  const out = [];
+  const walk = (/** @type {TreeNode} */ node) => {
+    for (const f of node.folders) {
+      const all = pathsOf(f);
+      if (all.length && all.every((p) => picked.has(p))) out.push(f.path);
+      else walk(f);
+    }
+    for (const d of node.docs) if (!d.dir && picked.has(d.path)) out.push(d.path);
+  };
+  walk(root);
+  return out;
+}
