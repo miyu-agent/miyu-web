@@ -171,8 +171,8 @@
 .kb-sel-btn.is-danger { color: var(--danger); }
 .kb-sel-btn.is-armed { background: color-mix(in srgb, var(--danger) 16%, transparent); }
 .kb-sel-btn:disabled { opacity: 0.45; cursor: default; }
-/* 多选时勾选框排在每一行最前面、跟着缩进，在线的右边：竖线从上一层的勾选框下面下来，横线连到这一行的勾选框（2026-10-20 项目主人：
-   原来勾选框压在线上；挪到最左边一列又说线右边有地方，框不该放在外面） */
+/* 多选时勾选框在箭头那一格后面、紧挨着图标，线照常从上一层的箭头下来（2026-10-20 项目主人：原来勾选框压在线上；挪到最左边一列说框不该
+   放在外面；放在每一行最前面，文档的勾选框和图标之间隔着空的箭头那一格，空太多） */
 .kb-check { display: grid; flex: none; place-items: center; width: 16px; color: var(--text-faint); }
 .kb-check .icon { width: 15px; height: 15px; }
 .kb-doc.is-picked .kb-check { color: var(--accent); }

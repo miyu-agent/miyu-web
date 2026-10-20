@@ -385,7 +385,7 @@ export class KnowledgePage {
     const fq = this.fileQuery.trim().toLowerCase();
     const hit = (/** @type {{path: string}} */ d) => !fq || d.path.toLowerCase().includes(fq);
     const tree = docs ? treeOf([...docs.documents.filter(hit), ...docs.folders.filter(hit).map((d) => ({ ...d, dir: true }))]) : null;
-    // 竖线落在上一层第一格（箭头、多选时的勾选框）的中线上
+    // 竖线落在上一层箭头的中线上
     const shift = 14;
     /**
      * 一行的线：`anc[x]` 是第 x 层的竖线穿不穿过这一行（那一层的文件夹后面还有同级的）；自己那一层画 ├ 或 └，加一道横线连到箭头。
@@ -414,8 +414,9 @@ export class KnowledgePage {
           role: 'button', tabindex: '0', 'aria-expanded': String(open), style: `--depth: ${depth}`, 'data-path': f.path,
           onclick: (/** @type {MouseEvent} */ e) => (this.selecting && !(/** @type {Element} */ (e.target)).closest('.kb-dir-arrow') ? this.pick(inside, order, false) : toggle()),
           onkeydown: (/** @type {KeyboardEvent} */ e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); toggle(); } },
-        }, linesOf(depth, anc, last), this.selecting ? h('span.kb-check', icon(picked ? 'square-check' : some ? 'square-minus' : 'square')) : null,
-        h('span.kb-dir-arrow', icon('chevron-right')), h('span.kb-doc-icon', icon(open ? 'folder-open' : 'folder')),
+        }, linesOf(depth, anc, last), h('span.kb-dir-arrow', icon('chevron-right')),
+        this.selecting ? h('span.kb-check', icon(picked ? 'square-check' : some ? 'square-minus' : 'square')) : null,
+        h('span.kb-doc-icon', icon(open ? 'folder-open' : 'folder')),
         h('span.kb-doc-path', f.name), h('span.kb-doc-count', t('dir_count', { n: countOf(f) })), remove);
         // 一个文件夹连它里面的套一层：往下翻时文件夹那一行钉在顶上，翻过了这一组才被推走（2026-10-20 项目主人：展开的文件夹要固定在顶部，方便收起）
         return [h('div.kb-group', { style: `--depth: ${depth}` }, row, ...(open ? rowsOf(f, depth + 1, depth ? [...anc, !last] : []) : []))];
@@ -535,9 +536,9 @@ export class KnowledgePage {
     return h(`div.kb-doc${folder ? '.is-folder' : '.is-link'}${why ? '.is-bad' : ''}${picked ? '.is-picked' : ''}`,
       { style: `--depth: ${depth}`, title: d.path, 'data-path': d.path, ...(folder ? {} : { role: 'button', tabindex: '0', onclick: open, onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' && e.target === e.currentTarget) open(e); } }) },
       lines,
-      picking ? h('span.kb-check', icon(picked ? 'square-check' : 'square')) : null,
-      // 箭头那一格空着：同一层的文件、文件夹的图标、名字对齐
+      // 箭头那一格空着：同一层的文件、文件夹的图标、名字对齐；多选时勾选框接在它后面、紧挨着图标
       h('span.kb-dir-arrow'),
+      picking ? h('span.kb-check', icon(picked ? 'square-check' : 'square')) : null,
       h('span.kb-doc-icon', icon(folder ? 'folder' : docIcon(d.kind))),
       h('div.kb-doc-text', h('span.kb-doc-path', d.name ?? d.path), why ? h('span.kb-doc-note.is-bad', t(why)) : null),
       meta ? h('span.kb-doc-meta', meta) : null,
