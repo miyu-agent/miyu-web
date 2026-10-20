@@ -85,7 +85,8 @@
     "compaction_paused": "自動圧縮は一時停止中です",
     "no_model": "モデルが設定されていません",
     "other": "モデルエラー",
-    "cooling": "候補がすべてクールダウン中です"
+    "cooling": "候補がすべてクールダウン中です",
+    "output_limit": "応答が出力上限を超えました"
   },
   "levels": {
     "workspace": "ワークスペース",

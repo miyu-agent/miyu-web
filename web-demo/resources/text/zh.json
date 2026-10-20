@@ -85,7 +85,8 @@
     "compaction_paused": "自动压缩已暂停",
     "no_model": "没有可用的模型",
     "other": "模型出错",
-    "cooling": "模型都在冷却"
+    "cooling": "模型都在冷却",
+    "output_limit": "回复超过了输出上限"
   },
   "levels": {
     "workspace": "工作区",

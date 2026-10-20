@@ -85,7 +85,8 @@
     "compaction_paused": "Auto-compaction is paused",
     "no_model": "No usable model",
     "other": "Model error",
-    "cooling": "All models are cooling down"
+    "cooling": "All models are cooling down",
+    "output_limit": "Reply exceeded the output limit"
   },
   "levels": {
     "workspace": "Workspace",

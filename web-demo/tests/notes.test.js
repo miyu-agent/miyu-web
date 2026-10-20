@@ -26,6 +26,8 @@ test('谁说的：你的、别的账号的、子代理发给她的（标题照�
 
 test('出错那一句：402、404 加人话；内核自己查出来的写分类，有原话的接后面；没原话的写分类', () => {
   assert.equal(failureText({ class: 'other', message: 'no money', status: 402 }), '额度不足：no money');
+  // 一轮里连着写到输出上限（核心 3-10）：内核的分类，写人话
+  assert.equal(failureText({ class: 'output_limit' }), '回复超过了输出上限');
   assert.equal(failureText({ class: 'other', message: 'model not found', status: 404 }), '未找到，请检查端点地址和模型名：model not found');
   assert.equal(failureText({ class: 'bad_stream', message: 'eof' }), '响应流异常：eof');
   assert.equal(failureText({ class: 'empty_reply', message: '' }), '响应为空');
