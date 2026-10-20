@@ -2,7 +2,7 @@
 //! 人叫的整理那一块下面的星空（蓝图 `web.md`「记忆页」第 13 条；2026-10-20 项目主人看过几版样板选的「星空」，底色跟主题）：
 //! 一条记忆一颗星——形状有四角闪光、六角星、菱形、小圆点，大小不一（多数小、少数亮的大星），颜色在几种蓝、青、淡紫里换、偶尔一颗暖金，
 //! 各自照自己的节奏闪；背后一层很淡的星尘，偶尔划过一颗流星（只是背景，不代表记忆）。
-//! 读进来的一条（`given`）在空地上淡入、光芒亮一下；作废了、说了留下的是哪条的（`kept`）像流星一样拖着尾巴滑进那一颗，那颗闪一下、大一点；
+//! 读进来的一条（`given`）在空地上慢慢淡入（不爆一下）；作废了、说了留下的是哪条的（`kept`）像流星一样拖着尾巴滑进那一颗，那颗闪一下、大一点；
 //! 过时作废、没并进别的淡掉；改写的闪一下；一批合完了（`merged`），留下的星之间连起淡淡的星座线（每颗连最近的一两颗，太远的不连）；
 //! 整理完从中间一颗起，顺着星座线一颗颗闪亮。放不下的（同一时刻多于 80 颗）：更早的、整理过的缩成背景里的星尘。
 //! 只管星在哪、什么样、连着谁（`step` 推一帧）；画在 `dream.js` 的画布上。
@@ -192,7 +192,7 @@ export class Sky {
   step(now, reduce) {
     for (const s of this.stars) {
       if (s.gone) continue;
-      s.alpha = reduce ? 1 : Math.min(1, s.alpha + 0.03);
+      s.alpha = reduce ? 1 : Math.min(1, s.alpha + 0.02);
       if (s.into) {
         // 留下的那颗也被并走了：跟着滑到最后留下的
         let t = s.into;
@@ -296,8 +296,9 @@ export class Sky {
       if (s.dusting) a *= Math.max(0, 1 - (now - s.dustAt) / 1200);
       const tw = reduce ? 1 : 0.65 + 0.35 * Math.sin((now / 1000) * s.speed + s.phase);
       const lit = s.lit && now >= s.lit ? Math.max(0, 1 - (now - s.lit) / 700) : 0;
-      const born = reduce ? 0 : Math.max(0, 1 - (now - s.born) / 700);
-      const r = s.size * (0.85 + 0.15 * tw) * (1 + lit * 0.6 + born * 0.8) * (s.dusting ? 1 - Math.min(1, (now - s.dustAt) / 1200) * 0.8 : 1);
+      // 新星只慢慢淡入、略大一点再收回去（2026-10-20 项目主人：每读一条都闪一下——原来先放大 1.8 倍，深色主题光叠着加，一下一下爆亮）
+      const born = reduce ? 0 : Math.max(0, 1 - (now - s.born) / 900);
+      const r = s.size * (0.85 + 0.15 * tw) * (1 + lit * 0.6 + born * 0.15) * (s.dusting ? 1 - Math.min(1, (now - s.dustAt) / 1200) * 0.8 : 1);
       // 流星尾巴
       if (s.into && s.trail.length > 1) {
         for (let i = 1; i < s.trail.length; i++) {
