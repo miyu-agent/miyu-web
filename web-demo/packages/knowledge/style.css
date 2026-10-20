@@ -65,16 +65,22 @@
 
 /* 一个库里面 */
 .kb-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* 一个库里、看原文时，返回那一行钉在顶上（2026-10-20 项目主人：往下翻不应该被推上去）：底色同设置框、糊一层，下面的字从它下面滚过去 */
+.kb-base-page > .kb-head, .kb-read-page > .kb-head { position: sticky; top: 0; z-index: 5; box-sizing: border-box; height: 40px; margin: 0 -24px; padding: 0 24px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+/* 拖文件进来：整页都收（同一天项目主人），右边那一栏描一圈虚线、铺一层淡的 accent */
+.set-body.kb-dropping { outline: 2px dashed var(--accent); outline-offset: -6px; background: color-mix(in srgb, var(--accent-soft) 45%, transparent); }
+.kb-files-title { margin-right: auto; color: var(--text-faint); font-size: 12px; font-weight: 600; }
 .kb-back { display: inline-flex; flex: none; align-items: center; gap: 3px; height: 28px; padding: 0 8px 0 4px; border: 0; border-radius: 7px; background: none; color: var(--text-soft); font: 13px var(--sans); cursor: pointer; }
 .kb-back:hover { background: var(--surface-2); color: var(--text); }
 .kb-back .icon { width: 15px; height: 15px; }
 .kb-head-id { overflow: hidden; color: var(--text-faint); font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
-.kb-drop { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 16px; border: 1.5px dashed var(--line-strong); border-radius: 12px; color: var(--text-faint); font-size: 13px; transition: background-color 0.15s ease, border-color 0.15s ease; }
-.kb-drop .icon { width: 16px; height: 16px; }
-.kb-drop.is-over { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
-.kb-drop-pick { padding: 0; border: 0; background: none; color: var(--accent); font: 13px var(--sans); cursor: pointer; }
-.kb-drop-pick:hover { text-decoration: underline; }
 .kb-docs { display: grid; }
+/* 一个文件夹连里面的是一组；文件夹那一行往下翻时钉在顶上（返回那一行下面，一层往下 34px），翻过了这一组才被推走（2026-10-20 项目主人：方便收起） */
+.kb-group { display: grid; }
+.kb-group > .kb-doc.is-dir { position: sticky; top: calc(40px + var(--depth, 0) * 34px); z-index: calc(4 - var(--depth, 0));
+  background: color-mix(in srgb, var(--surface) 82%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.kb-group > .kb-doc.is-dir:hover, .kb-group > .kb-doc.is-dir:focus-visible { background: var(--surface-2); }
 /* 文件树（2026-10-20 项目主人看过样板选的「缩进加竖线」）：一行 34px（悬停露出来的删除不撑高），每层往右 20px；箭头一格 16px（文件那一行空着，
    同一层名字对齐）；右边大小、日期靠右，再右边删除。行之间不画线，悬停整行淡底 */
 .kb-doc { position: relative; display: flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 6px 0 calc(6px + var(--depth, 0) * 20px); border-radius: 8px; }

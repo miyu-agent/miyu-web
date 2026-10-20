@@ -182,6 +182,8 @@ export class KnowledgePage {
 
   draw() {
     if (!this.kit) return;
+    // 拖着的时候重画了（推来进度、重读）：原来那一页的拖放监听跟着没了，描的那圈先拿掉，拖到新的这一页上再描
+    this.el.closest('.set-body')?.classList.remove('kb-dropping');
     if (this.old) {
       replace(this.el, h('div.kb-problem', h('p', this.t('errors.old_core'))));
       return;
@@ -409,7 +411,8 @@ export class KnowledgePage {
         }, linesOf(depth, anc, last), this.selecting ? h('span.kb-check', icon(picked ? 'square-check' : some ? 'square-minus' : 'square')) : null,
         h('span.kb-dir-arrow', icon('chevron-right')), h('span.kb-doc-icon', icon(open ? 'folder-open' : 'folder')),
         h('span.kb-doc-path', f.name), h('span.kb-doc-count', t('dir_count', { n: countOf(f) })), remove);
-        return [row, ...(open ? rowsOf(f, depth + 1, depth ? [...anc, !last] : []) : [])];
+        // 一个文件夹连它里面的套一层：往下翻时文件夹那一行钉在顶上，翻过了这一组才被推走（2026-10-20 项目主人：展开的文件夹要固定在顶部，方便收起）
+        return [h('div.kb-group', { style: `--depth: ${depth}` }, row, ...(open ? rowsOf(f, depth + 1, depth ? [...anc, !last] : []) : []))];
       }),
       ...node.docs.map((d, i) => this.docRow(b, d, !!d.dir, depth, order, linesOf(depth, anc, i === node.docs.length - 1))),
     ];
@@ -431,28 +434,26 @@ export class KnowledgePage {
     const busy = this.reindexing || b.indexing === true || this.progress?.kb === b.id;
     const reindex = h('button.set-btn.kb-reindex', { type: 'button', disabled: busy, onclick: () => this.reindex(b) },
       icon(busy ? 'loader-circle' : 'rotate-cw'), t(busy ? 'reindexing' : 'reindex'));
-    return h('div.kb-base-page',
+    const page = h('div.kb-base-page',
       h('div.kb-head', h('button.kb-back', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), t('back_list')), h('span.kb-head-id', b.id)),
       this.card(b, false, true),
       this.indexBlock(b, docs ? readable : b.documents ?? 0, docs ? chunks : b.chunks ?? 0),
-      own ? this.dropZone(b) : null,
-      own && tree && rows.length ? this.selectBar(tree) : null,
+      this.fileHead(b, own, tree && rows.length ? tree : null),
       list,
       // 底下一条钉在设置框底边（2026-10-20 项目主人：重建索引放回原来的位置，删除弹窗问一句）：篇数、段数，右边重建索引、删除
       h('div.kb-foot.set-pinned', h('span', t('foot', { docs: docs ? readable : b.documents ?? 0, chunks: docs ? chunks : b.chunks ?? 0 })), h('span.kb-foot-actions', reindex, del)));
+    if (own) this.dropOn(page, b);
+    return page;
   }
 
   /**
-   * 清单上面那一排（自己建的库；2026-10-20 项目主人：要能批量选择和删除）：平常右边一个「多选」；多选时「已选 N 篇」、全选、删除（点两下）、退出。
+   * 多选时清单上面那一排（自己建的库；2026-10-20 项目主人：要能批量选择和删除）：「已选 N 篇」、全选、删除（弹窗问一句）、退出。
    * @param {import('./model.js').TreeNode} tree
    */
   selectBar(tree) {
     const t = this.t;
     const b = this.bases.find((x) => this.view.kind === 'base' && x.id === this.view.id);
     const btn = (/** @type {string} */ name, /** @type {string} */ title, /** @type {() => void} */ run, cls = '') => h(`button.icon-button.kb-sel-btn${cls}`, { type: 'button', title, 'aria-label': title, onclick: run }, icon(name));
-    if (!this.selecting) {
-      return h('div.kb-sel', btn('list-checks', t('select'), () => { this.selecting = true; this.selected = new Set(); this.lastPick = null; this.draw(); }));
-    }
     const n = this.selected.size;
     const del = btn('trash-2', t('remove'), () => { if (b) this.removeMany(b, [...this.selected], removalOf(tree, this.selected), del, t('remove_many_ask', { n })); }, '.is-danger');
     if (!n) del.setAttribute('disabled', '');
@@ -537,23 +538,37 @@ export class KnowledgePage {
       remove);
   }
 
-  /** 自己建的库的「拖文件到这里，或者选择文件」 @param {import('./model.js').Base} b */
-  dropZone(b) {
+  /**
+   * 整页都能拖进来（2026-10-20 项目主人：不该精准拖到那一块才能导入）：拖到这一库的页上，右边那一栏描一圈虚线、铺一层淡的 accent，松手照路径加。
+   * 只听这一页（`local`）：事件先到它，它收了的整页的附件那边不再收一份（`src/host/files.js` 的 `watchDrop`）；节点换掉了监听跟着没了。
+   * @param {HTMLElement} page @param {import('./model.js').Base} b
+   */
+  dropOn(page, b) {
+    const over = (/** @type {boolean} */ on) => page.closest('.set-body')?.classList.toggle('kb-dropping', on);
+    this.ctx.host?.files?.watchDrop?.(page, {
+      enter: () => over(true),
+      over: () => {},
+      leave: () => over(false),
+      drop: (/** @type {any[]} */ list) => { over(false); this.addFiles(b, list); },
+    }, { local: true, folders: true });
+  }
+
+  /**
+   * 清单头上一行（2026-10-20 项目主人：去掉拖文件的那一块，换成一行小字「文件列表」，同一行文件、文件夹、多选的图标）：左边暗字「文件列表」，
+   * 右边自己建的库有「加文件」（`file-plus`，开系统的选文件）、「加文件夹」（`folder-plus`，宿主能选文件夹的才有）、「多选」（有文档时才有）；
+   * 多选时换成「已选 N 篇」、全选、删除、退出。挂的、随包的只有「文件列表」。
+   * @param {import('./model.js').Base} b @param {boolean} own @param {import('./model.js').TreeNode|null} tree
+   */
+  fileHead(b, own, tree) {
     const t = this.t;
     const files = this.ctx.host?.files;
-    // 文件、文件夹都收（2026-10-20 项目主人：要支持文件夹）：文件夹里的照它的相对路径一篇一篇加
-    const zone = h('div.kb-drop', icon('file-plus'), h('span', t('drop_text')),
-      h('button.kb-drop-pick', { type: 'button', onclick: async () => this.addFiles(b, (await files?.pick?.()) ?? []) }, t('drop_pick')),
-      files?.pickFolder ? h('span', t('drop_or')) : null,
-      files?.pickFolder ? h('button.kb-drop-pick', { type: 'button', onclick: async () => this.addFiles(b, (await files.pickFolder()) ?? []) }, t('drop_pick_folder')) : null);
-    // 只听这一块（`local`）：事件先到它，它收了的整页的附件那边不再收一份（`src/host/files.js` 的 `watchDrop`）；节点换掉了监听跟着没了
-    files?.watchDrop?.(zone, {
-      enter: () => zone.classList.add('is-over'),
-      over: () => {},
-      leave: () => zone.classList.remove('is-over'),
-      drop: (/** @type {any[]} */ list) => this.addFiles(b, list),
-    }, { local: true, folders: true });
-    return zone;
+    const btn = (/** @type {string} */ name, /** @type {string} */ title, /** @type {() => void} */ run, cls = '') => h(`button.icon-button.kb-sel-btn${cls}`, { type: 'button', title, 'aria-label': title, onclick: run }, icon(name));
+    if (own && tree && this.selecting) return this.selectBar(tree);
+    return h('div.kb-sel',
+      h('span.kb-files-title', t('files_title')),
+      own && files?.pick ? btn('file-plus', t('drop_pick'), async () => this.addFiles(b, (await files.pick()) ?? [])) : null,
+      own && files?.pickFolder ? btn('folder-plus', t('drop_pick_folder'), async () => this.addFiles(b, (await files.pickFolder()) ?? [])) : null,
+      own && tree ? btn('list-checks', t('select'), () => { this.selecting = true; this.selected = new Set(); this.lastPick = null; this.draw(); }) : null);
   }
 
   /** @param {Extract<View, {kind: 'read'}>} v */

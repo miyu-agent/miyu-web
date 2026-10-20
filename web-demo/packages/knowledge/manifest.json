@@ -56,8 +56,7 @@
       "page": "第 {page} 页",
       "back_list": "知识库",
       "back": "返回",
-      "drop_text": "拖文件或文件夹到这里，或者",
-      "drop_pick": "选择文件",
+      "drop_pick": "加文件",
       "uploading": "上传中…",
       "added": "已加入：{name}",
       "exists": "已经有同名的文档：{name}",
@@ -90,8 +89,7 @@
         "unknown_document": "这篇文档已经不在了",
         "old_core": "这一版核心还没有知识库，更新核心后再看"
       },
-      "drop_or": "、",
-      "drop_pick_folder": "选择文件夹",
+      "drop_pick_folder": "加文件夹",
       "dir_count": "{n} 篇",
       "added_n": "已加入 {n} 篇",
       "index_model_none": "未设置",
@@ -112,7 +110,8 @@
         "model": "语义模型",
         "at": "上次建好",
         "never": "还没建"
-      }
+      },
+      "files_title": "文件列表"
     },
     "en": {
       "title": "Knowledge",
@@ -144,8 +143,7 @@
       "page": "Page {page}",
       "back_list": "Knowledge",
       "back": "Back",
-      "drop_text": "Drop files or folders here, or",
-      "drop_pick": "choose files",
+      "drop_pick": "Add files",
       "uploading": "Uploading…",
       "added": "Added: {name}",
       "exists": "A document with this name already exists: {name}",
@@ -178,8 +176,7 @@
         "unknown_document": "This document no longer exists",
         "old_core": "This core has no knowledge bases yet. Update the core and try again"
       },
-      "drop_or": "/",
-      "drop_pick_folder": "choose a folder",
+      "drop_pick_folder": "Add a folder",
       "dir_count": "{n} docs",
       "added_n": "Added {n} documents",
       "index_model_none": "not set",
@@ -200,7 +197,8 @@
         "model": "Embedding model",
         "at": "Last built",
         "never": "Not yet"
-      }
+      },
+      "files_title": "Files"
     },
     "ja": {
       "title": "ナレッジ",
@@ -232,8 +230,7 @@
       "page": "{page} ページ",
       "back_list": "ナレッジ",
       "back": "戻る",
-      "drop_text": "ファイルやフォルダをここにドロップ、または",
-      "drop_pick": "ファイルを選択",
+      "drop_pick": "ファイルを追加",
       "uploading": "アップロード中…",
       "added": "追加しました：{name}",
       "exists": "同じ名前の文書がすでにあります：{name}",
@@ -266,8 +263,7 @@
         "unknown_document": "この文書はもうありません",
         "old_core": "このコアにはまだナレッジベースがありません。コアを更新してください"
       },
-      "drop_or": "・",
-      "drop_pick_folder": "フォルダを選択",
+      "drop_pick_folder": "フォルダーを追加",
       "dir_count": "{n} 件",
       "added_n": "{n} 件を追加しました",
       "index_model_none": "未設定",
@@ -288,7 +284,8 @@
         "model": "埋め込みモデル",
         "at": "前回の構築",
         "never": "未構築"
-      }
+      },
+      "files_title": "ファイル一覧"
     }
   }
 }
