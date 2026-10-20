@@ -141,7 +141,7 @@ export function search(pages, query) {
   for (const page of pages) {
     for (const group of page.groups) {
       for (const item of group.items) {
-        const hay = `${item.name}\n${item.key}\n${item.description}`.toLowerCase();
+        const hay = `${item.name}\n${item.key}\n${item.description}\n${group.name}`.toLowerCase();
         if (hay.includes(q)) out.push({ page, group, item });
       }
     }
@@ -399,3 +399,61 @@ export function comboState(suggestions, value) {
 
 /** 「其他」那一项的值：和哪个建议值都不会一样。 */
 export const COMBO_OTHER = Object.freeze({ other: true });
+
+/**
+ * 左栏的分组（2026-10-20 项目主人分的四组）：`heads` 是每一组开头的那一页；一页在第几组照它在 `order` 里排在哪个开头后面（开头排在 `order` 里的位置）。
+ * `order` 里没有的页（核心多出来的）排在「高级」前面，算最后一组。交回「页 → 第几组」。
+ * @param {string[]} order @param {string[]} heads @returns {(id: string) => number}
+ */
+export function navGroups(order, heads) {
+  const at = heads.map((id) => order.indexOf(id)).filter((i) => i >= 0).sort((a, b) => a - b);
+  return (id) => {
+    const i = order.indexOf(id);
+    if (i < 0) return at.length;
+    return at.filter((x) => x <= i).length;
+  };
+}
+
+/** 软件包页的筛选（2026-10-20 项目主人：技能、脚本、MCP、网页、扩展混在一起，要能筛）：先后照这里；`web` 是网页自己的组件 */
+export const PKG_FILTERS = /** @type {const} */ (['all', 'builtin', 'extension', 'connection', 'ui', 'mascot', 'mcp', 'web']);
+
+/**
+ * 一个核心的软件包落在哪几个筛选里（照包带了什么，一个包带好几样的几个里都有）：内置（`builtin`）、扩展（`process`、`worker`）、
+ * 接入（带 `connection` 的）、界面（`ui`）、吉祥物（`mascot`，或者别的种类多带一张吉祥物）、MCP（`mcp` 里有服务的）。
+ * @param {any} p `package.list` 的一项 @returns {string[]}
+ */
+export function pkgKinds(p) {
+  const kinds = [];
+  if (p.kind === 'builtin') kinds.push('builtin');
+  if (p.kind === 'process' || p.kind === 'worker') kinds.push('extension');
+  if (p.connection) kinds.push('connection');
+  if (p.kind === 'ui') kinds.push('ui');
+  if (p.kind === 'mascot' || p.mascot) kinds.push('mascot');
+  if (Array.isArray(p.mcp) && p.mcp.length) kinds.push('mcp');
+  return kinds;
+}
+
+/** 一行右边的小标签写它是哪一种（文字表 `pkg.kind.*` 的键）：接入的写接入；只带技能、脚本的 `bundle` 写技能包，带服务的写 MCP @param {any} p */
+export function pkgTag(p) {
+  if (p.connection) return 'connection';
+  if (p.kind === 'process' || p.kind === 'worker') return 'extension';
+  if (p.kind === 'bundle') return Array.isArray(p.mcp) && p.mcp.length ? 'mcp' : 'bundle';
+  return ['builtin', 'ui', 'mascot'].includes(p.kind) ? p.kind : 'builtin';
+}
+
+/** 搜索：名字、一句说明、编号里有这几个字（不分大小写，前后空白不算；空的都算） @param {string} query @param {...(string|null|undefined)} fields */
+export function pkgMatch(query, ...fields) {
+  const q = String(query ?? '').trim().toLowerCase();
+  return !q || fields.some((f) => typeof f === 'string' && f.toLowerCase().includes(q));
+}
+
+/**
+ * 一项配置是哪个软件包的：`package` 是装着的包的照它；对不上的（核心 2026-10-20 以前把组当包编号填，联网搜索 `net` 的 key 和地址在组 `net_keys`）
+ * 照键的头一段认（`net.search.exa.key` 归 `net`）；都对不上的是 `null`（核心自己的模块，照旧一组一组摊开）。
+ * @param {{key: string, package?: string}} item @param {Set<string>} ids 装着的包
+ */
+export function ownerOf(item, ids) {
+  if (typeof item.package === 'string' && ids.has(item.package)) return item.package;
+  const head = String(item.key ?? '').split('.')[0];
+  return ids.has(head) ? head : null;
+}

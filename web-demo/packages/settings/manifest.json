@@ -82,13 +82,30 @@
         "usage",
         "personas",
         "memory",
+        "knowledge",
         "presets",
+        "skills",
+        "scripts",
+        "mcp",
         "packages",
         "backstage",
         "advanced"
       ],
       "name": {
         "zh": "分页的先后（编号；核心多出来的页接在 advanced 前面）"
+      },
+      "advanced": true
+    },
+    "nav_groups": {
+      "type": "list",
+      "of": "text",
+      "default": [
+        "personas",
+        "skills",
+        "packages"
+      ],
+      "name": {
+        "zh": "左栏分组：这几页是一组的开头，前面画一道线（编号）"
       },
       "advanced": true
     },
@@ -140,7 +157,10 @@
         "presets": "toggle-right",
         "advanced": "wrench",
         "packages": "package",
-        "backstage": "gauge"
+        "backstage": "gauge",
+        "skills": "sparkles",
+        "scripts": "square-terminal",
+        "mcp": "plug"
       },
       "name": {
         "zh": "分页的图标（Lucide 的名字；没配的用 sliders-horizontal）"
@@ -374,6 +394,27 @@
           "official": "官方软件源",
           "community": "社区软件源",
           "local": "本地"
+        },
+        "search": "搜索软件包",
+        "no_match": "没有对得上的软件包",
+        "filter": {
+          "all": "全部",
+          "builtin": "内置",
+          "extension": "扩展",
+          "connection": "接入",
+          "ui": "界面",
+          "mascot": "吉祥物",
+          "mcp": "MCP",
+          "web": "网页"
+        },
+        "kind": {
+          "builtin": "内置",
+          "extension": "扩展",
+          "connection": "接入",
+          "ui": "界面",
+          "mascot": "吉祥物",
+          "mcp": "MCP",
+          "bundle": "技能包"
         }
       },
       "onboard": {
@@ -436,7 +477,9 @@
       },
       "main_color": "主色",
       "main_color_auto": "自动",
-      "advanced_more": "{names}等"
+      "advanced_more": "{names}等",
+      "search_pages": "页面",
+      "search_packages": "软件包"
     },
     "en": {
       "title": "Settings",
@@ -663,6 +706,27 @@
           "official": "Official source",
           "community": "Community source",
           "local": "Local"
+        },
+        "search": "Search packages",
+        "no_match": "No matching packages",
+        "filter": {
+          "all": "All",
+          "builtin": "Built-in",
+          "extension": "Extensions",
+          "connection": "Connections",
+          "ui": "Interfaces",
+          "mascot": "Mascots",
+          "mcp": "MCP",
+          "web": "Web"
+        },
+        "kind": {
+          "builtin": "Built-in",
+          "extension": "Extension",
+          "connection": "Connection",
+          "ui": "Interface",
+          "mascot": "Mascot",
+          "mcp": "MCP",
+          "bundle": "Skill pack"
         }
       },
       "onboard": {
@@ -725,7 +789,9 @@
       },
       "main_color": "Main color",
       "main_color_auto": "Auto",
-      "advanced_more": "{names} and more"
+      "advanced_more": "{names} and more",
+      "search_pages": "Pages",
+      "search_packages": "Packages"
     },
     "ja": {
       "title": "設定",
@@ -952,6 +1018,27 @@
           "official": "公式ソース",
           "community": "コミュニティのソース",
           "local": "ローカル"
+        },
+        "search": "パッケージを検索",
+        "no_match": "一致するパッケージはありません",
+        "filter": {
+          "all": "すべて",
+          "builtin": "内蔵",
+          "extension": "拡張",
+          "connection": "接続",
+          "ui": "インターフェース",
+          "mascot": "マスコット",
+          "mcp": "MCP",
+          "web": "Web"
+        },
+        "kind": {
+          "builtin": "内蔵",
+          "extension": "拡張",
+          "connection": "接続",
+          "ui": "インターフェース",
+          "mascot": "マスコット",
+          "mcp": "MCP",
+          "bundle": "スキルパック"
         }
       },
       "onboard": {
@@ -1014,7 +1101,9 @@
       },
       "main_color": "メインカラー",
       "main_color_auto": "自動",
-      "advanced_more": "{names} など"
+      "advanced_more": "{names} など",
+      "search_pages": "ページ",
+      "search_packages": "パッケージ"
     }
   },
   "styles": [

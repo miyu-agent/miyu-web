@@ -27,6 +27,7 @@
   background: transparent; color: var(--text-soft); font: 13.5px var(--sans); text-align: left; cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
+.set-nav-rule { flex: none; height: 1px; margin: 6px 10px; border: 0; background: var(--line); }
 .set-tab:hover { background: color-mix(in srgb, var(--text) 4%, transparent); color: var(--text); }
 .set-tab.is-on { background: var(--sidebar-active); box-shadow: var(--sidebar-active-shadow); color: var(--text); font-weight: 500; }
 .set-tab span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -255,10 +256,28 @@
 .set-price.is-currency .set-input { width: 100%; font-family: var(--mono); text-transform: uppercase; }
 /* 软件包一行：点了滑进它的设置页，右边一个箭头 */
 .set-pkg.is-expandable { cursor: pointer; }
+/* 能点进去的一行悬停铺淡底（同「深度」：能点的悬停深一档；2026-10-20 项目主人：软件包这一行鼠标悬浮没有效果）；底色往两边多出 10px，字不挪 */
+.set-row.set-pkg, .set-row.is-expandable { margin-inline: -10px; padding-inline: 10px; border-radius: 10px; transition: background-color 0.15s ease; }
+.set-row.is-expandable:hover { background: color-mix(in srgb, var(--surface-2) 70%, transparent); }
 .set-pkg.is-expandable:hover .set-name { color: var(--text); }
 .set-pkg-arrow { display: inline-grid; flex: none; width: 16px; place-items: center; color: var(--text-faint); }
 .set-pkg.is-expandable:hover .set-pkg-arrow { color: var(--text-soft); }
 /* 核心软件包的一行（core-packages.js）：左边图标，右边状态（只写要留意的）、开关、箭头 */
+/* 软件包页顶上：搜索框、一排筛选（2026-10-20）；一行右边的小标签写它是哪一种 */
+.set-pkg-tools { display: grid; gap: 10px; margin-bottom: 4px; }
+.set-pkg-find { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: 8px; background: var(--surface-2); color: var(--text-faint); transition: background-color 0.15s ease, box-shadow 0.15s ease; }
+.set-pkg-find:hover { background: var(--surface-3); }
+.set-pkg-find:focus-within { background: var(--surface-1); box-shadow: var(--card-shadow); }
+.set-pkg-find .icon { width: 14px; height: 14px; flex: none; }
+.set-pkg-find-input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: 13px var(--sans); }
+.set-pkg-find-input::-webkit-search-cancel-button { display: none; }
+.set-pkg-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.set-pkg-chip { height: 28px; padding: 0 11px; border: 0; border-radius: 14px; background: var(--surface-2); color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer; }
+.set-pkg-chip:hover { background: var(--surface-3); color: var(--text); }
+.set-pkg-chip.is-on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.set-pkg-chip span { margin-left: 4px; color: var(--text-faint); font-weight: 400; }
+.set-pkg-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.set-pkg-tag { flex: none; padding: 0 6px; border-radius: 5px; background: var(--surface-2); color: var(--text-faint); font-size: 11px; line-height: 18px; white-space: nowrap; }
 .set-pkg-face { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--surface-2); color: var(--text-soft); }
 .set-pkg-face .icon { width: 17px; height: 17px; }
 .set-pkg-status { flex: none; display: inline-flex; align-items: center; gap: 6px; color: var(--text-faint); font-size: 12px; }

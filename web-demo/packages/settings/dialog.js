@@ -4,7 +4,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
-import { buildPages, search, pagesWithErrors, layerFor, expectFor } from './model.js';
+import { buildPages, search, pagesWithErrors, layerFor, expectFor, navGroups, pkgMatch, ownerOf } from './model.js';
 import { coreRow, groupBlock, banner } from './rows.js';
 import { drawLook } from './look.js';
 import { drawPackages } from './packages.js';
@@ -12,7 +12,7 @@ import { drawModels } from './models.js';
 import { sectionKit } from './kit.js';
 import { Extensions } from './extensions.js';
 import { PackageFeed } from './packages-feed.js';
-import { drawCorePackages, followExtension } from './core-packages.js';
+import { drawCorePackages, followExtension, openInfo } from './core-packages.js';
 import { drawBackstage } from './backstage.js';
 import { Subpage, swap } from './subpage.js';
 import { drawAdvanced } from './advanced.js';
@@ -145,6 +145,40 @@ export class SettingsDialog {
     return all.sort((a, b) => rank(a.id) - rank(b.id));
   }
 
+  /**
+   * 搜索的结果（2026-10-20 项目主人：左上角的搜索不好用——原来只搜配置项、组名只写页名）：先是名字对得上的页（点了去那一页）、软件包（点了进它的信息页），
+   * 再是配置项，一组一块，组名写全「页 · 包 · 组」（照 `ownerOf` 认是哪个包的；组名就是包名的不重写）。
+   * @param {string} query
+   */
+  searchResults(query) {
+    const t = (/** @type {string} */ key, /** @type {any} */ fields) => this.ctx.text(key, fields);
+    const leave = () => { this.query = ''; this.search.value = ''; };
+    const jump = (/** @type {string} */ name, /** @type {string} */ sub, /** @type {() => void} */ go) => h('div.set-row.set-pkg.is-expandable', { onclick: go },
+      h('div.set-text', h('div.set-name', h('span', name)), sub ? h('p.set-desc', sub) : null), h('span.set-pkg-arrow', icon('chevron-right')));
+    const pages = this.entries().filter((e) => pkgMatch(query, e.name, e.id))
+      .map((e) => jump(e.name, '', () => { leave(); this.show(e.id); }));
+    const packages = (this.packages ?? []).filter((p) => p.status && pkgMatch(query, p.name, p.summary, p.package))
+      .map((p) => jump(p.name ?? p.package, p.summary ?? '', () => { leave(); this.show('packages'); openInfo(this, p.package); }));
+    const ids = new Set((this.packages ?? []).map((/** @type {any} */ p) => p.package));
+    const nameOf = (/** @type {string} */ id) => (this.packages ?? []).find((/** @type {any} */ p) => p.package === id)?.name ?? id;
+    /** @type {Map<string, {label: string, items: any[]}>} */
+    const groups = new Map();
+    for (const f of search(this.pages, query)) {
+      const owner = ownerOf(f.item, ids);
+      const parts = [f.page.name, owner && nameOf(owner) !== f.group.name ? nameOf(owner) : null, f.group.name !== f.page.name ? f.group.name : null].filter(Boolean);
+      const key = `${f.page.id}|${f.group.id}`;
+      const g = groups.get(key) ?? { label: parts.join(' · '), items: [] };
+      g.items.push(f.item);
+      groups.set(key, g);
+    }
+    const out = [
+      pages.length ? groupBlock(t('search_pages'), pages) : null,
+      packages.length ? groupBlock(t('search_packages'), packages) : null,
+      ...[...groups.values()].map((g) => groupBlock(g.label, g.items.map((item) => coreRow(this, item)))),
+    ].filter(Boolean);
+    return out.length ? out : [h('p.set-empty', t('no_match', { query: query.trim() }))];
+  }
+
   /** 到某一页：左栏选中它，右边画它；窄的时候点进去。 */
   show(id) {
     if (!this.entries().some((e) => e.id === id)) id = 'general';
@@ -161,8 +195,18 @@ export class SettingsDialog {
   drawNav() {
     const bad = pagesWithErrors(this.pages);
     const icons = this.ctx.config.icons;
-    replace(this.nav, this.entries().map((e) => h(`button.set-tab${e.id === this.current && !this.query ? '.is-on' : ''}`, { type: 'button', onclick: () => this.show(e.id) },
-      icon(icons[e.id] ?? 'sliders-horizontal'), h('span', e.name), bad.has(e.id) ? h('i.set-dot') : null)));
+    const groupOf = navGroups(this.ctx.config.order, this.ctx.config.nav_groups ?? []);
+    let last = -1;
+    const items = [];
+    for (const e of this.entries()) {
+      // 组与组之间一道细线（2026-10-20 项目主人分的四组）；一页都没有的组不画
+      const group = groupOf(e.id);
+      if (last >= 0 && group !== last) items.push(h('hr.set-nav-rule'));
+      last = group;
+      items.push(h(`button.set-tab${e.id === this.current && !this.query ? '.is-on' : ''}`, { type: 'button', onclick: () => this.show(e.id) },
+        icon(icons[e.id] ?? 'sliders-horizontal'), h('span', e.name), bad.has(e.id) ? h('i.set-dot') : null));
+    }
+    replace(this.nav, items);
   }
 
   /** 点进一层（软件包的设置、软件后台页）：滑进去，页头写它的名字、左边返回箭头。 @param {string} title @param {() => any} render @param {{keep?: boolean, leave?: () => void}} [opts] */
@@ -190,14 +234,7 @@ export class SettingsDialog {
     if (this.query.trim()) {
       this.title.textContent = this.ctx.text('search');
       this.drawNav();
-      const found = search(this.pages, this.query);
-      if (!found.length) {
-        replace(this.body, h('p.set-empty', this.ctx.text('no_match', { query: this.query.trim() })));
-        return;
-      }
-      const byPage = new Map();
-      for (const f of found) byPage.set(f.page, [...(byPage.get(f.page) ?? []), f.item]);
-      replace(this.body, [...byPage].map(([page, items]) => groupBlock(page.name, items.map((item) => coreRow(this, item)))));
+      replace(this.body, this.searchResults(this.query));
       return;
     }
     if (this.sub.page) {
@@ -217,12 +254,10 @@ export class SettingsDialog {
     // 高级：一组一行，点进去看（`advanced.js`，2026-10-19 项目主人：不平铺）
     else if (this.current === 'advanced' && page) kids = drawAdvanced(this, page);
     else if (this.current === 'packages') {
-      // 上面核心的软件包，按接入、界面、功能分段：一个包一行、点进去是它的信息页（`core-packages.js`）；下面一段网页自己的组件
-      const core = drawCorePackages(this, page);
+      // 顶上搜索、筛选，核心的软件包一个一行、点进去是它的信息页，最后一段网页自己的组件（`core-packages.js`）
       kids = [
         ...(page?.problems ?? []).map((p) => banner(p)),
-        ...core,
-        h('section.set-part', core.length ? h('h2.set-part-name', this.ctx.text('packages_web')) : null, drawPackages(this)),
+        ...drawCorePackages(this, page, drawPackages(this)),
       ];
     }
     else if (entry?.section) kids = entry.section.render?.(sectionKit(this)) ?? null;
