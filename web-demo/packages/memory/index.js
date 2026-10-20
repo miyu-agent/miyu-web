@@ -102,8 +102,7 @@ async function dream(ctx, words) {
   // 只在发起的那个会话里露出来（换到别的会话藏起来，换回来接着看）
   const shown = () => { box.hidden = (ctx.chat?.current?.() ?? null) !== session; };
   const watch = setInterval(shown, 300);
-  receipts.get(session)?.();
-  receipts.delete(session);
+  // 上一趟的结果那一行留在正文里原来的位置（是那时候的事），不拿掉
   // 挂那一块：真开始合了（头一条 `merging`）当场挂，不然等一会儿（没有要整理的很快就回，不闪一下）
   /** @type {(() => void)|null} */
   let unmount = null;
@@ -175,17 +174,23 @@ async function dream(ctx, words) {
     mount();
     card.finish(got);
     release();
-    // 收成结果那一行：前台的天亮一会儿再收，转到后台的当场留在正文末尾
-    // 收成结果那一行：那一块收回去，结果那一行长出来
+    // 收成结果那一行：那一块收回去，结果那一行钉在这时正文最后一块的后面（`chat.anchor`），后来的回答接在它下面，它不再跟着往下掉
+    // （2026-10-20 项目主人：这一行会往下掉）；换了会话回来照钉的位置再放（`chat.place`）
     const settle = () => {
-      mount();
-      shown();
-      grow(card.receipt());
+      unmount?.();
+      unmount = null;
+      const line = card.receipt();
+      const where = ctx.chat?.anchor?.(line) ?? null;
+      const keep = setInterval(() => {
+        if (where == null || line.isConnected || (ctx.chat?.current?.() ?? null) !== session) return;
+        ctx.chat?.place?.(where, line);
+      }, 400);
+      receipts.set(session, () => { clearInterval(keep); line.remove(); receipts.delete(session); });
       ctx.chat?.reveal?.();
     };
+    receipts.set(session, drop);
     if (away) settle();
     else setTimeout(() => fold(settle), SETTLE_MS);
-    receipts.set(session, drop);
   } catch (err) {
     release();
     drop();

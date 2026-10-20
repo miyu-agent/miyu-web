@@ -126,7 +126,7 @@ export class DreamCard {
     this.stopBtn?.remove();
     setTimeout(() => this.wake(), 450);
     this.title.textContent = this.t(this.stopped ? 'dream.stopped_title' : 'dream.done');
-    this.batch.textContent = this.counted() ? this.t('dream.result', { given: got?.given ?? 0, revised: got?.revised ?? 0, retired: got?.retired ?? 0 }) : '';
+    this.batch.textContent = this.counted() ? this.t('dream.result', { parts: this.parts() }) : '';
     this.tally.textContent = '';
     this.sync();
   }
@@ -137,12 +137,22 @@ export class DreamCard {
     return !this.stopped || (g.given ?? 0) + (g.revised ?? 0) + (g.retired ?? 0) > 0;
   }
 
-  /** 结果那一句（同核心 `/dream` 的回执）：合完的「整理完成：检查…」，叫停的「整理已中断：…其余下次再整理。」，一批都没合完的「整理已中断，下次再整理。」 */
-  resultText() {
+  /** 「检查 N 条，修改 N 条，作废 N 条」：0 条的不写（2026-10-20 项目主人：0 条的就不用显示了） */
+  parts() {
     const g = this.got ?? {};
-    const fields = { given: g.given ?? 0, revised: g.revised ?? 0, retired: g.retired ?? 0 };
-    if (!this.stopped) return this.t('dreamed', fields);
-    return this.counted() ? this.t('dream.stopped', fields) : this.t('dream.stopped_none');
+    return /** @type {[string, number][]} */ ([['part_given', g.given ?? 0], ['part_revised', g.revised ?? 0], ['part_retired', g.retired ?? 0]])
+      .filter(([, n]) => n > 0).map(([k, n]) => this.t(`dream.${k}`, { n })).join(this.t('dream.sep'));
+  }
+
+  /**
+   * 结果那一句（同核心 `/dream` 的回执）：合完的「整理完成：检查…」，叫停的「整理已中断：…其余下次再整理。」，一批都没合完的「整理已中断，下次再整理。」；
+   * 后面接用了多久（同一天项目主人：没有时间）。
+   */
+  resultText() {
+    const took = clock(Math.max(1, Math.round(((this.doneAt || performance.now()) - this.startedAt) / 1000)));
+    const text = !this.stopped ? this.t('dreamed', { parts: this.parts() })
+      : this.counted() ? this.t('dream.stopped', { parts: this.parts() }) : this.t('dream.stopped_none');
+    return `${text} · ${took}`;
   }
 
   /**
@@ -162,9 +172,10 @@ export class DreamCard {
       }
       return h('div.dream-receipt-item', tag('sum'), h('span.dream-receipt-summary', s.text));
     }));
-    const head = h(`div.dream-receipt-head${items.length ? '.is-link' : ''}`, items.length ? { role: 'button', tabindex: '0', 'aria-expanded': 'false' } : null,
-      h('span.dream-receipt-mark', '✦'), h('span.dream-receipt-text', this.resultText()), items.length ? h('span.dream-receipt-arrow', icon('chevron-right')) : null);
-    const box = h('div.dream-receipt', head, list);
+    // 正文里的写成提示行的样子（同「后台任务完成」那一行：缩进、字号、上下间距一样；2026-10-20 项目主人：间距和那类输出不一样）
+    const head = h(`div.dream-receipt-head.note-line.tone-module${items.length ? '.is-link' : ''}`, items.length ? { role: 'button', tabindex: '0', 'aria-expanded': 'false' } : null,
+      h('span.note-mark', '✦'), h('span.note-text.dream-receipt-text', this.resultText()), items.length ? h('span.dream-receipt-arrow', icon('chevron-right')) : null);
+    const box = h('div.note.dream-receipt', head, list);
     if (items.length) {
       const toggle = () => {
         list.hidden = !list.hidden;

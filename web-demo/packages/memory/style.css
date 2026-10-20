@@ -119,21 +119,21 @@
 .mem-list-page .dream-card.is-leaving { animation: dream-out var(--motion-out) var(--ease-in) both; }
 @keyframes dream-in { from { opacity: 0; transform: translateY(6px); } }
 @keyframes dream-out { to { opacity: 0; transform: translateY(6px); } }
-.chat-tail .dream-receipt { margin: 4px 0 2px; }
 @media (prefers-reduced-motion: reduce) { .dream-line, .mem-list-page .dream-card { animation: none; } }
 
-/* 合完收成的结果那一行（照终端：暗色 ✦ 打头，有改、删、摘要的能点开，列这一趟真正存下的） */
-.dream-receipt { display: grid; gap: 6px; margin: 6px 0 2px; border-radius: 10px; color: var(--text-faint); font-size: 13px; }
-.dream-receipt-head { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 4px 6px; border-radius: 8px; }
-.dream-receipt-head.is-link { cursor: pointer; }
-.dream-receipt-head.is-link:hover, .dream-receipt.is-open .dream-receipt-head { background: var(--surface-2); color: var(--text-soft); }
-.dream-receipt-head:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* 合完收成的结果那一行（照终端：✦ 打头，有改、删、摘要的能点开，列这一趟真正存下的）：正文里一行提示行（`.note`，styles/chat.css），
+   缩进、字号、上下间距同「后台任务完成」那类（2026-10-20 项目主人：间距不一样），钉在合完那一刻正文的位置，后来的接在它下面 */
+.dream-receipt-head { width: fit-content; max-width: 100%; }
+.dream-receipt-head.is-link { cursor: pointer; transition: color 0.15s ease; }
+.dream-receipt-head.is-link:hover, .dream-receipt.is-open .dream-receipt-head { color: color-mix(in srgb, var(--text) 84%, var(--surface)); }
+.dream-receipt-head:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 .dream-receipt-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dream-receipt-arrow { display: inline-grid; flex: none; place-items: center; opacity: 0; transition: opacity 0.15s ease, transform 0.15s ease; }
-.dream-receipt-arrow .icon { width: 13px; height: 13px; }
-.dream-receipt-head:hover .dream-receipt-arrow, .dream-receipt.is-open .dream-receipt-arrow { opacity: 1; }
+.dream-receipt-arrow { display: inline-grid; flex: none; align-self: center; place-items: center; opacity: 0; transition: opacity 0.15s ease, transform 0.15s ease; }
+.dream-receipt-arrow .icon { width: 12px; height: 12px; }
+.dream-receipt-head:hover .dream-receipt-arrow, .dream-receipt.is-open .dream-receipt-arrow { opacity: 0.8; }
 .dream-receipt.is-open .dream-receipt-arrow { transform: rotate(90deg); }
-.dream-receipt-list { display: grid; gap: 4px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); }
+.dream-receipt-list { margin-top: 8px; font-family: var(--sans); font-weight: 400; }
+.dream-receipt-list:not([hidden]) { display: grid; gap: 4px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); }
 .dream-receipt-item { display: flex; align-items: baseline; gap: 8px; min-width: 0; color: var(--text-soft); font-size: 12.5px; line-height: 1.55; }
 .dream-receipt-item s { color: var(--text-faint); }
 .dream-receipt-summary { white-space: pre-wrap; color: var(--text-soft); }
