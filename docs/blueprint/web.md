@@ -896,6 +896,7 @@
    - 时间线（`--timeline-` 打头）：`--timeline-col` 节点那一列多宽、`--timeline-indent` 细节缩进多少，`--timeline-fg`、`--timeline-think`、`--timeline-hi` 一步的字、思考的字、悬停亮一档，`--timeline-rail` 竖线，`--timeline-font` 那一行的字，`--timeline-body-bg`、`--timeline-body-radius`、`--timeline-body-line` 点开的细节框和里面的分隔，`--timeline-diff-add`、`--timeline-diff-del` 差异的加、删行的底，`--note-font`、`--note-fg` 回报、压缩那一行，`--turn-end-font`、`--turn-end-fg` 收尾那一行。
    - 动效：`--motion-in`、`--motion-out` 进场、退场多长，`--motion-pane` 大块的（左栏），`--motion-collapse` 收起，`--motion-slide` 滑到另一处，`--ease-out`、`--ease-in` 曲线（可以写 `steps(4)` 一格一格地动）；`--motion-scale` 各处写死的过渡、动画时长都乘它（1；0 是不动）。按毫秒在代码里等的几处（收起抽屉、换页）不跟着它，只管样式里的。
    - 图标：`--icon-stroke` 线条多粗（1.75）。
+   - 人格有背景图时（「跟着人格的外观」第 6 条）：左栏、输入框、左上角那一条、空会话那一排按钮的底和磨砂照人格那一套（要透出图），影、边、圆角照皮肤；对话区的底、上下两截淡出照旧不画（图在下面），皮肤写的 `--stage-bg` 这时不用。
    - 组件里不另外定义表里的名字（时间线原来在 `.tl-segment` 上自己定义了 `--tl-soft` 这类，盖在根上的写了也换不到；照 deepseek-harness 的坑：它的阴影变量逐个元素重新声明，全局的覆盖改不到输入框），测试照样式查。
    颜色类的出厂值都是主题的颜色变量（`var(--surface-1)` 这类），换了主题照样跟着变；皮肤里写颜色也只用主题的颜色变量、`color-mix`，不写颜色字面量（同软件包的 `style.css`）。变量名不和主题的颜色重名（`--card-shadow` 是主题的，皮肤的是 `--card-elev`）。
 3. **部件名：看得见的都有**（2026-10-21 项目主人：「所有元素可配置」，原来只有 40 个部件名，1137 个类里只盖到 136 个）。变量是常用的几个旋钮，部件名才是「每一块都能换」：样式里画了东西（底、边、影、圆角、字、颜色、透明度）的每一个类都归到某个部件名下面，皮肤的 CSS 挑它就能换它的任何样子。部件名是对外的约定（`resources/parts.json`：名字、一句说明、页面里对应的选择器；改名字算破坏，要在这里记下来），页面里的类名不是：皮肤里写 `[data-part="composer"]`，`skin` 包接进页面时照这张表换成 `:is(.composer)`；状态写 `[data-state="on"]`，换成 `.is-on`（页面上的状态都是 `is-` 打头的类）。页面上不另加属性，平时不多花一点力气；以后改了类名只改这张表，皮肤不跟着坏。

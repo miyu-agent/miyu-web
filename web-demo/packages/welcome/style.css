@@ -28,7 +28,7 @@
   --text: var(--px-tx); --text-soft: var(--px-soft); --text-faint: var(--px-dim); --line: var(--px-edge); --line-strong: var(--px-edge);
   --accent-soft: var(--px-cell-on); --card-shadow: none; --float-shadow: none;
 }
-.wl-layer.is-leaving { animation: wl-out 0.28s var(--ease-in) both; pointer-events: none; will-change: opacity; }
+.wl-layer.is-leaving { animation: wl-out calc(0.28s * var(--motion-scale)) var(--ease-in) both; pointer-events: none; will-change: opacity; }
 @keyframes wl-out { to { opacity: 0; } }
 .wl-page { position: relative; z-index: 1; height: 100%; overflow-y: auto; }
 /* 一列 560px，整体上下、左右都居中；最底下给地面留出地方 */
@@ -45,10 +45,10 @@
 .wl-steps { display: flex; gap: calc(4px * var(--space)); margin: 0; padding: 0; list-style: none; }
 .wl-steps li { width: 12px; height: 12px; background: var(--px-edge); box-shadow: inset -2px -2px 0 var(--px-ground); }
 .wl-steps li.is-done, .wl-steps li.is-now { background: var(--px-yel); box-shadow: inset -2px -2px 0 var(--px-yel-dark); }
-.wl-steps li.is-now { animation: wl-blink 1s steps(2) infinite; }
+.wl-steps li.is-now { animation: wl-blink calc(1s * var(--motion-scale)) steps(2) infinite; }
 
 /* 一屏：整块平滑地挪进来、淡入，不糊开、不弹（2026-10-19 项目主人：原来 steps(4) 一格一格挪，看着像掉帧） */
-.wl-screen { display: grid; gap: 0; animation: wl-in-fwd 0.24s var(--ease-out) both; }
+.wl-screen { display: grid; gap: 0; animation: wl-in-fwd calc(0.24s * var(--motion-scale)) var(--ease-out) both; }
 .wl-screen.is-back { animation-name: wl-in-back; }
 @keyframes wl-in-fwd { from { opacity: 0; transform: translateX(16px); } }
 @keyframes wl-in-back { from { opacity: 0; transform: translateX(-16px); } }
@@ -56,7 +56,7 @@
 .wl-sub { justify-self: center; max-width: 460px; margin: calc(10px * var(--space)) 0 0; color: var(--px-dim); font-size: calc(14px * var(--text-scale)); line-height: 1.6; text-align: center; }
 .wl-body { margin-top: calc(26px * var(--space)); }
 .wl-wait { display: flex; justify-content: center; margin: calc(40px * var(--space)) 0; color: var(--px-dim); }
-.wl-wait svg { width: calc(20px * var(--space)); height: calc(20px * var(--space)); animation: set-spin 0.9s steps(8) infinite; }
+.wl-wait svg { width: calc(20px * var(--space)); height: calc(20px * var(--space)); animation: set-spin calc(0.9s * var(--motion-scale)) steps(8) infinite; }
 .wl-error { margin: calc(14px * var(--space)) 0 0; color: var(--danger); font-size: calc(13px * var(--text-scale)); text-align: center; white-space: pre-wrap; }
 /* 按钮：主按钮是蓝色的像素块，底下一道深的边当影子，按下去往下沉；「上一步」是暗字 */
 .wl-foot { display: flex; align-items: center; justify-content: center; gap: calc(22px * var(--space)); margin-top: calc(30px * var(--space)); }
@@ -85,7 +85,7 @@
 .wl-layer.is-hello .wl-title { font-size: calc(44px * var(--text-scale)); }
 /* 欢迎页：主按钮「开始」，下面一闪一闪的「PRESS ENTER」（2026-10-19 项目主人：上面还要有个开始） */
 .wl-hint { margin: 0; color: var(--px-yel); font: calc(10px * var(--text-scale)) var(--px-font); }
-.wl-layer.is-hello .wl-hint { animation: wl-blink 1s steps(2) infinite; }
+.wl-layer.is-hello .wl-hint { animation: wl-blink calc(1s * var(--motion-scale)) steps(2) infinite; }
 .wl-layer.is-hello .wl-btn.is-primary { min-width: 168px; height: 48px; font-size: calc(20px * var(--text-scale)); }
 .wl-layer.is-hello .wl-foot + .wl-body, .wl-layer.is-hello .wl-body { margin-top: calc(16px * var(--space)); }
 /* 完成：像拿到道具（2026-10-19 项目主人：原来掉彩色方块的礼花不适合）：CLEAR! 落下来顿一下，「获得 …」隔 0.3 秒一行弹上来，最后出按钮；
@@ -98,12 +98,12 @@
 .wl-pill { color: var(--px-dim); font-size: calc(13.5px * var(--text-scale)); }
 .wl-pill b { color: var(--px-tx); font-weight: 500; }
 .wl-layer.is-done .wl-screen { animation: none; }
-.wl-layer.is-done .wl-title { animation: wl-drop 0.42s cubic-bezier(0.3, 1.5, 0.6, 1) both; }
-.wl-pill { animation: wl-pop 0.32s calc(0.45s + var(--i) * 0.3s) cubic-bezier(0.3, 1.6, 0.6, 1) both; }
-.wl-layer.is-done .wl-foot { animation: wl-rise 0.3s 0.45s var(--ease-out) both; }
-.wl-layer.is-done .wl-screen:has(.wl-pill:nth-child(1)) .wl-foot { animation-delay: 0.75s; }
-.wl-layer.is-done .wl-screen:has(.wl-pill:nth-child(2)) .wl-foot { animation-delay: 1.05s; }
-.wl-layer.is-done .wl-screen:has(.wl-pill:nth-child(3)) .wl-foot { animation-delay: 1.35s; }
+.wl-layer.is-done .wl-title { animation: wl-drop calc(0.42s * var(--motion-scale)) cubic-bezier(0.3, 1.5, 0.6, 1) both; }
+.wl-pill { animation: wl-pop calc(0.32s * var(--motion-scale)) calc(0.45s + var(--i) * calc(0.3s * var(--motion-scale))) cubic-bezier(0.3, 1.6, 0.6, 1) both; }
+.wl-layer.is-done .wl-foot { animation: wl-rise calc(0.3s * var(--motion-scale)) calc(0.45s * var(--motion-scale)) var(--ease-out) both; }
+.wl-layer.is-done .wl-screen:has(.wl-pill:nth-child(1)) .wl-foot { animation-delay: calc(0.75s * var(--motion-scale)); }
+.wl-layer.is-done .wl-screen:has(.wl-pill:nth-child(2)) .wl-foot { animation-delay: calc(1.05s * var(--motion-scale)); }
+.wl-layer.is-done .wl-screen:has(.wl-pill:nth-child(3)) .wl-foot { animation-delay: calc(1.35s * var(--motion-scale)); }
 @keyframes wl-drop { from { opacity: 0; transform: translateY(-36px); } }
 @keyframes wl-pop { from { opacity: 0; transform: translateY(14px); } }
 @keyframes wl-rise { from { opacity: 0; transform: translateY(8px); } }
@@ -126,7 +126,7 @@
 }
 .wl-layer .setup-choice.is-on .setup-choice-name { color: var(--px-yel); }
 .wl-lang::before, .wl-layer .setup-choice::before, .wl-layer .ob-model::before { content: "▶"; position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: transparent; font: calc(9px * var(--text-scale)) var(--px-font); }
-.wl-lang.is-on::before, .wl-layer .setup-choice.is-on::before, .wl-layer .ob-model.is-on::before { color: var(--px-yel-ink); animation: wl-blink 1s steps(2) infinite; }
+.wl-lang.is-on::before, .wl-layer .setup-choice.is-on::before, .wl-layer .ob-model.is-on::before { color: var(--px-yel-ink); animation: wl-blink calc(1s * var(--motion-scale)) steps(2) infinite; }
 .wl-layer .setup-choice.is-on::before { color: var(--px-yel); }
 .wl-lang.is-on .wl-lang-note, .wl-layer .ob-model.is-on .ob-model-note { color: #5c4a14; }
 .wl-check, .wl-layer .setup-choice-check, .wl-layer .ob-model-check { display: none; }
@@ -137,7 +137,7 @@
 /* 内置语义模型从软件源下载的进度（G-8）：一条像素格子的槽（四边垫 3px 阴影，同选项），黄色一格格往前填；下面一行暗字 */
 .wl-dl { display: grid; align-content: center; gap: calc(14px * var(--space)); min-height: 116px; margin: calc(3px * var(--space)); }
 .wl-dl-bar { --px-c: var(--px-cell); position: relative; height: 18px; background: var(--px-c); box-shadow: 0 -3px 0 0 var(--px-c), 0 3px 0 0 var(--px-c), -3px 0 0 0 var(--px-c), 3px 0 0 0 var(--px-c); }
-.wl-dl-bar i { display: block; width: 0; height: 100%; background: repeating-linear-gradient(90deg, var(--px-yel) 0 9px, transparent 9px 12px); transition: width 0.2s linear; }
+.wl-dl-bar i { display: block; width: 0; height: 100%; background: repeating-linear-gradient(90deg, var(--px-yel) 0 9px, transparent 9px 12px); transition: width calc(0.2s * var(--motion-scale)) linear; }
 .wl-dl-words { color: var(--px-dim); font-size: calc(13px * var(--text-scale)); text-align: center; font-variant-numeric: tabular-nums; }
 
 /* 别的包画的选项：一家供应商一行、模型一行、预设卡片 */
@@ -188,7 +188,7 @@
 /* 星点：稀稀的白点慢慢闪（原来那两团糊开的光去掉了） */
 .wl-sky { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .wl-glow { display: none; }
-.wl-star { position: absolute; width: 2px; height: 2px; background: var(--px-star); animation: wl-twinkle 6s steps(3) infinite; }
+.wl-star { position: absolute; width: 2px; height: 2px; background: var(--px-star); animation: wl-twinkle calc(6s * var(--motion-scale)) steps(3) infinite; }
 @keyframes wl-twinkle { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.7; } }
 @media (prefers-reduced-motion: reduce) {
   .wl-star, .wl-screen, .wl-layer, .wl-pill, .wl-layer.is-done .wl-title, .wl-layer.is-done .wl-foot, .wl-steps li.is-now, .wl-lang.is-on::before, .wl-layer .setup-choice.is-on::before,

@@ -51,6 +51,16 @@ test('每一种材质的变量都有地方用、用的都在表里', () => {
   }
 });
 
+test('组件里不另外定义表里的名字：写在根上的皮肤值才换得到（--tl-soft 这类组件自己的变量照它取值）', () => {
+  /** @type {string[]} */
+  const bad = [];
+  for (const p of sheets) {
+    for (const m of strip(read(p)).matchAll(/(--[a-z][a-z0-9-]*)\s*:/g)) if (known.has(m[1])) bad.push(`${p}：${m[1]}`);
+  }
+  // 动效的几个出厂值写在 base.css 的 :root 上（同变量表）
+  assert.deepEqual(bad.filter((x) => !/^styles\/base\.css：--(motion-|ease-|radius)/.test(x)), []);
+});
+
 test('认一格皮肤：表里没有的名字、{light, dark} 缺一份的不认；--skin- 打头的是它自己的', () => {
   assert.equal(packProblem({ id: 'ok', tokens: { '--round': '0', '--card-elev': { light: 'a', dark: 'b' }, '--skin-edge': 'x' } }, known), null);
   assert.match(String(packProblem({ id: 'x', tokens: { '--card-shadow': 'none' } }, known)), /变量表里没有 --card-shadow/);

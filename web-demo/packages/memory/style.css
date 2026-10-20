@@ -2,18 +2,18 @@
    类别不配颜色，写在每一行右边的暗字里（2026-10-19 项目主人：四个颜色的圆点没什么意义） */
 .mem-list-page, .mem-detail-page { display: grid; gap: calc(14px * var(--space)); }
 .mem-tools { display: flex; flex-wrap: wrap; align-items: center; gap: calc(8px * var(--space)); }
-.mem-find { display: flex; flex: 1; align-items: center; gap: calc(6px * var(--space)); min-width: 180px; height: 30px; padding: 0 calc(10px * var(--space)); border-radius: var(--field-radius, var(--r-8)); background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text-faint)); transition: background-color 0.15s ease, box-shadow 0.15s ease; }
+.mem-find { display: flex; flex: 1; align-items: center; gap: calc(6px * var(--space)); min-width: 180px; height: 30px; padding: 0 calc(10px * var(--space)); border-radius: var(--field-radius, var(--r-8)); background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text-faint)); transition: background-color calc(0.15s * var(--motion-scale)) ease, box-shadow calc(0.15s * var(--motion-scale)) ease; }
 .mem-find:hover { background: var(--field-hover, var(--surface-3)); }
 .mem-find:focus-within { background: var(--field-bg-focus, var(--surface-1)); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
 .mem-find .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); flex: none; }
 .mem-find-input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: calc(13px * var(--text-scale)) var(--font-ui); }
 .mem-find-input::-webkit-search-cancel-button { display: none; }
 .mem-tools .set-btn .icon, .mem-page .set-btn .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
-.mem-dream .icon-loader-circle, .mem-dream:disabled .icon { animation: set-spin 0.9s linear infinite; }
+.mem-dream .icon-loader-circle, .mem-dream:disabled .icon { animation: set-spin calc(0.9s * var(--motion-scale)) linear infinite; }
 .mem-dream:disabled { opacity: 0.75; cursor: default; }
 .mem-tidying { display: flex; align-items: center; gap: calc(6px * var(--space)); margin: calc(-6px * var(--space)) 0 0; color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
 .mem-tidying[hidden] { display: none; }
-.mem-tidying .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); animation: set-spin 0.9s linear infinite; }
+.mem-tidying .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); animation: set-spin calc(0.9s * var(--motion-scale)) linear infinite; }
 
 /* 类别、作废的开关 */
 .mem-chips { display: flex; flex-wrap: wrap; align-items: center; gap: calc(6px * var(--space)); }

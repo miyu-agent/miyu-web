@@ -7,7 +7,7 @@
    边框留着 1px 透明的：框里的字、提示、命令列表照它对齐 */
 .composer {
   position: relative; border: var(--composer-border, 1px solid transparent); border-radius: var(--composer-radius, var(--r-20));
-  background: var(--composer-bg, var(--surface-1)); box-shadow: var(--composer-elev, var(--composer-shadow)); transition: box-shadow 0.22s ease, margin-top 0.2s ease;
+  background: var(--composer-bg, var(--surface-1)); box-shadow: var(--composer-elev, var(--composer-shadow)); transition: box-shadow calc(0.22s * var(--motion-scale)) ease, margin-top calc(0.2s * var(--motion-scale)) ease;
 }
 .composer:focus-within { box-shadow: var(--composer-elev-focus, var(--composer-focus-shadow)); }
 .composer-input {
@@ -37,7 +37,7 @@
 .composer-tools { display: flex; align-items: center; gap: calc(2px * var(--space)); margin-right: auto; }
 .composer-send {
   display: grid; width: 32px; height: 32px; padding: 0; place-items: center; border: var(--send-border, 0); border-radius: var(--send-radius, var(--r-10));
-  background: var(--send-bg, var(--accent)); color: var(--send-fg, var(--on-primary)); cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  background: var(--send-bg, var(--accent)); color: var(--send-fg, var(--on-primary)); cursor: pointer; transition: background-color calc(0.15s * var(--motion-scale)) ease, color calc(0.15s * var(--motion-scale)) ease, transform calc(0.1s * var(--motion-scale)) ease;
 }
 /* accent 蓝（2026-09-30 项目主人定：试过墨色、头发的金色，回到蓝）；悬停深一档 */
 .composer-send:hover:not(:disabled) { background: var(--send-hover, color-mix(in srgb, var(--accent) 88%, var(--text))); }
@@ -108,7 +108,7 @@
 @keyframes level-in { 0%, 35% { opacity: 0; filter: blur(calc(2px * var(--blur))); } 100% { opacity: 1; filter: none; } }
 @keyframes level-out { 0% { opacity: 1; filter: none; } 45%, 100% { opacity: 0; filter: blur(calc(2px * var(--blur))); } }
 .composer::after { position: absolute; border-radius: inherit; content: ""; pointer-events: none; inset: -1px; }
-.composer.is-level-flash::after { animation: level-flash 0.7s ease-out; }
+.composer.is-level-flash::after { animation: level-flash calc(0.7s * var(--motion-scale)) ease-out; }
 /* 只是一层软的光晕，不画线（2026-09-30 项目主人：原来有一圈 1px 的线，像描边） */
 @keyframes level-flash {
   from { box-shadow: 0 0 14px 2px color-mix(in srgb, var(--flash) 30%, transparent); }
@@ -124,7 +124,7 @@
 .back-row.is-leaving { animation: sink-out var(--motion-out) var(--ease-in) both; }
 .back-button {
   display: inline-flex; max-width: min(60%, 360px); align-items: center; gap: calc(6px * var(--space)); padding: calc(4px * var(--space)) calc(10px * var(--space)) calc(4px * var(--space)) calc(8px * var(--space)); border: var(--ghost-border, 0); border-radius: var(--ghost-radius, var(--r-8));
-  background: var(--ghost-bg, none); color: var(--ghost-fg, var(--text-soft)); font: inherit; font-size: calc(12.5px * var(--text-scale)); cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease;
+  background: var(--ghost-bg, none); color: var(--ghost-fg, var(--text-soft)); font: inherit; font-size: calc(12.5px * var(--text-scale)); cursor: pointer; transition: background-color calc(0.15s * var(--motion-scale)) ease, color calc(0.15s * var(--motion-scale)) ease;
 }
 .back-button:hover { background: var(--ghost-hover, color-mix(in srgb, var(--text) 6%, transparent)); color: var(--ghost-fg-hover, var(--text)); }
 .back-button .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); flex: none; }
@@ -146,7 +146,7 @@
 .composer-jump {
   position: absolute; right: 0; bottom: calc(100% + 10px); z-index: 3; display: grid; width: 32px; height: 32px; padding: 0; place-items: center;
   border: var(--float-border, 1px solid var(--line)); border-radius: var(--float-radius, var(--r-round)); background: var(--float-bg, var(--surface-1)); box-shadow: var(--float-elev, var(--card-shadow)); color: var(--text-soft);
-  cursor: pointer; transition: color 0.15s ease; animation: rise-in var(--motion-in) var(--ease-out);
+  cursor: pointer; transition: color calc(0.15s * var(--motion-scale)) ease; animation: rise-in var(--motion-in) var(--ease-out);
 }
 .composer-jump:hover { color: var(--text); }
 .composer-jump .icon { width: calc(16px * var(--space)); height: calc(16px * var(--space)); }
@@ -165,7 +165,7 @@
 .footer-model {
   display: inline-flex; align-items: baseline; min-width: 0; max-width: 100%; overflow: hidden;
   padding: 0 calc(6px * var(--space)); margin: 0 calc(-6px * var(--space)); border: 0; border-radius: var(--r-6); background: none; color: var(--t-dim); font: inherit; cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color calc(0.15s * var(--motion-scale)) ease;
 }
 .footer-model:hover, .footer-model.is-open { background: var(--surface-2); }
 .footer-model:focus { outline: none; }
@@ -215,7 +215,7 @@
 .model-menu-text { display: flex; flex: 1; flex-direction: column; min-width: 0; }
 .model-menu-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .model-menu-desc { overflow: hidden; color: var(--text-faint); font-size: calc(11px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
-.model-menu-row > .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); flex: none; color: var(--accent); opacity: 0; transition: opacity 0.15s ease; }
+.model-menu-row > .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); flex: none; color: var(--accent); opacity: 0; transition: opacity calc(0.15s * var(--motion-scale)) ease; }
 .model-menu-row.is-current > .icon { opacity: 1; }
 .model-menu-note { padding: calc(8px * var(--space)); color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
 /* 思考强度那一行：一根细线，「思考强度」右边暗色写现在那一档、一个 ›；子菜单贴着右沿往右展开（下沿和这一行对齐，往上长） */

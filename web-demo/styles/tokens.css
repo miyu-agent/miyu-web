@@ -22,6 +22,62 @@
      @token --focus-ring 键盘停着的那一圈（outline 的写法）
      @token --scrollbar-color 滚动条的颜色（滑块、槽）
      @token --scrollbar-width 滚动条多粗（auto、thin、none）
+   回答（Markdown）
+     @token --md-size 正文的字号
+     @token --md-line 正文的行高
+     @token --md-gap 段落、列表之间空多少
+     @token --md-h-weight 标题的粗细
+     @token --md-h2-size 一级标题的字号（# 画成 h2）
+     @token --md-h3-size 二级标题的字号
+     @token --md-h4-size 三级及以下标题的字号
+     @token --md-list-indent 列表缩进多少
+     @token --md-list-gap 列表一项和一项之间
+     @token --md-marker 列表圆点、序号的颜色
+     @token --md-quote-border 引用左边那道线（border 的写法）
+     @token --md-quote-bg 引用的底
+     @token --md-quote-fg 引用的字色
+     @token --md-quote-radius 引用的圆角
+     @token --md-code-bg 行内代码的底
+     @token --md-code-fg 行内代码的字色
+     @token --md-code-radius 行内代码的圆角
+     @token --md-code-pad 行内代码的内边距
+     @token --md-link 链接的颜色
+     @token --md-link-weight 链接的粗细
+     @token --md-link-line 链接下划线的颜色
+     @token --md-hr 分隔线的颜色（background 的值）
+     @token --md-table-size 表格的字号
+     @token --md-th-bg 表头的底
+     @token --md-th-fg 表头的字色
+     @token --md-th-line 表头下面那条线（border 的写法）
+     @token --md-td-line 表格每一行下面那条线
+     @token --md-toolbar-fg 代码块头上那一条的字色
+   时间线、回报那一行、收尾那一行
+     @token --timeline-col 节点那一列多宽
+     @token --timeline-indent 细节缩进多少
+     @token --timeline-fg 一步那一行的字色
+     @token --timeline-think 思考的字色
+     @token --timeline-hi 悬停时亮一档的字色
+     @token --timeline-rail 竖线的颜色
+     @token --timeline-font 那一行的字（font 简写）
+     @token --timeline-body-bg 点开的细节框的底
+     @token --timeline-body-radius 细节框的圆角
+     @token --timeline-body-line 细节框里几块之间的线（border 的写法）
+     @token --timeline-diff-add 差异里加的那几行的底
+     @token --timeline-diff-del 差异里删的那几行的底
+     @token --note-font 回报、压缩那一行的字（font 简写）
+     @token --note-fg 回报、压缩那一行的字色
+     @token --turn-end-font 收尾那一行的字（font 简写）
+     @token --turn-end-fg 收尾那一行的字色
+   动效（定义在 base.css）
+     @token --motion-in 进场多长
+     @token --motion-out 退场多长
+     @token --motion-pane 大块的（左栏）多长
+     @token --motion-collapse 收起多长
+     @token --motion-slide 滑到另一处多长
+     @token --ease-out 进场的曲线（可以写 steps(4)）
+     @token --ease-in 退场的曲线
+   图标
+     @token --icon-stroke 线条多粗
    输入框
      @token --composer-bg 底
      @token --composer-border 边
@@ -156,6 +212,8 @@
   --text-scale: 1;
   /* @token --space 间距的倍数：各处的内边距、外边距、行与行之间的空、图标多大都乘它 */
   --space: 1;
+  /* @token --motion-scale 动效时长的倍数：各处写死的过渡、动画时长都乘它（0 是不动） */
+  --motion-scale: 1;
   /* @token --r-数 各处的圆角：那么多像素乘 --round（--r-2-5 是 2.5px） */
   --r-1: calc(1px * var(--round));
   --r-2: calc(2px * var(--round));

@@ -4,12 +4,12 @@
 .mascot { position: absolute; top: 0; left: 0; line-height: 0; will-change: transform; }
 .mascot-body { position: relative; }
 /* 舞台的放大（第一次引导的欢迎页）慢慢变过去 */
-.mascot-scale { transition: transform 320ms var(--ease-out, ease-out); }
+.mascot-scale { transition: transform calc(320ms * var(--motion-scale)) var(--ease-out, ease-out); }
 .mascot-canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; cursor: grab; pointer-events: auto; touch-action: none; }
 .mascot.is-dragging .mascot-canvas { cursor: grabbing; }
 .mascot-prop {
   position: absolute; right: -12px; bottom: calc(var(--foot-gap, 0px) + var(--prop-dy, 0px)); left: -12px; display: flex; justify-content: center;
-  pointer-events: none; transform-origin: 50% 100%; animation: mascot-prop-in 220ms cubic-bezier(0.34, 1.5, 0.64, 1) both;
+  pointer-events: none; transform-origin: 50% 100%; animation: mascot-prop-in calc(220ms * var(--motion-scale)) cubic-bezier(0.34, 1.5, 0.64, 1) both;
 }
 .mascot-prop.is-leaving { animation: mascot-prop-out var(--motion-out) var(--ease-in) both; }
 .mascot-prop-canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }

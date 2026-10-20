@@ -6,19 +6,19 @@
 .markdown-body { min-width: 0; overflow-wrap: anywhere; }
 .markdown-body > :first-child { margin-top: 0; }
 .markdown-body > :last-child { margin-bottom: 0; }
-.markdown-body p { margin: 0 0 calc(10px * var(--space)); }
+.markdown-body p { margin: 0 0 var(--md-gap, calc(10px * var(--space))); }
 
 /* 标题：# 是 h2，往下顺延 */
 .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
-  margin: calc(18px * var(--space)) 0 calc(8px * var(--space)); color: var(--text); font-weight: 700; line-height: 1.35; letter-spacing: 0;
+  margin: calc(18px * var(--space)) 0 calc(8px * var(--space)); color: var(--text); font-weight: var(--md-h-weight, 700); line-height: 1.35; letter-spacing: 0;
 }
-.markdown-body h2 { font-size: calc(17px * var(--text-scale)); }
-.markdown-body h3 { margin: calc(14px * var(--space)) 0 calc(6px * var(--space)); font-size: calc(15.5px * var(--text-scale)); }
-.markdown-body h4, .markdown-body h5, .markdown-body h6 { margin: calc(12px * var(--space)) 0 calc(5px * var(--space)); font-size: calc(15px * var(--text-scale)); }
+.markdown-body h2 { font-size: var(--md-h2-size, calc(17px * var(--text-scale))); }
+.markdown-body h3 { margin: calc(14px * var(--space)) 0 calc(6px * var(--space)); font-size: var(--md-h3-size, calc(15.5px * var(--text-scale))); }
+.markdown-body h4, .markdown-body h5, .markdown-body h6 { margin: calc(12px * var(--space)) 0 calc(5px * var(--space)); font-size: var(--md-h4-size, calc(15px * var(--text-scale))); }
 
 /* 列表：不嵌套；任务列表的勾选框不能点 */
-.markdown-body ul, .markdown-body ol { display: grid; margin: 0 0 calc(10px * var(--space)); padding-left: calc(20px * var(--space)); gap: calc(3px * var(--space)); }
-.markdown-body li::marker { color: var(--text-soft); }
+.markdown-body ul, .markdown-body ol { display: grid; margin: 0 0 var(--md-gap, calc(10px * var(--space))); padding-left: var(--md-list-indent, calc(20px * var(--space))); gap: var(--md-list-gap, calc(3px * var(--space))); }
+.markdown-body li::marker { color: var(--md-marker, var(--text-soft)); }
 .markdown-body .task-list { padding-left: calc(2px * var(--space)); }
 .markdown-body .task-list-item {
   display: grid; grid-template-columns: 16px minmax(0, 1fr); align-items: start; column-gap: calc(8px * var(--space)); list-style: none;
@@ -26,10 +26,10 @@
 .markdown-body .task-list-item input { width: 15px; height: 15px; margin: calc(3px * var(--space)) 0 0; accent-color: var(--accent); opacity: 1; }
 
 .markdown-body blockquote {
-  margin: 0 0 calc(10px * var(--space)); padding: calc(7px * var(--space)) calc(13px * var(--space)); border-left: 3px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0;
-  background: color-mix(in srgb, var(--accent-soft) 35%, transparent); color: var(--text-soft); font-size: calc(14px * var(--text-scale));
+  margin: 0 0 calc(10px * var(--space)); padding: calc(7px * var(--space)) calc(13px * var(--space)); border-left: var(--md-quote-border, 3px solid var(--accent)); border-radius: var(--md-quote-radius, 0 var(--radius) var(--radius) 0);
+  background: var(--md-quote-bg, color-mix(in srgb, var(--accent-soft) 35%, transparent)); color: var(--md-quote-fg, var(--text-soft)); font-size: calc(14px * var(--text-scale));
 }
-.markdown-body hr { height: 1px; margin: calc(14px * var(--space)) 0; border: 0; background: var(--line); }
+.markdown-body hr { height: 1px; margin: calc(14px * var(--space)) 0; border: 0; background: var(--md-hr, var(--line)); }
 .markdown-body del { color: var(--text-faint); }
 
 /* 表格：去外框和竖线，只留淡横线，太宽的自己横着滚 */
@@ -37,27 +37,27 @@
   max-width: 100%; margin: 0 0 calc(10px * var(--space)); overflow-x: auto; border-radius: var(--card-radius, var(--radius));
   background: var(--card-bg, color-mix(in srgb, var(--surface-2) 45%, transparent)); scrollbar-color: var(--line-strong) transparent;
 }
-.markdown-body table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: calc(13.5px * var(--text-scale)); }
+.markdown-body table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: var(--md-table-size, calc(13.5px * var(--text-scale))); }
 .markdown-body th, .markdown-body td {
   max-width: 360px; padding: calc(7px * var(--space)) calc(14px * var(--space)); border: 0; text-align: left; vertical-align: top; overflow-wrap: anywhere;
 }
 .markdown-body th {
-  border-bottom: var(--divider, 1px solid var(--line)); color: var(--text-soft); font-size: calc(11px * var(--text-scale)); font-weight: 600; letter-spacing: 0.07em;
+  border-bottom: var(--md-th-line, var(--divider, 1px solid var(--line))); color: var(--md-th-fg, var(--text-soft)); font-size: calc(11px * var(--text-scale)); font-weight: 600; letter-spacing: 0.07em;
 }
-.markdown-body td { border-bottom: 1px solid color-mix(in srgb, var(--line) 45%, transparent); }
+.markdown-body td { border-bottom: var(--md-td-line, 1px solid color-mix(in srgb, var(--line) 45%, transparent)); }
 .markdown-body tbody tr:last-child td { border-bottom: 0; }
 .markdown-body .align-center { text-align: center; }
 .markdown-body .align-right { text-align: right; }
 
 .markdown-body code:not(pre code) {
-  padding: calc(1px * var(--space)) calc(6px * var(--space)); border: 0; border-radius: var(--radius); background: var(--surface-2);
+  padding: var(--md-code-pad, calc(1px * var(--space)) calc(6px * var(--space))); border: 0; border-radius: var(--md-code-radius, var(--radius)); background: var(--md-code-bg, var(--surface-2)); color: var(--md-code-fg, inherit);
   font-family: var(--font-code); font-size: 0.86em; overflow-wrap: anywhere;
 }
 
 /* 链接：定值的蓝，不跟主题（旧版 09-09 定：「蓝色带下划线 = 能点」有肌肉记忆） */
 .markdown-body a {
-  color: var(--link); font-weight: 600; text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--link) 35%, transparent); text-underline-offset: 3px; overflow-wrap: anywhere;
+  color: var(--md-link, var(--link)); font-weight: var(--md-link-weight, 600); text-decoration: underline;
+  text-decoration-color: var(--md-link-line, color-mix(in srgb, var(--link) 35%, transparent)); text-underline-offset: 3px; overflow-wrap: anywhere;
 }
 .markdown-body a:hover { text-decoration-color: var(--link); }
 /* 「标题（地址）」整行一个链接：地址那半截退半档，标题还是主角 */
@@ -69,13 +69,13 @@
 .code-block { margin: calc(2px * var(--space)) 0 calc(12px * var(--space)); overflow: hidden; border: var(--codeblock-border, 0); border-radius: var(--codeblock-radius, var(--radius)); background: var(--codeblock-bg, var(--code-bg)); color: var(--code-ink); }
 .code-toolbar {
   display: flex; min-height: 30px; align-items: center; justify-content: space-between; padding: calc(3px * var(--space)) calc(6px * var(--space)) 0 calc(14px * var(--space));
-  color: color-mix(in srgb, var(--code-ink) 50%, transparent);
+  color: var(--md-toolbar-fg, color-mix(in srgb, var(--code-ink) 50%, transparent));
   font-family: var(--font-mono); font-size: calc(10px * var(--text-scale)); letter-spacing: 0.14em; text-transform: uppercase;
 }
 .code-copy-button {
   display: grid; width: 25px; height: 23px; place-items: center; padding: 0; border: 0; border-radius: var(--radius);
   background: transparent; color: color-mix(in srgb, var(--code-ink) 60%, transparent); cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color calc(0.15s * var(--motion-scale)) ease, color calc(0.15s * var(--motion-scale)) ease;
 }
 .code-copy-button:hover { background: color-mix(in srgb, var(--code-ink) 12%, transparent); color: var(--code-ink); }
 .code-copy-button .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); }
@@ -112,12 +112,12 @@
    （card_shadow；2026-09-30 项目主人定：卡片的描边不好看），行内代码的底是正文色兑底色的中性灰 */
 .assistant-content .code-block { --code-bg: var(--surface-1); box-shadow: var(--codeblock-elev, var(--card-shadow)); }
 .assistant-content .markdown-body code:not(pre code) {
-  border-radius: var(--r-8); background: color-mix(in srgb, var(--text) 9%, var(--surface));
+  border-radius: var(--md-code-radius, var(--r-8)); background: var(--md-code-bg, color-mix(in srgb, var(--text) 9%, var(--surface)));
 }
 .assistant-content .markdown-table-scroll { border-radius: var(--card-radius, var(--radius)); background: var(--card-bg, var(--surface-1)); box-shadow: var(--card-elev, var(--card-shadow)); }
 .assistant-content .markdown-body table { background: none; }
 .assistant-content .markdown-body th {
-  border-bottom: var(--divider, 1px solid var(--line)); background: color-mix(in srgb, var(--text) 5%, var(--surface-1));
+  border-bottom: var(--md-th-line, var(--divider, 1px solid var(--line))); background: var(--md-th-bg, color-mix(in srgb, var(--text) 5%, var(--surface-1)));
 }
-.assistant-content .markdown-body td { border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }
+.assistant-content .markdown-body td { border-bottom: var(--md-td-line, 1px solid color-mix(in srgb, var(--line) 70%, transparent)); }
 .assistant-content .markdown-body tr:last-child td { border-bottom: 0; }

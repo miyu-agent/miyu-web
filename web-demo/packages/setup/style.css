@@ -96,7 +96,7 @@
 .setup-pic-main img { width: 100%; height: 100%; object-fit: cover; }
 .setup-pic-hover {
   position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, 0.42); color: #fff;
-  font-size: calc(12.5px * var(--text-scale)); font-weight: 500; opacity: 0; transition: opacity 0.15s ease;
+  font-size: calc(12.5px * var(--text-scale)); font-weight: 500; opacity: 0; transition: opacity calc(0.15s * var(--motion-scale)) ease;
 }
 .setup-pic-main:hover .setup-pic-hover, .setup-pic-main:focus-visible .setup-pic-hover { opacity: 1; }
 .setup-pic-main:focus-visible { outline: none; }
@@ -112,7 +112,7 @@
 .setup-pic-remove .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); }
 .setup-swatch {
   flex: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: var(--r-10);
-  font: 600 calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer; transition: transform 0.12s var(--ease-out);
+  font: 600 calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer; transition: transform calc(0.12s * var(--motion-scale)) var(--ease-out);
 }
 .setup-swatch:hover { transform: scale(1.08); }
 .setup-swatch .icon { width: calc(18px * var(--space)); height: calc(18px * var(--space)); }
@@ -170,7 +170,7 @@
 .setup-icon-now { display: inline-flex; align-items: center; gap: calc(4px * var(--space)); width: fit-content; height: 36px; padding: 0 calc(8px * var(--space)); border: 0; border-radius: var(--r-10); background: var(--surface-2); color: var(--text); font: calc(15px * var(--text-scale)) var(--font-ui); cursor: pointer; }
 .setup-icon-now:hover { background: var(--surface-3); }
 .setup-icon-now .icon { width: calc(20px * var(--space)); height: calc(20px * var(--space)); }
-.setup-icon-now .icon:last-child { width: calc(14px * var(--space)); height: calc(14px * var(--space)); color: var(--text-faint); transition: transform 0.16s var(--ease-out); }
+.setup-icon-now .icon:last-child { width: calc(14px * var(--space)); height: calc(14px * var(--space)); color: var(--text-faint); transition: transform calc(0.16s * var(--motion-scale)) var(--ease-out); }
 .setup-icon-now.is-open .icon:last-child { transform: rotate(180deg); }
 .setup-icon-panel { display: grid; gap: calc(8px * var(--space)); padding: calc(10px * var(--space)); border-radius: var(--r-12); background: var(--surface-2); }
 .setup-icon-tools { display: flex; gap: calc(8px * var(--space)); }
@@ -206,7 +206,7 @@
 .setup-new { display: inline-flex; align-items: center; gap: calc(4px * var(--space)); height: 30px; padding: 0 calc(12px * var(--space)); border: var(--btn-border, 0); border-radius: var(--btn-radius, var(--r-8)); background: var(--btn-bg, var(--surface-2)); color: var(--btn-fg, var(--text)); font: calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer; }
 .setup-new:hover { background: var(--btn-hover, var(--surface-3)); }
 .setup-new svg { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
-.setup-card.is-clickable { cursor: pointer; transition: background-color 0.15s ease; }
+.setup-card.is-clickable { cursor: pointer; transition: background-color calc(0.15s * var(--motion-scale)) ease; }
 .setup-card.is-clickable:hover { background: var(--surface-2); }
 .setup-card.is-clickable:focus-visible { outline: 0; background: var(--surface-2); }
 .setup-float-scrim {
@@ -237,7 +237,7 @@
 .setup-field-control > .set-input { width: 100%; box-sizing: border-box; }
 .setup-area {
   display: block; width: 100%; box-sizing: border-box; padding: calc(6px * var(--space)) calc(9px * var(--space)); border: var(--field-border, 0); border-radius: var(--field-radius, var(--r-8)); outline: 0; resize: none; overflow: hidden;
-  background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text)); font: calc(13px * var(--text-scale))/1.6 var(--font-ui); transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text)); font: calc(13px * var(--text-scale))/1.6 var(--font-ui); transition: background-color calc(0.15s * var(--motion-scale)) ease, box-shadow calc(0.15s * var(--motion-scale)) ease;
 }
 .setup-area:hover { background: var(--field-hover, var(--surface-3)); }
 .setup-area:focus { background: var(--field-bg-focus, var(--surface-1)); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
@@ -287,7 +287,7 @@
 .setup-choice {
   position: relative; display: grid; width: 100%; padding: calc(12px * var(--space)) calc(40px * var(--space)) calc(12px * var(--space)) calc(14px * var(--space)); border: var(--item-border, 0); border-radius: var(--item-radius, var(--r-12));
   background: var(--item-bg, transparent); color: var(--item-fg, var(--text)); font: calc(14px * var(--text-scale)) var(--font-ui); text-align: left; cursor: pointer; gap: calc(8px * var(--space));
-  transition: background-color 0.15s ease;
+  transition: background-color calc(0.15s * var(--motion-scale)) ease;
 }
 /* 照「深度」：平常不铺底，悬停深一档，选中再深一档（蓝图 web.md「深度」） */
 .setup-choice:hover { background: var(--item-hover, var(--surface-2)); }
@@ -311,7 +311,7 @@
 .setup-palettes { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: calc(10px * var(--space)); }
 .setup-palette {
   display: grid; gap: calc(8px * var(--space)); padding: calc(8px * var(--space)) calc(8px * var(--space)) calc(10px * var(--space)); border: var(--card-border, 0); border-radius: var(--card-radius, var(--r-14)); background: var(--card-bg, var(--surface-1)); color: var(--text);
-  font: calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer; box-shadow: var(--card-elev, var(--card-shadow)); transition: transform 0.15s ease, box-shadow 0.15s ease;
+  font: calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer; box-shadow: var(--card-elev, var(--card-shadow)); transition: transform calc(0.15s * var(--motion-scale)) ease, box-shadow calc(0.15s * var(--motion-scale)) ease;
 }
 .setup-palette:hover, .setup-palette:focus-visible { outline: 0; transform: translateY(-1px); box-shadow: var(--card-elev-hover, var(--float-shadow)); }
 .setup-palette.is-on { box-shadow: 0 0 0 2px var(--accent), var(--card-shadow); }
@@ -329,7 +329,7 @@
 .project-swatches { display: flex; flex-wrap: wrap; gap: calc(8px * var(--space)); padding-top: calc(6px * var(--space)); }
 .project-swatch {
   position: relative; display: grid; width: 22px; height: 22px; padding: 0; place-items: center; overflow: hidden; border: 0; border-radius: var(--r-7);
-  background: var(--swatch, var(--surface-2)); color: var(--text-soft); cursor: pointer; transition: box-shadow 0.15s ease;
+  background: var(--swatch, var(--surface-2)); color: var(--text-soft); cursor: pointer; transition: box-shadow calc(0.15s * var(--motion-scale)) ease;
 }
 .project-swatch.is-on { box-shadow: 0 0 0 2px var(--surface-1), 0 0 0 4px var(--swatch, var(--accent)); }
 .project-swatch.is-pick:not(.is-on):hover { background: var(--surface-3); }

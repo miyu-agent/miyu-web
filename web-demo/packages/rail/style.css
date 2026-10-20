@@ -7,7 +7,7 @@
 .rail-lines { display: flex; width: 28px; max-height: 60vh; flex-direction: column; align-items: flex-end; padding: calc(6px * var(--space)) calc(4px * var(--space)); overflow: hidden; gap: calc(6px * var(--space)); }
 .rail-line {
   width: 14px; height: 2px; flex: none; padding: 0; border: 0; border-radius: var(--r-1);
-  background: var(--text-faint); opacity: 0.55; cursor: pointer; transition: width 0.15s ease, opacity 0.15s ease, background-color 0.15s ease;
+  background: var(--text-faint); opacity: 0.55; cursor: pointer; transition: width calc(0.15s * var(--motion-scale)) ease, opacity calc(0.15s * var(--motion-scale)) ease, background-color calc(0.15s * var(--motion-scale)) ease;
 }
 /* 线只有 2px 高：点的地方往上下各多 3px，那 3px 不上色（只改 background-color，别用简写把 clip 冲掉） */
 .rail-line { box-sizing: content-box; border-block: 3px solid transparent; background-clip: padding-box; margin-block: calc(-3px * var(--space)); }
@@ -18,12 +18,12 @@
   border: var(--float-border, 1px solid var(--line)); border-radius: var(--float-radius, var(--r-14)); background: var(--float-bg, color-mix(in srgb, var(--surface-1) 90%, transparent));
   -webkit-backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur))) saturate(1.2)); backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur))) saturate(1.2)); box-shadow: var(--float-elev, var(--float-shadow));
   transform: translateY(-50%) scale(0.96); transform-origin: right center; opacity: 0; pointer-events: none;
-  transition: opacity 0.12s ease-in, transform 0.12s ease-in;
+  transition: opacity calc(0.12s * var(--motion-scale)) ease-in, transform calc(0.12s * var(--motion-scale)) ease-in;
 }
 /* 出来：从那一列那边淡入、放大到原样；收起：淡出、缩一点 */
 .rail-pop.is-open {
   transform: translateY(-50%); opacity: 1; pointer-events: auto;
-  transition: opacity 0.16s ease-out, transform 0.16s cubic-bezier(0.22, 0.61, 0.36, 1);
+  transition: opacity calc(0.16s * var(--motion-scale)) ease-out, transform calc(0.16s * var(--motion-scale)) cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 .rail-list { display: flex; flex-direction: column; gap: calc(2px * var(--space)); }
 .rail-item {

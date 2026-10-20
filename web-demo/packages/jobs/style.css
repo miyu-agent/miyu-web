@@ -6,7 +6,7 @@
   font: inherit; cursor: pointer;
 }
 .jobs-pill:hover .jobs-pill-text { text-decoration: underline; text-underline-offset: 3px; }
-.jobs-dot { width: 7px; height: 7px; border-radius: var(--r-round); background: currentColor; animation: jobs-breathe 1.8s ease-in-out infinite; }
+.jobs-dot { width: 7px; height: 7px; border-radius: var(--r-round); background: currentColor; animation: jobs-breathe calc(1.8s * var(--motion-scale)) ease-in-out infinite; }
 @keyframes jobs-breathe { 50% { opacity: 0.35; } }
 
 /* 浮层：和命令列表同一个位置、同一个样子；进场升上来，退场沉下去 */
@@ -23,7 +23,7 @@
 .jobs-head-count { min-width: 0; flex: 1; overflow: hidden; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
 .jobs-stop-all {
   flex: none; padding: calc(2px * var(--space)) calc(8px * var(--space)); border: 0; border-radius: var(--r-7); background: transparent; color: var(--text-soft); font: inherit; font-size: calc(12px * var(--text-scale)); cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color calc(0.15s * var(--motion-scale)) ease, color calc(0.15s * var(--motion-scale)) ease;
 }
 .jobs-stop-all:hover { background: color-mix(in srgb, var(--ribbon) 14%, transparent); color: var(--ribbon); }
 .jobs-list { display: grid; max-height: 360px; overflow-y: auto; }
@@ -44,7 +44,7 @@
 .jobs-state-mark { display: grid; width: 12px; height: 12px; place-items: center; }
 .jobs-state-mark .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); }
 .jobs-row.is-running .jobs-state-mark { color: var(--accent); }
-.jobs-row.is-running .jobs-state-mark .icon { animation: jobs-spin 1s linear infinite; }
+.jobs-row.is-running .jobs-state-mark .icon { animation: jobs-spin calc(1s * var(--motion-scale)) linear infinite; }
 @keyframes jobs-spin { to { transform: rotate(360deg); } }
 .jobs-row.is-paused .jobs-state { color: var(--t-warn); }
 .jobs-row.is-done .jobs-state-mark { color: var(--t-good); }
@@ -74,13 +74,13 @@
   color: var(--text-faint); font: inherit; font-size: calc(12.5px * var(--text-scale)); text-align: left; cursor: pointer;
 }
 .jobs-done:hover { background: var(--surface-2); color: var(--text-soft); }
-.jobs-done .icon { width: calc(11px * var(--space)); height: calc(11px * var(--space)); transition: transform 160ms ease; }
+.jobs-done .icon { width: calc(11px * var(--space)); height: calc(11px * var(--space)); transition: transform calc(160ms * var(--motion-scale)) ease; }
 .jobs-done.is-open .icon { transform: rotate(90deg); }
 .jobs-empty { padding: calc(10px * var(--space)) calc(10px * var(--space)) calc(12px * var(--space)); color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
 /* 展开、收起（「已结束」、后台命令的预览）：和时间线点开一步同一个动效，高度从 0 长出来、收回去，淡入淡出（--jobs-fold 照 fold_ms） */
 .jobs-fold {
   display: grid; grid-template-rows: 0fr; opacity: 0;
-  transition: grid-template-rows var(--jobs-fold, 380ms) cubic-bezier(0.22, 0.61, 0.36, 1), opacity var(--jobs-fold, 380ms) ease;
+  transition: grid-template-rows var(--jobs-fold, calc(380ms * var(--motion-scale))) cubic-bezier(0.22, 0.61, 0.36, 1), opacity var(--jobs-fold, calc(380ms * var(--motion-scale))) ease;
 }
 .jobs-fold.is-open { grid-template-rows: 1fr; opacity: 1; }
 .jobs-fold-inner { display: grid; min-height: 0; overflow: hidden; }
@@ -92,7 +92,7 @@
 .jobs-output { max-height: 220px; overflow-y: auto; overscroll-behavior: contain; }
 .jobs-stop {
   display: grid; width: 26px; height: 26px; flex: none; padding: 0; place-items: center; border: 0; border-radius: var(--r-7);
-  background: transparent; color: var(--text-soft); cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease;
+  background: transparent; color: var(--text-soft); cursor: pointer; transition: background-color calc(0.15s * var(--motion-scale)) ease, color calc(0.15s * var(--motion-scale)) ease;
 }
 .jobs-stop .stop-mark { width: 9px; height: 9px; border-radius: var(--r-2); background: currentColor; }
 .jobs-stop:hover:not(:disabled) { background: color-mix(in srgb, var(--ribbon) 16%, transparent); color: var(--ribbon); }

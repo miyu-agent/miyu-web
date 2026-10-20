@@ -31,7 +31,7 @@
 .wg-state.is-failed { color: var(--t-error); }
 .wg-state.is-off { color: var(--text-faint); }
 .wg-mark-doing { display: inline-flex; align-self: center; color: var(--accent); }
-.wg-mark-doing .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); animation: wg-spin 1s linear infinite; }
+.wg-mark-doing .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); animation: wg-spin calc(1s * var(--motion-scale)) linear infinite; }
 .wg-item-text { display: flex; flex: 1; flex-wrap: wrap; align-items: baseline; gap: calc(2px * var(--space)) calc(8px * var(--space)); min-width: 0; }
 .wg-item-title { overflow-wrap: anywhere; }
 .wg-item-detail { color: var(--text-soft); font-size: calc(12px * var(--text-scale)); }
@@ -109,7 +109,7 @@
 .wg-f-conflict { color: var(--t-warn); font-size: calc(12px * var(--text-scale)); }
 .wg-f-message { padding: calc(6px * var(--space)) 0 0; color: var(--t-error); font-size: calc(12.5px * var(--text-scale)); white-space: pre-wrap; }
 .wg-f-actions { display: flex; align-items: center; justify-content: flex-end; gap: calc(8px * var(--space)); padding-top: calc(10px * var(--space)); }
-.wg-f-saved { color: var(--t-good); font-size: calc(12.5px * var(--text-scale)); animation: fade-out 0.4s ease-in 1.8s both; }
+.wg-f-saved { color: var(--t-good); font-size: calc(12.5px * var(--text-scale)); animation: fade-out calc(0.4s * var(--motion-scale)) ease-in calc(1.8s * var(--motion-scale)) both; }
 .wg-input { width: 100%; min-width: 0; height: 34px; padding: 0 calc(10px * var(--space)); border: var(--field-border, 0); border-radius: var(--field-radius, var(--r-8)); background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text)); font: inherit; font-size: calc(13.5px * var(--text-scale)); outline: none; }
 .wg-input:focus { box-shadow: var(--field-elev-focus, 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent)); }
 .wg-input::placeholder { color: var(--text-faint); }
@@ -122,8 +122,8 @@
 /* 沿用默认的那一档：淡的选中（核心给了 default.value 时） */
 .wg-seg.is-default { background: color-mix(in srgb, var(--surface-1) 55%, transparent); color: var(--text-soft); }
 .wg-switch { display: inline-flex; align-items: center; gap: calc(10px * var(--space)); justify-self: start; height: 34px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
-.wg-switch > i { position: relative; width: 34px; height: 20px; border-radius: var(--switch-radius, var(--r-10)); background: var(--switch-bg, var(--surface-3)); transition: background 0.15s ease; }
-.wg-switch > i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: var(--r-round); background: var(--surface-1); box-shadow: 0 1px 2px rgb(0 0 0 / 0.2); transition: transform 0.15s ease; }
+.wg-switch > i { position: relative; width: 34px; height: 20px; border-radius: var(--switch-radius, var(--r-10)); background: var(--switch-bg, var(--surface-3)); transition: background calc(0.15s * var(--motion-scale)) ease; }
+.wg-switch > i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: var(--r-round); background: var(--surface-1); box-shadow: 0 1px 2px rgb(0 0 0 / 0.2); transition: transform calc(0.15s * var(--motion-scale)) ease; }
 .wg-switch.is-on > i { background: var(--switch-active, var(--accent)); }
 .wg-switch.is-on > i::after { transform: translateX(14px); }
 .wg-switch.is-default > i { opacity: 0.55; }

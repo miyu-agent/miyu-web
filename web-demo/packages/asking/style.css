@@ -42,13 +42,13 @@
 .asking-options { display: grid; gap: 0; }
 .asking-option {
   display: flex; align-items: flex-start; gap: calc(9px * var(--space)); padding: calc(5px * var(--space)) calc(10px * var(--space)); border-radius: var(--r-8); cursor: pointer;
-  transition: background-color 0.12s ease;
+  transition: background-color calc(0.12s * var(--motion-scale)) ease;
 }
 .asking-option.is-selected { background: var(--accent-soft); }
 .asking-num, .asking-check {
   flex: none; display: grid; place-items: center; width: 18px; height: 18px; margin-top: calc(1px * var(--space)); border-radius: var(--r-5);
   background: var(--surface-2); color: var(--text-faint); font-family: var(--font-mono); font-size: calc(11.5px * var(--text-scale));
-  transition: background-color 0.12s ease, color 0.12s ease;
+  transition: background-color calc(0.12s * var(--motion-scale)) ease, color calc(0.12s * var(--motion-scale)) ease;
 }
 .asking-option.is-selected .asking-num { background: var(--accent); color: var(--on-primary); }
 .asking-check { background: var(--surface-3); }
@@ -63,7 +63,7 @@
 .asking-edit {
   width: 100%; margin-top: calc(2px * var(--space)); padding: calc(6px * var(--space)) calc(8px * var(--space)); border: var(--field-border, 0); border-radius: var(--field-radius, var(--r-8)); resize: none; overflow: hidden;
   background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text)); font: inherit; font-size: calc(13.5px * var(--text-scale)); line-height: 1.5; outline: none;
-  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  transition: background-color calc(0.15s * var(--motion-scale)) ease, box-shadow calc(0.15s * var(--motion-scale)) ease;
 }
 .asking-edit:focus { background: var(--field-bg-focus, var(--surface-1)); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
 
@@ -96,7 +96,7 @@
 
 /* 最下面一行：按键提示、取消 */
 .asking-foot { display: flex; align-items: center; justify-content: space-between; gap: calc(12px * var(--space)); margin-top: calc(8px * var(--space)); }
-.asking-keys { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); transition: color 0.15s ease; }
+.asking-keys { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); transition: color calc(0.15s * var(--motion-scale)) ease; }
 .asking-keys.is-armed { color: var(--t-warn); }
 .asking-foot-right { display: inline-flex; flex: none; align-items: center; gap: calc(10px * var(--space)); }
 .asking-next { height: 26px; padding: 0 calc(12px * var(--space)); border: var(--btn-primary-border, 0); border-radius: var(--btn-primary-radius, var(--r-8)); background: var(--btn-primary-bg, var(--accent)); color: var(--btn-primary-fg, var(--on-primary)); font: inherit; font-size: calc(12.5px * var(--text-scale)); cursor: pointer; }

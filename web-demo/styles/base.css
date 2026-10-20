@@ -3,13 +3,13 @@
 
 :root {
   /* 动效（蓝图 web.md「动效」）：进场先快后慢、退场先慢后快，退场短一点；大块的（左栏、预览工作区那一栏）慢一点 */
-  --motion-in: 0.16s;
-  --motion-out: 0.12s;
-  --motion-pane: 0.28s;
+  --motion-in: calc(0.16s * var(--motion-scale));
+  --motion-out: calc(0.12s * var(--motion-scale));
+  --motion-pane: calc(0.28s * var(--motion-scale));
   /* 删掉的一项先淡出、再收起高度（左栏的会话） */
-  --motion-collapse: 0.26s;
+  --motion-collapse: calc(0.26s * var(--motion-scale));
   /* 一块东西从一处滑到另一处（左栏选中的那一块） */
-  --motion-slide: 0.24s;
+  --motion-slide: calc(0.24s * var(--motion-scale));
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ease-in: cubic-bezier(0.55, 0, 0.85, 0.35);
   /* 只用本机的字体，不往外取（旧版一样）。西文先 Inter，没有的用 Adwaita Sans（GNOME 照 Inter 改的）、Noto Sans；中文落到
@@ -89,13 +89,13 @@ button, textarea { font: inherit; color: inherit; }
 * { scrollbar-width: var(--scrollbar-width, thin); scrollbar-color: var(--scrollbar-color, var(--line-strong) transparent); }
 
 /* 图标：Lucide，线宽统一 1.75（大小不同也照这一个粗细，看着是一家的），跟着字的颜色；默认 16px */
-.icon { width: calc(16px * var(--space)); height: calc(16px * var(--space)); flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.icon { width: calc(16px * var(--space)); height: calc(16px * var(--space)); flex: none; fill: none; stroke: currentColor; stroke-width: var(--icon-stroke, 1.75); stroke-linecap: round; stroke-linejoin: round; }
 
 /* 图标按钮：32×32，圆角 8；悬停只铺一层很淡的底、图标变实（旧版 .icon-button） */
 .icon-button {
   display: inline-grid; place-items: center; width: calc(32px * var(--space)); height: calc(32px * var(--space)); flex: none; padding: 0;
   border: var(--ghost-border, 0); border-radius: var(--ghost-radius, var(--radius)); background: var(--ghost-bg, transparent); color: var(--ghost-fg, var(--text-soft)); cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color calc(0.15s * var(--motion-scale)) ease, color calc(0.15s * var(--motion-scale)) ease;
 }
 .icon-button:hover { background: var(--ghost-hover, color-mix(in srgb, var(--text) 6%, transparent)); color: var(--ghost-fg-hover, var(--text)); }
 .icon-button:focus-visible, button:focus-visible { outline: var(--focus-ring, 2px solid color-mix(in srgb, var(--accent) 55%, transparent)); outline-offset: 1px; }
@@ -109,7 +109,7 @@ button, textarea { font: inherit; color: inherit; }
    一直在重画，蓝图「性能」） */
 .status-dot::after, .session-unread-dot::after {
   position: absolute; inset: 0; border-radius: var(--r-round); background: currentColor; content: ""; opacity: 0;
-  animation: status-pulse 2.4s ease-in-out infinite; will-change: transform, opacity;
+  animation: status-pulse calc(2.4s * var(--motion-scale)) ease-in-out infinite; will-change: transform, opacity;
 }
 .status-dot.is-connecting { color: var(--gold); }
 .status-dot.is-offline { color: var(--danger); }

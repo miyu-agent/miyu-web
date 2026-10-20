@@ -36,7 +36,7 @@
 .goal-panel-gap { flex: 1; }
 .goal-panel-btn {
   padding: calc(4px * var(--space)) calc(12px * var(--space)); border: var(--btn-border, 0); border-radius: var(--btn-radius, var(--r-8)); background: var(--btn-bg, transparent); color: var(--btn-fg, var(--text-soft)); font: calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color calc(0.15s * var(--motion-scale)) ease, color calc(0.15s * var(--motion-scale)) ease;
 }
 .goal-panel-btn:hover:not(:disabled) { background: var(--btn-hover, var(--surface-2)); color: var(--btn-fg-hover, var(--text)); }
 .goal-panel-btn.is-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--ribbon) 14%, transparent); color: var(--ribbon); }
