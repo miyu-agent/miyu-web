@@ -94,7 +94,7 @@
 }
 .session-item { position: relative; border-radius: var(--radius); transition: background-color 160ms ease; }
 .session-item:hover, .session-item:focus-within, .session-item.is-menu-open { background: var(--item-hover, color-mix(in srgb, var(--text) 3.5%, transparent)); }
-.session-item.active, .session-item.active:hover, .session-item.active:focus-within { background: none; }
+.session-item.is-active, .session-item.is-active:hover, .session-item.is-active:focus-within { background: none; }
 .session-item-main {
   display: grid; grid-template-columns: 11px minmax(0, 1fr); align-items: center; gap: calc(7px * var(--space)); width: 100%; min-height: 30px;
   padding: calc(2px * var(--space)) calc(7px * var(--space)) calc(2px * var(--space)) calc(11px * var(--space)); border: 0; border-radius: var(--radius); background: none; color: var(--text); text-align: left; cursor: pointer;
@@ -116,7 +116,7 @@
   -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent calc(100% - 22px));
   mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent calc(100% - 22px));
 }
-.session-item.active .session-copy strong { font-weight: 500; }
+.session-item.is-active .session-copy strong { font-weight: 500; }
 
 /* 悬停时右边的三个点（照 Claude Code 的侧栏）：标题淡出去让位；按钮自己悬停、菜单开着时再深一层 */
 .session-trailing {
@@ -248,7 +248,7 @@
 .session-paused .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); color: var(--t-warn); }
 .session-run-spinner.is-kids { color: var(--text-soft); }
 .session-item.is-child .session-copy strong { color: var(--text-soft); font-size: calc(12px * var(--text-scale)); }
-.session-item.is-child.active .session-copy strong { color: var(--text); }
+.session-item.is-child.is-active .session-copy strong { color: var(--text); }
 /* 展开、收起整棵的箭头：盖在记号那一格上（2026-09-30 项目主人：原来在最左边，位置怪）。没有别的记号时一直露着；在跑、没看过的
    平常照旧，指针移上去才换成箭头 */
 .session-fold {

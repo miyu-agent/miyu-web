@@ -364,5 +364,4025 @@
     "select": [
       ".tl-step"
     ]
+  },
+  "asking": {
+    "zh": "确认和提问",
+    "select": [
+      ".asking"
+    ]
+  },
+  "asking.who": {
+    "zh": "确认和提问：是谁",
+    "select": [
+      ".asking-who"
+    ]
+  },
+  "asking.label": {
+    "zh": "确认和提问：标签",
+    "select": [
+      ".asking-label"
+    ]
+  },
+  "asking.pager": {
+    "zh": "确认和提问：翻页",
+    "select": [
+      ".asking-pager"
+    ]
+  },
+  "asking.pager-arrow": {
+    "zh": "确认和提问：翻页箭头",
+    "select": [
+      ".asking-pager-arrow"
+    ]
+  },
+  "asking.outside": {
+    "zh": "确认和提问：范围外",
+    "select": [
+      ".asking-outside"
+    ]
+  },
+  "asking.question": {
+    "zh": "确认和提问：问题",
+    "select": [
+      ".asking-question"
+    ]
+  },
+  "asking.path": {
+    "zh": "确认和提问：路径",
+    "select": [
+      ".asking-path"
+    ]
+  },
+  "asking.plan-row": {
+    "zh": "确认和提问：计划一行",
+    "select": [
+      ".asking-plan-row"
+    ]
+  },
+  "asking.plan-label": {
+    "zh": "确认和提问：计划标签",
+    "select": [
+      ".asking-plan-label"
+    ]
+  },
+  "asking.plan-items": {
+    "zh": "确认和提问：计划几项",
+    "select": [
+      ".asking-plan-items"
+    ]
+  },
+  "asking.option": {
+    "zh": "确认和提问：选项",
+    "select": [
+      ".asking-option"
+    ]
+  },
+  "asking.num": {
+    "zh": "确认和提问：序号",
+    "select": [
+      ".asking-num"
+    ]
+  },
+  "asking.check": {
+    "zh": "确认和提问：勾选框",
+    "select": [
+      ".asking-check"
+    ]
+  },
+  "asking.desc": {
+    "zh": "确认和提问：说明",
+    "select": [
+      ".asking-desc"
+    ]
+  },
+  "asking.preview": {
+    "zh": "确认和提问：预览",
+    "select": [
+      ".asking-preview"
+    ]
+  },
+  "asking.notes": {
+    "zh": "补充",
+    "select": [
+      ".asking-notes"
+    ]
+  },
+  "asking.notes-label": {
+    "zh": "确认和提问：补充标签",
+    "select": [
+      ".asking-notes-label"
+    ]
+  },
+  "asking.notes-add": {
+    "zh": "确认和提问：补充添加",
+    "select": [
+      ".asking-notes-add"
+    ]
+  },
+  "asking.review": {
+    "zh": "「确认」页",
+    "select": [
+      ".asking-review"
+    ]
+  },
+  "asking.keys": {
+    "zh": "确认和提问：按键",
+    "select": [
+      ".asking-keys"
+    ]
+  },
+  "asking.cancel": {
+    "zh": "确认和提问：取消",
+    "select": [
+      ".asking-cancel"
+    ]
+  },
+  "asking.card-head": {
+    "zh": "确认和提问：卡片头上一行",
+    "select": [
+      ".asking-card-head"
+    ]
+  },
+  "asking.card-label": {
+    "zh": "确认和提问：卡片标签",
+    "select": [
+      ".asking-card-label"
+    ]
+  },
+  "asking.card-answer": {
+    "zh": "确认和提问：卡片回答",
+    "select": [
+      ".asking-card-answer"
+    ]
+  },
+  "asking.card-notes": {
+    "zh": "确认和提问：卡片补充",
+    "select": [
+      ".asking-card-notes"
+    ]
+  },
+  "asking.report": {
+    "zh": "确认和提问：报告",
+    "select": [
+      ".asking-report"
+    ]
+  },
+  "asking.dot": {
+    "zh": "确认和提问：圆点",
+    "select": [
+      ".asking-dot"
+    ]
+  },
+  "attach.strip": {
+    "zh": "附件：一排",
+    "select": [
+      ".attach-strip"
+    ]
+  },
+  "attach.name": {
+    "zh": "附件：名字",
+    "select": [
+      ".attach-name"
+    ]
+  },
+  "attach.sub": {
+    "zh": "附件：小字",
+    "select": [
+      ".attach-sub"
+    ]
+  },
+  "attach.ext": {
+    "zh": "左下角扩展名的小标签",
+    "select": [
+      ".attach-ext"
+    ]
+  },
+  "attach.play": {
+    "zh": "视频",
+    "select": [
+      ".attach-play"
+    ]
+  },
+  "icon": {
+    "zh": "图标（Lucide）",
+    "select": [
+      ".icon"
+    ]
+  },
+  "attach.busy": {
+    "zh": "在传",
+    "select": [
+      ".attach-busy"
+    ]
+  },
+  "attach.remove": {
+    "zh": "拿掉",
+    "select": [
+      ".attach-remove"
+    ]
+  },
+  "attach.drop": {
+    "zh": "拖文件进来",
+    "select": [
+      ".attach-drop"
+    ]
+  },
+  "attach.drop-card": {
+    "zh": "附件：拖放卡片",
+    "select": [
+      ".attach-drop-card"
+    ]
+  },
+  "attach.drop-text": {
+    "zh": "附件：拖放字",
+    "select": [
+      ".attach-drop-text"
+    ]
+  },
+  "bs.page": {
+    "zh": "软件的独立整页",
+    "select": [
+      ".bs-page"
+    ]
+  },
+  "bs.bar": {
+    "zh": "软件后台：一条",
+    "select": [
+      ".bs-bar"
+    ]
+  },
+  "bs.back": {
+    "zh": "软件后台：返回",
+    "select": [
+      ".bs-back"
+    ]
+  },
+  "bs.face": {
+    "zh": "软件后台：头像",
+    "select": [
+      ".bs-face"
+    ]
+  },
+  "bs.name": {
+    "zh": "软件后台：名字",
+    "select": [
+      ".bs-name"
+    ]
+  },
+  "bs.frame": {
+    "zh": "软件后台：框",
+    "select": [
+      ".bs-frame"
+    ]
+  },
+  "bs.empty": {
+    "zh": "软件后台：空着时",
+    "select": [
+      ".bs-empty"
+    ]
+  },
+  "bs.site": {
+    "zh": "顶栏右边「在新标签页打开」",
+    "select": [
+      ".bs-site"
+    ]
+  },
+  "goal.pill": {
+    "zh": "长期目标：小块",
+    "select": [
+      ".goal-pill"
+    ]
+  },
+  "goal.text": {
+    "zh": "长期目标：字",
+    "select": [
+      ".goal-text"
+    ]
+  },
+  "goal.tail": {
+    "zh": "长期目标：末尾",
+    "select": [
+      ".goal-tail"
+    ]
+  },
+  "goal.panel-state": {
+    "zh": "长期目标：浮层状态",
+    "select": [
+      ".goal-panel-state"
+    ]
+  },
+  "goal.panel-error": {
+    "zh": "长期目标：浮层出错",
+    "select": [
+      ".goal-panel-error"
+    ]
+  },
+  "jobs.pill": {
+    "zh": "框下面那一行中间的按钮",
+    "select": [
+      ".jobs-pill"
+    ]
+  },
+  "jobs.pill-text": {
+    "zh": "后台任务：小块字",
+    "select": [
+      ".jobs-pill-text"
+    ]
+  },
+  "jobs.dot": {
+    "zh": "后台任务：圆点",
+    "select": [
+      ".jobs-dot"
+    ]
+  },
+  "jobs.head-title": {
+    "zh": "后台任务：头上一行标题",
+    "select": [
+      ".jobs-head-title"
+    ]
+  },
+  "jobs.head-count": {
+    "zh": "后台任务：头上一行数目",
+    "select": [
+      ".jobs-head-count"
+    ]
+  },
+  "jobs.stop-all": {
+    "zh": "后台任务：停止全部",
+    "select": [
+      ".jobs-stop-all"
+    ]
+  },
+  "jobs.row": {
+    "zh": "一行",
+    "select": [
+      ".jobs-row"
+    ]
+  },
+  "jobs.mark": {
+    "zh": "左边",
+    "select": [
+      ".jobs-mark"
+    ]
+  },
+  "jobs.state": {
+    "zh": "右边",
+    "select": [
+      ".jobs-state"
+    ]
+  },
+  "jobs.state-mark": {
+    "zh": "后台任务：状态记号",
+    "select": [
+      ".jobs-state-mark"
+    ]
+  },
+  "jobs.square": {
+    "zh": "后台任务：方块",
+    "select": [
+      ".jobs-square"
+    ]
+  },
+  "jobs.id": {
+    "zh": "后台任务：编号",
+    "select": [
+      ".jobs-id"
+    ]
+  },
+  "jobs.title": {
+    "zh": "后台任务：标题",
+    "select": [
+      ".jobs-title"
+    ]
+  },
+  "jobs.spawned": {
+    "zh": "后台任务：派出的",
+    "select": [
+      ".jobs-spawned"
+    ]
+  },
+  "jobs.guide": {
+    "zh": "后台任务：引导线",
+    "select": [
+      ".jobs-guide"
+    ]
+  },
+  "jobs.elbow": {
+    "zh": "后台任务：拐角",
+    "select": [
+      ".jobs-elbow"
+    ]
+  },
+  "jobs.done": {
+    "zh": "「已结束 N 个」",
+    "select": [
+      ".jobs-done"
+    ]
+  },
+  "jobs.empty": {
+    "zh": "后台任务：空着时",
+    "select": [
+      ".jobs-empty"
+    ]
+  },
+  "jobs.fold": {
+    "zh": "展开、收起",
+    "select": [
+      ".jobs-fold"
+    ]
+  },
+  "jobs.preview": {
+    "zh": "后台命令的预览",
+    "select": [
+      ".jobs-preview"
+    ]
+  },
+  "jobs.preview-label": {
+    "zh": "后台任务：预览标签",
+    "select": [
+      ".jobs-preview-label"
+    ]
+  },
+  "jobs.preview-note": {
+    "zh": "后台任务：预览说明",
+    "select": [
+      ".jobs-preview-note"
+    ]
+  },
+  "jobs.command": {
+    "zh": "后台任务：命令",
+    "select": [
+      ".jobs-command"
+    ]
+  },
+  "jobs.output": {
+    "zh": "后台任务：输出",
+    "select": [
+      ".jobs-output"
+    ]
+  },
+  "jobs.stop": {
+    "zh": "后台任务：停止",
+    "select": [
+      ".jobs-stop"
+    ]
+  },
+  "stop.mark": {
+    "zh": "打断按钮里的方块",
+    "select": [
+      ".stop-mark"
+    ]
+  },
+  "lightbox_": {
+    "zh": "灯箱",
+    "select": [
+      ".lightbox"
+    ]
+  },
+  "lightbox.scrim": {
+    "zh": "灯箱：遮罩",
+    "select": [
+      ".lightbox-scrim"
+    ]
+  },
+  "lightbox.card": {
+    "zh": "浮起来的那张卡片",
+    "select": [
+      ".lightbox-card"
+    ]
+  },
+  "lightbox.image": {
+    "zh": "灯箱：图片",
+    "select": [
+      ".lightbox-image"
+    ]
+  },
+  "lightbox.action": {
+    "zh": "灯箱：动作",
+    "select": [
+      ".lightbox-action"
+    ]
+  },
+  "mem.find-input": {
+    "zh": "记忆页：查找写字的框",
+    "select": [
+      ".mem-find-input"
+    ]
+  },
+  "mem.dream": {
+    "zh": "记忆页：整理",
+    "select": [
+      ".mem-dream"
+    ]
+  },
+  "mem.tidying": {
+    "zh": "记忆页：整理中",
+    "select": [
+      ".mem-tidying"
+    ]
+  },
+  "mem.n": {
+    "zh": "记忆页",
+    "select": [
+      ".mem-n"
+    ]
+  },
+  "mem.retired": {
+    "zh": "记忆页：作废的",
+    "select": [
+      ".mem-retired"
+    ]
+  },
+  "mem.row": {
+    "zh": "记忆页：一行",
+    "select": [
+      ".mem-row"
+    ]
+  },
+  "mem.text": {
+    "zh": "记忆页：字",
+    "select": [
+      ".mem-text"
+    ]
+  },
+  "mem.meta": {
+    "zh": "记忆页：附注",
+    "select": [
+      ".mem-meta"
+    ]
+  },
+  "mem.empty": {
+    "zh": "记忆页：空着时",
+    "select": [
+      ".mem-empty"
+    ]
+  },
+  "mem.more": {
+    "zh": "记忆页：更多",
+    "select": [
+      ".mem-more"
+    ]
+  },
+  "mem.foot": {
+    "zh": "记忆页：底下一行",
+    "select": [
+      ".mem-foot"
+    ]
+  },
+  "mem.clear": {
+    "zh": "记忆页：清除",
+    "select": [
+      ".mem-clear"
+    ]
+  },
+  "mem.add": {
+    "zh": "记一条",
+    "select": [
+      ".mem-add"
+    ]
+  },
+  "mem.count": {
+    "zh": "记忆页：数目",
+    "select": [
+      ".mem-count"
+    ]
+  },
+  "mem.back": {
+    "zh": "记忆页：返回",
+    "select": [
+      ".mem-back"
+    ]
+  },
+  "mem.detail-id": {
+    "zh": "记忆页：细节编号",
+    "select": [
+      ".mem-detail-id"
+    ]
+  },
+  "mem.detail": {
+    "zh": "记忆页：细节",
+    "select": [
+      ".mem-detail"
+    ]
+  },
+  "mem.label": {
+    "zh": "记忆页：标签",
+    "select": [
+      ".mem-label"
+    ]
+  },
+  "mem.hint": {
+    "zh": "记忆页：提示",
+    "select": [
+      ".mem-hint"
+    ]
+  },
+  "mem.plain": {
+    "zh": "记忆页：纯文字",
+    "select": [
+      ".mem-plain"
+    ]
+  },
+  "mem.source": {
+    "zh": "记忆页：来源",
+    "select": [
+      ".mem-source"
+    ]
+  },
+  "mem.note": {
+    "zh": "记忆页：说明",
+    "select": [
+      ".mem-note"
+    ]
+  },
+  "mem.retired-banner": {
+    "zh": "记忆页：作废的横幅",
+    "select": [
+      ".mem-retired-banner"
+    ]
+  },
+  "mem.gone": {
+    "zh": "记忆页：没了的",
+    "select": [
+      ".mem-gone"
+    ]
+  },
+  "mermaid.toolbar": {
+    "zh": "「图表」「源码」是中文",
+    "select": [
+      ".mermaid-toolbar"
+    ]
+  },
+  "mermaid.source-toggle": {
+    "zh": "mermaid 图：来源开关",
+    "select": [
+      ".mermaid-source-toggle"
+    ]
+  },
+  "mermaid.figure": {
+    "zh": "mermaid 图：图",
+    "select": [
+      ".mermaid-figure"
+    ]
+  },
+  "dock.pulse": {
+    "zh": "── 运行状态行和排着的话",
+    "select": [
+      ".dock-pulse"
+    ]
+  },
+  "pulse.queued": {
+    "zh": "排着的话",
+    "select": [
+      ".pulse-queued"
+    ]
+  },
+  "pulse.arrow": {
+    "zh": "运行状态行：箭头",
+    "select": [
+      ".pulse-arrow"
+    ]
+  },
+  "pulse.sizer": {
+    "zh": "运行状态行：量尺寸的",
+    "select": [
+      ".pulse-sizer"
+    ]
+  },
+  "pulse.shine": {
+    "zh": "一道亮光从左往右扫",
+    "select": [
+      ".pulse-shine"
+    ]
+  },
+  "pulse.clock": {
+    "zh": "运行状态行：计时",
+    "select": [
+      ".pulse-clock"
+    ]
+  },
+  "pulse.retry": {
+    "zh": "运行状态行：重试",
+    "select": [
+      ".pulse-retry"
+    ]
+  },
+  "rail.line": {
+    "zh": "跳转条：一行",
+    "select": [
+      ".rail-line"
+    ]
+  },
+  "set.side": {
+    "zh": "左边分页",
+    "select": [
+      ".set-side"
+    ]
+  },
+  "set.search": {
+    "zh": "设置页：搜索",
+    "select": [
+      ".set-search"
+    ]
+  },
+  "set.nav-rule": {
+    "zh": "设置页：导航规则",
+    "select": [
+      ".set-nav-rule"
+    ]
+  },
+  "set.dot": {
+    "zh": "设置页：圆点",
+    "select": [
+      ".set-dot"
+    ]
+  },
+  "set.title": {
+    "zh": "设置页：标题",
+    "select": [
+      ".set-title"
+    ]
+  },
+  "set.back": {
+    "zh": "设置页：返回",
+    "select": [
+      ".set-back"
+    ]
+  },
+  "set.empty": {
+    "zh": "设置页：空着时",
+    "select": [
+      ".set-empty"
+    ]
+  },
+  "set.group-name": {
+    "zh": "设置页：一组名字",
+    "select": [
+      ".set-group-name"
+    ]
+  },
+  "set.subgroup-name": {
+    "zh": "设置页：小组名字",
+    "select": [
+      ".set-subgroup-name"
+    ]
+  },
+  "set.row": {
+    "zh": "设置页：一行",
+    "select": [
+      ".set-row"
+    ]
+  },
+  "set.themes": {
+    "zh": "「明暗」那一行下面紧跟着主题卡片",
+    "select": [
+      ".set-themes"
+    ]
+  },
+  "set.name": {
+    "zh": "设置页：名字",
+    "select": [
+      ".set-name"
+    ]
+  },
+  "set.desc": {
+    "zh": "设置页：说明",
+    "select": [
+      ".set-desc"
+    ]
+  },
+  "set.source": {
+    "zh": "设置页：来源",
+    "select": [
+      ".set-source"
+    ]
+  },
+  "set.problem": {
+    "zh": "设置页：问题",
+    "select": [
+      ".set-problem"
+    ]
+  },
+  "set.error": {
+    "zh": "设置页：出错",
+    "select": [
+      ".set-error"
+    ]
+  },
+  "set.banner": {
+    "zh": "设置页：横幅",
+    "select": [
+      ".set-banner"
+    ]
+  },
+  "set.muted": {
+    "zh": "设置页：暗字",
+    "select": [
+      ".set-muted"
+    ]
+  },
+  "set.note": {
+    "zh": "设置页：说明",
+    "select": [
+      ".set-note"
+    ]
+  },
+  "set.reset": {
+    "zh": "设置页：恢复",
+    "select": [
+      ".set-reset"
+    ]
+  },
+  "set.status": {
+    "zh": "设置页：状态",
+    "select": [
+      ".set-status"
+    ]
+  },
+  "set.color": {
+    "zh": "设置页：颜色",
+    "select": [
+      ".set-color"
+    ]
+  },
+  "set.fold-head": {
+    "zh": "设置页：折叠头上一行",
+    "select": [
+      ".set-fold-head"
+    ]
+  },
+  "set.menu-search": {
+    "zh": "选项多的下拉顶上的搜索框",
+    "select": [
+      ".set-menu-search"
+    ]
+  },
+  "set.theme": {
+    "zh": "设置页：主题",
+    "select": [
+      ".set-theme"
+    ]
+  },
+  "set.theme-sample": {
+    "zh": "设置页：主题小样",
+    "select": [
+      ".set-theme-sample"
+    ]
+  },
+  "set.seed": {
+    "zh": "设置页：主色",
+    "select": [
+      ".set-seed"
+    ]
+  },
+  "set.theme-name": {
+    "zh": "设置页：主题名字",
+    "select": [
+      ".set-theme-name"
+    ]
+  },
+  "set.tabs": {
+    "zh": "标签页、分段切换照「深度」",
+    "select": [
+      ".set-tabs"
+    ]
+  },
+  "set.tabbar": {
+    "zh": "设置页：标签栏",
+    "select": [
+      ".set-tabbar"
+    ]
+  },
+  "prov.logo": {
+    "zh": "供应商的图标",
+    "select": [
+      ".prov-logo"
+    ]
+  },
+  "set.prov-note": {
+    "zh": "设置页：供应商说明",
+    "select": [
+      ".set-prov-note"
+    ]
+  },
+  "set.test": {
+    "zh": "设置页：测试",
+    "select": [
+      ".set-test"
+    ]
+  },
+  "set.key-block": {
+    "zh": "密钥",
+    "select": [
+      ".set-key-block"
+    ]
+  },
+  "set.key-why": {
+    "zh": "设置页：密钥原因",
+    "select": [
+      ".set-key-why"
+    ]
+  },
+  "set.key-label": {
+    "zh": "设置页：密钥标签",
+    "select": [
+      ".set-key-label"
+    ]
+  },
+  "set.key-line": {
+    "zh": "设置页：密钥一行",
+    "select": [
+      ".set-key-line"
+    ]
+  },
+  "set.models-head": {
+    "zh": "设置页：模型头上一行",
+    "select": [
+      ".set-models-head"
+    ]
+  },
+  "set.model-id": {
+    "zh": "设置页：模型编号",
+    "select": [
+      ".set-model-id"
+    ]
+  },
+  "set.model-meta": {
+    "zh": "设置页：模型附注",
+    "select": [
+      ".set-model-meta"
+    ]
+  },
+  "set.drawer": {
+    "zh": "设置页：抽屉",
+    "select": [
+      ".set-drawer"
+    ]
+  },
+  "set.drawer-head": {
+    "zh": "设置页：抽屉头上一行",
+    "select": [
+      ".set-drawer-head"
+    ]
+  },
+  "set.prov-warn": {
+    "zh": "第二轮",
+    "select": [
+      ".set-prov-warn"
+    ]
+  },
+  "set.model-state": {
+    "zh": "设置页：模型状态",
+    "select": [
+      ".set-model-state"
+    ]
+  },
+  "set.pick-provider": {
+    "zh": "设置页：选择供应商",
+    "select": [
+      ".set-pick-provider"
+    ]
+  },
+  "set.prices-head": {
+    "zh": "设置页：价格头上一行",
+    "select": [
+      ".set-prices-head"
+    ]
+  },
+  "set.price": {
+    "zh": "设置页：价格",
+    "select": [
+      ".set-price"
+    ]
+  },
+  "set.pkg": {
+    "zh": "能点进去的一行悬停铺淡底",
+    "select": [
+      ".set-pkg"
+    ]
+  },
+  "set.pkg-arrow": {
+    "zh": "设置页：软件包箭头",
+    "select": [
+      ".set-pkg-arrow"
+    ]
+  },
+  "set.pkg-find-input": {
+    "zh": "设置页：软件包查找写字的框",
+    "select": [
+      ".set-pkg-find-input"
+    ]
+  },
+  "set.pkg-face": {
+    "zh": "设置页：软件包头像",
+    "select": [
+      ".set-pkg-face"
+    ]
+  },
+  "set.pkg-status": {
+    "zh": "设置页：软件包状态",
+    "select": [
+      ".set-pkg-status"
+    ]
+  },
+  "set.pkg-line": {
+    "zh": "信息页",
+    "select": [
+      ".set-pkg-line"
+    ]
+  },
+  "set.backstage-by": {
+    "zh": "设置页：后台作者",
+    "select": [
+      ".set-backstage-by"
+    ]
+  },
+  "set.sub-desc": {
+    "zh": "点进去的那一层顶上那一句说明",
+    "select": [
+      ".set-sub-desc"
+    ]
+  },
+  "set.form-title": {
+    "zh": "设置页：表标题",
+    "select": [
+      ".set-form-title"
+    ]
+  },
+  "set.form-row": {
+    "zh": "设置页：表一行",
+    "select": [
+      ".set-form-row"
+    ]
+  },
+  "set.form-fixed": {
+    "zh": "设置页：表固定的",
+    "select": [
+      ".set-form-fixed"
+    ]
+  },
+  "set.seg": {
+    "zh": "设置页：分段",
+    "select": [
+      ".set-seg"
+    ]
+  },
+  "set.seg-item": {
+    "zh": "设置页：分段一项",
+    "select": [
+      ".set-seg-item"
+    ]
+  },
+  "set.new-at": {
+    "zh": "设置页：新建时间",
+    "select": [
+      ".set-new-at"
+    ]
+  },
+  "set.new-hint": {
+    "zh": "设置页：新建提示",
+    "select": [
+      ".set-new-hint"
+    ]
+  },
+  "set.pick-group": {
+    "zh": "选一个模型的选择器",
+    "select": [
+      ".set-pick-group"
+    ]
+  },
+  "set.pick-check": {
+    "zh": "设置页：选择勾选框",
+    "select": [
+      ".set-pick-check"
+    ]
+  },
+  "set.loading": {
+    "zh": "设置页：读着",
+    "select": [
+      ".set-loading"
+    ]
+  },
+  "set.picker-row": {
+    "zh": "设置页：选择列表一行",
+    "select": [
+      ".set-picker-row"
+    ]
+  },
+  "set.check": {
+    "zh": "设置页：勾选框",
+    "select": [
+      ".set-check"
+    ]
+  },
+  "set.picker-foot": {
+    "zh": "设置页：选择列表底下一行",
+    "select": [
+      ".set-picker-foot"
+    ]
+  },
+  "set.members": {
+    "zh": "设置页：成员",
+    "select": [
+      ".set-members"
+    ]
+  },
+  "set.member": {
+    "zh": "设置页：成员",
+    "select": [
+      ".set-member"
+    ]
+  },
+  "set.member-n": {
+    "zh": "设置页：成员",
+    "select": [
+      ".set-member-n"
+    ]
+  },
+  "set.member-tools": {
+    "zh": "设置页：成员工具",
+    "select": [
+      ".set-member-tools"
+    ]
+  },
+  "set.member-tool": {
+    "zh": "设置页：成员工具",
+    "select": [
+      ".set-member-tool"
+    ]
+  },
+  "set.part-name": {
+    "zh": "软件包页的段名",
+    "select": [
+      ".set-part-name"
+    ]
+  },
+  "set.part-hint": {
+    "zh": "段名下面一行暗色的说明",
+    "select": [
+      ".set-part-hint"
+    ]
+  },
+  "set.link": {
+    "zh": "设置页：链接",
+    "select": [
+      ".set-link"
+    ]
+  },
+  "set.ext-output": {
+    "zh": "设置页：扩展名输出",
+    "select": [
+      ".set-ext-output"
+    ]
+  },
+  "set.ext-unapproved": {
+    "zh": "设置页：扩展名未批准",
+    "select": [
+      ".set-ext-unapproved"
+    ]
+  },
+  "set.ext-ask": {
+    "zh": "设置页：扩展名询问",
+    "select": [
+      ".set-ext-ask"
+    ]
+  },
+  "set.ext-ask-title": {
+    "zh": "设置页：扩展名询问标题",
+    "select": [
+      ".set-ext-ask-title"
+    ]
+  },
+  "set.pkg-state": {
+    "zh": "「软件包」页核心那一段",
+    "select": [
+      ".set-pkg-state"
+    ]
+  },
+  "set.prov-danger": {
+    "zh": "设置页：供应商危险",
+    "select": [
+      ".set-prov-danger"
+    ]
+  },
+  "set.pkg-card-name": {
+    "zh": "设置页：软件包卡片名字",
+    "select": [
+      ".set-pkg-card-name"
+    ]
+  },
+  "set.pkg-card-desc": {
+    "zh": "设置页：软件包卡片说明",
+    "select": [
+      ".set-pkg-card-desc"
+    ]
+  },
+  "set.pkg-card-meta": {
+    "zh": "设置页：软件包卡片附注",
+    "select": [
+      ".set-pkg-card-meta"
+    ]
+  },
+  "setup.info-part": {
+    "zh": "人格、预设、工作区：信息部分",
+    "select": [
+      ".setup-info-part"
+    ]
+  },
+  "setup.info-sep": {
+    "zh": "人格、预设、工作区：信息间隔",
+    "select": [
+      ".setup-info-sep"
+    ]
+  },
+  "setup.menu-name": {
+    "zh": "人格、预设、工作区：菜单名字",
+    "select": [
+      ".setup-menu-name"
+    ]
+  },
+  "setup.menu-section": {
+    "zh": "人格、预设、工作区：菜单一节",
+    "select": [
+      ".setup-menu-section"
+    ]
+  },
+  "setup.menu-title": {
+    "zh": "人格、预设、工作区：菜单标题",
+    "select": [
+      ".setup-menu-title"
+    ]
+  },
+  "setup.menu-desc": {
+    "zh": "人格、预设、工作区：菜单说明",
+    "select": [
+      ".setup-menu-desc"
+    ]
+  },
+  "setup.menu-note": {
+    "zh": "人格、预设、工作区：菜单说明",
+    "select": [
+      ".setup-menu-note"
+    ]
+  },
+  "setup.face": {
+    "zh": "人格的头像、预设的图标",
+    "select": [
+      ".setup-face"
+    ]
+  },
+  "setup.pic-main": {
+    "zh": "人格、预设、工作区：图主体",
+    "select": [
+      ".setup-pic-main"
+    ]
+  },
+  "setup.pic-hover": {
+    "zh": "人格、预设、工作区：图悬停",
+    "select": [
+      ".setup-pic-hover"
+    ]
+  },
+  "setup.pic-empty": {
+    "zh": "人格、预设、工作区：图空着时",
+    "select": [
+      ".setup-pic-empty"
+    ]
+  },
+  "setup.pic-remove": {
+    "zh": "人格、预设、工作区：图移除",
+    "select": [
+      ".setup-pic-remove"
+    ]
+  },
+  "setup.swatch": {
+    "zh": "人格、预设、工作区：色块",
+    "select": [
+      ".setup-swatch"
+    ]
+  },
+  "setup.color-input": {
+    "zh": "人格、预设、工作区：颜色写字的框",
+    "select": [
+      ".setup-color-input"
+    ]
+  },
+  "setup.pic-action": {
+    "zh": "人格、预设、工作区：图动作",
+    "select": [
+      ".setup-pic-action"
+    ]
+  },
+  "setup.opacity": {
+    "zh": "透明度那一行",
+    "select": [
+      ".setup-opacity"
+    ]
+  },
+  "setup.opacity-value": {
+    "zh": "人格、预设、工作区：透明度值",
+    "select": [
+      ".setup-opacity-value"
+    ]
+  },
+  "setup.range": {
+    "zh": "滑杆",
+    "select": [
+      ".setup-range"
+    ]
+  },
+  "setup.focus-pic": {
+    "zh": "人格、预设、工作区：焦点图",
+    "select": [
+      ".setup-focus-pic"
+    ]
+  },
+  "setup.focus-dot": {
+    "zh": "人格、预设、工作区：焦点圆点",
+    "select": [
+      ".setup-focus-dot"
+    ]
+  },
+  "setup.focus-sample": {
+    "zh": "人格、预设、工作区：焦点小样",
+    "select": [
+      ".setup-focus-sample"
+    ]
+  },
+  "setup.focus-frame": {
+    "zh": "人格、预设、工作区：焦点框",
+    "select": [
+      ".setup-focus-frame"
+    ]
+  },
+  "setup.crop-stage": {
+    "zh": "人格、预设、工作区：裁剪舞台",
+    "select": [
+      ".setup-crop-stage"
+    ]
+  },
+  "setup.crop-ring": {
+    "zh": "人格、预设、工作区：裁剪一圈",
+    "select": [
+      ".setup-crop-ring"
+    ]
+  },
+  "setup.icon-now": {
+    "zh": "人格、预设、工作区：图标现在的",
+    "select": [
+      ".setup-icon-now"
+    ]
+  },
+  "setup.icon-panel": {
+    "zh": "人格、预设、工作区：图标浮层",
+    "select": [
+      ".setup-icon-panel"
+    ]
+  },
+  "setup.icon-none": {
+    "zh": "人格、预设、工作区：图标没有",
+    "select": [
+      ".setup-icon-none"
+    ]
+  },
+  "setup.icon": {
+    "zh": "人格、预设、工作区：图标",
+    "select": [
+      ".setup-icon"
+    ]
+  },
+  "setup.card": {
+    "zh": "人格、预设、工作区：卡片",
+    "select": [
+      ".setup-card"
+    ]
+  },
+  "setup.card-problem": {
+    "zh": "人格、预设、工作区：卡片问题",
+    "select": [
+      ".setup-card-problem"
+    ]
+  },
+  "setup.note": {
+    "zh": "人格、预设、工作区：说明",
+    "select": [
+      ".setup-note"
+    ]
+  },
+  "setup.empty": {
+    "zh": "人格、预设、工作区：空着时",
+    "select": [
+      ".setup-empty"
+    ]
+  },
+  "setup.intro": {
+    "zh": "人格、预设、工作区：开头",
+    "select": [
+      ".setup-intro"
+    ]
+  },
+  "setup.float-scrim": {
+    "zh": "人格、预设、工作区：浮出遮罩",
+    "select": [
+      ".setup-float-scrim"
+    ]
+  },
+  "setup.float-title": {
+    "zh": "人格、预设、工作区：浮出标题",
+    "select": [
+      ".setup-float-title"
+    ]
+  },
+  "setup.field-name": {
+    "zh": "人格、预设、工作区：框名字",
+    "select": [
+      ".setup-field-name"
+    ]
+  },
+  "setup.pair": {
+    "zh": "人格、预设、工作区：一对",
+    "select": [
+      ".setup-pair"
+    ]
+  },
+  "setup.who": {
+    "zh": "人格、预设、工作区：是谁",
+    "select": [
+      ".setup-who"
+    ]
+  },
+  "setup.drop": {
+    "zh": "人格、预设、工作区：拖放",
+    "select": [
+      ".setup-drop"
+    ]
+  },
+  "setup.feature-group": {
+    "zh": "分段的小标题",
+    "select": [
+      ".setup-feature-group"
+    ]
+  },
+  "setup.feature": {
+    "zh": "人格、预设、工作区：功能",
+    "select": [
+      ".setup-feature"
+    ]
+  },
+  "setup.feature-name": {
+    "zh": "人格、预设、工作区：功能名字",
+    "select": [
+      ".setup-feature-name"
+    ]
+  },
+  "setup.tools": {
+    "zh": "功能下面平铺的工具",
+    "select": [
+      ".setup-tools"
+    ]
+  },
+  "setup.tool": {
+    "zh": "人格、预设、工作区：工具",
+    "select": [
+      ".setup-tool"
+    ]
+  },
+  "setup.missing": {
+    "zh": "人格、预设、工作区：缺的",
+    "select": [
+      ".setup-missing"
+    ]
+  },
+  "setup.error": {
+    "zh": "人格、预设、工作区：出错",
+    "select": [
+      ".setup-error"
+    ]
+  },
+  "setup.link": {
+    "zh": "人格、预设、工作区：链接",
+    "select": [
+      ".setup-link"
+    ]
+  },
+  "setup.choice-name": {
+    "zh": "人格、预设、工作区：选项名字",
+    "select": [
+      ".setup-choice-name"
+    ]
+  },
+  "setup.choice-hint": {
+    "zh": "人格、预设、工作区：选项提示",
+    "select": [
+      ".setup-choice-hint"
+    ]
+  },
+  "setup.choice-check": {
+    "zh": "人格、预设、工作区：选项勾选框",
+    "select": [
+      ".setup-choice-check"
+    ]
+  },
+  "setup.chip": {
+    "zh": "人格、预设、工作区：小块",
+    "select": [
+      ".setup-chip"
+    ]
+  },
+  "setup.choice-wrap": {
+    "zh": "人格、预设、工作区：选项外框",
+    "select": [
+      ".setup-choice-wrap"
+    ]
+  },
+  "setup.palette-sample": {
+    "zh": "人格、预设、工作区：配色小样",
+    "select": [
+      ".setup-palette-sample"
+    ]
+  },
+  "project.note": {
+    "zh": "项目：说明",
+    "select": [
+      ".project-note"
+    ]
+  },
+  "project.swatch": {
+    "zh": "项目：色块",
+    "select": [
+      ".project-swatch"
+    ]
+  },
+  "project.toggle": {
+    "zh": "项目：开关",
+    "select": [
+      ".project-toggle"
+    ]
+  },
+  "setup.info-slash": {
+    "zh": "人格、预设、工作区：信息斜杠命令",
+    "select": [
+      ".setup-info-slash"
+    ]
+  },
+  "setup.menu-label": {
+    "zh": "人格、预设、工作区：菜单标签",
+    "select": [
+      ".setup-menu-label"
+    ]
+  },
+  "setup.menu-more": {
+    "zh": "人格、预设、工作区：菜单更多",
+    "select": [
+      ".setup-menu-more"
+    ]
+  },
+  "setup.menu-divider": {
+    "zh": "人格、预设、工作区：菜单分隔线",
+    "select": [
+      ".setup-menu-divider"
+    ]
+  },
+  "setup.menu-back": {
+    "zh": "翻进来的那一页标题前面的返回箭头",
+    "select": [
+      ".setup-menu-back"
+    ]
+  },
+  "app.shell": {
+    "zh": "底色那一层盖整个窗口",
+    "select": [
+      ".app-shell"
+    ]
+  },
+  "dock.todo": {
+    "zh": "── 待办",
+    "select": [
+      ".dock-todo"
+    ]
+  },
+  "todo.head": {
+    "zh": "待办：头上一行",
+    "select": [
+      ".todo-head"
+    ]
+  },
+  "todo.mark": {
+    "zh": "待办：记号",
+    "select": [
+      ".todo-mark"
+    ]
+  },
+  "todo.row": {
+    "zh": "照 TUI",
+    "select": [
+      ".todo-row"
+    ]
+  },
+  "todo.text": {
+    "zh": "待办：字",
+    "select": [
+      ".todo-text"
+    ]
+  },
+  "use.stamp": {
+    "zh": "用量页：时间戳",
+    "select": [
+      ".use-stamp"
+    ]
+  },
+  "use.custom": {
+    "zh": "用量页：自定义",
+    "select": [
+      ".use-custom"
+    ]
+  },
+  "use.tile-k": {
+    "zh": "用量页：格子",
+    "select": [
+      ".use-tile-k"
+    ]
+  },
+  "use.tile-v": {
+    "zh": "用量页：格子",
+    "select": [
+      ".use-tile-v"
+    ]
+  },
+  "use.tile-s": {
+    "zh": "用量页：格子",
+    "select": [
+      ".use-tile-s"
+    ]
+  },
+  "use.legend": {
+    "zh": "用量页：图例",
+    "select": [
+      ".use-legend"
+    ]
+  },
+  "use.c-hit": {
+    "zh": "用量页：命中",
+    "select": [
+      ".use-c-hit"
+    ]
+  },
+  "use.c-new": {
+    "zh": "用量页：新建",
+    "select": [
+      ".use-c-new"
+    ]
+  },
+  "use.c-out": {
+    "zh": "用量页：输出",
+    "select": [
+      ".use-c-out"
+    ]
+  },
+  "use.grid": {
+    "zh": "用量页：网格",
+    "select": [
+      ".use-grid"
+    ]
+  },
+  "use.hot": {
+    "zh": "用量页：热点",
+    "select": [
+      ".use-hot"
+    ]
+  },
+  "use.sum": {
+    "zh": "用量页：合计",
+    "select": [
+      ".use-sum"
+    ]
+  },
+  "use.cursor": {
+    "zh": "用量页：光标",
+    "select": [
+      ".use-cursor"
+    ]
+  },
+  "use.tip-head": {
+    "zh": "用量页：提示头上一行",
+    "select": [
+      ".use-tip-head"
+    ]
+  },
+  "use.tip-k": {
+    "zh": "用量页：提示",
+    "select": [
+      ".use-tip-k"
+    ]
+  },
+  "use.tip-rule": {
+    "zh": "用量页：提示规则",
+    "select": [
+      ".use-tip-rule"
+    ]
+  },
+  "use.tip-more": {
+    "zh": "用量页：提示更多",
+    "select": [
+      ".use-tip-more"
+    ]
+  },
+  "use.tip-none": {
+    "zh": "用量页：提示没有",
+    "select": [
+      ".use-tip-none"
+    ]
+  },
+  "use.empty": {
+    "zh": "用量页：空着时",
+    "select": [
+      ".use-empty"
+    ]
+  },
+  "use.tabs": {
+    "zh": "用量页：标签页",
+    "select": [
+      ".use-tabs"
+    ]
+  },
+  "use.tab": {
+    "zh": "用量页：标签页",
+    "select": [
+      ".use-tab"
+    ]
+  },
+  "use.table": {
+    "zh": "列宽是定的",
+    "select": [
+      ".use-table"
+    ]
+  },
+  "use.row": {
+    "zh": "用量页：一行",
+    "select": [
+      ".use-row"
+    ]
+  },
+  "use.sub": {
+    "zh": "用量页：小字",
+    "select": [
+      ".use-sub"
+    ]
+  },
+  "use.faint": {
+    "zh": "用量页：淡字",
+    "select": [
+      ".use-faint"
+    ]
+  },
+  "use.more": {
+    "zh": "用量页：更多",
+    "select": [
+      ".use-more"
+    ]
+  },
+  "use.share": {
+    "zh": "用量页：占比",
+    "select": [
+      ".use-share"
+    ]
+  },
+  "use.modal": {
+    "zh": "用量页：弹窗",
+    "select": [
+      ".use-modal"
+    ]
+  },
+  "use.pop-head": {
+    "zh": "用量页：浮层头上一行",
+    "select": [
+      ".use-pop-head"
+    ]
+  },
+  "use.stat": {
+    "zh": "上面一排",
+    "select": [
+      ".use-stat"
+    ]
+  },
+  "use.stat-v": {
+    "zh": "用量页：数",
+    "select": [
+      ".use-stat-v"
+    ]
+  },
+  "use.stat-k": {
+    "zh": "用量页：数",
+    "select": [
+      ".use-stat-k"
+    ]
+  },
+  "use.stat-dot": {
+    "zh": "用量页：数圆点",
+    "select": [
+      ".use-stat-dot"
+    ]
+  },
+  "use.stat-more": {
+    "zh": "用量页：数更多",
+    "select": [
+      ".use-stat-more"
+    ]
+  },
+  "use.split": {
+    "zh": "用量页：分开",
+    "select": [
+      ".use-split"
+    ]
+  },
+  "use.split-head": {
+    "zh": "用量页：分开头上一行",
+    "select": [
+      ".use-split-head"
+    ]
+  },
+  "use.split-row": {
+    "zh": "用量页：分开一行",
+    "select": [
+      ".use-split-row"
+    ]
+  },
+  "use.all": {
+    "zh": "用量页：全部",
+    "select": [
+      ".use-all"
+    ]
+  },
+  "use.problem": {
+    "zh": "用量页：问题",
+    "select": [
+      ".use-problem"
+    ]
+  },
+  "wl.ground": {
+    "zh": "盖在内容上面一层",
+    "select": [
+      ".wl-ground"
+    ]
+  },
+  "wl.where": {
+    "zh": "第一次引导：位置",
+    "select": [
+      ".wl-where"
+    ]
+  },
+  "wl.title": {
+    "zh": "第一次引导：标题",
+    "select": [
+      ".wl-title"
+    ]
+  },
+  "wl.sub": {
+    "zh": "第一次引导：小字",
+    "select": [
+      ".wl-sub"
+    ]
+  },
+  "wl.wait": {
+    "zh": "第一次引导：等待",
+    "select": [
+      ".wl-wait"
+    ]
+  },
+  "wl.error": {
+    "zh": "第一次引导：出错",
+    "select": [
+      ".wl-error"
+    ]
+  },
+  "wl.foot": {
+    "zh": "窗口矮的时候「上一步」「下一步」钉在地面正上方",
+    "select": [
+      ".wl-foot"
+    ]
+  },
+  "wl.link": {
+    "zh": "第一次引导：链接",
+    "select": [
+      ".wl-link"
+    ]
+  },
+  "wl.btn": {
+    "zh": "第一次引导：按钮",
+    "select": [
+      ".wl-btn"
+    ]
+  },
+  "wl.hint": {
+    "zh": "欢迎页",
+    "select": [
+      ".wl-hint"
+    ]
+  },
+  "wl.pill": {
+    "zh": "第一次引导：小块",
+    "select": [
+      ".wl-pill"
+    ]
+  },
+  "wl.lang": {
+    "zh": "第一次引导：语言",
+    "select": [
+      ".wl-lang"
+    ]
+  },
+  "ob.row": {
+    "zh": "第一次引导：一行",
+    "select": [
+      ".ob-row"
+    ]
+  },
+  "ob.model": {
+    "zh": "第一次引导：模型",
+    "select": [
+      ".ob-model"
+    ]
+  },
+  "wl.lang-note": {
+    "zh": "第一次引导：语言说明",
+    "select": [
+      ".wl-lang-note"
+    ]
+  },
+  "ob.model-note": {
+    "zh": "第一次引导：模型说明",
+    "select": [
+      ".ob-model-note"
+    ]
+  },
+  "wl.tag": {
+    "zh": "第一次引导：标签",
+    "select": [
+      ".wl-tag"
+    ]
+  },
+  "wl.dl-bar": {
+    "zh": "第一次引导：清单一条",
+    "select": [
+      ".wl-dl-bar"
+    ]
+  },
+  "wl.dl-words": {
+    "zh": "第一次引导：清单词",
+    "select": [
+      ".wl-dl-words"
+    ]
+  },
+  "ob.group-name": {
+    "zh": "第一次引导：一组名字",
+    "select": [
+      ".ob-group-name"
+    ]
+  },
+  "ob.tag": {
+    "zh": "第一次引导：标签",
+    "select": [
+      ".ob-tag"
+    ]
+  },
+  "setup.choice-open": {
+    "zh": "人格、预设、工作区：选项打开",
+    "select": [
+      ".setup-choice-open"
+    ]
+  },
+  "ob.rows": {
+    "zh": "长的列表在自己的框里滚",
+    "select": [
+      ".ob-rows"
+    ]
+  },
+  "ob.scroll": {
+    "zh": "长的列表在自己的框里滚",
+    "select": [
+      ".ob-scroll"
+    ]
+  },
+  "ob.model-list": {
+    "zh": "第一次引导：模型列表",
+    "select": [
+      ".ob-model-list"
+    ]
+  },
+  "ob.input": {
+    "zh": "输入框、下拉、开关",
+    "select": [
+      ".ob-input"
+    ]
+  },
+  "wl.area": {
+    "zh": "输入框、下拉、开关",
+    "select": [
+      ".wl-area"
+    ]
+  },
+  "ob.search": {
+    "zh": "输入框、下拉、开关",
+    "select": [
+      ".ob-search"
+    ]
+  },
+  "setup.pic": {
+    "zh": "人格、预设、工作区：图",
+    "select": [
+      ".setup-pic"
+    ]
+  },
+  "ob.field-name": {
+    "zh": "第一次引导：框名字",
+    "select": [
+      ".ob-field-name"
+    ]
+  },
+  "wl.star": {
+    "zh": "第一次引导：星",
+    "select": [
+      ".wl-star"
+    ]
+  },
+  "wl.preview": {
+    "zh": "主题那一屏的小窗口",
+    "select": [
+      ".wl-preview"
+    ]
+  },
+  "wl.preview-side": {
+    "zh": "第一次引导：预览侧边",
+    "select": [
+      ".wl-preview-side"
+    ]
+  },
+  "wl.preview-me": {
+    "zh": "引导里主题小样：你的话",
+    "select": [
+      ".wl-preview-chat .me"
+    ]
+  },
+  "wl.preview-ai": {
+    "zh": "引导里主题小样：回答的那几行",
+    "select": [
+      ".wl-preview-chat .ai"
+    ]
+  },
+  "wl.preview-box": {
+    "zh": "引导里主题小样：输入框",
+    "select": [
+      ".wl-preview-chat .box"
+    ]
+  },
+  "wl.preview-send": {
+    "zh": "引导里主题小样：发送按钮",
+    "select": [
+      ".wl-preview-chat .send"
+    ]
+  },
+  "wg.block": {
+    "zh": "界面块：一块",
+    "select": [
+      ".wg-block"
+    ]
+  },
+  "wg.head": {
+    "zh": "界面块：头上一行",
+    "select": [
+      ".wg-head"
+    ]
+  },
+  "wg.title": {
+    "zh": "界面块：标题",
+    "select": [
+      ".wg-title"
+    ]
+  },
+  "wg.off": {
+    "zh": "界面块：关着",
+    "select": [
+      ".wg-off"
+    ]
+  },
+  "wg.empty": {
+    "zh": "界面块：空着时",
+    "select": [
+      ".wg-empty"
+    ]
+  },
+  "wg.heading": {
+    "zh": "界面块：小标题",
+    "select": [
+      ".wg-heading"
+    ]
+  },
+  "wg.label": {
+    "zh": "界面块：标签",
+    "select": [
+      ".wg-label"
+    ]
+  },
+  "wg.bar": {
+    "zh": "界面块：一条",
+    "select": [
+      ".wg-bar"
+    ]
+  },
+  "wg.fill": {
+    "zh": "界面块：填充",
+    "select": [
+      ".wg-fill"
+    ]
+  },
+  "wg.mark": {
+    "zh": "界面块：记号",
+    "select": [
+      ".wg-mark"
+    ]
+  },
+  "wg.progress-text": {
+    "zh": "界面块：进度字",
+    "select": [
+      ".wg-progress-text"
+    ]
+  },
+  "wg.item": {
+    "zh": "界面块：一项",
+    "select": [
+      ".wg-item"
+    ]
+  },
+  "wg.state": {
+    "zh": "界面块：状态",
+    "select": [
+      ".wg-state"
+    ]
+  },
+  "wg.mark-doing": {
+    "zh": "界面块：记号在做",
+    "select": [
+      ".wg-mark-doing"
+    ]
+  },
+  "wg.item-detail": {
+    "zh": "界面块：一项细节",
+    "select": [
+      ".wg-item-detail"
+    ]
+  },
+  "wg.right": {
+    "zh": "界面块：右边",
+    "select": [
+      ".wg-right"
+    ]
+  },
+  "wg.more": {
+    "zh": "界面块：更多",
+    "select": [
+      ".wg-more"
+    ]
+  },
+  "wg.tone-dim": {
+    "zh": "语气",
+    "select": [
+      ".wg-tone-dim"
+    ]
+  },
+  "wg.tone-accent": {
+    "zh": "界面块：语气色主色",
+    "select": [
+      ".wg-tone-accent"
+    ]
+  },
+  "wg.tone-good": {
+    "zh": "界面块：语气色好",
+    "select": [
+      ".wg-tone-good"
+    ]
+  },
+  "wg.tone-warn": {
+    "zh": "界面块：语气色警告",
+    "select": [
+      ".wg-tone-warn"
+    ]
+  },
+  "wg.tone-bad": {
+    "zh": "界面块：语气色坏",
+    "select": [
+      ".wg-tone-bad"
+    ]
+  },
+  "wg.forms": {
+    "zh": "界面块：表单",
+    "select": [
+      ".wg-forms"
+    ]
+  },
+  "wg.f-notice": {
+    "zh": "界面块：f提示",
+    "select": [
+      ".wg-f-notice"
+    ]
+  },
+  "wg.sec-item": {
+    "zh": "界面块：分节一项",
+    "select": [
+      ".wg-sec-item"
+    ]
+  },
+  "wg.avatar": {
+    "zh": "界面块：头像",
+    "select": [
+      ".wg-avatar"
+    ]
+  },
+  "wg.sec-title": {
+    "zh": "界面块：分节标题",
+    "select": [
+      ".wg-sec-title"
+    ]
+  },
+  "wg.sec-name": {
+    "zh": "界面块：分节名字",
+    "select": [
+      ".wg-sec-name"
+    ]
+  },
+  "wg.sec-sub": {
+    "zh": "界面块：分节小字",
+    "select": [
+      ".wg-sec-sub"
+    ]
+  },
+  "wg.dot": {
+    "zh": "界面块：圆点",
+    "select": [
+      ".wg-dot"
+    ]
+  },
+  "wg.sec-detail": {
+    "zh": "界面块：分节细节",
+    "select": [
+      ".wg-sec-detail"
+    ]
+  },
+  "wg.sec-back": {
+    "zh": "界面块：分节返回",
+    "select": [
+      ".wg-sec-back"
+    ]
+  },
+  "wg.f-label": {
+    "zh": "界面块：f标签",
+    "select": [
+      ".wg-f-label"
+    ]
+  },
+  "wg.f-hint": {
+    "zh": "界面块：f提示",
+    "select": [
+      ".wg-f-hint"
+    ]
+  },
+  "wg.f-tail": {
+    "zh": "界面块：f末尾",
+    "select": [
+      ".wg-f-tail"
+    ]
+  },
+  "wg.f-default": {
+    "zh": "界面块：f默认",
+    "select": [
+      ".wg-f-default"
+    ]
+  },
+  "wg.f-restore": {
+    "zh": "界面块：f恢复",
+    "select": [
+      ".wg-f-restore"
+    ]
+  },
+  "wg.f-faint": {
+    "zh": "界面块：f淡字",
+    "select": [
+      ".wg-f-faint"
+    ]
+  },
+  "wg.f-problem": {
+    "zh": "界面块：f问题",
+    "select": [
+      ".wg-f-problem"
+    ]
+  },
+  "wg.f-conflict": {
+    "zh": "界面块：f冲突",
+    "select": [
+      ".wg-f-conflict"
+    ]
+  },
+  "wg.f-message": {
+    "zh": "界面块：f消息",
+    "select": [
+      ".wg-f-message"
+    ]
+  },
+  "wg.f-saved": {
+    "zh": "界面块：f存好的",
+    "select": [
+      ".wg-f-saved"
+    ]
+  },
+  "wg.switch": {
+    "zh": "界面块：切换",
+    "select": [
+      ".wg-switch"
+    ]
+  },
+  "wg.chip-x": {
+    "zh": "界面块：小块关闭",
+    "select": [
+      ".wg-chip-x"
+    ]
+  },
+  "wg.chip-add": {
+    "zh": "界面块：小块添加",
+    "select": [
+      ".wg-chip-add"
+    ]
+  },
+  "artifact.empty": {
+    "zh": "预览工作区：空着时",
+    "select": [
+      ".artifact-empty"
+    ]
+  },
+  "artifact.title-button": {
+    "zh": "预览工作区：标题按钮",
+    "select": [
+      ".artifact-title-button"
+    ]
+  },
+  "artifact.resource-remove": {
+    "zh": "预览工作区：资源移除",
+    "select": [
+      ".artifact-resource-remove"
+    ]
+  },
+  "artifact.action": {
+    "zh": "预览工作区：动作",
+    "select": [
+      ".artifact-action"
+    ]
+  },
+  "artifact.markdown": {
+    "zh": "预览工作区：Markdown",
+    "select": [
+      ".artifact-markdown"
+    ]
+  },
+  "artifact.source": {
+    "zh": "预览工作区：来源",
+    "select": [
+      ".artifact-source"
+    ]
+  },
+  "artifact.line-numbers": {
+    "zh": "预览工作区：一行数字",
+    "select": [
+      ".artifact-line-numbers"
+    ]
+  },
+  "artifact.code": {
+    "zh": "预览工作区：代码",
+    "select": [
+      ".artifact-code"
+    ]
+  },
+  "artifact.frame": {
+    "zh": "预览工作区：框",
+    "select": [
+      ".artifact-frame"
+    ]
+  },
+  "artifact.loading": {
+    "zh": "预览工作区：读着",
+    "select": [
+      ".artifact-loading"
+    ]
+  },
+  "artifact.failure": {
+    "zh": "预览工作区：失败",
+    "select": [
+      ".artifact-failure"
+    ]
+  },
+  "artifact.toggle": {
+    "zh": "预览工作区：开关",
+    "select": [
+      ".artifact-toggle"
+    ]
+  },
+  "status.dot": {
+    "zh": "在线的圆点",
+    "select": [
+      ".status-dot"
+    ]
+  },
+  "session.unread-dot": {
+    "zh": "呼吸的那一圈",
+    "select": [
+      ".session-unread-dot"
+    ]
+  },
+  "fatal": {
+    "zh": "起不来时整页一句话",
+    "select": [
+      ".fatal"
+    ]
+  },
+  "boot.wait": {
+    "zh": "连着桥、连不上桥",
+    "select": [
+      ".boot-wait"
+    ]
+  },
+  "boot.why": {
+    "zh": "启动：原因",
+    "select": [
+      ".boot-why"
+    ]
+  },
+  "boot.how": {
+    "zh": "启动：做法",
+    "select": [
+      ".boot-how"
+    ]
+  },
+  "unfold.inner": {
+    "zh": "展开收起的里层",
+    "select": [
+      ".unfold-inner"
+    ]
+  },
+  "chat.fade": {
+    "zh": "淡出",
+    "select": [
+      ".chat-fade"
+    ]
+  },
+  "chat.fade-top": {
+    "zh": "顶上的淡出",
+    "select": [
+      ".chat-fade-top"
+    ]
+  },
+  "user.speaker": {
+    "zh": "别人说的",
+    "select": [
+      ".user-speaker"
+    ]
+  },
+  "compacting.wait": {
+    "zh": "自动压缩停下来等的那一行",
+    "select": [
+      ".compacting-wait"
+    ]
+  },
+  "compacting.line": {
+    "zh": "压缩：一行",
+    "select": [
+      ".compacting-line"
+    ]
+  },
+  "compacting.label": {
+    "zh": "压缩：标签",
+    "select": [
+      ".compacting-label"
+    ]
+  },
+  "compacting.dots": {
+    "zh": "压缩：点",
+    "select": [
+      ".compacting-dots"
+    ]
+  },
+  "compacting.count": {
+    "zh": "字数紧跟在点后面",
+    "select": [
+      ".compacting-count"
+    ]
+  },
+  "compacting.track": {
+    "zh": "压缩：轨道",
+    "select": [
+      ".compacting-track"
+    ]
+  },
+  "compacting.fill": {
+    "zh": "压缩进度条走过的一段",
+    "select": [
+      ".compacting-fill"
+    ]
+  },
+  "compacting.pct": {
+    "zh": "压缩：百分比",
+    "select": [
+      ".compacting-pct"
+    ]
+  },
+  "note.mark": {
+    "zh": "压缩失败那一行",
+    "select": [
+      ".note-mark"
+    ]
+  },
+  "note.text": {
+    "zh": "压缩失败那一行",
+    "select": [
+      ".note-text"
+    ]
+  },
+  "note.recap-head": {
+    "zh": "回报那一行：回顾头上一行",
+    "select": [
+      ".note-recap-head"
+    ]
+  },
+  "note.recap-text": {
+    "zh": "回报那一行：回顾字",
+    "select": [
+      ".note-recap-text"
+    ]
+  },
+  "note.line": {
+    "zh": "回报那一行：一行",
+    "select": [
+      ".note-line"
+    ]
+  },
+  "tl.chevron": {
+    "zh": "时间线：折叠箭头",
+    "select": [
+      ".tl-chevron"
+    ]
+  },
+  "note.detail": {
+    "zh": "回报那一行：细节",
+    "select": [
+      ".note-detail"
+    ]
+  },
+  "tl.fold": {
+    "zh": "时间线：折叠",
+    "select": [
+      ".tl-fold"
+    ]
+  },
+  "note.detail-head": {
+    "zh": "回报那一行：细节头上一行",
+    "select": [
+      ".note-detail-head"
+    ]
+  },
+  "note.report": {
+    "zh": "子代理交回的报告",
+    "select": [
+      ".note-report"
+    ]
+  },
+  "conversation.media-visual": {
+    "zh": "对话里的媒体：媒体画面",
+    "select": [
+      ".conversation-media-visual"
+    ]
+  },
+  "user.file-name": {
+    "zh": "你的话：文件名字",
+    "select": [
+      ".user-file-name"
+    ]
+  },
+  "user.file-sub": {
+    "zh": "你的话：文件小字",
+    "select": [
+      ".user-file-sub"
+    ]
+  },
+  "user.file-ext": {
+    "zh": "你的话：文件扩展名",
+    "select": [
+      ".user-file-ext"
+    ]
+  },
+  "user.video": {
+    "zh": "你的话里的视频",
+    "select": [
+      ".user-video"
+    ]
+  },
+  "user.video-play": {
+    "zh": "你的话：视频播放",
+    "select": [
+      ".user-video-play"
+    ]
+  },
+  "user.video-player": {
+    "zh": "你的话：视频播放器",
+    "select": [
+      ".user-video-player"
+    ]
+  },
+  "assistant.initial": {
+    "zh": "人格没有头像",
+    "select": [
+      ".assistant-initial"
+    ]
+  },
+  "turn.end": {
+    "zh": "一轮：末尾",
+    "select": [
+      ".turn-end"
+    ]
+  },
+  "tone.error": {
+    "zh": "出错的语气色",
+    "select": [
+      ".tone-error"
+    ]
+  },
+  "turn.end-jobs": {
+    "zh": "打断的那一轮后面那一句「后台还有 N 个在跑」",
+    "select": [
+      ".turn-end-jobs"
+    ]
+  },
+  "user.actions": {
+    "zh": "你的话",
+    "select": [
+      ".user-actions"
+    ]
+  },
+  "turn.actions": {
+    "zh": "她的一轮",
+    "select": [
+      ".turn-actions"
+    ]
+  },
+  "edit.input": {
+    "zh": "编辑：写字的框",
+    "select": [
+      ".edit-input"
+    ]
+  },
+  "edit.cancel": {
+    "zh": "编辑：取消",
+    "select": [
+      ".edit-cancel"
+    ]
+  },
+  "edit.send": {
+    "zh": "编辑：发送",
+    "select": [
+      ".edit-send"
+    ]
+  },
+  "slot.failed": {
+    "zh": "挂载位里出错的那一块",
+    "select": [
+      ".slot-failed"
+    ]
+  },
+  "chat.crumbs": {
+    "zh": "子代理的会话顶上那条路径",
+    "select": [
+      ".chat-crumbs"
+    ]
+  },
+  "crumb.path": {
+    "zh": "路径：路径",
+    "select": [
+      ".crumb-path"
+    ]
+  },
+  "crumb": {
+    "zh": "路径：",
+    "select": [
+      ".crumb"
+    ]
+  },
+  "crumb.sep": {
+    "zh": "路径：间隔",
+    "select": [
+      ".crumb-sep"
+    ]
+  },
+  "crumb.gap": {
+    "zh": "路径：空隙",
+    "select": [
+      ".crumb-gap"
+    ]
+  },
+  "bridge.lost": {
+    "zh": "桥重启过、换了口令",
+    "select": [
+      ".bridge-lost"
+    ]
+  },
+  "chat.older": {
+    "zh": "正文最上面一行",
+    "select": [
+      ".chat-older"
+    ]
+  },
+  "composer.backdrop": {
+    "zh": "两层排字的设置写成一模一样",
+    "select": [
+      ".composer-backdrop"
+    ]
+  },
+  "composer.block": {
+    "zh": "输入框：一块",
+    "select": [
+      ".composer-block"
+    ]
+  },
+  "good": {
+    "zh": "好消息不画描边",
+    "select": [
+      ".good"
+    ]
+  },
+  "footer.level": {
+    "zh": "框下面那一行：级别",
+    "select": [
+      ".footer-level"
+    ]
+  },
+  "level.workspace": {
+    "zh": "权限级别：工作区",
+    "select": [
+      ".level-workspace"
+    ]
+  },
+  "level.full": {
+    "zh": "权限级别：开放",
+    "select": [
+      ".level-full"
+    ]
+  },
+  "level.read_only": {
+    "zh": "权限级别：只读",
+    "select": [
+      ".level-read_only"
+    ]
+  },
+  "composer.takeover-ghost": {
+    "zh": "收起时留着淡掉的那一份抽屉",
+    "select": [
+      ".composer-takeover-ghost"
+    ]
+  },
+  "composer.stash": {
+    "zh": "输入框：已暂存",
+    "select": [
+      ".composer-stash"
+    ]
+  },
+  "footer.model": {
+    "zh": "框下面那一行：模型",
+    "select": [
+      ".footer-model"
+    ]
+  },
+  "footer.model-name": {
+    "zh": "框下面那一行：模型名字",
+    "select": [
+      ".footer-model-name"
+    ]
+  },
+  "footer.model-prov": {
+    "zh": "框下面那一行：模型供应商",
+    "select": [
+      ".footer-model-prov"
+    ]
+  },
+  "footer.model-effort": {
+    "zh": "框下面那一行：模型思考强度",
+    "select": [
+      ".footer-model-effort"
+    ]
+  },
+  "model.menu-search-input": {
+    "zh": "换模型的菜单：菜单搜索写字的框",
+    "select": [
+      ".model-menu-search-input"
+    ]
+  },
+  "model.menu-desc": {
+    "zh": "换模型的菜单：菜单说明",
+    "select": [
+      ".model-menu-desc"
+    ]
+  },
+  "model.menu-note": {
+    "zh": "换模型的菜单：菜单说明",
+    "select": [
+      ".model-menu-note"
+    ]
+  },
+  "model.menu-line": {
+    "zh": "思考强度那一行",
+    "select": [
+      ".model-menu-line"
+    ]
+  },
+  "model.menu-value": {
+    "zh": "换模型的菜单：菜单值",
+    "select": [
+      ".model-menu-value"
+    ]
+  },
+  "model.menu-tab": {
+    "zh": "换模型的菜单：菜单标签页",
+    "select": [
+      ".model-menu-tab"
+    ]
+  },
+  "commands.head": {
+    "zh": "命令列表：头上一行",
+    "select": [
+      ".commands-head"
+    ]
+  },
+  "command.name": {
+    "zh": "命令列表：名字",
+    "select": [
+      ".command-name"
+    ]
+  },
+  "command.alias": {
+    "zh": "命令列表：别名",
+    "select": [
+      ".command-alias"
+    ]
+  },
+  "command.arg": {
+    "zh": "命令列表：参数",
+    "select": [
+      ".command-arg"
+    ]
+  },
+  "command.summary": {
+    "zh": "命令列表：摘要",
+    "select": [
+      ".command-summary"
+    ]
+  },
+  "picker.title": {
+    "zh": "选择列表：标题",
+    "select": [
+      ".picker-title"
+    ]
+  },
+  "picker.hint": {
+    "zh": "选择列表：提示",
+    "select": [
+      ".picker-hint"
+    ]
+  },
+  "picker.label": {
+    "zh": "选择列表：标签",
+    "select": [
+      ".picker-label"
+    ]
+  },
+  "picker.desc": {
+    "zh": "选择列表：说明",
+    "select": [
+      ".picker-desc"
+    ]
+  },
+  "picker.action": {
+    "zh": "选择列表：动作",
+    "select": [
+      ".picker-action"
+    ]
+  },
+  "picker.note": {
+    "zh": "选择列表：说明",
+    "select": [
+      ".picker-note"
+    ]
+  },
+  "help.section": {
+    "zh": "按键帮助：一节",
+    "select": [
+      ".help-section"
+    ]
+  },
+  "help.key": {
+    "zh": "按键帮助：按键",
+    "select": [
+      ".help-key"
+    ]
+  },
+  "help.what": {
+    "zh": "按键帮助：做什么",
+    "select": [
+      ".help-what"
+    ]
+  },
+  "history.title": {
+    "zh": "历史：标题",
+    "select": [
+      ".history-title"
+    ]
+  },
+  "history.count": {
+    "zh": "历史：数目",
+    "select": [
+      ".history-count"
+    ]
+  },
+  "history.body": {
+    "zh": "历史：正文",
+    "select": [
+      ".history-body"
+    ]
+  },
+  "history.text": {
+    "zh": "历史：字",
+    "select": [
+      ".history-text"
+    ]
+  },
+  "history.lines": {
+    "zh": "历史：几行",
+    "select": [
+      ".history-lines"
+    ]
+  },
+  "history.rest": {
+    "zh": "历史：其余",
+    "select": [
+      ".history-rest"
+    ]
+  },
+  "history.ago": {
+    "zh": "历史：多久以前",
+    "select": [
+      ".history-ago"
+    ]
+  },
+  "history.empty": {
+    "zh": "历史：空着时",
+    "select": [
+      ".history-empty"
+    ]
+  },
+  "history.hint": {
+    "zh": "历史：提示",
+    "select": [
+      ".history-hint"
+    ]
+  },
+  "slist.title": {
+    "zh": "会话列表：标题",
+    "select": [
+      ".slist-title"
+    ]
+  },
+  "slist.count": {
+    "zh": "会话列表：数目",
+    "select": [
+      ".slist-count"
+    ]
+  },
+  "slist.mark": {
+    "zh": "会话列表：记号",
+    "select": [
+      ".slist-mark"
+    ]
+  },
+  "session.run-spinner": {
+    "zh": "左栏的会话：运行转圈",
+    "select": [
+      ".session-run-spinner"
+    ]
+  },
+  "slist.id": {
+    "zh": "会话列表：编号",
+    "select": [
+      ".slist-id"
+    ]
+  },
+  "slist.name": {
+    "zh": "会话列表：名字",
+    "select": [
+      ".slist-name"
+    ]
+  },
+  "slist.untitled": {
+    "zh": "会话列表：没标题的",
+    "select": [
+      ".slist-untitled"
+    ]
+  },
+  "slist.ago": {
+    "zh": "会话列表：多久以前",
+    "select": [
+      ".slist-ago"
+    ]
+  },
+  "slist.empty": {
+    "zh": "会话列表：空着时",
+    "select": [
+      ".slist-empty"
+    ]
+  },
+  "slist.hint": {
+    "zh": "会话列表：提示",
+    "select": [
+      ".slist-hint"
+    ]
+  },
+  "mention.title": {
+    "zh": "提到文件：标题",
+    "select": [
+      ".mention-title"
+    ]
+  },
+  "mention.note": {
+    "zh": "提到文件：说明",
+    "select": [
+      ".mention-note"
+    ]
+  },
+  "mention.path": {
+    "zh": "提到文件：路径",
+    "select": [
+      ".mention-path"
+    ]
+  },
+  "mention.dir": {
+    "zh": "提到文件：目录",
+    "select": [
+      ".mention-dir"
+    ]
+  },
+  "mention.name": {
+    "zh": "提到文件：名字",
+    "select": [
+      ".mention-name"
+    ]
+  },
+  "mention.empty": {
+    "zh": "提到文件：空着时",
+    "select": [
+      ".mention-empty"
+    ]
+  },
+  "mention.hint": {
+    "zh": "提到文件：提示",
+    "select": [
+      ".mention-hint"
+    ]
+  },
+  "link.url": {
+    "zh": "「标题",
+    "select": [
+      ".link-url"
+    ]
+  },
+  "code.toolbar": {
+    "zh": "代码：工具栏",
+    "select": [
+      ".code-toolbar"
+    ]
+  },
+  "code.copy-button": {
+    "zh": "代码：复制按钮",
+    "select": [
+      ".code-copy-button"
+    ]
+  },
+  "tok.c": {
+    "zh": "代码的颜色",
+    "select": [
+      ".tok-c"
+    ]
+  },
+  "tok.p": {
+    "zh": "代码高亮：标点",
+    "select": [
+      ".tok-p"
+    ]
+  },
+  "tok.o": {
+    "zh": "代码高亮：运算符",
+    "select": [
+      ".tok-o"
+    ]
+  },
+  "tok.k": {
+    "zh": "代码高亮：关键字",
+    "select": [
+      ".tok-k"
+    ]
+  },
+  "tok.s": {
+    "zh": "代码高亮：字符串",
+    "select": [
+      ".tok-s"
+    ]
+  },
+  "tok.n": {
+    "zh": "代码高亮：数字",
+    "select": [
+      ".tok-n"
+    ]
+  },
+  "tok.f": {
+    "zh": "代码高亮：函数",
+    "select": [
+      ".tok-f"
+    ]
+  },
+  "tok.t": {
+    "zh": "代码高亮：类型",
+    "select": [
+      ".tok-t"
+    ]
+  },
+  "tok.y": {
+    "zh": "代码高亮：常量",
+    "select": [
+      ".tok-y"
+    ]
+  },
+  "tok.b": {
+    "zh": "代码高亮",
+    "select": [
+      ".tok-b"
+    ]
+  },
+  "tok.i": {
+    "zh": "代码高亮",
+    "select": [
+      ".tok-i"
+    ]
+  },
+  "tok.ins": {
+    "zh": "差异的增删行",
+    "select": [
+      ".tok-ins"
+    ]
+  },
+  "tok.del": {
+    "zh": "代码高亮：删除",
+    "select": [
+      ".tok-del"
+    ]
+  },
+  "katex": {
+    "zh": "公式",
+    "select": [
+      ".katex"
+    ]
+  },
+  "conversation.media-fallback": {
+    "zh": "对话里的媒体：媒体兜底",
+    "select": [
+      ".conversation-media-fallback"
+    ]
+  },
+  "conversation.media-tried": {
+    "zh": "本机的图按哪个路径找的",
+    "select": [
+      ".conversation-media-tried"
+    ]
+  },
+  "conversation.media-alt": {
+    "zh": "读不出来时她给的那一句描述",
+    "select": [
+      ".conversation-media-alt"
+    ]
+  },
+  "vfs.btn": {
+    "zh": "视频全屏按钮",
+    "select": [
+      ".vfs-btn"
+    ]
+  },
+  "video.shell": {
+    "zh": "视频的外框",
+    "select": [
+      ".video-shell"
+    ]
+  },
+  "video.caption": {
+    "zh": "视频的说明文字",
+    "select": [
+      ".video-caption"
+    ]
+  },
+  "media.audio-cover": {
+    "zh": "媒体：音频封面",
+    "select": [
+      ".media-audio-cover"
+    ]
+  },
+  "media.audio-name": {
+    "zh": "媒体：音频名字",
+    "select": [
+      ".media-audio-name"
+    ]
+  },
+  "media.audio-meta": {
+    "zh": "媒体：音频附注",
+    "select": [
+      ".media-audio-meta"
+    ]
+  },
+  "media.audio-play": {
+    "zh": "媒体：音频播放",
+    "select": [
+      ".media-audio-play"
+    ]
+  },
+  "media.audio-time": {
+    "zh": "媒体：音频时间",
+    "select": [
+      ".media-audio-time"
+    ]
+  },
+  "media.audio-track": {
+    "zh": "媒体：音频轨道",
+    "select": [
+      ".media-audio-track"
+    ]
+  },
+  "media.audio-track-fill": {
+    "zh": "媒体：音频轨道填充",
+    "select": [
+      ".media-audio-track-fill"
+    ]
+  },
+  "media.audio-icon-btn": {
+    "zh": "媒体：音频图标按钮",
+    "select": [
+      ".media-audio-icon-btn"
+    ]
+  },
+  "media.audio-volume": {
+    "zh": "媒体：音频音量",
+    "select": [
+      ".media-audio-volume"
+    ]
+  },
+  "link.card-media": {
+    "zh": "链接卡片：卡片媒体",
+    "select": [
+      ".link-card-media"
+    ]
+  },
+  "link.card-play": {
+    "zh": "链接卡片：卡片播放",
+    "select": [
+      ".link-card-play"
+    ]
+  },
+  "link.card-time": {
+    "zh": "链接卡片：卡片时间",
+    "select": [
+      ".link-card-time"
+    ]
+  },
+  "link.card-icon": {
+    "zh": "链接卡片：卡片图标",
+    "select": [
+      ".link-card-icon"
+    ]
+  },
+  "link.card-title": {
+    "zh": "链接卡片：卡片标题",
+    "select": [
+      ".link-card-title"
+    ]
+  },
+  "link.card-desc": {
+    "zh": "链接卡片：卡片说明",
+    "select": [
+      ".link-card-desc"
+    ]
+  },
+  "link.card-site": {
+    "zh": "链接卡片：卡片网站",
+    "select": [
+      ".link-card-site"
+    ]
+  },
+  "link.card-arrow": {
+    "zh": "链接卡片：卡片箭头",
+    "select": [
+      ".link-card-arrow"
+    ]
+  },
+  "shown.card-icon": {
+    "zh": "发出来的文件：卡片图标",
+    "select": [
+      ".shown-card-icon"
+    ]
+  },
+  "shown.card-name": {
+    "zh": "发出来的文件：卡片名字",
+    "select": [
+      ".shown-card-name"
+    ]
+  },
+  "shown.card-sub": {
+    "zh": "发出来的文件：卡片小字",
+    "select": [
+      ".shown-card-sub"
+    ]
+  },
+  "shown.card-go": {
+    "zh": "发出来的文件：卡片前往",
+    "select": [
+      ".shown-card-go"
+    ]
+  },
+  "sessions.page": {
+    "zh": "全部会话",
+    "select": [
+      ".sessions-page"
+    ]
+  },
+  "sessions.title": {
+    "zh": "全部会话页：标题",
+    "select": [
+      ".sessions-title"
+    ]
+  },
+  "sessions.search": {
+    "zh": "全部会话页：搜索",
+    "select": [
+      ".sessions-search"
+    ]
+  },
+  "sessions.count": {
+    "zh": "全部会话页：数目",
+    "select": [
+      ".sessions-count"
+    ]
+  },
+  "sessions.icon": {
+    "zh": "全部会话页：图标",
+    "select": [
+      ".sessions-icon"
+    ]
+  },
+  "sessions.row": {
+    "zh": "全部会话页：一行",
+    "select": [
+      ".sessions-row"
+    ]
+  },
+  "sessions.name": {
+    "zh": "全部会话页：名字",
+    "select": [
+      ".sessions-name"
+    ]
+  },
+  "sessions.when": {
+    "zh": "全部会话页：什么时候",
+    "select": [
+      ".sessions-when"
+    ]
+  },
+  "sessions.agents": {
+    "zh": "派过子代理的",
+    "select": [
+      ".sessions-agents"
+    ]
+  },
+  "sessions.jobs": {
+    "zh": "有后台任务在跑的",
+    "select": [
+      ".sessions-jobs"
+    ]
+  },
+  "sessions.jobs-dot": {
+    "zh": "全部会话页：后台任务圆点",
+    "select": [
+      ".sessions-jobs-dot"
+    ]
+  },
+  "sessions.empty": {
+    "zh": "全部会话页：空着时",
+    "select": [
+      ".sessions-empty"
+    ]
+  },
+  "sessions.tab": {
+    "zh": "全部会话页：标签页",
+    "select": [
+      ".sessions-tab"
+    ]
+  },
+  "sessions.switch-thumb": {
+    "zh": "全部会话页：切换滑块",
+    "select": [
+      ".sessions-switch-thumb"
+    ]
+  },
+  "sessions.sort": {
+    "zh": "全部会话页：排序",
+    "select": [
+      ".sessions-sort"
+    ]
+  },
+  "sessions.group": {
+    "zh": "时间分组的组头",
+    "select": [
+      ".sessions-group"
+    ]
+  },
+  "project.card-desc": {
+    "zh": "项目：卡片说明",
+    "select": [
+      ".project-card-desc"
+    ]
+  },
+  "project.card-meta": {
+    "zh": "项目：卡片附注",
+    "select": [
+      ".project-card-meta"
+    ]
+  },
+  "project.back": {
+    "zh": "项目：返回",
+    "select": [
+      ".project-back"
+    ]
+  },
+  "project.title": {
+    "zh": "项目：标题",
+    "select": [
+      ".project-title"
+    ]
+  },
+  "project.desc": {
+    "zh": "项目：说明",
+    "select": [
+      ".project-desc"
+    ]
+  },
+  "project.defaults": {
+    "zh": "项目：默认值",
+    "select": [
+      ".project-defaults"
+    ]
+  },
+  "project.defaults-title": {
+    "zh": "项目：默认值标题",
+    "select": [
+      ".project-defaults-title"
+    ]
+  },
+  "project.default": {
+    "zh": "项目：默认",
+    "select": [
+      ".project-default"
+    ]
+  },
+  "project.default-name": {
+    "zh": "项目：默认名字",
+    "select": [
+      ".project-default-name"
+    ]
+  },
+  "project.default-value": {
+    "zh": "项目：默认值",
+    "select": [
+      ".project-default-value"
+    ]
+  },
+  "sessions.tokens": {
+    "zh": "一共用了多少 token",
+    "select": [
+      ".sessions-tokens"
+    ]
+  },
+  "brand.identity": {
+    "zh": "左上角",
+    "select": [
+      ".brand-identity"
+    ]
+  },
+  "brand.avatar": {
+    "zh": "左上角：头像",
+    "select": [
+      ".brand-avatar"
+    ]
+  },
+  "sidebar.toggle": {
+    "zh": "左栏：开关",
+    "select": [
+      ".sidebar-toggle"
+    ]
+  },
+  "session.group-header": {
+    "zh": "左栏的会话：一组头上一行",
+    "select": [
+      ".session-group-header"
+    ]
+  },
+  "session.item-main": {
+    "zh": "左栏的会话：一项主体",
+    "select": [
+      ".session-item-main"
+    ]
+  },
+  "session.count": {
+    "zh": "顶层收着的",
+    "select": [
+      ".session-count"
+    ]
+  },
+  "session.copy": {
+    "zh": "露出三个点的时候",
+    "select": [
+      ".session-copy"
+    ]
+  },
+  "session.trailing": {
+    "zh": "悬停时右边的三个点",
+    "select": [
+      ".session-trailing"
+    ]
+  },
+  "page.scrim": {
+    "zh": "窄屏左栏打开时盖着页面的一层",
+    "select": [
+      ".page-scrim"
+    ]
+  },
+  "session.confirm-text": {
+    "zh": "左栏的会话：确认字",
+    "select": [
+      ".session-confirm-text"
+    ]
+  },
+  "tree.guide": {
+    "zh": "树的引导线",
+    "select": [
+      ".tree-guide"
+    ]
+  },
+  "tree.elbow": {
+    "zh": "树的拐角",
+    "select": [
+      ".tree-elbow"
+    ]
+  },
+  "session.fold": {
+    "zh": "展开、收起整棵的箭头",
+    "select": [
+      ".session-fold"
+    ]
+  },
+  "session.lead": {
+    "zh": "左栏的会话：前面的",
+    "select": [
+      ".session-lead"
+    ]
+  },
+  "session.kids": {
+    "zh": "子代理下面还有的",
+    "select": [
+      ".session-kids"
+    ]
+  },
+  "session.kids-arrow": {
+    "zh": "左栏的会话：子项箭头",
+    "select": [
+      ".session-kids-arrow"
+    ]
+  },
+  "session.kids-count": {
+    "zh": "左栏的会话：子项数目",
+    "select": [
+      ".session-kids-count"
+    ]
+  },
+  "session.done": {
+    "zh": "「已完成 N 个」",
+    "select": [
+      ".session-done"
+    ]
+  },
+  "session.done-arrow": {
+    "zh": "左栏的会话：做完的箭头",
+    "select": [
+      ".session-done-arrow"
+    ]
+  },
+  "session.all": {
+    "zh": "顶层露满了",
+    "select": [
+      ".session-all"
+    ]
+  },
+  "session.group-button": {
+    "zh": "左栏的会话：一组按钮",
+    "select": [
+      ".session-group-button"
+    ]
+  },
+  "session.drop-zone": {
+    "zh": "左栏的会话：拖放区",
+    "select": [
+      ".session-drop-zone"
+    ]
+  },
+  "session.drop-hint": {
+    "zh": "只有一个元素的那一块",
+    "select": [
+      ".session-drop-hint"
+    ]
+  },
+  "project": {
+    "zh": "项目：",
+    "select": [
+      ".project"
+    ]
+  },
+  "project.chevron": {
+    "zh": "项目：折叠箭头",
+    "select": [
+      ".project-chevron"
+    ]
+  },
+  "project.empty": {
+    "zh": "项目：空着时",
+    "select": [
+      ".project-empty"
+    ]
+  },
+  "session.menu-back": {
+    "zh": "左栏的会话：菜单返回",
+    "select": [
+      ".session-menu-back"
+    ]
+  },
+  "session.menu-project": {
+    "zh": "左栏的会话：菜单项目",
+    "select": [
+      ".session-menu-project"
+    ]
+  },
+  "sb.section": {
+    "zh": "一栏一块",
+    "select": [
+      ".sb-section"
+    ]
+  },
+  "sb.head": {
+    "zh": "栏头",
+    "select": [
+      ".sb-head"
+    ]
+  },
+  "sb.chevron": {
+    "zh": "左栏：折叠箭头",
+    "select": [
+      ".sb-chevron"
+    ]
+  },
+  "si": {
+    "zh": "登录框、「账号」那一屏",
+    "select": [
+      ".si"
+    ]
+  },
+  "si.brand": {
+    "zh": "登录：左上角",
+    "select": [
+      ".si-brand"
+    ]
+  },
+  "si.steps": {
+    "zh": "登录：几步",
+    "select": [
+      ".si-steps"
+    ]
+  },
+  "si.title": {
+    "zh": "登录：标题",
+    "select": [
+      ".si-title"
+    ]
+  },
+  "si.sub": {
+    "zh": "登录：小字",
+    "select": [
+      ".si-sub"
+    ]
+  },
+  "si.field-name": {
+    "zh": "登录：框名字",
+    "select": [
+      ".si-field-name"
+    ]
+  },
+  "si.error": {
+    "zh": "登录：出错",
+    "select": [
+      ".si-error"
+    ]
+  },
+  "tl.segment": {
+    "zh": "时间线",
+    "select": [
+      ".tl-segment"
+    ]
+  },
+  "tl.summary": {
+    "zh": "收起那一行",
+    "select": [
+      ".tl-summary"
+    ]
+  },
+  "tl.summary-text": {
+    "zh": "时间线：摘要字",
+    "select": [
+      ".tl-summary-text"
+    ]
+  },
+  "tl.added": {
+    "zh": "时间线：加的",
+    "select": [
+      ".tl-added"
+    ]
+  },
+  "tl.removed": {
+    "zh": "时间线：删的",
+    "select": [
+      ".tl-removed"
+    ]
+  },
+  "tl.wrap": {
+    "zh": "一段展开、收起",
+    "select": [
+      ".tl-wrap"
+    ]
+  },
+  "tl.row": {
+    "zh": "一步那一行",
+    "select": [
+      ".tl-row"
+    ]
+  },
+  "tl.node": {
+    "zh": "时间线：节点",
+    "select": [
+      ".tl-node"
+    ]
+  },
+  "tl.name": {
+    "zh": "时间线：名字",
+    "select": [
+      ".tl-name"
+    ]
+  },
+  "tl.time": {
+    "zh": "时间线：时间",
+    "select": [
+      ".tl-time"
+    ]
+  },
+  "tl.peek": {
+    "zh": "时间线：浮出",
+    "select": [
+      ".tl-peek"
+    ]
+  },
+  "tl.peek-sep": {
+    "zh": "编号和预览中间的 ·",
+    "select": [
+      ".tl-peek-sep"
+    ]
+  },
+  "tl.window": {
+    "zh": "时间线：窗口",
+    "select": [
+      ".tl-window"
+    ]
+  },
+  "tl.thought-body": {
+    "zh": "时间线：思考正文",
+    "select": [
+      ".tl-thought-body"
+    ]
+  },
+  "tl.head": {
+    "zh": "工具",
+    "select": [
+      ".tl-head"
+    ]
+  },
+  "tl.peek-dot": {
+    "zh": "思考那一小段前面的点",
+    "select": [
+      ".tl-peek-dot"
+    ]
+  },
+  "tl.subject": {
+    "zh": "时间线：主题",
+    "select": [
+      ".tl-subject"
+    ]
+  },
+  "tl.said": {
+    "zh": "时间线：说的",
+    "select": [
+      ".tl-said"
+    ]
+  },
+  "tl.diff": {
+    "zh": "编辑、写入",
+    "select": [
+      ".tl-diff"
+    ]
+  },
+  "tl.status": {
+    "zh": "时间线：状态",
+    "select": [
+      ".tl-status"
+    ]
+  },
+  "tl.command": {
+    "zh": "执行命令",
+    "select": [
+      ".tl-command"
+    ]
+  },
+  "tl.more": {
+    "zh": "时间线：更多",
+    "select": [
+      ".tl-more"
+    ]
+  },
+  "tl.body": {
+    "zh": "时间线：正文",
+    "select": [
+      ".tl-body"
+    ]
+  },
+  "tl.label": {
+    "zh": "时间线：标签",
+    "select": [
+      ".tl-label"
+    ]
+  },
+  "tl.found-row": {
+    "zh": "翻记忆、查知识库、读文档",
+    "select": [
+      ".tl-found-row"
+    ]
+  },
+  "tl.found-head": {
+    "zh": "时间线：找到的头上一行",
+    "select": [
+      ".tl-found-head"
+    ]
+  },
+  "tl.found-text": {
+    "zh": "时间线：找到的字",
+    "select": [
+      ".tl-found-text"
+    ]
+  },
+  "tl.found-doc": {
+    "zh": "时间线：找到的文档",
+    "select": [
+      ".tl-found-doc"
+    ]
+  },
+  "tl.link": {
+    "zh": "时间线：链接",
+    "select": [
+      ".tl-link"
+    ]
+  },
+  "tl.link-meta": {
+    "zh": "时间线：链接附注",
+    "select": [
+      ".tl-link-meta"
+    ]
+  },
+  "tl.link-snippet": {
+    "zh": "时间线：链接片段",
+    "select": [
+      ".tl-link-snippet"
+    ]
+  },
+  "tl.table": {
+    "zh": "时间线：表格",
+    "select": [
+      ".tl-table"
+    ]
+  },
+  "diff.op": {
+    "zh": "「修改」「新建」是中文",
+    "select": [
+      ".diff-op"
+    ]
+  },
+  "diff.path": {
+    "zh": "差异：路径",
+    "select": [
+      ".diff-path"
+    ]
+  },
+  "diff.stat": {
+    "zh": "差异：数",
+    "select": [
+      ".diff-stat"
+    ]
+  },
+  "diff.stat-add": {
+    "zh": "差异：数添加",
+    "select": [
+      ".diff-stat-add"
+    ]
+  },
+  "diff.stat-del": {
+    "zh": "差异：数删除",
+    "select": [
+      ".diff-stat-del"
+    ]
+  },
+  "diff.hunk": {
+    "zh": "差异：一段改动",
+    "select": [
+      ".diff-hunk"
+    ]
+  },
+  "diff.gutter": {
+    "zh": "差异：行号栏",
+    "select": [
+      ".diff-gutter"
+    ]
+  },
+  "diff.no": {
+    "zh": "行号",
+    "select": [
+      ".diff-no"
+    ]
+  },
+  "diff.note": {
+    "zh": "差异：说明",
+    "select": [
+      ".diff-note"
+    ]
+  },
+  "diff.text": {
+    "zh": "差异：字",
+    "select": [
+      ".diff-text"
+    ]
+  },
+  "diff.line": {
+    "zh": "差异：一行",
+    "select": [
+      ".diff-line"
+    ]
+  },
+  "mr1": {
+    "zh": "运行中的三个球：第一个",
+    "select": [
+      ".mr1"
+    ]
+  },
+  "mr2": {
+    "zh": "运行中的三个球：第二个",
+    "select": [
+      ".mr2"
+    ]
+  },
+  "mr3": {
+    "zh": "运行中的三个球：第三个",
+    "select": [
+      ".mr3"
+    ]
+  },
+  "wl.layer": {
+    "zh": "第一次引导：盖着整页的那一层",
+    "select": [
+      ".wl-layer"
+    ]
   }
 }

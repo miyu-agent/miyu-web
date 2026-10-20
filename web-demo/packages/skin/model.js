@@ -118,6 +118,8 @@ export function translate(css, parts, base) {
       if (!p) { unknown.push(name); return ':is(.skin-unknown-part)'; }
       return `:is(${p.select.join(', ')})`;
     })
+    // 状态：页面上都是 `is-` 打头的类（`has-` 打头的照写）
+    .replace(/\[data-state=(["'])([a-z][a-z0-9-]*)\1\]/g, (_, _q, st) => (st.startsWith('has-') ? `.${st}` : `.is-${st}`))
     .replace(/url\(\s*(["']?)([^"')]+)\1\s*\)/g, (whole, q, ref) => {
       if (/^(data:|[a-z]+:\/\/|\/)/i.test(ref)) return whole;
       return `url(${q}${new URL(ref, base).href}${q})`;

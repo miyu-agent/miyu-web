@@ -51,12 +51,12 @@
 }
 .vfs-btn .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); }
 .video-shell:hover .vfs-btn, .vfs-btn:focus-visible { opacity: 1; }
-.video-shell.webfs {
+.video-shell.is-webfs {
   position: fixed; z-index: 70; display: grid; width: auto; max-width: none; padding: calc(28px * var(--space)); place-items: center;
   background: rgb(0 0 0 / 93%); inset: 0;
 }
-.video-shell.webfs video { width: 100%; height: 100%; max-height: none; object-fit: contain; box-shadow: none; }
-.video-shell.webfs .vfs-btn { top: 16px; right: 16px; opacity: 1; }
+.video-shell.is-webfs video { width: 100%; height: 100%; max-height: none; object-fit: contain; box-shadow: none; }
+.video-shell.is-webfs .vfs-btn { top: 16px; right: 16px; opacity: 1; }
 .video-caption {
   max-width: min(100%, 480px); margin-top: calc(7px * var(--space)); overflow: hidden; color: var(--text-soft); font-size: calc(11px * var(--text-scale));
   text-overflow: ellipsis; white-space: nowrap;

@@ -75,6 +75,33 @@ test('接进页面：部件名换成选择器，字体的相对地址换成绝�
   assert.match(got.css, /:root\[data-skin="a"\] :is\(\.composer\)/);
   assert.match(got.css, /url\("http:\/\/h\/packages\/a\/fonts\/a\.woff2"\)/);
   assert.deepEqual(got.unknown, ['nope']);
+  assert.match(translate(':root[data-skin="a"] [data-part="item"][data-state="on"], [data-part="composer"][data-state="has-stash"] {}', parts, 'http://h/').css,
+    /:is\([^)]*\)\.is-on, :is\(\.composer\)\.has-stash/);
+});
+
+test('看得见的都有部件名：样式里画了东西（底、边、影、字、颜色……）的类都归到某个部件名下面', () => {
+  const VIS = /(?:^|;)\s*(background|border|box-shadow|color|font|outline|filter|mask|opacity|text-decoration|backdrop-filter|-webkit-backdrop-filter|fill|stroke|text-shadow)[\w-]*\s*:/;
+  const covered = new Set();
+  for (const p of Object.values(parts)) {
+    for (const sel of p.select) for (const one of sel.split(',')) {
+      for (const m of one.trim().split(/[\s>+~]+/).at(-1).matchAll(/\.([a-z][\w-]*)/g)) covered.add(m[1]);
+    }
+  }
+  /** @type {string[]} */
+  const missing = [];
+  for (const p of sheets) {
+    for (const m of strip(read(p)).matchAll(/([^{}@]+)\{([^{}]*)\}/g)) {
+      if (!VIS.test(m[2])) continue;
+      for (const one of m[1].split(',')) {
+        const sel = one.trim();
+        if (!sel || /^(from|to|\d)/.test(sel)) continue;
+        for (const c of sel.split(/[\s>+~]+/).at(-1).matchAll(/\.([a-z][\w-]*)/g)) {
+          if (!/^(is|has)-/.test(c[1]) && !covered.has(c[1])) missing.push(`${p}：.${c[1]}`);
+        }
+      }
+    }
+  }
+  assert.deepEqual([...new Set(missing)], [], '这些类没有部件名：加进 resources/parts.json（状态的类用 is- 打头）');
 });
 
 test('部件名：每个都有说明、选择器里的类在样式里真有', () => {
