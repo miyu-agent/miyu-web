@@ -553,8 +553,15 @@
             "command": "请填写命令",
             "env": "环境变量第 {line} 行要写成「名字=值」",
             "timeout": "时限要在 1 到 3600 秒之间",
-            "quote": "命令里的引号没有配对"
-          }
+            "quote": "命令里的引号没有配对",
+            "url": "地址要以 http:// 或 https:// 开头",
+            "header": "请求头第 {line} 行要写成「名字: 值」"
+          },
+          "kind_command": "本机命令",
+          "kind_url": "网址",
+          "url_hint": "例如 https://mcp.example.com/mcp",
+          "bearer_hint": "可不填；引用写成 {secret:名字} 或 {env:变量}",
+          "headers_hint": "一行一个：名字: 值"
         },
         "select": "多选",
         "selected": "已选 {count} 个",
@@ -951,8 +958,15 @@
             "command": "Enter a command",
             "env": "Environment line {line} should be NAME=value",
             "timeout": "The time limit must be 1 to 3600 seconds",
-            "quote": "A quote in the command isn’t closed"
-          }
+            "quote": "A quote in the command isn’t closed",
+            "url": "The URL must start with http:// or https://",
+            "header": "Header line {line} must look like \"Name: value\""
+          },
+          "kind_command": "Local command",
+          "kind_url": "URL",
+          "url_hint": "e.g. https://mcp.example.com/mcp",
+          "bearer_hint": "Optional; refer with {secret:name} or {env:VAR}",
+          "headers_hint": "One per line: Name: value"
         },
         "select": "Select",
         "selected": "{count} selected",
@@ -1349,8 +1363,15 @@
             "command": "コマンドを入力してください",
             "env": "環境変数の {line} 行目は「名前=値」の形にしてください",
             "timeout": "制限時間は 1〜3600 秒です",
-            "quote": "コマンドの引用符が閉じていません"
-          }
+            "quote": "コマンドの引用符が閉じていません",
+            "url": "URL は http:// か https:// で始めてください",
+            "header": "リクエストヘッダーの {line} 行目は「名前: 値」の形にしてください"
+          },
+          "kind_command": "ローカルコマンド",
+          "kind_url": "URL",
+          "url_hint": "例：https://mcp.example.com/mcp",
+          "bearer_hint": "省略可。参照は {secret:名前} か {env:変数}",
+          "headers_hint": "1 行に 1 つ：名前: 値"
         },
         "select": "選択",
         "selected": "{count} 件選択",

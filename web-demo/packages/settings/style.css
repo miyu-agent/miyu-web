@@ -503,6 +503,9 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .set-tool-pop { display: grid; gap: 12px; width: min(480px, 100%); max-height: 100%; overflow: auto; padding: 16px 18px 18px; border-radius: 14px; background: var(--surface); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); box-sizing: border-box; }
 .set-tool-pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--text); font-size: 14px; }
 .set-tool-pop-head .icon-button .icon { width: 14px; height: 14px; }
+/* 本机命令、网址两种各自那几行（添加时顶上的分段切换换着露）；切换靠左、和格子的字对齐 */
+.set-tool-group { display: grid; gap: 12px; }
+.set-tool-kinds { justify-self: start; }
 .set-tool-field { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: start; gap: 12px; }
 .set-tool-label { padding-top: 6px; color: var(--text-soft); font-size: 13px; }
 .set-tool-field > .set-pkg-chips { padding-top: 2px; }

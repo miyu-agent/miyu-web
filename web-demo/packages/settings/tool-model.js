@@ -171,13 +171,14 @@ export function joinCommand(parts) {
  * 添加、编辑服务那张表交上来的字，换成 `mcp.set` 的参数；写错的交回第一处的问题（文字表 `tools.form.bad.*` 的键和要填的格子）。
  * 命令一个框写整条（`splitCommand`）；环境变量一行一个 `名字=值`，`keep` 里是原来就有、表里照原样画的值（引用、遮住的），名字对得上又没改的照原样交回。
  * 会话的种类（`venues`）网页不画（2026-10-20 项目主人：本机、私聊、群聊是通讯平台的事），编辑时照原来的带回。
- * @param {{name: string, command: string, env: string, timeout: string}} form
+ * @param {{kind?: 'command'|'url', name: string, command: string, env: string, url?: string, bearer?: string, headers?: string, timeout: string}} form
  * @param {{env?: Record<string, any>, venues?: string[]}} [before] 编辑时原来那一项
  * @returns {{params: any}|{problem: string, field: string, line?: number}}
  */
 export function serverParams(form, before = {}) {
   const name = form.name.trim();
   if (!SERVER_NAME.test(name)) return { problem: 'name', field: 'name' };
+  if (form.kind === 'url') return urlParams(name, form, before);
   const parts = splitCommand(form.command);
   if (!parts) return { problem: 'quote', field: 'command' };
   if (!parts.length || !parts[0]) return { problem: 'command', field: 'command' };
@@ -209,6 +210,43 @@ export function serverParams(form, before = {}) {
   return { params };
 }
 
+/**
+ * 网址的服务（核心 X-32 下）：交 `url`、`bearer`、`headers`，不交 `command`、`args`、`env`。令牌一行；请求头一行一个 `名字: 值`；
+ * 值是引用的（`{secret:X}`、`{env:X}`）照表里画的样子没改，原样交回原来那一格。
+ * @param {string} name @param {{url?: string, bearer?: string, headers?: string, timeout: string}} form @param {any} before
+ * @returns {{params: any}|{problem: string, field: string, line?: number}}
+ */
+function urlParams(name, form, before) {
+  const url = (form.url ?? '').trim();
+  if (!/^https?:\/\/\S+$/i.test(url)) return { problem: 'url', field: 'url' };
+  /** @type {any} */
+  const params = { name, url };
+  const bearer = (form.bearer ?? '').trim();
+  if (bearer) params.bearer = before.bearer !== undefined && typeof before.bearer !== 'string' && bearer === envShown(before.bearer) ? before.bearer : bearer;
+  /** @type {Record<string, any>} */
+  const headers = {};
+  const lines = (form.headers ?? '').split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const at = line.indexOf(':');
+    const key = at > 0 ? line.slice(0, at).trim() : '';
+    if (!key || /\s/.test(key)) return { problem: 'header', field: 'headers', line: i + 1 };
+    const text = line.slice(at + 1).trim();
+    const old = before.headers?.[key];
+    headers[key] = old !== undefined && typeof old !== 'string' && text === envShown(old) ? old : text;
+  }
+  if (Object.keys(headers).length) params.headers = headers;
+  if (Array.isArray(before.venues) && before.venues.length) params.venues = before.venues;
+  const timeout = form.timeout.trim();
+  if (timeout) {
+    const sec = Number(timeout);
+    if (!Number.isFinite(sec) || sec < 1 || sec > 3600) return { problem: 'timeout', field: 'timeout' };
+    if (Math.round(sec * 1000) !== TIMEOUT_DEFAULT_S * 1000) params.timeout_ms = Math.round(sec * 1000);
+  }
+  return { params };
+}
+
 /** 环境变量的值在表里怎么写：字照原样；引用写成 `{env:X}`、`{secret:X}`；别的样子照 JSON。 @param {any} v */
 export function envShown(v) {
   if (typeof v === 'string') return v;
@@ -224,6 +262,11 @@ export function envShown(v) {
 export function formOf(s) {
   const command = Array.isArray(s.command) ? s.command.map(String) : typeof s.command === 'string' ? [s.command] : [];
   return {
+    // 网址的服务（`mcp.list` 里带 `url`、没有 `command`）
+    kind: typeof s.url === 'string' ? 'url' : 'command',
+    url: typeof s.url === 'string' ? s.url : '',
+    bearer: s.bearer != null ? envShown(s.bearer) : '',
+    headers: Object.entries(s.headers ?? {}).map(([k, v]) => `${k}: ${envShown(v)}`).join('\n'),
     name: s.name ?? '',
     command: joinCommand(command),
     env: Object.entries(s.env ?? {}).map(([k, v]) => `${k}=${envShown(v)}`).join('\n'),

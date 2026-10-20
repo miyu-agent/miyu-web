@@ -129,7 +129,7 @@ test('编辑：照 mcp.list 先填（命令写回一行），引用没改的原�
     env: { GITHUB_TOKEN: { secret: 'gh' }, HOME_DIR: { env: 'HOME' }, LOG: '1' }, need_load: { value: false, by: 'source' },
   };
   const form = formOf(server);
-  assert.deepEqual(form, { name: 'github', command: "github-mcp-server stdio '/a b'", env: 'GITHUB_TOKEN={secret:gh}\nHOME_DIR={env:HOME}\nLOG=1', timeout: '120' });
+  assert.deepEqual(form, { kind: 'command', url: '', bearer: '', headers: '', name: 'github', command: "github-mcp-server stdio '/a b'", env: 'GITHUB_TOKEN={secret:gh}\nHOME_DIR={env:HOME}\nLOG=1', timeout: '120' });
   assert.deepEqual(serverParams(form, server), { params: {
     name: 'github', command: 'github-mcp-server', args: ['stdio', '/a b'], venues: ['local', 'private'], timeout_ms: 120000,
     env: { GITHUB_TOKEN: { secret: 'gh' }, HOME_DIR: { env: 'HOME' }, LOG: '1' },
@@ -170,4 +170,27 @@ test('MCP 详情里环境变量、令牌、请求头遮住（扩展线 X-32 下�
   assert.equal(maskedValue({ secret: 'gh' }), '{secret:gh}');
   assert.equal(maskedPairs({ A: 'x', B: { env: 'B_KEY' } }), 'A=••••••  B={env:B_KEY}');
   assert.equal(maskedPairs(undefined), '');
+});
+
+test('网址的服务（核心 X-32 下）：交 url、bearer、headers，不交 command、args、env；写错的指出那一格', () => {
+  const base = { kind: /** @type {const} */ ('url'), name: 'remote', command: '', env: '', url: ' https://mcp.example.com/mcp ', bearer: 'tok', headers: 'X-Team: miyu\n\nX-Mode: read', timeout: '' };
+  assert.deepEqual(serverParams(base), { params: { name: 'remote', url: 'https://mcp.example.com/mcp', bearer: 'tok', headers: { 'X-Team': 'miyu', 'X-Mode': 'read' } } });
+  assert.deepEqual(serverParams({ ...base, url: 'mcp.example.com' }), { problem: 'url', field: 'url' });
+  assert.deepEqual(serverParams({ ...base, headers: 'X-Team miyu' }), { problem: 'header', field: 'headers', line: 1 });
+  assert.deepEqual(serverParams({ ...base, bearer: '', headers: '' }), { params: { name: 'remote', url: 'https://mcp.example.com/mcp' } });
+});
+
+test('mcp.list 交回的照原样填进编辑框，没改就原样交回 mcp.set，一字不变（命令的、网址的都是）', () => {
+  const keys = ['name', 'command', 'args', 'env', 'url', 'bearer', 'headers', 'timeout_ms', 'venues'];
+  const pick = (/** @type {any} */ s) => Object.fromEntries(Object.entries(s).filter(([k]) => keys.includes(k)));
+  const servers = [
+    { name: 'remote', url: 'https://mcp.example.com/mcp', bearer: { secret: 'remote-token' }, headers: { 'X-Team': 'miyu', 'X-Key': { env: 'TEAM_KEY' } }, timeout_ms: 30000, venues: ['local'], state: 'running' },
+    { name: 'plain', url: 'http://127.0.0.1:9000/mcp', state: 'off' },
+    { name: 'github', command: ['github-mcp-server', 'stdio'], env: { GITHUB_TOKEN: { secret: 'gh' }, LOG: '1' }, state: 'running' },
+  ];
+  for (const s of servers) {
+    const expect = pick(s);
+    if (Array.isArray(expect.command)) { expect.args = expect.command.slice(1); expect.command = expect.command[0]; if (!expect.args.length) delete expect.args; }
+    assert.deepEqual(serverParams(formOf(s), s), { params: expect }, s.name);
+  }
 });

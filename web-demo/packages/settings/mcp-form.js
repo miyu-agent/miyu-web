@@ -15,7 +15,9 @@ import { refresh } from './tool-pages.js';
 export function openServerForm(dialog, server) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   dialog.panel.querySelector('.set-tool-modal')?.remove();
-  const start = server ? formOf(server) : { name: '', command: '', env: '', timeout: '' };
+  const start = server ? formOf(server) : { kind: 'command', name: '', command: '', env: '', url: '', bearer: '', headers: '', timeout: '' };
+  /** 本机命令还是网址（核心 X-32 下）：编辑的照它是哪一种，不能换 */
+  let kind = start.kind;
   const input = (/** @type {string} */ value, /** @type {string} */ hint, /** @type {boolean} */ mono) => /** @type {HTMLInputElement} */ (h(`input.set-input.set-tool-input${mono ? '.is-mono' : ''}`,
     { type: 'text', value, placeholder: hint, spellcheck: 'false', autocomplete: 'off' }));
   const area = (/** @type {string} */ value, /** @type {string} */ hint) => /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.set-tool-area.is-mono',
@@ -25,6 +27,9 @@ export function openServerForm(dialog, server) {
     // 整条命令一个框（2026-10-20 项目主人：命令、参数分两格不合理）
     command: input(start.command, t('tools.form.command_hint'), true),
     env: area(start.env, t('tools.form.env_hint')),
+    url: input(start.url, t('tools.form.url_hint'), true),
+    bearer: input(start.bearer, t('tools.form.bearer_hint'), true),
+    headers: area(start.headers, t('tools.form.headers_hint')),
     timeout: input(start.timeout, String(TIMEOUT_DEFAULT_S), false),
   };
   if (server) fields.name.readOnly = true;
@@ -37,7 +42,8 @@ export function openServerForm(dialog, server) {
   };
   const save = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'button', onclick: async () => {
     const got = serverParams({
-      name: fields.name.value, command: fields.command.value, env: fields.env.value, timeout: fields.timeout.value,
+      kind, name: fields.name.value, command: fields.command.value, env: fields.env.value,
+      url: fields.url.value, bearer: fields.bearer.value, headers: fields.headers.value, timeout: fields.timeout.value,
     }, server ?? {});
     if ('problem' in got) {
       say(t(`tools.form.bad.${got.problem}`, { line: got.line ?? 0 }), /** @type {any} */ (fields)[got.field] ?? null);
@@ -57,18 +63,31 @@ export function openServerForm(dialog, server) {
     await refresh(dialog, 'mcp');
   } }, t('tools.form.save')));
   const row = (/** @type {string} */ label, /** @type {any} */ control) => h('label.set-tool-field', h('span.set-tool-label', label), control);
+  const commandRows = h('div.set-tool-group', row(t('tools.field.command'), fields.command), row(t('tools.form.env'), fields.env));
+  const urlRows = h('div.set-tool-group', row(t('tools.field.url'), fields.url), row(t('tools.field.bearer'), fields.bearer), row(t('tools.field.headers'), fields.headers));
+  // 添加时最上面一个分段切换「本机命令 | 网址」（2026-10-21 项目主人定）；编辑的不画
+  const kindButtons = /** @type {const} */ (['command', 'url']).map((k) => h('button.set-seg-item', { type: 'button', onclick: () => { kind = k; drawKind(); (k === 'url' ? fields.url : fields.command).focus(); } }, t(`tools.form.kind_${k}`)));
+  const kinds = server ? null : h('div.set-seg.set-tool-kinds', kindButtons);
+  const drawKind = () => {
+    commandRows.hidden = kind !== 'command';
+    urlRows.hidden = kind !== 'url';
+    kindButtons.forEach((b, i) => b.classList.toggle('is-on', (i === 0 ? 'command' : 'url') === kind));
+    error.hidden = true;
+  };
   const pop = h('div.set-tool-pop', { role: 'dialog', 'aria-modal': 'true', 'aria-label': server ? t('tools.form.edit_title', { name: server.name }) : t('tools.form.add_title') },
     h('div.set-tool-pop-head', h('strong', server ? t('tools.form.edit_title', { name: server.name }) : t('tools.form.add_title')),
       h('button.icon-button', { type: 'button', title: t('close'), 'aria-label': t('close'), onclick: () => close() }, icon('x'))),
+    kinds,
     row(t('tools.field.name'), fields.name),
-    row(t('tools.field.command'), fields.command),
-    row(t('tools.form.env'), fields.env),
+    commandRows,
+    urlRows,
     row(t('tools.form.timeout'), h('div.set-tool-timeout', fields.timeout, h('span', t('tools.form.seconds')))),
     error,
     h('div.set-tool-pop-foot', h('button.set-btn', { type: 'button', onclick: () => close() }, t('tools.form.cancel')), save));
   const modal = h('div.set-tool-modal', { 'data-set-dismiss': '1', onclick: (/** @type {Event} */ e) => { if (e.target === e.currentTarget) close(); } }, pop);
   const close = () => leave(modal, () => modal.remove());
   modal.addEventListener('set-dismiss', close);
+  drawKind();
   dialog.panel.append(modal);
-  (server ? fields.command : fields.name).focus();
+  (server ? (kind === 'url' ? fields.url : fields.command) : fields.name).focus();
 }
