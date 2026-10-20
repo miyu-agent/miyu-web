@@ -234,9 +234,7 @@
         "conflict": "该人格已在别处修改",
         "reload": "重新加载",
         "delete": "删除",
-        "delete_again": "再点一次删除",
         "restore": "恢复出厂",
-        "restore_again": "再点一次恢复出厂",
         "deleted": "已删除",
         "restored": "已恢复出厂设置",
         "features": "功能",
@@ -251,7 +249,9 @@
         },
         "memory": "记忆",
         "memory_open": "查看",
-        "memory_count": "{n} 条 · 查看"
+        "memory_count": "{n} 条 · 查看",
+        "delete_ask": "确认删除「{name}」吗？",
+        "restore_ask": "确认把「{name}」恢复出厂吗？改过的内容会丢掉。"
       },
       "folders": {
         "open": "选择文件夹…",
@@ -318,7 +318,7 @@
         "save": "保存",
         "cancel": "取消",
         "delete": "删除项目",
-        "delete_again": "再点一次删除"
+        "delete_ask": "确认删除项目「{name}」吗？里面的会话会一起删除。"
       },
       "info": {
         "persona": "人格",
@@ -432,9 +432,7 @@
         "conflict": "This persona was modified elsewhere",
         "reload": "Reload",
         "delete": "Delete",
-        "delete_again": "Click again to delete",
         "restore": "Restore defaults",
-        "restore_again": "Click again to restore defaults",
         "deleted": "Deleted",
         "restored": "Defaults restored",
         "features": "Features",
@@ -449,7 +447,9 @@
         },
         "memory": "Memory",
         "memory_open": "View",
-        "memory_count": "{n} · View"
+        "memory_count": "{n} · View",
+        "delete_ask": "Delete \"{name}\"?",
+        "restore_ask": "Restore \"{name}\" to its built-in version? Your changes will be lost."
       },
       "folders": {
         "open": "Select folder…",
@@ -516,7 +516,7 @@
         "save": "Save",
         "cancel": "Cancel",
         "delete": "Delete project",
-        "delete_again": "Click again to delete"
+        "delete_ask": "Delete project \"{name}\"? Its sessions will be deleted too."
       },
       "info": {
         "persona": "Persona",
@@ -630,9 +630,7 @@
         "conflict": "この人格はほかの場所で変更されました。",
         "reload": "読み直す",
         "delete": "削除",
-        "delete_again": "もう一度押して削除",
         "restore": "出荷時に戻す",
-        "restore_again": "もう一度押して出荷時に戻す",
         "deleted": "削除しました",
         "restored": "出荷時の状態に戻しました",
         "features": "機能",
@@ -647,7 +645,9 @@
         },
         "memory": "記憶",
         "memory_open": "表示",
-        "memory_count": "{n} 件 · 表示"
+        "memory_count": "{n} 件 · 表示",
+        "delete_ask": "「{name}」を削除しますか？",
+        "restore_ask": "「{name}」を初期状態に戻しますか？変更内容は失われます。"
       },
       "folders": {
         "open": "フォルダを選ぶ…",
@@ -714,7 +714,7 @@
         "save": "保存",
         "cancel": "キャンセル",
         "delete": "プロジェクトを削除",
-        "delete_again": "もう一度クリックで削除"
+        "delete_ask": "プロジェクト「{name}」を削除しますか？中のセッションも削除されます。"
       },
       "info": {
         "persona": "人格",

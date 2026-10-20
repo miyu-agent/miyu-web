@@ -8,6 +8,7 @@
 //! 带 MCP 服务的（扩展包、`bundle`，核心 X-4）多一组「MCP 服务」：一个服务一行写现在怎样（`mcp-servers.js`），组头「重启」（`package.restart`）；
 //! 个人设置里写的服务（F-9 补）在列表的段后面单列一组。
 
+import { confirmIn } from './confirm.js';
 import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField } from './rows.js';
 import { splitKey, itemFor, mcpStopped, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf } from './model.js';
@@ -278,19 +279,14 @@ function openButton(dialog, id) {
 }
 
 /**
- * 卸载：只有管理员自己装的、不是必需的才有（出厂的卸掉和关掉是一回事，照列表的开关）。点一下变成「再点一次卸载」，再点才卸。
+ * 卸载：只有管理员自己装的、不是必需的才有（出厂的卸掉和关掉是一回事，照列表的开关）。先弹窗问一句（2026-10-20 项目主人：不要点两下）。
  * @param {any} dialog @param {any} p
  */
 function removeButton(dialog, p) {
   if (p.required || p.layer === 'shipped') return null;
-  const t = (/** @type {string} */ key) => dialog.ctx.text(key);
-  let armed = false;
+  const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const button = h('button.set-btn.is-danger', { type: 'button', onclick: async () => {
-    if (!armed) {
-      armed = true;
-      button.textContent = t('pkg.uninstall_again');
-      return;
-    }
+    if (!await confirmIn(button, { text: t('pkg.uninstall_ask', { name: p.name ?? p.package }), yes: t('ask_yes'), no: t('ask_no') })) return;
     try {
       await dialog.ctx.core.request('package.remove', { package: p.package });
       dialog.back();

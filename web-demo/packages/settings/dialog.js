@@ -370,7 +370,8 @@ export class SettingsDialog {
         typing.dispatchEvent(new CustomEvent('set-revert'));
         return;
       }
-      const open = this.panel.querySelector('.set-menu, .set-drawer, .set-form, .set-pool.is-editing, [data-set-dismiss]');
+      // 叠着几层的（浮卡上又弹了问一句的）先关最上面那层：后挂上的在后面
+      const open = [...this.panel.querySelectorAll('.set-menu, .set-drawer, .set-form, .set-pool.is-editing, [data-set-dismiss]')].at(-1);
       if (open) {
         open.dispatchEvent(new CustomEvent('set-dismiss'));
         return;

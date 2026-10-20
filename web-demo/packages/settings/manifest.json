@@ -340,8 +340,8 @@
         "count": "模型 {count}",
         "unset": "未设置",
         "remove": "删除",
-        "remove_confirm": "确认删除",
-        "remove_in_use": "默认模型在用它，删了要另选"
+        "remove_confirm": "确认删除「{name}」吗？",
+        "remove_confirm_in_use": "默认模型在用「{name}」，删了要另选。确认删除吗？"
       },
       "changed": "已修改",
       "packages_web": "网页",
@@ -372,7 +372,6 @@
         "features": "功能",
         "settings": "设置",
         "uninstall": "卸载",
-        "uninstall_again": "再点一次卸载",
         "open_backstage": "打开页面",
         "owner_accounts": "终端管理员的 {platform} 号",
         "owner_desc": "私聊时视为终端管理员本人",
@@ -415,7 +414,8 @@
           "mascot": "吉祥物",
           "mcp": "MCP",
           "bundle": "技能包"
-        }
+        },
+        "uninstall_ask": "确认卸载「{name}」吗？"
       },
       "onboard": {
         "title_list": "选择模型供应商",
@@ -479,7 +479,9 @@
       "main_color_auto": "自动",
       "advanced_more": "{names}等",
       "search_pages": "页面",
-      "search_packages": "软件包"
+      "search_packages": "软件包",
+      "ask_yes": "确认",
+      "ask_no": "取消"
     },
     "en": {
       "title": "Settings",
@@ -652,8 +654,8 @@
         "count": "Models {count}",
         "unset": "Not set",
         "remove": "Delete",
-        "remove_confirm": "Confirm delete",
-        "remove_in_use": "The default model uses it; pick another after deleting"
+        "remove_confirm": "Delete \"{name}\"?",
+        "remove_confirm_in_use": "The default model uses \"{name}\"; you'll need to pick another. Delete it?"
       },
       "changed": "Modified",
       "packages_web": "Web",
@@ -684,7 +686,6 @@
         "features": "Features",
         "settings": "Settings",
         "uninstall": "Uninstall",
-        "uninstall_again": "Click again to uninstall",
         "open_backstage": "Open page",
         "owner_accounts": "Terminal admin's {platform} account",
         "owner_desc": "Treated as the terminal admin in private chats",
@@ -727,7 +728,8 @@
           "mascot": "Mascot",
           "mcp": "MCP",
           "bundle": "Skill pack"
-        }
+        },
+        "uninstall_ask": "Uninstall \"{name}\"?"
       },
       "onboard": {
         "title_list": "Select a model provider",
@@ -791,7 +793,9 @@
       "main_color_auto": "Auto",
       "advanced_more": "{names} and more",
       "search_pages": "Pages",
-      "search_packages": "Packages"
+      "search_packages": "Packages",
+      "ask_yes": "Confirm",
+      "ask_no": "Cancel"
     },
     "ja": {
       "title": "設定",
@@ -964,8 +968,8 @@
         "count": "モデル {count}",
         "unset": "未設定",
         "remove": "削除",
-        "remove_confirm": "削除を確認",
-        "remove_in_use": "既定のモデルが使っています。削除後に選び直してください"
+        "remove_confirm": "「{name}」を削除しますか？",
+        "remove_confirm_in_use": "既定のモデルが「{name}」を使っています。削除後に選び直す必要があります。削除しますか？"
       },
       "changed": "変更済み",
       "packages_web": "ウェブ",
@@ -996,7 +1000,6 @@
         "features": "機能",
         "settings": "設定",
         "uninstall": "アンインストール",
-        "uninstall_again": "もう一度押してアンインストール",
         "open_backstage": "ページを開く",
         "owner_accounts": "端末管理者の {platform} アカウント",
         "owner_desc": "個人チャットでは端末管理者本人として扱います",
@@ -1039,7 +1042,8 @@
           "mascot": "マスコット",
           "mcp": "MCP",
           "bundle": "スキルパック"
-        }
+        },
+        "uninstall_ask": "「{name}」をアンインストールしますか？"
       },
       "onboard": {
         "title_list": "モデルプロバイダーを選択",
@@ -1103,7 +1107,9 @@
       "main_color_auto": "自動",
       "advanced_more": "{names} など",
       "search_pages": "ページ",
-      "search_packages": "パッケージ"
+      "search_packages": "パッケージ",
+      "ask_yes": "確認",
+      "ask_no": "キャンセル"
     }
   },
   "styles": [

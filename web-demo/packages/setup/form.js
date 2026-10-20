@@ -14,6 +14,7 @@ import { h } from '../../src/lib/dom.js';
  *   field: (text: string, hint: string) => HTMLInputElement,
  *   button: (label: string, opts: {primary?: boolean, danger?: boolean}, onclick: () => void) => HTMLButtonElement,
  *   toast: (text: string) => void,
+ *   confirm: (from: Element, text: string) => Promise<boolean>,
  * }} Kit
  */
 
@@ -51,28 +52,12 @@ export function area(text, hint, rows = 3) {
 }
 
 /**
- * 点两次才做的按钮：第一次变成「再点一次…」，3 秒没再点变回去（2026-10-08 项目主人照推荐定：不弹窗）。
- * @param {Kit} kit @param {string} label @param {string} again @param {() => void} run
+ * 删除、恢复出厂的按钮：点了先弹窗问一句（`kit.confirm`；2026-10-20 项目主人：「点一下变确认」不好，要弹窗确认），确认了才做。
+ * @param {Kit} kit @param {string} label @param {() => string} ask 问的那句（点的时候现取，名字可能改过） @param {() => void} run
  */
-export function twoClick(kit, label, again, run) {
-  let armed = false;
-  let timer = 0;
-  const reset = () => {
-    armed = false;
-    clearTimeout(timer);
-    btn.textContent = label;
-    btn.classList.remove('is-armed');
-  };
-  const btn = kit.button(label, { danger: true }, () => {
-    if (armed) {
-      reset();
-      run();
-      return;
-    }
-    armed = true;
-    btn.textContent = again;
-    btn.classList.add('is-armed');
-    timer = setTimeout(reset, 3000);
+export function askFirst(kit, label, ask, run) {
+  const btn = kit.button(label, { danger: true }, async () => {
+    if (await kit.confirm(btn, ask())) run();
   });
   return btn;
 }

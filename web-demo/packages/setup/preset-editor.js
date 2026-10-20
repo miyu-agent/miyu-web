@@ -7,7 +7,7 @@
 //! 「不用图标」删掉这一层写的；选了当场存。删除照核心的 `remove`，同人格。
 
 import { h, icon, replace, hasIcon, iconNames } from '../../src/lib/dom.js';
-import { field, twoClick } from './form.js';
+import { field, askFirst } from './form.js';
 import { refusalText } from './persona-editor.js';
 import { featureGroups } from './model.js';
 
@@ -60,7 +60,7 @@ export class PresetEditor {
     // 写了上下两个「功能」挨着），别的各一个
     const features = h('div.setup-features', featureGroups(list).map((g) => [g.group === 'feature' ? null : h('div.setup-feature-group', t(`edit.feature_groups.${g.group}`)), g.items.map((f) => this.featureRow(f))]));
     this.note = h('p.setup-error', { hidden: true });
-    const remove = got.remove ? twoClick(this.kit, t(`edit.${got.remove}`), t(`edit.${got.remove}_again`), () => this.drop()) : null;
+    const remove = got.remove ? askFirst(this.kit, t(`edit.${got.remove}`), () => t(`edit.${got.remove}_ask`, { name: this.title.textContent || this.id }), () => this.drop()) : null;
     replace(this.body,
       field(t('edit.name'), name),
       field(t('edit.icon'), this.iconRow(got, label)),

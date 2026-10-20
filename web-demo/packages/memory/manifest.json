@@ -13,7 +13,7 @@
   },
   "kind": "optional",
   "description": {
-    "zh": "设置页多一页「记忆」：一个人格一份（无人格也有一份），能搜、按类别筛、连作废的一起看；点开一条改内容和关键词、作废、找回；整理、清空这一份。/memory 直接打开。"
+    "zh": "设置页多一页「记忆」：一个人格一份（无人格也有一份），能搜、按类别筛、连作废的一起看；点开一条改内容和关键词、作废、找回；整理、清空。/memory 直接打开。"
   },
   "provides": {
     "services": [
@@ -66,8 +66,8 @@
       "more": "再多列一些",
       "foot": "{live} 条在用",
       "foot_retired": "{live} 条在用 · {retired} 条作废",
-      "clear": "清空这一份",
-      "clear_confirm": "确认清空 {name} 的全部记忆",
+      "clear": "清空",
+      "clear_ask": "确认要清空记忆吗？",
       "cleared": "已清空 {n} 条（找不回来）",
       "too_long": "最多 {n} 字",
       "too_long_keywords": "关键词最多 {n} 字",
@@ -146,8 +146,8 @@
       "more": "Show more",
       "foot": "{live} in use",
       "foot_retired": "{live} in use · {retired} retired",
-      "clear": "Clear all",
-      "clear_confirm": "Confirm: clear all of {name}'s memories",
+      "clear": "Clear",
+      "clear_ask": "Clear all memories?",
       "cleared": "Cleared {n} (can't be undone)",
       "too_long": "Up to {n} characters",
       "too_long_keywords": "Keywords: up to {n} characters",
@@ -226,8 +226,8 @@
       "more": "さらに表示",
       "foot": "{live} 件が有効",
       "foot_retired": "{live} 件が有効 · {retired} 件が無効",
-      "clear": "すべて消去",
-      "clear_confirm": "{name}の記憶をすべて消去する",
+      "clear": "消去",
+      "clear_ask": "記憶をすべて消去しますか？",
       "cleared": "{n} 件を消去しました（元に戻せません）",
       "too_long": "{n} 文字まで",
       "too_long_keywords": "キーワードは {n} 文字まで",
