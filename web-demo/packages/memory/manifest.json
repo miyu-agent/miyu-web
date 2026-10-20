@@ -27,8 +27,7 @@
     "chat",
     "settings~",
     "composer~",
-    "mascot~",
-    "theme~"
+    "mascot~"
   ],
   "styles": [
     "style.css"

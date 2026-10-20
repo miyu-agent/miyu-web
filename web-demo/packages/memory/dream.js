@@ -1,15 +1,14 @@
 // @ts-check
-//! 人叫的整理那一块（蓝图 `web.md`「记忆页」第 13 条）：头一行、五行滚动区、下面一条星空（`stars.js`；2026-10-20 项目主人看过几版样板定的，
-//! 原来的光点、日月舞台和吉祥物不要了）。记忆页的「整理」、`/dream` 都用它。数据照 `dream-model.js`。
+//! 人叫的整理那一块（蓝图 `web.md`「记忆页」第 13 条）：头一行、五行滚动区、整块都是滚动的字（2026-10-20 项目主人：星星图不要了，区域都用来显示内容；
+//! 原来的星空、光点、日月舞台和吉祥物都不要了）。记忆页的「整理」、`/dream` 都用它。数据照 `dream-model.js`。
 //! 合完了（或者叫停了，核心 R-22）收成结果那一行（`receipt`），点开列这一趟真正存下的。
 
 import { h, icon } from '../../src/lib/dom.js';
 import { clock } from '../../src/lib/format.js';
 import { DreamTrack } from './dream-model.js';
-import { Sky } from './stars.js';
 
 /** 滚动区留几行（多的从上面拿掉：看得见的是五行，上面两行淡出） */
-const KEEP = 7;
+const KEEP = 13;
 /** 合完以后那一块留多久再收成结果那一行（光点淡下去，再看一会儿） */
 export const SETTLE_MS = 3000;
 
@@ -28,7 +27,6 @@ export class DreamCard {
     /** 叫停了（`memory.dream` 回了 `stopped`）：收成「整理已中断」 */
     this.stopped = false;
     this.doneAt = 0;
-    this.dots = new Sky();
     this.startedAt = performance.now();
     /** 合完的回应（结果那一行照它写） @type {any} */
     this.got = null;
@@ -56,37 +54,27 @@ export class DreamCard {
       },
     }, this.t('dream.stop')) : null;
     this.list = h('div.dream-feed-list');
-    this.canvas = /** @type {HTMLCanvasElement} */ (h('canvas.dream-sky', { 'aria-hidden': 'true' }));
     this.el = h('section.dream-card', { 'aria-live': 'polite' },
       h('div.dream-head', this.title, this.batch, this.time, this.tally, this.stopBtn),
-      h('div.dream-feed', this.list),
-      this.canvas);
+      // 整块都拿来写滚动的字（2026-10-20 项目主人：星星图不要了，区域都用来显示内容）
+      h('div.dream-feed', this.list));
     // 进场的动画只放一次：记忆页每次重画都把这一块拿出来再放回去，CSS 动画会从头再放（看着闪一下；2026-10-20 项目主人：点整理、整理完卡片会闪）
     this.el.addEventListener('animationend', (e) => {
       const el = /** @type {HTMLElement} */ (e.target);
       if (el === this.el && !el.classList.contains('is-leaving')) el.classList.add('is-in');
       else if (el.classList?.contains('dream-line')) el.classList.add('is-in');
     });
-    this.g = /** @type {CanvasRenderingContext2D} */ (this.canvas.getContext('2d'));
     // 输入框上那只跟着一起睡（2026-10-20 项目主人：一起睡），合完了醒
     this.sleeping = true;
     ctx.mascot?.sleep?.(true);
-    this.frame = 0;
     this.sync();
-    const tick = (/** @type {number} */ now) => {
-      if (this.el.isConnected) {
-        this.fit();
-        this.draw(now);
-        this.clock(now);
-      }
-      this.frame = requestAnimationFrame(tick);
-    };
-    this.frame = requestAnimationFrame(tick);
+    // 用时每秒走一下（不再一帧一帧画）
+    this.timer = setInterval(() => { if (this.el.isConnected) this.clock(performance.now()); }, 250);
   }
 
-  /** 不要了：停掉动画；还睡着的叫醒 */
+  /** 不要了：停掉计时；还睡着的叫醒 */
   dispose() {
-    cancelAnimationFrame(this.frame);
+    clearInterval(this.timer);
     this.wake();
   }
 
@@ -104,8 +92,6 @@ export class DreamCard {
   push(method, params) {
     const lines = method === 'memory.event' ? this.track.logged(params?.event) : method === 'memory.dreaming' ? this.track.dreaming(params) : [];
     for (const line of lines) this.say(line);
-    // 一批合完了：留下的点就地连起来
-    if (method === 'memory.event' && params?.event?.kind === 'ext.memory.merged') this.dots.settle(performance.now());
     if (lines.length || method === 'memory.event') this.sync();
   }
 
@@ -118,11 +104,6 @@ export class DreamCard {
     this.got = got ?? {};
     this.stopped = got?.stopped === true;
     this.doneAt = performance.now();
-    // 合完一圈一圈点亮（叫停的不亮）
-    if (!this.stopped) {
-      this.dots.settle(this.doneAt);
-      this.dots.finish(this.doneAt);
-    }
     this.stopBtn?.remove();
     setTimeout(() => this.wake(), 450);
     this.title.textContent = this.t(this.stopped ? 'dream.stopped_title' : 'dream.done');
@@ -236,38 +217,9 @@ export class DreamCard {
     } else if (line.kind === 'kw') row = h('div.dream-line', tag('kw'), h('span.dream-t', text(line.id), h('span.dream-why', ` · ${line.keywords}`)));
     else if (line.kind === 'stopped') row = h('div.dream-line.is-fail', h('span.dream-t', t('dream.stopped_line')));
     else row = h('div.dream-line.is-fail', h('span.dream-t', t('dream.retry')));
-    // 光点：读进来一条一个点，并进别的飞过去、过时的淡掉，改写的亮一下
-    const now = performance.now();
-    if (line.kind === 'read') this.dots.add(line.id, now);
-    else if (line.kind === 'batch') this.dots.addMany(line.count, now);
-    else if (line.kind === 'del') this.dots.merge(line.id, line.kept, now);
-    else if (line.kind === 'new') this.dots.flash(line.id, now);
     // 新的一批：摘要那一行重新起
     if ((line.kind === 'read' || line.kind === 'batch') && this.summaryLine) this.summaryLine = null;
     this.list.append(row);
     while (this.list.children.length > KEEP) this.list.firstElementChild?.remove();
-  }
-
-  /** 画布照显示的大小和像素比 */
-  fit() {
-    const r = this.canvas.getBoundingClientRect();
-    if (!r.width || !r.height) return;
-    const dpr = devicePixelRatio || 1;
-    const w = Math.round(r.width * dpr), hh = Math.round(r.height * dpr);
-    if (w !== this.canvas.width || hh !== this.canvas.height) {
-      this.canvas.width = w;
-      this.canvas.height = hh;
-    }
-    this.dots.resize(r.width, r.height);
-    this.g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-
-  /** 画一帧 @param {number} now */
-  draw(now) {
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    this.dots.step(now, reduce);
-    // 深色主题用亮的那套颜色、光叠着加（主题服务说了算，没有的照系统）
-    const dark = this.ctx.theme?.dark?.() ?? matchMedia('(prefers-color-scheme: dark)').matches;
-    this.dots.draw(this.g, now, dark, reduce);
   }
 }

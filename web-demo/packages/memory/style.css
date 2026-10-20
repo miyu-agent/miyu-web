@@ -98,7 +98,7 @@
 .dream-stop:disabled { cursor: default; opacity: 0.7; }
 .dream-stop:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .dream-tally { margin-left: auto; color: var(--text-faint); font-size: 12px; font-variant-numeric: tabular-nums; }
-.dream-feed { position: relative; height: 130px; overflow: hidden; margin-bottom: 10px; padding: 0 16px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 30px); mask-image: linear-gradient(to bottom, transparent 0, #000 30px); }
+.dream-feed { position: relative; height: 260px; overflow: hidden; margin-bottom: 10px; padding: 0 16px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 30px); mask-image: linear-gradient(to bottom, transparent 0, #000 30px); }
 .dream-feed-list { position: absolute; right: 16px; bottom: 0; left: 16px; display: grid; }
 .dream-line { display: flex; align-items: center; gap: 8px; min-width: 0; height: 26px; color: var(--text-soft); font-size: 13px; white-space: nowrap; animation: dream-rise 0.45s var(--ease-out); }
 @keyframes dream-rise { from { opacity: 0; transform: translateY(8px); } }
@@ -111,8 +111,6 @@
 .dream-k.is-del { background: color-mix(in srgb, var(--ribbon) 13%, transparent); color: var(--ribbon); }
 .dream-k.is-kw { background: color-mix(in srgb, var(--gold) 14%, transparent); color: var(--gold); }
 .dream-k.is-sum { background: var(--surface-3); color: var(--text-soft); }
-/* 下面一条星空（`stars.js`）：不画分割线、底色跟主题（2026-10-20 项目主人） */
-.dream-sky { display: block; width: 100%; height: 120px; }
 .chat-tail .dream-card { margin: 8px 0 4px; }
 /* 记忆页里的那一块：出来淡入升上来，收起淡出沉下去（正文末尾的照 `unfold` 长出来、收回去） */
 .mem-list-page .dream-card { animation: dream-in var(--motion-collapse) var(--ease-out); }
