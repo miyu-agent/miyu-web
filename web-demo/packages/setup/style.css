@@ -220,7 +220,8 @@
 .setup-float:focus { outline: none; }
 .setup-float {
   display: flex; flex-direction: column; width: min(620px, 100%); max-height: 100%; overflow: hidden;
-  border-radius: 14px; background: var(--surface-1); box-shadow: var(--float-shadow);
+  /* 底色同设置框（2026-10-20 项目主人：后面已经糊了，浮起来的窗不用白的，配色不容易出问题） */
+  border-radius: 14px; background: var(--surface); box-shadow: var(--float-shadow);
   animation: pop-in var(--motion-in) var(--ease-out) both;
 }
 .setup-float-scrim.is-leaving .setup-float { animation: pop-out var(--motion-out) var(--ease-in) both; }

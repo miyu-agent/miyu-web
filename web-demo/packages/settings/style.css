@@ -310,11 +310,11 @@
 .set-btn.is-danger { color: var(--danger); }
 .set-btn.is-danger.is-armed { background: color-mix(in srgb, var(--danger) 14%, transparent); }
 
-/* 删除、清空前问一句（confirm.js）：盖住设置框，正中一张小卡片 */
+/* 删除、清空前问一句（confirm.js）：盖住设置框，正中一张小卡片；底色同设置框（2026-10-20 项目主人：后面已经糊了，浮起来的小窗不用白的） */
 .set-ask { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 45%, transparent); animation: set-ask-fade 0.14s var(--ease-out); }
 body > .set-ask { z-index: 95; }
 .set-ask.is-leaving { animation: set-ask-fade 0.12s var(--ease-out) reverse forwards; }
-.set-ask-card { display: grid; gap: 16px; width: min(340px, 100%); padding: 18px 18px 14px; border-radius: 14px; background: var(--surface-1); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); box-sizing: border-box; animation: set-ask-pop 0.16s var(--ease-out); }
+.set-ask-card { display: grid; gap: 16px; width: min(340px, 100%); padding: 18px 18px 14px; border-radius: 14px; background: var(--surface); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); box-sizing: border-box; animation: set-ask-pop 0.16s var(--ease-out); }
 .set-ask.is-leaving .set-ask-card { animation: set-ask-pop 0.12s var(--ease-out) reverse forwards; }
 .set-ask-text { margin: 0; color: var(--text); font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
 .set-ask-foot { display: flex; justify-content: flex-end; gap: 8px; }
@@ -326,7 +326,7 @@ body > .set-ask { z-index: 95; }
 .set-body:has(> .set-fill), .set-slide:has(> .set-fill) { display: flex; flex-direction: column; }
 .set-slide:has(> .set-fill) { flex: 1 0 auto; }
 .set-fill { flex: 1 0 auto; }
-.set-pinned { position: sticky; bottom: -24px; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: auto -24px -24px; padding: 10px 24px 14px; background: color-mix(in srgb, var(--surface) 55%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: var(--text-faint); font-size: 12.5px; }
+.set-pinned { position: sticky; bottom: -24px; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: auto -24px -24px; padding: 6px 24px 8px; background: color-mix(in srgb, var(--surface) 55%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: var(--text-faint); font-size: 12.5px; }
 .set-seg { display: inline-flex; gap: 2px; border-radius: 8px; width: fit-content; }
 .set-seg-item { height: 24px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer; }
 .set-seg-item:hover { background: var(--surface-2); color: var(--text); }
