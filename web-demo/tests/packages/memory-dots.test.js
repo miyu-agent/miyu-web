@@ -81,3 +81,19 @@ test('老核心只说一批几条：照条数出点', () => {
   d.addMany(3);
   assert.equal(d.live().length, 3);
 });
+
+test('合完一圈一圈点亮：从离中间最近的那个点起，顺着线越远越晚；线上跑的光点只在长完的线上放', () => {
+  const d = new Dots();
+  d.resize(600, 96);
+  for (let i = 1; i <= 12; i++) d.add(`m${i}`);
+  d.settle(0);
+  d.step(10, false);
+  assert.equal(d.pulses.length, 0, '线还没长完');
+  d.step(2000, false);
+  assert.ok(d.pulses.length >= 1);
+  d.finish(5000);
+  const at = d.live().map((x) => x.waveAt);
+  assert.ok(at.every((t) => t >= 5000));
+  assert.equal(Math.min(...at), 5000);
+  assert.ok(Math.max(...at) > 5000);
+});

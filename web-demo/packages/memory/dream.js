@@ -118,6 +118,11 @@ export class DreamCard {
     this.got = got ?? {};
     this.stopped = got?.stopped === true;
     this.doneAt = performance.now();
+    // 合完一圈一圈点亮（叫停的不亮）
+    if (!this.stopped) {
+      this.dots.settle(this.doneAt);
+      this.dots.finish(this.doneAt);
+    }
     this.stopBtn?.remove();
     setTimeout(() => this.wake(), 450);
     this.title.textContent = this.t(this.stopped ? 'dream.stopped_title' : 'dream.done');
@@ -224,8 +229,8 @@ export class DreamCard {
     else row = h('div.dream-line.is-fail', h('span.dream-t', t('dream.retry')));
     // 光点：读进来一条一个点，并进别的飞过去、过时的淡掉，改写的亮一下
     const now = performance.now();
-    if (line.kind === 'read') this.dots.add(line.id);
-    else if (line.kind === 'batch') this.dots.addMany(line.count);
+    if (line.kind === 'read') this.dots.add(line.id, now);
+    else if (line.kind === 'batch') this.dots.addMany(line.count, now);
     else if (line.kind === 'del') this.dots.merge(line.id, line.kept, now);
     else if (line.kind === 'new') this.dots.flash(line.id, now);
     // 新的一批：摘要那一行重新起
