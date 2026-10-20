@@ -153,7 +153,9 @@ function shoot(pieces, head, x, y) {
 function onFace(face, p, blink, open, lamp) {
   if (p[2] <= 0) return null;
   const q = [p[0], p[1]];
-  if (!blink && face.eyes.some(([a, b]) => segment(q, a, b) < face.eye_width)) return 'eye';
+  // 眼睛是竖着的长方形：左右各 `eye_width`、上下照两头（2026-10-20 项目主人：眼睛是双竖线、长方形；原来照线段量，两头是圆的，
+  // 一格一个像素时两头只剩一格，正对着看是三角）
+  if (!blink && face.eyes.some(([a, b]) => Math.abs(q[0] - a[0]) < face.eye_width && q[1] >= Math.min(a[1], b[1]) && q[1] <= Math.max(a[1], b[1]))) return 'eye';
   const line = face.line;
   const half = (open * face.mouth_gap) / 2;
   const [x0, x1] = [line[0][0], line[line.length - 1][0]];
