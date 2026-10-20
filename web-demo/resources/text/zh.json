@@ -517,5 +517,9 @@
     "messages_inside": "只在项目里",
     "messages_open": "能和项目外的会话互相留言",
     "back": "全部项目"
+  },
+  "gallery": {
+    "no_send": "样张里发不出去",
+    "command": "打开皮肤样张"
   }
 }

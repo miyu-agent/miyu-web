@@ -6,6 +6,7 @@ import { App } from '../../src/ui/app.js';
 import { useConnection as linkCardsUse } from '../../src/ui/linkcards.js';
 import { codeBlock, copy } from '../../src/markdown/build.js';
 import { PALETTE, colorOf } from '../../src/model/project.js';
+import { t } from '../../src/util/res.js';
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -19,6 +20,8 @@ export function apply(ctx) {
   ctx.provide('markdown', { codeBlock, copy });
   // 斜杠命令：别的包登记自己的（`/settings`、`/pkg` 这类）
   ctx.provide('commands', app.commands);
+  // 皮肤样张（蓝图 web.md「皮肤」第 7 条）：设置页「皮肤」那一行的「样张」也开它
+  ctx.effect(() => app.commands.register({ name: 'gallery', summary: t('gallery.command') }, () => { app.openGallery().catch((err) => app.composer.say(err.message)); }));
   ctx.provide('chat', {
     /** 正在看的会话（还没开的新会话是 `null`） */
     current: () => app.current,
@@ -32,6 +35,8 @@ export function apply(ctx) {
     /** 家目录（握手回应的 `host.home`）：路径写成 `~` 用 */
     home: () => app.home,
     interrupt: () => app.interrupt(),
+    /** 开皮肤样张（只在这一页、不连核心的会话） */
+    gallery: () => app.openGallery(),
     /** 正文末尾（挂载位 `chat.tail`）来了新的：回到跟着最新的、露出它 */
     reveal: () => app.chat.reveal(),
     /** 钉一个节点在这时正文里最后一块的后面，交回钉在哪；照交回的位置再钉（换了会话回来） */

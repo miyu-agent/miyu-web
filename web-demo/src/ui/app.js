@@ -32,6 +32,12 @@ import { footerOf, footerLabel, effortLevels, effortLabel, effortOf, effortChang
 import { Crumbs, BackButton } from './crumbs.js';
 import { pathOf } from '../model/tree.js';
 import { draftOf, colorOf } from '../model/project.js';
+import { emptySession } from '../core/store.js';
+
+/** 皮肤样张的会话编号：只在这一页（核心那边没有这个会话） */
+const GALLERY = 'gallery:skin';
+/** @param {string} id */
+const isGallery = (id) => id === GALLERY;
 
 /** 输入历史记在这台设备上的名字（蓝图「输入历史」第 1 条；内核的 `storage` 会带上账号） */
 const HISTORY = 'input_history';
@@ -495,6 +501,8 @@ export class App {
    * 窄屏上顺手收起左栏。
    */
   open(id, listed = false) {
+    // 换到别的会话：样张收掉（蓝图 web.md「皮肤」第 7 条）
+    if (this.current && isGallery(this.current) && id !== this.current) this.store.drop(this.current);
     this.pendingLevel = null;
     this.pendingModel = null;
     this.draft = { persona: null, preset: null, cwd: null, project: null };
@@ -556,11 +564,27 @@ export class App {
   }
 
   /**
+   * 皮肤样张（蓝图 `web.md`「皮肤」第 7 条，`resources/gallery.json`）：一个只在这一页、不连核心的会话，照写好的条目用真的对话区画出每一种东西。
+   * 放进会话仓库（不订阅、左栏不列），点开工具那一步的结果照条目里写好的交；发不出去；换到别的会话就收掉。
+   */
+  async openGallery() {
+    this.gallery ??= await fetch(new URL('resources/gallery.json', document.baseURI)).then((r) => r.json());
+    const id = GALLERY;
+    if (!this.store.sessions.has(id)) {
+      const s = emptySession(id);
+      s.view.reset({ entries: this.gallery.entries, status: this.gallery.status });
+      this.store.sessions.set(id, s);
+    }
+    this.open(id);
+  }
+
+  /**
    * 一次编辑、写入改了什么（`view.detail`，核心 9-6 三补）：完整的差异带行号。问不到的（旧核心、没有这次调用）交 `null`，
    * 那一步照参数比的照旧。
    * @param {string} session @param {string} call
    */
   callDetail(session, call) {
+    if (isGallery(session)) return Promise.resolve(this.gallery?.details?.[call] ?? null);
     const key = `${session} ${call}`;
     if (!this.details.has(key)) this.details.set(key, this.store.conn.request('view.detail', { session, call }).catch(() => null));
     return /** @type {Promise<any>} */ (this.details.get(key));
@@ -572,6 +596,7 @@ export class App {
    * @param {string} session @param {number} upto
    */
   compactionSummary(session, upto) {
+    if (isGallery(session)) return Promise.resolve(Object.values(this.gallery?.summaries ?? {})[0] ?? null);
     const key = `${session} c${upto}`;
     if (!this.details.has(key)) this.details.set(key, this.store.conn.request('view.detail', { session, compaction: upto }).then((r) => (typeof r?.summary === 'string' ? r.summary : null), () => null));
     return /** @type {Promise<string|null>} */ (this.details.get(key));
@@ -655,6 +680,10 @@ export class App {
   }
 
   async send(text, extra = {}) {
+    if (this.current && isGallery(this.current)) {
+      this.composer.say(t('gallery.no_send'));
+      return false;
+    }
     try {
       await this.ensureSession();
       // 工作区是会话的属性（核心 9-7）：说话不再带 `cwd`
@@ -753,6 +782,7 @@ export class App {
    * @param {string} id
    */
   titleOf(id) {
+    if (isGallery(id)) return this.gallery?.title ?? null;
     const parent = this.parentOf(id);
     const kid = parent ? this.kids(parent).find((k) => k.session === id) : null;
     if (kid) return kid.title;

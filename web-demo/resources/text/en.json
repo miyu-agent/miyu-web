@@ -517,5 +517,9 @@
     "messages_inside": "Only within the project",
     "messages_open": "Can message sessions outside the project",
     "back": "All projects"
+  },
+  "gallery": {
+    "no_send": "The gallery is read-only",
+    "command": "Open the skin gallery"
   }
 }

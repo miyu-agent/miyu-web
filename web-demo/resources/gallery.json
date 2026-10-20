@@ -1,0 +1,254 @@
+{
+ "note": "皮肤样张（蓝图 web.md「皮肤」第 7 条）：一个只在这一页、不连核心的会话，条目照核心视图流的写法，字都是编的。",
+ "title": "皮肤样张",
+ "entries": [
+  {
+   "id": "s-1",
+   "kind": "user",
+   "turn": 1,
+   "at": "2026-10-21T09:00:00Z",
+   "level": "workspace",
+   "text": "给我看看皮肤能换的东西都长什么样",
+   "attachments": [
+    {
+     "kind": "file",
+     "blob": "gallery-notes",
+     "media_type": "text/markdown",
+     "name": "皮肤笔记.md"
+    }
+   ]
+  },
+  {
+   "id": "s-2",
+   "kind": "thought",
+   "turn": 1,
+   "at": "2026-10-21T09:00:00Z",
+   "group": "s-g1",
+   "text": "先翻一下样式文件，再改一处试试，最后跑一遍测试。",
+   "took_ms": 2400
+  },
+  {
+   "id": "s-3",
+   "kind": "tool",
+   "turn": 1,
+   "at": "2026-10-21T09:01:00Z",
+   "group": "s-g1",
+   "call": "gallery-read",
+   "name": "read",
+   "state": "done",
+   "args": "{\"path\": \"web-demo/styles/tokens.css\"}",
+   "title": {
+    "name": "读取",
+    "object": "web-demo/styles/tokens.css"
+   },
+   "took_ms": 120
+  },
+  {
+   "id": "s-4",
+   "kind": "tool",
+   "turn": 1,
+   "at": "2026-10-21T09:01:00Z",
+   "group": "s-g1",
+   "call": "gallery-grep",
+   "name": "grep",
+   "state": "done",
+   "args": "{\"pattern\": \"--round\", \"path\": \"web-demo/styles\"}",
+   "title": {
+    "name": "搜索",
+    "object": "--round",
+    "said": "3 处"
+   },
+   "took_ms": 80
+  },
+  {
+   "id": "s-5",
+   "kind": "tool",
+   "turn": 1,
+   "at": "2026-10-21T09:02:00Z",
+   "group": "s-g1",
+   "call": "gallery-edit",
+   "name": "edit",
+   "state": "done",
+   "args": "{\"path\": \"web-demo/styles/tokens.css\", \"edits\": [{\"old_string\": \"  --round: 1;\\n  --blur: 1;\", \"new_string\": \"  --round: 0;\\n  --blur: 0;\\n  --space: 1.1;\"}]}",
+   "title": {
+    "name": "编辑",
+    "object": "web-demo/styles/tokens.css"
+   },
+   "diff": {
+    "added": 3,
+    "removed": 2
+   },
+   "files": [
+    {
+     "action": "changed",
+     "path": "web-demo/styles/tokens.css"
+    }
+   ],
+   "took_ms": 60
+  },
+  {
+   "id": "s-6",
+   "kind": "tool",
+   "turn": 1,
+   "at": "2026-10-21T09:03:00Z",
+   "group": "s-g1",
+   "call": "gallery-shell",
+   "name": "shell",
+   "state": "done",
+   "args": "{\"command\": \"node --test 'web-demo/tests/**/*.test.js'\"}",
+   "title": {
+    "name": "执行命令",
+    "object": "node --test 'web-demo/tests/**/*.test.js'"
+   },
+   "took_ms": 8200
+  },
+  {
+   "id": "s-7",
+   "kind": "tool",
+   "turn": 1,
+   "at": "2026-10-21T09:04:00Z",
+   "group": "s-g1",
+   "call": "gallery-fail",
+   "name": "shell",
+   "state": "error",
+   "args": "{\"command\": \"npm run lint\"}",
+   "title": {
+    "name": "执行命令",
+    "object": "npm run lint"
+   },
+   "took_ms": 900
+  },
+  {
+   "id": "s-g1",
+   "kind": "group",
+   "turn": 1,
+   "at": "2026-10-21T09:00:00Z",
+   "steps": [
+    "s-2",
+    "s-3",
+    "s-4",
+    "s-5",
+    "s-6",
+    "s-7"
+   ],
+   "summary": [
+    {
+     "text": "想了 2s，读了 1 个文件，搜索 1 次，改了 1 个文件，跑了 2 条命令"
+    }
+   ],
+   "summary_en": [
+    {
+     "text": "Thought 2s, read 1 file, searched once, edited 1 file, ran 2 commands"
+    }
+   ],
+   "took_ms": 12000,
+   "failed": true
+  },
+  {
+   "id": "s-8",
+   "kind": "reply",
+   "turn": 1,
+   "at": "2026-10-21T09:05:00Z",
+   "persona": null,
+   "text": "# 皮肤样张\n\n这一页是**写好的样子**，不连核心。改皮肤时照它看一遍：*斜体*、~~删除线~~、`行内代码`、[一个链接](https://example.com)。\n\n## 二级标题\n\n一段比较长的正文，用来看行高和段落之间的空。皮肤能换字体、字号、行高，也能换链接、引用、代码的样子。\n\n### 三级标题\n\n- 无序列表的一项\n- 第二项，带 `代码`\n  - 缩进的一项\n\n1. 有序列表\n2. 第二步\n\n- [x] 做完的任务\n- [ ] 还没做的任务\n\n> 这是一段引用。引用左边有一道线，底下铺一层淡色。\n\n| 名字 | 说明 | 数 |\n|---|---|---:|\n| 圆角 | `--round` 倍数 | 1 |\n| 虚化 | `--blur` 倍数 | 1 |\n| 字号 | `--text-scale` 倍数 | 1 |\n\n```js\n// 代码块：头上一条写语言，右边复制\nexport function hello(name) {\n  return `你好，${name}`;\n}\n```\n\n公式：$E = mc^2$，独占一行的：\n\n$$\n\\int_0^1 x^2\\,dx = \\frac{1}{3}\n$$\n\n---\n\n最后一段，分隔线下面。"
+  },
+  {
+   "id": "s-9",
+   "kind": "end",
+   "turn": 1,
+   "at": "2026-10-21T09:05:00Z",
+   "endpoint": "样张",
+   "model": "gallery",
+   "level": "workspace",
+   "reason": "completed",
+   "took_ms": 12600,
+   "usage": {
+    "uncached": 1800,
+    "cache_read": 4200,
+    "cache_write": 0,
+    "output": 620,
+    "reasoning": 0
+   }
+  },
+  {
+   "id": "s-10",
+   "kind": "notice",
+   "turn": 2,
+   "at": "2026-10-21T09:06:00Z",
+   "what": "compaction",
+   "trigger": "manual",
+   "state": "done",
+   "before": 48000,
+   "after": 9000,
+   "took_ms": 5200,
+   "usage": {
+    "uncached": 9000,
+    "cache_read": 0,
+    "cache_write": 0,
+    "output": 800,
+    "reasoning": 0
+   }
+  },
+  {
+   "id": "s-11",
+   "kind": "notice",
+   "turn": 2,
+   "at": "2026-10-21T09:06:00Z",
+   "what": "recap",
+   "text": "前面看了皮肤的变量表，改了圆角和间距，跑了测试；lint 那一步没过。"
+  },
+  {
+   "id": "s-12",
+   "kind": "user",
+   "turn": 3,
+   "at": "2026-10-21T09:07:00Z",
+   "level": "workspace",
+   "text": "再说一句，然后打断"
+  },
+  {
+   "id": "s-13",
+   "kind": "reply",
+   "turn": 3,
+   "at": "2026-10-21T09:07:00Z",
+   "persona": null,
+   "text": "这一轮说到一半被打断了，收尾那一行会写「已打断」。"
+  },
+  {
+   "id": "s-14",
+   "kind": "end",
+   "turn": 3,
+   "at": "2026-10-21T09:08:00Z",
+   "level": "workspace",
+   "reason": "interrupted",
+   "took_ms": 3000
+  }
+ ],
+ "status": {
+  "state": "idle",
+  "permission": {
+   "level": "workspace",
+   "read_only": false
+  }
+ },
+ "details": {
+  "gallery-shell": {
+   "output": "✔ 变量表：每个名字都有一句说明\n✔ 看得见的都有部件名\n✔ 像素风：变量都认、CSS 守规矩\nℹ tests 554\nℹ pass 554\nℹ fail 0",
+   "files": []
+  },
+  "gallery-fail": {
+   "output": "npm error Missing script: \"lint\"",
+   "files": []
+  },
+  "gallery-read": {
+   "output": "/* 皮肤能换的变量 */\n:root {\n  --round: 1;\n  --blur: 1;\n}",
+   "files": []
+  },
+  "gallery-grep": {
+   "output": "web-demo/styles/tokens.css:  --round: 1;\nweb-demo/styles/base.css:  --radius: calc(8px * var(--round));\nweb-demo/styles/tokens.css:  --r-8: calc(8px * var(--round));",
+   "files": []
+  }
+ },
+ "summaries": {
+  "48000": "（样张）压缩前的对话：看皮肤的变量表、改圆角和间距、跑测试。"
+ }
+}

@@ -69,13 +69,15 @@ async function skinRow(dialog) {
   if (!packs.length) return null;
   const skin = await ctx.packages.settings('skin');
   const chosen = packs.some((p) => p.id === skin.values.pack) ? skin.values.pack : '';
-  return shell({
-    name: ctx.text('skin'),
-    control: select(dialog, [{ value: '', name: ctx.text('skin_factory') }, ...packs.map((p) => ({ value: p.id, name: p.name }))], chosen, async (v) => {
-      await ctx.packages.set('skin', { config: { pack: v } });
-      dialog.drawBody();
-    }),
-  }).el;
+  const pick = select(dialog, [{ value: '', name: ctx.text('skin_factory') }, ...packs.map((p) => ({ value: p.id, name: p.name }))], chosen, async (v) => {
+    await ctx.packages.set('skin', { config: { pack: v } });
+    dialog.drawBody();
+  });
+  // 「样张」：关上设置页，开皮肤样张（蓝图 `web.md`「皮肤」第 7 条）
+  const gallery = ctx.chat?.gallery
+    ? h('button.set-btn', { type: 'button', onclick: () => { dialog.close(); ctx.chat.gallery(); } }, ctx.text('skin_gallery'))
+    : null;
+  return shell({ name: ctx.text('skin'), control: h('div.set-inline', gallery, pick) }).el;
 }
 
 /**
