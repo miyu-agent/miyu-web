@@ -268,7 +268,14 @@ export class MemoryPage {
   closeAdd() {
     this.adding = false;
     delete this.el.dataset.setDismiss;
-    this.draw();
+    this.fadeModal();
+  }
+
+  /** 小窗收起：先放完退场（遮罩淡掉、卡片缩回去，同设置里别的小窗；2026-10-20 项目主人：退出没有动画），再重画 */
+  fadeModal() {
+    const modal = /** @type {HTMLElement|null} */ (this.el.querySelector('.mem-modal'));
+    if (modal) leave(modal, () => this.draw());
+    else this.draw();
   }
 
   /** 后台在整理的那一行（第 12 条）：没在整理的留一个藏着的空位，推来时只换它，不重画列表 */
@@ -352,7 +359,7 @@ export class MemoryPage {
   /** 收起详情的小窗（写着没存的字不要了） */
   closeDetail() {
     this.open = null;
-    this.draw();
+    this.fadeModal();
   }
 
   detail() {
