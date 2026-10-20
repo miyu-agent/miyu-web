@@ -320,6 +320,8 @@
       "failed_plain": "后台命令失败 · {title}",
       "signal": "后台命令失败 · {title} · 信号 {signal}",
       "stopped": "后台命令已停止 · {title}",
+      "timed_out": "后台命令超时已停止 · {title}",
+      "too_large": "后台命令输出太大，已停止 · {title}",
       "undone": "后台命令随撤销停止 · {title}",
       "restarted": "后台命令因重启停止 · {title}",
       "aborted": "后台命令中断：核心已退出 · {title}"
