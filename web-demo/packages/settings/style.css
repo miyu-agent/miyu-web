@@ -11,13 +11,13 @@
   position: relative; display: grid; grid-template-columns: 200px minmax(0, 1fr);
   width: min(var(--set-w), calc(100vw - 48px)); height: min(var(--set-h), calc(100vh - 48px));
   overflow: hidden; border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--float-shadow);
-  /* 一点点磨砂（2026-10-19 项目主人：稍微有一点，不用左栏那么虚） */
-  background: color-mix(in srgb, var(--surface) 88%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+  /* 一点点磨砂（2026-10-19 项目主人：稍微有一点，不用左栏那么虚；2026-10-20 再透明一成：八成八改七成八） */
+  background: color-mix(in srgb, var(--surface) 78%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
   animation: pop-in var(--motion-in) var(--ease-out) both; color: var(--text);
 }
 
 /* 左边分页（第 3 条） */
-.set-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; padding: 12px; background: color-mix(in srgb, var(--sidebar-bg) 88%, transparent); }
+.set-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; padding: 12px; background: color-mix(in srgb, var(--sidebar-bg) 78%, transparent); }
 .set-search-box { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 8px; background: var(--surface-1); color: var(--text-faint); box-shadow: var(--card-shadow); }
 .set-search { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: 13px var(--sans); }
 .set-search::-webkit-search-cancel-button { display: none; }
@@ -512,3 +512,18 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .set-tool-timeout .set-input { width: 96px; }
 .set-tool-error { margin: 0; color: var(--danger); font-size: 12.5px; line-height: 1.5; }
 .set-tool-pop-foot { display: flex; justify-content: flex-end; gap: 8px; }
+/* 运行中前面一个绿点（同软件包页的状态）；多选、删除 */
+.set-tool-state.is-on::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: var(--online); vertical-align: 1px; }
+.set-tool-state.is-error { color: var(--danger); }
+.set-tool-icon { flex: none; width: 32px; height: 32px; border-radius: 8px; }
+.set-tool-icon .icon { width: 16px; height: 16px; }
+.set-tool-icon.is-danger { color: var(--danger); }
+.set-tool-icon.is-armed { background: color-mix(in srgb, var(--danger) 16%, transparent); }
+.set-tool-icon:disabled { opacity: 0.45; cursor: default; }
+.set-tool-count { flex: none; color: var(--text-soft); font-size: 13px; }
+.set-tool-del { width: 28px; height: 28px; opacity: 0; transition: opacity 0.15s ease; }
+.set-row:hover .set-tool-del, .set-tool-del:focus-visible, .set-tool-del.is-armed { opacity: 1; }
+.set-tool-check { display: grid; flex: none; place-items: center; width: 18px; color: var(--text-faint); }
+.set-tool-check .icon { width: 16px; height: 16px; }
+.set-row.is-picked .set-tool-check { color: var(--accent); }
+.set-row.is-unpickable { opacity: 0.5; }

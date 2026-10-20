@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 import {
   skillItem, scriptItem, mcpItems, switchValue, featureId, loadingParams, inSource, sourceOf, toolMatch, homeDir, shortTool,
-  serverParams, formOf, envShown, editable, commandLine,
+  serverParams, formOf, envShown, editable, commandLine, splitCommand, joinCommand, flip, range,
 } from '../../packages/settings/tool-model.js';
 import { pkgKinds, carriedBy, PKG_FILTERS } from '../../packages/settings/model.js';
 
@@ -94,40 +94,57 @@ test('MCP 的工具名去掉服务前缀；命令写成一行', () => {
   assert.equal(shortTool('github', 'mcp__github__search_code'), 'search_code');
   assert.equal(shortTool('github', 'other'), 'other');
   assert.equal(commandLine(['npx', '@playwright/mcp']), 'npx @playwright/mcp');
+  assert.equal(commandLine(['node', '/a b']), "node '/a b'");
   assert.equal(commandLine('npx'), 'npx');
 });
 
-test('添加服务：表换成 mcp.set 的参数，写错的说哪一格', () => {
-  const base = { name: 'github', command: 'github-mcp-server', args: 'stdio\n\n --read-only ', env: 'GITHUB_TOKEN={secret:gh}\nLOG=1', venues: ['local'], timeout: '' };
+test('一整条命令拆成程序和参数：照空白拆，引号里的不拆；写回一行能原样拆回来', () => {
+  assert.deepEqual(splitCommand('npx -y @modelcontextprotocol/server-everything'), ['npx', '-y', '@modelcontextprotocol/server-everything']);
+  assert.deepEqual(splitCommand('node "/a b/c.js"  --x'), ['node', '/a b/c.js', '--x']);
+  assert.deepEqual(splitCommand("sh -c 'echo \"hi\"'"), ['sh', '-c', 'echo "hi"']);
+  assert.deepEqual(splitCommand('a\\ b c'), ['a b', 'c']);
+  assert.equal(splitCommand('bad "quote'), null);
+  assert.deepEqual(splitCommand('   '), []);
+  const parts = ['node', '/a b/c.js', "it's", ''];
+  assert.deepEqual(splitCommand(joinCommand(parts)), parts);
+  assert.equal(joinCommand(['npx', '-y', 'x']), 'npx -y x');
+});
+
+test('添加服务：表换成 mcp.set 的参数，写错的说哪一格；不画会话的种类', () => {
+  const base = { name: 'github', command: 'github-mcp-server stdio --read-only', env: 'GITHUB_TOKEN={secret:gh}\nLOG=1', timeout: '' };
   assert.deepEqual(serverParams(base), { params: { name: 'github', command: 'github-mcp-server', args: ['stdio', '--read-only'], env: { GITHUB_TOKEN: '{secret:gh}', LOG: '1' } } });
   assert.deepEqual(serverParams({ ...base, name: 'GitHub' }), { problem: 'name', field: 'name' });
   assert.deepEqual(serverParams({ ...base, name: 'a'.repeat(33) }), { problem: 'name', field: 'name' });
   assert.deepEqual(serverParams({ ...base, command: '  ' }), { problem: 'command', field: 'command' });
+  assert.deepEqual(serverParams({ ...base, command: 'node "x' }), { problem: 'quote', field: 'command' });
   assert.deepEqual(serverParams({ ...base, env: 'LOG=1\nbroken' }), { problem: 'env', field: 'env', line: 2 });
   assert.deepEqual(serverParams({ ...base, timeout: '0' }), { problem: 'timeout', field: 'timeout' });
-  // 会话：只勾本机的和不勾一样不写；时限是默认的不写，别的换成毫秒
-  const got = serverParams({ ...base, args: '', env: '', venues: ['group', 'local'], timeout: '30' });
-  assert.deepEqual(got, { params: { name: 'github', command: 'github-mcp-server', venues: ['local', 'group'], timeout_ms: 30000 } });
-  assert.deepEqual(serverParams({ ...base, args: '', env: '', timeout: '600' }), { params: { name: 'github', command: 'github-mcp-server' } });
+  assert.deepEqual(serverParams({ ...base, command: 'x', env: '', timeout: '30' }), { params: { name: 'github', command: 'x', timeout_ms: 30000 } });
+  assert.deepEqual(serverParams({ ...base, command: 'x', env: '', timeout: '600' }), { params: { name: 'github', command: 'x' } });
 });
 
-test('编辑：照 mcp.list 先填，引用没改的原样交回，不带 need_load', () => {
+test('编辑：照 mcp.list 先填（命令写回一行），引用没改的原样交回，会话的种类照原来的带回，不带 need_load', () => {
   const server = {
-    name: 'github', command: ['github-mcp-server', 'stdio'], venues: ['local', 'private'], timeout_ms: 120000,
+    name: 'github', command: ['github-mcp-server', 'stdio', '/a b'], venues: ['local', 'private'], timeout_ms: 120000,
     env: { GITHUB_TOKEN: { secret: 'gh' }, HOME_DIR: { env: 'HOME' }, LOG: '1' }, need_load: { value: false, by: 'source' },
   };
   const form = formOf(server);
-  assert.deepEqual(form, { name: 'github', command: 'github-mcp-server', args: 'stdio', env: 'GITHUB_TOKEN={secret:gh}\nHOME_DIR={env:HOME}\nLOG=1', venues: ['local', 'private'], timeout: '120' });
-  const back = serverParams(form, server);
-  assert.deepEqual(back, { params: {
-    name: 'github', command: 'github-mcp-server', args: ['stdio'], venues: ['local', 'private'], timeout_ms: 120000,
+  assert.deepEqual(form, { name: 'github', command: "github-mcp-server stdio '/a b'", env: 'GITHUB_TOKEN={secret:gh}\nHOME_DIR={env:HOME}\nLOG=1', timeout: '120' });
+  assert.deepEqual(serverParams(form, server), { params: {
+    name: 'github', command: 'github-mcp-server', args: ['stdio', '/a b'], venues: ['local', 'private'], timeout_ms: 120000,
     env: { GITHUB_TOKEN: { secret: 'gh' }, HOME_DIR: { env: 'HOME' }, LOG: '1' },
   } });
-  // 改了的照写的字
   const changed = serverParams({ ...form, env: 'GITHUB_TOKEN=plain' }, server);
   assert.deepEqual('params' in changed && changed.params.env, { GITHUB_TOKEN: 'plain' });
   assert.equal(envShown({ other: 1 }), '{"other":1}');
-  assert.deepEqual(formOf({ name: 'x', command: ['npx'] }).venues, ['local']);
+});
+
+test('多选：点一项勾上去掉，Shift 连选', () => {
+  const one = flip(new Set(), 'a');
+  assert.deepEqual([...one], ['a']);
+  assert.deepEqual([...flip(one, 'a')], []);
+  assert.deepEqual([...range(one, ['a', 'b', 'c', 'd'], 'a', 'c')].sort(), ['a', 'b', 'c']);
+  assert.deepEqual([...range(new Set(), ['a', 'b'], null, 'b')], ['b']);
 });
 
 test('编辑得了的：核心同一回补上了 skill.list 的 dir', () => {

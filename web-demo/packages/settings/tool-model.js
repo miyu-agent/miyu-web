@@ -119,28 +119,71 @@ export const shortTool = (server, tool) => (tool.startsWith(`mcp__${server}__`) 
 /** 服务名：小写字母开头，只有小写字母、数字、`-`，最多 32 个（核心 `mcp.set`） */
 export const SERVER_NAME = /^[a-z][a-z0-9-]{0,31}$/;
 
-/** 会话的种类（`venues`），先后照这里；不勾的照本机 */
-export const VENUES = /** @type {const} */ (['local', 'private', 'group']);
-
 /** 时限不写是多少秒（核心：600000 毫秒） */
 export const TIMEOUT_DEFAULT_S = 600;
 
 /**
+ * 一整条命令拆成 `[程序, …参数]`（2026-10-20 项目主人：命令、参数分两格不合理，一个框写整条）：照空白拆；`"…"`、`'…'` 里的空白不拆（单引号里原样，
+ * 双引号里 `\"`、`\\` 转义）；引号外的 `\` 让下一个字照原样。引号没配对的交 `null`。
+ * @param {string} text @returns {string[]|null}
+ */
+export function splitCommand(text) {
+  const out = [];
+  let word = '';
+  let has = false;
+  /** @type {string|null} */
+  let quote = null;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quote === "'") {
+      if (c === "'") quote = null;
+      else word += c;
+    } else if (quote === '"') {
+      if (c === '"') quote = null;
+      else if (c === '\\' && (text[i + 1] === '"' || text[i + 1] === '\\')) word += text[++i];
+      else word += c;
+    } else if (c === '"' || c === "'") {
+      quote = c;
+      has = true;
+    } else if (c === '\\' && i + 1 < text.length) {
+      word += text[++i];
+      has = true;
+    } else if (/\s/.test(c)) {
+      if (has || word) out.push(word);
+      word = '';
+      has = false;
+    } else {
+      word += c;
+      has = true;
+    }
+  }
+  if (quote) return null;
+  if (has || word) out.push(word);
+  return out;
+}
+
+/** `[程序, …参数]` 写回一行：有空白、引号、`\` 的、空的用单引号括（里面的单引号写成 `'\''`）。 @param {string[]} parts */
+export function joinCommand(parts) {
+  return parts.map((p) => (p === '' || /[\s'"\\]/.test(p) ? `'${p.replace(/'/g, "'\\''")}'` : p)).join(' ');
+}
+
+/**
  * 添加、编辑服务那张表交上来的字，换成 `mcp.set` 的参数；写错的交回第一处的问题（文字表 `tools.form.bad.*` 的键和要填的格子）。
- * 环境变量一行一个 `名字=值`；`keep` 里是原来就有、表里照原样画的值（引用、遮住的），名字对得上又没改的照原样交回。
- * @param {{name: string, command: string, args: string, env: string, venues: string[], timeout: string}} form
- * @param {{env?: Record<string, any>}} [before] 编辑时原来那一项
+ * 命令一个框写整条（`splitCommand`）；环境变量一行一个 `名字=值`，`keep` 里是原来就有、表里照原样画的值（引用、遮住的），名字对得上又没改的照原样交回。
+ * 会话的种类（`venues`）网页不画（2026-10-20 项目主人：本机、私聊、群聊是通讯平台的事），编辑时照原来的带回。
+ * @param {{name: string, command: string, env: string, timeout: string}} form
+ * @param {{env?: Record<string, any>, venues?: string[]}} [before] 编辑时原来那一项
  * @returns {{params: any}|{problem: string, field: string, line?: number}}
  */
 export function serverParams(form, before = {}) {
   const name = form.name.trim();
   if (!SERVER_NAME.test(name)) return { problem: 'name', field: 'name' };
-  const command = form.command.trim();
-  if (!command) return { problem: 'command', field: 'command' };
+  const parts = splitCommand(form.command);
+  if (!parts) return { problem: 'quote', field: 'command' };
+  if (!parts.length || !parts[0]) return { problem: 'command', field: 'command' };
   /** @type {any} */
-  const params = { name, command };
-  const args = form.args.split('\n').map((l) => l.trim()).filter(Boolean);
-  if (args.length) params.args = args;
+  const params = { name, command: parts[0] };
+  if (parts.length > 1) params.args = parts.slice(1);
   /** @type {Record<string, any>} */
   const env = {};
   const lines = form.env.split('\n');
@@ -155,14 +198,12 @@ export function serverParams(form, before = {}) {
     env[key] = old !== undefined && typeof old !== 'string' && text === envShown(old) ? old : text;
   }
   if (Object.keys(env).length) params.env = env;
-  const venues = VENUES.filter((v) => form.venues.includes(v));
-  // 只勾本机的和不勾一样，不写
-  if (venues.length && !(venues.length === 1 && venues[0] === 'local')) params.venues = venues;
+  if (Array.isArray(before.venues) && before.venues.length) params.venues = before.venues;
   const timeout = form.timeout.trim();
   if (timeout) {
-    const s = Number(timeout);
-    if (!Number.isFinite(s) || s < 1 || s > 3600) return { problem: 'timeout', field: 'timeout' };
-    if (Math.round(s * 1000) !== TIMEOUT_DEFAULT_S * 1000) params.timeout_ms = Math.round(s * 1000);
+    const sec = Number(timeout);
+    if (!Number.isFinite(sec) || sec < 1 || sec > 3600) return { problem: 'timeout', field: 'timeout' };
+    if (Math.round(sec * 1000) !== TIMEOUT_DEFAULT_S * 1000) params.timeout_ms = Math.round(sec * 1000);
   }
   // 加载方式不经这里（`tool.set_loading` 管；带了会把默认值写死进文件，核心 X-27 补）
   return { params };
@@ -177,17 +218,15 @@ export function envShown(v) {
 }
 
 /**
- * 编辑时表里先填的字（核心 X-27 补：`mcp.list` 的 `command` 是 `[程序, …参数]`，写了的另带 `env`、不是默认的带 `timeout_ms`）。
+ * 编辑时表里先填的字（核心 X-27 补：`mcp.list` 的 `command` 是 `[程序, …参数]`，写回一行；写了的另带 `env`、不是默认的带 `timeout_ms`）。
  * @param {any} s `mcp.list` 的一项
  */
 export function formOf(s) {
   const command = Array.isArray(s.command) ? s.command.map(String) : typeof s.command === 'string' ? [s.command] : [];
   return {
     name: s.name ?? '',
-    command: command[0] ?? '',
-    args: command.slice(1).join('\n'),
+    command: joinCommand(command),
     env: Object.entries(s.env ?? {}).map(([k, v]) => `${k}=${envShown(v)}`).join('\n'),
-    venues: Array.isArray(s.venues) && s.venues.length ? s.venues : ['local'],
     timeout: typeof s.timeout_ms === 'number' ? String(s.timeout_ms / 1000) : '',
   };
 }
@@ -199,5 +238,26 @@ export function formOf(s) {
  */
 export const editable = (skills) => typeof skills?.dir === 'string';
 
-/** 命令那一格写成一行给人看：`[程序, …参数]` 用空格连（旧核心是一个字）。 @param {any} command */
-export const commandLine = (command) => (Array.isArray(command) ? command.join(' ') : String(command ?? ''));
+/** 命令那一格写成一行给人看：`[程序, …参数]` 照 `joinCommand` 连（旧核心是一个字）。 @param {any} command */
+export const commandLine = (command) => (Array.isArray(command) ? joinCommand(command.map(String)) : String(command ?? ''));
+
+/** 多选：点一项，没勾的勾上、勾了的去掉（交回新的一份；同全部会话的多选）。 @param {Set<string>} selected @param {string} id */
+export function flip(selected, id) {
+  const next = new Set(selected);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  return next;
+}
+
+/**
+ * 多选：`Shift` 点，上一次点的和这一次之间（含两头，照列表的先后）都勾上；上一次点的不在列表里的只勾这一项。
+ * @param {Set<string>} selected @param {string[]} order @param {string|null} from @param {string} to
+ */
+export function range(selected, order, from, to) {
+  const next = new Set(selected);
+  const a = from == null ? -1 : order.indexOf(from);
+  const b = order.indexOf(to);
+  if (a < 0 || b < 0) return next.add(to);
+  for (const id of order.slice(Math.min(a, b), Math.max(a, b) + 1)) next.add(id);
+  return next;
+}

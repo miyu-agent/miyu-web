@@ -11,7 +11,7 @@ import { openInfo } from './core-packages.js';
 import { openServerForm } from './mcp-form.js';
 import {
   skillItem, scriptItem, mcpItems, switchValue, featureId, loadingParams, SOURCES, inSource, sourceOf, toolMatch, homeDir, shortTool,
-  editable, commandLine, VENUES,
+  editable, commandLine, flip, range,
 } from './tool-model.js';
 
 /** 三页的图标 */
@@ -42,8 +42,11 @@ function sourceText(dialog, item) {
 export function drawToolPage(dialog, kind) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const views = (dialog.toolView ??= {});
-  const view = (views[kind] ??= { query: '', filter: 'all' });
+  const view = (views[kind] ??= { query: '', filter: 'all', selecting: false, selected: new Set(), last: null });
   const items = itemsOf(dialog, kind);
+  // 删了的不留在选中里
+  view.selected = new Set([...view.selected].filter((id) => items.some((x) => x.id === id && deletable(x))));
+  if (view.selecting && !items.some(deletable)) view.selecting = false;
   const list = h('div.set-rows');
   const group = h('section.set-group', list);
   const empty = h('p.set-empty', { hidden: true });
@@ -64,7 +67,8 @@ export function drawToolPage(dialog, kind) {
   };
   const update = () => {
     const rows = items.filter((x) => inSource(x, view.filter) && toolMatch(view.query, x, sourceText(dialog, x)));
-    replace(list, rows.map((x) => toolRow(dialog, x)));
+    view.order = rows.filter(deletable).map((x) => x.id);
+    replace(list, rows.map((x) => toolRow(dialog, x, view)));
     group.hidden = !rows.length;
     empty.hidden = rows.length > 0;
     empty.textContent = items.length ? t('tools.no_match') : t(`tools.none.${kind}`);
@@ -76,21 +80,83 @@ export function drawToolPage(dialog, kind) {
   drawChips();
   update();
   return [
-    h('div.set-pkg-tools', h('div.set-tool-head', find, headButton(dialog, kind)), chips),
+    h('div.set-pkg-tools', h('div.set-tool-head', find, ...headButtons(dialog, kind, view, items)), chips),
     empty, group,
     h('p.set-tool-note', t(kind === 'skills' ? 'tools.note.skills' : 'tools.note.load')),
   ];
 }
 
-/** 顶上右边的按钮：技能、脚本「打开目录」（拿不到文件夹的不出），MCP「添加服务」。 @param {any} dialog @param {ToolKind} kind */
-function headButton(dialog, kind) {
-  const t = (/** @type {string} */ key) => dialog.ctx.text(key);
-  if (kind === 'mcp') {
-    return h('button.set-btn.is-primary', { type: 'button', onclick: () => openServerForm(dialog, null) }, icon('plus'), h('span', t('tools.add_server')));
+/**
+ * 删得了的：MCP 页自己写的服务（`mcp.remove`；2026-10-20 项目主人：不用点进详情才能删，还要能多选删）。随包来的不能删；技能等核心给删的方法。
+ * @param {ToolItem} item
+ */
+const deletable = (item) => item.kind === 'mcp' && item.own;
+
+/** 一个小的图标按钮（多选那一排）。 @param {string} name @param {string} title @param {() => void} run @param {string} [cls] */
+const iconBtn = (name, title, run, cls = '') => h(`button.icon-button.set-tool-icon${cls}`, { type: 'button', title, 'aria-label': title, onclick: run }, icon(name));
+
+/**
+ * 删一下要点两次：第一下变红、提示写「再点一次删除」，第二下才删（同详情里的删除）。
+ * @param {HTMLElement} el @param {string} again @param {() => void} run
+ */
+function twice(el, again, run) {
+  el.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (el.classList.contains('is-armed')) return run();
+    el.classList.add('is-armed');
+    el.title = again;
+    el.setAttribute('aria-label', again);
+  });
+  return el;
+}
+
+/**
+ * 顶上右边的按钮：技能、脚本「打开目录」（拿不到文件夹的不出）；MCP「多选」（有删得了的才有）、「添加服务」。多选时换成「已选 N 个」、全选、删除、退出
+ * （同全部会话的多选）。
+ * @param {any} dialog @param {ToolKind} kind @param {any} view @param {ToolItem[]} items
+ */
+function headButtons(dialog, kind, view, items) {
+  const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
+  if (kind !== 'mcp') {
+    const dir = homeDir(kind, kind === 'skills' ? dialog.skills : dialog.scripts);
+    return dir ? [h('button.set-btn', { type: 'button', title: dir, onclick: () => reveal(dialog, dir) }, icon('folder-open'), h('span', t('tools.open_dir')))] : [];
   }
-  const dir = homeDir(kind, kind === 'skills' ? dialog.skills : dialog.scripts);
-  if (!dir) return null;
-  return h('button.set-btn', { type: 'button', title: dir, onclick: () => reveal(dialog, dir) }, icon('folder-open'), h('span', t('tools.open_dir')));
+  const redraw = () => dialog.drawBody();
+  if (view.selecting) {
+    const del = iconBtn('trash-2', t('tools.delete'), () => {}, `.is-danger${view.selected.size ? '' : '.is-disabled'}`);
+    if (view.selected.size) twice(del, t('tools.delete_again'), () => removeServers(dialog, items.filter((x) => view.selected.has(x.id))));
+    else del.setAttribute('disabled', '');
+    return [
+      h('span.set-tool-count', t('tools.selected', { count: view.selected.size })),
+      iconBtn('check-check', t('tools.select_all'), () => { view.selected = new Set(items.filter(deletable).map((x) => x.id)); redraw(); }),
+      del,
+      iconBtn('x', t('tools.select_exit'), () => { view.selecting = false; view.selected = new Set(); redraw(); }),
+    ];
+  }
+  return [
+    items.some(deletable) ? iconBtn('list-checks', t('tools.select'), () => { view.selecting = true; view.selected = new Set(); view.last = null; redraw(); }) : null,
+    h('button.set-btn.is-primary', { type: 'button', onclick: () => openServerForm(dialog, null) }, icon('plus'), h('span', t('tools.add_server'))),
+  ].filter(Boolean);
+}
+
+/** 删几个自己写的 MCP 服务（`mcp.remove` 一个个删），删完提示几个、重读。 @param {any} dialog @param {ToolItem[]} list */
+async function removeServers(dialog, list) {
+  let done = 0;
+  for (const item of list) {
+    try {
+      await dialog.ctx.core.request('mcp.remove', { name: item.name });
+      done += 1;
+    } catch (err) {
+      dialog.toast(err?.message ?? String(err));
+    }
+  }
+  const view = dialog.toolView?.mcp;
+  if (view) {
+    view.selecting = false;
+    view.selected = new Set();
+  }
+  if (done) dialog.toast(dialog.ctx.text('tools.deleted_n', { count: done }));
+  await refresh(dialog, 'mcp');
 }
 
 /**
@@ -114,34 +180,49 @@ export async function reveal(dialog, dir) {
   }
 }
 
-/** 列表上的一行。 @param {any} dialog @param {ToolItem} item */
-function toolRow(dialog, item) {
-  const controls = [
+/**
+ * 列表上的一行。多选时删得了的那几行前面一个勾选框，点一行勾上、再点去掉，`Shift` 连选；删不了的暗着、点不了。平常删得了的悬停时右边多一个删除（点两下）。
+ * MCP 页自己写的不写「自制」，只有随包来的写包名（2026-10-20 项目主人）。
+ * @param {any} dialog @param {ToolItem} item @param {any} view
+ */
+function toolRow(dialog, item, view) {
+  const t = (/** @type {string} */ key) => dialog.ctx.text(key);
+  const selecting = !!view.selecting;
+  const can = deletable(item);
+  const picked = selecting && view.selected.has(item.id);
+  const controls = selecting ? [] : [
     item.load ? loadSelect(dialog, item) : null,
     item.on !== null ? switchFor(dialog, item) : null,
+    can ? twice(iconBtn('trash-2', t('tools.delete'), () => {}, '.is-danger.set-tool-del'), t('tools.delete_again'), () => removeServers(dialog, [item])) : null,
   ].filter(Boolean);
-  return h('div.set-row.set-pkg.is-expandable', {
+  const tag = item.kind === 'mcp' && item.own ? null : h('span.set-pkg-tag', sourceText(dialog, item));
+  return h(`div.set-row.set-pkg${selecting ? (can ? '.is-expandable.is-picking' : '.is-unpickable') : '.is-expandable'}${picked ? '.is-picked' : ''}`, {
     onclick: (/** @type {MouseEvent} */ e) => {
-      if (/** @type {Element} */ (e.target).closest('.set-switch, .set-select')) return;
-      openTool(dialog, item);
+      if (/** @type {Element} */ (e.target).closest('.set-switch, .set-select, .set-tool-del')) return;
+      if (!selecting) return openTool(dialog, item);
+      if (!can) return;
+      view.selected = e.shiftKey ? range(view.selected, view.order ?? [], view.last, item.id) : flip(view.selected, item.id);
+      view.last = item.id;
+      dialog.drawBody();
     },
   },
+  selecting ? h('span.set-tool-check', icon(picked ? 'square-check' : 'square')) : null,
   h('span.set-pkg-face', icon(FACE[item.kind])),
   h('div.set-text',
     h('div.set-name', h('span', item.title ?? item.name), item.title ? h('code.set-tool-id', item.name) : null),
     descLine(dialog, item)),
-  h('span.set-pkg-tag', sourceText(dialog, item)),
+  tag,
   controls.length ? h('div.set-control.set-tool-controls', controls) : null,
-  h('span.set-pkg-arrow', icon('chevron-right')));
+  selecting ? null : h('span.set-pkg-arrow', icon('chevron-right')));
 }
 
 /** 名字下面那一行：技能、脚本是一句说明；MCP 是状态和有几件工具。 @param {any} dialog @param {ToolItem} item */
 function descLine(dialog, item) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   if (item.kind !== 'mcp') return item.desc ? h('p.set-desc', item.desc) : null;
-  const { text, bad } = serverState(dialog, item);
+  const { text, bad, running } = serverState(dialog, item);
   const tools = Array.isArray(item.raw.tools) ? t('tools.tools_n', { count: item.raw.tools.length }) : null;
-  return h('p.set-desc', h(`span${bad ? '.is-error' : ''}`, text), tools ? ` · ${tools}` : null);
+  return h('p.set-desc', stateNode(text, bad, running), tools ? ` · ${tools}` : null);
 }
 
 /**
@@ -151,10 +232,13 @@ function descLine(dialog, item) {
 function serverState(dialog, item) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const s = item.raw;
-  if (item.covered) return { text: t('pkg.mcp_covered'), bad: false };
+  if (item.covered) return { text: t('pkg.mcp_covered'), bad: false, running: false };
   const on = s.enabled !== false && s.state !== 'off';
-  return { text: stateText(t, { ...s, on }), bad: on && s.state === 'stopped' };
+  return { text: stateText(t, { ...s, on }), bad: on && s.state === 'stopped', running: on && s.state === 'running' };
 }
+
+/** 状态的字：运行中前面一个绿点（同软件包页，2026-10-20 项目主人），停了的红字。 @param {string} text @param {boolean} bad @param {boolean} running */
+const stateNode = (text, bad, running) => h(`span.set-tool-state${bad ? '.is-error' : ''}${running ? '.is-on' : ''}`, text);
 
 /** 加载方式的下拉：懒加载（`need_load` 是真的）、完整。 @param {any} dialog @param {ToolItem} item */
 function loadSelect(dialog, item) {
@@ -227,7 +311,9 @@ function toolDetail(dialog, kind, id) {
   const installed = item.package && (dialog.packages ?? []).some((/** @type {any} */ p) => p.package === item.package && p.status);
   const sourceNode = installed ? h('button.set-link', { type: 'button', onclick: () => { dialog.show('packages'); openInfo(dialog, item.package); } }, source) : source;
   const state = kind === 'mcp' ? serverState(dialog, item) : null;
-  const meta = h('p.set-pkg-card-meta', t('tools.field.source'), ' · ', sourceNode, state ? [' · ', h(`span${state.bad ? '.is-bad' : ''}`, state.text)] : null);
+  // MCP 自己写的不写「来源 · 自制」（同列表），只写状态
+  const ownMcp = kind === 'mcp' && item.own;
+  const meta = h('p.set-pkg-card-meta', ownMcp ? null : [t('tools.field.source'), ' · ', sourceNode], state ? [ownMcp ? null : ' · ', stateNode(state.text, state.bad, state.running)] : null);
   const actions = kind === 'mcp' ? serverActions(dialog, item) : [];
   const stderr = Array.isArray(s.stderr) ? s.stderr.join('\n') : s.stderr ?? '';
   dialog.mcpShowing ??= new Set();
@@ -258,8 +344,6 @@ function toolDetail(dialog, kind, id) {
     if (kind === 'scripts' && typeof s.timeout === 'number') rows.push(line(t('tools.field.timeout'), t('tools.timeout_s', { seconds: s.timeout })));
   } else {
     rows.push(line(t('tools.field.command'), h('code.set-tool-code', { title: commandLine(s.command) }, commandLine(s.command))));
-    const venues = VENUES.filter((v) => (Array.isArray(s.venues) && s.venues.length ? s.venues : ['local']).includes(v));
-    rows.push(line(t('tools.field.venues'), venues.map((v) => t(`tools.venue.${v}`)).join(t('pkg.sep'))));
     if (Array.isArray(s.tools) && s.tools.length) {
       rows.push(h('div.set-row.is-wide', h('div.set-text', h('div.set-name', h('span', t('tools.field.tools')))),
         h('div.set-tool-list', s.tools.map((/** @type {string} */ name) => h('code.set-tool-chip', shortTool(item.name, name))))));

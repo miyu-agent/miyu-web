@@ -253,8 +253,7 @@
         "delete_ask": "确认删除「{name}」吗？",
         "restore_ask": "确认把「{name}」恢复出厂吗？改过的内容会丢掉。",
         "by_global": "跟随全局",
-        "by_preset": "预设里定的",
-        "follow_global": "改回跟随全局"
+        "follow_global": "恢复全局默认"
       },
       "folders": {
         "open": "选择文件夹…",
@@ -454,8 +453,7 @@
         "delete_ask": "Delete \"{name}\"?",
         "restore_ask": "Restore \"{name}\" to its built-in version? Your changes will be lost.",
         "by_global": "Follows global",
-        "by_preset": "Set in preset",
-        "follow_global": "Follow global"
+        "follow_global": "Restore global default"
       },
       "folders": {
         "open": "Select folder…",
@@ -655,7 +653,6 @@
         "delete_ask": "「{name}」を削除しますか？",
         "restore_ask": "「{name}」を初期状態に戻しますか？変更内容は失われます。",
         "by_global": "全体設定に従う",
-        "by_preset": "プリセットで指定",
         "follow_global": "全体設定に戻す"
       },
       "folders": {

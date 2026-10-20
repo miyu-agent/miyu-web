@@ -5,7 +5,7 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
-import { serverParams, formOf, VENUES, TIMEOUT_DEFAULT_S } from './tool-model.js';
+import { serverParams, formOf, TIMEOUT_DEFAULT_S } from './tool-model.js';
 import { refresh } from './tool-pages.js';
 
 /**
@@ -15,30 +15,20 @@ import { refresh } from './tool-pages.js';
 export function openServerForm(dialog, server) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   dialog.panel.querySelector('.set-tool-modal')?.remove();
-  const start = server ? formOf(server) : { name: '', command: '', args: '', env: '', venues: ['local'], timeout: '' };
+  const start = server ? formOf(server) : { name: '', command: '', env: '', timeout: '' };
   const input = (/** @type {string} */ value, /** @type {string} */ hint, /** @type {boolean} */ mono) => /** @type {HTMLInputElement} */ (h(`input.set-input.set-tool-input${mono ? '.is-mono' : ''}`,
     { type: 'text', value, placeholder: hint, spellcheck: 'false', autocomplete: 'off' }));
   const area = (/** @type {string} */ value, /** @type {string} */ hint) => /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.set-tool-area.is-mono',
     { rows: 3, placeholder: hint, spellcheck: 'false', autocomplete: 'off' }, value));
   const fields = {
     name: input(start.name, t('tools.form.name_hint'), true),
+    // 整条命令一个框（2026-10-20 项目主人：命令、参数分两格不合理）
     command: input(start.command, t('tools.form.command_hint'), true),
-    args: area(start.args, t('tools.form.args_hint')),
     env: area(start.env, t('tools.form.env_hint')),
     timeout: input(start.timeout, String(TIMEOUT_DEFAULT_S), false),
   };
   if (server) fields.name.readOnly = true;
   fields.timeout.inputMode = 'numeric';
-  const venues = new Set(start.venues);
-  const venueButtons = VENUES.map((v) => {
-    const b = h(`button.set-pkg-chip${venues.has(v) ? '.is-on' : ''}`, { type: 'button', 'aria-pressed': String(venues.has(v)), onclick: () => {
-      if (venues.has(v)) venues.delete(v);
-      else venues.add(v);
-      b.classList.toggle('is-on', venues.has(v));
-      b.setAttribute('aria-pressed', String(venues.has(v)));
-    } }, t(`tools.venue.${v}`));
-    return b;
-  });
   const error = h('p.set-tool-error', { role: 'alert', hidden: true });
   const say = (/** @type {string} */ text, /** @type {HTMLElement|null} */ at) => {
     error.textContent = text;
@@ -47,7 +37,7 @@ export function openServerForm(dialog, server) {
   };
   const save = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'button', onclick: async () => {
     const got = serverParams({
-      name: fields.name.value, command: fields.command.value, args: fields.args.value, env: fields.env.value, venues: [...venues], timeout: fields.timeout.value,
+      name: fields.name.value, command: fields.command.value, env: fields.env.value, timeout: fields.timeout.value,
     }, server ?? {});
     if ('problem' in got) {
       say(t(`tools.form.bad.${got.problem}`, { line: got.line ?? 0 }), /** @type {any} */ (fields)[got.field] ?? null);
@@ -72,9 +62,7 @@ export function openServerForm(dialog, server) {
       h('button.icon-button', { type: 'button', title: t('close'), 'aria-label': t('close'), onclick: () => close() }, icon('x'))),
     row(t('tools.field.name'), fields.name),
     row(t('tools.field.command'), fields.command),
-    row(t('tools.form.args'), fields.args),
     row(t('tools.form.env'), fields.env),
-    h('div.set-tool-field', h('span.set-tool-label', t('tools.field.venues')), h('div.set-pkg-chips', venueButtons)),
     row(t('tools.form.timeout'), h('div.set-tool-timeout', fields.timeout, h('span', t('tools.form.seconds')))),
     error,
     h('div.set-tool-pop-foot', h('button.set-btn', { type: 'button', onclick: () => close() }, t('tools.form.cancel')), save));

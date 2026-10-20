@@ -80,10 +80,10 @@
         "user",
         "models",
         "usage",
+        "presets",
         "personas",
         "memory",
         "knowledge",
-        "presets",
         "skills",
         "scripts",
         "mcp",
@@ -100,7 +100,7 @@
       "type": "list",
       "of": "text",
       "default": [
-        "personas",
+        "presets",
         "skills",
         "packages"
       ],
@@ -390,7 +390,7 @@
         "sep": "、",
         "upstream": "上游",
         "from": {
-          "shipped": "出厂",
+          "shipped": "内置",
           "official": "官方软件源",
           "community": "社区软件源",
           "local": "本地"
@@ -501,7 +501,7 @@
           "package": "随软件包来的"
         },
         "own": "自制",
-        "shipped": "出厂",
+        "shipped": "内置",
         "lazy": "懒加载",
         "full": "完整",
         "no_match": "没有对得上的",
@@ -513,8 +513,8 @@
         "gone": "已不存在",
         "tools_n": "{count} 件工具",
         "note": {
-          "skills": "开关是全局的：预设里没单独写的照它，写了的以预设为准。技能用到时才读正文，没有加载方式。",
-          "load": "懒加载：只给 AI 名字和一句说明，用到时再拿完整的参数；完整：每一轮都给全。开关是全局的：预设里没单独写的照它，写了的以预设为准。"
+          "skills": "技能用到时才读正文，没有加载方式。",
+          "load": "懒加载：只给 AI 名字和一句说明，用到时再拿完整的参数；完整：每一轮都给全。"
         },
         "field": {
           "source": "来源",
@@ -523,17 +523,11 @@
           "timeout": "时限",
           "load": "加载方式",
           "command": "命令",
-          "venues": "会话",
           "tools": "工具"
         },
         "timeout_s": "{seconds} 秒",
         "load_set": "个人设置里改过",
         "load_reset": "恢复",
-        "venue": {
-          "local": "本机",
-          "private": "私聊",
-          "group": "群聊"
-        },
         "from_package": "随软件包安装，命令在包里改。",
         "restart": "重启",
         "edit": "编辑",
@@ -543,9 +537,7 @@
           "add_title": "添加 MCP 服务",
           "edit_title": "编辑 {name}",
           "name_hint": "例如 github",
-          "command_hint": "程序，例如 npx",
-          "args": "参数",
-          "args_hint": "一行一个",
+          "command_hint": "整条命令，例如 npx -y @modelcontextprotocol/server-everything",
           "env": "环境变量",
           "env_hint": "一行一个：名字=值",
           "timeout": "时限",
@@ -557,9 +549,17 @@
             "name": "名字要以小写字母开头，只用小写字母、数字和 -，最多 32 个字符",
             "command": "请填写命令",
             "env": "环境变量第 {line} 行要写成「名字=值」",
-            "timeout": "时限要在 1 到 3600 秒之间"
+            "timeout": "时限要在 1 到 3600 秒之间",
+            "quote": "命令里的引号没有配对"
           }
-        }
+        },
+        "select": "多选",
+        "selected": "已选 {count} 个",
+        "select_all": "全选",
+        "select_exit": "退出多选",
+        "delete": "删除",
+        "delete_again": "再点一次删除",
+        "deleted_n": "已删除 {count} 个"
       }
     },
     "en": {
@@ -906,8 +906,8 @@
         "gone": "No longer exists",
         "tools_n": "{count} tools",
         "note": {
-          "skills": "Switches are global: presets follow them unless they set the item themselves. Skills are read only when used, so they have no loading mode.",
-          "load": "Lazy: the AI gets only the name and a one-line description, and fetches the full parameters when it uses it. Full: everything is sent every turn. Switches are global: presets follow them unless they set the item themselves."
+          "skills": "Skills are read only when used, so they have no loading mode.",
+          "load": "Lazy: the AI gets only the name and a one-line description, and fetches the full parameters when it uses it. Full: everything is sent every turn."
         },
         "field": {
           "source": "Source",
@@ -916,17 +916,11 @@
           "timeout": "Time limit",
           "load": "Loading",
           "command": "Command",
-          "venues": "Sessions",
           "tools": "Tools"
         },
         "timeout_s": "{seconds} s",
         "load_set": "Changed in personal settings",
         "load_reset": "Reset",
-        "venue": {
-          "local": "Local",
-          "private": "Private chats",
-          "group": "Group chats"
-        },
         "from_package": "Installed with a package; change its command in the package.",
         "restart": "Restart",
         "edit": "Edit",
@@ -936,9 +930,7 @@
           "add_title": "Add MCP server",
           "edit_title": "Edit {name}",
           "name_hint": "e.g. github",
-          "command_hint": "Program, e.g. npx",
-          "args": "Arguments",
-          "args_hint": "One per line",
+          "command_hint": "The whole command, e.g. npx -y @modelcontextprotocol/server-everything",
           "env": "Environment",
           "env_hint": "One per line: NAME=value",
           "timeout": "Time limit",
@@ -950,9 +942,17 @@
             "name": "Names start with a lowercase letter and use only lowercase letters, digits and -, up to 32 characters",
             "command": "Enter a command",
             "env": "Environment line {line} should be NAME=value",
-            "timeout": "The time limit must be 1 to 3600 seconds"
+            "timeout": "The time limit must be 1 to 3600 seconds",
+            "quote": "A quote in the command isn’t closed"
           }
-        }
+        },
+        "select": "Select",
+        "selected": "{count} selected",
+        "select_all": "Select all",
+        "select_exit": "Done",
+        "delete": "Delete",
+        "delete_again": "Click again to delete",
+        "deleted_n": "Deleted {count}"
       }
     },
     "ja": {
@@ -1176,7 +1176,7 @@
         "sep": "、",
         "upstream": "アップストリーム",
         "from": {
-          "shipped": "標準搭載",
+          "shipped": "内蔵",
           "official": "公式ソース",
           "community": "コミュニティのソース",
           "local": "ローカル"
@@ -1287,7 +1287,7 @@
           "package": "パッケージ付属"
         },
         "own": "自作",
-        "shipped": "同梱",
+        "shipped": "内蔵",
         "lazy": "遅延読み込み",
         "full": "完全",
         "no_match": "一致するものがありません",
@@ -1299,8 +1299,8 @@
         "gone": "存在しません",
         "tools_n": "ツール {count} 個",
         "note": {
-          "skills": "スイッチは全体設定です。プリセットで個別に指定していない項目はこれに従い、指定した項目はプリセットが優先されます。スキルは使うときに本文を読むため、読み込み方法はありません。",
-          "load": "遅延読み込み：AI には名前と一行の説明だけを渡し、使うときに詳しいパラメーターを取得します。完全：毎ターンすべて渡します。スイッチは全体設定です。プリセットで個別に指定した項目はプリセットが優先されます。"
+          "skills": "スキルは使うときに本文を読むため、読み込み方法はありません。",
+          "load": "遅延読み込み：AI には名前と一行の説明だけを渡し、使うときに詳しいパラメーターを取得します。完全：毎ターンすべて渡します。"
         },
         "field": {
           "source": "提供元",
@@ -1309,17 +1309,11 @@
           "timeout": "制限時間",
           "load": "読み込み方法",
           "command": "コマンド",
-          "venues": "セッション",
           "tools": "ツール"
         },
         "timeout_s": "{seconds} 秒",
         "load_set": "個人設定で変更済み",
         "load_reset": "元に戻す",
-        "venue": {
-          "local": "ローカル",
-          "private": "個別チャット",
-          "group": "グループ"
-        },
         "from_package": "パッケージと一緒にインストールされています。コマンドはパッケージ側で変更します。",
         "restart": "再起動",
         "edit": "編集",
@@ -1329,9 +1323,7 @@
           "add_title": "MCP サーバーを追加",
           "edit_title": "{name} を編集",
           "name_hint": "例：github",
-          "command_hint": "プログラム（例：npx）",
-          "args": "引数",
-          "args_hint": "1 行に 1 つ",
+          "command_hint": "コマンド全体（例：npx -y @modelcontextprotocol/server-everything）",
           "env": "環境変数",
           "env_hint": "1 行に 1 つ：名前=値",
           "timeout": "制限時間",
@@ -1343,9 +1335,17 @@
             "name": "名前は小文字で始め、小文字・数字・- のみ、32 文字以内で入力してください",
             "command": "コマンドを入力してください",
             "env": "環境変数の {line} 行目は「名前=値」の形にしてください",
-            "timeout": "制限時間は 1〜3600 秒です"
+            "timeout": "制限時間は 1〜3600 秒です",
+            "quote": "コマンドの引用符が閉じていません"
           }
-        }
+        },
+        "select": "選択",
+        "selected": "{count} 件選択",
+        "select_all": "すべて選択",
+        "select_exit": "選択を終了",
+        "delete": "削除",
+        "delete_again": "もう一度押して削除",
+        "deleted_n": "{count} 件削除しました"
       }
     }
   },
