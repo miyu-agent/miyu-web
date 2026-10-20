@@ -66,11 +66,23 @@
 /* 一个库里面 */
 .kb-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
 /* 一个库里、看原文时，返回那一行钉在顶上（2026-10-20 项目主人：往下翻不应该被推上去）：底色同设置框、糊一层，下面的字从它下面滚过去 */
-.kb-base-page > .kb-head, .kb-read-page > .kb-head { position: sticky; top: 0; z-index: 5; box-sizing: border-box; height: 40px; margin: 0 -24px; padding: 0 24px;
+/* 下沿 10px 羽化（2026-10-20 项目主人：边缘可以羽化一下） */
+.kb-base-page > .kb-head, .kb-read-page > .kb-head { position: sticky; top: 0; z-index: 5; box-sizing: border-box; height: 48px; margin: 0 -24px -8px; padding: 0 24px 8px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 10px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 10px), transparent);
   background: color-mix(in srgb, var(--surface) 94%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
 /* 拖文件进来：整页都收（同一天项目主人），右边那一栏描一圈虚线、铺一层淡的 accent */
-.set-body.kb-dropping { outline: 2px dashed var(--accent); outline-offset: -6px; background: color-mix(in srgb, var(--accent-soft) 45%, transparent); }
-.kb-files-title { margin-right: auto; color: var(--text-faint); font-size: 12px; font-weight: 600; }
+.set-main.kb-dropping::after { content: attr(data-drop-hint); position: absolute; inset: 52px 16px 16px; z-index: 20; display: grid; place-items: center; pointer-events: none;
+  border: 2px dashed color-mix(in srgb, var(--accent) 70%, transparent); border-radius: 14px; background: color-mix(in srgb, var(--accent-soft) 82%, var(--surface));
+  color: var(--accent); font-size: 15px; font-weight: 600; animation: fade-in 0.12s var(--ease-out); }
+.kb-files-title { flex: none; color: var(--text-faint); font-size: 12px; font-weight: 600; }
+/* 文件列表那一行的小搜索框：同顶上的搜索框，矮一点 */
+.kb-file-find { display: flex; flex: 1; align-items: center; gap: 6px; max-width: 240px; height: 26px; margin: 0 auto 0 10px; padding: 0 8px; border-radius: 7px; background: var(--surface-2); color: var(--text-faint); transition: background-color 0.15s ease, box-shadow 0.15s ease; }
+.kb-file-find:hover { background: var(--surface-3); }
+.kb-file-find:focus-within { background: var(--surface-1); box-shadow: var(--card-shadow); }
+.kb-file-find .icon { width: 13px; height: 13px; flex: none; }
+.kb-file-find-input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: 12.5px var(--sans); }
+.kb-file-find-input::-webkit-search-cancel-button { display: none; }
+.kb-sel:not(:has(.kb-file-find)) .kb-files-title { margin-right: auto; }
 .kb-back { display: inline-flex; flex: none; align-items: center; gap: 3px; height: 28px; padding: 0 8px 0 4px; border: 0; border-radius: 7px; background: none; color: var(--text-soft); font: 13px var(--sans); cursor: pointer; }
 .kb-back:hover { background: var(--surface-2); color: var(--text); }
 .kb-back .icon { width: 15px; height: 15px; }
@@ -155,7 +167,9 @@
 .kb-sel-btn.is-danger { color: var(--danger); }
 .kb-sel-btn.is-armed { background: color-mix(in srgb, var(--danger) 16%, transparent); }
 .kb-sel-btn:disabled { opacity: 0.45; cursor: default; }
-.kb-check { display: grid; flex: none; place-items: center; width: 16px; color: var(--text-faint); }
+.kb-check { position: absolute; top: 50%; left: 6px; display: grid; place-items: center; width: 16px; color: var(--text-faint); transform: translateY(-50%); }
+/* 多选时整棵树往右挪一格，勾选框在最左边那一格、不跟着缩进（同一天项目主人：展开的时候选择框和线重叠了） */
+.kb-docs.is-selecting .kb-doc { padding-left: calc(28px + var(--depth, 0) * 20px); }
 .kb-check .icon { width: 15px; height: 15px; }
 .kb-doc.is-picked .kb-check { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) { .kb-index-bar.is-unknown > i, .kb-reindex:disabled .icon { animation: none; } }

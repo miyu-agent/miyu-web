@@ -111,7 +111,10 @@
         "at": "上次建好",
         "never": "还没建"
       },
-      "files_title": "文件列表"
+      "files_title": "文件列表",
+      "files_search": "搜索文件",
+      "files_no_match": "没有对得上的文件",
+      "drop_here": "拖拽到此处导入"
     },
     "en": {
       "title": "Knowledge",
@@ -198,7 +201,10 @@
         "at": "Last built",
         "never": "Not yet"
       },
-      "files_title": "Files"
+      "files_title": "Files",
+      "files_search": "Search files",
+      "files_no_match": "No matching files",
+      "drop_here": "Drop here to import"
     },
     "ja": {
       "title": "ナレッジ",
@@ -285,7 +291,10 @@
         "at": "前回の構築",
         "never": "未構築"
       },
-      "files_title": "ファイル一覧"
+      "files_title": "ファイル一覧",
+      "files_search": "ファイルを検索",
+      "files_no_match": "一致するファイルはありません",
+      "drop_here": "ここにドロップして追加"
     }
   }
 }

@@ -54,6 +54,8 @@ export class KnowledgePage {
     this.selecting = false;
     /** @type {Set<string>} */
     this.selected = new Set();
+    /** 文件列表那一行搜索框里的字（照路径筛） */
+    this.fileQuery = '';
     /** @type {string|null} */
     this.lastPick = null;
     /** 文件树里收起来的文件夹（照路径） @type {Set<string>} */
@@ -183,7 +185,7 @@ export class KnowledgePage {
   draw() {
     if (!this.kit) return;
     // 拖着的时候重画了（推来进度、重读）：原来那一页的拖放监听跟着没了，描的那圈先拿掉，拖到新的这一页上再描
-    this.el.closest('.set-body')?.classList.remove('kb-dropping');
+    this.el.closest('.set-main')?.classList.remove('kb-dropping');
     if (this.old) {
       replace(this.el, h('div.kb-problem', h('p', this.t('errors.old_core'))));
       return;
@@ -379,7 +381,10 @@ export class KnowledgePage {
     const docs = this.docs;
     // 文档排成文件树（2026-10-20 项目主人，看过样板选「缩进加竖线」）：文件夹一行（箭头、图标、名字，名字后面几篇），点了展开收起（里面的几行长出来、
     // 收回去）；里面的往右缩一层，一层一道竖线落在上一层箭头的正下方，一行一道横线连过去，最后一行的竖线到它为止；行之间不画线
-    const tree = docs ? treeOf([...docs.documents, ...docs.folders.map((d) => ({ ...d, dir: true }))]) : null;
+    // 文件列表那一行的搜索框（2026-10-20 项目主人）：照路径找（不分大小写），找着的时候文件夹都展开
+    const fq = this.fileQuery.trim().toLowerCase();
+    const hit = (/** @type {{path: string}} */ d) => !fq || d.path.toLowerCase().includes(fq);
+    const tree = docs ? treeOf([...docs.documents.filter(hit), ...docs.folders.filter(hit).map((d) => ({ ...d, dir: true }))]) : null;
     const shift = this.selecting ? 36 : 14;
     /**
      * 一行的线：`anc[x]` 是第 x 层的竖线穿不穿过这一行（那一层的文件夹后面还有同级的）；自己那一层画 ├ 或 └，加一道横线连到箭头。
@@ -393,7 +398,7 @@ export class KnowledgePage {
     /** @param {import('./model.js').TreeNode} node @param {number} depth @param {boolean[]} anc @returns {HTMLElement[]} */
     const rowsOf = (node, depth, anc) => [
       ...node.folders.flatMap((f, i) => {
-        const open = !this.closed.has(f.path);
+        const open = !!fq || !this.closed.has(f.path);
         const last = i === node.folders.length - 1 && !node.docs.length;
         const toggle = () => this.flip(f.path, open);
         const inside = pathsOf(f);
@@ -424,7 +429,7 @@ export class KnowledgePage {
     ];
     const list = !docs ? null
       : docs.gone ? h('p.kb-empty.is-bad', t('folder_gone', { path: b.mount ?? '' }))
-      : rows.length ? h(`div.kb-docs${this.selecting ? '.is-selecting' : ''}`, rows) : h('p.kb-empty', t('docs_empty'));
+      : rows.length ? h(`div.kb-docs${this.selecting ? '.is-selecting' : ''}`, rows) : h('p.kb-empty', t(fq ? 'files_no_match' : 'docs_empty'));
     // 底下的数同卡片上的（核心数的是读得了的）：读不了的不算篇数，以前进过索引留着的旧块照算
     const readable = (docs?.documents ?? []).filter((d) => !d.reason).length;
     const chunks = (docs?.documents ?? []).reduce((n, d) => n + (d.chunks ?? 0), 0);
@@ -438,7 +443,7 @@ export class KnowledgePage {
       h('div.kb-head', h('button.kb-back', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), t('back_list')), h('span.kb-head-id', b.id)),
       this.card(b, false, true),
       this.indexBlock(b, docs ? readable : b.documents ?? 0, docs ? chunks : b.chunks ?? 0),
-      this.fileHead(b, own, tree && rows.length ? tree : null),
+      this.fileHead(b, own, tree && rows.length ? tree : null, !!docs && (docs.documents.length > 0 || !!fq)),
       list,
       // 底下一条钉在设置框底边（2026-10-20 项目主人：重建索引放回原来的位置，删除弹窗问一句）：篇数、段数，右边重建索引、删除
       h('div.kb-foot.set-pinned', h('span', t('foot', { docs: docs ? readable : b.documents ?? 0, chunks: docs ? chunks : b.chunks ?? 0 })), h('span.kb-foot-actions', reindex, del)));
@@ -539,12 +544,18 @@ export class KnowledgePage {
   }
 
   /**
-   * 整页都能拖进来（2026-10-20 项目主人：不该精准拖到那一块才能导入）：拖到这一库的页上，右边那一栏描一圈虚线、铺一层淡的 accent，松手照路径加。
+   * 整页都能拖进来（2026-10-20 项目主人：不该精准拖到那一块才能导入）：拖到这一库的页上，右边那一栏（页头以下）铺满一层淡的 accent、一圈虚线，
+   * 正中写「拖拽到此处导入」（同一天项目主人：原来只描一圈，样子怪），松手照路径加。
    * 只听这一页（`local`）：事件先到它，它收了的整页的附件那边不再收一份（`src/host/files.js` 的 `watchDrop`）；节点换掉了监听跟着没了。
    * @param {HTMLElement} page @param {import('./model.js').Base} b
    */
   dropOn(page, b) {
-    const over = (/** @type {boolean} */ on) => page.closest('.set-body')?.classList.toggle('kb-dropping', on);
+    const over = (/** @type {boolean} */ on) => {
+      const main = /** @type {HTMLElement|null} */ (page.closest('.set-main'));
+      if (!main) return;
+      main.dataset.dropHint = this.t('drop_here');
+      main.classList.toggle('kb-dropping', on);
+    };
     this.ctx.host?.files?.watchDrop?.(page, {
       enter: () => over(true),
       over: () => {},
@@ -557,15 +568,30 @@ export class KnowledgePage {
    * 清单头上一行（2026-10-20 项目主人：去掉拖文件的那一块，换成一行小字「文件列表」，同一行文件、文件夹、多选的图标）：左边暗字「文件列表」，
    * 右边自己建的库有「加文件」（`file-plus`，开系统的选文件）、「加文件夹」（`folder-plus`，宿主能选文件夹的才有）、「多选」（有文档时才有）；
    * 多选时换成「已选 N 篇」、全选、删除、退出。挂的、随包的只有「文件列表」。
-   * @param {import('./model.js').Base} b @param {boolean} own @param {import('./model.js').TreeNode|null} tree
+   * 「文件列表」后面一个小搜索框（同一天项目主人：这里也加一个搜索框；有文档时才有），边打边筛，输入法选字时不筛。
+   * @param {import('./model.js').Base} b @param {boolean} own @param {import('./model.js').TreeNode|null} tree @param {boolean} searchable
    */
-  fileHead(b, own, tree) {
+  fileHead(b, own, tree, searchable) {
     const t = this.t;
     const files = this.ctx.host?.files;
     const btn = (/** @type {string} */ name, /** @type {string} */ title, /** @type {() => void} */ run, cls = '') => h(`button.icon-button.kb-sel-btn${cls}`, { type: 'button', title, 'aria-label': title, onclick: run }, icon(name));
     if (own && tree && this.selecting) return this.selectBar(tree);
+    const find = searchable ? /** @type {HTMLInputElement} */ (h('input.kb-file-find-input', { type: 'search', value: this.fileQuery, placeholder: t('files_search'), spellcheck: 'false', autocomplete: 'off' })) : null;
+    find?.addEventListener('input', (e) => {
+      if (/** @type {InputEvent} */ (e).isComposing) return;
+      this.fileQuery = find.value;
+      this.draw();
+      // 重画换了框：焦点、光标放回去
+      const again = /** @type {HTMLInputElement|null} */ (this.el.querySelector('.kb-file-find-input'));
+      if (again) {
+        again.focus({ preventScroll: true });
+        again.setSelectionRange(again.value.length, again.value.length);
+      }
+    });
+    find?.addEventListener('compositionend', () => find.dispatchEvent(new Event('input')));
     return h('div.kb-sel',
       h('span.kb-files-title', t('files_title')),
+      find ? h('label.kb-file-find', icon('search'), find) : null,
       own && files?.pick ? btn('file-plus', t('drop_pick'), async () => this.addFiles(b, (await files.pick()) ?? [])) : null,
       own && files?.pickFolder ? btn('folder-plus', t('drop_pick_folder'), async () => this.addFiles(b, (await files.pickFolder()) ?? [])) : null,
       own && tree ? btn('list-checks', t('select'), () => { this.selecting = true; this.selected = new Set(); this.lastPick = null; this.draw(); }) : null);
@@ -609,6 +635,7 @@ export class KnowledgePage {
     this.docs = null;
     this.selecting = false;
     this.selected = new Set();
+    this.fileQuery = '';
     this.draw();
     this.scrollTop();
     this.loadDocs(id).then(() => this.draw());
