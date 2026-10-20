@@ -19,6 +19,9 @@ import { drawBackstage } from './backstage.js';
 import { Subpage, swap } from './subpage.js';
 import { drawAdvanced } from './advanced.js';
 
+/** 私密目录那两项（隐私与安全页） @param {any} item */
+const isPrivate = (item) => item.key === PRIVATE_ADD || item.key === PRIVATE_REMOVE;
+
 /** 上次看的那一页：这个终端记着（蓝图第 3 条），刷新就忘 */
 let lastPage = 'general';
 
@@ -128,10 +131,7 @@ export class SettingsDialog {
     }
   }
 
-  /** 私密目录那两项 @param {any} item */
-const isPrivate = (item) => item.key === PRIVATE_ADD || item.key === PRIVATE_REMOVE;
-
-/** 左栏的分页：核心的照 `pages`，网页的「软件包」，挂进 `settings.section` 的；先后照设置项 `order`。主题在通用页最上面，不单开一页。 */
+  /** 左栏的分页：核心的照 `pages`，网页的「软件包」，挂进 `settings.section` 的；先后照设置项 `order`。主题在通用页最上面，不单开一页。 */
   entries() {
     const order = this.ctx.config.order;
     const named = (id) => this.ctx.text(`pages.${id}`);
