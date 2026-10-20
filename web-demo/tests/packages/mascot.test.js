@@ -111,3 +111,8 @@ test('肚子上的灯（lamp）：亮着时圈里铺上灯，灭着圈里是身�
   assert.ok(inside(on) > 0, '亮着');
   assert.ok(on.flat().some((c) => c?.part === 'belly'), '圈还在');
 });
+
+test('锯齿线正中那一点在 [0, 0.06]（2026-10-20 项目主人又挑的，终端同一组数）', () => {
+  assert.deepEqual(look.face.line[3], [0.0, 0.06]);
+  assert.equal(look.face.line.length, 7);
+});
