@@ -5,8 +5,9 @@
 //! 后一块接着画、不再写头像和名字（`cont`，同一天项目主人定）。纯函数。
 
 /**
- * @typedef {{key: string, kind: 'user'|'her'|'note', turn?: number|null, item?: any, items: any[], cont?: boolean}} Block
- *   `cont` 的是接着她同一轮的（中间插进来一句话），不再画头像和名字
+ * @typedef {{key: string, kind: 'user'|'her'|'note', turn?: number|null, item?: any, items: any[], cont?: boolean, persona?: string|null}} Block
+ *   `cont` 的是接着她同一轮的（中间插进来一句话），不再画头像和名字；`persona` 是她那一块里回复条目带的人格（无人格 `null`），
+ *   一条带它的都没有的不写（照会话现在的人格画）
  */
 
 /** @param {any[]} items @returns {Block[]} */
@@ -29,6 +30,10 @@ export function group(items) {
       out.push({ key: `h${it.turn}-${n}`, kind: 'her', turn: it.turn, items: [it], cont });
     }
   });
+  for (const b of out) {
+    const reply = b.kind === 'her' ? b.items.find((x) => x.type === 'reply' && 'persona' in x) : null;
+    if (reply) b.persona = reply.persona;
+  }
   return out;
 }
 

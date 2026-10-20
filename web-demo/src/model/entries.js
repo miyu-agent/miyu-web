@@ -57,7 +57,8 @@ export function itemsOf(entries, status, opts = {}) {
       }
       case 'reply':
         spoke.add(e.turn);
-        items.push({ type: 'reply', key: e.id, turn: e.turn ?? null, text: e.text ?? '', streaming: !!e.open });
+        // 这一轮是哪个人格回的（核心 70d6ff7d，无人格是 `null`）：她那一块的头照它画；老核心没有这一格的不带
+        items.push({ type: 'reply', key: e.id, turn: e.turn ?? null, text: e.text ?? '', streaming: !!e.open, ...('persona' in e ? { persona: e.persona ?? null } : {}) });
         break;
       case 'media': {
         // 她发出去的一张图（核心 X-19）：跟着她这一轮画在正文里，和回答的字一样（2026-10-16 项目主人定）

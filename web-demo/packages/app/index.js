@@ -57,6 +57,8 @@ export function apply(ctx) {
     persona: (id) => app.store.sessions.get(id)?.view.status?.persona ?? app.store.index.get(id)?.persona ?? null,
     /** 会话用的人格画成什么样：交一个函数（会话 → `{name, avatar}`；无人格 `null`；还不知道 `undefined`），软件包 `setup` 给 */
     look: (fn) => app.setLooker(fn),
+    /** 一个人格画成什么样：交一个函数（人格编号 → `{name, avatar}`；没有这个人格 `null`；还不知道 `undefined`），软件包 `setup` 给；中途换过人格的会话，以前那几轮的头照它画 */
+    lookFor: (fn) => { app.chat.setLookFor(fn); app.schedule(); },
     /** 一个会话用的人格画成什么样（照 `look` 登记的那个函数：`{name, avatar}`；无人格 `null`；还不知道 `undefined`）：系统通知的图标照它 */
     lookOf: (id) => (app.looker ? app.looker(id) : undefined),
     /** 人格列表、新会话选的人格变了：照 `look` 重新取一次 */

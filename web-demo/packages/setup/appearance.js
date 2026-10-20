@@ -75,7 +75,8 @@ export class Appearance {
     const url = this.imageUrl(this.catalog.avatars, this.avatar, () => this.paintAvatar(), this.avatarBox);
     const pick = this.filePicker((file) => this.changeImage('avatar', file));
     this.redraw(this.avatarBox,
-      this.picture('avatar', url ? h('img', { src: url, alt: '' }) : h('span.setup-pic-initial', [...this.hooks.name()][0] ?? ''), !!url,
+      // 没有头像的：一个「添加图片」的记号，不写名字的第一个字（看着像设了头像，2026-10-20 项目主人）
+      this.picture('avatar', url ? h('img', { src: url, alt: '' }) : h('span.setup-pic-initial', icon('image-plus')), !!url,
         () => pick.click(), this.avatar ? () => this.setPart('avatar', { unset: true }) : null),
       pick);
   }

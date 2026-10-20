@@ -179,7 +179,9 @@
   background: color-mix(in srgb, var(--accent) 16%, var(--surface-1)); color: var(--accent); font-size: 13px; font-weight: 600;
 }
 /* 无人格的会话：她那一轮不画头像和名字，内容、提示行、压缩的进度不缩进（2026-10-10 项目主人） */
-.timeline.is-bare .assistant-message, .timeline.is-bare .note, .timeline.is-bare .compacting, .timeline.is-bare .chat-tail { padding-left: 0; }
+/* 她那一轮、提示行缩不缩进照各自的（中途换了人格，旧的照回复时的人格：`chat.js` 的 `block`）；压缩的进度、正文末尾那一格照现在的人格 */
+.timeline.is-bare .compacting, .timeline.is-bare .chat-tail { padding-left: 0; }
+.assistant-message.is-bare, .note.is-bare { padding-left: 0; }
 .assistant-content { color: var(--text); font-size: 15px; line-height: 1.75; }
 .assistant-content > * + * { margin-top: 10px; }
 
