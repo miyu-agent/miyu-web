@@ -8,9 +8,9 @@ import { h, icon, replace } from '../../src/lib/dom.js';
 
 /**
  * @typedef {{title: string, desc?: string, icon?: string, current?: boolean, off?: boolean, tip?: string, label?: string, more?: boolean, still?: boolean,
- *   danger?: boolean, keep?: boolean, wrap?: boolean, action?: {icon: string, title: string, run: () => void}, pick: (el: HTMLElement) => void}} Row
+ *   danger?: boolean, keep?: boolean, wrap?: boolean, action?: {icon: string, title: string, run: () => void, key?: string}, pick: (el: HTMLElement) => void}} Row
  *   `label` 是左边暗字的名字（名字、值一行的样子，左上角的「会话信息」），`more` 末尾一个 ›，`still` 只是看的、点不了、不亮，`keep` 点了不收菜单，
- *   `wrap` 值太长换行写全（不截断），`action` 行末一个图标按钮
+ *   `wrap` 值太长换行写全（不截断），`action` 行末一个图标按钮（带 `key` 的，移到这一行按这个键也一样：人格、预设的编辑是 `e`）
  * @typedef {{section: string}} Section
  * @typedef {{divider: true}} Divider 一道细线
  * @typedef {{title: string, rows: (Row|Section|Divider)[], note?: string, foot?: HTMLElement[], back?: () => void, below?: boolean, action?: {icon: string, title: string, run: () => void}}} View
@@ -35,6 +35,7 @@ export class Menu {
       else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') this.mark(this.next(e.key === 'ArrowDown' ? 1 : -1));
       else if (e.key === 'Enter' && !e.isComposing && this.at >= 0) this.pick(this.items[this.at].row);
       else if (e.key === 'Backspace' && this.view?.back) this.view.back();
+      else if (!e.isComposing && !e.ctrlKey && !e.metaKey && !e.altKey && this.at >= 0 && this.items[this.at].row.action?.key === e.key) this.items[this.at].row.action?.run();
       else return;
       e.preventDefault();
       e.stopPropagation();
