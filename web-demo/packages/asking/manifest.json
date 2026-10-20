@@ -61,7 +61,7 @@
       "notes_add": "添加补充",
       "decision": {
         "once": "允许本次",
-        "session": "本会话内允许",
+        "session": "此目录不再询问",
         "workspace": "本工作区内允许",
         "deny": "不允许"
       },
@@ -145,7 +145,7 @@
       "notes_add": "Add notes",
       "decision": {
         "once": "Allow this time",
-        "session": "Allow for this session",
+        "session": "Don’t ask again for this folder",
         "workspace": "Allow in this workspace",
         "deny": "Don't allow"
       },
@@ -229,7 +229,7 @@
       "notes_add": "補足を書く",
       "decision": {
         "once": "今回だけ許可",
-        "session": "このセッションでは許可",
+        "session": "このフォルダでは確認しない",
         "workspace": "このワークスペースでは許可",
         "deny": "許可しない"
       },
