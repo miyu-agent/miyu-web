@@ -85,7 +85,8 @@ function fillBar(dialog, el) {
   const other = m.progress && m.progress.package && m.progress.package !== m.busy ? nameOf(m, m.progress.package) : null;
   el.style.setProperty('--mk-pct', `${pct ?? 0}%`);
   const label = /** @type {HTMLElement} */ (el.querySelector('.mk-bar-label'));
-  if (label) label.textContent = pct == null ? t('market.preparing') : other ? t('market.downloading_dep', { name: other, pct }) : t('market.downloading', { pct });
+  // 下完了（100%）核心还在解包、装：写「正在安装…」
+  if (label) label.textContent = pct == null ? t('market.preparing') : pct >= 100 && !other ? t('market.installing') : other ? t('market.downloading_dep', { name: other, pct }) : t('market.downloading', { pct });
 }
 
 /** @param {Market} m @param {string} id */

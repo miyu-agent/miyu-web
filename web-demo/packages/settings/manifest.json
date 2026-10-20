@@ -551,7 +551,8 @@
         "with": "一起安装",
         "size": "下载大小",
         "replaces": "替换",
-        "replaces_version": "替换已装的 {version}"
+        "replaces_version": "替换已装的 {version}",
+        "installing": "正在安装…"
       }
     },
     "en": {
@@ -934,7 +935,8 @@
         "with": "Also installs",
         "size": "Download size",
         "replaces": "Replaces",
-        "replaces_version": "Replaces installed {version}"
+        "replaces_version": "Replaces installed {version}",
+        "installing": "Installing…"
       }
     },
     "ja": {
@@ -1317,7 +1319,8 @@
         "with": "一緒にインストール",
         "size": "ダウンロードサイズ",
         "replaces": "置き換え",
-        "replaces_version": "インストール済みの {version} を置き換え"
+        "replaces_version": "インストール済みの {version} を置き換え",
+        "installing": "インストール中…"
       }
     }
   },
