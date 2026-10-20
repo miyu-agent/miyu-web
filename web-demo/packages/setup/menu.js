@@ -50,7 +50,7 @@ export class Menu {
   /** 在 `anchor` 旁边打开一屏（已经开着的换成这一屏）：`below` 开在它下面（左上角那一条），不然开在上面。 @param {HTMLElement} anchor @param {View} view */
   show(anchor, view) {
     // 开着换一屏的：记下原来多大，换完从原来的大小缓到新的（2026-10-20 项目主人：宽的会话信息换到窄的换人格没有动画）
-    const before = this.el.hidden ? null : this.el.getBoundingClientRect();
+    const before = this.el.hidden ? null : { width: this.el.offsetWidth, height: this.el.offsetHeight };
     this.anchor = anchor;
     this.view = view;
     this.items = [];
@@ -100,11 +100,12 @@ export class Menu {
 
   /**
    * 换了一屏：框从原来的宽高缓到现在的（0.22 秒，里面的字先藏着），里面的新内容跟着淡进来；一样大的只淡进来。减少动画的直接换。
-   * @param {DOMRect} before
+   * 量的是排版的大小（`offsetWidth`）：页面整个缩放了的（界面缩放），`getBoundingClientRect` 量出来的是放大以后的，缓到它会大一圈再跳回去。
+   * @param {{width: number, height: number}} before
    */
   resize(before) {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const after = this.el.getBoundingClientRect();
+    const after = { width: this.el.offsetWidth, height: this.el.offsetHeight };
     this.sizing?.cancel();
     const same = Math.abs(after.width - before.width) < 1 && Math.abs(after.height - before.height) < 1;
     const ease = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
