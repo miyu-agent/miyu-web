@@ -70,7 +70,8 @@
    加粗，点一下换下一级）· 模型（加粗）端点，右边用量，都暗 */
 .composer-footer {
   display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 26px; margin-top: 4px; padding: 0 18px;
-  color: var(--t-dim); font: 13px var(--mono); white-space: nowrap;
+  /* 12px（2026-10-20 项目主人：字号太大了；原来 13px，比上面那排按钮的 12.5px 比例字还显大一圈） */
+  color: var(--t-dim); font: 12px var(--mono); white-space: nowrap;
 }
 .footer-left { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 /* 左边排成一行：级别、点、模型那一截；左右各留 6px 给模型那一截悬停时铺的底（不然它伸出去的那 6px 算溢出，Firefox 把整个按钮
@@ -168,7 +169,7 @@
 .footer-model:focus { outline: none; }
 .footer-model:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); }
 .footer-model-name { min-width: 0; overflow: hidden; color: var(--text); font-weight: 400; text-overflow: ellipsis; }
-.footer-model-prov { flex: none; margin-left: 0.4em; color: var(--t-dim); font-size: 11.5px; }
+.footer-model-prov { flex: none; margin-left: 0.4em; color: var(--t-dim); font-size: 11px; }
 /* 思考强度用工作区那个蓝（蓝图「换模型的菜单」第 1 条）；前面的点照框下面那一行的暗色 */
 .footer-model-sep { flex: none; white-space: pre; }
 .footer-model-effort { flex: none; color: var(--t-workspace); }
