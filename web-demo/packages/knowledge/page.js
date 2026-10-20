@@ -4,6 +4,7 @@
 //! 设置页重画、关了再开交回的是同一块。核心没有知识库的流：打开时、自己改了以后重读。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { leave } from '../../src/lib/motion.js';
 import { upload, serial } from '../../src/lib/upload.js';
 import { sourceOf, writable, deletable, reasonKey, idFor, nextId, sizeText, docIcon, hitHead, probeOf, treeOf, countOf, pathsOf, removalOf } from './model.js';
 
@@ -70,6 +71,9 @@ export class KnowledgePage {
     this.el.addEventListener('set-dismiss', () => this.back());
     /** 订着 `kb` 这条流（页面开着时订，不在页面上了退订） */
     this.subscribed = false;
+    /** 自己正在列、读、搜几件，到什么时候为止推来的建索引不跟（`reading`） */
+    this.ownReads = 0;
+    this.quietUntil = 0;
     // 建索引的进度（核心 97ea473b：订了 `kb` 流推 `kb.indexing {kb, done, total}`、`kb.indexed {kb}`；人点的重建、搜的时候顺手补的、AI 用工具的都推）。
     // 没推的（旧核心）照点了以后来回走；`kb.indexed` 来了重读列表（那个库的 `indexed_at`、`indexing`）
     this.onPush = (/** @type {string} */ method, /** @type {any} */ p) => {
@@ -83,6 +87,8 @@ export class KnowledgePage {
         this.unsubscribe();
         return;
       }
+      // 自己列、读、搜的时候核心顺手补变了的文档，也推这两条：不跟（跟了就重读、重读又补，绕成一个圈，2026-10-21 在 8785 上量到一秒几十圈）
+      if (this.ownReads > 0 || performance.now() < this.quietUntil) return;
       if (method === 'kb.indexing' && typeof p?.kb === 'string') {
         this.progress = { kb: p.kb, done: p.done, total: p.total };
         if (this.view.kind === 'base' && this.view.id === p.kb) this.draw();
@@ -96,6 +102,20 @@ export class KnowledgePage {
       ctx.core.pushes?.delete(this.onPush);
       this.unsubscribe();
     });
+  }
+
+  /**
+   * 列、读、搜：核心照文件补的时候也推建索引的进度，这时候推来的是自己这一下引起的，不跟；回了以后再等 0.3 秒（推送可能晚一点到）。
+   * @param {string} method @param {any} params
+   */
+  async reading(method, params) {
+    this.ownReads += 1;
+    try {
+      return await this.ctx.core.request(method, params);
+    } finally {
+      this.ownReads -= 1;
+      this.quietUntil = performance.now() + 300;
+    }
   }
 
   /** 订 `kb` 流（这一刻的样子照 `kb.list`）；旧核心不认的不管 */
@@ -126,7 +146,7 @@ export class KnowledgePage {
   async reload() {
     try {
       const [got, pkgs, cfg] = await Promise.all([
-        this.ctx.core.request('kb.list', {}),
+        this.reading('kb.list', {}),
         this.packages.size ? null : this.ctx.core.request('package.list', {}).catch(() => null),
         this.ctx.core.request('config.get', { keys: ['models.embedding'] }).catch(() => null),
       ]);
@@ -148,7 +168,7 @@ export class KnowledgePage {
   /** @param {string} id */
   async loadDocs(id) {
     try {
-      const got = await this.ctx.core.request('kb.documents', { kb: id });
+      const got = await this.reading('kb.documents', { kb: id });
       if (this.view.kind !== 'base' || this.view.id !== id) return;
       this.docs = { documents: got?.documents ?? [], folders: got?.folders ?? [] };
     } catch (err) {
@@ -171,7 +191,7 @@ export class KnowledgePage {
       return;
     }
     try {
-      const got = await this.ctx.core.request('kb.search', { query: q, limit: HITS });
+      const got = await this.reading('kb.search', { query: q, limit: HITS });
       if (q !== this.query.trim()) return;
       this.hits = Array.isArray(got?.hits) ? got.hits : [];
     } catch (err) {
@@ -221,8 +241,7 @@ export class KnowledgePage {
     const modal = this.creating ? h('div.kb-modal', {
       onclick: (/** @type {Event} */ e) => {
         if (e.target !== e.currentTarget || this.el.querySelector('.kb-create [data-dirty]')) return;
-        this.creating = false;
-        this.draw();
+        this.closeCreate();
       },
     }, this.createForm()) : null;
     return h('div.kb-list-page',
@@ -323,7 +342,7 @@ export class KnowledgePage {
       folder ? h('div.kb-folder', folder, pick) : null,
       h('div.kb-create-foot',
         h('label.kb-auto', { title: t('auto_hint') }, h('span', t('auto')), this.kit.toggle(auto, (/** @type {boolean} */ on) => { auto = on; return true; })),
-        h('button.set-btn', { type: 'button', onclick: () => { this.creating = false; this.draw(); } }, t('cancel')), ok));
+        h('button.set-btn', { type: 'button', onclick: () => this.closeCreate() }, t('cancel')), ok));
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (ok.disabled) return;
@@ -337,7 +356,7 @@ export class KnowledgePage {
         ok.textContent = t(folder ? 'do_mount' : 'do_create');
         return;
       }
-      this.creating = false;
+      await this.closeCreate();
       this.fresh = made;
       this.kit.toast(t(folder ? 'mounted' : 'created'));
       await this.reload();
@@ -385,8 +404,8 @@ export class KnowledgePage {
     const fq = this.fileQuery.trim().toLowerCase();
     const hit = (/** @type {{path: string}} */ d) => !fq || d.path.toLowerCase().includes(fq);
     const tree = docs ? treeOf([...docs.documents.filter(hit), ...docs.folders.filter(hit).map((d) => ({ ...d, dir: true }))]) : null;
-    // 竖线落在上一层箭头的中线上
-    const shift = 14;
+    // 竖线落在上一层图标那一格的中线上（图标那一格 18px，从缩进处起；2026-10-20 项目主人：文件夹图标那列和竖线同一列，不留空档）
+    const shift = 15;
     /**
      * 一行的线：`anc[x]` 是第 x 层的竖线穿不穿过这一行（那一层的文件夹后面还有同级的）；自己那一层画 ├ 或 └，加一道横线连到箭头。
      * @param {number} depth @param {boolean[]} anc @param {boolean} last
@@ -412,11 +431,13 @@ export class KnowledgePage {
           : null;
         const row = h(`div.kb-doc.is-dir.is-link${open ? '.is-open' : ''}${picked ? '.is-picked' : ''}`, {
           role: 'button', tabindex: '0', 'aria-expanded': String(open), style: `--depth: ${depth}`, 'data-path': f.path,
-          onclick: (/** @type {MouseEvent} */ e) => (this.selecting && !(/** @type {Element} */ (e.target)).closest('.kb-dir-arrow') ? this.pick(inside, order, false) : toggle()),
+          // 多选时点勾选框是勾，点这一行别处是展开收起
+          onclick: (/** @type {MouseEvent} */ e) => (this.selecting && (/** @type {Element} */ (e.target)).closest('.kb-check') ? this.pick(inside, order, false) : toggle()),
           onkeydown: (/** @type {KeyboardEvent} */ e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); toggle(); } },
-        }, linesOf(depth, anc, last), h('span.kb-dir-arrow', icon('chevron-right')),
-        this.selecting ? h('span.kb-check', icon(picked ? 'square-check' : some ? 'square-minus' : 'square')) : null,
-        h('span.kb-doc-icon', icon(open ? 'folder-open' : 'folder')),
+        }, linesOf(depth, anc, last),
+        // 图标那一格：平常是文件夹，悬停换成展开、收起的箭头（同一天项目主人）；多选时换成勾选框
+        this.selecting ? h('span.kb-doc-icon.kb-check', icon(picked ? 'square-check' : some ? 'square-minus' : 'square'))
+          : h('span.kb-doc-icon.kb-dir-icon', icon(open ? 'folder-open' : 'folder'), icon('chevron-right')),
         h('span.kb-doc-path', f.name), h('span.kb-doc-count', t('dir_count', { n: countOf(f) })), remove);
         // 一个文件夹连它里面的套一层：往下翻时文件夹那一行钉在顶上，翻过了这一组才被推走（2026-10-20 项目主人：展开的文件夹要固定在顶部，方便收起）
         return [h('div.kb-group', { style: `--depth: ${depth}` }, row, ...(open ? rowsOf(f, depth + 1, depth ? [...anc, !last] : []) : []))];
@@ -426,7 +447,7 @@ export class KnowledgePage {
     /** 清单里文档的先后（`Shift` 连选照它） @type {string[]} */
     const order = tree ? pathsOf(tree) : [];
     const rows = !docs ? [] : [
-      ...this.uploading.map((name) => h('div.kb-doc.is-uploading', h('span.kb-dir-arrow'), h('span.kb-doc-icon', icon('loader-circle')), h('div.kb-doc-text', h('span.kb-doc-path', name), h('span.kb-doc-note', t('uploading'))))),
+      ...this.uploading.map((name) => h('div.kb-doc.is-uploading', h('span.kb-doc-icon', icon('loader-circle')), h('div.kb-doc-text', h('span.kb-doc-path', name), h('span.kb-doc-note', t('uploading'))))),
       ...(tree ? rowsOf(tree, 0, []) : []),
     ];
     const list = !docs ? null
@@ -536,10 +557,8 @@ export class KnowledgePage {
     return h(`div.kb-doc${folder ? '.is-folder' : '.is-link'}${why ? '.is-bad' : ''}${picked ? '.is-picked' : ''}`,
       { style: `--depth: ${depth}`, title: d.path, 'data-path': d.path, ...(folder ? {} : { role: 'button', tabindex: '0', onclick: open, onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' && e.target === e.currentTarget) open(e); } }) },
       lines,
-      // 箭头那一格空着：同一层的文件、文件夹的图标、名字对齐；多选时勾选框接在它后面、紧挨着图标
-      h('span.kb-dir-arrow'),
-      picking ? h('span.kb-check', icon(picked ? 'square-check' : 'square')) : null,
-      h('span.kb-doc-icon', icon(folder ? 'folder' : docIcon(d.kind))),
+      // 图标那一格（同文件夹那一行，名字对齐）；多选时换成勾选框
+      picking ? h('span.kb-doc-icon.kb-check', icon(picked ? 'square-check' : 'square')) : h('span.kb-doc-icon', icon(folder ? 'folder' : docIcon(d.kind))),
       h('div.kb-doc-text', h('span.kb-doc-path', d.name ?? d.path), why ? h('span.kb-doc-note.is-bad', t(why)) : null),
       meta ? h('span.kb-doc-meta', meta) : null,
       remove);
@@ -653,11 +672,21 @@ export class KnowledgePage {
     this.scrollTop();
   }
 
+  /** 收起新建的小窗：先放完退场（同设置里别的小窗：遮罩淡掉、卡片缩回去），再重画（2026-10-20 项目主人：退出没有动画） */
+  closeCreate() {
+    this.creating = false;
+    const modal = /** @type {HTMLElement|null} */ (this.el.querySelector('.kb-modal'));
+    return new Promise((done) => {
+      const after = () => { this.draw(); done(undefined); };
+      if (modal) leave(modal, after);
+      else after();
+    });
+  }
+
   back() {
     // 新建的小窗开着：先收起它
     if (this.creating) {
-      this.creating = false;
-      this.draw();
+      this.closeCreate();
       return;
     }
     const v = this.view;
