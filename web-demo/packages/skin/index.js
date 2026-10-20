@@ -1,12 +1,13 @@
 // @ts-check
 //! 皮肤（软件包 `skin`，蓝图 `web.md`「皮肤」）：声明 `skin.packs`，皮肤包挂进来一格 `{id, name, tokens, css}`。照设置项 `pack` 选哪个
 //! （空着的、选的没了的是出厂：什么都不写）；选了的在页面根上写 `data-skin`，把它的变量照现在的明暗写上，它的 CSS 把部件名换成页面里的
-//! 选择器（`resources/parts.json`）接进页面。变量表（`styles/tokens.css`）里没有的名字、`{light, dark}` 缺一份的，不认这一格，控制台写明为什么。
+//! 选择器（`resources/parts.json`）接进页面，带了图标的换上它的图标（`src/lib/dom.js` 的 `useIconPack`）。变量表（`styles/tokens.css`）里没有的名字、`{light, dark}` 缺一份的，不认这一格，控制台写明为什么。
 //!
 //! 提供服务 `skin`：现在是哪个、有哪几个。换了发事件 `skin.changed`（写好以后发）；头一次以后再换，整页一起淡过去（`src/lib/retheme.js`）。
 
 import { retheme } from '../../src/lib/retheme.js';
-import { packProblem, scopeProblems, translate, valuesOf, vocabulary } from './model.js';
+import { useIconPack } from '../../src/lib/dom.js';
+import { cleanIcons, packProblem, scopeProblems, translate, valuesOf, vocabulary } from './model.js';
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -58,18 +59,37 @@ export function apply(ctx) {
     return '';
   };
 
+  /** 读过的皮肤图标（地址 → 干净的那一份，没读完的是 null） @type {Map<string, Record<string, any>|null>} */
+  const iconSets = new Map();
+  /** 这一格的图标：读过的直接交；没读过的去读，读完再画一遍 @param {any} pack */
+  const iconsOf = (pack) => {
+    if (!pack.icons) return null;
+    if (iconSets.has(pack.icons)) return iconSets.get(pack.icons) ?? null;
+    iconSets.set(pack.icons, null);
+    fetch(pack.icons).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`${r.status}`)))).then((json) => {
+      const got = cleanIcons(json);
+      if (got.dropped) tell(pack.id, `图标里有 ${got.dropped} 样不认，扔掉了`);
+      iconSets.set(pack.icons, got.icons);
+      shown = '';
+      paint();
+    }).catch((err) => tell(pack.id, `读不到图标：${err.message}`));
+    return null;
+  };
+
   const paint = () => {
     if (gone) return;
     const p = chosen();
     const d = isDark();
     const values = p ? valuesOf(p, d) : [];
     const css = p ? sheetOf(p) : '';
-    const sig = p ? JSON.stringify([p.id, values, css.length]) : '';
+    const icons = p ? iconsOf(p) : null;
+    const sig = p ? JSON.stringify([p.id, values, css.length, !!icons]) : '';
     if (sig === shown) return;
     shown = sig;
     retheme(() => {
       for (const name of written) root.style.removeProperty(name);
       written = [];
+      useIconPack(icons);
       if (!p) {
         delete root.dataset.skin;
         style?.remove();
@@ -113,6 +133,7 @@ export function apply(ctx) {
   });
   ctx.effect(() => () => {
     gone = true;
+    useIconPack(null);
     for (const name of written) root.style.removeProperty(name);
     delete root.dataset.skin;
     style?.remove();

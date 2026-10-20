@@ -1,7 +1,7 @@
 // @ts-check
 //! 皮肤「像素风」（软件包 `skin-pixel`，蓝图 `web.md`「皮肤」第 6 条）：挂进 `skin` 包声明的 `skin.packs`。照第一次引导的「像素关卡」：
 //! 全直角、不虚化；浮起来的、贴在页面上的东西四边一圈 3px 的像素边、四个角各缺一格（四道错开的影画的，不是真的描边），往右下错开
-//! 的实色块影；界面上的字用像素字体（`skin.css` 的 `@font-face`），读的字、代码照旧。颜色都从主题掺出来（`--skin-` 打头的是这一格自己的）。
+//! 的实色块影；界面上的字用像素字体（`skin.css` 的 `@font-face`），读的字、代码照旧；图标是像素的（`icons.json`，`tools/pixel-icons.py` 生成）；动效一格一格地动。颜色都从主题掺出来（`--skin-` 打头的是这一格自己的）。
 
 /** 四道错开 3px 的影：一圈像素边，四个角各缺一格 @param {string} c */
 const frame = (c) => `0 -3px 0 0 ${c}, 0 3px 0 0 ${c}, -3px 0 0 0 ${c}, 3px 0 0 0 ${c}`;
@@ -43,6 +43,22 @@ export const tokens = {
   '--divider': '2px dashed var(--skin-soft)',
   '--focus-ring': '3px solid var(--accent)',
   '--scrollbar-color': 'var(--skin-edge) var(--skin-cell)',
+  // 回答、时间线
+  '--md-quote-border': '4px solid var(--skin-edge)',
+  '--md-quote-bg': 'var(--skin-cell)',
+  '--md-quote-radius': '0',
+  '--md-code-bg': 'var(--skin-cell-hi)',
+  '--md-code-radius': '0',
+  '--md-link-line': 'var(--skin-edge)',
+  '--md-hr': 'var(--skin-edge)',
+  '--md-th-bg': 'var(--skin-cell-on)',
+  '--md-td-line': '2px dashed var(--skin-soft)',
+  '--timeline-rail': 'var(--skin-edge)',
+  '--timeline-body-bg': 'var(--skin-cell)',
+  '--timeline-body-line': '2px dashed var(--skin-soft)',
+  // 动效：一格一格地动
+  '--ease-out': 'steps(4, end)',
+  '--ease-in': 'steps(3, end)',
   // 材质
   '--composer-bg': 'var(--surface-1)',
   '--composer-elev': `${frame(EDGE)}, ${drop(6)}`,
@@ -83,5 +99,6 @@ export const tokens = {
 
 /** @param {any} ctx */
 export function apply(ctx) {
-  ctx.slots.mount('skin.packs', { id: 'pixel', name: ctx.text('name'), order: 10, tokens, css: new URL('skin.css', import.meta.url).href });
+  ctx.slots.mount('skin.packs', { id: 'pixel', name: ctx.text('name'), order: 10, tokens,
+    css: new URL('skin.css', import.meta.url).href, icons: new URL('icons.json', import.meta.url).href });
 }

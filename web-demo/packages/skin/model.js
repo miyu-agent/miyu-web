@@ -4,7 +4,7 @@
 //! 变量表是 `styles/tokens.css`：`:root` 里定义的（形状的总开关）加注释里 `@token` 列的（材质，出厂不定义）。部件名是
 //! `resources/parts.json`：名字 → 页面里的选择器；皮肤的 CSS 写 `[data-part="composer"]`，接进页面时换成 `:is(.composer)`。
 
-/** @typedef {{id: string, name?: string, order?: number, tokens?: Record<string, string|{light: string, dark: string}>, css?: string}} Pack */
+/** @typedef {{id: string, name?: string, order?: number, tokens?: Record<string, string|{light: string, dark: string}>, css?: string, icons?: string}} Pack */
 /** @typedef {Record<string, {zh?: string, select: string[]}>} Parts */
 
 const ID = /^[a-z][a-z0-9-]*$/;
@@ -37,6 +37,7 @@ export function packProblem(pack, known) {
     }
   }
   if (pack.css != null && typeof pack.css !== 'string') return 'css 要是样式文件的地址';
+  if (pack.icons != null && typeof pack.icons !== 'string') return 'icons 要是图标表的地址';
   return null;
 }
 
@@ -80,7 +81,12 @@ export function scopeProblems(css, id) {
   const bad = [];
   for (const r of rulesOf(css)) {
     if (r.selector === '@font-face') continue;
-    if (r.selector.startsWith('@')) { bad.push(`${r.selector}：只认 @font-face、@media、@supports`); continue; }
+    // 自己的动画：名字以 skin-<编号>- 开头（换进出场的样子）
+    if (/^@keyframes\s/.test(r.selector)) {
+      if (!r.selector.slice(10).trim().startsWith(`skin-${id}-`)) bad.push(`${r.selector}：动画的名字要以 skin-${id}- 开头`);
+      continue;
+    }
+    if (r.selector.startsWith('@')) { bad.push(`${r.selector}：只认 @font-face、@keyframes、@media、@supports`); continue; }
     for (const one of splitList(r.selector)) {
       if (!one.startsWith(lead)) bad.push(`${one}：不在 ${lead} 下面`);
       else if (/[.#][a-zA-Z_-]/.test(one.slice(lead.length).replace(/\[[^\]]*\]/g, ''))) bad.push(`${one}：只写部件名，不写类名、编号`);
@@ -125,4 +131,38 @@ export function translate(css, parts, base) {
       return `url(${q}${new URL(ref, base).href}${q})`;
     });
   return { css: out, unknown: [...new Set(unknown)] };
+}
+
+/** 皮肤的图标里认的图形和属性（只画图，不认 href、style、事件） */
+const SHAPES = new Set(['path', 'circle', 'rect', 'line', 'polyline', 'polygon', 'ellipse', 'g']);
+const ATTRS = new Set(['d', 'cx', 'cy', 'r', 'rx', 'ry', 'x', 'y', 'x1', 'y1', 'x2', 'y2', 'width', 'height', 'points', 'fill', 'stroke',
+  'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'fill-rule', 'clip-rule', 'opacity', 'fill-opacity', 'stroke-opacity', 'transform']);
+
+/**
+ * 皮肤带的图标表（和 `resources/lucide.json` 一个写法）：只留认得的图形、属性，值里不许有 `url(`、`javascript:` 这类。
+ * 交回 `{icons, dropped}`：干净的那一份，和扔掉了几样（写进控制台）。
+ * @param {any} json
+ */
+export function cleanIcons(json) {
+  /** @type {Record<string, Array<[string, Record<string, string>]>>} */
+  const icons = {};
+  let dropped = 0;
+  for (const [name, shapes] of Object.entries(json?.icons ?? {})) {
+    if (!/^[a-z0-9-]+$/.test(name) || !Array.isArray(shapes)) { dropped++; continue; }
+    /** @type {Array<[string, Record<string, string>]>} */
+    const keep = [];
+    for (const one of shapes) {
+      const [tag, attrs] = Array.isArray(one) ? one : [];
+      if (!SHAPES.has(tag) || !attrs || typeof attrs !== 'object') { dropped++; continue; }
+      /** @type {Record<string, string>} */
+      const clean = {};
+      for (const [k, v] of Object.entries(attrs)) {
+        if (ATTRS.has(k) && typeof v === 'string' && !/url\(|script:|[<>]/i.test(v)) clean[k] = v;
+        else dropped++;
+      }
+      keep.push([tag, clean]);
+    }
+    icons[name] = keep;
+  }
+  return { icons, dropped };
 }

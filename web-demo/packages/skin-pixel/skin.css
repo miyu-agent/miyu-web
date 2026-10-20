@@ -17,10 +17,12 @@
 :root[data-skin="pixel"] [data-part="composer.send.disabled"], :root[data-skin="pixel"] [data-part="button.primary.disabled"] { box-shadow: none; }
 /* 选中的那一格分段、小标签往下沉着 */
 :root[data-skin="pixel"] [data-part="chip.active"] { box-shadow: inset 0 3px 0 0 var(--skin-ground); }
-/* 变量管不到的几块：回答旁边的头像、左栏的分组标题、引用、时间线点开的细节（部件名照 resources/parts.json） */
+/* 变量管不到的几块：回答旁边的头像、左栏的分组标题、时间线点开的细节那一圈边（部件名照 resources/parts.json） */
 :root[data-skin="pixel"] [data-part="assistant.initial"], :root[data-skin="pixel"] [data-part="assistant.label-img"] {
   border-radius: 0; box-shadow: 0 -2px 0 0 var(--skin-edge), 0 2px 0 0 var(--skin-edge), -2px 0 0 0 var(--skin-edge), 2px 0 0 0 var(--skin-edge);
 }
 :root[data-skin="pixel"] [data-part="session.group-header"] { font-family: "Miyu Pixel UI", var(--sans); letter-spacing: 0.08em; text-transform: uppercase; }
-:root[data-skin="pixel"] [data-part="markdown.body-blockquote"] { border-left: 4px solid var(--skin-edge); background: var(--skin-cell); }
-:root[data-skin="pixel"] [data-part="tl.body"] { background: var(--skin-cell); box-shadow: 0 -2px 0 0 var(--skin-soft), 0 2px 0 0 var(--skin-soft), -2px 0 0 0 var(--skin-soft), 2px 0 0 0 var(--skin-soft); }
+:root[data-skin="pixel"] [data-part="tl.body"] { box-shadow: 0 -2px 0 0 var(--skin-soft), 0 2px 0 0 var(--skin-soft), -2px 0 0 0 var(--skin-soft), 2px 0 0 0 var(--skin-soft); }
+/* 浮起来的菜单一格一格地弹出来（自己的动画；退场照原来的，不盖） */
+@keyframes skin-pixel-pop { 0% { opacity: 0; transform: translateY(6px); } 50% { opacity: 1; transform: translateY(3px); } 100% { opacity: 1; transform: none; } }
+:root[data-skin="pixel"] [data-part="menu"]:not([data-state="leaving"]) { animation: skin-pixel-pop calc(0.18s * var(--motion-scale)) steps(3, end) both; }

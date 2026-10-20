@@ -15,6 +15,18 @@ export function addIcons(table) {
   icons = { ...table, ...icons };
 }
 
+/** 皮肤带的一套图标（蓝图 `web.md`「皮肤」第 4 条）：有的名字照它画，没有的照图标表；`null` 是没有。 */
+let pack = /** @type {Record<string, Array<[string, Record<string, string>]>>|null} */ (null);
+
+/**
+ * 换上一套皮肤的图标（`null` 拿掉）：页面上已经画着的图标当场照新的重画（`icon` 画的都记着名字）。
+ * @param {Record<string, Array<[string, Record<string, string>]>>|null} table
+ */
+export function useIconPack(table) {
+  pack = table;
+  for (const svg of document.querySelectorAll('svg.icon[data-icon]')) draw(/** @type {SVGElement} */ (svg), svg.getAttribute('data-icon') ?? '');
+}
+
 /** 图标表里所有的名字（选预设图标时搜）。 */
 export const iconNames = () => Object.keys(icons);
 
@@ -86,12 +98,19 @@ export function icon(name) {
   svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('aria-hidden', 'true');
   svg.setAttribute('class', 'icon');
-  for (const [tag, attrs] of icons[name] ?? []) {
+  svg.setAttribute('data-icon', name);
+  draw(svg, name);
+  return svg;
+}
+
+/** 照名字画进一个图标（皮肤的那一套有的先用它）。 @param {SVGElement} svg @param {string} name */
+function draw(svg, name) {
+  svg.replaceChildren();
+  for (const [tag, attrs] of pack?.[name] ?? icons[name] ?? []) {
     const part = document.createElementNS(SVG, tag);
     for (const [k, v] of Object.entries(attrs)) part.setAttribute(k, v);
     svg.append(part);
   }
-  return svg;
 }
 
 /**

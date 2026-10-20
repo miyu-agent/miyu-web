@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { packProblem, scopeProblems, translate, valuesOf, vocabulary } from '../../packages/skin/model.js';
+import { cleanIcons, packProblem, scopeProblems, translate, valuesOf, vocabulary } from '../../packages/skin/model.js';
 import { tokens as pixel } from '../../packages/skin-pixel/index.js';
 
 const at = (/** @type {string} */ p) => new URL(`../../${p}`, import.meta.url);
@@ -77,6 +77,8 @@ test('皮肤的 CSS：都在 :root[data-skin="编号"] 下面、只挑部件名�
   assert.equal(scopeProblems(':root[data-skin="a"] .composer {}', 'a').length, 1, '类名');
   assert.equal(scopeProblems(':root[data-skin="a"] [data-part="card"]:not(.x) {}', 'a').length, 1, ':not 里的类名');
   assert.deepEqual(scopeProblems('@media (max-width: 600px) { :root[data-skin="a"] [data-part="card"] { color: red; } }', 'a'), []);
+  assert.deepEqual(scopeProblems('@keyframes skin-a-pop { from { opacity: 0; } } :root[data-skin="a"] [data-part="menu"] { animation-name: skin-a-pop; }', 'a'), []);
+  assert.equal(scopeProblems('@keyframes pop { from { opacity: 0; } }', 'a').length, 1, '动画名字不带 skin-编号-');
 });
 
 test('接进页面：部件名换成选择器，字体的相对地址换成绝对的，不认得的部件名交出来', () => {
@@ -151,4 +153,23 @@ test('像素风：变量都认、CSS 守规矩、用到的部件名都在、字�
   for (const [name, v] of Object.entries(pixel)) {
     for (const s of typeof v === 'string' ? [v] : [v.light, v.dark]) assert.ok(!/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(/i.test(s), `${name}：${s}`);
   }
+});
+
+test('皮肤的图标：只留画图用的图形和属性，href、style、事件、url() 都扔掉', () => {
+  const got = cleanIcons({ icons: {
+    ok: [['path', { d: 'M0 0h2v2h-2z', fill: 'currentColor' }]],
+    bad: [['script', { src: 'x' }], ['image', { href: 'http://x' }], ['path', { d: 'M0 0', onclick: 'x', style: 'fill:red', fill: 'url(#a)' }]],
+    'No Name': [['path', { d: 'M0 0' }]],
+  } });
+  assert.deepEqual(got.icons.ok, [['path', { d: 'M0 0h2v2h-2z', fill: 'currentColor' }]]);
+  assert.deepEqual(got.icons.bad, [['path', { d: 'M0 0' }]]);
+  assert.ok(!('No Name' in got.icons));
+  assert.equal(got.dropped, 6);
+});
+
+test('像素风的图标：照界面的图标表一个不落，清理时一样都不扔', () => {
+  const all = JSON.parse(read('resources/lucide.json')).icons;
+  const px = JSON.parse(read('packages/skin-pixel/icons.json'));
+  assert.deepEqual(Object.keys(px.icons).sort(), Object.keys(all).sort());
+  assert.equal(cleanIcons(px).dropped, 0);
 });
