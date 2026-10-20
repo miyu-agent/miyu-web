@@ -97,7 +97,7 @@ export class DreamCard {
 
   /**
    * 合完了（`memory.dream` 的回应）：光点慢慢淡下去，头一行换成结果；叫停了的（`stopped`，核心 R-22）写「整理已中断」。输入框上那只醒过来。
-   * @param {{given?: number, revised?: number, retired?: number, stopped?: boolean}} got
+   * @param {{given?: number, revised?: number, retired?: number, summary?: boolean, stopped?: boolean}} got
    */
   finish(got) {
     this.finished = true;
@@ -118,22 +118,28 @@ export class DreamCard {
     return !this.stopped || (g.given ?? 0) + (g.revised ?? 0) + (g.retired ?? 0) > 0;
   }
 
-  /** 「检查 N 条，修改 N 条，作废 N 条」：0 条的不写（2026-10-20 项目主人：0 条的就不用显示了） */
+  /**
+   * 「检查 N 条，修改 N 条，作废 N 条」：照核心 `/dream` 回执的原话（eddeff6e，两个头一样）——改的、作废的是 0 的不写，都是 0 的写「没有要改的」，
+   * 摘要换了的多一段「摘要已更新」（叫停的不说）（2026-10-20 项目主人：0 条的就不用显示了）
+   */
   parts() {
     const g = this.got ?? {};
-    return /** @type {[string, number][]} */ ([['part_given', g.given ?? 0], ['part_revised', g.revised ?? 0], ['part_retired', g.retired ?? 0]])
-      .filter(([, n]) => n > 0).map(([k, n]) => this.t(`dream.${k}`, { n })).join(this.t('dream.sep'));
+    const out = [this.t('dream.part_given', { n: g.given ?? 0 })];
+    if (g.revised) out.push(this.t('dream.part_revised', { n: g.revised }));
+    if (g.retired) out.push(this.t('dream.part_retired', { n: g.retired }));
+    if (!g.revised && !g.retired) out.push(this.t('dream.part_unchanged'));
+    if (g.summary && !this.stopped) out.push(this.t('dream.part_summary'));
+    return out.join(this.t('dream.sep'));
   }
 
   /**
    * 结果那一句（同核心 `/dream` 的回执）：合完的「整理完成：检查…」，叫停的「整理已中断：…其余下次再整理。」，一批都没合完的「整理已中断，下次再整理。」；
-   * 后面接用了多久（同一天项目主人：没有时间）。
+   * 末尾写用了多久（同一天项目主人：没有时间）；照核心回执的原话。
    */
   resultText() {
     const took = clock(Math.max(1, Math.round(((this.doneAt || performance.now()) - this.startedAt) / 1000)));
-    const text = !this.stopped ? this.t('dreamed', { parts: this.parts() })
-      : this.counted() ? this.t('dream.stopped', { parts: this.parts() }) : this.t('dream.stopped_none');
-    return `${text} · ${took}`;
+    return !this.stopped ? this.t('dreamed', { parts: this.parts(), took })
+      : this.counted() ? this.t('dream.stopped', { parts: this.parts(), took }) : this.t('dream.stopped_none', { took });
   }
 
   /**
