@@ -75,7 +75,7 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
 body {
-  background: var(--surface);
+  background: var(--page-bg, var(--surface));
   color: var(--text);
   /* 行高照旧版：浏览器默认的（约 1.2）；对话的字自己定行高 */
   font: calc(13px * var(--text-scale)) var(--font-ui);
@@ -86,7 +86,7 @@ body {
 }
 button, textarea { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
-* { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+* { scrollbar-width: var(--scrollbar-width, thin); scrollbar-color: var(--scrollbar-color, var(--line-strong) transparent); }
 
 /* 图标：Lucide，线宽统一 1.75（大小不同也照这一个粗细，看着是一家的），跟着字的颜色；默认 16px */
 .icon { width: calc(16px * var(--space)); height: calc(16px * var(--space)); flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
@@ -98,7 +98,7 @@ button, textarea { font: inherit; color: inherit; }
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 .icon-button:hover { background: var(--ghost-hover, color-mix(in srgb, var(--text) 6%, transparent)); color: var(--ghost-fg-hover, var(--text)); }
-.icon-button:focus-visible, button:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 1px; }
+.icon-button:focus-visible, button:focus-visible { outline: var(--focus-ring, 2px solid color-mix(in srgb, var(--accent) 55%, transparent)); outline-offset: 1px; }
 
 /* 在线的圆点：2.4 秒往外呼一圈；连着绿，连接中金，断了红（旧版 .status-dot） */
 .status-dot {

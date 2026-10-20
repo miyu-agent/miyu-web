@@ -41,7 +41,7 @@
 .mem-empty { margin: 0; padding: calc(34px * var(--space)) 0; color: var(--text-faint); font-size: calc(13px * var(--text-scale)); text-align: center; }
 .mem-more { justify-self: center; margin-top: calc(8px * var(--space)); border: 0; background: none; color: var(--text-soft); font: calc(12.5px * var(--text-scale)) var(--font-ui); cursor: pointer; }
 .mem-more:hover { color: var(--text); }
-.mem-foot { display: flex; align-items: center; justify-content: space-between; gap: calc(12px * var(--space)); padding-top: calc(8px * var(--space)); border-top: 1px solid var(--line); color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
+.mem-foot { display: flex; align-items: center; justify-content: space-between; gap: calc(12px * var(--space)); padding-top: calc(8px * var(--space)); border-top: var(--divider, 1px solid var(--line)); color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
 .mem-clear.is-armed { background: color-mix(in srgb, var(--danger) 14%, transparent); }
 
 /* 记一条 */

@@ -6,7 +6,7 @@
    一直是三列，第三列是预览工作区，关着是 0：列数不变，开关预览工作区时那一列也能长出来、收回去（蓝图「动效」） */
 .app-shell {
   display: grid;
-  grid-template-columns: 252px minmax(0, 1fr) 0px;
+  grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) 0px;
   width: 100%;
   height: calc(100dvh / var(--ui-scale));
   overflow: hidden;
@@ -26,7 +26,7 @@
 .app-shell.is-sidebar-collapsed.is-sidebar-peek .sidebar {
   /* 盖在吉祥物那一层（软件包 mascot 的 .mascot-layer，40）上面：浮出来的左栏遮住它（2026-10-16 项目主人） */
   z-index: 41;
-  transform: none; opacity: 1; pointer-events: auto; box-shadow: var(--peek-shadow);
+  transform: none; opacity: 1; pointer-events: auto; box-shadow: var(--side-peek, var(--peek-shadow));
   transition: transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.2s ease, box-shadow 0.28s ease;
 }
 .sidebar-peek-zone { display: none; }
@@ -35,8 +35,8 @@
 }
 
 .sidebar {
-  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; width: 252px; min-height: 0;
-  background: var(--side-bg, var(--sidebar-bg)); box-shadow: var(--side-elev, inset -1px 0 0 var(--line)); z-index: 20;
+  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; width: var(--side-width, 252px); min-height: 0;
+  background: var(--side-bg, var(--sidebar-bg)); box-shadow: var(--side-elev, var(--side-edge, inset -1px 0 0 var(--line))); z-index: 20;
 }
 
 /* 头上一块：头像、名字和状态、新会话、收起 */
@@ -50,14 +50,14 @@
 /* 无人格：不画头像、名称写 Miyu，不能点；名称和在线的圆点跟下面「会话」那一行的图标对齐（2026-10-10 项目主人：原来贴得太靠左） */
 .brand-identity:disabled { padding-left: calc(11px * var(--space)); cursor: default; }
 .brand-face[hidden] { display: none; }
-.brand-face { display: grid; flex: 0 0 38px; }
-.brand-avatar { width: 38px; height: 38px; flex: 0 0 38px; border: 2px solid var(--gold); border-radius: var(--r-round); object-fit: cover; }
+.brand-face { display: grid; flex: 0 0 var(--avatar-size, 38px); }
+.brand-avatar { width: var(--avatar-size, 38px); height: var(--avatar-size, 38px); flex: 0 0 var(--avatar-size, 38px); border: var(--avatar-border, 2px solid var(--gold)); border-radius: var(--avatar-radius, var(--r-round)); object-fit: cover; }
 .brand-avatar.is-initial {
   display: grid; box-sizing: border-box; place-items: center; background: color-mix(in srgb, var(--accent) 16%, var(--surface-1)); color: var(--accent);
   font-size: calc(16px * var(--text-scale)); font-weight: 600;
 }
 .brand-identity > div { display: grid; min-width: 0; gap: calc(2px * var(--space)); }
-.brand-identity strong { font-family: var(--serif); font-size: calc(17px * var(--text-scale)); font-weight: 600; letter-spacing: 0.04em; }
+.brand-identity strong { font-family: var(--brand-font, var(--serif)); font-size: var(--brand-size, calc(17px * var(--text-scale))); font-weight: 600; letter-spacing: 0.04em; }
 .brand-identity > div > span { display: flex; min-width: 0; align-items: center; color: var(--text-soft); font-size: calc(11px * var(--text-scale)); gap: calc(6px * var(--space)); }
 /* 新会话：和「收起」一个样子，透明、悬停铺一层淡底（2026-09-30 项目主人：原来 accent_soft 底的一块比 Claude 的丑） */
 /* 左栏的开关（桌面）：整页只有这一个，钉在左上角（头上一行第一个的位置：左 14、上 19），盖在左栏、浮出来的左栏、吉祥物上面；
@@ -188,7 +188,7 @@
   .sidebar-peek-zone, .app-shell.is-sidebar-collapsed .sidebar-peek-zone {
     position: fixed; top: 0; bottom: 0; left: 0; z-index: 14; display: block; width: var(--peek-zone);
   }
-  .app-shell.is-sidebar-peek .sidebar, .app-shell.is-sidebar-collapsed.is-sidebar-peek .sidebar { transform: translateX(0); box-shadow: var(--peek-shadow); }
+  .app-shell.is-sidebar-peek .sidebar, .app-shell.is-sidebar-collapsed.is-sidebar-peek .sidebar { transform: translateX(0); box-shadow: var(--side-peek, var(--peek-shadow)); }
   .page-scrim { position: fixed; inset: 0; z-index: 18; border: 0; background: var(--scrim); }
   .app-shell.is-drawer-open .page-scrim { display: block; }
   /* 窄屏抽屉也盖住吉祥物（同上面浮出来的左栏） */
@@ -383,7 +383,7 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
 .sb-section.is-drop-on { background: color-mix(in srgb, var(--accent-soft) 70%, transparent); box-shadow: inset 0 0 0 1.5px var(--accent); }
 /* 栏头：点了收起、展开，箭头悬停才露（收着的朝右） */
 .sb-head { min-height: 22px; cursor: pointer; border-radius: var(--r-6); }
-.sb-head:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sb-head:focus-visible { outline: var(--focus-ring, 2px solid var(--accent)); outline-offset: 1px; }
 .sb-chevron { display: grid; place-items: center; color: var(--text-faint); opacity: 0; transition: opacity 120ms ease, transform var(--motion-slide) var(--ease-out); }
 .sb-chevron .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); }
 .sb-head:hover .sb-chevron, .sb-head:focus-visible .sb-chevron { opacity: 1; }

@@ -23,7 +23,7 @@
   pointer-events: none; transition: opacity 120ms ease;
 }
 .conversation-media-visual[role="button"]:hover::after { opacity: 1; }
-.conversation-media-visual:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.conversation-media-visual:focus-visible { outline: var(--focus-ring, 2px solid var(--accent)); outline-offset: 2px; }
 .conversation-media-visual:not([role="button"]) { cursor: default; }
 .conversation-media-fallback {
   display: grid; min-height: 120px; place-items: center; padding: calc(18px * var(--space)); gap: calc(7px * var(--space));
@@ -101,7 +101,7 @@
 }
 .media-audio-track:hover .media-audio-track-fill::after, .media-audio-track.is-scrubbing .media-audio-track-fill::after,
 .media-audio-track:focus-visible .media-audio-track-fill::after { transform: translateY(-50%) scale(1); }
-.media-audio-track:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent); outline-offset: 2px; }
+.media-audio-track:focus-visible { outline: var(--focus-ring, 2px solid color-mix(in srgb, var(--accent) 60%, transparent)); outline-offset: 2px; }
 .media-audio-track.is-static { cursor: default; opacity: 0.55; }
 .media-audio-icon-btn {
   display: flex; width: 26px; height: 26px; flex: none; align-items: center; justify-content: center; border: none;
@@ -129,7 +129,7 @@ p.has-link-card { margin: calc(10px * var(--space)) 0; }
 .link-card:hover, .link-card:focus-visible {
   box-shadow: var(--card-elev-hover, var(--float-shadow)); transform: translateY(-1px);
 }
-.link-card-media { border-bottom: 1px solid var(--line); background: var(--surface-3); aspect-ratio: 1.91 / 1; }
+.link-card-media { border-bottom: var(--divider, 1px solid var(--line)); background: var(--surface-3); aspect-ratio: 1.91 / 1; }
 .link-card-media img { display: block; width: 100%; height: 100%; object-fit: cover; }
 /* 视频（蓝图「链接卡片」第 5 条）：正中一个播放记号（照附件里视频的那个），右下角一块时长 */
 .link-card-media.is-video { position: relative; display: grid; place-items: center; }

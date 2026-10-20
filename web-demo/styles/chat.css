@@ -1,7 +1,7 @@
 /* 对话区（蓝图 web.md「对话区」，照旧版 styles.css:1402-2442、11355-11366）：你的话靠右的气泡；
    她的话头上头像和名字、不加气泡，内容缩进 40px；收尾那一行照 TUI，等宽、暗。 */
 
-.stage { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; background: var(--surface); }
+.stage { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; height: 100%; background: var(--stage-bg, var(--surface)); }
 /* 空会话（新会话、还没有一句话）：输入框在对话区正中，发出第一句话滑到底下（app.js 放动画；蓝图「对话区」的「空会话」） */
 .stage.is-empty { justify-content: center; }
 .stage.is-empty .chat-scroll { flex: 0 0 0; }
@@ -17,14 +17,14 @@
    重画，滚动掉帧；这样看着一样，滚动时不用重画正文，蓝图「性能」） */
 .chat-fade {
   position: sticky; bottom: 0; height: 28px; margin-top: calc(-28px * var(--space)); pointer-events: none;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--surface) 0%, transparent), var(--surface));
+  background: var(--stage-fade, linear-gradient(to bottom, color-mix(in srgb, var(--surface) 0%, transparent), var(--surface)));
 }
 .timeline { width: min(100%, 980px); margin: 0 auto; padding: calc(24px * var(--space)) calc(30px * var(--space)) calc(14px * var(--space)); }
 /* 顶上的淡出：左上角浮着的那一条（stage.info）露着时，正文滚到它下面淡掉（原来透出字），正文也从它下面起（原来「上下文已清空」
    这类第一行被它挡住）；看着子代理时它在路径那一行里，不占正文，两样都不要（2026-10-10 项目主人） */
 .chat-fade-top {
   position: sticky; z-index: 3; top: 0; display: none; height: calc(var(--stage-info-h, 0px) + 26px); margin-bottom: calc(-1 * (var(--stage-info-h, 0px) + calc(26px * var(--space))));
-  pointer-events: none; background: linear-gradient(to bottom, var(--surface) 62%, color-mix(in srgb, var(--surface) 0%, transparent));
+  pointer-events: none; background: var(--stage-fade-top, linear-gradient(to bottom, var(--surface) 62%, color-mix(in srgb, var(--surface) 0%, transparent)));
 }
 .stage.has-info:not(:has(.chat-crumbs:not([hidden]))) .chat-fade-top { display: block; }
 .stage.has-info:not(:has(.chat-crumbs:not([hidden]))) .timeline { padding-top: calc(var(--stage-info-h, 0px) + calc(30px * var(--space))); }
@@ -251,8 +251,8 @@
    line 细线；路径，前面几段 text_soft、悬停 text、能点，最后一段 text。左栏收起、窄屏时让开左上角的按钮。回派它的那一层的按钮在
    输入框正上方（composer.css 的 .back-row） */
 .chat-crumbs {
-  display: flex; flex: none; align-items: center; gap: calc(6px * var(--space)); height: 40px; padding: 0 calc(16px * var(--space)); border-bottom: 1px solid var(--line);
-  background: var(--surface); animation: drop-in var(--motion-in) var(--ease-out) both;
+  display: flex; flex: none; align-items: center; gap: calc(6px * var(--space)); height: 40px; padding: 0 calc(16px * var(--space)); border-bottom: var(--divider, 1px solid var(--line));
+  background: var(--crumbs-bg, var(--surface)); animation: drop-in var(--motion-in) var(--ease-out) both;
 }
 .chat-crumbs.is-leaving { animation: lift-out var(--motion-out) var(--ease-in) both; }
 .app-shell.is-sidebar-collapsed .chat-crumbs { padding-left: calc(52px * var(--space)); }

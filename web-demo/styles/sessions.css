@@ -32,7 +32,7 @@
 /* 一行：标题、什么时候开的，行与行之间一根细线；悬停铺一层淡底 */
 .sessions-list { display: grid; grid-template-columns: minmax(0, 1fr); }
 .sessions-row {
-  display: flex; min-width: 0; align-items: center; gap: calc(10px * var(--space)); min-height: 52px; padding: 0 calc(10px * var(--space)); border: 0; border-bottom: 1px solid var(--line);
+  display: flex; min-width: 0; align-items: center; gap: calc(10px * var(--space)); min-height: 52px; padding: 0 calc(10px * var(--space)); border: 0; border-bottom: var(--divider, 1px solid var(--line));
   border-radius: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer;
   transition: background-color 0.15s ease;
 }

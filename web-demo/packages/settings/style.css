@@ -59,7 +59,7 @@
 .set-subgroup { margin-top: calc(10px * var(--space)); }
 .set-subgroup-name { margin: calc(14px * var(--space)) 0 0; color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); font-weight: 600; }
 .set-rows { display: flex; flex-direction: column; }
-.set-row { display: flex; align-items: center; gap: calc(16px * var(--space)); padding: calc(12px * var(--space)) 0; border-bottom: 1px solid var(--line); }
+.set-row { display: flex; align-items: center; gap: calc(16px * var(--space)); padding: calc(12px * var(--space)) 0; border-bottom: var(--divider, 1px solid var(--line)); }
 /* 几行的框：放到名字、说明下面，占满这一行；↺ 和转圈照旧在框前面 */
 .set-row:has(.set-area) { flex-wrap: wrap; }
 .set-row:has(.set-area) .set-text { flex-basis: 100%; }
@@ -221,7 +221,7 @@
 .set-model-meta { flex: none; margin-left: auto; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); white-space: nowrap; }
 .set-drawer {
   position: absolute; top: 0; right: 0; bottom: 0; z-index: 4; width: min(380px, 100%); padding: 0 calc(16px * var(--space)) calc(16px * var(--space)); overflow-y: auto;
-  border-left: 1px solid var(--line); background: var(--surface); box-shadow: -12px 0 24px -18px rgba(0, 0, 0, 0.25);
+  border-left: var(--divider, 1px solid var(--line)); background: var(--surface); box-shadow: -12px 0 24px -18px rgba(0, 0, 0, 0.25);
   animation: pane-in var(--motion-slide) var(--ease-out) both;
 }
 .set-drawer.is-settled { animation: none; }
@@ -276,7 +276,7 @@
 .set-pkg-chip:hover { background: var(--chip-hover, var(--surface-3)); color: var(--chip-fg-hover, var(--text)); }
 .set-pkg-chip.is-on { background: var(--chip-active, var(--accent-soft)); color: var(--chip-fg-active, var(--accent)); font-weight: 600; }
 .set-pkg-chip span { margin-left: calc(4px * var(--space)); color: var(--text-faint); font-weight: 400; }
-.set-pkg-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.set-pkg-chip:focus-visible { outline: var(--focus-ring, 2px solid var(--accent)); outline-offset: 2px; }
 .set-pkg-tag { flex: none; padding: 0 calc(6px * var(--space)); border-radius: var(--chip-radius, var(--r-5)); background: var(--chip-bg, var(--surface-2)); color: var(--chip-fg, var(--text-faint)); font-size: calc(11px * var(--text-scale)); line-height: calc(18px * var(--text-scale)); white-space: nowrap; }
 .set-pkg-face { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--r-9); background: var(--surface-2); color: var(--text-soft); }
 .set-pkg-face .icon { width: calc(17px * var(--space)); height: calc(17px * var(--space)); }
@@ -358,7 +358,7 @@
 .set-check .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); stroke-width: 2.5; }
 .set-picker-row input:checked + .set-check { background: var(--accent); color: var(--on-primary); }
 .set-picker-row input:focus-visible + .set-check { box-shadow: var(--card-shadow); }
-.set-picker-foot { display: flex; justify-content: flex-end; gap: calc(6px * var(--space)); padding-top: calc(4px * var(--space)); border-top: 1px solid var(--line); }
+.set-picker-foot { display: flex; justify-content: flex-end; gap: calc(6px * var(--space)); padding-top: calc(4px * var(--space)); border-top: var(--divider, 1px solid var(--line)); }
 
 /* 模型池的成员：一行一个 */
 .set-pool-head strong { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -4,6 +4,24 @@
    第二层：一种材质一组，出厂不定义：每一处照自己原来的值画（var(--名字, 原来的值)），皮肤写了哪个，那一类的每一处都换成它。
    颜色只用主题的颜色变量和 color-mix，不写颜色字面量；名字不和主题的颜色重名（--card-shadow 是主题的，这里是 --card-elev）。
 
+   大块的区域（出厂不定义，照原来的画）
+     @token --page-bg 整页的底（可以是渐变、图）
+     @token --stage-bg 对话区的底
+     @token --stage-fade 正文滚到输入框上沿时那一截淡出（background 的值；对话区的底换成图时写 none）
+     @token --stage-fade-top 正文滚到左上角那一条下面时的淡出
+     @token --crumbs-bg 子代理的会话顶上那条路径的底
+     @token --side-edge 左栏和对话区之间那条线（box-shadow 的写法）
+     @token --side-width 左栏多宽
+     @token --side-peek 左栏收起后临时浮出来时的影
+     @token --avatar-size 左上角头像多大
+     @token --avatar-border 左上角头像那一圈框（border 的写法）
+     @token --avatar-radius 左上角头像的圆角
+     @token --brand-font 左上角名字的字体
+     @token --brand-size 左上角名字的字号
+     @token --divider 各处分隔的细线（border 的写法）
+     @token --focus-ring 键盘停着的那一圈（outline 的写法）
+     @token --scrollbar-color 滚动条的颜色（滑块、槽）
+     @token --scrollbar-width 滚动条多粗（auto、thin、none）
    输入框
      @token --composer-bg 底
      @token --composer-border 边

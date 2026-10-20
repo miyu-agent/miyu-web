@@ -3,7 +3,7 @@
 
 .app-shell { --artifact-in: 0.34s; --artifact-out: 0.24s; --artifact-ease-in: cubic-bezier(0.32, 0.72, 0, 1); --artifact-ease-out: cubic-bezier(0.4, 0, 1, 1); }
 .app-shell.has-artifacts {
-  grid-template-columns: 252px minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale));
+  grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale));
   transition: grid-template-columns var(--artifact-in) var(--artifact-ease-in);
 }
 .app-shell.has-artifacts.is-sidebar-collapsed { grid-template-columns: 0px minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale)); }

@@ -42,7 +42,7 @@
   max-width: 360px; padding: calc(7px * var(--space)) calc(14px * var(--space)); border: 0; text-align: left; vertical-align: top; overflow-wrap: anywhere;
 }
 .markdown-body th {
-  border-bottom: 1px solid var(--line); color: var(--text-soft); font-size: calc(11px * var(--text-scale)); font-weight: 600; letter-spacing: 0.07em;
+  border-bottom: var(--divider, 1px solid var(--line)); color: var(--text-soft); font-size: calc(11px * var(--text-scale)); font-weight: 600; letter-spacing: 0.07em;
 }
 .markdown-body td { border-bottom: 1px solid color-mix(in srgb, var(--line) 45%, transparent); }
 .markdown-body tbody tr:last-child td { border-bottom: 0; }
@@ -117,7 +117,7 @@
 .assistant-content .markdown-table-scroll { border-radius: var(--card-radius, var(--radius)); background: var(--card-bg, var(--surface-1)); box-shadow: var(--card-elev, var(--card-shadow)); }
 .assistant-content .markdown-body table { background: none; }
 .assistant-content .markdown-body th {
-  border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--text) 5%, var(--surface-1));
+  border-bottom: var(--divider, 1px solid var(--line)); background: color-mix(in srgb, var(--text) 5%, var(--surface-1));
 }
 .assistant-content .markdown-body td { border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }
 .assistant-content .markdown-body tr:last-child td { border-bottom: 0; }
