@@ -24,7 +24,7 @@ export function apply(ctx) {
   const palettes = () => ctx.slots.list('theme.palettes');
   /** 这时浅的还是深的：设置项「明暗」，跟随系统的照系统 */
   const scheme = () => schemeOf(ctx.config.scheme, dark.matches ? 'dark' : 'light');
-  const chosen = () => chosenOf(palettes(), ctx.config.palette);
+  const chosen = () => chosenOf(palettes(), ctx.config.palette, ctx.config.default_palette);
   /** 一个主题这时实际的颜色 @param {import('./model.js').Palette} p */
   const colorsOf = (p) => colorsIn(palettes(), p, scheme());
 

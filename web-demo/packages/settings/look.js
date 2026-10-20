@@ -26,8 +26,8 @@ export function drawLook(dialog) {
   const fill = async (/** @type {HTMLElement} */ el) => {
     const theme = await ctx.packages.settings('theme');
     const palettes = ctx.slots.list('theme.palettes');
-    // 没写、写的没了的是第一个
-    const chosen = palettes.some((p) => p.id === theme.values.palette) ? theme.values.palette : palettes[0]?.id;
+    // 照主题包这时实际用的（没选的跟随人格，2026-10-20 项目主人）；点了哪一张就记哪一张，「默认」也记下来，不再跟人格
+    const chosen = ctx.theme?.current?.()?.id ?? (palettes.some((p) => p.id === theme.values.palette) ? theme.values.palette : palettes[0]?.id);
     const set = async (config) => {
       await ctx.packages.set('theme', { config });
       dialog.drawBody();

@@ -24,9 +24,18 @@
       "type": "text",
       "default": "",
       "name": {
-        "zh": "用哪个主题（空着的是第一个）"
+        "zh": "用哪个主题（空着的照 default_palette）"
       },
       "applies": "live"
+    },
+    "default_palette": {
+      "type": "text",
+      "default": "persona",
+      "name": {
+        "zh": "没选主题时用哪个（编号；出厂跟随人格，没有这个主题的用第一个）"
+      },
+      "applies": "live",
+      "advanced": true
     },
     "scheme": {
       "type": "choice",

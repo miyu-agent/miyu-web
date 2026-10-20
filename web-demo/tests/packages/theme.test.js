@@ -30,6 +30,14 @@ test('用哪个主题：写了的用它；没写、写的没了的用第一个�
   assert.equal(chosenOf([], 'persona'), null);
 });
 
+test('没选主题的照出厂的跟随人格（2026-10-20 项目主人：默认配色跟随人格）；人选过的、选了默认的照选的；没有跟随人格这一套的用第一个', () => {
+  const all = [byDefault, persona];
+  assert.equal(chosenOf(all, '', 'persona')?.id, 'persona');
+  assert.equal(chosenOf(all, undefined, 'persona')?.id, 'persona');
+  assert.equal(chosenOf(all, 'default', 'persona')?.id, 'default');
+  assert.equal(chosenOf([byDefault], '', 'persona')?.id, 'default');
+});
+
 test('一个主题的颜色：照明暗取它自己的那一份；交不出的用默认那一份', () => {
   assert.equal(colorsOf([byDefault, persona], persona, 'light')?.page.surface, '#fff8f5');
   assert.equal(colorsOf([byDefault, persona], persona, 'dark')?.page.surface, '#161311');
