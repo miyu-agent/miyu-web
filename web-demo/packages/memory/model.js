@@ -115,3 +115,19 @@ export function agoText(at, now, t) {
   if (d.getFullYear() === new Date(now).getFullYear()) return t('ago.date', { m: d.getMonth() + 1, d: d.getDate() });
   return t('ago.full', { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate() });
 }
+
+/**
+ * 关键词拆成一个个（2026-10-20 项目主人：「逗号隔开」分不清中文、英文逗号）：中文、英文逗号、顿号、分号、换行都算隔开，去掉前后空白、空的、重的。
+ * @param {string|null|undefined} text @returns {string[]}
+ */
+export function splitKeywords(text) {
+  const out = [];
+  for (const w of String(text ?? '').split(/[,，、;；\n]+/)) {
+    const k = w.trim();
+    if (k && !out.includes(k)) out.push(k);
+  }
+  return out;
+}
+
+/** 一个个关键词连回核心存的那一行（英文逗号加空格）。 @param {string[]} words */
+export const joinKeywords = (words) => words.join(', ');

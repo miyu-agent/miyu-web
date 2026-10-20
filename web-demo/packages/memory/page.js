@@ -5,6 +5,7 @@
 
 import { leave } from '../../src/lib/motion.js';
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { keywordBox } from './keywords.js';
 import { DreamCard } from './dream.js';
 import { CLASSES, TEXT_MAX, KEYWORDS_MAX, chars, counts, visible, hasKeywords, updateOf, canSave, saveNote, shortId, agoText, isRetired, tidying } from './model.js';
 
@@ -301,7 +302,7 @@ export class MemoryPage {
     const t = this.t;
     let cls = 'user';
     const area = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.set-area.mem-area', { placeholder: t('add_hint', { n: TEXT_MAX }), rows: '3' }));
-    const kw = this.keywords ? /** @type {HTMLInputElement} */ (h('input.set-input.mem-kw', { type: 'text', placeholder: t('add_keywords'), spellcheck: 'false', autocomplete: 'off' })) : null;
+    const kw = this.keywords ? keywordBox(null, t('add_keywords')) : null;
     const count = h('span.mem-count', `0 / ${TEXT_MAX}`);
     const ok = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'submit', disabled: true }, t('remember')));
     const kinds = h('div.mem-chips', CLASSES.map((k) => h(`button.mem-chip${k === cls ? '.is-on' : ''}`, { type: 'button', onclick: (/** @type {Event} */ e) => {
@@ -362,7 +363,7 @@ export class MemoryPage {
     const ro = isRetired(m);
     const area = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.set-area.mem-area', { disabled: ro }, m.text));
     const withKw = this.keywords || hasKeywords([m]);
-    const kw = withKw ? /** @type {HTMLInputElement} */ (h('input.set-input.mem-kw', { type: 'text', value: m.keywords ?? '', placeholder: t('detail.keywords_hint'), spellcheck: 'false', autocomplete: 'off', disabled: ro })) : null;
+    const kw = withKw ? keywordBox(m.keywords ?? null, t('detail.keywords_hint'), ro) : null;
     const count = h('span.mem-count', `${chars(m.text)} / ${TEXT_MAX}`);
     const kwCount = kw ? h('span.mem-count', `${chars(m.keywords ?? '')} / ${KEYWORDS_MAX}`) : null;
     const note = h('span.mem-note');

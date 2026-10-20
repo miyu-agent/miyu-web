@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { counts, visible, isRetired, updateOf, canSave, saveNote, chars, hasKeywords, shortId, TEXT_MAX, tidying } from '../../packages/memory/model.js';
+import { counts, visible, isRetired, updateOf, canSave, saveNote, chars, hasKeywords, shortId, TEXT_MAX, tidying, splitKeywords, joinKeywords } from '../../packages/memory/model.js';
 
 const m = (id, cls, text, extra = {}) => ({ id, class: cls, text, ...extra });
 const list = [
@@ -69,4 +69,11 @@ test('后台在整理：不是人叫的 merging 记下，同一批 merged、merg
   assert.deepEqual([...open], [30]);
   open = tidying(open, ev('ext.memory.merge_failed', { upto: 30, why: 'interrupted' }));
   assert.equal(open.size, 0);
+});
+
+test('关键词拆成一个个：中文、英文逗号、顿号、分号都算隔开，去掉空的、重的；连回去用英文逗号', () => {
+  assert.deepEqual(splitKeywords('猫，豆豆, 宠物、猫 ; 狗'), ['猫', '豆豆', '宠物', '狗']);
+  assert.deepEqual(splitKeywords(''), []);
+  assert.deepEqual(splitKeywords(null), []);
+  assert.equal(joinKeywords(['猫', '豆豆']), '猫, 豆豆');
 });

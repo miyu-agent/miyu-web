@@ -5,7 +5,7 @@
 //! 提供服务 `memory`：别的包（人格详情）跳到某个人格的那一份。停用了没有这一页、没有 `/memory`，`/dream` 退回核心的。
 
 import { h } from '../../src/lib/dom.js';
-import { unfold } from '../../src/lib/motion.js';
+import { unfold, leave } from '../../src/lib/motion.js';
 import { MemoryPage } from './page.js';
 import { DreamCard } from './dream.js';
 
@@ -134,7 +134,14 @@ async function dream(ctx, words) {
       away = true;
       ctx.composer?.claimEscape?.(null);
       card.wake();
-      fold(() => inner.replaceChildren());
+      // 先淡掉，再一下收起（不缓）：这时人刚发了话、视口正往最底下走，她的回答一边在长，原来那一块 0.3 秒里一点点收，正文跟着一抖一抖的
+      // （2026-10-20 项目主人）；一下收起的那一截由正文底下垫的空白顶上（`follow.js`：内容变短时视口不往回退），她接下来的字填上
+      leave(card.el, () => {
+        box.classList.add('is-instant');
+        unfold(box, false);
+        inner.replaceChildren();
+        requestAnimationFrame(() => requestAnimationFrame(() => box.classList.remove('is-instant')));
+      });
       say(t('dream_background'));
     },
   };

@@ -7,6 +7,10 @@ import { h, icon } from '../../src/lib/dom.js';
 import { clock } from '../../src/lib/format.js';
 import { DreamTrack } from './dream-model.js';
 
+/** 一批合着的时候天最多往前挪这一批的几成；挪到一半要多久（毫秒，越往后越慢） */
+const SKY_CREEP = 0.85;
+const SKY_CREEP_MS = 60000;
+
 /** 舞台多少格高、地面从第几格起（一格放大成 3px，舞台高 126px） */
 const H = 42;
 const GROUND = 35;
@@ -75,6 +79,15 @@ export class DreamCard {
       h('div.dream-head', this.title, this.batch, this.time, this.tally, this.stopBtn),
       h('div.dream-feed', this.list),
       h('div.dream-stage', this.canvas));
+    // 进场的动画只放一次：记忆页每次重画都把这一块拿出来再放回去，CSS 动画会从头再放（看着闪一下；2026-10-20 项目主人：点整理、整理完卡片会闪）
+    this.el.addEventListener('animationend', (e) => {
+      const el = /** @type {HTMLElement} */ (e.target);
+      if (el === this.el && !el.classList.contains('is-leaving')) el.classList.add('is-in');
+      else if (el.classList?.contains('dream-line')) el.classList.add('is-in');
+    });
+    /** 这一批是哪一批、什么时候开始的（天照时间往下一批挪一点） */
+    this.batchOf = /** @type {any} */ (null);
+    this.batchAt = 0;
     this.g = /** @type {CanvasRenderingContext2D} */ (this.canvas.getContext('2d'));
     // 输入框上那只跟着一起睡（2026-10-20 项目主人：一起睡），天亮了和舞台上的一起醒
     this.sleeping = true;
@@ -254,7 +267,7 @@ export class DreamCard {
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     // 叫停了的停在合完的那一处，天不亮
     const dawn = this.finished && !this.stopped;
-    const target = dawn ? 1 : this.track.progress();
+    const target = dawn ? 1 : this.sky(now);
     this.shown += (target - this.shown) * 0.05;
     const t = this.shown;
     const day = dawn ? Math.min(1, (now - this.doneAt) / 900) : 0;
@@ -299,6 +312,24 @@ export class DreamCard {
     const tr = this.track;
     if (tr.total) digits(g, `${dawn ? tr.total : tr.merged}/${tr.total}`, W - 3, 3, mix(SKY.digitNight, SKY.digitDay, Math.max(day, green)));
     this.mascot(now, reduce);
+  }
+
+  /**
+   * 天走到哪（0 到 1）：合完的批照实；这一批合着的时候照时间慢慢往下一批的位置挪，最多挪到这一批的八成五，合完了才到（2026-10-20 项目主人：动画完全没有了——
+   * 一批之内不挪，只有一批的时候天一直不动）。右上角的数照旧只数合完的。
+   * @param {number} now
+   */
+  sky(now) {
+    const tr = this.track;
+    const base = tr.progress();
+    const b = tr.batch;
+    if (b !== this.batchOf) {
+      this.batchOf = b;
+      this.batchAt = now;
+    }
+    if (!b || !tr.total || !b.fresh) return base;
+    const share = Math.min(1 - base, b.fresh / tr.total);
+    return base + share * SKY_CREEP * (1 - Math.exp(-(now - this.batchAt) / SKY_CREEP_MS));
   }
 
   /** 开着吉祥物的：左边原地睡着，一呼一吸、头上冒 Zz；天亮醒过来跳一下 @param {number} now @param {boolean} reduce */
