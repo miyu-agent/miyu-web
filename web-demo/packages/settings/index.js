@@ -49,6 +49,7 @@ export function apply(ctx) {
   ctx.commands.register({ name: 'settings', summary: ctx.text('command_settings') }, () => open(null));
   ctx.commands.register({ name: 'config', summary: ctx.text('command_config') }, () => open('models'));
   ctx.commands.register({ name: 'pkg', summary: ctx.text('command_pkg') }, () => open('packages'));
+  ctx.commands.register({ name: 'market', summary: ctx.text('command_market') }, () => open('market'));
 
   ctx.slots.mount('sidebar.actions', {
     id: 'settings',

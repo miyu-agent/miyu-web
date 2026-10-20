@@ -87,6 +87,7 @@
         "skills",
         "scripts",
         "mcp",
+        "market",
         "packages",
         "backstage",
         "advanced"
@@ -102,7 +103,7 @@
       "default": [
         "personas",
         "skills",
-        "packages"
+        "market"
       ],
       "name": {
         "zh": "左栏分组：这几页是一组的开头，前面画一道线（编号）"
@@ -160,7 +161,8 @@
         "backstage": "gauge",
         "skills": "sparkles",
         "scripts": "square-terminal",
-        "mcp": "plug"
+        "mcp": "plug",
+        "market": "download"
       },
       "name": {
         "zh": "分页的图标（Lucide 的名字；没配的用 sliders-horizontal）"
@@ -182,7 +184,8 @@
       "load_failed": "无法加载配置：{reason}",
       "pages": {
         "packages": "软件包",
-        "backstage": "软件后台"
+        "backstage": "软件后台",
+        "market": "下载软件"
       },
       "layers": {
         "none": "未设置"
@@ -479,7 +482,77 @@
       "main_color_auto": "自动",
       "advanced_more": "{names}等",
       "search_pages": "页面",
-      "search_packages": "软件包"
+      "search_packages": "软件包",
+      "command_market": "打开下载软件",
+      "market": {
+        "loading": "正在读软件源…",
+        "unreachable": "连不上软件源",
+        "retry": "重试",
+        "search": "搜索软件",
+        "no_match": "没有符合条件的软件",
+        "upgrades": "{n} 个可升级",
+        "refresh": "刷新软件源",
+        "refreshed": "已更新：{n} 个软件",
+        "meta": "{at} 更新 · 共 {n} 个",
+        "stale": "软件源连不上，用的是 {at} 的索引",
+        "filter": {
+          "all": "全部",
+          "installed": "已安装",
+          "upgradable": "可升级",
+          "official": "官方",
+          "community": "社区",
+          "features": "功能",
+          "skills": "技能",
+          "scripts": "脚本",
+          "mcp": "MCP 服务",
+          "personas": "人格",
+          "presets": "预设",
+          "command": "命令",
+          "slash": "斜杠命令",
+          "content": "内容"
+        },
+        "official": "官方",
+        "community": "社区",
+        "blocked": "被拉黑",
+        "blocked_why": "被拉黑：{reason}",
+        "installed": "已安装",
+        "install": "安装",
+        "upgrade": "升级",
+        "preparing": "准备中…",
+        "downloading": "下载中 {pct}%",
+        "downloading_dep": "下载 {name} {pct}%",
+        "done": "装好了：{name}",
+        "done_off": "装好了：{name}，到软件包页打开它",
+        "upgraded": "升级好了 {n} 个",
+        "upgrade_all": "全部升级",
+        "upgrade_all_title": "升级 {n} 个软件",
+        "download": "下载 {size}",
+        "cancel": "取消",
+        "skip": {
+          "moved": "{name}：来源仓库变了，不升",
+          "gone": "{name}：软件源里没有了",
+          "blocked": "{name}：被拉黑（{reason}），不升",
+          "held": "{name}：设置了不升级"
+        },
+        "bad": {
+          "unknown": "软件源里没有这个软件",
+          "depends": "缺少依赖：{names}",
+          "target": "这个软件没有本机能用的版本",
+          "download": "下载失败"
+        },
+        "version": "版本 {version}",
+        "community_warn": "社区软件没人审过，装之前看清楚要什么权限",
+        "about": "详情",
+        "origin": "来源",
+        "includes": "包含",
+        "nothing": "无",
+        "capabilities": "所需权限",
+        "none": "无",
+        "with": "一起安装",
+        "size": "下载大小",
+        "replaces": "替换",
+        "replaces_version": "替换已装的 {version}"
+      }
     },
     "en": {
       "title": "Settings",
@@ -494,7 +567,8 @@
       "load_failed": "Couldn't load settings: {reason}",
       "pages": {
         "packages": "Packages",
-        "backstage": "Dashboards"
+        "backstage": "Dashboards",
+        "market": "Get software"
       },
       "layers": {
         "none": "Not set"
@@ -791,7 +865,77 @@
       "main_color_auto": "Auto",
       "advanced_more": "{names} and more",
       "search_pages": "Pages",
-      "search_packages": "Packages"
+      "search_packages": "Packages",
+      "command_market": "Open Get software",
+      "market": {
+        "loading": "Reading the package source…",
+        "unreachable": "Can't reach the package source",
+        "retry": "Retry",
+        "search": "Search software",
+        "no_match": "Nothing matches",
+        "upgrades": "{n} upgradable",
+        "refresh": "Refresh the source",
+        "refreshed": "Updated: {n} packages",
+        "meta": "Updated {at} · {n} in total",
+        "stale": "Can't reach the source; using the index from {at}",
+        "filter": {
+          "all": "All",
+          "installed": "Installed",
+          "upgradable": "Upgradable",
+          "official": "Official",
+          "community": "Community",
+          "features": "Features",
+          "skills": "Skills",
+          "scripts": "Scripts",
+          "mcp": "MCP servers",
+          "personas": "Personas",
+          "presets": "Presets",
+          "command": "Commands",
+          "slash": "Slash commands",
+          "content": "Content"
+        },
+        "official": "Official",
+        "community": "Community",
+        "blocked": "Blocked",
+        "blocked_why": "Blocked: {reason}",
+        "installed": "Installed",
+        "install": "Install",
+        "upgrade": "Upgrade",
+        "preparing": "Preparing…",
+        "downloading": "Downloading {pct}%",
+        "downloading_dep": "Downloading {name} {pct}%",
+        "done": "Installed {name}",
+        "done_off": "Installed {name}; turn it on in Packages",
+        "upgraded": "Upgraded {n}",
+        "upgrade_all": "Upgrade all",
+        "upgrade_all_title": "Upgrade {n} packages",
+        "download": "Download {size}",
+        "cancel": "Cancel",
+        "skip": {
+          "moved": "{name}: source repository changed, not upgraded",
+          "gone": "{name}: no longer in the source",
+          "blocked": "{name}: blocked ({reason}), not upgraded",
+          "held": "{name}: held back"
+        },
+        "bad": {
+          "unknown": "Not in the package source",
+          "depends": "Missing dependencies: {names}",
+          "target": "No build for this system",
+          "download": "Download failed"
+        },
+        "version": "Version {version}",
+        "community_warn": "Community packages are not reviewed; check the permissions before installing",
+        "about": "Details",
+        "origin": "Source",
+        "includes": "Includes",
+        "nothing": "Nothing",
+        "capabilities": "Permissions",
+        "none": "None",
+        "with": "Also installs",
+        "size": "Download size",
+        "replaces": "Replaces",
+        "replaces_version": "Replaces installed {version}"
+      }
     },
     "ja": {
       "title": "設定",
@@ -806,7 +950,8 @@
       "load_failed": "設定を読み込めません：{reason}",
       "pages": {
         "packages": "パッケージ",
-        "backstage": "ソフトの管理画面"
+        "backstage": "ソフトの管理画面",
+        "market": "ソフトのダウンロード"
       },
       "layers": {
         "none": "未設定"
@@ -1103,7 +1248,77 @@
       "main_color_auto": "自動",
       "advanced_more": "{names} など",
       "search_pages": "ページ",
-      "search_packages": "パッケージ"
+      "search_packages": "パッケージ",
+      "command_market": "ソフトのダウンロードを開く",
+      "market": {
+        "loading": "ソフトウェアソースを読み込み中…",
+        "unreachable": "ソフトウェアソースに接続できません",
+        "retry": "再試行",
+        "search": "ソフトを検索",
+        "no_match": "条件に合うソフトはありません",
+        "upgrades": "{n} 件アップグレード可能",
+        "refresh": "ソースを更新",
+        "refreshed": "更新しました：{n} 件",
+        "meta": "{at} 更新 · 全 {n} 件",
+        "stale": "ソースに接続できないため {at} のインデックスを使っています",
+        "filter": {
+          "all": "すべて",
+          "installed": "インストール済み",
+          "upgradable": "アップグレード可能",
+          "official": "公式",
+          "community": "コミュニティ",
+          "features": "機能",
+          "skills": "スキル",
+          "scripts": "スクリプト",
+          "mcp": "MCP サーバー",
+          "personas": "人格",
+          "presets": "プリセット",
+          "command": "コマンド",
+          "slash": "スラッシュコマンド",
+          "content": "コンテンツ"
+        },
+        "official": "公式",
+        "community": "コミュニティ",
+        "blocked": "ブロック済み",
+        "blocked_why": "ブロック済み：{reason}",
+        "installed": "インストール済み",
+        "install": "インストール",
+        "upgrade": "アップグレード",
+        "preparing": "準備中…",
+        "downloading": "ダウンロード中 {pct}%",
+        "downloading_dep": "{name} をダウンロード中 {pct}%",
+        "done": "{name} をインストールしました",
+        "done_off": "{name} をインストールしました。ソフトウェアパッケージで有効にしてください",
+        "upgraded": "{n} 件アップグレードしました",
+        "upgrade_all": "すべてアップグレード",
+        "upgrade_all_title": "{n} 件をアップグレード",
+        "download": "ダウンロード {size}",
+        "cancel": "キャンセル",
+        "skip": {
+          "moved": "{name}：ソースのリポジトリが変わったため対象外",
+          "gone": "{name}：ソースから削除されました",
+          "blocked": "{name}：ブロック済み（{reason}）のため対象外",
+          "held": "{name}：アップグレードしない設定です"
+        },
+        "bad": {
+          "unknown": "ソースにこのソフトはありません",
+          "depends": "依存が足りません：{names}",
+          "target": "このシステム用の版がありません",
+          "download": "ダウンロードに失敗しました"
+        },
+        "version": "バージョン {version}",
+        "community_warn": "コミュニティのソフトは審査されていません。必要な権限を確認してからインストールしてください",
+        "about": "詳細",
+        "origin": "提供元",
+        "includes": "含むもの",
+        "nothing": "なし",
+        "capabilities": "必要な権限",
+        "none": "なし",
+        "with": "一緒にインストール",
+        "size": "ダウンロードサイズ",
+        "replaces": "置き換え",
+        "replaces_version": "インストール済みの {version} を置き換え"
+      }
     }
   },
   "styles": [

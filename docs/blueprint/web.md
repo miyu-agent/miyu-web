@@ -905,6 +905,7 @@
 | `web-demo/tests/packages/backdrop.test.js` | 背景图的透明度换成盖的底色（没设、写错的照设置项）、焦点换成 CSS 位置（没设、写错的居中）；选焦点窗口里指针落在哪一点（夹住、取整）、图照比例放进框里多大 |
 | `web-demo/tests/packages/crop.test.js` | 裁头像：差不多正方形（2% 以内）的不弹；一倍时短边铺满框；挪、放大以后夹住，框里不露空；框对着原图的哪一块 |
 | `web-demo/tests/lib/md3.test.js`、`tests/packages/theme.test.js` | 生成的是整份（93 格、浅深都有）、Content 的值（垫字的淡底不是原色）、有含义的颜色最多转 15°、不带颜色的是中性色、吉祥物照抄、浅色的影换颜色；明暗（跟随系统照系统）、用哪个主题（没写、写的没了用默认）、交不出颜色的用默认那一份 |
+| `web-demo/tests/packages/market.test.js` | 下载软件页：筛选（已安装、可升级、官方、社区、种类，只露有的种类）、个数、搜索几个词都得有；卡片的按钮是哪一种（被拉黑、在装、升级、已安装、安装）；卡片上点安装要不要先开详情；带了什么写成一行；进度的百分数 |
 | `web-demo/tests/packages/theme-wallpaper.test.js` | 跟随壁纸：问着的时候推来的「换了」问完再问、挂上新壁纸的颜色；一时问不到的留着原来那一套、出错以后照样跟上，没有壁纸（`null`）的才拿掉 |
 | `web-demo/tests/packages/backstage.test.js` | 软件页面的网址：`#package=`、另带 `widget`，和别的几项混着也认、写法不对的不认，写了读回来一样；宿主抹掉口令、一次性码，`package=` 留着 |
 | `web-demo/tests/packages/widgets.test.js` | 界面块：订阅时屏上有哪几个位置；订阅回应换整份、推来的一块换那一块、`null` 是没了、新来的接后面；一段占几行；截行（截在字里、列表里，按钮、进度条不拆）；右边那段字的几小段（最多 4 段）和语气 |

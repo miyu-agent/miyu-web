@@ -453,3 +453,70 @@ a.set-btn.set-link { display: inline-flex; align-items: center; }
 a.set-btn.is-anchor { display: inline-flex; align-items: center; gap: 5px; color: var(--text); text-decoration: none; }
 /* 链接做的一行（软件后台页）：同别的行，字照正文的颜色、不画下划线 */
 a.set-row.is-anchor { color: inherit; text-decoration: none; }
+
+/* 下载软件（软件市场，蓝图 web.md「设置页」第 12a 条）：顶上一行搜索、「N 个可升级」、刷新；两排筛选；卡片墙两列（窄的一列） */
+.mk-tools { align-items: center; }
+.mk-ups { flex: none; padding: 0 4px; border: 0; background: none; color: var(--accent); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.mk-ups:hover { text-decoration: underline; text-underline-offset: 3px; }
+.mk-refresh.is-spin .icon { animation: tl-spin 900ms linear infinite; }
+.mk-meta { margin: -4px 0 10px; color: var(--text-faint); font-size: 12px; }
+.mk-kinds { margin-top: -6px; }
+.set-pkg-chip.is-off { opacity: 0.55; }
+.mk-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+@media (max-width: 640px) { .mk-grid { grid-template-columns: minmax(0, 1fr); } }
+.mk-card {
+  display: grid; grid-template-rows: auto 1fr auto; gap: 8px; min-height: 148px; padding: 14px 14px 12px; border-radius: 12px;
+  background: var(--surface-1); box-shadow: var(--card-shadow); cursor: pointer; outline: none;
+  transition: box-shadow 0.15s ease; animation: fade-in var(--motion-in) var(--ease-out) both;
+}
+.mk-card:hover, .mk-card:focus-visible { box-shadow: var(--float-shadow); }
+.mk-card-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mk-face { flex: 0 0 36px; width: 36px; height: 36px; }
+.mk-face.is-big { flex-basis: 48px; width: 48px; height: 48px; }
+.mk-face.is-big .icon { width: 22px; height: 22px; }
+.mk-card-title { display: grid; min-width: 0; gap: 2px; }
+.mk-card-title strong { overflow: hidden; color: var(--text); font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.mk-version { color: var(--text-faint); font-size: 11.5px; }
+.mk-summary { display: -webkit-box; margin: 0; overflow: hidden; color: var(--text-soft); font-size: 12.5px; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.mk-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mk-tag { padding: 2px 7px; border-radius: 5px; background: var(--surface-2); color: var(--text-faint); font-size: 11px; }
+.mk-tag.is-official { color: var(--text-soft); }
+.mk-tag.is-blocked { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+.mk-action { min-width: 76px; }
+.mk-action.is-big { min-width: 120px; height: 36px; font-size: 13.5px; }
+/* 在装的那一个：按钮换成一条进度，底色铺满、主色从左长过去 */
+.mk-bar {
+  position: relative; display: grid; height: 30px; place-items: center; overflow: hidden; padding: 0 12px; border-radius: 8px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 28%, var(--surface-2)) var(--mk-pct, 0%), var(--surface-2) var(--mk-pct, 0%));
+  color: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; transition: background 0.2s linear;
+}
+.mk-bar.is-big { height: 36px; }
+.mk-problem { margin: 0; color: var(--danger); font-size: 12px; overflow-wrap: anywhere; }
+.mk-upall { display: flex; justify-content: flex-end; margin-top: 10px; }
+.mk-skips { margin-top: 8px; color: var(--text-faint); font-size: 12px; }
+.mk-skips p { margin: 2px 0; }
+.mk-offline { display: grid; justify-items: center; gap: 10px; margin: 48px auto; max-width: 420px; color: var(--text); text-align: center; }
+.mk-why { color: var(--text-faint); font: 11.5px var(--mono); overflow-wrap: anywhere; }
+/* 详情：头上一块，下面一行一项，底下右边一个大按钮 */
+.mk-detail-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 18px; }
+.mk-detail-text { display: grid; min-width: 0; gap: 4px; }
+.mk-detail-text strong { color: var(--text); font-size: 16px; font-weight: 600; }
+.mk-detail-text p { margin: 0; color: var(--text-soft); font-size: 13px; line-height: 1.55; }
+.mk-detail-text .mk-version { color: var(--text-faint); font-size: 12px; }
+.mk-warn { color: var(--t-warn) !important; font-size: 12px !important; }
+.mk-warn.is-blocked { color: var(--danger) !important; }
+.mk-value { max-width: 60%; color: var(--text-soft); font-size: 13px; text-align: right; overflow-wrap: anywhere; }
+.mk-value code { font: 12px var(--mono); }
+.mk-with { display: grid; gap: 2px; justify-items: end; }
+.mk-detail-foot { display: grid; justify-items: end; gap: 6px; margin-top: 16px; }
+/* 全部升级的确认：同设置里别的小窗（后面淡遮罩，点遮罩、Esc、「取消」收起） */
+.mk-ask { position: absolute; z-index: 5; inset: 0; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 55%, transparent); animation: fade-in var(--motion-in) var(--ease-out) both; }
+.mk-ask.is-leaving { animation: fade-out var(--motion-out) var(--ease-in) both; }
+.mk-ask-card { display: grid; gap: 10px; width: min(420px, 100%); padding: 18px 20px 16px; border-radius: 14px; background: var(--surface); box-shadow: var(--float-shadow); animation: pop-in var(--motion-in) var(--ease-out) both; }
+.mk-ask.is-leaving .mk-ask-card { animation: pop-out var(--motion-out) var(--ease-in) both; }
+.mk-ask-card strong { color: var(--text); font-size: 14px; font-weight: 600; }
+.mk-ask-list { display: grid; gap: 4px; max-height: 240px; margin: 0; padding: 0; overflow-y: auto; list-style: none; font-size: 13px; }
+.mk-ask-list li { display: flex; justify-content: space-between; gap: 12px; color: var(--text); }
+.mk-ask-list code { color: var(--text-faint); font: 12px var(--mono); }
+.mk-ask-size { margin: 0; color: var(--text-faint); font-size: 12px; }
+.mk-ask-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
