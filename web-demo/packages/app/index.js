@@ -5,6 +5,7 @@
 import { App } from '../../src/ui/app.js';
 import { useConnection as linkCardsUse } from '../../src/ui/linkcards.js';
 import { codeBlock, copy } from '../../src/markdown/build.js';
+import { renderMarkdown } from '../../src/markdown/render.js';
 import { PALETTE, colorOf } from '../../src/model/project.js';
 
 /** @param {any} ctx */
@@ -15,8 +16,8 @@ export function apply(ctx) {
   const app = new App(ctx.sessions, ctx.core, ctx.host, ctx, () => ctx.lightbox);
   app.mount(ctx.page.root);
   // 对话区：别的包经它拿滚的那一层、正文那一列、你说的话
-  // Markdown 的代码块、复制：mermaid 这类包经它用
-  ctx.provide('markdown', { codeBlock, copy });
+  // Markdown 的代码块、复制：mermaid 这类包经它用；整段画（知识库页的片段、原文）：`render(容器, 原文)`
+  ctx.provide('markdown', { codeBlock, copy, render: (/** @type {HTMLElement} */ el, /** @type {string} */ text) => renderMarkdown(el, text, { streaming: false }) });
   // 斜杠命令：别的包登记自己的（`/settings`、`/pkg` 这类）
   ctx.provide('commands', app.commands);
   ctx.provide('chat', {

@@ -60,7 +60,8 @@ export class SettingsDialog {
         h('header.set-head', h('button.set-back', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), h('span.set-back-text', this.ctx.text('back'))), this.title,
           h('button.icon-button.set-close', { type: 'button', title: this.ctx.text('close'), 'aria-label': this.ctx.text('close'), onclick: () => this.close() }, icon('x'))),
         this.body));
-    this.root = h('div.set-layer', h('div.set-scrim', { onclick: () => this.close() }), this.panel);
+    // 设置框挡着拖放：拖文件到框上不弹输入框的「拖到这里」（框里自己收文件的那一块照收，`src/host/files.js` 的 `watchDrop`）
+    this.root = h('div.set-layer', { dataset: { dropShield: '' } }, h('div.set-scrim', { onclick: () => this.close() }), this.panel);
     this.body.addEventListener('focusout', () => setTimeout(() => this.flush(), 0));
     document.body.append(this.root);
     this.narrow = matchMedia(`(max-width: ${cfg.narrow}px)`);
