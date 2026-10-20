@@ -28,6 +28,8 @@ export class Menu {
     this.at = -1;
     /** @type {View|null} */
     this.view = null;
+    /** 换一屏时框的大小正在缓过去的那段动画 @type {Animation|null} */
+    this.sizing = null;
     this.onKey = (/** @type {KeyboardEvent} */ e) => {
       if (e.key === 'Escape') this.close();
       else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') this.mark(this.next(e.key === 'ArrowDown' ? 1 : -1));
@@ -47,6 +49,8 @@ export class Menu {
 
   /** 在 `anchor` 旁边打开一屏（已经开着的换成这一屏）：`below` 开在它下面（左上角那一条），不然开在上面。 @param {HTMLElement} anchor @param {View} view */
   show(anchor, view) {
+    // 开着换一屏的：记下原来多大，换完从原来的大小缓到新的（2026-10-20 项目主人：宽的会话信息换到窄的换人格没有动画）
+    const before = this.el.hidden ? null : this.el.getBoundingClientRect();
     this.anchor = anchor;
     this.view = view;
     this.items = [];
@@ -86,11 +90,35 @@ export class Menu {
     // 开着菜单的那个按钮：箭头跟着朝下（左上角的标题）
     if (anchor.getAttribute('aria-haspopup') === 'menu') anchor.setAttribute('aria-expanded', 'true');
     this.fit();
+    if (before) this.resize(before);
     this.mark(Math.max(0, this.items.findIndex((x) => x.row.current && !x.row.off)));
     if (!wasOpen) {
       document.addEventListener('keydown', this.onKey, true);
       document.addEventListener('pointerdown', this.onDown, true);
     }
+  }
+
+  /**
+   * 换了一屏：框从原来的宽高缓到现在的（0.22 秒，里面的字先藏着），里面的新内容跟着淡进来；一样大的只淡进来。减少动画的直接换。
+   * @param {DOMRect} before
+   */
+  resize(before) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const after = this.el.getBoundingClientRect();
+    this.sizing?.cancel();
+    const same = Math.abs(after.width - before.width) < 1 && Math.abs(after.height - before.height) < 1;
+    const ease = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+    if (!same) {
+      this.el.style.overflow = 'hidden';
+      this.sizing = this.el.animate([
+        { width: `${before.width}px`, height: `${before.height}px` },
+        { width: `${after.width}px`, height: `${after.height}px` },
+      ], { duration: 220, easing: ease });
+      const done = () => { this.el.style.overflow = ''; this.sizing = null; };
+      this.sizing.onfinish = done;
+      this.sizing.oncancel = done;
+    }
+    for (const kid of this.el.children) kid.animate([{ opacity: 0 }, { opacity: 1 }], { duration: same ? 140 : 200, delay: same ? 0 : 40, easing: 'ease-out', fill: 'backwards' });
   }
 
   /** 放不下（空会话里输入框在窗口中间，上面地方少）：列表那一截矮下去，整个菜单留在窗口里。 */
