@@ -24,6 +24,11 @@ export function apply(ctx) {
   /** 答了、取消了，等核心回应的调用：这时不再开。调用编号只在一个会话里唯一（换个会话从头编），照「会话 + 调用」认 */
   const answering = new Set();
   const keyOf = (/** @type {string|null} */ session, /** @type {string} */ call) => `${session ?? ''} ${call}`;
+  /**
+   * 取消了的（打断这一轮）：打断的回应比会话状态先到，那一下状态里还在等这一问，照它会再开一下、马上又收（框弹一下；2026-10-20 项目主人：点取消以后
+   * 收起会弹）。取消了的一直不再开，状态里没有它了再忘掉。
+   */
+  const cancelled = new Set();
   /** 开着的这一个 @type {{d: import('./model.js').Drawer, session: string|null}|null} */
   let showing = null;
   /** 最近一次对话区画的（事件 `view.changed`）：会话、会话状态、条目 @type {{session: string|null, status: any, entries: any[]}|null} */
@@ -45,7 +50,10 @@ export function apply(ctx) {
   const send = async (session, d, result) => {
     answering.add(keyOf(session, d.id));
     try {
-      if ('cancelled' in result) await ctx.chat.interrupt();
+      if ('cancelled' in result) {
+        cancelled.add(keyOf(session, d.id));
+        await ctx.chat.interrupt();
+      }
       else {
         const answer = result.kind === 'approve'
           ? { decision: result.decision, ...(result.reason ? { reason: result.reason } : {}) }
@@ -67,7 +75,7 @@ export function apply(ctx) {
   /** 开着的没有了，开下一个：正在看的会话里还没了结的（不算正在等回应的）。 */
   const next = () => {
     if (drawer.open) return;
-    const real = view ? pending(view).find((/** @type {any} */ d) => !answering.has(keyOf(view?.session ?? null, d.id))) : null;
+    const real = view ? pending(view).find((/** @type {any} */ d) => !answering.has(keyOf(view?.session ?? null, d.id)) && !cancelled.has(keyOf(view?.session ?? null, d.id))) : null;
     if (!real) return;
     showing = { d: real, session: view?.session ?? null };
     // 先画好抽屉再占框：框照画好的抽屉量高度（反过来量到的是空的，先缩成一条再跳上去）
@@ -80,6 +88,9 @@ export function apply(ctx) {
   /** 会话状态变了：开着的那一个别处了结了、换了会话，收掉（不留提示）；再看要不要开下一个。 */
   const sync = (/** @type {{session: string|null, status: any, entries: any[]}} */ v) => {
     view = v;
+    // 取消了的、状态里已经没有了的忘掉（只看正在看的这个会话的）
+    const waiting = new Set(pending(v).map((/** @type {any} */ d) => keyOf(v.session, d.id)));
+    for (const k of cancelled) if (k.startsWith(`${v.session ?? ''} `) && !waiting.has(k)) cancelled.delete(k);
     if (showing) {
       const still = showing.session === v.session && pending(v).some((/** @type {any} */ d) => d.id === showing?.d.id);
       if (!still) {

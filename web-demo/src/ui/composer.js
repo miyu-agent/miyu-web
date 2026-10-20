@@ -203,14 +203,25 @@ export class Composer {
     const style = getComputedStyle(this.input);
     const moving = this.settledBox && performance.now() - this.settledBox.at < span(style.transitionDuration, style.transitionDelay);
     const from = open && moving ? this.settledBox.height : box.offsetHeight;
+    const ms = parseFloat(getComputedStyle(box).getPropertyValue('--takeover-ms')) || 0;
+    const motion = !!ms && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // 收的时候抽屉照原样留一份、贴着框的下沿淡掉，框的上沿往下收（同打开时倒过来）；原来一收起抽屉就没了，空着的白框缩回去，看着像弹一下
+    // （2026-10-20 项目主人：点取消以后收起的动画会弹）
+    const ghost = !open && motion && this.takeoverEl.childNodes.length ? h('div.composer-takeover-ghost', { 'aria-hidden': 'true' }, this.takeoverEl.cloneNode(true)) : null;
     box.classList.toggle('is-taken', open);
     const to = box.offsetHeight;
-    const ms = parseFloat(getComputedStyle(box).getPropertyValue('--takeover-ms')) || 0;
-    if (from && to && from !== to && ms && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (from && to && from !== to && motion) {
       // 缓的时候里面的东西贴着框的下沿（`is-morphing`）：上沿往上长把抽屉从上面露出来，收的时候上沿往下收
       box.classList.add('is-morphing');
+      if (ghost) {
+        box.append(ghost);
+        ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: ms, easing: 'ease-out', fill: 'forwards' });
+      }
       box.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: ms, easing: 'cubic-bezier(0.2, 0, 0, 1)' })
-        .finished.catch(() => {}).finally(() => box.classList.remove('is-morphing'));
+        .finished.catch(() => {}).finally(() => {
+          box.classList.remove('is-morphing');
+          ghost?.remove();
+        });
     }
     if (!open) {
       this.changed();

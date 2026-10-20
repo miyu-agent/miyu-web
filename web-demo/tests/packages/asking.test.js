@@ -92,6 +92,9 @@ test('确认的问题行：写几个文件、家目录写 ~、工作区外和私
   assert.deepEqual([exec.title, exec.command, exec.outsideSandbox], ['清掉另一个仓库的编译产物', 'cargo clean --manifest-path ~/src/other/Cargo.toml', true]);
   const bare = approvalHead({ call_id: 'x', access: 'execute', detail: { command: 'ls', tool: 'shell' } }, null, text);
   assert.deepEqual([bare.title, bare.command, bare.outsideSandbox], ['exec_untitled', 'ls', false]);
+  // 高危命令（核心 5-17）：带 `hazard` 的标出来，没有的不标
+  assert.equal(approvalHead({ call_id: 'h', access: 'execute', detail: { command: 'git push --force', hazard: 'git_force_push', sandbox: true, tool: 'shell' } }, null, text).hazard, true);
+  assert.equal(bare.hazard, false);
   assert.equal(approvalHead({ call_id: 'x', access: 'execute', detail: { tool: 'shell' } }, null, text).title, 'access.exec{"count":0,"tool":"shell"}');
   assert.equal(approvalHead({ call_id: 'x', access: 'network', detail: { tool: 'web_fetch' } }, null, text).title, 'access_other{"count":0,"tool":"web_fetch"}');
 });

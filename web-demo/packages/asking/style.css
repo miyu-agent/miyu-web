@@ -34,6 +34,7 @@
   flex: none; padding: 0 6px; border-radius: 4px; background: color-mix(in srgb, var(--t-warn) 14%, transparent);
   color: var(--t-warn); font-family: var(--sans); font-size: 11px; line-height: 18px;
 }
+.asking-outside.is-danger { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); font-weight: 600; }
 
 /* 选项：一项一块，选中的淡底 */
 .asking-main { display: grid; gap: 10px; }

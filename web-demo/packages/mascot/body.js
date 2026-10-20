@@ -225,7 +225,9 @@ export class Body {
       const same = platforms.find((p) => p.id === was.id);
       // 输入框左右挪了（收起左栏、改窗口）：跟着它右边挪
       const x = same && was.id === 'composer' && this.walkTo == null ? b.x + (same.x2 - was.x2) : b.x;
-      if (!same || x < same.x1 || x > same.x2 || same.y - b.y > c.carry.snap_px) b = { ...b, x, ground: null };
+      // 输入框自己往下收（确认、提问的抽屉收起，一帧能收几十像素）：跟着下去，不掉下去再弹一下（2026-10-20 项目主人：收起会弹）；别的台子挪得多了照旧掉
+      const drop = was.id === 'composer' ? Infinity : c.carry.snap_px;
+      if (!same || x < same.x1 || x > same.x2 || same.y - b.y > drop) b = { ...b, x, ground: null };
       else {
         if (same.y < b.y) this.offset += b.y - same.y;
         b = { ...b, x, y: same.y, ground: same };

@@ -243,7 +243,7 @@ export class Drawer {
       : null;
     return [
       // 「沙盒外」跟在短标题后面（2026-10-07 项目主人：原来接在命令末尾，命令长了离标题远）
-      h('div.asking-question', head ? head.title : q.question, head?.outsideSandbox ? h('span.asking-outside', t('outside_sandbox')) : null),
+      h('div.asking-question', head ? head.title : q.question, head?.hazard ? h('span.asking-outside.is-danger', t('hazard')) : null, head?.outsideSandbox ? h('span.asking-outside', t('outside_sandbox')) : null),
       head?.command != null ? h('div.asking-paths', h('div.asking-path', h('span.asking-command', head.command.split('\n').map((l) => `$ ${l}`).join('\n')))) : null,
       head?.paths.length ? h('div.asking-paths', head.paths.map((p) => h('div.asking-path', h('span', p.path), p.zone ? h('span.asking-outside', { title: p.zone === 'private' ? t('private_tip') : null }, t(p.zone)) : null))) : null,
       head?.plan ? this.planRows(head.plan) : null,
