@@ -495,9 +495,11 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .set-pkg-card-meta .set-link { font-size: 12.5px; }
 
 /* 添加、编辑服务的小窗：设置框正中（设置框磨砂了，`position: fixed` 照设置框那一块摆），后面淡遮罩 */
-.set-tool-modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 45%, transparent); animation: set-tool-fade 0.14s var(--ease-out); }
-.set-tool-modal.is-leaving { animation: set-tool-fade 0.12s var(--ease-out) reverse forwards; }
-@keyframes set-tool-fade { from { opacity: 0; } }
+.set-tool-modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 45%, transparent); animation: fade-in var(--motion-in) var(--ease-out) backwards; }
+.set-tool-modal.is-leaving { animation: fade-out var(--motion-out) var(--ease-in) both; }
+/* 卡片进出同设置里别的小窗（confirm.js 那一段）：从 0.97 放大出来、缩回去淡掉 */
+.set-tool-pop { animation: pop-in var(--motion-in) var(--ease-out) both; }
+.set-tool-modal.is-leaving .set-tool-pop { animation: pop-out var(--motion-out) var(--ease-in) both; }
 .set-tool-pop { display: grid; gap: 12px; width: min(480px, 100%); max-height: 100%; overflow: auto; padding: 16px 18px 18px; border-radius: 14px; background: var(--surface); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); box-sizing: border-box; }
 .set-tool-pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--text); font-size: 14px; }
 .set-tool-pop-head .icon-button .icon { width: 14px; height: 14px; }
