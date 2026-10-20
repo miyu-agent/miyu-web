@@ -28,6 +28,10 @@ export function apply(ctx) {
   ctx.slots.watch('theme.palettes', () => {
     if (dialog?.isOpen) dialog.refreshLook?.();
   });
+  // 皮肤包来了、走了：「皮肤」那一行跟着变
+  ctx.slots.watch('skin.packs', () => {
+    if (dialog?.isOpen) dialog.refreshLook?.();
+  });
   // 给第一次引导的（蓝图「第一次引导」第 12 条）：和设置页一个样子的控件、接一家供应商的几屏（设置页的「＋ 添加供应商」也是它）
   ctx.provide('settings', {
     /** 控件画在 `panel` 里（菜单开在它上面），提示交给 `toast`。 @param {HTMLElement} panel @param {(text: string) => void} toast */

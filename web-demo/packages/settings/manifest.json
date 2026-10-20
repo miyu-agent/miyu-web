@@ -23,7 +23,8 @@
     "packages",
     "commands",
     "theme~",
-    "backstage~"
+    "backstage~",
+    "skin~"
   ],
   "settings": {
     "width": {
@@ -479,7 +480,9 @@
       "main_color_auto": "自动",
       "advanced_more": "{names}等",
       "search_pages": "页面",
-      "search_packages": "软件包"
+      "search_packages": "软件包",
+      "skin": "皮肤",
+      "skin_factory": "出厂"
     },
     "en": {
       "title": "Settings",
@@ -791,7 +794,9 @@
       "main_color_auto": "Auto",
       "advanced_more": "{names} and more",
       "search_pages": "Pages",
-      "search_packages": "Packages"
+      "search_packages": "Packages",
+      "skin": "Skin",
+      "skin_factory": "Default"
     },
     "ja": {
       "title": "設定",
@@ -1103,7 +1108,9 @@
       "main_color_auto": "自動",
       "advanced_more": "{names} など",
       "search_pages": "ページ",
-      "search_packages": "パッケージ"
+      "search_packages": "パッケージ",
+      "skin": "スキン",
+      "skin_factory": "標準"
     }
   },
   "styles": [

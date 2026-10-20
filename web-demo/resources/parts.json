@@ -1,0 +1,368 @@
+{
+  "artifacts": {
+    "zh": "预览工作区",
+    "select": [
+      ".artifact-workspace"
+    ]
+  },
+  "button": {
+    "zh": "按钮",
+    "select": [
+      ".set-select",
+      ".set-btn",
+      ".set-env",
+      ".setup-menu-btn",
+      ".setup-add",
+      ".setup-new",
+      ".wg-button",
+      ".sessions-button",
+      ".goal-panel-btn"
+    ]
+  },
+  "button.ghost": {
+    "zh": "透明的图标按钮",
+    "select": [
+      ".icon-button",
+      ".msg-action",
+      ".back-button",
+      ".session-menu-button"
+    ]
+  },
+  "button.primary": {
+    "zh": "主按钮",
+    "select": [
+      ".set-btn.is-primary",
+      ".setup-menu-btn.is-primary",
+      ".goal-panel-btn.is-primary",
+      ".asking-submit",
+      ".asking-next",
+      ".wg-primary",
+      ".si-btn"
+    ]
+  },
+  "button.primary.disabled": {
+    "zh": "主按钮用不了时",
+    "select": [
+      ".set-btn.is-primary:disabled",
+      ".goal-panel-btn.is-primary:disabled",
+      ".si-btn:disabled"
+    ]
+  },
+  "card": {
+    "zh": "贴在页面上的卡片",
+    "select": [
+      ".note-recap",
+      ".user-file",
+      ".assistant-content .markdown-table-scroll",
+      ".markdown-body .markdown-table-scroll",
+      ".video-shell video",
+      ".media-audio-card",
+      ".link-card",
+      ".shown-card",
+      ".project-card",
+      ".diff-file",
+      ".asking-card",
+      ".attach-chip",
+      ".set-pool",
+      ".set-pkg-card",
+      ".set-backstage-frame",
+      ".setup-palette",
+      ".use-tile",
+      ".mem-problem"
+    ]
+  },
+  "chip": {
+    "zh": "小标签、小块",
+    "select": [
+      ".set-chip",
+      ".set-pill",
+      ".set-pkg-chip",
+      ".set-pkg-tag",
+      ".setup-btn",
+      ".setup-tag",
+      ".mem-chip",
+      ".sessions-chip",
+      ".wg-chip",
+      ".wg-badge"
+    ]
+  },
+  "chip.active": {
+    "zh": "选中的小标签",
+    "select": [
+      ".set-pkg-chip.is-on",
+      ".mem-chip.is-on",
+      ".sessions-chip.is-on"
+    ]
+  },
+  "code": {
+    "zh": "代码块",
+    "select": [
+      ".code-block",
+      ".assistant-content .code-block"
+    ]
+  },
+  "composer": {
+    "zh": "输入框",
+    "select": [
+      ".composer"
+    ]
+  },
+  "composer.footer": {
+    "zh": "框下面那一行",
+    "select": [
+      ".composer-footer"
+    ]
+  },
+  "composer.input": {
+    "zh": "输入框里写字的地方",
+    "select": [
+      ".composer-input"
+    ]
+  },
+  "composer.notice": {
+    "zh": "浮在框上面的提示",
+    "select": [
+      ".composer-notice"
+    ]
+  },
+  "composer.send": {
+    "zh": "发送按钮",
+    "select": [
+      ".composer-send"
+    ]
+  },
+  "composer.send.disabled": {
+    "zh": "发送按钮用不了时",
+    "select": [
+      ".composer-send:disabled"
+    ]
+  },
+  "dock": {
+    "zh": "输入框上面那一叠（待办、运行状态行）",
+    "select": [
+      ".dock-above"
+    ]
+  },
+  "field": {
+    "zh": "写字的框、搜索框、下拉",
+    "select": [
+      ".set-input",
+      ".set-search-box",
+      ".set-pkg-find",
+      ".setup-area",
+      ".goal-panel-field",
+      ".model-menu-search",
+      ".history-search",
+      ".slist-search",
+      ".wg-input",
+      ".si-input",
+      ".asking-edit",
+      ".mem-find",
+      ".sessions-search-box",
+      ".session-rename",
+      ".user-edit",
+      ".use-date"
+    ]
+  },
+  "item": {
+    "zh": "能选的一行",
+    "select": [
+      ".sidebar-nav-row",
+      ".session-menu button",
+      ".set-tab",
+      ".set-prov",
+      ".set-model",
+      ".set-menu-item",
+      ".set-pick-row",
+      ".model-menu-row",
+      ".setup-choice",
+      ".setup-menu-action",
+      ".wg-menu-item",
+      ".rail-item",
+      ".artifact-resource-item",
+      ".artifact-tab"
+    ]
+  },
+  "item.active": {
+    "zh": "选中、打开着的那一行",
+    "select": [
+      ".sidebar-nav-row.is-on",
+      ".session-pill",
+      ".set-tab.is-on",
+      ".set-prov.is-on",
+      ".set-model.is-on",
+      ".set-pick-row.is-on",
+      ".setup-choice.is-on",
+      ".rail-item.is-current",
+      ".artifact-tab.is-active"
+    ]
+  },
+  "item.selected": {
+    "zh": "键盘停着的那一行",
+    "select": [
+      ".model-menu-row.is-selected",
+      ".command-row.is-selected",
+      ".picker-row.is-selected",
+      ".history-row.is-selected",
+      ".slist-row.is-selected",
+      ".mention-row.is-selected",
+      ".setup-menu-row.is-selected"
+    ]
+  },
+  "lightbox": {
+    "zh": "灯箱下面那一条",
+    "select": [
+      ".lightbox-bar"
+    ]
+  },
+  "menu": {
+    "zh": "浮起来的小框（菜单、命令列表、提示、浮层）",
+    "select": [
+      ".model-menu",
+      ".composer-notice",
+      ".composer-jump",
+      ".dock-commands",
+      ".dock-picker",
+      ".dock-help",
+      ".dock-history",
+      ".dock-mention",
+      ".dock-slist",
+      ".goal-panel",
+      ".jobs-panel",
+      ".lightbox-bar",
+      ".rail-pop",
+      ".set-menu",
+      ".set-toast",
+      ".setup-menu",
+      ".setup-info",
+      ".wg-menu",
+      ".artifact-resource-menu",
+      ".session-menu",
+      ".session-ghost",
+      ".use-tip",
+      ".use-pop"
+    ]
+  },
+  "message.answer": {
+    "zh": "回答",
+    "select": [
+      ".assistant-content"
+    ]
+  },
+  "message.user": {
+    "zh": "你的话",
+    "select": [
+      ".user-bubble"
+    ]
+  },
+  "modal": {
+    "zh": "弹窗",
+    "select": [
+      ".set-panel",
+      ".wg-confirm-card",
+      ".setup-float",
+      ".boot-card"
+    ]
+  },
+  "modal.veil": {
+    "zh": "弹窗底下盖着整页的那一层",
+    "select": [
+      ".set-scrim",
+      ".wg-confirm"
+    ]
+  },
+  "note": {
+    "zh": "回报、压缩那一行",
+    "select": [
+      ".note"
+    ]
+  },
+  "rail": {
+    "zh": "右边的跳转条",
+    "select": [
+      ".rail-list"
+    ]
+  },
+  "seg": {
+    "zh": "分段切换",
+    "select": [
+      ".model-menu-switch",
+      ".use-seg",
+      ".wg-segs",
+      ".sessions-switch",
+      ".artifact-mode-switch"
+    ]
+  },
+  "seg.thumb": {
+    "zh": "分段切换选中的那一格",
+    "select": [
+      ".model-menu-thumb",
+      ".use-seg button.is-on",
+      ".wg-seg.is-on",
+      ".artifact-mode.is-active"
+    ]
+  },
+  "settings": {
+    "zh": "设置页",
+    "select": [
+      ".set-panel"
+    ]
+  },
+  "sidebar": {
+    "zh": "左栏",
+    "select": [
+      ".sidebar"
+    ]
+  },
+  "sidebar.item": {
+    "zh": "左栏的一行",
+    "select": [
+      ".session-item",
+      ".sidebar-nav-row"
+    ]
+  },
+  "stage": {
+    "zh": "对话区",
+    "select": [
+      ".stage"
+    ]
+  },
+  "switch": {
+    "zh": "开关",
+    "select": [
+      ".set-switch",
+      ".wg-switch > i"
+    ]
+  },
+  "switch.active": {
+    "zh": "开着的开关",
+    "select": [
+      ".set-switch.is-on",
+      ".wg-switch.is-on > i"
+    ]
+  },
+  "switch.knob": {
+    "zh": "开关的圆钮",
+    "select": [
+      ".set-switch i"
+    ]
+  },
+  "table": {
+    "zh": "表格",
+    "select": [
+      ".markdown-table-scroll"
+    ]
+  },
+  "timeline": {
+    "zh": "时间线",
+    "select": [
+      ".timeline"
+    ]
+  },
+  "timeline.step": {
+    "zh": "时间线的一步",
+    "select": [
+      ".tl-step"
+    ]
+  }
+}
