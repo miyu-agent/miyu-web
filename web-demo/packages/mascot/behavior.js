@@ -33,7 +33,7 @@ export class Behavior {
     this.face = new Face(config);
     this.pose = this.face.pose;
     /** 肚子上的灯：亮灭变了画一帧（第 7 条） */
-    this.lamp = new Lamp({ ...config.lamp, sleep_ms: config.sleep.breath_ms }, () => io.reduced(), () => {
+    this.lamp = new Lamp(config.lamp, () => io.reduced(), () => {
       this.pose.lamp = this.lamp.on;
       this.wake();
     });
@@ -52,7 +52,7 @@ export class Behavior {
     this.caret = /** @type {{x: number, y: number}|null} */ (null);
     /** 她在回答 */
     this.busy = false;
-    /** 睡着：闭着眼、蹲下低头、肚子的灯一明一暗、头上冒 Zz；不走、不掏东西、不东张西望。两种：整理记忆时（`setAsleep`）有人动也不醒；
+    /** 睡着：闭着眼、头上冒 Zz；不走、不掏东西、不东张西望。两种：整理记忆时（`setAsleep`）有人动也不醒；
      *  闲着太久自己睡的（`sleep.idle_ms`，2026-10-20 项目主人）一有人动、开始回答就醒 */
     this.asleep = false;
     this.dreaming = false;
@@ -149,7 +149,8 @@ export class Behavior {
   }
 
   /**
-   * 照两种睡着的定睡不睡：睡着的收起手里的东西、停在原地、闭眼、蹲下低头（`body.js` 照 `sleep.crouch`）、灯一明一暗；醒来站起来跳一下、照常看。
+   * 照两种睡着的定睡不睡：睡着的收起手里的东西、停在原地、看正前方、闭眼（眯成一道线），头上冒 Zz（2026-10-20 项目主人：睡觉不要蹲下，眼睛眯起来、
+   * Zz 就行）；醒来跳一下、照常看。
    */
   sleepNow() {
     const on = this.dreaming || this.dozing;
@@ -163,8 +164,7 @@ export class Behavior {
       this.gameUntil = 0;
     }
     this.settle();
-    this.light();
-    if (on) this.look(0, this.config.sleep.pitch, this.config.gaze.half_life_ms);
+    if (on) this.look(0, 0, this.config.gaze.half_life_ms);
     else {
       this.hop();
       this.follow();
@@ -230,7 +230,7 @@ export class Behavior {
 
   /** 灯照现在的样子闪：在回答一闪一闪，有后台任务隔一阵亮一下，别的灭着。 */
   light() {
-    this.lamp.set(this.busy ? 'busy' : this.jobs > 0 ? 'jobs' : this.asleep ? 'sleep' : 'off');
+    this.lamp.set(this.busy ? 'busy' : this.jobs > 0 ? 'jobs' : 'off');
   }
 
   /** 该拿什么照现在的样子定：站着、在回答的拿电脑；站着、在玩的拿游戏机；别的收起来。 */
@@ -380,7 +380,7 @@ export class Behavior {
     this.pose.turn = shape.turn;
     this.io.place(shape);
     this.io.draw(this.pose);
-    // 睡着的蹲好了就停（一呼一吸是灯，亮灭变的那一下才推一帧）
+    // 睡着的不一帧一帧推（Zz 是 CSS 动画）
     if (moving) this.wake();
   }
 

@@ -140,7 +140,7 @@
 /* 「记一条」：设置框正中的小窗（设置框磨砂了，`position: fixed` 照设置框那一块摆；后面淡遮罩） */
 .mem-modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 45%, transparent); animation: mem-modal-in 0.16s var(--ease-out); }
 @keyframes mem-modal-in { from { opacity: 0; } }
-.mem-modal .mem-add { width: min(520px, 100%); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); animation: mem-modal-pop 0.16s var(--ease-out); }
+.mem-modal .mem-add { width: min(520px, 100%); background: var(--surface); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); animation: mem-modal-pop 0.16s var(--ease-out); }
 @keyframes mem-modal-pop { from { transform: translateY(6px) scale(0.98); } }
 @media (prefers-reduced-motion: reduce) { .mem-modal, .mem-modal .mem-add { animation: none; } }
 
@@ -151,8 +151,12 @@
 .dream-slot.unfold.is-instant, .dream-slot.unfold.is-instant > .unfold-inner { transition: none; }
 
 /* 关键词：一个个小块，后面接着打 */
-.mem-kw-box { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; width: 100%; min-height: 32px; height: auto; padding: 4px 6px; box-sizing: border-box; cursor: text; }
+/* 比设置页的 `.set-input`（定高 30px）多一层：块多了往下长（2026-10-20 项目主人：关键词多了框坏了，块跑到框外面） */
+.set-input.mem-kw-box { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; width: 100%; min-height: 32px; height: auto; padding: 4px 6px; box-sizing: border-box; cursor: text; }
 .mem-kw-box.is-disabled { cursor: default; opacity: 0.7; }
+/* 聚焦（框里那一行字有焦点）同别的框：换亮底加一层软影，里面的块换成灰底（同一天项目主人：关键词框聚焦怎么不变颜色） */
+.set-input.mem-kw-box:focus-within { background: var(--surface-1); box-shadow: var(--card-shadow); }
+.mem-kw-box:focus-within .mem-kw-chip { background: var(--surface-2); }
 .mem-kw-chips { display: contents; }
 .mem-kw-chip { display: inline-flex; align-items: center; gap: 2px; padding: 0 4px 0 8px; border-radius: 6px; background: var(--surface-1); color: var(--text); font-size: 12.5px; line-height: 22px; }
 .mem-kw-chip button { display: grid; width: 16px; height: 16px; place-items: center; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--text-faint); cursor: pointer; }
