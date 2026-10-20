@@ -12,12 +12,12 @@
   width: min(var(--set-w), calc(100vw - 48px)); height: min(var(--set-h), calc(100vh - 48px));
   overflow: hidden; border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--float-shadow);
   /* 一点点磨砂（2026-10-19 项目主人：稍微有一点，不用左栏那么虚；2026-10-20 再透明一成：八成八改七成八） */
-  background: color-mix(in srgb, var(--surface) 68%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+  background: color-mix(in srgb, var(--surface) 78%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
   animation: pop-in var(--motion-in) var(--ease-out) both; color: var(--text);
 }
 
 /* 左边分页（第 3 条） */
-.set-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; padding: 12px; background: color-mix(in srgb, var(--sidebar-bg) 68%, transparent); }
+.set-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; padding: 12px; background: color-mix(in srgb, var(--sidebar-bg) 78%, transparent); }
 .set-search-box { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 8px; background: var(--surface-1); color: var(--text-faint); box-shadow: var(--card-shadow); }
 .set-search { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: 13px var(--sans); }
 .set-search::-webkit-search-cancel-button { display: none; }
@@ -498,7 +498,7 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .set-tool-modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 45%, transparent); animation: set-tool-fade 0.14s var(--ease-out); }
 .set-tool-modal.is-leaving { animation: set-tool-fade 0.12s var(--ease-out) reverse forwards; }
 @keyframes set-tool-fade { from { opacity: 0; } }
-.set-tool-pop { display: grid; gap: 12px; width: min(480px, 100%); max-height: 100%; overflow: auto; padding: 16px 18px 18px; border-radius: 14px; background: var(--surface-1); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); box-sizing: border-box; }
+.set-tool-pop { display: grid; gap: 12px; width: min(480px, 100%); max-height: 100%; overflow: auto; padding: 16px 18px 18px; border-radius: 14px; background: var(--surface); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); box-sizing: border-box; }
 .set-tool-pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--text); font-size: 14px; }
 .set-tool-pop-head .icon-button .icon { width: 14px; height: 14px; }
 .set-tool-field { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: start; gap: 12px; }
