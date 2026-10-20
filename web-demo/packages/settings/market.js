@@ -360,7 +360,8 @@ function detailPage(dialog, id) {
       line(t('market.capabilities'), (got?.capabilities ?? []).length ? (got.capabilities).join('、') : t('market.none')),
       (got?.with ?? []).length ? line(t('market.with'), h('div.mk-with', got.with.map((/** @type {any} */ w) => h('code', `${w.package} ${w.version ?? ''}`)))) : null,
       typeof got?.download === 'number' ? line(t('market.size'), bytes(got.download)) : null,
-      got?.replaces ? line(t('market.replaces'), t('market.replaces_version', { version: got.replaces.version ?? '' })) : null,
+      // 装着别的版本的才写「替换」（同一个版本重装不写）
+      got?.replaces && got.replaces.version !== p.version ? line(t('market.replaces'), t('market.replaces_version', { version: got.replaces.version ?? '' })) : null,
     ].filter(Boolean);
     replace(rows, items);
   }, (err) => replace(rows, h('p.set-empty.is-bad', problemText(dialog, err))));
