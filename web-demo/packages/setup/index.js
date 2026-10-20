@@ -459,7 +459,10 @@ export function apply(ctx) {
    * 换之前问一句（同会话信息卡片里的那一句），也在输入框上面的列表里问：「确认切换」「取消」。确认了发 `session.configure`。
    * @param {string} session @param {{persona?: string|null, preset?: string}} change
    */
-  const confirmInList = (session, change) => listOf(t('info.switch_confirm'), [
+  const confirmInList = (session, change) => (ctx.chat.compactable?.(session) === false
+    // 没有能压缩的：不问、直接换（同会话信息卡片里的）
+    ? ctx.core.request('session.configure', { session, ...change }).catch((/** @type {any} */ err) => ctx.composer.say(err?.message ?? String(err)))
+    : listOf(t('info.switch_confirm'), [
     { title: t('info.confirm_switch'), pick: async () => {
       try {
         await ctx.core.request('session.configure', { session, ...change });
@@ -468,7 +471,7 @@ export function apply(ctx) {
       }
     } },
     { title: t('info.cancel'), pick: () => {} },
-  ]);
+  ]));
 
   /**
    * `/persona`、`/preset`（2026-10-20 项目主人：网页还不支持，加上；不开左上角的卡片，用列表就行——要的是输入框上面那种列表）：空会话里列人格、预设，
