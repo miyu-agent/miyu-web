@@ -346,6 +346,17 @@ export function apply(ctx) {
     key: 'preset.default',
     options: () => (catalog.presets ?? []).filter((p) => !p.problem).map((p) => ({ value: p.preset, name: presetName(p) })),
   });
+  // 终端会话（核心 8-33，给 shellhook 开的会话）用哪个人格、预设：不写是跟随默认人格、默认预设（没有单独的无人格）
+  ctx.slots.mount('settings.editor', {
+    id: 'setup-terminal-persona',
+    key: 'terminal.persona',
+    options: () => [{ value: null, name: t('follow_default') }, ...(catalog.personas ?? []).filter((p) => !p.problem).map((p) => ({ value: p.persona, name: personaName(p) }))],
+  });
+  ctx.slots.mount('settings.editor', {
+    id: 'setup-terminal-preset',
+    key: 'terminal.preset',
+    options: () => [{ value: null, name: t('follow_default') }, ...(catalog.presets ?? []).filter((p) => !p.problem).map((p) => ({ value: p.preset, name: presetName(p) }))],
+  });
   ctx.slots.mount('stage.info', { id: 'setup', order: 10, render: () => infoWrap });
   ctx.on('view.changed', () => draw());
   ctx.on('draft.changed', () => draw());
