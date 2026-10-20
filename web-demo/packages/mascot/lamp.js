@@ -4,8 +4,8 @@
 //! 亮。亮灭只在变的那一刻叫一次 `changed`（排好下一次变的时刻），不一帧一帧地推（「空闲就是真的空闲」）。
 
 /**
- * @typedef {{busy_on_ms: number, busy_off_ms: number, jobs_every_ms: number, jobs_on_ms: number, flash_ms: number, flashes: number}} LampConfig
- * @typedef {'busy'|'jobs'|'off'} Mode 在回答、有后台任务、灭着
+ * @typedef {{busy_on_ms: number, busy_off_ms: number, jobs_every_ms: number, jobs_on_ms: number, flash_ms: number, flashes: number, sleep_ms: number}} LampConfig
+ * @typedef {'busy'|'jobs'|'sleep'|'off'} Mode 在回答、有后台任务、睡着（一明一暗，各 `sleep_ms`）、灭着
  */
 
 /**
@@ -19,12 +19,14 @@ export function lit(mode, t, c, reduced) {
   if (mode === 'off') return false;
   if (reduced) return true;
   if (mode === 'busy') return t % (c.busy_on_ms + c.busy_off_ms) < c.busy_on_ms;
+  if (mode === 'sleep') return t % (2 * c.sleep_ms) >= c.sleep_ms;
   return t % c.jobs_every_ms < c.jobs_on_ms;
 }
 
 /** 离下一次亮灭变还有多久（毫秒）；不会再变的是 `null`。 */
 function nextIn(mode, t, c, reduced) {
   if (mode === 'off' || reduced) return null;
+  if (mode === 'sleep') return c.sleep_ms - (t % c.sleep_ms);
   const [on, period] = mode === 'busy' ? [c.busy_on_ms, c.busy_on_ms + c.busy_off_ms] : [c.jobs_on_ms, c.jobs_every_ms];
   const ph = t % period;
   return ph < on ? on - ph : period - ph;

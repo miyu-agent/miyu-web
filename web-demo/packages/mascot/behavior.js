@@ -33,7 +33,7 @@ export class Behavior {
     this.face = new Face(config);
     this.pose = this.face.pose;
     /** 肚子上的灯：亮灭变了画一帧（第 7 条） */
-    this.lamp = new Lamp(config.lamp, () => io.reduced(), () => {
+    this.lamp = new Lamp({ ...config.lamp, sleep_ms: config.sleep.breath_ms }, () => io.reduced(), () => {
       this.pose.lamp = this.lamp.on;
       this.wake();
     });
@@ -52,8 +52,11 @@ export class Behavior {
     this.caret = /** @type {{x: number, y: number}|null} */ (null);
     /** 她在回答 */
     this.busy = false;
-    /** 睡着（整理记忆时，`setAsleep`）：闭着眼、一呼一吸、头上冒 Zz；不走、不掏东西、不东张西望，有人动也不醒 */
+    /** 睡着：闭着眼、蹲下低头、肚子的灯一明一暗、头上冒 Zz；不走、不掏东西、不东张西望。两种：整理记忆时（`setAsleep`）有人动也不醒；
+     *  闲着太久自己睡的（`sleep.idle_ms`，2026-10-20 项目主人）一有人动、开始回答就醒 */
     this.asleep = false;
+    this.dreaming = false;
+    this.dozing = false;
     this.frame = 0;
     this.last = 0;
     this.droopTimer = 0;
@@ -108,6 +111,18 @@ export class Behavior {
       later(a.game_after_ms / 4, game);
     };
     later(this.config.activity.game_after_ms / 4, game);
+    // 闲着太久自己睡：没人动 `idle_ms`、没在回答、站着、手里没东西（在玩游戏机的也算闲着，收起来睡）
+    const doze = () => {
+      const z = this.config.sleep;
+      if (z.idle_ms > 0 && !this.dozing && !this.busy && !this.io.reduced() && this.body.standing() && this.body.walkTo == null
+        && performance.now() - this.touched > z.idle_ms) {
+        this.dozing = true;
+        this.gameUntil = 0;
+        this.sleepNow();
+      }
+      later(z.check_ms, doze);
+    };
+    later(this.config.sleep.check_ms, doze);
   }
 
   /** 没人动（`after_ms` 没按键、没动鼠标）。 */
@@ -120,11 +135,24 @@ export class Behavior {
     return !this.busy && !this.asleep && !this.activity && this.body.standing() && !this.io.reduced();
   }
 
-  /**
-   * 睡着、醒来（整理记忆时，服务 `mascot.sleep`）：睡着的收起手里的东西、停在原地、闭眼、低一点头；醒来跳一下、照常看。
-   * @param {boolean} on
-   */
+  /** 整理记忆时睡着、醒来（服务 `mascot.sleep`）。 @param {boolean} on */
   setAsleep(on) {
+    this.dreaming = on;
+    this.sleepNow();
+  }
+
+  /** 闲着睡着的叫醒（有人动、开始回答）；整理记忆睡着的不管。 */
+  rouse() {
+    if (!this.dozing) return;
+    this.dozing = false;
+    this.sleepNow();
+  }
+
+  /**
+   * 照两种睡着的定睡不睡：睡着的收起手里的东西、停在原地、闭眼、蹲下低头（`body.js` 照 `sleep.crouch`）、灯一明一暗；醒来站起来跳一下、照常看。
+   */
+  sleepNow() {
+    const on = this.dreaming || this.dozing;
     if (on === this.asleep) return;
     this.asleep = on;
     this.pose.sleep = on;
@@ -135,7 +163,8 @@ export class Behavior {
       this.gameUntil = 0;
     }
     this.settle();
-    if (on) this.look(0, this.config.droop.pitch / 2, this.config.gaze.half_life_ms);
+    this.light();
+    if (on) this.look(0, this.config.sleep.pitch, this.config.gaze.half_life_ms);
     else {
       this.hop();
       this.follow();
@@ -152,6 +181,7 @@ export class Behavior {
   /** 有人动了（按键）：走着的停在原地，游戏机收起来。 */
   touch() {
     this.touched = performance.now();
+    this.rouse();
     this.body.halt();
     if (this.gameUntil) {
       this.gameUntil = 0;
@@ -179,6 +209,10 @@ export class Behavior {
   setBusy(busy, hop = true) {
     if (busy === this.busy) return;
     this.busy = busy;
+    if (busy) {
+      this.touched = performance.now();
+      this.rouse();
+    }
     this.settle();
     this.light();
     if (!busy && hop) {
@@ -196,7 +230,7 @@ export class Behavior {
 
   /** 灯照现在的样子闪：在回答一闪一闪，有后台任务隔一阵亮一下，别的灭着。 */
   light() {
-    this.lamp.set(this.busy ? 'busy' : this.jobs > 0 ? 'jobs' : 'off');
+    this.lamp.set(this.busy ? 'busy' : this.jobs > 0 ? 'jobs' : this.asleep ? 'sleep' : 'off');
   }
 
   /** 该拿什么照现在的样子定：站着、在回答的拿电脑；站着、在玩的拿游戏机；别的收起来。 */
@@ -283,6 +317,8 @@ export class Behavior {
 
   /** 左键按下：抓起来。 */
   grab(x, y) {
+    this.touched = performance.now();
+    this.rouse();
     this.body.grab(x, y);
     this.wake();
   }
@@ -344,8 +380,8 @@ export class Behavior {
     this.pose.turn = shape.turn;
     this.io.place(shape);
     this.io.draw(this.pose);
-    // 睡着的一直推（一呼一吸）；减少动画的不推
-    if (moving || (this.asleep && !this.io.reduced())) this.wake();
+    // 睡着的蹲好了就停（一呼一吸是灯，亮灭变的那一下才推一帧）
+    if (moving) this.wake();
   }
 
   /** 停用了：停掉计时、不再推。 */

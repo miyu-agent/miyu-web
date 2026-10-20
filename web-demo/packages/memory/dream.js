@@ -348,7 +348,8 @@ export class DreamCard {
     const wakeAt = this.stopped ? 450 : DAWN_MS + 200;
     const woke = this.finished && now - this.doneAt > wakeAt;
     const { canvas, bottom } = m.portrait(woke ? {} : { sleep: true });
-    let dy = !woke && !reduce ? Math.floor(now / 1600) % 2 : 0;
+    // 睡着的一呼一吸交给肚子的灯（`mascot.portrait`），身子不再一上一下
+    let dy = 0;
     if (woke && !reduce) {
       const k = (now - this.doneAt - wakeAt) / 520;
       if (k > 0 && k < 1) dy = -Math.round(Math.sin(k * Math.PI) * 7);

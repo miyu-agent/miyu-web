@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { lit } from '../../packages/mascot/lamp.js';
 
-const cfg = { busy_on_ms: 300, busy_off_ms: 300, jobs_every_ms: 1800, jobs_on_ms: 250, flash_ms: 120, flashes: 2 };
+const cfg = { busy_on_ms: 300, busy_off_ms: 300, jobs_every_ms: 1800, jobs_on_ms: 250, flash_ms: 120, flashes: 2, sleep_ms: 1600 };
 
 test('在回答：亮 300 灭 300 轮着来', () => {
   assert.deepEqual([0, 100, 299, 300, 599, 600].map((t) => lit('busy', t, cfg, false)), [true, true, true, false, false, true]);
@@ -15,6 +15,10 @@ test('在回答：亮 300 灭 300 轮着来', () => {
 test('有后台任务：隔 1.8 秒亮 0.25 秒；灭着的不亮', () => {
   assert.deepEqual([0, 249, 250, 1799, 1800].map((t) => lit('jobs', t, cfg, false)), [true, true, false, false, true]);
   assert.equal(lit('off', 0, cfg, false), false);
+});
+
+test('睡着（2026-10-20 闲着久了自己睡、整理记忆时）：灭 1.6 秒、亮 1.6 秒，慢慢一明一暗', () => {
+  assert.deepEqual([0, 1599, 1600, 3199, 3200].map((t) => lit('sleep', t, cfg, false)), [false, false, true, true, false]);
 });
 
 test('减少动画：不闪，回答、有后台任务时一直亮', () => {

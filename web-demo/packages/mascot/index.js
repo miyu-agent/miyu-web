@@ -250,7 +250,10 @@ export function apply(ctx) {
       behavior.setAsleep(sleepers > 0);
     },
     portrait: (pose = {}) => {
-      still.draw({ yaw: 0, pitch: 0, blink: false, ear: 0, ...pose });
+      // 睡着的照输入框上那只的睡姿：蹲下低头，肚子的灯一明一暗
+      const z = c.sleep;
+      const asleep = pose.sleep ? { crouch: z.crouch, pitch: z.pitch, lamp: Math.floor(performance.now() / z.breath_ms) % 2 === 1 } : {};
+      still.draw({ yaw: 0, pitch: 0, blink: false, ear: 0, ...asleep, ...pose });
       return { canvas: still.canvas, bottom: still.bottom };
     },
   });
