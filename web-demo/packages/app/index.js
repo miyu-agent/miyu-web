@@ -94,6 +94,8 @@ export function apply(ctx) {
     takeover: (open) => app.composer.takeover(open),
     /** 锁住输入框（`text` 是占位字，`null` 解锁）：默认的人格没了、还没选的时候（软件包 `setup`） */
     lock: (text) => app.composer.lock(text),
+    /** 输入框上面的列表选一样（同 `/language`：标题、按键提示、一行一样、现在的写「当前」）：`/persona`、`/preset` */
+    pick: (ask) => app.composer.picker.show(ask),
   });
   ctx.effect(() => () => ctx.page.root.replaceChildren());
 }
