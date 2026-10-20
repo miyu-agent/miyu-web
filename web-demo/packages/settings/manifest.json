@@ -513,7 +513,7 @@
         "gone": "已不存在",
         "tools_n": "{count} 件工具",
         "note": {
-          "skills": "技能用到时才读正文，没有加载方式。",
+          "skills": "技能需要加载才能使用",
           "load": "懒加载：只给 AI 名字和一句说明，用到时再拿完整的参数；完整：每一轮都给全。"
         },
         "field": {
@@ -532,7 +532,6 @@
         "restart": "重启",
         "edit": "编辑",
         "remove": "删除",
-        "remove_again": "再点一次删除",
         "form": {
           "add_title": "添加 MCP 服务",
           "edit_title": "编辑 {name}",
@@ -558,9 +557,10 @@
         "select_all": "全选",
         "select_exit": "退出多选",
         "delete": "删除",
-        "delete_again": "再点一次删除",
         "deleted_n": "已删除 {count} 个",
-        "trashed_n": "已删除 {count} 个（在回收站里）"
+        "trashed_n": "已删除 {count} 个（在回收站里）",
+        "delete_ask": "确认删除「{name}」吗？",
+        "delete_many_ask": "确认删除选中的 {count} 个吗？"
       }
     },
     "en": {
@@ -907,7 +907,7 @@
         "gone": "No longer exists",
         "tools_n": "{count} tools",
         "note": {
-          "skills": "Skills are read only when used, so they have no loading mode.",
+          "skills": "Skills need to be loaded before use",
           "load": "Lazy: the AI gets only the name and a one-line description, and fetches the full parameters when it uses it. Full: everything is sent every turn."
         },
         "field": {
@@ -926,7 +926,6 @@
         "restart": "Restart",
         "edit": "Edit",
         "remove": "Remove",
-        "remove_again": "Click again to remove",
         "form": {
           "add_title": "Add MCP server",
           "edit_title": "Edit {name}",
@@ -952,9 +951,10 @@
         "select_all": "Select all",
         "select_exit": "Done",
         "delete": "Delete",
-        "delete_again": "Click again to delete",
         "deleted_n": "Deleted {count}",
-        "trashed_n": "Deleted {count} (moved to trash)"
+        "trashed_n": "Deleted {count} (moved to trash)",
+        "delete_ask": "Delete \"{name}\"?",
+        "delete_many_ask": "Delete the {count} selected?"
       }
     },
     "ja": {
@@ -1301,7 +1301,7 @@
         "gone": "存在しません",
         "tools_n": "ツール {count} 個",
         "note": {
-          "skills": "スキルは使うときに本文を読むため、読み込み方法はありません。",
+          "skills": "スキルは読み込んでから使います",
           "load": "遅延読み込み：AI には名前と一行の説明だけを渡し、使うときに詳しいパラメーターを取得します。完全：毎ターンすべて渡します。"
         },
         "field": {
@@ -1320,7 +1320,6 @@
         "restart": "再起動",
         "edit": "編集",
         "remove": "削除",
-        "remove_again": "もう一度押して削除",
         "form": {
           "add_title": "MCP サーバーを追加",
           "edit_title": "{name} を編集",
@@ -1346,9 +1345,10 @@
         "select_all": "すべて選択",
         "select_exit": "選択を終了",
         "delete": "削除",
-        "delete_again": "もう一度押して削除",
         "deleted_n": "{count} 件削除しました",
-        "trashed_n": "{count} 件削除しました（ゴミ箱に移動）"
+        "trashed_n": "{count} 件削除しました（ゴミ箱に移動）",
+        "delete_ask": "「{name}」を削除しますか？",
+        "delete_many_ask": "選択した {count} 件を削除しますか？"
       }
     }
   },

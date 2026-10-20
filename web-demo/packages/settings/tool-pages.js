@@ -9,6 +9,7 @@ import { groupBlock, toggle, select, findBox } from './rows.js';
 import { stateText } from './extensions.js';
 import { openInfo } from './core-packages.js';
 import { openServerForm } from './mcp-form.js';
+import { confirmIn } from './confirm.js';
 import {
   skillItem, scriptItem, mcpItems, switchValue, featureId, loadingParams, SOURCES, inSource, sourceOf, toolMatch, homeDir, shortTool,
   editable, commandLine, flip, range,
@@ -97,16 +98,13 @@ const deletable = (item) => (item.kind === 'mcp' || item.kind === 'skills') && i
 const iconBtn = (name, title, run, cls = '') => h(`button.icon-button.set-tool-icon${cls}`, { type: 'button', title, 'aria-label': title, onclick: run }, icon(name));
 
 /**
- * 删一下要点两次：第一下变红、提示写「再点一次删除」，第二下才删（同详情里的删除）。
- * @param {HTMLElement} el @param {string} again @param {() => void} run
+ * 删之前弹窗问一句（`confirm.js`；2026-10-20 项目主人：不要点一下变确认），确认了才删。
+ * @param {any} dialog @param {HTMLElement} el @param {string} text @param {() => void} run
  */
-function twice(el, again, run) {
-  el.addEventListener('click', (e) => {
+function askFirst(dialog, el, text, run) {
+  el.addEventListener('click', async (e) => {
     e.stopPropagation();
-    if (el.classList.contains('is-armed')) return run();
-    el.classList.add('is-armed');
-    el.title = again;
-    el.setAttribute('aria-label', again);
+    if (await confirmIn(el, { text, yes: dialog.ctx.text('ask_yes'), no: dialog.ctx.text('ask_no') })) run();
   });
   return el;
 }
@@ -126,7 +124,7 @@ function headButtons(dialog, kind, view, items) {
   const redraw = () => dialog.drawBody();
   if (view.selecting) {
     const del = iconBtn('trash-2', t('tools.delete'), () => {}, `.is-danger${view.selected.size ? '' : '.is-disabled'}`);
-    if (view.selected.size) twice(del, t('tools.delete_again'), () => removeItems(dialog, kind, items.filter((x) => view.selected.has(x.id))));
+    if (view.selected.size) askFirst(dialog, del, t('tools.delete_many_ask', { count: view.selected.size }), () => removeItems(dialog, kind, items.filter((x) => view.selected.has(x.id))));
     else del.setAttribute('disabled', '');
     return [
       h('span.set-tool-count', t('tools.selected', { count: view.selected.size })),
@@ -207,7 +205,7 @@ function toolRow(dialog, item, view) {
   const controls = selecting ? [] : [
     item.load ? loadSelect(dialog, item) : null,
     item.on !== null ? switchFor(dialog, item) : null,
-    can ? twice(iconBtn('trash-2', t('tools.delete'), () => {}, '.is-danger.set-tool-del'), t('tools.delete_again'), () => removeItems(dialog, item.kind, [item])) : null,
+    can ? askFirst(dialog, iconBtn('trash-2', t('tools.delete'), () => {}, '.is-danger.set-tool-del'), t('tools.delete_ask', { name: item.name }), () => removeItems(dialog, item.kind, [item])) : null,
   ].filter(Boolean);
   const tag = item.kind === 'mcp' && item.own ? null : h('span.set-pkg-tag', sourceText(dialog, item));
   return h(`div.set-row.set-pkg${selecting ? (can ? '.is-expandable.is-picking' : '.is-unpickable') : '.is-expandable'}${picked ? '.is-picked' : ''}`, {
@@ -396,14 +394,8 @@ function serverActions(dialog, item) {
   }
   if (!item.own) return out;
   if (editable(dialog.skills)) out.push(h('button.set-btn', { type: 'button', onclick: () => openServerForm(dialog, s) }, t('tools.edit')));
-  let armed = false;
   const remove = h('button.set-btn.is-danger', { type: 'button', onclick: async () => {
-    if (!armed) {
-      armed = true;
-      remove.classList.add('is-armed');
-      remove.textContent = t('tools.remove_again');
-      return;
-    }
+    if (!await confirmIn(remove, { text: t('tools.delete_ask', { name: item.name }), yes: t('ask_yes'), no: t('ask_no') })) return;
     try {
       await dialog.ctx.core.request('mcp.remove', { name: item.name });
     } catch (err) {

@@ -92,14 +92,14 @@ export class PresetEditor {
 
   /**
    * 技能、脚本、MCP 服务开不开谁定的（核心 X-27 的 `by`；2026-10-20 项目主人）：`global` 写「跟随全局」；预设里写了的（`preset`）在 `unlisted` 是 `on`
-   * 的预设里给一个「恢复全局默认」（删掉预设里写的那一项）；`default` 不写。
+   * 的预设里给一个「跟随全局默认」（删掉预设里写的那一项）；`default` 不写。
    * 包自己的功能不接全局开关，不写。
    * @param {any} f
    */
   byMarks(f) {
     if (!/^(skill|script|mcp)-/.test(f.id ?? '')) return [];
     if (f.by === 'global') return [h('span.setup-feature-by', this.t('edit.by_global'))];
-    // 预设里写了的不另标（2026-10-20 项目主人：「预设里定的」没用），只给「恢复全局默认」
+    // 预设里写了的不另标（2026-10-20 项目主人：「预设里定的」没用），只给「跟随全局默认」（同一天改名，原来叫「恢复全局默认」）
     if (f.by !== 'preset' || this.unlisted !== 'on') return [];
     return [h('button.setup-feature-back', { type: 'button', onclick: () => this.set([{ key: `features.${f.id}`, unset: true }]) }, this.t('edit.follow_global'))];
   }
