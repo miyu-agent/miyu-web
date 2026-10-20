@@ -1,6 +1,9 @@
 /* 知识库页（蓝图 web.md「知识库页」）：样子同记忆页（packages/memory/style.css）——控件照设置页（set-input、set-btn、set-switch），
    卡片是 surface_1 加软影，一行一行的清单行之间一道细线、悬停 surface_2；控件不画描边 */
 .kb-list-page, .kb-base-page, .kb-read-page { display: grid; gap: 14px; }
+/* 一个库里面撑满右边，底下那一条（篇数、重建索引、删除）钉在设置框底边（2026-10-20 项目主人） */
+.kb-page:has(> .kb-base-page) { display: flex; flex-direction: column; }
+.kb-base-page { display: flex; flex: 1 0 auto; flex-direction: column; }
 .kb-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .kb-find { display: flex; flex: 1; align-items: center; gap: 6px; min-width: 180px; height: 30px; padding: 0 10px; border-radius: 8px; background: var(--surface-2); color: var(--text-faint); transition: background-color 0.15s ease, box-shadow 0.15s ease; }
 .kb-find:hover { background: var(--surface-3); }
@@ -72,38 +75,39 @@
 .kb-drop-pick { padding: 0; border: 0; background: none; color: var(--accent); font: 13px var(--sans); cursor: pointer; }
 .kb-drop-pick:hover { text-decoration: underline; }
 .kb-docs { display: grid; }
-.kb-doc { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 10px; align-items: center; min-height: 40px; padding: 7px 10px; border-radius: 10px; }
+/* 文件树（2026-10-20 项目主人看过样板选的「缩进加竖线」）：一行 34px（悬停露出来的删除不撑高），每层往右 20px；箭头一格 16px（文件那一行空着，
+   同一层名字对齐）；右边大小、日期靠右，再右边删除。行之间不画线，悬停整行淡底 */
+.kb-doc { position: relative; display: flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 6px 0 calc(6px + var(--depth, 0) * 20px); border-radius: 8px; }
 .kb-doc.is-link { cursor: pointer; }
-/* 文件树（2026-10-20）：往右缩一层 18px；文件夹那一行前面一个箭头，开着的转下来 */
-.kb-doc { padding-left: calc(10px + var(--depth, 0) * 20px); }
-/* 有文件夹的：每一行都留出箭头那一格，同一层的文件、文件夹名字对齐 */
-.kb-docs.has-dirs .kb-doc { padding-left: calc(26px + var(--depth, 0) * 20px); }
-/* 文件树一层一道细竖线（2026-10-20 项目主人：子文件夹在哪个文件夹里看不出来）：第 n 层左边 n 道，对着上一层的文件夹图标 */
-.kb-docs.has-dirs .kb-doc::after { content: ''; position: absolute; top: 0; bottom: 0; left: 33px; width: calc(var(--depth, 0) * 20px); pointer-events: none;
-  background: repeating-linear-gradient(to right, var(--line-strong, var(--line)) 0 1px, transparent 1px 20px); }
-.kb-doc.is-dir .kb-doc-icon { display: flex; align-items: center; gap: 2px; margin-left: -16px; }
-.kb-dir-arrow { display: inline-grid; width: 14px; place-items: center; color: var(--text-faint); transition: transform 0.15s ease; }
-.kb-dir-arrow .icon { width: 12px; height: 12px; }
+.kb-dir-arrow { display: grid; flex: none; width: 16px; height: 16px; place-items: center; color: var(--text-faint); transition: transform 0.16s ease; }
+.kb-dir-arrow .icon { width: 14px; height: 14px; }
 .kb-doc.is-dir.is-open .kb-dir-arrow { transform: rotate(90deg); }
 .kb-doc.is-dir .kb-doc-path { font-weight: 500; }
 .kb-doc.is-link:hover, .kb-doc.is-link:focus-visible { background: var(--surface-2); outline: 0; }
-/* 行之间一道直的细线（圆角的行用阴影画线，角上会弯）；悬停的那一行上下的线藏起来 */
-.kb-doc + .kb-doc::before, .kb-hit + .kb-hit::before { position: absolute; top: 0; right: 10px; left: 10px; height: 1px; background: var(--line); content: ''; }
-.kb-doc:hover::before, .kb-doc:hover + .kb-doc::before, .kb-hit:hover::before, .kb-hit:hover + .kb-hit::before { display: none; }
-.kb-doc-icon { display: grid; color: var(--text-faint); }
-.kb-doc-icon .icon { width: 16px; height: 16px; }
+/* 竖线落在上一层箭头的中线上，最后一行的到这一行中间为止（└）；横线从竖线连到这一行的箭头那一格（位置照 page.js 算，多选时前面多一格勾选框） */
+.kb-doc { overflow: hidden; }
+.kb-guide { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line-strong); pointer-events: none; }
+.kb-guide.is-last { bottom: 50%; }
+.kb-tick { position: absolute; top: 50%; width: 10px; height: 1px; background: var(--line-strong); pointer-events: none; }
+/* 文件夹的「N 篇」紧跟在名字后面（2026-10-20 项目主人：可以左对齐），右边空着 */
+.kb-doc.is-dir > .kb-doc-path { flex: 0 1 auto; min-width: 0; padding: 7px 0; }
+.kb-doc-count { flex: none; margin-right: auto; color: var(--text-faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+.kb-hit + .kb-hit::before { position: absolute; top: 0; right: 10px; left: 10px; height: 1px; background: var(--line); content: ''; }
+.kb-hit:hover::before, .kb-hit:hover + .kb-hit::before { display: none; }
+.kb-doc-icon { display: grid; flex: none; width: 18px; place-items: center; color: var(--text-soft); }
+.kb-doc-icon .icon { width: 15px; height: 15px; }
 .kb-doc.is-uploading .kb-doc-icon .icon { animation: set-spin 0.9s linear infinite; }
-.kb-doc-text { display: grid; gap: 1px; min-width: 0; }
+.kb-doc-text { display: grid; flex: 1; gap: 1px; min-width: 0; padding: 7px 0; }
 .kb-doc-path { overflow: hidden; color: var(--text); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .kb-doc-note { color: var(--text-faint); font-size: 12px; }
 .kb-doc-note.is-bad { color: var(--danger); }
 .kb-doc.is-folder .kb-doc-path { color: var(--text-soft); }
-.kb-doc-meta { color: var(--text-faint); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.kb-remove { visibility: hidden; height: 26px; padding: 0 8px; }
-.kb-doc:hover .kb-remove, .kb-doc:focus-within .kb-remove, .kb-remove.is-armed { visibility: visible; }
-.kb-remove.is-armed, .kb-foot .is-armed { background: color-mix(in srgb, var(--danger) 14%, transparent); }
-.kb-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--text-faint); font-size: 12.5px; }
+.kb-doc-meta { flex: none; margin-left: auto; color: var(--text-faint); font-size: 12px; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.kb-remove { flex: none; visibility: hidden; width: 26px; height: 26px; border-radius: 7px; color: var(--danger); }
+.kb-remove .icon { width: 15px; height: 15px; }
+.kb-doc:hover .kb-remove, .kb-doc:focus-within .kb-remove { visibility: visible; }
 .kb-foot-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.kb-foot .set-btn .icon { width: 14px; height: 14px; }
 .kb-reindex:disabled { opacity: 0.75; cursor: default; }
 .kb-reindex:disabled .icon { animation: set-spin 0.9s linear infinite; }
 
@@ -121,17 +125,17 @@
 @media (max-width: 640px) {
   .kb-card { grid-template-columns: minmax(0, 1fr); }
   .kb-card-icon { display: none; }
-  .kb-doc { grid-template-columns: auto minmax(0, 1fr) auto; }
   .kb-doc-meta { display: none; }
 }
 
-/* 库里卡片下半截的索引信息：一行数、右边重建；建着的时候一道进度条 */
-.kb-card > .kb-index { grid-column: 2 / -1; display: grid; gap: 8px; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--line); }
-.kb-index-line { display: flex; align-items: center; gap: 12px; }
-.kb-index-stats { flex: 1; min-width: 0; color: var(--text-faint); font-size: 12.5px; }
-.kb-index .kb-reindex { flex: none; }
-.kb-index .kb-reindex .icon { width: 14px; height: 14px; }
-.kb-index .kb-reindex:disabled .icon { animation: kb-spin 0.9s linear infinite; }
+/* 库卡片下面一排小格的索引信息（2026-10-20 项目主人选的样板 2）：四格一样宽，窄了两格一行；重建着的时候下面一行字加进度条 */
+.kb-index { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.kb-tile { display: grid; gap: 2px; min-width: 0; padding: 9px 12px; border-radius: 12px; background: var(--surface-1); box-shadow: var(--card-shadow); font-variant-numeric: tabular-nums; }
+.kb-tile small { color: var(--text-faint); font-size: 11.5px; }
+.kb-tile b { overflow: hidden; color: var(--text); font-size: 13.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.kb-index-busy { display: flex; grid-column: 1 / -1; align-items: center; gap: 10px; color: var(--text-soft); font-size: 12px; font-variant-numeric: tabular-nums; }
+.kb-index-busy .kb-index-bar { flex: 1; }
+@media (max-width: 640px) { .kb-index { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @keyframes kb-spin { to { transform: rotate(360deg); } }
 .kb-index-bar { position: relative; height: 4px; overflow: hidden; border-radius: 2px; background: var(--surface-2); }
 .kb-index-bar > i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 2px; background: var(--accent); transition: width 0.3s ease; }
@@ -145,8 +149,8 @@
 .kb-sel-btn.is-danger { color: var(--danger); }
 .kb-sel-btn.is-armed { background: color-mix(in srgb, var(--danger) 16%, transparent); }
 .kb-sel-btn:disabled { opacity: 0.45; cursor: default; }
-.kb-check { display: grid; flex: none; place-items: center; width: 16px; margin-right: 6px; color: var(--text-faint); }
+.kb-check { display: grid; flex: none; place-items: center; width: 16px; color: var(--text-faint); }
 .kb-check .icon { width: 15px; height: 15px; }
 .kb-doc.is-picked .kb-check { color: var(--accent); }
-@media (prefers-reduced-motion: reduce) { .kb-index-bar.is-unknown > i, .kb-index .kb-reindex:disabled .icon { animation: none; } }
-.kb-doc:has(> .kb-check) { grid-template-columns: auto auto minmax(0, 1fr) auto auto; }
+@media (prefers-reduced-motion: reduce) { .kb-index-bar.is-unknown > i, .kb-reindex:disabled .icon { animation: none; } }
+

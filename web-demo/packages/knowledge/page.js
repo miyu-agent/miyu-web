@@ -7,9 +7,8 @@ import { h, icon, replace } from '../../src/lib/dom.js';
 import { upload, serial } from '../../src/lib/upload.js';
 import { sourceOf, writable, deletable, reasonKey, idFor, nextId, sizeText, docIcon, hitHead, probeOf, treeOf, countOf, pathsOf, removalOf } from './model.js';
 
-/** 搜索框停多久再问、删除要几秒内再点一下、搜几段 */
+/** 搜索框停多久再问、搜几段 */
 const TYPE_MS = 250;
-const ARM_MS = 3000;
 const HITS = 20;
 /** 分块传：一块多少字节（核心收的上限 512 KiB）、连着几次没往前走就不传了（同附件） */
 const CHUNK = 524288;
@@ -25,7 +24,7 @@ export class KnowledgePage {
   constructor(ctx) {
     this.ctx = ctx;
     this.t = (/** @type {string} */ key, /** @type {any} */ fields) => ctx.text(key, fields);
-    this.el = h('div.kb-page');
+    this.el = h('div.kb-page.set-fill');
     /** @type {any} */
     this.kit = null;
     /** @type {import('./model.js').Base[]} */
@@ -46,10 +45,6 @@ export class KnowledgePage {
     this.docs = null;
     /** 传着的文件名 @type {string[]} */
     this.uploading = [];
-    /** 点了一下、等着再点的（删一篇写路径，删库写 `base`） @type {string|null} */
-    this.armed = null;
-    /** @type {any} */
-    this.armTimer = 0;
     this.reindexing = false;
     /** 建索引的进度（核心推来的 `kb.indexing {kb, done, total}`；自己点了、还没推来的是 `{kb}`） @type {{kb: string, done?: number, total?: number}|null} */
     this.progress = null;
@@ -71,22 +66,54 @@ export class KnowledgePage {
     this.queue = serial();
     // `Esc` 在一个库里、看原文时回上一层：设置框在捕获阶段拿到 `Esc`，找带 `data-set-dismiss` 的发 `set-dismiss`（`dialog.js` 的 `onKey`）
     this.el.addEventListener('set-dismiss', () => this.back());
-    // 建索引的进度（核心 2026-10-20 排着的 `kb.indexing`、`kb.indexed`；没推的照点了以后来回走）
-    ctx.core.onPush?.((/** @type {string} */ method, /** @type {any} */ p) => {
+    /** 订着 `kb` 这条流（页面开着时订，不在页面上了退订） */
+    this.subscribed = false;
+    // 建索引的进度（核心 97ea473b：订了 `kb` 流推 `kb.indexing {kb, done, total}`、`kb.indexed {kb}`；人点的重建、搜的时候顺手补的、AI 用工具的都推）。
+    // 没推的（旧核心）照点了以后来回走；`kb.indexed` 来了重读列表（那个库的 `indexed_at`、`indexing`）
+    this.onPush = (/** @type {string} */ method, /** @type {any} */ p) => {
+      if (method === 'resync' && p?.stream === 'kb') {
+        this.subscribed = false;
+        if (this.el.isConnected) this.subscribe();
+        return;
+      }
+      if (method !== 'kb.indexing' && method !== 'kb.indexed') return;
+      if (!this.el.isConnected) {
+        this.unsubscribe();
+        return;
+      }
       if (method === 'kb.indexing' && typeof p?.kb === 'string') {
         this.progress = { kb: p.kb, done: p.done, total: p.total };
         if (this.view.kind === 'base' && this.view.id === p.kb) this.draw();
-      } else if (method === 'kb.indexed' && typeof p?.kb === 'string' && this.progress?.kb === p.kb && !this.reindexing) {
-        this.progress = null;
-        if (this.loaded) this.reload();
+      } else if (method === 'kb.indexed' && typeof p?.kb === 'string') {
+        if (this.progress?.kb === p.kb && !this.reindexing) this.progress = null;
+        if (this.loaded && !this.reindexing) this.reload();
       }
+    };
+    ctx.core.onPush?.(this.onPush);
+    ctx.effect?.(() => () => {
+      ctx.core.pushes?.delete(this.onPush);
+      this.unsubscribe();
     });
+  }
+
+  /** 订 `kb` 流（这一刻的样子照 `kb.list`）；旧核心不认的不管 */
+  async subscribe() {
+    if (this.subscribed) return;
+    this.subscribed = true;
+    await this.ctx.core.request('subscribe', { stream: 'kb' }).catch(() => { this.subscribed = false; });
+  }
+
+  unsubscribe() {
+    if (!this.subscribed) return;
+    this.subscribed = false;
+    this.ctx.core.request('unsubscribe', { stream: 'kb' }).catch(() => {});
   }
 
   /** 设置页画这一页：每次打开重读库的列表，交回同一块。 @param {any} kit */
   render(kit) {
     this.kit = kit;
     this.loaded = true;
+    this.subscribe();
     this.reload();
     return this.el;
   }
@@ -215,13 +242,15 @@ export class KnowledgePage {
    * 一个库的卡片：名字、说明、「N 篇 · 来源」（读不了的换成红字），右边「自动想起」。`open` 的点了进这个库。
    * @param {import('./model.js').Base} b @param {boolean} open
    */
-  card(b, open, index = null) {
+  card(b, open, inside = false) {
     const t = this.t;
     const src = sourceOf(b);
     // 自己建的不写「自己建的」（2026-10-20 项目主人）
     const from = src === 'package' ? t('source.package', { name: this.packages.get(/** @type {string} */ (b.package)) ?? b.package })
       : src === 'mount' ? t('source.mount', { path: b.mount }) : null;
-    const meta = b.error ? h('p.kb-card-meta.is-bad', b.error) : h('p.kb-card-meta', [t('docs_n', { n: b.documents ?? 0 }), from].filter(Boolean).join(' · '));
+    // 库里那张不写篇数（下面一排小格写着）
+    const said = [inside ? null : t('docs_n', { n: b.documents ?? 0 }), from].filter(Boolean).join(' · ');
+    const meta = b.error ? h('p.kb-card-meta.is-bad', b.error) : said ? h('p.kb-card-meta', said) : null;
     const auto = h('label.kb-auto', { title: t('auto_hint'), onclick: (/** @type {Event} */ e) => e.stopPropagation() },
       h('span', t('auto')), this.kit.toggle(!!b.auto, (/** @type {boolean} */ on) => this.setAuto(b, on)));
     const attrs = open
@@ -229,13 +258,13 @@ export class KnowledgePage {
       : {};
     return h(`div.kb-card${open ? '.is-link' : ''}${this.fresh === b.id ? '.is-fresh' : ''}`, attrs,
       h('span.kb-card-icon', icon(src === 'mount' ? 'folder' : src === 'package' ? 'package' : 'library')),
-      h('div.kb-card-text', h('div.kb-card-name', b.name || b.id), b.description ? h('p.kb-card-desc', b.description) : null, index ? null : meta),
-      auto, index);
+      h('div.kb-card-text', h('div.kb-card-name', b.name || b.id), b.description ? h('p.kb-card-desc', b.description) : null, meta),
+      auto);
   }
 
   /**
-   * 库里那张卡片下半截的索引信息（2026-10-20 项目主人：重建索引要有进度，索引信息也要有卡片）：「N 篇 · N 段 · 语义模型 X · 上次建好 时刻」，右边「重建索引」；
-   * 建着的时候下面一道进度条（核心推来 `done`、`total` 的写「正在重建 done / total」，没有的来回走）。
+   * 库卡片下面一排小格写索引（2026-10-20 项目主人看过样板选的：不放进卡片、不做一大块长条）：篇数、段数、语义模型、上次建好；重建着的时候这一排下面
+   * 一行「正在重建 done / total」和进度条（核心没推来数的写「正在重建…」，条来回走）。「重建索引」按钮在底下那一条里。
    * @param {import('./model.js').Base} b @param {number} docs @param {number} chunks
    */
   indexBlock(b, docs, chunks) {
@@ -244,15 +273,14 @@ export class KnowledgePage {
     const busy = this.reindexing || b.indexing === true || this.progress?.kb === b.id;
     const p = this.progress?.kb === b.id ? this.progress : null;
     const known = !!p && typeof p.total === 'number' && p.total > 0 && typeof p.done === 'number';
-    const stats = [
-      t('foot', { docs, chunks }),
-      t('index_model', { name: this.embedding ?? t('index_model_none') }),
-      Number.isFinite(at) ? t('index_at', { when: new Date(at).toLocaleString() }) : null,
-    ].filter(Boolean).join(' · ');
-    const reindex = h('button.set-btn.kb-reindex', { type: 'button', disabled: busy, onclick: (/** @type {Event} */ e) => { e.stopPropagation(); this.reindex(b); } },
-      icon(busy ? 'loader-circle' : 'rotate-cw'), busy ? (known ? t('reindexing_n', { done: p?.done, total: p?.total }) : t('reindexing')) : t('reindex'));
-    const bar = busy ? h(`div.kb-index-bar${known ? '' : '.is-unknown'}`, h('i', known ? { style: { width: `${Math.min(100, ((p?.done ?? 0) / (p?.total ?? 1)) * 100)}%` } } : {})) : null;
-    return h('div.kb-index', h('div.kb-index-line', h('span.kb-index-stats', stats), reindex), bar);
+    const tile = (/** @type {string} */ name, /** @type {string} */ value) => h('div.kb-tile', { title: value }, h('small', name), h('b', value));
+    return h('div.kb-index',
+      tile(t('index.docs'), String(docs)),
+      tile(t('index.chunks'), String(chunks)),
+      tile(t('index.model'), this.embedding ?? t('index_model_none')),
+      tile(t('index.at'), Number.isFinite(at) ? new Date(at).toLocaleString(undefined, { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : t('index.never')),
+      busy ? h('div.kb-index-busy', h('span', known ? t('reindexing_n', { done: p?.done, total: p?.total }) : t('reindexing')),
+        h(`div.kb-index-bar${known ? '' : '.is-unknown'}`, h('i', known ? { style: { width: `${Math.min(100, ((p?.done ?? 0) / (p?.total ?? 1)) * 100)}%` } } : {}))) : null);
   }
 
   /** 搜到的一段：头一行「库名 / 路径 · 标题」，下面片段（Markdown，图不画，搜的字标出来）。 @param {import('./model.js').Hit} x */
@@ -347,60 +375,71 @@ export class KnowledgePage {
     }
     const own = writable(b);
     const docs = this.docs;
-    // 文档排成文件树（2026-10-20 项目主人）：文件夹一行（箭头、图标、名字、几篇），点了展开收起；里面的往右缩一层
+    // 文档排成文件树（2026-10-20 项目主人，看过样板选「缩进加竖线」）：文件夹一行（箭头、图标、名字，名字后面几篇），点了展开收起（里面的几行长出来、
+    // 收回去）；里面的往右缩一层，一层一道竖线落在上一层箭头的正下方，一行一道横线连过去，最后一行的竖线到它为止；行之间不画线
     const tree = docs ? treeOf([...docs.documents, ...docs.folders.map((d) => ({ ...d, dir: true }))]) : null;
-    /** @param {import('./model.js').TreeNode} node @param {number} depth @returns {HTMLElement[]} */
-    const rowsOf = (node, depth) => [
-      ...node.folders.flatMap((f) => {
+    const shift = this.selecting ? 36 : 14;
+    /**
+     * 一行的线：`anc[x]` 是第 x 层的竖线穿不穿过这一行（那一层的文件夹后面还有同级的）；自己那一层画 ├ 或 └，加一道横线连到箭头。
+     * @param {number} depth @param {boolean[]} anc @param {boolean} last
+     */
+    const linesOf = (depth, anc, last) => (depth ? [
+      ...anc.map((on, x) => (on ? h('i.kb-guide', { style: `left: ${shift + x * 20}px` }) : null)),
+      h(`i.kb-guide${last ? '.is-last' : ''}`, { style: `left: ${shift + (depth - 1) * 20}px` }),
+      h('i.kb-tick', { style: `left: ${shift + (depth - 1) * 20}px` }),
+    ] : []);
+    /** @param {import('./model.js').TreeNode} node @param {number} depth @param {boolean[]} anc @returns {HTMLElement[]} */
+    const rowsOf = (node, depth, anc) => [
+      ...node.folders.flatMap((f, i) => {
         const open = !this.closed.has(f.path);
-        const toggle = () => {
-          if (open) this.closed.add(f.path);
-          else this.closed.delete(f.path);
-          this.draw();
-        };
+        const last = i === node.folders.length - 1 && !node.docs.length;
+        const toggle = () => this.flip(f.path, open);
         const inside = pathsOf(f);
         const picked = this.selecting && inside.length > 0 && inside.every((p) => this.selected.has(p));
         const some = this.selecting && !picked && inside.some((p) => this.selected.has(p));
-        const armed = this.armed === `dir:${f.path}`;
-        // 文件夹悬停右边一个删除（点两下），删里面的全部（2026-10-20 项目主人：要能按文件夹删）
+        // 文件夹悬停右边一个删除（弹窗问一句），删里面的全部（2026-10-20 项目主人：要能按文件夹删）
         const remove = own && !this.selecting && inside.length
-          ? h(`button.set-btn.is-danger.kb-remove${armed ? '.is-armed' : ''}`, { type: 'button', title: t('remove_dir'), onclick: (/** @type {Event} */ e) => { e.stopPropagation(); this.removeMany(b, inside, `dir:${f.path}`, [f.path]); } },
-            icon('trash-2'), armed ? t('remove_confirm') : null)
+          ? h('button.icon-button.is-danger.kb-remove', { type: 'button', title: t('remove_dir'), 'aria-label': t('remove_dir'), onclick: (/** @type {Event} */ e) => { e.stopPropagation(); this.removeMany(b, inside, [f.path], /** @type {Element} */ (e.currentTarget), t('remove_ask', { name: f.name })); } },
+            icon('trash-2'))
           : null;
         const row = h(`div.kb-doc.is-dir.is-link${open ? '.is-open' : ''}${picked ? '.is-picked' : ''}`, {
-          role: 'button', tabindex: '0', 'aria-expanded': String(open), style: `--depth: ${depth}`,
+          role: 'button', tabindex: '0', 'aria-expanded': String(open), style: `--depth: ${depth}`, 'data-path': f.path,
           onclick: (/** @type {MouseEvent} */ e) => (this.selecting && !(/** @type {Element} */ (e.target)).closest('.kb-dir-arrow') ? this.pick(inside, order, false) : toggle()),
           onkeydown: (/** @type {KeyboardEvent} */ e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); toggle(); } },
-        }, this.selecting ? h('span.kb-check', icon(picked ? 'square-check' : some ? 'square-minus' : 'square')) : null,
-        h('span.kb-doc-icon', h('span.kb-dir-arrow', icon('chevron-right')), icon(open ? 'folder-open' : 'folder')),
-        h('div.kb-doc-text', h('span.kb-doc-path', f.name)), h('span.kb-doc-meta', t('dir_count', { n: countOf(f) })), remove);
-        return [row, ...(open ? rowsOf(f, depth + 1) : [])];
+        }, linesOf(depth, anc, last), this.selecting ? h('span.kb-check', icon(picked ? 'square-check' : some ? 'square-minus' : 'square')) : null,
+        h('span.kb-dir-arrow', icon('chevron-right')), h('span.kb-doc-icon', icon(open ? 'folder-open' : 'folder')),
+        h('span.kb-doc-path', f.name), h('span.kb-doc-count', t('dir_count', { n: countOf(f) })), remove);
+        return [row, ...(open ? rowsOf(f, depth + 1, depth ? [...anc, !last] : []) : [])];
       }),
-      ...node.docs.map((d) => this.docRow(b, d, !!d.dir, depth, order)),
+      ...node.docs.map((d, i) => this.docRow(b, d, !!d.dir, depth, order, linesOf(depth, anc, i === node.docs.length - 1))),
     ];
     /** 清单里文档的先后（`Shift` 连选照它） @type {string[]} */
     const order = tree ? pathsOf(tree) : [];
     const rows = !docs ? [] : [
-      ...this.uploading.map((name) => h('div.kb-doc.is-uploading', h('span.kb-doc-icon', icon('loader-circle')), h('div.kb-doc-text', h('span.kb-doc-path', name), h('span.kb-doc-note', t('uploading'))))),
-      ...(tree ? rowsOf(tree, 0) : []),
+      ...this.uploading.map((name) => h('div.kb-doc.is-uploading', h('span.kb-dir-arrow'), h('span.kb-doc-icon', icon('loader-circle')), h('div.kb-doc-text', h('span.kb-doc-path', name), h('span.kb-doc-note', t('uploading'))))),
+      ...(tree ? rowsOf(tree, 0, []) : []),
     ];
     const list = !docs ? null
       : docs.gone ? h('p.kb-empty.is-bad', t('folder_gone', { path: b.mount ?? '' }))
-      : rows.length ? h(`div.kb-docs${tree?.folders.length ? '.has-dirs' : ''}`, rows) : h('p.kb-empty', t('docs_empty'));
+      : rows.length ? h(`div.kb-docs${this.selecting ? '.is-selecting' : ''}`, rows) : h('p.kb-empty', t('docs_empty'));
     // 底下的数同卡片上的（核心数的是读得了的）：读不了的不算篇数，以前进过索引留着的旧块照算
     const readable = (docs?.documents ?? []).filter((d) => !d.reason).length;
     const chunks = (docs?.documents ?? []).reduce((n, d) => n + (d.chunks ?? 0), 0);
     const del = deletable(b)
-      ? h(`button.set-btn.is-danger${this.armed === 'base' ? '.is-armed' : ''}`, { type: 'button', onclick: () => this.deleteBase(b) },
-        icon('trash-2'), this.armed === 'base' ? t('delete_confirm', { name: b.name || b.id }) : t('delete'))
+      ? h('button.set-btn.is-danger', { type: 'button', onclick: (/** @type {Event} */ e) => this.deleteBase(b, /** @type {Element} */ (e.currentTarget)) }, icon('trash-2'), t('delete'))
       : null;
+    const busy = this.reindexing || b.indexing === true || this.progress?.kb === b.id;
+    const reindex = h('button.set-btn.kb-reindex', { type: 'button', disabled: busy, onclick: () => this.reindex(b) },
+      icon(busy ? 'loader-circle' : 'rotate-cw'), t(busy ? 'reindexing' : 'reindex'));
     return h('div.kb-base-page',
       h('div.kb-head', h('button.kb-back', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), t('back_list')), h('span.kb-head-id', b.id)),
-      this.card(b, false, this.indexBlock(b, docs ? readable : b.documents ?? 0, docs ? chunks : b.chunks ?? 0)),
+      this.card(b, false, true),
+      this.indexBlock(b, docs ? readable : b.documents ?? 0, docs ? chunks : b.chunks ?? 0),
       own ? this.dropZone(b) : null,
       own && tree && rows.length ? this.selectBar(tree) : null,
       list,
-      del ? h('div.kb-foot', h('span'), h('span.kb-foot-actions', del)) : null);
+      // 底下一条钉在设置框底边（2026-10-20 项目主人：重建索引放回原来的位置，删除弹窗问一句）：篇数、段数，右边重建索引、删除
+      h('div.kb-foot.set-pinned', h('span', t('foot', { docs: docs ? readable : b.documents ?? 0, chunks: docs ? chunks : b.chunks ?? 0 })), h('span.kb-foot-actions', reindex, del)));
   }
 
   /**
@@ -415,14 +454,38 @@ export class KnowledgePage {
       return h('div.kb-sel', btn('list-checks', t('select'), () => { this.selecting = true; this.selected = new Set(); this.lastPick = null; this.draw(); }));
     }
     const n = this.selected.size;
-    const armed = this.armed === 'many';
-    const del = btn('trash-2', armed ? t('remove_confirm') : t('remove'), () => { if (b) this.removeMany(b, [...this.selected], 'many', removalOf(tree, this.selected)); }, `.is-danger${armed ? '.is-armed' : ''}`);
+    const del = btn('trash-2', t('remove'), () => { if (b) this.removeMany(b, [...this.selected], removalOf(tree, this.selected), del, t('remove_many_ask', { n })); }, '.is-danger');
     if (!n) del.setAttribute('disabled', '');
     return h('div.kb-sel',
       h('span.kb-sel-count', t('selected_n', { n })),
       btn('check-check', t('select_all'), () => { this.selected = new Set(pathsOf(tree)); this.draw(); }),
       del,
       btn('x', t('select_exit'), () => { this.selecting = false; this.selected = new Set(); this.draw(); }));
+  }
+
+  /**
+   * 展开、收起一个文件夹（2026-10-20 项目主人：要有动画）：展开的重画以后里面的几行从 0 长到原来的高、淡进来；收起的先收回去、淡掉，走完再重画。
+   * 减少动画的直接换。
+   * @param {string} path @param {boolean} open 现在开着
+   */
+  flip(path, open) {
+    const inside = () => [...this.el.querySelectorAll('.kb-doc[data-path]')].filter((r) => /** @type {HTMLElement} */ (r).dataset.path?.startsWith(`${path}/`));
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!open) {
+      this.closed.delete(path);
+      this.draw();
+      if (!reduce) for (const r of inside()) r.animate([{ height: '0px', minHeight: '0px', opacity: 0 }, { height: `${/** @type {HTMLElement} */ (r).offsetHeight}px`, minHeight: '0px', opacity: 1 }], { duration: 200, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+      return;
+    }
+    const rows = inside();
+    this.closed.add(path);
+    if (reduce || !rows.length) {
+      this.draw();
+      return;
+    }
+    this.el.querySelector(`.kb-doc[data-path="${CSS.escape(path)}"]`)?.classList.remove('is-open');
+    const anims = rows.map((r) => r.animate([{ height: `${/** @type {HTMLElement} */ (r).offsetHeight}px`, minHeight: '0px', opacity: 1 }, { height: '0px', minHeight: '0px', opacity: 0 }], { duration: 170, easing: 'ease-in', fill: 'forwards' }));
+    anims[0].finished.then(() => this.draw(), () => {});
   }
 
   /**
@@ -444,28 +507,30 @@ export class KnowledgePage {
 
   /**
    * 文档清单的一行：图标、名字（在文件树里只写这一层的名字，悬停写全路径），右边「大小 · 日期」；读不了的下面一行红字。自己建的库悬停右边一个删除。
-   * `folder` 的是读不了的子目录。`depth` 是在文件树的第几层（往右缩）。
-   * @param {import('./model.js').Base} b @param {import('./model.js').Doc} d @param {boolean} [folder] @param {number} [depth]
+   * `folder` 的是读不了的子目录。`depth` 是在文件树的第几层（往右缩），`lines` 是它前面的竖线、横线。
+   * @param {import('./model.js').Base} b @param {import('./model.js').Doc} d @param {boolean} [folder] @param {number} [depth] @param {string[]} [order] @param {HTMLElement[]} [lines]
    */
-  docRow(b, d, folder = false, depth = 0, order = []) {
+  docRow(b, d, folder = false, depth = 0, order = [], lines = []) {
     const t = this.t;
     const why = reasonKey(d);
     const at = d.at ? Date.parse(d.at) : NaN;
     const meta = folder ? '' : [sizeText(d.size), Number.isFinite(at) ? new Date(at).toLocaleDateString() : ''].filter(Boolean).join(' · ');
-    const armed = this.armed === `doc:${d.path}`;
     const picking = this.selecting && writable(b) && !folder;
     const picked = picking && this.selected.has(d.path);
     const remove = writable(b) && !folder && !this.selecting
-      ? h(`button.set-btn.is-danger.kb-remove${armed ? '.is-armed' : ''}`, { type: 'button', title: t('remove'), onclick: (/** @type {Event} */ e) => { e.stopPropagation(); this.removeDoc(b, d.path); } },
-        icon('trash-2'), armed ? t('remove_confirm') : null)
+      ? h('button.icon-button.is-danger.kb-remove', { type: 'button', title: t('remove'), 'aria-label': t('remove'), onclick: (/** @type {Event} */ e) => { e.stopPropagation(); this.removeDoc(b, d, /** @type {Element} */ (e.currentTarget)); } },
+        icon('trash-2'))
       : null;
     const open = (/** @type {any} */ e) => {
       if (picking) return this.pick([d.path], order, !!e?.shiftKey);
       if (!folder) this.openRead(b.id, d.path, 1, null);
     };
     return h(`div.kb-doc${folder ? '.is-folder' : '.is-link'}${why ? '.is-bad' : ''}${picked ? '.is-picked' : ''}`,
-      { style: `--depth: ${depth}`, title: d.path, ...(folder ? {} : { role: 'button', tabindex: '0', onclick: open, onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' && e.target === e.currentTarget) open(e); } }) },
+      { style: `--depth: ${depth}`, title: d.path, 'data-path': d.path, ...(folder ? {} : { role: 'button', tabindex: '0', onclick: open, onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' && e.target === e.currentTarget) open(e); } }) },
+      lines,
       picking ? h('span.kb-check', icon(picked ? 'square-check' : 'square')) : null,
+      // 箭头那一格空着：同一层的文件、文件夹的图标、名字对齐
+      h('span.kb-dir-arrow'),
       h('span.kb-doc-icon', icon(folder ? 'folder' : docIcon(d.kind))),
       h('div.kb-doc-text', h('span.kb-doc-path', d.name ?? d.path), why ? h('span.kb-doc-note.is-bad', t(why)) : null),
       meta ? h('span.kb-doc-meta', meta) : null,
@@ -527,7 +592,6 @@ export class KnowledgePage {
   openBase(id) {
     this.view = { kind: 'base', id };
     this.docs = null;
-    this.armed = null;
     this.selecting = false;
     this.selected = new Set();
     this.draw();
@@ -550,7 +614,6 @@ export class KnowledgePage {
       return;
     }
     const v = this.view;
-    this.armed = null;
     if (v.kind === 'read') {
       this.view = v.from;
       if (v.from.kind === 'base') this.loadDocs(v.from.id).then(() => this.draw());
@@ -601,9 +664,10 @@ export class KnowledgePage {
     await this.reload();
   }
 
-  /** 删一篇：点一下变「确认删除」，三秒内再点才删。 @param {import('./model.js').Base} b @param {string} path */
-  async removeDoc(b, path) {
-    if (!this.arm(`doc:${path}`)) return;
+  /** 删一篇：先弹窗问一句（2026-10-20 项目主人：不要点一下变确认）。 @param {import('./model.js').Base} b @param {import('./model.js').Doc} d @param {Element} from */
+  async removeDoc(b, d, from) {
+    const path = d.path;
+    if (!await this.kit.confirm(from, this.t('remove_ask', { name: d.name ?? path }))) return;
     try {
       await this.ctx.core.request('kb.remove', { kb: b.id, path });
       this.kit.toast(this.t('removed'));
@@ -614,12 +678,13 @@ export class KnowledgePage {
   }
 
   /**
-   * 删几样（多选、一个文件夹）：点两下（`key` 记着点的是哪个）。核心 b03598e2 起 `kb.remove` 的 `path` 收文件夹、`paths` 收几样（有一样不在的
+   * 删几样（多选、一个文件夹）：先弹窗问一句。核心 b03598e2 起 `kb.remove` 的 `path` 收文件夹、`paths` 收几样（有一样不在的
    * 一样都不删）：`targets` 照它交；旧核心不认 `paths` 的，照 `docs` 一篇篇删。删完提示几篇。
-   * @param {import('./model.js').Base} b @param {string[]} docs 要删的每一篇 @param {string} key @param {string[]} [targets] 交给核心的（文件夹、文档）
+   * @param {import('./model.js').Base} b @param {string[]} docs 要删的每一篇 @param {string[]} targets 交给核心的（文件夹、文档）
+   * @param {Element} from 点的按钮 @param {string} ask 问的那句
    */
-  async removeMany(b, docs, key, targets = docs) {
-    if (!docs.length || !this.arm(key)) return;
+  async removeMany(b, docs, targets, from, ask) {
+    if (!docs.length || !await this.kit.confirm(from, ask)) return;
     let done = 0;
     try {
       await this.ctx.core.request('kb.remove', targets.length === 1 ? { kb: b.id, path: targets[0] } : { kb: b.id, paths: targets });
@@ -645,9 +710,9 @@ export class KnowledgePage {
     await this.reload();
   }
 
-  /** 删库：同上，删了回到卡片。 @param {import('./model.js').Base} b */
-  async deleteBase(b) {
-    if (!this.arm('base')) return;
+  /** 删库：先弹窗问「确认删除这个库吗？」，删了回到卡片。 @param {import('./model.js').Base} b @param {Element} from */
+  async deleteBase(b, from) {
+    if (!await this.kit.confirm(from, this.t(sourceOf(b) === 'mount' ? 'delete_ask_mount' : 'delete_ask'))) return;
     try {
       await this.ctx.core.request('kb.delete', { kb: b.id });
       this.kit.toast(this.t(sourceOf(b) === 'mount' ? 'deleted_mount' : 'deleted_own'));
@@ -672,22 +737,6 @@ export class KnowledgePage {
     this.reindexing = false;
     this.progress = null;
     await this.reload();
-  }
-
-  /**
-   * 点两下才办：第一下记着、重画成「确认」，三秒内再点交真；别的交假。
-   * @param {string} key
-   */
-  arm(key) {
-    clearTimeout(this.armTimer);
-    if (this.armed === key) {
-      this.armed = null;
-      return true;
-    }
-    this.armed = key;
-    this.draw();
-    this.armTimer = setTimeout(() => { if (this.armed === key) { this.armed = null; this.draw(); } }, ARM_MS);
-    return false;
   }
 
   // —— 别的 ——
