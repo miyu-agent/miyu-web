@@ -12,7 +12,7 @@ import { openServerForm } from './mcp-form.js';
 import { confirmIn } from './confirm.js';
 import {
   skillItem, scriptItem, mcpItems, switchValue, featureId, loadingParams, SOURCES, inSource, sourceOf, toolMatch, homeDir, shortTool,
-  editable, commandLine, flip, range,
+  editable, commandLine, flip, range, maskedValue, maskedPairs,
 } from './tool-model.js';
 
 /** 三页的图标 */
@@ -355,7 +355,12 @@ function toolDetail(dialog, kind, id) {
     if (typeof s.path === 'string') rows.push(line(t('tools.field.path'), h('code.set-tool-code', { title: s.path }, s.path)));
     if (kind === 'scripts' && typeof s.timeout === 'number') rows.push(line(t('tools.field.timeout'), t('tools.timeout_s', { seconds: s.timeout })));
   } else {
-    rows.push(line(t('tools.field.command'), h('code.set-tool-code', { title: commandLine(s.command) }, commandLine(s.command))));
+    // 网址的服务（核心 X-32 上）没有命令、带 `url`：写地址；令牌、请求头、环境变量照约定遮住（引用照常写名字）
+    if (typeof s.url === 'string') rows.push(line(t('tools.field.url'), h('code.set-tool-code', { title: s.url }, s.url)));
+    else rows.push(line(t('tools.field.command'), h('code.set-tool-code', { title: commandLine(s.command) }, commandLine(s.command))));
+    if (s.bearer != null) rows.push(line(t('tools.field.bearer'), h('code.set-tool-code', maskedValue(s.bearer))));
+    if (s.headers && Object.keys(s.headers).length) rows.push(line(t('tools.field.headers'), h('code.set-tool-code', maskedPairs(s.headers))));
+    if (s.env && Object.keys(s.env).length) rows.push(line(t('tools.field.env'), h('code.set-tool-code', maskedPairs(s.env))));
     if (Array.isArray(s.tools) && s.tools.length) {
       rows.push(h('div.set-row.is-wide', h('div.set-text', h('div.set-name', h('span', t('tools.field.tools')))),
         h('div.set-tool-list', s.tools.map((/** @type {string} */ name) => h('code.set-tool-chip', shortTool(item.name, name))))));
@@ -393,7 +398,8 @@ function serverActions(dialog, item) {
     } }, t('tools.restart')));
   }
   if (!item.own) return out;
-  if (editable(dialog.skills)) out.push(h('button.set-btn', { type: 'button', onclick: () => openServerForm(dialog, s) }, t('tools.edit')));
+  // 网址的服务等 `mcp.set` 收 `url`、`bearer`、`headers`（X-32 下）合进 main 再给编辑
+  if (editable(dialog.skills) && typeof s.url !== 'string') out.push(h('button.set-btn', { type: 'button', onclick: () => openServerForm(dialog, s) }, t('tools.edit')));
   const remove = h('button.set-btn.is-danger', { type: 'button', onclick: async () => {
     if (!await confirmIn(remove, { text: t('tools.delete_ask', { name: item.name }), yes: t('ask_yes'), no: t('ask_no') })) return;
     try {

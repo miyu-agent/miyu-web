@@ -523,7 +523,11 @@
           "timeout": "时限",
           "load": "加载方式",
           "command": "命令",
-          "tools": "工具"
+          "tools": "工具",
+          "url": "地址",
+          "bearer": "令牌",
+          "headers": "请求头",
+          "env": "环境变量"
         },
         "timeout_s": "{seconds} 秒",
         "load_set": "个人设置里改过",
@@ -917,7 +921,11 @@
           "timeout": "Time limit",
           "load": "Loading",
           "command": "Command",
-          "tools": "Tools"
+          "tools": "Tools",
+          "url": "URL",
+          "bearer": "Token",
+          "headers": "Headers",
+          "env": "Environment"
         },
         "timeout_s": "{seconds} s",
         "load_set": "Changed in personal settings",
@@ -1311,7 +1319,11 @@
           "timeout": "制限時間",
           "load": "読み込み方法",
           "command": "コマンド",
-          "tools": "ツール"
+          "tools": "ツール",
+          "url": "アドレス",
+          "bearer": "トークン",
+          "headers": "リクエストヘッダー",
+          "env": "環境変数"
         },
         "timeout_s": "{seconds} 秒",
         "load_set": "個人設定で変更済み",

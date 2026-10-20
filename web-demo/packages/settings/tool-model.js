@@ -261,3 +261,16 @@ export function range(selected, order, from, to) {
   for (const id of order.slice(Math.min(a, b), Math.max(a, b) + 1)) next.add(id);
   return next;
 }
+
+/**
+ * 环境变量、令牌、请求头在详情里怎么显示（扩展线 X-32 下的约定：`mcp.list` 照原样交回这几格，显示时遮住，只在编辑框里给全）：
+ * 写成引用的（`{env:X}`、`{secret:X}`）只是名字，照常写；字一律写成一串圆点。
+ * @param {any} v
+ */
+export function maskedValue(v) {
+  if (v && typeof v === 'object' && (typeof v.env === 'string' || typeof v.secret === 'string')) return envShown(v);
+  return '••••••';
+}
+
+/** 一组键值（环境变量、请求头）在详情里写成一行：`KEY=••••••  KEY2={env:X}` @param {Record<string, any>|undefined} map */
+export const maskedPairs = (map) => Object.entries(map ?? {}).map(([k, v]) => `${k}=${maskedValue(v)}`).join('  ');

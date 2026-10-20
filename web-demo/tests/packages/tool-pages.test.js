@@ -162,3 +162,12 @@ test('软件包页的技能、脚本筛选照 skill.list、script.list 的 packa
   assert.deepEqual(carriedBy(null, null), { skills: new Set(), scripts: new Set() });
   assert.ok(PKG_FILTERS.indexOf('skill') < PKG_FILTERS.indexOf('mcp'));
 });
+
+test('MCP 详情里环境变量、令牌、请求头遮住（扩展线 X-32 下的约定）：字写成圆点，写成引用的照常写名字', async () => {
+  const { maskedValue, maskedPairs } = await import('../../packages/settings/tool-model.js');
+  assert.equal(maskedValue('sk-123456'), '••••••');
+  assert.equal(maskedValue({ env: 'GITHUB_TOKEN' }), '{env:GITHUB_TOKEN}');
+  assert.equal(maskedValue({ secret: 'gh' }), '{secret:gh}');
+  assert.equal(maskedPairs({ A: 'x', B: { env: 'B_KEY' } }), 'A=••••••  B={env:B_KEY}');
+  assert.equal(maskedPairs(undefined), '');
+});
