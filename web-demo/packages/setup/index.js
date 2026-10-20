@@ -141,7 +141,7 @@ export function apply(ctx) {
     const inProject = !!project;
     const title = session ? chat.title?.(session) ?? null : null;
     const sig = JSON.stringify([session, draft, cwd, catalog.personas?.length ?? -1, catalog.presets?.length ?? -1, catalog.personaDefault, catalog.presetDefault,
-      used, session ? [chat.persona(session), chat.preset(session)] : null, project && [project.project, project.name, chat.projectColor?.(project.color)], title]);
+      used, session ? [chat.persona(session), chat.preset(session), chat.defaultWorkdirOf?.(session) ?? null] : null, project && [project.project, project.name, chat.projectColor?.(project.color)], title]);
     if (!force && sig === drawn) return;
     drawn = sig;
     if (!session) {
@@ -178,7 +178,9 @@ export function apply(ctx) {
     ctx.composer.lock(null);
     const persona = chat.persona(session);
     const preset = chat.preset(session);
-    const path = tilde(cwd, home());
+    // 在这个会话自己的默认工作区里的写「默认工作区」，悬停看完整的（2026-10-20 项目主人：一个会话一个子目录，那串路径看不出意思）
+    const own = chat.defaultWorkdirOf?.(session) ?? null;
+    const path = own && cwd === own ? t('default_workspace') : tilde(cwd, home());
     // 主会话（2026-10-19 项目主人第三版）：左上角写标题（项目里的前面多「项目名 /」，点项目名进项目页），点标题出菜单：人格、预设、工作区（原来平铺在这一条上）
     if (!chat.parentOf?.(session)) {
       const titleBtn = h('button.setup-info-part.is-title', { type: 'button', title: title ?? '', 'aria-haspopup': 'menu', onclick: () => openInfo(titleBtn, persona, preset, path) },
@@ -193,7 +195,7 @@ export function apply(ctx) {
     replace(info,
       persona ? [h('span.setup-info-part', icon('user-round'), h('b', nameOf(persona))), sep()] : null,
       preset ? [h('span.setup-info-part', icon('toggle-right'), h('b', presetNameOf(preset))), sep()] : null,
-      pathBtn = h('button.setup-info-part.is-path', { type: 'button', title: path, onclick: () => openWorkspaces(pathBtn ?? info, true) }, icon('folder'), h('span', path)));
+      pathBtn = h('button.setup-info-part.is-path', { type: 'button', title: tilde(cwd, home()), onclick: () => openWorkspaces(pathBtn ?? info, true) }, icon('folder'), h('span', path)));
     info.hidden = false;
   };
 
@@ -302,8 +304,10 @@ export function apply(ctx) {
   /** 工作区的菜单：默认工作区、最近用过的、「选择文件夹…」（2026-10-08 项目主人：不要手写路径的框；要写路径用 `/workspace 路径`）。 @param {HTMLElement} anchor @param {boolean} below */
   const openWorkspaces = (anchor, below) => {
     const def = chat.defaultWorkdir();
+    // 开着的会话的「默认」是它自己的那一个（核心 5-14 中）；点了照旧交账号的工作区，核心换成这个会话自己的
+    const own = chat.current() ? chat.defaultWorkdirOf?.(chat.current()) ?? null : null;
     const now = chat.current() ? chat.workdir() : chat.draft().cwd ?? def;
-    const others = recent().filter((p) => p !== def);
+    const others = recent().filter((p) => p !== def && p !== own);
     const which = below ? infoMenu : menu;
     which.show(anchor, {
       title: t('set_workspace'),
@@ -311,7 +315,7 @@ export function apply(ctx) {
       action: { icon: 'folder-open', title: t('folders.open_short'), run: () => browse(ctx, which, anchor, below, now, pickDir, (p) => tilde(p, home())) },
       below,
       rows: [
-        { title: t('default_workspace'), desc: tilde(def, home()), current: now === def, pick: () => pickDir(def) },
+        { title: t('default_workspace'), desc: tilde(own ?? def, home()), current: now === def || (!!own && now === own), pick: () => pickDir(def) },
         ...(others.length ? [{ section: t('recent') }] : []),
         ...others.map((p) => ({ title: dirName(tilde(p, home())), desc: tilde(p, home()), current: now === p, pick: () => pickDir(p) })),
       ],

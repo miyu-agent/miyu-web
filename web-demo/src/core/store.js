@@ -18,7 +18,7 @@ import { ViewLog, VIEW_PUSHES } from './view.js';
  *   `first` 读进来的最早一条的序号，`more` 还有更早的（`view.page`），`paged` 往前翻过，`older` 正在读更早的一页
  */
 /**
- * @typedef {{upto: number, usage: any, permission: {level: string, read_only: boolean}|null, jobs: any[]|null, workspace: {cwd: string, dirs?: string[]}|null}} Base
+ * @typedef {{upto: number, usage: any, permission: {level: string, read_only: boolean}|null, jobs: any[]|null, workspace: {cwd: string, dirs?: string[]}|null, defaultWorkspace: string|null}} Base
  *   订阅回应里「这一刻的」：累计用量、权限级别、还在跑的任务、工作区（会话状态里也有，之后照 `view.status` 换）
  */
 
@@ -163,7 +163,9 @@ export class Store {
     s.limits = r.limits ?? s.limits ?? {};
     s.model = r.status?.model ?? r.model ?? null;
     s.todos = r.status?.todos ?? r.todos ?? [];
-    s.base = { upto: r.last ?? 0, usage: r.usage ?? null, permission: r.permission ?? null, jobs: r.jobs ?? null, workspace: r.workspace ?? null };
+    s.base = { upto: r.last ?? 0, usage: r.usage ?? null, permission: r.permission ?? null, jobs: r.jobs ?? null, workspace: r.workspace ?? null,
+      // 这个会话自己的默认工作区（核心 5-14 中：没选目录的会话一个会话一个子目录）：`cwd` 和它一样的写「默认工作区」
+      defaultWorkspace: typeof r.default_workspace === 'string' ? r.default_workspace : null };
   }
 
   /**
@@ -178,13 +180,14 @@ export class Store {
     // 目录是人选的（或者照上一次会话预选上的）带 `chosen`：太宽也照用，回应带 `wide`（核心 9-7 补，2026-10-09 项目主人：手动选的别自动切）
     // 在项目里开的带 `project`（核心 H-2）：没写的人格、预设核心照项目的
     const who = persona === false ? { persona: null } : persona ? { persona } : {};
-    const { session, wide } = await this.conn.request('session.create', {
+    const { session, wide, cwd: used } = await this.conn.request('session.create', {
       cwd, ...(model ? { model } : {}), ...who, ...(preset ? { preset } : {}), ...(chosen ? { chosen: true } : {}), ...(project ? { project } : {}),
     });
     /** 刚开的这个会话的目录太宽（照人选的用着）：外面照它提醒一句 */
     this.createdWide = wide === true ? session : null;
     // 推送还没到时先记上，左栏当场有它
-    this.index.seed(session, { cwd, ...(project ? { project } : {}) });
+    // 没选目录的核心另给这个会话一个子目录（核心 5-14 上），照回应的记
+    this.index.seed(session, { cwd: typeof used === 'string' ? used : cwd, ...(project ? { project } : {}) });
     await this.load(session);
     this.changed();
     return session;

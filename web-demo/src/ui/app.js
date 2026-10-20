@@ -520,6 +520,18 @@ export class App {
     return s?.view.status?.workspace?.cwd ?? s?.base?.workspace?.cwd ?? this.cwd;
   }
 
+  /**
+   * 一个会话自己的默认工作区（核心 5-14 中的 `default_workspace`：订阅回应的，没有的照会话列表那一项）；旧核心没给的是 `null`。
+   * @param {string|null} id
+   */
+  defaultWorkdirOf(id) {
+    if (!id) return null;
+    const own = this.store.sessions.get(id)?.base?.defaultWorkspace;
+    if (own) return own;
+    const listed = /** @type {any} */ (this.store.index.get(id))?.default_workspace;
+    return typeof listed === 'string' ? listed : null;
+  }
+
   /** 开到第几轮（换模型照它认选的生效没有）：照最后一条的回合。 @param {any} s */
   turnsOf(s) {
     return s ? lastTurn(s.view.list) : 0;
@@ -964,7 +976,7 @@ export class App {
     this.crumbs.draw(path);
     this.back?.draw(path.length > 1 ? path[path.length - 2] : null);
     // 回答里的本机地址、结果里的图照这个会话取（工作目录照 `session.created`）
-    this.chat.setWhere(this.current, this.current ? this.workdir() : null);
+    this.chat.setWhere(this.current, this.current ? this.workdir() : null, this.defaultWorkdirOf(this.current));
     // 子会话的父会话照会话表（按页读时 `session.created` 可能还在没读的页里）
     const parent = this.current ? this.store.index.get(this.current)?.parent ?? null : null;
     const again = this.recapsAgain.get(this.current ?? '') ?? [];

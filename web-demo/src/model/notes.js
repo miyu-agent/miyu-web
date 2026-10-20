@@ -4,7 +4,7 @@
 //! 记号在 `layout.json` 的 `note_marks`。
 
 import { res, t } from '../util/res.js';
-import { short } from './format.js';
+import { short, tilde } from './format.js';
 import { shortSession } from './words.js';
 
 /**
@@ -164,4 +164,13 @@ export function failureText(f) {
   const hint = status != null ? res.text.status_hints[String(status)] : null;
   if (hint) return message ? t('reason_with', { head: hint, message }) : hint;
   return message || classes[cls] || cls;
+}
+
+/**
+ * 换了工作区那一行的字：换回这个会话自己的默认工作区的写「工作区：默认工作区」（核心 5-14 中的 `default_workspace`；2026-10-20 项目主人：
+ * 一个会话一个子目录，那串路径看不出意思），别的写路径（家目录写 `~`）。
+ * @param {string} path @param {string|null} def @param {string|null} home
+ */
+export function workspaceText(path, def, home) {
+  return t('notes.workspace', { path: def && path === def ? t('notes.default_workspace') : tilde(path, home) });
 }
