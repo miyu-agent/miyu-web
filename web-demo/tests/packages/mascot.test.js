@@ -112,21 +112,7 @@ test('肚子上的灯（lamp）：亮着时圈里铺上灯，灭着圈里是身�
   assert.ok(on.flat().some((c) => c?.part === 'belly'), '圈还在');
 });
 
-test('抱着电脑不露嘴（hush）：没有锯齿线、没有嘴里，那几格照脸画；眼睛、肚子照旧（2026-10-20 项目主人）', () => {
-  const open = render(look, pose({ hush: true }), size).flat().filter(Boolean);
-  assert.ok(!open.some((c) => c.part === 'line' || c.part === 'mouth'));
-  assert.ok(open.some((c) => c.part === 'eye') && open.some((c) => c.part === 'belly'));
-  const talking = render(look, pose({ hush: true, mouth: 1 }), size).flat().filter(Boolean);
-  assert.ok(!talking.some((c) => c.part === 'mouth'), '张着嘴的也不画');
-  // 和平常比，少掉的格子都成了头
-  assert.equal(open.length, render(look, pose(), size).flat().filter(Boolean).length);
-});
-
-test('锯齿线正中只剩一个细尖：正中那一点在 0（2026-10-20 项目主人：中间嘴巴的地方不要加厚）', () => {
-  assert.deepEqual(look.face.line[3], [0, 0]);
-  // 正中那一列的锯齿线最多两格（原来上 2 格下 4 格叠成一小块）
-  const cells = render(look, pose(), size);
-  const mid = Math.floor(config.cols / 2);
-  const lineRows = cells.filter((row) => row[mid]?.part === 'line' || row[mid - 1]?.part === 'line').length;
-  assert.ok(lineRows <= 2, String(lineRows));
+test('锯齿线正中那一点在 [0, 0.06]（2026-10-20 项目主人又挑的，终端同一组数）', () => {
+  assert.deepEqual(look.face.line[3], [0.0, 0.06]);
+  assert.equal(look.face.line.length, 7);
 });

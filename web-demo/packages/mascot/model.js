@@ -15,10 +15,9 @@
  *   crouch_drop?: number, crouch_squish?: number}} Look 迈步时鳍抬多高、前后迈多远（`stride_lift`、`stride_swing`）；蹲到底头往下沉
  *   多少、压扁多少（头的半径为 1）
  * @typedef {{yaw: number, pitch: number, blink: boolean, ear: number, stride?: number, crouch?: number, mouth?: number, turn?: number,
- *   lamp?: boolean, hush?: boolean}} Pose
+ *   lamp?: boolean}} Pose
  *   这一帧：头朝哪、闭没闭眼、耳朵往外多歪（弧度）、迈到哪（-1 到 1：正的左鳍往前迈、抬起来，负的右鳍）、蹲多深（0 到 1；负的往上
- *   抻长）、嘴张多大（0 合着、1 张到最大）、整个身子转多少度（侧身走路；鳍也跟着转，`yaw` 是头在这上面再看哪）、肚子上的灯亮没亮、
- *   不露嘴（`hush`：抱着电脑的时候，锯齿线、嘴照脸的颜色画；2026-10-20 项目主人，终端同一条）
+ *   抻长）、嘴张多大（0 合着、1 张到最大）、整个身子转多少度（侧身走路；鳍也跟着转，`yaw` 是头在这上面再看哪）、肚子上的灯亮没亮
  * @typedef {{part: Part|'eye'|'line'|'mouth'|'belly'|'lamp', level: number}} Cell 一格：哪一块、第几档亮（0 最暗）；`line` 是嘴那道锯齿线，
  *   `mouth` 是张开的嘴里，`belly` 是肚子上那盏灯的圈，`lamp` 是灯亮着时圈里
  */
@@ -55,7 +54,7 @@ export function render(look, pose, grid) {
         // 蹲下以后头沉下去、压扁了：打中的那一点换回头原来的坐标再对脸
         const p = hit.point;
         const local = [p[0] / bend.sx, (p[1] + bend.drop) / bend.sy, p[2]];
-        const mark = hit.part === 'head' ? onFace(look.face, local, pose.blink, pose.mouth ?? 0, !!pose.lamp, !!pose.hush) : null;
+        const mark = hit.part === 'head' ? onFace(look.face, local, pose.blink, pose.mouth ?? 0, !!pose.lamp) : null;
         if (mark) {
           tally[mark] += 1;
           continue;
@@ -151,23 +150,20 @@ function shoot(pieces, head, x, y) {
  * 头上这一点落没落在脸上：只看正面，位置用头朝前时的 x、y。闭着眼时没有眼睛。嘴是那道锯齿线：`open`（0 到 1）张开时上下两排
  * 各往外挪一半，中间是嘴里；肚子上的圈是一盏灯：一圈线，亮着时圈里是灯（2026-09-30 项目主人定：那个圈不是嘴，当作灯，会闪）。
  */
-function onFace(face, p, blink, open, lamp, hush = false) {
+function onFace(face, p, blink, open, lamp) {
   if (p[2] <= 0) return null;
   const q = [p[0], p[1]];
   if (!blink && face.eyes.some(([a, b]) => segment(q, a, b) < face.eye_width)) return 'eye';
-  // 不露嘴的（抱着电脑）：锯齿线、嘴都不画，那几格照脸的颜色
-  if (!hush) {
-    const line = face.line;
-    const half = (open * face.mouth_gap) / 2;
-    const [x0, x1] = [line[0][0], line[line.length - 1][0]];
-    if (half > face.line_width && q[0] > x0 && q[0] < x1) {
-      const y = zigzagAt(line, q[0]);
-      if (q[1] < y + half && q[1] > y - half) return 'mouth';
-    }
-    const at = (pt, dy) => [pt[0], pt[1] + dy];
-    for (let i = 1; i < line.length; i++) {
-      for (const dy of half > 0 ? [half, -half] : [0]) if (segment(q, at(line[i - 1], dy), at(line[i], dy)) < face.line_width) return 'line';
-    }
+  const line = face.line;
+  const half = (open * face.mouth_gap) / 2;
+  const [x0, x1] = [line[0][0], line[line.length - 1][0]];
+  if (half > face.line_width && q[0] > x0 && q[0] < x1) {
+    const y = zigzagAt(line, q[0]);
+    if (q[1] < y + half && q[1] > y - half) return 'mouth';
+  }
+  const at = (pt, dy) => [pt[0], pt[1] + dy];
+  for (let i = 1; i < line.length; i++) {
+    for (const dy of half > 0 ? [half, -half] : [0]) if (segment(q, at(line[i - 1], dy), at(line[i], dy)) < face.line_width) return 'line';
   }
   const m = face.belly;
   const dx = Math.abs(q[0] - m.center[0]) - (m.half[0] - m.round);
