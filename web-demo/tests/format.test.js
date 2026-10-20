@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { short, hitRate, percentTenths, clock, seconds } from '../src/model/format.js';
-import { bytes, noStop } from '../src/lib/format.js';
+import { bytes, noStop, contextPercent } from '../src/lib/format.js';
 
 test('token 写短：一千以下照写，一千以上 k、一百万以上 M，一位小数，整的不写小数', () => {
   assert.equal(short(950), '950');
@@ -57,4 +57,11 @@ test('提示不要句末的句号：去掉一个「。」「.」，省略号留�
   assert.equal(noStop('正在回顾…'), '正在回顾…');
   assert.equal(noStop('Loading...'), 'Loading...');
   assert.equal(noStop('已复制 3 个字'), '已复制 3 个字');
+});
+
+test('上下文占窗口几成：整数百分比，不到 1% 的写 <1%', () => {
+  assert.equal(contextPercent(50_000, 1_000_000), '5%');
+  assert.equal(contextPercent(4_800, 1_000_000), '<1%');
+  assert.equal(contextPercent(199_000, 200_000), '100%');
+  assert.equal(contextPercent(0, 200_000), '0%');
 });

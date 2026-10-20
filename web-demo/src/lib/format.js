@@ -94,3 +94,9 @@ export function bytes(n) {
 export function noStop(text) {
   return text.replace(/(?<!\.)[。.]$/u, '');
 }
+
+/** 上下文占窗口几成（全部会话的用量，2026-10-20 项目主人：「5% · 累计 3.9k」）：整数的百分比，用了一点又不到 1% 的写「<1%」。 @param {number} used @param {number} window */
+export function contextPercent(used, window) {
+  const pct = (used / window) * 100;
+  return pct > 0 && pct < 1 ? '<1%' : `${Math.round(pct)}%`;
+}

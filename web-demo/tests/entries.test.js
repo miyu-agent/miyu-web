@@ -106,7 +106,7 @@ test('旁白：压缩、清空、后台任务、换了模型、工作区、别�
     'note: 后台命令完成 · 跑测试',
     'note: 后台命令失败 · 编译',
     'note: 已切换到 dev/m2（原模型出错）',
-    'note: 工作区：/home/a/src',
+    'note: 工作区切换：/home/a/src',
     'note: 会话 bcd-1111 等待超时',
     'note: [asking]',
     'note: ',

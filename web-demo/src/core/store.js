@@ -18,7 +18,7 @@ import { ViewLog, VIEW_PUSHES } from './view.js';
  *   `first` 读进来的最早一条的序号，`more` 还有更早的（`view.page`），`paged` 往前翻过，`older` 正在读更早的一页
  */
 /**
- * @typedef {{upto: number, usage: any, permission: {level: string, read_only: boolean}|null, jobs: any[]|null, workspace: {cwd: string, dirs?: string[]}|null, defaultWorkspace: string|null}} Base
+ * @typedef {{upto: number, usage: any, permission: {level: string, read_only: boolean}|null, jobs: any[]|null, workspace: {cwd: string, dirs?: string[]}|null, defaultWorkspace: string|null, compactable?: boolean|null}} Base
  *   订阅回应里「这一刻的」：累计用量、权限级别、还在跑的任务、工作区（会话状态里也有，之后照 `view.status` 换）
  */
 
@@ -165,7 +165,9 @@ export class Store {
     s.todos = r.status?.todos ?? r.todos ?? [];
     s.base = { upto: r.last ?? 0, usage: r.usage ?? null, permission: r.permission ?? null, jobs: r.jobs ?? null, workspace: r.workspace ?? null,
       // 这个会话自己的默认工作区（核心 5-14 中：没选目录的会话一个会话一个子目录）：`cwd` 和它一样的写「默认工作区」
-      defaultWorkspace: typeof r.default_workspace === 'string' ? r.default_workspace : null };
+      defaultWorkspace: typeof r.default_workspace === 'string' ? r.default_workspace : null,
+      // 这时压缩有没有东西可压（核心 86097c26：判法同 `session.compact` 回不回 `nothing_to_compact`；旧核心没有是 `null`）
+      compactable: typeof r.compactable === 'boolean' ? r.compactable : null };
   }
 
   /**

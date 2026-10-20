@@ -368,7 +368,7 @@
     },
     "changed": "Switched to {to} (previous model failed)",
     "model_replaced": "{from} unavailable, switched to {to}",
-    "workspace": "Workspace: {path}",
+    "workspace": "Workspace switched: {path}",
     "default_workspace": "Default workspace",
     "module": {
       "round": "{name} · Round {round}",
@@ -405,7 +405,11 @@
     "sort_created": "Date created",
     "agents_running": "{count} subagents running",
     "project_meta": "{count} sessions · {when}",
-    "project_none": "No sessions yet"
+    "project_none": "No sessions yet",
+    "context": "Context {used}/{window}",
+    "context_bare": "Context {used}",
+    "total": "Total {tokens}",
+    "total_short": "total {tokens}"
   },
   "turn_end": {
     "restarted": "Restarted",

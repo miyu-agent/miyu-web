@@ -42,6 +42,12 @@ export function apply(ctx) {
     defaultWorkdir: () => app.cwd,
     /** 一个会话自己的默认工作区（核心 5-14 中；旧核心是 `null`） */
     defaultWorkdirOf: (/** @type {string|null} */ id) => app.defaultWorkdirOf(id),
+    /** 这个会话这时压缩有没有东西可压（核心 86097c26 的 `compactable`：视图流推来的先，订阅回应的后；旧核心没有是 `null`） */
+    compactable: (/** @type {string} */ id) => {
+      const s = app.store.sessions.get(id);
+      const v = s?.view.status?.compactable ?? s?.base?.compactable;
+      return typeof v === 'boolean' ? v : null;
+    },
     /** 还没开的新会话选的人格、预设、工作区：开会话时带上（事件 `draft.changed`） */
     draft: () => ({ ...app.draft }),
     setDraft: (patch) => app.setDraft(patch),

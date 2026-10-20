@@ -38,7 +38,7 @@ test('出错那一句：402、404 加人话；内核自己查出来的写分类�
 
 test('换了工作区那一行：换回会话自己的默认工作区写「默认工作区」，别的写路径（家目录写 ~），旧核心没给默认的照路径', () => {
   const def = '/home/a/.miyu/home/admin/workspace/0199a000-0000-7000-8000-000000000002';
-  assert.equal(workspaceText(def, def, '/home/a'), '工作区：默认工作区');
-  assert.equal(workspaceText('/home/a/src', def, '/home/a'), '工作区：~/src');
-  assert.equal(workspaceText(def, null, '/home/a'), '工作区：~/.miyu/home/admin/workspace/0199a000-0000-7000-8000-000000000002');
+  assert.equal(workspaceText(def, def, '/home/a'), '工作区切换：默认工作区');
+  assert.equal(workspaceText('/home/a/src', def, '/home/a'), '工作区切换：~/src');
+  assert.equal(workspaceText(def, null, '/home/a'), '工作区切换：~/.miyu/home/admin/workspace/0199a000-0000-7000-8000-000000000002');
 });

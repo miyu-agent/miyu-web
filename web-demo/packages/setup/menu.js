@@ -19,13 +19,17 @@ import { h, icon, replace } from '../../src/lib/dom.js';
  */
 
 export class Menu {
-  constructor() {
+  /** @param {string} [backLabel] 返回箭头的提示 */
+  constructor(backLabel = '') {
+    this.backLabel = backLabel;
     this.el = h('div.setup-menu', { hidden: true, role: 'menu' });
     /** @type {{el: HTMLElement, row: Row}[]} */
     this.items = [];
     this.at = -1;
     /** @type {View|null} */
     this.view = null;
+    /** 换一屏时框的大小正在缓过去的那段动画 @type {Animation|null} */
+    this.sizing = null;
     this.onKey = (/** @type {KeyboardEvent} */ e) => {
       if (e.key === 'Escape') this.close();
       else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') this.mark(this.next(e.key === 'ArrowDown' ? 1 : -1));
@@ -45,6 +49,8 @@ export class Menu {
 
   /** 在 `anchor` 旁边打开一屏（已经开着的换成这一屏）：`below` 开在它下面（左上角那一条），不然开在上面。 @param {HTMLElement} anchor @param {View} view */
   show(anchor, view) {
+    // 开着换一屏的：记下原来多大，换完从原来的大小缓到新的（2026-10-20 项目主人：宽的会话信息换到窄的换人格没有动画）
+    const before = this.el.hidden ? null : { width: this.el.offsetWidth, height: this.el.offsetHeight };
     this.anchor = anchor;
     this.view = view;
     this.items = [];
@@ -62,27 +68,60 @@ export class Menu {
           type: 'button', title: r.action.title, 'aria-label': r.action.title, onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(),
           onclick: (/** @type {MouseEvent} */ e) => { e.stopPropagation(); r.action?.run(); },
         }, icon(r.action.icon)) : null,
-        r.more ? h('span.setup-menu-more', icon('chevron-right')) : r.label != null ? null : icon('check'));
+        // 现在的那一项不打勾、名字照 accent 色，右边不留打勾的空档（2026-10-20 项目主人）
+        r.more ? h('span.setup-menu-more', icon('chevron-right')) : null);
       if (!r.still) this.items.push({ el, row: r });
       return el;
     });
     replace(this.el,
-      view.title ? h('div.setup-menu-head', h('strong.setup-menu-name', view.title),
+      // 翻进来的一页（有 `back` 的）：标题前面一个返回的箭头（2026-10-19 项目主人：子菜单要有返回的箭头）
+      view.title ? h('div.setup-menu-head',
+        view.back ? h('button.setup-menu-back', { type: 'button', title: this.backLabel, 'aria-label': this.backLabel, onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(), onclick: () => view.back?.() }, icon('chevron-left')) : null,
+        h('strong.setup-menu-name', view.title),
         view.action ? h('button.setup-menu-action', { type: 'button', title: view.action.title, 'aria-label': view.action.title, onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(), onclick: () => view.action?.run() }, icon(view.action.icon)) : null) : null,
       h('div.setup-menu-list', nodes, view.note ? h('div.setup-menu-note', view.note) : null),
       view.foot?.length ? h('div.setup-menu-foot', view.foot) : null);
     this.el.classList.toggle('is-below', !!view.below);
-    this.el.style.left = `${anchor.offsetLeft}px`;
+    // 只有一句话和按钮的一屏（问一句的：换人格前的确认）：话照正文的颜色、大一点
+    this.el.classList.toggle('is-ask', !view.rows.length && !!view.note);
+    // 左边对齐：左上角那一条里的按钮开的，和那一条的左边对齐（不是按钮自己的左边，差一截内边距；2026-10-20 项目主人：没对齐）
+    const edge = /** @type {HTMLElement} */ (anchor.closest('.setup-info') ?? anchor);
+    this.el.style.left = `${edge.offsetLeft}px`;
     const wasOpen = !this.el.hidden;
     this.el.hidden = false;
     // 开着菜单的那个按钮：箭头跟着朝下（左上角的标题）
     if (anchor.getAttribute('aria-haspopup') === 'menu') anchor.setAttribute('aria-expanded', 'true');
     this.fit();
+    if (before) this.resize(before);
     this.mark(Math.max(0, this.items.findIndex((x) => x.row.current && !x.row.off)));
     if (!wasOpen) {
       document.addEventListener('keydown', this.onKey, true);
       document.addEventListener('pointerdown', this.onDown, true);
     }
+  }
+
+  /**
+   * 换了一屏：框从原来的宽高缓到现在的（0.22 秒，里面的字先藏着），里面的新内容跟着淡进来；一样大的只淡进来。减少动画的直接换。
+   * 量的是排版的大小（`offsetWidth`）：页面整个缩放了的（界面缩放），`getBoundingClientRect` 量出来的是放大以后的，缓到它会大一圈再跳回去。
+   * @param {{width: number, height: number}} before
+   */
+  resize(before) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const after = { width: this.el.offsetWidth, height: this.el.offsetHeight };
+    this.sizing?.cancel();
+    const same = Math.abs(after.width - before.width) < 1 && Math.abs(after.height - before.height) < 1;
+    const ease = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+    if (!same) {
+      this.el.style.overflow = 'hidden';
+      this.sizing = this.el.animate([
+        { width: `${before.width}px`, height: `${before.height}px` },
+        { width: `${after.width}px`, height: `${after.height}px` },
+      ], { duration: 220, easing: ease });
+      const done = () => { this.el.style.overflow = ''; this.sizing = null; };
+      this.sizing.onfinish = done;
+      this.sizing.oncancel = done;
+    }
+    for (const kid of this.el.children) kid.animate([{ opacity: 0 }, { opacity: 1 }], { duration: same ? 140 : 200, delay: same ? 0 : 40, easing: 'ease-out', fill: 'backwards' });
   }
 
   /** 放不下（空会话里输入框在窗口中间，上面地方少）：列表那一截矮下去，整个菜单留在窗口里。 */

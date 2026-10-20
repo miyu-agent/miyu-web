@@ -368,7 +368,7 @@
     },
     "changed": "{to} に切り替えました：元のモデルでエラー",
     "model_replaced": "{from} がなくなったため {to} に戻しました",
-    "workspace": "ワークスペース：{path}",
+    "workspace": "ワークスペース切り替え：{path}",
     "default_workspace": "既定のワークスペース",
     "module": {
       "round": "{name} · {round} ラウンド目",
@@ -405,7 +405,11 @@
     "sort_created": "作成日順",
     "agents_running": "サブエージェント {count} 件が実行中",
     "project_meta": "{count} 件のセッション · {when}",
-    "project_none": "まだセッションがありません"
+    "project_none": "まだセッションがありません",
+    "context": "コンテキスト {used}/{window}",
+    "context_bare": "コンテキスト {used}",
+    "total": "合計 {tokens}",
+    "total_short": "累計 {tokens}"
   },
   "turn_end": {
     "restarted": "再起動しました",
