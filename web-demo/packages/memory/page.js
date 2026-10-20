@@ -4,7 +4,7 @@
 //! `memory` 流，推来的重读（停 300 毫秒并成一次）。一页是一个常驻的对象：设置页重画、关了再开交回的是同一块，写了一半的字还在。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { CLASSES, TEXT_MAX, KEYWORDS_MAX, chars, counts, visible, hasKeywords, updateOf, canSave, saveNote, shortId, agoText, isRetired } from './model.js';
+import { CLASSES, TEXT_MAX, KEYWORDS_MAX, chars, counts, visible, hasKeywords, updateOf, canSave, saveNote, shortId, agoText, isRetired, tidying } from './model.js';
 
 /** 一次列几条（滚到底再多读一批） */
 const PAGE = 200;
@@ -41,6 +41,8 @@ export class MemoryPage {
     /** 核心认不认关键词（R-15 上）：读到过一条带这一格的就一直算认（搜不到东西、列表空着时也不收起关键词那一行） */
     this.keywords = false;
     this.dreaming = false;
+    /** 后台自己在整理的几批（`upto`）：有就在顶上一排下面写「正在整理…」（第 12 条） @type {Set<number|string>} */
+    this.background = new Set();
     /** 出错（没装记忆、这里没有记忆）：整页一张卡 @type {string|null} */
     this.problem = null;
     this.loaded = false;
@@ -134,6 +136,8 @@ export class MemoryPage {
     if (!this.persona || this.subscribed === this.persona) return;
     this.unsubscribe();
     this.subscribed = this.persona;
+    // 换了一份、重订了：后台在整理的从头记（流只推新的）
+    this.background = new Set();
     await this.ctx.core.request('subscribe', { stream: 'memory', persona: this.persona }).catch(() => {
       this.subscribed = null;
     });
@@ -157,6 +161,9 @@ export class MemoryPage {
       this.unsubscribe();
       return;
     }
+    const was = this.background.size > 0;
+    this.background = tidying(this.background, params.event);
+    if (was !== this.background.size > 0) this.drawTidying();
     clearTimeout(this.reloadTimer);
     this.reloadTimer = setTimeout(() => this.reload(), PUSH_MS);
   }
@@ -223,10 +230,21 @@ export class MemoryPage {
       icon('trash-2'), this.armed ? t('clear_confirm', { name }) : t('clear'));
     return h('div.mem-list-page',
       h('div.mem-tools', picker, h('label.mem-find', icon('search'), find), dream, add),
+      this.tidyingLine(),
       this.adding ? this.addForm() : null,
       chips,
       h('div.mem-list', rows, more),
       h('div.mem-foot', h('span', t(retiredCount ? 'foot_retired' : 'foot', { live: c.all, retired: retiredCount })), clear));
+  }
+
+  /** 后台在整理的那一行（第 12 条）：没在整理的留一个藏着的空位，推来时只换它，不重画列表 */
+  tidyingLine() {
+    return h('p.mem-tidying', { hidden: this.background.size === 0 }, icon('loader-circle'), this.t('tidying'));
+  }
+
+  drawTidying() {
+    const line = this.el.querySelector('.mem-tidying');
+    if (line instanceof HTMLElement) line.hidden = this.background.size === 0;
   }
 
   /** 一条一行。 @param {import('./model.js').Memory} m */
