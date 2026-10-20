@@ -84,7 +84,9 @@ export class Menu {
     this.el.classList.toggle('is-below', !!view.below);
     // 只有一句话和按钮的一屏（问一句的：换人格前的确认）：话照正文的颜色、大一点
     this.el.classList.toggle('is-ask', !view.rows.length && !!view.note);
-    this.el.style.left = `${anchor.offsetLeft}px`;
+    // 左边对齐：左上角那一条里的按钮开的，和那一条的左边对齐（不是按钮自己的左边，差一截内边距；2026-10-20 项目主人：没对齐）
+    const edge = /** @type {HTMLElement} */ (anchor.closest('.setup-info') ?? anchor);
+    this.el.style.left = `${edge.offsetLeft}px`;
     const wasOpen = !this.el.hidden;
     this.el.hidden = false;
     // 开着菜单的那个按钮：箭头跟着朝下（左上角的标题）
