@@ -314,7 +314,8 @@ export function apply(ctx) {
           closed: ({ changed }) => {
             const session = chat.current();
             const using = session ? (kind === 'persona' ? chat.persona(session) : chat.preset(session)) : null;
-            if (changed && session && using === id) askCompact(kind, session, back);
+            // 没有能压缩的（`compactable` 是假）不问、直接回列表（终端一样）
+            if (changed && session && using === id && ctx.chat.compactable?.(session) !== false) askCompact(kind, session, back);
             else back();
           },
         });
