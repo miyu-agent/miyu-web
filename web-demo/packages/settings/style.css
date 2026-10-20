@@ -326,7 +326,7 @@ body > .set-ask { z-index: 95; }
 .set-body:has(> .set-fill), .set-slide:has(> .set-fill) { display: flex; flex-direction: column; }
 .set-slide:has(> .set-fill) { flex: 1 0 auto; }
 .set-fill { flex: 1 0 auto; }
-.set-pinned { position: sticky; bottom: -24px; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: auto -24px -24px; padding: 6px 24px 8px; background: color-mix(in srgb, var(--surface) 55%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: var(--text-faint); font-size: 12.5px; }
+.set-pinned { position: sticky; bottom: -24px; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: auto -24px -24px; padding: 6px 24px 8px; background: color-mix(in srgb, var(--surface) 94%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); color: var(--text-faint); font-size: 12.5px; }
 .set-seg { display: inline-flex; gap: 2px; border-radius: 8px; width: fit-content; }
 .set-seg-item { height: 24px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer; }
 .set-seg-item:hover { background: var(--surface-2); color: var(--text); }
