@@ -2,7 +2,7 @@
 //! 人叫的整理那一块下面的星空（蓝图 `web.md`「记忆页」第 13 条；2026-10-20 项目主人看过几版样板选的「星空」，底色跟主题）：
 //! 一条记忆一颗星——形状有四角闪光、六角星、菱形、小圆点，大小不一（多数小、少数亮的大星），颜色在几种蓝、青、淡紫里换、偶尔一颗暖金，
 //! 各自照自己的节奏闪；背后一层很淡的星尘，偶尔划过一颗流星（只是背景，不代表记忆）。
-//! 读进来的一条（`given`）在空地上慢慢淡入（不爆一下）；作废了、说了留下的是哪条的（`kept`）像流星一样拖着尾巴滑进那一颗，那颗闪一下、大一点；
+//! 读进来的一条（`given`）在空地上慢慢淡入（不爆一下；一批一下交来很多条的排队一颗接一颗出来，隔 `STAGGER_MS`）；作废了、说了留下的是哪条的（`kept`）像流星一样拖着尾巴滑进那一颗，那颗闪一下、大一点；
 //! 过时作废、没并进别的淡掉；改写的闪一下；一批合完了（`merged`），留下的星之间连起淡淡的星座线（每颗连最近的一两颗，太远的不连）；
 //! 整理完从中间一颗起，顺着星座线一颗颗闪亮。放不下的（同一时刻多于 80 颗）：更早的、整理过的缩成背景里的星尘。
 //! 只管星在哪、什么样、连着谁（`step` 推一帧）；画在 `dream.js` 的画布上。
@@ -27,6 +27,8 @@ const SHAPES = ['sparkle', 'sparkle', 'star6', 'diamond', 'dot', 'dot'];
 export const MAX_STARS = 80;
 /** 找空地时试几处，取离别的星最远的那处 */
 const TRIES = 24;
+/** 一批一下交来很多条的：排队一颗接一颗出来，隔多久一颗（2026-10-20 项目主人：一百多颗一瞬间全出来，很不合理） */
+export const STAGGER_MS = 55;
 
 const ease = (/** @type {number} */ t) => 1 - (1 - Math.max(0, Math.min(1, t))) ** 3;
 
@@ -55,6 +57,8 @@ export class Sky {
     this.doneAt = 0;
     /** 老核心不带 `given`、只说了一批几条的：编号自己编 */
     this.anon = 0;
+    /** 排着队的最后一颗什么时候出来 */
+    this.queueAt = 0;
     // 背景里一层很淡、很小、不动的星尘（位置是比例，换了大小跟着走）
     const rnd = seeded('dust');
     /** @type {Dust[]} */
@@ -105,8 +109,11 @@ export class Sky {
     const big = rnd();
     const size = big > 0.9 ? 6 + rnd() * 2.5 : big > 0.65 ? 4 + rnd() * 1.5 : 2.2 + rnd() * 1.6;
     const shape = size > 5.5 ? 'sparkle' : SHAPES[Math.floor(rnd() * SHAPES.length)];
+    // 排队：前面还有没出来的，接在最后一颗后面 `STAGGER_MS`
+    const born = Math.max(now, this.queueAt);
+    this.queueAt = born + STAGGER_MS;
     /** @type {Star} */
-    const s = { id, x, y, born: now, color, size, shape, rot: rnd() * Math.PI / 4, phase: rnd() * 6.28, speed: 0.6 + rnd() * 1.2,
+    const s = { id, x, y, born, color, size, shape, rot: rnd() * Math.PI / 4, phase: rnd() * 6.28, speed: 0.6 + rnd() * 1.2,
       alpha: 0, into: null, gone: false, fading: false, fadeAt: 0, lit: 0, settled: false, dusting: false, dustAt: 0, trail: [] };
     this.stars.push(s);
     this.byId.set(id, s);
@@ -148,7 +155,8 @@ export class Sky {
         const key = [s.id, o.id].sort().join('\n');
         if (has.has(key)) continue;
         has.add(key);
-        this.links.push({ a: s, b: o, at: now + seeded(key)() * 500 });
+        // 两颗都出来了才长线（排着队还没出来的等它）
+        this.links.push({ a: s, b: o, at: Math.max(now, s.born, o.born) + seeded(key)() * 500 });
       }
     }
   }
@@ -191,7 +199,7 @@ export class Sky {
   /** 推一帧：淡入、滑着的滑过去、淡着的淡掉、缩成星尘的缩掉；偶尔放一颗流星 @param {number} now @param {boolean} reduce */
   step(now, reduce) {
     for (const s of this.stars) {
-      if (s.gone) continue;
+      if (s.gone || now < s.born) continue;
       s.alpha = reduce ? 1 : Math.min(1, s.alpha + 0.02);
       if (s.into) {
         // 留下的那颗也被并走了：跟着滑到最后留下的
@@ -290,7 +298,7 @@ export class Sky {
     }
     const dim = this.doneAt ? 0.8 + 0.2 * Math.max(0, 1 - (now - this.doneAt - 2500) / 1500) : 1;
     for (const s of this.stars) {
-      if (s.gone) continue;
+      if (s.gone || now < s.born) continue;
       let a = s.alpha * dim;
       if (s.fading) a *= Math.max(0, 1 - (now - s.fadeAt) / 1100);
       if (s.dusting) a *= Math.max(0, 1 - (now - s.dustAt) / 1200);

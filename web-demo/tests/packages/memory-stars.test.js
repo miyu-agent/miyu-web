@@ -84,3 +84,15 @@ test('老核心只说一批几条：照条数出星', () => {
   s.addMany(3, 0);
   assert.equal(s.live().length, 3);
 });
+
+test('一批一下交来很多条：排队一颗接一颗出来，不一瞬间全冒出来', async () => {
+  const { STAGGER_MS } = await import('../../packages/memory/stars.js');
+  const s = new Sky();
+  s.resize(600, 120);
+  for (let i = 1; i <= 100; i++) s.add(`m${i}`, 1000);
+  const born = s.stars.map((x) => x.born);
+  assert.equal(born[0], 1000);
+  assert.equal(born[99], 1000 + 99 * STAGGER_MS);
+  s.step(1100, false);
+  assert.ok(s.stars.filter((x) => x.alpha > 0).length <= 3, '0.1 秒时只出来头两三颗');
+});
