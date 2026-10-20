@@ -270,6 +270,12 @@ export function apply(ctx) {
    * @param {HTMLElement} anchor @param {string} session @param {{persona?: string|null, preset?: string}} change @param {() => void} back
    */
   const confirmSwitch = (anchor, session, change, back) => {
+    // 没有能压缩的（核心的 `compactable` 是假）：不问、直接换（2026-10-20 项目主人：没什么可压缩的，切换就不应该提示要压缩；终端一样）
+    if (ctx.chat.compactable?.(session) === false) {
+      infoMenu.close();
+      ctx.core.request('session.configure', { session, ...change }).catch((/** @type {any} */ err) => ctx.composer.say(err?.message ?? String(err)));
+      return;
+    }
     const button = (/** @type {string} */ label, /** @type {boolean} */ primary, /** @type {() => void} */ onclick) => h(`button.setup-menu-btn${primary ? '.is-primary' : ''}`, { type: 'button', onclick }, label);
     infoMenu.show(anchor, {
       title: t(change.preset ? 'info.switch_preset' : 'info.switch_persona'), below: true, back,
