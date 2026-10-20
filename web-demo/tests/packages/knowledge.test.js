@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sourceOf, writable, deletable, reasonKey, idFor, nextId, validId, sizeText, docIcon, hitHead, probeOf, treeOf, countOf } from '../../packages/knowledge/model.js';
+import { sourceOf, writable, deletable, reasonKey, idFor, nextId, validId, sizeText, docIcon, hitHead, probeOf, treeOf, countOf, pathsOf, folderAt } from '../../packages/knowledge/model.js';
 
 test('来源：随包的、挂的只读，随包的不能删', () => {
   const own = { id: 'notes' };
@@ -75,4 +75,15 @@ test('文件树：照路径一层层分，文件夹在前、文件在后，各�
   assert.equal(countOf(notes), 3);
   assert.equal(countOf(root), 5);
   assert.deepEqual(treeOf([]), { name: '', path: '', folders: [], docs: [] });
+});
+
+test('一个文件夹里（连子文件夹）每一篇的路径：多选勾文件夹、删文件夹照它；读不了的子目录不算', () => {
+  const tree = treeOf([
+    { path: 'a.md' }, { path: 'docs/b.md' }, { path: 'docs/new/c.md' }, { path: 'docs/locked', dir: true },
+  ]);
+  assert.deepEqual(pathsOf(tree).sort(), ['a.md', 'docs/b.md', 'docs/new/c.md']);
+  const docs = folderAt(tree, 'docs');
+  assert.ok(docs);
+  assert.deepEqual(pathsOf(/** @type {any} */ (docs)).sort(), ['docs/b.md', 'docs/new/c.md']);
+  assert.equal(folderAt(tree, 'nope'), null);
 });

@@ -132,3 +132,18 @@ export function treeOf(docs) {
 export function countOf(node) {
   return node.docs.filter((d) => !d.dir).length + node.folders.reduce((n, f) => n + countOf(f), 0);
 }
+
+/** 一个文件夹里（连子文件夹）每一篇的路径（多选勾文件夹、删文件夹照它；读不了的子目录不算） @param {TreeNode} node @returns {string[]} */
+export function pathsOf(node) {
+  return [...node.docs.filter((d) => !d.dir).map((d) => d.path), ...node.folders.flatMap(pathsOf)];
+}
+
+/** 照路径找文件树里的一个文件夹 @param {TreeNode} root @param {string} path @returns {TreeNode|null} */
+export function folderAt(root, path) {
+  if (root.path === path) return root;
+  for (const f of root.folders) {
+    const got = folderAt(f, path);
+    if (got) return got;
+  }
+  return null;
+}

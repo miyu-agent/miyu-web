@@ -47,6 +47,8 @@
 @media (prefers-reduced-motion: reduce) { .kb-modal, .kb-modal .kb-create { animation: none; } }
 /* 新建 */
 .kb-create { display: grid; gap: 8px; padding: 12px; border-radius: 12px; background: var(--surface-1); box-shadow: var(--card-shadow); }
+/* 新建的小窗照设置框的底（2026-10-20 项目主人：卡片背景为什么这么淡） */
+.kb-modal .kb-create { background: var(--surface); }
 .kb-create .set-input { width: 100%; }
 .kb-tabs { display: flex; gap: 6px; }
 .kb-tab { height: 26px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--surface-2); color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer; }
@@ -73,9 +75,12 @@
 .kb-doc { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 10px; align-items: center; min-height: 40px; padding: 7px 10px; border-radius: 10px; }
 .kb-doc.is-link { cursor: pointer; }
 /* 文件树（2026-10-20）：往右缩一层 18px；文件夹那一行前面一个箭头，开着的转下来 */
-.kb-doc { padding-left: calc(10px + var(--depth, 0) * 18px); }
+.kb-doc { padding-left: calc(10px + var(--depth, 0) * 20px); }
 /* 有文件夹的：每一行都留出箭头那一格，同一层的文件、文件夹名字对齐 */
-.kb-docs.has-dirs .kb-doc { padding-left: calc(26px + var(--depth, 0) * 18px); }
+.kb-docs.has-dirs .kb-doc { padding-left: calc(26px + var(--depth, 0) * 20px); }
+/* 文件树一层一道细竖线（2026-10-20 项目主人：子文件夹在哪个文件夹里看不出来）：第 n 层左边 n 道，对着上一层的文件夹图标 */
+.kb-docs.has-dirs .kb-doc::after { content: ''; position: absolute; top: 0; bottom: 0; left: 33px; width: calc(var(--depth, 0) * 20px); pointer-events: none;
+  background: repeating-linear-gradient(to right, var(--line-strong, var(--line)) 0 1px, transparent 1px 20px); }
 .kb-doc.is-dir .kb-doc-icon { display: flex; align-items: center; gap: 2px; margin-left: -16px; }
 .kb-dir-arrow { display: inline-grid; width: 14px; place-items: center; color: var(--text-faint); transition: transform 0.15s ease; }
 .kb-dir-arrow .icon { width: 12px; height: 12px; }
@@ -119,3 +124,29 @@
   .kb-doc { grid-template-columns: auto minmax(0, 1fr) auto; }
   .kb-doc-meta { display: none; }
 }
+
+/* 库里卡片下半截的索引信息：一行数、右边重建；建着的时候一道进度条 */
+.kb-card > .kb-index { grid-column: 2 / -1; display: grid; gap: 8px; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--line); }
+.kb-index-line { display: flex; align-items: center; gap: 12px; }
+.kb-index-stats { flex: 1; min-width: 0; color: var(--text-faint); font-size: 12.5px; }
+.kb-index .kb-reindex { flex: none; }
+.kb-index .kb-reindex .icon { width: 14px; height: 14px; }
+.kb-index .kb-reindex:disabled .icon { animation: kb-spin 0.9s linear infinite; }
+@keyframes kb-spin { to { transform: rotate(360deg); } }
+.kb-index-bar { position: relative; height: 4px; overflow: hidden; border-radius: 2px; background: var(--surface-2); }
+.kb-index-bar > i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 2px; background: var(--accent); transition: width 0.3s ease; }
+.kb-index-bar.is-unknown > i { width: 30%; animation: kb-bar 1.2s ease-in-out infinite; }
+@keyframes kb-bar { from { left: -30%; } to { left: 100%; } }
+/* 多选那一排、勾选框 */
+.kb-sel { display: flex; align-items: center; justify-content: flex-end; gap: 4px; min-height: 32px; }
+.kb-sel-count { margin-right: auto; color: var(--text-soft); font-size: 13px; }
+.kb-sel-btn { width: 30px; height: 30px; border-radius: 8px; }
+.kb-sel-btn .icon { width: 16px; height: 16px; }
+.kb-sel-btn.is-danger { color: var(--danger); }
+.kb-sel-btn.is-armed { background: color-mix(in srgb, var(--danger) 16%, transparent); }
+.kb-sel-btn:disabled { opacity: 0.45; cursor: default; }
+.kb-check { display: grid; flex: none; place-items: center; width: 16px; margin-right: 6px; color: var(--text-faint); }
+.kb-check .icon { width: 15px; height: 15px; }
+.kb-doc.is-picked .kb-check { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .kb-index-bar.is-unknown > i, .kb-index .kb-reindex:disabled .icon { animation: none; } }
+.kb-doc:has(> .kb-check) { grid-template-columns: auto auto minmax(0, 1fr) auto auto; }

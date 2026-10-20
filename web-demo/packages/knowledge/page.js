@@ -5,7 +5,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { upload, serial } from '../../src/lib/upload.js';
-import { sourceOf, writable, deletable, reasonKey, idFor, nextId, sizeText, docIcon, hitHead, probeOf, treeOf, countOf } from './model.js';
+import { sourceOf, writable, deletable, reasonKey, idFor, nextId, sizeText, docIcon, hitHead, probeOf, treeOf, countOf, pathsOf } from './model.js';
 
 /** 搜索框停多久再问、删除要几秒内再点一下、搜几段 */
 const TYPE_MS = 250;
@@ -51,6 +51,16 @@ export class KnowledgePage {
     /** @type {any} */
     this.armTimer = 0;
     this.reindexing = false;
+    /** 建索引的进度（核心推来的 `kb.indexing {kb, done, total}`；自己点了、还没推来的是 `{kb}`） @type {{kb: string, done?: number, total?: number}|null} */
+    this.progress = null;
+    /** 语义模型（配置项 `models.embedding`；索引信息里写） @type {string|null} */
+    this.embedding = null;
+    /** 多选：开着没有、勾了哪几篇（照路径）、上一次点的（`Shift` 连选） */
+    this.selecting = false;
+    /** @type {Set<string>} */
+    this.selected = new Set();
+    /** @type {string|null} */
+    this.lastPick = null;
     /** 文件树里收起来的文件夹（照路径） @type {Set<string>} */
     this.closed = new Set();
     /** 旧核心没有 `kb.*`：整页一张卡 */
@@ -61,6 +71,16 @@ export class KnowledgePage {
     this.queue = serial();
     // `Esc` 在一个库里、看原文时回上一层：设置框在捕获阶段拿到 `Esc`，找带 `data-set-dismiss` 的发 `set-dismiss`（`dialog.js` 的 `onKey`）
     this.el.addEventListener('set-dismiss', () => this.back());
+    // 建索引的进度（核心 2026-10-20 排着的 `kb.indexing`、`kb.indexed`；没推的照点了以后来回走）
+    ctx.core.onPush?.((/** @type {string} */ method, /** @type {any} */ p) => {
+      if (method === 'kb.indexing' && typeof p?.kb === 'string') {
+        this.progress = { kb: p.kb, done: p.done, total: p.total };
+        if (this.view.kind === 'base' && this.view.id === p.kb) this.draw();
+      } else if (method === 'kb.indexed' && typeof p?.kb === 'string' && this.progress?.kb === p.kb && !this.reindexing) {
+        this.progress = null;
+        if (this.loaded) this.reload();
+      }
+    });
   }
 
   /** 设置页画这一页：每次打开重读库的列表，交回同一块。 @param {any} kit */
@@ -76,10 +96,13 @@ export class KnowledgePage {
   /** 重读库的列表（和软件包的名字），在库里的连文档清单，搜着的连搜到的。 */
   async reload() {
     try {
-      const [got, pkgs] = await Promise.all([
+      const [got, pkgs, cfg] = await Promise.all([
         this.ctx.core.request('kb.list', {}),
         this.packages.size ? null : this.ctx.core.request('package.list', {}).catch(() => null),
+        this.ctx.core.request('config.get', { keys: ['models.embedding'] }).catch(() => null),
       ]);
+      const emb = cfg?.items?.['models.embedding']?.value;
+      this.embedding = typeof emb === 'string' && emb && emb !== 'off' ? emb : null;
       this.bases = Array.isArray(got?.bases) ? got.bases : [];
       for (const p of pkgs?.packages ?? []) this.packages.set(p.package, p.name ?? p.package);
       this.old = false;
@@ -192,12 +215,13 @@ export class KnowledgePage {
    * 一个库的卡片：名字、说明、「N 篇 · 来源」（读不了的换成红字），右边「自动想起」。`open` 的点了进这个库。
    * @param {import('./model.js').Base} b @param {boolean} open
    */
-  card(b, open) {
+  card(b, open, index = null) {
     const t = this.t;
     const src = sourceOf(b);
+    // 自己建的不写「自己建的」（2026-10-20 项目主人）
     const from = src === 'package' ? t('source.package', { name: this.packages.get(/** @type {string} */ (b.package)) ?? b.package })
-      : src === 'mount' ? t('source.mount', { path: b.mount }) : t('source.own');
-    const meta = b.error ? h('p.kb-card-meta.is-bad', b.error) : h('p.kb-card-meta', [t('docs_n', { n: b.documents ?? 0 }), from].join(' · '));
+      : src === 'mount' ? t('source.mount', { path: b.mount }) : null;
+    const meta = b.error ? h('p.kb-card-meta.is-bad', b.error) : h('p.kb-card-meta', [t('docs_n', { n: b.documents ?? 0 }), from].filter(Boolean).join(' · '));
     const auto = h('label.kb-auto', { title: t('auto_hint'), onclick: (/** @type {Event} */ e) => e.stopPropagation() },
       h('span', t('auto')), this.kit.toggle(!!b.auto, (/** @type {boolean} */ on) => this.setAuto(b, on)));
     const attrs = open
@@ -205,8 +229,30 @@ export class KnowledgePage {
       : {};
     return h(`div.kb-card${open ? '.is-link' : ''}${this.fresh === b.id ? '.is-fresh' : ''}`, attrs,
       h('span.kb-card-icon', icon(src === 'mount' ? 'folder' : src === 'package' ? 'package' : 'library')),
-      h('div.kb-card-text', h('div.kb-card-name', b.name || b.id), b.description ? h('p.kb-card-desc', b.description) : null, meta),
-      auto);
+      h('div.kb-card-text', h('div.kb-card-name', b.name || b.id), b.description ? h('p.kb-card-desc', b.description) : null, index ? null : meta),
+      auto, index);
+  }
+
+  /**
+   * 库里那张卡片下半截的索引信息（2026-10-20 项目主人：重建索引要有进度，索引信息也要有卡片）：「N 篇 · N 段 · 语义模型 X · 上次建好 时刻」，右边「重建索引」；
+   * 建着的时候下面一道进度条（核心推来 `done`、`total` 的写「正在重建 done / total」，没有的来回走）。
+   * @param {import('./model.js').Base} b @param {number} docs @param {number} chunks
+   */
+  indexBlock(b, docs, chunks) {
+    const t = this.t;
+    const at = b.indexed_at ? Date.parse(b.indexed_at) : NaN;
+    const busy = this.reindexing || b.indexing === true || this.progress?.kb === b.id;
+    const p = this.progress?.kb === b.id ? this.progress : null;
+    const known = !!p && typeof p.total === 'number' && p.total > 0 && typeof p.done === 'number';
+    const stats = [
+      t('foot', { docs, chunks }),
+      t('index_model', { name: this.embedding ?? t('index_model_none') }),
+      Number.isFinite(at) ? t('index_at', { when: new Date(at).toLocaleString() }) : null,
+    ].filter(Boolean).join(' · ');
+    const reindex = h('button.set-btn.kb-reindex', { type: 'button', disabled: busy, onclick: (/** @type {Event} */ e) => { e.stopPropagation(); this.reindex(b); } },
+      icon(busy ? 'loader-circle' : 'rotate-cw'), busy ? (known ? t('reindexing_n', { done: p?.done, total: p?.total }) : t('reindexing')) : t('reindex'));
+    const bar = busy ? h(`div.kb-index-bar${known ? '' : '.is-unknown'}`, h('i', known ? { style: { width: `${Math.min(100, ((p?.done ?? 0) / (p?.total ?? 1)) * 100)}%` } } : {})) : null;
+    return h('div.kb-index', h('div.kb-index-line', h('span.kb-index-stats', stats), reindex), bar);
   }
 
   /** 搜到的一段：头一行「库名 / 路径 · 标题」，下面片段（Markdown，图不画，搜的字标出来）。 @param {import('./model.js').Hit} x */
@@ -312,15 +358,28 @@ export class KnowledgePage {
           else this.closed.delete(f.path);
           this.draw();
         };
-        const row = h(`div.kb-doc.is-dir.is-link${open ? '.is-open' : ''}`, {
-          role: 'button', tabindex: '0', 'aria-expanded': String(open), style: { '--depth': String(depth) }, onclick: toggle,
+        const inside = pathsOf(f);
+        const picked = this.selecting && inside.length > 0 && inside.every((p) => this.selected.has(p));
+        const some = this.selecting && !picked && inside.some((p) => this.selected.has(p));
+        const armed = this.armed === `dir:${f.path}`;
+        // 文件夹悬停右边一个删除（点两下），删里面的全部（2026-10-20 项目主人：要能按文件夹删）
+        const remove = own && !this.selecting && inside.length
+          ? h(`button.set-btn.is-danger.kb-remove${armed ? '.is-armed' : ''}`, { type: 'button', title: t('remove_dir'), onclick: (/** @type {Event} */ e) => { e.stopPropagation(); this.removeMany(b, inside, `dir:${f.path}`); } },
+            icon('trash-2'), armed ? t('remove_confirm') : null)
+          : null;
+        const row = h(`div.kb-doc.is-dir.is-link${open ? '.is-open' : ''}${picked ? '.is-picked' : ''}`, {
+          role: 'button', tabindex: '0', 'aria-expanded': String(open), style: `--depth: ${depth}`,
+          onclick: (/** @type {MouseEvent} */ e) => (this.selecting && !(/** @type {Element} */ (e.target)).closest('.kb-dir-arrow') ? this.pick(inside, order, false) : toggle()),
           onkeydown: (/** @type {KeyboardEvent} */ e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); toggle(); } },
-        }, h('span.kb-doc-icon', h('span.kb-dir-arrow', icon('chevron-right')), icon(open ? 'folder-open' : 'folder')),
-        h('div.kb-doc-text', h('span.kb-doc-path', f.name)), h('span.kb-doc-meta', t('dir_count', { n: countOf(f) })));
+        }, this.selecting ? h('span.kb-check', icon(picked ? 'square-check' : some ? 'square-minus' : 'square')) : null,
+        h('span.kb-doc-icon', h('span.kb-dir-arrow', icon('chevron-right')), icon(open ? 'folder-open' : 'folder')),
+        h('div.kb-doc-text', h('span.kb-doc-path', f.name)), h('span.kb-doc-meta', t('dir_count', { n: countOf(f) })), remove);
         return [row, ...(open ? rowsOf(f, depth + 1) : [])];
       }),
-      ...node.docs.map((d) => this.docRow(b, d, !!d.dir, depth)),
+      ...node.docs.map((d) => this.docRow(b, d, !!d.dir, depth, order)),
     ];
+    /** 清单里文档的先后（`Shift` 连选照它） @type {string[]} */
+    const order = tree ? pathsOf(tree) : [];
     const rows = !docs ? [] : [
       ...this.uploading.map((name) => h('div.kb-doc.is-uploading', h('span.kb-doc-icon', icon('loader-circle')), h('div.kb-doc-text', h('span.kb-doc-path', name), h('span.kb-doc-note', t('uploading'))))),
       ...(tree ? rowsOf(tree, 0) : []),
@@ -335,14 +394,52 @@ export class KnowledgePage {
       ? h(`button.set-btn.is-danger${this.armed === 'base' ? '.is-armed' : ''}`, { type: 'button', onclick: () => this.deleteBase(b) },
         icon('trash-2'), this.armed === 'base' ? t('delete_confirm', { name: b.name || b.id }) : t('delete'))
       : null;
-    const reindex = h('button.set-btn.kb-reindex', { type: 'button', disabled: this.reindexing, onclick: () => this.reindex(b) },
-      icon(this.reindexing ? 'loader-circle' : 'rotate-cw'), t(this.reindexing ? 'reindexing' : 'reindex'));
     return h('div.kb-base-page',
       h('div.kb-head', h('button.kb-back', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), t('back_list')), h('span.kb-head-id', b.id)),
-      this.card(b, false),
+      this.card(b, false, this.indexBlock(b, docs ? readable : b.documents ?? 0, docs ? chunks : b.chunks ?? 0)),
       own ? this.dropZone(b) : null,
+      own && tree && rows.length ? this.selectBar(tree) : null,
       list,
-      h('div.kb-foot', h('span', t('foot', { docs: docs ? readable : b.documents ?? 0, chunks: docs ? chunks : b.chunks ?? 0 })), h('span.kb-foot-actions', reindex, del)));
+      del ? h('div.kb-foot', h('span'), h('span.kb-foot-actions', del)) : null);
+  }
+
+  /**
+   * 清单上面那一排（自己建的库；2026-10-20 项目主人：要能批量选择和删除）：平常右边一个「多选」；多选时「已选 N 篇」、全选、删除（点两下）、退出。
+   * @param {import('./model.js').TreeNode} tree
+   */
+  selectBar(tree) {
+    const t = this.t;
+    const b = this.bases.find((x) => this.view.kind === 'base' && x.id === this.view.id);
+    const btn = (/** @type {string} */ name, /** @type {string} */ title, /** @type {() => void} */ run, cls = '') => h(`button.icon-button.kb-sel-btn${cls}`, { type: 'button', title, 'aria-label': title, onclick: run }, icon(name));
+    if (!this.selecting) {
+      return h('div.kb-sel', btn('list-checks', t('select'), () => { this.selecting = true; this.selected = new Set(); this.lastPick = null; this.draw(); }));
+    }
+    const n = this.selected.size;
+    const armed = this.armed === 'many';
+    const del = btn('trash-2', armed ? t('remove_confirm') : t('remove'), () => { if (b) this.removeMany(b, [...this.selected], 'many'); }, `.is-danger${armed ? '.is-armed' : ''}`);
+    if (!n) del.setAttribute('disabled', '');
+    return h('div.kb-sel',
+      h('span.kb-sel-count', t('selected_n', { n })),
+      btn('check-check', t('select_all'), () => { this.selected = new Set(pathsOf(tree)); this.draw(); }),
+      del,
+      btn('x', t('select_exit'), () => { this.selecting = false; this.selected = new Set(); this.draw(); }));
+  }
+
+  /**
+   * 多选时点一行：文档勾上、去掉；文件夹照它里面的全部（全勾了的去掉，不然都勾上）；`Shift` 照清单的先后连选（文档）。
+   * @param {string[]} paths 这一行管的几篇 @param {string[]} order 清单里文档的先后 @param {boolean} shift
+   */
+  pick(paths, order, shift) {
+    const next = new Set(this.selected);
+    if (shift && this.lastPick && paths.length === 1) {
+      const a = order.indexOf(this.lastPick);
+      const z = order.indexOf(paths[0]);
+      if (a >= 0 && z >= 0) for (const p of order.slice(Math.min(a, z), Math.max(a, z) + 1)) next.add(p);
+    } else if (paths.every((p) => next.has(p))) paths.forEach((p) => next.delete(p));
+    else paths.forEach((p) => next.add(p));
+    this.selected = next;
+    if (paths.length === 1) this.lastPick = paths[0];
+    this.draw();
   }
 
   /**
@@ -350,19 +447,25 @@ export class KnowledgePage {
    * `folder` 的是读不了的子目录。`depth` 是在文件树的第几层（往右缩）。
    * @param {import('./model.js').Base} b @param {import('./model.js').Doc} d @param {boolean} [folder] @param {number} [depth]
    */
-  docRow(b, d, folder = false, depth = 0) {
+  docRow(b, d, folder = false, depth = 0, order = []) {
     const t = this.t;
     const why = reasonKey(d);
     const at = d.at ? Date.parse(d.at) : NaN;
     const meta = folder ? '' : [sizeText(d.size), Number.isFinite(at) ? new Date(at).toLocaleDateString() : ''].filter(Boolean).join(' · ');
     const armed = this.armed === `doc:${d.path}`;
-    const remove = writable(b) && !folder
+    const picking = this.selecting && writable(b) && !folder;
+    const picked = picking && this.selected.has(d.path);
+    const remove = writable(b) && !folder && !this.selecting
       ? h(`button.set-btn.is-danger.kb-remove${armed ? '.is-armed' : ''}`, { type: 'button', title: t('remove'), onclick: (/** @type {Event} */ e) => { e.stopPropagation(); this.removeDoc(b, d.path); } },
         icon('trash-2'), armed ? t('remove_confirm') : null)
       : null;
-    const open = () => { if (!folder) this.openRead(b.id, d.path, 1, null); };
-    return h(`div.kb-doc${folder ? '.is-folder' : '.is-link'}${why ? '.is-bad' : ''}`,
-      { style: { '--depth': String(depth) }, title: d.path, ...(folder ? {} : { role: 'button', tabindex: '0', onclick: open, onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' && e.target === e.currentTarget) open(); } }) },
+    const open = (/** @type {any} */ e) => {
+      if (picking) return this.pick([d.path], order, !!e?.shiftKey);
+      if (!folder) this.openRead(b.id, d.path, 1, null);
+    };
+    return h(`div.kb-doc${folder ? '.is-folder' : '.is-link'}${why ? '.is-bad' : ''}${picked ? '.is-picked' : ''}`,
+      { style: `--depth: ${depth}`, title: d.path, ...(folder ? {} : { role: 'button', tabindex: '0', onclick: open, onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' && e.target === e.currentTarget) open(e); } }) },
+      picking ? h('span.kb-check', icon(picked ? 'square-check' : 'square')) : null,
       h('span.kb-doc-icon', icon(folder ? 'folder' : docIcon(d.kind))),
       h('div.kb-doc-text', h('span.kb-doc-path', d.name ?? d.path), why ? h('span.kb-doc-note.is-bad', t(why)) : null),
       meta ? h('span.kb-doc-meta', meta) : null,
@@ -425,6 +528,8 @@ export class KnowledgePage {
     this.view = { kind: 'base', id };
     this.docs = null;
     this.armed = null;
+    this.selecting = false;
+    this.selected = new Set();
     this.draw();
     this.scrollTop();
     this.loadDocs(id).then(() => this.draw());
@@ -508,6 +613,28 @@ export class KnowledgePage {
     await this.reload();
   }
 
+  /**
+   * 删几篇（多选、一个文件夹）：点两下（`key` 记着点的是哪个）；一篇篇 `kb.remove`（核心排着让 `path` 收文件夹、`paths` 收几个），删完提示几篇。
+   * @param {import('./model.js').Base} b @param {string[]} paths @param {string} key
+   */
+  async removeMany(b, paths, key) {
+    if (!paths.length || !this.arm(key)) return;
+    let done = 0;
+    for (const path of paths) {
+      try {
+        await this.ctx.core.request('kb.remove', { kb: b.id, path });
+        done += 1;
+      } catch (err) {
+        this.say(this.refusal(err));
+        break;
+      }
+    }
+    this.selecting = false;
+    this.selected = new Set();
+    if (done) this.kit.toast(this.t('removed_n', { n: done }));
+    await this.reload();
+  }
+
   /** 删库：同上，删了回到卡片。 @param {import('./model.js').Base} b */
   async deleteBase(b) {
     if (!this.arm('base')) return;
@@ -524,6 +651,7 @@ export class KnowledgePage {
   /** @param {import('./model.js').Base} b */
   async reindex(b) {
     this.reindexing = true;
+    this.progress = { kb: b.id };
     this.draw();
     try {
       await this.ctx.core.request('kb.reindex', { kb: b.id });
@@ -532,6 +660,7 @@ export class KnowledgePage {
       this.say(this.refusal(err));
     }
     this.reindexing = false;
+    this.progress = null;
     await this.reload();
   }
 

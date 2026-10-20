@@ -95,7 +95,17 @@
       "drop_or": "、",
       "drop_pick_folder": "选择文件夹",
       "dir_count": "{n} 篇",
-      "added_n": "已加入 {n} 篇"
+      "added_n": "已加入 {n} 篇",
+      "index_model": "语义模型 {name}",
+      "index_model_none": "未设置",
+      "index_at": "上次建好 {when}",
+      "reindexing_n": "正在重建 {done} / {total}",
+      "select": "多选",
+      "selected_n": "已选 {n} 篇",
+      "select_all": "全选",
+      "select_exit": "退出多选",
+      "remove_dir": "删除这个文件夹",
+      "removed_n": "已删除 {n} 篇（在回收站里）"
     },
     "en": {
       "title": "Knowledge",
@@ -166,7 +176,17 @@
       "drop_or": "/",
       "drop_pick_folder": "choose a folder",
       "dir_count": "{n} docs",
-      "added_n": "Added {n} documents"
+      "added_n": "Added {n} documents",
+      "index_model": "Embedding model {name}",
+      "index_model_none": "not set",
+      "index_at": "Built {when}",
+      "reindexing_n": "Rebuilding {done} / {total}",
+      "select": "Select",
+      "selected_n": "{n} selected",
+      "select_all": "Select all",
+      "select_exit": "Done",
+      "remove_dir": "Delete this folder",
+      "removed_n": "Deleted {n} (moved to trash)"
     },
     "ja": {
       "title": "ナレッジ",
@@ -237,7 +257,17 @@
       "drop_or": "・",
       "drop_pick_folder": "フォルダを選択",
       "dir_count": "{n} 件",
-      "added_n": "{n} 件を追加しました"
+      "added_n": "{n} 件を追加しました",
+      "index_model": "意味検索モデル {name}",
+      "index_model_none": "未設定",
+      "index_at": "最終構築 {when}",
+      "reindexing_n": "再構築中 {done} / {total}",
+      "select": "選択",
+      "selected_n": "{n} 件選択",
+      "select_all": "すべて選択",
+      "select_exit": "選択を終了",
+      "remove_dir": "このフォルダを削除",
+      "removed_n": "{n} 件削除しました（ゴミ箱に移動）"
     }
   }
 }
