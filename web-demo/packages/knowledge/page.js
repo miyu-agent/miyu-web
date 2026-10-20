@@ -385,7 +385,8 @@ export class KnowledgePage {
     const fq = this.fileQuery.trim().toLowerCase();
     const hit = (/** @type {{path: string}} */ d) => !fq || d.path.toLowerCase().includes(fq);
     const tree = docs ? treeOf([...docs.documents.filter(hit), ...docs.folders.filter(hit).map((d) => ({ ...d, dir: true }))]) : null;
-    const shift = this.selecting ? 36 : 14;
+    // 竖线落在上一层第一格（箭头、多选时的勾选框）的中线上
+    const shift = 14;
     /**
      * 一行的线：`anc[x]` 是第 x 层的竖线穿不穿过这一行（那一层的文件夹后面还有同级的）；自己那一层画 ├ 或 └，加一道横线连到箭头。
      * @param {number} depth @param {boolean[]} anc @param {boolean} last
@@ -550,11 +551,14 @@ export class KnowledgePage {
    * @param {HTMLElement} page @param {import('./model.js').Base} b
    */
   dropOn(page, b) {
+    const main = () => /** @type {HTMLElement|null} */ (page.closest('.set-main'));
+    // 提示的字先挂上（这一页挂上去以后）：拖进来时那一层才是从透明淡出来的
+    queueMicrotask(() => { const m = main(); if (m) m.dataset.dropHint = this.t('drop_here'); });
     const over = (/** @type {boolean} */ on) => {
-      const main = /** @type {HTMLElement|null} */ (page.closest('.set-main'));
-      if (!main) return;
-      main.dataset.dropHint = this.t('drop_here');
-      main.classList.toggle('kb-dropping', on);
+      const m = main();
+      if (!m) return;
+      m.dataset.dropHint = this.t('drop_here');
+      m.classList.toggle('kb-dropping', on);
     };
     this.ctx.host?.files?.watchDrop?.(page, {
       enter: () => over(true),

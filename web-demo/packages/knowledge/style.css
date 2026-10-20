@@ -71,9 +71,13 @@
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 10px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 10px), transparent);
   background: color-mix(in srgb, var(--surface) 94%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
 /* 拖文件进来：整页都收（同一天项目主人），右边那一栏描一圈虚线、铺一层淡的 accent */
-.set-main.kb-dropping::after { content: attr(data-drop-hint); position: absolute; inset: 52px 16px 16px; z-index: 20; display: grid; place-items: center; pointer-events: none;
+.set-main[data-drop-hint]::after { content: attr(data-drop-hint); position: absolute; inset: 52px 16px 16px; z-index: 20; display: grid; place-items: center; pointer-events: none; opacity: 0; visibility: hidden;
+  transition: opacity 0.18s var(--ease-out), visibility 0s linear 0.18s;
   border: 2px dashed color-mix(in srgb, var(--accent) 70%, transparent); border-radius: 14px; background: color-mix(in srgb, var(--accent-soft) 82%, var(--surface));
-  color: var(--accent); font-size: 15px; font-weight: 600; animation: fade-in 0.12s var(--ease-out); }
+  color: var(--accent); font-size: 15px; font-weight: 600; }
+/* 拖进来淡出来、拖走、松手淡掉（2026-10-20 项目主人：铺层消失没有动画） */
+.set-main.kb-dropping::after { opacity: 1; visibility: visible; transition: opacity 0.12s var(--ease-out), visibility 0s; }
+@media (prefers-reduced-motion: reduce) { .set-main[data-drop-hint]::after { transition: none; } }
 .kb-files-title { flex: none; color: var(--text-faint); font-size: 12px; font-weight: 600; }
 /* 文件列表那一行的小搜索框：同顶上的搜索框，矮一点 */
 .kb-file-find { display: flex; flex: 1; align-items: center; gap: 6px; max-width: 240px; height: 26px; margin: 0 auto 0 10px; padding: 0 8px; border-radius: 7px; background: var(--surface-2); color: var(--text-faint); transition: background-color 0.15s ease, box-shadow 0.15s ease; }
@@ -167,9 +171,9 @@
 .kb-sel-btn.is-danger { color: var(--danger); }
 .kb-sel-btn.is-armed { background: color-mix(in srgb, var(--danger) 16%, transparent); }
 .kb-sel-btn:disabled { opacity: 0.45; cursor: default; }
-.kb-check { position: absolute; top: 50%; left: 6px; display: grid; place-items: center; width: 16px; color: var(--text-faint); transform: translateY(-50%); }
-/* 多选时整棵树往右挪一格，勾选框在最左边那一格、不跟着缩进（同一天项目主人：展开的时候选择框和线重叠了） */
-.kb-docs.is-selecting .kb-doc { padding-left: calc(28px + var(--depth, 0) * 20px); }
+/* 多选时勾选框排在每一行最前面、跟着缩进，在线的右边：竖线从上一层的勾选框下面下来，横线连到这一行的勾选框（2026-10-20 项目主人：
+   原来勾选框压在线上；挪到最左边一列又说线右边有地方，框不该放在外面） */
+.kb-check { display: grid; flex: none; place-items: center; width: 16px; color: var(--text-faint); }
 .kb-check .icon { width: 15px; height: 15px; }
 .kb-doc.is-picked .kb-check { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) { .kb-index-bar.is-unknown > i, .kb-reindex:disabled .icon { animation: none; } }
