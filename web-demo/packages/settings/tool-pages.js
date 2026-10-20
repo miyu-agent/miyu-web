@@ -87,10 +87,11 @@ export function drawToolPage(dialog, kind) {
 }
 
 /**
- * 删得了的：MCP 页自己写的服务（`mcp.remove`；2026-10-20 项目主人：不用点进详情才能删，还要能多选删）。随包来的不能删；技能等核心给删的方法。
+ * 删得了的：自己写的 MCP 服务（`mcp.remove`）、自己放的技能（`skill.remove`，核心 9ef87384；2026-10-20 项目主人：不用点进详情才能删，还要能多选删）。
+ * 随包来的不能删；脚本页不删。
  * @param {ToolItem} item
  */
-const deletable = (item) => item.kind === 'mcp' && item.own;
+const deletable = (item) => (item.kind === 'mcp' || item.kind === 'skills') && item.own;
 
 /** 一个小的图标按钮（多选那一排）。 @param {string} name @param {string} title @param {() => void} run @param {string} [cls] */
 const iconBtn = (name, title, run, cls = '') => h(`button.icon-button.set-tool-icon${cls}`, { type: 'button', title, 'aria-label': title, onclick: run }, icon(name));
@@ -117,14 +118,15 @@ function twice(el, again, run) {
  */
 function headButtons(dialog, kind, view, items) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
-  if (kind !== 'mcp') {
-    const dir = homeDir(kind, kind === 'skills' ? dialog.skills : dialog.scripts);
-    return dir ? [h('button.set-btn', { type: 'button', title: dir, onclick: () => reveal(dialog, dir) }, icon('folder-open'), h('span', t('tools.open_dir')))] : [];
-  }
+  const dir = kind === 'mcp' ? null : homeDir(kind, kind === 'skills' ? dialog.skills : dialog.scripts);
+  const main = kind === 'mcp'
+    ? h('button.set-btn.is-primary', { type: 'button', onclick: () => openServerForm(dialog, null) }, icon('plus'), h('span', t('tools.add_server')))
+    : dir ? h('button.set-btn', { type: 'button', title: dir, onclick: () => reveal(dialog, dir) }, icon('folder-open'), h('span', t('tools.open_dir'))) : null;
+  if (kind === 'scripts') return main ? [main] : [];
   const redraw = () => dialog.drawBody();
   if (view.selecting) {
     const del = iconBtn('trash-2', t('tools.delete'), () => {}, `.is-danger${view.selected.size ? '' : '.is-disabled'}`);
-    if (view.selected.size) twice(del, t('tools.delete_again'), () => removeServers(dialog, items.filter((x) => view.selected.has(x.id))));
+    if (view.selected.size) twice(del, t('tools.delete_again'), () => removeItems(dialog, kind, items.filter((x) => view.selected.has(x.id))));
     else del.setAttribute('disabled', '');
     return [
       h('span.set-tool-count', t('tools.selected', { count: view.selected.size })),
@@ -135,28 +137,40 @@ function headButtons(dialog, kind, view, items) {
   }
   return [
     items.some(deletable) ? iconBtn('list-checks', t('tools.select'), () => { view.selecting = true; view.selected = new Set(); view.last = null; redraw(); }) : null,
-    h('button.set-btn.is-primary', { type: 'button', onclick: () => openServerForm(dialog, null) }, icon('plus'), h('span', t('tools.add_server'))),
+    main,
   ].filter(Boolean);
 }
 
-/** 删几个自己写的 MCP 服务（`mcp.remove` 一个个删），删完提示几个、重读。 @param {any} dialog @param {ToolItem[]} list */
-async function removeServers(dialog, list) {
+/**
+ * 删几个：MCP 服务一个个 `mcp.remove`；技能一次 `skill.remove {names}`（挪进回收站；有一个不行的一个都不删，照核心的话提示）。删完提示几个、重读。
+ * @param {any} dialog @param {ToolKind} kind @param {ToolItem[]} list
+ */
+async function removeItems(dialog, kind, list) {
   let done = 0;
-  for (const item of list) {
+  if (kind === 'skills') {
     try {
-      await dialog.ctx.core.request('mcp.remove', { name: item.name });
-      done += 1;
+      const got = await dialog.ctx.core.request('skill.remove', { names: list.map((x) => x.name) });
+      done = Array.isArray(got?.trash) ? got.trash.length : list.length;
     } catch (err) {
       dialog.toast(err?.message ?? String(err));
     }
+  } else {
+    for (const item of list) {
+      try {
+        await dialog.ctx.core.request('mcp.remove', { name: item.name });
+        done += 1;
+      } catch (err) {
+        dialog.toast(err?.message ?? String(err));
+      }
+    }
   }
-  const view = dialog.toolView?.mcp;
+  const view = dialog.toolView?.[kind];
   if (view) {
     view.selecting = false;
     view.selected = new Set();
   }
-  if (done) dialog.toast(dialog.ctx.text('tools.deleted_n', { count: done }));
-  await refresh(dialog, 'mcp');
+  if (done) dialog.toast(dialog.ctx.text(kind === 'skills' ? 'tools.trashed_n' : 'tools.deleted_n', { count: done }));
+  await refresh(dialog, kind);
 }
 
 /**
@@ -193,7 +207,7 @@ function toolRow(dialog, item, view) {
   const controls = selecting ? [] : [
     item.load ? loadSelect(dialog, item) : null,
     item.on !== null ? switchFor(dialog, item) : null,
-    can ? twice(iconBtn('trash-2', t('tools.delete'), () => {}, '.is-danger.set-tool-del'), t('tools.delete_again'), () => removeServers(dialog, [item])) : null,
+    can ? twice(iconBtn('trash-2', t('tools.delete'), () => {}, '.is-danger.set-tool-del'), t('tools.delete_again'), () => removeItems(dialog, item.kind, [item])) : null,
   ].filter(Boolean);
   const tag = item.kind === 'mcp' && item.own ? null : h('span.set-pkg-tag', sourceText(dialog, item));
   return h(`div.set-row.set-pkg${selecting ? (can ? '.is-expandable.is-picking' : '.is-unpickable') : '.is-expandable'}${picked ? '.is-picked' : ''}`, {

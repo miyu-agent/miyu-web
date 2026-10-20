@@ -559,7 +559,8 @@
         "select_exit": "退出多选",
         "delete": "删除",
         "delete_again": "再点一次删除",
-        "deleted_n": "已删除 {count} 个"
+        "deleted_n": "已删除 {count} 个",
+        "trashed_n": "已删除 {count} 个（在回收站里）"
       }
     },
     "en": {
@@ -952,7 +953,8 @@
         "select_exit": "Done",
         "delete": "Delete",
         "delete_again": "Click again to delete",
-        "deleted_n": "Deleted {count}"
+        "deleted_n": "Deleted {count}",
+        "trashed_n": "Deleted {count} (moved to trash)"
       }
     },
     "ja": {
@@ -1345,7 +1347,8 @@
         "select_exit": "選択を終了",
         "delete": "削除",
         "delete_again": "もう一度押して削除",
-        "deleted_n": "{count} 件削除しました"
+        "deleted_n": "{count} 件削除しました",
+        "trashed_n": "{count} 件削除しました（ゴミ箱に移動）"
       }
     }
   },
