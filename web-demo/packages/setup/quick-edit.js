@@ -2,7 +2,8 @@
 //! 直接在页面上开一个人格、预设的编辑卡片（左栏左上角的头像点进来的，2026-10-10 项目主人：直接打开编辑卡片，不先开设置页；列人格、预设的
 //! 列表里点编辑图标、按 `e` 的，2026-10-20 项目主人，蓝图「人格、预设、工作区」第 10 条）：和设置页「人格」「预设」页里点一块开的是同一张卡片、
 //! 同一个编辑器（`float.js`、`persona-editor.js`、`preset-editor.js`），只是盖在整页上。控件照设置页的（服务 `settings` 的 `kit`）。
-//! 点卡片外面、`Esc`、✕ 交给编辑器（改了没存的不关、提示一句）；存了重读列表，左上角、对话区的头像跟着换；关了叫 `closed`（回到原来的列表）。
+//! 点卡片外面、`Esc`、✕ 交给编辑器（改了没存的不关、提示一句）；存了重读列表，左上角、对话区的头像跟着换；关了叫 `closed`，带上这一回存没存过
+//! （存了、删了、恢复了都算，只换外观的不算：列表那边照它问要不要压缩，蓝图「人格、预设、工作区」第 10 条）。
 
 import { floatCard } from './float.js';
 import { PersonaEditor } from './persona-editor.js';
@@ -17,33 +18,35 @@ let opened = null;
  * @param {import('./catalog.js').Catalog} catalog
  * @param {string} id 人格的编号
  * @param {(panel: HTMLElement, toast: (text: string) => void) => import('./form.js').Kit} kitOf 服务 `settings` 的 `kit`
- * @param {{closed?: () => void}} [opts] 卡片关了以后做什么
+ * @param {{closed?: (how: {changed: boolean}) => void}} [opts] 卡片关了以后做什么
  */
 export function editPersona(ctx, catalog, id, kitOf, opts = {}) {
   return editItem(ctx, catalog, 'persona', id, kitOf, opts);
 }
 
-/** 预设的编辑卡片（同 `editPersona`）。 @param {any} ctx @param {import('./catalog.js').Catalog} catalog @param {string} id @param {any} kitOf @param {{closed?: () => void}} [opts] */
+/** 预设的编辑卡片（同 `editPersona`）。 @param {any} ctx @param {import('./catalog.js').Catalog} catalog @param {string} id @param {any} kitOf @param {{closed?: (how: {changed: boolean}) => void}} [opts] */
 export function editPreset(ctx, catalog, id, kitOf, opts = {}) {
   return editItem(ctx, catalog, 'preset', id, kitOf, opts);
 }
 
 /**
  * @param {any} ctx @param {import('./catalog.js').Catalog} catalog @param {'persona'|'preset'} kind @param {string} id @param {any} kitOf
- * @param {{closed?: () => void}} opts
+ * @param {{closed?: (how: {changed: boolean}) => void}} opts
  */
 async function editItem(ctx, catalog, kind, id, kitOf, opts) {
   if (opened) return;
   const t = (/** @type {string} */ key) => ctx.text(key);
   /** @type {PersonaEditor|PresetEditor|null} */
   let editor = null;
+  /** 这一回存过没有 */
+  let changed = false;
   const dismiss = () => (editor ? editor.tryClose() : close());
   const card = floatCard({ title: '', body: document.createElement('div'), close: t('edit.close'), onDismiss: dismiss });
   const close = () => {
     if (opened !== handle) return;
     opened = null;
     card.close();
-    opts.closed?.();
+    opts.closed?.({ changed });
   };
   const handle = { close };
   opened = handle;
@@ -61,8 +64,13 @@ async function editItem(ctx, catalog, kind, id, kitOf, opts) {
   box.tabIndex = -1;
   box.focus({ preventScroll: true });
   const hooks = {
-    saved: () => catalog.load(),
+    // 只换头像、主题色、背景图的（`look`）不算改了：模型看的字没变，缓存不受影响（终端同样）
+    saved: (/** @type {{look?: boolean}} */ how = {}) => {
+      if (!how.look) changed = true;
+      return catalog.load();
+    },
     removed: (/** @type {boolean} */ remains) => {
+      changed = true;
       // 恢复出厂的还在，照出厂的样子重读；删掉的关掉卡片
       if (remains) editor?.load();
       else close();

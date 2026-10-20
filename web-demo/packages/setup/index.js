@@ -300,18 +300,44 @@ export function apply(ctx) {
   /**
    * 一行右边的编辑（蓝图「人格、预设、工作区」第 10 条；2026-10-20 项目主人：选人格、选预设的地方要能直接进那一项的编辑）：铅笔图标，键盘 `e`。
    * 点了先收起列表（`before`），开那一项的编辑卡片，关了照 `reopen` 回到原来的列表；不算选了它。没有设置页的服务（编辑器的控件照它）不给。
+   * 改了、存了正在用的那一个的，回列表之前先问要不要压缩（`askCompact`）。
    * @param {'persona'|'preset'} kind @param {string} id @param {(() => void)|undefined} reopen @param {() => void} [before]
    */
   const editAction = (kind, id, reopen, before) => {
     if (!ctx.settings || !reopen) return undefined;
+    const back = reopen;
     return {
       icon: 'pencil', title: t(kind === 'persona' ? 'info.edit_persona' : 'info.edit_preset'), key: 'e',
       run: () => {
         before?.();
-        (kind === 'persona' ? editPersona : editPreset)(ctx, catalog, id, ctx.settings.kit, { closed: reopen });
+        (kind === 'persona' ? editPersona : editPreset)(ctx, catalog, id, ctx.settings.kit, {
+          closed: ({ changed }) => {
+            const session = chat.current();
+            const using = session ? (kind === 'persona' ? chat.persona(session) : chat.preset(session)) : null;
+            if (changed && session && using === id) askCompact(kind, session, back);
+            else back();
+          },
+        });
       },
     };
   };
+
+  /**
+   * 改了、存了这个会话正在用的人格、预设（2026-10-20 项目主人定，终端一样）：先在输入框上面的列表里问一句「当前使用的预设发生变化，下一轮对话缓存
+   * 全部失效，建议提前压缩上下文。」，「是」收起列表、压缩一次（同 `/compact`，`session.compact`），「否」回到原来的列表。
+   * 空会话还没开会话，没有缓存，不问（调用的地方照 `chat.current()` 判了）。
+   * @param {'persona'|'preset'} kind @param {string} session @param {() => void} back
+   */
+  const askCompact = (kind, session, back) => listOf(t(kind === 'persona' ? 'info.changed_persona' : 'info.changed_preset'), [
+    { title: t('info.yes'), pick: async () => {
+      try {
+        await ctx.core.request('session.compact', { session });
+      } catch (err) {
+        ctx.composer.say(/** @type {any} */ (err)?.message ?? String(err));
+      }
+    } },
+    { title: t('info.no'), pick: back },
+  ]);
 
   /**
    * 人格的几行：第一行「无人格」，再一个人格一行（写错的暗着）；选了交 `pick`（无人格是 `null`）。输入框上面的「选择人格」菜单、`/persona` 的列表都照它。

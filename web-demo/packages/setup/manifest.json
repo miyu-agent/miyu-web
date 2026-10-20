@@ -336,7 +336,11 @@
         "cancel": "取消",
         "confirm": "确认",
         "back": "返回",
-        "confirm_switch": "确认切换"
+        "confirm_switch": "确认切换",
+        "changed_persona": "当前使用的人格发生变化，下一轮对话缓存全部失效，建议提前压缩上下文。",
+        "changed_preset": "当前使用的预设发生变化，下一轮对话缓存全部失效，建议提前压缩上下文。",
+        "yes": "是",
+        "no": "否"
       },
       "follow_default": "跟随默认",
       "command_persona": "换人格",
@@ -530,7 +534,11 @@
         "cancel": "Cancel",
         "confirm": "Confirm",
         "back": "Back",
-        "confirm_switch": "Switch"
+        "confirm_switch": "Switch",
+        "changed_persona": "The persona in use has changed. The cache will be invalidated on the next turn; consider compacting the context first.",
+        "changed_preset": "The preset in use has changed. The cache will be invalidated on the next turn; consider compacting the context first.",
+        "yes": "Yes",
+        "no": "No"
       },
       "follow_default": "Follow default",
       "command_persona": "Switch persona",
@@ -724,7 +732,11 @@
         "cancel": "キャンセル",
         "confirm": "確認",
         "back": "戻る",
-        "confirm_switch": "切り替える"
+        "confirm_switch": "切り替える",
+        "changed_persona": "使用中の人格が変更されました。次のターンでキャッシュはすべて無効になります。先にコンテキストを圧縮することをおすすめします。",
+        "changed_preset": "使用中のプリセットが変更されました。次のターンでキャッシュはすべて無効になります。先にコンテキストを圧縮することをおすすめします。",
+        "yes": "はい",
+        "no": "いいえ"
       },
       "follow_default": "デフォルトに従う",
       "command_persona": "人格を切り替え",
