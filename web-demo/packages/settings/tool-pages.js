@@ -83,7 +83,8 @@ export function drawToolPage(dialog, kind) {
   return [
     h('div.set-pkg-tools', h('div.set-tool-head', find, ...headButtons(dialog, kind, view, items)), chips),
     empty, group,
-    h('p.set-tool-note', t(kind === 'skills' ? 'tools.note.skills' : 'tools.note.load')),
+    // 页底只给技能写一句；脚本、MCP 那句「懒加载：…；完整：…」不要了（2026-10-21 项目主人）
+    kind === 'skills' ? h('p.set-tool-note', t('tools.note.skills')) : null,
   ];
 }
 
@@ -198,7 +199,7 @@ export async function reveal(dialog, dir) {
  * @param {any} dialog @param {ToolItem} item @param {any} view
  */
 function toolRow(dialog, item, view) {
-  const t = (/** @type {string} */ key) => dialog.ctx.text(key);
+  const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const selecting = !!view.selecting;
   const can = deletable(item);
   const picked = selecting && view.selected.has(item.id);
@@ -254,7 +255,7 @@ const stateNode = (text, bad, running) => h(`span.set-tool-state${bad ? '.is-err
 
 /** 加载方式的下拉：懒加载（`need_load` 是真的）、完整。 @param {any} dialog @param {ToolItem} item */
 function loadSelect(dialog, item) {
-  const t = (/** @type {string} */ key) => dialog.ctx.text(key);
+  const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const options = [{ value: true, name: t('tools.lazy') }, { value: false, name: t('tools.full') }];
   return select(dialog, options, item.load?.value ?? true, (v) => setLoading(dialog, item, v));
 }
@@ -383,7 +384,7 @@ function toolDetail(dialog, kind, id) {
  * @param {any} dialog @param {ToolItem} item
  */
 function serverActions(dialog, item) {
-  const t = (/** @type {string} */ key) => dialog.ctx.text(key);
+  const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const s = item.raw;
   const out = [];
   if (!item.covered && s.enabled !== false) {
