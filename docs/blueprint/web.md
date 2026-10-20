@@ -36,8 +36,8 @@
 | `web-demo/src/kernel/`、`web-demo/src/lib/`、`web-demo/packages/`、`web-demo/distro.json` | 内核、lib、软件包、发行版（`web/architecture.md`）。现在有哪些软件包、各提供什么、挂在哪，见 `web/architecture.md`「现在搬到哪了」 |
 | `web-demo/src/ui/` | 画：`app.js` 整页和状态；`sidebar.js` 左栏；`chat.js` 对话区；`follow.js` 对话区滚到哪（跟着最新的、长回答停住、点开时钉住被点的那一行）；`rail.js` 右边的跳转条；`said.js` 你的话（别人说的写上是谁）和她一轮末尾的按钮、编辑；`notes.js` 回报、压缩、清空那一行，点开看输出、报告；`sessions-page.js` 全部会话那一页；`timeline.js` 时间线的一段、三个球；`steps.js` 时间线的一步；`rich.js` 回答里的图和卡片接进 Markdown；`mermaid.js` mermaid 图；`media.js` 图片、视频、音频卡片；`lightbox.js` 灯箱；`linkcards.js` 链接卡片；`artifacts.js` 预览工作区；`composer.js` 输入框、提示、框下面那一行；`model-menu.js` 换模型的菜单；`commands.js` 命令列表和执行；`todo.js` 待办那一块；`pulse.js` 运行状态行；`theme.js` 主题；`dom.js` 造 DOM、画图标 |
 | `web-demo/src/util/res.js` | 读资源、界面上的一句字 |
-| `web-demo/styles/` | `base.css` 字体、缩放、图标、共用的按钮；`sidebar.css` 两栏三栏、左栏、窄屏；`chat.css` 对话区；`markdown.css` 回答的 Markdown；`media.css` 图片、音视频、灯箱、链接卡片、mermaid 图；`artifacts.css` 预览工作区；`timeline.css` 时间线、三个球；`composer.css` 输入框、提示、框下面那一行；`dock.css` 输入框上面的一叠：命令列表、待办、运行状态行 |
-| `web-demo/resources/` | `languages.json` 界面语言的表（「界面语言」）；`text/zh.json`、`text/ja.json` 界面上的字，每种语言一份；`layout.json` 界面上的数和记号（权限级别的图标照 TUI）；`persona.json` 名字、头像（核心还没有 `persona.get`）；`lucide.json` 图标；`commands.json` 斜杠命令；`pulse.json` 运行状态行的词库（TUI 的原样）；`fake.json` 演示用的假数据（待办）；`timeline.json` 时间线的配置；`markdown.json` Markdown 的数和名单、链接卡片的数；`cards.json` 媒体卡片认哪些扩展名；`artifacts.json` 预览工作区；`media.json` 桥读的（媒体类型）；`themes/morning.json`、`themes/tokyonight.json` 两套颜色；`assets/` 头像 |
+| `web-demo/styles/` | `base.css` 字体、缩放、图标、共用的按钮；`sidebar.css` 两栏三栏、左栏、窄屏；`chat.css` 对话区；`markdown.css` 回答的 Markdown；`media.css` 图片、音视频、灯箱、链接卡片、mermaid 图；`artifacts.css` 预览工作区；`timeline.css` 时间线、三个球；`composer.css` 输入框、提示、框下面那一行；`dock.css` 输入框上面的一叠：命令列表、待办、运行状态行；`tokens.css` 皮肤能换的变量表（「皮肤」） |
+| `web-demo/resources/` | `languages.json` 界面语言的表（「界面语言」）；`text/zh.json`、`text/ja.json` 界面上的字，每种语言一份；`layout.json` 界面上的数和记号（权限级别的图标照 TUI）；`persona.json` 名字、头像（核心还没有 `persona.get`）；`lucide.json` 图标；`commands.json` 斜杠命令；`pulse.json` 运行状态行的词库（TUI 的原样）；`fake.json` 演示用的假数据（待办）；`timeline.json` 时间线的配置；`markdown.json` Markdown 的数和名单、链接卡片的数；`cards.json` 媒体卡片认哪些扩展名；`artifacts.json` 预览工作区；`media.json` 桥读的（媒体类型）；`parts.json` 部件名（「皮肤」第 3 条）；`themes/morning.json`、`themes/tokyonight.json` 两套颜色；`assets/` 头像 |
 | `web-demo/vendor/` | 照旧版拷来的库：Prism 1.29.0、KaTeX 0.18.4（连字体），都是 MIT |
 | `web-demo/tests/` | 纯逻辑的测试，`node --test web-demo/tests`；拿仓库里事件的样本（`docs/designs/samples/events/`）拼成会话当底料 |
 
@@ -883,6 +883,26 @@
 7. 停用 `theme-persona`：没有「跟随人格」这张卡片，也不铺背景图；编辑卡片里主题色、背景图那两行照样能改（存在人格里，以后启用了就用上）。
 8. 裁头像（2026-10-11 项目主人定：比例不对才弹）：选的图不是正方形（长宽差过 2%）先弹一个窗口「裁剪头像」：图上一个圆的框（框外压暗），拖图挪位置、滑杆或滚轮放大，「取消」「确定」；确定了裁成正方形再缩小、存。正方形的直接存。
 
+### 皮肤
+
+主题管颜色，皮肤管形状和材质：圆角、阴影、边框、虚化、内边距、字体、按钮的样子（2026-10-21 项目主人定：「换皮 + 皮肤包」，全部组件一次铺开；看过 deepseek-harness 的网页：它换组件靠挂载位，换样子只靠颜色变量，没有专门换皮的一层，品牌包也只是往挂载位里挂东西）。两样分开选，能随便搭：像素风的皮肤配跟随人格的配色照样成立。
+
+1. **出厂样子不变**：可换的样子都写成页面变量，出厂值就是原来的值；没装皮肤包、选「出厂」时，每个元素算出来的样子和原来一模一样（照「守着它的」那条逐个元素比）。
+2. **变量分两层**，都写在 `styles/tokens.css`（整份变量表，每个带一句说明；皮肤包只能写表里有的）：
+   - 形状的总开关（一个数改全页）：`--round` 圆角的倍数（1；0 是全直角），各处的圆角写成 `--r-数`（`--r-8` 就是 8px 乘这个倍数；圆的 `--r-round`、胶囊 `--r-pill` 也乘它）；`--blur` 毛玻璃虚化的倍数（1；0 不虚化）；`--font-ui` 界面上的字（按钮、菜单、左栏、标题）、`--font-read` 读的字（回答、你的话、输入框）、`--font-code` 代码，出厂都是原来的字体表。
+   - 一种材质一组（名字照「东西-哪一样」）。下面每一组都有 `-bg` 底、`-radius` 圆角、`-border` 边（出厂 `0` 或原来那条细线）、`-elev` 阴影（出厂照主题的那几格影），有的多几样：
+     - `composer` 输入框（`-elev-focus` 聚焦的影、`-pad-x`、`-pad-top` 写字的地方离边多远、`-font` 框里的字）；`send` 发送按钮（`-fg` 图标的颜色、`-size` 多大）；
+     - `bubble` 你的话（`-pad` 内边距）；`card` 贴在页面上的卡片（代码块、表格、链接卡片、媒体卡片、附件卡、文件卡）；
+     - `float` 浮起来的小框（菜单、命令列表、提示、浮层、悬停说明；`-blur` 毛玻璃）；`modal` 弹窗（设置页、确认、详情窗口；`-blur`，`-veil` 底下盖的那一层）；
+     - `item` 能选的一行（左栏的会话、菜单的一行、设置页左栏；`-hover` 悬停、`-active` 选中的底）；`btn` 按钮（`-primary-bg`、`-primary-fg` 主按钮）；`field` 写字的框、搜索框、下拉（`-focus` 聚焦的样子）；`chip` 小标签、小块；
+     - `sidebar` 左栏（`-bg`、`-edge` 和对话区之间那条线）；`dock` 输入框上面那一叠（待办、运行状态行）。
+   颜色类的出厂值都是主题的颜色变量（`var(--surface-1)` 这类），换了主题照样跟着变；皮肤里写颜色也只用主题的颜色变量、`color-mix`，不写颜色字面量（同软件包的 `style.css`）。变量名不和主题的颜色重名（`--card-shadow` 是主题的，皮肤的是 `--card-elev`）。
+3. **部件名**：变量做不到的，皮肤包可以带一份 CSS，只能挑部件。页面上每一块的根上写 `data-part="名字"`，名字是对外的约定（`resources/parts.json` 列全，每个带一句说明；改名字算破坏，要在这里记下来）：`sidebar`、`sidebar.item`、`stage`、`message.user`、`message.answer`、`note`、`timeline`、`timeline.step`、`composer`、`composer.input`、`composer.send`、`composer.footer`、`composer.notice`、`menu`（所有浮起来的菜单、列表）、`menu.row`、`modal`、`modal.card`、`settings`、`card`、`code`、`table`、`button`、`button.primary`、`field`、`switch`、`chip`、`tooltip`、`dock`、`rail`、`artifacts`、`lightbox`。状态照 `:hover`、`:focus-visible`、`[aria-selected]`、`[aria-pressed]`、`[aria-expanded]`、`:disabled`。
+4. **皮肤包**：一个可选的软件包，挂进挂载位 `skin.packs`（list，软件包 `skin` 声明）一格 `{id, name, tokens}`：`tokens` 是变量名到值，值是一段字（浅深一样）或 `{light, dark}`（两份都要有，缺一份不认这一格）；表里没有的名字不认（加载时这一格「故障」，写明哪个名字）。它的 `style.css` 里每条规则都以 `:root[data-skin="<它的编号>"]` 开头、只写部件名（`[data-part="composer"]`）和上面那几种状态，不写类名、编号（`.composer`、`#app`），可以带 `@font-face`（字随包带着）。没选它时它的规则不起作用。
+5. **选哪个**（软件包 `skin`，基础）：设置项 `pack`（live，空着的是出厂）。设置页「通用」的「主题」一组，主题卡片和「主色」下面一行「皮肤」（下拉：出厂，再照 `skin.packs` 一套一项），当场换。选了的：页面根上写 `data-skin="<编号>"`，把它的变量照现在的明暗写上（换了明暗跟着换）；换皮肤时整页 0.3 秒淡过去（同换主题，`src/lib/retheme.js`）；停用了正在用的那一个，回到出厂。提供服务 `skin`（`current()`、`list()`），换了发事件 `skin.changed`（吉祥物、跳转条这类自己量位置的照它重量）。
+6. **像素风**（软件包 `skin-pixel`，样板；照第一次引导的「像素关卡」：2026-10-19 项目主人从四套样板里挑的那一套）：全直角（`--round: 0`），不虚化；浮起来的东西不用软影，换成往右下错开 3px 的实色块影（主色掺进 `surface_3`），输入框、弹窗、卡片、按钮四边一圈 3px 的像素边、四个角各缺一格（阶梯角，照引导里的做法用四道错开的影画，不画真的描边）；按钮按下去往下沉 2px、影变短；界面上的字（`--font-ui`）用引导的像素字体（中文站酷庆科黄油体、西文 Press Start 2P，SIL OFL 1.1，随包带着），读的字、代码照旧（长回答用像素字读不下去）；选中、悬停的底照主色掺出来的那几格（同引导）。颜色照主题，深浅都有。
+7. **还不做的**：设置页里一项项单改皮肤的变量（像默认主题的颜色那样）；整块换掉一个组件（照 deepseek-harness 的挂载位遮蔽：输入框先拆成自己的包、写字和发送做成服务，`web/architecture.md`「怎么搬」第 4 步）；皮肤卡片的小样。
+
 ### 守着它的
 
 | 测试 | 守哪几条 |
@@ -895,6 +915,7 @@
 | `web-demo/tests/packages/backdrop.test.js` | 背景图的透明度换成盖的底色（没设、写错的照设置项）、焦点换成 CSS 位置（没设、写错的居中）；选焦点窗口里指针落在哪一点（夹住、取整）、图照比例放进框里多大 |
 | `web-demo/tests/packages/crop.test.js` | 裁头像：差不多正方形（2% 以内）的不弹；一倍时短边铺满框；挪、放大以后夹住，框里不露空；框对着原图的哪一块 |
 | `web-demo/tests/lib/md3.test.js`、`tests/packages/theme.test.js` | 生成的是整份（93 格、浅深都有）、Content 的值（垫字的淡底不是原色）、有含义的颜色最多转 15°、不带颜色的是中性色、吉祥物照抄、浅色的影换颜色；明暗（跟随系统照系统）、用哪个主题（没写、写的没了用默认）、交不出颜色的用默认那一份 |
+| `web-demo/tests/packages/skin.test.js` | 皮肤：出厂的变量表（`styles/tokens.css`）每个都有说明、不和主题的颜色重名；样式里的圆角、虚化、字体都经变量（不再写死的 px）；皮肤包的变量都在表里、`{light, dark}` 两份都有；皮肤的 CSS 每条都在 `:root[data-skin="<编号>"]` 下面、只挑部件名；部件名都在 `resources/parts.json` 里、页面上真有；选了的写上、换了明暗跟着换、停用了回到出厂 |
 | `web-demo/tests/packages/theme-wallpaper.test.js` | 跟随壁纸：问着的时候推来的「换了」问完再问、挂上新壁纸的颜色；一时问不到的留着原来那一套、出错以后照样跟上，没有壁纸（`null`）的才拿掉 |
 | `web-demo/tests/packages/backstage.test.js` | 软件页面的网址：`#package=`、另带 `widget`，和别的几项混着也认、写法不对的不认，写了读回来一样；宿主抹掉口令、一次性码，`package=` 留着 |
 | `web-demo/tests/packages/widgets.test.js` | 界面块：订阅时屏上有哪几个位置；订阅回应换整份、推来的一块换那一块、`null` 是没了、新来的接后面；一段占几行；截行（截在字里、列表里，按钮、进度条不拆）；右边那段字的几小段（最多 4 段）和语气 |
