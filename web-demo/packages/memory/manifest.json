@@ -156,7 +156,9 @@
       "dream_stop_none": "没有在整理",
       "dream_stopped": "已停止整理。",
       "dream_action": "整理",
-      "close": "关闭"
+      "close": "关闭",
+      "dream_stop": "停止整理",
+      "dream_stop_hint": "点一下停止整理"
     },
     "en": {
       "title": "Memory",
@@ -281,7 +283,9 @@
       "dream_stop_none": "Not tidying right now",
       "dream_stopped": "Tidying stopped.",
       "dream_action": "Tidy up",
-      "close": "Close"
+      "close": "Close",
+      "dream_stop": "Stop",
+      "dream_stop_hint": "Click to stop tidying"
     },
     "ja": {
       "title": "記憶",
@@ -406,7 +410,9 @@
       "dream_stop_none": "整理していません",
       "dream_stopped": "整理を停止しました。",
       "dream_action": "整理",
-      "close": "閉じる"
+      "close": "閉じる",
+      "dream_stop": "整理を停止",
+      "dream_stop_hint": "クリックで整理を停止"
     }
   }
 }

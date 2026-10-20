@@ -11,6 +11,9 @@
 .mem-tools .set-btn .icon, .mem-page .set-btn .icon { width: 14px; height: 14px; }
 .mem-dream .icon-loader-circle, .mem-dream:disabled .icon { animation: set-spin 0.9s linear infinite; }
 .mem-dream:disabled { opacity: 0.75; cursor: default; }
+/* 整理中：照样能点（点了叫停），悬停是「停止整理」、危险色 */
+.mem-dream.is-busy:hover { color: var(--danger); }
+.mem-dream.is-busy:hover .icon { animation: none; }
 .mem-tidying { display: flex; align-items: center; gap: 6px; margin: -6px 0 0; color: var(--text-faint); font-size: 12.5px; }
 .mem-tidying[hidden] { display: none; }
 .mem-tidying .icon { width: 13px; height: 13px; animation: set-spin 0.9s linear infinite; }

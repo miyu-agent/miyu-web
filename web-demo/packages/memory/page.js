@@ -234,8 +234,15 @@ export class MemoryPage {
       this.typeTimer = setTimeout(() => this.reload().then(() => this.refocus()), TYPE_MS);
     });
     find.addEventListener('compositionend', () => find.dispatchEvent(new Event('input')));
-    const dream = h('button.set-btn.mem-dream', { type: 'button', disabled: this.dreaming || !this.persona, onclick: () => this.dream() },
-      icon(this.dreaming ? 'loader-circle' : 'sparkles'), t(this.dreaming ? 'dreaming' : 'dream_action'));
+    // 整理中的时候这个按钮也能点：点了叫停（同那一块的「停止」；2026-10-21 项目主人），悬停时字换成「停止整理」
+    const label = h('span', t(this.dreaming ? 'dreaming' : 'dream_action'));
+    const mark = icon(this.dreaming ? 'loader-circle' : 'sparkles');
+    const dream = h(`button.set-btn.mem-dream${this.dreaming ? '.is-busy' : ''}`, {
+      type: 'button', disabled: !this.persona || (this.dreaming && !this.card?.stopBtn), title: this.dreaming ? t('dream_stop_hint') : null,
+      onclick: () => (this.dreaming ? this.card?.stopBtn?.click() : this.dream()),
+      onmouseenter: () => { if (this.dreaming) { label.textContent = t('dream_stop'); dream.replaceChildren(icon('square'), label); } },
+      onmouseleave: () => { if (this.dreaming) { label.textContent = t('dreaming'); dream.replaceChildren(mark, label); } },
+    }, mark, label);
     const add = h('button.set-btn.is-primary', { type: 'button', disabled: !this.persona, onclick: () => { this.adding = true; this.draw(); this.el.querySelector('.mem-add textarea')?.focus(); } }, icon('plus'), t('add'));
     const chips = h('div.mem-chips',
       ['all', ...CLASSES].map((k) => h(`button.mem-chip${this.cls === k ? '.is-on' : ''}${k === 'all' ? '' : `.is-${k}`}`, { type: 'button', onclick: () => { this.cls = k; this.draw(); } },
