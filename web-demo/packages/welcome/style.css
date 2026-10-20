@@ -15,11 +15,11 @@
   --px-yel: light-dark(#e0a300, #ffd75e); --px-yel-dark: light-dark(#9c6f00, #c99a1e); --px-yel-ink: #241c05;
   --px-blu: var(--accent); --px-blu-dark: color-mix(in srgb, var(--accent) 55%, #000); --px-ink: var(--on-primary);
   --px-star: light-dark(color-mix(in srgb, var(--text) 30%, transparent), #ffffff);
-  --px-head: "Miyu Pixel CJK", var(--sans); --px-font: "Miyu Pixel", ui-monospace, monospace;
+  --px-head: "Miyu Pixel CJK", var(--font-ui); --px-font: "Miyu Pixel", ui-monospace, monospace;
   /* 真的主题记一份：主题那一屏的小窗口照它画（下面一层换成像素的那一套） */
   --keep-surface: var(--surface); --keep-sidebar: var(--sidebar-bg); --keep-surface-1: var(--surface-1); --keep-surface-2: var(--surface-2);
   --keep-text: var(--text); --keep-text-soft: var(--text-soft); --keep-accent: var(--accent); --keep-accent-soft: var(--accent-soft);
-  position: fixed; z-index: 38; inset: 0; overflow: hidden; background: var(--px-bg); color: var(--px-tx); font-family: var(--sans);
+  position: fixed; z-index: 38; inset: 0; overflow: hidden; background: var(--px-bg); color: var(--px-tx); font-family: var(--font-ui);
   animation: fade-in var(--motion-in) var(--ease-out) both;
 }
 /* 主题的几格换成像素的那一套：别的包的控件（浮层也挂在这一层下面）照它们画 */
@@ -116,7 +116,7 @@
   position: relative; border: 0; border-radius: 0; background: var(--px-c); color: var(--px-tx);
   box-shadow: 0 -3px 0 0 var(--px-c), 0 3px 0 0 var(--px-c), -3px 0 0 0 var(--px-c), 3px 0 0 0 var(--px-c); transform: none; transition: none;
 }
-.wl-lang { display: flex; align-items: center; gap: 10px; min-height: 46px; margin: 3px; padding: 0 14px 0 30px; font: 14.5px var(--sans); text-align: left; cursor: pointer; }
+.wl-lang { display: flex; align-items: center; gap: 10px; min-height: 46px; margin: 3px; padding: 0 14px 0 30px; font: 14.5px var(--font-ui); text-align: left; cursor: pointer; }
 .wl-lang:hover, .wl-lang:focus-visible, .wl-layer .ob-row:hover, .wl-layer .ob-row:focus-visible, .wl-layer .setup-choice:hover, .wl-layer .ob-model:hover { outline: 0; --px-c: var(--px-cell-hi); background: var(--px-c); }
 .wl-lang.is-on, .wl-layer .ob-model.is-on { --px-c: var(--px-yel); background: var(--px-c); color: var(--px-yel-ink); }
 /* 大块的预设卡片选中的不整块涂黄（2026-10-19 项目主人：配色太重）：底亮一档，四边一圈 3px 的黄色像素阶梯框，名字变黄 */

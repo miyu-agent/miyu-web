@@ -34,8 +34,8 @@
 
 /* 表格：去外框和竖线，只留淡横线，太宽的自己横着滚 */
 .markdown-body .markdown-table-scroll {
-  max-width: 100%; margin: 0 0 10px; overflow-x: auto; border-radius: var(--radius);
-  background: color-mix(in srgb, var(--surface-2) 45%, transparent); scrollbar-color: var(--line-strong) transparent;
+  max-width: 100%; margin: 0 0 10px; overflow-x: auto; border-radius: var(--card-radius, var(--radius));
+  background: var(--card-bg, color-mix(in srgb, var(--surface-2) 45%, transparent)); scrollbar-color: var(--line-strong) transparent;
 }
 .markdown-body table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .markdown-body th, .markdown-body td {
@@ -51,7 +51,7 @@
 
 .markdown-body code:not(pre code) {
   padding: 1px 6px; border: 0; border-radius: var(--radius); background: var(--surface-2);
-  font-family: var(--code-font); font-size: 0.86em; overflow-wrap: anywhere;
+  font-family: var(--font-code); font-size: 0.86em; overflow-wrap: anywhere;
 }
 
 /* 链接：定值的蓝，不跟主题（旧版 09-09 定：「蓝色带下划线 = 能点」有肌肉记忆） */
@@ -66,11 +66,11 @@
 .markdown-body a.path-link { cursor: copy; }
 
 /* 代码块：一块面板，不靠描边，靠底色（旧版 09-09 定） */
-.code-block { margin: 2px 0 12px; overflow: hidden; border: 0; border-radius: var(--radius); background: var(--code-bg); color: var(--code-ink); }
+.code-block { margin: 2px 0 12px; overflow: hidden; border: var(--codeblock-border, 0); border-radius: var(--codeblock-radius, var(--radius)); background: var(--codeblock-bg, var(--code-bg)); color: var(--code-ink); }
 .code-toolbar {
   display: flex; min-height: 30px; align-items: center; justify-content: space-between; padding: 3px 6px 0 14px;
   color: color-mix(in srgb, var(--code-ink) 50%, transparent);
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
 }
 .code-copy-button {
   display: grid; width: 25px; height: 23px; place-items: center; padding: 0; border: 0; border-radius: var(--radius);
@@ -81,7 +81,7 @@
 .code-copy-button .icon { width: 13px; height: 13px; }
 .code-block pre {
   max-height: 420px; margin: 0; padding: 4px 16px 13px; overflow: auto; color: var(--code-ink);
-  font-family: var(--code-font); font-size: 12.5px; line-height: 1.7; tab-size: 2;
+  font-family: var(--font-code); font-size: 12.5px; line-height: 1.7; tab-size: 2;
 }
 .code-block code { white-space: pre; }
 
@@ -110,11 +110,11 @@
 
 /* 她的回答直接铺在页面底色上（旧版 styles.css:11355-11395）：代码块和表格是一张 surface_1 的卡片，不画描边，一点点影
    （card_shadow；2026-09-30 项目主人定：卡片的描边不好看），行内代码的底是正文色兑底色的中性灰 */
-.assistant-content .code-block { --code-bg: var(--surface-1); box-shadow: var(--card-shadow); }
+.assistant-content .code-block { --code-bg: var(--surface-1); box-shadow: var(--codeblock-elev, var(--card-shadow)); }
 .assistant-content .markdown-body code:not(pre code) {
-  border-radius: 8px; background: color-mix(in srgb, var(--text) 9%, var(--surface));
+  border-radius: var(--r-8); background: color-mix(in srgb, var(--text) 9%, var(--surface));
 }
-.assistant-content .markdown-table-scroll { border-radius: var(--radius); background: var(--surface-1); box-shadow: var(--card-shadow); }
+.assistant-content .markdown-table-scroll { border-radius: var(--card-radius, var(--radius)); background: var(--card-bg, var(--surface-1)); box-shadow: var(--card-elev, var(--card-shadow)); }
 .assistant-content .markdown-body table { background: none; }
 .assistant-content .markdown-body th {
   border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--text) 5%, var(--surface-1));

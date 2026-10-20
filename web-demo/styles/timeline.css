@@ -14,7 +14,7 @@
   --tl-hi: color-mix(in srgb, var(--text) 84%, var(--surface));
   /* 思考的字悬停亮一档：在想时滚着的那几行、点开的全文，整块能点（2026-09-30 项目主人定） */
   --tl-think-hi: color-mix(in srgb, var(--text) 90%, var(--surface));
-  position: relative; margin: 2px 0; color: var(--tl-soft); font: 600 11.5px/1.5 var(--sans);
+  position: relative; margin: 2px 0; color: var(--tl-soft); font: 600 11.5px/1.5 var(--font-ui);
 }
 
 /* 收起那一行（照 TUI）：英文、没有节点；只有那一截字能点，悬停字亮一档，末尾的箭头悬停才露（照 Claude 网页端） */
@@ -58,10 +58,10 @@
 .tl-node { display: grid; flex: 0 0 var(--tl-col); width: var(--tl-col); height: var(--tl-col); place-items: center; color: var(--tl-soft); transition: color 0.15s ease; }
 .tl-node .icon { width: 13px; height: 13px; }
 .tl-name { flex: 0 0 auto; color: var(--text); white-space: nowrap; }
-.tl-time { flex: none; color: var(--tl-soft); font: 400 10.5px var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tl-time { flex: none; color: var(--tl-soft); font: 400 10.5px var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* 思考：标题 1px 4px 的小块；在想时流光、图标呼吸；收着时后面接最后一小段，放不下左边淡出 */
-.tl-step.is-thought .tl-name { max-width: 24em; padding: 1px 4px; overflow: hidden; border-radius: 5px; text-overflow: ellipsis; }
+.tl-step.is-thought .tl-name { max-width: 24em; padding: 1px 4px; overflow: hidden; border-radius: var(--r-5); text-overflow: ellipsis; }
 .tl-step.is-thought.is-live .tl-name {
   background: linear-gradient(90deg, var(--text) 30%, var(--accent) 50%, var(--text) 70%); background-size: 200% 100%;
   -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
@@ -127,25 +127,25 @@
 .tl-step.is-tool.is-bare > .tl-command[hidden] ~ .tl-fold { margin-top: 0; }
 
 /* 工具：名字、用时、对象、结果那一句；在跑的末尾转圈 */
-.tl-head { display: flex; flex: 0 1 auto; min-width: 0; align-items: baseline; gap: 5px; padding: 1px 4px; border-radius: 5px; }
+.tl-head { display: flex; flex: 0 1 auto; min-width: 0; align-items: baseline; gap: 5px; padding: 1px 4px; border-radius: var(--r-5); }
 /* 一行里几段之间用 · 隔开（名字、用时、对象、结果那一句、加减；思考的名字、用时、那一小段），颜色和对象一样（2026-10-01 项目主人：
    原来只靠空隙分，看着乱）。字是页面变量 --tl-sep（text 的 timeline.peek_sep）；藏着的那一段不画 */
 .tl-head > * + *:not([hidden])::before,
 .tl-step.is-thought > .tl-row > .tl-time:not([hidden])::before {
-  content: var(--tl-sep); margin-right: 5px; color: var(--tl-soft); font: 400 11px var(--sans);
+  content: var(--tl-sep); margin-right: 5px; color: var(--tl-soft); font: 400 11px var(--font-ui);
 }
 /* 思考那一小段前面的点：和那一小段一起出现、一起藏 */
-.tl-peek-dot { display: none; flex: none; color: var(--tl-soft); font: 400 11px var(--sans); }
+.tl-peek-dot { display: none; flex: none; color: var(--tl-soft); font: 400 11px var(--font-ui); }
 .tl-step.is-thought:not(.is-open) .tl-peek-dot { display: inline; }
 .tl-step.is-thought.is-rolling .tl-peek-dot { display: none; }
 .tl-subject { flex: 0 1 auto; min-width: 0; overflow: hidden; color: var(--tl-soft); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
-.tl-subject.is-mono { font: 400 11px var(--mono); }
+.tl-subject.is-mono { font: 400 11px var(--font-mono); }
 .tl-said { flex: none; color: var(--tl-soft); font-size: 11px; font-weight: 400; white-space: nowrap; }
 /* 编辑、写入：加减的行数，加的 diff_add、减的 diff_del（和收起那一行同一份，蓝图 web.md「时间线」的「工具一行」） */
 .tl-diff { flex: none; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tl-step.is-tool .tl-time { color: var(--text-faint); }
 .tl-step.is-preparing .tl-time { color: inherit; font: inherit; }
-.tl-status { display: grid; flex: none; margin-left: 4px; place-items: center; color: var(--tl-soft); font: 400 10.5px var(--mono); }
+.tl-status { display: grid; flex: none; margin-left: 4px; place-items: center; color: var(--tl-soft); font: 400 10.5px var(--font-mono); }
 .tl-status .icon, .tl-node .icon.is-spin { width: 12px; height: 12px; animation: tl-spin 900ms linear infinite; }
 .tl-node .icon.is-spin { width: 13px; height: 13px; }
 .tl-step.is-failed .tl-node, .tl-step.is-failed .tl-name, .tl-step.is-failed .tl-subject,
@@ -154,7 +154,7 @@
 /* 执行命令：命令本身写在那一行下面，等宽，最多几行，放不下的「⋮」；悬停和那一行一起亮 */
 .tl-command {
   max-height: calc(var(--tl-cmd-rows) * 1.7em); margin: 0 0 4px var(--tl-indent); overflow: hidden;
-  color: var(--tl-soft); font: 400 11px/1.7 var(--mono); tab-size: 2; cursor: pointer; transition: color 0.15s ease;
+  color: var(--tl-soft); font: 400 11px/1.7 var(--font-mono); tab-size: 2; cursor: pointer; transition: color 0.15s ease;
 }
 .tl-cline { white-space: pre-wrap; overflow-wrap: anywhere; }
 .tl-more { color: var(--text-faint); letter-spacing: 0.1em; }
@@ -188,15 +188,15 @@
 .tl-images .conversation-media { margin: 2px 0 0; }
 .tl-body pre {
   max-height: 300px; margin: 0; overflow-x: hidden; overflow-y: auto; color: var(--text);
-  font: 11.5px/1.65 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere;
+  font: 11.5px/1.65 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere;
 }
 /* 翻记忆、查知识库、读文档（核心给人看的 detail，照终端）：记忆一条一行「日期 · 内容」，作废的划线；对话片段、命中一段一块，头一行是哪来的 */
-.tl-found-row { font: 11.5px/1.65 var(--mono); overflow-wrap: anywhere; }
+.tl-found-row { font: 11.5px/1.65 var(--font-mono); overflow-wrap: anywhere; }
 .tl-found-row .tl-found-head { color: var(--text-faint); }
 .tl-found-row .tl-found-head::after { content: ' · '; }
 .tl-found-row.is-struck .tl-found-text { color: var(--text-faint); text-decoration: line-through; }
 .tl-found-block + .tl-found-block { margin-top: 8px; }
-.tl-found-block > .tl-found-head { color: var(--text-faint); font: 11px/1.6 var(--mono); }
+.tl-found-block > .tl-found-head { color: var(--text-faint); font: 11px/1.6 var(--font-mono); }
 .tl-found-doc { max-height: 300px; overflow: auto; font-size: 13px; }
 /* 读到的那一页里的图不画（照终端；文档里的图是知识库里的相对路径，网页取不到） */
 .tl-found-doc img { display: none; }
@@ -213,10 +213,10 @@
 
 
 /* 差异（旧版 diff.js、styles.css:2861-2967）：一张卡片，头一行做了什么、路径、加减；一行一行，加的绿底、删的红底 */
-.diff-file { overflow: hidden; border-radius: var(--radius); background: var(--surface-1); box-shadow: var(--bubble-shadow); font: 400 11px var(--mono); }
+.diff-file { overflow: hidden; border-radius: var(--card-radius, var(--radius)); background: var(--card-bg, var(--surface-1)); box-shadow: var(--card-elev, var(--bubble-shadow)); font: 400 11px var(--font-mono); }
 .diff-file-head { display: flex; align-items: baseline; gap: 8px; padding: 8px 12px 7px; }
 /* 「修改」「新建」是中文：等宽字体里中文占两格、看着字距拉开，用正文字体 */
-.diff-op { flex: none; color: var(--text-soft); font-family: var(--sans); font-weight: 600; }
+.diff-op { flex: none; color: var(--text-soft); font-family: var(--font-ui); font-weight: 600; }
 .diff-op.is-add { color: var(--diff-add); }
 .diff-path { flex: 1; min-width: 0; overflow: hidden; color: var(--text); text-overflow: ellipsis; white-space: nowrap; }
 .diff-stat { flex: none; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -274,7 +274,7 @@
   width: 6px;
   height: 6px;
   margin: -3px;
-  border-radius: 50%;
+  border-radius: var(--r-round);
 }
 .miyu-run .mr1 { background: var(--gold); animation: mr1 var(--mrun) ease-in-out infinite; }
 .miyu-run .mr2 { background: var(--ribbon); animation: mr2 var(--mrun) ease-in-out infinite; }

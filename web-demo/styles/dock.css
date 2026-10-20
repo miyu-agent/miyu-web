@@ -26,10 +26,10 @@
 /* ── 命令列表、选语言的浮层、输入历史列表、@ 选文件的列表：浮在框上面，和框一样宽；半透明的 surface-1 加毛玻璃，一圈细线，浮起来的阴影 ── */
 .dock-commands, .dock-picker, .dock-help, .dock-history, .dock-mention, .dock-slist {
   position: absolute; z-index: 3; right: -1px; bottom: calc(100% + 1px + var(--list-gap)); left: -1px;
-  padding: 6px; border: 1px solid var(--line); border-radius: 14px;
-  background: color-mix(in srgb, var(--surface-1) 90%, transparent);
-  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
-  box-shadow: var(--float-shadow);
+  padding: 6px; border: var(--float-border, 1px solid var(--line)); border-radius: var(--float-radius, var(--r-14));
+  background: var(--float-bg, color-mix(in srgb, var(--surface-1) 90%, transparent));
+  -webkit-backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur)))); backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur))));
+  box-shadow: var(--float-elev, var(--float-shadow));
   animation: rise-in var(--motion-in) var(--ease-out) both;
 }
 .dock-commands.is-leaving, .dock-picker.is-leaving, .dock-help.is-leaving, .dock-history.is-leaving, .dock-mention.is-leaving, .dock-slist.is-leaving { animation: sink-out var(--motion-out) var(--ease-in) both; }
@@ -42,10 +42,10 @@
 }
 .command-row {
   display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; column-gap: 18px;
-  height: var(--row-h); padding: 0 10px; border-radius: 9px; cursor: pointer;
+  height: var(--row-h); padding: 0 10px; border-radius: var(--r-9); cursor: pointer;
 }
-.command-row.is-selected { background: var(--surface-2); }
-.command-name { color: var(--text); font: 13px var(--mono); white-space: nowrap; }
+.command-row.is-selected { background: var(--item-hover, var(--surface-2)); }
+.command-name { color: var(--text); font: 13px var(--font-mono); white-space: nowrap; }
 .command-row.is-selected .command-name { color: var(--accent); }
 .command-alias { color: var(--text-faint); }
 .command-arg { color: var(--text-faint); font-weight: 400; }
@@ -56,14 +56,14 @@
 .picker-head { display: flex; align-items: baseline; gap: 8px; padding: 5px 10px 8px; line-height: 18px; }
 .picker-title { color: var(--text); font-size: 13px; font-weight: 600; }
 .picker-hint { min-width: 0; flex: 1; overflow: hidden; color: var(--text-faint); font-size: 12px; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
-.picker-row { display: flex; align-items: center; gap: 12px; height: 32px; padding: 0 10px; border-radius: 9px; cursor: pointer; }
-.picker-row.is-selected { background: var(--surface-2); }
+.picker-row { display: flex; align-items: center; gap: 12px; height: 32px; padding: 0 10px; border-radius: var(--r-9); cursor: pointer; }
+.picker-row.is-selected { background: var(--item-hover, var(--surface-2)); }
 .picker-label { min-width: 0; flex: 1; overflow: hidden; color: var(--text); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .picker-row.is-selected .picker-label { color: var(--accent); }
 .picker-desc { margin-left: 8px; color: var(--text-faint); font-size: 12px; }
 .picker-row.is-off { cursor: default; }
 .picker-row.is-off .picker-label { color: var(--text-faint); }
-.picker-action { display: none; flex: none; place-items: center; width: 24px; height: 24px; margin-right: -4px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--text-faint); cursor: pointer; }
+.picker-action { display: none; flex: none; place-items: center; width: 24px; height: 24px; margin-right: -4px; padding: 0; border: 0; border-radius: var(--r-6); background: none; color: var(--text-faint); cursor: pointer; }
 .picker-row.is-selected .picker-action { display: inline-grid; }
 .picker-action:hover { background: var(--surface-3); color: var(--text); }
 .picker-action .icon { width: 14px; height: 14px; }
@@ -73,7 +73,7 @@
 .help-section { margin: 8px 0 4px; color: var(--text-faint); font-size: 12px; font-weight: 700; }
 .help-section:first-child { margin-top: 0; }
 .help-grid { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 18px; row-gap: 2px; align-items: baseline; }
-.help-key { color: var(--text); font: 12.5px var(--mono); line-height: 22px; white-space: nowrap; }
+.help-key { color: var(--text); font: 12.5px var(--font-mono); line-height: 22px; white-space: nowrap; }
 .help-what { color: var(--text-soft); font-size: 13px; line-height: 22px; }
 
 /* ── 输入历史列表（Ctrl+R，蓝图 web.md「输入历史」第 4 条）：头一行「历史 · N 条」和搜索框；最新的贴着底，最多露 --rows 行，多的在
@@ -82,13 +82,13 @@
 .history-title { color: var(--text); font-size: 13px; font-weight: 600; }
 .history-count { flex: none; color: var(--text-faint); font-size: 12px; }
 .history-search {
-  min-width: 0; flex: 1; max-width: 240px; margin-left: auto; padding: 3px 8px; border: 0; border-radius: 7px; outline: 0;
-  background: var(--surface-2); color: var(--text); font: inherit; font-size: 12.5px; line-height: 18px;
+  min-width: 0; flex: 1; max-width: 240px; margin-left: auto; padding: 3px 8px; border: var(--field-border, 0); border-radius: var(--field-radius, var(--r-7)); outline: 0;
+  background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text)); font: inherit; font-size: 12.5px; line-height: 18px;
 }
 .history-search::placeholder { color: var(--text-faint); }
 .history-list { --row-h: 32px; max-height: calc(var(--rows) * var(--row-h)); overflow-y: auto; overscroll-behavior: contain; }
-.history-row { display: flex; align-items: flex-start; gap: 12px; min-height: var(--row-h); padding: 7px 10px; border-radius: 9px; cursor: pointer; }
-.history-row.is-selected { background: var(--surface-2); }
+.history-row { display: flex; align-items: flex-start; gap: 12px; min-height: var(--row-h); padding: 7px 10px; border-radius: var(--r-9); cursor: pointer; }
+.history-row.is-selected { background: var(--item-hover, var(--surface-2)); }
 .history-body { min-width: 0; flex: 1; overflow: hidden; color: var(--text); font-size: 13px; line-height: 18px; text-overflow: ellipsis; white-space: nowrap; }
 .history-row.is-open .history-body { overflow-wrap: anywhere; white-space: pre-wrap; }
 .history-row.is-selected .history-text { color: var(--accent); }
@@ -107,8 +107,8 @@
 .slist-title { color: var(--text); font-size: 13px; font-weight: 600; }
 .slist-count { flex: none; color: var(--text-faint); font-size: 12px; }
 .slist-search {
-  min-width: 0; flex: 1; max-width: 240px; margin-left: auto; padding: 3px 8px; border: 0; border-radius: 7px; outline: 0;
-  background: var(--surface-2); color: var(--text); font: inherit; font-size: 12.5px; line-height: 18px;
+  min-width: 0; flex: 1; max-width: 240px; margin-left: auto; padding: 3px 8px; border: var(--field-border, 0); border-radius: var(--field-radius, var(--r-7)); outline: 0;
+  background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text)); font: inherit; font-size: 12.5px; line-height: 18px;
 }
 .slist-search::placeholder { color: var(--text-faint); }
 .slist-list {
@@ -116,11 +116,11 @@
   display: grid; grid-template-columns: 0 14px max-content minmax(0, 1fr) max-content 0; column-gap: 10px; align-content: start;
   max-height: calc(var(--rows) * var(--row-h)); overflow-y: auto; overscroll-behavior: contain;
 }
-.slist-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; height: var(--row-h); border-radius: 9px; cursor: pointer; }
-.slist-row.is-selected { background: var(--surface-2); }
+.slist-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; height: var(--row-h); border-radius: var(--r-9); cursor: pointer; }
+.slist-row.is-selected { background: var(--item-hover, var(--surface-2)); }
 .slist-mark { grid-column: 2; display: grid; place-items: center; }
 .slist-mark.session-run-spinner { font-size: 15px; }
-.slist-id { color: var(--text-faint); font: 12px var(--mono); }
+.slist-id { color: var(--text-faint); font: 12px var(--font-mono); }
 .slist-row.is-selected .slist-id { color: var(--text-soft); }
 .slist-name { min-width: 0; overflow: hidden; color: var(--text); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .slist-row.is-selected .slist-name { color: var(--accent); }
@@ -135,9 +135,9 @@
 .mention-title { flex: none; color: var(--text); font-size: 13px; font-weight: 600; }
 .mention-note { min-width: 0; overflow: hidden; color: var(--text-faint); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .mention-list { --row-h: 32px; max-height: calc(var(--rows) * var(--row-h)); overflow-y: auto; overscroll-behavior: contain; }
-.mention-row { display: flex; align-items: center; height: var(--row-h); padding: 0 10px; border-radius: 9px; cursor: pointer; }
-.mention-row.is-selected { background: var(--surface-2); }
-.mention-path { min-width: 0; overflow: hidden; font: 13px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
+.mention-row { display: flex; align-items: center; height: var(--row-h); padding: 0 10px; border-radius: var(--r-9); cursor: pointer; }
+.mention-row.is-selected { background: var(--item-hover, var(--surface-2)); }
+.mention-path { min-width: 0; overflow: hidden; font: 13px var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
 .mention-dir { color: var(--text-faint); }
 .mention-name { color: var(--text); }
 .mention-row.is-selected .mention-name { color: var(--accent); }

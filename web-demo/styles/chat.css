@@ -46,7 +46,7 @@
 /* 不挂在她头下的一行：回报、压缩、清空（蓝图 web.md「后台命令、子代理的回报」「压缩、清空」）。和收尾那一行一样对齐、
    一样大：缩进到她的内容那一列，等宽 13px，字暗、记号有颜色；能点开的悬停亮一档，点开下面铺底色 */
 /* 提示行（回报、压缩、清空）：和时间线收起那一行一个样子（正文字体 600、11.5px、text 的六成二），记号照旧有颜色（蓝图 web.md「后台命令、子代理的回报」） */
-.note { margin-bottom: 19px; padding-left: 40px; color: color-mix(in srgb, var(--text) 62%, var(--surface)); font: 600 11.5px/1.5 var(--sans); }
+.note { margin-bottom: 19px; padding-left: 40px; color: color-mix(in srgb, var(--text) 62%, var(--surface)); font: 600 11.5px/1.5 var(--font-ui); }
 /* 上下各空一行，一行照提示行自己的字高（11.5px × 1.5），不照正文（2026-10-12 项目主人：原来照正文的一行，上 25、下 28，看着比一行宽；
    10-10 那次是从上 33、下 40 收到正文的一行）：照字到字量（上一块最后一行字的底到提示行字的顶、提示行字的底到下一块的字或头像的顶）上下都是 22，单独一行的和夹在她这一块里的一样；一连几条之间 16（2026-10-16 项目主人：原来下面比上面窄、离头像太近，夹在她这一块里的没跟着改） */
 .assistant-message + .note, .assistant-message + .compacting { margin-top: -12px; }
@@ -60,7 +60,7 @@
 }
 .compacting.is-breathing .compacting-line, .compacting.is-breathing .compacting-bar { animation: compacting-breathe 2s ease-in-out infinite; }
 /* 自动压缩停下来等的那一行：同结果那一行（.note 的字） */
-.compacting-wait { color: color-mix(in srgb, var(--text) 62%, var(--surface)); font: 600 11.5px/1.5 var(--sans); }
+.compacting-wait { color: color-mix(in srgb, var(--text) 62%, var(--surface)); font: 600 11.5px/1.5 var(--font-ui); }
 .compacting-line { display: flex; align-items: baseline; font-size: 11.5px; line-height: 1.5; }
 .compacting-label {
   color: var(--cp-base); font-weight: 600;
@@ -70,12 +70,12 @@
 }
 .compacting-dots { display: inline-block; width: 1.4em; color: var(--cp-base); font-weight: 600; }
 /* 字数紧跟在点后面（点那一格照「...」占宽，数字不跟着点跳；照运行状态行的用时） */
-.compacting-count { margin-left: 0.4em; color: var(--text-faint); font: 11px var(--mono); font-variant-numeric: tabular-nums; }
+.compacting-count { margin-left: 0.4em; color: var(--text-faint); font: 11px var(--font-mono); font-variant-numeric: tabular-nums; }
 .compacting-bar { display: flex; align-items: center; gap: 10px; margin-top: 7px; }
-.compacting-track { position: relative; width: 240px; max-width: 70%; height: 4px; overflow: hidden; border-radius: 999px; background: var(--line); }
+.compacting-track { position: relative; width: 240px; max-width: 70%; height: 4px; overflow: hidden; border-radius: var(--r-pill); background: var(--line); }
 /* 走过的一段只是实心的 accent，不扫光：流光只在上面那几个字上（2026-10-01 项目主人定） */
 .compacting-fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: inherit; background: var(--accent); transition: width .22s cubic-bezier(.2, 0, 0, 1); }
-.compacting-pct { min-width: 3.2em; color: var(--text-faint); font: 11px var(--mono); font-variant-numeric: tabular-nums; }
+.compacting-pct { min-width: 3.2em; color: var(--text-faint); font: 11px var(--font-mono); font-variant-numeric: tabular-nums; }
 @keyframes compacting-sweep { from { background-position: 100% 0; } to { background-position: 0 0; } }
 @keyframes compacting-breathe { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
 @media (prefers-reduced-motion: reduce) {
@@ -86,9 +86,9 @@
 .note-line.tone-failed .note-mark, .note-line.tone-failed .note-text { color: var(--t-error); }
 
 /* 回顾（蓝图 web.md「回顾」第 2 条）：一张卡片，和提问答了留下的一个样子（照附件卡、链接卡片） */
-.note.is-recap { font-family: var(--sans); font-weight: 400; }
+.note.is-recap { font-family: var(--font-ui); font-weight: 400; }
 .note-recap {
-  width: fit-content; max-width: min(100%, 640px); padding: 12px 16px; border-radius: 12px; background: var(--surface-1); box-shadow: var(--card-shadow);
+  width: fit-content; max-width: min(100%, 640px); padding: 12px 16px; border-radius: var(--card-radius, var(--r-12)); background: var(--card-bg, var(--surface-1)); box-shadow: var(--card-elev, var(--card-shadow));
 }
 .note-recap-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; color: var(--text-faint); font-size: 12px; }
 .note-recap-head .icon { width: 14px; height: 14px; flex: none; }
@@ -112,11 +112,11 @@
 .note.is-expandable .note-line:hover > .tl-chevron, .note.is-open > .note-line > .tl-chevron { opacity: 0.8; }
 .note.is-open > .note-line > .tl-chevron { transform: rotate(90deg); }
 .note.is-open .note-detail { cursor: pointer; }
-.note-detail { margin-top: 8px; margin-left: 0; font-family: var(--sans); font-weight: 400; }
+.note-detail { margin-top: 8px; margin-left: 0; font-family: var(--font-ui); font-weight: 400; }
 /* 点开、收起：和时间线点开一步同一个壳（高度从 0 长出来、收回去，淡入淡出，timeline.css 的 .tl-fold） */
 .note .tl-fold { --tl-ease: cubic-bezier(0.22, 0.61, 0.36, 1); }
 .note.is-open > .tl-fold { grid-template-rows: 1fr; opacity: 1; }
-.note-detail pre { max-height: 360px; margin: 0; overflow: auto; font: 12px/1.55 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.note-detail pre { max-height: 360px; margin: 0; overflow: auto; font: 12px/1.55 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 .note-detail-head { margin-bottom: 6px; color: var(--text-faint); font-size: 12px; }
 /* 子代理交回的报告：照她的回答画，字小一档 */
 .note-report { color: var(--text); font-size: 14px; line-height: 1.7; }
@@ -126,21 +126,21 @@
 .user-attachments .conversation-media { margin: 0; }
 .user-attachments .conversation-media, .user-attachments .conversation-media-visual, .user-attachments .conversation-media img { max-width: min(100%, var(--user-media)); }
 .user-attachments .conversation-media img { max-height: var(--user-media); }
-.user-attachments .conversation-media-visual { border-radius: 10px; }
+.user-attachments .conversation-media-visual { border-radius: var(--r-10); }
 .user-attachments .conversation-media-visual.has-aspect { width: min(var(--user-media), 100%); max-height: var(--user-media); }
 .user-file {
   position: relative; display: flex; width: 112px; height: 104px; flex: none; flex-direction: column; gap: 4px; padding: 10px 11px; overflow: hidden;
-  border-radius: 12px; background: color-mix(in srgb, var(--surface-2) 50%, var(--surface-1)); box-shadow: var(--card-shadow); color: var(--text); text-align: left;
+  border-radius: var(--card-radius, var(--r-12)); background: var(--card-bg, color-mix(in srgb, var(--surface-2) 50%, var(--surface-1))); box-shadow: var(--card-elev, var(--card-shadow)); color: var(--text); text-align: left;
   text-decoration: none; transition: background-color 0.15s ease;
 }
-.user-file:hover { background: var(--surface-2); }
+.user-file:hover { background: var(--card-hover, var(--surface-2)); }
 .user-file-name {
   display: -webkit-box; overflow: hidden; font-size: 13px; font-weight: 600; line-height: 17px; overflow-wrap: anywhere;
   -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
 }
 .user-file-sub { overflow: hidden; color: var(--text-faint); font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
 .user-file-ext {
-  position: absolute; bottom: 8px; left: 8px; max-width: calc(100% - 16px); padding: 1px 6px; overflow: hidden; border-radius: 5px;
+  position: absolute; bottom: 8px; left: 8px; max-width: calc(100% - 16px); padding: 1px 6px; overflow: hidden; border-radius: var(--r-5);
   background: var(--surface-3); color: var(--text-soft); font-size: 11px; font-weight: 600; letter-spacing: 0.02em; line-height: 16px;
   text-overflow: ellipsis; white-space: nowrap;
 }
@@ -148,48 +148,48 @@
 /* 你的话里的视频：第一帧，中间一个播放记号；点了原地换成带控制条的播放器 */
 .user-video {
   position: relative; display: grid; max-width: min(100%, var(--user-media)); max-height: var(--user-media); overflow: hidden;
-  place-items: center; border-radius: 10px; background: var(--surface-2); cursor: pointer;
+  place-items: center; border-radius: var(--r-10); background: var(--surface-2); cursor: pointer;
 }
 .user-video video { display: block; max-width: 100%; max-height: var(--user-media); object-fit: contain; }
 .user-video-play {
-  position: absolute; display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%;
+  position: absolute; display: grid; width: 34px; height: 34px; place-items: center; border-radius: var(--r-round);
   background: rgb(0 0 0 / 55%); color: #fff; transition: transform 0.15s ease;
 }
 .user-video:hover .user-video-play { transform: scale(1.08); }
 .user-video-play .icon { width: 15px; height: 15px; margin-left: 2px; fill: currentColor; }
-.user-video-player { max-width: min(100%, 480px); max-height: 56vh; border-radius: 10px; background: #000; }
+.user-video-player { max-width: min(100%, 480px); max-height: 56vh; border-radius: var(--r-10); background: #000; }
 /* 你的气泡：一层淡淡的底，不加阴影；右下角收小一点像个尾巴（旧版的形状，圆角放软） */
 .user-bubble {
-  max-width: min(62%, 640px); padding: 10px 16px; border-radius: 16px 16px 5px 16px;
-  background: color-mix(in srgb, var(--text) 5.5%, var(--surface)); color: var(--text);
-  font-size: 15px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere;
+  max-width: min(62%, 640px); padding: var(--bubble-pad, 10px 16px); border: var(--bubble-border, 0); box-shadow: var(--bubble-elev, none); border-radius: var(--bubble-radius, var(--r-16) var(--r-16) var(--r-5) var(--r-16));
+  background: var(--bubble-bg, color-mix(in srgb, var(--text) 5.5%, var(--surface))); color: var(--text);
+  font-family: var(--font-read); font-size: 15px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere;
 }
 
 /* 她的一轮 */
 .assistant-message { position: relative; max-width: 92%; margin-bottom: 30px; padding-left: 40px; }
 .assistant-label { display: flex; align-items: center; margin-bottom: 5px; gap: 8px; }
 .assistant-label img {
-  position: absolute; top: 0; left: 0; width: 30px; height: 30px; border-radius: 50%; object-fit: cover;
+  position: absolute; top: 0; left: 0; width: 30px; height: 30px; border-radius: var(--r-round); object-fit: cover;
   box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--gold) 75%, transparent);
 }
 .assistant-label strong { color: var(--text-soft); font-size: 11.5px; font-weight: 600; letter-spacing: 0.01em; }
 /* 人格没有头像：名字的第一个字（核心还没有人格的头像） */
 .assistant-initial {
-  position: absolute; top: 0; left: 0; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+  position: absolute; top: 0; left: 0; display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--r-round);
   background: color-mix(in srgb, var(--accent) 16%, var(--surface-1)); color: var(--accent); font-size: 13px; font-weight: 600;
 }
 /* 无人格的会话：她那一轮不画头像和名字，内容、提示行、压缩的进度不缩进（2026-10-10 项目主人） */
 /* 她那一轮、提示行缩不缩进照各自的（中途换了人格，旧的照回复时的人格：`chat.js` 的 `block`）；压缩的进度、正文末尾那一格照现在的人格 */
 .timeline.is-bare .compacting, .timeline.is-bare .chat-tail { padding-left: 0; }
 .assistant-message.is-bare, .note.is-bare { padding-left: 0; }
-.assistant-content { color: var(--text); font-size: 15px; line-height: 1.75; }
+.assistant-content { color: var(--text); font-family: var(--font-read); font-size: 15px; line-height: 1.75; }
 .assistant-content > * + * { margin-top: 10px; }
 
 /* 收尾那一行（tui.md「正文」第 4 条）：和上面的回答之间空一行（正文的一行高），等宽 13px、暗；出错的红 */
 .assistant-content > .turn-end { margin-top: calc(15px * 1.75); }
 /* 她正在回答时来的回报：夹在她这一块里，上下两段时间线中间；已经在她的内容那一列里，不再缩进，上下留和时间线一样的空 */
 .assistant-content > .note { margin-top: 12px; margin-bottom: 12px; padding-left: 0; }
-.turn-end { display: flex; flex-wrap: wrap; align-items: center; column-gap: 10px; color: var(--t-dim); font: 13px/1.6 var(--mono); }
+.turn-end { display: flex; flex-wrap: wrap; align-items: center; column-gap: 10px; color: var(--t-dim); font: 13px/1.6 var(--font-mono); }
 .turn-end-text { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .turn-end.tone-error { color: var(--t-error); }
 /* 打断的那一轮后面那一句「后台还有 N 个在跑」：点了打开后台任务（蓝图「后台任务」第 6 条） */
@@ -200,10 +200,10 @@
    悬停亮、铺一层淡底。编辑、重做只有最新的一轮有，在回答时没有 */
 .msg-actions { display: flex; gap: 2px; }
 .msg-action {
-  display: grid; width: 28px; height: 28px; place-items: center; padding: 0; border: 0; border-radius: 8px;
-  background: transparent; color: var(--text-faint); cursor: pointer; transition: background-color 0.12s ease, color 0.12s ease;
+  display: grid; width: 28px; height: 28px; place-items: center; padding: 0; border: var(--ghost-border, 0); border-radius: var(--ghost-radius, var(--r-8));
+  background: var(--ghost-bg, transparent); color: var(--ghost-fg, var(--text-faint)); cursor: pointer; transition: background-color 0.12s ease, color 0.12s ease;
 }
-.msg-action:hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }
+.msg-action:hover { background: var(--ghost-hover, color-mix(in srgb, var(--text) 6%, transparent)); color: var(--ghost-fg-hover, var(--text)); }
 .msg-action .icon { width: 14px; height: 14px; }
 .user-message:not(.is-latest) .is-edit, .assistant-message:not(.is-latest) .is-redo,
 .chat-scroll.is-running .is-edit, .chat-scroll.is-running .is-redo { display: none; }
@@ -218,20 +218,20 @@
 
 /* 编辑你的话：气泡换成一个输入框，下面右对齐「取消」「发送」 */
 .user-edit {
-  width: min(100%, 720px); padding: 10px 12px 8px 16px; border-radius: 16px; transform-origin: right bottom;
-  background: var(--surface-1); box-shadow: var(--composer-focus-shadow); animation: pop-in var(--motion-in) var(--ease-out) both;
+  width: min(100%, 720px); padding: 10px 12px 8px 16px; border-radius: var(--field-radius, var(--r-16)); transform-origin: right bottom;
+  background: var(--field-bg, var(--surface-1)); box-shadow: var(--field-elev, var(--composer-focus-shadow)); animation: pop-in var(--motion-in) var(--ease-out) both;
 }
 .user-edit.is-leaving { animation: fade-out var(--motion-out) var(--ease-in) both; }
 .edit-input {
   display: block; width: 100%; max-height: 40vh; padding: 0; overflow-y: auto; border: 0; outline: 0; resize: none;
-  background: transparent; color: var(--text); font: 15px/1.7 var(--sans);
+  background: transparent; color: var(--text); font: 15px/1.7 var(--font-read);
 }
 .edit-bar { display: flex; justify-content: flex-end; margin-top: 6px; gap: 6px; }
-.edit-cancel, .edit-send { height: 30px; padding: 0 13px; border: 0; border-radius: 9px; font: 500 13px var(--sans); cursor: pointer; }
+.edit-cancel, .edit-send { height: 30px; padding: 0 13px; border: 0; border-radius: var(--r-9); font: 500 13px var(--font-ui); cursor: pointer; }
 .edit-cancel { background: transparent; color: var(--text-soft); }
 .edit-cancel:hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }
 .edit-send { background: var(--accent); color: var(--on-primary); }
-.edit-send:hover { background: color-mix(in srgb, var(--accent) 88%, var(--text)); }
+.edit-send:hover { background: var(--btn-primary-hover, color-mix(in srgb, var(--accent) 88%, var(--text))); }
 
 @media (max-width: 836px) {
   .note { padding-left: 38px; }
@@ -258,7 +258,7 @@
 .app-shell.is-sidebar-collapsed .chat-crumbs { padding-left: 52px; }
 .crumb-path { display: flex; min-width: 0; align-items: center; gap: 2px; font-size: 13px; }
 .crumb {
-  min-width: 0; max-width: 220px; padding: 3px 6px; overflow: hidden; border: 0; border-radius: 6px; background: none;
+  min-width: 0; max-width: 220px; padding: 3px 6px; overflow: hidden; border: 0; border-radius: var(--r-6); background: none;
   color: var(--text-soft); font: inherit; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;
 }
 .crumb:hover { background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--text); }

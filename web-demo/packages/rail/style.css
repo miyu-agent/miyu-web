@@ -6,7 +6,7 @@
 }
 .rail-lines { display: flex; width: 28px; max-height: 60vh; flex-direction: column; align-items: flex-end; padding: 6px 4px; overflow: hidden; gap: 6px; }
 .rail-line {
-  width: 14px; height: 2px; flex: none; padding: 0; border: 0; border-radius: 1px;
+  width: 14px; height: 2px; flex: none; padding: 0; border: 0; border-radius: var(--r-1);
   background: var(--text-faint); opacity: 0.55; cursor: pointer; transition: width 0.15s ease, opacity 0.15s ease, background-color 0.15s ease;
 }
 /* 线只有 2px 高：点的地方往上下各多 3px，那 3px 不上色（只改 background-color，别用简写把 clip 冲掉） */
@@ -15,8 +15,8 @@
 .rail-line:hover { opacity: 1; }
 .rail-pop {
   position: absolute; top: 50%; right: 34px; width: max-content; max-width: 320px; max-height: 60vh; padding: 6px; overflow-y: auto;
-  border: 1px solid var(--line); border-radius: 14px; background: color-mix(in srgb, var(--surface-1) 90%, transparent);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2); box-shadow: var(--float-shadow);
+  border: var(--float-border, 1px solid var(--line)); border-radius: var(--float-radius, var(--r-14)); background: var(--float-bg, color-mix(in srgb, var(--surface-1) 90%, transparent));
+  -webkit-backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur))) saturate(1.2)); backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur))) saturate(1.2)); box-shadow: var(--float-elev, var(--float-shadow));
   transform: translateY(-50%) scale(0.96); transform-origin: right center; opacity: 0; pointer-events: none;
   transition: opacity 0.12s ease-in, transform 0.12s ease-in;
 }
@@ -27,9 +27,9 @@
 }
 .rail-list { display: flex; flex-direction: column; gap: 2px; }
 .rail-item {
-  display: block; max-width: 100%; padding: 7px 10px; overflow: hidden; border: 0; border-radius: 9px; background: transparent;
-  color: var(--text-soft); font: 13px/1.45 var(--sans); text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;
+  display: block; max-width: 100%; padding: 7px 10px; overflow: hidden; border: var(--item-border, 0); border-radius: var(--item-radius, var(--r-9)); background: var(--item-bg, transparent);
+  color: var(--item-fg, var(--text-soft)); font: 13px/1.45 var(--font-ui); text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;
 }
-.rail-item:hover { background: var(--surface-2); color: var(--text); }
-.rail-item.is-current { background: var(--surface-3); color: var(--text); }
+.rail-item:hover { background: var(--item-hover, var(--surface-2)); color: var(--item-fg-hover, var(--text)); }
+.rail-item.is-current { background: var(--item-active, var(--surface-3)); color: var(--item-fg-active, var(--text)); }
 @media (max-width: 836px) { .prompt-rail { display: none; } }

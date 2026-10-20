@@ -16,6 +16,6 @@
 .bs-empty { margin: auto; padding: 24px; color: var(--text-soft); font-size: 13.5px; text-align: center; }
 body.has-backstage { overflow: hidden; }
 /* 顶栏右边「在新标签页打开」（软件自己的网页，接入通讯平台的页面服务） */
-.bs-site { display: inline-flex; align-items: center; gap: 6px; height: 28px; margin-left: auto; padding: 0 10px; border: 0; border-radius: 8px; background: var(--surface-2); color: var(--text); font: 12.5px var(--sans); cursor: pointer; }
+.bs-site { display: inline-flex; align-items: center; gap: 6px; height: 28px; margin-left: auto; padding: 0 10px; border: 0; border-radius: var(--r-8); background: var(--surface-2); color: var(--text); font: 12.5px var(--font-ui); cursor: pointer; }
 .bs-site:hover { background: var(--surface-3); }
 .bs-site .icon { width: 14px; height: 14px; }

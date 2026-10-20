@@ -11,7 +11,7 @@
 .asking-label { min-width: 0; overflow: hidden; color: var(--text-faint); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .asking-pager { display: inline-flex; flex: none; align-items: center; gap: 2px; color: var(--text-soft); font-size: 12px; font-variant-numeric: tabular-nums; }
 .asking-page { min-width: 28px; text-align: center; }
-.asking-pager-arrow { display: inline-grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--text-soft); cursor: pointer; }
+.asking-pager-arrow { display: inline-grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: var(--r-6); background: transparent; color: var(--text-soft); cursor: pointer; }
 .asking-pager-arrow:hover { background: var(--surface-2); color: var(--text); }
 .asking-pager-arrow.is-off { opacity: 0.3; cursor: default; }
 .asking-pager-arrow.is-off:hover { background: transparent; }
@@ -22,7 +22,7 @@
 .asking-question > .asking-outside { margin-left: 8px; vertical-align: 1px; font-weight: 400; }
 .asking-question { margin-bottom: 8px; color: var(--text); font-size: 14px; font-weight: 600; line-height: 1.45; }
 .asking-paths { display: grid; gap: 2px; margin: -4px 0 10px; }
-.asking-path { display: flex; align-items: center; gap: 8px; color: var(--text-soft); font-family: var(--mono); font-size: 12.5px; word-break: break-all; }
+.asking-path { display: flex; align-items: center; gap: 8px; color: var(--text-soft); font-family: var(--font-mono); font-size: 12.5px; word-break: break-all; }
 /* 装、卸软件包的那几行：包文件夹一行（同路径），下面左边名目（淡、固定宽）、右边内容 */
 .asking-plan { display: grid; gap: 4px; margin: -4px 0 12px; }
 .asking-plan > .asking-path { margin-bottom: 4px; }
@@ -31,8 +31,8 @@
 .asking-plan-items { color: var(--text); overflow-wrap: anywhere; }
 .asking-command { white-space: pre-wrap; }
 .asking-outside {
-  flex: none; padding: 0 6px; border-radius: 4px; background: color-mix(in srgb, var(--t-warn) 14%, transparent);
-  color: var(--t-warn); font-family: var(--sans); font-size: 11px; line-height: 18px;
+  flex: none; padding: 0 6px; border-radius: var(--r-4); background: color-mix(in srgb, var(--t-warn) 14%, transparent);
+  color: var(--t-warn); font-family: var(--font-ui); font-size: 11px; line-height: 18px;
 }
 .asking-outside.is-danger { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); font-weight: 600; }
 
@@ -41,13 +41,13 @@
 .asking.is-wide .asking-main.has-preview { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
 .asking-options { display: grid; gap: 0; }
 .asking-option {
-  display: flex; align-items: flex-start; gap: 9px; padding: 5px 10px; border-radius: 8px; cursor: pointer;
+  display: flex; align-items: flex-start; gap: 9px; padding: 5px 10px; border-radius: var(--r-8); cursor: pointer;
   transition: background-color 0.12s ease;
 }
 .asking-option.is-selected { background: var(--accent-soft); }
 .asking-num, .asking-check {
-  flex: none; display: grid; place-items: center; width: 18px; height: 18px; margin-top: 1px; border-radius: 5px;
-  background: var(--surface-2); color: var(--text-faint); font-family: var(--mono); font-size: 11.5px;
+  flex: none; display: grid; place-items: center; width: 18px; height: 18px; margin-top: 1px; border-radius: var(--r-5);
+  background: var(--surface-2); color: var(--text-faint); font-family: var(--font-mono); font-size: 11.5px;
   transition: background-color 0.12s ease, color 0.12s ease;
 }
 .asking-option.is-selected .asking-num { background: var(--accent); color: var(--on-primary); }
@@ -61,19 +61,19 @@
 
 /* 编辑的框：跟着字长高 */
 .asking-edit {
-  width: 100%; margin-top: 2px; padding: 6px 8px; border: 0; border-radius: 8px; resize: none; overflow: hidden;
-  background: var(--surface-2); color: var(--text); font: inherit; font-size: 13.5px; line-height: 1.5; outline: none;
+  width: 100%; margin-top: 2px; padding: 6px 8px; border: var(--field-border, 0); border-radius: var(--field-radius, var(--r-8)); resize: none; overflow: hidden;
+  background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text)); font: inherit; font-size: 13.5px; line-height: 1.5; outline: none;
   transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
-.asking-edit:focus { background: var(--surface-1); box-shadow: var(--card-shadow); }
+.asking-edit:focus { background: var(--field-bg-focus, var(--surface-1)); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
 
 /* 选项的文字画：右边（窄了在下面），高度照最高的那张，换选项不跳 */
 .asking-previews { display: grid; }
 .asking-preview {
-  grid-area: 1 / 1; visibility: hidden; margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--surface-2);
+  grid-area: 1 / 1; visibility: hidden; margin: 0; padding: 10px 12px; border-radius: var(--r-8); background: var(--surface-2);
   color: var(--text-soft); font-size: 12.5px; line-height: 1.35; overflow-x: auto;
   /* 文字画照终端的格子画（中文占两格）：中文和西文正好二比一的等宽字在前，排得齐；都没装的退回 --mono */
-  font-family: "JetBrains Maple Mono", "Maple Mono NF CN", "Sarasa Mono SC", var(--mono);
+  font-family: "JetBrains Maple Mono", "Maple Mono NF CN", "Sarasa Mono SC", var(--font-mono);
 }
 .asking-preview.is-shown { visibility: visible; }
 
@@ -91,7 +91,7 @@
 .asking-review-row span { color: var(--text-soft); }
 .asking-review-row .is-missing, .asking-report .is-missing { color: var(--danger); }
 .asking-submit {
-  padding: 6px 16px; border: 0; border-radius: 10px; background: var(--accent); color: var(--on-primary); font: inherit; font-size: 13px; cursor: pointer;
+  padding: 6px 16px; border: var(--btn-primary-border, 0); border-radius: var(--btn-primary-radius, var(--r-10)); background: var(--btn-primary-bg, var(--accent)); color: var(--btn-primary-fg, var(--on-primary)); font: inherit; font-size: 13px; cursor: pointer;
 }
 
 /* 最下面一行：按键提示、取消 */
@@ -99,7 +99,7 @@
 .asking-keys { color: var(--text-faint); font-size: 12px; transition: color 0.15s ease; }
 .asking-keys.is-armed { color: var(--t-warn); }
 .asking-foot-right { display: inline-flex; flex: none; align-items: center; gap: 10px; }
-.asking-next { height: 26px; padding: 0 12px; border: 0; border-radius: 8px; background: var(--accent); color: var(--on-primary); font: inherit; font-size: 12.5px; cursor: pointer; }
+.asking-next { height: 26px; padding: 0 12px; border: var(--btn-primary-border, 0); border-radius: var(--btn-primary-radius, var(--r-8)); background: var(--btn-primary-bg, var(--accent)); color: var(--btn-primary-fg, var(--on-primary)); font: inherit; font-size: 12.5px; cursor: pointer; }
 .asking-next:hover { filter: brightness(1.06); }
 .asking-next:disabled { opacity: 0.4; cursor: default; filter: none; }
 .asking-cancel { flex: none; padding: 2px 4px; border: 0; background: none; color: var(--text-soft); font: inherit; font-size: 12px; cursor: pointer; }
@@ -112,8 +112,8 @@
 @media (max-width: 836px) { .timeline > .asking-report { margin-left: 38px; } }
 .asking-report.is-fresh { animation: rise-in var(--motion-in) var(--ease-out); }
 .asking-card {
-  width: fit-content; min-width: min(260px, 100%); max-width: min(100%, 520px); padding: 12px 16px; border-radius: 12px;
-  background: var(--surface-1); box-shadow: var(--card-shadow);
+  width: fit-content; min-width: min(260px, 100%); max-width: min(100%, 520px); padding: 12px 16px; border-radius: var(--card-radius, var(--r-12));
+  background: var(--card-bg, var(--surface-1)); box-shadow: var(--card-elev, var(--card-shadow));
 }
 .asking-card-head { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; color: var(--text-faint); font-size: 12px; }
 .asking-card-head .icon { width: 14px; height: 14px; flex: none; }

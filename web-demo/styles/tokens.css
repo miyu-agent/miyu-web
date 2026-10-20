@@ -1,0 +1,167 @@
+/* 皮肤能换的变量（蓝图 web.md「皮肤」）。主题管颜色，这里管形状和材质；皮肤包（挂进 skin.packs）只能写这份表里有的名字。
+
+   第一层：形状的总开关，出厂值写在下面的 :root 里，改一个数整页跟着变。
+   第二层：一种材质一组，出厂不定义：每一处照自己原来的值画（var(--名字, 原来的值)），皮肤写了哪个，那一类的每一处都换成它。
+   颜色只用主题的颜色变量和 color-mix，不写颜色字面量；名字不和主题的颜色重名（--card-shadow 是主题的，这里是 --card-elev）。
+
+   输入框
+     @token --composer-bg 底
+     @token --composer-border 边
+     @token --composer-radius 圆角
+     @token --composer-elev 影
+     @token --composer-pad-x 写字的地方左右离边多远
+     @token --composer-pad-top 写字的地方上面离边多远
+     @token --composer-font 字（font 简写）
+     @token --composer-elev-focus 聚焦的影
+   发送按钮
+     @token --send-bg 底
+     @token --send-border 边
+     @token --send-radius 圆角
+     @token --send-fg 字色
+     @token --send-hover 悬停的底
+     @token --send-bg-disabled 用不了时的底
+     @token --send-fg-disabled 用不了时的字色
+   你的话
+     @token --bubble-bg 底
+     @token --bubble-border 边
+     @token --bubble-radius 圆角
+     @token --bubble-elev 影
+     @token --bubble-pad 内边距
+   贴在页面上的卡片（链接、媒体、附件、文件、表格、差异）
+     @token --card-bg 底
+     @token --card-border 边
+     @token --card-radius 圆角
+     @token --card-elev 影
+     @token --card-hover 悬停的底
+     @token --card-elev-hover 悬停的影
+   代码块
+     @token --codeblock-bg 底
+     @token --codeblock-border 边
+     @token --codeblock-radius 圆角
+     @token --codeblock-elev 影
+   浮起来的小框（菜单、命令列表、提示、浮层）
+     @token --float-bg 底
+     @token --float-border 边
+     @token --float-radius 圆角
+     @token --float-elev 影
+     @token --float-blur 毛玻璃（backdrop-filter 的值）
+   弹窗（设置页、确认、编辑窗口）
+     @token --modal-bg 底
+     @token --modal-border 边
+     @token --modal-radius 圆角
+     @token --modal-elev 影
+     @token --modal-blur 毛玻璃（backdrop-filter 的值）
+   弹窗底下盖着整页的那一层
+     @token --veil-bg 底
+     @token --veil-blur 毛玻璃（backdrop-filter 的值）
+   能选的一行（左栏、菜单、设置页左栏）
+     @token --item-bg 底
+     @token --item-border 边
+     @token --item-radius 圆角
+     @token --item-fg 字色
+     @token --item-hover 悬停的底
+     @token --item-elev-hover 悬停的影
+     @token --item-fg-hover 悬停的字色
+     @token --item-active 选中、打开着的底
+     @token --item-elev-active 选中的影
+     @token --item-fg-active 选中的字色
+   透明的图标按钮
+     @token --ghost-bg 底
+     @token --ghost-border 边
+     @token --ghost-radius 圆角
+     @token --ghost-fg 字色
+     @token --ghost-hover 悬停的底
+     @token --ghost-fg-hover 悬停的字色
+   按钮
+     @token --btn-bg 底
+     @token --btn-border 边
+     @token --btn-radius 圆角
+     @token --btn-elev 影
+     @token --btn-fg 字色
+     @token --btn-hover 悬停的底
+     @token --btn-elev-hover 悬停的影
+     @token --btn-fg-hover 悬停的字色
+   主按钮
+     @token --btn-primary-bg 底
+     @token --btn-primary-border 边
+     @token --btn-primary-radius 圆角
+     @token --btn-primary-fg 字色
+     @token --btn-primary-hover 悬停的底
+     @token --btn-primary-fg-hover 悬停的字色
+     @token --btn-primary-bg-disabled 用不了时的底
+     @token --btn-primary-fg-disabled 用不了时的字色
+   写字的框、搜索框、下拉
+     @token --field-bg 底
+     @token --field-border 边
+     @token --field-radius 圆角
+     @token --field-elev 影
+     @token --field-fg 字色
+     @token --field-hover 悬停的底
+     @token --field-bg-focus 聚焦的底
+     @token --field-elev-focus 聚焦的影
+   小标签、小块
+     @token --chip-bg 底
+     @token --chip-border 边
+     @token --chip-radius 圆角
+     @token --chip-fg 字色
+     @token --chip-hover 悬停的底
+     @token --chip-fg-hover 悬停的字色
+     @token --chip-active 选中、打开着的底
+     @token --chip-fg-active 选中的字色
+   开关的槽
+     @token --switch-bg 底
+     @token --switch-border 边
+     @token --switch-radius 圆角
+     @token --switch-active 选中、打开着的底
+   开关的圆钮
+     @token --knob-bg 底
+     @token --knob-radius 圆角
+     @token --knob-elev 影
+   分段切换的槽
+     @token --seg-bg 底
+     @token --seg-radius 圆角
+   分段切换选中的那一格
+     @token --seg-thumb-bg 底
+     @token --seg-thumb-radius 圆角
+     @token --seg-thumb-elev 影
+   左栏
+     @token --side-bg 底
+     @token --side-elev 影
+*/
+
+:root {
+  /* @token --round 圆角的倍数：1 是出厂，0 是全直角 */
+  --round: 1;
+  /* @token --blur 毛玻璃虚化的倍数：1 是出厂，0 不虚化 */
+  --blur: 1;
+  /* @token --r-数 各处的圆角：那么多像素乘 --round（--r-2-5 是 2.5px） */
+  --r-1: calc(1px * var(--round));
+  --r-2: calc(2px * var(--round));
+  --r-2-5: calc(2.5px * var(--round));
+  --r-3: calc(3px * var(--round));
+  --r-4: calc(4px * var(--round));
+  --r-5: calc(5px * var(--round));
+  --r-6: calc(6px * var(--round));
+  --r-7: calc(7px * var(--round));
+  --r-8: calc(8px * var(--round));
+  --r-9: calc(9px * var(--round));
+  --r-10: calc(10px * var(--round));
+  --r-11: calc(11px * var(--round));
+  --r-12: calc(12px * var(--round));
+  --r-14: calc(14px * var(--round));
+  --r-16: calc(16px * var(--round));
+  --r-18: calc(18px * var(--round));
+  --r-20: calc(20px * var(--round));
+  /* @token --r-round 圆的（50%）乘 --round */
+  --r-round: calc(50% * var(--round));
+  /* @token --r-pill 胶囊的两头乘 --round */
+  --r-pill: calc(999px * var(--round));
+  /* @token --font-ui 界面上的字：按钮、菜单、左栏、标题 */
+  --font-ui: var(--sans);
+  /* @token --font-read 读的字：回答、你的话、输入框 */
+  --font-read: var(--sans);
+  /* @token --font-mono 等宽：框下面那一行、时间线、收尾那一行 */
+  --font-mono: var(--mono);
+  /* @token --font-code 回答里的代码 */
+  --font-code: var(--code-font);
+}

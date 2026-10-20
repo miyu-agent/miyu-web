@@ -3,7 +3,7 @@
 /* 「图表」「源码」是中文：用正文字体，不拉字距 */
 .mermaid-toolbar {
   display: flex; min-height: 26px; align-items: center; justify-content: space-between; gap: 8px;
-  color: var(--text-faint); font: 11px var(--sans); letter-spacing: 0.04em;
+  color: var(--text-faint); font: 11px var(--font-ui); letter-spacing: 0.04em;
 }
 .mermaid-actions { display: flex; align-items: center; gap: 2px; }
 .mermaid-source-toggle {

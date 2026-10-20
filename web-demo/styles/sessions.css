@@ -9,18 +9,18 @@
 .sessions-title { margin: 0; color: var(--text); font: 600 26px/1.2 var(--serif); letter-spacing: 0.01em; }
 .sessions-tools { display: flex; align-items: center; gap: 8px; }
 .sessions-search-box {
-  display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border-radius: 10px; background: var(--surface-1);
-  box-shadow: var(--composer-shadow); color: var(--text-faint);
+  display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; border-radius: var(--field-radius, var(--r-10)); background: var(--field-bg, var(--surface-1));
+  box-shadow: var(--field-elev, var(--composer-shadow)); color: var(--field-fg, var(--text-faint));
 }
-.sessions-search-box:focus-within { box-shadow: var(--composer-focus-shadow); }
+.sessions-search-box:focus-within { box-shadow: var(--field-elev-focus, var(--composer-focus-shadow)); }
 .sessions-search-box .icon { width: 15px; height: 15px; }
 .sessions-search { width: 180px; border: 0; outline: 0; background: none; color: var(--text); font: inherit; font-size: 13px; }
 .sessions-button {
-  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border: 0; border-radius: 10px;
-  background: var(--surface-1); box-shadow: var(--composer-shadow); color: var(--text); font: inherit; font-size: 13px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border: var(--btn-border, 0); border-radius: var(--btn-radius, var(--r-10));
+  background: var(--btn-bg, var(--surface-1)); box-shadow: var(--btn-elev, var(--composer-shadow)); color: var(--btn-fg, var(--text)); font: inherit; font-size: 13px; cursor: pointer;
   transition: box-shadow 0.15s ease, background-color 0.15s ease;
 }
-.sessions-button:hover { box-shadow: var(--composer-focus-shadow); }
+.sessions-button:hover { box-shadow: var(--btn-elev-hover, var(--composer-focus-shadow)); }
 /* 新会话：深色实底（照 Claude 的 New） */
 .sessions-button.is-primary { background: var(--text); box-shadow: none; color: var(--surface); }
 .sessions-button.is-primary:hover { background: color-mix(in srgb, var(--text) 86%, var(--surface)); }
@@ -36,7 +36,7 @@
   border-radius: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer;
   transition: background-color 0.15s ease;
 }
-.sessions-row:hover { background: color-mix(in srgb, var(--text) 4%, transparent); }
+.sessions-row:hover { background: var(--item-hover, color-mix(in srgb, var(--text) 4%, transparent)); }
 .sessions-row.is-selected { background: color-mix(in srgb, var(--accent) 9%, transparent); }
 .sessions-row.is-leaving { overflow: hidden; pointer-events: none; animation: item-out var(--motion-collapse) ease-in-out both; }
 .sessions-name { min-width: 0; flex: 1; overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
@@ -47,7 +47,7 @@
 .sessions-agents .icon { width: 13px; height: 13px; }
 /* 有后台任务在跑的：时刻左边一个呼吸的点加「N 个后台任务」，accent（和框下面那一行一样） */
 .sessions-jobs { display: inline-flex; flex: none; align-items: center; gap: 6px; color: var(--accent); font-size: 12.5px; }
-.sessions-jobs-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: sessions-breathe 1.8s ease-in-out infinite; }
+.sessions-jobs-dot { width: 6px; height: 6px; border-radius: var(--r-round); background: currentColor; animation: sessions-breathe 1.8s ease-in-out infinite; }
 @keyframes sessions-breathe { 50% { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) { .sessions-jobs-dot { animation: none; } }
 .sessions-check .icon { width: 15px; height: 15px; color: var(--text-faint); }
@@ -59,15 +59,15 @@
 }
 
 /* 「会话」「项目」两页的切换（蓝图「会话整理和项目」第 6 条，照模型菜单的：两格，滑块跟着换） */
-.sessions-switch { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; margin: -12px 0 18px; padding: 3px; border-radius: 10px; background: var(--surface-2); }
+.sessions-switch { position: relative; display: inline-grid; grid-template-columns: 1fr 1fr; margin: -12px 0 18px; padding: 3px; border-radius: var(--seg-radius, var(--r-10)); background: var(--seg-bg, var(--surface-2)); }
 .sessions-switch[hidden] { display: none; }
 .sessions-tab {
-  position: relative; z-index: 1; min-width: 84px; padding: 5px 14px; border: 0; border-radius: 8px; background: none; color: var(--text-soft);
-  font: 13px var(--sans); cursor: pointer; transition: color var(--motion-in) ease;
+  position: relative; z-index: 1; min-width: 84px; padding: 5px 14px; border: 0; border-radius: var(--r-8); background: none; color: var(--text-soft);
+  font: 13px var(--font-ui); cursor: pointer; transition: color var(--motion-in) ease;
 }
 .sessions-tab[aria-selected="true"] { color: var(--text); font-weight: 500; }
 .sessions-switch-thumb {
-  position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px); border-radius: 8px; background: var(--surface-1);
+  position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px); border-radius: var(--r-8); background: var(--surface-1);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.1); transition: transform var(--motion-slide) var(--ease-out);
 }
 .sessions-switch.on-projects .sessions-switch-thumb { transform: translateX(100%); }
@@ -75,12 +75,12 @@
 .sessions-filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
 .sessions-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .sessions-chip {
-  display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px; border: 0; border-radius: 999px; background: var(--surface-2);
-  color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease;
+  display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px; border: var(--chip-border, 0); border-radius: var(--chip-radius, var(--r-pill)); background: var(--chip-bg, var(--surface-2));
+  color: var(--chip-fg, var(--text-soft)); font: 12.5px var(--font-ui); cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease;
 }
-.sessions-chip:hover { background: var(--surface-3); color: var(--text); }
-.sessions-chip.is-on { background: var(--accent-soft); color: var(--accent); }
-.sessions-sort { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 8px; border: 0; border-radius: 8px; background: none; color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer; }
+.sessions-chip:hover { background: var(--chip-hover, var(--surface-3)); color: var(--chip-fg-hover, var(--text)); }
+.sessions-chip.is-on { background: var(--chip-active, var(--accent-soft)); color: var(--chip-fg-active, var(--accent)); }
+.sessions-sort { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 8px; border: 0; border-radius: var(--r-8); background: none; color: var(--text-soft); font: 12.5px var(--font-ui); cursor: pointer; }
 .sessions-sort:hover { background: var(--surface-2); color: var(--text); }
 .sessions-sort .icon { width: 13px; height: 13px; }
 /* 时间分组的组头：滚的时候贴在顶上 */
@@ -94,10 +94,10 @@
 /* 「项目」那一页：一个项目一张卡片，最后一张虚线的「新建项目」 */
 .project-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 .project-card {
-  display: grid; align-content: start; gap: 6px; min-height: 108px; padding: 16px; border: 0; border-radius: 14px; background: var(--surface-1);
-  box-shadow: var(--card-shadow); color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: box-shadow 0.15s ease, transform 0.15s ease;
+  display: grid; align-content: start; gap: 6px; min-height: 108px; padding: 16px; border: var(--card-border, 0); border-radius: var(--card-radius, var(--r-14)); background: var(--card-bg, var(--surface-1));
+  box-shadow: var(--card-elev, var(--card-shadow)); color: var(--text); font: inherit; text-align: left; cursor: pointer; transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
-.project-card:hover { box-shadow: var(--float-shadow); }
+.project-card:hover { box-shadow: var(--card-elev-hover, var(--float-shadow)); }
 .project-card-name { display: flex; min-width: 0; align-items: center; gap: 8px; }
 .project-card-name .icon { width: 17px; height: 17px; flex: none; color: var(--project-color, var(--text-faint)); }
 .project-card-name strong { min-width: 0; overflow: hidden; font-size: 14.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
@@ -112,7 +112,7 @@
 
 /* 项目页：路径、标题（项目颜色的文件夹）、两个按钮、说明、新建会话照的那几样 */
 .project-page { display: grid; gap: 14px; margin-bottom: 18px; }
-.project-back { display: inline-flex; justify-self: start; align-items: center; gap: 3px; height: 28px; padding: 0 9px 0 4px; margin-left: -4px; border: 0; border-radius: 7px; background: none; color: var(--text-soft); font: 13px var(--sans); cursor: pointer; }
+.project-back { display: inline-flex; justify-self: start; align-items: center; gap: 3px; height: 28px; padding: 0 9px 0 4px; margin-left: -4px; border: 0; border-radius: var(--r-7); background: none; color: var(--text-soft); font: 13px var(--font-ui); cursor: pointer; }
 .project-back:hover { background: var(--surface-2); color: var(--text); }
 .project-back .icon { width: 15px; height: 15px; }
 .project-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
@@ -120,7 +120,7 @@
 .project-title .icon { width: 24px; height: 24px; flex: none; color: var(--project-color, var(--text-faint)); }
 .project-title span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .project-desc { margin: 0; color: var(--text-soft); font-size: 14px; line-height: 1.6; }
-.project-defaults { display: grid; gap: 8px; padding: 14px 16px; border-radius: 12px; background: var(--surface-2); }
+.project-defaults { display: grid; gap: 8px; padding: 14px 16px; border-radius: var(--r-12); background: var(--surface-2); }
 .project-defaults-title { margin: 0 0 2px; color: var(--text-soft); font-size: 12.5px; font-weight: 600; }
 .project-default { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 12px; font-size: 13px; }
 .project-default-name { color: var(--text-faint); }

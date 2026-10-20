@@ -4,19 +4,19 @@
 .use-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
 .use-stamp { color: var(--text-faint); font-size: 12px; }
 .use-refresh .icon { width: 14px; height: 14px; }
-.use-seg { display: inline-flex; margin-left: auto; padding: 2px; border-radius: 9px; background: var(--surface-2); }
-.use-seg button { height: 26px; padding: 0 10px; border: 0; border-radius: 7px; background: none; color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer; }
+.use-seg { display: inline-flex; margin-left: auto; padding: 2px; border-radius: var(--seg-radius, var(--r-9)); background: var(--seg-bg, var(--surface-2)); }
+.use-seg button { height: 26px; padding: 0 10px; border: 0; border-radius: var(--r-7); background: none; color: var(--text-soft); font: 12.5px var(--font-ui); cursor: pointer; }
 .use-seg button:hover { color: var(--text); }
-.use-seg button.is-on { background: var(--surface-1); color: var(--text); box-shadow: var(--card-shadow); }
+.use-seg button.is-on { background: var(--seg-thumb-bg, var(--surface-1)); color: var(--text); box-shadow: var(--seg-thumb-elev, var(--card-shadow)); }
 .use-page button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .use-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .use-custom { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; margin-top: -6px; color: var(--text-soft); font-size: 12.5px; }
-.use-date { height: 28px; padding: 0 8px; border: 0; border-radius: 8px; background: var(--surface-2); color: var(--text); font: 12.5px var(--sans); font-variant-numeric: tabular-nums; }
-.use-date:hover { background: var(--surface-3); }
+.use-date { height: 28px; padding: 0 8px; border: var(--field-border, 0); border-radius: var(--field-radius, var(--r-8)); background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text)); font: 12.5px var(--font-ui); font-variant-numeric: tabular-nums; }
+.use-date:hover { background: var(--field-hover, var(--surface-3)); }
 .use-date:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.use-tile { display: grid; gap: 2px; min-width: 0; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); }
+.use-tile { display: grid; gap: 2px; min-width: 0; padding: 10px 12px; border-radius: var(--card-radius, var(--r-10)); background: var(--card-bg, var(--surface-2)); }
 .use-tile-k { color: var(--text-faint); font-size: 12px; }
 .use-tile-v, .use-tile-s { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .use-tile-v { color: var(--text); font-size: 19px; font-weight: 600; }
@@ -26,32 +26,32 @@
 .use-block-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
 .use-block-head h3 { margin: 0; color: var(--text); font-size: 13.5px; }
 .use-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-left: auto; color: var(--text-soft); font-size: 12px; }
-.use-legend i { display: inline-block; width: 9px; height: 9px; margin-right: 5px; border-radius: 2px; vertical-align: -1px; }
+.use-legend i { display: inline-block; width: 9px; height: 9px; margin-right: 5px; border-radius: var(--r-2); vertical-align: -1px; }
 .use-c-hit { background: color-mix(in srgb, var(--accent) 32%, var(--surface-1)); fill: color-mix(in srgb, var(--accent) 32%, var(--surface-1)); }
 .use-c-new { background: var(--accent); fill: var(--accent); }
 .use-c-out { background: var(--gold); fill: var(--gold); }
 .use-chart { position: relative; min-height: 190px; }
 .use-chart svg { display: block; width: 100%; height: 190px; overflow: visible; }
-.use-chart text { fill: var(--text-faint); font: 10.5px var(--sans); font-variant-numeric: tabular-nums; }
+.use-chart text { fill: var(--text-faint); font: 10.5px var(--font-ui); font-variant-numeric: tabular-nums; }
 .use-chart text.is-now { fill: var(--text-soft); }
 .use-grid { stroke: var(--line); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .use-hot { fill: var(--surface-2); opacity: 0; }
 .use-hot.is-on { opacity: 1; }
 .use-sum { margin-left: 8px; color: var(--text-faint); font-size: 12.5px; font-weight: 400; font-variant-numeric: tabular-nums; }
 .use-cursor { stroke: var(--text-faint); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; pointer-events: none; }
-.use-tip { position: absolute; z-index: 3; top: -8px; display: grid; gap: 4px; min-width: 190px; padding: 10px 12px; border-radius: 10px; background: var(--surface-1); box-shadow: var(--card-shadow); color: var(--text); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; pointer-events: none; transform: translateY(-100%); }
+.use-tip { position: absolute; z-index: 3; top: -8px; display: grid; gap: 4px; min-width: 190px; padding: 10px 12px; border-radius: var(--float-radius, var(--r-10)); background: var(--float-bg, var(--surface-1)); box-shadow: var(--float-elev, var(--card-shadow)); color: var(--text); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; pointer-events: none; transform: translateY(-100%); }
 .use-tip-head { display: flex; justify-content: space-between; gap: 18px; margin-bottom: 2px; font-size: 13px; }
 .use-tip-row { display: grid; grid-template-columns: 9px minmax(0, 1fr) auto; align-items: center; gap: 8px; }
-.use-tip-row i { width: 9px; height: 9px; border-radius: 2px; }
+.use-tip-row i { width: 9px; height: 9px; border-radius: var(--r-2); }
 .use-tip-k { color: var(--text-soft); }
 .use-tip-v { text-align: right; }
 .use-tip-rule { height: 1px; margin: 2px 0; background: var(--line); }
 .use-tip-more, .use-tip-none { color: var(--text-faint); font-size: 12px; }
 .use-tip-more { padding-left: 17px; }
-.use-empty { margin: 0; padding: 30px 0; border-radius: 10px; background: var(--surface-2); color: var(--text-faint); font-size: 12.5px; text-align: center; }
+.use-empty { margin: 0; padding: 30px 0; border-radius: var(--r-10); background: var(--surface-2); color: var(--text-faint); font-size: 12.5px; text-align: center; }
 
 .use-tabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 1px solid var(--line); }
-.use-tab { height: 30px; margin-bottom: -1px; padding: 0 10px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--text-soft); font: 13px var(--sans); cursor: pointer; }
+.use-tab { height: 30px; margin-bottom: -1px; padding: 0 10px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--text-soft); font: 13px var(--font-ui); cursor: pointer; }
 .use-tab:hover { color: var(--text); }
 .use-tab.is-on { border-bottom-color: var(--accent); color: var(--text); font-weight: 600; }
 .use-scroll { min-width: 0; overflow-x: auto; }
@@ -75,25 +75,25 @@
 .use-name-line > .use-sub { flex: 0 10 auto; }
 .use-sub, .use-faint, .use-more { color: var(--text-faint); }
 .use-sub, .use-more { font-size: 11.5px; }
-.use-share { height: 3px; margin-top: 4px; overflow: hidden; border-radius: 2px; background: var(--surface-2); }
-.use-share i { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
+.use-share { height: 3px; margin-top: 4px; overflow: hidden; border-radius: var(--r-2); background: var(--surface-2); }
+.use-share i { display: block; height: 100%; border-radius: var(--r-2); background: var(--accent); }
 .use-modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 45%, transparent); animation: use-fade 0.14s var(--ease-out); }
 @keyframes use-fade { from { opacity: 0; } }
-.use-pop { display: grid; gap: 12px; width: min(520px, 100%); max-height: 100%; overflow: auto; padding: 16px 18px 18px; border-radius: 14px; background: var(--surface-1); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); box-sizing: border-box; }
+.use-pop { display: grid; gap: 12px; width: min(520px, 100%); max-height: 100%; overflow: auto; padding: 16px 18px 18px; border-radius: var(--float-radius, var(--r-14)); background: var(--float-bg, var(--surface-1)); box-shadow: var(--float-elev, var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%)); box-sizing: border-box; }
 .use-pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--text); font-size: 14px; font-weight: 600; }
 .use-pop-head .use-name-line { flex: 1; }
 .use-pop-close .icon { width: 14px; height: 14px; }
 .use-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .use-stats.is-four { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: -4px; }
 /* 上面一排（总数）是中性的底，数大一号；下面四格 token 和柱子同色：一个色块，底色带一点那一种颜色 */
-.use-stat { --tone: var(--text-faint); display: grid; gap: 2px; min-width: 0; padding: 9px 11px; border-radius: 10px; background: var(--surface); }
+.use-stat { --tone: var(--text-faint); display: grid; gap: 2px; min-width: 0; padding: 9px 11px; border-radius: var(--r-10); background: var(--surface); }
 .use-stats:not(.is-four) .use-stat-v { font-size: 16px; }
 .use-stat.is-hit { --tone: color-mix(in srgb, var(--accent) 38%, var(--surface-1)); }
 .use-stat.is-new { --tone: var(--accent); }
 .use-stat.is-out { --tone: var(--gold); }
 .use-stat.is-hit, .use-stat.is-new, .use-stat.is-out { background: color-mix(in srgb, var(--tone) 9%, var(--surface-1)); }
 .use-stat-k { display: flex; align-items: center; gap: 6px; color: var(--text-faint); font-size: 11.5px; }
-.use-stat-dot { flex: none; width: 8px; height: 8px; border-radius: 2px; background: var(--tone); }
+.use-stat-dot { flex: none; width: 8px; height: 8px; border-radius: var(--r-2); background: var(--tone); }
 .use-stat-v { overflow: hidden; color: var(--text); font-size: 13.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .use-stat.is-warn .use-stat-v { color: var(--text-faint); font-size: 13px; font-weight: 500; }
 .use-stat-more { color: var(--text-faint); font-size: 11px; }
@@ -103,7 +103,7 @@
 .use-split-row .num { text-align: right; }
 .use-split-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .use-detail-actions { display: flex; justify-content: flex-end; }
-.use-all { justify-self: start; padding: 0; border: 0; background: none; color: var(--accent); font: 12.5px var(--sans); cursor: pointer; }
+.use-all { justify-self: start; padding: 0; border: 0; background: none; color: var(--accent); font: 12.5px var(--font-ui); cursor: pointer; }
 .use-all:hover { text-decoration: underline; }
 .use-chart .use-empty { display: grid; box-sizing: border-box; height: 190px; padding: 0; place-items: center; }
 .use-problem { padding: 34px 0; color: var(--text-faint); font-size: 13px; text-align: center; }

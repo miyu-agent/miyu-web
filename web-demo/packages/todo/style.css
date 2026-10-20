@@ -5,7 +5,7 @@
 .todo-body { padding: 0 19px 8px; }
 .todo-head { margin-bottom: 1px; color: var(--text-faint); font-size: 12px; }
 .todo-row { display: grid; grid-template-columns: 1.5em minmax(0, 1fr); }
-.todo-mark { font-family: var(--mono); }
+.todo-mark { font-family: var(--font-mono); }
 .todo-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dock-todo.is-full .todo-text { overflow: visible; overflow-wrap: anywhere; white-space: normal; }
 /* 照 TUI：没做、做完、收起的两行都暗；在做的记号和字都是主色、加粗；做完的只有字划线 */

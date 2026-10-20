@@ -890,12 +890,8 @@
 1. **出厂样子不变**：可换的样子都写成页面变量，出厂值就是原来的值；没装皮肤包、选「出厂」时，每个元素算出来的样子和原来一模一样（照「守着它的」那条逐个元素比）。
 2. **变量分两层**，都写在 `styles/tokens.css`（整份变量表，每个带一句说明；皮肤包只能写表里有的）：
    - 形状的总开关（一个数改全页）：`--round` 圆角的倍数（1；0 是全直角），各处的圆角写成 `--r-数`（`--r-8` 就是 8px 乘这个倍数；圆的 `--r-round`、胶囊 `--r-pill` 也乘它）；`--blur` 毛玻璃虚化的倍数（1；0 不虚化）；`--font-ui` 界面上的字（按钮、菜单、左栏、标题）、`--font-read` 读的字（回答、你的话、输入框）、`--font-code` 代码，出厂都是原来的字体表。
-   - 一种材质一组（名字照「东西-哪一样」）。下面每一组都有 `-bg` 底、`-radius` 圆角、`-border` 边（出厂 `0` 或原来那条细线）、`-elev` 阴影（出厂照主题的那几格影），有的多几样：
-     - `composer` 输入框（`-elev-focus` 聚焦的影、`-pad-x`、`-pad-top` 写字的地方离边多远、`-font` 框里的字）；`send` 发送按钮（`-fg` 图标的颜色、`-size` 多大）；
-     - `bubble` 你的话（`-pad` 内边距）；`card` 贴在页面上的卡片（代码块、表格、链接卡片、媒体卡片、附件卡、文件卡）；
-     - `float` 浮起来的小框（菜单、命令列表、提示、浮层、悬停说明；`-blur` 毛玻璃）；`modal` 弹窗（设置页、确认、详情窗口；`-blur`，`-veil` 底下盖的那一层）；
-     - `item` 能选的一行（左栏的会话、菜单的一行、设置页左栏；`-hover` 悬停、`-active` 选中的底）；`btn` 按钮（`-primary-bg`、`-primary-fg` 主按钮）；`field` 写字的框、搜索框、下拉（`-focus` 聚焦的样子）；`chip` 小标签、小块；
-     - `sidebar` 左栏（`-bg`、`-edge` 和对话区之间那条线）；`dock` 输入框上面那一叠（待办、运行状态行）。
+   - 一种材质一组（名字照「东西-哪一样」），出厂不定义：每一处照自己原来的值画（`var(--card-bg, 原来的值)`，原来各处的值不全一样，菜单的底有九成的、九成四的），皮肤写了哪个，那一类的每一处都换成它。样子有 `-bg` 底、`-border` 边、`-radius` 圆角、`-elev` 阴影、`-blur` 毛玻璃、`-fg` 字色，状态有 `-hover` 悬停的底、`-elev-hover`、`-bg-focus`、`-elev-focus` 聚焦、`-active`、`-elev-active` 选中、`-bg-disabled`、`-fg-disabled` 用不了；每一组有哪几样照那一类原来写了什么，`tokens.css` 列全。材质：`composer` 输入框（多 `-pad-x`、`-pad-top` 写字的地方离边多远、`-font` 框里的字）、`send` 发送按钮、`bubble` 你的话（多 `-pad`）、`card` 贴在页面上的卡片（链接、媒体、附件、文件、表格、差异）、`codeblock` 代码块、`float` 浮起来的小框（菜单、命令列表、提示、浮层）、`modal` 弹窗（设置页、确认、编辑窗口）、`veil` 弹窗底下盖着整页的那一层、`item` 能选的一行（左栏、菜单、设置页左栏）、`ghost` 透明的图标按钮、`btn` 按钮、`btn-primary` 主按钮、`field` 写字的框、搜索框、下拉、`chip` 小标签、`switch`、`knob` 开关的槽和圆钮、`seg`、`seg-thumb` 分段切换的槽和选中的那一格、`side` 左栏。
+   - 字：`--font-ui`、`--font-read`、`--font-code` 之外还有 `--font-mono` 等宽（框下面那一行、时间线、收尾那一行）。
    颜色类的出厂值都是主题的颜色变量（`var(--surface-1)` 这类），换了主题照样跟着变；皮肤里写颜色也只用主题的颜色变量、`color-mix`，不写颜色字面量（同软件包的 `style.css`）。变量名不和主题的颜色重名（`--card-shadow` 是主题的，皮肤的是 `--card-elev`）。
 3. **部件名**：变量做不到的，皮肤包可以带一份 CSS，只能挑部件。页面上每一块的根上写 `data-part="名字"`，名字是对外的约定（`resources/parts.json` 列全，每个带一句说明；改名字算破坏，要在这里记下来）：`sidebar`、`sidebar.item`、`stage`、`message.user`、`message.answer`、`note`、`timeline`、`timeline.step`、`composer`、`composer.input`、`composer.send`、`composer.footer`、`composer.notice`、`menu`（所有浮起来的菜单、列表）、`menu.row`、`modal`、`modal.card`、`settings`、`card`、`code`、`table`、`button`、`button.primary`、`field`、`switch`、`chip`、`tooltip`、`dock`、`rail`、`artifacts`、`lightbox`。状态照 `:hover`、`:focus-visible`、`[aria-selected]`、`[aria-pressed]`、`[aria-expanded]`、`:disabled`。
 4. **皮肤包**：一个可选的软件包，挂进挂载位 `skin.packs`（list，软件包 `skin` 声明）一格 `{id, name, tokens}`：`tokens` 是变量名到值，值是一段字（浅深一样）或 `{light, dark}`（两份都要有，缺一份不认这一格）；表里没有的名字不认（加载时这一格「故障」，写明哪个名字）。它的 `style.css` 里每条规则都以 `:root[data-skin="<它的编号>"]` 开头、只写部件名（`[data-part="composer"]`）和上面那几种状态，不写类名、编号（`.composer`、`#app`），可以带 `@font-face`（字随包带着）。没选它时它的规则不起作用。
