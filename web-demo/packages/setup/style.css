@@ -350,8 +350,9 @@
 .setup-info-part.is-project span { max-width: 180px; }
 .setup-info-slash { color: var(--text-faint); opacity: 0.6; }
 /* 菜单里一行「名字　值」（左上角的「会话信息」，2026-10-19 项目主人选的「信息 + 操作」、不要图标）：一样高，左边暗字，能点的末尾一个 ›；细线分开下面的操作 */
-.setup-menu-row.is-pair { align-items: flex-start; min-height: 35px; padding-top: 7px; padding-bottom: 7px; }
-.setup-menu-label { flex: none; width: 4.5em; padding-top: 1px; color: var(--text-faint); font-size: 12px; }
+/* 左右两列照基线对齐（2026-10-20 项目主人：右边那列字偏上——中文、英文的字在同样高的行里位置不一样，英文名「Miyu」看着高一截）；末尾的图标照旧居中 */
+.setup-menu-row.is-pair { align-items: baseline; min-height: 35px; padding-top: 7px; padding-bottom: 7px; }
+.setup-menu-label { flex: none; width: 4.5em; color: var(--text-faint); font-size: 12px; }
 .setup-menu-row.is-pair .setup-menu-desc { margin-top: 1px; }
 .setup-menu-more { display: grid; flex: none; align-self: center; place-items: center; color: var(--text-faint); }
 .setup-menu-more .icon { width: 13px; height: 13px; }
