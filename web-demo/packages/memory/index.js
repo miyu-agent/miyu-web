@@ -7,10 +7,10 @@
 import { h } from '../../src/lib/dom.js';
 import { unfold, leave } from '../../src/lib/motion.js';
 import { MemoryPage } from './page.js';
-import { DreamCard } from './dream.js';
+import { DreamCard, DAWN_MS } from './dream.js';
 
-/** 合完以后那一块留多久再收成结果那一行 */
-const SETTLE_MS = 1600;
+/** 合完以后那一块留多久再收成结果那一行：天走到黎明（`DAWN_MS`）、亮成白天、吉祥物醒了跳一下，再看一会儿 */
+const SETTLE_MS = DAWN_MS + 2400;
 /** 核心多久还没回才把那一块挂出来（没有要整理的很快就回，不闪一下；真开始合了当场挂） */
 const SHOW_AFTER_MS = 500;
 /** 收回去要多久（`--motion-collapse` 0.26 秒，多留一点） */

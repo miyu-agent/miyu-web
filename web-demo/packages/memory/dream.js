@@ -7,9 +7,12 @@ import { h, icon } from '../../src/lib/dom.js';
 import { clock } from '../../src/lib/format.js';
 import { DreamTrack } from './dream-model.js';
 
-/** 一批合着的时候天最多往前挪这一批的几成；挪到一半要多久（毫秒，越往后越慢） */
+/** 一批合着的时候天最多往前挪这一批的几成；照多快挪（毫秒：过了这么久挪到最多的六成三，越往后越慢；十秒左右挪到一半） */
 const SKY_CREEP = 0.85;
-const SKY_CREEP_MS = 60000;
+const SKY_CREEP_MS = 15000;
+/** 合完了：天从当时的位置走到黎明要多久，再从黎明亮成白天要多久（毫秒；亮成白天时吉祥物醒） */
+export const DAWN_MS = 1400;
+const DAY_MS = 1000;
 
 /** 舞台多少格高、地面从第几格起（一格放大成 3px，舞台高 126px） */
 const H = 42;
@@ -47,6 +50,8 @@ export class DreamCard {
     /** 叫停了（`memory.dream` 回了 `stopped`）：天不亮，收成「整理已中断」 */
     this.stopped = false;
     this.doneAt = 0;
+    /** 合完那一刻天走到哪（从这里走到黎明） */
+    this.dawnFrom = 0;
     this.startedAt = performance.now();
     /** 合完的回应（结果那一行照它写） @type {any} */
     this.got = null;
@@ -138,8 +143,9 @@ export class DreamCard {
     this.got = got ?? {};
     this.stopped = got?.stopped === true;
     this.doneAt = performance.now();
+    this.dawnFrom = this.shown;
     this.stopBtn?.remove();
-    setTimeout(() => this.wake(), 450);
+    setTimeout(() => this.wake(), this.stopped ? 450 : DAWN_MS + 200);
     this.title.textContent = this.t(this.stopped ? 'dream.stopped_title' : 'dream.done');
     this.batch.textContent = this.counted() ? this.t('dream.result', { given: got?.given ?? 0, revised: got?.revised ?? 0, retired: got?.retired ?? 0 }) : '';
     this.tally.textContent = '';
@@ -267,10 +273,12 @@ export class DreamCard {
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     // 叫停了的停在合完的那一处，天不亮
     const dawn = this.finished && !this.stopped;
-    const target = dawn ? 1 : this.sky(now);
-    this.shown += (target - this.shown) * 0.05;
+    // 合完了：从当时的位置照时间走到黎明（2026-10-20 项目主人：完成的时候一下就过去了——原来当场换成黎明的颜色），走到了再亮成白天
+    const k = dawn ? Math.min(1, (now - this.doneAt) / DAWN_MS) : 0;
+    if (dawn) this.shown = this.dawnFrom + (1 - this.dawnFrom) * (1 - (1 - k) ** 3);
+    else this.shown += (this.sky(now) - this.shown) * 0.05;
     const t = this.shown;
-    const day = dawn ? Math.min(1, (now - this.doneAt) / 900) : 0;
+    const day = dawn ? Math.max(0, Math.min(1, (now - this.doneAt - DAWN_MS) / DAY_MS)) : 0;
     const top = day ? mix(SKY.dawn[0], SKY.day[0], day) : mix3(SKY.night[0], SKY.late[0], SKY.dawn[0], t);
     const bottom = day ? mix(SKY.dawn[1], SKY.day[1], day) : mix3(SKY.night[1], SKY.late[1], SKY.dawn[1], t);
     // 天：几档色带（像素的渐变）
@@ -327,8 +335,9 @@ export class DreamCard {
       this.batchOf = b;
       this.batchAt = now;
     }
-    if (!b || !tr.total || !b.fresh) return base;
-    const share = Math.min(1 - base, b.fresh / tr.total);
+    if (!b) return base;
+    // 没有要合的新记忆（只重看旧的，`total`、`fresh` 是 0；2026-10-20 项目主人：只有一批、天一直不动）：这一批就是全部
+    const share = tr.total && b.fresh ? Math.min(1 - base, b.fresh / tr.total) : 1 - base;
     return base + share * SKY_CREEP * (1 - Math.exp(-(now - this.batchAt) / SKY_CREEP_MS));
   }
 
@@ -336,11 +345,12 @@ export class DreamCard {
   mascot(now, reduce) {
     const m = this.ctx.mascot;
     if (!m?.portrait) return;
-    const woke = this.finished && now - this.doneAt > 450;
+    const wakeAt = this.stopped ? 450 : DAWN_MS + 200;
+    const woke = this.finished && now - this.doneAt > wakeAt;
     const { canvas, bottom } = m.portrait(woke ? {} : { sleep: true });
     let dy = !woke && !reduce ? Math.floor(now / 1600) % 2 : 0;
     if (woke && !reduce) {
-      const k = (now - this.doneAt - 450) / 520;
+      const k = (now - this.doneAt - wakeAt) / 520;
       if (k > 0 && k < 1) dy = -Math.round(Math.sin(k * Math.PI) * 7);
     }
     const x = Math.round(this.W * 0.16);
