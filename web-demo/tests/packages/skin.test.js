@@ -87,6 +87,20 @@ test('看得见的都有部件名：样式里画了东西（底、边、影、�
       for (const m of one.trim().split(/[\s>+~]+/).at(-1).matchAll(/\.([a-z][\w-]*)/g)) covered.add(m[1]);
     }
   }
+  /** 主体是元素的那一条：「最近的那个类 元素」，主体带类的交 null @param {string} sel */
+  const pairOf = (sel) => {
+    const comps = sel.trim().split(/\s*[\s>+~]\s*/).filter(Boolean);
+    const last = comps.at(-1) ?? '';
+    const el = /^([a-z][a-z0-9]*)/.exec(last)?.[1];
+    if (/\.[a-z]/.test(last) || !el) return null;
+    for (const c of comps.slice(0, -1).reverse()) {
+      const cls = [...c.matchAll(/\.([a-z][\w-]*)/g)].map((m) => m[1]).filter((x) => !/^(is|has)-/.test(x));
+      if (cls.length) return `.${cls.at(-1)} ${el}`;
+    }
+    return null;
+  };
+  const pairs = new Set();
+  for (const p of Object.values(parts)) for (const sel of p.select) for (const one of sel.split(',')) { const x = pairOf(one); if (x) pairs.add(x); }
   /** @type {string[]} */
   const missing = [];
   for (const p of sheets) {
@@ -98,6 +112,9 @@ test('看得见的都有部件名：样式里画了东西（底、边、影、�
         for (const c of sel.split(/[\s>+~]+/).at(-1).matchAll(/\.([a-z][\w-]*)/g)) {
           if (!/^(is|has)-/.test(c[1]) && !covered.has(c[1])) missing.push(`${p}：.${c[1]}`);
         }
+        // 主体是元素的（`.markdown-body blockquote`）：照「最近的类 + 元素」那一对
+        const pair = pairOf(sel);
+        if (pair && !pairs.has(pair)) missing.push(`${p}：${pair}`);
       }
     }
   }

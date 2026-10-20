@@ -8,6 +8,9 @@ const frame = (c) => `0 -3px 0 0 ${c}, 0 3px 0 0 ${c}, -3px 0 0 0 ${c}, 3px 0 0 
 /** 往右下错开的实色块影 @param {number} n */
 const drop = (n) => `${n}px ${n}px 0 0 var(--skin-ground)`;
 
+/** 8px 一格的淡格子，铺在主题的底上 */
+const GRID = 'linear-gradient(color-mix(in srgb, var(--text) 5%, transparent) 1px, transparent 1px) 0 0 / 8px 8px, '
+  + 'linear-gradient(90deg, color-mix(in srgb, var(--text) 5%, transparent) 1px, transparent 1px) 0 0 / 8px 8px, var(--surface)';
 const EDGE = 'var(--skin-edge)';
 const SOFT = 'var(--skin-soft)';
 const ON = 'var(--accent)';
@@ -25,6 +28,21 @@ export const tokens = {
   '--round': '0',
   '--blur': '0',
   '--font-ui': '"Miyu Pixel UI", var(--sans)',
+  // 大块的区域：整页、对话区铺 8px 一格的淡格子（淡出那两截换成图以后不要了），左栏那条线、头像框、名字、分隔线、聚焦框、滚动条都换成像素的
+  '--page-bg': GRID,
+  '--stage-bg': GRID,
+  '--stage-fade': 'none',
+  '--stage-fade-top': 'none',
+  '--crumbs-bg': 'var(--skin-cell)',
+  '--side-edge': 'inset -3px 0 0 0 var(--skin-edge)',
+  '--side-peek': `${frame(EDGE)}, ${drop(6)}`,
+  '--avatar-border': '3px solid var(--skin-edge)',
+  '--avatar-radius': '0',
+  '--brand-font': '"Miyu Pixel UI", var(--serif)',
+  '--brand-size': '18px',
+  '--divider': '2px dashed var(--skin-soft)',
+  '--focus-ring': '3px solid var(--accent)',
+  '--scrollbar-color': 'var(--skin-edge) var(--skin-cell)',
   // 材质
   '--composer-bg': 'var(--surface-1)',
   '--composer-elev': `${frame(EDGE)}, ${drop(6)}`,

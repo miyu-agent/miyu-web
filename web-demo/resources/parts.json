@@ -4384,5 +4384,515 @@
     "select": [
       ".wl-layer"
     ]
+  },
+  "asking.text-strong": {
+    "zh": "asking-text里的粗体",
+    "select": [
+      ".asking-text strong"
+    ]
+  },
+  "asking.option-strong": {
+    "zh": "确认和提问里的粗体",
+    "select": [
+      ".asking-option strong"
+    ]
+  },
+  "asking.review-row-strong": {
+    "zh": "asking-review-row里的粗体",
+    "select": [
+      ".asking-review-row strong"
+    ]
+  },
+  "asking.review-row-span": {
+    "zh": "asking-review-row里的字",
+    "select": [
+      ".asking-review-row span"
+    ]
+  },
+  "goal.panel-head-strong": {
+    "zh": "goal-panel-head里的粗体",
+    "select": [
+      ".goal-panel-head strong"
+    ]
+  },
+  "mem.text-mark": {
+    "zh": "记忆页里的高亮",
+    "select": [
+      ".mem-text mark"
+    ]
+  },
+  "set.chip-button": {
+    "zh": "set-chip里的按钮",
+    "select": [
+      ".set-chip button"
+    ]
+  },
+  "set.menu-item-em": {
+    "zh": "set-menu-item里的斜体",
+    "select": [
+      ".set-menu-item em"
+    ]
+  },
+  "set.theme-sample-b": {
+    "zh": "设置页里的粗体",
+    "select": [
+      ".set-theme-sample b"
+    ]
+  },
+  "set.prov-text-small": {
+    "zh": "set-prov-text里的small",
+    "select": [
+      ".set-prov-text small"
+    ]
+  },
+  "set.prov-title-strong": {
+    "zh": "set-prov-title里的粗体",
+    "select": [
+      ".set-prov-title strong"
+    ]
+  },
+  "set.prov-title-span": {
+    "zh": "set-prov-title里的字",
+    "select": [
+      ".set-prov-title span"
+    ]
+  },
+  "set.key-line-span": {
+    "zh": "设置页里的字",
+    "select": [
+      ".set-key-line span"
+    ]
+  },
+  "set.drawer-head-code": {
+    "zh": "设置页里的行内代码",
+    "select": [
+      ".set-drawer-head code"
+    ]
+  },
+  "set.prices-head-em": {
+    "zh": "设置页里的斜体",
+    "select": [
+      ".set-prices-head em"
+    ]
+  },
+  "set.pkg-chip-span": {
+    "zh": "set-pkg-chip里的字",
+    "select": [
+      ".set-pkg-chip span"
+    ]
+  },
+  "set.use-pick-em": {
+    "zh": "set-use-pick里的斜体",
+    "select": [
+      ".set-use-pick em"
+    ]
+  },
+  "set.pick-group-small": {
+    "zh": "选一个模型的选择器里的small",
+    "select": [
+      ".set-pick-group small"
+    ]
+  },
+  "set.pick-group-em": {
+    "zh": "选一个模型的选择器里的斜体",
+    "select": [
+      ".set-pick-group em"
+    ]
+  },
+  "set.picker-row-input": {
+    "zh": "设置页里的输入框",
+    "select": [
+      ".set-picker-row input"
+    ]
+  },
+  "set.ext-ask-li": {
+    "zh": "设置页里的列表的一项",
+    "select": [
+      ".set-ext-ask li"
+    ]
+  },
+  "set.ext-ask-b": {
+    "zh": "设置页里的粗体",
+    "select": [
+      ".set-ext-ask b"
+    ]
+  },
+  "set.ext-ask-span": {
+    "zh": "设置页里的字",
+    "select": [
+      ".set-ext-ask span"
+    ]
+  },
+  "set.pkg-upstream-a": {
+    "zh": "set-pkg-upstream里的链接",
+    "select": [
+      ".set-pkg-upstream a"
+    ]
+  },
+  "setup.info-part-b": {
+    "zh": "人格、预设、工作区里的粗体",
+    "select": [
+      ".setup-info-part b"
+    ]
+  },
+  "setup.card-text-p": {
+    "zh": "setup-card-text里的段落",
+    "select": [
+      ".setup-card-text p"
+    ]
+  },
+  "setup.card-h4": {
+    "zh": "人格、预设、工作区里的四级标题",
+    "select": [
+      ".setup-card h4"
+    ]
+  },
+  "setup.card-code": {
+    "zh": "人格、预设、工作区里的行内代码",
+    "select": [
+      ".setup-card code"
+    ]
+  },
+  "setup.card-p": {
+    "zh": "人格、预设、工作区里的段落",
+    "select": [
+      ".setup-card p"
+    ]
+  },
+  "setup.field-name-small": {
+    "zh": "人格、预设、工作区里的small",
+    "select": [
+      ".setup-field-name small"
+    ]
+  },
+  "setup.palette-sample-i": {
+    "zh": "人格、预设、工作区里的图标位",
+    "select": [
+      ".setup-palette-sample i"
+    ]
+  },
+  "project.swatch-input": {
+    "zh": "项目里的输入框",
+    "select": [
+      ".project-swatch input"
+    ]
+  },
+  "project.work-small": {
+    "zh": "project-work里的small",
+    "select": [
+      ".project-work small"
+    ]
+  },
+  "use.seg-button": {
+    "zh": "use-seg里的按钮",
+    "select": [
+      ".use-seg button"
+    ]
+  },
+  "use.page-button": {
+    "zh": "use-page里的按钮",
+    "select": [
+      ".use-page button"
+    ]
+  },
+  "use.block-head-h3": {
+    "zh": "use-block-head里的三级标题",
+    "select": [
+      ".use-block-head h3"
+    ]
+  },
+  "use.legend-i": {
+    "zh": "用量页里的图标位",
+    "select": [
+      ".use-legend i"
+    ]
+  },
+  "use.chart-text": {
+    "zh": "use-chart里的text",
+    "select": [
+      ".use-chart text"
+    ]
+  },
+  "use.tip-row-i": {
+    "zh": "use-tip-row里的图标位",
+    "select": [
+      ".use-tip-row i"
+    ]
+  },
+  "use.table-th": {
+    "zh": "列宽是定的里的表头",
+    "select": [
+      ".use-table th"
+    ]
+  },
+  "use.table-button": {
+    "zh": "列宽是定的里的按钮",
+    "select": [
+      ".use-table button"
+    ]
+  },
+  "use.table-td": {
+    "zh": "列宽是定的里的表格的格",
+    "select": [
+      ".use-table td"
+    ]
+  },
+  "use.share-i": {
+    "zh": "用量页里的图标位",
+    "select": [
+      ".use-share i"
+    ]
+  },
+  "wl.steps-li": {
+    "zh": "wl-steps里的列表的一项",
+    "select": [
+      ".wl-steps li"
+    ]
+  },
+  "wl.pill-b": {
+    "zh": "第一次引导里的粗体",
+    "select": [
+      ".wl-pill b"
+    ]
+  },
+  "wl.dl-bar-i": {
+    "zh": "第一次引导里的图标位",
+    "select": [
+      ".wl-dl-bar i"
+    ]
+  },
+  "setup.pic-main-img": {
+    "zh": "人格、预设、工作区里的图片",
+    "select": [
+      ".setup-pic-main img"
+    ]
+  },
+  "setup.face-img": {
+    "zh": "人格的头像、预设的图标里的图片",
+    "select": [
+      ".setup-face img"
+    ]
+  },
+  "wl.preview-side-i": {
+    "zh": "第一次引导里的图标位",
+    "select": [
+      ".wl-preview-side i"
+    ]
+  },
+  "wg.confirm-card-p": {
+    "zh": "wg-confirm-card里的段落",
+    "select": [
+      ".wg-confirm-card p"
+    ]
+  },
+  "artifact.title-button-strong": {
+    "zh": "预览工作区里的粗体",
+    "select": [
+      ".artifact-title-button strong"
+    ]
+  },
+  "artifact.title-button-small": {
+    "zh": "预览工作区里的small",
+    "select": [
+      ".artifact-title-button small"
+    ]
+  },
+  "artifact.resource-item-small": {
+    "zh": "artifact-resource-item里的small",
+    "select": [
+      ".artifact-resource-item small"
+    ]
+  },
+  "boot.card-h1": {
+    "zh": "boot-card里的一级标题",
+    "select": [
+      ".boot-card h1"
+    ]
+  },
+  "boot.card-p": {
+    "zh": "boot-card里的段落",
+    "select": [
+      ".boot-card p"
+    ]
+  },
+  "note.detail-pre": {
+    "zh": "回报那一行里的代码块",
+    "select": [
+      ".note-detail pre"
+    ]
+  },
+  "assistant.label-img": {
+    "zh": "assistant-label里的图片",
+    "select": [
+      ".assistant-label img"
+    ]
+  },
+  "assistant.label-strong": {
+    "zh": "assistant-label里的粗体",
+    "select": [
+      ".assistant-label strong"
+    ]
+  },
+  "footer.left-b": {
+    "zh": "footer-left里的粗体",
+    "select": [
+      ".footer-left b"
+    ]
+  },
+  "markdown.body-h2": {
+    "zh": "markdown-body里的二级标题",
+    "select": [
+      ".markdown-body h2"
+    ]
+  },
+  "markdown.body-h3": {
+    "zh": "markdown-body里的三级标题",
+    "select": [
+      ".markdown-body h3"
+    ]
+  },
+  "markdown.body-h4": {
+    "zh": "markdown-body里的四级标题",
+    "select": [
+      ".markdown-body h4"
+    ]
+  },
+  "markdown.body-h5": {
+    "zh": "markdown-body里的五级标题",
+    "select": [
+      ".markdown-body h5"
+    ]
+  },
+  "markdown.body-h6": {
+    "zh": "markdown-body里的六级标题",
+    "select": [
+      ".markdown-body h6"
+    ]
+  },
+  "markdown.body-li": {
+    "zh": "markdown-body里的列表的一项",
+    "select": [
+      ".markdown-body li"
+    ]
+  },
+  "task.list-item-input": {
+    "zh": "task-list-item里的输入框",
+    "select": [
+      ".task-list-item input"
+    ]
+  },
+  "markdown.body-blockquote": {
+    "zh": "markdown-body里的引用",
+    "select": [
+      ".markdown-body blockquote"
+    ]
+  },
+  "markdown.body-hr": {
+    "zh": "markdown-body里的分隔线",
+    "select": [
+      ".markdown-body hr"
+    ]
+  },
+  "markdown.body-del": {
+    "zh": "markdown-body里的删除线",
+    "select": [
+      ".markdown-body del"
+    ]
+  },
+  "markdown.body-table": {
+    "zh": "markdown-body里的表格",
+    "select": [
+      ".markdown-body table"
+    ]
+  },
+  "markdown.body-th": {
+    "zh": "markdown-body里的表头",
+    "select": [
+      ".markdown-body th"
+    ]
+  },
+  "markdown.body-td": {
+    "zh": "markdown-body里的表格的格",
+    "select": [
+      ".markdown-body td"
+    ]
+  },
+  "markdown.body-code": {
+    "zh": "markdown-body里的行内代码",
+    "select": [
+      ".markdown-body code"
+    ]
+  },
+  "markdown.body-a": {
+    "zh": "markdown-body里的链接",
+    "select": [
+      ".markdown-body a"
+    ]
+  },
+  "code.block-pre": {
+    "zh": "code-block里的代码块",
+    "select": [
+      ".code-block pre"
+    ]
+  },
+  "project.card-name-strong": {
+    "zh": "project-card-name里的粗体",
+    "select": [
+      ".project-card-name strong"
+    ]
+  },
+  "brand.identity-strong": {
+    "zh": "左上角的名字",
+    "select": [
+      ".brand-identity strong"
+    ]
+  },
+  "brand.identity-span": {
+    "zh": "左上角名字下面「在线」那一行",
+    "select": [
+      ".brand-identity span"
+    ]
+  },
+  "session.copy-strong": {
+    "zh": "露出三个点的时候里的粗体",
+    "select": [
+      ".session-copy strong"
+    ]
+  },
+  "session.node-i": {
+    "zh": "session-node里的图标位",
+    "select": [
+      ".session-node i"
+    ]
+  },
+  "sb.head-span": {
+    "zh": "栏头里的字",
+    "select": [
+      ".sb-head span"
+    ]
+  },
+  "si.steps-li": {
+    "zh": "登录里的列表的一项",
+    "select": [
+      ".si-steps li"
+    ]
+  },
+  "tl.body-pre": {
+    "zh": "时间线里的代码块",
+    "select": [
+      ".tl-body pre"
+    ]
+  },
+  "tl.figure-figcaption": {
+    "zh": "tl-figure里的figcaption",
+    "select": [
+      ".tl-figure figcaption"
+    ]
+  },
+  "miyu.run-i": {
+    "zh": "miyu-run里的图标位",
+    "select": [
+      ".miyu-run i"
+    ]
   }
 }
