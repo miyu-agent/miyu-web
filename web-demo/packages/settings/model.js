@@ -415,20 +415,23 @@ export function navGroups(order, heads) {
 }
 
 /** 软件包页的筛选（2026-10-20 项目主人：技能、脚本、MCP、网页、扩展混在一起，要能筛）：先后照这里；`web` 是网页自己的组件 */
-export const PKG_FILTERS = /** @type {const} */ (['all', 'builtin', 'extension', 'connection', 'ui', 'mascot', 'mcp', 'web']);
+export const PKG_FILTERS = /** @type {const} */ (['all', 'builtin', 'extension', 'connection', 'ui', 'mascot', 'skill', 'script', 'mcp', 'web']);
 
 /**
  * 一个核心的软件包落在哪几个筛选里（照包带了什么，一个包带好几样的几个里都有）：内置（`builtin`）、扩展（`process`、`worker`）、
- * 接入（带 `connection` 的）、界面（`ui`）、吉祥物（`mascot`，或者别的种类多带一张吉祥物）、MCP（`mcp` 里有服务的）。
- * @param {any} p `package.list` 的一项 @returns {string[]}
+ * 接入（带 `connection` 的）、界面（`ui`）、吉祥物（`mascot`，或者别的种类多带一张吉祥物）、技能、脚本（`skill.list`、`script.list` 里
+ * `package` 是它的，`carried` 记着；核心 X-27）、MCP（`mcp` 里有服务的）。
+ * @param {any} p `package.list` 的一项 @param {{skills?: Set<string>, scripts?: Set<string>}} [carried] 带了技能、脚本的包 @returns {string[]}
  */
-export function pkgKinds(p) {
+export function pkgKinds(p, carried = {}) {
   const kinds = [];
   if (p.kind === 'builtin') kinds.push('builtin');
   if (p.kind === 'process' || p.kind === 'worker') kinds.push('extension');
   if (p.connection) kinds.push('connection');
   if (p.kind === 'ui') kinds.push('ui');
   if (p.kind === 'mascot' || p.mascot) kinds.push('mascot');
+  if (carried.skills?.has(p.package)) kinds.push('skill');
+  if (carried.scripts?.has(p.package)) kinds.push('script');
   if (Array.isArray(p.mcp) && p.mcp.length) kinds.push('mcp');
   return kinds;
 }
@@ -456,4 +459,13 @@ export function ownerOf(item, ids) {
   if (typeof item.package === 'string' && ids.has(item.package)) return item.package;
   const head = String(item.key ?? '').split('.')[0];
   return ids.has(head) ? head : null;
+}
+
+/**
+ * 带了技能、脚本的包（软件包页的筛选照它）：`skill.list`、`script.list` 每一项的 `package`。旧核心没有这两个方法的是空的。
+ * @param {any} skills `skill.list` 的回应 @param {any} scripts `script.list` 的回应
+ */
+export function carriedBy(skills, scripts) {
+  const ids = (/** @type {any} */ list) => new Set((Array.isArray(list) ? list : []).map((x) => x.package).filter((x) => typeof x === 'string'));
+  return { skills: ids(skills?.skills), scripts: ids(scripts?.scripts) };
 }

@@ -182,7 +182,10 @@
       "load_failed": "无法加载配置：{reason}",
       "pages": {
         "packages": "软件包",
-        "backstage": "软件后台"
+        "backstage": "软件后台",
+        "skills": "技能",
+        "scripts": "脚本",
+        "mcp": "MCP"
       },
       "layers": {
         "none": "未设置"
@@ -355,8 +358,7 @@
         "part": {
           "connection": "接入",
           "ui": "界面",
-          "feature": "功能",
-          "home_mcp": "个人设置中的 MCP 服务"
+          "feature": "功能"
         },
         "status": {
           "running": "运行中",
@@ -381,7 +383,6 @@
         "mcp": "MCP 服务",
         "mcp_restart": "重启",
         "mcp_stopped": "服务已停止",
-        "home_mcp_hint": "在个人设置文件 settings.toml 的 [mcp.<名称>] 中添加或修改，保存后立即生效",
         "mcp_covered": "被个人设置中的同名服务替代",
         "covered": "被个人设置替代",
         "depends_missing": "缺少依赖：{names}",
@@ -404,7 +405,9 @@
           "ui": "界面",
           "mascot": "吉祥物",
           "mcp": "MCP",
-          "web": "网页"
+          "web": "网页",
+          "skill": "技能",
+          "script": "脚本"
         },
         "kind": {
           "builtin": "内置",
@@ -481,7 +484,83 @@
       "search_pages": "页面",
       "search_packages": "软件包",
       "ask_yes": "确认",
-      "ask_no": "取消"
+      "ask_no": "取消",
+      "tools": {
+        "search": {
+          "skills": "搜索技能",
+          "scripts": "搜索脚本",
+          "mcp": "搜索 MCP 服务"
+        },
+        "open_dir": "打开目录",
+        "add_server": "添加服务",
+        "copied": "已复制路径：{path}",
+        "reveal_missing": "目录不在：{path}",
+        "source": {
+          "all": "全部",
+          "own": "自制",
+          "package": "随软件包来的"
+        },
+        "own": "自制",
+        "shipped": "出厂",
+        "lazy": "懒加载",
+        "full": "完整",
+        "no_match": "没有对得上的",
+        "none": {
+          "skills": "还没有技能",
+          "scripts": "还没有脚本",
+          "mcp": "还没有 MCP 服务"
+        },
+        "gone": "已不存在",
+        "tools_n": "{count} 件工具",
+        "note": {
+          "skills": "开关是全局的：预设里没单独写的照它，写了的以预设为准。技能用到时才读正文，没有加载方式。",
+          "load": "懒加载：只给 AI 名字和一句说明，用到时再拿完整的参数；完整：每一轮都给全。开关是全局的：预设里没单独写的照它，写了的以预设为准。"
+        },
+        "field": {
+          "source": "来源",
+          "name": "名字",
+          "path": "位置",
+          "timeout": "时限",
+          "load": "加载方式",
+          "command": "命令",
+          "venues": "会话",
+          "tools": "工具"
+        },
+        "timeout_s": "{seconds} 秒",
+        "load_set": "个人设置里改过",
+        "load_reset": "恢复",
+        "venue": {
+          "local": "本机",
+          "private": "私聊",
+          "group": "群聊"
+        },
+        "from_package": "随软件包安装，命令在包里改。",
+        "restart": "重启",
+        "edit": "编辑",
+        "remove": "删除",
+        "remove_again": "再点一次删除",
+        "form": {
+          "add_title": "添加 MCP 服务",
+          "edit_title": "编辑 {name}",
+          "name_hint": "例如 github",
+          "command_hint": "程序，例如 npx",
+          "args": "参数",
+          "args_hint": "一行一个",
+          "env": "环境变量",
+          "env_hint": "一行一个：名字=值",
+          "timeout": "时限",
+          "seconds": "秒",
+          "cancel": "取消",
+          "save": "保存",
+          "saving": "正在保存…",
+          "bad": {
+            "name": "名字要以小写字母开头，只用小写字母、数字和 -，最多 32 个字符",
+            "command": "请填写命令",
+            "env": "环境变量第 {line} 行要写成「名字=值」",
+            "timeout": "时限要在 1 到 3600 秒之间"
+          }
+        }
+      }
     },
     "en": {
       "title": "Settings",
@@ -496,7 +575,10 @@
       "load_failed": "Couldn't load settings: {reason}",
       "pages": {
         "packages": "Packages",
-        "backstage": "Dashboards"
+        "backstage": "Dashboards",
+        "skills": "Skills",
+        "scripts": "Scripts",
+        "mcp": "MCP"
       },
       "layers": {
         "none": "Not set"
@@ -669,8 +751,7 @@
         "part": {
           "connection": "Integrations",
           "ui": "Interfaces",
-          "feature": "Features",
-          "home_mcp": "MCP servers in personal settings"
+          "feature": "Features"
         },
         "status": {
           "running": "Running",
@@ -695,7 +776,6 @@
         "mcp": "MCP servers",
         "mcp_restart": "Restart",
         "mcp_stopped": "Server stopped",
-        "home_mcp_hint": "Add or change them under [mcp.<name>] in settings.toml; changes apply when saved",
         "mcp_covered": "Replaced by the server of the same name in personal settings",
         "covered": "Replaced by personal settings",
         "depends_missing": "Missing dependencies: {names}",
@@ -718,7 +798,9 @@
           "ui": "Interfaces",
           "mascot": "Mascots",
           "mcp": "MCP",
-          "web": "Web"
+          "web": "Web",
+          "skill": "Skills",
+          "script": "Scripts"
         },
         "kind": {
           "builtin": "Built-in",
@@ -795,7 +877,83 @@
       "search_pages": "Pages",
       "search_packages": "Packages",
       "ask_yes": "Confirm",
-      "ask_no": "Cancel"
+      "ask_no": "Cancel",
+      "tools": {
+        "search": {
+          "skills": "Search skills",
+          "scripts": "Search scripts",
+          "mcp": "Search MCP servers"
+        },
+        "open_dir": "Open folder",
+        "add_server": "Add server",
+        "copied": "Path copied: {path}",
+        "reveal_missing": "Folder not found: {path}",
+        "source": {
+          "all": "All",
+          "own": "Your own",
+          "package": "From packages"
+        },
+        "own": "Your own",
+        "shipped": "Built-in",
+        "lazy": "Lazy",
+        "full": "Full",
+        "no_match": "Nothing matches",
+        "none": {
+          "skills": "No skills yet",
+          "scripts": "No scripts yet",
+          "mcp": "No MCP servers yet"
+        },
+        "gone": "No longer exists",
+        "tools_n": "{count} tools",
+        "note": {
+          "skills": "Switches are global: presets follow them unless they set the item themselves. Skills are read only when used, so they have no loading mode.",
+          "load": "Lazy: the AI gets only the name and a one-line description, and fetches the full parameters when it uses it. Full: everything is sent every turn. Switches are global: presets follow them unless they set the item themselves."
+        },
+        "field": {
+          "source": "Source",
+          "name": "Name",
+          "path": "Location",
+          "timeout": "Time limit",
+          "load": "Loading",
+          "command": "Command",
+          "venues": "Sessions",
+          "tools": "Tools"
+        },
+        "timeout_s": "{seconds} s",
+        "load_set": "Changed in personal settings",
+        "load_reset": "Reset",
+        "venue": {
+          "local": "Local",
+          "private": "Private chats",
+          "group": "Group chats"
+        },
+        "from_package": "Installed with a package; change its command in the package.",
+        "restart": "Restart",
+        "edit": "Edit",
+        "remove": "Remove",
+        "remove_again": "Click again to remove",
+        "form": {
+          "add_title": "Add MCP server",
+          "edit_title": "Edit {name}",
+          "name_hint": "e.g. github",
+          "command_hint": "Program, e.g. npx",
+          "args": "Arguments",
+          "args_hint": "One per line",
+          "env": "Environment",
+          "env_hint": "One per line: NAME=value",
+          "timeout": "Time limit",
+          "seconds": "s",
+          "cancel": "Cancel",
+          "save": "Save",
+          "saving": "Saving…",
+          "bad": {
+            "name": "Names start with a lowercase letter and use only lowercase letters, digits and -, up to 32 characters",
+            "command": "Enter a command",
+            "env": "Environment line {line} should be NAME=value",
+            "timeout": "The time limit must be 1 to 3600 seconds"
+          }
+        }
+      }
     },
     "ja": {
       "title": "設定",
@@ -810,7 +968,10 @@
       "load_failed": "設定を読み込めません：{reason}",
       "pages": {
         "packages": "パッケージ",
-        "backstage": "ソフトの管理画面"
+        "backstage": "ソフトの管理画面",
+        "skills": "スキル",
+        "scripts": "スクリプト",
+        "mcp": "MCP"
       },
       "layers": {
         "none": "未設定"
@@ -983,8 +1144,7 @@
         "part": {
           "connection": "接続",
           "ui": "画面",
-          "feature": "機能",
-          "home_mcp": "個人設定の MCP サーバー"
+          "feature": "機能"
         },
         "status": {
           "running": "実行中",
@@ -1009,7 +1169,6 @@
         "mcp": "MCP サーバー",
         "mcp_restart": "再起動",
         "mcp_stopped": "サーバーが停止",
-        "home_mcp_hint": "settings.toml の [mcp.<名前>] で追加・変更します。保存するとすぐ反映されます",
         "mcp_covered": "個人設定の同名サーバーに置き換えられています",
         "covered": "個人設定に置き換え済み",
         "depends_missing": "依存パッケージ不足：{names}",
@@ -1032,7 +1191,9 @@
           "ui": "インターフェース",
           "mascot": "マスコット",
           "mcp": "MCP",
-          "web": "Web"
+          "web": "Web",
+          "skill": "スキル",
+          "script": "スクリプト"
         },
         "kind": {
           "builtin": "内蔵",
@@ -1109,7 +1270,83 @@
       "search_pages": "ページ",
       "search_packages": "パッケージ",
       "ask_yes": "確認",
-      "ask_no": "キャンセル"
+      "ask_no": "キャンセル",
+      "tools": {
+        "search": {
+          "skills": "スキルを検索",
+          "scripts": "スクリプトを検索",
+          "mcp": "MCP サーバーを検索"
+        },
+        "open_dir": "フォルダを開く",
+        "add_server": "サーバーを追加",
+        "copied": "パスをコピーしました：{path}",
+        "reveal_missing": "フォルダがありません：{path}",
+        "source": {
+          "all": "すべて",
+          "own": "自作",
+          "package": "パッケージ付属"
+        },
+        "own": "自作",
+        "shipped": "同梱",
+        "lazy": "遅延読み込み",
+        "full": "完全",
+        "no_match": "一致するものがありません",
+        "none": {
+          "skills": "スキルはまだありません",
+          "scripts": "スクリプトはまだありません",
+          "mcp": "MCP サーバーはまだありません"
+        },
+        "gone": "存在しません",
+        "tools_n": "ツール {count} 個",
+        "note": {
+          "skills": "スイッチは全体設定です。プリセットで個別に指定していない項目はこれに従い、指定した項目はプリセットが優先されます。スキルは使うときに本文を読むため、読み込み方法はありません。",
+          "load": "遅延読み込み：AI には名前と一行の説明だけを渡し、使うときに詳しいパラメーターを取得します。完全：毎ターンすべて渡します。スイッチは全体設定です。プリセットで個別に指定した項目はプリセットが優先されます。"
+        },
+        "field": {
+          "source": "提供元",
+          "name": "名前",
+          "path": "場所",
+          "timeout": "制限時間",
+          "load": "読み込み方法",
+          "command": "コマンド",
+          "venues": "セッション",
+          "tools": "ツール"
+        },
+        "timeout_s": "{seconds} 秒",
+        "load_set": "個人設定で変更済み",
+        "load_reset": "元に戻す",
+        "venue": {
+          "local": "ローカル",
+          "private": "個別チャット",
+          "group": "グループ"
+        },
+        "from_package": "パッケージと一緒にインストールされています。コマンドはパッケージ側で変更します。",
+        "restart": "再起動",
+        "edit": "編集",
+        "remove": "削除",
+        "remove_again": "もう一度押して削除",
+        "form": {
+          "add_title": "MCP サーバーを追加",
+          "edit_title": "{name} を編集",
+          "name_hint": "例：github",
+          "command_hint": "プログラム（例：npx）",
+          "args": "引数",
+          "args_hint": "1 行に 1 つ",
+          "env": "環境変数",
+          "env_hint": "1 行に 1 つ：名前=値",
+          "timeout": "制限時間",
+          "seconds": "秒",
+          "cancel": "キャンセル",
+          "save": "保存",
+          "saving": "保存中…",
+          "bad": {
+            "name": "名前は小文字で始め、小文字・数字・- のみ、32 文字以内で入力してください",
+            "command": "コマンドを入力してください",
+            "env": "環境変数の {line} 行目は「名前=値」の形にしてください",
+            "timeout": "制限時間は 1〜3600 秒です"
+          }
+        }
+      }
     }
   },
   "styles": [

@@ -476,3 +476,39 @@ a.set-btn.set-link { display: inline-flex; align-items: center; }
 a.set-btn.is-anchor { display: inline-flex; align-items: center; gap: 5px; color: var(--text); text-decoration: none; }
 /* 链接做的一行（软件后台页）：同别的行，字照正文的颜色、不画下划线 */
 a.set-row.is-anchor { color: inherit; text-decoration: none; }
+
+/* 技能、脚本、MCP 三页（蓝图第 20 条）：同软件包页的行；顶上搜索框右边一个按钮 */
+.set-tool-head { display: flex; align-items: center; gap: 8px; }
+.set-tool-head .set-pkg-find { flex: 1; min-width: 0; }
+.set-tool-head .set-btn { display: inline-flex; flex: none; align-items: center; gap: 6px; }
+.set-tool-head .set-btn .icon { width: 14px; height: 14px; }
+.set-tool-id { overflow: hidden; color: var(--text-faint); font: 11.5px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
+.set-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.set-tool-controls { gap: 10px; }
+.set-desc .is-error { color: var(--danger); }
+.set-tool-note { margin: 14px 0 0; color: var(--text-faint); font-size: 12.5px; line-height: 1.6; }
+.set-tool-value { min-width: 0; max-width: 62%; color: var(--text-soft); font-size: 13px; }
+.set-tool-code { display: block; overflow: hidden; color: var(--text-soft); font: 12px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
+.set-row.is-wide { display: grid; gap: 8px; }
+.set-tool-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.set-tool-chip { padding: 0 7px; border-radius: 6px; background: var(--surface-2); color: var(--text-soft); font: 11.5px/22px var(--mono); }
+.set-pkg-card-meta .set-link { font-size: 12.5px; }
+
+/* 添加、编辑服务的小窗：设置框正中（设置框磨砂了，`position: fixed` 照设置框那一块摆），后面淡遮罩 */
+.set-tool-modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 45%, transparent); animation: set-tool-fade 0.14s var(--ease-out); }
+.set-tool-modal.is-leaving { animation: set-tool-fade 0.12s var(--ease-out) reverse forwards; }
+@keyframes set-tool-fade { from { opacity: 0; } }
+.set-tool-pop { display: grid; gap: 12px; width: min(480px, 100%); max-height: 100%; overflow: auto; padding: 16px 18px 18px; border-radius: 14px; background: var(--surface-1); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); box-sizing: border-box; }
+.set-tool-pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--text); font-size: 14px; }
+.set-tool-pop-head .icon-button .icon { width: 14px; height: 14px; }
+.set-tool-field { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: start; gap: 12px; }
+.set-tool-label { padding-top: 6px; color: var(--text-soft); font-size: 13px; }
+.set-tool-field > .set-pkg-chips { padding-top: 2px; }
+.set-input.set-tool-input { width: 100%; box-sizing: border-box; }
+.set-input.is-mono { font-family: var(--mono); font-size: 12.5px; }
+.set-input.set-tool-area { width: 100%; height: auto; min-height: 66px; padding: 7px 9px; box-sizing: border-box; line-height: 1.5; resize: vertical; }
+.set-input.set-tool-input[readonly] { color: var(--text-faint); }
+.set-tool-timeout { display: flex; align-items: center; gap: 8px; color: var(--text-faint); font-size: 12.5px; }
+.set-tool-timeout .set-input { width: 96px; }
+.set-tool-error { margin: 0; color: var(--danger); font-size: 12.5px; line-height: 1.5; }
+.set-tool-pop-foot { display: flex; justify-content: flex-end; gap: 8px; }

@@ -8,6 +8,7 @@
 //! - 连核心的线是一条 WebSocket（`/ws`）；本机文件、blob（链接卡片的配图、图标也是 blob）的地址是桥的 `/file`、`/blob`；
 //!   附件的字节从浏览器的文件里切一段读出来（`files.read`），页面分块传给核心（蓝图 `web.md`「附件」第 2 条，核心施工 W-5）。
 //! - 链接照网页的写法（`target=_blank`、`download`），浏览器自己会办，`intercept` 什么都不做。
+//! - 打开目录：请桥开文件管理器（`/reveal`，桥的 `reveal.rs`）；页面开在别的机器上的不请。
 //! - 选目录：浏览器给不了本机路径，请桥开系统的选目录对话框（`/pick-dir`，桥的 `dialog.rs`）；页面开在别的机器上的（地址不是本机）
 //!   不请，对话框会开在桥那台机器上、人看不到。
 //! - 软件后台页：带着口令 `POST /page` 请桥造一张票据，交回框的地址（地址里只有票据，框里的页面读得到自己的地址，口令不能给它）。
@@ -93,6 +94,23 @@ async function pickDir(key, opts = {}) {
 }
 
 /**
+ * 打开目录（技能、脚本两页的「打开目录」）：请桥在这台机器上用文件管理器打开（`/reveal`，桥的 `reveal.rs`）。开了交 `{ok: true}`；
+ * 不在的交 `{missing: true}`；开不了的（页面开在别的机器上、桥那台机器上没有文件管理器、问不到桥）交 `null`，用的地方退回复制路径。
+ * @param {string} key @param {string} path
+ * @returns {Promise<{ok: true}|{missing: true}|null>}
+ */
+async function revealDir(key, path) {
+  if (!onThisMachine()) return null;
+  try {
+    const got = await (await fetch(`/reveal?${new URLSearchParams({ k: key, path })}`, { cache: 'no-store' })).json();
+    if (got?.ok) return { ok: true };
+    return got?.missing ? { missing: true } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * 桌面壁纸（主题「跟随壁纸」，蓝图 `web.md`「跟着人格的外观」第 5 条）：问桥（`/wallpaper`）现在的那一份。matugen 生成的颜色优先：
  * 交 `{sig, kind: 'matugen', colors}`（`colors` 是那份 JSON，页面自己认）；没有的交 `{sig, kind: 'image', seeds}`（桥照图算好的候选色，
  * 最多四个 `#rrggbb`，打分高的在前）。`sig` 是换没换的记号。页面开在别的机器上的（那是桥那台机器的壁纸）、两样都读不到的（404）交 `null`；
@@ -166,6 +184,8 @@ export function browserHost() {
       ...fileTools(urls(key)),
       /** 选目录：请桥开系统的对话框（见上面的 `pickDir`） */
       pickDir: (/** @type {{title?: string, start?: string}} */ opts) => pickDir(key, opts),
+      /** 打开目录：请桥开文件管理器（见上面的 `revealDir`） */
+      reveal: (/** @type {string} */ path) => revealDir(key, path),
     },
     /** 软件的页面：框的地址（见上面的 `packagePage`） */
     pages: { open: (/** @type {string} */ id) => packagePage(key, id) },
