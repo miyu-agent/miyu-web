@@ -67,7 +67,7 @@
 .kb-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
 /* 一个库里、看原文时，返回那一行钉在顶上（2026-10-20 项目主人：往下翻不应该被推上去）：底色同设置框、糊一层，下面的字从它下面滚过去 */
 .kb-base-page > .kb-head, .kb-read-page > .kb-head { position: sticky; top: 0; z-index: 5; box-sizing: border-box; height: 40px; margin: 0 -24px; padding: 0 24px;
-  background: color-mix(in srgb, var(--surface) 70%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  background: color-mix(in srgb, var(--surface) 94%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
 /* 拖文件进来：整页都收（同一天项目主人），右边那一栏描一圈虚线、铺一层淡的 accent */
 .set-body.kb-dropping { outline: 2px dashed var(--accent); outline-offset: -6px; background: color-mix(in srgb, var(--accent-soft) 45%, transparent); }
 .kb-files-title { margin-right: auto; color: var(--text-faint); font-size: 12px; font-weight: 600; }
@@ -79,7 +79,7 @@
 /* 一个文件夹连里面的是一组；文件夹那一行往下翻时钉在顶上（返回那一行下面，一层往下 34px），翻过了这一组才被推走（2026-10-20 项目主人：方便收起） */
 .kb-group { display: grid; }
 .kb-group > .kb-doc.is-dir { position: sticky; top: calc(40px + var(--depth, 0) * 34px); z-index: calc(4 - var(--depth, 0));
-  background: color-mix(in srgb, var(--surface) 82%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  background: color-mix(in srgb, var(--surface) 94%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
 .kb-group > .kb-doc.is-dir:hover, .kb-group > .kb-doc.is-dir:focus-visible { background: var(--surface-2); }
 /* 文件树（2026-10-20 项目主人看过样板选的「缩进加竖线」）：一行 34px（悬停露出来的删除不撑高），每层往右 20px；箭头一格 16px（文件那一行空着，
    同一层名字对齐）；右边大小、日期靠右，再右边删除。行之间不画线，悬停整行淡底 */
