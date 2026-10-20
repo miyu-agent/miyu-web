@@ -71,7 +71,8 @@ export function lastChoice(sessions, personas, presets) {
   if (!last.persona) out.persona = false;
   else if (defaultUsable(personas, last.persona)) out.persona = last.persona;
   if (last.preset && defaultUsable(presets, last.preset, 'preset')) out.preset = last.preset;
-  if (last.cwd) out.cwd = last.cwd;
+  // 上一个会话在它自己的默认工作区里的不预选（核心 5-14：那是它一个会话的子目录，新会话照默认另有自己的）
+  if (last.cwd && last.cwd !== last.default_workspace) out.cwd = last.cwd;
   return out;
 }
 
