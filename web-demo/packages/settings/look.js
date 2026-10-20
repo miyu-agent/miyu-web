@@ -73,11 +73,7 @@ async function skinRow(dialog) {
     await ctx.packages.set('skin', { config: { pack: v } });
     dialog.drawBody();
   });
-  // 「样张」：关上设置页，开皮肤样张（蓝图 `web.md`「皮肤」第 7 条）
-  const gallery = ctx.chat?.gallery
-    ? h('button.set-btn', { type: 'button', onclick: () => { dialog.close(); ctx.chat.gallery(); } }, ctx.text('skin_gallery'))
-    : null;
-  return shell({ name: ctx.text('skin'), control: h('div.set-inline', gallery, pick) }).el;
+  return shell({ name: ctx.text('skin'), control: pick }).el;
 }
 
 /**

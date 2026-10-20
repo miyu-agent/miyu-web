@@ -453,5 +453,3 @@ a.set-btn.set-link { display: inline-flex; align-items: center; }
 a.set-btn.is-anchor { display: inline-flex; align-items: center; gap: calc(5px * var(--space)); color: var(--text); text-decoration: none; }
 /* 链接做的一行（软件后台页）：同别的行，字照正文的颜色、不画下划线 */
 a.set-row.is-anchor { color: inherit; text-decoration: none; }
-/* 一行右边并排几个控件（「皮肤」：样张、下拉） */
-.set-inline { display: flex; align-items: center; gap: calc(8px * var(--space)); }

@@ -24,8 +24,7 @@
     "commands",
     "theme~",
     "backstage~",
-    "skin~",
-    "chat~"
+    "skin~"
   ],
   "settings": {
     "width": {
@@ -483,8 +482,7 @@
       "search_pages": "页面",
       "search_packages": "软件包",
       "skin": "皮肤",
-      "skin_factory": "出厂",
-      "skin_gallery": "样张"
+      "skin_factory": "出厂"
     },
     "en": {
       "title": "Settings",
@@ -798,8 +796,7 @@
       "search_pages": "Pages",
       "search_packages": "Packages",
       "skin": "Skin",
-      "skin_factory": "Default",
-      "skin_gallery": "Gallery"
+      "skin_factory": "Default"
     },
     "ja": {
       "title": "設定",
@@ -1113,8 +1110,7 @@
       "search_pages": "ページ",
       "search_packages": "パッケージ",
       "skin": "スキン",
-      "skin_factory": "標準",
-      "skin_gallery": "見本"
+      "skin_factory": "標準"
     }
   },
   "styles": [
