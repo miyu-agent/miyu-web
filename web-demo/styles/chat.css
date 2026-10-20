@@ -6,7 +6,7 @@
 .stage.is-empty { justify-content: center; }
 .stage.is-empty .chat-scroll { flex: 0 0 0; }
 /* 新会话首页输入框下面（挂载位 stage.home：扩展的界面块）：和输入框一样宽，只在空会话里露 */
-.stage-home { display: none; width: min(100%, 980px); margin: 0 auto; padding: 0 30px; }
+.stage-home { display: none; width: min(100%, 980px); margin: 0 auto; padding: 0 calc(30px * var(--space)); }
 .stage.is-empty .stage-home:not(:empty) { display: block; }
 /* 正文滚到输入框上沿时淡出去，不是一刀切断（2026-09-30 改） */
 .chat-scroll {
@@ -16,52 +16,52 @@
 /* 淡出：贴着滚动区底边的一条，从透明渐变到底色（2026-10-01 改：原来用 mask-image 罩着整个滚动区，每滚一下整片正文都要
    重画，滚动掉帧；这样看着一样，滚动时不用重画正文，蓝图「性能」） */
 .chat-fade {
-  position: sticky; bottom: 0; height: 28px; margin-top: -28px; pointer-events: none;
+  position: sticky; bottom: 0; height: 28px; margin-top: calc(-28px * var(--space)); pointer-events: none;
   background: linear-gradient(to bottom, color-mix(in srgb, var(--surface) 0%, transparent), var(--surface));
 }
-.timeline { width: min(100%, 980px); margin: 0 auto; padding: 24px 30px 14px; }
+.timeline { width: min(100%, 980px); margin: 0 auto; padding: calc(24px * var(--space)) calc(30px * var(--space)) calc(14px * var(--space)); }
 /* 顶上的淡出：左上角浮着的那一条（stage.info）露着时，正文滚到它下面淡掉（原来透出字），正文也从它下面起（原来「上下文已清空」
    这类第一行被它挡住）；看着子代理时它在路径那一行里，不占正文，两样都不要（2026-10-10 项目主人） */
 .chat-fade-top {
-  position: sticky; z-index: 3; top: 0; display: none; height: calc(var(--stage-info-h, 0px) + 26px); margin-bottom: calc(-1 * (var(--stage-info-h, 0px) + 26px));
+  position: sticky; z-index: 3; top: 0; display: none; height: calc(var(--stage-info-h, 0px) + 26px); margin-bottom: calc(-1 * (var(--stage-info-h, 0px) + calc(26px * var(--space))));
   pointer-events: none; background: linear-gradient(to bottom, var(--surface) 62%, color-mix(in srgb, var(--surface) 0%, transparent));
 }
 .stage.has-info:not(:has(.chat-crumbs:not([hidden]))) .chat-fade-top { display: block; }
-.stage.has-info:not(:has(.chat-crumbs:not([hidden]))) .timeline { padding-top: calc(var(--stage-info-h, 0px) + 30px); }
+.stage.has-info:not(:has(.chat-crumbs:not([hidden]))) .timeline { padding-top: calc(var(--stage-info-h, 0px) + calc(30px * var(--space))); }
 
 /* 你说的话：下面 27px 的空算在它里面，悬停到按钮上不断 */
-.user-message { position: relative; display: grid; justify-items: end; padding-bottom: 27px; }
+.user-message { position: relative; display: grid; justify-items: end; padding-bottom: calc(27px * var(--space)); }
 /* 别人说的（别的账号、子代理、别的 harness、平台上的人）：气泡上面一行小字写是谁（蓝图 web.md「不是你说的话」） */
-.user-speaker { margin-bottom: 4px; color: var(--text-faint); font-size: 12px; }
+.user-speaker { margin-bottom: calc(4px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
 /* 子代理的会话里「来自「父会话」」：能点，回到那个会话 */
 .user-speaker.is-link {
-  display: inline-flex; max-width: min(62%, 420px); align-items: center; gap: 3px; padding: 0; border: 0; background: none;
-  font: inherit; font-size: 12px; cursor: pointer;
+  display: inline-flex; max-width: min(62%, 420px); align-items: center; gap: calc(3px * var(--space)); padding: 0; border: 0; background: none;
+  font: inherit; font-size: calc(12px * var(--text-scale)); cursor: pointer;
 }
 /* 父会话的标题长的截掉（整句在悬停提示里） */
 .user-speaker-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .user-speaker.is-link:hover { color: var(--text-soft); }
-.user-speaker.is-link .icon { width: 11px; height: 11px; }
+.user-speaker.is-link .icon { width: calc(11px * var(--space)); height: calc(11px * var(--space)); }
 
 /* 不挂在她头下的一行：回报、压缩、清空（蓝图 web.md「后台命令、子代理的回报」「压缩、清空」）。和收尾那一行一样对齐、
    一样大：缩进到她的内容那一列，等宽 13px，字暗、记号有颜色；能点开的悬停亮一档，点开下面铺底色 */
 /* 提示行（回报、压缩、清空）：和时间线收起那一行一个样子（正文字体 600、11.5px、text 的六成二），记号照旧有颜色（蓝图 web.md「后台命令、子代理的回报」） */
-.note { margin-bottom: 19px; padding-left: 40px; color: color-mix(in srgb, var(--text) 62%, var(--surface)); font: 600 11.5px/1.5 var(--font-ui); }
+.note { margin-bottom: calc(19px * var(--space)); padding-left: calc(40px * var(--space)); color: color-mix(in srgb, var(--text) 62%, var(--surface)); font: 600 calc(11.5px * var(--text-scale))/1.5 var(--font-ui); }
 /* 上下各空一行，一行照提示行自己的字高（11.5px × 1.5），不照正文（2026-10-12 项目主人：原来照正文的一行，上 25、下 28，看着比一行宽；
    10-10 那次是从上 33、下 40 收到正文的一行）：照字到字量（上一块最后一行字的底到提示行字的顶、提示行字的底到下一块的字或头像的顶）上下都是 22，单独一行的和夹在她这一块里的一样；一连几条之间 16（2026-10-16 项目主人：原来下面比上面窄、离头像太近，夹在她这一块里的没跟着改） */
-.assistant-message + .note, .assistant-message + .compacting { margin-top: -12px; }
+.assistant-message + .note, .assistant-message + .compacting { margin-top: calc(-12px * var(--space)); }
 /* 一连几条回报：彼此 16，不各空一行 */
-.note + .note { margin-top: -7px; }
+.note + .note { margin-top: calc(-7px * var(--space)); }
 /* 压缩的进度（蓝图 web.md「压缩的进度」，方案 A）：和回报那一行一样缩进；流光照运行状态行，下面一根细条，过了一会儿呼吸 */
 .compacting {
   --cp-base: color-mix(in srgb, var(--accent) 85%, black);
   --cp-peak: color-mix(in srgb, white 55%, var(--accent));
-  margin-bottom: 12px; padding-left: 40px; animation: fade-in var(--motion-in) var(--ease-out);
+  margin-bottom: calc(12px * var(--space)); padding-left: calc(40px * var(--space)); animation: fade-in var(--motion-in) var(--ease-out);
 }
 .compacting.is-breathing .compacting-line, .compacting.is-breathing .compacting-bar { animation: compacting-breathe 2s ease-in-out infinite; }
 /* 自动压缩停下来等的那一行：同结果那一行（.note 的字） */
-.compacting-wait { color: color-mix(in srgb, var(--text) 62%, var(--surface)); font: 600 11.5px/1.5 var(--font-ui); }
-.compacting-line { display: flex; align-items: baseline; font-size: 11.5px; line-height: 1.5; }
+.compacting-wait { color: color-mix(in srgb, var(--text) 62%, var(--surface)); font: 600 calc(11.5px * var(--text-scale))/1.5 var(--font-ui); }
+.compacting-line { display: flex; align-items: baseline; font-size: calc(11.5px * var(--text-scale)); line-height: 1.5; }
 .compacting-label {
   color: var(--cp-base); font-weight: 600;
   background: linear-gradient(90deg, var(--cp-base) 40%, var(--cp-peak) 50%, var(--cp-base) 60%) 100% 0 / 250% 100% no-repeat;
@@ -70,12 +70,12 @@
 }
 .compacting-dots { display: inline-block; width: 1.4em; color: var(--cp-base); font-weight: 600; }
 /* 字数紧跟在点后面（点那一格照「...」占宽，数字不跟着点跳；照运行状态行的用时） */
-.compacting-count { margin-left: 0.4em; color: var(--text-faint); font: 11px var(--font-mono); font-variant-numeric: tabular-nums; }
-.compacting-bar { display: flex; align-items: center; gap: 10px; margin-top: 7px; }
+.compacting-count { margin-left: 0.4em; color: var(--text-faint); font: calc(11px * var(--text-scale)) var(--font-mono); font-variant-numeric: tabular-nums; }
+.compacting-bar { display: flex; align-items: center; gap: calc(10px * var(--space)); margin-top: calc(7px * var(--space)); }
 .compacting-track { position: relative; width: 240px; max-width: 70%; height: 4px; overflow: hidden; border-radius: var(--r-pill); background: var(--line); }
 /* 走过的一段只是实心的 accent，不扫光：流光只在上面那几个字上（2026-10-01 项目主人定） */
 .compacting-fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: inherit; background: var(--accent); transition: width .22s cubic-bezier(.2, 0, 0, 1); }
-.compacting-pct { min-width: 3.2em; color: var(--text-faint); font: 11px var(--font-mono); font-variant-numeric: tabular-nums; }
+.compacting-pct { min-width: 3.2em; color: var(--text-faint); font: calc(11px * var(--text-scale)) var(--font-mono); font-variant-numeric: tabular-nums; }
 @keyframes compacting-sweep { from { background-position: 100% 0; } to { background-position: 0 0; } }
 @keyframes compacting-breathe { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
 @media (prefers-reduced-motion: reduce) {
@@ -88,15 +88,15 @@
 /* 回顾（蓝图 web.md「回顾」第 2 条）：一张卡片，和提问答了留下的一个样子（照附件卡、链接卡片） */
 .note.is-recap { font-family: var(--font-ui); font-weight: 400; }
 .note-recap {
-  width: fit-content; max-width: min(100%, 640px); padding: 12px 16px; border-radius: var(--card-radius, var(--r-12)); background: var(--card-bg, var(--surface-1)); box-shadow: var(--card-elev, var(--card-shadow));
+  width: fit-content; max-width: min(100%, 640px); padding: calc(12px * var(--space)) calc(16px * var(--space)); border-radius: var(--card-radius, var(--r-12)); background: var(--card-bg, var(--surface-1)); box-shadow: var(--card-elev, var(--card-shadow));
 }
-.note-recap-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; color: var(--text-faint); font-size: 12px; }
-.note-recap-head .icon { width: 14px; height: 14px; flex: none; }
-.note-recap-text { color: var(--text-soft); font-size: 14px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.note-recap-head { display: flex; align-items: center; gap: calc(6px * var(--space)); margin-bottom: calc(6px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
+.note-recap-head .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); flex: none; }
+.note-recap-text { color: var(--text-soft); font-size: calc(14px * var(--text-scale)); line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
 /* 正文末尾、最后一轮下面（挂载位 chat.tail：确认和提问了结以后留的）：和回报那一行一样缩进 */
-.chat-tail { padding-left: 40px; }
-.chat-tail > * { margin-bottom: 30px; }
-.note-line { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.chat-tail { padding-left: calc(40px * var(--space)); }
+.chat-tail > * { margin-bottom: calc(30px * var(--space)); }
+.note-line { display: flex; align-items: baseline; gap: calc(8px * var(--space)); min-width: 0; }
 .note-text { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .note-line.tone-good .note-mark { color: var(--t-good); }
 /* 停掉的（人停的、她停的、随撤销、因重启、中断）：同一个实心圆点，text_soft（2026-09-30 项目主人定） */
@@ -108,40 +108,40 @@
 .note.is-expandable .note-line { width: fit-content; max-width: 100%; cursor: pointer; transition: color 0.15s ease; }
 .note.is-expandable .note-line:hover { color: color-mix(in srgb, var(--text) 84%, var(--surface)); }
 /* 提示行的小箭头：悬停才露，点开以后一直露着、转成朝下（和时间线一个规矩，timeline.css 的 .tl-chevron） */
-.note-line > .tl-chevron { align-self: center; margin-left: -2px; }
+.note-line > .tl-chevron { align-self: center; margin-left: calc(-2px * var(--space)); }
 .note.is-expandable .note-line:hover > .tl-chevron, .note.is-open > .note-line > .tl-chevron { opacity: 0.8; }
 .note.is-open > .note-line > .tl-chevron { transform: rotate(90deg); }
 .note.is-open .note-detail { cursor: pointer; }
-.note-detail { margin-top: 8px; margin-left: 0; font-family: var(--font-ui); font-weight: 400; }
+.note-detail { margin-top: calc(8px * var(--space)); margin-left: 0; font-family: var(--font-ui); font-weight: 400; }
 /* 点开、收起：和时间线点开一步同一个壳（高度从 0 长出来、收回去，淡入淡出，timeline.css 的 .tl-fold） */
 .note .tl-fold { --tl-ease: cubic-bezier(0.22, 0.61, 0.36, 1); }
 .note.is-open > .tl-fold { grid-template-rows: 1fr; opacity: 1; }
-.note-detail pre { max-height: 360px; margin: 0; overflow: auto; font: 12px/1.55 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
-.note-detail-head { margin-bottom: 6px; color: var(--text-faint); font-size: 12px; }
+.note-detail pre { max-height: 360px; margin: 0; overflow: auto; font: calc(12px * var(--text-scale))/1.55 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.note-detail-head { margin-bottom: calc(6px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
 /* 子代理交回的报告：照她的回答画，字小一档 */
-.note-report { color: var(--text); font-size: 14px; line-height: 1.7; }
+.note-report { color: var(--text); font-size: calc(14px * var(--text-scale)); line-height: 1.7; }
 
 /* 你的话带的附件：气泡上面靠右一排，放不下折行，和气泡隔 6px（蓝图 web.md「附件」第 6 条） */
-.user-attachments { display: flex; max-width: min(62%, 640px); flex-wrap: wrap; justify-content: flex-end; margin-bottom: 6px; gap: 8px; }
+.user-attachments { display: flex; max-width: min(62%, 640px); flex-wrap: wrap; justify-content: flex-end; margin-bottom: calc(6px * var(--space)); gap: calc(8px * var(--space)); }
 .user-attachments .conversation-media { margin: 0; }
 .user-attachments .conversation-media, .user-attachments .conversation-media-visual, .user-attachments .conversation-media img { max-width: min(100%, var(--user-media)); }
 .user-attachments .conversation-media img { max-height: var(--user-media); }
 .user-attachments .conversation-media-visual { border-radius: var(--r-10); }
 .user-attachments .conversation-media-visual.has-aspect { width: min(var(--user-media), 100%); max-height: var(--user-media); }
 .user-file {
-  position: relative; display: flex; width: 112px; height: 104px; flex: none; flex-direction: column; gap: 4px; padding: 10px 11px; overflow: hidden;
+  position: relative; display: flex; width: 112px; height: 104px; flex: none; flex-direction: column; gap: calc(4px * var(--space)); padding: calc(10px * var(--space)) calc(11px * var(--space)); overflow: hidden;
   border-radius: var(--card-radius, var(--r-12)); background: var(--card-bg, color-mix(in srgb, var(--surface-2) 50%, var(--surface-1))); box-shadow: var(--card-elev, var(--card-shadow)); color: var(--text); text-align: left;
   text-decoration: none; transition: background-color 0.15s ease;
 }
 .user-file:hover { background: var(--card-hover, var(--surface-2)); }
 .user-file-name {
-  display: -webkit-box; overflow: hidden; font-size: 13px; font-weight: 600; line-height: 17px; overflow-wrap: anywhere;
+  display: -webkit-box; overflow: hidden; font-size: calc(13px * var(--text-scale)); font-weight: 600; line-height: calc(17px * var(--text-scale)); overflow-wrap: anywhere;
   -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
 }
-.user-file-sub { overflow: hidden; color: var(--text-faint); font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+.user-file-sub { overflow: hidden; color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
 .user-file-ext {
-  position: absolute; bottom: 8px; left: 8px; max-width: calc(100% - 16px); padding: 1px 6px; overflow: hidden; border-radius: var(--r-5);
-  background: var(--surface-3); color: var(--text-soft); font-size: 11px; font-weight: 600; letter-spacing: 0.02em; line-height: 16px;
+  position: absolute; bottom: 8px; left: 8px; max-width: calc(100% - 16px); padding: calc(1px * var(--space)) calc(6px * var(--space)); overflow: hidden; border-radius: var(--r-5);
+  background: var(--surface-3); color: var(--text-soft); font-size: calc(11px * var(--text-scale)); font-weight: 600; letter-spacing: 0.02em; line-height: calc(16px * var(--text-scale));
   text-overflow: ellipsis; white-space: nowrap;
 }
 .user-file:hover .user-file-ext { background: var(--surface-3); }
@@ -156,40 +156,40 @@
   background: rgb(0 0 0 / 55%); color: #fff; transition: transform 0.15s ease;
 }
 .user-video:hover .user-video-play { transform: scale(1.08); }
-.user-video-play .icon { width: 15px; height: 15px; margin-left: 2px; fill: currentColor; }
+.user-video-play .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); margin-left: calc(2px * var(--space)); fill: currentColor; }
 .user-video-player { max-width: min(100%, 480px); max-height: 56vh; border-radius: var(--r-10); background: #000; }
 /* 你的气泡：一层淡淡的底，不加阴影；右下角收小一点像个尾巴（旧版的形状，圆角放软） */
 .user-bubble {
-  max-width: min(62%, 640px); padding: var(--bubble-pad, 10px 16px); border: var(--bubble-border, 0); box-shadow: var(--bubble-elev, none); border-radius: var(--bubble-radius, var(--r-16) var(--r-16) var(--r-5) var(--r-16));
+  max-width: min(62%, 640px); padding: var(--bubble-pad, calc(10px * var(--space)) calc(16px * var(--space))); border: var(--bubble-border, 0); box-shadow: var(--bubble-elev, none); border-radius: var(--bubble-radius, var(--r-16) var(--r-16) var(--r-5) var(--r-16));
   background: var(--bubble-bg, color-mix(in srgb, var(--text) 5.5%, var(--surface))); color: var(--text);
-  font-family: var(--font-read); font-size: 15px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere;
+  font-family: var(--font-read); font-size: calc(15px * var(--text-scale)); line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere;
 }
 
 /* 她的一轮 */
-.assistant-message { position: relative; max-width: 92%; margin-bottom: 30px; padding-left: 40px; }
-.assistant-label { display: flex; align-items: center; margin-bottom: 5px; gap: 8px; }
+.assistant-message { position: relative; max-width: 92%; margin-bottom: calc(30px * var(--space)); padding-left: calc(40px * var(--space)); }
+.assistant-label { display: flex; align-items: center; margin-bottom: calc(5px * var(--space)); gap: calc(8px * var(--space)); }
 .assistant-label img {
   position: absolute; top: 0; left: 0; width: 30px; height: 30px; border-radius: var(--r-round); object-fit: cover;
   box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--gold) 75%, transparent);
 }
-.assistant-label strong { color: var(--text-soft); font-size: 11.5px; font-weight: 600; letter-spacing: 0.01em; }
+.assistant-label strong { color: var(--text-soft); font-size: calc(11.5px * var(--text-scale)); font-weight: 600; letter-spacing: 0.01em; }
 /* 人格没有头像：名字的第一个字（核心还没有人格的头像） */
 .assistant-initial {
   position: absolute; top: 0; left: 0; display: grid; place-items: center; width: 30px; height: 30px; border-radius: var(--r-round);
-  background: color-mix(in srgb, var(--accent) 16%, var(--surface-1)); color: var(--accent); font-size: 13px; font-weight: 600;
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-1)); color: var(--accent); font-size: calc(13px * var(--text-scale)); font-weight: 600;
 }
 /* 无人格的会话：她那一轮不画头像和名字，内容、提示行、压缩的进度不缩进（2026-10-10 项目主人） */
 /* 她那一轮、提示行缩不缩进照各自的（中途换了人格，旧的照回复时的人格：`chat.js` 的 `block`）；压缩的进度、正文末尾那一格照现在的人格 */
 .timeline.is-bare .compacting, .timeline.is-bare .chat-tail { padding-left: 0; }
 .assistant-message.is-bare, .note.is-bare { padding-left: 0; }
-.assistant-content { color: var(--text); font-family: var(--font-read); font-size: 15px; line-height: 1.75; }
-.assistant-content > * + * { margin-top: 10px; }
+.assistant-content { color: var(--text); font-family: var(--font-read); font-size: calc(15px * var(--text-scale)); line-height: 1.75; }
+.assistant-content > * + * { margin-top: calc(10px * var(--space)); }
 
 /* 收尾那一行（tui.md「正文」第 4 条）：和上面的回答之间空一行（正文的一行高），等宽 13px、暗；出错的红 */
-.assistant-content > .turn-end { margin-top: calc(15px * 1.75); }
+.assistant-content > .turn-end { margin-top: calc(calc(15px * var(--space)) * 1.75); }
 /* 她正在回答时来的回报：夹在她这一块里，上下两段时间线中间；已经在她的内容那一列里，不再缩进，上下留和时间线一样的空 */
-.assistant-content > .note { margin-top: 12px; margin-bottom: 12px; padding-left: 0; }
-.turn-end { display: flex; flex-wrap: wrap; align-items: center; column-gap: 10px; color: var(--t-dim); font: 13px/1.6 var(--font-mono); }
+.assistant-content > .note { margin-top: calc(12px * var(--space)); margin-bottom: calc(12px * var(--space)); padding-left: 0; }
+.turn-end { display: flex; flex-wrap: wrap; align-items: center; column-gap: calc(10px * var(--space)); color: var(--t-dim); font: calc(13px * var(--text-scale))/1.6 var(--font-mono); }
 .turn-end-text { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .turn-end.tone-error { color: var(--t-error); }
 /* 打断的那一轮后面那一句「后台还有 N 个在跑」：点了打开后台任务（蓝图「后台任务」第 6 条） */
@@ -198,13 +198,13 @@
 
 /* 你的话、她一轮末尾的按钮（said.js，照 Claude 网页端，2026-09-30 项目主人定）：28×28、圆角 8，图标 14px 暗，
    悬停亮、铺一层淡底。编辑、重做只有最新的一轮有，在回答时没有 */
-.msg-actions { display: flex; gap: 2px; }
+.msg-actions { display: flex; gap: calc(2px * var(--space)); }
 .msg-action {
   display: grid; width: 28px; height: 28px; place-items: center; padding: 0; border: var(--ghost-border, 0); border-radius: var(--ghost-radius, var(--r-8));
   background: var(--ghost-bg, transparent); color: var(--ghost-fg, var(--text-faint)); cursor: pointer; transition: background-color 0.12s ease, color 0.12s ease;
 }
 .msg-action:hover { background: var(--ghost-hover, color-mix(in srgb, var(--text) 6%, transparent)); color: var(--ghost-fg-hover, var(--text)); }
-.msg-action .icon { width: 14px; height: 14px; }
+.msg-action .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
 .user-message:not(.is-latest) .is-edit, .assistant-message:not(.is-latest) .is-redo,
 .chat-scroll.is-running .is-edit, .chat-scroll.is-running .is-redo { display: none; }
 /* 你的话：浮在气泡右下角下面的空里，悬停才露 */
@@ -213,72 +213,72 @@
 .user-message:hover .user-actions, .user-actions:focus-within { opacity: 1; pointer-events: auto; }
 .user-message.is-editing .user-actions { display: none; }
 /* 她的一轮：收尾那一行后面；最新的一轮一直露着，更早的悬停在这一轮上才露；不撑高那一行 */
-.turn-actions { margin: -4px 0; opacity: 0; transition: opacity 0.15s ease; }
+.turn-actions { margin: calc(-4px * var(--space)) 0; opacity: 0; transition: opacity 0.15s ease; }
 .assistant-message.is-latest .turn-actions, .assistant-message:hover .turn-actions, .turn-actions:focus-within { opacity: 1; }
 
 /* 编辑你的话：气泡换成一个输入框，下面右对齐「取消」「发送」 */
 .user-edit {
-  width: min(100%, 720px); padding: 10px 12px 8px 16px; border-radius: var(--field-radius, var(--r-16)); transform-origin: right bottom;
+  width: min(100%, 720px); padding: calc(10px * var(--space)) calc(12px * var(--space)) calc(8px * var(--space)) calc(16px * var(--space)); border-radius: var(--field-radius, var(--r-16)); transform-origin: right bottom;
   background: var(--field-bg, var(--surface-1)); box-shadow: var(--field-elev, var(--composer-focus-shadow)); animation: pop-in var(--motion-in) var(--ease-out) both;
 }
 .user-edit.is-leaving { animation: fade-out var(--motion-out) var(--ease-in) both; }
 .edit-input {
   display: block; width: 100%; max-height: 40vh; padding: 0; overflow-y: auto; border: 0; outline: 0; resize: none;
-  background: transparent; color: var(--text); font: 15px/1.7 var(--font-read);
+  background: transparent; color: var(--text); font: calc(15px * var(--text-scale))/1.7 var(--font-read);
 }
-.edit-bar { display: flex; justify-content: flex-end; margin-top: 6px; gap: 6px; }
-.edit-cancel, .edit-send { height: 30px; padding: 0 13px; border: 0; border-radius: var(--r-9); font: 500 13px var(--font-ui); cursor: pointer; }
+.edit-bar { display: flex; justify-content: flex-end; margin-top: calc(6px * var(--space)); gap: calc(6px * var(--space)); }
+.edit-cancel, .edit-send { height: 30px; padding: 0 calc(13px * var(--space)); border: 0; border-radius: var(--r-9); font: 500 calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer; }
 .edit-cancel { background: transparent; color: var(--text-soft); }
 .edit-cancel:hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }
 .edit-send { background: var(--accent); color: var(--on-primary); }
 .edit-send:hover { background: var(--btn-primary-hover, color-mix(in srgb, var(--accent) 88%, var(--text))); }
 
 @media (max-width: 836px) {
-  .note { padding-left: 38px; }
-  .chat-tail { padding-left: 38px; }
-  .timeline { padding: 22px 13px 12px; }
+  .note { padding-left: calc(38px * var(--space)); }
+  .chat-tail { padding-left: calc(38px * var(--space)); }
+  .timeline { padding: calc(22px * var(--space)) calc(13px * var(--space)) calc(12px * var(--space)); }
   .user-bubble, .user-attachments { max-width: 86%; }
-  .assistant-message { max-width: 100%; padding-left: 38px; }
+  .assistant-message { max-width: 100%; padding-left: calc(38px * var(--space)); }
   .assistant-label img, .assistant-initial { width: 28px; height: 28px; }
 }
 
 
 /* 对话区右边的挂载位（软件包 rail 这类挂进来）：不占地方，挂进来的自己定位在对话区那一栏上 */
 .stage-right { display: contents; }
-.slot-failed { color: var(--danger); font-size: 12px; }
+.slot-failed { color: var(--danger); font-size: calc(12px * var(--text-scale)); }
 
 /* 子代理的会话顶上那条路径（蓝图 web.md「对话区」的「子代理的会话顶上那条路径」）：高 40px，占着地方（正文从它下面起），下面一根
    line 细线；路径，前面几段 text_soft、悬停 text、能点，最后一段 text。左栏收起、窄屏时让开左上角的按钮。回派它的那一层的按钮在
    输入框正上方（composer.css 的 .back-row） */
 .chat-crumbs {
-  display: flex; flex: none; align-items: center; gap: 6px; height: 40px; padding: 0 16px; border-bottom: 1px solid var(--line);
+  display: flex; flex: none; align-items: center; gap: calc(6px * var(--space)); height: 40px; padding: 0 calc(16px * var(--space)); border-bottom: 1px solid var(--line);
   background: var(--surface); animation: drop-in var(--motion-in) var(--ease-out) both;
 }
 .chat-crumbs.is-leaving { animation: lift-out var(--motion-out) var(--ease-in) both; }
-.app-shell.is-sidebar-collapsed .chat-crumbs { padding-left: 52px; }
-.crumb-path { display: flex; min-width: 0; align-items: center; gap: 2px; font-size: 13px; }
+.app-shell.is-sidebar-collapsed .chat-crumbs { padding-left: calc(52px * var(--space)); }
+.crumb-path { display: flex; min-width: 0; align-items: center; gap: calc(2px * var(--space)); font-size: calc(13px * var(--text-scale)); }
 .crumb {
-  min-width: 0; max-width: 220px; padding: 3px 6px; overflow: hidden; border: 0; border-radius: var(--r-6); background: none;
+  min-width: 0; max-width: 220px; padding: calc(3px * var(--space)) calc(6px * var(--space)); overflow: hidden; border: 0; border-radius: var(--r-6); background: none;
   color: var(--text-soft); font: inherit; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;
 }
 .crumb:hover { background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--text); }
-.crumb.is-here { flex: 1 1 auto; padding: 3px 6px; color: var(--text); cursor: default; }
+.crumb.is-here { flex: 1 1 auto; padding: calc(3px * var(--space)) calc(6px * var(--space)); color: var(--text); cursor: default; }
 .crumb-sep { display: grid; flex: none; place-items: center; color: var(--text-faint); }
-.crumb-sep .icon { width: 12px; height: 12px; }
-.crumb-gap { flex: none; padding: 0 4px; color: var(--text-faint); }
+.crumb-sep .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); }
+.crumb-gap { flex: none; padding: 0 calc(4px * var(--space)); color: var(--text-faint); }
 @media (max-width: 836px) {
-  .chat-crumbs, .app-shell.is-sidebar-collapsed .chat-crumbs { padding-left: 52px; }
+  .chat-crumbs, .app-shell.is-sidebar-collapsed .chat-crumbs { padding-left: calc(52px * var(--space)); }
 }
 
 /* 桥重启过、换了口令（蓝图 web.md「连核心」第 9 条）：对话区顶上一条，占着地方，warn 色的字、淡底；进来从上面落下 */
 .bridge-lost {
-  padding: 9px 16px; background: color-mix(in srgb, var(--t-warn) 10%, var(--surface)); color: var(--t-warn); font-size: 13px; text-align: center;
+  padding: calc(9px * var(--space)) calc(16px * var(--space)); background: color-mix(in srgb, var(--t-warn) 10%, var(--surface)); color: var(--t-warn); font-size: calc(13px * var(--text-scale)); text-align: center;
   animation: drop-in var(--motion-in) var(--ease-out) both;
 }
 
 /* 对话区左上角浮着的一小条（挂载位 stage.info，软件包 setup 画人格、工作区，蓝图 web.md「人格、预设、工作区」第 5 条）：
    左栏收起、窄屏时让开左上角的按钮；看着子代理时顶上有路径那一行，接在那一行的右边 */
-.stage-info { position: absolute; z-index: 14; top: 12px; left: 16px; display: flex; gap: 6px; max-width: calc(100% - 96px); pointer-events: none; }
+.stage-info { position: absolute; z-index: 14; top: 12px; left: 16px; display: flex; gap: calc(6px * var(--space)); max-width: calc(100% - 96px); pointer-events: none; }
 .stage-info:empty { display: none; }
 .stage-info > * { pointer-events: auto; }
 .app-shell.is-sidebar-collapsed .stage-info { top: 20px; left: 56px; }
@@ -286,7 +286,7 @@
 @media (max-width: 836px) { .stage-info { left: 56px; } }
 
 /* 正文最上面一行（按页读，蓝图 web.md「连核心」第 3a 条）：读更早的一页时「正在读更早的…」，翻到头了「已经是开头」；暗色、居中 */
-.chat-older { padding: 14px 0 4px; color: var(--text-faint); font-size: 12px; text-align: center; }
+.chat-older { padding: calc(14px * var(--space)) 0 calc(4px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); text-align: center; }
 .chat-older[hidden] { display: none; }
 /* 全部会话那一页（项目页）开着：左上角那一条（会话标题、项目名）不画（2026-10-19 项目主人：从项目会话点进项目页，原来会话的那一条还在） */
 .stage:has(> .sessions-page:not([hidden]):not(.is-leaving)) .stage-info { display: none; }

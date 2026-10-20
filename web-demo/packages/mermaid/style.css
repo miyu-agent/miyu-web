@@ -1,19 +1,19 @@
 /* mermaid 图（软件包 mermaid；蓝图 web.md「mermaid 图」，照旧版 styles.css:2693-2761）：不加卡片的底，融进她的正文；上面一行暗的小字，右边切源码、复制 */
-.mermaid-block { margin: 2px 0 12px; }
+.mermaid-block { margin: calc(2px * var(--space)) 0 calc(12px * var(--space)); }
 /* 「图表」「源码」是中文：用正文字体，不拉字距 */
 .mermaid-toolbar {
-  display: flex; min-height: 26px; align-items: center; justify-content: space-between; gap: 8px;
-  color: var(--text-faint); font: 11px var(--font-ui); letter-spacing: 0.04em;
+  display: flex; min-height: 26px; align-items: center; justify-content: space-between; gap: calc(8px * var(--space));
+  color: var(--text-faint); font: calc(11px * var(--text-scale)) var(--font-ui); letter-spacing: 0.04em;
 }
-.mermaid-actions { display: flex; align-items: center; gap: 2px; }
+.mermaid-actions { display: flex; align-items: center; gap: calc(2px * var(--space)); }
 .mermaid-source-toggle {
-  height: 23px; padding: 0 8px; border: 0; border-radius: var(--radius); background: transparent; color: var(--text-faint);
+  height: 23px; padding: 0 calc(8px * var(--space)); border: 0; border-radius: var(--radius); background: transparent; color: var(--text-faint);
   font: inherit; white-space: nowrap; cursor: pointer;
 }
 .mermaid-source-toggle:hover { background: var(--surface-2); color: var(--text); }
 .mermaid-source-toggle.is-active { background: var(--surface-3); color: var(--text); }
 .mermaid-figure {
-  display: flex; justify-content: center; padding: 6px 0 4px; overflow-x: auto; color: var(--text-faint); font-size: 12px;
+  display: flex; justify-content: center; padding: calc(6px * var(--space)) 0 calc(4px * var(--space)); overflow-x: auto; color: var(--text-faint); font-size: calc(12px * var(--text-scale));
 }
 .mermaid-figure svg { max-width: 100%; max-height: min(60vh, var(--mermaid-max, 520px)); height: auto; }
 .mermaid-figure.is-zoomable { cursor: zoom-in; }

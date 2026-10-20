@@ -134,6 +134,10 @@
   --round: 1;
   /* @token --blur 毛玻璃虚化的倍数：1 是出厂，0 不虚化 */
   --blur: 1;
+  /* @token --text-scale 字号的倍数：各处的字号、按像素写的行高都乘它 */
+  --text-scale: 1;
+  /* @token --space 间距的倍数：各处的内边距、外边距、行与行之间的空、图标多大都乘它 */
+  --space: 1;
   /* @token --r-数 各处的圆角：那么多像素乘 --round（--r-2-5 是 2.5px） */
   --r-1: calc(1px * var(--round));
   --r-2: calc(2px * var(--round));
