@@ -106,8 +106,10 @@
 .kb-dir-icon > .icon { grid-area: 1 / 1; transition: opacity 0.12s ease, transform 0.16s ease; }
 .kb-dir-icon > .icon:last-child { opacity: 0; color: var(--text-soft); }
 .kb-doc.is-dir.is-open .kb-dir-icon > .icon:last-child { transform: rotate(90deg); }
-.kb-doc.is-dir:hover .kb-dir-icon > .icon:first-child, .kb-doc.is-dir:focus-visible .kb-dir-icon > .icon:first-child { opacity: 0; }
-.kb-doc.is-dir:hover .kb-dir-icon > .icon:last-child, .kb-doc.is-dir:focus-visible .kb-dir-icon > .icon:last-child { opacity: 1; }
+.kb-doc.is-dir:is(:hover, :focus-visible, .is-hot) .kb-dir-icon > .icon:first-child { opacity: 0; }
+.kb-doc.is-dir:is(:hover, :focus-visible, .is-hot) .kb-dir-icon > .icon:last-child { opacity: 1; }
+/* 重画出来的那一行不放图标的渐变（不然一出来就从文件夹渐到箭头） */
+.kb-doc.is-dir.is-hot .kb-dir-icon > .icon { transition: none; }
 .kb-doc.is-dir .kb-doc-path { font-weight: 500; }
 .kb-doc.is-link:hover, .kb-doc.is-link:focus-visible { background: var(--surface-2); outline: 0; }
 /* 竖线落在上一层箭头的中线上，最后一行的到这一行中间为止（└）；横线从竖线连到这一行的箭头那一格（位置照 page.js 算，多选时前面多一格勾选框） */

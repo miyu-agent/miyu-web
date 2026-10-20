@@ -55,6 +55,8 @@ export class KnowledgePage {
     this.selecting = false;
     /** @type {Set<string>} */
     this.selected = new Set();
+    /** 刚点过展开收起的那个文件夹（重画后照样画成悬停的样子） @type {string|null} */
+    this.hot = null;
     /** 文件列表那一行搜索框里的字（照路径筛） */
     this.fileQuery = '';
     /** @type {string|null} */
@@ -429,8 +431,11 @@ export class KnowledgePage {
           ? h('button.icon-button.is-danger.kb-remove', { type: 'button', title: t('remove_dir'), 'aria-label': t('remove_dir'), onclick: (/** @type {Event} */ e) => { e.stopPropagation(); this.removeMany(b, inside, [f.path], /** @type {Element} */ (e.currentTarget), t('remove_ask', { name: f.name })); } },
             icon('trash-2'))
           : null;
-        const row = h(`div.kb-doc.is-dir.is-link${open ? '.is-open' : ''}${picked ? '.is-picked' : ''}`, {
+        // 刚点过的那一行（`hot`）：重画出来的新节点在鼠标不动时还不算悬停，图标会先换回文件夹、鼠标一动又换成箭头，来回闪
+        // （2026-10-21 项目主人）；记着它，直接画成悬停的样子，鼠标离开再放掉
+        const row = h(`div.kb-doc.is-dir.is-link${open ? '.is-open' : ''}${picked ? '.is-picked' : ''}${this.hot === f.path ? '.is-hot' : ''}`, {
           role: 'button', tabindex: '0', 'aria-expanded': String(open), style: `--depth: ${depth}`, 'data-path': f.path,
+          onmouseleave: (/** @type {MouseEvent} */ e) => { if (this.hot === f.path) this.hot = null; /** @type {Element} */ (e.currentTarget).classList.remove('is-hot'); },
           // 多选时点勾选框是勾，点这一行别处是展开收起
           onclick: (/** @type {MouseEvent} */ e) => (this.selecting && (/** @type {Element} */ (e.target)).closest('.kb-check') ? this.pick(inside, order, false) : toggle()),
           onkeydown: (/** @type {KeyboardEvent} */ e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); toggle(); } },
@@ -498,6 +503,7 @@ export class KnowledgePage {
    * @param {string} path @param {boolean} open 现在开着
    */
   flip(path, open) {
+    this.hot = path;
     const inside = () => [...this.el.querySelectorAll('.kb-doc[data-path]')].filter((r) => /** @type {HTMLElement} */ (r).dataset.path?.startsWith(`${path}/`));
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (!open) {
