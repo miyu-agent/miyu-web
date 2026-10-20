@@ -110,8 +110,8 @@
 .dream-k.is-del { background: color-mix(in srgb, var(--ribbon) 13%, transparent); color: var(--ribbon); }
 .dream-k.is-kw { background: color-mix(in srgb, var(--gold) 14%, transparent); color: var(--gold); }
 .dream-k.is-sum { background: var(--surface-3); color: var(--text-soft); }
-.dream-stage { height: 126px; background: #141833; }
-.dream-stage canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+/* 下面一条光点（`dots.js`）：不画分割线（2026-10-20 项目主人） */
+.dream-dots { display: block; width: 100%; height: 96px; }
 .chat-tail .dream-card { margin: 8px 0 4px; }
 /* 记忆页里的那一块：出来淡入升上来，收起淡出沉下去（正文末尾的照 `unfold` 长出来、收回去） */
 .mem-list-page .dream-card { animation: dream-in var(--motion-collapse) var(--ease-out); }

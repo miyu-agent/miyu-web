@@ -118,13 +118,9 @@ export function apply(ctx) {
     reduced,
     hidden: () => narrow.matches || document.body.dataset.mascot === 'hold',
   });
-  // 给别的包画的一帧（`mascot.portrait`：整理记忆时睡着的那一只）：另一块画布，颜色同样照主题
-  const still = new Sprite(c);
   // 颜色照主题；换了主题重取
   sprite.recolor();
-  still.recolor();
   ctx.on('theme.changed', () => {
-    still.recolor();
     sprite.recolor();
     sprite.draw(behavior.pose);
     props.draw();
@@ -237,21 +233,12 @@ export function apply(ctx) {
     /** 舞台上的台子挪了（滚了一下）：推一帧 */
     refresh: wake,
     /**
-     * 摆成 `pose` 的一帧给别的包画（整理记忆的舞台：`{sleep: true}` 睡着、闭着眼）：交回画好的小画布（一格一个像素，四边各多一格轮廓）
-     * 和最下面一行有东西的在第几行（脚踩在哪）。同一块画布，下次再要会画成别的样子：拿到当场画走。
-     * @param {Partial<import('./model.js').Pose>} [pose]
-     */
-    /**
-     * 睡着、醒来（整理记忆的时候，和整理那一块舞台上的一起睡）：几处同时叫睡的，最后一处叫醒才醒。
+     * 睡着、醒来（整理记忆的时候）：几处同时叫睡的，最后一处叫醒才醒。
      * @param {boolean} on
      */
     sleep: (on) => {
       sleepers = Math.max(0, sleepers + (on ? 1 : -1));
       behavior.setAsleep(sleepers > 0);
-    },
-    portrait: (pose = {}) => {
-      still.draw({ yaw: 0, pitch: 0, blink: false, ear: 0, ...pose });
-      return { canvas: still.canvas, bottom: still.bottom };
     },
   });
   sprite.draw(behavior.pose);
