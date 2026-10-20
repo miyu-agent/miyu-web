@@ -116,3 +116,11 @@ test('锯齿线正中那一点在 [0, 0.06]（2026-10-20 项目主人又挑的�
   assert.deepEqual(look.face.line[3], [0.0, 0.06]);
   assert.equal(look.face.line.length, 7);
 });
+
+test('眼睛是竖着的长方形：正对着时每只两格宽、三行一样宽，和嘴之间空一行（2026-10-20 项目主人：双竖线、长方形，不是三角）', () => {
+  const cells = render(look, pose(), size);
+  const rows = cells.map((row, y) => [y, row.filter((c) => c?.part === 'eye').length]).filter(([, n]) => n);
+  assert.deepEqual(rows.map(([, n]) => n), [4, 4, 4]);
+  const lineTop = cells.findIndex((row) => row.some((c) => c?.part === 'line'));
+  assert.ok(lineTop - rows.at(-1)[0] >= 2, `眼睛最下一行 ${rows.at(-1)[0]}，嘴从 ${lineTop} 起`);
+});
