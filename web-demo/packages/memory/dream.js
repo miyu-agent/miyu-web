@@ -1,12 +1,12 @@
 // @ts-check
-//! 人叫的整理那一块（蓝图 `web.md`「记忆页」第 13 条）：头一行、五行滚动区、下面一条光点（`dots.js`；2026-10-20 项目主人看过样板换成
-//! 「光点合并」，原来的日月舞台和吉祥物不要了）。记忆页的「整理」、`/dream` 都用它。数据照 `dream-model.js`。
+//! 人叫的整理那一块（蓝图 `web.md`「记忆页」第 13 条）：头一行、五行滚动区、下面一条星空（`stars.js`；2026-10-20 项目主人看过几版样板定的，
+//! 原来的光点、日月舞台和吉祥物不要了）。记忆页的「整理」、`/dream` 都用它。数据照 `dream-model.js`。
 //! 合完了（或者叫停了，核心 R-22）收成结果那一行（`receipt`），点开列这一趟真正存下的。
 
 import { h, icon } from '../../src/lib/dom.js';
 import { clock } from '../../src/lib/format.js';
 import { DreamTrack } from './dream-model.js';
-import { Dots } from './dots.js';
+import { Sky } from './stars.js';
 
 /** 滚动区留几行（多的从上面拿掉：看得见的是五行，上面两行淡出） */
 const KEEP = 7;
@@ -28,7 +28,7 @@ export class DreamCard {
     /** 叫停了（`memory.dream` 回了 `stopped`）：收成「整理已中断」 */
     this.stopped = false;
     this.doneAt = 0;
-    this.dots = new Dots();
+    this.dots = new Sky();
     this.startedAt = performance.now();
     /** 合完的回应（结果那一行照它写） @type {any} */
     this.got = null;
@@ -56,7 +56,7 @@ export class DreamCard {
       },
     }, this.t('dream.stop')) : null;
     this.list = h('div.dream-feed-list');
-    this.canvas = /** @type {HTMLCanvasElement} */ (h('canvas.dream-dots', { 'aria-hidden': 'true' }));
+    this.canvas = /** @type {HTMLCanvasElement} */ (h('canvas.dream-sky', { 'aria-hidden': 'true' }));
     this.el = h('section.dream-card', { 'aria-live': 'polite' },
       h('div.dream-head', this.title, this.batch, this.time, this.tally, this.stopBtn),
       h('div.dream-feed', this.list),
@@ -253,11 +253,12 @@ export class DreamCard {
     this.g.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
-  /** 画一帧：点照主题的 accent 色 @param {number} now */
+  /** 画一帧 @param {number} now */
   draw(now) {
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.dots.step(now, reduce);
-    const color = getComputedStyle(this.el).getPropertyValue('--accent').trim() || '#3a63c9';
-    this.dots.draw(this.g, now, color, this.finished ? this.doneAt : 0, reduce);
+    // 深色主题用亮的那套颜色、光叠着加（主题服务说了算，没有的照系统）
+    const dark = this.ctx.theme?.dark?.() ?? matchMedia('(prefers-color-scheme: dark)').matches;
+    this.dots.draw(this.g, now, dark, reduce);
   }
 }
