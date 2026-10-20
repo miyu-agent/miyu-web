@@ -37,7 +37,7 @@ export class DreamCard {
     this.title = h('b', this.t('dream.running'));
     this.batch = h('span.dream-batch');
     this.tally = h('span.dream-tally');
-    /** 「做梦中… · 1m 20s」：整理了多久，每秒走一下，合完停住；这一批她还一个字都没写出来时前面写「做梦中…」 */
+    /** 「1m 20s」：整理了多久，每秒走一下，合完停住 */
     this.time = h('span.dream-time');
     this.second = -1;
     /** 「停止」：点了写「正在停止…」、灰着；叫停成了等回应收成「整理已中断」，没成的（已经合完了）照原样 */
@@ -192,15 +192,13 @@ export class DreamCard {
     return box;
   }
 
-  /** 头一行的用时：每秒走一下，合完停住；这一批还没写出东西时前面写「做梦中…」 @param {number} now */
+  /** 头一行的用时：每秒走一下，合完停住（2026-10-20 项目主人：前面的「做梦中… · 」删掉） @param {number} now */
   clock(now) {
     if (this.finished) return;
     const sec = Math.floor((now - this.startedAt) / 1000);
-    const quiet = this.track.quiet();
-    const key = sec * 2 + (quiet ? 1 : 0);
-    if (key === this.second) return;
-    this.second = key;
-    this.time.textContent = `${quiet ? `${this.t('dream.dreaming')} · ` : ''}${clock(sec)}`;
+    if (sec === this.second) return;
+    this.second = sec;
+    this.time.textContent = clock(sec);
   }
 
   /** 头一行（只重看旧记忆的批写「重看 N 条旧记忆」，没有「合了 / 一共」可数） */

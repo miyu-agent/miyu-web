@@ -129,7 +129,7 @@ export class DreamTrack {
     return this.batch ? 0 : this.closed ? 1 : 0;
   }
 
-  /** 这一批她还一个字都没写出来（头一行写「做梦中…」）：正在合、还没推来决定 */
+  /** 这一批她还一个字都没写出来：正在合、还没推来决定（头一行原来照它写「做梦中…」，2026-10-20 项目主人删掉了） */
   quiet() {
     return !!this.batch && this.batch.decided === 0;
   }
