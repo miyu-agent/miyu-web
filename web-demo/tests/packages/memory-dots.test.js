@@ -41,27 +41,39 @@ test('并进的那条后来也被并走了：跟着飞到最后留下的那条',
   assert.equal(d.byId.get('c')?.grow, 2);
 });
 
-test('合完一批：留下的挪到左边那一堆，下一批的在右边', () => {
+test('合完一批：留下的就地连起来（每个连最近的两个），点不挪；并走了的线跟着拿掉', () => {
   const d = new Dots();
   d.resize(600, 96);
   for (let i = 1; i <= 10; i++) d.add(`m${i}`);
-  d.settle();
-  for (let i = 11; i <= 20; i++) d.add(`m${i}`);
-  const left = Math.max(...d.dots.filter((x) => x.settled).map((x) => /** @type {number} */ (x.tx)));
-  const right = Math.min(...d.dots.filter((x) => !x.settled).map((x) => /** @type {number} */ (x.tx)));
-  assert.ok(left < right, `${left} < ${right}`);
+  const before = d.live().map((x) => [x.x, x.y].join());
+  d.settle(0);
+  assert.deepEqual(d.live().map((x) => [x.x, x.y].join()), before);
+  assert.ok(d.links.length >= 5 && d.links.length <= 20, String(d.links.length));
+  const n = d.links.length;
+  d.settle(0);
+  assert.equal(d.links.length, n, '再合一次不重复连');
+  const one = d.links[0].a;
+  d.merge(one.id, null, 0);
+  assert.ok(d.links.every((l) => l.a !== one && l.b !== one));
 });
 
-test('点多了变小，排出来的位置不重叠、都在这一条里面', () => {
+test('点在这一条里随意找空地：都在里面、不重叠；同一个编号每次找的地方一样；点多了变小', () => {
   const d = new Dots();
   d.resize(600, 96);
   for (let i = 1; i <= 120; i++) d.add(`m${i}`);
   assert.equal(d.r, 2);
-  const pts = d.dots.map((x) => [/** @type {number} */ (x.tx), x.ty]);
+  const pts = d.dots.map((x) => [x.x, x.y]);
   for (const [x, y] of pts) assert.ok(x > 0 && x < 600 && y > 0 && y < 96);
   let close = 0;
   for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) if (Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]) < 2 * d.r) close++;
   assert.equal(close, 0);
+  const again = new Dots();
+  again.resize(600, 96);
+  again.add('m1');
+  const first = new Dots();
+  first.resize(600, 96);
+  first.add('m1');
+  assert.deepEqual([again.dots[0].x, again.dots[0].y], [first.dots[0].x, first.dots[0].y]);
 });
 
 test('老核心只说一批几条：照条数出点', () => {

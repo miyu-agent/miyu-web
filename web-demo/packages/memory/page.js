@@ -26,8 +26,11 @@ export class MemoryPage {
     this.ctx = ctx;
     this.t = (/** @type {string} */ key, /** @type {any} */ fields) => ctx.text(key, fields);
     this.el = h('div.mem-page');
-    // `Esc`：「记一条」的小窗开着时先收起它（设置框找带 `data-set-dismiss` 的发 `set-dismiss`）
-    this.el.addEventListener('set-dismiss', () => { if (this.adding) this.closeAdd(); });
+    // `Esc`：「记一条」、一条的详情的小窗开着时先收起它（设置框找带 `data-set-dismiss` 的发 `set-dismiss`）
+    this.el.addEventListener('set-dismiss', () => {
+      if (this.adding) this.closeAdd();
+      else if (this.open) this.closeDetail();
+    });
     /** @type {any} */
     this.kit = null;
     /** @type {{persona: string, name: string}[]} */
@@ -186,7 +189,7 @@ export class MemoryPage {
     if (!this.kit) return;
     // 「记一条」的小窗里写着字的：不重画，免得冲掉（收起以后再画）
     if (this.adding && /** @type {HTMLTextAreaElement|null} */ (this.el.querySelector('.mem-add textarea'))?.value.trim()) return;
-    if (this.adding) this.el.dataset.setDismiss = '1';
+    if (this.adding || this.open) this.el.dataset.setDismiss = '1';
     else delete this.el.dataset.setDismiss;
     // 正在详情里写着的：不重画那一张，免得冲掉写了一半的字；那一条在别处没了的写一行
     if (this.open && this.el.querySelector('.mem-detail')) {
@@ -196,7 +199,8 @@ export class MemoryPage {
       const editing = this.el.querySelector('.mem-detail [data-dirty]');
       if (editing) return;
     }
-    replace(this.el, this.problem ? this.problemCard() : this.open ? this.detail() : this.page());
+    // 一条的详情在列表上面弹一个小窗（2026-10-20 项目主人：改成浮动窗口），列表留在后面
+    replace(this.el, this.problem ? this.problemCard() : [this.page(), this.open ? this.detail() : null]);
   }
 
   problemCard() {
@@ -342,13 +346,13 @@ export class MemoryPage {
   /** @param {string} id */
   openDetail(id) {
     this.open = id;
-    replace(this.el, this.detail());
-    this.el.closest('.set-body')?.scrollTo?.({ top: 0 });
+    this.draw();
   }
 
+  /** 收起详情的小窗（写着没存的字不要了） */
   closeDetail() {
     this.open = null;
-    replace(this.el, this.page());
+    this.draw();
   }
 
   detail() {
@@ -356,7 +360,7 @@ export class MemoryPage {
     const m = this.list.find((x) => x.id === this.open) ?? (this.seen?.id === this.open ? this.seen : null);
     if (!m) {
       this.open = null;
-      return this.page();
+      return null;
     }
     this.seen = m;
     const name = this.personas.find((p) => p.persona === this.persona)?.name ?? '';
@@ -414,8 +418,8 @@ export class MemoryPage {
         delete area.dataset.dirty;
         if (kw) delete kw.dataset.dirty;
         await this.reload();
-        // 改了内容的是新编号：详情换到新的那一条（`reload` 没在画详情的话这里画）
-        if (this.open) replace(this.el, this.detail());
+        // 改了内容的是新编号：详情换到新的那一条
+        this.draw();
       } catch (err) {
         save.disabled = false;
         const why = /** @type {any} */ (err)?.data;
@@ -423,9 +427,16 @@ export class MemoryPage {
         this.say(this.refusal(err));
       }
     });
-    return h('div.mem-detail-page',
-      h('div.mem-detail-head', h('button.mem-back', { type: 'button', onclick: () => this.closeDetail() }, icon('chevron-left'), t('title')), h('span.mem-detail-id', `${name} · ${m.id}`)),
-      form);
+    // 小窗：头一行「记忆」、暗字「人格 · 编号」、✕；点外面（没写着字的）、`Esc`、✕ 收起
+    return h('div.mem-modal', {
+      onclick: (/** @type {Event} */ e) => {
+        if (e.target !== e.currentTarget || this.el.querySelector('.mem-detail [data-dirty]')) return;
+        this.closeDetail();
+      },
+    }, h('div.mem-pop', { role: 'dialog', 'aria-modal': 'true', 'aria-label': t('title') },
+      h('div.mem-pop-head', h('strong', t('title')), h('span.mem-detail-id', `${name} · ${m.id}`),
+        h('button.icon-button.mem-pop-close', { type: 'button', title: t('close'), 'aria-label': t('close'), onclick: () => this.closeDetail() }, icon('x'))),
+      form));
   }
 
   // —— 改 ——
@@ -448,7 +459,7 @@ export class MemoryPage {
       await this.ctx.core.request('memory.restore', { persona: this.persona, id });
       this.kit.toast(this.t('restored'));
       await this.reload();
-      if (this.open) replace(this.el, this.detail());
+      this.draw();
     } catch (err) {
       this.say(this.refusal(err));
     }

@@ -150,7 +150,8 @@
       "dream_usage": "用法：/dream 整理记忆，/dream stop 停止整理",
       "dream_stop_none": "没有在整理",
       "dream_stopped": "已停止整理。",
-      "dream_action": "整理"
+      "dream_action": "整理",
+      "close": "关闭"
     },
     "en": {
       "title": "Memory",
@@ -269,7 +270,8 @@
       "dream_usage": "Usage: /dream to tidy memories, /dream stop to stop",
       "dream_stop_none": "Not tidying right now",
       "dream_stopped": "Tidying stopped.",
-      "dream_action": "Tidy up"
+      "dream_action": "Tidy up",
+      "close": "Close"
     },
     "ja": {
       "title": "記憶",
@@ -388,7 +390,8 @@
       "dream_usage": "使い方：/dream で記憶を整理、/dream stop で停止",
       "dream_stop_none": "整理していません",
       "dream_stopped": "整理を停止しました。",
-      "dream_action": "整理"
+      "dream_action": "整理",
+      "close": "閉じる"
     }
   }
 }

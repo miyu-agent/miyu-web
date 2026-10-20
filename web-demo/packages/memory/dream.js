@@ -104,8 +104,8 @@ export class DreamCard {
   push(method, params) {
     const lines = method === 'memory.event' ? this.track.logged(params?.event) : method === 'memory.dreaming' ? this.track.dreaming(params) : [];
     for (const line of lines) this.say(line);
-    // 一批合完了：留下的点挪到左边那一堆
-    if (method === 'memory.event' && params?.event?.kind === 'ext.memory.merged') this.dots.settle();
+    // 一批合完了：留下的点就地连起来
+    if (method === 'memory.event' && params?.event?.kind === 'ext.memory.merged') this.dots.settle(performance.now());
     if (lines.length || method === 'memory.event') this.sync();
   }
 
@@ -253,6 +253,6 @@ export class DreamCard {
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.dots.step(now, reduce);
     const color = getComputedStyle(this.el).getPropertyValue('--accent').trim() || '#3a63c9';
-    this.dots.draw(this.g, now, color, this.finished ? this.doneAt : 0);
+    this.dots.draw(this.g, now, color, this.finished ? this.doneAt : 0, reduce);
   }
 }

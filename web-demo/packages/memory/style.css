@@ -1,6 +1,6 @@
 /* 记忆页（蓝图 web.md「记忆页」）：控件照设置页（set-input、set-btn、set-switch）；一条一行、行之间一道细线，悬停 surface_2；
    类别不配颜色，写在每一行右边的暗字里（2026-10-19 项目主人：四个颜色的圆点没什么意义） */
-.mem-list-page, .mem-detail-page { display: grid; gap: 14px; }
+.mem-list-page { display: grid; gap: 14px; }
 .mem-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .mem-find { display: flex; flex: 1; align-items: center; gap: 6px; min-width: 180px; height: 30px; padding: 0 10px; border-radius: 8px; background: var(--surface-2); color: var(--text-faint); transition: background-color 0.15s ease, box-shadow 0.15s ease; }
 .mem-find:hover { background: var(--surface-3); }
@@ -53,13 +53,14 @@
 .mem-count { color: var(--text-faint); font-size: 11.5px; font-variant-numeric: tabular-nums; }
 .mem-count.is-over { color: var(--danger); }
 
-/* 详情 */
-.mem-detail-head { display: flex; align-items: center; gap: 10px; }
-.mem-back { display: inline-flex; align-items: center; gap: 3px; height: 28px; padding: 0 8px 0 4px; border: 0; border-radius: 7px; background: none; color: var(--text-soft); font: 13px var(--sans); cursor: pointer; }
-.mem-back:hover { background: var(--surface-2); color: var(--text); }
-.mem-back .icon { width: 15px; height: 15px; }
+/* 详情：列表上面弹一个小窗（2026-10-20 项目主人：改成浮动窗口），底色同设置框，同「记一条」的小窗 */
+.mem-pop { display: flex; flex-direction: column; width: min(640px, 100%); max-height: 100%; overflow: hidden; border-radius: 14px; background: var(--surface);
+  box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); animation: mem-modal-pop 0.16s var(--ease-out); }
+.mem-pop-head { display: flex; align-items: baseline; gap: 10px; padding: 14px 12px 4px 20px; }
+.mem-pop-head strong { color: var(--text); font-size: 15px; font-weight: 600; }
+.mem-pop-close { align-self: center; margin-left: auto; }
 .mem-detail-id { color: var(--text-faint); font-size: 12.5px; }
-.mem-detail { display: grid; gap: 16px; padding: 18px; border-radius: 14px; background: var(--surface-1); box-shadow: var(--card-shadow); }
+.mem-detail { display: grid; gap: 16px; min-height: 0; padding: 12px 20px 18px; overflow-y: auto; }
 .mem-field { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 12px; align-items: start; }
 .mem-label { padding-top: 6px; color: var(--text-soft); font-size: 13px; }
 .mem-value { display: grid; gap: 4px; min-width: 0; }
@@ -142,7 +143,7 @@
 @keyframes mem-modal-in { from { opacity: 0; } }
 .mem-modal .mem-add { width: min(520px, 100%); background: var(--surface); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); animation: mem-modal-pop 0.16s var(--ease-out); }
 @keyframes mem-modal-pop { from { transform: translateY(6px) scale(0.98); } }
-@media (prefers-reduced-motion: reduce) { .mem-modal, .mem-modal .mem-add { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .mem-modal, .mem-modal .mem-add, .mem-pop { animation: none; } }
 
 /* 进场的动画放过一次的不再放（重画时这一块拿出来再放回去，CSS 动画会从头再放） */
 .mem-list-page .dream-card.is-in:not(.is-leaving), .dream-line.is-in { animation: none; }
