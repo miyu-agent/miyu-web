@@ -40,6 +40,8 @@ export function apply(ctx) {
     /** 正在看的会话在哪个目录干活；账号的工作区（握手回应的 `host.workspace`，新会话默认在这里） */
     workdir: () => app.workdir(),
     defaultWorkdir: () => app.cwd,
+    /** 一个会话自己的默认工作区（核心 5-14 中；旧核心是 `null`） */
+    defaultWorkdirOf: (/** @type {string|null} */ id) => app.defaultWorkdirOf(id),
     /** 还没开的新会话选的人格、预设、工作区：开会话时带上（事件 `draft.changed`） */
     draft: () => ({ ...app.draft }),
     setDraft: (patch) => app.setDraft(patch),

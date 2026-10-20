@@ -367,6 +367,7 @@
     "changed": "Switched to {to} (previous model failed)",
     "model_replaced": "{from} unavailable, switched to {to}",
     "workspace": "Workspace: {path}",
+    "default_workspace": "Default workspace",
     "module": {
       "round": "{name} · Round {round}",
       "names": {

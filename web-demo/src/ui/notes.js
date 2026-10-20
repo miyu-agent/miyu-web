@@ -7,11 +7,12 @@ import { h, icon } from './dom.js';
 import { res, t } from '../util/res.js';
 import { blobUrl } from '../core/host.js';
 import { renderMarkdown } from '../markdown/render.js';
-import { tilde } from '../model/format.js';
+import { workspaceText } from '../model/notes.js';
 
 /**
  * @param {any} it 条目（`model/notes.js`）
- * @param {{session: string|null, home?: string|null, summary?: (upto: number) => Promise<string|null>}} where 取输出照哪个会话；家目录（换工作区那一行的路径写成 `~/…`）；
+ * @param {{session: string|null, home?: string|null, def?: string|null, summary?: (upto: number) => Promise<string|null>}} where 取输出照哪个会话；家目录（换工作区那一行的路径写成 `~/…`）；
+ *   这个会话自己的默认工作区（换回它的那一行写「默认工作区」，核心 5-14 中）；
  *   问一次压缩的摘要（压缩那一行点开时）
  * @param {{say: (text: string, good?: boolean) => void, hooks: (scope: any) => any}} markdown 画子代理的报告（对话区的那一套）
  */
@@ -20,7 +21,7 @@ export function noteNode(it, where, markdown) {
   if (it.recap != null) {
     return h('div.note.is-recap', h('div.note-recap', h('div.note-recap-head', icon('file-text'), h('span', t('notes.recap'))), h('div.note-recap-text', it.recap)));
   }
-  const text = it.path != null ? t('notes.workspace', { path: tilde(it.path, where.home ?? null) }) : it.text;
+  const text = it.path != null ? workspaceText(it.path, where.def ?? null, where.home ?? null) : it.text;
   const line = h(`div.note-line.tone-${it.tone}`, it.mark ? h('span.note-mark', it.mark) : null, h('span.note-text', text));
   const node = h('div.note', line);
   if (!it.detail) return node;

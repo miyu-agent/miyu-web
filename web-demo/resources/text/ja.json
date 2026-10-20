@@ -367,6 +367,7 @@
     "changed": "{to} に切り替えました：元のモデルでエラー",
     "model_replaced": "{from} がなくなったため {to} に戻しました",
     "workspace": "ワークスペース：{path}",
+    "default_workspace": "既定のワークスペース",
     "module": {
       "round": "{name} · {round} ラウンド目",
       "names": {

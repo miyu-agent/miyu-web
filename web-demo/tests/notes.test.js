@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { failureText, speakerOf } from '../src/model/notes.js';
+import { failureText, speakerOf, workspaceText } from '../src/model/notes.js';
 
 loadRes();
 
@@ -34,4 +34,11 @@ test('出错那一句：402、404 加人话；内核自己查出来的写分类�
   assert.equal(failureText({ class: 'auth', message: '' }), '认证失败');
   assert.equal(failureText({ class: 'no_model', message: 'models.chat is not set' }), '没有可用的模型：models.chat is not set', '没有可用的模型（8-6）是内核查出来的');
   assert.equal(failureText({ class: 'cooling', message: 'all candidates cooling: dev/m key 1 rate_limited until 10:05' }), '模型都在冷却：all candidates cooling: dev/m key 1 rate_limited until 10:05', '模型都在冷却（8-9）没发出去，也是内核查出来的');
+});
+
+test('换了工作区那一行：换回会话自己的默认工作区写「默认工作区」，别的写路径（家目录写 ~），旧核心没给默认的照路径', () => {
+  const def = '/home/a/.miyu/home/admin/workspace/0199a000-0000-7000-8000-000000000002';
+  assert.equal(workspaceText(def, def, '/home/a'), '工作区：默认工作区');
+  assert.equal(workspaceText('/home/a/src', def, '/home/a'), '工作区：~/src');
+  assert.equal(workspaceText(def, null, '/home/a'), '工作区：~/.miyu/home/admin/workspace/0199a000-0000-7000-8000-000000000002');
 });
