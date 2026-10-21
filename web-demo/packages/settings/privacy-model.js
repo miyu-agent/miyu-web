@@ -1,9 +1,21 @@
 // @ts-check
-//! 「隐私与安全」页的私密目录那张表（蓝图 `web.md`「设置页」第 12b 条；核心施工 5-15 下）：两项配置并成一张表。
+//! 「隐私与安全」页的私密目录、只禁写那两张表（蓝图 `web.md`「设置页」第 12b 条；核心施工 5-15 下、5-17）：一对配置并成一张表。
 //! `sandbox.private.remove` 的 `options` 是这台机器的出厂列表，值是去掉的出厂项；`sandbox.private.add` 是加了的。不碰页面，测试直接调。
 
 export const ADD = 'sandbox.private.add';
 export const REMOVE = 'sandbox.private.remove';
+
+/**
+ * 画成一张表的几对（核心 5-15 下、5-17）：加了的、去掉的默认项（`remove` 的 `options` 是这台机器的默认清单），有的带一个总开关。
+ * 私密目录（藏起来）和只禁写（能读不能写）同一个画法。
+ */
+export const PAIRS = [
+  { add: ADD, remove: REMOVE, enabled: 'sandbox.private.enabled' },
+  { add: 'sandbox.readonly.add', remove: 'sandbox.readonly.remove', enabled: null },
+];
+
+/** 这一组里是哪一对（两项都在的才算） @param {any[]} items */
+export const pairIn = (items) => PAIRS.find((p) => items.some((i) => i.key === p.add) && items.some((i) => i.key === p.remove)) ?? null;
 
 /** 一项现在的值（一串路径；没写的是空的） @param {any} item */
 const listOf = (item) => {
@@ -31,8 +43,8 @@ export function privateRows(add, remove) {
  * @returns {{key: string, value: string[]}}
  */
 export function dropChange(row, add, remove) {
-  if (row.shipped) return { key: REMOVE, value: [...new Set([...listOf(remove), row.path])] };
-  return { key: ADD, value: listOf(add).filter((p) => p !== row.path) };
+  if (row.shipped) return { key: remove.key, value: [...new Set([...listOf(remove), row.path])] };
+  return { key: add.key, value: listOf(add).filter((p) => p !== row.path) };
 }
 
 /**
@@ -44,8 +56,8 @@ export function addChange(text, add, remove) {
   const path = text.trim();
   if (!path) return null;
   if (privateRows(add, remove).some((r) => r.path === path)) return null;
-  if (listOf(remove).includes(path)) return { key: REMOVE, value: listOf(remove).filter((p) => p !== path) };
-  return { key: ADD, value: [...listOf(add), path] };
+  if (listOf(remove).includes(path)) return { key: remove.key, value: listOf(remove).filter((p) => p !== path) };
+  return { key: add.key, value: [...listOf(add), path] };
 }
 
 /** 去掉过出厂项的才有「恢复默认」：只把 `remove` 去掉（出厂的回来，加了的照留） @param {any} remove */
@@ -73,8 +85,8 @@ export function batchChange(text, add, remove) {
   }
   /** @type {{key: string, value: string[]}[]} */
   const changes = [];
-  if (adds.length !== listOf(add).length) changes.push({ key: ADD, value: adds });
-  if (removes.length !== listOf(remove).length) changes.push({ key: REMOVE, value: removes });
+  if (adds.length !== listOf(add).length) changes.push({ key: add.key, value: adds });
+  if (removes.length !== listOf(remove).length) changes.push({ key: remove.key, value: removes });
   return { changes, skipped };
 }
 

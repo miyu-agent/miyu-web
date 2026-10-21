@@ -5,7 +5,6 @@
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { drawMarket, marketPush } from './market.js';
 import { hasPrivate, privateGroup } from './privacy.js';
-import { ADD as PRIVATE_ADD, REMOVE as PRIVATE_REMOVE } from './privacy-model.js';
 import { leave } from '../../src/lib/motion.js';
 import { buildPages, search, pagesWithErrors, layerFor, expectFor, navGroups, pkgMatch, ownerOf } from './model.js';
 import { coreRow, groupBlock, banner } from './rows.js';
@@ -21,8 +20,6 @@ import { Subpage, swap } from './subpage.js';
 import { drawAdvanced } from './advanced.js';
 import { drawToolPage, hasToolPage } from './tool-pages.js';
 
-/** 私密目录那两项（隐私与安全页） @param {any} item */
-const isPrivate = (item) => item.key === PRIVATE_ADD || item.key === PRIVATE_REMOVE;
 
 /** 上次看的那一页：这个终端记着（蓝图第 3 条），刷新就忘 */
 let lastPage = 'general';
@@ -287,7 +284,7 @@ export class SettingsDialog {
         this.current === 'general' ? drawLook(this) : null,
         ...page.groups.flatMap((g) => (hasPrivate(g.items)
           // 私密目录（隐私与安全页，核心 5-15 下）：两项并成一张表；这一组别的项照通用的行
-          ? [privateGroup(this, g.name, g.items), groupBlock('', g.items.filter((i) => !isPrivate(i)).map((item) => coreRow(this, item)))]
+          ? privateGroup(this, g.name, g.items)
           : this.extensions.entries.has(g.id)
           ? h('section.set-group', h('h3.set-group-name', g.name), this.extensions.body(g.id, g.items.map((item) => coreRow(this, item)).filter(Boolean)))
           : groupBlock(g.name, g.items.map((item) => coreRow(this, item))))),

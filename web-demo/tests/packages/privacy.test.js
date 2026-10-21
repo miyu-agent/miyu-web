@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { privateRows, dropChange, addChange, canRestore, batchChange, findRows, ADD, REMOVE } from '../../packages/settings/privacy-model.js';
+import { privateRows, dropChange, addChange, canRestore, batchChange, findRows, pairIn, ADD, REMOVE } from '../../packages/settings/privacy-model.js';
 
 const shipped = [{ value: '~/.ssh', name: '~/.ssh' }, { value: '~/.gnupg', name: '~/.gnupg' }, { value: '~/.aws', name: '~/.aws' }];
 const items = (add, remove) => [{ key: ADD, entry: { value: add } }, { key: REMOVE, options: shipped, entry: { value: remove } }];
@@ -42,4 +42,15 @@ test('一次加好几个（一行一个）：空行、已经在的跳过，去�
   const rows = privateRows(add, remove);
   assert.deepEqual(findRows(rows, 'GNU').map((r) => r.path), ['~/.gnupg']);
   assert.equal(findRows(rows, '  ').length, rows.length);
+});
+
+test('只禁写（核心 5-17）同一个画法：键照那一对的；一组里两项都在才认是哪一对', () => {
+  const add = { key: 'sandbox.readonly.add', entry: { value: [] } };
+  const remove = { key: 'sandbox.readonly.remove', options: [{ value: '.git/hooks', name: '.git/hooks' }, { value: '~/.bashrc', name: '~/.bashrc' }], entry: { value: [] } };
+  assert.deepEqual(privateRows(add, remove).map((r) => r.path), ['.git/hooks', '~/.bashrc']);
+  assert.deepEqual(dropChange({ path: '.git/hooks', shipped: true }, add, remove), { key: 'sandbox.readonly.remove', value: ['.git/hooks'] });
+  assert.deepEqual(batchChange('~/.zshrc', add, remove).changes, [{ key: 'sandbox.readonly.add', value: ['~/.zshrc'] }]);
+  assert.equal(pairIn([add, remove])?.add, 'sandbox.readonly.add');
+  assert.equal(pairIn([add]), null);
+  assert.equal(pairIn(items([], []))?.enabled, 'sandbox.private.enabled');
 });

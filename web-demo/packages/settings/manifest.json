@@ -681,7 +681,8 @@
         "restore": "恢复默认",
         "empty": "没有私密目录",
         "search": "搜索目录",
-        "no_match": "没有对得上的目录"
+        "no_match": "没有对得上的目录",
+        "in_workspace": "每个工作区"
       }
     },
     "en": {
@@ -1192,7 +1193,8 @@
         "restore": "Restore defaults",
         "empty": "No private folders",
         "search": "Search folders",
-        "no_match": "No matching folders"
+        "no_match": "No matching folders",
+        "in_workspace": "Every workspace"
       }
     },
     "ja": {
@@ -1703,7 +1705,8 @@
         "restore": "既定に戻す",
         "empty": "プライベートフォルダはありません",
         "search": "フォルダを検索",
-        "no_match": "一致するフォルダはありません"
+        "no_match": "一致するフォルダはありません",
+        "in_workspace": "各ワークスペース"
       }
     }
   },
