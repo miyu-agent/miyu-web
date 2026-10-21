@@ -1,0 +1,231 @@
+// @ts-check
+//! 人叫的整理那一块（蓝图 `web.md`「记忆页」第 13 条）：头一行、五行滚动区、整块都是滚动的字（2026-10-20 项目主人：星星图不要了，区域都用来显示内容；
+//! 原来的星空、光点、日月舞台和吉祥物都不要了）。记忆页的「整理」、`/dream` 都用它。数据照 `dream-model.js`。
+//! 合完了（或者叫停了，核心 R-22）收成结果那一行（`receipt`），点开列这一趟真正存下的。
+
+import { h, icon } from '../../src/lib/dom.js';
+import { clock } from '../../src/lib/format.js';
+import { DreamTrack } from './dream-model.js';
+
+/** 滚动区留几行（多的从上面拿掉：看得见的是五行，上面两行淡出） */
+const KEEP = 13;
+/** 合完以后那一块留多久再收成结果那一行（光点淡下去，再看一会儿） */
+export const SETTLE_MS = 3000;
+
+export class DreamCard {
+  /**
+   * @param {any} ctx `memory` 包的 ctx
+   * @param {Map<string, string>} texts 记忆编号 → 正文（打开时读的那一份；滚动区照它写）
+   * @param {{stop?: () => Promise<void>}} [opts] 头一行右边的「停止」叫停这一趟（核心 R-23 的 `memory.dream_stop`；人叫的整理才有）
+   */
+  constructor(ctx, texts, opts = {}) {
+    this.ctx = ctx;
+    this.t = (/** @type {string} */ key, /** @type {any} */ fields) => ctx.text(key, fields);
+    this.texts = texts;
+    this.track = new DreamTrack();
+    this.finished = false;
+    /** 叫停了（`memory.dream` 回了 `stopped`）：收成「整理已中断」 */
+    this.stopped = false;
+    this.doneAt = 0;
+    this.startedAt = performance.now();
+    /** 合完的回应（结果那一行照它写） @type {any} */
+    this.got = null;
+    /** 摘要那一行（同一行跟着改） @type {HTMLElement|null} */
+    this.summaryLine = null;
+    this.title = h('b', this.t('dream.running'));
+    this.batch = h('span.dream-batch');
+    this.tally = h('span.dream-tally');
+    /** 「1m 20s」：整理了多久，每秒走一下，合完停住 */
+    this.time = h('span.dream-time');
+    this.second = -1;
+    /** 「停止」：点了写「正在停止…」、灰着；叫停成了等回应收成「整理已中断」，没成的（已经合完了）照原样 */
+    this.stopBtn = opts.stop ? h('button.dream-stop', {
+      type: 'button',
+      onclick: async () => {
+        const btn = /** @type {HTMLButtonElement} */ (this.stopBtn);
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.textContent = this.t('dream.stopping');
+        await opts.stop?.();
+        if (!this.finished) {
+          btn.disabled = false;
+          btn.textContent = this.t('dream.stop');
+        }
+      },
+    }, this.t('dream.stop')) : null;
+    this.list = h('div.dream-feed-list');
+    this.el = h('section.dream-card', { 'aria-live': 'polite' },
+      h('div.dream-head', this.title, this.batch, this.time, this.tally, this.stopBtn),
+      // 整块都拿来写滚动的字（2026-10-20 项目主人：星星图不要了，区域都用来显示内容）
+      h('div.dream-feed', this.list));
+    // 进场的动画只放一次：记忆页每次重画都把这一块拿出来再放回去，CSS 动画会从头再放（看着闪一下；2026-10-20 项目主人：点整理、整理完卡片会闪）
+    this.el.addEventListener('animationend', (e) => {
+      const el = /** @type {HTMLElement} */ (e.target);
+      if (el === this.el && !el.classList.contains('is-leaving')) el.classList.add('is-in');
+      else if (el.classList?.contains('dream-line')) el.classList.add('is-in');
+    });
+    // 输入框上那只跟着一起睡（2026-10-20 项目主人：一起睡），合完了醒
+    this.sleeping = true;
+    ctx.mascot?.sleep?.(true);
+    this.sync();
+    // 用时每秒走一下（不再一帧一帧画）
+    this.timer = setInterval(() => { if (this.el.isConnected) this.clock(performance.now()); }, 250);
+  }
+
+  /** 不要了：停掉计时；还睡着的叫醒 */
+  dispose() {
+    clearInterval(this.timer);
+    this.wake();
+  }
+
+  /** 叫醒输入框上那只（只叫一次） */
+  wake() {
+    if (!this.sleeping) return;
+    this.sleeping = false;
+    this.ctx.mascot?.sleep?.(false);
+  }
+
+  /**
+   * 推送：记忆日志新的一行（`memory.event`）、模型写出来的一条决定（`memory.dreaming`）。
+   * @param {string} method @param {any} params
+   */
+  push(method, params) {
+    const lines = method === 'memory.event' ? this.track.logged(params?.event) : method === 'memory.dreaming' ? this.track.dreaming(params) : [];
+    for (const line of lines) this.say(line);
+    if (lines.length || method === 'memory.event') this.sync();
+  }
+
+  /**
+   * 合完了（`memory.dream` 的回应）：光点慢慢淡下去，头一行换成结果；叫停了的（`stopped`，核心 R-22）写「整理已中断」。输入框上那只醒过来。
+   * @param {{given?: number, revised?: number, retired?: number, summary?: boolean, stopped?: boolean}} got
+   */
+  finish(got) {
+    this.finished = true;
+    this.got = got ?? {};
+    this.stopped = got?.stopped === true;
+    this.doneAt = performance.now();
+    this.stopBtn?.remove();
+    setTimeout(() => this.wake(), 450);
+    this.title.textContent = this.t(this.stopped ? 'dream.stopped_title' : 'dream.done');
+    this.batch.textContent = this.counted() ? this.t('dream.result', { parts: this.parts() }) : '';
+    this.tally.textContent = '';
+    this.sync();
+  }
+
+  /** 合完了的有没有数可写（叫停在头一批里的什么都没合完） */
+  counted() {
+    const g = this.got ?? {};
+    return !this.stopped || (g.given ?? 0) + (g.revised ?? 0) + (g.retired ?? 0) > 0;
+  }
+
+  /**
+   * 「检查 N 条，修改 N 条，作废 N 条」：照核心 `/dream` 回执的原话（eddeff6e，两个头一样）——改的、作废的是 0 的不写，都是 0 的写「没有要改的」，
+   * 摘要换了的多一段「摘要已更新」（叫停的不说）（2026-10-20 项目主人：0 条的就不用显示了）
+   */
+  parts() {
+    const g = this.got ?? {};
+    const out = [this.t('dream.part_given', { n: g.given ?? 0 })];
+    if (g.revised) out.push(this.t('dream.part_revised', { n: g.revised }));
+    if (g.retired) out.push(this.t('dream.part_retired', { n: g.retired }));
+    if (!g.revised && !g.retired) out.push(this.t('dream.part_unchanged'));
+    if (g.summary && !this.stopped) out.push(this.t('dream.part_summary'));
+    return out.join(this.t('dream.sep'));
+  }
+
+  /**
+   * 结果那一句（同核心 `/dream` 的回执）：合完的「整理完成：检查…」，叫停的「整理已中断：…其余下次再整理。」，一批都没合完的「整理已中断，下次再整理。」；
+   * 末尾写用了多久（同一天项目主人：没有时间）；照核心回执的原话。
+   */
+  resultText() {
+    const took = clock(Math.max(1, Math.round(((this.doneAt || performance.now()) - this.startedAt) / 1000)));
+    return !this.stopped ? this.t('dreamed', { parts: this.parts(), took })
+      : this.counted() ? this.t('dream.stopped', { parts: this.parts(), took }) : this.t('dream.stopped_none', { took });
+  }
+
+  /**
+   * 收成结果那一行（2026-10-20 项目主人在终端定的，网页照着）：暗色 ✦ 打头的一行；这一趟有改、删、摘要的能点开，列日志里真正存下的
+   * （写法同滚动区，摘要写全文）。只在这一次打开的正文里，不进会话记录。
+   */
+  receipt() {
+    const items = this.track.saved;
+    const text = (/** @type {string} */ id) => this.texts.get(id) ?? id;
+    const t = this.t;
+    const tag = (/** @type {string} */ kind) => h(`span.dream-k.is-${kind}`, t(`dream.k.${kind}`));
+    const list = h('div.dream-receipt-list', { hidden: true }, items.map((s) => {
+      if (s.kind === 'new') return h('div.dream-receipt-item', tag('new'), h('span', h('s', text(s.id)), ' → ', s.text));
+      if (s.kind === 'del') {
+        const label = s.retire ? t(`dream.retire.${s.retire}`) : null;
+        return h('div.dream-receipt-item', tag('del'), h('span', h('s', text(s.id)), label ? h('span.dream-why', ` · ${label}`) : null, s.kept ? h('span.dream-why', ` · ${t('dream.kept', { text: text(s.kept) })}`) : null));
+      }
+      return h('div.dream-receipt-item', tag('sum'), h('span.dream-receipt-summary', s.text));
+    }));
+    // 正文里的写成提示行的样子（同「后台任务完成」那一行：缩进、字号、上下间距一样；2026-10-20 项目主人：间距和那类输出不一样）
+    const head = h(`div.dream-receipt-head.note-line.tone-module${items.length ? '.is-link' : ''}`, items.length ? { role: 'button', tabindex: '0', 'aria-expanded': 'false' } : null,
+      h('span.note-mark', '✦'), h('span.note-text.dream-receipt-text', this.resultText()), items.length ? h('span.dream-receipt-arrow', icon('chevron-right')) : null);
+    const box = h('div.note.dream-receipt', head, list);
+    if (items.length) {
+      const toggle = () => {
+        list.hidden = !list.hidden;
+        box.classList.toggle('is-open', !list.hidden);
+        head.setAttribute('aria-expanded', String(!list.hidden));
+      };
+      head.addEventListener('click', toggle);
+      head.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        toggle();
+      });
+    }
+    return box;
+  }
+
+  /** 头一行的用时：每秒走一下，合完停住（2026-10-20 项目主人：前面的「做梦中… · 」删掉） @param {number} now */
+  clock(now) {
+    if (this.finished) return;
+    const sec = Math.floor((now - this.startedAt) / 1000);
+    if (sec === this.second) return;
+    this.second = sec;
+    this.time.textContent = clock(sec);
+  }
+
+  /** 头一行（只重看旧记忆的批写「重看 N 条旧记忆」，没有「合了 / 一共」可数） */
+  sync() {
+    const tr = this.track;
+    if (this.finished) return;
+    const planned = tr.planned();
+    this.batch.textContent = !tr.batches ? '' : !tr.total ? this.t('dream.sweep', { n: tr.given })
+      : planned && planned > 1 ? this.t('dream.batch_of', { n: tr.batches, m: planned }) : this.t('dream.batch', { n: tr.batches });
+    this.tally.textContent = this.t('dream.tally', tr.tally);
+  }
+
+  /** 浮过一行 @param {import('./dream-model.js').Line} line */
+  say(line) {
+    const t = this.t;
+    const text = (/** @type {string} */ id) => this.texts.get(id) ?? id;
+    const tag = (/** @type {string} */ kind) => h(`span.dream-k.is-${kind}`, t(`dream.k.${kind}`));
+    if (line.kind === 'sum' && this.summaryLine) {
+      const body = this.summaryLine.querySelector('.dream-t');
+      if (body) body.textContent = line.done ? t('dream.summary_done') : t('dream.summary', { n: line.chars });
+      return;
+    }
+    let row;
+    if (line.kind === 'read') row = h('div.dream-line.is-read', tag('read'), h('span.dream-t', text(line.id)));
+    else if (line.kind === 'batch') row = h('div.dream-line.is-read', tag('read'), h('span.dream-t', t('dream.batch_read', { n: line.count })));
+    else if (line.kind === 'new') row = h('div.dream-line', tag('new'), h('span.dream-t', h('s', text(line.id)), ' → ', line.text));
+    else if (line.kind === 'del') {
+      const label = line.retire ? t(`dream.retire.${line.retire}`) : null;
+      // 为什么和类别说的一样的（「用不着」）不写两遍
+      const why = [label, line.why && line.why !== label ? line.why : null, line.kept ? t('dream.kept', { text: text(line.kept) }) : null].filter(Boolean).join(' · ');
+      row = h('div.dream-line', tag('del'), h('span.dream-t', h('s', text(line.id)), why ? h('span.dream-why', ` · ${why}`) : null));
+    } else if (line.kind === 'sum') {
+      row = h('div.dream-line', tag('sum'), h('span.dream-t', line.done ? t('dream.summary_done') : t('dream.summary', { n: line.chars })));
+      this.summaryLine = row;
+    } else if (line.kind === 'kw') row = h('div.dream-line', tag('kw'), h('span.dream-t', text(line.id), h('span.dream-why', ` · ${line.keywords}`)));
+    else if (line.kind === 'stopped') row = h('div.dream-line.is-fail', h('span.dream-t', t('dream.stopped_line')));
+    else row = h('div.dream-line.is-fail', h('span.dream-t', t('dream.retry')));
+    // 新的一批：摘要那一行重新起
+    if ((line.kind === 'read' || line.kind === 'batch') && this.summaryLine) this.summaryLine = null;
+    this.list.append(row);
+    while (this.list.children.length > KEEP) this.list.firstElementChild?.remove();
+  }
+}

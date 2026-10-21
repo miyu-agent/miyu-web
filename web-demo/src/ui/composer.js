@@ -73,6 +73,8 @@ export class Composer {
     /** 列表里没有的命令交给核心、还没回 */
     this.asking = false;
     this.esc = 0;
+    /** 认领了没在回答、框里没字时的两下 `Esc` 的（软件包经 `composer.claimEscape`；整理记忆时叫停整理） @type {{hint: string, run: () => void}|null} */
+    this.escapeClaim = null;
     this.noticeTimer = 0;
     this.input = /** @type {HTMLTextAreaElement} */ (h('textarea.composer-input', {
       rows: 1,
@@ -513,13 +515,15 @@ export class Composer {
       this.on.cycleLevel();
       return;
     }
-    // 两下 Esc：在回答时打断（框里有没有字都算），没在回答、有字时清空
-    if (ev.key !== 'Escape' || (!this.running && this.input.value === '')) return;
+    // 两下 Esc：在回答时打断（框里有没有字都算），没在回答、有字时清空；没在回答、没有字时交给认领了它的软件包（整理记忆时叫停整理）
+    const claim = !this.running && this.input.value === '' ? this.escapeClaim : null;
+    if (ev.key !== 'Escape' || (!this.running && this.input.value === '' && !claim)) return;
     ev.preventDefault();
     const now = Date.now();
     if (now - this.esc < res.layout.esc_window_ms) {
       this.esc = 0;
-      if (this.running) this.on.interrupt();
+      if (claim) claim.run();
+      else if (this.running) this.on.interrupt();
       else {
         // 清掉的那句单独留一份：空着按 ↑ 先拿回它
         this.recall.clear(this.input.value);
@@ -529,7 +533,7 @@ export class Composer {
       return;
     }
     this.esc = now;
-    this.say(t(this.running ? 'esc_interrupt_hint' : 'esc_clear_hint'));
+    this.say(claim ? claim.hint : t(this.running ? 'esc_interrupt_hint' : 'esc_clear_hint'));
   }
 
   /** 光标在哪：在最前面（没选着字）、前面没有换行、后面没有换行（`Recall` 照它定翻不翻）。 */
