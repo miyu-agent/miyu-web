@@ -1,5 +1,5 @@
 {
-  "zh": "吉祥物的落脚点（蓝图 web.md「吉祥物」第 11 条）：一项一个点，照部件名（parts.json）找页面上的东西。kind：ground 台面、perch 站点、ledge 扒边、hotspot 互动点；edge 是哪一道边；别的几格见蓝图",
+  "zh": "吉祥物的落脚点（蓝图 web.md「吉祥物」第 11 条）：一项一个点，照部件名（parts.json）找页面上的东西。kind：ground 台面、perch 站点、ledge 扒边、under 扒下沿、hotspot 互动点；edge 是哪一道边；别的几格见蓝图",
   "anchors": [
     {
       "id": "floor",
@@ -52,11 +52,10 @@
     {
       "id": "stage.info",
       "part": "stage.info",
-      "kind": "ground",
-      "edge": "top",
-      "inset": 8,
+      "kind": "under",
+      "edge": "bottom",
       "layer": "stage",
-      "zh": "对话区左上角那一条（会话的名字、人格）的上边沿"
+      "zh": "对话区左上角那一条（会话的名字、人格）的下沿：扒着挂在下面往下探（窗口顶上站不下）"
     },
     {
       "id": "settings.top",
@@ -68,9 +67,9 @@
     {
       "id": "brand.avatar",
       "part": "brand.avatar",
-      "kind": "perch",
-      "edge": "top",
-      "zh": "左上角的头像上：跳上去站一会儿"
+      "kind": "under",
+      "edge": "bottom",
+      "zh": "左上角头像的下沿：扒着挂在下面往下探（窗口顶上站不下）"
     },
     {
       "id": "rail",
@@ -114,12 +113,9 @@
     {
       "id": "sidebar.toggle",
       "part": "sidebar.toggle",
-      "kind": "hotspot",
-      "edge": "right",
-      "actions": [
-        "pat"
-      ],
-      "zh": "左栏开关：站在它右边拍一拍（不点它）"
+      "kind": "under",
+      "edge": "bottom",
+      "zh": "左栏开关的下沿：扒着挂在下面往下探（窗口顶上站不下）"
     },
     {
       "id": "composer.notice",

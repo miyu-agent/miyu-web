@@ -4,7 +4,7 @@
 //! 算的：看得见（有宽高、在窗口里、不在退场）、头顶放得下、`layer` 那一块里没被盖住、`needs` 的那一项算着。量法是 `src/lib/anchors.js`
 //! 的纯函数；这里只读页面。一帧里量一次（同一帧里问几回交同一份）。
 
-import { measure, roomy } from '../../src/lib/anchors.js';
+import { knownTo, measure, roomy } from '../../src/lib/anchors.js';
 
 /**
  * @typedef {import('../../src/lib/anchors.js').Anchor} Anchor
@@ -16,12 +16,15 @@ import { measure, roomy } from '../../src/lib/anchors.js';
  *   blocked: Set<string>}} World 这一帧量出来的：台面（连站点）、扒边、互动点；每一处（`key`）的那一块和它的位置；看得见却被盖住了的落脚点
  */
 
+/** 这个吉祥物会哪几种落脚点（第 11 条）：不会扒下沿（`under`，2026-10-21 项目主人：「但是我们的吉祥物不做这个」），那一种的点不量、不去 */
+export const KINDS = /** @type {const} */ (['ground', 'perch', 'ledge', 'hotspot']);
 /** 扒边至少要这么长才算（像素） */
 const MIN_LEDGE = 24;
 
 export class Anchors {
   /**
-   * @param {{size: () => {w: number, h: number}, inset: () => number, layer: Element}} o 身子多大、台面两头默认让多少、吉祥物那一层（看盖没盖住时跳过）
+   * @param {{size: () => {w: number, h: number}, inset: () => number, layer: Element, kinds: readonly string[]}} o 身子多大、台面两头默认让多少、
+   *   吉祥物那一层（看盖没盖住时跳过）、这个吉祥物会哪几种点（不会的不量）
    */
   constructor(o) {
     this.o = o;
@@ -39,7 +42,7 @@ export class Anchors {
   /** 换一批点（表读到了、挂载位变了、换了主题） @param {Parts} parts @param {Anchor[]} list */
   set(parts, list) {
     this.parts = parts;
-    this.list = list;
+    this.list = knownTo(list, this.o.kinds);
     this.drop();
   }
 

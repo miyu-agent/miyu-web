@@ -5,7 +5,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { anchorProblem, combine, hangAt, launchFrom, leap, measure, PERCH_HALF, roomy, standFor, tableProblems, themeProblem } from '../../src/lib/anchors.js';
+import { anchorProblem, combine, hangAt, knownTo, launchFrom, leap, measure, PERCH_HALF, roomy, standFor, tableProblems, themeProblem } from '../../src/lib/anchors.js';
+import { KINDS } from '../../packages/mascot/anchors.js';
 
 const parts = JSON.parse(readFileSync(new URL('../../resources/parts.json', import.meta.url), 'utf8'));
 const table = JSON.parse(readFileSync(new URL('../../resources/mascot-anchors.json', import.meta.url), 'utf8'));
@@ -30,6 +31,16 @@ test('一项认不认：种类、边对得上，部件名在表里，动作只�
   assert.match(String(anchorProblem({ ...spot, actions: ['kick'] }, parts)), /动作 kick/);
   assert.match(String(anchorProblem({ ...ok, actions: ['poke'] }, parts)), /只有互动点/);
   assert.match(String(anchorProblem({ ...ok, when: 'appear' }, parts)), /when/);
+  assert.equal(anchorProblem({ id: 'u', part: 'brand.avatar', kind: 'under', edge: 'bottom' }, parts), null);
+  assert.match(String(anchorProblem({ id: 'u', part: 'brand.avatar', kind: 'under', edge: 'top' }, parts)), /边只有 bottom/);
+});
+
+test('吉祥物会的那几种：不会的那一种直接跳过；我们的吉祥物不会扒下沿，左上角那三处不量、不去（2026-10-21 项目主人）', () => {
+  assert.ok(!KINDS.includes(/** @type {any} */ ('under')));
+  const ours = knownTo(table.anchors, KINDS).map((/** @type {any} */ a) => a.id);
+  for (const id of ['brand.avatar', 'stage.info', 'sidebar.toggle']) assert.ok(!ours.includes(id), id);
+  assert.equal(ours.length, table.anchors.length - 3);
+  assert.equal(knownTo(table.anchors, [...KINDS, 'under']).length, table.anchors.length, '会这一种的吉祥物照常算');
 });
 
 test('挂进来的（别的包）：可以不写部件名、自己量（at），可以写 group；表里的不行', () => {
@@ -49,9 +60,10 @@ test('落脚点表：每一项的部件名都在部件名表里、都有说明�
     if (a.layer) assert.ok(parts[a.layer], `${a.id} 的 layer`);
   }
   assert.deepEqual(table.anchors.filter((/** @type {any} */ a) => a.home).map((/** @type {any} */ a) => a.id), ['composer']);
-  // 第一批（2026-10-21）：四种都有
+  // 第一批（2026-10-21）：五种都有；窗口顶上那三处（头像、那一条、左栏开关）是扒下沿
   const kinds = Object.groupBy(table.anchors, (/** @type {any} */ a) => a.kind);
-  assert.deepEqual(Object.keys(kinds).sort(), ['ground', 'hotspot', 'ledge', 'perch']);
+  assert.deepEqual(Object.keys(kinds).sort(), ['ground', 'hotspot', 'ledge', 'perch', 'under']);
+  assert.deepEqual(kinds.under?.map((/** @type {any} */ a) => a.id).sort(), ['brand.avatar', 'sidebar.toggle', 'stage.info']);
   assert.deepEqual(tableProblems({ anchors: [...table.anchors, table.anchors[0]] }, parts).filter((x) => x.includes('重了')), ['落脚点 floor 重了']);
   assert.ok(tableProblems({ anchors: [{ ...table.anchors[1], needs: 'gone' }] }, parts).some((x) => x.includes('gone')));
   assert.ok(tableProblems({ anchors: table.anchors.filter((/** @type {any} */ a) => !a.home) }, parts).some((x) => x.includes('home')));
@@ -59,7 +71,7 @@ test('落脚点表：每一项的部件名都在部件名表里、都有说明�
 
 test('主题加的点：编号以主题的编号打头、不和表里的重、不写 home；挪的点：键是表里的、自己加的或者一种，dx、dy 在 ±40 以内', () => {
   const mine = { id: 'pixel.code', part: 'code', kind: 'ground', edge: 'top', zh: '' };
-  assert.equal(themeProblem({ id: 'pixel', anchors: [mine], anchorOffsets: { composer: { dy: -3 }, ground: { dy: 1 }, 'pixel.code': { dx: 2 } } }, parts, ids), null);
+  assert.equal(themeProblem({ id: 'pixel', anchors: [mine], anchorOffsets: { composer: { dy: -3 }, ground: { dy: 1 }, under: { dy: 2 }, 'pixel.code': { dx: 2 } } }, parts, ids), null);
   assert.match(String(themeProblem({ id: 'pixel', anchors: [{ ...mine, id: 'code' }] }, parts, ids)), /以 pixel\. 开头/);
   assert.match(String(themeProblem({ id: 'pixel', anchors: [mine, mine] }, parts, ids)), /重了/);
   assert.match(String(themeProblem({ id: 'composer', anchors: [{ ...mine, id: 'composer' }] }, parts, ids)), /以 composer\. 开头|重了/);
@@ -102,6 +114,7 @@ test('量站点、扒边、互动点：站点是上边沿正中一小段；扒�
   assert.deepEqual([top?.x, top?.y, top?.side, top?.actions], [120, 320, 'top', ['poke']]);
   assert.equal(measure(/** @type {any} */ ({ kind: 'hotspot', edge: 'right', actions: ['pat'] }), r, o).hotspot?.x, 140 + 26 + 4);
   assert.equal(measure(/** @type {any} */ ({ kind: 'hotspot', edge: 'left', actions: ['look'], when: 'appear' }), r, o).hotspot?.when, 'appear');
+  assert.deepEqual(measure(/** @type {any} */ ({ kind: 'under', edge: 'bottom', dy: 1 }), rect(57, 16, 99, 58), o).under, { id: 'k', x1: 57, x2: 99, y: 59 }, '扒下沿：那一块的下沿，不写 inset 的不让');
 });
 
 test('头顶放不下的不算：离窗口上沿不到一个身子高（左上角的头像、那一条在 16px、13px）', () => {

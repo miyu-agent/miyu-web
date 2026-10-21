@@ -3,8 +3,8 @@
 //! 守不守规矩、照一块东西的位置量出台面、站点、扒边、互动点、够不够得着。吉祥物的包（`packages/mascot`）照它量，皮肤的包
 //! （`packages/skin/model.js`）照它查主题包，所以放在 `src/lib`。不碰页面，位置都是屏幕像素（y 往下是正），测试直接调。
 
-/** 四种落脚点各认哪几道边 */
-export const EDGES = /** @type {const} */ ({ ground: ['top', 'bottom'], perch: ['top'], ledge: ['left', 'right'], hotspot: ['top', 'left', 'right'] });
+/** 五种落脚点各认哪几道边（扒下沿 `under`：挂在那一块的下沿下面往下探，2026-10-21 项目主人定） */
+export const EDGES = /** @type {const} */ ({ ground: ['top', 'bottom'], perch: ['top'], ledge: ['left', 'right'], under: ['bottom'], hotspot: ['top', 'left', 'right'] });
 /** 互动点的动作：戳、拍、凑过去看 */
 export const ACTIONS = /** @type {const} */ (['poke', 'pat', 'look']);
 /** 主题挪一个点最多挪多远（像素） */
@@ -13,7 +13,7 @@ export const MAX_OFFSET = 40;
 export const PERCH_HALF = 6;
 
 /**
- * @typedef {'ground'|'perch'|'ledge'|'hotspot'} Kind
+ * @typedef {'ground'|'perch'|'ledge'|'under'|'hotspot'} Kind
  * @typedef {{id: string, kind: Kind, edge: string, part?: string, at?: () => any, zh?: string, actions?: string[], all?: boolean,
  *   within?: string, layer?: string, needs?: string, inset?: number, span?: number, dx?: number, dy?: number, carry?: boolean,
  *   solid?: boolean, stick?: boolean, home?: boolean, when?: 'appear', group?: string}} Anchor 一个落脚点（各格见蓝图）
@@ -21,6 +21,7 @@ export const PERCH_HALF = 6;
  * @typedef {{left: number, top: number, right: number, bottom: number}} Rect
  * @typedef {{x1: number, x2: number, y: number, id: string, carry?: boolean, bottom?: number, stick?: boolean, perch?: boolean}} Platform
  * @typedef {{id: string, x: number, y1: number, y2: number, side: 'left'|'right'}} Ledge 一道竖的边：在哪、从多高到多高、往哪边探
+ * @typedef {{id: string, x1: number, x2: number, y: number}} Under 一道横的下沿：从哪到哪、多高（挂在它下面）
  * @typedef {{id: string, x: number, y: number, rect: Rect, side: 'top'|'left'|'right', actions: string[], when?: 'appear'}} Hotspot
  *   一个互动点：站哪（`x`；`y` 是碰的那一点）、那一块在哪、从哪边碰、能做什么
  * @typedef {{dx?: number, dy?: number}} Offset
@@ -139,9 +140,9 @@ export function combine(table, mounted, theme) {
 
 /**
  * 一块东西（`rect`）上量出这个点。台面交 `Platform`（`id` 照 `key`），站点交上边沿正中一小段（`perch`），扒边交 `Ledge`，
- * 互动点交 `Hotspot`（站哪照身子宽 `w` 算）。
+ * 扒下沿交 `Under`（两头各让 `inset`，不写的不让），互动点交 `Hotspot`（站哪照身子宽 `w` 算）。
  * @param {Anchor} a @param {Rect} r @param {{key: string, inset: number, w: number}} o
- * @returns {{platform?: Platform, ledge?: Ledge, hotspot?: Hotspot}}
+ * @returns {{platform?: Platform, ledge?: Ledge, under?: Under, hotspot?: Hotspot}}
  */
 export function measure(a, r, o) {
   const dx = a.dx ?? 0;
@@ -170,6 +171,10 @@ export function measure(a, r, o) {
     const side = a.edge === 'left' ? 'left' : 'right';
     return { ledge: { id, x: (side === 'left' ? r.left : r.right) + dx, y1: r.top + dy, y2: r.bottom + dy, side } };
   }
+  if (a.kind === 'under') {
+    const inset = a.inset ?? 0;
+    return { under: { id, x1: r.left + inset + dx, x2: r.right - inset + dx, y: r.bottom + dy } };
+  }
   const side = /** @type {'top'|'left'|'right'} */ (a.edge);
   const gap = o.w / 2 + 4;
   const x = (side === 'top' ? (r.left + r.right) / 2 : side === 'left' ? r.left - gap : r.right + gap) + dx;
@@ -179,6 +184,12 @@ export function measure(a, r, o) {
   if (a.when) h.when = a.when;
   return { hotspot: h };
 }
+
+/**
+ * 这个吉祥物会的那几种点（`kinds`）：不会的那一种挑点时直接跳过，量都不量（我们的吉祥物不会扒下沿，2026-10-21 项目主人）。
+ * @param {Anchor[]} list @param {readonly string[]} kinds
+ */
+export const knownTo = (list, kinds) => list.filter((a) => kinds.includes(a.kind));
 
 /** 头顶放得下（离窗口上沿至少一个身子高 `h`）：顶上是墙，站上去头会出窗口的不算 @param {{y: number}} p @param {number} h */
 export const roomy = (p, h) => p.y >= h;

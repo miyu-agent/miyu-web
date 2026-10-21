@@ -15,7 +15,7 @@ import { Props } from './props.js';
 import { Behavior } from './behavior.js';
 import { runningDeepStatus } from '../../src/lib/jobs.js';
 import { anchorProblem, combine, tableProblems } from '../../src/lib/anchors.js';
-import { Anchors } from './anchors.js';
+import { Anchors, KINDS } from './anchors.js';
 
 /** 窄屏（和左栏变抽屉的是同一个宽）不出来 */
 const NARROW = '(max-width: 836px)';
@@ -51,7 +51,7 @@ export function apply(ctx) {
   /** 别的包交来的舞台（第一次引导），没有的站在输入框上 @type {Stage|null} */
   let stage = null;
   /** 落脚点：表、部件名读到以前不出来（不然先在地上露一下再跳上去） */
-  const anchors = new Anchors({ size, inset: () => c.home.edge, layer });
+  const anchors = new Anchors({ size, inset: () => c.home.edge, layer, kinds: KINDS });
   let ready = false;
   /** 表里的那几项、部件名、平常站的那一项的编号 */
   let table = /** @type {import('../../src/lib/anchors.js').Anchor[]} */ ([]);
