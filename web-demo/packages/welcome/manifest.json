@@ -58,7 +58,7 @@
         "language": "语言",
         "model": "模型",
         "persona": "人格",
-        "theme": "主题",
+        "theme": "配色",
         "profile": "关于你",
         "preset": "预设",
         "embed": "语义模型"
@@ -115,7 +115,7 @@
         "language": "Language",
         "model": "Model",
         "persona": "Persona",
-        "theme": "Theme",
+        "theme": "Colors",
         "profile": "About you",
         "preset": "Preset",
         "embed": "Semantic model"
@@ -172,7 +172,7 @@
         "language": "言語",
         "model": "モデル",
         "persona": "人格",
-        "theme": "テーマ",
+        "theme": "配色",
         "profile": "あなたについて",
         "preset": "プリセット",
         "embed": "意味モデル"

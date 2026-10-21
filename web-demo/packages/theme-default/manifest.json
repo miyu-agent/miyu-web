@@ -2,18 +2,18 @@
   "id": "theme-default",
   "version": "0.2.0",
   "name": {
-    "zh": "默认主题",
-    "en": "Default theme",
-    "ja": "デフォルトテーマ"
+    "zh": "默认配色",
+    "en": "Default colors",
+    "ja": "デフォルト配色"
   },
   "summary": {
-    "zh": "主题「默认」：浅色是晨光，深色是 tokyonight",
-    "en": "The \"Default\" theme: Morning when light, tokyonight when dark",
-    "ja": "テーマ「デフォルト」：ライトは晨光、ダークは tokyonight"
+    "zh": "配色方案「默认」：浅色是晨光，深色是 tokyonight",
+    "en": "The \"Default\" color scheme: Morning when light, tokyonight when dark",
+    "ja": "配色「デフォルト」：ライトは晨光、ダークは tokyonight"
   },
   "kind": "optional",
   "description": {
-    "zh": "一个主题，浅色、深色各一份：浅色是晨光，深色是 tokyonight。每个颜色都是设置项（浅色的 light_、深色的 dark_ 打头），能单改。"
+    "zh": "一个配色方案，浅色、深色各一份：浅色是晨光，深色是 tokyonight。每个颜色都是设置项（浅色的 light_、深色的 dark_ 打头），能单改。"
   },
   "note": "2026-10-11 由 theme-morning、theme-tokyonight 两个包并成（主题是成对的一套）。浅色（light_）：浅色。从角色取色（眼睛 #3368c0、发色 #e8c48e、缎带 #853b49、衬衫 #faf2e9），照 MD3 生成（material-color-utilities 0.4，TONAL_SPOT，对比度 0）；强调色取 tone 40。page 一段是旧版网页的名字，括号里是 MD3 的角色：surface（surface）、sidebar_bg（surface_container）、surface_1（surface_container_lowest：浮起来的比底亮，照旧版浅色）、surface_2（surface_container_high）、surface_3（surface_container_highest）、text（on_surface）、text_soft（on_surface_variant）、line（outline_variant）、line_strong（outline）、accent（primary）、accent_soft（primary_container）、gold（secondary）、ribbon（tertiary）。tui 一段照 TUI 演示的语义色，在晨光的底上重新取（对比度够）。link、code_bg、code_ink、tok_* 是 Markdown 的，照旧版浅色（styles.css:163-225）：链接是定值，不跟主题；代码底是页面自己的底 surface，代码字是 text 和底八五开；tok_* 是 One Light 的九种颜色（注释压暗了一档）。她的回答里代码块的底另换成 surface_1（styles/markdown.css，照旧版）。 深色（dark_）：深色。tui 一段和 TUI 演示的 themes/tokyonight-night.json 一样（去掉网页用不上的几格）；page 一段把 tokyonight 的颜色填进 MD3 的角色，名字照旧版网页：surface（bg #1a1b26）、sidebar_bg（bg_dark #16161e，比底暗一档，照旧版深色）、surface_1（#1f2335：浮起来的比底亮）、surface_2（bg_highlight #24283b）、surface_3（#292e42）、text（fg）、text_soft（fg_dark）、line（#3b4261）、line_strong（comment 更亮的一档 #565f89）、accent（blue）、accent_soft（#394b70）、gold（yellow）、ribbon（red）。link、code_bg、code_ink、tok_* 是 Markdown 的，照旧版深色（styles.css:1-225）：链接是定值，不跟主题；代码底是 surface_2（旧版 surface_container_high），代码字是 text 兑一点 accent；tok_* 是 One Dark 的九种颜色。她的回答里代码块的底另换成 surface_1（styles/markdown.css，照旧版）。",
   "text": {

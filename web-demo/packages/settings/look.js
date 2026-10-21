@@ -49,7 +49,8 @@ export function drawLook(dialog) {
         h('span.set-theme-name', p.name));
     };
     const current = palettes.find((p) => p.id === chosen);
-    replace(el, groupBlock(ctx.text('theme'), [scheme.el, h('div.set-themes', palettes.map(card)), seedRow(dialog, current?.seeds?.()), await skinRow(dialog)]));
+    // 「外观」一组（2026-10-21 项目主人定叫法：新的那一层叫「主题」，管颜色的叫「配色方案」）：主题、明暗、配色方案的卡片、主色
+    replace(el, groupBlock(ctx.text('theme'), [await skinRow(dialog), scheme.el, h('p.set-themes-label', ctx.text('palette_label')), h('div.set-themes', palettes.map(card)), seedRow(dialog, current?.seeds?.())]));
   };
   const el = later(fill);
   dialog.refreshLook = () => {

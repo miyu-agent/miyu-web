@@ -7,13 +7,13 @@
     "ja": "壁紙に合わせる"
   },
   "summary": {
-    "zh": "主题「跟随壁纸」：照这台电脑的桌面壁纸生成页面的颜色",
-    "en": "A \"Follow wallpaper\" theme colored from this computer's desktop wallpaper",
-    "ja": "テーマ「壁紙に合わせる」：このパソコンのデスクトップ壁紙からページの色を作る"
+    "zh": "配色方案「跟随壁纸」：照这台电脑的桌面壁纸生成页面的颜色",
+    "en": "A \"Follow wallpaper\" color scheme colored from this computer's desktop wallpaper",
+    "ja": "配色「壁紙に合わせる」：このパソコンのデスクトップ壁紙からページの色を作る"
   },
   "kind": "optional",
   "description": {
-    "zh": "主题里多一个「跟随壁纸」：有 matugen 生成的那份颜色（package/matugen 的模板）就照它，和桌面上别的软件一模一样；没有的照这台电脑现在的桌面壁纸取主色（最多四个候选，设置页「主题」能选），按 MD3 Content 生成浅色、深色两份（全部的颜色）。由网页服务读（和桌面在同一台机器上）；两样都读不到的（页面开在别的机器上）没有这个主题。换了壁纸当场跟着变：网页服务盯着壁纸来处的文件、变了推过来（不轮询），窗口拿回焦点时也问一次。"
+    "zh": "配色方案里多一个「跟随壁纸」：有 matugen 生成的那份颜色（package/matugen 的模板）就照它，和桌面上别的软件一模一样；没有的照这台电脑现在的桌面壁纸取主色（最多四个候选，设置页「配色方案」能选），按 MD3 Content 生成浅色、深色两份（全部的颜色）。由网页服务读（和桌面在同一台机器上）；两样都读不到的（页面开在别的机器上）没有这个主题。换了壁纸当场跟着变：网页服务盯着壁纸来处的文件、变了推过来（不轮询），窗口拿回焦点时也问一次。"
   },
   "note": "壁纸的候选色由网页服务算（和核心算头像的是同一份 Rust 代码），宿主的 wallpaper(dark) 交 seeds；生成主题用 src/lib/md3（material-color-utilities 0.4，Apache-2.0）的 SchemeContent，对比度 0；matugen 那份只取 source。",
   "text": {

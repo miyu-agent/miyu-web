@@ -148,6 +148,8 @@
 .set-pkg.is-failed .set-pill { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
 
 /* 外观（第 12 条） */
+/* 「配色方案」：外观那一组里卡片上面一行小字（2026-10-21 起「主题」指形状和材质那一层） */
+.set-themes-label { margin: calc(10px * var(--space)) 0 0; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
 .set-themes { display: flex; flex-wrap: wrap; gap: calc(12px * var(--space)); padding: calc(8px * var(--space)) 0 calc(4px * var(--space)); }
 .set-theme { display: flex; flex-direction: column; gap: calc(6px * var(--space)); width: 132px; padding: 0; border: 0; background: none; color: var(--text-soft); font: calc(12.5px * var(--text-scale)) var(--font-ui); cursor: pointer; }
 .set-theme-sample { position: relative; display: flex; height: 76px; overflow: hidden; border-radius: var(--r-10); box-shadow: var(--card-shadow); }

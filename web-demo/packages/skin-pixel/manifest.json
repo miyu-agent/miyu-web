@@ -2,23 +2,29 @@
   "id": "skin-pixel",
   "version": "0.1.0",
   "name": {
-    "zh": "像素风皮肤",
-    "en": "Pixel skin",
-    "ja": "ピクセルスキン"
+    "zh": "像素风主题",
+    "en": "Pixel theme",
+    "ja": "ピクセルテーマ"
   },
   "summary": {
-    "zh": "皮肤「像素风」：直角、像素边、实色块影、像素字体",
-    "en": "The \"Pixel\" skin: square corners, pixel frames, hard shadows, pixel font",
-    "ja": "スキン「ピクセル」：直角・ピクセル枠・ベタ影・ピクセルフォント"
+    "zh": "主题「像素风」：直角、像素边、实色块影、像素字体",
+    "en": "The \"Pixel\" theme: square corners, pixel frames, hard shadows, pixel font",
+    "ja": "テーマ「ピクセル」：直角・ピクセル枠・ベタ影・ピクセルフォント"
   },
   "kind": "optional",
   "description": {
     "zh": "照第一次引导的「像素关卡」：全直角、不虚化；输入框、卡片、浮层、弹窗四边一圈 3px 的像素边、四个角各缺一格，往右下错开的实色块影；按钮按下去往下沉；界面上的字用像素字体（Fusion Pixel 12px，SIL OFL 1.1，随包带着），读的字、代码照旧。颜色都照主题（蓝图 web.md「皮肤」第 6 条）。"
   },
   "text": {
-    "zh": { "name": "像素风" },
-    "en": { "name": "Pixel" },
-    "ja": { "name": "ピクセル" }
+    "zh": {
+      "name": "像素风"
+    },
+    "en": {
+      "name": "Pixel"
+    },
+    "ja": {
+      "name": "ピクセル"
+    }
   },
   "inject": [
     "slots"

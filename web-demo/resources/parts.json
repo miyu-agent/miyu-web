@@ -4894,5 +4894,11 @@
     "select": [
       ".miyu-run i"
     ]
+  },
+  "set.themes-label": {
+    "zh": "设置页：外观里「配色方案」那一行小字",
+    "select": [
+      ".set-themes-label"
+    ]
   }
 }

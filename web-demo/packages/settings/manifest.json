@@ -238,7 +238,7 @@
       "combo_other": "其他",
       "menu_search": "搜索",
       "advanced": "高级（{count}）",
-      "theme": "主题",
+      "theme": "外观",
       "follow_system": "跟随系统",
       "scheme": "明暗",
       "scheme_light": "浅色",
@@ -481,8 +481,9 @@
       "advanced_more": "{names}等",
       "search_pages": "页面",
       "search_packages": "软件包",
-      "skin": "皮肤",
-      "skin_factory": "出厂"
+      "skin": "主题",
+      "skin_factory": "默认主题",
+      "palette_label": "配色方案"
     },
     "en": {
       "title": "Settings",
@@ -552,7 +553,7 @@
       "combo_other": "Other",
       "menu_search": "Search",
       "advanced": "Advanced ({count})",
-      "theme": "Theme",
+      "theme": "Appearance",
       "follow_system": "Follow system",
       "scheme": "Mode",
       "scheme_light": "Light",
@@ -795,8 +796,9 @@
       "advanced_more": "{names} and more",
       "search_pages": "Pages",
       "search_packages": "Packages",
-      "skin": "Skin",
-      "skin_factory": "Default"
+      "skin": "Theme",
+      "skin_factory": "Default theme",
+      "palette_label": "Color scheme"
     },
     "ja": {
       "title": "設定",
@@ -866,7 +868,7 @@
       "combo_other": "その他",
       "menu_search": "検索",
       "advanced": "詳細（{count}）",
-      "theme": "テーマ",
+      "theme": "外観",
       "follow_system": "システムに合わせる",
       "scheme": "外観モード",
       "scheme_light": "ライト",
@@ -1109,8 +1111,9 @@
       "advanced_more": "{names} など",
       "search_pages": "ページ",
       "search_packages": "パッケージ",
-      "skin": "スキン",
-      "skin_factory": "標準"
+      "skin": "テーマ",
+      "skin_factory": "デフォルトテーマ",
+      "palette_label": "配色"
     }
   },
   "styles": [
