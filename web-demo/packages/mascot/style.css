@@ -1,6 +1,8 @@
 /* 吉祥物（软件包 mascot；蓝图 web.md「吉祥物」）：整页最前面一层，不接鼠标，只有画布接（拖、点）。位置、压扁、歪都是 behavior.js
    一帧一帧写的 transform，不要过渡。手里的东西盖在身子前面，底边离脚 --prop-dy，拿出来从下面弹出来，收起来缩回去。窄屏不出来 */
 .mascot-layer { position: fixed; z-index: 40; inset: 0; overflow: hidden; pointer-events: none; }
+/* 站在、扒在弹窗（设置页）的边上：抬到弹窗上面（设置页那一层是 90） */
+.mascot-layer.is-up { z-index: 95; }
 .mascot { position: absolute; top: 0; left: 0; line-height: 0; will-change: transform; }
 .mascot-body { position: relative; }
 /* 舞台的放大（第一次引导的欢迎页）慢慢变过去 */

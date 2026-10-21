@@ -149,7 +149,17 @@ export function apply(ctx) {
   // 不在家（站在别处、扒着）：页面上哪里变了都推一帧（站的那一块可能没了）；在家的照旧只看输入框
   const around = new MutationObserver(() => wake());
   let aroundOn = false;
+  /** 站在、扒在、跳向弹窗（设置页）上的落脚点：整层抬到弹窗上面（不然被弹窗底下那层虚化盖住）；在家的照旧在弹窗底下 */
+  let up = false;
   function watchAround() {
+    const bd = behavior.body;
+    const key = bd.hang?.id ?? bd.trip?.then.id ?? bd.at?.ground?.id ?? null;
+    const on = !!key && key !== homeId && key !== 'floor' && ready ? world().els.get(key) : null;
+    const lift = !!on && anchors.elements('modal').some((m) => m.contains(on));
+    if (lift !== up) layer.classList.toggle('is-up', (up = lift));
+    watchPage();
+  }
+  function watchPage() {
     const g = behavior.body.at?.ground;
     const on = !!behavior.body.hang || (!!g && g.id !== homeId && g.id !== 'floor');
     if (on === aroundOn) return;
