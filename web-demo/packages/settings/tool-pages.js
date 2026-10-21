@@ -366,6 +366,12 @@ function toolDetail(dialog, kind, id) {
       rows.push(h('div.set-row.is-wide', h('div.set-text', h('div.set-name', h('span', t('tools.field.tools')))),
         h('div.set-tool-list', s.tools.map((/** @type {string} */ name) => h('code.set-tool-chip', shortTool(item.name, name))))));
     }
+    // 服务列出来了、核心没登记的工具（核心 X-37 的 `skipped`）：一个一行，写原名和为什么
+    if (Array.isArray(s.skipped) && s.skipped.length) {
+      rows.push(h('div.set-row.is-wide', h('div.set-text', h('div.set-name', h('span', t('tools.field.skipped'))), h('p.set-desc', t('tools.skipped_note'))),
+        h('div.set-tool-skips', s.skipped.map((/** @type {any} */ x) => h('div.set-tool-skip', h('code.set-tool-chip', String(x.tool ?? '')),
+          h('span', skippedWhy(t, x.why)))))));
+    }
   }
   if (item.load) {
     const reset = item.load.by === 'setting' ? h('button.set-link', { type: 'button', onclick: () => setLoading(dialog, item, null) }, t('tools.load_reset')) : null;
@@ -414,4 +420,10 @@ function serverActions(dialog, item) {
   } }, t('tools.remove'));
   out.push(remove);
   return out;
+}
+
+/** 没登记的为什么（核心 X-37）：认得的写成话，别的照原样 @param {(k: string, f?: any) => string} t @param {any} why */
+function skippedWhy(t, why) {
+  const known = ['name_taken', 'parameters'];
+  return known.includes(why) ? t(`tools.skipped_why.${why}`) : String(why ?? '');
 }
