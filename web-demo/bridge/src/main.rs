@@ -76,7 +76,11 @@ async fn main() {
         })
         .map(|id| format!("&package={id}"))
         .unwrap_or_default();
-    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..");
+    let dir = page_dir(
+        std::env::var_os("MIYU_WEB_ROOT").map(PathBuf::from),
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".."),
+        std::env::current_exe().ok(),
+    );
     let dir = match dir.canonicalize() {
         Ok(dir) => dir,
         Err(e) => return eprintln!("找不到页面文件的目录 {}：{e}", dir.display()),
@@ -144,5 +148,58 @@ async fn serve(stream: TcpStream, site: Arc<Site>) {
         link::run(stream, site).await;
     } else if let Err(e) = files::serve(stream, &site).await {
         eprintln!("给页面文件时出错：{e}");
+    }
+}
+
+/// 页面文件在哪：写了 `MIYU_WEB_ROOT` 的照它；不然编译时的源码目录还在就用它；再不然照程序自己的位置往上找
+/// （`web-demo/bridge/target/<档>/miyu-web-bridge` → `web-demo`：带 `index.html` 和 `bridge/` 的那一层）。
+/// 仓库挪了地方、编进去的路径不在了也找得到（2026-10-22：挪到 `miyu-agent/miyu-web` 以后旧桥一律 404）。都找不到的交编译时的那一个，照原来报错。
+fn page_dir(env: Option<PathBuf>, built: PathBuf, exe: Option<PathBuf>) -> PathBuf {
+    if let Some(dir) = env {
+        return dir;
+    }
+    if built.join("index.html").is_file() {
+        return built;
+    }
+    let found = exe.as_deref().and_then(|exe| {
+        exe.ancestors()
+            .skip(1)
+            .find(|d| d.join("index.html").is_file() && d.join("bridge").is_dir())
+            .map(PathBuf::from)
+    });
+    found.unwrap_or(built)
+}
+
+#[cfg(test)]
+mod page_dir_tests {
+    use super::page_dir;
+    use std::path::PathBuf;
+
+    #[test]
+    fn env_first_then_built_then_beside_the_program() {
+        let root = std::env::temp_dir().join(format!("miyu-web-page-dir-{}", std::process::id()));
+        let web = root.join("moved/web-demo");
+        let exe = web.join("bridge/target/debug/miyu-web-bridge");
+        std::fs::create_dir_all(exe.parent().unwrap()).unwrap();
+        std::fs::write(web.join("index.html"), "").unwrap();
+        let gone = root.join("old/web-demo");
+        // 写了环境变量的照它
+        assert_eq!(
+            page_dir(Some(PathBuf::from("/x")), web.clone(), None),
+            PathBuf::from("/x")
+        );
+        // 编译时的还在：用它
+        assert_eq!(
+            page_dir(None, web.clone(), Some(PathBuf::from("/nowhere/bin"))),
+            web
+        );
+        // 编译时的不在了（仓库挪了）：照程序的位置往上找
+        assert_eq!(page_dir(None, gone.clone(), Some(exe.clone())), web);
+        // 都找不到：交编译时的那一个（照原来报错）
+        assert_eq!(
+            page_dir(None, gone.clone(), Some(PathBuf::from("/nowhere/bin"))),
+            gone
+        );
+        std::fs::remove_dir_all(&root).unwrap();
     }
 }

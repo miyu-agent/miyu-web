@@ -24,7 +24,7 @@
 
 | 代码 | 管什么 |
 |---|---|
-| `web-demo/bridge/` | 桥（Rust，不进工作区）：只听本机、访问口令；页面文件；WebSocket 和核心的套接字两头照转，握手时塞本机令牌；读历史不再由桥顶替（2026-10-01 起用核心的订阅补发 `subscribe` 的 `after`，施工 3-8 六补，原来桥读日志顶替 `events.read`）；`/file`、`/blob` 给本机文件和 blob |
+| `web-demo/bridge/` | 桥（Rust，不进工作区）：只听本机、访问口令；页面文件（目录运行时找：写了 `MIYU_WEB_ROOT` 照它，不然编译时的源码目录还在就用它，再不然照程序自己的位置往上找带 `index.html` 和 `bridge/` 的那一层；2026-10-22 仓库挪到 `miyu-agent/miyu-web` 以后，编进去的旧路径找不到，页面一律 404）；WebSocket 和核心的套接字两头照转，握手时塞本机令牌；读历史不再由桥顶替（2026-10-01 起用核心的订阅补发 `subscribe` 的 `after`，施工 3-8 六补，原来桥读日志顶替 `events.read`）；`/file`、`/blob` 给本机文件和 blob |
 | `web-demo/index.html`、`src/main.js` | 入口：读资源、套主题、经桥连核心、握手、读会话表、画页面；起不来的整页写一句为什么 |
 | `web-demo/src/host/` | 宿主：和平台有关的（连核心的线和口令、地址、上传、选文件、拖放、外链、剪贴板），浏览器一份、以后桌面端一份（`web/architecture.md`「宿主」） |
 | `web-demo/src/core/host.js` | 旧代码经它用宿主：本机文件、blob、链接卡片配图的地址，外链，剪贴板（拆完旧代码就没了） |
@@ -1034,7 +1034,7 @@
 
 | 测试 | 守哪几条 |
 |---|---|
-| `web-demo/bridge/`（`cargo test`） | `/file`、`/blob` 回哪一段、核心拒的换成什么状态，存下来的文件名只留最后一段（`media.rs`）；软件后台页的地址拆成票据、包、文件，票据认得出是哪个包、多了扔掉最早的，核心拒的换成什么状态（`pages.rs`） |
+| `web-demo/bridge/`（`cargo test`） | 页面目录照 `MIYU_WEB_ROOT`、编译时的目录、程序的位置先后找（`main.rs`）；`/file`、`/blob` 回哪一段、核心拒的换成什么状态，存下来的文件名只留最后一段（`media.rs`）；软件后台页的地址拆成票据、包、文件，票据认得出是哪个包、多了扔掉最早的，核心拒的换成什么状态（`pages.rs`） |
 | `crates/miyu-wallpaper`（`cargo test`） | 各家的回答读出图的路径（照真的输出剪的样本：awww、swww、hyprpaper、GNOME 的转义、KDE 的节和壁纸包、macOS、Windows），只要浏览器认得的图（HEIC 不要），换了图记号跟着变 |
 | `crates/miyu-wallpaper`（`cargo test`）补 | XFCE 的 `last-image`、swaybg 的参数、wpaperd、waypaper（`~` 换家目录、只认 `[Settings]`）、feh（路径里的单引号）、nitrogen、macOS 的 `Index.plist`（目录不算）、HEIC 认得出、matugen 输出在缓存目录 |
 | `crates/miyu-wallpaper`（`cargo test`）再补 | 盯的清单（总要盯的只有 matugen 那一份、各家只列自己的文件）、盯的计划（在的文件只盯它自己、目录整个往下盯、还没有的不盯）、真盯（改了、换成了别的文件、换过以后再改、缓存目录里变了叫，同一层别的文件、还没有的建出来、只读、清单空了不叫） |
