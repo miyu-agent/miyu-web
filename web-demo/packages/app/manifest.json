@@ -18,7 +18,8 @@
     "language",
     "lightbox~",
     "theme~",
-    "backstage~"
+    "backstage~",
+    "personas~"
   ],
   "settings": {},
   "provides": {
