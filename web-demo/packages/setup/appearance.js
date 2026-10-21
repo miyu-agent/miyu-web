@@ -20,8 +20,6 @@ const AVATAR_BYTES = 1024 * 1024;
 const BACKGROUND_BYTES = 5 * 1024 * 1024;
 /** 人格没设透明度时画多少（蓝图第 6 条：盖 80% 的底色） */
 const OPACITY_DEFAULT = 20;
-/** 「模糊」打开时先存的程度（蓝图「跟着人格的外观」第 6 条） */
-const BLUR_ON = 5;
 
 export class Appearance {
   /**
@@ -44,7 +42,7 @@ export class Appearance {
     /** 背景图的透明度（0–100）、焦点（`[x, y]`）（核心 P-7）；没设的 `null` */
     this.opacity = /** @type {number|null} */ (null);
     this.focus = /** @type {[number, number]|null} */ (null);
-    /** 背景图的模糊程度（1–100，核心 P-7 补）；没设的 `null` 是不模糊 */
+    /** 背景图的模糊程度（1–100，核心 P-7 补）；没设的 `null` 是不模糊（滑杆上是 0） */
     this.blur = /** @type {number|null} */ (null);
     // 三行各一格（换了、读到了只重画它，不动写了一半的字）
     this.avatarBox = h('div.setup-avatar-box');
@@ -112,7 +110,7 @@ export class Appearance {
         () => pick.click(), this.background ? () => this.setPart('background', { unset: true }) : null,
         url ? [{ label: t('edit.focus'), act: () => this.pickFocus(url) }] : []),
       url ? this.opacityRow() : null,
-      url ? this.blurRows() : null,
+      url ? this.blurRow() : null,
       pick);
   }
 
@@ -130,26 +128,21 @@ export class Appearance {
   }
 
   /**
-   * 「模糊」开关，开了下面一行「模糊程度」滑杆：开存 5、关删掉；拖的时候整页当场跟着变，松手存（2026-10-19 项目主人要的）。
+   * 「模糊」一行：同「透明度」，滑杆 0–100，拖的时候整页当场跟着变，松手存；拖到 0 是不模糊，删掉（2026-10-21 项目主人：不要开关，0 就是关了）。
    */
-  blurRows() {
-    const t = this.t;
-    const on = this.blur != null;
-    const toggle = this.kit.toggle(on, (/** @type {boolean} */ v) => {
-      this.setPart('background_blur', v ? BLUR_ON : { unset: true });
-      return true;
-    });
-    const head = h('div.setup-opacity.setup-blur', h('span.setup-opacity-name', t('edit.blur')), h('span.setup-blur-gap'), toggle);
-    if (!on) return head;
-    const value = this.blur ?? BLUR_ON;
+  blurRow() {
+    const value = this.blur ?? 0;
     const shown = h('span.setup-opacity-value', String(value));
-    const slider = /** @type {HTMLInputElement} */ (h('input.setup-range', { type: 'range', min: '1', max: '100', step: '1', value: String(value), 'aria-label': t('edit.blur_amount') }));
+    const slider = /** @type {HTMLInputElement} */ (h('input.setup-range', { type: 'range', min: '0', max: '100', step: '1', value: String(value), 'aria-label': this.t('edit.blur') }));
     slider.addEventListener('input', () => {
       shown.textContent = slider.value;
       this.ctx.emit('look.preview', { persona: this.id, blur: Number(slider.value) });
     });
-    slider.addEventListener('change', () => this.setPart('background_blur', Number(slider.value)));
-    return [head, h('div.setup-opacity', h('span.setup-opacity-name', t('edit.blur_amount')), slider, shown)];
+    slider.addEventListener('change', () => {
+      const n = Number(slider.value);
+      this.setPart('background_blur', n > 0 ? n : { unset: true });
+    });
+    return h('div.setup-opacity', h('span.setup-opacity-name', this.t('edit.blur')), slider, shown);
   }
 
   /** 选焦点：开窗口，「确定」存、「居中」删掉。 @param {string} url */

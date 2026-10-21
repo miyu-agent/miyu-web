@@ -135,7 +135,6 @@
 .setup-opacity-name { flex: none; }
 .setup-opacity-value { flex: none; min-width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
 .setup-opacity .setup-range { flex: 1; min-width: 0; width: auto; }
-.setup-blur-gap { flex: 1; }
 /* 滑杆（透明度、裁头像的放大）：细的轨道、实心的圆点，不描边 */
 .setup-range { width: 280px; height: 18px; margin: 0; background: none; -webkit-appearance: none; appearance: none; cursor: pointer; }
 .setup-range:focus-visible { outline: none; }
