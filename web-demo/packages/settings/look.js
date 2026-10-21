@@ -49,8 +49,10 @@ export function drawLook(dialog) {
         h('span.set-theme-name', p.name));
     };
     const current = palettes.find((p) => p.id === chosen);
-    // 「外观」一组（2026-10-21 项目主人定叫法：新的那一层叫「主题」，管颜色的叫「配色方案」）：主题、明暗、配色方案的卡片、主色
-    replace(el, groupBlock(ctx.text('theme'), [await skinRow(dialog), scheme.el, h('p.set-themes-label', ctx.text('palette_label')), h('div.set-themes', palettes.map(card)), seedRow(dialog, current?.seeds?.())]));
+    // 两组（2026-10-21 项目主人定叫法，照终端的外观页）：「主题」（形状和材质那一层，有主题包才有这一组）、「配色方案」（明暗、卡片、主色）
+    const skin = await skinRow(dialog);
+    replace(el, h('div.set-look', skin ? groupBlock(ctx.text('skin'), [skin]) : null,
+      groupBlock(ctx.text('palette_label'), [scheme.el, h('div.set-themes', palettes.map(card)), seedRow(dialog, current?.seeds?.())])));
   };
   const el = later(fill);
   dialog.refreshLook = () => {
