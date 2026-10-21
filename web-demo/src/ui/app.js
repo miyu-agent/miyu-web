@@ -788,7 +788,7 @@ export class App {
     // 整理会话：核心不起标题，写「整理记忆 · 人格名」（会话那一间的写那个会话的标题；蓝图「记忆页」第 13a 条第 2 条）
     const dream = this.dreamOf(id);
     if (dream) {
-      const name = dream.session ? this.titleOf(dream.session) : dream.persona && dream.persona !== '_none' ? this.ctx.personas?.personaName?.(dream.persona) ?? dream.persona : null;
+      const name = dream.session ? this.titleOf(dream.session) : dream.persona && dream.persona !== '_none' ? this.chat.lookFor?.(dream.persona)?.name ?? dream.persona : null;
       return name ? t('dream_title', { name }) : t('dream_title_bare');
     }
     const parent = this.parentOf(id);
