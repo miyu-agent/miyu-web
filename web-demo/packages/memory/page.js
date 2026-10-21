@@ -275,7 +275,7 @@ export class MemoryPage {
   /** 「整理记录」：整理旁边一个图标按钮 */
   historyButton() {
     const label = this.t('dream.view.history');
-    return h('button.icon-button.set-btn.mem-history', { type: 'button', title: label, 'aria-label': label, disabled: !this.persona, onclick: () => { this.history = true; this.draw(); } }, icon('clock'));
+    return h('button.icon-button.set-btn.mem-history-btn', { type: 'button', title: label, 'aria-label': label, disabled: !this.persona, onclick: () => { this.history = true; this.draw(); } }, icon('clock'));
   }
 
   /**
