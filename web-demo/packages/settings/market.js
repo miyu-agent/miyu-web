@@ -15,7 +15,7 @@ const TYPE_MS = 120;
 /**
  * @typedef {{list: any[], generated: string|null, stale: string|null, up: any|null, error: string|null, loading: boolean,
  *   busy: string|null, progress: {package: string, done: number, total: number}|null, problems: Record<string, string>,
- *   previews: Map<string, Promise<any>>, refreshing: boolean, seen: Set<string>}} Market
+ *   previews: Map<string, Promise<any>>, refreshing: boolean, seen: Set<string>, just?: string|null}} Market
  */
 
 /** @param {any} dialog @returns {Market} */
@@ -28,7 +28,7 @@ const upgradableOf = (m) => new Set((m.up?.upgrades ?? []).map((/** @type {any} 
  * 读一遍：`package.search {}`（不写词列出全部）和 `package.upgrades`；`force` 先 `package.sync {force: true}`（刷新）。读完重画（还在这一页、没点进一层的）。
  * @param {any} dialog @param {boolean} [force]
  */
-export async function loadMarket(dialog, force = false) {
+export async function loadMarket(dialog, force = false, draw = true) {
   const m = stateOf(dialog);
   m.loading = true;
   try {
@@ -45,9 +45,12 @@ export async function loadMarket(dialog, force = false) {
     if (!m.list.length) m.list = [];
   } finally {
     m.loading = false;
-    redraw(dialog);
+    if (draw) redraw(dialog);
   }
 }
+
+/** 进度条至少留多久（毫秒） */
+const BAR_MIN_MS = 600;
 
 /** 还在这一页的重画：列表那一层（点进详情的重画详情） @param {any} dialog */
 function redraw(dialog) {
@@ -216,7 +219,17 @@ function actionButton(dialog, p, upgradable, big) {
   }
   if (kind === 'installed') {
     // 悬停变「卸载」（2026-10-21 项目主人），点了先弹窗问
-    return h(`button.set-btn${cls}.mk-installed`, { type: 'button', disabled: !!m.busy, title: t('market.uninstall'), onclick: () => uninstall(dialog, p) },
+    // 刚装好的：鼠标还停在上面，移开过一次才悬停变「卸载」
+    const just = m.just === p.package;
+    return h(`button.set-btn${cls}.mk-installed${just ? '.is-just' : ''}`, {
+      type: 'button', disabled: !!m.busy, title: just ? undefined : t('market.uninstall'), onclick: () => uninstall(dialog, p),
+      onpointerleave: (/** @type {Event} */ e) => {
+        if (m.just === p.package) m.just = null;
+        const el = /** @type {HTMLElement} */ (e.currentTarget);
+        el.classList.remove('is-just');
+        el.title = t('market.uninstall');
+      },
+    },
       h('span.mk-when-idle', t('market.installed')), h('span.mk-when-hover', t('market.uninstall')));
   }
   const up = (m.up?.upgrades ?? []).find((/** @type {any} */ u) => u.package === p.package);
@@ -274,12 +287,16 @@ async function run(dialog, id, call, done) {
   const m = stateOf(dialog);
   m.busy = id;
   m.progress = null;
+  const started = performance.now();
   redraw(dialog);
   try {
     const got = await call();
+    // 进度条至少留一会儿、列表重读完了再换成「已安装」：太快的一闪而过、中间闪回「安装」都像在闪（2026-10-21 项目主人）
+    await Promise.all([loadMarket(dialog, false, false), new Promise((r) => setTimeout(r, Math.max(0, BAR_MIN_MS - (performance.now() - started))))]);
     m.busy = null;
+    m.just = id;
     done(got);
-    await loadMarket(dialog);
+    redraw(dialog);
   } catch (err) {
     m.busy = null;
     m.problems[id] = problemText(dialog, err);
