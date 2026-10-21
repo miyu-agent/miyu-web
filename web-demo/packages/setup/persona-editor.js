@@ -6,7 +6,7 @@
 //! 最上面三行是外观（头像、主题色、背景图，`appearance.js`）：换、删当场存，不等「保存」。
 
 import { h, replace } from '../../src/lib/dom.js';
-import { field, switchField, area, twoClick } from './form.js';
+import { field, switchField, area, askFirst } from './form.js';
 import { Pairs } from './pairs.js';
 import { personaSave, halfPair } from './model.js';
 import { Appearance } from './appearance.js';
@@ -95,7 +95,7 @@ export class PersonaEditor {
     const subagent = this.kit.toggle(this.subagentOn, (on) => { this.subagentOn = on; this.sync(); return true; });
     this.note = h('p.setup-error', { hidden: true });
     this.saveBtn = this.kit.button(t('edit.save'), { primary: true }, () => this.save());
-    const remove = this.remove ? twoClick(this.kit, t(`edit.${this.remove}`), t(`edit.${this.remove}_again`), () => this.drop()) : null;
+    const remove = this.remove ? askFirst(this.kit, t(`edit.${this.remove}`), () => t(`edit.${this.remove}_ask`, { name: this.before?.name || this.name?.value.trim() || this.id }), () => this.drop()) : null;
     this.look.paint();
     replace(this.body,
       field(t('edit.avatar'), this.look.avatarBox),

@@ -309,6 +309,29 @@
 .set-btn.is-primary:disabled { background: var(--surface-2); color: var(--text-faint); filter: none; opacity: 1; }
 .set-btn.is-danger { color: var(--danger); }
 .set-btn.is-danger.is-armed { background: color-mix(in srgb, var(--danger) 14%, transparent); }
+
+/* 删除、清空前问一句（confirm.js）：盖住设置框，正中一张小卡片；底色同设置框（2026-10-20 项目主人：后面已经糊了，浮起来的小窗不用白的） */
+/* 设置里浮起来的小窗进出都是同一套（2026-10-20 项目主人：浮动窗口的打开和退出动画应当是统一的）：遮罩 fade-in / fade-out，卡片 pop-in / pop-out，
+   同设置框、人格预设的卡片（styles/base.css 的 keyframes）。进、退用两个名字：同一个名字倒着放不会重放，看着就是一下没了 */
+.set-ask { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 45%, transparent); animation: fade-in var(--motion-in) var(--ease-out) backwards; }
+body > .set-ask { z-index: 95; }
+.set-ask.is-leaving { animation: fade-out var(--motion-out) var(--ease-in) both; }
+.set-ask-card { display: grid; gap: 16px; width: min(340px, 100%); padding: 18px 18px 14px; border-radius: 14px; background: var(--surface); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); box-sizing: border-box; animation: pop-in var(--motion-in) var(--ease-out) both; }
+.set-ask.is-leaving .set-ask-card { animation: pop-out var(--motion-out) var(--ease-in) both; }
+.set-ask-text { margin: 0; color: var(--text); font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.set-ask-foot { display: flex; justify-content: flex-end; gap: 8px; }
+/* 确认那一下是删除、清空这类找不回来的：红的（2026-10-20 项目主人） */
+.set-btn.is-primary.is-danger-fill { border-color: var(--danger); background: var(--danger); color: #fff; }
+.set-btn.is-primary.is-danger-fill:hover { border-color: var(--danger); filter: brightness(1.06); }
+
+/* 页底钉住的一条（记忆页的条数和「清空」、知识库的「删除」）：页面最外一层加 `set-fill` 撑满右边，这一条在最底下；内容长了它留在底下，后面的字从它下面滚过去、糊掉 */
+/* 页面最外一层撑满：`.set-body`（滑动时还有一层 `.set-slide`）照它的内容排成一列 */
+.set-body:has(> .set-fill), .set-slide:has(> .set-fill) { display: flex; flex-direction: column; }
+.set-slide:has(> .set-fill) { flex: 1 0 auto; }
+.set-fill { flex: 1 0 auto; }
+.set-pinned { position: sticky; bottom: -24px; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: auto -24px -24px; padding: 16px 24px 8px; background: color-mix(in srgb, var(--surface) 94%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  /* 上沿 10px 羽化（2026-10-20 项目主人：边缘可以羽化一下） */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 10px); mask-image: linear-gradient(to bottom, transparent, #000 10px); color: var(--text-faint); font-size: 12.5px; }
 .set-seg { display: inline-flex; gap: 2px; border-radius: 8px; width: fit-content; }
 .set-seg-item { height: 24px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer; }
 .set-seg-item:hover { background: var(--surface-2); color: var(--text); }

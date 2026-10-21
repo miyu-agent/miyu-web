@@ -7,7 +7,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { floatCard } from './float.js';
-import { field, switchField, area, twoClick } from './form.js';
+import { field, switchField, area, askFirst } from './form.js';
 import { Menu } from './menu.js';
 import { browse } from './folders.js';
 import { personaName, presetName, dirName, tilde, remember } from './model.js';
@@ -177,7 +177,7 @@ export async function editProject(ctx, catalog, what, workspaces) {
     }
   };
   // 删项目连里面的会话一起删（整页的 `deleteProject`，同左栏的菜单；2026-10-19 项目主人）
-  const remove = editing ? twoClick(kit, t('delete'), t('delete_again'), async () => {
+  const remove = editing ? askFirst(kit, t('delete'), () => t('delete_ask', { name: editing.name ?? '' }), async () => {
     close();
     await chat.deleteProject?.(editing.project);
   }) : null;

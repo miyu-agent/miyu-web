@@ -8,6 +8,7 @@ import { hasLogos, logoEl } from '../../src/lib/logo.js';
 import { duplicates, inputText, providerName, hostOf, whereOf, sameNamed, layerFor, secretName, keyChange, providerRemoval } from './model.js';
 import { modelName, metaOf, sharedState, loadingRow, searchable, refreshProvider, testLine } from './model-bits.js';
 import { openForm } from './provider-form.js';
+import { confirmIn } from './confirm.js';
 import { openAdd } from './add-provider.js';
 import { drawer } from './model-detail.js';
 
@@ -92,8 +93,8 @@ function head(dialog, p, logos) {
 }
 
 /**
- * 「删除」（2026-10-19 项目主人：原来少了删除）：点一下变「确认删除」，三秒内再点才删，照写着这一家的那一层把 `providers.<id>.*` 各 `unset`；
- * 默认模型用的是它的，确认那一下旁边一行暗红字。这一层没写它的（别的层写的、核心自带的）不出这个按钮。
+ * 「删除」（2026-10-19 项目主人：原来少了删除）：弹窗问一句（2026-10-20 项目主人：不要点一下变「确认删除」），默认模型用的是它的问的话里写上；
+ * 确认了照写着这一家的那一层把 `providers.<id>.*` 各 `unset`。这一层没写它的（别的层写的、核心自带的）不出这个按钮。
  * @param {any} dialog @param {any} p
  */
 function removeButton(dialog, p) {
@@ -104,18 +105,10 @@ function removeButton(dialog, p) {
   if (!removal.length) return null;
   const chat = dialog.got?.items?.['models.chat']?.value;
   const inUse = typeof chat === 'string' && chat.startsWith(`${p.id}/`);
-  const note = h('small.set-prov-danger', { hidden: true }, ctx.text('models.remove_in_use'));
-  let armed = /** @type {ReturnType<typeof setTimeout>|null} */ (null);
+  const note = h('small.set-prov-danger', { hidden: true });
   const button = h('button.set-btn', { type: 'button', onclick: async () => {
-    if (!armed) {
-      button.textContent = ctx.text('models.remove_confirm');
-      button.classList.add('is-danger', 'is-armed');
-      note.hidden = !inUse;
-      armed = setTimeout(() => { armed = null; button.textContent = ctx.text('models.remove'); button.classList.remove('is-danger', 'is-armed'); note.hidden = true; }, 3000);
-      return;
-    }
-    clearTimeout(armed);
-    armed = null;
+    const text = ctx.text(inUse ? 'models.remove_confirm_in_use' : 'models.remove_confirm', { name: providerName(p) });
+    if (!await confirmIn(button, { text, yes: ctx.text('ask_yes'), no: ctx.text('ask_no') })) return;
     button.setAttribute('disabled', '');
     const why = await dialog.saveMany(layer, removal);
     if (why) {

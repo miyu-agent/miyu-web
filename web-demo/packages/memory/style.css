@@ -1,6 +1,9 @@
 /* 记忆页（蓝图 web.md「记忆页」）：控件照设置页（set-input、set-btn、set-switch）；一条一行、行之间一道细线，悬停 surface_2；
    类别不配颜色，写在每一行右边的暗字里（2026-10-19 项目主人：四个颜色的圆点没什么意义） */
 .mem-list-page, .mem-detail-page { display: grid; gap: 14px; }
+/* 列表那一层撑满右边，条数和「清空」钉在最底下（2026-10-20 项目主人：不要分割线，放到底部固定） */
+.mem-page:has(> .mem-list-page) { display: flex; flex-direction: column; }
+.mem-list-page { display: flex; flex: 1 0 auto; flex-direction: column; }
 .mem-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .mem-find { display: flex; flex: 1; align-items: center; gap: 6px; min-width: 180px; height: 30px; padding: 0 10px; border-radius: 8px; background: var(--surface-2); color: var(--text-faint); transition: background-color 0.15s ease, box-shadow 0.15s ease; }
 .mem-find:hover { background: var(--surface-3); }
@@ -41,8 +44,6 @@
 .mem-empty { margin: 0; padding: 34px 0; color: var(--text-faint); font-size: 13px; text-align: center; }
 .mem-more { justify-self: center; margin-top: 8px; border: 0; background: none; color: var(--text-soft); font: 12.5px var(--sans); cursor: pointer; }
 .mem-more:hover { color: var(--text); }
-.mem-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--text-faint); font-size: 12.5px; }
-.mem-clear.is-armed { background: color-mix(in srgb, var(--danger) 14%, transparent); }
 
 /* 记一条 */
 .mem-add { display: grid; gap: 8px; padding: 12px; border-radius: 12px; background: var(--surface-1); box-shadow: var(--card-shadow); }

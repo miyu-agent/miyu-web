@@ -8,10 +8,9 @@ import { CLASSES, TEXT_MAX, KEYWORDS_MAX, chars, counts, visible, hasKeywords, u
 
 /** 一次列几条（滚到底再多读一批） */
 const PAGE = 200;
-/** 搜索框停多久再问、推来的停多久再重读、清空要几秒内再点一下 */
+/** 搜索框停多久再问、推来的停多久再重读 */
 const TYPE_MS = 250;
 const PUSH_MS = 300;
-const ARM_MS = 3000;
 /** 无人格那一份的编号（核心 P-12 的 NO_PERSONA；人格编号都以小写字母开头，撞不上） */
 export const NO_PERSONA = '_none';
 
@@ -20,7 +19,7 @@ export class MemoryPage {
   constructor(ctx) {
     this.ctx = ctx;
     this.t = (/** @type {string} */ key, /** @type {any} */ fields) => ctx.text(key, fields);
-    this.el = h('div.mem-page');
+    this.el = h('div.mem-page.set-fill');
     /** @type {any} */
     this.kit = null;
     /** @type {{persona: string, name: string}[]} */
@@ -48,7 +47,6 @@ export class MemoryPage {
     this.loaded = false;
     /** 订着哪一份的流 @type {string|null} */
     this.subscribed = null;
-    this.armed = 0;
     /** @type {any} */
     this.reloadTimer = 0;
     /** @type {any} */
@@ -226,15 +224,15 @@ export class MemoryPage {
       : h('p.mem-empty', this.list.length || this.query.trim() ? t('no_match') : t('empty', { name }));
     const more = this.list.length >= this.limit ? h('button.mem-more', { type: 'button', onclick: () => { this.limit += PAGE; this.reload(); } }, t('more')) : null;
     const retiredCount = this.retired ? this.list.filter(isRetired).length : 0;
-    const clear = h(`button.set-btn.is-danger.mem-clear${this.armed ? '.is-armed' : ''}`, { type: 'button', disabled: !c.all, onclick: () => this.clear() },
-      icon('trash-2'), this.armed ? t('clear_confirm', { name }) : t('clear'));
+    const clear = h('button.set-btn.is-danger.mem-clear', { type: 'button', disabled: !c.all, onclick: (/** @type {Event} */ e) => this.clear(/** @type {Element} */ (e.currentTarget)) },
+      icon('trash-2'), t('clear'));
     return h('div.mem-list-page',
       h('div.mem-tools', picker, h('label.mem-find', icon('search'), find), dream, add),
       this.tidyingLine(),
       this.adding ? this.addForm() : null,
       chips,
       h('div.mem-list', rows, more),
-      h('div.mem-foot', h('span', t(retiredCount ? 'foot_retired' : 'foot', { live: c.all, retired: retiredCount })), clear));
+      h('div.mem-foot.set-pinned', h('span', t(retiredCount ? 'foot_retired' : 'foot', { live: c.all, retired: retiredCount })), clear));
   }
 
   /** 后台在整理的那一行（第 12 条）：没在整理的留一个藏着的空位，推来时只换它，不重画列表 */
@@ -438,15 +436,9 @@ export class MemoryPage {
     await this.reload();
   }
 
-  /** 清空这一份：点一下变「确认清空」，三秒内再点才清。 */
-  async clear() {
-    if (!this.armed) {
-      this.armed = 1;
-      this.draw();
-      setTimeout(() => { if (this.armed) { this.armed = 0; this.draw(); } }, ARM_MS);
-      return;
-    }
-    this.armed = 0;
+  /** 清空这一份：先弹窗问「确认要清空记忆吗」。 @param {Element} from */
+  async clear(from) {
+    if (!await this.kit.confirm(from, this.t('clear_ask'))) return;
     try {
       const got = await this.ctx.core.request('memory.forget', { persona: this.persona, clear: 'me' });
       this.kit.toast(this.t('cleared', { n: got?.cleared ?? 0 }));
