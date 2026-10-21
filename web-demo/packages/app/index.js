@@ -30,6 +30,8 @@ export function apply(ctx) {
     onPrompts: (fn) => app.chat.onPrompts(fn),
     /** 看另一个会话（子代理的会话也行，第一次看时才读） */
     open: (id) => app.open(id),
+    /** 还没开的新会话先开出来（照说第一句话一样，带上选的人格、预设、工作区），交回会话编号：空会话里打 `/dream` */
+    ensure: async () => { await app.ensureSession(); return app.current; },
     /** 正在看的会话在不在回答；打断它（照两下 `Esc`） */
     running: () => !!app.composer.running,
     /** 家目录（握手回应的 `host.home`）：路径写成 `~` 用 */
@@ -101,6 +103,8 @@ export function apply(ctx) {
     lock: (text) => app.composer.lock(text),
     /** 输入框上面的列表选一样（同 `/language`：标题、按键提示、一行一样、现在的写「当前」）：`/persona`、`/preset` */
     pick: (ask) => app.composer.picker.show(ask),
+    /** 认领没在回答、框里没字时的两下 `Esc`（`{hint, run}`：第一下提示 `hint`，第二下 `run`；`null` 放开）：整理记忆时叫停整理 */
+    claimEscape: (claim) => { app.composer.escapeClaim = claim; },
   });
   ctx.effect(() => () => ctx.page.root.replaceChildren());
 }

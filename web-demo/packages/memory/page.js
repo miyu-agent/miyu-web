@@ -3,7 +3,10 @@
 //! 一排类别筛选和「显示作废的」；一条一行，点开在同一页里换成详情（改内容和关键词、作废、找回）；底下清空这一份。开着时订阅那一份的
 //! `memory` 流，推来的重读（停 300 毫秒并成一次）。一页是一个常驻的对象：设置页重画、关了再开交回的是同一块，写了一半的字还在。
 
+import { leave } from '../../src/lib/motion.js';
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { keywordBox } from './keywords.js';
+import { DreamCard } from './dream.js';
 import { CLASSES, TEXT_MAX, KEYWORDS_MAX, chars, counts, visible, hasKeywords, updateOf, canSave, saveNote, shortId, agoText, isRetired, tidying } from './model.js';
 
 /** 一次列几条（滚到底再多读一批） */
@@ -12,6 +15,8 @@ const PAGE = 200;
 const TYPE_MS = 250;
 const PUSH_MS = 300;
 const ARM_MS = 3000;
+/** 人叫的整理合完以后那一块留几秒再收起（第 13 条） */
+const DREAM_KEEP_MS = 6000;
 /** 无人格那一份的编号（核心 P-12 的 NO_PERSONA；人格编号都以小写字母开头，撞不上） */
 export const NO_PERSONA = '_none';
 
@@ -21,6 +26,11 @@ export class MemoryPage {
     this.ctx = ctx;
     this.t = (/** @type {string} */ key, /** @type {any} */ fields) => ctx.text(key, fields);
     this.el = h('div.mem-page');
+    // `Esc`：「记一条」、一条的详情的小窗开着时先收起它（设置框找带 `data-set-dismiss` 的发 `set-dismiss`）
+    this.el.addEventListener('set-dismiss', () => {
+      if (this.adding) this.closeAdd();
+      else if (this.open) this.closeDetail();
+    });
     /** @type {any} */
     this.kit = null;
     /** @type {{persona: string, name: string}[]} */
@@ -43,6 +53,8 @@ export class MemoryPage {
     this.dreaming = false;
     /** 后台自己在整理的几批（`upto`）：有就在顶上一排下面写「正在整理…」（第 12 条） @type {Set<number|string>} */
     this.background = new Set();
+    /** 人叫的整理那一块（第 13 条；没在整理的是 `null`） @type {DreamCard|null} */
+    this.card = null;
     /** 出错（没装记忆、这里没有记忆）：整页一张卡 @type {string|null} */
     this.problem = null;
     this.loaded = false;
@@ -156,7 +168,10 @@ export class MemoryPage {
       if (this.el.isConnected) this.subscribe();
       return;
     }
-    if (method !== 'memory.event' || params?.persona !== this.subscribed) return;
+    if ((method !== 'memory.event' && method !== 'memory.dreaming') || params?.persona !== this.subscribed) return;
+    // 人叫的整理那一块：日志、模型写出来的决定都交给它（第 13 条）
+    this.card?.push(method, params);
+    if (method === 'memory.dreaming') return;
     if (!this.el.isConnected) {
       this.unsubscribe();
       return;
@@ -172,6 +187,10 @@ export class MemoryPage {
 
   draw() {
     if (!this.kit) return;
+    // 「记一条」的小窗里写着字的：不重画，免得冲掉（收起以后再画）
+    if (this.adding && /** @type {HTMLTextAreaElement|null} */ (this.el.querySelector('.mem-add textarea'))?.value.trim()) return;
+    if (this.adding || this.open) this.el.dataset.setDismiss = '1';
+    else delete this.el.dataset.setDismiss;
     // 正在详情里写着的：不重画那一张，免得冲掉写了一半的字；那一条在别处没了的写一行
     if (this.open && this.el.querySelector('.mem-detail')) {
       const still = this.list.find((m) => m.id === this.open);
@@ -180,7 +199,8 @@ export class MemoryPage {
       const editing = this.el.querySelector('.mem-detail [data-dirty]');
       if (editing) return;
     }
-    replace(this.el, this.problem ? this.problemCard() : this.open ? this.detail() : this.page());
+    // 一条的详情在列表上面弹一个小窗（2026-10-20 项目主人：改成浮动窗口），列表留在后面
+    replace(this.el, this.problem ? this.problemCard() : [this.page(), this.open ? this.detail() : null]);
   }
 
   problemCard() {
@@ -214,9 +234,16 @@ export class MemoryPage {
       this.typeTimer = setTimeout(() => this.reload().then(() => this.refocus()), TYPE_MS);
     });
     find.addEventListener('compositionend', () => find.dispatchEvent(new Event('input')));
-    const dream = h('button.set-btn.mem-dream', { type: 'button', disabled: this.dreaming || !this.persona, onclick: () => this.dream() },
-      icon(this.dreaming ? 'loader-circle' : 'sparkles'), t(this.dreaming ? 'dreaming' : 'dream'));
-    const add = h('button.set-btn.is-primary', { type: 'button', disabled: !this.persona, onclick: () => { this.adding = !this.adding; this.draw(); this.el.querySelector('.mem-add textarea')?.focus(); } }, icon('plus'), t('add'));
+    // 整理中的时候这个按钮也能点：点了叫停（同那一块的「停止」；2026-10-21 项目主人），悬停时字换成「停止整理」
+    const label = h('span', t(this.dreaming ? 'dreaming' : 'dream_action'));
+    const mark = icon(this.dreaming ? 'loader-circle' : 'sparkles');
+    const dream = h(`button.set-btn.mem-dream${this.dreaming ? '.is-busy' : ''}`, {
+      type: 'button', disabled: !this.persona || (this.dreaming && !this.card?.stopBtn), title: this.dreaming ? t('dream_stop_hint') : null,
+      onclick: () => (this.dreaming ? this.card?.stopBtn?.click() : this.dream()),
+      onmouseenter: () => { if (this.dreaming) { label.textContent = t('dream_stop'); dream.replaceChildren(icon('square'), label); } },
+      onmouseleave: () => { if (this.dreaming) { label.textContent = t('dreaming'); dream.replaceChildren(mark, label); } },
+    }, mark, label);
+    const add = h('button.set-btn.is-primary', { type: 'button', disabled: !this.persona, onclick: () => { this.adding = true; this.draw(); this.el.querySelector('.mem-add textarea')?.focus(); } }, icon('plus'), t('add'));
     const chips = h('div.mem-chips',
       ['all', ...CLASSES].map((k) => h(`button.mem-chip${this.cls === k ? '.is-on' : ''}${k === 'all' ? '' : `.is-${k}`}`, { type: 'button', onclick: () => { this.cls = k; this.draw(); } },
         t(`classes.${k}`), h('span.mem-n', String(c[k] ?? 0)))),
@@ -231,10 +258,31 @@ export class MemoryPage {
     return h('div.mem-list-page',
       h('div.mem-tools', picker, h('label.mem-find', icon('search'), find), dream, add),
       this.tidyingLine(),
-      this.adding ? this.addForm() : null,
+      this.card?.el ?? null,
       chips,
       h('div.mem-list', rows, more),
-      h('div.mem-foot', h('span', t(retiredCount ? 'foot_retired' : 'foot', { live: c.all, retired: retiredCount })), clear));
+      h('div.mem-foot', h('span', t(retiredCount ? 'foot_retired' : 'foot', { live: c.all, retired: retiredCount })), clear),
+      // 「记一条」在设置框正中弹一个小窗（2026-10-20 项目主人：新建以浮动窗口出现更好）：点外面（还没写字的）、`Esc`、「取消」收起
+      this.adding ? h('div.mem-modal', {
+        onclick: (/** @type {Event} */ e) => {
+          if (e.target !== e.currentTarget || /** @type {HTMLTextAreaElement|null} */ (this.el.querySelector('.mem-add textarea'))?.value.trim()) return;
+          this.closeAdd();
+        },
+      }, this.addForm()) : null);
+  }
+
+  /** 收起「记一条」的小窗（写着的字不要了） */
+  closeAdd() {
+    this.adding = false;
+    delete this.el.dataset.setDismiss;
+    this.fadeModal();
+  }
+
+  /** 小窗收起：先放完退场（遮罩淡掉、卡片缩回去，同设置里别的小窗；2026-10-20 项目主人：退出没有动画），再重画 */
+  fadeModal() {
+    const modal = /** @type {HTMLElement|null} */ (this.el.querySelector('.mem-modal'));
+    if (modal) leave(modal, () => this.draw());
+    else this.draw();
   }
 
   /** 后台在整理的那一行（第 12 条）：没在整理的留一个藏着的空位，推来时只换它，不重画列表 */
@@ -272,7 +320,7 @@ export class MemoryPage {
     const t = this.t;
     let cls = 'user';
     const area = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.set-area.mem-area', { placeholder: t('add_hint', { n: TEXT_MAX }), rows: '3' }));
-    const kw = this.keywords ? /** @type {HTMLInputElement} */ (h('input.set-input.mem-kw', { type: 'text', placeholder: t('add_keywords'), spellcheck: 'false', autocomplete: 'off' })) : null;
+    const kw = this.keywords ? keywordBox(null, t('add_keywords')) : null;
     const count = h('span.mem-count', `0 / ${TEXT_MAX}`);
     const ok = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'submit', disabled: true }, t('remember')));
     const kinds = h('div.mem-chips', CLASSES.map((k) => h(`button.mem-chip${k === cls ? '.is-on' : ''}`, { type: 'button', onclick: (/** @type {Event} */ e) => {
@@ -288,7 +336,7 @@ export class MemoryPage {
     area.addEventListener('input', sync);
     kw?.addEventListener('input', sync);
     const form = h('form.mem-add', kinds, area, kw, h('div.mem-add-foot', count,
-      h('button.set-btn', { type: 'button', onclick: () => { this.adding = false; this.draw(); } }, t('cancel')), ok));
+      h('button.set-btn', { type: 'button', onclick: () => this.closeAdd() }, t('cancel')), ok));
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (ok.disabled) return;
@@ -312,13 +360,13 @@ export class MemoryPage {
   /** @param {string} id */
   openDetail(id) {
     this.open = id;
-    replace(this.el, this.detail());
-    this.el.closest('.set-body')?.scrollTo?.({ top: 0 });
+    this.draw();
   }
 
+  /** 收起详情的小窗（写着没存的字不要了） */
   closeDetail() {
     this.open = null;
-    replace(this.el, this.page());
+    this.fadeModal();
   }
 
   detail() {
@@ -326,14 +374,14 @@ export class MemoryPage {
     const m = this.list.find((x) => x.id === this.open) ?? (this.seen?.id === this.open ? this.seen : null);
     if (!m) {
       this.open = null;
-      return this.page();
+      return null;
     }
     this.seen = m;
     const name = this.personas.find((p) => p.persona === this.persona)?.name ?? '';
     const ro = isRetired(m);
     const area = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.set-area.mem-area', { disabled: ro }, m.text));
     const withKw = this.keywords || hasKeywords([m]);
-    const kw = withKw ? /** @type {HTMLInputElement} */ (h('input.set-input.mem-kw', { type: 'text', value: m.keywords ?? '', placeholder: t('detail.keywords_hint'), spellcheck: 'false', autocomplete: 'off', disabled: ro })) : null;
+    const kw = withKw ? keywordBox(m.keywords ?? null, t('detail.keywords_hint'), ro) : null;
     const count = h('span.mem-count', `${chars(m.text)} / ${TEXT_MAX}`);
     const kwCount = kw ? h('span.mem-count', `${chars(m.keywords ?? '')} / ${KEYWORDS_MAX}`) : null;
     const note = h('span.mem-note');
@@ -384,8 +432,8 @@ export class MemoryPage {
         delete area.dataset.dirty;
         if (kw) delete kw.dataset.dirty;
         await this.reload();
-        // 改了内容的是新编号：详情换到新的那一条（`reload` 没在画详情的话这里画）
-        if (this.open) replace(this.el, this.detail());
+        // 改了内容的是新编号：详情换到新的那一条
+        this.draw();
       } catch (err) {
         save.disabled = false;
         const why = /** @type {any} */ (err)?.data;
@@ -393,9 +441,16 @@ export class MemoryPage {
         this.say(this.refusal(err));
       }
     });
-    return h('div.mem-detail-page',
-      h('div.mem-detail-head', h('button.mem-back', { type: 'button', onclick: () => this.closeDetail() }, icon('chevron-left'), t('title')), h('span.mem-detail-id', `${name} · ${m.id}`)),
-      form);
+    // 小窗：头一行「记忆」、暗字「人格 · 编号」、✕；点外面（没写着字的）、`Esc`、✕ 收起
+    return h('div.mem-modal', {
+      onclick: (/** @type {Event} */ e) => {
+        if (e.target !== e.currentTarget || this.el.querySelector('.mem-detail [data-dirty]')) return;
+        this.closeDetail();
+      },
+    }, h('div.mem-pop', { role: 'dialog', 'aria-modal': 'true', 'aria-label': t('title') },
+      h('div.mem-pop-head', h('strong', t('title')), h('span.mem-detail-id', `${name} · ${m.id}`),
+        h('button.icon-button.mem-pop-close', { type: 'button', title: t('close'), 'aria-label': t('close'), onclick: () => this.closeDetail() }, icon('x'))),
+      form));
   }
 
   // —— 改 ——
@@ -418,20 +473,48 @@ export class MemoryPage {
       await this.ctx.core.request('memory.restore', { persona: this.persona, id });
       this.kit.toast(this.t('restored'));
       await this.reload();
-      if (this.open) replace(this.el, this.detail());
+      this.draw();
     } catch (err) {
       this.say(this.refusal(err));
     }
   }
 
+  /**
+   * 整理（第 2、13 条）：顶上一排下面展开那一块，日志、模型写出来的决定推来照它画；合完天亮、写结果，6 秒后收起。没有要整理的、
+   * 忙着的、出错的不留那一块，提示一句。
+   */
   async dream() {
+    const persona = this.persona;
     this.dreaming = true;
+    // 「停止」：叫停这一份这时人叫的整理（核心 R-23 的 `memory.dream_stop`）
+    const card = new DreamCard(this.ctx, new Map(this.list.map((m) => [m.id, m.text])), {
+      stop: () => this.ctx.core.request('memory.dream_stop', { persona }).then(() => {}, (/** @type {any} */ err) => { this.say(this.refusal(err)); }),
+    });
+    this.card = card;
     this.draw();
+    // 滚动区照编号写正文：先照列着的，再读一份整的（搜着、筛着的时候列着的不全）
+    this.ctx.core.request('memory.list', { persona, forgotten: true, limit: 500 }).then((got) => {
+      for (const m of got?.memories ?? []) card.texts.set(m.id, m.text);
+    }, () => {});
+    // 收起：照「动效」退场（`is-leaving` 的动画走完再拿掉）
+    const drop = () => {
+      if (this.card !== card) return;
+      this.card = null;
+      card.dispose();
+      leave(card.el, () => card.el.remove());
+    };
     try {
-      const got = await this.ctx.core.request('memory.dream', { persona: this.persona });
+      const got = await this.ctx.core.request('memory.dream', { persona });
       const n = (got?.given ?? 0) + (got?.retired ?? 0) + (got?.revised ?? 0);
-      this.kit.toast(n || got?.summary ? this.t('dreamed', { given: got?.given ?? 0, revised: got?.revised ?? 0, retired: got?.retired ?? 0 }) : this.t('dream_none'));
+      if (n || got?.summary || got?.stopped === true) {
+        card.finish(got);
+        setTimeout(drop, DREAM_KEEP_MS);
+      } else {
+        drop();
+        this.kit.toast(this.t('dream_none'));
+      }
     } catch (err) {
+      drop();
       this.say(/** @type {any} */ (err)?.data?.reason === 'memory_busy' ? this.t('dream_busy') : this.refusal(err));
     }
     this.dreaming = false;

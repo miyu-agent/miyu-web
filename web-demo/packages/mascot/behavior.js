@@ -21,9 +21,9 @@ const clamp = (v, max) => Math.max(-max, Math.min(max, v));
  * @typedef {{platforms: import('./body.js').Platform[], ledges: import('../../src/lib/anchors.js').Ledge[], hotspots: Hotspot[]}} World
  * @typedef {import('./body.js').Room & {draw: (pose: import('./model.js').Pose) => void,
  *   place: (at: {x: number, y: number, rot: number, clip: {left: number, right: number}|null}) => void, head: () => {x: number, y: number}|null,
- *   hold: (kind: string|null) => void, nextProp: () => void, hidden: () => boolean, world?: () => World,
+ *   hold: (kind: string|null) => void, nextProp: () => void, hidden: () => boolean, sleeping: (on: boolean) => void, world?: () => World,
  *   touch?: (id: string, kind: string) => void}} Io
- *   台子这些，再加画一帧、放到哪、头在屏幕上哪、拿出收起道具、道具下一帧、不出来；这一帧的落脚点（台面、扒边、互动点）、碰一下互动点那一块
+ *   台子这些，再加画一帧、放到哪、头在屏幕上哪、拿出收起道具、道具下一帧、不出来、睡着没有（冒 Zz）；这一帧的落脚点（台面、扒边、互动点）、碰一下互动点那一块
  * @typedef {{kind: 'ground'|'perch'|'ledge'|'hotspot', id: string, from: number, x: number, y: number, stand?: string, spot?: Hotspot,
  *   action?: string, stage: 'walk'|'leap'}} Plan 要去的一处：哪一种、编号、从哪起跳（脚下这一段上）、落在哪、互动点站在哪一段、
  *   碰哪一块、做什么；走着去还是跳着去
@@ -60,6 +60,11 @@ export class Behavior {
     this.caret = /** @type {{x: number, y: number}|null} */ (null);
     /** 她在回答 */
     this.busy = false;
+    /** 睡着：闭着眼、头上冒 Zz；不走、不掏东西、不东张西望。两种：整理记忆时（`setAsleep`）有人动也不醒；
+     *  闲着太久自己睡的（`sleep.idle_ms`，2026-10-20 项目主人）一有人动、开始回答就醒 */
+    this.asleep = false;
+    this.dreaming = false;
+    this.dozing = false;
     this.frame = 0;
     this.last = 0;
     this.droopTimer = 0;
@@ -85,7 +90,7 @@ export class Behavior {
     };
     later(pick(idle.blink_every_ms), blink);
     const glance = () => {
-      if (this.idle() && !this.caret && !this.activity && this.body.walkTo == null && !this.io.reduced()) {
+      if (this.idle() && !this.asleep && !this.caret && !this.activity && this.body.walkTo == null && !this.io.reduced()) {
         const home = Math.random() < idle.glance_home;
         this.look(home ? 0 : (Math.random() * 2 - 1) * idle.glance_yaw, home ? 0 : (Math.random() * 2 - 1) * idle.glance_pitch, idle.glance_half_life_ms);
       }
@@ -93,7 +98,7 @@ export class Behavior {
     };
     later(pick(idle.glance_hold_ms), glance);
     const twitch = () => {
-      if (!this.io.reduced()) this.twitch();
+      if (!this.io.reduced() && !this.asleep) this.twitch();
       later(pick(idle.twitch_every_ms), twitch);
     };
     later(pick(idle.twitch_every_ms), twitch);
@@ -125,6 +130,18 @@ export class Behavior {
       later(a.game_after_ms / 4, game);
     };
     later(this.config.activity.game_after_ms / 4, game);
+    // 闲着太久自己睡：没人动 `idle_ms`、没在回答、站着、手里没东西（在玩游戏机的也算闲着，收起来睡）
+    const doze = () => {
+      const z = this.config.sleep;
+      if (z.idle_ms > 0 && !this.dozing && !this.busy && !this.io.reduced() && this.body.standing() && this.body.walkTo == null
+        && performance.now() - this.touched > z.idle_ms) {
+        this.dozing = true;
+        this.gameUntil = 0;
+        this.sleepNow();
+      }
+      later(z.check_ms, doze);
+    };
+    later(this.config.sleep.check_ms, doze);
   }
 
   /** 没人动（`after_ms` 没按键、没动鼠标）。 */
@@ -134,7 +151,54 @@ export class Behavior {
 
   /** 闲着、站着、手里没东西，也没设减少动画：可以自己走、掏游戏机。 */
   free() {
-    return !this.busy && !this.activity && this.body.standing() && !this.io.reduced() && !this.body.act && !this.plan;
+    return !this.busy && !this.asleep && !this.activity && this.body.standing() && !this.io.reduced() && !this.body.act && !this.plan;
+  }
+
+  /** 整理记忆时睡着、醒来（服务 `mascot.sleep`）。 @param {boolean} on */
+  setAsleep(on) {
+    this.dreaming = on;
+    this.sleepNow();
+  }
+
+  /** 闲着睡着的叫醒（有人动、开始回答）；整理记忆睡着的不管。 */
+  rouse() {
+    if (!this.dozing) return;
+    this.dozing = false;
+    this.sleepNow();
+  }
+
+  /**
+   * 照两种睡着的定睡不睡：睡着的收起手里的东西、停在原地、看正前方、闭眼（眯成一道线），头上冒 Zz（2026-10-20 项目主人：睡觉不要蹲下，眼睛眯起来、
+   * Zz 就行）；醒来跳一下、照常看。
+   */
+  sleepNow() {
+    const on = this.dreaming || this.dozing;
+    if (on === this.asleep) return;
+    this.asleep = on;
+    this.pose.sleep = on;
+    this.body.sleeping = on;
+    this.io.sleeping(on);
+    if (on) {
+      this.body.halt();
+      this.gameUntil = 0;
+      // 不去别处（第 11 条）：要去的作罢、动作收掉；扒着边的先松手，掉到下面就地睡；在别处待着的就地睡，醒了再待一会儿回家
+      this.plan = null;
+      this.later = null;
+      this.body.act = null;
+      if (this.away) clearTimeout(this.away.timer);
+      this.away = null;
+      if (this.body.hang) this.body.unhang();
+    } else {
+      const g = this.body.at?.ground;
+      if (g && g.id !== 'floor' && g.id !== this.io.home()?.platform.id) this.stay(g.id, pick(this.config.visit.stay_ms));
+    }
+    this.settle();
+    if (on) this.look(0, 0, this.config.gaze.half_life_ms);
+    else {
+      this.hop();
+      this.follow();
+    }
+    this.wake();
   }
 
   /** 走一趟（没人动时隔一阵自己走；也能叫它走）。 */
@@ -146,6 +210,7 @@ export class Behavior {
   /** 有人动了（按键）：走着的停在原地，游戏机收起来。 */
   touch() {
     this.touched = performance.now();
+    this.rouse();
     this.body.halt();
     // 走着去一处的被叫停了：不去了
     if (this.plan?.stage === 'walk' && this.body.walkTo == null) this.plan = null;
@@ -175,6 +240,10 @@ export class Behavior {
   setBusy(busy, hop = true) {
     if (busy === this.busy) return;
     this.busy = busy;
+    if (busy) {
+      this.touched = performance.now();
+      this.rouse();
+    }
     this.settle();
     this.light();
     if (!busy && hop) {
@@ -199,7 +268,7 @@ export class Behavior {
   settle() {
     // 正在走的（比如从输入框正下面那一段走出来）先不拿，走到了再说
     const standing = this.body.standing() && this.body.walkTo == null && !this.io.reduced();
-    const want = standing && this.busy ? 'laptop' : standing && this.gameUntil > performance.now() ? 'console' : null;
+    const want = this.asleep ? null : standing && this.busy ? 'laptop' : standing && this.gameUntil > performance.now() ? 'console' : null;
     if (want === this.activity) return;
     this.activity = want;
     this.io.hold(want);
@@ -248,7 +317,7 @@ export class Behavior {
 
   /** 照 `gaze` 转过去（走着的脸朝走的方向，不管它）。 */
   follow() {
-    if (this.io.reduced() || this.body.walkTo != null) return;
+    if (this.io.reduced() || this.body.walkTo != null || this.asleep) return;
     const a = this.gaze();
     this.look(a.yaw, a.pitch, this.config.gaze.half_life_ms);
   }
@@ -382,6 +451,8 @@ export class Behavior {
    * @param {Hotspot} s
    */
   notice(s) {
+    // 睡着的不去看（第 9 条）
+    if (this.asleep) return;
     const b = this.body.at;
     const g = b?.ground;
     // 在空中（框上的命令列表刚收起、正掉回输入框）：落稳了再看，那时它还露着的话
@@ -411,6 +482,8 @@ export class Behavior {
 
   /** 左键按下：抓起来。 */
   grab(x, y) {
+    this.touched = performance.now();
+    this.rouse();
     this.home();
     this.body.grab(x, y);
     this.wake();
@@ -499,6 +572,7 @@ export class Behavior {
     this.pose.turn = shape.turn;
     this.io.place(shape);
     this.io.draw(this.pose);
+    // 睡着的不一帧一帧推（Zz 是 CSS 动画）
     if (moving) this.wake();
   }
 

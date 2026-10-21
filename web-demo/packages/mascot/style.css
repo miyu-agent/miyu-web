@@ -31,3 +31,11 @@
   .mascot-scale { transition: none; }
   [data-mascot-touch] { animation: none; }
 }
+
+/* 睡着时头上冒的 Zz（`mascot.sleep`）：从头的右上角冒出来，小 z 先、大 Z 晚半拍，往右上飘着淡掉；颜色是耳朵的影子色（浅底、深底都看得见），
+   描一道浅边（底下是整理那一块的夜空时也看得清） */
+.mascot-zz { position: absolute; top: 4px; right: 10px; pointer-events: none; }
+.mascot-zz svg { position: absolute; fill: var(--t-mascot-ear-shade); filter: drop-shadow(0 0 1px var(--t-mascot-head)); animation: mascot-zz 1.6s linear infinite; opacity: 0; }
+.mascot-zz svg + svg { animation-delay: 0.8s; }
+@keyframes mascot-zz { 0% { opacity: 1; transform: translate(0, 0); } 100% { opacity: 0; transform: translate(12px, -16px); } }
+@media (prefers-reduced-motion: reduce) { .mascot-zz svg { animation: none; opacity: 0.9; } .mascot-zz svg + svg { transform: translate(6px, -8px); } }

@@ -168,3 +168,30 @@ test('出厂样子不变：站着的命令列表收起、输入框挪走了往�
   run(body, now, (o) => o.landed != null && !!body.at?.ground);
   assert.equal(body.at?.ground?.id, 'message.user#1');
 });
+
+test('睡着不去别处（第 9 条）：扒着边的松手、要去的作罢、动作收掉、不挑点；在别处睡醒了再待一会儿回家', async () => {
+  const { Behavior } = await import('../../packages/mascot/behavior.js');
+  Object.assign(globalThis, { window: globalThis, requestAnimationFrame: () => 1, cancelAnimationFrame: () => {}, document: { hidden: false } });
+  const top = { id: 'settings.top', x1: 202, x2: 1078, y: 300 };
+  const r = room([top]);
+  const io = { ...r, draw: () => {}, place: () => {}, head: () => ({ x: 0, y: 0 }), hold: () => {}, nextProp: () => {}, hidden: () => false, sleeping: () => {},
+    world: () => ({ platforms: r.list, ledges: r.edges, hotspots: [] }), touch: () => {} };
+  const b = new Behavior(config, io);
+  try {
+    b.body.move(16, performance.now());
+    b.body.hang = { id: 'sidebar.edge', side: 'right', y: 690, at: performance.now(), clip: { left: 0, right: 0 } };
+    b.body.at = { x: 280, y: 690, vx: 0, vy: 0, ground: null };
+    b.plan = /** @type {any} */ ({ kind: 'ledge', id: 'sidebar.edge', stage: 'leap' });
+    b.setAsleep(true);
+    assert.equal(b.body.hang, null, '扒着的松手');
+    assert.equal(b.plan, null, '要去的作罢');
+    b.body.at = { x: 600, y: 300, vx: 0, vy: 0, ground: top };
+    assert.equal(b.free(), false);
+    assert.equal(b.visit(), false, '睡着不挑点');
+    b.setAsleep(false);
+    assert.equal(b.away?.id, 'settings.top', '醒了在别处的再待一会儿回家');
+    assert.ok(b.visit(), '醒着的照常挑点');
+  } finally {
+    b.destroy();
+  }
+});

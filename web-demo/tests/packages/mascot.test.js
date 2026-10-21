@@ -116,3 +116,16 @@ test('锯齿线正中那一点在 [0, 0.06]（2026-10-20 项目主人又挑的�
   assert.deepEqual(look.face.line[3], [0.0, 0.06]);
   assert.equal(look.face.line.length, 7);
 });
+
+test('睡着（sleep）：眼睛画成一道横线（一行、左右对称），不是醒着的竖条', () => {
+  const grid = { cols: config.cols, rows: config.rows, radius: config.radius, center_row: config.center_row };
+  const eyes = (pose) => render(look, { yaw: 0, pitch: 0, blink: false, ear: 0, ...pose }, grid)
+    .flatMap((row, y) => row.map((c, x) => (c?.part === 'eye' ? [x, y] : null)).filter(Boolean));
+  const awake = eyes({});
+  const asleep = eyes({ sleep: true });
+  assert.ok(new Set(awake.map(([, y]) => y)).size > 1, '醒着的眼睛是竖条');
+  assert.equal(new Set(asleep.map(([, y]) => y)).size, 1, '睡着的是一行');
+  assert.ok(asleep.length >= 4, String(asleep.length));
+  const xs = asleep.map(([x]) => x);
+  assert.deepEqual(xs.map((x) => config.cols - 1 - x).sort((a, b) => a - b), [...xs].sort((a, b) => a - b), '左右对称');
+});

@@ -1,6 +1,6 @@
 /* 记忆页（蓝图 web.md「记忆页」）：控件照设置页（set-input、set-btn、set-switch）；一条一行、行之间一道细线，悬停 surface_2；
    类别不配颜色，写在每一行右边的暗字里（2026-10-19 项目主人：四个颜色的圆点没什么意义） */
-.mem-list-page, .mem-detail-page { display: grid; gap: calc(14px * var(--space)); }
+.mem-list-page { display: grid; gap: calc(14px * var(--space)); }
 .mem-tools { display: flex; flex-wrap: wrap; align-items: center; gap: calc(8px * var(--space)); }
 .mem-find { display: flex; flex: 1; align-items: center; gap: calc(6px * var(--space)); min-width: 180px; height: 30px; padding: 0 calc(10px * var(--space)); border-radius: var(--field-radius, var(--r-8)); background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text-faint)); transition: background-color calc(0.15s * var(--motion-scale)) ease, box-shadow calc(0.15s * var(--motion-scale)) ease; }
 .mem-find:hover { background: var(--field-hover, var(--surface-3)); }
@@ -11,6 +11,9 @@
 .mem-tools .set-btn .icon, .mem-page .set-btn .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
 .mem-dream .icon-loader-circle, .mem-dream:disabled .icon { animation: set-spin calc(0.9s * var(--motion-scale)) linear infinite; }
 .mem-dream:disabled { opacity: 0.75; cursor: default; }
+/* 整理中：照样能点（点了叫停），悬停是「停止整理」、危险色 */
+.mem-dream.is-busy:hover { color: var(--danger); }
+.mem-dream.is-busy:hover .icon { animation: none; }
 .mem-tidying { display: flex; align-items: center; gap: calc(6px * var(--space)); margin: calc(-6px * var(--space)) 0 0; color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
 .mem-tidying[hidden] { display: none; }
 .mem-tidying .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); animation: set-spin calc(0.9s * var(--motion-scale)) linear infinite; }
@@ -53,13 +56,14 @@
 .mem-count { color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); font-variant-numeric: tabular-nums; }
 .mem-count.is-over { color: var(--danger); }
 
-/* 详情 */
-.mem-detail-head { display: flex; align-items: center; gap: calc(10px * var(--space)); }
-.mem-back { display: inline-flex; align-items: center; gap: calc(3px * var(--space)); height: 28px; padding: 0 calc(8px * var(--space)) 0 calc(4px * var(--space)); border: 0; border-radius: var(--r-7); background: none; color: var(--text-soft); font: calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer; }
-.mem-back:hover { background: var(--surface-2); color: var(--text); }
-.mem-back .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); }
+/* 详情：列表上面弹一个小窗（2026-10-20 项目主人：改成浮动窗口），底色同设置框，同「记一条」的小窗 */
+.mem-pop { display: flex; flex-direction: column; width: min(640px, 100%); max-height: 100%; overflow: hidden; border-radius: var(--modal-radius, var(--r-14)); background: var(--modal-bg, var(--surface));
+  box-shadow: var(--modal-elev, var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%)); animation: pop-in var(--motion-in) var(--ease-out) both; }
+.mem-pop-head { display: flex; align-items: baseline; gap: calc(10px * var(--space)); padding: calc(14px * var(--space)) calc(12px * var(--space)) calc(4px * var(--space)) calc(20px * var(--space)); }
+.mem-pop-head strong { color: var(--text); font-size: calc(15px * var(--text-scale)); font-weight: 600; }
+.mem-pop-close { align-self: center; margin-left: auto; }
 .mem-detail-id { color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
-.mem-detail { display: grid; gap: calc(16px * var(--space)); padding: calc(18px * var(--space)); border-radius: var(--r-14); background: var(--surface-1); box-shadow: var(--card-shadow); }
+.mem-detail { display: grid; gap: calc(16px * var(--space)); min-height: 0; padding: calc(12px * var(--space)) calc(20px * var(--space)) calc(18px * var(--space)); overflow-y: auto; }
 .mem-field { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: calc(12px * var(--space)); align-items: start; }
 .mem-label { padding-top: calc(6px * var(--space)); color: var(--text-soft); font-size: calc(13px * var(--text-scale)); }
 .mem-value { display: grid; gap: calc(4px * var(--space)); min-width: 0; }
@@ -83,3 +87,82 @@
   .mem-label { padding-top: 0; }
   .mem-retired { margin-left: 0; }
 }
+
+/* 人叫的整理那一块（第 13 条，`dream.js`；2026-10-20 项目主人选的「日月轮转」）：头一行、五行滚动区（新的从下面浮上来、上面淡出）、
+   像素舞台（画布一格放大三倍，夜空是舞台自己的一套颜色；右上角的数也画在里面） */
+.dream-card { display: grid; border-radius: var(--r-14); overflow: hidden; background: var(--surface-1); box-shadow: var(--card-shadow); }
+.dream-card[hidden] { display: none; }
+.dream-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; padding: 12px 16px 8px; }
+.dream-head b { color: var(--text); font-size: 13.5px; }
+.dream-batch { color: var(--text-faint); font-size: 12px; }
+.dream-time { color: var(--text-faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+.dream-stop { height: 24px; padding: 0 10px; border: 0; border-radius: var(--r-7); background: var(--surface-2); color: var(--text-soft); font: 12px var(--font-ui); cursor: pointer; align-self: center; }
+.dream-stop:hover { background: var(--surface-3); color: var(--text); }
+.dream-stop:disabled { cursor: default; opacity: 0.7; }
+.dream-stop:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dream-tally { margin-left: auto; color: var(--text-faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+.dream-feed { position: relative; height: 260px; overflow: hidden; margin-bottom: 10px; padding: 0 16px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 30px); mask-image: linear-gradient(to bottom, transparent 0, #000 30px); }
+.dream-feed-list { position: absolute; right: 16px; bottom: 0; left: 16px; display: grid; }
+.dream-line { display: flex; align-items: center; gap: 8px; min-width: 0; height: 26px; color: var(--text-soft); font-size: 13px; white-space: nowrap; animation: dream-rise 0.45s var(--ease-out); }
+@keyframes dream-rise { from { opacity: 0; transform: translateY(8px); } }
+.dream-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.dream-line.is-read .dream-t, .dream-line s, .dream-why { color: var(--text-faint); }
+.dream-line.is-fail .dream-t { color: var(--gold); }
+.dream-k { display: inline-grid; flex: none; place-items: center; min-width: 30px; height: 18px; padding: 0 5px; border-radius: var(--r-5); font-size: 11px; font-weight: 600; }
+.dream-k.is-read { background: var(--surface-2); color: var(--text-faint); }
+.dream-k.is-new { background: var(--accent-soft); color: var(--accent); }
+.dream-k.is-del { background: color-mix(in srgb, var(--ribbon) 13%, transparent); color: var(--ribbon); }
+.dream-k.is-kw { background: color-mix(in srgb, var(--gold) 14%, transparent); color: var(--gold); }
+.dream-k.is-sum { background: var(--surface-3); color: var(--text-soft); }
+.chat-tail .dream-card { margin: 8px 0 4px; }
+/* 记忆页里的那一块：出来淡入升上来，收起淡出沉下去（正文末尾的照 `unfold` 长出来、收回去） */
+.mem-list-page .dream-card { animation: dream-in var(--motion-collapse) var(--ease-out); }
+.mem-list-page .dream-card.is-leaving { animation: dream-out var(--motion-out) var(--ease-in) both; }
+@keyframes dream-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes dream-out { to { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .dream-line, .mem-list-page .dream-card { animation: none; } }
+
+/* 合完收成的结果那一行（照终端：✦ 打头，有改、删、摘要的能点开，列这一趟真正存下的）：正文里一行提示行（`.note`，styles/chat.css），
+   缩进、字号、上下间距同「后台任务完成」那类（2026-10-20 项目主人：间距不一样），钉在合完那一刻正文的位置，后来的接在它下面 */
+.dream-receipt-head { width: fit-content; max-width: 100%; }
+.dream-receipt-head.is-link { cursor: pointer; transition: color 0.15s ease; }
+.dream-receipt-head.is-link:hover, .dream-receipt.is-open .dream-receipt-head { color: color-mix(in srgb, var(--text) 84%, var(--surface)); }
+.dream-receipt-head:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-4); }
+.dream-receipt-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dream-receipt-arrow { display: inline-grid; flex: none; align-self: center; place-items: center; opacity: 0; transition: opacity 0.15s ease, transform 0.15s ease; }
+.dream-receipt-arrow .icon { width: 12px; height: 12px; }
+.dream-receipt-head:hover .dream-receipt-arrow, .dream-receipt.is-open .dream-receipt-arrow { opacity: 0.8; }
+.dream-receipt.is-open .dream-receipt-arrow { transform: rotate(90deg); }
+.dream-receipt-list { margin-top: 8px; font-family: var(--font-ui); font-weight: 400; }
+.dream-receipt-list:not([hidden]) { display: grid; gap: 4px; padding: 8px 10px; border-radius: var(--r-10); background: var(--surface-2); }
+.dream-receipt-item { display: flex; align-items: baseline; gap: 8px; min-width: 0; color: var(--text-soft); font-size: 12.5px; line-height: 1.55; }
+.dream-receipt-item s { color: var(--text-faint); }
+.dream-receipt-summary { white-space: pre-wrap; color: var(--text-soft); }
+
+/* 「记一条」：设置框正中的小窗（设置框磨砂了，`position: fixed` 照设置框那一块摆；后面淡遮罩） */
+/* 进出同设置里别的小窗（2026-10-20 项目主人：浮动窗口的打开和退出动画应当统一）：遮罩淡入淡出，卡片从 0.97 放大出来、缩回去淡掉 */
+.mem-modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 45%, transparent); animation: fade-in var(--motion-in) var(--ease-out) backwards; }
+.mem-modal.is-leaving { animation: fade-out var(--motion-out) var(--ease-in) both; }
+.mem-modal .mem-add { width: min(520px, 100%); background: var(--surface); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); animation: pop-in var(--motion-in) var(--ease-out) both; }
+.mem-modal.is-leaving .mem-add, .mem-modal.is-leaving .mem-pop { animation: pop-out var(--motion-out) var(--ease-in) both; }
+@media (prefers-reduced-motion: reduce) { .mem-modal, .mem-modal .mem-add, .mem-pop { animation: none; } }
+
+/* 进场的动画放过一次的不再放（重画时这一块拿出来再放回去，CSS 动画会从头再放） */
+.mem-list-page .dream-card.is-in:not(.is-leaving), .dream-line.is-in { animation: none; }
+/* 转到后台：先淡掉，再一下收起 */
+.chat-tail .dream-card.is-leaving { animation: dream-out var(--motion-out) var(--ease-in) both; }
+.dream-slot.unfold.is-instant, .dream-slot.unfold.is-instant > .unfold-inner { transition: none; }
+
+/* 关键词：一个个小块，后面接着打 */
+/* 比设置页的 `.set-input`（定高 30px）多一层：块多了往下长（2026-10-20 项目主人：关键词多了框坏了，块跑到框外面） */
+.set-input.mem-kw-box { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; width: 100%; min-height: 32px; height: auto; padding: 4px 6px; box-sizing: border-box; cursor: text; }
+.mem-kw-box.is-disabled { cursor: default; opacity: 0.7; }
+/* 聚焦（框里那一行字有焦点）同别的框：换亮底加一层软影，里面的块换成灰底（同一天项目主人：关键词框聚焦怎么不变颜色） */
+.set-input.mem-kw-box:focus-within { background: var(--surface-1); box-shadow: var(--card-shadow); }
+.mem-kw-box:focus-within .mem-kw-chip { background: var(--surface-2); }
+.mem-kw-chips { display: contents; }
+.mem-kw-chip { display: inline-flex; align-items: center; gap: 2px; padding: 0 4px 0 8px; border-radius: var(--r-6); background: var(--surface-1); color: var(--text); font-size: 12.5px; line-height: 22px; }
+.mem-kw-chip button { display: grid; width: 16px; height: 16px; place-items: center; padding: 0; border: 0; border-radius: var(--r-4); background: none; color: var(--text-faint); cursor: pointer; }
+.mem-kw-chip button:hover { background: var(--surface-3); color: var(--text); }
+.mem-kw-chip .icon { width: 11px; height: 11px; }
+.mem-kw-input { flex: 1; min-width: 8em; border: 0; outline: 0; background: transparent; color: var(--text); font: 13px var(--font-ui); }

@@ -959,12 +959,6 @@
       ".mem-count"
     ]
   },
-  "mem.back": {
-    "zh": "记忆页：返回",
-    "select": [
-      ".mem-back"
-    ]
-  },
   "mem.detail-id": {
     "zh": "记忆页：细节编号",
     "select": [
@@ -4905,6 +4899,162 @@
     "zh": "miyu-run里的图标位",
     "select": [
       ".miyu-run i"
+    ]
+  },
+  "mascot.zz": {
+    "zh": "吉祥物睡着时头上冒的 Zz",
+    "select": [
+      ".mascot-zz svg"
+    ]
+  },
+  "mem.pop": {
+    "zh": "记忆页：记忆详情的小窗",
+    "select": [
+      ".mem-pop"
+    ]
+  },
+  "mem.pop-head-strong": {
+    "zh": "记忆页：详情小窗头上的标题",
+    "select": [
+      ".mem-pop-head strong"
+    ]
+  },
+  "dream.card": {
+    "zh": "整理记忆那一块",
+    "select": [
+      ".dream-card"
+    ]
+  },
+  "dream.head-b": {
+    "zh": "整理记忆：头一行的标题",
+    "select": [
+      ".dream-head b"
+    ]
+  },
+  "dream.batch": {
+    "zh": "整理记忆：第几批",
+    "select": [
+      ".dream-batch"
+    ]
+  },
+  "dream.time": {
+    "zh": "整理记忆：用时",
+    "select": [
+      ".dream-time"
+    ]
+  },
+  "dream.stop": {
+    "zh": "整理记忆：停止按钮",
+    "select": [
+      ".dream-stop"
+    ]
+  },
+  "dream.tally": {
+    "zh": "整理记忆：右上角的数",
+    "select": [
+      ".dream-tally"
+    ]
+  },
+  "dream.feed": {
+    "zh": "整理记忆：滚动的字那一块",
+    "select": [
+      ".dream-feed"
+    ]
+  },
+  "dream.line": {
+    "zh": "整理记忆：滚动的一行",
+    "select": [
+      ".dream-line"
+    ]
+  },
+  "dream.t": {
+    "zh": "整理记忆：一行前面的时间",
+    "select": [
+      ".dream-t"
+    ]
+  },
+  "dream.line-s": {
+    "zh": "整理记忆：一行里划掉的字",
+    "select": [
+      ".dream-line s"
+    ]
+  },
+  "dream.why": {
+    "zh": "整理记忆：为什么",
+    "select": [
+      ".dream-why"
+    ]
+  },
+  "dream.k": {
+    "zh": "整理记忆：关键字",
+    "select": [
+      ".dream-k"
+    ]
+  },
+  "dream.receipt-head": {
+    "zh": "整理的结果那一行",
+    "select": [
+      ".dream-receipt-head"
+    ]
+  },
+  "dream.receipt-arrow": {
+    "zh": "整理的结果那一行：展开的箭头",
+    "select": [
+      ".dream-receipt-arrow"
+    ]
+  },
+  "dream.receipt-list": {
+    "zh": "整理的结果：点开的列表",
+    "select": [
+      ".dream-receipt-list"
+    ]
+  },
+  "dream.receipt-item": {
+    "zh": "整理的结果：一条",
+    "select": [
+      ".dream-receipt-item"
+    ]
+  },
+  "dream.receipt-item-s": {
+    "zh": "整理的结果：一条里划掉的字",
+    "select": [
+      ".dream-receipt-item s"
+    ]
+  },
+  "dream.receipt-summary": {
+    "zh": "整理的结果：换了的摘要",
+    "select": [
+      ".dream-receipt-summary"
+    ]
+  },
+  "mem.modal": {
+    "zh": "记忆页：「记一条」的小窗",
+    "select": [
+      ".mem-modal"
+    ]
+  },
+  "mem.kw-box": {
+    "zh": "记忆页：关键词框",
+    "select": [
+      ".mem-kw-box"
+    ]
+  },
+  "mem.kw-chip": {
+    "zh": "记忆页：关键词的一块",
+    "select": [
+      ".mem-kw-chip"
+    ]
+  },
+  "mem.kw-chip-button": {
+    "zh": "记忆页：关键词块上的删除",
+    "select": [
+      ".mem-kw-chip button"
+    ]
+  },
+  "mem.kw-input": {
+    "zh": "记忆页：关键词写字的地方",
+    "select": [
+      ".mem-kw-input"
     ]
   }
 }

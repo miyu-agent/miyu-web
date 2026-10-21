@@ -66,6 +66,8 @@ export class Body {
     this.landDepth = 0;
     /** 这一帧蹲多深（缓过去，负的是抻长）；整个身子转了多少度（侧身走路，缓过去） */
     this.crouch = 0;
+    /** 睡着（站着不动，`behavior.js` 的 `sleepNow`） */
+    this.sleeping = false;
     this.turn = 0;
     /** 按着：什么时候按下的、抓的地方离脚多远、上一次指针在哪、什么时候、指针的速度、挪够了没有（没挪够的是在蓄力） */
     this.drag = /** @type {{t0: number, dx: number, dy: number, x: number, y: number, t: number, vx: number, vy: number, moved: boolean}|null} */ (null);
