@@ -248,6 +248,7 @@ test('MCP 服务的提示词做成的命令（核心 X-39）：名字中间可�
   assert.equal(typed('/:x'), null);
   assert.equal(typed('/http://x'), null);
   assert.deepEqual(read([], '/github:review-pr 123'), { kind: 'unlisted', name: 'github:review-pr', words: '123' }, '列表里没有的交外面（会话里问核心）');
+  assert.deepEqual(read([], '/github: 你好'), { kind: 'talk' }, '`:` 结尾的回车时不算命令（同终端）');
   const spec = { name: 'github:review-pr', summary: '', args: true };
   assert.deepEqual(read([spec], '/github:review-pr 123'), { kind: 'command', spec, words: '123' });
 });

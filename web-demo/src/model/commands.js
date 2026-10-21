@@ -91,7 +91,8 @@ export function find(list, name) {
  */
 export function read(list, value, later = new Set(), opens = new Set(), nones = new Set()) {
   const name = typed(value);
-  if (name == null) return { kind: 'talk' };
+  // `:` 结尾的（`/github:` 还没打完）回车时不算命令，同终端：`:` 不打头、不结尾
+  if (name == null || name.endsWith(':')) return { kind: 'talk' };
   const words = value.slice(1 + name.length).trim();
   const spec = find(list, name);
   // 空会话里列着的核心的命令（2026-10-17 项目主人：新会话里打 / 要弹出来）：带着字、开会话的（`/goal <目标>`）先开会话再交核心；
