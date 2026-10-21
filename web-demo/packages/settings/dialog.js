@@ -20,6 +20,9 @@ import { Subpage, swap } from './subpage.js';
 import { drawAdvanced } from './advanced.js';
 import { drawToolPage, hasToolPage } from './tool-pages.js';
 
+/** 刚存成的那一项重画出来还画对勾的时限（毫秒） */
+const SAVED_MS = 1000;
+
 
 /** 上次看的那一页：这个终端记着（蓝图第 3 条），刷新就忘 */
 let lastPage = 'general';
@@ -327,12 +330,21 @@ export class SettingsDialog {
       const problems = err.data?.problems ?? [];
       return problems.length ? problems.map((p) => p.message).join('\n') : err.message;
     }
+    // 记下刚存成的几项：重画出来的那几行照它画对勾（`rows.js`）
+    this.saved = { keys: new Set(changes.map((c) => c.key)), at: performance.now() };
     await this.reload();
     return null;
   }
 
+  /** 这一项是不是刚存成的（1 秒以内） @param {string} key */
+  justSaved(key) {
+    return !!this.saved && this.saved.keys.has(key) && performance.now() - this.saved.at < SAVED_MS;
+  }
+
   /** 重读核心的配置、重画；正在改的那一项有焦点的，等焦点走了再画（第 9 条）。 */
   async reload() {
+    // 已经收到、还没重读的推送并进这一遍（存完自己重读，核心推来的 `config.changed` 不再另读一遍）
+    clearTimeout(this.pushTimer);
     await this.load();
     if (this.editing()) {
       this.pending = true;

@@ -21,6 +21,9 @@ export const groupBlock = (name, rows) => {
 /** 对不上哪一项的问题：那一页顶上一条横幅。 */
 export const banner = (p) => h(`div.set-banner.is-${p.level === 'error' ? 'error' : 'warn'}`, icon(p.level === 'error' ? 'circle-alert' : 'triangle-alert'), h('span', p.message));
 
+/** 存了多久还没回来才转圈（毫秒） */
+const SPIN_AFTER_MS = 300;
+
 /**
  * 一行的壳：名字、说明、小字（没有就不出这一行）、问题；右边控件和 ↺。交回节点和几个钩子（转圈、对勾、写原因）。
  * @param {{name: string, description?: string, source?: Node|string|null, problems?: {level: string, message: string}[],
@@ -39,14 +42,20 @@ export function shell(o) {
     h('div.set-control',
       o.reset ? h('button.set-reset', { type: 'button', title: o.resetTitle, 'aria-label': o.resetTitle, onclick: o.reset }, icon('rotate-ccw')) : null,
       status, o.control));
+  /** @type {ReturnType<typeof setTimeout>|undefined} */
+  let spin;
   return {
     el,
-    /** 存着：转圈 */
-    busy: () => { error.hidden = true; replace(status, icon('loader-circle')); status.className = 'set-status is-busy'; },
+    /** 存着：0.3 秒还没回来才转圈（快的不转，2026-10-21 项目主人：切一下也要转一下） */
+    busy: () => {
+      error.hidden = true;
+      clearTimeout(spin);
+      spin = setTimeout(() => { replace(status, icon('loader-circle')); status.className = 'set-status is-busy'; }, SPIN_AFTER_MS);
+    },
     /** 成了：对勾，1 秒淡出 */
-    done: () => { replace(status, icon('check')); status.className = 'set-status is-done'; },
+    done: () => { clearTimeout(spin); replace(status, icon('check')); status.className = 'set-status is-done'; },
     /** 拒了：原因写在这一项下面 */
-    fail: (why) => { replace(status); status.className = 'set-status'; error.textContent = why; error.hidden = false; },
+    fail: (why) => { clearTimeout(spin); replace(status); status.className = 'set-status'; error.textContent = why; error.hidden = false; },
   };
 }
 
@@ -109,6 +118,8 @@ export function coreRow(dialog, item, opts = {}) {
     reset: written ? () => save({ unset: true }) : null,
     resetTitle: ctx.text('reset'),
   });
+  // 刚存成的：存完整页重读重画了，对勾画在新的这一行上
+  if (dialog.justSaved?.(item.key)) row.done();
   return row.el;
 }
 
