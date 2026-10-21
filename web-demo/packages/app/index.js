@@ -29,8 +29,11 @@ export function apply(ctx) {
     scroller: app.chat.el,
     list: app.chat.list,
     onPrompts: (fn) => app.chat.onPrompts(fn),
-    /** 看另一个会话（子代理的会话也行，第一次看时才读） */
-    open: (id) => app.open(id),
+    /**
+     * 看另一个会话（子代理的会话也行，第一次看时才读）。整理会话照打开前正在看的记着「← 返回」回哪；`back` 是另给的去处
+     * （记忆页：回到原来看的会话、再打开那一份的记忆页），`title` 写在悬停提示里
+     */
+    open: (id, opts) => app.open(id, false, opts),
     /** 还没开的新会话先开出来（照说第一句话一样，带上选的人格、预设、工作区），交回会话编号：空会话里打 `/dream` */
     ensure: async () => { await app.ensureSession(); return app.current; },
     /** 正在看的会话在不在回答；打断它（照两下 `Esc`） */

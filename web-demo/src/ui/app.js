@@ -500,9 +500,18 @@ export class App {
    * 看一个会话；`null` 是一个还没开的新会话（蓝图「连核心」第 5 条），它不带着上一个新会话的演示待办。
    * 窄屏上顺手收起左栏。
    */
-  open(id, listed = false) {
+  open(id, listed = false, opts = {}) {
     // 换到别的会话：样张收掉（蓝图 web.md「皮肤」第 7 条）
     if (this.current && isGallery(this.current) && id !== this.current) this.store.drop(this.current);
+    // 进整理会话：记下「← 返回」回哪（打开前正在看的会话；记忆页另给去处），整理会话之间来回的照旧；进别的会话忘掉
+    // （蓝图「记忆页」第 13a 条第 2 条；2026-10-22 项目主人：进了整理会话没有返回的箭头）
+    if (id && this.dreamOf(id)) {
+      if (!this.dreamOf(this.current)) {
+        const from = this.current;
+        const extra = /** @type {{back?: {title: string, run: () => void}}} */ (opts).back ?? null;
+        this.dreamBack = { title: extra?.title ?? (from ? this.titleOf(from) : null), run: () => { this.open(from); extra?.run(); } };
+      }
+    } else this.dreamBack = null;
     this.pendingLevel = null;
     this.pendingModel = null;
     this.draft = { persona: null, preset: null, cwd: null, project: null };
@@ -1024,7 +1033,7 @@ export class App {
     this.composer?.sessionList.refresh();
     const path = this.current ? pathOf(this.current, (id) => this.parentOf(id)).map((id) => ({ session: id, title: this.titleOf(id) })) : [];
     this.crumbs.draw(path);
-    this.back?.draw(path.length > 1 ? path[path.length - 2] : null);
+    this.back?.draw(path.length > 1 ? path[path.length - 2] : this.dreamOf(this.current) && this.dreamBack ? { session: '', ...this.dreamBack } : null);
     // 回答里的本机地址、结果里的图照这个会话取（工作目录照 `session.created`）
     this.chat.setWhere(this.current, this.current ? this.workdir() : null, this.defaultWorkdirOf(this.current));
     // 子会话的父会话照会话表（按页读时 `session.created` 可能还在没读的页里）

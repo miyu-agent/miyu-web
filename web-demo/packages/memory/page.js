@@ -16,6 +16,8 @@ const TYPE_MS = 250;
 const PUSH_MS = 300;
 /** 人叫的整理合完以后那一块留几秒再收起（第 13 条） */
 const DREAM_KEEP_MS = 6000;
+/** 人叫的整理：核心多久还没回才把那一块挂出来（同 `/dream`；没有要整理的很快就回，不闪一下；真开始合了当场挂） */
+const SHOW_AFTER_MS = 500;
 /** 无人格那一份的编号（核心 P-12 的 NO_PERSONA；人格编号都以小写字母开头，撞不上） */
 export const NO_PERSONA = '_none';
 
@@ -172,6 +174,8 @@ export class MemoryPage {
     if ((method !== 'memory.event' && method !== 'memory.dreaming') || params?.persona !== this.subscribed) return;
     // 人叫的整理那一块：日志、模型写出来的决定都交给它（第 13 条）
     this.card?.push(method, params);
+    // 真开始合了：当场挂出来
+    if (this.card && !this.cardShown && method === 'memory.event' && params?.event?.kind === 'ext.memory.merging' && params.event.body?.manual) this.revealCard?.();
     if (method === 'memory.dreaming') return;
     if (!this.el.isConnected) {
       this.unsubscribe();
@@ -236,13 +240,15 @@ export class MemoryPage {
     });
     find.addEventListener('compositionend', () => find.dispatchEvent(new Event('input')));
     // 整理中的时候这个按钮也能点：点了叫停（同那一块的「停止」；2026-10-21 项目主人），悬停时字换成「停止整理」
-    const label = h('span', t(this.dreaming ? 'dreaming' : 'dream_action'));
-    const mark = icon(this.dreaming ? 'loader-circle' : 'sparkles');
-    const dream = h(`button.set-btn.mem-dream${this.dreaming ? '.is-busy' : ''}`, {
-      type: 'button', disabled: !this.persona || (this.dreaming && !this.card?.stopBtn), title: this.dreaming ? t('dream_stop_hint') : null,
+    // 那一块挂出来了才写「整理中…」（没有要整理的很快就回，按钮的字也不闪一下）
+    const busy = this.dreaming && this.cardShown;
+    const label = h('span', t(busy ? 'dreaming' : 'dream_action'));
+    const mark = icon(busy ? 'loader-circle' : 'sparkles');
+    const dream = h(`button.set-btn.mem-dream${busy ? '.is-busy' : ''}`, {
+      type: 'button', disabled: !this.persona || (this.dreaming && !this.card?.stopBtn), title: busy ? t('dream_stop_hint') : null,
       onclick: () => (this.dreaming ? this.card?.stopBtn?.click() : this.dream()),
-      onmouseenter: () => { if (this.dreaming) { label.textContent = t('dream_stop'); dream.replaceChildren(icon('square'), label); } },
-      onmouseleave: () => { if (this.dreaming) { label.textContent = t('dreaming'); dream.replaceChildren(mark, label); } },
+      onmouseenter: () => { if (busy) { label.textContent = t('dream_stop'); dream.replaceChildren(icon('square'), label); } },
+      onmouseleave: () => { if (busy) { label.textContent = t('dreaming'); dream.replaceChildren(mark, label); } },
     }, mark, label);
     const add = h('button.set-btn.is-primary', { type: 'button', disabled: !this.persona, onclick: () => { this.adding = true; this.draw(); this.el.querySelector('.mem-add textarea')?.focus(); } }, icon('plus'), t('add'));
     const chips = h('div.mem-chips',
@@ -259,7 +265,7 @@ export class MemoryPage {
     return h('div.mem-list-page',
       h('div.mem-tools', picker, h('label.mem-find', icon('search'), find), dream, this.historyButton(), add),
       this.tidyingLine(),
-      this.card?.el ?? null,
+      this.cardShown ? this.card?.el ?? null : null,
       chips,
       h('div.mem-list', rows, more),
       h('div.mem-foot.set-pinned', h('span', t(retiredCount ? 'foot_retired' : 'foot', { live: c.all, retired: retiredCount })), clear),
@@ -312,11 +318,12 @@ export class MemoryPage {
     this.fadeModal();
   }
 
-  /** 关上设置，在对话区打开一个整理会话（「查看过程」、整理记录的一行） @param {string} id */
+  /** 关上设置，在对话区打开一个整理会话（「查看过程」、整理记录的一行）；返回回到原来看的会话、再打开这一份的记忆页 @param {string} id */
   openSession(id) {
     this.history = false;
+    const persona = this.persona;
     this.ctx.settings?.close?.();
-    this.ctx.chat?.open?.(id);
+    this.ctx.chat?.open?.(id, { back: { title: this.t('title'), run: () => { this.show(persona); this.ctx.settings?.open?.('memory'); } } });
   }
 
   /** 收起「记一条」的小窗（写着的字不要了） */
@@ -541,6 +548,16 @@ export class MemoryPage {
       open: (id) => this.openSession(id),
     });
     this.card = card;
+    // 真开始合了（头一条 `merging`）或者过了半秒还没回才挂出来（同 `/dream`）：没有要整理的很快就回，不先放一下再收回去（2026-10-22 项目主人）
+    this.cardShown = false;
+    const reveal = () => {
+      if (this.card !== card || this.cardShown || card.finished) return;
+      this.cardShown = true;
+      card.show();
+      this.draw();
+    };
+    this.revealCard = reveal;
+    const later = setTimeout(reveal, SHOW_AFTER_MS);
     this.draw();
     // 滚动区照编号写正文：先照列着的，再读一份整的（搜着、筛着的时候列着的不全）
     this.ctx.core.request('memory.list', { persona, forgotten: true, limit: 500 }).then((got) => {
@@ -548,8 +565,11 @@ export class MemoryPage {
     }, () => {});
     // 收起：照「动效」退场（`is-leaving` 的动画走完再拿掉）
     const drop = () => {
+      clearTimeout(later);
       if (this.card !== card) return;
       this.card = null;
+      this.revealCard = null;
+      if (!this.cardShown) { card.dispose(); return; }
       card.dispose();
       leave(card.el, () => card.el.remove());
     };
@@ -557,6 +577,11 @@ export class MemoryPage {
       const got = await this.ctx.core.request('memory.dream', { persona });
       const n = (got?.given ?? 0) + (got?.retired ?? 0) + (got?.revised ?? 0);
       if (n || got?.summary || got?.stopped === true) {
+        // 很快就合完了、还没挂出来的：挂出来看结果
+        if (!this.cardShown) {
+          this.cardShown = true;
+          this.draw();
+        }
         card.finish(got);
         setTimeout(drop, DREAM_KEEP_MS);
       } else {

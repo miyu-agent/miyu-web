@@ -70,9 +70,8 @@ export class DreamCard {
       if (el === this.el && !el.classList.contains('is-leaving')) el.classList.add('is-in');
       else if (el.classList?.contains('dream-line')) el.classList.add('is-in');
     });
-    // 输入框上那只跟着一起睡（2026-10-20 项目主人：一起睡），合完了醒
-    this.sleeping = true;
-    ctx.mascot?.sleep?.(true);
+    // 输入框上那只跟着一起睡（2026-10-20 项目主人：一起睡），合完了醒：挂出来了才睡（`show`；没有要整理的不挂，也不睡）
+    this.sleeping = false;
     this.sync();
     // 用时每秒走一下（不再一帧一帧画）
     this.timer = setInterval(() => { if (this.el.isConnected) { this.clock(performance.now()); this.spend(); } }, 250);
@@ -97,6 +96,13 @@ export class DreamCard {
   dispose() {
     clearInterval(this.timer);
     this.wake();
+  }
+
+  /** 挂出来了：输入框上那只睡下（合完了的不睡） */
+  show() {
+    if (this.sleeping || this.finished) return;
+    this.sleeping = true;
+    this.ctx.mascot?.sleep?.(true);
   }
 
   /** 叫醒输入框上那只（只叫一次） */

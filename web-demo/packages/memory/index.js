@@ -81,6 +81,7 @@ async function dream(ctx, words) {
     if (!session) return;
   }
   const where = { session };
+  // 「查看过程」：返回回到发起的这个会话（对话区照打开前正在看的记着）
   const card = new DreamCard(ctx, new Map(), { stop: () => stop(ctx), open: (id) => ctx.chat?.open?.(id) });
   // 正文末尾那一格：先是整理那一块，合完换成结果那一行
   // 进出照「动效」的占地方的一块（`unfold`：从 0 长出来、收回去；2026-10-20 项目主人：出现和消失没有过渡动画）
@@ -114,6 +115,7 @@ async function dream(ctx, words) {
   const mount = () => {
     if (unmount) return;
     unmount = ctx.slots.mount('chat.tail', { id: `memory-dream-${session}`, render: () => box }) ?? (() => {});
+    card.show();
     shown();
     ctx.chat?.reveal?.();
     requestAnimationFrame(() => requestAnimationFrame(() => unfold(box, true)));

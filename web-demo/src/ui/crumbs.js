@@ -54,17 +54,20 @@ export class BackButton {
   constructor(open) {
     this.open = open;
     this.to = /** @type {string|null} */ (null);
+    /** 不是回派它的会话、另给去处的（整理会话：回到打开它之前的地方） @type {(() => void)|null} */
+    this.run = null;
     this.label = h('span.back-label', t('crumbs.back'));
     this.el = h('div.back-row', { hidden: true },
-      h('button.back-button', { type: 'button', onclick: () => { if (this.to) this.open(this.to); } }, icon('arrow-left'), this.label));
+      h('button.back-button', { type: 'button', onclick: () => { if (this.run) this.run(); else if (this.to) this.open(this.to); } }, icon('arrow-left'), this.label));
   }
 
   /**
-   * 照派它的那个会话画；主会话（没有派它的）藏起来。
-   * @param {{session: string, title: string|null}|null} parent
+   * 照派它的那个会话画；主会话（没有派它的）藏起来。带 `run` 的点了做它（整理会话回到打开它之前的地方），`title` 照样写在悬停提示里。
+   * @param {{session: string, title: string|null, run?: () => void}|null} parent
    */
   draw(parent) {
-    const to = parent?.session ?? null;
+    this.run = parent?.run ?? null;
+    const to = parent ? (parent.run ? `run:${parent.title ?? ''}` : parent.session) : null;
     const title = parent ? parent.title ?? t('sidebar.untitled') : '';
     const hint = t('crumbs.back_to', { title });
     const button = /** @type {HTMLElement} */ (this.el.firstChild);
