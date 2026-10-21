@@ -222,7 +222,10 @@ export class SettingsDialog {
     replace(this.nav, items);
   }
 
-  /** 点进一层（软件包的设置、软件后台页）：滑进去，页头写它的名字、左边返回箭头。 @param {string} title @param {() => any} render @param {{keep?: boolean, leave?: () => void}} [opts] */
+  /**
+   * 点进一层（软件包的设置、软件后台页）：滑进去，页头写它的名字、左边返回箭头；`bare` 的（里面的卡片已经写了名字）页头只写「返回」。
+   * @param {string} title @param {() => any} render @param {{keep?: boolean, leave?: () => void, bare?: boolean}} [opts]
+   */
   openSub(title, render, opts) {
     this.sub.open(title, render, this.body.scrollTop, opts);
     this.drawBody('push');
@@ -242,6 +245,7 @@ export class SettingsDialog {
     const scroll = this.body.scrollTop;
     if (this.query.trim()) this.sub.close();
     this.root.classList.toggle('has-sub', !!this.sub.page);
+    this.root.classList.toggle('is-bare-sub', !!this.sub.page?.bare);
     // 模型的详情挂在右边整栏上：换页、搜索时收掉，模型页自己再挂
     this.panel.querySelector('.set-drawer')?.remove();
     if (this.query.trim()) {
@@ -251,7 +255,7 @@ export class SettingsDialog {
       return;
     }
     if (this.sub.page) {
-      this.title.textContent = this.sub.page.title;
+      this.title.textContent = this.sub.page.bare ? '' : this.sub.page.title;
       // 画过一次就不重画的（软件后台页的框）：别处改了配置、重读完也不动它
       if (this.sub.page.keep && this.sub.page.shown && !dir) return;
       swap(this.body, this.sub.page.render(), dir, dir === 'push' ? 0 : scroll);

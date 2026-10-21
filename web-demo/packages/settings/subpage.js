@@ -11,16 +11,16 @@ export class Subpage {
   constructor() {
     /**
      * 开着的那一层：名字、画法、进去前列表滚到哪；`keep` 的画过一次就不重画（软件后台页的框：重画会把框挪出、挪进文档，页面整个重新载入），
-     * `leave` 是收掉时要做的；没开是 `null`
-     * @type {{title: string, render: () => any, scroll: number, keep: boolean, shown: boolean, leave: (() => void)|null}|null}
+     * `leave` 是收掉时要做的，`bare` 的页头不写名字、只写「返回」（里面的卡片已经写了名字）；没开是 `null`
+     * @type {{title: string, render: () => any, scroll: number, keep: boolean, shown: boolean, leave: (() => void)|null, bare: boolean}|null}
      */
     this.page = null;
   }
 
-  /** 进去：记下列表滚到哪。 @param {string} title @param {() => any} render @param {number} scroll @param {{keep?: boolean, leave?: () => void}} [opts] */
+  /** 进去：记下列表滚到哪。 @param {string} title @param {() => any} render @param {number} scroll @param {{keep?: boolean, leave?: () => void, bare?: boolean}} [opts] */
   open(title, render, scroll, opts = {}) {
     this.close();
-    this.page = { title, render, scroll, keep: !!opts.keep, shown: false, leave: opts.leave ?? null };
+    this.page = { title, render, scroll, keep: !!opts.keep, shown: false, leave: opts.leave ?? null, bare: !!opts.bare };
   }
 
   /** 回来：交回进去前列表滚到哪。 */

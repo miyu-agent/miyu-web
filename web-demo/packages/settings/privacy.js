@@ -86,7 +86,14 @@ export function privateGroup(dialog, name, items) {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); submit(); }
   });
   // 一直都在，没去掉过出厂项的灰着：有时有有时没有，框的宽度会跟着变（2026-10-21 项目主人）
-  const restore = h('button.set-btn', { type: 'button', disabled: !canRestore(remove), onclick: () => store([{ key: remove.key, unset: true }]) }, t('privacy.restore'));
+  const restore = h('button.set-btn', {
+    type: 'button', disabled: !canRestore(remove),
+    // 先弹窗问（2026-10-21 项目主人）：「确认重置私密目录列表至出厂状态吗？」，名字照组名
+    onclick: async (/** @type {Event} */ e) => {
+      if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('privacy.restore_ask', { name }), yes: t('privacy.restore'), no: t('privacy.cancel') }))) return;
+      store([{ key: remove.key, unset: true }]);
+    },
+  }, t('privacy.restore'));
   return h('section.set-group',
     h('h3.set-group-name', name),
     others.length ? h('div.set-rows', others) : null,

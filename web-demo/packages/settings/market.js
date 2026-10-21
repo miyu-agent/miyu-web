@@ -364,7 +364,7 @@ async function confirmAll(dialog) {
 /** 点进详情（同软件包的信息页，滑进来） @param {any} dialog @param {string} id */
 function openDetail(dialog, id) {
   const m = stateOf(dialog);
-  dialog.openSub(nameOf(m, id), () => detailPage(dialog, id));
+  dialog.openSub(nameOf(m, id), () => detailPage(dialog, id), { bare: true });
 }
 
 /**

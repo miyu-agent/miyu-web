@@ -307,7 +307,7 @@ export async function refresh(dialog, kind) {
 function openTool(dialog, item) {
   const kind = item.kind;
   const id = item.id;
-  dialog.openSub(item.title ?? item.name, () => toolDetail(dialog, kind, id));
+  dialog.openSub(item.title ?? item.name, () => toolDetail(dialog, kind, id), { bare: true });
 }
 
 /**
