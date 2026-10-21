@@ -1,7 +1,7 @@
 // @ts-check
 //! 「隐私与安全」页的私密目录、只禁写两组（蓝图 `web.md`「设置页」第 12b 条；核心施工 5-15 下、5-17）：加了的、去掉的默认项
 //! 两项并成一张表画（私密目录上面多一个总开关，关着的表灰掉）。表放在一个能滚的框里，顶上搜索；一行一个目录，出厂的带「出厂预设」，悬停露删除（先弹窗问）；框下面写目录的框
-//! （一行一个，能一次加好几个），右边「添加」「恢复默认」。改一下存一下，拒了的照核心的话写在框下面。
+//! （一行一个，能一次加好几个），右边上下两个按钮「添加」「重置」。改一下存一下，拒了的照核心的话写在框下面。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { tilde } from '../../src/lib/format.js';
@@ -85,9 +85,8 @@ export function privateGroup(dialog, name, items) {
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); submit(); }
   });
-  const restore = canRestore(remove)
-    ? h('button.set-btn', { type: 'button', onclick: () => store([{ key: remove.key, unset: true }]) }, t('privacy.restore'))
-    : null;
+  // 一直都在，没去掉过出厂项的灰着：有时有有时没有，框的宽度会跟着变（2026-10-21 项目主人）
+  const restore = h('button.set-btn', { type: 'button', disabled: !canRestore(remove), onclick: () => store([{ key: remove.key, unset: true }]) }, t('privacy.restore'));
   return h('section.set-group',
     h('h3.set-group-name', name),
     others.length ? h('div.set-rows', others) : null,
