@@ -78,6 +78,7 @@
       "default": [
         "general",
         "user",
+        "privacy",
         "models",
         "usage",
         "presets",
@@ -162,7 +163,8 @@
         "skills": "sparkles",
         "scripts": "square-terminal",
         "mcp": "plug",
-        "market": "download"
+        "market": "download",
+        "privacy": "shield"
       },
       "name": {
         "zh": "分页的图标（Lucide 的名字；没配的用 sliders-horizontal）"
@@ -652,6 +654,15 @@
         "replaces": "替换",
         "replaces_version": "替换已装的 {version}",
         "installing": "正在安装…"
+      },
+      "privacy": {
+        "shipped": "出厂",
+        "drop": "不再藏",
+        "add_hint": "例如 ~/.ssh 或 /srv/keys",
+        "add": "添加",
+        "already": "已经在列表里了",
+        "restore": "恢复默认",
+        "empty": "没有私密目录"
       }
     },
     "en": {
@@ -1135,6 +1146,15 @@
         "replaces": "Replaces",
         "replaces_version": "Replaces installed {version}",
         "installing": "Installing…"
+      },
+      "privacy": {
+        "shipped": "Built-in",
+        "drop": "Stop hiding",
+        "add_hint": "e.g. ~/.ssh or /srv/keys",
+        "add": "Add",
+        "already": "Already in the list",
+        "restore": "Restore defaults",
+        "empty": "No private folders"
       }
     },
     "ja": {
@@ -1618,6 +1638,15 @@
         "replaces": "置き換え",
         "replaces_version": "インストール済みの {version} を置き換え",
         "installing": "インストール中…"
+      },
+      "privacy": {
+        "shipped": "既定",
+        "drop": "隠すのをやめる",
+        "add_hint": "例：~/.ssh や /srv/keys",
+        "add": "追加",
+        "already": "すでに一覧にあります",
+        "restore": "既定に戻す",
+        "empty": "プライベートフォルダはありません"
       }
     }
   },
