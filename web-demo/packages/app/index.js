@@ -86,6 +86,10 @@ export function apply(ctx) {
     title: (id) => app.titleOf(id),
     /** 派它的会话（子代理的会话有，主会话是 `null`） */
     parentOf: (id) => app.parentOf(id),
+    /** 整理会话的 `dream`（核心 D-1 下：`{persona | session, manual, from?}`），别的会话是 `null` */
+    dream: (id) => app.dreamOf(id),
+    /** 整理会话的会话表那一项（`last_active`、`tokens`、`busy`……）：记忆页的「整理记录」 */
+    dreams: () => [...(app.store.index.dreams?.values() ?? [])],
     /** 项目的十二种颜色（存的是浅色那一种）、一种颜色照现在的深浅画成什么（新建项目、项目设置那一个窗口，软件包 setup） */
     projectPalette: () => PALETTE,
     projectColor: (color) => colorOf(color, !!ctx.theme?.dark()),

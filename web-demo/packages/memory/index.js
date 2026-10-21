@@ -8,6 +8,7 @@ import { h } from '../../src/lib/dom.js';
 import { unfold, leave } from '../../src/lib/motion.js';
 import { MemoryPage } from './page.js';
 import { DreamCard, SETTLE_MS } from './dream.js';
+import { batchNode, answerNode } from './dream-view.js';
 
 /** 核心多久还没回才把那一块挂出来（没有要整理的很快就回，不闪一下；真开始合了当场挂） */
 const SHOW_AFTER_MS = 500;
@@ -29,6 +30,10 @@ export function apply(ctx) {
   ctx.on('message.sent', (/** @type {any} */ e) => {
     if (running && running.session === e?.session) running.background();
   });
+  // 整理会话里的一批（蓝图「记忆页」第 13a 条第 3 条）：对话区照条目把这两样交过来
+  const t = (/** @type {string} */ key, /** @type {any} */ fields) => ctx.text(key, fields);
+  ctx.slots.mount('chat.item', { id: 'memory-dream-batch', key: 'dream.batch', render: (/** @type {any} */ it) => batchNode(t, it) });
+  ctx.slots.mount('chat.item', { id: 'memory-dream-answer', key: 'dream.answer', render: (/** @type {any} */ it) => answerNode(t, it) });
   ctx.provide('memory', { open });
 }
 
@@ -76,7 +81,7 @@ async function dream(ctx, words) {
     if (!session) return;
   }
   const where = { session };
-  const card = new DreamCard(ctx, new Map(), { stop: () => stop(ctx) });
+  const card = new DreamCard(ctx, new Map(), { stop: () => stop(ctx), open: (id) => ctx.chat?.open?.(id) });
   // 正文末尾那一格：先是整理那一块，合完换成结果那一行
   // 进出照「动效」的占地方的一块（`unfold`：从 0 长出来、收回去；2026-10-20 项目主人：出现和消失没有过渡动画）
   const inner = h('div.unfold-inner', card.el);

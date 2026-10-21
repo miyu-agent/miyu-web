@@ -5728,5 +5728,89 @@
     "select": [
       ".mk-link code"
     ]
+  },
+  "dream.batch-row": {
+    "zh": "整理会话里记忆模块交来的一批（那一行和展开的原文）",
+    "select": [
+      ".dream-batch-row"
+    ]
+  },
+  "dream.batch-head": {
+    "zh": "整理会话里一批的那一行（记忆模块 · 第 N 批）",
+    "select": [
+      ".dream-batch-head"
+    ]
+  },
+  "dream.answer": {
+    "zh": "整理会话里她的回答（一条条决定）",
+    "select": [
+      ".dream-answer"
+    ]
+  },
+  "dream.answer-foot": {
+    "zh": "整理会话里她的回答下面那一行（原文）",
+    "select": [
+      ".dream-answer-foot"
+    ]
+  },
+  "dream.raw-button": {
+    "zh": "整理会话里的「原文」按钮",
+    "select": [
+      ".dream-raw-btn"
+    ]
+  },
+  "dream.raw": {
+    "zh": "整理会话里点开的原文",
+    "select": [
+      ".dream-raw"
+    ]
+  },
+  "dream.summary-button": {
+    "zh": "整理会话里「摘要写好了」那一行",
+    "select": [
+      ".dream-summary-btn"
+    ]
+  },
+  "dream.summary-text": {
+    "zh": "整理会话里点开的摘要",
+    "select": [
+      ".dream-summary-text"
+    ]
+  },
+  "mem.history": {
+    "zh": "记忆页「整理记录」的小窗里的列表",
+    "select": [
+      ".mem-history"
+    ]
+  },
+  "mem.history-row": {
+    "zh": "整理记录里的一趟",
+    "select": [
+      ".mem-history-row"
+    ]
+  },
+  "mem.history-when": {
+    "zh": "整理记录一趟的时刻",
+    "select": [
+      ".mem-history-when"
+    ]
+  },
+  "mem.history-how": {
+    "zh": "整理记录一趟是手动还是自动、结果",
+    "select": [
+      ".mem-history-how, .mem-history-result"
+    ]
+  },
+  "mem.history-busy": {
+    "zh": "整理记录里正在跑的那一趟",
+    "select": [
+      ".mem-history-busy"
+    ]
+  },
+  "dream.open": {
+    "zh": "整理那一块头一行的「查看过程」",
+    "select": [
+      ".dream-open"
+    ]
   }
 }

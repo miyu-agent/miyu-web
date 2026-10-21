@@ -29,7 +29,10 @@ export class MemoryPage {
     this.el.addEventListener('set-dismiss', () => {
       if (this.adding) this.closeAdd();
       else if (this.open) this.closeDetail();
+      else if (this.history) this.closeHistory();
     });
+    /** 「整理记录」的小窗开着（蓝图第 13a 条第 4 条） */
+    this.history = false;
     /** @type {any} */
     this.kit = null;
     /** @type {{persona: string, name: string}[]} */
@@ -187,7 +190,7 @@ export class MemoryPage {
     if (!this.kit) return;
     // 「记一条」的小窗里写着字的：不重画，免得冲掉（收起以后再画）
     if (this.adding && /** @type {HTMLTextAreaElement|null} */ (this.el.querySelector('.mem-add textarea'))?.value.trim()) return;
-    if (this.adding || this.open) this.el.dataset.setDismiss = '1';
+    if (this.adding || this.open || this.history) this.el.dataset.setDismiss = '1';
     else delete this.el.dataset.setDismiss;
     // 正在详情里写着的：不重画那一张，免得冲掉写了一半的字；那一条在别处没了的写一行
     if (this.open && this.el.querySelector('.mem-detail')) {
@@ -198,7 +201,7 @@ export class MemoryPage {
       if (editing) return;
     }
     // 一条的详情在列表上面弹一个小窗（2026-10-20 项目主人：改成浮动窗口），列表留在后面
-    replace(this.el, this.problem ? this.problemCard() : [this.page(), this.open ? this.detail() : null]);
+    replace(this.el, this.problem ? this.problemCard() : [this.page(), this.open ? this.detail() : this.history ? this.historyPop() : null]);
   }
 
   problemCard() {
@@ -254,7 +257,7 @@ export class MemoryPage {
     const clear = h('button.set-btn.is-danger.mem-clear', { type: 'button', disabled: !c.all, onclick: (/** @type {Event} */ e) => this.clear(/** @type {Element} */ (e.currentTarget)) },
       icon('trash-2'), t('clear'));
     return h('div.mem-list-page',
-      h('div.mem-tools', picker, h('label.mem-find', icon('search'), find), dream, add),
+      h('div.mem-tools', picker, h('label.mem-find', icon('search'), find), dream, this.historyButton(), add),
       this.tidyingLine(),
       this.card?.el ?? null,
       chips,
@@ -267,6 +270,53 @@ export class MemoryPage {
           this.closeAdd();
         },
       }, this.addForm()) : null);
+  }
+
+  /** 「整理记录」：整理旁边一个图标按钮 */
+  historyButton() {
+    const label = this.t('dream.view.history');
+    return h('button.icon-button.set-btn.mem-history', { type: 'button', title: label, 'aria-label': label, disabled: !this.persona, onclick: () => { this.history = true; this.draw(); } }, icon('clock'));
+  }
+
+  /**
+   * 「整理记录」的小窗：这一份最近的整理会话（会话表里另放的那一份，`dream.persona` 是这一份的），新的在前；一趟一行，点了打开那个会话。
+   * 核心给了结果的（`dream.result`）写「改 N · 删 N」。
+   */
+  historyPop() {
+    const t = this.t;
+    const mine = (this.ctx.chat?.dreams?.() ?? [])
+      .filter((/** @type {any} */ e) => e?.dream?.persona === this.persona)
+      .sort((/** @type {any} */ a, /** @type {any} */ b) => String(b.last_active ?? '').localeCompare(String(a.last_active ?? '')));
+    const when = (/** @type {string|undefined} */ at) => {
+      const d = at ? new Date(at) : null;
+      return d && !Number.isNaN(d.getTime()) ? d.toLocaleString(document.documentElement.lang || undefined, { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+    };
+    const rows = mine.length ? mine.map((/** @type {any} */ e) => {
+      const r = e.dream?.result;
+      const result = r && typeof r === 'object' ? t('dream.view.result', { revised: r.revised ?? 0, retired: r.retired ?? 0 }) : null;
+      return h('button.mem-history-row', { type: 'button', onclick: () => this.openSession(e.session) },
+        h('span.mem-history-when', when(e.last_active)),
+        h('span.mem-history-how', t(e.dream?.manual ? 'dream.view.manual' : 'dream.view.auto')),
+        e.busy ? h('span.mem-history-busy', icon('loader-circle'), t('dream.view.running')) : result ? h('span.mem-history-result', result) : null,
+        icon('chevron-right'));
+    }) : h('p.mem-empty', t('dream.view.history_empty'));
+    return h('div.mem-modal', { onclick: (/** @type {Event} */ e) => { if (e.target === e.currentTarget) this.closeHistory(); } },
+      h('div.mem-pop', { role: 'dialog', 'aria-modal': 'true', 'aria-label': t('dream.view.history') },
+        h('div.mem-pop-head', h('strong', t('dream.view.history')),
+          h('button.icon-button.mem-pop-close', { type: 'button', title: t('close'), 'aria-label': t('close'), onclick: () => this.closeHistory() }, icon('x'))),
+        h('div.mem-history', rows)));
+  }
+
+  closeHistory() {
+    this.history = false;
+    this.fadeModal();
+  }
+
+  /** 关上设置，在对话区打开一个整理会话（「查看过程」、整理记录的一行） @param {string} id */
+  openSession(id) {
+    this.history = false;
+    this.ctx.settings?.close?.();
+    this.ctx.chat?.open?.(id);
   }
 
   /** 收起「记一条」的小窗（写着的字不要了） */
@@ -487,6 +537,8 @@ export class MemoryPage {
     // 「停止」：叫停这一份这时人叫的整理（核心 R-23 的 `memory.dream_stop`）
     const card = new DreamCard(this.ctx, new Map(this.list.map((m) => [m.id, m.text])), {
       stop: () => this.ctx.core.request('memory.dream_stop', { persona }).then(() => {}, (/** @type {any} */ err) => { this.say(this.refusal(err)); }),
+      // 「查看过程」：关上设置，在对话区打开这一趟的整理会话
+      open: (id) => this.openSession(id),
     });
     this.card = card;
     this.draw();

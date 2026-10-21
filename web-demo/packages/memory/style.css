@@ -167,3 +167,28 @@
 .mem-kw-chip button:hover { background: var(--surface-3); color: var(--text); }
 .mem-kw-chip .icon { width: calc(11px * var(--space)); height: calc(11px * var(--space)); }
 .mem-kw-input { flex: 1; min-width: 8em; border: 0; outline: 0; background: transparent; color: var(--text); font: calc(13px * var(--text-scale)) var(--font-ui); }
+
+/* 整理会话里的一批（蓝图「记忆页」第 13a 条第 3 条）：记忆模块交来的那一句收成一行，她的回答写成一条条决定；「原文」点开看全文 */
+.dream-batch-row { margin: calc(10px * var(--space)) 0 calc(4px * var(--space)); }
+.dream-batch-head, .dream-answer-foot { display: flex; align-items: center; gap: calc(8px * var(--space)); color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
+.dream-batch-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dream-raw-btn { flex: none; padding: 0 calc(6px * var(--space)); border: 0; border-radius: var(--r-5); background: none; color: var(--text-faint); font: inherit; cursor: pointer; }
+.dream-raw-btn:hover, .dream-raw-btn.is-on { background: var(--surface-2); color: var(--text-soft); }
+.dream-raw { max-height: 320px; margin: calc(6px * var(--space)) 0 0; padding: calc(8px * var(--space)) calc(10px * var(--space)); overflow: auto; border-radius: var(--r-8); background: var(--surface-2); color: var(--text-soft); font: calc(12px * var(--text-scale)) / 1.5 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.dream-answer { margin: calc(4px * var(--space)) 0 calc(6px * var(--space)); }
+.dream-answer .dream-line { animation: none; }
+.dream-answer-foot { margin-top: calc(2px * var(--space)); }
+.dream-summary-btn { width: 100%; padding: 0; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+.dream-summary-text { margin: 0 0 calc(6px * var(--space)) calc(44px * var(--space)); color: var(--text-soft); font-size: calc(13px * var(--text-scale)); line-height: 1.6; }
+/* 「整理记录」的小窗：一趟一行（蓝图「记忆页」第 13a 条第 4 条） */
+.mem-history { display: grid; gap: calc(2px * var(--space)); max-height: 420px; padding: calc(4px * var(--space)) calc(10px * var(--space)) calc(12px * var(--space)); overflow: auto; }
+.mem-history-row { display: flex; align-items: center; gap: calc(10px * var(--space)); width: 100%; padding: calc(8px * var(--space)) calc(10px * var(--space)); border: 0; border-radius: var(--r-8); background: none; color: var(--text); font: calc(13px * var(--text-scale)) var(--font-ui); text-align: left; cursor: pointer; }
+.mem-history-row:hover { background: var(--surface-2); }
+.mem-history-when { font-variant-numeric: tabular-nums; }
+.mem-history-how, .mem-history-result { color: var(--text-faint); }
+.mem-history-busy { display: inline-flex; align-items: center; gap: calc(4px * var(--space)); color: var(--text-soft); }
+.mem-history-busy .icon { animation: set-spin calc(0.9s * var(--motion-scale)) linear infinite; }
+.mem-history-row > .icon:last-child { margin-left: auto; color: var(--text-faint); }
+/* 卡片头一行的「查看过程」 */
+.dream-open { flex: none; margin-left: auto; padding: 0 calc(6px * var(--space)); border: 0; border-radius: var(--r-5); background: none; color: var(--accent); font: calc(12px * var(--text-scale)) var(--font-ui); cursor: pointer; }
+.dream-open:hover { background: var(--surface-2); }

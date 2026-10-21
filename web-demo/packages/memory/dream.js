@@ -4,7 +4,7 @@
 //! 合完了（或者叫停了，核心 R-22）收成结果那一行（`receipt`），点开列这一趟真正存下的。
 
 import { h, icon } from '../../src/lib/dom.js';
-import { clock } from '../../src/lib/format.js';
+import { clock, short } from '../../src/lib/format.js';
 import { DreamTrack } from './dream-model.js';
 
 /** 滚动区留几行（多的从上面拿掉：看得见的是五行，上面两行淡出） */
@@ -16,7 +16,8 @@ export class DreamCard {
   /**
    * @param {any} ctx `memory` 包的 ctx
    * @param {Map<string, string>} texts 记忆编号 → 正文（打开时读的那一份；滚动区照它写）
-   * @param {{stop?: () => Promise<void>}} [opts] 头一行右边的「停止」叫停这一趟（核心 R-23 的 `memory.dream_stop`；人叫的整理才有）
+   * @param {{stop?: () => Promise<void>, open?: (session: string) => void}} [opts] 头一行右边的「停止」叫停这一趟（核心 R-23 的 `memory.dream_stop`；人叫的整理才有）；
+   *   「查看过程」打开这一趟的整理会话（核心 D-2 上，蓝图第 13a 条第 1 条）
    */
   constructor(ctx, texts, opts = {}) {
     this.ctx = ctx;
@@ -54,8 +55,13 @@ export class DreamCard {
       },
     }, this.t('dream.stop')) : null;
     this.list = h('div.dream-feed-list');
+    /** 这一趟的整理会话（`merging`、回应的 `session`）：知道了才露「查看过程」 @type {string|null} */
+    this.session = null;
+    /** 「累计 8.7k」：照会话表这一项的 `tokens` */
+    this.spent = h('span.dream-time');
+    this.openBtn = opts.open ? h('button.dream-open', { type: 'button', hidden: true, onclick: () => { if (this.session) opts.open?.(this.session); } }, this.t('dream.view.open'), ' ↗') : null;
     this.el = h('section.dream-card', { 'aria-live': 'polite' },
-      h('div.dream-head', this.title, this.batch, this.time, this.tally, this.stopBtn),
+      h('div.dream-head', this.title, this.batch, this.time, this.spent, this.tally, this.stopBtn, this.openBtn),
       // 整块都拿来写滚动的字（2026-10-20 项目主人：星星图不要了，区域都用来显示内容）
       h('div.dream-feed', this.list));
     // 进场的动画只放一次：记忆页每次重画都把这一块拿出来再放回去，CSS 动画会从头再放（看着闪一下；2026-10-20 项目主人：点整理、整理完卡片会闪）
@@ -69,7 +75,22 @@ export class DreamCard {
     ctx.mascot?.sleep?.(true);
     this.sync();
     // 用时每秒走一下（不再一帧一帧画）
-    this.timer = setInterval(() => { if (this.el.isConnected) this.clock(performance.now()); }, 250);
+    this.timer = setInterval(() => { if (this.el.isConnected) { this.clock(performance.now()); this.spend(); } }, 250);
+  }
+
+  /** 知道了这一趟在哪个整理会话里：露「查看过程」 @param {string|null|undefined} id */
+  setSession(id) {
+    if (!id || this.session === id) return;
+    this.session = id;
+    if (this.openBtn) this.openBtn.hidden = false;
+    this.spend();
+  }
+
+  /** 花了多少：会话表这一项的 `tokens`（会话表只给 tokens，不给钱：算不准的钱不显示） */
+  spend() {
+    const entry = this.session ? (this.ctx.chat?.dreams?.() ?? []).find((/** @type {any} */ d) => d.session === this.session) : null;
+    const n = typeof entry?.tokens === 'number' ? entry.tokens : 0;
+    this.spent.textContent = n ? this.t('dream.view.tokens', { n: short(n) }) : '';
   }
 
   /** 不要了：停掉计时；还睡着的叫醒 */
@@ -90,6 +111,8 @@ export class DreamCard {
    * @param {string} method @param {any} params
    */
   push(method, params) {
+    const e = method === 'memory.event' ? params?.event : null;
+    if (e?.kind === 'ext.memory.merging' && typeof e.body?.session === 'string') this.setSession(e.body.session);
     const lines = method === 'memory.event' ? this.track.logged(params?.event) : method === 'memory.dreaming' ? this.track.dreaming(params) : [];
     for (const line of lines) this.say(line);
     if (lines.length || method === 'memory.event') this.sync();
@@ -104,6 +127,7 @@ export class DreamCard {
     this.got = got ?? {};
     this.stopped = got?.stopped === true;
     this.doneAt = performance.now();
+    this.setSession(got?.session);
     this.stopBtn?.remove();
     setTimeout(() => this.wake(), 450);
     this.title.textContent = this.t(this.stopped ? 'dream.stopped_title' : 'dream.done');

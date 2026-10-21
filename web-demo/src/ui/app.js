@@ -785,10 +785,21 @@ export class App {
    */
   titleOf(id) {
     if (isGallery(id)) return this.gallery?.title ?? null;
+    // 整理会话：核心不起标题，写「整理记忆 · 人格名」（会话那一间的写那个会话的标题；蓝图「记忆页」第 13a 条第 2 条）
+    const dream = this.dreamOf(id);
+    if (dream) {
+      const name = dream.session ? this.titleOf(dream.session) : dream.persona && dream.persona !== '_none' ? this.ctx.personas?.personaName?.(dream.persona) ?? dream.persona : null;
+      return name ? t('dream_title', { name }) : t('dream_title_bare');
+    }
     const parent = this.parentOf(id);
     const kid = parent ? this.kids(parent).find((k) => k.session === id) : null;
     if (kid) return kid.title;
     return this.store.summary(id).title;
+  }
+
+  /** 整理会话的 `dream`（`{persona | session, manual, from?}`，核心 D-1 下；会话表里另放的那一份）；别的会话是 `null` @param {string|null} id */
+  dreamOf(id) {
+    return id ? this.store.index.dreams?.get(id)?.dream ?? null : null;
   }
 
   /** 挂在一个会话下面的子代理的会话，一层层往下（照派它的会话的事件，`lib/jobs.js`）；同一个不算两遍。 */
@@ -1020,7 +1031,7 @@ export class App {
     const parent = this.current ? this.store.index.get(this.current)?.parent ?? null : null;
     const again = this.recapsAgain.get(this.current ?? '') ?? [];
     // 条目、会话状态换成正文（核心 9-8，蓝图「照条目画」）
-    const view = withLocalRecaps(itemsOf(s?.view.list ?? [], s?.view.status ?? null, { account: this.ext.account, parent }), again);
+    const view = withLocalRecaps(itemsOf(s?.view.list ?? [], s?.view.status ?? null, { account: this.ext.account, parent, dream: !!this.dreamOf(this.current) }), again);
     this.chat.setCompacting(s ? compactingOf(s.view.list, s.view.status) : null, this.current);
     // 先照空不空摆好输入框（居中时对话区没有高度），再画对话：不然第一句话照 0 高算停在哪，被顶到视口上面
     this.centerIfEmpty(!this.current);

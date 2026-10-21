@@ -25,7 +25,8 @@ export const seqOf = (id) => Number.parseInt(String(id).replace(/^[a-z]+/, ''), 
 const RUNNING = new Set(['preparing', 'running']);
 
 /**
- * @typedef {{account?: string|null, parent?: string|null}} Options 这个页面登录的账号（自己说的话不写是谁）；这个会话是子会话的，派它的会话
+ * @typedef {{account?: string|null, parent?: string|null, dream?: boolean}} Options 这个页面登录的账号（自己说的话不写是谁）；这个会话是子会话的，派它的会话；
+ *   是整理会话的（核心 D-2 上）：记忆模块交来的那一句、她的回答交给记忆包画（挂载位 `chat.item` 的 `dream.batch`、`dream.answer`）
  */
 
 /**
@@ -42,9 +43,20 @@ export function itemsOf(entries, status, opts = {}) {
   const queued = [];
   /** 每一轮来过她的条目（不是你的话）：开轮的那一句、三个球照它 */
   const spoke = new Set();
+  /** 整理会话：第几批、每一轮记忆模块交来的原文（她的回答照它把编号写成正文） */
+  let batch = 0;
+  /** @type {Map<number, string>} */
+  const asked = new Map();
   for (const e of shown) {
     switch (e.kind) {
       case 'user': {
+        // 整理会话里记忆模块交来的一批（蓝图「记忆页」第 13a 条）：收成一行，原文能点开
+        if (opts.dream && e.from?.kind === 'module') {
+          batch += 1;
+          if (e.turn != null) asked.set(e.turn, e.text ?? '');
+          items.push({ type: 'note', key: e.id, seq: seqOf(e.id), turn: e.turn ?? null, slot: 'dream.batch', batch, text: e.text ?? '' });
+          break;
+        }
         // 模块替她开的一轮（长期目标的续轮）：一行小字，不当你的话（2026-10-12 项目主人定）
         if (e.from?.kind === 'module') {
           items.push({ ...moduleNote(e), seq: seqOf(e.id) });
@@ -57,6 +69,11 @@ export function itemsOf(entries, status, opts = {}) {
       }
       case 'reply':
         spoke.add(e.turn);
+        // 整理会话里她的回答（一段 JSON）：写成一条条决定，原文能点开
+        if (opts.dream) {
+          items.push({ type: 'note', key: e.id, turn: e.turn ?? null, slot: 'dream.answer', text: e.text ?? '', streaming: !!e.open, request: asked.get(e.turn) ?? '' });
+          break;
+        }
         // 这一轮是哪个人格回的（核心 70d6ff7d，无人格是 `null`）：她那一块的头照它画；老核心没有这一格的不带
         items.push({ type: 'reply', key: e.id, turn: e.turn ?? null, text: e.text ?? '', streaming: !!e.open, ...('persona' in e ? { persona: e.persona ?? null } : {}) });
         break;

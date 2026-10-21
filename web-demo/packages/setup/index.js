@@ -177,7 +177,8 @@ export function apply(ctx) {
     }
     row.hidden = true;
     menu.close();
-    ctx.composer.lock(null);
+    // 整理会话（核心 D-2 上）：只看，不能说话（蓝图「记忆页」第 13a 条第 2 条）
+    ctx.composer.lock(chat.dream?.(session) ? t('dream_readonly') : null);
     const persona = chat.persona(session);
     const preset = chat.preset(session);
     // 在这个会话自己的默认工作区里的写「默认工作区」，悬停看完整的（2026-10-20 项目主人：一个会话一个子目录，那串路径看不出意思）
