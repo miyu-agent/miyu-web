@@ -935,18 +935,6 @@
       ".mem-more"
     ]
   },
-  "mem.foot": {
-    "zh": "记忆页：底下一行",
-    "select": [
-      ".mem-foot"
-    ]
-  },
-  "mem.clear": {
-    "zh": "记忆页：清除",
-    "select": [
-      ".mem-clear"
-    ]
-  },
   "mem.add": {
     "zh": "记一条",
     "select": [
@@ -5055,6 +5043,690 @@
     "zh": "记忆页：关键词写字的地方",
     "select": [
       ".mem-kw-input"
+    ]
+  },
+  "kb.find": {
+    "zh": "知识库：find",
+    "select": [
+      ".kb-find"
+    ]
+  },
+  "kb.find-input": {
+    "zh": "知识库：find input",
+    "select": [
+      ".kb-find-input"
+    ]
+  },
+  "kb.empty": {
+    "zh": "知识库：empty",
+    "select": [
+      ".kb-empty"
+    ]
+  },
+  "kb.card": {
+    "zh": "知识库：card",
+    "select": [
+      ".kb-card"
+    ]
+  },
+  "kb.card-icon": {
+    "zh": "知识库：card icon",
+    "select": [
+      ".kb-card-icon"
+    ]
+  },
+  "kb.card-name": {
+    "zh": "知识库：card name",
+    "select": [
+      ".kb-card-name"
+    ]
+  },
+  "kb.card-desc": {
+    "zh": "知识库：card desc",
+    "select": [
+      ".kb-card-desc"
+    ]
+  },
+  "kb.card-meta": {
+    "zh": "知识库：card meta",
+    "select": [
+      ".kb-card-meta"
+    ]
+  },
+  "kb.auto": {
+    "zh": "知识库：auto",
+    "select": [
+      ".kb-auto"
+    ]
+  },
+  "kb.hit": {
+    "zh": "知识库：hit",
+    "select": [
+      ".kb-hit"
+    ]
+  },
+  "kb.hit-head": {
+    "zh": "知识库：hit head",
+    "select": [
+      ".kb-hit-head"
+    ]
+  },
+  "kb.snippet": {
+    "zh": "知识库：snippet",
+    "select": [
+      ".kb-snippet"
+    ]
+  },
+  "kb.plain": {
+    "zh": "知识库：plain",
+    "select": [
+      ".kb-plain"
+    ]
+  },
+  "kb.modal": {
+    "zh": "新建",
+    "select": [
+      ".kb-modal"
+    ]
+  },
+  "kb.create": {
+    "zh": "进出同设置里别的小窗",
+    "select": [
+      ".kb-create"
+    ]
+  },
+  "kb.tab": {
+    "zh": "知识库：tab",
+    "select": [
+      ".kb-tab"
+    ]
+  },
+  "kb.head": {
+    "zh": "下沿 10px 羽化",
+    "select": [
+      ".kb-head"
+    ]
+  },
+  "set.main": {
+    "zh": "拖文件进来",
+    "select": [
+      ".set-main"
+    ]
+  },
+  "kb.dropping": {
+    "zh": "拖进来淡出来、拖走、松手淡掉",
+    "select": [
+      ".kb-dropping"
+    ]
+  },
+  "kb.files-title": {
+    "zh": "知识库：files title",
+    "select": [
+      ".kb-files-title"
+    ]
+  },
+  "kb.file-find": {
+    "zh": "文件列表那一行的小搜索框",
+    "select": [
+      ".kb-file-find"
+    ]
+  },
+  "kb.file-find-input": {
+    "zh": "知识库：file find input",
+    "select": [
+      ".kb-file-find-input"
+    ]
+  },
+  "kb.back": {
+    "zh": "知识库：back",
+    "select": [
+      ".kb-back"
+    ]
+  },
+  "kb.head-id": {
+    "zh": "知识库：head id",
+    "select": [
+      ".kb-head-id"
+    ]
+  },
+  "kb.doc": {
+    "zh": "知识库：doc",
+    "select": [
+      ".kb-doc"
+    ]
+  },
+  "kb.doc-path": {
+    "zh": "知识库：doc path",
+    "select": [
+      ".kb-doc-path"
+    ]
+  },
+  "kb.guide": {
+    "zh": "知识库：guide",
+    "select": [
+      ".kb-guide"
+    ]
+  },
+  "kb.tick": {
+    "zh": "知识库：tick",
+    "select": [
+      ".kb-tick"
+    ]
+  },
+  "kb.doc-count": {
+    "zh": "知识库：doc count",
+    "select": [
+      ".kb-doc-count"
+    ]
+  },
+  "kb.doc-icon": {
+    "zh": "知识库：doc icon",
+    "select": [
+      ".kb-doc-icon"
+    ]
+  },
+  "kb.doc-note": {
+    "zh": "知识库：doc note",
+    "select": [
+      ".kb-doc-note"
+    ]
+  },
+  "kb.doc-meta": {
+    "zh": "知识库：doc meta",
+    "select": [
+      ".kb-doc-meta"
+    ]
+  },
+  "kb.remove": {
+    "zh": "知识库：remove",
+    "select": [
+      ".kb-remove"
+    ]
+  },
+  "kb.reindex": {
+    "zh": "知识库：reindex",
+    "select": [
+      ".kb-reindex"
+    ]
+  },
+  "kb.read-card": {
+    "zh": "看原文",
+    "select": [
+      ".kb-read-card"
+    ]
+  },
+  "kb.doc-body": {
+    "zh": "知识库：doc body",
+    "select": [
+      ".kb-doc-body"
+    ]
+  },
+  "kb.found": {
+    "zh": "知识库：found",
+    "select": [
+      ".kb-found"
+    ]
+  },
+  "kb.pager-at": {
+    "zh": "知识库：pager at",
+    "select": [
+      ".kb-pager-at"
+    ]
+  },
+  "kb.problem": {
+    "zh": "知识库：problem",
+    "select": [
+      ".kb-problem"
+    ]
+  },
+  "kb.tile": {
+    "zh": "知识库：tile",
+    "select": [
+      ".kb-tile"
+    ]
+  },
+  "kb.index-busy": {
+    "zh": "知识库：index busy",
+    "select": [
+      ".kb-index-busy"
+    ]
+  },
+  "kb.index-bar": {
+    "zh": "知识库：index bar",
+    "select": [
+      ".kb-index-bar"
+    ]
+  },
+  "kb.sel-count": {
+    "zh": "知识库：sel count",
+    "select": [
+      ".kb-sel-count"
+    ]
+  },
+  "kb.sel-btn": {
+    "zh": "知识库：sel btn",
+    "select": [
+      ".kb-sel-btn"
+    ]
+  },
+  "kb.check": {
+    "zh": "多选时勾选框顶替图标那一格",
+    "select": [
+      ".kb-check"
+    ]
+  },
+  "set.ask": {
+    "zh": "设置里浮起来的小窗进出都是同一套",
+    "select": [
+      ".set-ask"
+    ]
+  },
+  "set.ask-card": {
+    "zh": "设置页：ask card",
+    "select": [
+      ".set-ask-card"
+    ]
+  },
+  "set.ask-text": {
+    "zh": "设置页：ask text",
+    "select": [
+      ".set-ask-text"
+    ]
+  },
+  "set.pinned": {
+    "zh": "设置页：pinned",
+    "select": [
+      ".set-pinned"
+    ]
+  },
+  "set.tool-id": {
+    "zh": "设置页：tool id",
+    "select": [
+      ".set-tool-id"
+    ]
+  },
+  "set.tool-note": {
+    "zh": "设置页：tool note",
+    "select": [
+      ".set-tool-note"
+    ]
+  },
+  "set.tool-value": {
+    "zh": "设置页：tool value",
+    "select": [
+      ".set-tool-value"
+    ]
+  },
+  "set.tool-code": {
+    "zh": "设置页：tool code",
+    "select": [
+      ".set-tool-code"
+    ]
+  },
+  "set.tool-skip": {
+    "zh": "设置页：tool skip",
+    "select": [
+      ".set-tool-skip"
+    ]
+  },
+  "set.tool-chip": {
+    "zh": "设置页：tool chip",
+    "select": [
+      ".set-tool-chip"
+    ]
+  },
+  "set.tool-tag": {
+    "zh": "设置页：tool tag",
+    "select": [
+      ".set-tool-tag"
+    ]
+  },
+  "set.tool-modal": {
+    "zh": "添加、编辑服务的小窗",
+    "select": [
+      ".set-tool-modal"
+    ]
+  },
+  "set.tool-pop": {
+    "zh": "设置页：tool pop",
+    "select": [
+      ".set-tool-pop"
+    ]
+  },
+  "set.tool-pop-head": {
+    "zh": "设置页：tool pop head",
+    "select": [
+      ".set-tool-pop-head"
+    ]
+  },
+  "set.tool-label": {
+    "zh": "设置页：tool label",
+    "select": [
+      ".set-tool-label"
+    ]
+  },
+  "set.tool-input": {
+    "zh": "设置页：tool input",
+    "select": [
+      ".set-tool-input"
+    ]
+  },
+  "set.tool-timeout": {
+    "zh": "设置页：tool timeout",
+    "select": [
+      ".set-tool-timeout"
+    ]
+  },
+  "set.tool-error": {
+    "zh": "设置页：tool error",
+    "select": [
+      ".set-tool-error"
+    ]
+  },
+  "set.tool-state": {
+    "zh": "运行中前面一个绿点",
+    "select": [
+      ".set-tool-state"
+    ]
+  },
+  "set.tool-icon": {
+    "zh": "设置页：tool icon",
+    "select": [
+      ".set-tool-icon"
+    ]
+  },
+  "set.tool-count": {
+    "zh": "设置页：tool count",
+    "select": [
+      ".set-tool-count"
+    ]
+  },
+  "set.tool-del": {
+    "zh": "设置页：tool del",
+    "select": [
+      ".set-tool-del"
+    ]
+  },
+  "set.tool-check": {
+    "zh": "设置页：tool check",
+    "select": [
+      ".set-tool-check"
+    ]
+  },
+  "mk.ups": {
+    "zh": "mk-ups",
+    "select": [
+      ".mk-ups"
+    ]
+  },
+  "mk.meta": {
+    "zh": "mk-meta",
+    "select": [
+      ".mk-meta"
+    ]
+  },
+  "mk.card": {
+    "zh": "mk-card",
+    "select": [
+      ".mk-card"
+    ]
+  },
+  "mk.version": {
+    "zh": "mk-version",
+    "select": [
+      ".mk-version"
+    ]
+  },
+  "mk.summary": {
+    "zh": "mk-summary",
+    "select": [
+      ".mk-summary"
+    ]
+  },
+  "mk.tag": {
+    "zh": "mk-tag",
+    "select": [
+      ".mk-tag"
+    ]
+  },
+  "mk.kinds-none": {
+    "zh": "mk-kinds-none",
+    "select": [
+      ".mk-kinds-none"
+    ]
+  },
+  "mk.installed": {
+    "zh": "mk-installed",
+    "select": [
+      ".mk-installed"
+    ]
+  },
+  "mk.action": {
+    "zh": "mk-action",
+    "select": [
+      ".mk-action"
+    ]
+  },
+  "mk.bar": {
+    "zh": "在装的那一个",
+    "select": [
+      ".mk-bar"
+    ]
+  },
+  "mk.problem": {
+    "zh": "mk-problem",
+    "select": [
+      ".mk-problem"
+    ]
+  },
+  "mk.skips": {
+    "zh": "mk-skips",
+    "select": [
+      ".mk-skips"
+    ]
+  },
+  "mk.offline": {
+    "zh": "mk-offline",
+    "select": [
+      ".mk-offline"
+    ]
+  },
+  "mk.why": {
+    "zh": "mk-why",
+    "select": [
+      ".mk-why"
+    ]
+  },
+  "mk.warn": {
+    "zh": "mk-warn",
+    "select": [
+      ".mk-warn"
+    ]
+  },
+  "mk.value": {
+    "zh": "mk-value",
+    "select": [
+      ".mk-value"
+    ]
+  },
+  "mk.ask": {
+    "zh": "全部升级的确认",
+    "select": [
+      ".mk-ask"
+    ]
+  },
+  "mk.ask-card": {
+    "zh": "mk-ask-card",
+    "select": [
+      ".mk-ask-card"
+    ]
+  },
+  "mk.ask-list": {
+    "zh": "mk-ask-list",
+    "select": [
+      ".mk-ask-list"
+    ]
+  },
+  "mk.ask-size": {
+    "zh": "mk-ask-size",
+    "select": [
+      ".mk-ask-size"
+    ]
+  },
+  "pv.body": {
+    "zh": "私密目录的总开关关着",
+    "select": [
+      ".pv-body"
+    ]
+  },
+  "pv.box": {
+    "zh": "pv-box",
+    "select": [
+      ".pv-box"
+    ]
+  },
+  "pv.find": {
+    "zh": "pv-find",
+    "select": [
+      ".pv-find"
+    ]
+  },
+  "pv.find-input": {
+    "zh": "pv-find-input",
+    "select": [
+      ".pv-find-input"
+    ]
+  },
+  "pv.row": {
+    "zh": "pv-row",
+    "select": [
+      ".pv-row"
+    ]
+  },
+  "pv.path": {
+    "zh": "pv-path",
+    "select": [
+      ".pv-path"
+    ]
+  },
+  "pv.tag": {
+    "zh": "pv-tag",
+    "select": [
+      ".pv-tag"
+    ]
+  },
+  "pv.drop": {
+    "zh": "pv-drop",
+    "select": [
+      ".pv-drop"
+    ]
+  },
+  "pv.input": {
+    "zh": "pv-input",
+    "select": [
+      ".pv-input"
+    ]
+  },
+  "mk.filter": {
+    "zh": "下载软件",
+    "select": [
+      ".mk-filter"
+    ]
+  },
+  "mk.kinds-n": {
+    "zh": "mk-kinds-n",
+    "select": [
+      ".mk-kinds-n"
+    ]
+  },
+  "mk.link": {
+    "zh": "mk-link",
+    "select": [
+      ".mk-link"
+    ]
+  },
+  "setup.feature-by": {
+    "zh": "人格、预设、工作区：feature by",
+    "select": [
+      ".setup-feature-by"
+    ]
+  },
+  "setup.feature-back": {
+    "zh": "人格、预设、工作区：feature back",
+    "select": [
+      ".setup-feature-back"
+    ]
+  },
+  "kb.page-mark": {
+    "zh": "知识库里的高亮",
+    "select": [
+      ".kb-page mark"
+    ]
+  },
+  "kb.tile-small": {
+    "zh": "知识库里的小字",
+    "select": [
+      ".kb-tile small"
+    ]
+  },
+  "kb.tile-b": {
+    "zh": "知识库里的粗体",
+    "select": [
+      ".kb-tile b"
+    ]
+  },
+  "kb.index-bar-i": {
+    "zh": "知识库里的图标位",
+    "select": [
+      ".kb-index-bar i"
+    ]
+  },
+  "mk.card-title-strong": {
+    "zh": "mk-card-title里的粗体",
+    "select": [
+      ".mk-card-title strong"
+    ]
+  },
+  "mk.detail-text-strong": {
+    "zh": "mk-detail-text里的粗体",
+    "select": [
+      ".mk-detail-text strong"
+    ]
+  },
+  "mk.detail-text-p": {
+    "zh": "mk-detail-text里的段落",
+    "select": [
+      ".mk-detail-text p"
+    ]
+  },
+  "mk.value-code": {
+    "zh": "mk-value里的行内代码",
+    "select": [
+      ".mk-value code"
+    ]
+  },
+  "mk.ask-card-strong": {
+    "zh": "mk-ask-card里的粗体",
+    "select": [
+      ".mk-ask-card strong"
+    ]
+  },
+  "mk.ask-list-li": {
+    "zh": "mk-ask-list里的列表的一项",
+    "select": [
+      ".mk-ask-list li"
+    ]
+  },
+  "mk.ask-list-code": {
+    "zh": "mk-ask-list里的行内代码",
+    "select": [
+      ".mk-ask-list code"
+    ]
+  },
+  "mk.link-code": {
+    "zh": "mk-link里的行内代码",
+    "select": [
+      ".mk-link code"
     ]
   }
 }
