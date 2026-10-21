@@ -317,3 +317,17 @@ export function maskedValue(v) {
 
 /** 一组键值（环境变量、请求头）在详情里写成一行：`KEY=••••••  KEY2={env:X}` @param {Record<string, any>|undefined} map */
 export const maskedPairs = (map) => Object.entries(map ?? {}).map(([k, v]) => `${k}=${maskedValue(v)}`).join('  ');
+
+/**
+ * 服务列出来了、核心没登记的（`mcp.list` 的 `skipped`）：工具是 `{tool, why}`（核心 X-37），提示词是 `{prompt, why}`（核心 X-39）。
+ * 交回几行（`name` 是服务那边的原名，没写名字的是空的）和有哪几种（`tools`、`prompts`、`both`；没有的交 `null`）。
+ * @param {any} skipped
+ * @returns {{kinds: 'tools'|'prompts'|'both'|null, rows: {name: string, prompt: boolean, why: string}[]}}
+ */
+export function skippedOf(skipped) {
+  const rows = (Array.isArray(skipped) ? skipped : []).filter((x) => x && typeof x === 'object')
+    .map((x) => ({ name: String(x.prompt ?? x.tool ?? ''), prompt: x.prompt != null && x.tool == null, why: String(x.why ?? '') }));
+  const prompts = rows.some((r) => r.prompt);
+  const tools = rows.some((r) => !r.prompt);
+  return { kinds: prompts && tools ? 'both' : prompts ? 'prompts' : tools ? 'tools' : null, rows };
+}

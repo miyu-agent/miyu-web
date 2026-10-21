@@ -495,6 +495,7 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .set-tool-skips { display: grid; gap: 6px; }
 .set-tool-skip { display: flex; align-items: center; gap: 8px; color: var(--text-faint); font-size: 12px; }
 .set-tool-chip { padding: 0 7px; border-radius: 6px; background: var(--surface-2); color: var(--text-soft); font: 11.5px/22px var(--mono); }
+.set-tool-tag { flex: none; padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line); color: var(--text-faint); font-size: 11px; }
 .set-pkg-card-meta .set-link { font-size: 12.5px; }
 
 /* 添加、编辑服务的小窗：设置框正中（设置框磨砂了，`position: fixed` 照设置框那一块摆），后面淡遮罩 */

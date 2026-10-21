@@ -12,7 +12,7 @@ import { openServerForm } from './mcp-form.js';
 import { confirmIn } from './confirm.js';
 import {
   skillItem, scriptItem, mcpItems, switchValue, featureId, loadingParams, SOURCES, inSource, sourceOf, toolMatch, homeDir, shortTool,
-  editable, commandLine, flip, range, maskedValue, maskedPairs,
+  editable, commandLine, flip, range, maskedValue, maskedPairs, skippedOf,
 } from './tool-model.js';
 
 /** 三页的图标 */
@@ -366,11 +366,14 @@ function toolDetail(dialog, kind, id) {
       rows.push(h('div.set-row.is-wide', h('div.set-text', h('div.set-name', h('span', t('tools.field.tools')))),
         h('div.set-tool-list', s.tools.map((/** @type {string} */ name) => h('code.set-tool-chip', shortTool(item.name, name))))));
     }
-    // 服务列出来了、核心没登记的工具（核心 X-37 的 `skipped`）：一个一行，写原名和为什么
-    if (Array.isArray(s.skipped) && s.skipped.length) {
-      rows.push(h('div.set-row.is-wide', h('div.set-text', h('div.set-name', h('span', t('tools.field.skipped'))), h('p.set-desc', t('tools.skipped_note'))),
-        h('div.set-tool-skips', s.skipped.map((/** @type {any} */ x) => h('div.set-tool-skip', h('code.set-tool-chip', String(x.tool ?? '')),
-          h('span', skippedWhy(t, x.why)))))));
+    // 服务列出来了、核心没登记的工具（核心 X-37 的 `skipped`）、提示词（核心 X-39）：一个一行，写原名和为什么，提示词的标一下
+    const skipped = skippedOf(s.skipped);
+    if (skipped.kinds) {
+      rows.push(h('div.set-row.is-wide', h('div.set-text', h('div.set-name', h('span', t(`tools.field.skipped_${skipped.kinds}`))), h('p.set-desc', t(`tools.skipped_note_${skipped.kinds}`))),
+        h('div.set-tool-skips', skipped.rows.map((x) => h('div.set-tool-skip',
+          x.name ? h('code.set-tool-chip', x.name) : null,
+          skipped.kinds === 'both' && x.prompt ? h('span.set-tool-tag', t('tools.skipped_prompt')) : null,
+          h('span', skippedWhy(t, x)))))));
     }
   }
   if (item.load) {
@@ -422,8 +425,8 @@ function serverActions(dialog, item) {
   return out;
 }
 
-/** 没登记的为什么（核心 X-37）：认得的写成话，别的照原样 @param {(k: string, f?: any) => string} t @param {any} why */
-function skippedWhy(t, why) {
-  const known = ['name_taken', 'parameters'];
-  return known.includes(why) ? t(`tools.skipped_why.${why}`) : String(why ?? '');
+/** 没登记的为什么（核心 X-37、X-39）：认得的写成话（提示词撞名另一句），别的照原样 @param {(k: string, f?: any) => string} t @param {{prompt: boolean, why: string}} x */
+function skippedWhy(t, { prompt, why }) {
+  if (why === 'name_taken' && prompt) return t('tools.skipped_why.prompt_taken');
+  return ['name', 'name_taken', 'parameters'].includes(why) ? t(`tools.skipped_why.${why}`) : why;
 }

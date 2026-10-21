@@ -194,3 +194,14 @@ test('mcp.list 交回的照原样填进编辑框，没改就原样交回 mcp.set
     assert.deepEqual(serverParams(formOf(s), s), { params: expect }, s.name);
   }
 });
+
+test('没登记的（mcp.list 的 skipped）：工具 {tool, why}（核心 X-37）、提示词 {prompt, why}（核心 X-39）都认，说有哪几种；没写名字的是空的', async () => {
+  const { skippedOf } = await import('../../packages/settings/tool-model.js');
+  assert.deepEqual(skippedOf(undefined), { kinds: null, rows: [] });
+  assert.equal(skippedOf([{ tool: 'a', why: 'parameters' }]).kinds, 'tools');
+  assert.equal(skippedOf([{ prompt: 'p', why: 'name_taken' }]).kinds, 'prompts');
+  assert.deepEqual(skippedOf([{ tool: '', why: 'name' }, { prompt: 'p', why: 'name_taken' }, null]), {
+    kinds: 'both',
+    rows: [{ name: '', prompt: false, why: 'name' }, { name: 'p', prompt: true, why: 'name_taken' }],
+  });
+});
