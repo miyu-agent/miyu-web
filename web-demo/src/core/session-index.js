@@ -17,6 +17,8 @@ export class SessionIndex {
     this.conn = conn;
     /** @type {Map<string, Entry>} */
     this.entries = new Map();
+    /** 整理记忆的会话（核心 D-1 下）：不进表，另放这里 @type {Map<string, any>} */
+    this.dreams = new Map();
     /** @type {Set<Change>} */
     this.listeners = new Set();
     /** 订阅着（核心有这个流）；退回读一次的是假 */
@@ -53,9 +55,10 @@ export class SessionIndex {
     this.replace(sessions ?? []);
   }
 
-  /** 整张表换上：没了的算删掉。 @param {Entry[]} list */
+  /** 整张表换上：没了的算删掉。整理记忆的会话（`kind: "dream"`，核心 D-1 下）另放，不进表。 @param {Entry[]} list */
   replace(list) {
-    const next = new Map(list.map((e) => [e.session, e]));
+    this.dreams = new Map(list.filter(isDream).map((e) => [e.session, e]));
+    const next = new Map(list.filter((e) => !isDream(e)).map((e) => [e.session, e]));
     const before = this.entries;
     this.entries = next;
     for (const [id, old] of before) if (!next.has(id)) this.emit(id, old, null);
@@ -82,12 +85,18 @@ export class SessionIndex {
     if (method !== 'sessions.changed' || !p?.session) return;
     const before = this.entries.get(p.session) ?? null;
     if (p.removed) {
+      this.dreams.delete(p.session);
       if (!before) return;
       this.entries.delete(p.session);
       this.emit(p.session, before, null);
       return;
     }
     if (!p.entry) return;
+    // 整理记忆的会话：另放（以后记忆页画整理的过程用），左栏、全部会话那一页不列
+    if (isDream(p.entry)) {
+      this.dreams.set(p.session, p.entry);
+      return;
+    }
     if (before) this.entries.set(p.session, p.entry);
     else this.entries = new Map([[p.session, p.entry], ...this.entries]);
     this.emit(p.session, before, p.entry);
@@ -95,6 +104,9 @@ export class SessionIndex {
 
   emit(id, before, after) { for (const fn of this.listeners) fn(id, before, after); }
 }
+
+/** 整理记忆的会话（核心 D-1 下：`session.list`、`sessions.changed` 的一项带 `kind: "dream"` 和 `dream`） @param {any} e */
+const isDream = (e) => e?.kind === 'dream';
 
 /** 两项一样（格照字母先后写出来比）。 */
 function same(a, b) {

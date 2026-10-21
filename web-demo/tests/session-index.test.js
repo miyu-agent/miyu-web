@@ -60,3 +60,17 @@ test('自己刚开的会话先记上一项，推送到了整项换掉；旧核�
   assert.deepEqual([old.index.live, old.calls], [false, ['subscribe:sessions', 'session.list']]);
   assert.equal(old.index.get('x')?.session, 'x');
 });
+
+test('整理记忆的会话（kind: "dream"，核心 D-1 下）不进表、另放；推来的也一样，删掉的从另放的那份拿掉', async () => {
+  const dream = { session: 'd1', kind: 'dream', dream: { persona: 'cat', session: null, manual: false, from: 'idle' } };
+  const f = fake([[{ session: 'a' }, dream]]);
+  await f.index.start();
+  assert.deepEqual([...f.index.entries.keys()], ['a']);
+  assert.deepEqual([...f.index.dreams.keys()], ['d1']);
+  f.push('sessions.changed', { session: 'd2', entry: { session: 'd2', kind: 'dream', dream: {} } });
+  assert.deepEqual([...f.index.entries.keys()], ['a']);
+  assert.deepEqual([...f.index.dreams.keys()], ['d1', 'd2']);
+  f.push('sessions.changed', { session: 'd1', removed: true });
+  assert.deepEqual([...f.index.dreams.keys()], ['d2']);
+  assert.deepEqual(f.changes.map((c) => c[0]), ['a'], '只报普通会话的变化');
+});
