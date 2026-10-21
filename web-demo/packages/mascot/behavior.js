@@ -65,6 +65,8 @@ export class Behavior {
     this.droopTimer = 0;
     /** 要去的一处（第 11 条） @type {Plan|null} */
     this.plan = null;
+    /** 露出来时在空中、落稳了再去看的互动点（编号） @type {string|null} */
+    this.later = null;
     /** 在别处待着：哪一处、待够了回家的计时 */
     this.away = /** @type {{id: string, timer: number}|null} */ (null);
     /** @type {number[]} */
@@ -382,6 +384,8 @@ export class Behavior {
   notice(s) {
     const b = this.body.at;
     const g = b?.ground;
+    // 在空中（框上的命令列表刚收起、正掉回输入框）：落稳了再看，那时它还露着的话
+    this.later = !g && !this.body.drag ? s.id : null;
     if (!b || !g || this.activity || this.body.act || this.body.drag || this.io.reduced() || this.plan || this.body.windup) return;
     const world = this.io.world?.();
     const stand = world ? standFor(s, world.platforms) : null;
@@ -463,6 +467,12 @@ export class Behavior {
       const on = this.body.at?.ground?.id;
       if (plan.kind === 'hotspot' && on === plan.stand) this.perform(plan);
       else if (on === plan.id) this.stay(plan.id, pick(c.visit.stay_ms));
+    }
+    if (moved.landed != null && this.later && this.body.standing()) {
+      const id = this.later;
+      this.later = null;
+      const spot = this.io.world?.()?.hotspots.find((x) => x.id === id);
+      if (spot) this.notice(spot);
     }
     if (moved.hung && plan) {
       this.plan = null;
