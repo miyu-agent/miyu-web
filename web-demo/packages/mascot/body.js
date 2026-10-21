@@ -55,7 +55,7 @@ export class Body {
     this.floorUntil = 0;
     /** 在空中时舞台叫它回家：落稳了再回（`goHome`） */
     this.homeAfter = false;
-    /** 在往家去（脚下的输入框没了、挪走了，往家跳）：只认家、地、浮层，别的台面（你的话、设置页……）穿过去，落在原来会落的地方（出厂样子不变） */
+    /** 在往家去（脚下的输入框、浮层没了、挪走了，往家跳）：只认家、地、浮层，别的台面（你的话、设置页……）穿过去，落在原来会落的地方（出厂样子不变） */
     this.homeward = false;
     /** 原地跳着（落地前不算离开台子，手里的东西不收） */
     this.hopping = false;
@@ -306,7 +306,8 @@ export class Body {
       const drop = was.id === 'composer' || same?.stick ? Infinity : c.carry.snap_px;
       if (!same || x < same.x1 || x > same.x2 || same.y - b.y > drop) {
         b = { ...b, x, ground: null };
-        if (was.id === 'composer' && !this.hopping) this.homeward = true;
+        // 输入框、它上面的浮层（命令列表收起）没了：往家掉，别的台面穿过去
+        if ((was.id === 'composer' || was.carry) && !this.hopping) this.homeward = true;
       }
       else {
         if (same.y < b.y) this.offset += b.y - same.y;
