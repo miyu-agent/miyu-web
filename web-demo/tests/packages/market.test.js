@@ -62,3 +62,14 @@ test('种类是动态的：清单的种类（kind，核心 G-11）加上带了�
   assert.equal(got.counts.newkind, 1);
   assert.deepEqual(kindsOf(odd), ['newkind', 'gadgets']);
 });
+
+test('核心 G-11 的种类原样：process、worker 都算插件、并成一种；bundle 不单列，照它带的筛；没有 kind 的不筛', () => {
+  const ext = { package: 'qq', kind: 'process', provides: {} };
+  const wk = { package: 'w', kind: 'worker', provides: {} };
+  const pack = { package: 'memes', kind: 'bundle', provides: { skills: ['memes'] } };
+  const old = { package: 'o', provides: {} };
+  assert.deepEqual([kindsOf(ext), kindsOf(wk), kindsOf(pack), kindsOf(old)], [['extension'], ['extension'], ['skills'], []]);
+  const got = shownOf([ext, wk, pack, old], { query: '', filter: 'all', kind: null }, new Set());
+  assert.deepEqual(got.kinds, ['extension', 'skills']);
+  assert.equal(got.counts.extension, 2);
+});

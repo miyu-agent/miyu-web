@@ -627,7 +627,8 @@
           "extension": "插件",
           "ui": "界面",
           "mascot": "吉祥物",
-          "bundle": "扩展包"
+          "bundle": "扩展包",
+          "builtin": "内置"
         },
         "official": "官方",
         "community": "社区",
@@ -1151,7 +1152,8 @@
           "extension": "Plugins",
           "ui": "Interfaces",
           "mascot": "Mascots",
-          "bundle": "Bundles"
+          "bundle": "Bundles",
+          "builtin": "Built-in"
         },
         "official": "Official",
         "community": "Community",
@@ -1675,7 +1677,8 @@
           "extension": "プラグイン",
           "ui": "インターフェース",
           "mascot": "マスコット",
-          "bundle": "バンドル"
+          "bundle": "バンドル",
+          "builtin": "内蔵"
         },
         "official": "公式",
         "community": "コミュニティ",

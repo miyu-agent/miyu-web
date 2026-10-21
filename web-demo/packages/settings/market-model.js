@@ -8,14 +8,20 @@ export const STATUS_FILTERS = /** @type {const} */ (['all', 'installed', 'upgrad
  * 主题、通讯平台、语言、插件……）加上它带了的几样（`provides` 里有名字的那几格，核心 G-10：技能、脚本、MCP……）。都照核心给的编号，
  * 这里只定先后：认得的照这张表排在前面，别的照编号排在后面。
  */
-export const KIND_FILTERS = /** @type {const} */ (['theme', 'connection', 'language', 'extension', 'ui', 'mascot', 'bundle',
+export const KIND_FILTERS = /** @type {const} */ (['theme', 'connection', 'language', 'extension', 'ui', 'mascot', 'builtin',
   'skills', 'scripts', 'mcp', 'command', 'slash', 'personas', 'presets', 'features', 'content']);
 /** 卡片的图标：照它带的头一种 */
 const FACES = { theme: 'palette', connection: 'plug', language: 'languages', extension: 'package', mascot: 'smile', personas: 'user-round', presets: 'toggle-right', skills: 'sparkles', scripts: 'square-terminal', mcp: 'plug', command: 'square-terminal', slash: 'square-terminal', content: 'file-text', features: 'package' };
 
+/** 清单的种类换成筛选的那一种：核心的 `process`、`worker` 对人都是插件（核心 G-11 给的是清单 `kind` 的原样） */
+const KIND_ALIAS = /** @type {Record<string, string>} */ ({ process: 'extension', worker: 'extension' });
+/** 不单列的种类：`bundle` 只是装技能、脚本、MCP 的壳，照它带的那几样筛 */
+const KIND_HIDDEN = new Set(['bundle']);
+
 /** 它是哪几种：清单的种类，加上带了的几样（有名字的才算） @param {any} p @returns {string[]} */
 export const kindsOf = (p) => {
-  const own = typeof p?.kind === 'string' && p.kind ? [p.kind] : [];
+  const raw = typeof p?.kind === 'string' && p.kind ? KIND_ALIAS[p.kind] ?? p.kind : null;
+  const own = raw && !KIND_HIDDEN.has(raw) ? [raw] : [];
   const carried = Object.entries(p?.provides ?? {}).filter(([, v]) => (Array.isArray(v) ? v.length > 0 : !!v)).map(([k]) => k);
   return [...new Set([...own, ...carried])];
 };
