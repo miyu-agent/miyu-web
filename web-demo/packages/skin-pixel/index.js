@@ -1,7 +1,7 @@
 // @ts-check
 //! 皮肤「像素风」（软件包 `skin-pixel`，蓝图 `web.md`「皮肤」第 6 条）：挂进 `skin` 包声明的 `skin.packs`。照第一次引导的「像素关卡」：
 //! 全直角、不虚化；浮起来的、贴在页面上的东西四边一圈 3px 的像素边、四个角各缺一格（四道错开的影画的，不是真的描边），往右下错开
-//! 的实色块影；界面上的字用像素字体（`skin.css` 的 `@font-face`），读的字、代码照旧；图标是像素的（`icons.json`，`tools/pixel-icons.py` 生成）；动效一格一格地动。颜色都从主题掺出来（`--skin-` 打头的是这一格自己的）。
+//! 的实色块影；界面上的字用像素字体（`skin.css` 的 `@font-face`），读的字、代码照旧；图标是像素的（`icons.json`，`tools/pixel-icons.py` 生成）；浮起来的菜单一格一格地弹出（只动透明度，滑动、跟着指针走的照原来的）。颜色都从主题掺出来（`--skin-` 打头的是这一格自己的）。
 
 /** 四道错开 3px 的影：一圈像素边，四个角各缺一格 @param {string} c */
 const frame = (c) => `0 -3px 0 0 ${c}, 0 3px 0 0 ${c}, -3px 0 0 0 ${c}, 3px 0 0 0 ${c}`;
@@ -56,9 +56,6 @@ export const tokens = {
   '--timeline-rail': 'var(--skin-edge)',
   '--timeline-body-bg': 'var(--skin-cell)',
   '--timeline-body-line': '2px dashed var(--skin-soft)',
-  // 动效：一格一格地动
-  '--ease-out': 'steps(4, end)',
-  '--ease-in': 'steps(3, end)',
   // 材质
   '--composer-bg': 'var(--surface-1)',
   '--composer-elev': `${frame(EDGE)}, ${drop(6)}`,

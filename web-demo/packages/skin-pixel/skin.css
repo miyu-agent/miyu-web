@@ -23,6 +23,7 @@
 }
 :root[data-skin="pixel"] [data-part="session.group-header"] { font-family: "Miyu Pixel UI", var(--sans); letter-spacing: 0.08em; text-transform: uppercase; }
 :root[data-skin="pixel"] [data-part="tl.body"] { box-shadow: 0 -2px 0 0 var(--skin-soft), 0 2px 0 0 var(--skin-soft), -2px 0 0 0 var(--skin-soft), 2px 0 0 0 var(--skin-soft); }
-/* 浮起来的菜单一格一格地弹出来（自己的动画；退场照原来的，不盖） */
-@keyframes skin-pixel-pop { 0% { opacity: 0; transform: translateY(6px); } 50% { opacity: 1; transform: translateY(3px); } 100% { opacity: 1; transform: none; } }
-:root[data-skin="pixel"] [data-part="menu"]:not([data-state="leaving"]) { animation: skin-pixel-pop calc(0.18s * var(--motion-scale)) steps(3, end) both; }
+/* 浮起来的菜单一格一格地显出来（自己的动画；退场照原来的，不盖）。只动透明度、不写 transform：拖着走的会话标签也算浮起来的小框，
+   位置靠 transform 跟着指针，动画里写了 transform 会把它钉回左上角（2026-10-21 项目主人撞见）；也不写 fill-mode both，放完就不留着 */
+@keyframes skin-pixel-pop { 0% { opacity: 0; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+:root[data-skin="pixel"] [data-part="menu"]:not([data-state="leaving"]) { animation: skin-pixel-pop calc(0.18s * var(--motion-scale)) steps(3, end) backwards; }
