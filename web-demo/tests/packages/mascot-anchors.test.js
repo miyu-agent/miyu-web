@@ -149,3 +149,22 @@ test('像素风的落脚点：加的点、挪的点都认（皮肤包照落脚�
   assert.match(String(packProblem({ id: 'pixel', tokens: {}, anchorOffsets: { nope: { dy: 1 } } }, known, rules)), /nope/);
   assert.match(String(packProblem({ id: 'pixel', tokens: {}, anchors: [{ id: 'code', part: 'code', kind: 'ground', edge: 'top' }] }, known, rules)), /pixel\./);
 });
+
+test('出厂样子不变：站着的命令列表收起、输入框挪走了往下掉，中间你的话的气泡穿过去，落在输入框上（照原来的）；拖着松手落下来的落在气泡上', () => {
+  const float = { id: 'composer.floats#1', x1: 332, x2: 1225, y: 300, carry: true };
+  const bubble = { id: 'message.user#1', x1: 1000, x2: 1237, y: 518, stick: true };
+  const r = room([float, bubble]);
+  const body = new Body(config, r);
+  let now = performance.now();
+  body.move(16, now);
+  body.at = { x: 1183, y: 300, vx: 0, vy: 0, ground: float };
+  r.list = [composer, floor, bubble];
+  run(body, now, (o) => o.landed != null && !!body.at?.ground);
+  assert.equal(body.at?.ground?.id, 'composer');
+  // 拖着松手（拎起来就不再是往家掉）
+  body.grab(1183, 700);
+  body.drag = null;
+  body.at = { x: 1183, y: 400, vx: 0, vy: 0, ground: null };
+  run(body, now, (o) => o.landed != null && !!body.at?.ground);
+  assert.equal(body.at?.ground?.id, 'message.user#1');
+});
