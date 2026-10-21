@@ -21,6 +21,9 @@ export const groupBlock = (name, rows) => {
 /** 对不上哪一项的问题：那一页顶上一条横幅。 */
 export const banner = (p) => h(`div.set-banner.is-${p.level === 'error' ? 'error' : 'warn'}`, icon(p.level === 'error' ? 'circle-alert' : 'triangle-alert'), h('span', p.message));
 
+/** 存了多久还没回来才转圈（毫秒） */
+const SPIN_AFTER_MS = 300;
+
 /**
  * 一行的壳：名字、说明、小字（没有就不出这一行）、问题；右边控件和 ↺。交回节点和几个钩子（转圈、对勾、写原因）。
  * @param {{name: string, description?: string, source?: Node|string|null, problems?: {level: string, message: string}[],
@@ -39,14 +42,20 @@ export function shell(o) {
     h('div.set-control',
       o.reset ? h('button.set-reset', { type: 'button', title: o.resetTitle, 'aria-label': o.resetTitle, onclick: o.reset }, icon('rotate-ccw')) : null,
       status, o.control));
+  /** @type {ReturnType<typeof setTimeout>|undefined} */
+  let spin;
   return {
     el,
-    /** 存着：转圈 */
-    busy: () => { error.hidden = true; replace(status, icon('loader-circle')); status.className = 'set-status is-busy'; },
+    /** 存着：0.3 秒还没回来才转圈（快的不转，2026-10-21 项目主人：切一下也要转一下） */
+    busy: () => {
+      error.hidden = true;
+      clearTimeout(spin);
+      spin = setTimeout(() => { replace(status, icon('loader-circle')); status.className = 'set-status is-busy'; }, SPIN_AFTER_MS);
+    },
     /** 成了：对勾，1 秒淡出 */
-    done: () => { replace(status, icon('check')); status.className = 'set-status is-done'; },
+    done: () => { clearTimeout(spin); replace(status, icon('check')); status.className = 'set-status is-done'; },
     /** 拒了：原因写在这一项下面 */
-    fail: (why) => { replace(status); status.className = 'set-status'; error.textContent = why; error.hidden = false; },
+    fail: (why) => { clearTimeout(spin); replace(status); status.className = 'set-status'; error.textContent = why; error.hidden = false; },
   };
 }
 
@@ -55,8 +64,11 @@ export function shell(o) {
  * 值来自哪一层不写（2026-10-08 项目主人）。
  * @param {any} dialog @param {import('./model.js').Item} item @param {boolean} [compact]
  */
+/** 说明里已经写了什么时候生效的，不再另写一行（2026-10-21 项目主人：新会话的权限级别说明写了「修改后开新会话生效」） */
+const SAYS_WHEN = new Set(['permission.level']);
+
 function appliesLine(dialog, item, compact) {
-  const when = compact ? null : noteOf(item.applies);
+  const when = compact || SAYS_WHEN.has(item.key) ? null : noteOf(item.applies);
   return when ? dialog.ctx.text(`applies.${when}`) : null;
 }
 
@@ -106,6 +118,8 @@ export function coreRow(dialog, item, opts = {}) {
     reset: written ? () => save({ unset: true }) : null,
     resetTitle: ctx.text('reset'),
   });
+  // 刚存成的：存完整页重读重画了，对勾画在新的这一行上
+  if (dialog.justSaved?.(item.key)) row.done();
   return row.el;
 }
 
@@ -366,4 +380,26 @@ function list(dialog, item, values, change) {
     field.focus();
   });
   return h('div.set-chips', chips, add);
+}
+
+/** 搜索框停多久再筛（边打边筛；输入法选字时不筛） */
+const TYPE_MS = 120;
+
+/**
+ * 一页顶上的搜索框（软件包页、技能、脚本、MCP 三页）：边打边筛，停一下再交 `change`；输入法选字时不交。框自己不重画（光标、输入法不断）。
+ * @param {string} value @param {string} hint 占位字 @param {(query: string) => void} change
+ */
+export function findBox(value, hint, change) {
+  const input = /** @type {HTMLInputElement} */ (h('input.set-pkg-find-input', { type: 'search', value, placeholder: hint, 'aria-label': hint, spellcheck: 'false', autocomplete: 'off' }));
+  let composing = false;
+  /** @type {any} */
+  let timer = 0;
+  input.addEventListener('compositionstart', () => { composing = true; });
+  input.addEventListener('compositionend', () => { composing = false; input.dispatchEvent(new Event('input')); });
+  input.addEventListener('input', () => {
+    if (composing) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => change(input.value), TYPE_MS);
+  });
+  return h('label.set-pkg-find', icon('search'), input);
 }

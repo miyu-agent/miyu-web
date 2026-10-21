@@ -17,6 +17,7 @@
 //! - 链接卡片不经桥：页面直接问核心的 `link.preview`，卡片的图是 blob，照 `/blob` 取（核心施工 W-7）。
 //! - `@` 选文件不经桥：页面直接问核心的 `fs.list`、`fs.find`（核心施工 W-2）。
 //! - 选工作区的「选择文件夹…」经 `/pick-dir?k=口令&title=…&start=…` 开系统的选目录对话框（`dialog.rs`），回选的绝对路径。
+//! - 技能、脚本两页的「打开目录」经 `/reveal?k=口令&path=…` 在这台机器上用文件管理器打开那个文件夹（`reveal.rs`）。
 //! - 主题「跟随壁纸」经 `/wallpaper?k=口令&dark=0|1` 问桌面壁纸（matugen 那一份优先）换没换、带 `data=1` 取那一份，
 //!   `/wallpaper/events?k=口令` 盯着壁纸来处的文件、变了推一条（`wallpaper.rs`，crate `miyu-wallpaper`；不轮询）。
 //! - 软件后台页经 `POST /page` 换票据、`/p/<票据>/<包>/<路径>` 给文件（`pages.rs`，核心 F-6 中）：文件经核心的 `package.file` 读。
@@ -32,6 +33,7 @@ mod files;
 mod link;
 mod media;
 mod pages;
+mod reveal;
 mod wallpaper;
 
 use std::path::PathBuf;

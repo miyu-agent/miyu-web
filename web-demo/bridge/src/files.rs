@@ -1,4 +1,4 @@
-//! 页面文件：只认 `GET`，路径落在页面目录里才给；别的 404。开发用，不缓存。`/file`、`/blob` 交给 `media.rs`，`/pick-dir` 交给 `dialog.rs`，
+//! 页面文件：只认 `GET`，路径落在页面目录里才给；别的 404。开发用，不缓存。`/file`、`/blob` 交给 `media.rs`，`/pick-dir` 交给 `dialog.rs`，`/reveal` 交给 `reveal.rs`，
 //! `/wallpaper`、`/wallpaper/events` 交给 `wallpaper.rs`，
 //! 软件后台页的 `POST /page`、`/p/…` 交给 `pages.rs`。
 
@@ -77,6 +77,27 @@ pub async fn serve(mut stream: TcpStream, site: &Site) -> io::Result<()> {
             "200 OK",
             "application/json; charset=utf-8",
             picked.json().as_bytes(),
+        )
+        .await;
+    }
+    if path == "/reveal" {
+        // 打开目录（`reveal.rs`）：带口令才开
+        let q = media::params(query);
+        if q.get("k") != Some(&site.key) {
+            return reply(
+                &mut stream,
+                "403 Forbidden",
+                "text/plain; charset=utf-8",
+                b"",
+            )
+            .await;
+        }
+        let got = crate::reveal::reveal(q.get("path").map_or("", String::as_str)).await;
+        return reply(
+            &mut stream,
+            "200 OK",
+            "application/json; charset=utf-8",
+            got.json().as_bytes(),
         )
         .await;
     }

@@ -11,13 +11,13 @@
   position: relative; display: grid; grid-template-columns: 200px minmax(0, 1fr);
   width: min(var(--set-w), calc(100vw - 48px)); height: min(var(--set-h), calc(100vh - 48px));
   overflow: hidden; border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--float-shadow);
-  /* 一点点磨砂（2026-10-19 项目主人：稍微有一点，不用左栏那么虚） */
-  background: color-mix(in srgb, var(--surface) 88%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+  /* 一点点磨砂（2026-10-19 项目主人：稍微有一点，不用左栏那么虚；2026-10-20 再透明一成：八成八改七成八） */
+  background: color-mix(in srgb, var(--surface) 78%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
   animation: pop-in var(--motion-in) var(--ease-out) both; color: var(--text);
 }
 
 /* 左边分页（第 3 条） */
-.set-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; padding: 12px; background: color-mix(in srgb, var(--sidebar-bg) 88%, transparent); }
+.set-side { display: flex; flex-direction: column; gap: 10px; min-height: 0; padding: 12px; background: color-mix(in srgb, var(--sidebar-bg) 78%, transparent); }
 .set-search-box { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px; border-radius: 8px; background: var(--surface-1); color: var(--text-faint); box-shadow: var(--card-shadow); }
 .set-search { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: 13px var(--sans); }
 .set-search::-webkit-search-cancel-button { display: none; }
@@ -42,6 +42,9 @@
 /* 点进去的一层（subpage.js）：页头左边的返回箭头一直在（不写字），进去新的从右边滑进来、原来的往左滑走，回来反过来 */
 .set-layer.has-sub .set-back { display: inline-flex; }
 .set-layer.has-sub .set-back-text { display: none; }
+/* 里面的卡片已经写了名字的那一层：页头不写名字，返回箭头后面写「返回」（2026-10-21 项目主人） */
+.set-back-sub { display: none; }
+.set-layer.has-sub.is-bare-sub .set-back-sub { display: inline; }
 .set-slide.is-push { animation: set-slide-from-right 0.26s var(--ease-out); }
 .set-slide.is-pop { animation: set-slide-from-left 0.26s var(--ease-out); }
 .set-slide-ghost { position: absolute; left: 24px; right: 24px; pointer-events: none; }
@@ -476,3 +479,176 @@ a.set-btn.set-link { display: inline-flex; align-items: center; }
 a.set-btn.is-anchor { display: inline-flex; align-items: center; gap: 5px; color: var(--text); text-decoration: none; }
 /* 链接做的一行（软件后台页）：同别的行，字照正文的颜色、不画下划线 */
 a.set-row.is-anchor { color: inherit; text-decoration: none; }
+
+/* 技能、脚本、MCP 三页（蓝图第 20 条）：同软件包页的行；顶上搜索框右边一个按钮 */
+.set-tool-head { display: flex; align-items: center; gap: 8px; }
+.set-tool-head .set-pkg-find { flex: 1; min-width: 0; }
+.set-tool-head .set-btn { display: inline-flex; flex: none; align-items: center; gap: 6px; }
+.set-tool-head .set-btn .icon { width: 14px; height: 14px; }
+.set-tool-id { overflow: hidden; color: var(--text-faint); font: 11.5px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
+.set-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.set-tool-controls { gap: 10px; }
+.set-desc .is-error { color: var(--danger); }
+.set-tool-note { margin: 14px 0 0; color: var(--text-faint); font-size: 12.5px; line-height: 1.6; }
+.set-tool-value { min-width: 0; max-width: 62%; color: var(--text-soft); font-size: 13px; }
+.set-tool-code { display: block; overflow: hidden; color: var(--text-soft); font: 12px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
+.set-row.is-wide { display: grid; gap: 8px; }
+.set-tool-list { display: flex; flex-wrap: wrap; gap: 6px; }
+/* 没登记的工具（核心 X-37）：一个一行，原名的小块后面暗字写为什么 */
+.set-tool-skips { display: grid; gap: 6px; }
+.set-tool-skip { display: flex; align-items: center; gap: 8px; color: var(--text-faint); font-size: 12px; }
+.set-tool-chip { padding: 0 7px; border-radius: 6px; background: var(--surface-2); color: var(--text-soft); font: 11.5px/22px var(--mono); }
+.set-tool-tag { flex: none; padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line); color: var(--text-faint); font-size: 11px; }
+.set-pkg-card-meta .set-link { font-size: 12.5px; }
+
+/* 添加、编辑服务的小窗：设置框正中（设置框磨砂了，`position: fixed` 照设置框那一块摆），后面淡遮罩 */
+.set-tool-modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 45%, transparent); animation: fade-in var(--motion-in) var(--ease-out) backwards; }
+.set-tool-modal.is-leaving { animation: fade-out var(--motion-out) var(--ease-in) both; }
+/* 卡片进出同设置里别的小窗（confirm.js 那一段）：从 0.97 放大出来、缩回去淡掉 */
+.set-tool-pop { animation: pop-in var(--motion-in) var(--ease-out) both; }
+.set-tool-modal.is-leaving .set-tool-pop { animation: pop-out var(--motion-out) var(--ease-in) both; }
+.set-tool-pop { display: grid; gap: 12px; width: min(480px, 100%); max-height: 100%; overflow: auto; padding: 16px 18px 18px; border-radius: 14px; background: var(--surface); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); box-sizing: border-box; }
+.set-tool-pop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--text); font-size: 14px; }
+.set-tool-pop-head .icon-button .icon { width: 14px; height: 14px; }
+/* 本机命令、网址两种各自那几行（添加时顶上的分段切换换着露）；切换靠左、和格子的字对齐 */
+.set-tool-group { display: grid; gap: 12px; }
+.set-tool-kinds { justify-self: start; }
+.set-tool-field { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: start; gap: 12px; }
+.set-tool-label { padding-top: 6px; color: var(--text-soft); font-size: 13px; }
+.set-tool-field > .set-pkg-chips { padding-top: 2px; }
+.set-input.set-tool-input { width: 100%; box-sizing: border-box; }
+.set-input.is-mono { font-family: var(--mono); font-size: 12.5px; }
+.set-input.set-tool-area { width: 100%; height: auto; min-height: 66px; padding: 7px 9px; box-sizing: border-box; line-height: 1.5; resize: vertical; }
+.set-input.set-tool-input[readonly] { color: var(--text-faint); }
+.set-tool-timeout { display: flex; align-items: center; gap: 8px; color: var(--text-faint); font-size: 12.5px; }
+.set-tool-timeout .set-input { width: 96px; }
+.set-tool-error { margin: 0; color: var(--danger); font-size: 12.5px; line-height: 1.5; }
+.set-tool-pop-foot { display: flex; justify-content: flex-end; gap: 8px; }
+/* 运行中前面一个绿点（同软件包页的状态）；多选、删除 */
+.set-tool-state.is-on::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: var(--online); vertical-align: 1px; }
+.set-tool-state.is-error { color: var(--danger); }
+.set-tool-icon { flex: none; width: 32px; height: 32px; border-radius: 8px; }
+.set-tool-icon .icon { width: 16px; height: 16px; }
+.set-tool-icon.is-danger { color: var(--danger); }
+.set-tool-icon.is-armed { background: color-mix(in srgb, var(--danger) 16%, transparent); }
+.set-tool-icon:disabled { opacity: 0.45; cursor: default; }
+.set-tool-count { flex: none; color: var(--text-soft); font-size: 13px; }
+.set-tool-del { width: 28px; height: 28px; opacity: 0; transition: opacity 0.15s ease; }
+.set-row:hover .set-tool-del, .set-tool-del:focus-visible, .set-tool-del.is-armed { opacity: 1; }
+.set-tool-check { display: grid; flex: none; place-items: center; width: 18px; color: var(--text-faint); }
+.set-tool-check .icon { width: 16px; height: 16px; }
+.set-row.is-picked .set-tool-check { color: var(--accent); }
+.set-row.is-unpickable { opacity: 0.5; }
+/* 下载软件（软件市场，蓝图 web.md「设置页」第 12a 条）：顶上一行搜索、「N 个可升级」、刷新；两排筛选；卡片墙两列（窄的一列） */
+.mk-tools { display: flex; flex-direction: row; align-items: center; gap: 8px; }
+.mk-tools > .set-pkg-find { flex: 1; min-width: 0; }
+.mk-ups { flex: none; padding: 0 4px; border: 0; background: none; color: var(--accent); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.mk-ups:hover { text-decoration: underline; text-underline-offset: 3px; }
+.mk-refresh.is-spin .icon { animation: tl-spin 900ms linear infinite; }
+.mk-meta { margin: -4px 0 10px; color: var(--text-faint); font-size: 12px; }
+.mk-kinds { margin-top: -6px; }
+.set-pkg-chip.is-off { opacity: 0.55; }
+.mk-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+@media (max-width: 640px) { .mk-grid { grid-template-columns: minmax(0, 1fr); } }
+.mk-card {
+  display: grid; grid-template-rows: auto 1fr auto; gap: 8px; min-height: 148px; padding: 14px 14px 12px; border-radius: 12px;
+  background: var(--surface-1); box-shadow: var(--card-shadow); cursor: pointer; outline: none;
+  transition: box-shadow 0.15s ease;
+}
+/* 只有第一次出现的淡入：装、卸、刷新以后重画的不再淡一遍（2026-10-21 项目主人：点安装、下完卡片会闪） */
+.mk-card.is-new { animation: fade-in var(--motion-in) var(--ease-out) both; }
+.mk-card:hover, .mk-card:focus-visible { box-shadow: var(--float-shadow); }
+.mk-card-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mk-face { flex: 0 0 36px; width: 36px; height: 36px; }
+.mk-face.is-big { flex-basis: 48px; width: 48px; height: 48px; }
+.mk-face.is-big .icon { width: 22px; height: 22px; }
+.mk-card-title { display: grid; min-width: 0; gap: 2px; }
+.mk-card-title strong { overflow: hidden; color: var(--text); font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.mk-version { color: var(--text-faint); font-size: 11.5px; }
+.mk-summary { display: -webkit-box; margin: 0; overflow: hidden; color: var(--text-soft); font-size: 12.5px; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.mk-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mk-tag { padding: 2px 7px; border-radius: 5px; background: var(--surface-2); color: var(--text-faint); font-size: 11px; }
+.mk-tag.is-official { color: var(--text-soft); }
+.mk-tag.is-blocked { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+.mk-action { min-width: 64px; justify-content: center; text-align: center; }
+/* 已安装：悬停变「卸载」（红） */
+.mk-installed { padding: 0 12px; }
+.mk-installed.is-big { min-width: 0; padding: 0 16px; }
+.mk-kinds-none { margin: 6px 10px 8px; color: var(--text-faint); font-size: 12px; }
+.mk-installed .mk-when-hover { display: none; }
+.mk-installed:hover:not(:disabled, .is-just) .mk-when-idle, .mk-installed:focus-visible .mk-when-idle { display: none; }
+.mk-installed:hover:not(:disabled, .is-just) .mk-when-hover, .mk-installed:focus-visible .mk-when-hover { display: inline; }
+.mk-installed:hover:not(:disabled, .is-just), .mk-installed:focus-visible { background: color-mix(in srgb, var(--danger) 14%, var(--surface-2)); color: var(--danger); }
+.mk-action.is-big { min-width: 120px; height: 36px; font-size: 13.5px; }
+/* 在装的那一个：按钮换成一条进度，底色铺满、主色从左长过去 */
+.mk-bar {
+  position: relative; display: grid; height: 30px; place-items: center; overflow: hidden; padding: 0 12px; border-radius: 8px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 28%, var(--surface-2)) var(--mk-pct, 0%), var(--surface-2) var(--mk-pct, 0%));
+  color: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; transition: background 0.2s linear;
+}
+.mk-bar.is-big { height: 36px; }
+.mk-problem { margin: 0; color: var(--danger); font-size: 12px; overflow-wrap: anywhere; }
+.mk-upall { display: flex; justify-content: flex-end; margin-top: 10px; }
+.mk-skips { margin-top: 8px; color: var(--text-faint); font-size: 12px; }
+.mk-skips p { margin: 2px 0; }
+.mk-offline { display: grid; justify-items: center; gap: 10px; margin: 48px auto; max-width: 420px; color: var(--text); text-align: center; }
+.mk-why { color: var(--text-faint); font: 11.5px var(--mono); overflow-wrap: anywhere; }
+/* 详情：头上一块，下面一行一项，底下右边一个大按钮 */
+.mk-detail-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 18px; }
+.mk-detail-text { display: grid; min-width: 0; gap: 4px; }
+.mk-detail-text strong { color: var(--text); font-size: 16px; font-weight: 600; }
+.mk-detail-text p { margin: 0; color: var(--text-soft); font-size: 13px; line-height: 1.55; }
+.mk-detail-text .mk-version { color: var(--text-faint); font-size: 12px; }
+.mk-warn { color: var(--t-warn) !important; font-size: 12px !important; }
+.mk-warn.is-blocked { color: var(--danger) !important; }
+.mk-value { max-width: 60%; color: var(--text-soft); font-size: 13px; text-align: right; overflow-wrap: anywhere; }
+.mk-value code { font: 12px var(--mono); }
+.mk-with { display: grid; gap: 2px; justify-items: end; }
+.mk-detail-foot { display: grid; justify-items: end; gap: 6px; margin-top: 16px; }
+/* 全部升级的确认：同设置里别的小窗（后面淡遮罩，点遮罩、Esc、「取消」收起） */
+.mk-ask { position: absolute; z-index: 5; inset: 0; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 55%, transparent); animation: fade-in var(--motion-in) var(--ease-out) both; }
+.mk-ask.is-leaving { animation: fade-out var(--motion-out) var(--ease-in) both; }
+.mk-ask-card { display: grid; gap: 10px; width: min(420px, 100%); padding: 18px 20px 16px; border-radius: 14px; background: var(--surface); box-shadow: var(--float-shadow); animation: pop-in var(--motion-in) var(--ease-out) both; }
+.mk-ask.is-leaving .mk-ask-card { animation: pop-out var(--motion-out) var(--ease-in) both; }
+.mk-ask-card strong { color: var(--text); font-size: 14px; font-weight: 600; }
+.mk-ask-list { display: grid; gap: 4px; max-height: 240px; margin: 0; padding: 0; overflow-y: auto; list-style: none; font-size: 13px; }
+.mk-ask-list li { display: flex; justify-content: space-between; gap: 12px; color: var(--text); }
+.mk-ask-list code { color: var(--text-faint); font: 12px var(--mono); }
+.mk-ask-size { margin: 0; color: var(--text-faint); font-size: 12px; }
+.mk-ask-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+/* 隐私与安全页的私密目录（蓝图 web.md「设置页」第 12b 条）：一个能滚的框（顶上搜索），一行一个目录（等宽），出厂的带小标签，悬停露删除；
+   框下面写目录的框（一行一个），右边「添加」「恢复默认」 */
+.pv-desc { margin: -2px 0 8px; }
+/* 私密目录的总开关关着：表灰掉、不能改 */
+.pv-body.is-off { opacity: 0.45; pointer-events: none; transition: opacity 0.15s ease; }
+.pv-box { display: grid; grid-template-rows: auto minmax(0, 1fr); max-height: 300px; overflow: hidden; border-radius: 10px; background: color-mix(in srgb, var(--surface-2) 55%, transparent); }
+.pv-find { display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px; color: var(--text-faint); box-shadow: inset 0 -1px 0 var(--line); }
+.pv-find .icon { width: 14px; height: 14px; }
+.pv-find-input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: 13px var(--sans); }
+.pv-find-input::-webkit-search-cancel-button { display: none; }
+.pv-list { min-height: 0; overflow-y: auto; padding: 4px; overscroll-behavior: contain; }
+.pv-row { display: flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 6px 0 8px; border-radius: 7px; }
+.pv-row:hover { background: var(--surface-2); }
+.pv-empty { margin: 10px 8px; }
+.pv-path { flex: 1; min-width: 0; overflow: hidden; color: var(--text); font: 12.5px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
+.pv-tag { flex: none; padding: 1px 6px; border-radius: 5px; background: var(--surface-2); color: var(--text-faint); font-size: 11px; }
+.pv-drop { width: 26px; height: 26px; opacity: 0; transition: opacity 0.15s ease; }
+.pv-row:hover .pv-drop, .pv-drop:focus-visible { opacity: 1; }
+.pv-add { display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; }
+.pv-input { flex: 1; min-width: 0; min-height: 66px; resize: vertical; font-family: var(--mono); line-height: 1.5; }
+.pv-buttons { display: grid; flex: none; gap: 6px; }
+.pv-buttons .set-btn { justify-content: center; }
+
+/* 下载软件：按种类筛的图标（筛着的主色）、菜单、选着的种类那一块；来源的链接 */
+.mk-filter.is-on { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.mk-kinds-menu { position: absolute; z-index: 6; min-width: 180px; max-height: 320px; overflow-y: auto; }
+.mk-kinds-menu .set-menu-item { display: flex; align-items: center; gap: 8px; width: 100%; }
+.mk-kinds-menu .set-menu-item > span:first-child { flex: 1; text-align: left; }
+.mk-kinds-n { color: var(--text-faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+.mk-kinds-menu .icon { width: 14px; height: 14px; color: var(--accent); }
+.mk-kind-on { display: inline-flex; align-items: center; gap: 4px; }
+.mk-kind-on .icon { width: 12px; height: 12px; }
+.mk-link { display: inline-flex; align-items: center; gap: 4px; color: var(--accent); text-decoration: none; }
+.mk-link:hover code { text-decoration: underline; text-underline-offset: 3px; }
+.mk-link code { color: inherit; }
+.mk-link .icon { width: 12px; height: 12px; }

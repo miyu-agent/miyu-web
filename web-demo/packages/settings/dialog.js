@@ -3,6 +3,8 @@
 //! （`config.set`），别处改了（`config.changed`）重读重画，正在改的那一项不被冲掉。各页怎么画在 `rows.js`、`look.js`、`models.js`。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { drawMarket, marketPush } from './market.js';
+import { hasPrivate, privateGroup } from './privacy.js';
 import { leave } from '../../src/lib/motion.js';
 import { buildPages, search, pagesWithErrors, layerFor, expectFor, navGroups, pkgMatch, ownerOf } from './model.js';
 import { coreRow, groupBlock, banner } from './rows.js';
@@ -16,6 +18,11 @@ import { drawCorePackages, followExtension, openInfo } from './core-packages.js'
 import { drawBackstage } from './backstage.js';
 import { Subpage, swap } from './subpage.js';
 import { drawAdvanced } from './advanced.js';
+import { drawToolPage, hasToolPage } from './tool-pages.js';
+
+/** 刚存成的那一项重画出来还画对勾的时限（毫秒） */
+const SAVED_MS = 1000;
+
 
 /** 上次看的那一页：这个终端记着（蓝图第 3 条），刷新就忘 */
 let lastPage = 'general';
@@ -57,7 +64,7 @@ export class SettingsDialog {
     this.panel = h('section.set-panel', { role: 'dialog', 'aria-modal': 'true', 'aria-label': this.ctx.text('title'), style: `--set-w: ${cfg.width}px; --set-h: ${cfg.height}px` },
       h('aside.set-side', h('label.set-search-box', icon('search'), this.search), this.nav),
       h('div.set-main',
-        h('header.set-head', h('button.set-back', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), h('span.set-back-text', this.ctx.text('back'))), this.title,
+        h('header.set-head', h('button.set-back', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), h('span.set-back-text', this.ctx.text('back')), h('span.set-back-sub', this.ctx.text('back_sub'))), this.title,
           h('button.icon-button.set-close', { type: 'button', title: this.ctx.text('close'), 'aria-label': this.ctx.text('close'), onclick: () => this.close() }, icon('x'))),
         this.body));
     this.root = h('div.set-layer', h('div.set-scrim', { onclick: () => this.close() }), this.panel);
@@ -95,15 +102,20 @@ export class SettingsDialog {
   /** 读核心的配置清单、最终值；模型列表另读（可能慢：核心要去供应商那边拉），读完了模型页跟着重画。 */
   async load() {
     const core = this.ctx.core;
-    const [schema, got, packages] = await Promise.all([core.request('config.schema', {}), core.request('config.get', { all: true }),
+    const [schema, got, packages, skills, scripts] = await Promise.all([core.request('config.schema', {}), core.request('config.get', { all: true }),
       // 核心的软件包（9-1）：「默认界面」的选项照它列（读不到的旧核心是空的）
       core.request('package.list', {}).then((r) => r?.packages ?? [], () => []),
+      // 技能、脚本两页（核心 X-26、X-27；没有推送，打开、改了配置时重读）：旧核心没有的是 `null`，不出那一页
+      core.request('skill.list', {}).then((r) => (Array.isArray(r?.skills) ? r : null), () => null),
+      core.request('script.list', {}).then((r) => (Array.isArray(r?.scripts) ? r : null), () => null),
       // 软件包自己写的图标（清单的 `icon`，F-6 上）照整套图标画
       this.ctx.icons.more()]);
     /** 能直接敲 `miyu` 打开的界面（`kind` 是 `ui`、有命令的包，核心 9-3） */
     this.heads = packages.filter((p) => p.kind === 'ui' && p.command);
     /** 核心认的软件包（「软件包」页上面那一段照它列） */
     this.packages = packages;
+    this.skills = skills;
+    this.scripts = scripts;
     this.schema = schema;
     this.got = got;
     const cfg = this.ctx.config;
@@ -134,8 +146,12 @@ export class SettingsDialog {
       ...this.pages.map((p) => ({ id: p.id, name: p.name })),
       // 核心也有一页「软件包」（9-1 下，一个包一组）：和网页自己的组件合成一页，上面核心、下面网页（2026-10-07 项目主人定）
       ...(this.pages.some((p) => p.id === 'packages') ? [] : [{ id: 'packages', name: named('packages') }]),
+      // 下载软件（软件市场，核心 G-3 到 G-5）：「软件包」上面一项（2026-10-21 项目主人）
+      { id: 'market', name: named('market') },
       // 软件后台（核心 F-6 中）：带自己页面的软件，点进去是它的页面
       { id: 'backstage', name: named('backstage') },
+      // 技能、脚本、MCP（第 20 条，核心 X-26、X-27）：核心有对应方法的才有
+      ...(/** @type {const} */ (['skills', 'scripts', 'mcp'])).filter((id) => hasToolPage(this, id)).map((id) => ({ id, name: named(id) })),
       ...this.ctx.slots.list('settings.section').map((s) => ({ id: s.id, name: s.name, section: s })),
     ];
     const rank = (id) => {
@@ -209,7 +225,10 @@ export class SettingsDialog {
     replace(this.nav, items);
   }
 
-  /** 点进一层（软件包的设置、软件后台页）：滑进去，页头写它的名字、左边返回箭头。 @param {string} title @param {() => any} render @param {{keep?: boolean, leave?: () => void}} [opts] */
+  /**
+   * 点进一层（软件包的设置、软件后台页）：滑进去，页头写它的名字、左边返回箭头；`bare` 的（里面的卡片已经写了名字）页头只写「返回」。
+   * @param {string} title @param {() => any} render @param {{keep?: boolean, leave?: () => void, bare?: boolean}} [opts]
+   */
   openSub(title, render, opts) {
     this.sub.open(title, render, this.body.scrollTop, opts);
     this.drawBody('push');
@@ -229,6 +248,7 @@ export class SettingsDialog {
     const scroll = this.body.scrollTop;
     if (this.query.trim()) this.sub.close();
     this.root.classList.toggle('has-sub', !!this.sub.page);
+    this.root.classList.toggle('is-bare-sub', !!this.sub.page?.bare);
     // 模型的详情挂在右边整栏上：换页、搜索时收掉，模型页自己再挂
     this.panel.querySelector('.set-drawer')?.remove();
     if (this.query.trim()) {
@@ -238,7 +258,7 @@ export class SettingsDialog {
       return;
     }
     if (this.sub.page) {
-      this.title.textContent = this.sub.page.title;
+      this.title.textContent = this.sub.page.bare ? '' : this.sub.page.title;
       // 画过一次就不重画的（软件后台页的框）：别处改了配置、重读完也不动它
       if (this.sub.page.keep && this.sub.page.shown && !dir) return;
       swap(this.body, this.sub.page.render(), dir, dir === 'push' ? 0 : scroll);
@@ -251,6 +271,7 @@ export class SettingsDialog {
     let kids;
     if (this.current === 'models') kids = drawModels(this);
     else if (this.current === 'backstage') kids = drawBackstage(this);
+    else if (this.current === 'market') kids = drawMarket(this);
     // 高级：一组一行，点进去看（`advanced.js`，2026-10-19 项目主人：不平铺）
     else if (this.current === 'advanced' && page) kids = drawAdvanced(this, page);
     else if (this.current === 'packages') {
@@ -260,6 +281,7 @@ export class SettingsDialog {
         ...drawCorePackages(this, page, drawPackages(this)),
       ];
     }
+    else if (this.current === 'skills' || this.current === 'scripts' || this.current === 'mcp') kids = drawToolPage(this, this.current);
     else if (entry?.section) kids = entry.section.render?.(sectionKit(this)) ?? null;
     else if (page) {
       // 通用页最上面是主题卡片（2026-10-10 项目主人：外观页只有主题三个选择，并进通用、放在最上面）。
@@ -267,7 +289,10 @@ export class SettingsDialog {
       kids = [
         ...page.problems.map((p) => banner(p)),
         this.current === 'general' ? drawLook(this) : null,
-        ...page.groups.map((g) => (this.extensions.entries.has(g.id)
+        ...page.groups.flatMap((g) => (hasPrivate(g.items)
+          // 私密目录（隐私与安全页，核心 5-15 下）：两项并成一张表；这一组别的项照通用的行
+          ? privateGroup(this, g.name, g.items)
+          : this.extensions.entries.has(g.id)
           ? h('section.set-group', h('h3.set-group-name', g.name), this.extensions.body(g.id, g.items.map((item) => coreRow(this, item)).filter(Boolean)))
           : groupBlock(g.name, g.items.map((item) => coreRow(this, item))))),
       ];
@@ -305,12 +330,21 @@ export class SettingsDialog {
       const problems = err.data?.problems ?? [];
       return problems.length ? problems.map((p) => p.message).join('\n') : err.message;
     }
+    // 记下刚存成的几项：重画出来的那几行照它画对勾（`rows.js`）
+    this.saved = { keys: new Set(changes.map((c) => c.key)), at: performance.now() };
     await this.reload();
     return null;
   }
 
+  /** 这一项是不是刚存成的（1 秒以内） @param {string} key */
+  justSaved(key) {
+    return !!this.saved && this.saved.keys.has(key) && performance.now() - this.saved.at < SAVED_MS;
+  }
+
   /** 重读核心的配置、重画；正在改的那一项有焦点的，等焦点走了再画（第 9 条）。 */
   async reload() {
+    // 已经收到、还没重读的推送并进这一遍（存完自己重读，核心推来的 `config.changed` 不再另读一遍）
+    clearTimeout(this.pushTimer);
     await this.load();
     if (this.editing()) {
       this.pending = true;
@@ -345,6 +379,8 @@ export class SettingsDialog {
   /** 别处改了配置（别的终端、命令行、手改文件）：重读重画；扩展的状态变了只重画那一组。 */
   onPush(method, params) {
     if (!this.isOpen) return;
+    // 下载软件页：下载进度、装了卸了（先看一眼，不吃掉）
+    marketPush(this, method, params);
     if (this.feed.push(method, params)) return;
     if (this.extensions.push(method, params)) {
       // 扩展开了、停了：软件包列表那一行的状态、开关跟着换

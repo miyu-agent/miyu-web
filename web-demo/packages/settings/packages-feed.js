@@ -1,7 +1,7 @@
 // @ts-check
 //! 软件包列表的推送（蓝图 `web.md`「设置页」第 13 条；核心 F-8 三补，`subscribe {"stream": "packages"}`）：设置弹窗开着时订、关了退订；
 //! 回应就是整份列表，之后 `package.changed` 整项换（MCP 服务起了、停了也推，核心 X-4），掉了队（`resync`）重订。个人设置里写的
-//! MCP 服务（核心 F-9 补）订上以后读一次 `mcp.list`，之后跟 `mcp.changed`。换了在「软件包」页的重画（正在改一项的不打断）。
+//! MCP 服务（核心 F-9 补）订上以后读一次 `mcp.list`，之后跟 `mcp.changed`。换了在「软件包」「MCP」页的重画（正在改一项的不打断）。
 
 import { applyPackageChange, applyServerChange } from './model.js';
 
@@ -14,7 +14,11 @@ export class PackageFeed {
 
   /** 订阅：回应是整份列表，换上。 */
   async start() {
-    if (this.live) return;
+    // 订着的（改了配置整个重读）：服务的开关、加载方式变了不另推 `mcp.changed`（核心 X-27），重读一次
+    if (this.live) {
+      await this.readHome();
+      return;
+    }
     this.live = true;
     try {
       const got = await this.dialog.ctx.core.request('subscribe', { stream: 'packages' });
@@ -23,7 +27,12 @@ export class PackageFeed {
       // 旧核心没有这个流：照 `package.list` 读的那一份，不跟推送
       this.live = false;
     }
-    // 订上以后再读，读完到订上之间的变化不会漏（推来的照名字换）；旧核心没有这个方法：不画那一组
+    // 订上以后再读，读完到订上之间的变化不会漏（推来的照名字换）
+    await this.readHome();
+  }
+
+  /** 个人设置里的 MCP 服务：旧核心没有这个方法的是 `null`（不出「MCP」页）。 */
+  async readHome() {
     this.dialog.homeMcp = await this.dialog.ctx.core.request('mcp.list', {}).then((r) => (Array.isArray(r?.servers) ? r.servers : null), () => null);
   }
 
@@ -56,6 +65,6 @@ export class PackageFeed {
 
   redraw() {
     const d = this.dialog;
-    if (d.isOpen && d.current === 'packages' && !d.editing()) d.drawBody();
+    if (d.isOpen && (d.current === 'packages' || d.current === 'mcp') && !d.editing()) d.drawBody();
   }
 }

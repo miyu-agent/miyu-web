@@ -1,8 +1,7 @@
 // @ts-check
-//! MCP 服务的一行和「个人设置中的 MCP 服务」那一组（蓝图 `web.md`「设置页」第 13 条；核心 X-4、F-9 补）。包里带的（扩展包、`bundle`）在
-//! 包的信息页里一组（`core-packages.js` 的 `mcpGroup`），个人设置里写的（`settings.toml` 的 `[mcp.<名字>]`，不属于哪个包）在「软件包」
-//! 页单列一组，照 `mcp.list`。一行一个服务：名字、现在怎样（停下的红字、能展开看输出）；被个人设置里同名的替代了的写「被个人设置中的
-//! 同名服务替代」，不写已停用（`covered`）。个人设置里的每一行右边一个「重启」（`mcp.restart`）；加、删、改照旧手改文件（核心不给编辑）。
+//! 包的信息页里「MCP 服务」那一组的一行（蓝图 `web.md`「设置页」第 13 条；核心 X-4、F-9 补）：名字、现在怎样（停下的红字、能展开看输出）；
+//! 被个人设置里同名的替代了的写「被个人设置中的同名服务替代」，不写已停用（`covered`）。个人设置里写的服务 2026-10-20 起在「MCP」页
+//! （`tool-pages.js`，第 20 条）。
 
 import { h } from '../../src/lib/dom.js';
 import { stateText } from './extensions.js';
@@ -27,29 +26,4 @@ export function serverRow(dialog, key, s, opts) {
       opts.action ? h('div.set-control', opts.action) : null),
     showing.has(key) && stderr ? h('pre.set-ext-output', stderr) : null,
   ];
-}
-
-/**
- * 「个人设置中的 MCP 服务」：一组，组头下一行暗色说在哪里改；没有的（个人设置里没写、旧核心没有 `mcp.list`）不画。
- * @param {any} dialog
- */
-export function homeMcpPart(dialog) {
-  const servers = /** @type {any[]|null} */ (dialog.homeMcp ?? null);
-  if (!servers?.length) return null;
-  const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
-  const rows = servers.map((s) => serverRow(dialog, `~home/${s.name}`, s, { on: true, action: restartButton(dialog, s.name) }));
-  return h('section.set-part', h('h2.set-part-name', t('pkg.part.home_mcp')), h('p.set-part-hint', t('pkg.home_mcp_hint')), h('section.set-group', h('div.set-rows', rows)));
-}
-
-/** 「重启」：`mcp.restart {name}`，回应是那一项，换进去重画；拒了弹一句。 @param {any} dialog @param {string} name */
-function restartButton(dialog, name) {
-  return h('button.set-btn.is-small', { type: 'button', onclick: async () => {
-    try {
-      const got = await dialog.ctx.core.request('mcp.restart', { name });
-      if (got?.name) dialog.homeMcp = (dialog.homeMcp ?? []).map((/** @type {any} */ x) => (x.name === got.name ? got : x));
-    } catch (err) {
-      dialog.toast(err?.message ?? String(err));
-    }
-    dialog.drawBody();
-  } }, dialog.ctx.text('pkg.mcp_restart'));
 }
