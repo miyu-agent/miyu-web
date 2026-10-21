@@ -252,6 +252,7 @@
       "scheme_dark": "深色",
       "pkg_missing": "缺少 {names}",
       "back": "设置",
+      "back_sub": "返回",
       "models": {
         "tabs": {
           "providers": "供应商",
@@ -772,6 +773,7 @@
       "scheme_dark": "Dark",
       "pkg_missing": "Missing {names}",
       "back": "Settings",
+      "back_sub": "Back",
       "models": {
         "tabs": {
           "providers": "Providers",
@@ -1292,6 +1294,7 @@
       "scheme_dark": "ダーク",
       "pkg_missing": "{names} が足りません",
       "back": "設定",
+      "back_sub": "戻る",
       "models": {
         "tabs": {
           "providers": "プロバイダー",

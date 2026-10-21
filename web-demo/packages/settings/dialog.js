@@ -61,7 +61,7 @@ export class SettingsDialog {
     this.panel = h('section.set-panel', { role: 'dialog', 'aria-modal': 'true', 'aria-label': this.ctx.text('title'), style: `--set-w: ${cfg.width}px; --set-h: ${cfg.height}px` },
       h('aside.set-side', h('label.set-search-box', icon('search'), this.search), this.nav),
       h('div.set-main',
-        h('header.set-head', h('button.set-back', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), h('span.set-back-text', this.ctx.text('back'))), this.title,
+        h('header.set-head', h('button.set-back', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), h('span.set-back-text', this.ctx.text('back')), h('span.set-back-sub', this.ctx.text('back_sub'))), this.title,
           h('button.icon-button.set-close', { type: 'button', title: this.ctx.text('close'), 'aria-label': this.ctx.text('close'), onclick: () => this.close() }, icon('x'))),
         this.body));
     this.root = h('div.set-layer', h('div.set-scrim', { onclick: () => this.close() }), this.panel);

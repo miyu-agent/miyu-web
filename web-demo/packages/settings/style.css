@@ -43,7 +43,8 @@
 .set-layer.has-sub .set-back { display: inline-flex; }
 .set-layer.has-sub .set-back-text { display: none; }
 /* 里面的卡片已经写了名字的那一层：页头不写名字，返回箭头后面写「返回」（2026-10-21 项目主人） */
-.set-layer.has-sub.is-bare-sub .set-back-text { display: inline; }
+.set-back-sub { display: none; }
+.set-layer.has-sub.is-bare-sub .set-back-sub { display: inline; }
 .set-slide.is-push { animation: set-slide-from-right 0.26s var(--ease-out); }
 .set-slide.is-pop { animation: set-slide-from-left 0.26s var(--ease-out); }
 .set-slide-ghost { position: absolute; left: 24px; right: 24px; pointer-events: none; }
