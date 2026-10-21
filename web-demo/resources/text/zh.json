@@ -73,6 +73,7 @@
   "esc_clear_hint": "再按一次 Esc 清空",
   "cleared": "已清空 · ↑ 恢复",
   "done": "{time} · {endpoint}/{model} · {elapsed}",
+  "done_bare": "{time} · {elapsed}",
   "done_usage": " · {tokens}(C{percent}%)",
   "interrupted": "已中断",
   "failed": "出错：{message}",

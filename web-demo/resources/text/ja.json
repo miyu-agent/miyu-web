@@ -73,6 +73,7 @@
   "esc_clear_hint": "もう一度 Esc でクリア",
   "cleared": "クリアしました · ↑ で復元",
   "done": "{time} · {endpoint}/{model} · {elapsed}",
+  "done_bare": "{time} · {elapsed}",
   "done_usage": " · {tokens}(C{percent}%)",
   "interrupted": "中断しました",
   "failed": "エラー：{message}",

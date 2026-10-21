@@ -178,7 +178,7 @@
 .dream-answer { margin: calc(4px * var(--space)) 0 calc(6px * var(--space)); }
 .dream-answer .dream-line { animation: none; }
 .dream-answer-foot { margin-top: calc(2px * var(--space)); }
-.dream-summary-btn { width: 100%; padding: 0; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+.dream-summary-btn { width: 100%; padding: 0; border: 0; background: none; font-family: inherit; text-align: left; cursor: pointer; }
 .dream-summary-text { margin: 0 0 calc(6px * var(--space)) calc(44px * var(--space)); color: var(--text-soft); font-size: calc(13px * var(--text-scale)); line-height: 1.6; }
 /* 「整理记录」的小窗：一趟一行（蓝图「记忆页」第 13a 条第 4 条） */
 .mem-history { display: grid; gap: calc(2px * var(--space)); max-height: 420px; padding: calc(4px * var(--space)) calc(10px * var(--space)) calc(12px * var(--space)); overflow: auto; }

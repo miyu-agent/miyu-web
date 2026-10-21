@@ -73,6 +73,7 @@
   "esc_clear_hint": "Press Esc again to clear",
   "cleared": "Cleared · ↑ to restore",
   "done": "{time} · {endpoint}/{model} · {elapsed}",
+  "done_bare": "{time} · {elapsed}",
   "done_usage": " · {tokens}(C{percent}%)",
   "interrupted": "Interrupted",
   "failed": "Error: {message}",

@@ -287,7 +287,10 @@ function endItem(e, status) {
     const said = res.text.turn_end?.[reason];
     return { ...base, text: said ? icon(level) + said : reason };
   }
-  const head = t('done', { time: hhmm(e.at), endpoint: e.endpoint ?? '', model: e.model ?? '', elapsed: seconds(e.took_ms ?? 0) });
+  // 没带模型的（整理会话这类，核心没给）不写「供应商/模型」那一截
+  const head = e.model || e.endpoint
+    ? t('done', { time: hhmm(e.at), endpoint: e.endpoint ?? '', model: e.model ?? '', elapsed: seconds(e.took_ms ?? 0) })
+    : t('done_bare', { time: hhmm(e.at), elapsed: seconds(e.took_ms ?? 0) });
   return { ...base, text: icon(level) + head + usageText(e.usage) };
 }
 
