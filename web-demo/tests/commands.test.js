@@ -239,3 +239,15 @@ test('空会话里照「没有」说的（/goal 的固定写法、/todo）：网
     assert.deepEqual(Object.keys(web).sort(), [...res.commands.empty_none].sort(), 'empty_none 里的每一条都有一句');
   }
 });
+
+test('MCP 服务的提示词做成的命令（核心 X-39）：名字中间可以有一个 `:`，正在打的 `/github:` 也算；两个 `:`、`:` 打头的不算', () => {
+  assert.equal(typed('/github:review-pr 123'), 'github:review-pr');
+  assert.equal(typed('/github:'), 'github:');
+  assert.equal(menuTyped('/github:rev'), 'github:rev');
+  assert.equal(typed('/a:b:c'), null);
+  assert.equal(typed('/:x'), null);
+  assert.equal(typed('/http://x'), null);
+  assert.deepEqual(read([], '/github:review-pr 123'), { kind: 'unlisted', name: 'github:review-pr', words: '123' }, '列表里没有的交外面（会话里问核心）');
+  const spec = { name: 'github:review-pr', summary: '', args: true };
+  assert.deepEqual(read([spec], '/github:review-pr 123'), { kind: 'command', spec, words: '123' });
+});

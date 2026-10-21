@@ -43,11 +43,14 @@ export function mergeSpecs(local, core) {
  *   `needs_words`：空会话里打了开会话的命令（`/goal`）没写字；`empty_fixed`：空会话里打了它的一种固定写法（`/goal pause`））
  */
 
-/** 框里的字像不像命令：像的交回命令名（刚打一个 `/` 的是空的），不像的是 `null`。名字要紧挨着 `/`。 */
+/**
+ * 框里的字像不像命令：像的交回命令名（刚打一个 `/` 的是空的），不像的是 `null`。名字要紧挨着 `/`。MCP 服务的提示词做成的命令
+ * 名字是 `<服务名>:<提示词名>`（核心 X-39，`/github:review-pr 123`），中间可以有一个 `:`；正在打的 `/github:` 也算。
+ */
 export function typed(value) {
   if (!value.startsWith('/')) return null;
   const name = value.slice(1).split(/\s/u, 1)[0];
-  return /^([A-Za-z][A-Za-z0-9_-]*)?$/.test(name) ? name : null;
+  return /^([A-Za-z][A-Za-z0-9_-]*(:[A-Za-z0-9_-]*)?)?$/.test(name) ? name : null;
 }
 
 /** 列表要不要开、照什么筛：像命令名，名字后面还没打空白（打了空白是在写参数，名字已经打全了）。 */
