@@ -55,6 +55,8 @@ export class Body {
     this.floorUntil = 0;
     /** 在空中时舞台叫它回家：落稳了再回（`goHome`） */
     this.homeAfter = false;
+    /** 在往家去（脚下的输入框没了、挪走了，往家跳）：只认家、地、浮层，别的台面（你的话、设置页……）穿过去，落在原来会落的地方（出厂样子不变） */
+    this.homeward = false;
     /** 原地跳着（落地前不算离开台子，手里的东西不收） */
     this.hopping = false;
     /** 要跳了、先蹲着：什么时候开始蹲、起跳的速度（往上、横着） */
@@ -189,6 +191,7 @@ export class Body {
     this.hang = null;
     this.trip = null;
     this.act = null;
+    this.homeward = false;
   }
 
   /**
@@ -285,7 +288,8 @@ export class Body {
       }
       this.unhang();
     }
-    const platforms = this.room.platforms();
+    const home = this.homeward ? this.room.home()?.platform.id : null;
+    const platforms = this.homeward ? this.room.platforms().filter((p) => p.id === home || p.id === 'floor' || p.carry) : this.room.platforms();
     if (!this.at) {
       const home = this.room.home();
       const floor = platforms.find((p) => p.id === 'floor') ?? null;
@@ -300,7 +304,10 @@ export class Body {
       // 输入框自己往下收（确认、提问的抽屉收起，一帧能收几十像素）：跟着下去，不掉下去再弹一下（2026-10-20 项目主人：收起会弹）；
       // 跟着挪的（`stick`：你的话跟着对话滚）一样；别的台子挪得多了照旧掉
       const drop = was.id === 'composer' || same?.stick ? Infinity : c.carry.snap_px;
-      if (!same || x < same.x1 || x > same.x2 || same.y - b.y > drop) b = { ...b, x, ground: null };
+      if (!same || x < same.x1 || x > same.x2 || same.y - b.y > drop) {
+        b = { ...b, x, ground: null };
+        if (was.id === 'composer' && !this.hopping) this.homeward = true;
+      }
       else {
         if (same.y < b.y) this.offset += b.y - same.y;
         b = { ...b, x, y: same.y, ground: same };
@@ -449,6 +456,7 @@ export class Body {
     const home = this.homing ? this.room.home() : null;
     this.homing = false;
     if (!home) return;
+    this.homeward = true;
     const g = this.config.gravity;
     const extra = this.config.walk.home_extra_px;
     const up = Math.sqrt(2 * g * Math.max(0, b.y - home.platform.y + extra));
@@ -479,6 +487,7 @@ export class Body {
     this.walkTo = null;
     this.leaving = false;
     this.hopping = false;
+    this.homeward = false;
     this.landAt = now;
     this.landDepth = l.squash * Math.min(1, v / l.per_speed);
     if (b.ground?.id === 'floor') this.floorUntil = now + pick(this.config.walk.floor_stay_ms);
