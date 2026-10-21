@@ -160,7 +160,8 @@ export function apply(ctx) {
   /** 这一回算哪几个点：表里的、挂载位里挂的（`group` 的只在那个舞台上算）、主题加的和挪的 */
   const recombine = () => {
     if (!ready) return;
-    const mounted = ctx.slots.list('mascot.anchors').filter((/** @type {any} */ a) => {
+    // 挂载位给每一格添的 `owner`、`seq` 不算落脚点的格
+    const mounted = ctx.slots.list('mascot.anchors').map((/** @type {any} */ { owner, seq, ...a }) => a).filter((/** @type {any} */ a) => {
       const why = anchorProblem(a, parts, { free: true });
       if (why) tell(why);
       return !why;
