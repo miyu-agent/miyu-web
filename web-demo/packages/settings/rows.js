@@ -55,8 +55,11 @@ export function shell(o) {
  * 值来自哪一层不写（2026-10-08 项目主人）。
  * @param {any} dialog @param {import('./model.js').Item} item @param {boolean} [compact]
  */
+/** 说明里已经写了什么时候生效的，不再另写一行（2026-10-21 项目主人：新会话的权限级别说明写了「修改后开新会话生效」） */
+const SAYS_WHEN = new Set(['permission.level']);
+
 function appliesLine(dialog, item, compact) {
-  const when = compact ? null : noteOf(item.applies);
+  const when = compact || SAYS_WHEN.has(item.key) ? null : noteOf(item.applies);
   return when ? dialog.ctx.text(`applies.${when}`) : null;
 }
 

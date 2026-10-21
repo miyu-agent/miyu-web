@@ -24,7 +24,7 @@ test('筛选：已安装、可升级、官方、社区、种类；搜索照名�
   assert.deepEqual(view('all', null, '表情 技能'), ['memes']);
   assert.deepEqual(view('all', null, 'EMBED'), ['embed']);
   const got = shownOf(all, { query: '', filter: 'all', kind: null }, up);
-  assert.deepEqual(got.kinds, ['features', 'skills', 'personas', 'content'], '只露有的种类，照先后');
+  assert.deepEqual(got.kinds, ['skills', 'personas', 'features', 'content'], '只露有的种类，照先后');
   assert.equal(got.counts.community, 2);
   assert.equal(got.counts.skills, 1);
   assert.ok(found(cat, '人格'));
@@ -51,4 +51,14 @@ test('卡片上点安装：要权限、要一起装依赖的先开详情；带�
   assert.equal(percentOf({ done: 21, total: 50 }), 42);
   assert.equal(percentOf({ done: 0, total: 0 }), null);
   assert.equal(percentOf(null), null);
+});
+
+test('种类是动态的：清单的种类（kind，核心 G-11）加上带了的几样；认得的排前面，没见过的照编号排在后面', () => {
+  const theme = { package: 'night', name: '夜', official: true, installed: null, blocked: null, kind: 'theme', provides: {} };
+  const odd = { package: 'x', name: 'X', official: false, installed: null, blocked: null, kind: 'newkind', provides: { gadgets: ['g'] } };
+  const got = shownOf([theme, odd, memes], { query: '', filter: 'all', kind: null }, new Set());
+  assert.deepEqual(got.kinds, ['theme', 'skills', 'content', 'gadgets', 'newkind']);
+  assert.deepEqual(shownOf([theme, odd, memes], { query: '', filter: 'all', kind: 'theme' }, new Set()).list.map((p) => p.package), ['night']);
+  assert.equal(got.counts.newkind, 1);
+  assert.deepEqual(kindsOf(odd), ['newkind', 'gadgets']);
 });

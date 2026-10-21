@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { privateRows, dropChange, addChange, canRestore, ADD, REMOVE } from '../../packages/settings/privacy-model.js';
+import { privateRows, dropChange, addChange, canRestore, batchChange, findRows, ADD, REMOVE } from '../../packages/settings/privacy-model.js';
 
 const shipped = [{ value: '~/.ssh', name: '~/.ssh' }, { value: '~/.gnupg', name: '~/.gnupg' }, { value: '~/.aws', name: '~/.aws' }];
 const items = (add, remove) => [{ key: ADD, entry: { value: add } }, { key: REMOVE, options: shipped, entry: { value: remove } }];
@@ -30,4 +30,16 @@ test('加：空的、已经在的不加；去掉过的出厂项再加是从 remo
   assert.deepEqual(addChange('~/.aws', add, remove), { key: REMOVE, value: [] });
   assert.equal(canRestore(remove), true);
   assert.equal(canRestore(items([], [])[1]), false);
+});
+
+test('一次加好几个（一行一个）：空行、已经在的跳过，去掉过的出厂项再加是从 remove 里拿掉；搜索照路径筛', () => {
+  const [add, remove] = items(['/srv/keys'], ['~/.aws']);
+  assert.deepEqual(batchChange('~/a\n\n  ~/b \n~/.ssh\n~/.aws\n~/a', add, remove), {
+    changes: [{ key: ADD, value: ['/srv/keys', '~/a', '~/b'] }, { key: REMOVE, value: [] }],
+    skipped: ['~/.ssh', '~/a'],
+  });
+  assert.deepEqual(batchChange('~/.ssh', add, remove), { changes: [], skipped: ['~/.ssh'] });
+  const rows = privateRows(add, remove);
+  assert.deepEqual(findRows(rows, 'GNU').map((r) => r.path), ['~/.gnupg']);
+  assert.equal(findRows(rows, '  ').length, rows.length);
 });

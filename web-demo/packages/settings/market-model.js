@@ -3,19 +3,32 @@
 
 /** 第一排筛选（照这个先后） */
 export const STATUS_FILTERS = /** @type {const} */ (['all', 'installed', 'upgradable', 'official', 'community']);
-/** 第二排：照它带了什么（`package.search` 每一项的 `provides`，核心 G-10），只露有的 */
-export const KIND_FILTERS = /** @type {const} */ (['features', 'skills', 'scripts', 'mcp', 'personas', 'presets', 'command', 'slash', 'content']);
+/**
+ * 按种类筛（2026-10-21 项目主人：筛选图标，照包的种类筛；以后加了种类不用改网页）：一个包的种类是它清单里的种类（`kind`，核心 G-11：
+ * 主题、通讯平台、语言、插件……）加上它带了的几样（`provides` 里有名字的那几格，核心 G-10：技能、脚本、MCP……）。都照核心给的编号，
+ * 这里只定先后：认得的照这张表排在前面，别的照编号排在后面。
+ */
+export const KIND_FILTERS = /** @type {const} */ (['theme', 'connection', 'language', 'extension', 'ui', 'mascot', 'bundle',
+  'skills', 'scripts', 'mcp', 'command', 'slash', 'personas', 'presets', 'features', 'content']);
 /** 卡片的图标：照它带的头一种 */
-const FACES = { personas: 'user-round', presets: 'toggle-right', skills: 'sparkles', scripts: 'square-terminal', mcp: 'plug', command: 'square-terminal', slash: 'square-terminal', content: 'file-text', features: 'package' };
+const FACES = { theme: 'palette', connection: 'plug', language: 'languages', extension: 'package', mascot: 'smile', personas: 'user-round', presets: 'toggle-right', skills: 'sparkles', scripts: 'square-terminal', mcp: 'plug', command: 'square-terminal', slash: 'square-terminal', content: 'file-text', features: 'package' };
 
-/** 它带了的几种（有名字的才算） @param {any} p */
-export const kindsOf = (p) => KIND_FILTERS.filter((k) => {
-  const v = p?.provides?.[k];
-  return Array.isArray(v) ? v.length > 0 : !!v;
-});
+/** 它是哪几种：清单的种类，加上带了的几样（有名字的才算） @param {any} p @returns {string[]} */
+export const kindsOf = (p) => {
+  const own = typeof p?.kind === 'string' && p.kind ? [p.kind] : [];
+  const carried = Object.entries(p?.provides ?? {}).filter(([, v]) => (Array.isArray(v) ? v.length > 0 : !!v)).map(([k]) => k);
+  return [...new Set([...own, ...carried])];
+};
+
+/** 种类的先后：认得的照表，别的照编号排在后面 @param {string} a @param {string} b */
+const byKind = (a, b) => {
+  const i = KIND_FILTERS.indexOf(/** @type {any} */ (a));
+  const j = KIND_FILTERS.indexOf(/** @type {any} */ (b));
+  return (i < 0 ? 999 : i) - (j < 0 ? 999 : j) || a.localeCompare(b);
+};
 
 /** 卡片的图标 @param {any} p */
-export const faceOf = (p) => FACES[kindsOf(p)[0] ?? 'features'];
+export const faceOf = (p) => FACES[/** @type {keyof typeof FACES} */ (kindsOf(p).sort(byKind).find((k) => k in FACES) ?? 'features')];
 
 /** 装着的版本和软件源的不一样（照 `package.upgrades` 的 `upgrades`） @param {any} p @param {Set<string>} upgradable */
 const canUpgrade = (p, upgradable) => upgradable.has(p.package);
@@ -54,8 +67,8 @@ export function shownOf(all, view, upgradable) {
   const list = hit.filter((p) => matches(p, view.filter, upgradable) && (!view.kind || matches(p, view.kind, upgradable)));
   /** @type {Record<string, number>} */
   const counts = {};
-  for (const f of [...STATUS_FILTERS, ...KIND_FILTERS]) counts[f] = hit.filter((p) => matches(p, f, upgradable)).length;
-  const kinds = KIND_FILTERS.filter((k) => all.some((p) => kindsOf(p).includes(k)));
+  const kinds = [...new Set(all.flatMap(kindsOf))].sort(byKind);
+  for (const f of [...STATUS_FILTERS, ...kinds]) counts[f] = hit.filter((p) => matches(p, f, upgradable)).length;
   return { list, counts, kinds };
 }
 
@@ -83,7 +96,7 @@ export const needsLook = (preview) => (Array.isArray(preview?.capabilities) && p
  * @param {any} provides @param {Record<string, string>} names @param {string} sep
  */
 export function providesLine(provides, names, sep = '、') {
-  return KIND_FILTERS.map((k) => {
+  return Object.keys(provides ?? {}).sort(byKind).map((k) => {
     const v = provides?.[k];
     const items = Array.isArray(v) ? v : v ? [String(v)] : [];
     return items.length ? `${names[k] ?? k} ${items.join(sep)}` : null;

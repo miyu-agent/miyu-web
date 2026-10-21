@@ -6,8 +6,8 @@
 import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { bytes } from '../../src/lib/format.js';
-import { STATUS_FILTERS, KIND_FILTERS, shownOf, actionOf, faceOf, needsLook, providesLine, percentOf } from './market-model.js';
-import { openInfo } from './core-packages.js';
+import { STATUS_FILTERS, shownOf, actionOf, faceOf, needsLook, providesLine, percentOf } from './market-model.js';
+import { confirmIn } from './confirm.js';
 
 /** 搜索框停多久再筛（边打边筛；输入法选字时不筛） */
 const TYPE_MS = 120;
@@ -15,11 +15,11 @@ const TYPE_MS = 120;
 /**
  * @typedef {{list: any[], generated: string|null, stale: string|null, up: any|null, error: string|null, loading: boolean,
  *   busy: string|null, progress: {package: string, done: number, total: number}|null, problems: Record<string, string>,
- *   previews: Map<string, Promise<any>>, refreshing: boolean}} Market
+ *   previews: Map<string, Promise<any>>, refreshing: boolean, seen: Set<string>}} Market
  */
 
 /** @param {any} dialog @returns {Market} */
-const stateOf = (dialog) => (dialog.market ??= { list: [], generated: null, stale: null, up: null, error: null, loading: false, busy: null, progress: null, problems: {}, previews: new Map(), refreshing: false });
+const stateOf = (dialog) => (dialog.market ??= { list: [], generated: null, stale: null, up: null, error: null, loading: false, busy: null, progress: null, problems: {}, previews: new Map(), refreshing: false, seen: new Set() });
 
 /** 能升级的编号 @param {Market} m */
 const upgradableOf = (m) => new Set((m.up?.upgrades ?? []).map((/** @type {any} */ u) => u.package));
@@ -111,7 +111,6 @@ export function drawMarket(dialog) {
   const grid = h('div.mk-grid');
   const empty = h('p.set-empty', { hidden: true }, t('market.no_match'));
   const statusChips = h('div.set-pkg-chips', { role: 'tablist' });
-  const kindChips = h('div.set-pkg-chips.mk-kinds', { role: 'tablist' });
   const extra = h('div.mk-extra');
   const chip = (/** @type {string} */ f, /** @type {boolean} */ on, /** @type {number} */ n, /** @type {() => void} */ go) => h(`button.set-pkg-chip${on ? '.is-on' : ''}${n ? '' : '.is-off'}`, {
     type: 'button', role: 'tab', 'aria-selected': String(on), onclick: go,
@@ -119,9 +118,15 @@ export function drawMarket(dialog) {
   const update = () => {
     const got = shownOf(m.list, view, upgradable);
     if (view.kind && !got.kinds.includes(/** @type {any} */ (view.kind))) view.kind = null;
-    replace(statusChips, STATUS_FILTERS.map((f) => chip(f, view.filter === f, got.counts[f], () => { view.filter = f; update(); })));
-    replace(kindChips, got.kinds.map((k) => chip(k, view.kind === k, got.counts[k], () => { view.kind = view.kind === k ? null : k; update(); })));
-    kindChips.hidden = !got.kinds.length;
+    replace(statusChips, [
+      ...STATUS_FILTERS.map((f) => chip(f, view.filter === f, got.counts[f], () => { view.filter = f; update(); })),
+      // 选着的种类接在后面，点了去掉
+      view.kind ? h('button.set-pkg-chip.is-on.mk-kind-on', { type: 'button', title: t('market.kind_clear'), onclick: () => { view.kind = null; update(); } },
+        kindName(dialog, view.kind), icon('x')) : null,
+    ]);
+    filterBtn.hidden = !got.kinds.length;
+    filterBtn.classList.toggle('is-on', !!view.kind);
+    kindsNow = got;
     replace(grid, got.list.map((p) => card(dialog, p, upgradable)));
     empty.hidden = got.list.length > 0;
     replace(extra, view.filter === 'upgradable' ? upgradeExtras(dialog) : []);
@@ -138,6 +143,13 @@ export function drawMarket(dialog) {
     clearTimeout(timer);
     timer = setTimeout(() => { view.query = input.value; update(); }, TYPE_MS);
   });
+  /** 现在的个数（筛选菜单照它写） @type {any} */
+  let kindsNow = null;
+  // 按种类筛（2026-10-21 项目主人：给一个筛选的图标，照包的种类筛；种类照核心给的动态出，以后加了种类不用改网页）
+  const filterBtn = /** @type {HTMLButtonElement} */ (h('button.icon-button.mk-filter', {
+    type: 'button', title: t('market.kinds'), 'aria-label': t('market.kinds'),
+    onclick: () => openKinds(dialog, filterBtn, kindsNow, view, update),
+  }, icon(hasIcon('list-filter') ? 'list-filter' : 'sliders-horizontal')));
   const ups = upgradable.size
     ? h('button.mk-ups', { type: 'button', onclick: () => { view.filter = 'upgradable'; update(); } }, t('market.upgrades', { n: upgradable.size }))
     : null;
@@ -155,7 +167,7 @@ export function drawMarket(dialog) {
   }, icon('rotate-cw')));
   const meta = h('p.mk-meta', m.stale ? t('market.stale', { at: whenOf(m.generated) }) : t('market.meta', { at: whenOf(m.generated), n: m.list.length }));
   update();
-  return [h('div.set-pkg-tools.mk-tools', h('label.set-pkg-find', icon('search'), input), ups, refresh), meta, statusChips, kindChips, extra, empty, grid];
+  return [h('div.set-pkg-tools.mk-tools', h('label.set-pkg-find', icon('search'), input), filterBtn, ups, refresh), meta, statusChips, extra, empty, grid];
 }
 
 /** 索引的时刻：本地的「10月21日 09:30」 @param {string|null} at */
@@ -176,7 +188,9 @@ function card(dialog, p, upgradable) {
   const tag = p.blocked
     ? h('span.mk-tag.is-blocked', { title: String(p.blocked) }, t('market.blocked'))
     : h(`span.mk-tag${p.official ? '.is-official' : ''}`, t(p.official ? 'market.official' : 'market.community'));
-  return h('div.mk-card', { role: 'button', tabindex: '0', onclick: (/** @type {Event} */ e) => { if (!(/** @type {HTMLElement} */ (e.target)).closest('button')) openDetail(dialog, p.package); },
+  const fresh = !m.seen.has(p.package);
+  m.seen.add(p.package);
+  return h(`div.mk-card${fresh ? '.is-new' : ''}`, { role: 'button', tabindex: '0', 'data-mk-card': p.package, onclick: (/** @type {Event} */ e) => { if (!(/** @type {HTMLElement} */ (e.target)).closest('button')) openDetail(dialog, p.package); },
     onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' && e.target === e.currentTarget) openDetail(dialog, p.package); } },
     h('div.mk-card-head', h('span.set-pkg-face.mk-face', icon(hasIcon(face) ? face : 'package')),
       h('div.mk-card-title', h('strong', p.name ?? p.package), h('span.mk-version', p.version ?? ''))),
@@ -202,7 +216,9 @@ function actionButton(dialog, p, upgradable, big) {
     return bar;
   }
   if (kind === 'installed') {
-    return h(`button.set-btn${cls}`, { type: 'button', onclick: () => { dialog.show('packages'); openInfo(dialog, p.package); } }, t('market.installed'));
+    // 悬停变「卸载」（2026-10-21 项目主人），点了先弹窗问
+    return h(`button.set-btn${cls}.mk-installed`, { type: 'button', disabled: !!m.busy, title: t('market.uninstall'), onclick: () => uninstall(dialog, p) },
+      h('span.mk-when-idle', t('market.installed')), h('span.mk-when-hover', t('market.uninstall')));
   }
   const up = (m.up?.upgrades ?? []).find((/** @type {any} */ u) => u.package === p.package);
   return h(`button.set-btn.is-primary${cls}`, {
@@ -353,9 +369,9 @@ function detailPage(dialog, id) {
   const rows = h('div.set-rows', h('p.set-empty', t('market.loading')));
   const line = (/** @type {string} */ label, /** @type {any} */ value) => h('div.set-row', h('div.set-text', h('div.set-name', h('span', label))), h('div.set-control.mk-value', value));
   previewOf(dialog, id).then((got) => {
-    const names = Object.fromEntries(KIND_FILTERS.map((k) => [k, t(`market.filter.${k}`)]));
+    const names = Object.fromEntries(Object.keys(got?.provides ?? p.provides ?? {}).map((k) => [k, kindName(dialog, k)]));
     const items = [
-      got?.origin ? line(t('market.origin'), h('code', got.origin)) : null,
+      got?.origin ? line(t('market.origin'), h('a.mk-link', { href: /^https?:\/\//.test(got.origin) ? got.origin : `https://${got.origin}`, target: '_blank', rel: 'noopener noreferrer' }, h('code', got.origin), icon('external-link'))) : null,
       line(t('market.includes'), providesLine(got?.provides ?? p.provides, names) || t('market.nothing')),
       line(t('market.capabilities'), (got?.capabilities ?? []).length ? (got.capabilities).join('、') : t('market.none')),
       (got?.with ?? []).length ? line(t('market.with'), h('div.mk-with', got.with.map((/** @type {any} */ w) => h('code', `${w.package} ${w.version ?? ''}`)))) : null,
@@ -368,4 +384,53 @@ function detailPage(dialog, id) {
   const action = actionButton(dialog, p, upgradableOf(m), true);
   return [head, h('section.set-group', h('h3.set-group-name', t('market.about')), rows),
     h('div.mk-detail-foot', m.problems[id] ? h('p.mk-problem', m.problems[id]) : null, action)];
+}
+
+/**
+ * 卸载：先弹窗问，`package.remove`，卸了重问一遍（拒了的写在那张卡片下面：必需的、别的包依赖它的）。
+ * @param {any} dialog @param {any} p
+ */
+async function uninstall(dialog, p) {
+  const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
+  const m = stateOf(dialog);
+  if (m.busy) return;
+  const name = p.name ?? p.package;
+  if (!(await confirmIn(dialog.panel.querySelector('.set-body') ?? dialog.panel, { text: t('market.uninstall_ask', { name }), yes: t('market.uninstall'), no: t('market.cancel') }))) return;
+  await run(dialog, p.package, () => dialog.ctx.core.request('package.remove', { package: p.package }), () => dialog.toast(t('market.uninstalled', { name })));
+}
+
+/** 种类的名字：认得的照字表（`market.filter.*`），核心以后加的种类照编号写 @param {any} dialog @param {string} k */
+function kindName(dialog, k) {
+  const key = `market.filter.${k}`;
+  const got = dialog.ctx.text(key);
+  return got && got !== key ? got : k;
+}
+
+/**
+ * 筛选菜单：开在图标下面，一种一行（名字、个数），「全部种类」在最上面；点了换、收起；`Esc`、点外面收起。
+ * @param {any} dialog @param {HTMLElement} at @param {any} got @param {{kind: string|null}} view @param {() => void} update
+ */
+function openKinds(dialog, at, got, view, update) {
+  const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
+  dialog.panel.querySelector('.mk-kinds-menu')?.remove();
+  if (!got) return;
+  const close = () => leave(menu, () => menu.remove());
+  const pick = (/** @type {string|null} */ k) => () => { view.kind = k; close(); update(); };
+  const row = (/** @type {string|null} */ k, /** @type {string} */ name, /** @type {number} */ n) => h(`button.set-menu-item${view.kind === k ? '.is-on' : ''}`, { type: 'button', onclick: pick(k) },
+    h('span', name), h('span.mk-kinds-n', String(n)), view.kind === k ? icon('check') : null);
+  const menu = h('div.set-menu.mk-kinds-menu', { role: 'menu', 'data-set-dismiss': '1' },
+    row(null, t('market.kinds_all'), got.counts.all ?? 0),
+    ...got.kinds.map((/** @type {string} */ k) => row(k, kindName(dialog, k), got.counts[k] ?? 0)));
+  menu.addEventListener('set-dismiss', close);
+  const box = at.getBoundingClientRect();
+  const panel = dialog.panel.getBoundingClientRect();
+  const zoom = panel.width / dialog.panel.offsetWidth || 1;
+  menu.style.top = `${(box.bottom - panel.top) / zoom + 6}px`;
+  menu.style.right = `${(panel.right - box.right) / zoom}px`;
+  dialog.panel.append(menu);
+  const away = (/** @type {MouseEvent} */ e) => {
+    if (!menu.isConnected) { document.removeEventListener('pointerdown', away, true); return; }
+    if (!menu.contains(/** @type {Node} */ (e.target)) && e.target !== at && !at.contains(/** @type {Node} */ (e.target))) { document.removeEventListener('pointerdown', away, true); close(); }
+  };
+  document.addEventListener('pointerdown', away, true);
 }

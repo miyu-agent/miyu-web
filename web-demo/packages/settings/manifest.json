@@ -610,7 +610,14 @@
           "presets": "预设",
           "command": "命令",
           "slash": "斜杠命令",
-          "content": "内容"
+          "content": "内容",
+          "theme": "主题",
+          "connection": "通讯平台",
+          "language": "语言",
+          "extension": "插件",
+          "ui": "界面",
+          "mascot": "吉祥物",
+          "bundle": "扩展包"
         },
         "official": "官方",
         "community": "社区",
@@ -653,16 +660,27 @@
         "size": "下载大小",
         "replaces": "替换",
         "replaces_version": "替换已装的 {version}",
-        "installing": "正在安装…"
+        "installing": "正在安装…",
+        "kinds": "按种类筛选",
+        "kinds_all": "全部种类",
+        "kind_clear": "不按种类筛",
+        "uninstall": "卸载",
+        "uninstall_ask": "确认卸载「{name}」吗？",
+        "uninstalled": "已卸载：{name}"
       },
       "privacy": {
-        "shipped": "出厂",
-        "drop": "不再藏",
-        "add_hint": "例如 ~/.ssh 或 /srv/keys",
+        "shipped": "出厂预设",
+        "drop": "从列表中删除",
+        "drop_ask": "是否确认从列表中删除此目录？",
+        "drop_yes": "删除",
+        "cancel": "取消",
+        "add_hint": "一行一个，例如 ~/.ssh 或 /srv/keys（Shift+回车换行）",
         "add": "添加",
-        "already": "已经在列表里了",
+        "already": "已经在列表里了：{paths}",
         "restore": "恢复默认",
-        "empty": "没有私密目录"
+        "empty": "没有私密目录",
+        "search": "搜索目录",
+        "no_match": "没有对得上的目录"
       }
     },
     "en": {
@@ -1102,7 +1120,14 @@
           "presets": "Presets",
           "command": "Commands",
           "slash": "Slash commands",
-          "content": "Content"
+          "content": "Content",
+          "theme": "Themes",
+          "connection": "Messaging platforms",
+          "language": "Languages",
+          "extension": "Plugins",
+          "ui": "Interfaces",
+          "mascot": "Mascots",
+          "bundle": "Bundles"
         },
         "official": "Official",
         "community": "Community",
@@ -1145,16 +1170,27 @@
         "size": "Download size",
         "replaces": "Replaces",
         "replaces_version": "Replaces installed {version}",
-        "installing": "Installing…"
+        "installing": "Installing…",
+        "kinds": "Filter by kind",
+        "kinds_all": "All kinds",
+        "kind_clear": "Clear kind filter",
+        "uninstall": "Uninstall",
+        "uninstall_ask": "Uninstall \"{name}\"?",
+        "uninstalled": "Uninstalled {name}"
       },
       "privacy": {
-        "shipped": "Built-in",
-        "drop": "Stop hiding",
-        "add_hint": "e.g. ~/.ssh or /srv/keys",
+        "shipped": "Preset",
+        "drop": "Remove from the list",
+        "drop_ask": "Remove this folder from the list?",
+        "drop_yes": "Remove",
+        "cancel": "Cancel",
+        "add_hint": "One per line, e.g. ~/.ssh or /srv/keys (Shift+Enter for a new line)",
         "add": "Add",
-        "already": "Already in the list",
+        "already": "Already in the list: {paths}",
         "restore": "Restore defaults",
-        "empty": "No private folders"
+        "empty": "No private folders",
+        "search": "Search folders",
+        "no_match": "No matching folders"
       }
     },
     "ja": {
@@ -1594,7 +1630,14 @@
           "presets": "プリセット",
           "command": "コマンド",
           "slash": "スラッシュコマンド",
-          "content": "コンテンツ"
+          "content": "コンテンツ",
+          "theme": "テーマ",
+          "connection": "メッセージングプラットフォーム",
+          "language": "言語",
+          "extension": "プラグイン",
+          "ui": "インターフェース",
+          "mascot": "マスコット",
+          "bundle": "バンドル"
         },
         "official": "公式",
         "community": "コミュニティ",
@@ -1637,16 +1680,27 @@
         "size": "ダウンロードサイズ",
         "replaces": "置き換え",
         "replaces_version": "インストール済みの {version} を置き換え",
-        "installing": "インストール中…"
+        "installing": "インストール中…",
+        "kinds": "種類で絞り込む",
+        "kinds_all": "すべての種類",
+        "kind_clear": "種類の絞り込みを外す",
+        "uninstall": "アンインストール",
+        "uninstall_ask": "「{name}」をアンインストールしますか？",
+        "uninstalled": "アンインストールしました：{name}"
       },
       "privacy": {
         "shipped": "既定",
-        "drop": "隠すのをやめる",
-        "add_hint": "例：~/.ssh や /srv/keys",
+        "drop": "一覧から削除",
+        "drop_ask": "このフォルダを一覧から削除しますか？",
+        "drop_yes": "削除",
+        "cancel": "キャンセル",
+        "add_hint": "1 行に 1 つ。例：~/.ssh や /srv/keys（Shift+Enter で改行）",
         "add": "追加",
-        "already": "すでに一覧にあります",
+        "already": "すでに一覧にあります：{paths}",
         "restore": "既定に戻す",
-        "empty": "プライベートフォルダはありません"
+        "empty": "プライベートフォルダはありません",
+        "search": "フォルダを検索",
+        "no_match": "一致するフォルダはありません"
       }
     }
   },

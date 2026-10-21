@@ -50,3 +50,36 @@ export function addChange(text, add, remove) {
 
 /** 去掉过出厂项的才有「恢复默认」：只把 `remove` 去掉（出厂的回来，加了的照留） @param {any} remove */
 export const canRestore = (remove) => listOf(remove).length > 0;
+
+/**
+ * 一次加好几个（一行一个）：去掉空行和前后空白；表里已经有的跳过；去掉过的出厂项再加回来是从 `remove` 里拿掉。
+ * 交回要存的几项（`add`、`remove` 各至多一项）和跳过了哪些。
+ * @param {string} text @param {any} add @param {any} remove
+ * @returns {{changes: {key: string, value: string[]}[], skipped: string[]}}
+ */
+export function batchChange(text, add, remove) {
+  const have = new Set(privateRows(add, remove).map((r) => r.path));
+  let adds = listOf(add);
+  let removes = listOf(remove);
+  /** @type {string[]} */
+  const skipped = [];
+  for (const line of text.split('\n')) {
+    const path = line.trim();
+    if (!path) continue;
+    if (have.has(path)) { skipped.push(path); continue; }
+    have.add(path);
+    if (removes.includes(path)) removes = removes.filter((p) => p !== path);
+    else adds = [...adds, path];
+  }
+  /** @type {{key: string, value: string[]}[]} */
+  const changes = [];
+  if (adds.length !== listOf(add).length) changes.push({ key: ADD, value: adds });
+  if (removes.length !== listOf(remove).length) changes.push({ key: REMOVE, value: removes });
+  return { changes, skipped };
+}
+
+/** 照搜的字筛表里的几行（不分大小写） @param {{path: string, shipped: boolean}[]} rows @param {string} query */
+export const findRows = (rows, query) => {
+  const q = query.trim().toLowerCase();
+  return q ? rows.filter((r) => r.path.toLowerCase().includes(q)) : rows;
+};
