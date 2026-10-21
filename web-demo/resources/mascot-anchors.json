@@ -1,0 +1,133 @@
+{
+  "zh": "吉祥物的落脚点（蓝图 web.md「吉祥物」第 11 条）：一项一个点，照部件名（parts.json）找页面上的东西。kind：ground 台面、perch 站点、ledge 扒边、under 扒下沿、hotspot 互动点；edge 是哪一道边；别的几格见蓝图",
+  "anchors": [
+    {
+      "id": "floor",
+      "part": "app.shell",
+      "kind": "ground",
+      "edge": "bottom",
+      "inset": 0,
+      "zh": "整页的底边：最后一层地，哪个舞台都算"
+    },
+    {
+      "id": "composer",
+      "part": "composer",
+      "kind": "ground",
+      "edge": "top",
+      "solid": true,
+      "home": true,
+      "layer": "stage",
+      "zh": "输入框的上边沿：平常站在这里（靠右）；实心，框往上长把往下掉的它顶上去；对话区被整页的东西盖住时不算"
+    },
+    {
+      "id": "composer.floats",
+      "part": "menu",
+      "kind": "ground",
+      "edge": "top",
+      "all": true,
+      "within": "composer",
+      "needs": "composer",
+      "carry": true,
+      "zh": "输入框上面的浮层（命令列表、后台任务、会话列表、输入历史、选语言、帮助、提示、跳到最新）的上边沿：升起来把站在框上的顶上去"
+    },
+    {
+      "id": "model.menu",
+      "part": "model.menu",
+      "kind": "ground",
+      "edge": "top",
+      "carry": true,
+      "zh": "换模型的菜单的上边沿：升起来把站在下面的顶上去"
+    },
+    {
+      "id": "message.user",
+      "part": "message.user",
+      "kind": "ground",
+      "edge": "top",
+      "all": true,
+      "stick": true,
+      "inset": 10,
+      "layer": "stage",
+      "zh": "你的话的气泡顶上：每一个都算，跟着对话滚；滚出去、被输入框那一叠盖住的不算"
+    },
+    {
+      "id": "stage.info",
+      "part": "stage.info",
+      "kind": "under",
+      "edge": "bottom",
+      "layer": "stage",
+      "zh": "对话区左上角那一条（会话的名字、人格）的下沿：扒着挂在下面往下探（窗口顶上站不下）"
+    },
+    {
+      "id": "settings.top",
+      "part": "settings",
+      "kind": "ground",
+      "edge": "top",
+      "zh": "设置页的上边沿"
+    },
+    {
+      "id": "brand.avatar",
+      "part": "brand.avatar",
+      "kind": "under",
+      "edge": "bottom",
+      "zh": "左上角头像的下沿：扒着挂在下面往下探（窗口顶上站不下）"
+    },
+    {
+      "id": "rail",
+      "part": "rail",
+      "kind": "perch",
+      "edge": "top",
+      "zh": "右边跳转条的顶上：跳上去站一会儿"
+    },
+    {
+      "id": "sidebar.edge",
+      "part": "sidebar",
+      "kind": "ledge",
+      "edge": "right",
+      "zh": "左栏的右边沿：扒着，从左栏后面往右探出来看"
+    },
+    {
+      "id": "settings.left",
+      "part": "settings",
+      "kind": "ledge",
+      "edge": "left",
+      "zh": "设置页的左边沿：扒着，从设置页后面往左探出来看"
+    },
+    {
+      "id": "settings.right",
+      "part": "settings",
+      "kind": "ledge",
+      "edge": "right",
+      "zh": "设置页的右边沿：扒着，从设置页后面往右探出来看"
+    },
+    {
+      "id": "composer.send",
+      "part": "composer.send",
+      "kind": "hotspot",
+      "edge": "top",
+      "actions": [
+        "poke"
+      ],
+      "needs": "composer",
+      "zh": "发送按钮：站在它正上方戳一下（只是动画，不发出去）"
+    },
+    {
+      "id": "sidebar.toggle",
+      "part": "sidebar.toggle",
+      "kind": "under",
+      "edge": "bottom",
+      "zh": "左栏开关的下沿：扒着挂在下面往下探（窗口顶上站不下）"
+    },
+    {
+      "id": "composer.notice",
+      "part": "composer.notice",
+      "kind": "hotspot",
+      "edge": "right",
+      "actions": [
+        "look"
+      ],
+      "needs": "composer",
+      "when": "appear",
+      "zh": "输入框上面的提示：露出来的那一下凑过去看（离得远的就地侧过身看）"
+    }
+  ]
+}

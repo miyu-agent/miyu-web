@@ -1,3 +1,3 @@
 /* 换颜色的那一下（src/lib/retheme.js 的视图过渡）：整页旧的一张淡出、新的淡入，0.3 秒；淡的时候点得到底下的页面 */
-::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.3s; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: calc(0.3s * var(--motion-scale)); }
 ::view-transition { pointer-events: none; }

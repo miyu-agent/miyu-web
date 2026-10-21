@@ -376,7 +376,7 @@ export class Sidebar {
    * `offset*`（整页放大后的 CSS 像素），和这一项一样大。
    */
   placePill(instant = false) {
-    const row = this.items.querySelector('.session-item.active');
+    const row = this.items.querySelector('.session-item.is-active');
     const pill = this.pill;
     // 收着的那一栏、收着的项目里的不露；刚收进去的当场拿掉，不在原地淡出（2026-10-19 项目主人：收起后原地留一块底）
     if (!(row instanceof HTMLElement) || this.selecting || row.closest('.is-folded, .project:not(.is-open)')) {
@@ -405,7 +405,7 @@ export class Sidebar {
     // 多选时「会话」那一栏的行换成勾选框（`pick`），「置顶」「项目」两栏的照常
     if (this.selecting && row.pick) {
       const on = this.selected.has(id);
-      return h(`div.session-item.is-selecting${on ? '.is-selected' : ''}${active ? '.active' : ''}`, { dataset: { session: id } },
+      return h(`div.session-item.is-selecting${on ? '.is-selected' : ''}${active ? '.is-active' : ''}`, { dataset: { session: id } },
         h('button.session-item-main', { type: 'button', title, 'aria-pressed': String(on), onclick: (e) => this.pick(id, e.shiftKey) },
           h('span.session-lead.session-check', icon(on ? 'square-check' : 'square')),
           h('span.session-copy', h('strong', title))));
@@ -429,7 +429,7 @@ export class Sidebar {
       : row.kidCount ? h('span.session-count', t('sidebar.kids', { count: row.kidCount })) : null;
     const marker = row.busy && !it.running ? h('span.session-lead.session-run-spinner.is-kids', frameNow()) : row.depth ? childLead(it, row.depth, active) : lead(it);
     const quiet = !marker.childElementCount && !marker.textContent;
-    const cls = `${active ? '.active' : ''}${open ? '.is-menu-open' : ''}${row.depth ? '.is-child' : ''}${row.hasKids ? '.has-kids' : ''}${row.open ? '.is-open' : ''}${quiet ? '.is-quiet' : ''}`;
+    const cls = `${active ? '.is-active' : ''}${open ? '.is-menu-open' : ''}${row.depth ? '.is-child' : ''}${row.hasKids ? '.has-kids' : ''}${row.open ? '.is-open' : ''}${quiet ? '.is-quiet' : ''}`;
     return h(`div.session-item${cls}`, { dataset: { session: id }, style },
       treeLines(row),
       fold,
@@ -519,7 +519,7 @@ export class Sidebar {
         input.select();
       });
     }
-    return h(`div.session-item.is-renaming${active ? '.active' : ''}`, { dataset: { session: it.session }, style },
+    return h(`div.session-item.is-renaming${active ? '.is-active' : ''}`, { dataset: { session: it.session }, style },
       h('div.session-item-main', lead(it), this.renameInput));
   }
 

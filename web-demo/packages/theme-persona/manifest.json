@@ -7,13 +7,13 @@
     "ja": "人格の外観"
   },
   "summary": {
-    "zh": "主题「跟随人格」：照会话人格的头像或自选的颜色生成页面的颜色；对话区铺人格的背景图",
-    "en": "A \"Follow persona\" theme colored from the session persona's avatar or chosen color, and its background in the chat",
-    "ja": "テーマ「人格に合わせる」：会話の人格のアイコンか選んだ色からページの色を作り、会話欄に背景画像を敷く"
+    "zh": "配色方案「跟随人格」：照会话人格的头像或自选的颜色生成页面的颜色；对话区铺人格的背景图",
+    "en": "A \"Follow persona\" color scheme colored from the session persona's avatar or chosen color, and its background in the chat",
+    "ja": "配色「人格に合わせる」：会話の人格のアイコンか選んだ色からページの色を作り、会話欄に背景画像を敷く"
   },
   "kind": "optional",
   "description": {
-    "zh": "主题里多一个「跟随人格」：照正在看的会话用的人格，主色照人格自选的颜色、没选的照头像的第一个候选色（核心算好给的），按 MD3 Content 生成浅色、深色两份（全部的颜色）；都没有、无人格的就是默认那个主题。人格有背景图的铺在对话区，上面盖一层底色，和选哪个主题无关。"
+    "zh": "配色方案里多一个「跟随人格」：照正在看的会话用的人格，主色照人格自选的颜色、没选的照头像的第一个候选色（核心算好给的），按 MD3 Content 生成浅色、深色两份（全部的颜色）；都没有、无人格的就是默认那个配色方案。人格有背景图的铺在对话区，上面盖一层底色，和选哪个主题无关。"
   },
   "note": "头像的候选色由核心算（persona.list、persona.get 的 seeds）；生成主题用 src/lib/md3（material-color-utilities 0.4，Apache-2.0）的 SchemeContent，对比度 0。",
   "text": {

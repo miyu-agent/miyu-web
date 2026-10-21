@@ -4,7 +4,7 @@
 .si {
   --si-surface: #faf9f7; --si-surface-1: #ffffff; --si-surface-2: #efece7; --si-surface-3: #e6e2db; --si-text: #1d1c1a; --si-soft: #625d56;
   --si-accent: #3a63c9; --si-on-accent: #ffffff; --si-danger: #c2413b; --si-line: #e2ddd5;
-  position: fixed; inset: 0; overflow-y: auto; background: var(--surface, var(--si-surface)); color: var(--text, var(--si-text)); font-family: var(--sans);
+  position: fixed; inset: 0; overflow-y: auto; background: var(--surface, var(--si-surface)); color: var(--text, var(--si-text)); font-family: var(--font-ui);
 }
 @media (prefers-color-scheme: dark) {
   .si {
@@ -12,33 +12,33 @@
     --si-accent: #7aa2f7; --si-on-accent: #16161e; --si-danger: #f7768e; --si-line: #2e3348;
   }
 }
-.si-col { box-sizing: border-box; width: min(560px, 100% - 32px); margin: 0 auto; padding: 56px 0 64px; animation: fade-in var(--motion-in) var(--ease-out) both; }
-.si-head { display: flex; align-items: center; justify-content: space-between; height: 20px; margin-bottom: 52px; }
-.si-brand { color: var(--text-soft, var(--si-soft)); font-size: 13px; font-weight: 600; }
-.si-steps { display: flex; align-items: center; margin: 0; padding: 0; color: color-mix(in srgb, var(--text-soft, var(--si-soft)) 62%, var(--surface, var(--si-surface))); font-size: 12.5px; list-style: none; gap: 8px; }
-.si-steps li { display: flex; align-items: center; gap: 8px; }
+.si-col { box-sizing: border-box; width: min(560px, 100% - 32px); margin: 0 auto; padding: calc(56px * var(--space)) 0 calc(64px * var(--space)); animation: fade-in var(--motion-in) var(--ease-out) both; }
+.si-head { display: flex; align-items: center; justify-content: space-between; height: 20px; margin-bottom: calc(52px * var(--space)); }
+.si-brand { color: var(--text-soft, var(--si-soft)); font-size: calc(13px * var(--text-scale)); font-weight: 600; }
+.si-steps { display: flex; align-items: center; margin: 0; padding: 0; color: color-mix(in srgb, var(--text-soft, var(--si-soft)) 62%, var(--surface, var(--si-surface))); font-size: calc(12.5px * var(--text-scale)); list-style: none; gap: calc(8px * var(--space)); }
+.si-steps li { display: flex; align-items: center; gap: calc(8px * var(--space)); }
 .si-steps li + li::before { content: ''; width: 16px; height: 1px; background: var(--line, var(--si-line)); }
 .si-steps li.is-now { color: var(--text, var(--si-text)); font-weight: 600; }
-.si-title { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.4; }
-.si-sub { margin: 4px 0 0; color: var(--text-soft, var(--si-soft)); font-size: 14px; }
-.si-body { display: grid; gap: 10px; margin-top: 18px; }
-.si-field { display: grid; grid-template-columns: 96px minmax(0, 1fr); align-items: center; gap: 12px; min-height: 32px; }
-.si-field-name { color: var(--text-soft, var(--si-soft)); font-size: 13.5px; }
+.si-title { margin: 0; font-size: calc(20px * var(--text-scale)); font-weight: 600; line-height: 1.4; }
+.si-sub { margin: calc(4px * var(--space)) 0 0; color: var(--text-soft, var(--si-soft)); font-size: calc(14px * var(--text-scale)); }
+.si-body { display: grid; gap: calc(10px * var(--space)); margin-top: calc(18px * var(--space)); }
+.si-field { display: grid; grid-template-columns: 96px minmax(0, 1fr); align-items: center; gap: calc(12px * var(--space)); min-height: 32px; }
+.si-field-name { color: var(--text-soft, var(--si-soft)); font-size: calc(13.5px * var(--text-scale)); }
 .si-input {
-  box-sizing: border-box; width: 100%; height: 32px; padding: 0 9px; border: 0; border-radius: 8px; outline: 0;
-  background: var(--surface-2, var(--si-surface-2)); color: var(--text, var(--si-text)); font: 13px var(--sans); transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box; width: 100%; height: 32px; padding: 0 calc(9px * var(--space)); border: var(--field-border, 0); border-radius: var(--field-radius, var(--r-8)); outline: 0;
+  background: var(--field-bg, var(--surface-2, var(--si-surface-2))); color: var(--field-fg, var(--text, var(--si-text))); font: calc(13px * var(--text-scale)) var(--font-ui); transition: background-color calc(0.15s * var(--motion-scale)) ease, box-shadow calc(0.15s * var(--motion-scale)) ease;
 }
-.si-input:hover { background: var(--surface-3, var(--si-surface-3)); }
-.si-input:focus { background: var(--surface-1, var(--si-surface-1)); box-shadow: var(--card-shadow, 0 2px 10px -4px rgba(0, 0, 0, 0.18)); }
-.si-error { margin: 14px 0 0; color: var(--danger, var(--si-danger)); font-size: 13px; white-space: pre-wrap; }
+.si-input:hover { background: var(--field-hover, var(--surface-3, var(--si-surface-3))); }
+.si-input:focus { background: var(--field-bg-focus, var(--surface-1, var(--si-surface-1))); box-shadow: var(--field-elev-focus, var(--card-shadow, 0 2px 10px -4px rgba(0, 0, 0, 0.18))); }
+.si-error { margin: calc(14px * var(--space)) 0 0; color: var(--danger, var(--si-danger)); font-size: calc(13px * var(--text-scale)); white-space: pre-wrap; }
 .si-error[hidden] { display: none; }
-.si-foot { display: flex; justify-content: flex-end; margin-top: 22px; }
+.si-foot { display: flex; justify-content: flex-end; margin-top: calc(22px * var(--space)); }
 .si-btn {
-  height: 32px; padding: 0 16px; border: 0; border-radius: 9px; background: var(--accent, var(--si-accent)); color: var(--on-primary, var(--si-on-accent));
-  font: 13.5px var(--sans); cursor: pointer;
+  height: 32px; padding: 0 calc(16px * var(--space)); border: var(--btn-primary-border, 0); border-radius: var(--btn-primary-radius, var(--r-9)); background: var(--btn-primary-bg, var(--accent, var(--si-accent))); color: var(--btn-primary-fg, var(--on-primary, var(--si-on-accent)));
+  font: calc(13.5px * var(--text-scale)) var(--font-ui); cursor: pointer;
 }
 .si-btn:hover { filter: brightness(1.06); }
 .si-btn:focus-visible { outline: 0; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, var(--si-accent)) 28%, transparent); }
-.si-btn:disabled { background: var(--surface-2, var(--si-surface-2)); color: var(--text-soft, var(--si-soft)); filter: none; cursor: default; }
+.si-btn:disabled { background: var(--btn-primary-bg-disabled, var(--surface-2, var(--si-surface-2))); color: var(--btn-primary-fg-disabled, var(--text-soft, var(--si-soft))); filter: none; cursor: default; }
 /* 登录框：一张不带步骤条的，往下挪一点 */
-.si.is-login .si-col { padding-top: 120px; }
+.si.is-login .si-col { padding-top: calc(120px * var(--space)); }

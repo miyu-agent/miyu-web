@@ -1,13 +1,13 @@
 /* 长期目标（软件包 goal；蓝图 web.md「长期目标」）：输入框右上方，和左上方的运行状态行同一行（styles/dock.css 的 .dock-lane）、
    同样的上下空和左右边距，靠右；目标太长截掉末尾 */
 .dock-goal { align-self: start; }
-.goal-body { display: flex; justify-content: flex-end; padding: var(--pulse-clear) 19px var(--pulse-gap); }
+.goal-body { display: flex; justify-content: flex-end; padding: var(--pulse-clear) calc(19px * var(--space)) var(--pulse-gap); }
 .goal-pill {
-  display: inline-flex; align-items: center; gap: 6px; min-width: 0; height: var(--pulse-row); padding: 0; border: 0; background: none;
-  color: var(--accent); font: 500 13px var(--sans); cursor: pointer;
+  display: inline-flex; align-items: center; gap: calc(6px * var(--space)); min-width: 0; height: var(--pulse-row); padding: 0; border: 0; background: none;
+  color: var(--accent); font: 500 calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer;
 }
 .goal-pill:hover .goal-text, .goal-pill:hover .goal-tail { text-decoration: underline; text-underline-offset: 3px; }
-.goal-pill .icon { width: 13px; height: 13px; flex: none; }
+.goal-pill .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); flex: none; }
 .goal-text { max-width: 16em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .goal-sep, .goal-tail { flex: none; }
 /* 停着、等回复：暗的；受阻：警示色 */
@@ -17,31 +17,31 @@
 /* 改目标的浮层：和后台任务的浮层同一个位置、同一个样子（输入框上面，半透明加毛玻璃，浮起来的阴影；进场升上来，退场沉下去） */
 .goal-panel {
   position: absolute; z-index: 3; right: -1px; bottom: calc(100% + 1px + var(--list-gap, 6px)); left: -1px;
-  display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 14px;
-  background: color-mix(in srgb, var(--surface-1) 90%, transparent); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
-  box-shadow: var(--float-shadow); animation: rise-in var(--motion-in) var(--ease-out) both;
+  display: grid; gap: calc(8px * var(--space)); padding: calc(10px * var(--space)); border: var(--float-border, 1px solid var(--line)); border-radius: var(--float-radius, var(--r-14));
+  background: var(--float-bg, color-mix(in srgb, var(--surface-1) 90%, transparent)); -webkit-backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur)))); backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur))));
+  box-shadow: var(--float-elev, var(--float-shadow)); animation: rise-in var(--motion-in) var(--ease-out) both;
 }
 .goal-panel.is-leaving { animation: sink-out var(--motion-out) var(--ease-in) both; }
-.goal-panel-head { display: flex; align-items: baseline; gap: 8px; padding: 0 4px; line-height: 18px; }
-.goal-panel-head strong { color: var(--text); font-size: 13px; font-weight: 600; }
-.goal-panel-state { min-width: 0; overflow: hidden; color: var(--text-faint); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.goal-panel-head { display: flex; align-items: baseline; gap: calc(8px * var(--space)); padding: 0 calc(4px * var(--space)); line-height: calc(18px * var(--text-scale)); }
+.goal-panel-head strong { color: var(--text); font-size: calc(13px * var(--text-scale)); font-weight: 600; }
+.goal-panel-state { min-width: 0; overflow: hidden; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
 /* 原文的框：不描边，底色深一档，聚焦加一圈影 */
 .goal-panel-field {
-  width: 100%; min-height: 64px; max-height: 40vh; padding: 8px 10px; border: 0; border-radius: 9px; outline: none; resize: none;
-  background: var(--surface-2); color: var(--text); font: 14px/1.55 var(--sans);
+  width: 100%; min-height: 64px; max-height: 40vh; padding: calc(8px * var(--space)) calc(10px * var(--space)); border: var(--field-border, 0); border-radius: var(--field-radius, var(--r-9)); outline: none; resize: none;
+  background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text)); font: calc(14px * var(--text-scale))/1.55 var(--font-ui);
 }
-.goal-panel-field:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
-.goal-panel-error { margin: 0; padding: 0 4px; color: var(--t-warn); font-size: 12.5px; }
-.goal-panel-bar { display: flex; align-items: center; gap: 6px; }
+.goal-panel-field:focus { box-shadow: var(--field-elev-focus, 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent)); }
+.goal-panel-error { margin: 0; padding: 0 calc(4px * var(--space)); color: var(--t-warn); font-size: calc(12.5px * var(--text-scale)); }
+.goal-panel-bar { display: flex; align-items: center; gap: calc(6px * var(--space)); }
 .goal-panel-gap { flex: 1; }
 .goal-panel-btn {
-  padding: 4px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--text-soft); font: 13px var(--sans); cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  padding: calc(4px * var(--space)) calc(12px * var(--space)); border: var(--btn-border, 0); border-radius: var(--btn-radius, var(--r-8)); background: var(--btn-bg, transparent); color: var(--btn-fg, var(--text-soft)); font: calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer;
+  transition: background-color calc(0.15s * var(--motion-scale)) ease, color calc(0.15s * var(--motion-scale)) ease;
 }
-.goal-panel-btn:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.goal-panel-btn:hover:not(:disabled) { background: var(--btn-hover, var(--surface-2)); color: var(--btn-fg-hover, var(--text)); }
 .goal-panel-btn.is-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--ribbon) 14%, transparent); color: var(--ribbon); }
-.goal-panel-btn.is-primary { background: var(--accent); color: var(--on-primary); }
-.goal-panel-btn.is-primary:hover:not(:disabled) { background: var(--accent); color: var(--on-primary); filter: brightness(1.06); }
+.goal-panel-btn.is-primary { background: var(--btn-primary-bg, var(--accent)); color: var(--btn-primary-fg, var(--on-primary)); }
+.goal-panel-btn.is-primary:hover:not(:disabled) { background: var(--btn-primary-hover, var(--accent)); color: var(--btn-primary-fg-hover, var(--on-primary)); filter: brightness(1.06); }
 /* 点不了的（原文没变、在等核心回）：同设置页的主按钮 */
 .goal-panel-btn:disabled { cursor: default; color: var(--text-faint); }
-.goal-panel-btn.is-primary:disabled { background: var(--surface-2); }
+.goal-panel-btn.is-primary:disabled { background: var(--btn-primary-bg-disabled, var(--surface-2)); }

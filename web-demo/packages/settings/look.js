@@ -49,13 +49,34 @@ export function drawLook(dialog) {
         h('span.set-theme-name', p.name));
     };
     const current = palettes.find((p) => p.id === chosen);
-    replace(el, groupBlock(ctx.text('theme'), [scheme.el, h('div.set-themes', palettes.map(card)), seedRow(dialog, current?.seeds?.())]));
+    // 两组（2026-10-21 项目主人定叫法，照终端的外观页）：「主题」（形状和材质那一层，有主题包才有这一组）、「配色方案」（明暗、卡片、主色）
+    const skin = await skinRow(dialog);
+    replace(el, h('div.set-look', skin ? groupBlock(ctx.text('skin'), [skin]) : null,
+      groupBlock(ctx.text('palette_label'), [scheme.el, h('div.set-themes', palettes.map(card)), seedRow(dialog, current?.seeds?.())])));
   };
   const el = later(fill);
   dialog.refreshLook = () => {
     if (el.isConnected) fill(el).catch(() => {});
   };
   return el;
+}
+
+/**
+ * 「皮肤」一行（蓝图 `web.md`「皮肤」第 5 条）：下拉，出厂，再照 `skin.packs` 一套一项（皮肤包认的那几格，服务 `skin` 列的）；当场换。
+ * 没有皮肤包（停用了 `skin`，或一个皮肤包都没装）的不出这一行。
+ * @param {any} dialog
+ */
+async function skinRow(dialog) {
+  const ctx = dialog.ctx;
+  const packs = ctx.slots.list('skin.packs').length ? (ctx.skin?.list() ?? []) : [];
+  if (!packs.length) return null;
+  const skin = await ctx.packages.settings('skin');
+  const chosen = packs.some((p) => p.id === skin.values.pack) ? skin.values.pack : '';
+  const pick = select(dialog, [{ value: '', name: ctx.text('skin_factory') }, ...packs.map((p) => ({ value: p.id, name: p.name }))], chosen, async (v) => {
+    await ctx.packages.set('skin', { config: { pack: v } });
+    dialog.drawBody();
+  });
+  return shell({ name: ctx.text('skin'), control: pick }).el;
 }
 
 /**

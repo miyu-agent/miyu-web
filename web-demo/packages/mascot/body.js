@@ -5,8 +5,11 @@
 //! 就松手是跳（按得越久跳得越高），拖动了被拎起来跟着指针走，身子跟着甩，松手照拖的速度扔出去；侧过身沿着台子迈步走，在地上待够了走回
 //! 输入框下面跳上去；两边、顶上是墙。蹲、抻都交给模型重画（`shape` 交回 `crouch`），不拉伸图片。数都是这个包的设置项，台子、
 //! 平常站在哪、多大由 `index.js` 量。
+//! 落脚点（第 11 条）：跳到一处去（`leapTo`：落在台面上，或者到那一点扒住一道边）；扒着（`hang`）不受重力，身子藏在那一块后面、
+//! 从边上探出一截（`shape` 交回裁掉多少）；碰一下互动点（`startAct`：戳、拍、凑过去看，照现有的姿势拼：转身、抬鳍、蹲、歪身子）。
 
 import { step, supportAt } from './world.js';
+import { hangAt, leap } from '../../src/lib/anchors.js';
 import { ease } from './face.js';
 
 /** `[最小, 最大]` 里随机一个 */
@@ -14,13 +17,21 @@ const pick = ([a, b]) => a + Math.random() * (b - a);
 /** 夹在 `[-max, max]` 里 */
 const clamp = (v, max) => Math.max(-max, Math.min(max, v));
 
+/** 一串时刻（0 到 1）附近鼓起来的一下：动作里戳、拍的那几下 @param {number} p @param {number[]} at */
+const pulse = (p, at) => at.reduce((m, h) => Math.max(m, Math.exp(-(((p - h) / 0.07) ** 2))), 0);
+/** 动作在哪几个时刻碰到那一块（0 到 1） */
+const HITS = /** @type {Record<string, number[]>} */ ({ poke: [0.32, 0.66], pat: [0.28, 0.52, 0.76], look: [] });
+
 /**
- * @typedef {import('./world.js').Platform} Platform
+ * @typedef {import('./world.js').Platform & {stick?: boolean, perch?: boolean}} Platform
+ * @typedef {import('../../src/lib/anchors.js').Ledge} Ledge
  * @typedef {{platforms: () => Platform[], home: () => {x: number, platform: Platform}|null, size: () => {w: number, h: number},
- *   reduced: () => boolean, avoid?: () => {x1: number, x2: number}|null}} Room 台子、平常站在哪、身子多大、减少动画、地上不站的那一段
- *   （正对输入框，免得挡住输入框下面那一行字）
- * @typedef {{moving: boolean, landed: number|null, left: boolean, arrived: boolean}} Moved 这一帧：还在不在动、落地多快、
- *   是不是刚离开台子、是不是走到了
+ *   reduced: () => boolean, avoid?: () => {x1: number, x2: number}|null, ledges?: () => Ledge[]}} Room 台子、平常站在哪、身子多大、
+ *   减少动画、地上不站的那一段（正对输入框，免得挡住输入框下面那一行字）、扒得住的几道边
+ * @typedef {{moving: boolean, landed: number|null, left: boolean, arrived: boolean, hung?: boolean, hit?: boolean, acted?: boolean}} Moved
+ *   这一帧：还在不在动、落地多快、是不是刚离开台子、是不是走到了、是不是刚扒住一道边、动作是不是碰了那一块一下、动作是不是做完了
+ * @typedef {{kind: string, side: number, at: number, ms: number, target: {x: number, y: number}, fired: number}} Act 在做的动作：
+ *   哪一样、朝哪边（1 右、-1 左）、什么时候开始、做多久、碰的那一点、碰过几下
  */
 
 export class Body {
@@ -44,6 +55,8 @@ export class Body {
     this.floorUntil = 0;
     /** 在空中时舞台叫它回家：落稳了再回（`goHome`） */
     this.homeAfter = false;
+    /** 在往家去（脚下的输入框、浮层没了、挪走了，往家跳）：只认家、地、浮层，别的台面（你的话、设置页……）穿过去，落在原来会落的地方（出厂样子不变） */
+    this.homeward = false;
     /** 原地跳着（落地前不算离开台子，手里的东西不收） */
     this.hopping = false;
     /** 要跳了、先蹲着：什么时候开始蹲、起跳的速度（往上、横着） */
@@ -61,6 +74,12 @@ export class Body {
     /** 身子歪多少度（拖的时候甩） */
     this.tilt = 0;
     this.tiltAim = 0;
+    /** 扒着哪道边：编号、往哪边探、脚在多高、什么时候扒上的、身子裁掉多少（左右各多少像素） */
+    this.hang = /** @type {{id: string, side: 'left'|'right', y: number, at: number, clip: {left: number, right: number}}|null} */ (null);
+    /** 跳着去一处（`leapTo`）：到了做什么（落下的台面、扒住的边）、多久到、什么时候起跳的（蹲着还没起跳的是 `null`） */
+    this.trip = /** @type {{then: {kind: 'land'|'hang', id: string}, x: number, y: number, t: number, t0: number|null}|null} */ (null);
+    /** 在做的动作（戳、拍、看） @type {Act|null} */
+    this.act = null;
   }
 
   /** 站在台子上，没被拖着。 */
@@ -171,6 +190,49 @@ export class Body {
     this.leaving = false;
     this.hopping = false;
     this.windup = null;
+    this.hang = null;
+    this.trip = null;
+    this.act = null;
+    this.homeward = false;
+  }
+
+  /**
+   * 跳到 `(x, y)` 去（第 11 条）：`then.kind` 是 `land` 的落在那里的台面上，`hang` 的到那一点时扒住那道边。站着才跳得起来，
+   * 先蹲一下；跳得比两头高的那一头再高 `visit.extra_px`，横着的速度照落到那里要多久算。交回跳没跳。
+   * @param {number} x @param {number} y @param {{kind: 'land'|'hang', id: string}} then
+   */
+  leapTo(x, y, then) {
+    const b = this.at;
+    if (!b?.ground || this.room.reduced() || this.drag) return false;
+    const v = leap(b.x, b.y, x, y, this.config.gravity, this.config.visit.extra_px);
+    this.walkTo = null;
+    this.homing = false;
+    this.leaving = false;
+    this.act = null;
+    this.windup = { at: performance.now(), vy: v.vy, vx: v.vx };
+    this.trip = { then, x, y, t: v.t, t0: null };
+    return true;
+  }
+
+  /** 松开扒着的边：往外一蹬，掉下去。 */
+  unhang() {
+    const h = this.hang;
+    if (!h || !this.at) return;
+    const out = h.side === 'right' ? 1 : -1;
+    this.hang = null;
+    this.at = { ...this.at, vx: out * 60, vy: -160, ground: null };
+  }
+
+  /**
+   * 做一个动作（互动点，第 11 条）：`poke` 戳、`pat` 拍、`look` 凑过去看，朝着 `target` 那一点（屏幕像素）做 `ms` 毫秒。站着才做。
+   * @param {string} kind @param {{x: number, y: number}} target @param {number} ms
+   */
+  startAct(kind, target, ms) {
+    const b = this.at;
+    if (!b?.ground || this.drag || this.room.reduced()) return false;
+    this.walkTo = null;
+    this.act = { kind, side: target.x >= b.x ? 1 : -1, at: performance.now(), ms, target, fired: 0 };
+    return true;
   }
 
   /** 拖着挪到指针那里；挪得够远才算拖（不然松手是跳）。交回是不是这一下才开始拖。 */
@@ -215,7 +277,21 @@ export class Body {
     const out = { moving: !!this.drag, landed: null, left: false, arrived: false };
     if (this.drag && this.at) return out;
     const c = this.config;
-    const platforms = this.room.platforms();
+    // 扒着：不受重力，跟着那道边；边没了、短得够不着脚了就松手掉下去
+    if (this.hang && this.at) {
+      const h = this.hang;
+      const l = this.room.ledges?.().find((x) => x.id === h.id);
+      if (l && h.y >= l.y1 && h.y <= l.y2) {
+        const at = hangAt(l, this.room.size().w, c.visit.peek);
+        this.hang = { ...h, side: l.side, clip: { left: at.left, right: at.right } };
+        this.at = { x: at.x, y: h.y, vx: 0, vy: 0, ground: null };
+        out.moving = now - h.at < c.visit.hang_settle_ms;
+        return out;
+      }
+      this.unhang();
+    }
+    const home = this.homeward ? this.room.home()?.platform.id : null;
+    const platforms = this.homeward ? this.room.platforms().filter((p) => p.id === home || p.id === 'floor' || p.carry) : this.room.platforms();
     if (!this.at) {
       const home = this.room.home();
       const floor = platforms.find((p) => p.id === 'floor') ?? null;
@@ -227,9 +303,14 @@ export class Body {
       const same = platforms.find((p) => p.id === was.id);
       // 输入框左右挪了（收起左栏、改窗口）：跟着它右边挪
       const x = same && was.id === 'composer' && this.walkTo == null ? b.x + (same.x2 - was.x2) : b.x;
-      // 输入框自己往下收（确认、提问的抽屉收起，一帧能收几十像素）：跟着下去，不掉下去再弹一下（2026-10-20 项目主人：收起会弹）；别的台子挪得多了照旧掉
-      const drop = was.id === 'composer' ? Infinity : c.carry.snap_px;
-      if (!same || x < same.x1 || x > same.x2 || same.y - b.y > drop) b = { ...b, x, ground: null };
+      // 输入框自己往下收（确认、提问的抽屉收起，一帧能收几十像素）：跟着下去，不掉下去再弹一下（2026-10-20 项目主人：收起会弹）；
+      // 跟着挪的（`stick`：你的话跟着对话滚）一样；别的台子挪得多了照旧掉
+      const drop = was.id === 'composer' || same?.stick ? Infinity : c.carry.snap_px;
+      if (!same || x < same.x1 || x > same.x2 || same.y - b.y > drop) {
+        b = { ...b, x, ground: null };
+        // 输入框、它上面的浮层（命令列表收起）没了：往家掉，别的台面穿过去
+        if ((was.id === 'composer' || was.carry) && !this.hopping) this.homeward = true;
+      }
       else {
         if (same.y < b.y) this.offset += b.y - same.y;
         b = { ...b, x, y: same.y, ground: same };
@@ -254,8 +335,23 @@ export class Body {
     }
     // 蹲够了：起跳（蹲着的时候脚下的台子没了，就不跳了）
     if (this.windup && (!b.ground || now - this.windup.at >= c.jump.windup_ms)) {
-      if (b.ground) b = { ...b, vy: this.windup.vy, vx: this.windup.vx ?? 0, ground: null };
+      if (b.ground) {
+        b = { ...b, vy: this.windup.vy, vx: this.windup.vx ?? 0, ground: null };
+        if (this.trip) this.trip.t0 = now;
+      } else this.trip = null;
       this.windup = null;
+    }
+    // 动作：做够了收；碰那一块的那几下告诉外面（被碰的那一块动一下）
+    const a = this.act;
+    if (a) {
+      const p = (now - a.at) / a.ms;
+      if (!b.ground || p >= 1) {
+        this.act = null;
+        out.acted = true;
+      } else if (a.fired < (HITS[a.kind] ?? []).length && p >= HITS[a.kind][a.fired]) {
+        a.fired += 1;
+        out.hit = true;
+      }
     }
     // 站在地上正对输入框的那一段、又没在走（刚起来、窗口改了、被叫停过）：往外让
     if (b.ground?.id === 'floor' && this.walkTo == null && !this.windup) this.leave(b, now);
@@ -282,8 +378,25 @@ export class Body {
       const r = step(b, dt, platforms, c.gravity);
       b = r.body;
       if (r.landed) {
+        this.trip = null;
         b = this.land(b, r.landed, now);
         out.landed = r.landed;
+      }
+    }
+    // 跳着去扒一道边：到了那一刻（往下落着经过那一点）扒住
+    const t = this.trip;
+    if (t && t.then.kind === 'hang' && !b.ground && t.t0 != null && (now - t.t0) / 1000 >= t.t - dt / 2000) {
+      const l = this.room.ledges?.().find((x) => x.id === t.then.id);
+      this.trip = null;
+      if (l && t.y >= l.y1 && t.y <= l.y2) {
+        const at = hangAt(l, this.room.size().w, c.visit.peek);
+        this.hang = { id: l.id, side: l.side, y: t.y, at: now, clip: { left: at.left, right: at.right } };
+        this.at = { x: at.x, y: t.y, vx: 0, vy: 0, ground: null };
+        this.landAt = now;
+        this.landDepth = c.land.squash * 0.4;
+        out.hung = true;
+        out.moving = true;
+        return out;
       }
     }
     // 两边、顶上是墙：撞墙的弹回来一点；走着撞到墙的就停在那儿（要去的地方在墙外，不原地踏步）
@@ -346,6 +459,7 @@ export class Body {
     const home = this.homing ? this.room.home() : null;
     this.homing = false;
     if (!home) return;
+    this.homeward = true;
     const g = this.config.gravity;
     const extra = this.config.walk.home_extra_px;
     const up = Math.sqrt(2 * g * Math.max(0, b.y - home.platform.y + extra));
@@ -376,6 +490,7 @@ export class Body {
     this.walkTo = null;
     this.leaving = false;
     this.hopping = false;
+    this.homeward = false;
     this.landAt = now;
     this.landDepth = l.squash * Math.min(1, v / l.per_speed);
     if (b.ground?.id === 'floor') this.floorUntil = now + pick(this.config.walk.floor_stay_ms);
@@ -400,7 +515,21 @@ export class Body {
     const b = /** @type {import('./world.js').Body} */ (this.at);
     if (this.drag) return this.drag.moved ? j.hold_crouch : j.charge_depth * Math.min(1, (now - this.drag.t0) / j.charge_ms);
     if (this.windup) return j.windup_depth * Math.min(1, (now - this.windup.at) / j.windup_ms);
+    // 扒着：扒上去那一下蹲一下，之后抻着一点（挂在那儿）
+    if (this.hang) {
+      const t = now - this.hang.at;
+      return t < c.visit.hang_settle_ms ? c.land.squash * 0.4 * Math.exp(-t / c.land.decay_ms) * Math.cos((2 * Math.PI * t) / c.land.period_ms) : -0.08;
+    }
     if (!b.ground) return -Math.min(c.land.stretch_max, Math.abs(b.vy) / c.land.stretch_per_speed);
+    // 动作：戳的弯下腰、每戳一下再低一点；拍的每拍一下蹲一点；看的抻一点（凑过去）
+    if (this.act) {
+      const a = this.act;
+      const p = Math.min(1, (now - a.at) / a.ms);
+      const bell = Math.sin(Math.PI * p);
+      if (a.kind === 'poke') return 0.35 * bell + 0.25 * pulse(p, HITS.poke);
+      if (a.kind === 'pat') return 0.15 * pulse(p, HITS.pat);
+      return -0.06 * bell;
+    }
     if (this.landAt != null) {
       const t = now - this.landAt;
       if (t > c.land.decay_ms * 5) this.landAt = null;
@@ -414,7 +543,8 @@ export class Body {
   /**
    * 这一帧画成什么样：被带上去的慢慢跟上、拖着甩、蹲多深；走的时候侧过身去（`turn`，照走的方向，走完转回正面）、两片鳍前后迈
    * （`stride`）、迈一步颠一下（正面的时候左右摇，侧过去就不摇了）；再加 `bob`（敲电脑一下一下颠）。
-   * @returns {{x: number, y: number, rot: number, stride: number, crouch: number, turn: number, moving: boolean}}
+   * 扒着的再交回身子左右各裁掉多少（`clip`，藏在那一块后面的那一截）；动作的转身、歪、抬鳍在这里拼。
+   * @returns {{x: number, y: number, rot: number, stride: number, crouch: number, turn: number, moving: boolean, clip: {left: number, right: number}|null}}
    */
   shape(dt, now, bob) {
     const c = this.config;
@@ -431,14 +561,38 @@ export class Body {
     if (this.crouch || aim) moving = true;
     const walking = this.walkTo != null && !!b.ground;
     const w = c.walk;
-    const face = walking ? Math.sign(/** @type {number} */ (this.walkTo) - b.x) * w.turn_deg : 0;
+    const v = c.visit;
+    const act = this.act;
+    const p = act ? Math.min(1, (now - act.at) / act.ms) : 0;
+    const bell = Math.sin(Math.PI * p);
+    // 扒着的、拍的、看的侧过身朝那一边（扒着的朝外）；戳的正对着
+    const out = this.hang ? (this.hang.side === 'right' ? 1 : -1) : 0;
+    const face = walking ? Math.sign(/** @type {number} */ (this.walkTo) - b.x) * w.turn_deg
+      : this.hang ? out * v.hang_turn_deg
+        : act && act.kind !== 'poke' ? act.side * v.act_turn_deg * Math.min(1, bell * 3) : 0;
     this.turn = ease(this.turn, face, dt, w.turn_half_life_ms);
     if (Math.abs(this.turn - face) < 0.5) this.turn = face;
     else moving = true;
     const wave = walking ? Math.sin(this.phase(now)) : 0;
     const side = Math.cos((this.turn * Math.PI) / 180);
     // 侧过身时往走的方向倾一点（转了多少倾多少）；正面的时候左右摇
-    const lean = (this.turn / w.turn_deg) * w.lean_deg;
-    return { x: b.x, y: b.y + this.offset - Math.abs(wave) * w.hop_px - bob, rot: this.tilt + lean + wave * w.waddle_deg * side, stride: wave, crouch: this.crouch, turn: this.turn, moving };
+    let lean = (this.turn / w.turn_deg) * w.lean_deg;
+    let stride = wave;
+    if (this.hang) {
+      // 扒着：往外歪，两片鳍一下一下扒着边（刚扒上的那一会儿扒得快，之后停住）
+      const t = now - this.hang.at;
+      lean = out * v.hang_lean_deg;
+      stride = t < v.hang_settle_ms ? 0.6 * Math.sin(t / 70) * (1 - t / v.hang_settle_ms) : 0;
+      if (t < v.hang_settle_ms) moving = true;
+    } else if (act) {
+      moving = true;
+      if (act.kind === 'poke') stride = 1.4 * pulse(p, HITS.poke);
+      // 拍：抬起朝它那一边的鳍（往右的是右鳍，`stride` 负的），拍的那几下落下去
+      else if (act.kind === 'pat') stride = -act.side * (1.5 - 1.1 * pulse(p, HITS.pat)) * Math.min(1, bell * 4);
+      else stride = 0;
+      if (act.kind !== 'poke') lean = act.side * v.act_lean_deg * Math.min(1, bell * 3);
+    }
+    const clip = this.hang ? this.hang.clip : null;
+    return { x: b.x, y: b.y + this.offset - Math.abs(wave) * w.hop_px - bob, rot: this.tilt + lean + wave * w.waddle_deg * side, stride, crouch: this.crouch, turn: this.turn, moving, clip };
   }
 }

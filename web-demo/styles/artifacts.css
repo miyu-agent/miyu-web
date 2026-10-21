@@ -3,7 +3,7 @@
 
 .app-shell { --artifact-in: 0.34s; --artifact-out: 0.24s; --artifact-ease-in: cubic-bezier(0.32, 0.72, 0, 1); --artifact-ease-out: cubic-bezier(0.4, 0, 1, 1); }
 .app-shell.has-artifacts {
-  grid-template-columns: 252px minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale));
+  grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale));
   transition: grid-template-columns var(--artifact-in) var(--artifact-ease-in);
 }
 .app-shell.has-artifacts.is-sidebar-collapsed { grid-template-columns: 0px minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale)); }
@@ -13,8 +13,8 @@
 
 .artifact-workspace {
   position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr); width: calc(var(--artifact-ratio) * 100vw / var(--ui-scale) - 16px);
-  min-width: 0; margin: 8px 10px 10px 6px; justify-self: end; overflow: hidden;
-  border: 1px solid var(--line); border-radius: 14px; background: var(--surface-1); box-shadow: var(--artifact-shadow);
+  min-width: 0; margin: calc(8px * var(--space)) calc(10px * var(--space)) calc(10px * var(--space)) calc(6px * var(--space)); justify-self: end; overflow: hidden;
+  border: 1px solid var(--line); border-radius: var(--r-14); background: var(--surface-1); box-shadow: var(--artifact-shadow);
   animation: artifact-in var(--artifact-in) var(--artifact-ease-in) both;
 }
 /* 开、关（2026-10-17 项目主人：右栏比左栏大得多，不照左栏那一套）：这一栏一开始就是最终的宽，里面的东西不跟着挤；整张从右边滑进来，
@@ -24,7 +24,7 @@
 @keyframes artifact-out { to { transform: translateX(calc(100% + 16px)); } }
 @media (prefers-reduced-motion: reduce) {
   .app-shell.has-artifacts, .app-shell.is-artifacts-leaving { transition: none; }
-  .artifact-workspace, .artifact-workspace.is-leaving { animation-duration: 1ms; }
+  .artifact-workspace, .artifact-workspace.is-leaving { animation-duration: calc(1ms * var(--motion-scale)); }
 }
 /* 最大化、窄屏：铺满（`justify-self: end` 对固定定位的也起作用，不改回来会缩成按内容算的宽、贴在右边） */
 .artifact-workspace.is-maximized { position: fixed; z-index: 50; width: auto; margin: 0; justify-self: stretch; inset: 8px; }
@@ -34,98 +34,98 @@
 /* 顶上两个标签「工作区」「面板」（扩展的界面块放进来时才有，2026-10-15 项目主人定）：竖着排，内容那一块占满剩下的高 */
 .artifact-workspace { display: flex; flex-direction: column; }
 .artifact-workspace > .artifact-view, .artifact-panel { flex: 1; }
-.artifact-tabs { display: flex; flex: none; align-items: center; gap: 4px; padding: 8px 10px 0 12px; }
+.artifact-tabs { display: flex; flex: none; align-items: center; gap: calc(4px * var(--space)); padding: calc(8px * var(--space)) calc(10px * var(--space)) 0 calc(12px * var(--space)); }
 .artifact-tabs > .artifact-action { margin-left: auto; }
-.artifact-tab { height: 30px; padding: 0 12px; border: 0; border-radius: var(--radius); background: transparent; color: var(--text-soft); font: inherit; font-size: 13px; cursor: pointer; }
-.artifact-tab:hover { background: var(--surface-2); color: var(--text); }
-.artifact-tab.is-active { background: var(--surface-3); color: var(--text); font-weight: 600; }
+.artifact-tab { height: 30px; padding: 0 calc(12px * var(--space)); border: var(--item-border, 0); border-radius: var(--item-radius, var(--radius)); background: var(--item-bg, transparent); color: var(--item-fg, var(--text-soft)); font: inherit; font-size: calc(13px * var(--text-scale)); cursor: pointer; }
+.artifact-tab:hover { background: var(--item-hover, var(--surface-2)); color: var(--item-fg-hover, var(--text)); }
+.artifact-tab.is-active { background: var(--item-active, var(--surface-3)); color: var(--item-fg-active, var(--text)); font-weight: 600; }
 .artifact-panel { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-.artifact-empty { margin: 40px auto; color: var(--text-faint); font-size: 13px; text-align: center; }
+.artifact-empty { margin: calc(40px * var(--space)) auto; color: var(--text-faint); font-size: calc(13px * var(--text-scale)); text-align: center; }
 /* 面板里的块比这一栏深一档，块里的按钮、进度条的轨道再深一档 */
 .artifact-panel .wg-block { --wg-bg: var(--surface-2); --wg-raised: var(--surface-3); }
 
 /* 头上一行（2026-10-17 项目主人选「轻一档」：原来 58px、每个按钮都铺一层底，太大太重）：44px；预览、源码合成一个分段开关；标题、
    右边几个按钮平时不铺底，悬停才有；类型标签等宽小字；不画分隔线 */
-.artifact-header { display: flex; min-height: 44px; align-items: center; justify-content: space-between; padding: 6px 8px 6px 10px; gap: 8px; }
-.artifact-leading { display: flex; min-width: 0; align-items: center; gap: 7px; }
-.artifact-mode-switch { display: flex; flex: none; padding: 2px; gap: 2px; border-radius: 9px; background: var(--surface-2); }
+.artifact-header { display: flex; min-height: 44px; align-items: center; justify-content: space-between; padding: calc(6px * var(--space)) calc(8px * var(--space)) calc(6px * var(--space)) calc(10px * var(--space)); gap: calc(8px * var(--space)); }
+.artifact-leading { display: flex; min-width: 0; align-items: center; gap: calc(7px * var(--space)); }
+.artifact-mode-switch { display: flex; flex: none; padding: calc(2px * var(--space)); gap: calc(2px * var(--space)); border-radius: var(--seg-radius, var(--r-9)); background: var(--seg-bg, var(--surface-2)); }
 .artifact-mode {
-  display: grid; width: 26px; height: 26px; place-items: center; padding: 0; border: 0; border-radius: 7px;
+  display: grid; width: 26px; height: 26px; place-items: center; padding: 0; border: 0; border-radius: var(--r-7);
   background: transparent; color: var(--text-faint); cursor: pointer;
 }
 .artifact-mode:hover { color: var(--text); }
-.artifact-mode.is-active { background: var(--surface-1); box-shadow: 0 1px 2px rgb(0 0 0 / 18%); color: var(--text); }
-.artifact-mode .icon, .artifact-action .icon { width: 14px; height: 14px; }
+.artifact-mode.is-active { background: var(--seg-thumb-bg, var(--surface-1)); box-shadow: var(--seg-thumb-elev, 0 1px 2px rgb(0 0 0 / 18%)); color: var(--text); }
+.artifact-mode .icon, .artifact-action .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
 .artifact-resource-wrap { position: relative; min-width: 0; }
 .artifact-title-button {
-  display: flex; max-width: 100%; min-height: 30px; align-items: center; padding: 0 6px; gap: 5px; border: 0; border-radius: var(--radius);
+  display: flex; max-width: 100%; min-height: 30px; align-items: center; padding: 0 calc(6px * var(--space)); gap: calc(5px * var(--space)); border: 0; border-radius: var(--radius);
   background: transparent; color: var(--text); cursor: pointer;
 }
 .artifact-title-button:hover { background: var(--surface-2); }
-.artifact-title-button strong { min-width: 0; overflow: hidden; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-.artifact-title-button small, .artifact-resource-item small { flex: none; color: var(--text-faint); font: 600 9px var(--code-font); letter-spacing: 0.04em; }
-.artifact-title-button .icon { width: 12px; height: 12px; flex: none; }
+.artifact-title-button strong { min-width: 0; overflow: hidden; font-size: calc(13px * var(--text-scale)); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.artifact-title-button small, .artifact-resource-item small { flex: none; color: var(--text-faint); font: 600 calc(9px * var(--text-scale)) var(--font-code); letter-spacing: 0.04em; }
+.artifact-title-button .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); flex: none; }
 .artifact-resource-menu {
   position: absolute; top: calc(100% + 7px); left: 0; z-index: 5; display: grid; width: min(320px, 70vw); max-height: min(360px, 50dvh);
-  padding: 5px; overflow-y: auto; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface-1);
-  box-shadow: var(--artifact-shadow); animation: drop-in var(--motion-in) var(--ease-out) both;
+  padding: calc(5px * var(--space)); overflow-y: auto; border: var(--float-border, 1px solid var(--line-strong)); border-radius: var(--float-radius, var(--radius)); background: var(--float-bg, var(--surface-1));
+  box-shadow: var(--float-elev, var(--artifact-shadow)); animation: drop-in var(--motion-in) var(--ease-out) both;
 }
 .artifact-resource-menu.is-leaving { animation: lift-out var(--motion-out) var(--ease-in) both; }
 .artifact-resource-item {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto 14px; min-height: 38px; align-items: center; padding: 5px 8px; gap: 7px;
-  border: 0; border-radius: var(--radius); background: transparent; color: var(--text); font-size: 12.5px; text-align: left; cursor: pointer;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto 14px; min-height: 38px; align-items: center; padding: calc(5px * var(--space)) calc(8px * var(--space)); gap: calc(7px * var(--space));
+  border: var(--item-border, 0); border-radius: var(--item-radius, var(--radius)); background: var(--item-bg, transparent); color: var(--item-fg, var(--text)); font-size: calc(12.5px * var(--text-scale)); text-align: left; cursor: pointer;
 }
-.artifact-resource-item:hover { background: var(--surface-2); }
+.artifact-resource-item:hover { background: var(--item-hover, var(--surface-2)); }
 .artifact-resource-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.artifact-resource-item .icon { width: 14px; height: 14px; color: var(--accent); }
+.artifact-resource-item .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); color: var(--accent); }
 /* 一行：名字那一大块加右边一个 ✕（悬停这一行才露，照旧版），点了从右栏拿掉这一样 */
-.artifact-resource-row { display: flex; align-items: center; gap: 2px; }
+.artifact-resource-row { display: flex; align-items: center; gap: calc(2px * var(--space)); }
 .artifact-resource-row > .artifact-resource-item { min-width: 0; flex: 1; }
 .artifact-resource-remove { width: 26px; height: 26px; flex: none; border-radius: var(--radius); color: var(--text-faint); opacity: 0; }
 .artifact-resource-row:hover .artifact-resource-remove, .artifact-resource-remove:focus-visible { opacity: 1; }
 .artifact-resource-remove:hover { background: var(--surface-2); color: var(--ribbon); }
-.artifact-resource-remove .icon { width: 13px; height: 13px; }
+.artifact-resource-remove .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); }
 @media (hover: none) { .artifact-resource-remove { opacity: 1; } }
-.artifact-actions { display: flex; flex: none; align-items: center; gap: 1px; }
+.artifact-actions { display: flex; flex: none; align-items: center; gap: calc(1px * var(--space)); }
 .artifact-action { width: 28px; height: 28px; color: var(--text-faint); }
 .artifact-action:hover { background: var(--surface-2); color: var(--text); }
 
 /* 内容 */
 .artifact-view { min-height: 0; overflow: auto; overscroll-behavior: contain; }
-.artifact-markdown { width: min(100%, 820px); margin: 0 auto; padding: 28px 32px 64px; font-size: 14.2px; }
+.artifact-markdown { width: min(100%, 820px); margin: 0 auto; padding: calc(28px * var(--space)) calc(32px * var(--space)) calc(64px * var(--space)); font-size: calc(14.2px * var(--text-scale)); }
 .artifact-source {
   display: grid; grid-template-columns: auto minmax(max-content, 1fr); width: max-content; min-width: 100%;
-  font: 13.6px/1.7 var(--code-font);
+  font: calc(13.6px * var(--text-scale))/1.7 var(--font-code);
 }
 .artifact-line-numbers {
-  position: sticky; left: 0; display: grid; min-width: 48px; padding: 22px 11px 48px 8px; background: var(--surface-1);
+  position: sticky; left: 0; display: grid; min-width: 48px; padding: calc(22px * var(--space)) calc(11px * var(--space)) calc(48px * var(--space)) calc(8px * var(--space)); background: var(--surface-1);
   color: var(--text-faint); font-variant-numeric: tabular-nums; text-align: right; user-select: none;
 }
 .artifact-line-numbers span { height: 1.7em; }
-.artifact-code { margin: 0; padding: 22px 22px 48px 18px; color: var(--text); font: inherit; white-space: pre; tab-size: 2; }
+.artifact-code { margin: 0; padding: calc(22px * var(--space)) calc(22px * var(--space)) calc(48px * var(--space)) calc(18px * var(--space)); color: var(--text); font: inherit; white-space: pre; tab-size: 2; }
 .artifact-frame { display: block; width: 100%; height: 100%; border: 0; background: white; }
 .artifact-image-stage { display: flex; height: 100%; align-items: center; justify-content: center; overflow: hidden; cursor: grab; touch-action: none; }
 .artifact-image-stage.is-dragging { cursor: grabbing; }
-.artifact-image-stage img { max-width: 100%; max-height: 100%; object-fit: contain; transform-origin: center top; transition: transform 160ms cubic-bezier(0.2, 0, 0, 1); }
+.artifact-image-stage img { max-width: 100%; max-height: 100%; object-fit: contain; transform-origin: center top; transition: transform calc(160ms * var(--motion-scale)) cubic-bezier(0.2, 0, 0, 1); }
 .artifact-image-stage.is-dragging img { transition: none; }
 /* PDF 交给浏览器自己的阅读器：它自己画底色 */
 .artifact-frame.is-pdf { background: var(--surface-soft); }
 .artifact-loading, .artifact-failure {
-  display: flex; height: 100%; align-items: center; justify-content: center; gap: 8px; color: var(--text-faint); font-size: 13px;
+  display: flex; height: 100%; align-items: center; justify-content: center; gap: calc(8px * var(--space)); color: var(--text-faint); font-size: calc(13px * var(--text-scale));
 }
-.artifact-loading .icon { width: 16px; height: 16px; animation: tl-spin 900ms linear infinite; }
-.artifact-failure .icon { width: 18px; height: 18px; color: var(--accent); }
+.artifact-loading .icon { width: calc(16px * var(--space)); height: calc(16px * var(--space)); animation: tl-spin calc(900ms * var(--motion-scale)) linear infinite; }
+.artifact-failure .icon { width: calc(18px * var(--space)); height: calc(18px * var(--space)); color: var(--accent); }
 
 /* 输入框右下角的开关：有产物才露；来了新的、工作区关着时一个圆点 */
-.artifact-toggle { position: relative; width: 32px; height: 32px; margin-right: 6px; }
+.artifact-toggle { position: relative; width: 32px; height: 32px; margin-right: calc(6px * var(--space)); }
 .artifact-toggle.is-active { color: var(--accent); }
 .artifact-toggle.has-new::after {
-  position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; border: 1px solid var(--surface-1); border-radius: 50%;
+  position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; border: 1px solid var(--surface-1); border-radius: var(--r-round);
   background: var(--accent); content: "";
 }
 
 @media (max-width: 836px) {
   .artifact-workspace { position: fixed; z-index: 30; width: auto; margin: 0; justify-self: stretch; inset: 8px; }
   .artifact-resize-handle { display: none; }
-  .artifact-markdown { padding: 22px 16px 48px; }
+  .artifact-markdown { padding: calc(22px * var(--space)) calc(16px * var(--space)) calc(48px * var(--space)); }
 }

@@ -96,7 +96,7 @@ export function videoCard(what) {
   const shell = h('div.video-shell', video);
   const full = h('button.vfs-btn', { type: 'button', title: t('media.fullscreen'), 'aria-label': t('media.fullscreen') }, icon('maximize-2'));
   full.addEventListener('click', () => {
-    const on = shell.classList.toggle('webfs');
+    const on = shell.classList.toggle('is-webfs');
     replace(full, icon(on ? 'minimize-2' : 'maximize-2'));
   });
   shell.append(full);

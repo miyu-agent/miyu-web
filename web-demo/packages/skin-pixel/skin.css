@@ -1,0 +1,29 @@
+/* 皮肤「像素风」的部件样式（蓝图 web.md「皮肤」第 4、6 条）：每条都在 :root[data-skin="pixel"] 下面、只挑部件名，skin 包接进页面时
+   换成页面里的选择器。变量做不到的才写这里：按钮的实色块影、按下去往下沉。字随包带着（fonts/，SIL OFL 1.1） */
+@font-face { font-family: "Miyu Pixel UI"; src: url("fonts/fusion-pixel-12px.woff2") format("woff2"); font-display: swap; }
+
+/* 按钮：底下一道 3px 的实色块影，按下去往下沉 2px、影变短 */
+:root[data-skin="pixel"] [data-part="button"], :root[data-skin="pixel"] [data-part="chip"] {
+  box-shadow: 0 3px 0 0 var(--skin-ground);
+}
+:root[data-skin="pixel"] [data-part="button.primary"], :root[data-skin="pixel"] [data-part="composer.send"] {
+  box-shadow: 0 3px 0 0 var(--skin-deep);
+}
+:root[data-skin="pixel"] [data-part="button"]:active:not(:disabled),
+:root[data-skin="pixel"] [data-part="button.primary"]:active:not(:disabled),
+:root[data-skin="pixel"] [data-part="composer.send"]:active:not(:disabled) {
+  transform: translateY(2px); box-shadow: 0 1px 0 0 var(--skin-deep);
+}
+:root[data-skin="pixel"] [data-part="composer.send.disabled"], :root[data-skin="pixel"] [data-part="button.primary.disabled"] { box-shadow: none; }
+/* 选中的那一格分段、小标签往下沉着 */
+:root[data-skin="pixel"] [data-part="chip.active"] { box-shadow: inset 0 3px 0 0 var(--skin-ground); }
+/* 变量管不到的几块：回答旁边的头像、左栏的分组标题、时间线点开的细节那一圈边（部件名照 resources/parts.json） */
+:root[data-skin="pixel"] [data-part="assistant.initial"], :root[data-skin="pixel"] [data-part="assistant.label-img"] {
+  border-radius: 0; box-shadow: 0 -2px 0 0 var(--skin-edge), 0 2px 0 0 var(--skin-edge), -2px 0 0 0 var(--skin-edge), 2px 0 0 0 var(--skin-edge);
+}
+:root[data-skin="pixel"] [data-part="session.group-header"] { font-family: "Miyu Pixel UI", var(--sans); letter-spacing: 0.08em; text-transform: uppercase; }
+:root[data-skin="pixel"] [data-part="tl.body"] { box-shadow: 0 -2px 0 0 var(--skin-soft), 0 2px 0 0 var(--skin-soft), -2px 0 0 0 var(--skin-soft), 2px 0 0 0 var(--skin-soft); }
+/* 浮起来的菜单一格一格地显出来（自己的动画；退场照原来的，不盖）。只动透明度、不写 transform：拖着走的会话标签也算浮起来的小框，
+   位置靠 transform 跟着指针，动画里写了 transform 会把它钉回左上角（2026-10-21 项目主人撞见）；也不写 fill-mode both，放完就不留着 */
+@keyframes skin-pixel-pop { 0% { opacity: 0; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+:root[data-skin="pixel"] [data-part="menu"]:not([data-state="leaving"]) { animation: skin-pixel-pop calc(0.18s * var(--motion-scale)) steps(3, end) backwards; }

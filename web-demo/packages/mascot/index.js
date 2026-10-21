@@ -1,10 +1,12 @@
 // @ts-check
 //! 吉祥物（软件包 `mascot`，蓝图 `web.md`「吉祥物」）：整页最前面一层（挂在 `body` 上，不在整页放大的那一层里，位置都是屏幕像素），
 //! 一个像素小吉祥物受重力站在台子上：整页的底边是地，输入框的上边沿、浮在框上面的命令列表和后台任务浮层的上边沿是台子（浮层的
-//! 升起来会把它顶上去）。和 TUI 首页的是同一个模型（`model.js`），画在一块小画布上（`sprite.js`），手里的电脑、游戏机在
+//! 升起来会把它顶上去）。能去哪儿照落脚点表（`resources/mascot-anchors.json`，第 11 条），照部件名找页面上的东西、量在 `anchors.js`；
+//! 别的包经挂载位 `mascot.anchors` 加点，主题包（服务 `skin` 的 `anchors()`）加点、挪点。和 TUI 首页的是同一个模型（`model.js`），画在一块小画布上（`sprite.js`），手里的电脑、游戏机在
 //! `props.js`，怎么动在 `behavior.js`、`world.js`。只有它自己接鼠标：左键拖、点它。跟着这些事动：打字（页面上哪个框都算）、鼠标动、她在
 //! 回答（事件 `view.changed`）、换主题（`theme.changed` 重取颜色）。窄屏不出来；停用了就没有。
-//! 给别的包一个服务 `mascot`（蓝图「第一次引导」第 11 条）：`stage(舞台)` 换到别的台子上站（撤了回到输入框），`hop()`、`droop()`、
+//! 给别的包一个服务 `mascot`（蓝图「第一次引导」第 11 条）：`stage(舞台)` 换到别的台子上站（舞台的 `group`：挂载位里写了同一个
+//! `group` 的那几格；撤了回到输入框），`hop()`、`droop()`、
 //! `busy(on)` 做动作。`<body data-mascot="hold">` 时先藏着不画（第一次引导一打开盖着底色、还没定站哪的那一下：不然先在输入框上露一下）。
 
 import { h } from '../../src/lib/dom.js';
@@ -12,6 +14,8 @@ import { Sprite } from './sprite.js';
 import { Props } from './props.js';
 import { Behavior } from './behavior.js';
 import { runningDeepStatus } from '../../src/lib/jobs.js';
+import { anchorProblem, combine, tableProblems } from '../../src/lib/anchors.js';
+import { Anchors, KINDS } from './anchors.js';
 
 /** 窄屏（和左栏变抽屉的是同一个宽）不出来 */
 const NARROW = '(max-width: 836px)';
@@ -19,11 +23,13 @@ const NARROW = '(max-width: 836px)';
 const TEXTY = new Set(['text', 'search', 'url', 'email', 'password', 'number', '']);
 
 /**
- * 别的包交来的舞台：几段台子（地照旧是整页底边，不用交）、平常站哪、放大几倍（照输入框上那一只算）、看着哪一块变（变了推一帧）、
- * 开场从窗口顶上掉下来。
- * @typedef {{platforms: () => import('./world.js').Platform[], home: () => {x: number, platform: import('./world.js').Platform}|null,
+ * 别的包交来的舞台：站哪几段（`group`：挂载位 `mascot.anchors` 里写了同一个 `group` 的那几格；旧的写法自己交 `platforms()`，还认；
+ * 地照旧是整页底边，不用交）、平常站哪、放大几倍（照输入框上那一只算）、看着哪一块变（变了推一帧）、开场从窗口顶上掉下来。
+ * @typedef {{group?: string, platforms?: () => import('./world.js').Platform[], home: () => {x: number, platform: import('./world.js').Platform}|null,
  *   scale?: number, root?: HTMLElement, drop?: boolean}} Stage
  */
+/** 吉祥物碰了一下的那一块动多久（毫秒；样子在 `style.css`） */
+const TOUCH_MS = 320;
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -41,51 +47,58 @@ export function apply(ctx) {
   const layer = h('div.mascot-layer', el);
   document.body.append(layer);
   const box = ctx.composer.box;
+  ctx.slots.declare('mascot.anchors', 'list');
   const narrow = matchMedia(NARROW);
   const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
   const size = () => ({ w: (c.cols + 2) * c.pixel, h: (c.rows + 2) * c.pixel });
   /** 别的包交来的舞台（第一次引导），没有的站在输入框上 @type {Stage|null} */
   let stage = null;
-  /** 台子：舞台的那几段，或者输入框那几段；再加整页的底边 */
-  const platforms = () => [...(stage ? stage.platforms() : composerPlatforms()), { id: 'floor', x1: 0, x2: innerWidth, y: innerHeight }];
-  /**
-   * 输入框被对话区里整页的东西盖住了（全部会话、软件后台这类占对话区那一块的页面）：看框正中那一点最上面是谁，是对话区里、又不是框
-   * 和吉祥物自己的就是盖住了。弹窗（设置、新建项目这类）挂在对话区外面，跳过它们往下看（2026-10-19 项目主人：全部会话里它站在看不见的输入框那里；
-   * 全部会话上面开着新建项目的窗口时，原来最上面是窗口后面那层底、不在对话区里，当成没盖住，跳回了输入框）。
-   * @param {DOMRect} r
-   */
-  let wasCovered = false;
-  const covered = (r) => {
-    const stageEl = box.closest('.stage');
-    if (!stageEl) return false;
-    // 这一点上叠着的从上往下：对话区外面的（弹窗、吉祥物那一层）跳过，对话区里最上面的不是输入框就是盖住了
-    const hit = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find((el) => stageEl.contains(el) && !layer.contains(el));
-    return !!hit && !box.contains(hit);
+  /** 落脚点：表、部件名读到以前不出来（不然先在地上露一下再跳上去） */
+  const anchors = new Anchors({ size, inset: () => c.home.edge, layer, kinds: KINDS });
+  let ready = false;
+  /** 表里的那几项、部件名、平常站的那一项的编号 */
+  let table = /** @type {import('../../src/lib/anchors.js').Anchor[]} */ ([]);
+  let parts = /** @type {import('../../src/lib/anchors.js').Parts} */ ({});
+  let homeId = 'composer';
+  /** 不认的说过一遍就不再说 */
+  const told = new Set();
+  const tell = (/** @type {string} */ why) => {
+    if (told.has(why)) return;
+    told.add(why);
+    console.warn(`吉祥物的落脚点不认：${why}`);
   };
-  /** 输入框的上边沿（两头圆角那一段不算）、开着的浮层的上边沿（顶得上去） */
-  const composerPlatforms = () => {
-    const edge = c.home.edge;
-    const r = box.getBoundingClientRect();
-    const now = !!r.width && covered(r);
-    // 盖的那一页收了：当场跳回输入框（不等在地上待够）
+  const floor = () => ({ id: 'floor', x1: 0, x2: innerWidth, y: innerHeight });
+  /** 这一帧的落脚点（舞台的那一组，没有舞台的是平常的页面） */
+  const world = () => anchors.world(stage?.group ?? null);
+  /** 被对话区里整页的东西盖住了（全部会话、软件后台这类）：输入框看得见、却不算（`layer`）。盖的那一页收了当场跳回输入框（不等在地上待够） */
+  let wasCovered = false;
+  /** 露出来那一下才去的互动点（提示）：上一帧露着哪几个 */
+  let shown = new Set();
+  /** 量出来以后：盖住的收了叫它回家；新露出来的提示叫它凑过去看 @param {import('./anchors.js').World} w */
+  const notice = (w) => {
+    const now = w.blocked.has(homeId) && !w.platforms.some((p) => p.id === homeId);
     if (wasCovered && !now) queueMicrotask(() => behavior.goHome());
     wasCovered = now;
-    if (now) return [];
-    /** @type {import('./world.js').Platform[]} */
-    // 输入框是实心的（`bottom`）：框往上长越过了往下掉的脚，把它顶上去，不从框里穿过去
-    const list = r.width ? [{ id: 'composer', x1: r.left + edge, x2: r.right - edge, y: r.top, bottom: r.bottom }] : [];
-    // 浮在框上面的浮层都带 `dock-float`（命令列表、后台任务、选语言……）
-    for (const f of box.querySelectorAll('.dock-float')) {
-      if (!(f instanceof HTMLElement) || f.hidden || f.classList.contains('is-leaving')) continue;
-      const fr = f.getBoundingClientRect();
-      list.push({ id: f.className.split(' ')[0], x1: fr.left + edge, x2: fr.right - edge, y: fr.top, carry: true });
+    const seen = new Set();
+    for (const spot of w.hotspots) {
+      if (spot.when !== 'appear') continue;
+      seen.add(spot.id);
+      if (!shown.has(spot.id)) queueMicrotask(() => behavior.notice(spot));
     }
-    return list;
+    shown = seen;
+  };
+  /** 台子：落脚点里的台面、站点（舞台的那一组，或者平常的页面）；整页的底边总在 */
+  const platforms = () => {
+    if (!ready) return [floor()];
+    if (stage?.platforms) return [...stage.platforms(), floor()];
+    const w = world();
+    notice(w);
+    return w.platforms.some((p) => p.id === 'floor') ? w.platforms : [...w.platforms, floor()];
   };
   const behavior = new Behavior(c, {
     draw: (pose) => sprite.draw(pose),
     sleeping: (on) => { zz.hidden = !on; },
-    place: ({ x, y, rot }) => {
+    place: ({ x, y, rot, clip }) => {
       // 脚底是画布里最下面一行有东西的底边：照它对到台子上，歪绕着脚（蹲、抻在模型里画，不拉伸图片）
       const foot = (sprite.bottom + 1) * c.pixel;
       el.style.transform = `translate(${Math.round(x - size().w / 2)}px, ${Math.round(y - foot)}px)`;
@@ -95,12 +108,28 @@ export function apply(ctx) {
       scaler.style.transformOrigin = `50% ${foot}px`;
       scaler.style.transform = `scale(${stage?.scale ?? 1})`;
       body.style.setProperty('--foot-gap', `${size().h - foot}px`);
+      // 扒着一道边：藏在那一块后面的那一截裁掉
+      el.style.clipPath = clip ? `inset(0px ${clip.right.toFixed(1)}px 0px ${clip.left.toFixed(1)}px)` : '';
+      watchAround();
     },
     platforms,
     home: () => {
       if (stage) return stage.home();
-      const p = composerPlatforms().find((x) => x.id === 'composer');
+      if (!ready) return null;
+      const p = world().platforms.find((x) => x.id === homeId);
       return p ? { x: p.x2 + c.home.edge - c.home.right, platform: p } : null;
+    },
+    ledges: () => (ready && !stage?.platforms ? world().ledges : []),
+    world: () => (!ready ? undefined : stage?.platforms ? { platforms: platforms(), ledges: [], hotspots: [] } : world()),
+    touch: (id, kind) => {
+      const target = ready ? world().els.get(id) : null;
+      if (!(target instanceof HTMLElement)) return;
+      // 再碰一下从头动：先拿掉、量一下（让动画重来），再写上
+      delete target.dataset.mascotTouch;
+      void target.offsetWidth;
+      target.dataset.mascotTouch = kind;
+      clearTimeout(touchTimers.get(target));
+      touchTimers.set(target, window.setTimeout(() => delete target.dataset.mascotTouch, TOUCH_MS));
     },
     head: () => {
       const r = sprite.canvas.getBoundingClientRect();
@@ -109,15 +138,75 @@ export function apply(ctx) {
     size,
     // 地上正对输入框的那一段（左右各多出半个身子）不站：免得挡住输入框下面那一行字
     avoid: () => {
-      if (stage) return null;
-      const r = box.getBoundingClientRect();
-      return r.width && !covered(r) ? { x1: r.left - size().w / 2, x2: r.right + size().w / 2 } : null;
+      if (stage || !ready) return null;
+      const w = world();
+      const r = w.rects.get(homeId);
+      return r && w.platforms.some((p) => p.id === homeId) ? { x1: r.left - size().w / 2, x2: r.right + size().w / 2 } : null;
     },
     hold: (kind) => props.hold(kind),
     nextProp: () => props.next(),
     reduced,
-    hidden: () => narrow.matches || document.body.dataset.mascot === 'hold',
+    hidden: () => !ready || narrow.matches || document.body.dataset.mascot === 'hold',
   });
+  /** 碰过的那几块什么时候收回去 @type {WeakMap<HTMLElement, number>} */
+  const touchTimers = new WeakMap();
+  // 不在家（站在别处、扒着）：页面上哪里变了都推一帧（站的那一块可能没了）；在家的照旧只看输入框
+  const around = new MutationObserver(() => wake());
+  let aroundOn = false;
+  /** 站在、扒在、跳向弹窗（设置页）上的落脚点：整层抬到弹窗上面（不然被弹窗底下那层虚化盖住）；在家的照旧在弹窗底下 */
+  let up = false;
+  function watchAround() {
+    const bd = behavior.body;
+    const key = bd.hang?.id ?? bd.trip?.then.id ?? bd.at?.ground?.id ?? null;
+    const on = !!key && key !== homeId && key !== 'floor' && ready ? world().els.get(key) : null;
+    const lift = !!on && anchors.elements('modal').some((m) => m.contains(on));
+    if (lift !== up) layer.classList.toggle('is-up', (up = lift));
+    watchPage();
+  }
+  function watchPage() {
+    const g = behavior.body.at?.ground;
+    const on = !!behavior.body.hang || (!!g && g.id !== homeId && g.id !== 'floor');
+    if (on === aroundOn) return;
+    aroundOn = on;
+    if (on) around.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class'] });
+    else around.disconnect();
+  }
+  /** 这一回算哪几个点：表里的、挂载位里挂的（`group` 的只在那个舞台上算）、主题加的和挪的 */
+  const recombine = () => {
+    if (!ready) return;
+    // 挂载位给每一格添的 `owner`、`seq` 不算落脚点的格
+    const mounted = ctx.slots.list('mascot.anchors').map((/** @type {any} */ { owner, seq, ...a }) => a).filter((/** @type {any} */ a) => {
+      const why = anchorProblem(a, parts, { free: true });
+      if (why) tell(why);
+      return !why;
+    });
+    const theme = ctx.skin?.anchors?.() ?? null;
+    const own = (theme?.anchors ?? []).filter((/** @type {any} */ a) => {
+      const why = anchorProblem(a, parts);
+      if (why) tell(why);
+      return !why;
+    });
+    anchors.set(parts, combine(table, mounted, theme ? { anchors: own, offsets: theme.offsets ?? {} } : null));
+    behavior.wake();
+  };
+  ctx.effect(() => {
+    let gone = false;
+    Promise.all([
+      fetch(new URL('../../resources/mascot-anchors.json', import.meta.url)).then((r) => r.json()),
+      fetch(new URL('../../resources/parts.json', import.meta.url)).then((r) => r.json()),
+    ]).then(([t, p]) => {
+      if (gone) return;
+      parts = p;
+      for (const why of tableProblems(t, parts)) tell(why);
+      table = (t.anchors ?? []).filter((/** @type {any} */ a) => !anchorProblem(a, parts));
+      homeId = table.find((a) => a.home)?.id ?? 'composer';
+      ready = true;
+      recombine();
+    }).catch((err) => console.warn('吉祥物：读不到落脚点表、部件名', err));
+    return () => { gone = true; };
+  });
+  ctx.slots.watch('mascot.anchors', recombine);
+  ctx.on('skin.changed', recombine);
   // 颜色照主题；换了主题重取
   sprite.recolor();
   ctx.on('theme.changed', () => {
@@ -144,6 +233,10 @@ export function apply(ctx) {
   const onBlur = (/** @type {Event} */ e) => {
     if (texty(e.target)) behavior.typing(null);
   };
+  // 滚动：站在跟着挪的台面上（你的话）、扒着的推一帧（在家的不管，输入框不跟着滚）
+  const onScroll = () => {
+    if (behavior.body.at?.ground?.stick || behavior.body.hang) wake();
+  };
   // 拖：左键按住跟着指针走，松手掉下去；没挪动的算点它
   const canvas = sprite.canvas;
   const onDown = (/** @type {PointerEvent} */ e) => {
@@ -163,7 +256,10 @@ export function apply(ctx) {
     behavior.release();
   };
   // 台子挪了（改窗口、框变高、浮层开关）、标签页回到前面、窄屏宽屏换了：推一帧，照新的台子站
-  const wake = () => behavior.wake();
+  const wake = () => {
+    anchors.drop();
+    behavior.wake();
+  };
   const watch = new MutationObserver(wake);
   watch.observe(box, { subtree: true, attributes: true, attributeFilter: ['hidden', 'class'], childList: true });
   const resized = new ResizeObserver(wake);
@@ -174,7 +270,7 @@ export function apply(ctx) {
   const listen = [
     [document, 'pointermove', onMove, { passive: true }], [document, 'keydown', onKey, true], [document, 'input', onType, true], [document, 'focusout', onBlur, true],
     [canvas, 'pointerdown', onDown], [canvas, 'pointermove', onDrag], [canvas, 'pointerup', onUp], [canvas, 'pointercancel', onUp],
-    [window, 'resize', wake], [document, 'visibilitychange', wake], [narrow, 'change', wake],
+    [window, 'resize', wake], [document, 'visibilitychange', wake], [narrow, 'change', wake], [document, 'scroll', onScroll, { capture: true, passive: true }],
   ];
   for (const [target, name, fn, opt] of listen) target.addEventListener(name, fn, opt);
   // 舞台那一块变了（换了一屏、长高了）：推一帧照新的台子站
@@ -184,6 +280,7 @@ export function apply(ctx) {
     for (const [target, name, fn, opt] of listen) target.removeEventListener(name, fn, opt);
     stageWatch.disconnect();
     stageResized.disconnect();
+    around.disconnect();
     held.disconnect();
     watch.disconnect();
     resized.disconnect();

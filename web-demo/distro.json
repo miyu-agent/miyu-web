@@ -5,6 +5,8 @@
     { "id": "theme" },
     { "id": "theme-persona" },
     { "id": "theme-wallpaper" },
+    { "id": "skin" },
+    { "id": "skin-pixel", "disabled": true },
     { "id": "welcome" },
     { "id": "app" },
     { "id": "rail" },

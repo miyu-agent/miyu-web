@@ -2,35 +2,35 @@
 /* 灯箱 */
 .lightbox {
   position: fixed; z-index: 90; display: grid; align-items: center; justify-items: center;
-  padding: clamp(16px, 4vw, 48px); inset: 0; animation: fade-in var(--motion-in) var(--ease-out) both;
+  padding: clamp(calc(16px * var(--space)), 4vw, calc(48px * var(--space))); inset: 0; animation: fade-in var(--motion-in) var(--ease-out) both;
   /* 毛玻璃糊在最外层：里面的遮罩在淡入的这一层里，糊不到后面的页面 */
-  backdrop-filter: blur(18px) saturate(1.15);
+  backdrop-filter: blur(calc(18px * var(--blur))) saturate(1.15);
 }
 /* 出来：遮罩淡入、图放大；收起：遮罩淡出、图缩回去（蓝图 web.md「动效」） */
 .lightbox.is-leaving { animation: fade-out var(--motion-out) var(--ease-in) both; }
 .lightbox.is-leaving .lightbox-frame { animation: pop-out var(--motion-out) var(--ease-in) both; }
 .lightbox-scrim { position: absolute; border: 0; background: color-mix(in srgb, var(--surface-1) 30%, rgb(0 0 0 / 26%)); cursor: zoom-out; inset: 0; }
 .lightbox-frame {
-  position: relative; display: grid; max-width: 100%; max-height: 100%; justify-items: center; gap: 12px;
+  position: relative; display: grid; max-width: 100%; max-height: 100%; justify-items: center; gap: calc(12px * var(--space));
   animation: pop-in var(--motion-in) var(--ease-out) both;
 }
 /* 浮起来的那张卡片：一圈极细的边、一层软的往下偏的影，图贴着卡片的圆角 */
 .lightbox-card {
-  display: grid; max-width: 100%; overflow: hidden; padding: 6px; border: 1px solid var(--line); border-radius: 18px;
+  display: grid; max-width: 100%; overflow: hidden; padding: calc(6px * var(--space)); border: 1px solid var(--line); border-radius: var(--r-18);
   background: color-mix(in srgb, var(--surface-1) 72%, transparent); box-shadow: 0 24px 64px rgb(0 0 0 / 28%), 0 2px 8px rgb(0 0 0 / 12%);
 }
 .lightbox-image {
-  display: block; max-width: 100%; max-height: calc(100dvh - clamp(110px, 13vw, 176px)); border-radius: 12px;
+  display: block; max-width: 100%; max-height: calc(100dvh - clamp(110px, 13vw, 176px)); border-radius: var(--r-12);
   object-fit: contain;
 }
 .lightbox-bar {
-  display: flex; max-width: 100%; align-items: center; padding: 5px; gap: 4px;
-  border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--float-shadow);
-  background: color-mix(in srgb, var(--surface-1) 86%, transparent); backdrop-filter: blur(16px) saturate(1.2);
+  display: flex; max-width: 100%; align-items: center; padding: calc(5px * var(--space)); gap: calc(4px * var(--space));
+  border: var(--float-border, 1px solid var(--line)); border-radius: var(--float-radius, var(--r-12)); box-shadow: var(--float-elev, var(--float-shadow));
+  background: var(--float-bg, color-mix(in srgb, var(--surface-1) 86%, transparent)); backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur))) saturate(1.2));
 }
-.lightbox-action { width: 34px; height: 34px; border-radius: 9px; color: var(--text-soft); }
+.lightbox-action { width: 34px; height: 34px; border-radius: var(--r-9); color: var(--text-soft); }
 .lightbox-action:hover { background: var(--surface-2); color: var(--text); }
-.lightbox-action .icon { width: 16px; height: 16px; }
+.lightbox-action .icon { width: calc(16px * var(--space)); height: calc(16px * var(--space)); }
 .lightbox-action.is-done { color: var(--accent); }
 .lightbox-action.is-failed { color: var(--ribbon); }
 body.has-lightbox { overflow: hidden; }

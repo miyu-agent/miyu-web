@@ -2,7 +2,7 @@
    「跟着人格的外观」第 6 条）：图铺满整个窗口（左栏也在图上，2026-10-11 项目主人定），铺满、照焦点裁（--persona-focus，没设的居中），
    上面一层底色（surface，浓度照 --persona-veil：100 减人格的透明度）让字看得清。左栏、左上角的标签、空会话输入框上面那一排按钮、输入框是磨砂的：半透明的底加模糊，透出一点图的颜色
    （标签 52%，2026-10-11 项目主人先嫌磨砂不够显、调透，又要再实一点）；
-   你的气泡、卡片、菜单照旧是实底 */
+   你的气泡、卡片、菜单照旧是实底。选了皮肤的：底和磨砂照这里（要透出图），影、边照皮肤（蓝图 web.md「皮肤」第 2 条） */
 /* 底色那一层盖整个窗口（左栏收起、展开的动画里，左栏和对话区之间那道缝也是盖着的；2026-10-11 项目主人截到收起时左边一道没盖的深色）。
    左栏磨砂照浏览器的 backdrop-filter 模糊它后面的（滑动、浮出时都对得上；原来自己垫一份图用 background-attachment: fixed，
    滑动、整页放大时对不上，浮出来是一团团的颜色，项目主人截图问过）：后面已经盖了底色，模糊时把饱和度拉高，透出图的颜色，
@@ -15,15 +15,15 @@
 .has-persona-backdrop .stage { background: transparent; }
 .has-persona-backdrop .sidebar {
   background: color-mix(in srgb, var(--sidebar-bg) 40%, transparent);
-  -webkit-backdrop-filter: blur(28px) saturate(1.9); backdrop-filter: blur(28px) saturate(1.9);
+  -webkit-backdrop-filter: blur(calc(28px * var(--blur))) saturate(1.9); backdrop-filter: blur(calc(28px * var(--blur))) saturate(1.9);
 }
 .has-persona-backdrop .composer {
   background: color-mix(in srgb, var(--surface-1) 70%, transparent);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2); backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(calc(20px * var(--blur))) saturate(1.2); backdrop-filter: blur(calc(20px * var(--blur))) saturate(1.2);
 }
 .has-persona-backdrop .setup-btn {
   background: color-mix(in srgb, var(--surface-1) 52%, transparent);
-  -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3);
+  -webkit-backdrop-filter: blur(calc(16px * var(--blur))) saturate(1.3); backdrop-filter: blur(calc(16px * var(--blur))) saturate(1.3);
 }
 .has-persona-backdrop .setup-btn:hover { background: color-mix(in srgb, var(--surface-3) 62%, transparent); }
 /* 对话区上下的淡出是一条实的底色，盖在图上就是一道带子：有图时不画 */
@@ -32,22 +32,22 @@
    看不出边、还白算，半径减去已经糊掉的（减到 0 只留饱和度）；底色浓一档、一道 1px 的亮边，靠颜色和边认出是一块面板
    （2026-10-19 项目主人：本来就有左栏、控件的磨砂，要和背景模糊适配） */
 .has-persona-blur .sidebar {
-  background: color-mix(in srgb, var(--sidebar-bg) 55%, transparent); box-shadow: inset -1px 0 0 color-mix(in srgb, var(--text) 8%, transparent);
-  -webkit-backdrop-filter: blur(max(0px, 28px - var(--persona-blur-px, 0px))) saturate(1.9); backdrop-filter: blur(max(0px, 28px - var(--persona-blur-px, 0px))) saturate(1.9);
+  background: color-mix(in srgb, var(--sidebar-bg) 55%, transparent); box-shadow: var(--side-elev, var(--side-edge, inset -1px 0 0 color-mix(in srgb, var(--text) 8%, transparent)));
+  -webkit-backdrop-filter: blur(calc(max(0px, 28px - var(--persona-blur-px, 0px)) * var(--blur))) saturate(1.9); backdrop-filter: blur(calc(max(0px, 28px - var(--persona-blur-px, 0px)) * var(--blur))) saturate(1.9);
 }
 .has-persona-blur .composer {
-  background: color-mix(in srgb, var(--surface-1) 78%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent), var(--composer-shadow);
-  -webkit-backdrop-filter: blur(max(0px, 20px - var(--persona-blur-px, 0px))) saturate(1.2); backdrop-filter: blur(max(0px, 20px - var(--persona-blur-px, 0px))) saturate(1.2);
+  background: color-mix(in srgb, var(--surface-1) 78%, transparent); box-shadow: var(--composer-elev, inset 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent), var(--composer-shadow));
+  -webkit-backdrop-filter: blur(calc(max(0px, 20px - var(--persona-blur-px, 0px)) * var(--blur))) saturate(1.2); backdrop-filter: blur(calc(max(0px, 20px - var(--persona-blur-px, 0px)) * var(--blur))) saturate(1.2);
 }
 /* 输入框原来的阴影、聚焦的阴影照留 */
-.has-persona-blur .composer:focus-within { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent), var(--composer-focus-shadow); }
+.has-persona-blur .composer:focus-within { box-shadow: var(--composer-elev-focus, inset 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent), var(--composer-focus-shadow)); }
 /* 左上角那一条（标题）和点它弹出的会话信息卡片同一种材质（2026-10-20 项目主人：两个控件材质、设计要统一）：开了模糊的不画细边（看着是描边，
    同一天项目主人：背景透明模糊时这个控件背景做得不好），底色实一点、一层浅浅的影浮在图上 */
 .has-persona-blur .setup-info, .has-persona-blur .setup-info-wrap .setup-menu {
-  border-color: transparent; background: color-mix(in srgb, var(--surface-1) 80%, transparent); box-shadow: 0 1px 2px rgb(0 0 0 / 6%), 0 4px 14px rgb(0 0 0 / 8%);
-  -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3);
+  border-color: transparent; background: color-mix(in srgb, var(--surface-1) 80%, transparent); box-shadow: var(--float-elev, 0 1px 2px rgb(0 0 0 / 6%), 0 4px 14px rgb(0 0 0 / 8%));
+  -webkit-backdrop-filter: blur(calc(16px * var(--blur))) saturate(1.3); backdrop-filter: blur(calc(16px * var(--blur))) saturate(1.3);
 }
 .has-persona-blur .setup-btn {
   background: color-mix(in srgb, var(--surface-1) 62%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent);
-  -webkit-backdrop-filter: blur(max(0px, 16px - var(--persona-blur-px, 0px))) saturate(1.3); backdrop-filter: blur(max(0px, 16px - var(--persona-blur-px, 0px))) saturate(1.3);
+  -webkit-backdrop-filter: blur(calc(max(0px, 16px - var(--persona-blur-px, 0px)) * var(--blur))) saturate(1.3); backdrop-filter: blur(calc(max(0px, 16px - var(--persona-blur-px, 0px)) * var(--blur))) saturate(1.3);
 }
