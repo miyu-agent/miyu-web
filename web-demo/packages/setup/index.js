@@ -95,6 +95,8 @@ export function apply(ctx) {
     personaName: (id) => nameOf(id),
     /** @param {string} id */
     presetName: (id) => presetNameOf(id),
+    /** 还没开的新会话要用哪个人格（选的，没选的照默认；无人格是 `null`）；人格列表还没读到的是 `undefined`：空会话里 `/dream` 照它整理那一份 */
+    inUse: () => (catalog.personas ? inUse().persona ?? null : undefined),
     /** @param {import('./form.js').Kit} kit @param {import('./welcome.js').Host} host */
     persona: (kit, host) => new PersonaStep(ctx, kit, catalog, host),
     /** @param {import('./form.js').Kit} kit @param {import('./welcome.js').Host} host */

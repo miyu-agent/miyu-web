@@ -39,7 +39,8 @@ export function apply(ctx) {
 
 /**
  * 正在 `/dream` 的那一次（同时只一个）：哪个会话、叫停、转到后台。
- * @type {{session: string, stop: () => Promise<void>, background: () => void}|null}
+ * 空会话里打的、还没开会话时 `session` 是 `null`，`where` 是这一趟整理的是哪一份（`{session}` 或 `{persona}`）。
+ * @type {{session: string|null, where: {session?: string, persona?: string}, stop: () => Promise<void>, background: () => void}|null}
  */
 let running = null;
 /** 每个会话最后一次整理的结果那一行（只在这一次打开的页面里，不进会话记录；同一个会话再整理换掉） @type {Map<string, () => void>} */
@@ -68,19 +69,23 @@ async function dream(ctx, words) {
     return;
   }
   let session = ctx.chat?.current?.() ?? null;
-  // 空会话里打的：先开会话；没有要整理的再删掉它，回到原来的空会话（选好的人格、预设、工作区放回去）
+  // 空会话里打的：不先开会话（先开再删，输入框滑下去又闪回来；2026-10-22 项目主人），照新会话要用的人格整理那一份（空会话没有要抽的），
+  // 真开始合了才开会话、把那一块挂进去；那时开了会话、最后又没有要整理的（很少：半秒还没回），再删掉它，回到原来的空会话
   const draft = session ? null : ctx.chat?.draft?.() ?? null;
-  const opened = !session;
-  if (!session) {
+  const persona = session ? null : ctx.personas?.inUse?.();
+  let opened = false;
+  if (!session && persona === undefined) {
+    // 人格列表还没读到：照原来的，先开会话
     try {
       session = await ctx.chat?.ensure?.();
+      opened = true;
     } catch (err) {
       say(/** @type {any} */ (err)?.message ?? String(err));
       return;
     }
     if (!session) return;
   }
-  const where = { session };
+  const where = session ? { session } : { persona: persona ?? '_none' };
   // 「查看过程」：返回回到发起的这个会话（对话区照打开前正在看的记着）
   const card = new DreamCard(ctx, new Map(), { stop: () => stop(ctx), open: (id) => ctx.chat?.open?.(id) });
   // 正文末尾那一格：先是整理那一块，合完换成结果那一行
@@ -99,7 +104,8 @@ async function dream(ctx, words) {
   };
   let away = false;
   const onPush = (/** @type {string} */ method, /** @type {any} */ params) => {
-    if ((method === 'memory.event' || method === 'memory.dreaming') && params?.session === session) {
+    const mine = 'session' in where ? params?.session === where.session : params?.persona === where.persona;
+    if ((method === 'memory.event' || method === 'memory.dreaming') && mine) {
       card.push(method, params);
       if (card.track.batches) mount();
     }
@@ -112,8 +118,24 @@ async function dream(ctx, words) {
   // 挂那一块：真开始合了（头一条 `merging`）当场挂，不然等一会儿（没有要整理的很快就回，不闪一下）
   /** @type {(() => void)|null} */
   let unmount = null;
-  const mount = () => {
-    if (unmount) return;
+  let mounting = false;
+  const mount = async () => {
+    if (unmount || mounting) return;
+    mounting = true;
+    // 空会话里打的：这时才开会话（带上选的人格、预设、工作区）
+    if (!session) {
+      try {
+        session = (await ctx.chat?.ensure?.()) ?? null;
+      } catch {
+        session = null;
+      }
+      if (!session) {
+        mounting = false;
+        return;
+      }
+      opened = true;
+      if (running) running.session = session;
+    }
     unmount = ctx.slots.mount('chat.tail', { id: `memory-dream-${session}`, render: () => box }) ?? (() => {});
     card.show();
     shown();
@@ -131,6 +153,7 @@ async function dream(ctx, words) {
   }, () => {});
   running = {
     session,
+    where,
     stop: () => stop(ctx),
     // 人说了话：叫醒、那一块收起、提示一句，整理在后台跑完再留结果那一行
     background: () => {
@@ -168,7 +191,7 @@ async function dream(ctx, words) {
     const n = (got?.given ?? 0) + (got?.retired ?? 0) + (got?.revised ?? 0);
     if (!n && !got?.summary && got?.stopped !== true) {
       release();
-      drop();
+      if (session) drop();
       // 为这一次开的会话：删掉，回到原来的空会话
       if (opened && ctx.chat?.current?.() === session) {
         await ctx.core.request('session.delete', { session }).catch(() => {});
@@ -178,7 +201,7 @@ async function dream(ctx, words) {
       say(t('dream_none'));
       return;
     }
-    mount();
+    await mount();
     card.finish(got);
     release();
     // 收成结果那一行：那一块收回去，结果那一行钉在这时正文最后一块的后面（`chat.anchor`），后来的回答接在它下面，它不再跟着往下掉
@@ -200,7 +223,7 @@ async function dream(ctx, words) {
     else setTimeout(() => fold(settle), SETTLE_MS);
   } catch (err) {
     release();
-    drop();
+    if (session) drop();
     if (opened && ctx.chat?.current?.() === session) {
       await ctx.core.request('session.delete', { session }).catch(() => {});
       ctx.chat?.open?.(null);
@@ -220,18 +243,21 @@ async function dream(ctx, words) {
 async function stop(ctx) {
   const say = (/** @type {string} */ text, good = false) => ctx.composer?.say?.(text, good);
   const session = running?.session ?? ctx.chat?.current?.() ?? null;
-  if (!session) {
+  // 正在 `/dream` 的照它整理的那一份叫停（空会话里打的、还没开会话的是人格那一份）
+  const where = running?.where ?? (session ? { session } : null);
+  if (!where) {
     say(ctx.text('dream_stop_none'));
     return;
   }
-  const mine = !!running && running.session === session;
+  const mine = !!running;
   try {
     try {
-      await ctx.core.request('memory.dream_stop', { session });
+      await ctx.core.request('memory.dream_stop', where);
       if (!mine) say(ctx.text('dream_stopped'), true);
     } catch (err) {
       const e = /** @type {any} */ (err);
       if (e?.code !== -32601 && e?.data?.reason !== 'unknown_method' && e?.reason !== 'unknown_method') throw err;
+      if (!session) throw err;
       const got = await ctx.core.request('command.run', { session, text: '/dream stop' });
       if (!mine && got?.said) say(got.said, true);
     }
