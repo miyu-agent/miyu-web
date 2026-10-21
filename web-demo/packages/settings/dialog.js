@@ -3,6 +3,7 @@
 //! （`config.set`），别处改了（`config.changed`）重读重画，正在改的那一项不被冲掉。各页怎么画在 `rows.js`、`look.js`、`models.js`。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { drawMarket, marketPush } from './market.js';
 import { leave } from '../../src/lib/motion.js';
 import { buildPages, search, pagesWithErrors, layerFor, expectFor, navGroups, pkgMatch, ownerOf } from './model.js';
 import { coreRow, groupBlock, banner } from './rows.js';
@@ -140,6 +141,8 @@ export class SettingsDialog {
       ...this.pages.map((p) => ({ id: p.id, name: p.name })),
       // 核心也有一页「软件包」（9-1 下，一个包一组）：和网页自己的组件合成一页，上面核心、下面网页（2026-10-07 项目主人定）
       ...(this.pages.some((p) => p.id === 'packages') ? [] : [{ id: 'packages', name: named('packages') }]),
+      // 下载软件（软件市场，核心 G-3 到 G-5）：「软件包」上面一项（2026-10-21 项目主人）
+      { id: 'market', name: named('market') },
       // 软件后台（核心 F-6 中）：带自己页面的软件，点进去是它的页面
       { id: 'backstage', name: named('backstage') },
       // 技能、脚本、MCP（第 20 条，核心 X-26、X-27）：核心有对应方法的才有
@@ -259,6 +262,7 @@ export class SettingsDialog {
     let kids;
     if (this.current === 'models') kids = drawModels(this);
     else if (this.current === 'backstage') kids = drawBackstage(this);
+    else if (this.current === 'market') kids = drawMarket(this);
     // 高级：一组一行，点进去看（`advanced.js`，2026-10-19 项目主人：不平铺）
     else if (this.current === 'advanced' && page) kids = drawAdvanced(this, page);
     else if (this.current === 'packages') {
@@ -354,6 +358,8 @@ export class SettingsDialog {
   /** 别处改了配置（别的终端、命令行、手改文件）：重读重画；扩展的状态变了只重画那一组。 */
   onPush(method, params) {
     if (!this.isOpen) return;
+    // 下载软件页：下载进度、装了卸了（先看一眼，不吃掉）
+    marketPush(this, method, params);
     if (this.feed.push(method, params)) return;
     if (this.extensions.push(method, params)) {
       // 扩展开了、停了：软件包列表那一行的状态、开关跟着换
