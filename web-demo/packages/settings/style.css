@@ -569,6 +569,8 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .mk-action { min-width: 64px; justify-content: center; text-align: center; }
 /* 已安装：悬停变「卸载」（红） */
 .mk-installed { padding: 0 12px; }
+.mk-installed.is-big { min-width: 0; padding: 0 16px; }
+.mk-kinds-none { margin: 6px 10px 8px; color: var(--text-faint); font-size: 12px; }
 .mk-installed .mk-when-hover { display: none; }
 .mk-installed:hover:not(:disabled) .mk-when-idle, .mk-installed:focus-visible .mk-when-idle { display: none; }
 .mk-installed:hover:not(:disabled) .mk-when-hover, .mk-installed:focus-visible .mk-when-hover { display: inline; }

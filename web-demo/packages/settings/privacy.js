@@ -66,7 +66,10 @@ export function privateGroup(dialog, name, items) {
       say(got.skipped.length ? t('privacy.already', { paths: got.skipped.join('、') }) : null);
       return;
     }
-    if (await store(got.changes)) input.value = '';
+    if (!(await store(got.changes))) return;
+    input.value = '';
+    // 加了别的、跳过了已经在的：也说一句（设置页重画以后写在新的那一块里）
+    if (got.skipped.length) dialog.toast(t('privacy.already', { paths: got.skipped.join('、') }));
   };
   // 回车加，Shift+回车换行写下一个
   input.addEventListener('keydown', (e) => {

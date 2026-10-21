@@ -124,7 +124,6 @@ export function drawMarket(dialog) {
       view.kind ? h('button.set-pkg-chip.is-on.mk-kind-on', { type: 'button', title: t('market.kind_clear'), onclick: () => { view.kind = null; update(); } },
         kindName(dialog, view.kind), icon('x')) : null,
     ]);
-    filterBtn.hidden = !got.kinds.length;
     filterBtn.classList.toggle('is-on', !!view.kind);
     kindsNow = got;
     replace(grid, got.list.map((p) => card(dialog, p, upgradable)));
@@ -420,7 +419,9 @@ function openKinds(dialog, at, got, view, update) {
     h('span', name), h('span.mk-kinds-n', String(n)), view.kind === k ? icon('check') : null);
   const menu = h('div.set-menu.mk-kinds-menu', { role: 'menu', 'data-set-dismiss': '1' },
     row(null, t('market.kinds_all'), got.counts.all ?? 0),
-    ...got.kinds.map((/** @type {string} */ k) => row(k, kindName(dialog, k), got.counts[k] ?? 0)));
+    ...got.kinds.map((/** @type {string} */ k) => row(k, kindName(dialog, k), got.counts[k] ?? 0)),
+    // 一个都分不出种类的（软件源里的包还没写种类、什么都没带）：照样开，写一句
+    got.kinds.length ? null : h('p.mk-kinds-none', t('market.kinds_none')));
   menu.addEventListener('set-dismiss', close);
   const box = at.getBoundingClientRect();
   const panel = dialog.panel.getBoundingClientRect();

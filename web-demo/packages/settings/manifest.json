@@ -666,7 +666,8 @@
         "kind_clear": "不按种类筛",
         "uninstall": "卸载",
         "uninstall_ask": "确认卸载「{name}」吗？",
-        "uninstalled": "已卸载：{name}"
+        "uninstalled": "已卸载：{name}",
+        "kinds_none": "还没有分了种类的软件"
       },
       "privacy": {
         "shipped": "出厂预设",
@@ -1176,7 +1177,8 @@
         "kind_clear": "Clear kind filter",
         "uninstall": "Uninstall",
         "uninstall_ask": "Uninstall \"{name}\"?",
-        "uninstalled": "Uninstalled {name}"
+        "uninstalled": "Uninstalled {name}",
+        "kinds_none": "No packages have kinds yet"
       },
       "privacy": {
         "shipped": "Preset",
@@ -1686,7 +1688,8 @@
         "kind_clear": "種類の絞り込みを外す",
         "uninstall": "アンインストール",
         "uninstall_ask": "「{name}」をアンインストールしますか？",
-        "uninstalled": "アンインストールしました：{name}"
+        "uninstalled": "アンインストールしました：{name}",
+        "kinds_none": "種類のあるソフトはまだありません"
       },
       "privacy": {
         "shipped": "既定",
