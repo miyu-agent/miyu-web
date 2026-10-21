@@ -33,6 +33,7 @@
     "pin": "Pin",
     "unpin": "Unpin",
     "pinned": "Pinned",
+    "terminal": "Terminal",
     "drop_pin": "Drop here to pin",
     "groups": {
       "recent": "Recent",

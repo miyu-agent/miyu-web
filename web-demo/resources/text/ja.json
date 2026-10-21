@@ -33,6 +33,7 @@
     "pin": "ピン留め",
     "unpin": "ピン留めを外す",
     "pinned": "ピン留め",
+    "terminal": "ターミナル",
     "drop_pin": "ここにドロップしてピン留め",
     "groups": {
       "recent": "最近",

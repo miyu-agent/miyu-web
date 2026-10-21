@@ -38,15 +38,17 @@ test('起来时订阅会话表（9-5）：左栏照最近活动列顶层的，�
     { session: 'child', oneshot: false, parent: 'mid', last_active: '2026-10-01T09:00:00.000Z' },
     { session: 'ask', oneshot: true, parent: null, last_active: '2026-10-01T09:30:00.000Z' },
     { session: 'quiet', oneshot: false, parent: null, preview: '帮我看看这个报错', last_active: '2026-10-01T00:30:00.000Z' },
+    { session: 'term', oneshot: false, parent: null, origin: 'terminal', last_active: '2026-10-01T00:10:00.000Z' },
   ];
   const { store, loaded } = withIndex(listed);
   await store.boot();
   await tick();
-  assert.deepEqual(store.order, ['busy', 'mid', 'new', 'quiet'], '照最近活动，子代理的、一次性的不列');
+  assert.deepEqual(store.order, ['busy', 'mid', 'new', 'quiet', 'term'], '照最近活动，子代理的、一次性的不列');
   assert.deepEqual(loaded.sort(), ['busy', 'mid'], '在跑的、派过子代理的才读');
   assert.equal(store.summary('quiet').title, '帮我看看这个报错', '没标题的拿第一句话的预览');
   assert.equal(store.summary('mid').title, '修 CI');
   assert.equal(store.summary('busy').running, true);
+  assert.deepEqual([store.summary('term').origin, store.summary('quiet').origin], ['terminal', null], '终端开的带 origin（核心 8-33 四补，左栏单开一栏）');
 });
 
 test('会话表推来变化（sessions.changed）：别处开的新会话当场列上；没读的会话一轮结束记成没看过、看了去掉；开始跑的读进来；别处删的交给界面收掉', async () => {
