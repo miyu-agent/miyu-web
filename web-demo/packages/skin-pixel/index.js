@@ -1,7 +1,7 @@
 // @ts-check
 //! 皮肤「像素风」（软件包 `skin-pixel`，蓝图 `web.md`「皮肤」第 6 条）：挂进 `skin` 包声明的 `skin.packs`。照第一次引导的「像素关卡」：
 //! 全直角、不虚化；浮起来的、贴在页面上的东西四边一圈 3px 的像素边、四个角各缺一格（四道错开的影画的，不是真的描边），往右下错开
-//! 的实色块影；界面上的字用像素字体（`skin.css` 的 `@font-face`），读的字、代码照旧；图标是像素的（`icons.json`，`tools/pixel-icons.py` 生成）；浮起来的菜单一格一格地弹出（只动透明度，滑动、跟着指针走的照原来的）。颜色都从主题掺出来（`--skin-` 打头的是这一格自己的）。
+//! 的实色块影；吉祥物的落脚点跟着像素边挪（站在外面那一圈边上），回答里的代码块也是台面（`anchors`、`anchorOffsets`）；界面上的字用像素字体（`skin.css` 的 `@font-face`），读的字、代码照旧；图标是像素的（`icons.json`，`tools/pixel-icons.py` 生成）；浮起来的菜单一格一格地弹出（只动透明度，滑动、跟着指针走的照原来的）。颜色都从主题掺出来（`--skin-` 打头的是这一格自己的）。
 
 /** 四道错开 3px 的影：一圈像素边，四个角各缺一格 @param {string} c */
 const frame = (c) => `0 -3px 0 0 ${c}, 0 3px 0 0 ${c}, -3px 0 0 0 ${c}, 3px 0 0 0 ${c}`;
@@ -94,8 +94,23 @@ export const tokens = {
   '--seg-thumb-elev': '0 2px 0 0 var(--skin-ground)',
 };
 
+/** 吉祥物的落脚点（蓝图 `web.md`「吉祥物」第 11 条）：加一种台面，回答里代码块的上边沿（像关卡里的砖台） */
+export const anchors = [
+  { id: 'pixel.code', part: 'code', kind: 'ground', edge: 'top', all: true, stick: true, inset: 12, layer: 'stage', dy: -3, zh: '回答里代码块的上边沿（站在像素边上）' },
+];
+/** 挪表里的点：有像素边（3px，画在框外面）的台面往上 3px、扒边往外 3px，站在边上不陷进去 */
+export const anchorOffsets = {
+  composer: { dy: -3 },
+  'composer.floats': { dy: -3 },
+  'model.menu': { dy: -3 },
+  'message.user': { dy: -3 },
+  'settings.top': { dy: -3 },
+  'settings.left': { dx: -3 },
+  'settings.right': { dx: 3 },
+};
+
 /** @param {any} ctx */
 export function apply(ctx) {
-  ctx.slots.mount('skin.packs', { id: 'pixel', name: ctx.text('name'), order: 10, tokens,
+  ctx.slots.mount('skin.packs', { id: 'pixel', name: ctx.text('name'), order: 10, tokens, anchors, anchorOffsets,
     css: new URL('skin.css', import.meta.url).href, icons: new URL('icons.json', import.meta.url).href });
 }

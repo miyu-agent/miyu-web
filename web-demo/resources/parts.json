@@ -243,6 +243,12 @@
       ".use-pop"
     ]
   },
+  "model.menu": {
+    "zh": "换模型的菜单",
+    "select": [
+      ".model-menu"
+    ]
+  },
   "message.answer": {
     "zh": "回答",
     "select": [
@@ -325,6 +331,12 @@
     "zh": "对话区",
     "select": [
       ".stage"
+    ]
+  },
+  "stage.info": {
+    "zh": "对话区左上角那一条（会话的名字、人格）",
+    "select": [
+      ".stage-info"
     ]
   },
   "switch": {

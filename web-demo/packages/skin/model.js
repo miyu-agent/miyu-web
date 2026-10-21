@@ -3,8 +3,15 @@
 //!
 //! 变量表是 `styles/tokens.css`：`:root` 里定义的（形状的总开关）加注释里 `@token` 列的（材质，出厂不定义）。部件名是
 //! `resources/parts.json`：名字 → 页面里的选择器；皮肤的 CSS 写 `[data-part="composer"]`，接进页面时换成 `:is(.composer)`。
+//! 皮肤包还可以带吉祥物的落脚点（`anchors` 加点、`anchorOffsets` 挪点，「吉祥物」第 11 条）：照 `src/lib/anchors.js` 的规矩查。
 
-/** @typedef {{id: string, name?: string, order?: number, tokens?: Record<string, string|{light: string, dark: string}>, css?: string, icons?: string}} Pack */
+import { themeProblem } from '../../src/lib/anchors.js';
+
+/**
+ * @typedef {{id: string, name?: string, order?: number, tokens?: Record<string, string|{light: string, dark: string}>, css?: string, icons?: string,
+ *   anchors?: import('../../src/lib/anchors.js').Anchor[], anchorOffsets?: Record<string, import('../../src/lib/anchors.js').Offset>}} Pack
+ * @typedef {{parts: Parts, ids: Set<string>}} AnchorRules 查落脚点用的：部件名表、落脚点表里的编号
+ */
 /** @typedef {Record<string, {zh?: string, select: string[]}>} Parts */
 
 const ID = /^[a-z][a-z0-9-]*$/;
@@ -20,10 +27,10 @@ export function vocabulary(css) {
 }
 
 /**
- * 一格皮肤认不认：认的交 `null`，不认的交为什么（写进控制台，设置页不列它）。
- * @param {any} pack @param {Set<string>} known
+ * 一格皮肤认不认：认的交 `null`，不认的交为什么（写进控制台，设置页不列它）。给了 `rules` 的连吉祥物的落脚点一起查。
+ * @param {any} pack @param {Set<string>} known @param {AnchorRules} [rules]
  */
-export function packProblem(pack, known) {
+export function packProblem(pack, known, rules) {
   if (!pack || typeof pack !== 'object') return '不是一格皮肤';
   if (typeof pack.id !== 'string' || !ID.test(pack.id)) return `编号不对：${pack.id}`;
   const tokens = pack.tokens ?? {};
@@ -38,6 +45,7 @@ export function packProblem(pack, known) {
   }
   if (pack.css != null && typeof pack.css !== 'string') return 'css 要是样式文件的地址';
   if (pack.icons != null && typeof pack.icons !== 'string') return 'icons 要是图标表的地址';
+  if (rules && (pack.anchors != null || pack.anchorOffsets != null)) return themeProblem(pack, rules.parts, rules.ids);
   return null;
 }
 

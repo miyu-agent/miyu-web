@@ -3,7 +3,9 @@
 //! （空着的、选的没了的是出厂：什么都不写）；选了的在页面根上写 `data-skin`，把它的变量照现在的明暗写上，它的 CSS 把部件名换成页面里的
 //! 选择器（`resources/parts.json`）接进页面，带了图标的换上它的图标（`src/lib/dom.js` 的 `useIconPack`）。变量表（`styles/tokens.css`）里没有的名字、`{light, dark}` 缺一份的，不认这一格，控制台写明为什么。
 //!
-//! 提供服务 `skin`：现在是哪个、有哪几个。换了发事件 `skin.changed`（写好以后发）；头一次以后再换，整页一起淡过去（`src/lib/retheme.js`）。
+//! 吉祥物的落脚点（`anchors`、`anchorOffsets`）照落脚点表（`resources/mascot-anchors.json`）查，经服务的 `anchors()` 交给吉祥物。
+//!
+//! 提供服务 `skin`：现在是哪个、有哪几个、它的落脚点。换了发事件 `skin.changed`（写好以后发）；头一次以后再换，整页一起淡过去（`src/lib/retheme.js`）。
 
 import { retheme } from '../../src/lib/retheme.js';
 import { useIconPack } from '../../src/lib/dom.js';
@@ -18,6 +20,8 @@ export function apply(ctx) {
   let known = null;
   /** @type {import('./model.js').Parts} */
   let parts = {};
+  /** 落脚点表里的编号（查皮肤包加的点、挪的点） @type {Set<string>} */
+  let anchorIds = new Set();
   /** 读过的皮肤 CSS（地址 → 换好的） @type {Map<string, string|null>} */
   const sheets = new Map();
   /** 写上去的变量 @type {string[]} */
@@ -36,7 +40,7 @@ export function apply(ctx) {
   };
 
   const packs = () => (known ? ctx.slots.list('skin.packs').filter((/** @type {any} */ p) => {
-    const why = packProblem(p, /** @type {Set<string>} */ (known));
+    const why = packProblem(p, /** @type {Set<string>} */ (known), { parts, ids: anchorIds });
     if (why) tell(p?.id ?? '?', why);
     return !why;
   }) : []);
@@ -117,9 +121,11 @@ export function apply(ctx) {
     Promise.all([
       fetch(new URL('../../styles/tokens.css', import.meta.url)).then((r) => r.text()),
       fetch(new URL('../../resources/parts.json', import.meta.url)).then((r) => r.json()),
-    ]).then(([css, table]) => {
+      fetch(new URL('../../resources/mascot-anchors.json', import.meta.url)).then((r) => r.json()),
+    ]).then(([css, table, spots]) => {
       known = vocabulary(css);
       parts = table;
+      anchorIds = new Set((spots.anchors ?? []).map((/** @type {any} */ a) => a.id));
       paint();
     }).catch((err) => console.warn('皮肤：读不到变量表、部件名', err));
     return () => {};
@@ -144,5 +150,10 @@ export function apply(ctx) {
     current: () => chosen()?.id ?? null,
     /** 认的那几格 `{id, name}` */
     list: () => packs().map((/** @type {any} */ p) => ({ id: p.id, name: p.name ?? p.id })),
+    /** 现在用的那一格带的吉祥物落脚点：加的点、挪的点；出厂、没带的是 `null` */
+    anchors: () => {
+      const p = chosen();
+      return p && (p.anchors || p.anchorOffsets) ? { anchors: p.anchors ?? [], offsets: p.anchorOffsets ?? {} } : null;
+    },
   });
 }

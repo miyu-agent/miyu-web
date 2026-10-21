@@ -61,6 +61,8 @@ export class Guide {
     /** 吉祥物站的舞台：欢迎页一种、别的几屏一种；撤销的函数 */
     this.stageKind = '';
     this.unstage = /** @type {(() => void)|null} */ (null);
+    /** 站的那一段挂进吉祥物的落脚点（挂载位 `mascot.anchors`）；拿下来的函数 */
+    this.unmount = /** @type {(() => void)|null} */ (null);
     /** 画了第几屏：台子的编号带着它（换了一屏，旧的台子就没了，吉祥物照新的站） */
     this.shown = 0;
     /** 人格、预设还在读的那一下：台子照上一屏的留着，不让她掉下去 @type {{platforms: any[], home: any}|null} */
@@ -136,6 +138,8 @@ export class Guide {
     this.page.removeEventListener('scroll', this.onScroll);
     this.unstage?.();
     this.unstage = null;
+    this.unmount?.();
+    this.unmount = null;
     this.layer.classList.add('is-leaving');
     this.uncover();
     const gone = () => this.layer.remove();
@@ -363,19 +367,28 @@ export class Guide {
     if (kind === this.stageKind) return false;
     const first = !this.stageKind;
     this.stageKind = kind;
+    // 站的那一段挂进吉祥物的落脚点（「吉祥物」第 11 条）：只在引导这个舞台上算（`group`），自己量（`at`）；编号跟着画了第几屏换
+    // （`key`：换了一屏，旧的台子就没了）
+    this.unmount ??= this.ctx.slots?.mount('mascot.anchors', {
+      id: 'welcome.top', kind: 'ground', edge: 'top', inset: 0, group: 'welcome', zh: '第一次引导里站的那一段',
+      at: () => {
+        const p = this.platforms()[0];
+        return p ? { left: p.x1, right: p.x2, top: p.y, bottom: p.y, key: p.id } : null;
+      },
+    }) ?? null;
     // 新的舞台直接换掉旧的（不先撤：撤了它先往输入框跳，新舞台就跳不成了）
     this.unstage = mascot.stage({
+      group: 'welcome',
       root: this.layer,
       scale: kind === 'hello' ? this.ctx.config.mascot_scale : 1,
       drop: first,
-      platforms: () => this.platforms(),
       home: () => this.home(),
     });
     this.release();
     return true;
   }
 
-  /** 台子：站的那一块（居中的几屏是标题正上方一段，别的几屏是最底下的地面）。 */
+  /** 台子：站的那一块（居中的几屏是标题正上方一段，别的几屏是最底下的地面）；挂进吉祥物的落脚点的那一格照它量。 */
   platforms() {
     if (this.held) return this.held.platforms;
     const top = this.top();

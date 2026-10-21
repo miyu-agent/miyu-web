@@ -15,10 +15,17 @@
 .mascot-prop-canvas { display: block; image-rendering: pixelated; image-rendering: crisp-edges; }
 @keyframes mascot-prop-in { from { opacity: 0; transform: translateY(6px) scale(0.6); } }
 @keyframes mascot-prop-out { to { opacity: 0; transform: translateY(4px) scale(0.7); } }
+/* 吉祥物碰了一下的那一块（互动点，蓝图第 11 条）：戳的往下一沉、缩一点，拍的一颤。只是动画，不点它。用单独的 translate、scale、rotate，
+   不碰那一块自己的 transform */
+[data-mascot-touch="poke"] { animation: mascot-poked calc(260ms * var(--motion-scale)) ease-out; }
+[data-mascot-touch="pat"] { animation: mascot-patted calc(240ms * var(--motion-scale)) ease-out; }
+@keyframes mascot-poked { 40% { translate: 0 2px; scale: 0.9; } }
+@keyframes mascot-patted { 30% { rotate: -6deg; scale: 0.94; } 65% { rotate: 4deg; } }
 @media (max-width: 836px) {
   .mascot-layer { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .mascot-prop, .mascot-prop.is-leaving { animation: none; }
   .mascot-scale { transition: none; }
+  [data-mascot-touch] { animation: none; }
 }

@@ -1,13 +1,15 @@
 // @ts-check
 //! 吉祥物什么时候做什么（软件包 `mascot`，蓝图 `web.md`「吉祥物」第 4–9 条）：身子怎么动在 `body.js`，脸在 `face.js`，这里定
 //! 什么时候做：没人动时隔一阵走一趟、摇头、抖耳朵、眨眼、打哈欠；她在回答时掏电脑敲，没人动好一阵掏游戏机玩一会儿（第 5 条）；
-//! 看哪（第 6 条）；按住蓄力、松手跳，拖、扔（第 3、8 条）；落地摔重了晕一下；嘴只在打哈欠时张。
+//! 看哪（第 6 条）；按住蓄力、松手跳，拖、扔（第 3、8 条）；落地摔重了晕一下；嘴只在打哈欠时张。没人动时隔一阵挑一处够得着的
+//! 落脚点去（第 11 条：跳上台面、站点，扒住一道边，走到互动点戳、拍、看），待够了回家；提示露出来那一下凑过去看。
 //! 只在要动的时候一帧一帧推（`requestAnimationFrame`），停着不画；标签页在后台不推。
 //! 数都是这个包的设置项。
 
 import { Body } from './body.js';
 import { Face } from './face.js';
 import { Lamp } from './lamp.js';
+import { hangAt, launchFrom, standFor } from '../../src/lib/anchors.js';
 
 /** `[最小, 最大]` 里随机一个 */
 const pick = ([a, b]) => a + Math.random() * (b - a);
@@ -15,10 +17,16 @@ const pick = ([a, b]) => a + Math.random() * (b - a);
 const clamp = (v, max) => Math.max(-max, Math.min(max, v));
 
 /**
+ * @typedef {import('../../src/lib/anchors.js').Hotspot} Hotspot
+ * @typedef {{platforms: import('./body.js').Platform[], ledges: import('../../src/lib/anchors.js').Ledge[], hotspots: Hotspot[]}} World
  * @typedef {import('./body.js').Room & {draw: (pose: import('./model.js').Pose) => void,
- *   place: (at: {x: number, y: number, rot: number}) => void, head: () => {x: number, y: number}|null,
- *   hold: (kind: string|null) => void, nextProp: () => void, hidden: () => boolean}} Io
- *   台子这些，再加画一帧、放到哪、头在屏幕上哪、拿出收起道具、道具下一帧、不出来
+ *   place: (at: {x: number, y: number, rot: number, clip: {left: number, right: number}|null}) => void, head: () => {x: number, y: number}|null,
+ *   hold: (kind: string|null) => void, nextProp: () => void, hidden: () => boolean, world?: () => World,
+ *   touch?: (id: string, kind: string) => void}} Io
+ *   台子这些，再加画一帧、放到哪、头在屏幕上哪、拿出收起道具、道具下一帧、不出来；这一帧的落脚点（台面、扒边、互动点）、碰一下互动点那一块
+ * @typedef {{kind: 'ground'|'perch'|'ledge'|'hotspot', id: string, from: number, x: number, y: number, stand?: string, spot?: Hotspot,
+ *   action?: string, stage: 'walk'|'leap'}} Plan 要去的一处：哪一种、编号、从哪起跳（脚下这一段上）、落在哪、互动点站在哪一段、
+ *   碰哪一块、做什么；走着去还是跳着去
  */
 
 export class Behavior {
@@ -55,6 +63,10 @@ export class Behavior {
     this.frame = 0;
     this.last = 0;
     this.droopTimer = 0;
+    /** 要去的一处（第 11 条） @type {Plan|null} */
+    this.plan = null;
+    /** 在别处待着：哪一处、待够了回家的计时 */
+    this.away = /** @type {{id: string, timer: number}|null} */ (null);
     /** @type {number[]} */
     this.timers = [];
     this.schedule();
@@ -97,6 +109,11 @@ export class Behavior {
       later(pick(this.config.walk.every_ms), walk);
     };
     later(pick(this.config.walk.every_ms), walk);
+    const visit = () => {
+      if (this.idle()) this.visit();
+      later(pick(this.config.visit.every_ms), visit);
+    };
+    later(pick(this.config.visit.every_ms), visit);
     const game = () => {
       const a = this.config.activity;
       if (this.free() && performance.now() - this.touched > a.game_after_ms && this.body.walkTo == null) {
@@ -115,7 +132,7 @@ export class Behavior {
 
   /** 闲着、站着、手里没东西，也没设减少动画：可以自己走、掏游戏机。 */
   free() {
-    return !this.busy && !this.activity && this.body.standing() && !this.io.reduced();
+    return !this.busy && !this.activity && this.body.standing() && !this.io.reduced() && !this.body.act && !this.plan;
   }
 
   /** 走一趟（没人动时隔一阵自己走；也能叫它走）。 */
@@ -128,6 +145,8 @@ export class Behavior {
   touch() {
     this.touched = performance.now();
     this.body.halt();
+    // 走着去一处的被叫停了：不去了
+    if (this.plan?.stage === 'walk' && this.body.walkTo == null) this.plan = null;
     if (this.gameUntil) {
       this.gameUntil = 0;
       this.settle();
@@ -208,6 +227,15 @@ export class Behavior {
   gaze() {
     const g = this.config.gaze;
     if (this.activity) return { yaw: 0, pitch: g.prop_pitch };
+    // 扒着的朝外看；做动作的看着碰的那一块
+    const hang = this.body.hang;
+    if (hang) return { yaw: (hang.side === 'right' ? 1 : -1) * this.config.visit.hang_yaw, pitch: 0 };
+    const act = this.body.act;
+    const head = act ? this.io.head() : null;
+    if (act && head) {
+      const deg = (v) => (Math.atan(v / (g.distance / 3)) * 180) / Math.PI;
+      return { yaw: clamp(deg(act.target.x - head.x), g.max_yaw), pitch: clamp(deg(act.target.y - head.y), g.max_pitch) };
+    }
     const moving = this.pointer && performance.now() - this.pointerAt < g.pointer_hold_ms;
     const target = moving ? this.pointer : this.caret;
     const me = target ? this.io.head() : null;
@@ -250,14 +278,136 @@ export class Behavior {
     this.droopTimer = window.setTimeout(() => this.follow(), d.ms);
   }
 
-  /** 舞台换了：跳回家（`drop` 的从窗口顶上掉下来）。 */
+  /** 舞台换了：跳回家（`drop` 的从窗口顶上掉下来）。扒着的先松手。 */
   goHome(drop = false) {
+    this.home();
     this.body.goHome(drop);
     this.wake();
   }
 
+  /** 不在别处待了、不去了 */
+  home() {
+    this.plan = null;
+    if (this.away) clearTimeout(this.away.timer);
+    this.away = null;
+    if (this.body.hang) this.body.unhang();
+  }
+
+  /**
+   * 挑一处够得着的落脚点去（第 11 条）：台面（不是脚下这一段、不是家、不是地、不是浮层）、站点、扒边、互动点（露出来那一下才去的不算）；
+   * 离脚下这一段横着不超过 `visit.reach_x`、往上不超过 `visit.reach_up`。交回去没去。
+   */
+  visit() {
+    const b = this.body.at;
+    const g = b?.ground;
+    const world = this.io.world?.();
+    if (!b || !g || !world || !this.free()) return false;
+    const v = this.config.visit;
+    const edge = this.config.home.edge;
+    const { w, h } = this.io.size();
+    const home = this.io.home();
+    const reach = (/** @type {{x: number, y: number}} */ to) => launchFrom({ x: b.x, ground: g }, to, v, edge);
+    /** @type {Plan[]} */
+    const cands = [];
+    for (const p of world.platforms) {
+      if (p.id === g.id || p.id === 'floor' || p.id === home?.platform.id || p.carry) continue;
+      const x = p.perch || p.x2 - p.x1 < 2 * edge ? (p.x1 + p.x2) / 2 : Math.max(p.x1 + edge, Math.min(p.x2 - edge, b.x));
+      const from = reach({ x, y: p.y });
+      if (from != null) cands.push({ kind: p.perch ? 'perch' : 'ground', id: p.id, from, x, y: p.y, stage: 'walk' });
+    }
+    for (const l of world.ledges) {
+      const y = Math.max(l.y1 + h, Math.min(l.y2 - 6, g.y - v.hang_rise_px));
+      if (y > l.y2) continue;
+      const x = hangAt(l, w, v.peek).x;
+      const from = reach({ x, y });
+      if (from != null) cands.push({ kind: 'ledge', id: l.id, from, x, y, stage: 'walk' });
+    }
+    for (const s of world.hotspots) {
+      if (s.when === 'appear') continue;
+      const stand = standFor(s, world.platforms);
+      if (!stand) continue;
+      const x = Math.max(stand.x1, Math.min(stand.x2, s.x));
+      const from = stand.id === g.id ? x : reach({ x, y: stand.y });
+      if (from != null) cands.push({ kind: 'hotspot', id: s.id, from, x, y: stand.y, stand: stand.id, spot: s, action: s.actions[Math.floor(Math.random() * s.actions.length)], stage: 'walk' });
+    }
+    if (!cands.length) return false;
+    this.go(cands[Math.floor(Math.random() * cands.length)]);
+    return true;
+  }
+
+  /** 去这一处：先沿着脚下这一段走到起跳的地方（互动点在脚下这一段上的走到它那里），到了再跳（`launch`）。 @param {Plan} plan */
+  go(plan) {
+    const b = this.body.at;
+    if (!b) return;
+    this.plan = plan;
+    if (Math.abs(plan.from - b.x) > 1) {
+      this.body.walkTo = plan.from;
+      this.body.walkAt = performance.now();
+      this.wake();
+    } else this.launch();
+  }
+
+  /** 走到了起跳的地方：互动点在脚下这一段上的当场做动作，别的跳过去（扒边的到那一点扒住）。 */
+  launch() {
+    const p = this.plan;
+    const g = this.body.at?.ground;
+    if (!p || !g) return;
+    if (p.kind === 'hotspot' && p.stand === g.id) {
+      this.perform(p);
+      return;
+    }
+    const then = /** @type {{kind: 'land'|'hang', id: string}} */ ({ kind: p.kind === 'ledge' ? 'hang' : 'land', id: p.kind === 'hotspot' ? /** @type {string} */ (p.stand) : p.id });
+    if (this.body.leapTo(p.x, p.y, then)) p.stage = 'leap';
+    else this.plan = null;
+    this.wake();
+  }
+
+  /** 做互动点的那个动作（时长照 `visit.<动作>_ms`）。 @param {Plan} p */
+  perform(p) {
+    const s = /** @type {Hotspot} */ (p.spot);
+    const r = s.rect;
+    const action = p.action ?? s.actions[0];
+    const target = { x: (r.left + r.right) / 2, y: (r.top + r.bottom) / 2 };
+    if (!this.body.startAct(action, target, this.config.visit[`${action}_ms`])) this.plan = null;
+    else this.plan = { ...p, stage: 'leap' };
+    if (action === 'look') this.twitch();
+    this.wake();
+  }
+
+  /**
+   * 互动点露出来了（`when: "appear"`，提示）：站着、手里没东西的凑过去看。在脚下这一段上、离得不远（`visit.notice_walk_px`）的走过去，
+   * 远的就地侧过身看。
+   * @param {Hotspot} s
+   */
+  notice(s) {
+    const b = this.body.at;
+    const g = b?.ground;
+    if (!b || !g || this.activity || this.body.act || this.body.drag || this.io.reduced() || this.plan || this.body.windup) return;
+    const world = this.io.world?.();
+    const stand = world ? standFor(s, world.platforms) : null;
+    const action = s.actions[0];
+    if (stand?.id === g.id && Math.abs(s.x - b.x) <= this.config.visit.notice_walk_px) {
+      this.go({ kind: 'hotspot', id: s.id, from: Math.max(stand.x1, Math.min(stand.x2, s.x)), x: s.x, y: stand.y, stand: stand.id, spot: s, action, stage: 'walk' });
+    } else this.perform({ kind: 'hotspot', id: s.id, from: b.x, x: b.x, y: b.y, stand: g.id, spot: s, action, stage: 'leap' });
+  }
+
+  /** 到了别处（台面、站点、扒着）：待一会儿（`visit.stay_ms`、扒着的 `visit.hang_ms`）回家。 @param {string} id @param {number} ms */
+  stay(id, ms) {
+    if (this.away) clearTimeout(this.away.timer);
+    this.away = {
+      id,
+      timer: window.setTimeout(() => {
+        this.away = null;
+        if (this.body.hang?.id === id) this.body.unhang();
+        else if (this.body.at?.ground?.id === id && this.body.standing()) this.body.goHome();
+        this.wake();
+      }, ms),
+    };
+  }
+
   /** 左键按下：抓起来。 */
   grab(x, y) {
+    this.home();
     this.body.grab(x, y);
     this.wake();
   }
@@ -305,6 +455,24 @@ export class Behavior {
       if (this.body.standing()) this.settle();
     }
     if (moved.arrived) this.settle();
+    // 去一处（第 11 条）：走到了起跳；落下了，落在要去的那一段上的待一会儿（互动点的做动作）；扒住了边待一会儿；动作碰了那一块、做完了
+    const plan = this.plan;
+    if (plan && moved.arrived && plan.stage === 'walk') this.launch();
+    else if (plan && moved.landed != null && plan.stage === 'leap' && !this.body.act) {
+      this.plan = null;
+      const on = this.body.at?.ground?.id;
+      if (plan.kind === 'hotspot' && on === plan.stand) this.perform(plan);
+      else if (on === plan.id) this.stay(plan.id, pick(c.visit.stay_ms));
+    }
+    if (moved.hung && plan) {
+      this.plan = null;
+      this.stay(plan.id, pick(c.visit.hang_ms));
+    }
+    if (moved.hit && this.plan?.spot) this.io.touch?.(this.plan.spot.id, this.body.act?.kind ?? this.plan.action ?? '');
+    if (moved.acted) {
+      this.plan = null;
+      this.follow();
+    }
     if (moved.arrived || moved.landed != null) this.follow();
     const bob = this.activity === 'laptop' ? (this.propFrame % 2) * c.activity.type_bob_px : 0;
     const shape = this.body.shape(dt, now, bob);
@@ -314,6 +482,8 @@ export class Behavior {
     if (this.body.walkTo != null && b?.ground) this.face.aim = { yaw: 0, pitch: 0, half: c.gaze.half_life_ms };
     else if (moving && !this.io.reduced()) this.face.aim = { ...this.face.aim, ...this.gaze() };
     moving = this.face.tick(dt, now) || moving;
+    // 扒着的耳朵往外撇一点（使着劲）
+    if (this.body.hang) this.pose.ear += c.visit.hang_ear;
     this.pose.stride = shape.stride;
     this.pose.crouch = shape.crouch;
     this.pose.turn = shape.turn;
@@ -325,6 +495,7 @@ export class Behavior {
   /** 停用了：停掉计时、不再推。 */
   destroy() {
     for (const id of this.timers) clearTimeout(id);
+    if (this.away) clearTimeout(this.away.timer);
     clearTimeout(this.pointerTimer);
     clearTimeout(this.droopTimer);
     clearInterval(this.propTimer);
