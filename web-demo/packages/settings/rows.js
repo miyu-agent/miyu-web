@@ -367,3 +367,25 @@ function list(dialog, item, values, change) {
   });
   return h('div.set-chips', chips, add);
 }
+
+/** 搜索框停多久再筛（边打边筛；输入法选字时不筛） */
+const TYPE_MS = 120;
+
+/**
+ * 一页顶上的搜索框（软件包页、技能、脚本、MCP 三页）：边打边筛，停一下再交 `change`；输入法选字时不交。框自己不重画（光标、输入法不断）。
+ * @param {string} value @param {string} hint 占位字 @param {(query: string) => void} change
+ */
+export function findBox(value, hint, change) {
+  const input = /** @type {HTMLInputElement} */ (h('input.set-pkg-find-input', { type: 'search', value, placeholder: hint, 'aria-label': hint, spellcheck: 'false', autocomplete: 'off' }));
+  let composing = false;
+  /** @type {any} */
+  let timer = 0;
+  input.addEventListener('compositionstart', () => { composing = true; });
+  input.addEventListener('compositionend', () => { composing = false; input.dispatchEvent(new Event('input')); });
+  input.addEventListener('input', () => {
+    if (composing) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => change(input.value), TYPE_MS);
+  });
+  return h('label.set-pkg-find', icon('search'), input);
+}

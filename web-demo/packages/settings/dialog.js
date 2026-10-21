@@ -16,6 +16,7 @@ import { drawCorePackages, followExtension, openInfo } from './core-packages.js'
 import { drawBackstage } from './backstage.js';
 import { Subpage, swap } from './subpage.js';
 import { drawAdvanced } from './advanced.js';
+import { drawToolPage, hasToolPage } from './tool-pages.js';
 
 /** 上次看的那一页：这个终端记着（蓝图第 3 条），刷新就忘 */
 let lastPage = 'general';
@@ -95,15 +96,20 @@ export class SettingsDialog {
   /** 读核心的配置清单、最终值；模型列表另读（可能慢：核心要去供应商那边拉），读完了模型页跟着重画。 */
   async load() {
     const core = this.ctx.core;
-    const [schema, got, packages] = await Promise.all([core.request('config.schema', {}), core.request('config.get', { all: true }),
+    const [schema, got, packages, skills, scripts] = await Promise.all([core.request('config.schema', {}), core.request('config.get', { all: true }),
       // 核心的软件包（9-1）：「默认界面」的选项照它列（读不到的旧核心是空的）
       core.request('package.list', {}).then((r) => r?.packages ?? [], () => []),
+      // 技能、脚本两页（核心 X-26、X-27；没有推送，打开、改了配置时重读）：旧核心没有的是 `null`，不出那一页
+      core.request('skill.list', {}).then((r) => (Array.isArray(r?.skills) ? r : null), () => null),
+      core.request('script.list', {}).then((r) => (Array.isArray(r?.scripts) ? r : null), () => null),
       // 软件包自己写的图标（清单的 `icon`，F-6 上）照整套图标画
       this.ctx.icons.more()]);
     /** 能直接敲 `miyu` 打开的界面（`kind` 是 `ui`、有命令的包，核心 9-3） */
     this.heads = packages.filter((p) => p.kind === 'ui' && p.command);
     /** 核心认的软件包（「软件包」页上面那一段照它列） */
     this.packages = packages;
+    this.skills = skills;
+    this.scripts = scripts;
     this.schema = schema;
     this.got = got;
     const cfg = this.ctx.config;
@@ -136,6 +142,8 @@ export class SettingsDialog {
       ...(this.pages.some((p) => p.id === 'packages') ? [] : [{ id: 'packages', name: named('packages') }]),
       // 软件后台（核心 F-6 中）：带自己页面的软件，点进去是它的页面
       { id: 'backstage', name: named('backstage') },
+      // 技能、脚本、MCP（第 20 条，核心 X-26、X-27）：核心有对应方法的才有
+      ...(/** @type {const} */ (['skills', 'scripts', 'mcp'])).filter((id) => hasToolPage(this, id)).map((id) => ({ id, name: named(id) })),
       ...this.ctx.slots.list('settings.section').map((s) => ({ id: s.id, name: s.name, section: s })),
     ];
     const rank = (id) => {
@@ -260,6 +268,7 @@ export class SettingsDialog {
         ...drawCorePackages(this, page, drawPackages(this)),
       ];
     }
+    else if (this.current === 'skills' || this.current === 'scripts' || this.current === 'mcp') kids = drawToolPage(this, this.current);
     else if (entry?.section) kids = entry.section.render?.(sectionKit(this)) ?? null;
     else if (page) {
       // 通用页最上面是主题卡片（2026-10-10 项目主人：外观页只有主题三个选择，并进通用、放在最上面）。

@@ -263,6 +263,9 @@
 .setup-feature { display: flex; align-items: center; gap: 10px; min-height: 32px; color: var(--text); font-size: 13.5px; }
 .setup-feature-name { flex: 1; min-width: 0; }
 .setup-feature.is-missing .setup-feature-name { color: var(--text-faint); }
+.setup-feature-by { flex: none; padding: 0 6px; border-radius: 5px; background: var(--surface-2); color: var(--text-faint); font-size: 11px; line-height: 18px; white-space: nowrap; }
+.setup-feature-back { flex: none; padding: 0; border: 0; background: none; color: var(--accent); font: 12px var(--sans); cursor: pointer; white-space: nowrap; }
+.setup-feature-back:hover { text-decoration: underline; }
 /* 功能下面平铺的工具：缩进一格、字小一点；功能关着时暗着、点不了 */
 .setup-tools { display: grid; margin: 0 0 6px 14px; padding-left: 10px; box-shadow: inset 2px 0 0 var(--surface-3); }
 .setup-tool { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 28px; color: var(--text-soft); font-size: 13px; }

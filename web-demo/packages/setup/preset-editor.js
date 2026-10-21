@@ -56,6 +56,8 @@ export class PresetEditor {
     this.title.textContent = label || this.id;
     const name = this.kit.text(label, '', (text) => { if (text) this.set([{ key: 'preset.name', value: text }]); });
     const list = Array.isArray(got.features) ? got.features : [];
+    /** 没列出来的功能默认开不开：`on` 的预设才照全局开关（核心 X-27） */
+    this.unlisted = got.unlisted;
     // 分四段：功能、MCP 服务、脚本、技能（2026-10-12 项目主人），空的段不出；包的功能那一段不写小标题（左边这一格就叫「功能」，
     // 写了上下两个「功能」挨着），别的各一个
     const features = h('div.setup-features', featureGroups(list).map((g) => [g.group === 'feature' ? null : h('div.setup-feature-group', t(`edit.feature_groups.${g.group}`)), g.items.map((f) => this.featureRow(f))]));
@@ -77,6 +79,7 @@ export class PresetEditor {
   featureRow(f) {
     if (f.installed === false) return h('div.setup-feature.is-missing', h('span.setup-feature-name', f.name ?? f.id), h('span.setup-missing', this.t('edit.not_installed')));
     const row = h('div.setup-feature', h('span.setup-feature-name', { title: f.summary ?? null }, f.name ?? f.id),
+      ...this.byMarks(f),
       this.kit.toggle(!!f.on, (on) => this.set([{ key: `features.${f.id}`, value: on }])));
     const tools = f.tools ?? [];
     if (tools.length < 2) return row;
@@ -85,6 +88,20 @@ export class PresetEditor {
       if (!f.on) toggle.setAttribute('disabled', '');
       return h('div.setup-tool', h('span', tool.label ?? tool.name), toggle);
     }))];
+  }
+
+  /**
+   * 技能、脚本、MCP 服务开不开谁定的（核心 X-27 的 `by`；2026-10-20 项目主人）：`global` 写「跟随全局」；预设里写了的（`preset`）在 `unlisted` 是 `on`
+   * 的预设里给一个「跟随全局默认」（删掉预设里写的那一项）；`default` 不写。
+   * 包自己的功能不接全局开关，不写。
+   * @param {any} f
+   */
+  byMarks(f) {
+    if (!/^(skill|script|mcp)-/.test(f.id ?? '')) return [];
+    if (f.by === 'global') return [h('span.setup-feature-by', this.t('edit.by_global'))];
+    // 预设里写了的不另标（2026-10-20 项目主人：「预设里定的」没用），只给「跟随全局默认」（同一天改名，原来叫「恢复全局默认」）
+    if (f.by !== 'preset' || this.unlisted !== 'on') return [];
+    return [h('button.setup-feature-back', { type: 'button', onclick: () => this.set([{ key: `features.${f.id}`, unset: true }]) }, this.t('edit.follow_global'))];
   }
 
   /**

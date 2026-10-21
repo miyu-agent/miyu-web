@@ -6,18 +6,16 @@
 //! 左上角箭头返回；2026-10-10 项目主人）：版本和状态、启用、它加的功能、权限（扩展的「运行」「权限」两行，`extensions.js`）、
 //! 设置项（`config.schema` 里 `package` 是它的）、卸载（管理员自己装的才有）。程序不在的只有状态（界面包核心照旧给设置项，照画）。
 //! 带 MCP 服务的（扩展包、`bundle`，核心 X-4）多一组「MCP 服务」：一个服务一行写现在怎样（`mcp-servers.js`），组头「重启」（`package.restart`）；
-//! 个人设置里写的服务（F-9 补）在列表的段后面单列一组。
+//! 个人设置里写的服务（F-9 补）2026-10-20 起在「MCP」页（`tool-pages.js`）。
 
 import { confirmIn } from './confirm.js';
 import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
-import { coreRow, groupBlock, toggle, textField } from './rows.js';
-import { splitKey, itemFor, mcpStopped, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf } from './model.js';
+import { coreRow, groupBlock, toggle, textField, findBox } from './rows.js';
+import { splitKey, itemFor, mcpStopped, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy } from './model.js';
 import { openPage, probeSites } from './backstage.js';
-import { serverRow, homeMcpPart } from './mcp-servers.js';
+import { serverRow } from './mcp-servers.js';
 import { stateText } from './extensions.js';
 
-/** 搜索框停多久再筛（边打边筛；输入法选字时不筛） */
-const TYPE_MS = 120;
 /** 列表上不写的状态：开关已经说了 */
 const QUIET = new Set(['ready', 'off']);
 /** 写成红字的状态：程序不在、依赖的包缺了（核心 F-11：装着、不拉起） */
@@ -28,7 +26,7 @@ const BAD = new Set(['program_missing', 'depends_missing']);
 const faceOf = (p) => h('span.set-pkg-face', icon(p.icon && hasIcon(p.icon) ? p.icon : 'package'));
 
 /**
- * 整页：搜索、筛选、核心的软件包、个人设置里的 MCP 服务、对不上哪个包的组，最后网页自己的组件（`web`：`packages.js` 的 `drawPackages`）。
+ * 整页：搜索、筛选、核心的软件包、对不上哪个包的组，最后网页自己的组件（`web`：`packages.js` 的 `drawPackages`）。
  * 搜什么、筛哪个记在 `dialog.pkgView`（设置框重画、关了再开还是它）；打字、点筛选只换列表，搜索框不重画（光标、输入法不断）。
  * @param {any} dialog @param {any} page `config.schema` 的 `packages` 页 @param {{node: HTMLElement, filter: (query: string) => Promise<number>, count: () => Promise<number>}} web
  */
@@ -38,17 +36,17 @@ export function drawCorePackages(dialog, page, web) {
   probeSites(dialog, packages);
   const view = (dialog.pkgView ??= { query: '', filter: 'all' });
   const ids = new Set(packages.map((p) => p.package));
+  const carried = carriedBy(dialog.skills, dialog.scripts);
   let webCount = 0;
   const list = h('div.set-rows');
   const coreGroup = h('section.set-group', list);
   const empty = h('p.set-empty', { hidden: true }, t('pkg.no_match'));
   const webPart = h('section.set-part', packages.length ? h('h2.set-part-name', t('packages_web')) : null, web.node);
-  const homeMcp = homeMcpPart(dialog);
   // 对不上哪个包的组（核心自己的模块）照旧一组一组摊开；联网搜索的 key 这类照 `ownerOf` 认回它的包，挪进信息页
   const rest = (page?.groups ?? []).filter((g) => g.items.every((item) => !ownerOf(item, ids)))
     .map((g) => groupBlock(g.name, g.items.map((item) => coreRow(dialog, item)))).filter(Boolean);
   const chips = h('div.set-pkg-chips', { role: 'tablist' });
-  const count = (/** @type {string} */ f) => (f === 'all' ? packages.length + webCount : f === 'web' ? webCount : packages.filter((p) => pkgKinds(p).includes(f)).length);
+  const count = (/** @type {string} */ f) => (f === 'all' ? packages.length + webCount : f === 'web' ? webCount : packages.filter((p) => pkgKinds(p, carried).includes(f)).length);
   const drawChips = () => {
     const shown = PKG_FILTERS.filter((f) => f === 'all' || count(f) > 0);
     // 筛的那一个没了（包卸了）回到全部
@@ -67,11 +65,10 @@ export function drawCorePackages(dialog, page, web) {
   const update = async () => {
     const mine = ++round;
     const core = view.filter !== 'web';
-    const rows = core ? packages.filter((p) => (view.filter === 'all' || pkgKinds(p).includes(view.filter)) && pkgMatch(view.query, p.name, p.summary, p.package)) : [];
+    const rows = core ? packages.filter((p) => (view.filter === 'all' || pkgKinds(p, carried).includes(view.filter)) && pkgMatch(view.query, p.name, p.summary, p.package)) : [];
     replace(list, rows.map((p) => packageRow(dialog, p)));
     coreGroup.hidden = !rows.length;
     const plain = view.filter === 'all' && !view.query.trim();
-    if (homeMcp) homeMcp.hidden = !(plain || (view.filter === 'mcp' && !view.query.trim()));
     for (const g of rest) g.hidden = !plain;
     const webOn = view.filter === 'all' || view.filter === 'web';
     webPart.hidden = !webOn;
@@ -80,28 +77,17 @@ export function drawCorePackages(dialog, page, web) {
     webPart.hidden = !webOn || !webRows;
     empty.hidden = rows.length + webRows > 0;
   };
-  const input = /** @type {HTMLInputElement} */ (h('input.set-pkg-find-input', { type: 'search', value: view.query, placeholder: t('pkg.search'), 'aria-label': t('pkg.search'), spellcheck: 'false', autocomplete: 'off' }));
-  let composing = false;
-  /** @type {any} */
-  let timer = 0;
-  input.addEventListener('compositionstart', () => { composing = true; });
-  input.addEventListener('compositionend', () => { composing = false; input.dispatchEvent(new Event('input')); });
-  input.addEventListener('input', () => {
-    if (composing) return;
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      view.query = input.value;
-      update();
-    }, TYPE_MS);
+  const find = findBox(view.query, t('pkg.search'), (query) => {
+    view.query = query;
+    update();
   });
-  const find = h('label.set-pkg-find', icon('search'), input);
   drawChips();
   update();
   web.count().then((n) => {
     webCount = n;
     drawChips();
   });
-  return [h('div.set-pkg-tools', find, chips), empty, coreGroup, homeMcp, ...rest, webPart].filter(Boolean);
+  return [h('div.set-pkg-tools', find, chips), empty, coreGroup, ...rest, webPart].filter(Boolean);
 }
 
 /**

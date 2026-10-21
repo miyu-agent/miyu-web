@@ -80,10 +80,10 @@
         "user",
         "models",
         "usage",
+        "presets",
         "personas",
         "memory",
         "knowledge",
-        "presets",
         "skills",
         "scripts",
         "mcp",
@@ -100,7 +100,7 @@
       "type": "list",
       "of": "text",
       "default": [
-        "personas",
+        "presets",
         "skills",
         "packages"
       ],
@@ -182,7 +182,10 @@
       "load_failed": "无法加载配置：{reason}",
       "pages": {
         "packages": "软件包",
-        "backstage": "软件后台"
+        "backstage": "软件后台",
+        "skills": "技能",
+        "scripts": "脚本",
+        "mcp": "MCP"
       },
       "layers": {
         "none": "未设置"
@@ -355,8 +358,7 @@
         "part": {
           "connection": "接入",
           "ui": "界面",
-          "feature": "功能",
-          "home_mcp": "个人设置中的 MCP 服务"
+          "feature": "功能"
         },
         "status": {
           "running": "运行中",
@@ -381,7 +383,6 @@
         "mcp": "MCP 服务",
         "mcp_restart": "重启",
         "mcp_stopped": "服务已停止",
-        "home_mcp_hint": "在个人设置文件 settings.toml 的 [mcp.<名称>] 中添加或修改，保存后立即生效",
         "mcp_covered": "被个人设置中的同名服务替代",
         "covered": "被个人设置替代",
         "depends_missing": "缺少依赖：{names}",
@@ -389,7 +390,7 @@
         "sep": "、",
         "upstream": "上游",
         "from": {
-          "shipped": "出厂",
+          "shipped": "内置",
           "official": "官方软件源",
           "community": "社区软件源",
           "local": "本地"
@@ -404,7 +405,9 @@
           "ui": "界面",
           "mascot": "吉祥物",
           "mcp": "MCP",
-          "web": "网页"
+          "web": "网页",
+          "skill": "技能",
+          "script": "脚本"
         },
         "kind": {
           "builtin": "内置",
@@ -481,7 +484,101 @@
       "search_pages": "页面",
       "search_packages": "软件包",
       "ask_yes": "确认",
-      "ask_no": "取消"
+      "ask_no": "取消",
+      "tools": {
+        "search": {
+          "skills": "搜索技能",
+          "scripts": "搜索脚本",
+          "mcp": "搜索 MCP 服务"
+        },
+        "open_dir": "打开目录",
+        "add_server": "添加服务",
+        "copied": "已复制路径：{path}",
+        "reveal_missing": "目录不在：{path}",
+        "source": {
+          "all": "全部",
+          "own": "自制",
+          "package": "随软件包来的"
+        },
+        "own": "自制",
+        "shipped": "内置",
+        "lazy": "懒加载",
+        "full": "完整",
+        "no_match": "没有对得上的",
+        "none": {
+          "skills": "还没有技能",
+          "scripts": "还没有脚本",
+          "mcp": "还没有 MCP 服务"
+        },
+        "gone": "已不存在",
+        "tools_n": "{count} 件工具",
+        "note": {
+          "skills": "技能需要加载才能使用",
+          "load": "懒加载：只给 AI 名字和一句说明，用到时再拿完整的参数；完整：每一轮都给全。"
+        },
+        "field": {
+          "source": "来源",
+          "name": "名字",
+          "path": "位置",
+          "timeout": "时限",
+          "load": "加载方式",
+          "command": "命令",
+          "tools": "工具",
+          "url": "地址",
+          "bearer": "令牌",
+          "headers": "请求头",
+          "env": "环境变量",
+          "skipped": "没登记的工具"
+        },
+        "timeout_s": "{seconds} 秒",
+        "load_set": "个人设置里改过",
+        "load_reset": "恢复",
+        "from_package": "随软件包安装，命令在包里改。",
+        "restart": "重启",
+        "edit": "编辑",
+        "remove": "删除",
+        "form": {
+          "add_title": "添加 MCP 服务",
+          "edit_title": "编辑 {name}",
+          "name_hint": "例如 github",
+          "command_hint": "例如 npx -y @modelcontextprotocol/server-everything",
+          "env": "环境变量",
+          "env_hint": "一行一个：名字=值",
+          "timeout": "时限",
+          "seconds": "秒",
+          "cancel": "取消",
+          "save": "保存",
+          "saving": "正在保存…",
+          "bad": {
+            "name": "名字要以小写字母开头，只用小写字母、数字和 -，最多 32 个字符",
+            "command": "请填写命令",
+            "env": "环境变量第 {line} 行要写成「名字=值」",
+            "timeout": "时限要在 1 到 3600 秒之间",
+            "quote": "命令里的引号没有配对",
+            "url": "地址要以 http:// 或 https:// 开头",
+            "header": "请求头第 {line} 行要写成「名字: 值」"
+          },
+          "kind_command": "本机命令",
+          "kind_url": "网址",
+          "url_hint": "例如 https://mcp.example.com/mcp",
+          "bearer_hint": "可不填；引用写成 {secret:名字} 或 {env:变量}",
+          "headers_hint": "一行一个：名字: 值"
+        },
+        "select": "多选",
+        "selected": "已选 {count} 个",
+        "select_all": "全选",
+        "select_exit": "退出多选",
+        "delete": "删除",
+        "deleted_n": "已删除 {count} 个",
+        "trashed_n": "已删除 {count} 个（在回收站里）",
+        "delete_ask": "确认删除「{name}」吗？",
+        "delete_many_ask": "确认删除选中的 {count} 个吗？",
+        "skipped_note": "服务列出来了，但核心没登记这几个，AI 用不了",
+        "skipped_why": {
+          "name_taken": "名字和别的工具重了",
+          "parameters": "参数的写法认不出"
+        }
+      }
     },
     "en": {
       "title": "Settings",
@@ -496,7 +593,10 @@
       "load_failed": "Couldn't load settings: {reason}",
       "pages": {
         "packages": "Packages",
-        "backstage": "Dashboards"
+        "backstage": "Dashboards",
+        "skills": "Skills",
+        "scripts": "Scripts",
+        "mcp": "MCP"
       },
       "layers": {
         "none": "Not set"
@@ -669,8 +769,7 @@
         "part": {
           "connection": "Integrations",
           "ui": "Interfaces",
-          "feature": "Features",
-          "home_mcp": "MCP servers in personal settings"
+          "feature": "Features"
         },
         "status": {
           "running": "Running",
@@ -695,7 +794,6 @@
         "mcp": "MCP servers",
         "mcp_restart": "Restart",
         "mcp_stopped": "Server stopped",
-        "home_mcp_hint": "Add or change them under [mcp.<name>] in settings.toml; changes apply when saved",
         "mcp_covered": "Replaced by the server of the same name in personal settings",
         "covered": "Replaced by personal settings",
         "depends_missing": "Missing dependencies: {names}",
@@ -718,7 +816,9 @@
           "ui": "Interfaces",
           "mascot": "Mascots",
           "mcp": "MCP",
-          "web": "Web"
+          "web": "Web",
+          "skill": "Skills",
+          "script": "Scripts"
         },
         "kind": {
           "builtin": "Built-in",
@@ -795,7 +895,101 @@
       "search_pages": "Pages",
       "search_packages": "Packages",
       "ask_yes": "Confirm",
-      "ask_no": "Cancel"
+      "ask_no": "Cancel",
+      "tools": {
+        "search": {
+          "skills": "Search skills",
+          "scripts": "Search scripts",
+          "mcp": "Search MCP servers"
+        },
+        "open_dir": "Open folder",
+        "add_server": "Add server",
+        "copied": "Path copied: {path}",
+        "reveal_missing": "Folder not found: {path}",
+        "source": {
+          "all": "All",
+          "own": "Your own",
+          "package": "From packages"
+        },
+        "own": "Your own",
+        "shipped": "Built-in",
+        "lazy": "Lazy",
+        "full": "Full",
+        "no_match": "Nothing matches",
+        "none": {
+          "skills": "No skills yet",
+          "scripts": "No scripts yet",
+          "mcp": "No MCP servers yet"
+        },
+        "gone": "No longer exists",
+        "tools_n": "{count} tools",
+        "note": {
+          "skills": "Skills need to be loaded before use",
+          "load": "Lazy: the AI gets only the name and a one-line description, and fetches the full parameters when it uses it. Full: everything is sent every turn."
+        },
+        "field": {
+          "source": "Source",
+          "name": "Name",
+          "path": "Location",
+          "timeout": "Time limit",
+          "load": "Loading",
+          "command": "Command",
+          "tools": "Tools",
+          "url": "URL",
+          "bearer": "Token",
+          "headers": "Headers",
+          "env": "Environment",
+          "skipped": "Skipped tools"
+        },
+        "timeout_s": "{seconds} s",
+        "load_set": "Changed in personal settings",
+        "load_reset": "Reset",
+        "from_package": "Installed with a package; change its command in the package.",
+        "restart": "Restart",
+        "edit": "Edit",
+        "remove": "Remove",
+        "form": {
+          "add_title": "Add MCP server",
+          "edit_title": "Edit {name}",
+          "name_hint": "e.g. github",
+          "command_hint": "e.g. npx -y @modelcontextprotocol/server-everything",
+          "env": "Environment",
+          "env_hint": "One per line: NAME=value",
+          "timeout": "Time limit",
+          "seconds": "s",
+          "cancel": "Cancel",
+          "save": "Save",
+          "saving": "Saving…",
+          "bad": {
+            "name": "Names start with a lowercase letter and use only lowercase letters, digits and -, up to 32 characters",
+            "command": "Enter a command",
+            "env": "Environment line {line} should be NAME=value",
+            "timeout": "The time limit must be 1 to 3600 seconds",
+            "quote": "A quote in the command isn’t closed",
+            "url": "The URL must start with http:// or https://",
+            "header": "Header line {line} must look like \"Name: value\""
+          },
+          "kind_command": "Local command",
+          "kind_url": "URL",
+          "url_hint": "e.g. https://mcp.example.com/mcp",
+          "bearer_hint": "Optional; refer with {secret:name} or {env:VAR}",
+          "headers_hint": "One per line: Name: value"
+        },
+        "select": "Select",
+        "selected": "{count} selected",
+        "select_all": "Select all",
+        "select_exit": "Done",
+        "delete": "Delete",
+        "deleted_n": "Deleted {count}",
+        "trashed_n": "Deleted {count} (moved to trash)",
+        "delete_ask": "Delete \"{name}\"?",
+        "delete_many_ask": "Delete the {count} selected?",
+        "skipped_note": "The server lists these, but Miyu didn't register them, so the AI can't use them",
+        "skipped_why": {
+          "name_taken": "Name already taken by another tool",
+          "parameters": "Parameters couldn't be read"
+        }
+      }
     },
     "ja": {
       "title": "設定",
@@ -810,7 +1004,10 @@
       "load_failed": "設定を読み込めません：{reason}",
       "pages": {
         "packages": "パッケージ",
-        "backstage": "ソフトの管理画面"
+        "backstage": "ソフトの管理画面",
+        "skills": "スキル",
+        "scripts": "スクリプト",
+        "mcp": "MCP"
       },
       "layers": {
         "none": "未設定"
@@ -983,8 +1180,7 @@
         "part": {
           "connection": "接続",
           "ui": "画面",
-          "feature": "機能",
-          "home_mcp": "個人設定の MCP サーバー"
+          "feature": "機能"
         },
         "status": {
           "running": "実行中",
@@ -1009,7 +1205,6 @@
         "mcp": "MCP サーバー",
         "mcp_restart": "再起動",
         "mcp_stopped": "サーバーが停止",
-        "home_mcp_hint": "settings.toml の [mcp.<名前>] で追加・変更します。保存するとすぐ反映されます",
         "mcp_covered": "個人設定の同名サーバーに置き換えられています",
         "covered": "個人設定に置き換え済み",
         "depends_missing": "依存パッケージ不足：{names}",
@@ -1017,7 +1212,7 @@
         "sep": "、",
         "upstream": "アップストリーム",
         "from": {
-          "shipped": "標準搭載",
+          "shipped": "内蔵",
           "official": "公式ソース",
           "community": "コミュニティのソース",
           "local": "ローカル"
@@ -1032,7 +1227,9 @@
           "ui": "インターフェース",
           "mascot": "マスコット",
           "mcp": "MCP",
-          "web": "Web"
+          "web": "Web",
+          "skill": "スキル",
+          "script": "スクリプト"
         },
         "kind": {
           "builtin": "内蔵",
@@ -1109,7 +1306,101 @@
       "search_pages": "ページ",
       "search_packages": "パッケージ",
       "ask_yes": "確認",
-      "ask_no": "キャンセル"
+      "ask_no": "キャンセル",
+      "tools": {
+        "search": {
+          "skills": "スキルを検索",
+          "scripts": "スクリプトを検索",
+          "mcp": "MCP サーバーを検索"
+        },
+        "open_dir": "フォルダを開く",
+        "add_server": "サーバーを追加",
+        "copied": "パスをコピーしました：{path}",
+        "reveal_missing": "フォルダがありません：{path}",
+        "source": {
+          "all": "すべて",
+          "own": "自作",
+          "package": "パッケージ付属"
+        },
+        "own": "自作",
+        "shipped": "内蔵",
+        "lazy": "遅延読み込み",
+        "full": "完全",
+        "no_match": "一致するものがありません",
+        "none": {
+          "skills": "スキルはまだありません",
+          "scripts": "スクリプトはまだありません",
+          "mcp": "MCP サーバーはまだありません"
+        },
+        "gone": "存在しません",
+        "tools_n": "ツール {count} 個",
+        "note": {
+          "skills": "スキルは読み込んでから使います",
+          "load": "遅延読み込み：AI には名前と一行の説明だけを渡し、使うときに詳しいパラメーターを取得します。完全：毎ターンすべて渡します。"
+        },
+        "field": {
+          "source": "提供元",
+          "name": "名前",
+          "path": "場所",
+          "timeout": "制限時間",
+          "load": "読み込み方法",
+          "command": "コマンド",
+          "tools": "ツール",
+          "url": "アドレス",
+          "bearer": "トークン",
+          "headers": "リクエストヘッダー",
+          "env": "環境変数",
+          "skipped": "登録されなかったツール"
+        },
+        "timeout_s": "{seconds} 秒",
+        "load_set": "個人設定で変更済み",
+        "load_reset": "元に戻す",
+        "from_package": "パッケージと一緒にインストールされています。コマンドはパッケージ側で変更します。",
+        "restart": "再起動",
+        "edit": "編集",
+        "remove": "削除",
+        "form": {
+          "add_title": "MCP サーバーを追加",
+          "edit_title": "{name} を編集",
+          "name_hint": "例：github",
+          "command_hint": "例：npx -y @modelcontextprotocol/server-everything",
+          "env": "環境変数",
+          "env_hint": "1 行に 1 つ：名前=値",
+          "timeout": "制限時間",
+          "seconds": "秒",
+          "cancel": "キャンセル",
+          "save": "保存",
+          "saving": "保存中…",
+          "bad": {
+            "name": "名前は小文字で始め、小文字・数字・- のみ、32 文字以内で入力してください",
+            "command": "コマンドを入力してください",
+            "env": "環境変数の {line} 行目は「名前=値」の形にしてください",
+            "timeout": "制限時間は 1〜3600 秒です",
+            "quote": "コマンドの引用符が閉じていません",
+            "url": "URL は http:// か https:// で始めてください",
+            "header": "リクエストヘッダーの {line} 行目は「名前: 値」の形にしてください"
+          },
+          "kind_command": "ローカルコマンド",
+          "kind_url": "URL",
+          "url_hint": "例：https://mcp.example.com/mcp",
+          "bearer_hint": "省略可。参照は {secret:名前} か {env:変数}",
+          "headers_hint": "1 行に 1 つ：名前: 値"
+        },
+        "select": "選択",
+        "selected": "{count} 件選択",
+        "select_all": "すべて選択",
+        "select_exit": "選択を終了",
+        "delete": "削除",
+        "deleted_n": "{count} 件削除しました",
+        "trashed_n": "{count} 件削除しました（ゴミ箱に移動）",
+        "delete_ask": "「{name}」を削除しますか？",
+        "delete_many_ask": "選択した {count} 件を削除しますか？",
+        "skipped_note": "サーバーは一覧に出していますが、登録されなかったため AI は使えません",
+        "skipped_why": {
+          "name_taken": "名前がほかのツールと重複しています",
+          "parameters": "パラメーターの書き方を読み取れません"
+        }
+      }
     }
   },
   "styles": [
