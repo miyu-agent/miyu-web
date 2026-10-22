@@ -142,9 +142,9 @@ impl Settings {
         self
     }
 
-    /// 空闲多久退出。
-    pub fn idle(&self) -> Duration {
-        Duration::from_secs(self.idle_seconds)
+    /// 空闲多久退出；`0` 是不退（服务器上由服务管理器起的那一份，2026-10-23 Z-1：空闲退了照 `Restart=on-failure` 不会再起）。
+    pub fn idle(&self) -> Option<Duration> {
+        (self.idle_seconds > 0).then(|| Duration::from_secs(self.idle_seconds))
     }
 
     /// 路径 `path` 照扩展名的媒体类型；表里没有的是 `application/octet-stream`（`miyu_webserve::pages::type_of`）。

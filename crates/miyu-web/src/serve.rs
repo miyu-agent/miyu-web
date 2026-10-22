@@ -96,8 +96,9 @@ impl Site {
         Busy(Arc::clone(self))
     }
 
-    /// 照空闲 `idle` 算几时该退出；有连着的是空的。
-    fn quiet_until(&self, idle: Duration) -> Option<Instant> {
+    /// 照空闲 `idle` 算几时该退出；有连着的、不退的（`idle` 是空的）是空的。
+    fn quiet_until(&self, idle: Option<Duration>) -> Option<Instant> {
+        let idle = idle?;
         if self.active.load(Ordering::Acquire) > 0 {
             return None;
         }

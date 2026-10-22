@@ -143,6 +143,20 @@ async fn pages_stay_inside_and_carry_the_headers() {
 }
 
 #[tokio::test]
+async fn idle_zero_never_leaves() {
+    // 服务器上由服务管理器起的那一份写 0（2026-10-23 Z-1）：空着也不退，三秒后照样在给页面
+    let home = Home::new();
+    let (_, port, serving) = start(&home, 0, 0).await;
+    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+    assert!(!serving.is_finished(), "空闲 0 不该退");
+    // 还在听、还回话（测试的家目录里没放页面，回什么不要紧）
+    let page = request(port, "GET", "/", &format!("127.0.0.1:{port}"), &[]).await;
+    assert!(page.status > 0);
+    assert!(address(&home.root).is_some(), "run/web 还在");
+    serving.abort();
+}
+
+#[tokio::test]
 async fn it_leaves_when_idle_and_cleans_up() {
     let home = Home::new();
     let (_, port, serving) = start(&home, 0, 1).await;
