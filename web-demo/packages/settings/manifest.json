@@ -788,7 +788,10 @@
         "blocked": "浏览器拦截了弹出窗口",
         "unregistered": "这个服务不支持自动注册，需要先在服务方注册应用，把 client_id 写进这个服务的设置",
         "failed": "登录失败",
-        "failed_why": "登录失败：{why}"
+        "failed_why": "登录失败：{why}",
+        "logout": "退出登录",
+        "logout_ask": "退出 {name} 的登录吗？再用要重新登录。",
+        "cancel": "取消"
       }
     },
     "en": {
@@ -1402,7 +1405,10 @@
         "blocked": "The browser blocked the pop-up",
         "unregistered": "This service doesn't support automatic registration. Register an app with the service first and add its client_id to this service's settings",
         "failed": "Sign-in failed",
-        "failed_why": "Sign-in failed: {why}"
+        "failed_why": "Sign-in failed: {why}",
+        "logout": "Sign out",
+        "logout_ask": "Sign out of {name}? You will need to sign in again to use it.",
+        "cancel": "Cancel"
       }
     },
     "ja": {
@@ -2016,7 +2022,10 @@
         "blocked": "ブラウザがポップアップをブロックしました",
         "unregistered": "このサービスは自動登録に対応していません。先にサービス側でアプリを登録し、client_id をこのサービスの設定に書いてください",
         "failed": "ログインに失敗しました",
-        "failed_why": "ログインに失敗しました：{why}"
+        "failed_why": "ログインに失敗しました：{why}",
+        "logout": "ログアウト",
+        "logout_ask": "{name} からログアウトしますか？使うにはもう一度ログインが必要です。",
+        "cancel": "キャンセル"
       }
     }
   },

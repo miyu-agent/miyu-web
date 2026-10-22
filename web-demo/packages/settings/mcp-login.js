@@ -4,6 +4,28 @@
 //! 网页不另等结果：登录成了核心推 `mcp.changed`，状态换成运行中，记着的「等待」跟着去掉。记着的只在设置弹窗开着时算（`dialog.close` 清掉）。
 
 import { h } from '../../src/lib/dom.js';
+import { confirmIn } from './confirm.js';
+
+/**
+ * 「退出登录」（核心 X-42 下再补：`logged_in` 的服务，详情卡片里）：先问一句，确认了发 `mcp.logout {service}`；服务停在「需要登录」照推来的
+ * `mcp.changed` 画，拒了的（`not_logged_in` 这类）照核心的话提示。
+ * @param {any} dialog @param {string} service @param {string} name 给人看的名字
+ */
+export function logoutButton(dialog, service, name) {
+  const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
+  return h('button.set-btn.mcp-logout', {
+    type: 'button',
+    onclick: async (/** @type {Event} */ e) => {
+      e.stopPropagation();
+      if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('mcp_login.logout_ask', { name }), yes: t('mcp_login.logout'), no: t('mcp_login.cancel') }))) return;
+      try {
+        await dialog.ctx.core.request('mcp.logout', { service });
+      } catch (err) {
+        dialog.toast(/** @type {any} */ (err)?.message ?? String(err));
+      }
+    },
+  }, t('mcp_login.logout'));
+}
 
 /**
  * 这个服务现在要不要登录。

@@ -7,7 +7,7 @@
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { groupBlock, toggle, select, findBox } from './rows.js';
 import { stateText } from './extensions.js';
-import { loginState, loginText, loginButton, loginErrorNode } from './mcp-login.js';
+import { loginState, loginText, loginButton, loginErrorNode, logoutButton } from './mcp-login.js';
 import { openInfo } from './core-packages.js';
 import { openServerForm } from './mcp-form.js';
 import { confirmIn } from './confirm.js';
@@ -340,6 +340,8 @@ function toolDetail(dialog, kind, id) {
   const actions = kind === 'mcp' ? serverActions(dialog, item) : [];
   // 要浏览器登录的：「登录」排最前面，主按钮（核心 X-42 上）
   if (state?.login.needs) actions.unshift(loginButton(dialog, item.name, state.login, { primary: true }));
+  // 浏览器登录过的（核心 X-42 下再补的 `logged_in`）：「退出登录」排在「登录」那个位置，不是主按钮
+  else if (kind === 'mcp' && s.logged_in === true) actions.unshift(logoutButton(dialog, item.name, item.name));
   const stderr = Array.isArray(s.stderr) ? s.stderr.join('\n') : s.stderr ?? '';
   dialog.mcpShowing ??= new Set();
   const showing = kind === 'mcp' && !!state?.bad && !!stderr && dialog.mcpShowing.has(id);
