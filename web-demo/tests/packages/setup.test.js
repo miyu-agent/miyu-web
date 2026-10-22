@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave, featureGroups } from '../../packages/setup/model.js';
+import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave, featureGroups, workdirWarn } from '../../packages/setup/model.js';
 
 const list = [{ persona: 'engineer', name: null }, { persona: 'miyu', name: 'Miyu' }, { persona: 'bad', problem: 'persona.toml:2: …' }];
 
@@ -131,4 +131,12 @@ test('预设的功能分五段：功能、MCP 服务、脚本、技能、斜杠�
     ['feature:web,knowledge', 'mcp:mcp-github', 'script:script-weather', 'skill:skill-notes,skill-writer', 'command:command-review']);
   assert.deepEqual(featureGroups([{ id: 'web' }]).map((g) => g.group), ['feature'], '只有包的功能：只一段');
   assert.deepEqual(featureGroups([]), []);
+});
+
+test('开会话、换工作区以后那一句（核心 5-14 改中）：太宽、护不住 Miyu 自己的数据各一行，照原因写；不认得的原因不写', () => {
+  const t = (/** @type {string} */ k, /** @type {any} */ f) => (f ? `${k}:${f.path}` : k);
+  assert.deepEqual(workdirWarn(t, { wide: true, unguarded: null }, '/'), ['workspace_wide:/']);
+  assert.deepEqual(workdirWarn(t, { wide: false, unguarded: 'weak' }, '~'), ['workspace_unguarded.weak']);
+  assert.deepEqual(workdirWarn(t, { wide: true, unguarded: 'no_bwrap' }, '~'), ['workspace_wide:~', 'workspace_unguarded.no_bwrap']);
+  assert.deepEqual(workdirWarn(t, { wide: false, unguarded: 'later_reason' }, '~'), []);
 });

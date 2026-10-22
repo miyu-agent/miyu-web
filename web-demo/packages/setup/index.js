@@ -9,7 +9,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { Menu } from './menu.js';
-import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, lastChoice } from './model.js';
+import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, lastChoice, workdirWarn } from './model.js';
 import { Catalog } from './catalog.js';
 import { ListPage, problemText } from './page.js';
 import { browse } from './folders.js';
@@ -493,8 +493,12 @@ export function apply(ctx) {
   ctx.on('session.opened', (id) => { if (id === null) load(); else draw(); });
   ctx.on('session.created', () => draw());
   // 核心照「工作目录太宽」退回了工作区：照实际的提示一句，用不了的那个不留在最近用过里
-  // 工作区设成了很大的目录（家目录、根目录…）：照人选的用着，提醒一句工作区级别下她改里面的文件不先问（核心 9-7 补）
-  ctx.on('workdir.wide', ({ cwd }) => ctx.composer.say(t('workspace_wide', { path: tilde(cwd ?? '', home()) })));
+  // 工作区设成了很大的目录（根目录…）：照人选的用着，提醒一句工作区级别下她改里面的文件不先问（核心 9-7 补）；
+  // 这一轮只有 Landlock、工作目录包住数据根（核心 5-14 改中 `unguarded`）：护不住 Miyu 自己的数据，照原因说一句。两句一起来的各一行
+  ctx.on('workdir.warn', (/** @type {{cwd?: string|null, wide: boolean, unguarded: string|null}} */ w) => {
+    const lines = workdirWarn(t, w, tilde(w.cwd ?? '', home()));
+    if (lines.length) ctx.composer.say(lines.join('\n'));
+  });
   ctx.on('workdir.adjusted', ({ asked, cwd }) => {
     ctx.storage.set(RECENT, recent().filter((p) => p !== asked));
     ctx.composer.say(t('workspace_adjusted', { path: tilde(cwd, home()) }));

@@ -168,6 +168,10 @@
       "forbidden": "无法使用该目录",
       "workspace_adjusted": "目录范围过大，已改用 {path}",
       "workspace_wide": "工作区 {path} 范围较大：「工作区」权限下修改其中的文件无需确认",
+      "workspace_unguarded": {
+        "no_bwrap": "这台机器没有 bubblewrap，在这里打开护不住 Miyu 自己的数据",
+        "weak": "沙盒强度是弱沙盒，在这里打开护不住 Miyu 自己的数据"
+      },
       "command": "切换工作区",
       "page": {
         "title": "人格",
@@ -368,6 +372,10 @@
       "forbidden": "Can't use this directory",
       "workspace_adjusted": "Directory too broad, using {path} instead",
       "workspace_wide": "Workspace {path} is broad: files in it can be modified without confirmation at the Workspace permission level",
+      "workspace_unguarded": {
+        "no_bwrap": "This machine has no bubblewrap, so opening here can't protect Miyu's own data",
+        "weak": "The sandbox strength is weak, so opening here can't protect Miyu's own data"
+      },
       "command": "Switch workspace",
       "page": {
         "title": "Personas",
@@ -568,6 +576,10 @@
       "forbidden": "このディレクトリは使えません",
       "workspace_adjusted": "このディレクトリは広すぎるため {path} で作業します",
       "workspace_wide": "ワークスペースは {path} です。範囲が広いため、「ワークスペース」権限ではこの中のファイルが確認なしで変更されます",
+      "workspace_unguarded": {
+        "no_bwrap": "このマシンには bubblewrap がないため、ここで開くと Miyu 自身のデータを守れません",
+        "weak": "サンドボックスの強さが「弱い」のため、ここで開くと Miyu 自身のデータを守れません"
+      },
       "command": "ワークスペースを変える：以降の発言はこのディレクトリで作業。パスなしならメニューで選ぶ",
       "page": {
         "title": "人格",

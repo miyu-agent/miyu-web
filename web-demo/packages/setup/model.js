@@ -182,3 +182,18 @@ export function featureGroups(list) {
     .map((group) => ({ group, items: list.filter((f) => of(f) === group) }))
     .filter((g) => g.items.length);
 }
+
+/** 核心 5-14 改中 `unguarded` 认得的原因 */
+const UNGUARDED = ['no_bwrap', 'weak'];
+
+/**
+ * 开会话、换工作区以后框上面那一句：太宽的（`wide`）、护不住 Miyu 自己的数据的（`unguarded`，照原因）各一行；不认得的原因不写。
+ * @param {(key: string, fill?: any) => string} t @param {{wide: boolean, unguarded: string|null}} w @param {string} path 显示用的目录
+ * @returns {string[]}
+ */
+export function workdirWarn(t, w, path) {
+  const lines = [];
+  if (w.wide) lines.push(t('workspace_wide', { path }));
+  if (w.unguarded && UNGUARDED.includes(w.unguarded)) lines.push(t(`workspace_unguarded.${w.unguarded}`));
+  return lines;
+}
