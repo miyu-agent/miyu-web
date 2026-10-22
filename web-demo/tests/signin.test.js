@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { refusedText, accountProblem, signIn } from '../src/kernel/signin.js';
+import { refusedText, accountProblem, registerProblem, signIn } from '../src/kernel/signin.js';
 import { Refusal } from '../src/core/connection.js';
 
 loadRes();
@@ -72,4 +72,28 @@ test('走桥的不带凭据一次就成；直接连的带记着的令牌，作�
   const again = await signIn(served, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
   assert.equal(again.setup, false);
   assert.deepEqual(calls.map((p) => p.login ?? p.code), ['old', 'c1'], '作废了的忘掉，下一次换别的凭据、新开一条线');
+});
+
+test('凭邀请码注册（核心 Y-1 上）：邀请码不对的照原因写；用户名照账号编号的写法（没有 _、不能叫 users），密码同「账号」那一屏', () => {
+  assert.equal(refusedText(new Refusal('x', -32010, 'bad_invite')), '邀请码不对、过期了或已经用过');
+  assert.equal(registerProblem('bob-2', 'password1', 'password1'), null);
+  assert.match(registerProblem('bob_2', 'password1', 'password1') ?? '', /小写字母开头/);
+  assert.match(registerProblem('users', 'password1', 'password1') ?? '', /小写字母开头/);
+  assert.match(registerProblem('bob', 'short', 'short') ?? '', /至少 8/);
+  assert.match(registerProblem('bob', 'password1', 'password2') ?? '', /不一样/);
+});
+
+test('成员（握手的 account 不是 admin）：试一次 config.get，放开了的照常起页面；管理员不试', async () => {
+  const sent = [];
+  const served = {
+    kind: 'served', check: async () => 'down',
+    channel: fakeLine((p) => (p.keys ? { values: {} } : { view: 1, account: 'bob' }), sent),
+    credential: () => ({ login: 'tok' }), remember: () => {}, forget: () => {},
+  };
+  const got = await signIn(served, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
+  assert.equal(got.hello.account, 'bob');
+  assert.deepEqual(sent.map((p) => (p.keys ? 'config.get' : 'hello')), ['hello', 'config.get']);
+  const admin = [];
+  await signIn({ ...served, channel: fakeLine(() => ({ view: 1, account: 'admin' }), admin) }, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
+  assert.equal(admin.length, 1, '管理员只握手');
 });

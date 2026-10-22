@@ -204,6 +204,14 @@ test('直接连网页软件的那一份：一次性码只交一次，接着用�
     assert.equal(servedHost().credential().login, 'tok', '刷新以后照记着的令牌');
     host.forget();
     assert.equal(servedHost().credential(), null, '忘掉了的出登录框');
+    // 管理员给的注册链接（核心 Y-1 上）：邀请码读下来、从地址栏抹掉，握手带它、只交一次；账号页的注册链接照这个网页的地址
+    globalThis.location.hash = '#invite=Ab3_x-9';
+    globalThis.location.origin = 'http://x';
+    const invited = servedHost();
+    assert.equal(location.hash, '', '邀请码从地址栏抹掉');
+    assert.deepEqual(invited.credential(), { invite: 'Ab3_x-9' });
+    assert.equal(invited.credential(), null);
+    assert.equal(invited.inviteLink('a b'), 'http://x/#invite=a%20b');
   } finally {
     for (const [k, d] of Object.entries(keep)) {
       if (d) Object.defineProperty(globalThis, k, d);

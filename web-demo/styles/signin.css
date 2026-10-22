@@ -33,6 +33,12 @@
 .si-error { margin: calc(14px * var(--space)) 0 0; color: var(--danger, var(--si-danger)); font-size: calc(13px * var(--text-scale)); white-space: pre-wrap; }
 .si-error[hidden] { display: none; }
 .si-foot { display: flex; justify-content: flex-end; margin-top: calc(22px * var(--space)); }
+/* 主按钮左边一个暗色链接（登录框的「用邀请码注册」「返回登录」，核心 Y-1 上） */
+.si-foot:has(.si-link) { justify-content: space-between; align-items: center; }
+.si-link { padding: 0; border: 0; background: none; color: var(--text-soft, var(--si-soft)); font: calc(13px * var(--text-scale)) var(--font-ui, inherit); cursor: pointer; }
+.si-link:hover { color: var(--text, var(--si-text)); text-decoration: underline; }
+/* 注册那一屏如实说的一段（设计 06 第六节） */
+.si-note { margin: calc(12px * var(--space)) 0 0; padding: calc(10px * var(--space)) calc(12px * var(--space)); border-radius: var(--r-8, 8px); background: var(--surface-2, var(--si-surface-2)); color: var(--text-soft, var(--si-soft)); font-size: calc(13px * var(--text-scale)); line-height: 1.6; }
 .si-btn {
   height: 32px; padding: 0 calc(16px * var(--space)); border: var(--btn-primary-border, 0); border-radius: var(--btn-primary-radius, var(--r-9)); background: var(--btn-primary-bg, var(--accent, var(--si-accent))); color: var(--btn-primary-fg, var(--on-primary, var(--si-on-accent)));
   font: calc(13.5px * var(--text-scale)) var(--font-ui); cursor: pointer;

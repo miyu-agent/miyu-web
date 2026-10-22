@@ -4097,6 +4097,18 @@
       ".si-error"
     ]
   },
+  "si.link": {
+    "zh": "登录：主按钮左边的链接（用邀请码注册、返回登录）",
+    "select": [
+      ".si-link"
+    ]
+  },
+  "si.note": {
+    "zh": "登录：注册那一屏如实说的一段",
+    "select": [
+      ".si-note"
+    ]
+  },
   "tl.segment": {
     "zh": "时间线",
     "select": [
@@ -5811,6 +5823,60 @@
     "zh": "整理那一块头一行的「查看过程」",
     "select": [
       ".dream-open"
+    ]
+  },
+  "acc.value": {
+    "zh": "账号页：用户名的值",
+    "select": [
+      ".acc-value"
+    ]
+  },
+  "acc.id": {
+    "zh": "账号页：邀请的编号",
+    "select": [
+      ".acc-id"
+    ]
+  },
+  "acc.invite-state": {
+    "zh": "账号页：邀请的状态",
+    "select": [
+      ".acc-invite-state"
+    ]
+  },
+  "acc.revoke": {
+    "zh": "账号页：撤销邀请",
+    "select": [
+      ".acc-revoke"
+    ]
+  },
+  "acc.kind": {
+    "zh": "账号页：账号的种类标签（管理员、成员、系统、已停用）",
+    "select": [
+      ".acc-kind"
+    ]
+  },
+  "acc.name": {
+    "zh": "账号页：账号的名字",
+    "select": [
+      ".acc-name"
+    ]
+  },
+  "acc.disable": {
+    "zh": "账号页：停用按钮",
+    "select": [
+      ".acc-disable"
+    ]
+  },
+  "acc.copy-label": {
+    "zh": "账号页：生成的邀请里「注册链接」「邀请码」",
+    "select": [
+      ".acc-copy-label"
+    ]
+  },
+  "acc.copy-value": {
+    "zh": "账号页：生成的注册链接、邀请码",
+    "select": [
+      ".acc-copy-value"
     ]
   }
 }

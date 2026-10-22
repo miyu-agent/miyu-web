@@ -209,6 +209,10 @@ export async function boot(root) {
       ctx.provide('host', {
         kind: host.kind,
         account,
+        /** 退出登录（拿登录令牌连的才有）：忘掉登录令牌、重新载入；走桥的是 `null` */
+        signOut: host.signOut ?? null,
+        /** 注册链接（账号页的「邀请」）：直接连网页软件的才有，走桥的交 `null` */
+        inviteLink: host.inviteLink,
         /** 这次起页面时设了账号（一次性码连上的）：引导第一段「账号」算走过，不再出欢迎页 */
         signedUp: setup,
         cwd: info.cwd,

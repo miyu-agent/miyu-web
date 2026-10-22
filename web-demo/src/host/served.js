@@ -25,6 +25,14 @@ function setupCode() {
   return m[1];
 }
 
+/** 地址里的邀请码（核心 Y-1 上，管理员给的注册链接 `#invite=<码>`）：读下来、从地址栏抹掉；握手带它、只能注册。 */
+function inviteCode() {
+  const m = location.hash.match(/(?:^#|&)invite=([A-Za-z0-9_-]+)/);
+  if (!m) return null;
+  dropFromHash(['invite']);
+  return m[1];
+}
+
 /** 记着的登录令牌：没有、过期了的是 `null`。 */
 function savedLogin() {
   try {
@@ -38,6 +46,7 @@ function savedLogin() {
 /** 起直接连网页软件的宿主（地址里没有桥的口令时用它）。 */
 export function servedHost() {
   let code = setupCode();
+  let invite = inviteCode();
   let token = savedLogin();
   /** 换过的票据：同一样东西不再换 @type {Map<string, Promise<string>>} */
   const tickets = new Map();
@@ -73,14 +82,19 @@ export function servedHost() {
     channel: () => /** @type {Channel} */ (/** @type {unknown} */ (new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`))),
     urls,
     /**
-     * 握手带的凭据：一次性码（只用一次）、记着的登录令牌；都没有的是 `null`（内核出登录框）。
-     * @returns {{code: string}|{login: string}|null}
+     * 握手带的凭据：一次性码、邀请码（都只用一次）、记着的登录令牌；都没有的是 `null`（内核出登录框）。
+     * @returns {{code: string}|{invite: string}|{login: string}|null}
      */
     credential: () => {
       if (code) {
         const c = code;
         code = null;
         return { code: c };
+      }
+      if (invite) {
+        const i = invite;
+        invite = null;
+        return { invite: i };
       }
       return token ? { login: token } : null;
     },
@@ -98,6 +112,14 @@ export function servedHost() {
     },
     /** 问口令还对不对：直接连的没有桥的口令，连不上就是网页软件没在跑 */
     check: async () => /** @type {'ok'|'bad'|'down'} */ ('down'),
+    /** 能退出登录（拿登录令牌连的）：忘掉这台设备上的登录令牌，重新载入出登录框 */
+    signOut: () => {
+      token = null;
+      try { store.removeItem(LOGIN); } catch { /* 记不住的本来就没记 */ }
+      location.reload();
+    },
+    /** 注册链接：这个网页的地址加 `#invite=<邀请码>`（账号页的「邀请」，核心 Y-1 上） @param {string} code */
+    inviteLink: (code) => `${location.origin}/#invite=${encodeURIComponent(code)}`,
     files: {
       ...fileTools(urls),
       /** 选目录：网页软件不给，用的地方退回自己画的文件夹浏览器 */

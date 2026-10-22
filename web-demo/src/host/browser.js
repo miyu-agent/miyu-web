@@ -178,6 +178,10 @@ export function browserHost() {
     /** 记下登录令牌：走桥的用不着 */
     remember: (/** @type {any} */ login) => {},
     forget: () => {},
+    /** 走桥的是本机口令，没有登录可退 */
+    signOut: null,
+    /** 走桥的页面开在本机、别的机器打不开：不给注册链接，只给邀请码 */
+    inviteLink: (/** @type {string} */ code) => null,
     /** 问桥口令还对不对（蓝图 `web.md`「连核心」第 9 条）：`ok`、`bad`（用不了了，桥重启过）、`down`（问不到，桥没在跑） */
     check: () => checkKey(key),
     files: {

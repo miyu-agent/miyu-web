@@ -4,6 +4,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { drawMarket, marketPush } from './market.js';
+import { drawAccount } from './account.js';
 import { hasPrivate, privateGroup } from './privacy.js';
 import { leave } from '../../src/lib/motion.js';
 import { buildPages, search, pagesWithErrors, layerFor, expectFor, navGroups, pkgMatch, ownerOf } from './model.js';
@@ -100,6 +101,7 @@ export class SettingsDialog {
     // 记着的 MCP 登录「等待」只在弹窗开着时算（蓝图第 20 条）
     this.mcpLogin = null;
     this.pvOff = null;
+    this.accounts = null;
     leave(this.root, () => this.root.remove());
   }
 
@@ -150,6 +152,8 @@ export class SettingsDialog {
       ...this.pages.map((p) => ({ id: p.id, name: p.name })),
       // 核心也有一页「软件包」（9-1 下，一个包一组）：和网页自己的组件合成一页，上面核心、下面网页（2026-10-07 项目主人定）
       ...(this.pages.some((p) => p.id === 'packages') ? [] : [{ id: 'packages', name: named('packages') }]),
+      // 账号（核心 Y-1 上，第 12c 条）：「用户身份」上面一项（2026-10-22 项目主人）；核心有成员这一套才有
+      ...(this.ctx.host?.account ? [{ id: 'account', name: named('account') }] : []),
       // 下载软件（软件市场，核心 G-3 到 G-5）：「软件包」上面一项（2026-10-21 项目主人）
       { id: 'market', name: named('market') },
       // 软件后台（核心 F-6 中）：带自己页面的软件，点进去是它的页面
@@ -276,6 +280,7 @@ export class SettingsDialog {
     if (this.current === 'models') kids = drawModels(this);
     else if (this.current === 'backstage') kids = drawBackstage(this);
     else if (this.current === 'market') kids = drawMarket(this);
+    else if (this.current === 'account') kids = drawAccount(this);
     // 高级：一组一行，点进去看（`advanced.js`，2026-10-19 项目主人：不平铺）
     else if (this.current === 'advanced' && page) kids = drawAdvanced(this, page);
     else if (this.current === 'packages') {

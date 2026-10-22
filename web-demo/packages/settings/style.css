@@ -661,3 +661,22 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .mk-link:hover code { text-decoration: underline; text-underline-offset: 3px; }
 .mk-link code { color: inherit; }
 .mk-link .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); }
+
+/* 账号页（第 12c 条，核心 Y-1 上） */
+.acc-value { color: var(--text-soft); font-size: calc(13px * var(--text-scale)); }
+.acc-actions, .acc-make { display: flex; align-items: center; gap: calc(8px * var(--space)); flex: none; }
+.acc-days { height: 28px; }
+.acc-id { color: var(--text-soft); font: calc(12.5px * var(--text-scale)) var(--font-mono); }
+.acc-invite-state { flex: none; color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); }
+.acc-invite-state.is-faint, .acc-invite.is-done .acc-id { color: var(--text-faint); }
+.acc-revoke { opacity: 0; transition: opacity calc(0.15s * var(--motion-scale)) ease; }
+.acc-invite:hover .acc-revoke, .acc-revoke:focus-visible { opacity: 1; }
+.acc-kind { flex: none; padding: calc(1px * var(--space)) calc(6px * var(--space)); border-radius: var(--r-5); background: var(--surface-2); color: var(--text-faint); font-size: calc(11px * var(--text-scale)); font-weight: 400; }
+.acc-kind.is-admin { color: var(--accent); }
+.acc-kind.is-off { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+.acc-member.is-disabled .acc-name { color: var(--text-faint); }
+.acc-disable:hover { color: var(--danger); }
+.acc-pop { width: min(520px, 100%); }
+.acc-copy { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: calc(10px * var(--space)); margin-top: calc(10px * var(--space)); }
+.acc-copy-label { color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); }
+.acc-copy-value { overflow-wrap: anywhere; padding: calc(6px * var(--space)) calc(8px * var(--space)); border-radius: var(--r-6); background: var(--surface-2); color: var(--text); font: calc(12.5px * var(--text-scale)) var(--font-mono); user-select: all; }
