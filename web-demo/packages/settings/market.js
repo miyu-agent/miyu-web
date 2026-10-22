@@ -167,7 +167,9 @@ export function drawMarket(dialog) {
       redraw(dialog);
     },
   }, icon('rotate-cw')));
-  const meta = h('p.mk-meta', m.stale ? t('market.stale', { at: whenOf(m.generated) }) : t('market.meta', { at: whenOf(m.generated), n: m.list.length }));
+  // 索引的时刻只在有能升级的时候写（2026-10-22 项目主人：平常不用看到）；连不上、用的旧索引的那一句照旧一直写
+  const meta = m.stale ? h('p.mk-meta', t('market.stale', { at: whenOf(m.generated) }))
+    : upgradable.size ? h('p.mk-meta', t('market.meta', { at: whenOf(m.generated), n: m.list.length })) : null;
   update();
   return [h('div.set-pkg-tools.mk-tools', h('label.set-pkg-find', icon('search'), input), filterBtn, ups, refresh), meta, statusChips, extra, empty, grid];
 }

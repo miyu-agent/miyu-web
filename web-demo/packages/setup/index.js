@@ -186,6 +186,16 @@ export function apply(ctx) {
     // 在这个会话自己的默认工作区里的写「默认工作区」，悬停看完整的（2026-10-20 项目主人：一个会话一个子目录，那串路径看不出意思）
     const own = chat.defaultWorkdirOf?.(session) ?? null;
     const path = own && cwd === own ? t('default_workspace') : tilde(cwd, home());
+    // 整理会话：没有人格、预设、工作区可换，标题点了不出菜单；左边一个「←」，同输入框上面的「← 返回」（2026-10-22 项目主人）
+    if (chat.dream?.(session)) {
+      infoMenu.close();
+      const hint = chat.backHint?.() ?? t('info.back');
+      replace(info, h('button.setup-info-part.is-back', { type: 'button', title: hint, 'aria-label': hint, onclick: () => chat.back?.() }, icon('arrow-left')),
+        h('span.setup-info-part.is-title.is-still', h('span', title ?? t('info.untitled'))));
+      pathBtn = null;
+      info.hidden = false;
+      return;
+    }
     // 主会话（2026-10-19 项目主人第三版）：左上角写标题（项目里的前面多「项目名 /」，点项目名进项目页），点标题出菜单：人格、预设、工作区（原来平铺在这一条上）
     if (!chat.parentOf?.(session)) {
       const titleBtn = h('button.setup-info-part.is-title', { type: 'button', title: title ?? '', 'aria-haspopup': 'menu', onclick: () => openInfo(titleBtn, session, persona, preset, path) },
@@ -193,6 +203,8 @@ export function apply(ctx) {
       pathBtn = titleBtn;
       replace(info, project ? [projectPart(project), h('span.setup-info-slash', '/')] : null, titleBtn);
       info.hidden = false;
+      // 卡片开着时人格、预设、工作区换了：卡片当场跟着改（2026-10-22 项目主人：换了工作区卡片里还是旧的）；翻进去的那几页不动
+      if (infoMenu.open && infoMenu.view?.card === session) showInfo(titleBtn, session, persona, preset, path);
       return;
     }
     // 子代理的会话（顶上有路径那一条写着标题）：照旧平铺人格 · 预设 · 工作目录
@@ -226,6 +238,7 @@ export function apply(ctx) {
     infoMenu.show(anchor, {
       title: '',
       below: true,
+      card: session,
       rows: [
         {
           label: t('info.persona'), title: persona ? nameOf(persona) : t('no_persona'), more: !!catalog.personas, keep: true,

@@ -64,8 +64,18 @@ export function addChange(text, add, remove) {
   return { key: add.key, value: [...listOf(add), path] };
 }
 
-/** 去掉过出厂项的才有「恢复默认」：只把 `remove` 去掉（出厂的回来，加了的照留） @param {any} remove */
-export const canRestore = (remove) => listOf(remove).length > 0;
+/**
+ * 跟出厂不一样的（去掉过出厂项、或者加过）才能「重置」：`remove`、`add` 都去掉，回到出厂的清单（2026-10-22 项目主人：加了几项以后点不了重置）。
+ * @param {any} add @param {any} remove
+ */
+export const canRestore = (add, remove) => listOf(remove).length > 0 || listOf(add).length > 0;
+
+/**
+ * 重置要存的：写过的那几项（个人这一层有值的）去掉。
+ * @param {any} add @param {any} remove
+ * @returns {{key: string, unset: true}[]}
+ */
+export const restoreChange = (add, remove) => [remove, add].filter((i) => i?.entry).map((i) => ({ key: i.key, unset: /** @type {const} */ (true) }));
 
 /**
  * 一次加好几个（一行一个）：去掉空行和前后空白；表里已经有的跳过；去掉过的出厂项再加回来是从 `remove` 里拿掉。

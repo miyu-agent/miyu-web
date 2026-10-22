@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { privateRows, dropChange, addChange, canRestore, batchChange, findRows, pairIn, inWorkspace, ADD, REMOVE } from '../../packages/settings/privacy-model.js';
+import { privateRows, dropChange, addChange, canRestore, batchChange, findRows, pairIn, inWorkspace, restoreChange, ADD, REMOVE } from '../../packages/settings/privacy-model.js';
 
 const shipped = [{ value: '~/.ssh', name: '~/.ssh' }, { value: '~/.gnupg', name: '~/.gnupg' }, { value: '~/.aws', name: '~/.aws' }];
 const items = (add, remove) => [{ key: ADD, entry: { value: add } }, { key: REMOVE, options: shipped, entry: { value: remove } }];
@@ -22,14 +22,18 @@ test('删：出厂的往 remove 里加，加了的从 add 里拿掉', () => {
   assert.deepEqual(dropChange({ path: '/srv/keys', shipped: false }, add, remove), { key: ADD, value: [] });
 });
 
-test('加：空的、已经在的不加；去掉过的出厂项再加是从 remove 里拿掉；恢复默认只在去掉过出厂项时有', () => {
+test('加：空的、已经在的不加；去掉过的出厂项再加是从 remove 里拿掉；重置只在跟出厂不一样时有', () => {
   const [add, remove] = items([], ['~/.aws']);
   assert.equal(addChange('  ', add, remove), null);
   assert.equal(addChange('~/.ssh', add, remove), null);
   assert.deepEqual(addChange(' ~/secret ', add, remove), { key: ADD, value: ['~/secret'] });
   assert.deepEqual(addChange('~/.aws', add, remove), { key: REMOVE, value: [] });
-  assert.equal(canRestore(remove), true);
-  assert.equal(canRestore(items([], [])[1]), false);
+  assert.equal(canRestore(add, remove), true);
+  assert.equal(canRestore(...items([], [])), false);
+  // 只加过的也能重置（2026-10-22 项目主人）；重置把写过的两项都去掉，没写过的不发
+  assert.equal(canRestore(...items(['Makefile'], [])), true);
+  assert.deepEqual(restoreChange(...items(['Makefile'], ['~/.aws'])), [{ key: REMOVE, unset: true }, { key: ADD, unset: true }]);
+  assert.deepEqual(restoreChange({ key: ADD }, { key: REMOVE, options: shipped, entry: { value: ['~/.aws'] } }), [{ key: REMOVE, unset: true }]);
 });
 
 test('一次加好几个（一行一个）：空行、已经在的跳过，去掉过的出厂项再加是从 remove 里拿掉；搜索照路径筛', () => {

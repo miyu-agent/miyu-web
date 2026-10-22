@@ -91,6 +91,9 @@ export function apply(ctx) {
     parentOf: (id) => app.parentOf(id),
     /** 整理会话的 `dream`（核心 D-1 下：`{persona | session, manual, from?}`），别的会话是 `null` */
     dream: (id) => app.dreamOf(id),
+    /** 同输入框上面的「← 返回」（整理会话左上角标题左边那个「←」）：交回回去了没有；`backHint` 是它的悬停提示，没有去处的是 `null` */
+    back: () => app.back?.go() ?? false,
+    backHint: () => app.back?.hint() ?? null,
     /** 整理会话的会话表那一项（`last_active`、`tokens`、`busy`……）：记忆页的「整理记录」 */
     dreams: () => [...(app.store.index.dreams?.values() ?? [])],
     /** 项目的十二种颜色（存的是浅色那一种）、一种颜色照现在的深浅画成什么（新建项目、项目设置那一个窗口，软件包 setup） */

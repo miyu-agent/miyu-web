@@ -61,6 +61,18 @@ export class BackButton {
       h('button.back-button', { type: 'button', onclick: () => { if (this.run) this.run(); else if (this.to) this.open(this.to); } }, icon('arrow-left'), this.label));
   }
 
+  /** 点了一样（整理会话左上角标题左边那个「←」，2026-10-22 项目主人）：在的时候回去，交回回去了没有 */
+  go() {
+    if (this.el.hidden || !this.to) return false;
+    if (this.run) this.run(); else this.open(this.to);
+    return true;
+  }
+
+  /** 回到哪里的悬停提示（没有去处的是 `null`） */
+  hint() {
+    return this.to ? /** @type {HTMLElement} */ (this.el.firstChild).title : null;
+  }
+
   /**
    * 照派它的那个会话画；主会话（没有派它的）藏起来。带 `run` 的点了做它（整理会话回到打开它之前的地方），`title` 照样写在悬停提示里。
    * @param {{session: string, title: string|null, run?: () => void}|null} parent

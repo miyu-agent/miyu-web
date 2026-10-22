@@ -570,7 +570,7 @@
             "url": "地址要以 http:// 或 https:// 开头",
             "header": "请求头第 {line} 行要写成「名字: 值」"
           },
-          "kind_command": "本机命令",
+          "kind_command": "本地",
           "kind_url": "网址",
           "url_hint": "例如 https://mcp.example.com/mcp",
           "bearer_hint": "可不填；引用写成 {secret:名字} 或 {env:变量}",
@@ -1114,7 +1114,7 @@
             "url": "The URL must start with http:// or https://",
             "header": "Header line {line} must look like \"Name: value\""
           },
-          "kind_command": "Local command",
+          "kind_command": "Local",
           "kind_url": "URL",
           "url_hint": "e.g. https://mcp.example.com/mcp",
           "bearer_hint": "Optional; refer with {secret:name} or {env:VAR}",
@@ -1658,7 +1658,7 @@
             "url": "URL は http:// か https:// で始めてください",
             "header": "リクエストヘッダーの {line} 行目は「名前: 値」の形にしてください"
           },
-          "kind_command": "ローカルコマンド",
+          "kind_command": "ローカル",
           "kind_url": "URL",
           "url_hint": "例：https://mcp.example.com/mcp",
           "bearer_hint": "省略可。参照は {secret:名前} か {env:変数}",

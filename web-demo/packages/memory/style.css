@@ -12,7 +12,8 @@
 .mem-find-input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: calc(13px * var(--text-scale)) var(--font-ui); }
 .mem-find-input::-webkit-search-cancel-button { display: none; }
 .mem-tools .set-btn .icon, .mem-page .set-btn .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
-.mem-dream .icon-loader-circle, .mem-dream:disabled .icon { animation: set-spin calc(0.9s * var(--motion-scale)) linear infinite; }
+/* 整理中的圈转着（图标是 `svg.icon[data-icon]`，没有按名字的类；原来写的 `.icon-loader-circle` 认不到，2026-10-22 项目主人：圈不会动） */
+.mem-dream [data-icon="loader-circle"] { animation: set-spin calc(0.9s * var(--motion-scale)) linear infinite; }
 .mem-dream:disabled { opacity: 0.75; cursor: default; }
 /* 整理中：照样能点（点了叫停），悬停是「停止整理」、危险色 */
 .mem-dream.is-busy:hover { color: var(--danger); }

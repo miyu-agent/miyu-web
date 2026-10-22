@@ -99,6 +99,7 @@ export class SettingsDialog {
     this.sub.close();
     // 记着的 MCP 登录「等待」只在弹窗开着时算（蓝图第 20 条）
     this.mcpLogin = null;
+    this.pvOff = null;
     leave(this.root, () => this.root.remove());
   }
 

@@ -353,6 +353,11 @@
 .setup-info-part.is-title:hover, .setup-info-part.is-project:hover { color: var(--text); }
 /* 标题后面的箭头：悬停、菜单开着时才露；平常朝右，菜单开着朝下（2026-10-19 项目主人：一直朝下不合理） */
 .setup-info-part.is-title.is-new { cursor: default; color: var(--text-faint); }
+/* 整理会话：标题点不了，左边一个「←」回到打开它之前的地方（2026-10-22 项目主人） */
+.setup-info-part.is-title.is-still { cursor: default; }
+.setup-info-part.is-title.is-still:hover { color: var(--text-soft); }
+.setup-info-part.is-back { justify-content: center; width: 20px; height: 20px; margin-left: calc(-4px * var(--space)); padding: 0; border: 0; border-radius: var(--r-6); background: none; color: var(--text-soft); cursor: pointer; }
+.setup-info-part.is-back:hover { background: var(--surface-2); color: var(--text); }
 .setup-info-part.is-project .icon { color: var(--project-color); }
 .setup-info-part.is-project span { max-width: 180px; }
 .setup-info-slash { color: var(--text-faint); opacity: 0.6; }

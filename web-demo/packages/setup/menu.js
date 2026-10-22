@@ -13,8 +13,9 @@ import { h, icon, replace } from '../../src/lib/dom.js';
  *   `wrap` 值太长换行写全（不截断），`action` 行末一个图标按钮（带 `key` 的，移到这一行按这个键也一样：人格、预设的编辑是 `e`）
  * @typedef {{section: string}} Section
  * @typedef {{divider: true}} Divider 一道细线
- * @typedef {{title: string, rows: (Row|Section|Divider)[], note?: string, foot?: HTMLElement[], back?: () => void, below?: boolean, action?: {icon: string, title: string, run: () => void}}} View
+ * @typedef {{title: string, rows: (Row|Section|Divider)[], note?: string, foot?: HTMLElement[], back?: () => void, below?: boolean, action?: {icon: string, title: string, run: () => void}, card?: string}} View
  *   `title` 空的不画头一行
+ *   `card` 是会话信息卡片照哪个会话画的（换了人格、预设、工作区照它重画）
  *   `action` 是标题右边的一个图标按钮（工作区的「选择文件夹」）
  */
 

@@ -7,7 +7,7 @@ import { h, icon, replace } from '../../src/lib/dom.js';
 import { tilde } from '../../src/lib/format.js';
 import { layerFor, expectFor } from './model.js';
 import { confirmIn } from './confirm.js';
-import { privateRows, dropChange, batchChange, canRestore, findRows, pairIn, inWorkspace } from './privacy-model.js';
+import { privateRows, dropChange, batchChange, canRestore, restoreChange, findRows, pairIn, inWorkspace } from './privacy-model.js';
 import { coreRow } from './rows.js';
 
 /** 这一组里有没有画成一张表的那一对（私密目录、只禁写） @param {any[]} items */
@@ -87,21 +87,35 @@ export function privateGroup(dialog, name, items) {
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); submit(); }
   });
-  // 一直都在，没去掉过出厂项的灰着：有时有有时没有，框的宽度会跟着变（2026-10-21 项目主人）
+  // 一直都在，跟出厂一样的灰着：有时有有时没有，框的宽度会跟着变（2026-10-21 项目主人）
   const restore = h('button.set-btn', {
-    type: 'button', disabled: !canRestore(remove),
+    type: 'button', disabled: !canRestore(add, remove),
     // 先弹窗问（2026-10-21 项目主人）：「确认重置私密目录列表至出厂状态吗？」，名字照组名
     onclick: async (/** @type {Event} */ e) => {
       if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('privacy.restore_ask', { name }), yes: t('privacy.restore'), no: t('privacy.cancel') }))) return;
-      store([{ key: remove.key, unset: true }]);
+      store(restoreChange(add, remove));
     },
   }, t('privacy.restore'));
   return h('section.set-group',
     h('h3.set-group-name', name),
     others.length ? h('div.set-rows', others) : null,
-    h(`div.pv-body${off ? '.is-off' : ''}`, { inert: off || undefined },
+    fold(dialog, pair.add, off,
       add.description ? h('p.set-desc.pv-desc', add.description) : null,
       h('div.pv-box', h('label.pv-find', icon('search'), find), list),
       h('div.pv-add', input, h('div.pv-buttons', h('button.set-btn.is-primary', { type: 'button', onclick: submit }, t('privacy.add')), restore)),
       error));
+}
+
+/**
+ * 开关下面那一块：关着的收起（高度收到 0、淡出），开了展开（2026-10-22 项目主人：原来灰掉、不能改）。拨了开关设置页整个重画，
+ * 照上一次画的样子先画出来、下一帧换成现在的，才走得出过渡；头一次画的直接是现在的样子。
+ * @param {any} dialog @param {string} key 记上一次样子用的 @param {boolean} off @param {...any} kids
+ */
+function fold(dialog, key, off, ...kids) {
+  const was = (dialog.pvOff ??= {})[key];
+  dialog.pvOff[key] = off;
+  const from = was === undefined ? off : was;
+  const el = h(`div.pv-fold${from ? '.is-off' : ''}`, { inert: off || undefined }, h('div.pv-body', ...kids));
+  if (from !== off) requestAnimationFrame(() => requestAnimationFrame(() => el.classList.toggle('is-off', off)));
+  return el;
 }

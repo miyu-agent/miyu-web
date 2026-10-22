@@ -242,7 +242,7 @@ export class SessionsPage {
   }
 
   /**
-   * 照时间分组的列表：一组一个头（滚的时候贴在顶上），组里一个会话一行。
+   * 列表：按创建时间的照时间分组，一组一个头（滚的时候贴在顶上），组里一个会话一行；按最近活动的不分组。
    * @param {Row[]} rows
    */
   groups(rows) {
@@ -250,6 +250,8 @@ export class SessionsPage {
     const groups = groupRows(rows, this.sort, now);
     const order = groups.flatMap((g) => g.rows.map((r) => r.session));
     if (!groups.length) return [h('div.sessions-empty', t(this.query || this.filter !== 'all' ? 'sessions_page.no_match' : 'sessions_page.empty'))];
+    // 按最近活动的不分组，一条平的列表（2026-10-22 项目主人：已经照最近活动排了，不用再分「最近 / 近 7 天」）
+    if (this.sort === 'active') return groups.flatMap((g) => g.rows.map((r) => this.row(r, order, now)));
     return groups.flatMap((g) => [
       h('div.sessions-group', t(`sidebar.groups.${g.group}`)),
       ...g.rows.map((r) => this.row(r, order, now)),
