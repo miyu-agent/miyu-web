@@ -12,5 +12,6 @@ Miyu 的网页（头）：网页软件 `miyu-web`（`crates/miyu-web`，只听�
 - 网页的纯逻辑测试读核心的出厂资源：本机跑设 `MIYU_RESOURCES` 指到核心检出里的 `resources/`（`node --test 'web-demo/tests/**/*.test.js'`）。
 - 给人看的字照三种语言；界面上只放人要的，说法照通用软件的短句；控件不画描边。
 - 图纸在 `docs/blueprint/`（`web.md`、`web-ui.md`、`web-module.md`、`webserve.md`、`web/`）；改了界面先改图纸。
+- 本机编译（`build`、`clippy`、`cargo test --no-run`、编测试用的核心）整条套整机编译锁 `flock /home/shorin/.cache/miyu-cargo.lock …`；跑测试、起测试服务、node 和 Playwright 不占锁（2026-10-22 项目主人定：锁只管编译），例如 `flock <锁> … cargo test --no-run && … cargo test`。
 - 本机测：沙箱数据根（`MIYU_HOME` 指到单独的目录），不碰 `~/.miyu`，不重启别人在用的核心；key 和地址只放在命令里。
 - 平台：Linux、macOS（M 系列）、Windows 都要编得过、测试过；网页的纯逻辑测试和演示的桥只在 Linux 上跑。
