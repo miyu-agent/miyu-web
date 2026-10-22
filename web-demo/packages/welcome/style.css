@@ -1,9 +1,9 @@
 /* 第一次引导（软件包 welcome；蓝图 web.md「第一次引导」第 2、3、10 条）：「像素关卡」（2026-10-19 项目主人从四套样板里挑的）。
    盖着整页的一层（在吉祥物那一层下面）。颜色照主题（2026-10-19 项目主人：主题那一屏换了整个引导跟着当场变）：像素的那几格
    （--px-*）从主题的几格掺出来，再在这一层下面把主题的几格换成它们，别的包画的控件（设置包的框、开关，人格包的表）跟着换；再给它们
-   换成直角、像素的阶梯角。字随包带着（fonts/，SIL OFL 1.1） */
-@font-face { font-family: "Miyu Pixel CJK"; src: url("fonts/zcool-qingke.woff2") format("woff2"); font-display: swap; }
-@font-face { font-family: "Miyu Pixel"; src: url("fonts/press-start.ttf") format("truetype"); font-display: swap; }
+   换成直角、像素的阶梯角。字在 resources/fonts/（SIL OFL 1.1，登录那几屏也用） */
+@font-face { font-family: "Miyu Pixel CJK"; src: url("../../resources/fonts/zcool-qingke.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Miyu Pixel"; src: url("../../resources/fonts/press-start.ttf") format("truetype"); font-display: swap; }
 
 .wl-layer {
   --px-bg: var(--surface);

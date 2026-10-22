@@ -87,7 +87,7 @@
 /* 时间分组的组头：滚的时候贴在顶上；不是第一组的上面多留一段空（2026-10-22 项目主人：组头混在会话里看不清） */
 .sessions-group {
   position: sticky; top: 0; z-index: 2; padding: calc(14px * var(--space)) calc(10px * var(--space)) calc(8px * var(--space)); background: var(--surface); color: var(--text-soft);
-  font-size: calc(13px * var(--text-scale)); font-weight: 600; letter-spacing: 0.02em;
+  font-size: calc(13px * var(--text-scale)); font-weight: 600; letter-spacing: 0.02em; text-align: center;
 }
 .sessions-group:not(:first-child) { padding-top: calc(34px * var(--space)); }
 .sessions-unread { flex: none; }

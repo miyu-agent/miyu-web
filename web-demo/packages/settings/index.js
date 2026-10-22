@@ -51,6 +51,8 @@ export function apply(ctx) {
     syncAdmin();
   }));
   syncAdmin();
+  // 换了主题：后台的左栏照新主题的深色那一份重画
+  ctx.on('theme.changed', () => admin.draw());
   ctx.effect(() => () => admin.close());
   // 主题那几套换了（换了壁纸、人格的头像）：开着的设置页重画「主题」一组（卡片的小样、「主色」）
   ctx.slots.watch('theme.palettes', () => {

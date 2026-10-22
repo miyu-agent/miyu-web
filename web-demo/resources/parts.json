@@ -4061,10 +4061,16 @@
       ".si"
     ]
   },
-  "si.brand": {
-    "zh": "登录：左上角",
+  "si.col": {
+    "zh": "登录：卡片（像素的描边）",
     "select": [
-      ".si-brand"
+      ".si-col"
+    ]
+  },
+  "si.where": {
+    "zh": "登录：第一次设账号那一屏的「STAGE 0/N」",
+    "select": [
+      ".si-where"
     ]
   },
   "si.steps": {

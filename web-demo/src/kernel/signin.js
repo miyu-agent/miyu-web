@@ -6,7 +6,8 @@
 //! 凭邀请码注册（核心 Y-1 上）：地址带 `#invite=` 的、登录框里点「用邀请码注册」填的，握手带 `invite`；回 `register: true` 的出「注册账号」一屏，
 //! `account.register` 拿到登录令牌，同一条线接着用。成员（核心 Y-2 以前只能调 `human.get`、`account.logout`）：试一次 `config.get` 被拒成
 //! `not_permitted` 的出一张卡「已登录」+「退出登录」，不往下起页面。
-//! 这几屏在软件包加载以前画（主题、引导还没来），样子在 `styles/signin.css`。
+//! 这几屏在软件包加载以前画（主题、引导还没来），样子在 `styles/signin.css`：同第一次引导的「像素关卡」场景，正中一张像素描边的卡片，吉祥物
+//! 蹲在卡片上沿（静态图，2026-10-22 项目主人选的样板二 B）。
 
 import { h, replace } from '../lib/dom.js';
 import { t } from '../util/res.js';
@@ -61,10 +62,13 @@ export function registerProblem(username, password, again) {
 }
 
 /**
- * 一行：左边名字，右边框。
+ * 一行：名字放进框里当占位（2026-10-22 项目主人：不再左边一列名字），读屏照旧读得到名字。
  * @param {string} name @param {HTMLInputElement} input
  */
-const field = (name, input) => h('label.si-field', h('span.si-field-name', name), input);
+const field = (name, input) => {
+  input.placeholder = name;
+  return h('label.si-field', h('span.si-field-name', name), input);
+};
 
 /** @param {string} type @param {string} value @param {string} auto */
 const input = (type, value, auto) => /** @type {HTMLInputElement} */ (h('input.si-input', { type, value, autocomplete: auto, spellcheck: 'false' }));
@@ -80,11 +84,14 @@ function screen(root, spec) {
   return new Promise((resolve) => {
     const error = h('p.si-error', { hidden: !spec.error }, spec.error ?? '');
     const btn = /** @type {HTMLButtonElement} */ (h('button.si-btn', { type: 'submit' }, spec.button));
-    const head = spec.login ? null : h('div.si-head', h('span.si-brand', 'Miyu'),
-      h('ol.si-steps', STEPS.map((s, i) => h(`li${i === 0 ? '.is-now' : ''}`, `${i + 1} ${t(`signin.steps.${s}`)}`))));
+    // 第一次设账号的：卡片顶上引导的关卡格子（第一格「账号」），同引导一路走下来
+    const head = spec.login ? null : h('div.si-head',
+      h('ol.si-steps', STEPS.map((s, i) => h(`li${i === 0 ? '.is-now' : ''}`, { title: t(`signin.steps.${s}`) }))),
+      h('p.si-where', `STAGE 0/${STEPS.length - 1}`));
     const link = spec.link ? h('button.si-link', { type: 'button', onclick: () => resolve('link') }, spec.link) : null;
-    const form = /** @type {HTMLFormElement} */ (h('form.si-col', head, h('h1.si-title', spec.title), h('p.si-sub', spec.sub),
-      spec.note ? h('p.si-note', spec.note) : null, h('div.si-body', spec.fields), error, h('div.si-foot', link, btn)));
+    const form = /** @type {HTMLFormElement} */ (h('form.si-col', h('img.si-mascot', { src: 'resources/assets/mascot.png', alt: '', 'aria-hidden': 'true' }),
+      head, h('h1.si-title', spec.title), spec.sub ? h('p.si-sub', spec.sub) : null,
+      h('div.si-body', spec.fields), error, h('div.si-foot', btn, link), spec.note ? h('p.si-note', spec.note) : null));
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (btn.disabled) return;
@@ -113,7 +120,7 @@ async function loginBox(root, error, last) {
     /** @type {{user: string, password: string}} */
     let got = { user: '', password: '' };
     const went = await screen(root, {
-      login: true, title: t('signin.login_title'), sub: t('signin.login_sub'), button: t('signin.login'), error, link: t('signin.invite_link'),
+      login: true, title: t('signin.login_title'), sub: '', button: t('signin.login'), error, link: t('signin.invite_link'),
       fields: [field(t('signin.username'), user), field(t('signin.password'), password)],
       submit: async () => {
         if (!user.value.trim() || !password.value) return t('signin.empty');
@@ -125,7 +132,7 @@ async function loginBox(root, error, last) {
     const code = input('text', '', 'off');
     let invite = '';
     const back = await screen(root, {
-      login: true, title: t('signin.invite_title'), sub: t('signin.invite_sub'), button: t('signin.next'), link: t('signin.back_login'),
+      login: true, title: t('signin.invite_title'), sub: '', button: t('signin.next'), link: t('signin.back_login'),
       fields: [field(t('signin.invite_code'), code)],
       submit: async () => {
         invite = code.value.trim();
@@ -179,8 +186,8 @@ function memberCard(root, conn, account, host) {
     host.forget();
     location.reload();
   } }, t('signin.logout')));
-  replace(root, h('div.si.is-login', h('div.si-col', h('h1.si-title', t('signin.member_title', { name: account })), h('p.si-sub', t('signin.member_sub')),
-    h('div.si-foot', out))));
+  replace(root, h('div.si.is-login', h('div.si-col', h('img.si-mascot', { src: 'resources/assets/mascot.png', alt: '', 'aria-hidden': 'true' }),
+    h('h1.si-title', t('signin.member_title', { name: account })), h('p.si-sub', t('signin.member_sub')), h('div.si-foot', out))));
   return new Promise(() => {});
 }
 
@@ -209,7 +216,7 @@ async function accountScreen(root, conn) {
   /** @type {any} */
   let login = null;
   await screen(root, {
-    login: false, title: t('signin.account_title'), sub: t('signin.account_sub'), button: t('signin.next'),
+    login: false, title: t('signin.account_title'), sub: '', note: t('signin.account_sub'), button: t('signin.next'),
     fields: [field(t('signin.username'), user), field(t('signin.password'), password), field(t('signin.again'), again)],
     submit: async () => {
       const why = accountProblem(user.value.trim(), password.value, again.value);

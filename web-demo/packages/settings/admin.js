@@ -65,6 +65,8 @@ export class AdminPage {
     /** 这一页记的东西（关了清掉） @type {any} */
     this.state = {};
     this.title = '';
+    /** 左栏上写着的颜色变量（换主题先拿掉） @type {string[]} */
+    this.navVars = [];
     this.onKey = (/** @type {KeyboardEvent} */ e) => {
       if (e.key !== 'Escape' || document.querySelector('.set-tool-modal, body > .set-ask')) return;
       e.preventDefault();
@@ -115,8 +117,26 @@ export class AdminPage {
     setTimeout(() => el.remove(), 2000);
   }
 
+  /**
+   * 左栏一直是暗色（2026-10-22 项目主人：浅色主题下也是暗色）：照现在这套主题深色那一份颜色，写成这一栏自己的变量；没有主题服务的照页面的。
+   */
+  paintNav() {
+    if (!this.nav) return;
+    const dark = this.ctx.theme?.colorsFor?.('dark');
+    for (const name of this.navVars ?? []) this.nav.style.removeProperty(name);
+    this.navVars = [];
+    if (!dark?.page) return;
+    for (const [k, v] of Object.entries(dark.page)) {
+      const name = `--${k.replaceAll('_', '-')}`;
+      this.nav.style.setProperty(name, String(v));
+      this.navVars.push(name);
+    }
+    this.nav.style.colorScheme = 'dark';
+  }
+
   draw() {
     if (!this.el || !this.nav || !this.body) return;
+    this.paintNav();
     const t = (/** @type {string} */ k, /** @type {any} */ f) => this.ctx.text(k, f);
     const st = stateOf(this.view());
     const route = this.ctx.host.route;
