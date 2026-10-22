@@ -530,6 +530,8 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .set-tool-state.is-error { color: var(--danger); }
 .set-tool-state.is-warn { color: var(--t-warn, var(--gold)); }
 .mcp-login-error { margin-top: calc(4px * var(--space)); }
+/* 窄屏：列表那一行放不下「登录」（名字挤成一个字），只写「需要登录」，点进详情登录 */
+@media (max-width: 640px) { .set-tool-controls .mcp-login { display: none; } }
 .set-tool-icon { flex: none; width: 32px; height: 32px; border-radius: var(--r-8); }
 .set-tool-icon .icon { width: calc(16px * var(--space)); height: calc(16px * var(--space)); }
 .set-tool-icon.is-danger { color: var(--danger); }
