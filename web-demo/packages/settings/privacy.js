@@ -28,7 +28,15 @@ export function privateGroup(dialog, name, items) {
   const toggle = pair.enabled ? items.find((i) => i.key === pair.enabled) : null;
   const off = toggle ? (toggle.entry?.value ?? toggle.default) === false : false;
   // 这一组别的项（总开关、这一对以外的）照通用的行画在表上面
-  const others = items.filter((i) => i.key !== pair.add && i.key !== pair.remove).map((i) => coreRow(dialog, i)).filter(Boolean);
+  const others = items.filter((i) => i.key !== pair.add && i.key !== pair.remove).map((i) => {
+    const row = coreRow(dialog, i);
+    // 总开关一拨就收起、展开，不等存完（开关自己先滑完圆点再存，要两三百毫秒）
+    if (row && i === toggle) row.addEventListener('click', (e) => {
+      const sw = /** @type {Element} */ (e.target).closest('.set-switch');
+      if (sw && !(/** @type {HTMLButtonElement} */ (sw)).disabled && body.isConnected) queueMicrotask(() => fold.go(dialog, pair.add, !sw.classList.contains('is-on'), body));
+    });
+    return row;
+  }).filter(Boolean);
   const queryKey = `privateQuery:${pair.add}`;
   const home = dialog.ctx.host?.home ?? null;
   const error = h('p.set-error', { hidden: true });
@@ -96,14 +104,15 @@ export function privateGroup(dialog, name, items) {
       store(restoreChange(add, remove));
     },
   }, t('privacy.restore'));
+  const body = fold(dialog, pair.add, off,
+    add.description ? h('p.set-desc.pv-desc', add.description) : null,
+    h('div.pv-box', h('label.pv-find', icon('search'), find), list),
+    h('div.pv-add', input, h('div.pv-buttons', h('button.set-btn.is-primary', { type: 'button', onclick: submit }, t('privacy.add')), restore)),
+    error);
   return h('section.set-group',
     h('h3.set-group-name', name),
     others.length ? h('div.set-rows', others) : null,
-    fold(dialog, pair.add, off,
-      add.description ? h('p.set-desc.pv-desc', add.description) : null,
-      h('div.pv-box', h('label.pv-find', icon('search'), find), list),
-      h('div.pv-add', input, h('div.pv-buttons', h('button.set-btn.is-primary', { type: 'button', onclick: submit }, t('privacy.add')), restore)),
-      error));
+    body);
 }
 
 /** 收起、展开走多久（毫秒，乘上动效快慢） */
@@ -116,18 +125,29 @@ const FOLD_MS = 240;
  * @param {any} dialog @param {string} key 记上一次样子用的 @param {boolean} off @param {...any} kids
  */
 function fold(dialog, key, off, ...kids) {
+  const el = h('div.pv-fold', h('div.pv-body', ...kids));
   const was = (dialog.pvOff ??= {})[key];
+  if (!was) dialog.pvOff[key] = { off, at: -Infinity };
+  fold.go(dialog, key, off, el);
+  return el;
+}
+
+/**
+ * 把那一块拨到开着、关着：跟记下的不一样的从这一刻起走，一样的照记下的那一刻接着走（走完了的直接是那个样子）。
+ * @param {any} dialog @param {string} key @param {boolean} off @param {HTMLElement} el `div.pv-fold`
+ */
+fold.go = (dialog, key, off, el) => {
   const now = performance.now();
-  if (!was || was.off !== off) dialog.pvOff[key] = { off, at: was ? now : -Infinity };
-  const body = h('div.pv-body', ...kids);
-  const el = h(`div.pv-fold${off ? '.is-off' : ''}`, { inert: off || undefined }, body);
+  if (dialog.pvOff[key].off !== off) dialog.pvOff[key] = { off, at: now };
+  el.classList.toggle('is-off', off);
+  el.inert = off;
+  const body = /** @type {HTMLElement} */ (el.firstElementChild);
+  for (const a of [...el.getAnimations(), ...body.getAnimations()]) a.cancel();
   const scale = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale'));
   const ms = FOLD_MS * (Number.isFinite(scale) ? scale : 1);
   const since = now - dialog.pvOff[key].at;
-  if (ms > 0 && since < ms) {
-    const go = (/** @type {Element} */ node, /** @type {Keyframe[]} */ frames) => { node.animate(frames, { duration: ms, easing: 'ease' }).currentTime = since; };
-    go(el, off ? [{ gridTemplateRows: '1fr' }, { gridTemplateRows: '0fr' }] : [{ gridTemplateRows: '0fr' }, { gridTemplateRows: '1fr' }]);
-    go(body, off ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }]);
-  }
-  return el;
-}
+  if (!(ms > 0 && since < ms)) return;
+  const go = (/** @type {Element} */ node, /** @type {Keyframe[]} */ frames) => { node.animate(frames, { duration: ms, easing: 'ease' }).currentTime = since; };
+  go(el, off ? [{ gridTemplateRows: '1fr' }, { gridTemplateRows: '0fr' }] : [{ gridTemplateRows: '0fr' }, { gridTemplateRows: '1fr' }]);
+  go(body, off ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }]);
+};
