@@ -682,10 +682,8 @@ export class App {
     }
     const got = await this.store.conn.request('session.set_workspace', { session, cwd });
     if (typeof got?.cwd === 'string' && got.cwd !== cwd) this.ctx.emit('workdir.adjusted', { session, asked: cwd, cwd: got.cwd });
-    // 太宽、照人设的用着（核心 9-7 补），护不住 Miyu 自己的数据（核心 5-14 改中）：提醒一句，不改
-    if (got?.wide === true || typeof got?.unguarded === 'string') {
-      this.ctx.emit('workdir.warn', { session, cwd: got.cwd ?? cwd, wide: got.wide === true, unguarded: typeof got.unguarded === 'string' ? got.unguarded : null });
-    }
+    // 太宽、照人设的用着（核心 9-7 补）：提醒一句，不改
+    if (got?.wide === true) this.ctx.emit('workdir.wide', { session, cwd: got.cwd ?? cwd });
     this.schedule();
     return got?.cwd ?? cwd;
   }
@@ -725,8 +723,7 @@ export class App {
     // 在项目里新建的：项目刚删掉了的不带（照不在项目里开）
     const project = this.store.projects.get(this.draft.project) ? this.draft.project : null;
     this.current = await this.store.create(asked ?? this.cwd, this.pendingModel, this.draft.persona, this.draft.preset, !!asked, project);
-    const warn = this.store.createdWarn;
-    if (warn?.session === this.current) this.ctx.emit('workdir.warn', { session: this.current, cwd: asked, wide: warn.wide, unguarded: warn.unguarded });
+    if (this.store.createdWide === this.current) this.ctx.emit('workdir.wide', { session: this.current, cwd: asked });
     this.pendingModel = null;
     this.draft = { persona: null, preset: null, cwd: null, project: null };
     this.store.view(this.current);

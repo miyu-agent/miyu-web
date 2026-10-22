@@ -182,11 +182,11 @@ export class Store {
     // 目录是人选的（或者照上一次会话预选上的）带 `chosen`：太宽也照用，回应带 `wide`（核心 9-7 补，2026-10-09 项目主人：手动选的别自动切）
     // 在项目里开的带 `project`（核心 H-2）：没写的人格、预设核心照项目的
     const who = persona === false ? { persona: null } : persona ? { persona } : {};
-    const { session, wide, unguarded, cwd: used } = await this.conn.request('session.create', {
+    const { session, wide, cwd: used } = await this.conn.request('session.create', {
       cwd, ...(model ? { model } : {}), ...who, ...(preset ? { preset } : {}), ...(chosen ? { chosen: true } : {}), ...(project ? { project } : {}),
     });
-    /** 刚开的这个会话的目录太宽（照人选的用着）、护不住 Miyu 自己的数据（核心 5-14 改中 `unguarded`）：外面照它提醒一句 */
-    this.createdWarn = wide === true || typeof unguarded === 'string' ? { session, wide: wide === true, unguarded: typeof unguarded === 'string' ? unguarded : null } : null;
+    /** 刚开的这个会话的目录太宽（照人选的用着）：外面照它提醒一句 */
+    this.createdWide = wide === true ? session : null;
     // 推送还没到时先记上，左栏当场有它
     // 没选目录的核心另给这个会话一个子目录（核心 5-14 上），照回应的记
     this.index.seed(session, { cwd: typeof used === 'string' ? used : cwd, ...(project ? { project } : {}) });
