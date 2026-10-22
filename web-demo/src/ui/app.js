@@ -206,6 +206,8 @@ export class App {
         save: (items) => ctx.storage.set(HISTORY, items),
       },
       session: () => this.current,
+      // 上下文明细、累计按用途的浮窗问核心（蓝图「上下文明细、累计按用途」）
+      request: (method, params) => this.store.conn.request(method, params),
       // 换模型的菜单（蓝图「换模型的菜单」）：每次打开问一次 `model.list`；选了下一轮生效
       // 会话列表（`/sessions`，蓝图「会话列表」）：全部顶层会话照会话表；在不在跑、看没看过：读过日志的照日志，没读过的照会话表
       sessions: {

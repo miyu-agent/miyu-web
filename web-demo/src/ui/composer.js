@@ -29,6 +29,7 @@ import { Picker } from './picker.js';
 import { HelpPanel } from './help.js';
 import { SessionList } from './session-list.js';
 import { ModelMenu } from './model-menu.js';
+import { ContextPop } from './context-pop.js';
 import { HistoryList } from './history.js';
 import { MentionList } from './mention.js';
 import { wordAt, plan, pathText, dirWord, splice, failure } from '../model/mention.js';
@@ -59,7 +60,7 @@ export class Composer {
    *   command: (spec: import('../model/commands.js').Spec, words: string|null) => void,
    *   history: {load: () => import('../model/history.js').Item[], save: (items: import('../model/history.js').Item[]) => void},
    *   commandsOpened?: () => void, allCommands?: () => Promise<import('../model/commands.js').Spec[]>,
-   *   session: () => string|null, models: import('./model-menu.js').On, files: (plan: any, fresh: boolean, onUpdate: (found: any) => void, stale: () => boolean) => Promise<any>, where: () => {cwd: string|null, home: string|null}} on
+   *   session: () => string|null, models: import('./model-menu.js').On, request: (method: string, params: any) => Promise<any>, files: (plan: any, fresh: boolean, onUpdate: (found: any) => void, stale: () => boolean) => Promise<any>, where: () => {cwd: string|null, home: string|null}} on
    *   `send` 交回核心收没收；`history` 读、存输入历史（这台设备上、按账号分开）；`session` 正在看的会话；`models` 换模型的菜单问核心要列表、现在用的、选定了做什么；`files` 问核心列、找文件
    *   （`core/files.js`，没建完的先交 `onUpdate`、`stale` 说不要了就停）；`where` 这个会话的工作目录、家目录（`@` 选文件写路径照它）
    * @param {() => import('../model/commands.js').Spec[]} specs 现在的全部斜杠命令（出厂的加软件包登记的）
@@ -104,7 +105,9 @@ export class Composer {
     /** 右边用量前面：挂载位 `composer.status` 挂的（扩展的界面块那一小段，软件包 `widgets`，`ui/app.js` 画进来） */
     this.status = h('span.footer-status');
     this.middle = h('span.footer-middle');
-    this.footer = h('div.composer-footer', this.left, this.middle, h('span.footer-end', this.status, this.right), this.modelMenu.el);
+    /** 上下文、累计那两格点了开的浮窗（蓝图「上下文明细、累计按用途」） */
+    this.contextPop = new ContextPop({ session: on.session, request: on.request });
+    this.footer = h('div.composer-footer', this.left, this.middle, h('span.footer-end', this.status, this.right), this.modelMenu.el, this.contextPop.el);
     // 从命令列表里点的、选中回车的：记成 `/名字`
     this.menu = new CommandList({
       run: (spec, words = null) => {
@@ -842,7 +845,26 @@ export class Composer {
       return this.right.offsetWidth;
     };
     const kept = fit(this.parts, room, measure);
-    this.right.textContent = kept.map((p) => p.text).join(' · ');
+    // 上下文、累计两格是按钮：点了开明细（蓝图「上下文明细、累计按用途」第 1 条）；速度那一格只是字
+    /** @type {Map<string, {el: HTMLElement, text: string}>} */
+    const cells = new Map();
+    replace(this.right, kept.map((p, i) => {
+      const sep = i ? ' · ' : null;
+      if (p.key !== 'context' && p.key !== 'total') return [sep, p.text];
+      const kind = /** @type {'context'|'total'} */ (p.key);
+      const el = h('button.footer-cell', { type: 'button', dataset: { kind }, title: t(`context_pop.tip_${kind}`), onclick: () => this.contextPop.toggle(kind, el, p.text) }, p.text);
+      cells.set(kind, { el, text: p.text });
+      return [sep, el];
+    }));
+    this.contextPop.refresh(cells);
+  }
+
+  /** `/context`：开上下文明细；框下面没写上下文的提示「上下文为空」 */
+  openContext() {
+    const cell = this.right.querySelector('.footer-cell[data-kind="context"]');
+    if (cell instanceof HTMLElement) {
+      if (this.contextPop.kind !== 'context') cell.click();
+    } else this.say(t('commands.nothing_to_clear'));
   }
 }
 

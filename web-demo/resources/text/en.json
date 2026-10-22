@@ -464,6 +464,28 @@
     "stashed": "Stashed · Ctrl+S to restore",
     "empty": "Nothing stashed"
   },
+  "context_pop": {
+    "tip_context": "Context breakdown",
+    "tip_total": "Usage by purpose",
+    "loading": "Loading…",
+    "unsupported": "This core can't show a breakdown yet",
+    "title": "Context",
+    "estimated": "estimated",
+    "line": "Auto-compacts at {line}",
+    "usage_title": "This session so far",
+    "no_usage": "No usage yet",
+    "with_subagents": "Includes subagents",
+    "with_cost": "Includes subagents · {cost} total",
+    "use": {
+      "main": "Conversation",
+      "compaction": "Compaction",
+      "subagent": "Subagents",
+      "recap": "Recap",
+      "title": "Titles",
+      "memory": "Memory",
+      "other": "Other"
+    }
+  },
   "model_menu": {
     "tip": "Switch model",
     "models": "Models",

@@ -464,6 +464,28 @@
     "stashed": "退避しました · Ctrl+S で戻す",
     "empty": "退避したものはありません"
   },
+  "context_pop": {
+    "tip_context": "コンテキストの内訳",
+    "tip_total": "用途別の使用量",
+    "loading": "読み込み中…",
+    "unsupported": "このコアはまだ内訳を表示できません",
+    "title": "コンテキスト",
+    "estimated": "推定",
+    "line": "{line} で自動圧縮",
+    "usage_title": "このセッションの累計",
+    "no_usage": "まだ使用量はありません",
+    "with_subagents": "サブエージェントを含む",
+    "with_cost": "サブエージェントを含む · 合計 {cost}",
+    "use": {
+      "main": "会話",
+      "compaction": "圧縮",
+      "subagent": "サブエージェント",
+      "recap": "振り返り",
+      "title": "タイトル",
+      "memory": "記憶",
+      "other": "その他"
+    }
+  },
   "model_menu": {
     "tip": "モデルを変更",
     "models": "モデル",

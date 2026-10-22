@@ -132,6 +132,15 @@
       "args": true
     },
     {
+      "name": "context",
+      "summary": {
+        "zh": "查看上下文里各部分占了多少",
+        "en": "Show what is taking up the context",
+        "ja": "コンテキストの内訳を表示する"
+      },
+      "run": "context"
+    },
+    {
       "name": "copy",
       "summary": {
         "zh": "复制AI的上一条回答",

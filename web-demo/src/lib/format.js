@@ -100,3 +100,15 @@ export function contextPercent(used, window) {
   const pct = (used / window) * 100;
   return pct > 0 && pct < 1 ? '<1%' : `${Math.round(pct)}%`;
 }
+
+const SIGNS = /** @type {Record<string, string>} */ ({ USD: '$', CNY: '¥', EUR: '€', GBP: '£' });
+
+/** 一笔钱（用量页、框下面累计的浮窗）：一分钱以下的四位小数，别的两位；认得的币种写记号，别的写代码加空格。 @param {{currency: string, amount: number}} a */
+export function amountText(a) {
+  const n = a.amount > 0 && a.amount < 0.01 ? a.amount.toFixed(4) : a.amount.toFixed(2);
+  const sign = SIGNS[a.currency];
+  return sign ? `${sign}${n}` : `${a.currency} ${n}`;
+}
+
+/** 花费：照币种各写各的，用 ` + ` 接起来；一个都没有是空的。 @param {{currency: string, amount: number}[]} amounts */
+export const money = (amounts) => (amounts ?? []).map(amountText).join(' + ');

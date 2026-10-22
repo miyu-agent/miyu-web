@@ -3167,6 +3167,114 @@
       ".footer-model-effort"
     ]
   },
+  "footer.cell": {
+    "zh": "框下面那一行：上下文、累计那两格（点了开明细）",
+    "select": [
+      ".footer-cell"
+    ]
+  },
+  "context.pop": {
+    "zh": "上下文明细的浮窗",
+    "select": [
+      ".ctx-pop"
+    ]
+  },
+  "context.pop-head": {
+    "zh": "上下文明细：头一行",
+    "select": [
+      ".ctx-pop-head"
+    ]
+  },
+  "context.pop-title": {
+    "zh": "上下文明细：头一行的名字",
+    "select": [
+      ".ctx-pop-title"
+    ]
+  },
+  "context.pop-sum": {
+    "zh": "上下文明细：头一行右边的合计",
+    "select": [
+      ".ctx-pop-sum"
+    ]
+  },
+  "context.pop-est": {
+    "zh": "上下文明细：「估算」",
+    "select": [
+      ".ctx-pop-est"
+    ]
+  },
+  "context.pop-note": {
+    "zh": "上下文明细：正在读、读不了那一行",
+    "select": [
+      ".ctx-pop-note"
+    ]
+  },
+  "context.pop-foot": {
+    "zh": "上下文明细：最下面那一行暗字",
+    "select": [
+      ".ctx-pop-foot"
+    ]
+  },
+  "context.bar": {
+    "zh": "上下文明细：横条",
+    "select": [
+      ".ctx-bar"
+    ]
+  },
+  "context.bar-seg": {
+    "zh": "上下文明细：横条的一段",
+    "select": [
+      ".ctx-bar-seg"
+    ]
+  },
+  "context.bar-line": {
+    "zh": "上下文明细：横条上压缩线的位置",
+    "select": [
+      ".ctx-bar-line"
+    ]
+  },
+  "context.rows": {
+    "zh": "上下文明细：几行",
+    "select": [
+      ".ctx-rows"
+    ]
+  },
+  "context.row": {
+    "zh": "上下文明细：一行",
+    "select": [
+      ".ctx-row"
+    ]
+  },
+  "context.row-arrow": {
+    "zh": "上下文明细：一行前面的小箭头",
+    "select": [
+      ".ctx-row-arrow"
+    ]
+  },
+  "context.dot": {
+    "zh": "上下文明细：一行的色点",
+    "select": [
+      ".ctx-dot"
+    ]
+  },
+  "context.row-name": {
+    "zh": "上下文明细：一行的名字",
+    "select": [
+      ".ctx-row-name"
+    ]
+  },
+  "context.row-n": {
+    "zh": "上下文明细：一行的 token 数",
+    "select": [
+      ".ctx-row-n"
+    ]
+  },
+  "context.row-pct": {
+    "zh": "上下文明细：一行的百分比、花费",
+    "select": [
+      ".ctx-row-pct"
+    ]
+  },
   "model.menu-search-input": {
     "zh": "换模型的菜单：菜单搜索写字的框",
     "select": [

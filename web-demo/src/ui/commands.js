@@ -346,6 +346,8 @@ const RUNS = {
     app.composer.focus();
   },
   copy: copyReply,
+  // 上下文明细（蓝图「上下文明细、累计按用途」第 1 条）：开框下面上下文那一格的浮窗
+  context: (app) => app.composer.openContext(),
   help: (app) => app.composer.openHelp(),
 };
 

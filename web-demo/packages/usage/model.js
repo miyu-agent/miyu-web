@@ -34,17 +34,8 @@ export function sum(rows) {
   return { requests, usage, amounts: [...amounts].map(([currency, amount]) => ({ currency, amount })), unpriced };
 }
 
-const SIGNS = /** @type {Record<string, string>} */ ({ USD: '$', CNY: '¥', EUR: '€', GBP: '£' });
-
-/** 一笔钱：一分钱以下的四位小数，别的两位；认得的币种写记号，别的写代码加空格。 @param {Amount} a */
-export function amountText(a) {
-  const n = a.amount > 0 && a.amount < 0.01 ? a.amount.toFixed(4) : a.amount.toFixed(2);
-  const sign = SIGNS[a.currency];
-  return sign ? `${sign}${n}` : `${a.currency} ${n}`;
-}
-
-/** 花费：照币种各写各的，用 ` + ` 接起来；一个都没有是空的。 @param {Amount[]} amounts */
-export const money = (amounts) => (amounts ?? []).map(amountText).join(' + ');
+/** 一笔钱、几笔钱的写法挪到了 `src/lib/format.js`（框下面累计的浮窗也用），这里照旧交出去 */
+export { amountText, money } from '../../src/lib/format.js';
 
 /** 本地日期 `2026-10-20` @param {Date} d */
 export const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;

@@ -464,6 +464,28 @@
     "stashed": "已暂存 · Ctrl+S 取回",
     "empty": "没有暂存内容"
   },
+  "context_pop": {
+    "tip_context": "上下文明细",
+    "tip_total": "累计按用途",
+    "loading": "正在读…",
+    "unsupported": "这个核心还不能看明细",
+    "title": "上下文",
+    "estimated": "估算",
+    "line": "到 {line} 自动压缩",
+    "usage_title": "本会话累计",
+    "no_usage": "还没有用量",
+    "with_subagents": "含子代理",
+    "with_cost": "含子代理 · 共 {cost}",
+    "use": {
+      "main": "主对话",
+      "compaction": "压缩",
+      "subagent": "子代理",
+      "recap": "回顾",
+      "title": "起标题",
+      "memory": "记忆",
+      "other": "其他"
+    }
+  },
   "model_menu": {
     "tip": "换模型",
     "models": "模型",
