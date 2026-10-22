@@ -214,8 +214,8 @@ export function approvalHead(body, home, text) {
     outsideSandbox: body.detail?.sandbox === false,
     // 被认出来的高危命令（核心 5-17：`detail.hazard` 是种类，`git_force_push` 这些）：标一个「高危命令」（2026-10-20 项目主人定的字，终端一样）
     hazard: typeof body.detail?.hazard === 'string' && body.detail.hazard !== '',
-    // `zone`：`outside` 工作区外，`private` 别的程序的私密目录（`~/.ssh` 这类，核心 5-13），各一个标记；别的不标
-    paths: paths.map((p) => ({ path: home && (p.path === home || p.path.startsWith(`${home}/`)) ? `~${p.path.slice(home.length)}` : p.path, zone: p.zone === 'outside' || p.zone === 'private' ? p.zone : null })),
+    // `zone`：`outside` 工作区外，`private` 别的程序的私密目录（`~/.ssh` 这类，核心 5-13），`read_only` 受保护的路径（核心 5-17 下上），各一个标记；别的不标
+    paths: paths.map((p) => ({ path: home && (p.path === home || p.path.startsWith(`${home}/`)) ? `~${p.path.slice(home.length)}` : p.path, zone: p.zone === 'outside' || p.zone === 'private' || p.zone === 'read_only' ? p.zone : null })),
   };
 }
 

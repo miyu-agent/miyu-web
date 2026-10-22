@@ -86,7 +86,7 @@ test('确认的问题行：写几个文件、家目录写 ~、工作区外和私
   assert.deepEqual(head.paths, [{ path: '~/.editorconfig', zone: 'outside' }]);
   // 别的程序的私密目录（核心 5-13 的 `private`）也标出来；只能读的（`read_only`）、没写的不标
   const priv = approvalHead({ call_id: 'p', access: 'read', detail: { tool: 'read', paths: [{ path: '/home/alice/.ssh/id_ed25519', write: false, zone: 'private' }, { path: '/etc/hosts', zone: 'read_only' }, { path: '/w/a' }] } }, '/home/alice', text);
-  assert.deepEqual(priv.paths, [{ path: '~/.ssh/id_ed25519', zone: 'private' }, { path: '/etc/hosts', zone: null }, { path: '/w/a', zone: null }]);
+  assert.deepEqual(priv.paths, [{ path: '~/.ssh/id_ed25519', zone: 'private' }, { path: '/etc/hosts', zone: 'read_only' }, { path: '/w/a', zone: null }]);
   // 跑命令的（D-4）：问题行是短标题，带命令原文，`sandbox: false` 标出来；没有短标题的写「要运行一条命令」；老的只有 `tool` 的照原来
   const exec = approvalHead(approval('demo_approve_2').body, null, text);
   assert.deepEqual([exec.title, exec.command, exec.outsideSandbox], ['清掉另一个仓库的编译产物', 'cargo clean --manifest-path ~/src/other/Cargo.toml', true]);

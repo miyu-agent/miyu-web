@@ -135,7 +135,9 @@
         }
       },
       "private": "私密目录",
-      "private_tip": "别的程序存钥匙、登录信息的目录"
+      "private_tip": "别的程序存钥匙、登录信息的目录",
+      "read_only": "受保护",
+      "read_only_tip": "受保护的路径：读照常，改之前要先问"
     },
     "en": {
       "asking": "{who} is asking",
@@ -220,7 +222,9 @@
         }
       },
       "private": "Private folder",
-      "private_tip": "Where other programs keep keys and logins"
+      "private_tip": "Where other programs keep keys and logins",
+      "read_only": "Protected",
+      "read_only_tip": "Protected path: reading is fine, changes are asked about first"
     },
     "ja": {
       "asking": "{who} が質問しています",
@@ -305,7 +309,9 @@
         }
       },
       "private": "プライベートフォルダ",
-      "private_tip": "ほかのプログラムが鍵やログイン情報を保存する場所"
+      "private_tip": "ほかのプログラムが鍵やログイン情報を保存する場所",
+      "read_only": "保護",
+      "read_only_tip": "保護するパス：読むのは自由、変更する前に確認します"
     }
   }
 }
