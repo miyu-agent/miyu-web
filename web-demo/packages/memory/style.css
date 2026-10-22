@@ -200,3 +200,25 @@
 .mem-who { display: inline-block; margin-right: calc(6px * var(--space)); padding: 0 calc(6px * var(--space)); border-radius: var(--r-5); background: var(--accent-soft, var(--surface-2)); color: var(--accent); font-size: calc(12px * var(--text-scale)); line-height: 1.6; vertical-align: 1px; }
 .mem-who-input { width: 100%; box-sizing: border-box; }
 .mem-who-input[hidden] { display: none; }
+
+/* 认识的人（第 14 条）：页头两个标签、一人一张卡排成网格 */
+.mem-tabs { display: flex; gap: calc(6px * var(--space)); }
+.mem-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: calc(10px * var(--space)); }
+.mem-card { display: flex; flex-direction: column; gap: calc(6px * var(--space)); min-width: 0; padding: calc(12px * var(--space)) calc(14px * var(--space)); border-radius: var(--r-12); background: var(--item-hover, var(--surface-2)); cursor: pointer; }
+.mem-card:hover, .mem-card:focus-visible { background: var(--surface-3); outline: 0; }
+.mem-card-who { overflow: hidden; color: var(--text); font-size: calc(14px * var(--text-scale)); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.mem-card-names { display: flex; flex-wrap: wrap; gap: calc(4px * var(--space)); }
+.mem-card-names .mem-who { margin-right: 0; }
+.mem-card-text { display: -webkit-box; flex: 1 0 auto; overflow: hidden; -webkit-line-clamp: 4; -webkit-box-orient: vertical; color: var(--text-soft); font-size: calc(13px * var(--text-scale)); line-height: 1.6; overflow-wrap: anywhere; white-space: pre-line; }
+.mem-card mark { padding: 0 calc(1px * var(--space)); border-radius: var(--r-3); background: color-mix(in srgb, var(--gold) 28%, transparent); color: inherit; }
+.mem-card-foot { display: grid; align-items: center; min-height: 26px; }
+.mem-card-foot > * { grid-area: 1 / 1; }
+.mem-card-foot .mem-restore { justify-self: end; }
+.mem-card-meta { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); white-space: nowrap; }
+.mem-card.is-retired { opacity: .6; }
+.mem-card.is-retired .mem-card-text { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--text-faint) 60%, transparent); }
+.mem-card.is-retired:hover .mem-restore, .mem-card.is-retired:focus-within .mem-restore { visibility: visible; }
+.mem-card.is-retired:hover .mem-card-meta, .mem-card.is-retired:focus-within .mem-card-meta { visibility: hidden; }
+.mem-card-area { min-height: 132px; }
+.mem-taken { justify-self: start; margin-top: calc(4px * var(--space)); padding: 0; border: 0; background: none; color: var(--accent); font: calc(12px * var(--text-scale)) var(--font-ui); cursor: pointer; }
+.mem-taken[hidden] { display: none; }

@@ -139,3 +139,37 @@ export function splitKeywords(text) {
 
 /** 一个个关键词连回核心存的那一行（英文逗号加空格）。 @param {string[]} words */
 export const joinKeywords = (words) => words.join(', ');
+
+// —— 人卡（蓝图「记忆页」第 14 条；核心 E-1 下） ——
+
+/** 一张卡最多几个字、几个叫法、一个叫法最多几个字 */
+export const CARD_MAX = 300;
+export const NAMES_MAX = 8;
+export const NAME_MAX = 40;
+
+/**
+ * 搜「认识的人」：是谁、叫法、正文里有这几个字的（不分大小写；空着的都算）。
+ * @param {{who: string, text: string, names?: string[]}} c @param {string} q
+ */
+export function cardMatches(c, q) {
+  const s = q.trim().toLowerCase();
+  if (!s) return true;
+  return [c.who, c.text, ...(c.names ?? [])].some((x) => String(x ?? '').toLowerCase().includes(s));
+}
+
+/**
+ * 写不写得了一张卡：是谁、内容不空，内容不超长，叫法不超过 8 个、一个不超过 40 字。交回哪一样不行（`who`、`text`、`names`），都行的 `null`。
+ * @param {string} who @param {string} text @param {string[]} names
+ */
+export function cardProblem(who, text, names) {
+  if (!who.trim()) return 'who';
+  const t = text.trim();
+  if (!t || chars(t) > CARD_MAX) return 'text';
+  if (names.length > NAMES_MAX || names.some((n) => !n.trim() || chars(n) > NAME_MAX)) return 'names';
+  return null;
+}
+
+/** 改没改：内容（去掉前后空白）、叫法（照先后）有一样不同就算改了。 @param {{text: string, names?: string[]}} c @param {string} text @param {string[]} names */
+export function cardChange(c, text, names) {
+  return text.trim() !== c.text || JSON.stringify(names) !== JSON.stringify(c.names ?? []);
+}

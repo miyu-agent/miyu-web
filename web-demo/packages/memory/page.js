@@ -7,6 +7,7 @@ import { leave } from '../../src/lib/motion.js';
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { keywordBox } from './keywords.js';
 import { DreamCard } from './dream.js';
+import { tabsRow, peoplePage, cardPop } from './people.js';
 import { CLASSES, TEXT_MAX, KEYWORDS_MAX, chars, counts, visible, hasKeywords, updateOf, canSave, saveNote, shortId, agoText, isRetired, tidying } from './model.js';
 
 /** 一次列几条（滚到底再多读一批） */
@@ -31,8 +32,20 @@ export class MemoryPage {
     this.el.addEventListener('set-dismiss', () => {
       if (this.adding) this.closeAdd();
       else if (this.open) this.closeDetail();
+      else if (this.person != null) this.closePerson();
       else if (this.history) this.closeHistory();
     });
+    /** 看哪一页：记忆、认识的人（第 14 条） @type {'memory'|'people'} */
+    this.tab = 'memory';
+    /** 这一份的人卡（连作废的；照是谁排）；旧核心没有 `memory.cards` 的是 `null`，不出标签 @type {import('./people.js').Card[]|null} */
+    this.cards = null;
+    /** 开着哪个人的卡（空字符串是「加一个人」） @type {string|null} */
+    this.person = null;
+    /** 开着的那张卡最后一次见到的样子 @type {import('./people.js').Card|null} */
+    this.seenCard = null;
+    /** 「认识的人」的搜索（网页自己筛）、显示作废的 */
+    this.peopleQuery = '';
+    this.cardsRetired = false;
     /** 「整理记录」的小窗开着（蓝图第 13a 条第 4 条） */
     this.history = false;
     /** @type {any} */
@@ -92,7 +105,9 @@ export class MemoryPage {
     if (persona && persona !== this.persona) {
       this.persona = persona;
       this.open = null;
+      this.person = null;
       this.query = '';
+      this.peopleQuery = '';
       if (this.loaded) {
         this.subscribe();
         this.reload();
@@ -128,12 +143,19 @@ export class MemoryPage {
     }
     const persona = this.persona;
     const q = this.query.trim();
+    // 人卡跟着一起读（连作废的，网页自己筛）；旧核心没有这个方法的不出「认识的人」（第 14 条）
+    const cards = this.ctx.core.request('memory.cards', { persona, forgotten: true }).then(
+      (/** @type {any} */ r) => (Array.isArray(r?.cards) ? r.cards : []),
+      (/** @type {any} */ err) => (err?.code === -32601 || err?.data?.reason === 'unknown_method' ? null : []));
     try {
       const got = q
         ? await this.ctx.core.request('memory.search', { persona, query: q, forgotten: this.retired, limit: Math.min(500, this.limit) })
         : await this.ctx.core.request('memory.list', { persona, forgotten: this.retired, limit: Math.min(500, this.limit) });
+      const people = await cards;
       if (persona !== this.persona || q !== this.query.trim()) return;
       this.list = Array.isArray(got?.memories) ? got.memories : [];
+      this.cards = people;
+      if (!people && this.tab === 'people') this.tab = 'memory';
       this.keywords = this.keywords || hasKeywords(this.list);
       this.problem = null;
     } catch (err) {
@@ -196,11 +218,11 @@ export class MemoryPage {
     if (this.el.querySelector('.mem-modal.is-leaving')) return;
     // 「记一条」的小窗里写着字的：不重画，免得冲掉（收起以后再画）
     if (this.adding && /** @type {HTMLTextAreaElement|null} */ (this.el.querySelector('.mem-add textarea'))?.value.trim()) return;
-    if (this.adding || this.open || this.history) this.el.dataset.setDismiss = '1';
+    if (this.adding || this.open || this.person != null || this.history) this.el.dataset.setDismiss = '1';
     else delete this.el.dataset.setDismiss;
     // 正在详情里写着的：不重画那一张，免得冲掉写了一半的字；那一条在别处没了的写一行
-    if (this.open && this.el.querySelector('.mem-detail')) {
-      const still = this.list.find((m) => m.id === this.open);
+    if ((this.open || this.person) && this.el.querySelector('.mem-detail')) {
+      const still = this.open ? this.list.find((m) => m.id === this.open) : this.cards?.find((c) => c.who === this.person);
       const note = this.el.querySelector('.mem-gone');
       if (note instanceof HTMLElement) note.hidden = !!still;
       const editing = this.el.querySelector('.mem-detail [data-dirty]');
@@ -209,7 +231,7 @@ export class MemoryPage {
     // 一条的详情在列表上面弹一个小窗（2026-10-20 项目主人：改成浮动窗口），列表留在后面。小窗本来就开着的（保存以后重读、推来的变化）：
     // 新画的那一个不再播进场的动画（2026-10-22 项目主人：保存之后浮动窗口闪了两下）
     const steady = !!this.el.querySelector(':scope > .mem-modal:not(.is-leaving)');
-    const modal = this.problem ? null : this.open ? this.detail() : this.history ? this.historyPop() : null;
+    const modal = this.problem ? null : this.open ? this.detail() : this.person != null ? cardPop(this) : this.history ? this.historyPop() : null;
     if (steady && modal) modal.classList.add('is-steady');
     replace(this.el, this.problem ? this.problemCard() : [this.page(), modal]);
   }
@@ -222,21 +244,28 @@ export class MemoryPage {
     return h('div.mem-problem', h('p', t(this.problem === 'old_core' ? 'problem.old_core' : 'problem.unavailable')));
   }
 
-  page() {
-    const t = this.t;
-    const c = counts(this.list);
-    const shown = visible(this.list, { cls: this.cls, retired: this.retired });
-    const name = this.personas.find((p) => p.persona === this.persona)?.name ?? '';
-    const picker = this.personas.length
+  /** 选哪一份的下拉（两页共用） */
+  picker() {
+    return this.personas.length
       ? this.kit.select(this.personas.map((p) => ({ value: p.persona, name: p.name })), this.persona, (/** @type {string} */ v) => {
         this.persona = v;
         this.cls = 'all';
         this.query = '';
+        this.peopleQuery = '';
         this.adding = false;
         this.subscribe();
         this.reload();
       })
       : null;
+  }
+
+  page() {
+    if (this.tab === 'people' && this.cards) return peoplePage(this);
+    const t = this.t;
+    const c = counts(this.list);
+    const shown = visible(this.list, { cls: this.cls, retired: this.retired });
+    const name = this.personas.find((p) => p.persona === this.persona)?.name ?? '';
+    const picker = this.picker();
     const find = /** @type {HTMLInputElement} */ (h('input.mem-find-input', { type: 'search', value: this.query, placeholder: t('search'), spellcheck: 'false', autocomplete: 'off' }));
     find.addEventListener('input', (e) => {
       if (/** @type {InputEvent} */ (e).isComposing) return;
@@ -269,6 +298,7 @@ export class MemoryPage {
     const clear = h('button.set-btn.is-danger.mem-clear', { type: 'button', disabled: !c.all, onclick: (/** @type {Event} */ e) => this.clear(/** @type {Element} */ (e.currentTarget)) },
       icon('trash-2'), t('clear'));
     return h('div.mem-list-page',
+      tabsRow(this),
       h('div.mem-tools', picker, h('label.mem-find', icon('search'), find), dream, this.historyButton(), add),
       this.tidyingLine(),
       this.cardShown ? this.card?.el ?? null : null,
@@ -332,6 +362,13 @@ export class MemoryPage {
     this.ctx.chat?.open?.(id, { back: { title: this.t('title'), run: () => { this.show(persona); this.ctx.settings?.open?.('memory'); } } });
   }
 
+  /** 收起一张卡的小窗（写着没存的字不要了） */
+  closePerson() {
+    this.person = null;
+    this.seenCard = null;
+    this.fadeModal();
+  }
+
   /** 收起「记一条」的小窗（写着的字不要了） */
   closeAdd() {
     this.adding = false;
@@ -371,9 +408,9 @@ export class MemoryPage {
           : null));
   }
 
-  /** 搜到的字淡黄底标出来 @param {string} text */
-  marked(text) {
-    const q = this.query.trim();
+  /** 搜到的字淡黄底标出来 @param {string} text @param {string} [query] 照哪个搜（默认记忆那一页的） */
+  marked(text, query = this.query) {
+    const q = query.trim();
     const i = q ? text.toLowerCase().indexOf(q.toLowerCase()) : -1;
     return i < 0 ? text : [text.slice(0, i), h('mark', text.slice(i, i + q.length)), text.slice(i + q.length)];
   }
@@ -637,10 +674,10 @@ export class MemoryPage {
     }
   }
 
-  /** 核心拒了：照原因写一句 @param {any} err */
-  refusal(err) {
+  /** 核心拒了：照原因写一句 @param {any} err @param {number} [max] 内容最多几个字（人卡的是 300） */
+  refusal(err, max = TEXT_MAX) {
     const d = err?.data;
-    if (d?.reason === 'memory_too_long') return this.t(d.field === 'keywords' ? 'too_long_keywords' : 'too_long', { n: d.limit ?? (d.field === 'keywords' ? KEYWORDS_MAX : TEXT_MAX) });
+    if (d?.reason === 'memory_too_long') return this.t(d.field === 'keywords' ? 'too_long_keywords' : 'too_long', { n: d.limit ?? (d.field === 'keywords' ? KEYWORDS_MAX : max) });
     if (d?.reason === 'memory_not_current') return this.t('not_current');
     if (d?.reason === 'unknown_memory') return this.t('not_current');
     return d?.message ?? err?.message ?? String(err);

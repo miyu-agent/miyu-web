@@ -182,7 +182,25 @@
       "close": "关闭",
       "dream_stop": "停止整理",
       "dream_stop_hint": "点一下停止整理",
-      "clear_ask": "确认要清空记忆吗？"
+      "clear_ask": "确认要清空记忆吗？",
+      "tabs": {
+        "memory": "记忆",
+        "people": "认识的人"
+      },
+      "people": {
+        "search": "搜索认识的人（名字、叫法、内容）",
+        "add": "加一个人",
+        "empty": "{name} 还没有认识的人。整理记忆时会照「认识的人」那一类的记忆写卡，也可以点「加一个人」",
+        "no_match": "没有符合的人",
+        "foot": "{live} 人",
+        "foot_retired": "{live} 人 · {retired} 张作废",
+        "by_person": "你改的",
+        "by_module": "整理写的",
+        "names": "叫法",
+        "names_note": "群名片、外号这类，搜得到，AI 不拿它认人",
+        "text_hint": "这个人是谁、怎么认识的、喜好、近况……最多 {n} 字",
+        "taken": "已经有这个人的卡了，点这里打开"
+      }
     },
     "en": {
       "title": "Memory",
@@ -332,7 +350,25 @@
       "close": "Close",
       "dream_stop": "Stop",
       "dream_stop_hint": "Click to stop tidying",
-      "clear_ask": "Clear all memories?"
+      "clear_ask": "Clear all memories?",
+      "tabs": {
+        "memory": "Memories",
+        "people": "People"
+      },
+      "people": {
+        "search": "Search people (name, aliases, notes)",
+        "add": "Add a person",
+        "empty": "{name} doesn’t know anyone yet. Cards are written from “People” memories when memory is tidied, or click “Add a person”",
+        "no_match": "No matching people",
+        "foot": "{live} people",
+        "foot_retired": "{live} people · {retired} retired",
+        "by_person": "Edited by you",
+        "by_module": "Written by tidying",
+        "names": "Aliases",
+        "names_note": "Group nicknames and the like. Searchable; the AI doesn’t use them to identify anyone",
+        "text_hint": "Who they are, how you met, likes, recent news… up to {n} characters",
+        "taken": "This person already has a card. Click to open it"
+      }
     },
     "ja": {
       "title": "記憶",
@@ -482,7 +518,25 @@
       "close": "閉じる",
       "dream_stop": "整理を停止",
       "dream_stop_hint": "クリックで整理を停止",
-      "clear_ask": "記憶をすべて消去しますか？"
+      "clear_ask": "記憶をすべて消去しますか？",
+      "tabs": {
+        "memory": "記憶",
+        "people": "知っている人"
+      },
+      "people": {
+        "search": "知っている人を検索（名前・呼び名・内容）",
+        "add": "人を追加",
+        "empty": "{name} にはまだ知っている人がいません。記憶の整理で「知っている人」の記憶からカードが作られます。「人を追加」からも作れます",
+        "no_match": "該当する人はいません",
+        "foot": "{live} 人",
+        "foot_retired": "{live} 人 · 無効 {retired} 枚",
+        "by_person": "あなたが編集",
+        "by_module": "整理で作成",
+        "names": "呼び名",
+        "names_note": "グループでの表示名やあだ名など。検索できますが、AI は人の識別には使いません",
+        "text_hint": "どんな人か、出会い、好み、近況… {n} 文字まで",
+        "taken": "この人のカードはもうあります。クリックで開く"
+      }
     }
   }
 }

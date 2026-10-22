@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { counts, visible, isRetired, updateOf, canSave, saveNote, chars, hasKeywords, shortId, TEXT_MAX, tidying, splitKeywords, joinKeywords } from '../../packages/memory/model.js';
+import { counts, visible, isRetired, updateOf, canSave, saveNote, chars, hasKeywords, shortId, TEXT_MAX, tidying, splitKeywords, joinKeywords, cardMatches, cardProblem, cardChange, CARD_MAX } from '../../packages/memory/model.js';
 
 const m = (id, cls, text, extra = {}) => ({ id, class: cls, text, ...extra });
 const list = [
@@ -86,4 +86,24 @@ test('认识的人（核心 E-1 上）：是谁改了也存成新的一条；空
   assert.equal(canSave(p, '喜欢猫', null, '  '), false);
   assert.equal(canSave(p, '喜欢狗', null, 'qq:10086'), true);
   assert.deepEqual(updateOf({ id: 'm1', class: 'user', text: 'a' }, 'b', null), { id: 'm1', text: 'b' });
+});
+
+test('人卡（第 14 条）：照是谁、叫法、正文搜；是谁、内容空的、超 300 字、叫法超 8 个或超 40 字的写不了；内容、叫法有一样不同才算改了', () => {
+  const card = { who: 'qq:10086', text: '大学同学，喜欢打球', names: ['明哥', 'Ming'] };
+  assert.ok(cardMatches(card, ''));
+  assert.ok(cardMatches(card, '10086'));
+  assert.ok(cardMatches(card, 'ming'));
+  assert.ok(cardMatches(card, '打球'));
+  assert.ok(!cardMatches(card, '猫'));
+  assert.equal(cardProblem('qq:1', '好', []), null);
+  assert.equal(cardProblem(' ', '好', []), 'who');
+  assert.equal(cardProblem('a', '  ', []), 'text');
+  assert.equal(cardProblem('a', '字'.repeat(CARD_MAX), []), null);
+  assert.equal(cardProblem('a', '字'.repeat(CARD_MAX + 1), []), 'text');
+  assert.equal(cardProblem('a', '好', Array.from({ length: 9 }, (_, i) => `n${i}`)), 'names');
+  assert.equal(cardProblem('a', '好', ['名'.repeat(41)]), 'names');
+  assert.ok(!cardChange(card, ' 大学同学，喜欢打球 ', ['明哥', 'Ming']));
+  assert.ok(cardChange(card, '大学同学', ['明哥', 'Ming']));
+  assert.ok(cardChange(card, '大学同学，喜欢打球', ['明哥']));
+  assert.ok(!cardChange({ who: 'b', text: 'x' }, 'x', []));
 });

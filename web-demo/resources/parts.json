@@ -5977,6 +5977,42 @@
       ".mem-who"
     ]
   },
+  "mem.card": {
+    "zh": "记忆页「认识的人」：一人一张卡",
+    "select": [
+      ".mem-card"
+    ]
+  },
+  "mem.card-who": {
+    "zh": "人卡上的是谁",
+    "select": [
+      ".mem-card-who"
+    ]
+  },
+  "mem.card-text": {
+    "zh": "人卡的正文",
+    "select": [
+      ".mem-card-text"
+    ]
+  },
+  "mem.card-meta": {
+    "zh": "人卡底下谁写的、多久以前",
+    "select": [
+      ".mem-card-meta"
+    ]
+  },
+  "mem.card-mark": {
+    "zh": "人卡里搜到的字",
+    "select": [
+      ".mem-card mark"
+    ]
+  },
+  "mem.taken": {
+    "zh": "「加一个人」里已经有这张卡的提示",
+    "select": [
+      ".mem-taken"
+    ]
+  },
   "adm.title": {
     "zh": "管理员后台：页名",
     "select": [
