@@ -34,6 +34,8 @@ export function refusedText(err) {
     case 'login_throttled': return t('signin.throttled', { seconds: Math.max(1, Math.ceil((err.data?.retry_after_ms ?? 0) / 1000)) });
     case 'bad_code': return t('signin.bad_code');
     case 'bad_invite': return t('signin.bad_invite');
+    // 停用的账号密码输对了（核心另给的原因；2026-10-22 项目主人：要说账号停用了）
+    case 'account_disabled': return t('signin.account_disabled');
     default: return null;
   }
 }

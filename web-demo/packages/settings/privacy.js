@@ -86,7 +86,7 @@ export function privateGroup(dialog, name, items) {
   // 搜索框右边两个图标按钮：「+」点了弹一个写路径的小框，「↺」重置（2026-10-22 项目主人：去掉表下面写路径的框）；一直都在，跟出厂一样的「重置」灰着
   const plus = /** @type {HTMLButtonElement} */ (h('button.icon-button.pv-tool', {
     type: 'button', title: t('privacy.add'), 'aria-label': t('privacy.add'),
-    onclick: () => openAdd(dialog, plus, w('add_hint'), async (text) => {
+    onclick: () => openAdd(dialog, w('add_title'), w('add_hint'), async (text) => {
       const got = batchChange(text, add, remove);
       if (!got.changes.length) return got.skipped.length ? t('privacy.already', { paths: got.skipped.join('、') }) : '';
       const why = await store(got.changes, true);
@@ -115,16 +115,17 @@ export function privateGroup(dialog, name, items) {
 }
 
 /**
- * 「+」点了弹的小框（同设置页别的浮层，开在按钮下面、右边对齐）：写路径的框（一行一个，`Enter` 加、`Shift+Enter` 换行），「取消」「添加」。
- * `submit` 交回拒了的话（写在小框里）、空的字（什么也不说，留着），`null` 是成了（收起）。
- * @param {any} dialog @param {HTMLElement} at @param {string} hint @param {(text: string) => Promise<string|null>} submit
+ * 「+」点了在设置框正中弹的窗口（同「添加 MCP 服务」：后面淡遮罩，点遮罩、`Esc`、「取消」收起；2026-10-22 项目主人：原来挂在按钮下面像个下拉框）：
+ * 标题照组名，写路径的框（一行一个，`Enter` 加、`Shift+Enter` 换行），「取消」「添加」。`submit` 交回拒了的话（写在窗口里）、空的字（什么也不说，
+ * 留着），`null` 是成了（收起）。
+ * @param {any} dialog @param {string} title @param {string} hint @param {(text: string) => Promise<string|null>} submit
  */
-function openAdd(dialog, at, hint, submit) {
+function openAdd(dialog, title, hint, submit) {
   const t = (/** @type {string} */ k) => dialog.ctx.text(k);
-  dialog.panel.querySelector('.pv-add-pop')?.remove();
+  dialog.panel.querySelector('.pv-add-modal')?.remove();
   const input = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.pv-input', { rows: 3, placeholder: hint, spellcheck: 'false', autocomplete: 'off' }));
   const error = h('p.set-error', { hidden: true });
-  const close = () => leave(pop, () => pop.remove());
+  const close = () => leave(modal, () => modal.remove());
   const go = async () => {
     const why = await submit(input.value);
     if (why === null) { close(); return; }
@@ -133,24 +134,16 @@ function openAdd(dialog, at, hint, submit) {
   };
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); go(); }
-    if (e.key === 'Escape') { e.stopPropagation(); close(); }
   });
-  const pop = h('div.set-menu.pv-add-pop', { role: 'dialog', 'aria-label': t('privacy.add'), 'data-set-dismiss': '1' },
+  const pop = h('div.set-tool-pop.pv-add-pop', { role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
+    h('div.set-tool-pop-head', h('strong', title),
+      h('button.icon-button', { type: 'button', title: t('close'), 'aria-label': t('close'), onclick: () => close() }, icon('x'))),
     input, error,
-    h('div.pv-add-foot', h('button.set-btn', { type: 'button', onclick: () => close() }, t('privacy.cancel')), h('button.set-btn.is-primary', { type: 'button', onclick: go }, t('privacy.add'))));
-  pop.addEventListener('set-dismiss', close);
-  const box = at.getBoundingClientRect();
-  const panel = dialog.panel.getBoundingClientRect();
-  const zoom = panel.width / dialog.panel.offsetWidth || 1;
-  pop.style.top = `${(box.bottom - panel.top) / zoom + 6}px`;
-  pop.style.right = `${(panel.right - box.right) / zoom}px`;
-  dialog.panel.append(pop);
+    h('div.set-tool-pop-foot', h('button.set-btn', { type: 'button', onclick: () => close() }, t('privacy.cancel')), h('button.set-btn.is-primary', { type: 'button', onclick: go }, t('privacy.add'))));
+  const modal = h('div.set-tool-modal.pv-add-modal', { 'data-set-dismiss': '1', onclick: (/** @type {Event} */ e) => { if (e.target === e.currentTarget) close(); } }, pop);
+  modal.addEventListener('set-dismiss', close);
+  dialog.panel.append(modal);
   input.focus();
-  const away = (/** @type {MouseEvent} */ e) => {
-    if (!pop.isConnected) { document.removeEventListener('pointerdown', away, true); return; }
-    if (!pop.contains(/** @type {Node} */ (e.target)) && e.target !== at && !at.contains(/** @type {Node} */ (e.target))) { document.removeEventListener('pointerdown', away, true); close(); }
-  };
-  document.addEventListener('pointerdown', away, true);
 }
 
 /** 收起、展开走多久（毫秒，乘上动效快慢） */

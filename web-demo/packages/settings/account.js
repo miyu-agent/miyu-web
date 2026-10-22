@@ -1,7 +1,7 @@
 // @ts-check
-//! 「账号」页（蓝图 `web.md`「设置页」第 12c 条；核心 Y-1 上，设计 06 第八又补第 7 条；2026-10-22 项目主人定）：网页自己的页，三组——
-//! 「我的账号」（用户名、退出登录）、「邀请」（生成邀请：注册链接和邀请码只给这一次；列出邀请，没用的能撤）、「成员」（一个账号一行，
-//! 停用、启用）。后两组只有管理员有：`account.invites` 回 `not_permitted` 的不画。改了以后重读这两组。
+//! 「账号」页（蓝图 `web.md`「设置页」第 12c 条；核心 Y-1 上，设计 06 第八又补第 7 条；2026-10-22 项目主人定）：网页自己的页——管理员
+//! 最上面一张「管理员后台」的入口卡片，下面「我的账号」（用户名、退出登录）。「邀请」（生成邀请：注册链接和邀请码只给这一次；列出邀请，
+//! 没用的能撤）、「成员」（一个账号一行，停用、启用）两组画在管理员后台（`admin.js`，第 12d 条）。改了以后重读这两组。
 
 import { h, icon } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
@@ -36,37 +36,53 @@ function when(at) {
   return Number.isNaN(d.getTime()) ? '' : d.toLocaleString(undefined, { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-/** 这一页记的东西（设置框关了清掉） @param {any} dialog */
-const stateOf = (dialog) => (dialog.accounts ??= { loading: false, loaded: false, admin: false, invites: [], accounts: [], error: null, days: 7 });
+/**
+ * 画在哪：设置框的「账号」页，或者管理员后台（`admin.js`）。`state` 是这一处记的东西（设置框关了、后台关了清掉），`redraw` 读完以后重画这一处。
+ * @typedef {{ctx: any, panel: HTMLElement, toast: (text: string) => void, redraw: () => void, state: any}} View
+ */
 
-/** 读邀请、账号表；不是管理员的（`not_permitted`）只画「我的账号」。读完重画。 @param {any} dialog */
-async function load(dialog) {
-  const st = stateOf(dialog);
+/** 这一处记的东西 @param {View} view */
+export const stateOf = (view) => (view.state.accounts ??= { loading: false, loaded: false, admin: false, invites: [], accounts: [], error: null, days: 7 });
+
+/** 读邀请、账号表；不是管理员的（`not_permitted`）不算出错。读完重画。 @param {View} view */
+export async function load(view) {
+  const st = stateOf(view);
   if (st.loading) return;
   st.loading = true;
   try {
-    const [invites, list] = await Promise.all([dialog.ctx.core.request('account.invites', {}), dialog.ctx.core.request('account.list', {})]);
+    const [invites, list] = await Promise.all([view.ctx.core.request('account.invites', {}), view.ctx.core.request('account.list', {})]);
     st.invites = Array.isArray(invites?.invites) ? invites.invites : [];
     st.accounts = Array.isArray(list?.accounts) ? list.accounts : [];
     st.admin = true;
     st.error = null;
   } catch (err) {
     st.admin = false;
-    // 不是管理员、旧核心没有这几个方法：只画「我的账号」，不算出错
+    // 不是管理员、旧核心没有这几个方法：不算出错
     const reason = /** @type {any} */ (err)?.reason;
     st.error = reason === 'not_permitted' || /** @type {any} */ (err)?.code === -32601 ? null : /** @type {any} */ (err)?.message ?? String(err);
   } finally {
     st.loading = false;
     st.loaded = true;
-    if (dialog.isOpen && dialog.current === 'account') dialog.drawBody();
+    view.redraw();
   }
 }
 
-/** 「账号」页。 @param {any} dialog */
+/** 设置框里的那一处 @param {any} dialog @returns {View} */
+const dialogView = (dialog) => ({
+  ctx: dialog.ctx, panel: dialog.panel, toast: (text) => dialog.toast(text), state: dialog,
+  redraw: () => { if (dialog.isOpen && dialog.current === 'account') dialog.drawBody(); },
+});
+
+/** 「账号」页：管理员最上面一张「管理员后台」的卡片（点了关上设置、开后台，第 12d 条），下面「我的账号」。 @param {any} dialog */
 export function drawAccount(dialog) {
-  const st = stateOf(dialog);
-  if (!st.loaded) load(dialog);
-  return [mine(dialog), ...(st.admin ? [inviteGroup(dialog), memberGroup(dialog)] : []), st.error ? h('p.set-error', st.error) : null];
+  const view = dialogView(dialog);
+  const st = stateOf(view);
+  if (!st.loaded) load(view);
+  const t = (/** @type {string} */ k) => dialog.ctx.text(k);
+  const enter = st.admin ? h('section.set-group', h('div.acc-enter',
+    h('div.set-text', h('div.set-name', h('span', t('account.admin_title'))), h('p.set-desc', t('account.admin_desc'))),
+    h('button.set-btn.acc-enter-btn', { type: 'button', onclick: () => { dialog.close(); dialog.ctx.host.route.go('#admin=overview'); } }, t('account.admin_enter'), icon('chevron-right')))) : null;
+  return [enter, mine(dialog), st.error ? h('p.set-error', st.error) : null];
 }
 
 /** 「我的账号」：用户名；拿登录令牌连的多「退出登录」「退出所有设备」。 @param {any} dialog */
@@ -90,10 +106,10 @@ function mine(dialog) {
   return h('section.set-group', h('h3.set-group-name', t('account.mine')), h('div.set-rows', rows));
 }
 
-/** 「邀请」：有效期、生成邀请；一个邀请一行。 @param {any} dialog */
-function inviteGroup(dialog) {
-  const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
-  const st = stateOf(dialog);
+/** 「邀请」：有效期、生成邀请；一个邀请一行。 @param {View} view */
+export function inviteGroup(view) {
+  const t = (/** @type {string} */ k, /** @type {any} */ f) => view.ctx.text(k, f);
+  const st = stateOf(view);
   const days = /** @type {HTMLSelectElement} */ (h('select.set-select.acc-days', { 'aria-label': t('account.days_label'), onchange: () => { st.days = Number(days.value); } },
     DAYS.map((d) => h('option', { value: String(d), selected: d === st.days }, t('account.days', { n: d })))));
   // 等核心回的时候按钮写「正在生成…」；小窗开着时不重读列表（2026-10-22 项目主人：偶尔点了没弹窗，点一下别处才出来——小窗刚出来下面整页就重画），
@@ -103,10 +119,10 @@ function inviteGroup(dialog) {
     make.replaceChildren(icon('loader-circle'), t('account.making'));
     make.classList.add('is-busy');
     try {
-      const got = await dialog.ctx.core.request('account.invite', { days: st.days });
-      showInvite(dialog, got, () => { st.loaded = false; load(dialog); });
+      const got = await view.ctx.core.request('account.invite', { days: st.days });
+      showInvite(view, got, () => { st.loaded = false; load(view); });
     } catch (err) {
-      dialog.toast(/** @type {any} */ (err)?.message ?? String(err));
+      view.toast(/** @type {any} */ (err)?.message ?? String(err));
     } finally {
       make.disabled = false;
       make.classList.remove('is-busy');
@@ -123,12 +139,12 @@ function inviteGroup(dialog) {
     const revoke = state === 'open' ? h('button.set-btn.is-small.acc-revoke', { type: 'button', onclick: async (/** @type {Event} */ e) => {
       if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('account.revoke_ask'), yes: t('account.revoke'), no: t('account.cancel') }))) return;
       try {
-        await dialog.ctx.core.request('account.invite_revoke', { id: inv.id });
+        await view.ctx.core.request('account.invite_revoke', { id: inv.id });
       } catch (err) {
-        dialog.toast(/** @type {any} */ (err)?.message ?? String(err));
+        view.toast(/** @type {any} */ (err)?.message ?? String(err));
       }
       st.loaded = false;
-      load(dialog);
+      load(view);
     } }, t('account.revoke')) : null;
     return h(`div.set-row.acc-invite${state === 'open' ? '' : '.is-done'}`,
       h('div.set-text', h('div.set-name', h('code.acc-id', String(inv.id).slice(0, 8))), h('p.set-desc', t('account.invite_created', { at: when(inv.created) }))),
@@ -141,16 +157,16 @@ function inviteGroup(dialog) {
 
 /**
  * 生成好的邀请：小窗里写注册链接（走桥的不给）和邀请码，各一个「复制」；码只显示这一次。
- * @param {any} dialog @param {{code: string, id: string, expires: string}} got @param {() => void} closed 收起以后（重读列表）
+ * @param {View} view @param {{code: string, id: string, expires: string}} got @param {() => void} closed 收起以后（重读列表）
  */
-function showInvite(dialog, got, closed) {
-  const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
-  const link = dialog.ctx.host?.inviteLink?.(got.code) ?? null;
+function showInvite(view, got, closed) {
+  const t = (/** @type {string} */ k, /** @type {any} */ f) => view.ctx.text(k, f);
+  const link = view.ctx.host?.inviteLink?.(got.code) ?? null;
   const copyRow = (/** @type {string} */ label, /** @type {string} */ text) => {
     const value = h('code.acc-copy-value', text);
     const btn = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-small', { type: 'button', onclick: async () => {
       try {
-        await dialog.ctx.host.clipboard.write(text);
+        await view.ctx.host.clipboard.write(text);
         btn.textContent = t('account.copied');
         setTimeout(() => { btn.textContent = t('account.copy'); }, 1000);
       } catch {
@@ -160,7 +176,7 @@ function showInvite(dialog, got, closed) {
         const sel = getSelection();
         sel?.removeAllRanges();
         sel?.addRange(range);
-        dialog.toast(t('account.copy_by_hand'));
+        view.toast(t('account.copy_by_hand'));
       }
     } }, t('account.copy')));
     return h('div.acc-copy', h('span.acc-copy-label', label), value, btn);
@@ -175,24 +191,24 @@ function showInvite(dialog, got, closed) {
   const modal = h('div.set-tool-modal', { 'data-set-dismiss': '1', onclick: (/** @type {Event} */ e) => { if (e.target === e.currentTarget) close(); } }, pop);
   const close = () => leave(modal, () => { modal.remove(); closed(); });
   modal.addEventListener('set-dismiss', close);
-  dialog.panel.append(modal);
+  view.panel.append(modal);
 }
 
-/** 「成员」：一个账号一行，成员能停用、启用。 @param {any} dialog */
-function memberGroup(dialog) {
-  const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
-  const st = stateOf(dialog);
+/** 「成员」：一个账号一行，成员能停用、启用。 @param {View} view */
+export function memberGroup(view) {
+  const t = (/** @type {string} */ k, /** @type {any} */ f) => view.ctx.text(k, f);
+  const st = stateOf(view);
   const rows = sortAccounts(st.accounts).map((a) => {
     const name = a.username ?? a.account;
     const toggle = a.kind === 'member' ? h(`button.set-btn.is-small${a.disabled ? '' : '.acc-disable'}`, { type: 'button', onclick: async (/** @type {Event} */ e) => {
       if (!a.disabled && !(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('account.disable_ask', { name }), yes: t('account.disable'), no: t('account.cancel') }))) return;
       try {
-        await dialog.ctx.core.request(a.disabled ? 'account.enable' : 'account.disable', { account: a.account });
+        await view.ctx.core.request(a.disabled ? 'account.enable' : 'account.disable', { account: a.account });
       } catch (err) {
-        dialog.toast(/** @type {any} */ (err)?.message ?? String(err));
+        view.toast(/** @type {any} */ (err)?.message ?? String(err));
       }
       st.loaded = false;
-      load(dialog);
+      load(view);
     } }, t(a.disabled ? 'account.enable' : 'account.disable')) : null;
     return h(`div.set-row.acc-member${a.disabled ? '.is-disabled' : ''}`,
       h('div.set-text', h('div.set-name', h('span.acc-name', name),

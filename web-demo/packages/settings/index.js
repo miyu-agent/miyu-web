@@ -8,6 +8,7 @@ import { h, icon } from '../../src/lib/dom.js';
 import { SettingsDialog } from './dialog.js';
 import { ProviderFlow } from './onboard/flow.js';
 import { sectionKit } from './kit.js';
+import { AdminPage, parseAdmin } from './admin.js';
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -24,6 +25,33 @@ export function apply(ctx) {
     dialog.open(page);
   };
   ctx.effect(() => () => dialog?.close());
+  // 管理员后台（第 12d 条）：独立整页，走网页自己的路由 `#admin=<页>`，刷新还在原来那一页。是页面里点进去的（账号页的卡片）：「回到 Miyu」后退一步；
+  // 一进来就带着网址的：把这一段去掉
+  const nav = ctx.host.route;
+  let pushed = false;
+  const admin = new AdminPage(ctx, () => {
+    if (pushed) {
+      pushed = false;
+      nav.back();
+      return;
+    }
+    nav.replace('');
+    syncAdmin();
+  });
+  const syncAdmin = () => {
+    const page = parseAdmin(nav.current());
+    if (page) admin.show(page);
+    else {
+      pushed = false;
+      admin.close();
+    }
+  };
+  ctx.effect(() => nav.watch(() => {
+    if (!admin.el && parseAdmin(nav.current())) pushed = true;
+    syncAdmin();
+  }));
+  syncAdmin();
+  ctx.effect(() => () => admin.close());
   // 主题那几套换了（换了壁纸、人格的头像）：开着的设置页重画「主题」一组（卡片的小样、「主色」）
   ctx.slots.watch('theme.palettes', () => {
     if (dialog?.isOpen) dialog.refreshLook?.();

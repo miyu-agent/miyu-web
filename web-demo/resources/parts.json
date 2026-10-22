@@ -5890,5 +5890,67 @@
     "select": [
       ".pv-tool"
     ]
+  },
+  "acc.enter": {
+    "zh": "账号页：管理员后台的入口卡片",
+    "select": [
+      ".acc-enter"
+    ]
+  },
+  "acc.enter-btn": {
+    "zh": "账号页：「进入后台」按钮",
+    "select": [
+      ".acc-enter-btn"
+    ]
+  },
+  "adm.page": {
+    "zh": "管理员后台：整页",
+    "select": [
+      ".adm-page"
+    ]
+  },
+  "adm.nav": {
+    "zh": "管理员后台：左边深色的一栏",
+    "select": [
+      ".adm-nav"
+    ]
+  },
+  "adm.brand": {
+    "zh": "管理员后台：左栏顶上「Miyu 管理员后台」",
+    "select": [
+      ".adm-brand"
+    ]
+  },
+  "adm.nav-item": {
+    "zh": "管理员后台：左栏一页一行",
+    "select": [
+      ".adm-nav-item"
+    ]
+  },
+  "adm.exit": {
+    "zh": "管理员后台：「回到 Miyu」",
+    "select": [
+      ".adm-exit"
+    ]
+  },
+  "adm.title": {
+    "zh": "管理员后台：页的标题",
+    "select": [
+      ".adm-title"
+    ]
+  },
+  "adm.stat": {
+    "zh": "管理员后台：总览的数",
+    "select": [
+      ".adm-stat",
+      ".adm-stat b",
+      ".adm-stat span"
+    ]
+  },
+  "adm.denied": {
+    "zh": "管理员后台：不是管理员时那一句",
+    "select": [
+      ".adm-denied"
+    ]
   }
 }

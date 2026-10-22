@@ -32,8 +32,9 @@
 /* 一行：标题、什么时候开的，行与行之间一根细线；悬停铺一层淡底 */
 .sessions-list { display: grid; grid-template-columns: minmax(0, 1fr); }
 .sessions-row {
-  display: flex; min-width: 0; align-items: center; gap: calc(10px * var(--space)); min-height: 52px; padding: 0 calc(10px * var(--space)); border: 0; border-bottom: var(--divider, 1px solid var(--line));
-  border-radius: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer;
+  /* 一行一行之间不画分隔线，悬停铺一块圆角的底（2026-10-22 项目主人：去掉每一项的下划线） */
+  display: flex; min-width: 0; align-items: center; gap: calc(10px * var(--space)); min-height: 48px; padding: 0 calc(10px * var(--space)); border: 0;
+  border-radius: var(--r-8); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer;
   transition: background-color calc(0.15s * var(--motion-scale)) ease;
 }
 .sessions-row:hover { background: var(--item-hover, color-mix(in srgb, var(--text) 4%, transparent)); }
@@ -88,7 +89,7 @@
   position: sticky; top: 0; z-index: 2; padding: calc(14px * var(--space)) calc(10px * var(--space)) calc(6px * var(--space)); background: var(--surface); color: var(--text-faint);
   font-size: calc(11.5px * var(--text-scale)); font-weight: 600; letter-spacing: 0.04em;
 }
-.sessions-group:not(:first-child) { padding-top: calc(26px * var(--space)); }
+.sessions-group:not(:first-child) { padding-top: calc(34px * var(--space)); }
 .sessions-unread { flex: none; }
 .sessions-agents.is-running { color: var(--gold); }
 

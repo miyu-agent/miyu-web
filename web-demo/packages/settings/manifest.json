@@ -685,7 +685,32 @@
         "uninstalled": "已卸载：{name}",
         "kinds_none": "还没有分了种类的软件"
       },
+      "admin": {
+        "title": "Miyu 管理员后台",
+        "tab_title": "管理员后台 · Miyu",
+        "exit": "回到 Miyu",
+        "loading": "正在读…",
+        "denied": "只有管理员能打开这一页",
+        "failed": "读不到管理员的信息",
+        "pages": {
+          "overview": "总览",
+          "accounts": "账号与邀请"
+        },
+        "stat_accounts": "账号",
+        "stat_accounts_off": "账号（{n} 个停用）",
+        "stat_invites": "还能用的邀请",
+        "recent": "最近",
+        "no_recent": "还没有动静",
+        "event": {
+          "joined": "{who} 用邀请注册",
+          "invited": "生成邀请 {who}",
+          "disabled": "{who} 已停用"
+        }
+      },
       "account": {
+        "admin_title": "管理员后台",
+        "admin_desc": "管理账号和邀请、看每个人的用量、改所有人共用的软件、人格、模型和设置。",
+        "admin_enter": "进入后台",
         "mine": "我的账号",
         "username": "用户名",
         "local_admin": "管理员（本机）",
@@ -742,8 +767,10 @@
         "search": "搜索目录",
         "no_match": "没有对得上的目录",
         "in_workspace": "每个工作区",
+        "add_title": "添加私密目录",
         "readonly": {
           "drop_ask": "是否确认从列表中删除此路径？",
+          "add_title": "添加受保护的路径",
           "add_hint": "一行一个，例如 ~/.bashrc、/etc/hosts 或工作区里的 Makefile（Shift+回车换行）",
           "empty": "没有受保护的路径",
           "search": "搜索路径",
@@ -1272,7 +1299,32 @@
         "uninstalled": "Uninstalled {name}",
         "kinds_none": "No packages have kinds yet"
       },
+      "admin": {
+        "title": "Miyu admin console",
+        "tab_title": "Admin console · Miyu",
+        "exit": "Back to Miyu",
+        "loading": "Loading…",
+        "denied": "Only admins can open this page",
+        "failed": "Couldn't load the admin information",
+        "pages": {
+          "overview": "Overview",
+          "accounts": "Accounts & invites"
+        },
+        "stat_accounts": "Accounts",
+        "stat_accounts_off": "Accounts ({n} disabled)",
+        "stat_invites": "Open invites",
+        "recent": "Recent",
+        "no_recent": "Nothing yet",
+        "event": {
+          "joined": "{who} signed up with an invite",
+          "invited": "Invite {who} created",
+          "disabled": "{who} is disabled"
+        }
+      },
       "account": {
+        "admin_title": "Admin console",
+        "admin_desc": "Manage accounts and invites, see everyone's usage, and change the software, personas, models and settings everyone shares.",
+        "admin_enter": "Open console",
         "mine": "My account",
         "username": "Username",
         "local_admin": "Admin (this computer)",
@@ -1329,8 +1381,10 @@
         "search": "Search folders",
         "no_match": "No matching folders",
         "in_workspace": "Every workspace",
+        "add_title": "Add a private folder",
         "readonly": {
           "drop_ask": "Remove this path from the list?",
+          "add_title": "Add a protected path",
           "add_hint": "One per line, e.g. ~/.bashrc, /etc/hosts or Makefile in the workspace (Shift+Enter for a new line)",
           "empty": "No protected paths",
           "search": "Search paths",
@@ -1859,7 +1913,32 @@
         "uninstalled": "アンインストールしました：{name}",
         "kinds_none": "種類のあるソフトはまだありません"
       },
+      "admin": {
+        "title": "Miyu 管理コンソール",
+        "tab_title": "管理コンソール · Miyu",
+        "exit": "Miyu に戻る",
+        "loading": "読み込み中…",
+        "denied": "このページは管理者だけが開けます",
+        "failed": "管理者の情報を読み込めません",
+        "pages": {
+          "overview": "概要",
+          "accounts": "アカウントと招待"
+        },
+        "stat_accounts": "アカウント",
+        "stat_accounts_off": "アカウント（{n} 件停止中）",
+        "stat_invites": "使える招待",
+        "recent": "最近",
+        "no_recent": "まだ何もありません",
+        "event": {
+          "joined": "{who} が招待で登録",
+          "invited": "招待 {who} を作成",
+          "disabled": "{who} は停止中"
+        }
+      },
       "account": {
+        "admin_title": "管理コンソール",
+        "admin_desc": "アカウントと招待の管理、各メンバーの使用量の確認、全員で共有するソフト・人格・モデル・設定の変更ができます。",
+        "admin_enter": "コンソールを開く",
         "mine": "自分のアカウント",
         "username": "ユーザー名",
         "local_admin": "管理者（このコンピューター）",
@@ -1916,8 +1995,10 @@
         "search": "フォルダを検索",
         "no_match": "一致するフォルダはありません",
         "in_workspace": "各ワークスペース",
+        "add_title": "プライベートフォルダを追加",
         "readonly": {
           "drop_ask": "このパスを一覧から削除しますか？",
+          "add_title": "保護するパスを追加",
           "add_hint": "1 行に 1 つ。例：~/.bashrc、/etc/hosts、ワークスペースの Makefile（Shift+Enter で改行）",
           "empty": "保護するパスはありません",
           "search": "パスを検索",

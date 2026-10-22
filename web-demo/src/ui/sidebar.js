@@ -94,9 +94,9 @@ export class Sidebar {
     /** 三栏的头（栏头不带图标，2026-10-19 项目主人）：点了收起、展开，箭头悬停才露；「会话」那一栏的头多选时写「已选 N 个」、换成全选、删除、退出 */
     this.groupHeader = sectionHead(this, 'sessions', this.groupTitle, this.groupTools);
     this.pinnedHeader = sectionHead(this, 'pin', h('span', t('sidebar.pinned')), null);
-    // 终端集成开的会话（核心 8-33 四补的 `origin: "terminal"`）：「会话」那一栏最后单成一组，组头同时间组（2026-10-22 项目主人：叫「终端集成」，
-    // 放在「近 30 天」下面、「查看全部」上面；原来单开一栏）
-    this.terminalHeader = h('div.session-group-header.is-time', { dataset: { key: 'group:terminal' } }, h('span', t('sidebar.terminal')));
+    // 终端集成开的会话（核心 8-33 四补的 `origin: "terminal"`）：「会话」那一栏最后单成一组「终端集成」（2026-10-22 项目主人：放在「近 30 天」下面、
+    // 「查看全部」上面，原来单开一栏；栏头同别的栏，悬停露箭头、点了收起）
+    this.terminalHeader = sectionHead(this, 'terminal', h('span', t('sidebar.terminal')), null);
     this.projectsHeader = sectionHead(this, 'projects', h('span', t('sidebar.projects')), h('span.session-group-tools',
       h('button.icon-button.session-group-button.is-select', { type: 'button', title: t('sidebar.new_project'), 'aria-label': t('sidebar.new_project'), onclick: () => on.editProject(null) }, icon('plus'))));
     /** 「会话」那一栏里按时间分的几组的头（蓝图「会话整理和项目」第 2 条）：近 7 天、近 30 天、30 天前；「最近」那一组不另画头，就是「会话」那一栏的头 */
@@ -286,7 +286,7 @@ export class Sidebar {
       replace(this.items, [
         pinned.length ? section('pin', this.pinnedHeader, pinnedRows.map(draw), 'pin') : null,
         showProjects ? section('projects', this.projectsHeader, blocks.map((b) => projectBlock(bar, b)), null) : null,
-        section('sessions', this.groupHeader, [...sessionsBody, ...(termRows.length ? [this.terminalHeader, ...termRows.map(draw)] : []), all], 'loose'),
+        section('sessions', this.groupHeader, [...sessionsBody, termRows.length ? section('terminal', this.terminalHeader, termRows.map(draw), null) : null, all], 'loose'),
       ]);
       this.slide(was);
       this.placeMenu();
@@ -749,7 +749,9 @@ function foldAnim(host, body, open, cls, clsMeansFolded, list) {
   const visible = Math.max(0, Math.min(full, (bottom - rect.top) / (scale || 1)));
   host.classList.add('is-folding');
   if (!open) apply();
+  // 走多久照看得见的那一截多高：一大截照原来的时长缓，看着像一下子收掉（2026-10-22 项目主人：会话收起没有动画了）；曲线也缓一些，不在头几帧走完大半
+  const ms = Math.min(res.layout.sidebar_move_ms * 2, Math.max(res.layout.sidebar_move_ms, visible * 0.6));
   const anim = body.animate(open ? [{ height: '0px' }, { height: `${visible}px` }] : [{ height: `${visible}px` }, { height: '0px' }],
-    { duration: res.layout.sidebar_move_ms, easing: 'cubic-bezier(0.2, 0, 0, 1)' });
+    { duration: ms, easing: 'cubic-bezier(0.33, 0, 0.2, 1)' });
   anim.onfinish = anim.oncancel = () => host.classList.remove('is-folding');
 }
