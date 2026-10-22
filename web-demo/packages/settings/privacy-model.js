@@ -10,9 +10,13 @@ export const REMOVE = 'sandbox.private.remove';
  * 私密目录（藏起来）和只禁写（能读不能写）同一个画法。
  */
 export const PAIRS = [
-  { add: ADD, remove: REMOVE, enabled: 'sandbox.private.enabled' },
-  { add: 'sandbox.readonly.add', remove: 'sandbox.readonly.remove', enabled: null },
+  { add: ADD, remove: REMOVE, enabled: 'sandbox.private.enabled', words: null },
+  // 受保护的路径（核心 5-17 下上）：有文件，表里的字说「路径」不说「目录」（`privacy.readonly.*`）
+  { add: 'sandbox.readonly.add', remove: 'sandbox.readonly.remove', enabled: null, words: 'readonly' },
 ];
+
+/** 是不是每个工作区里的那一处（相对路径）：不是 `~`、`/`、Windows 的 `C:\…`、`\\…` 开头的 @param {string} path */
+export const inWorkspace = (path) => !/^(?:[~/\\]|[A-Za-z]:[\\/])/.test(path);
 
 /** 这一组里是哪一对（两项都在的才算） @param {any[]} items */
 export const pairIn = (items) => PAIRS.find((p) => items.some((i) => i.key === p.add) && items.some((i) => i.key === p.remove)) ?? null;

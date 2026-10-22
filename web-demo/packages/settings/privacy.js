@@ -7,7 +7,7 @@ import { h, icon, replace } from '../../src/lib/dom.js';
 import { tilde } from '../../src/lib/format.js';
 import { layerFor, expectFor } from './model.js';
 import { confirmIn } from './confirm.js';
-import { privateRows, dropChange, batchChange, canRestore, findRows, pairIn } from './privacy-model.js';
+import { privateRows, dropChange, batchChange, canRestore, findRows, pairIn, inWorkspace } from './privacy-model.js';
 import { coreRow } from './rows.js';
 
 /** 这一组里有没有画成一张表的那一对（私密目录、只禁写） @param {any[]} items */
@@ -20,6 +20,8 @@ export const hasPrivate = (items) => !!pairIn(items);
 export function privateGroup(dialog, name, items) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
   const pair = /** @type {NonNullable<ReturnType<typeof pairIn>>} */ (pairIn(items));
+  // 这一组自己的说法（受保护的路径说「路径」），没有的照私密目录的
+  const w = (/** @type {string} */ k, /** @type {any} */ f) => t(pair.words ? `privacy.${pair.words}.${k}` : `privacy.${k}`, f);
   const add = items.find((i) => i.key === pair.add);
   const remove = items.find((i) => i.key === pair.remove);
   // 总开关（私密目录有，核心 5-17）：在表上面，照通用的行画；关着的表灰掉、不能改
@@ -52,24 +54,24 @@ export function privateGroup(dialog, name, items) {
     replace(list, rows.length ? rows.map((row) => h('div.pv-row',
       h('code.pv-path', { title: row.path }, home ? tilde(row.path, home) : row.path),
       // 相对路径（只禁写的 `.git/hooks` 这类）：每个工作区里的那一处
-      /^[~/]/.test(row.path) ? null : h('span.pv-tag', t('privacy.in_workspace')),
+      inWorkspace(row.path) ? h('span.pv-tag', t('privacy.in_workspace')) : null,
       row.shipped ? h('span.pv-tag', t('privacy.shipped')) : null,
       h('button.icon-button.pv-drop', {
         type: 'button', title: t('privacy.drop'), 'aria-label': t('privacy.drop'),
         // 先弹窗问（2026-10-21 项目主人）
         onclick: async (/** @type {Event} */ e) => {
-          if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('privacy.drop_ask'), yes: t('privacy.drop_yes'), no: t('privacy.cancel') }))) return;
+          if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: w('drop_ask'), yes: t('privacy.drop_yes'), no: t('privacy.cancel') }))) return;
           store([dropChange(row, add, remove)]);
         },
-      }, icon('x')))) : h('p.set-empty.pv-empty', t(all.length ? 'privacy.no_match' : 'privacy.empty')));
+      }, icon('x')))) : h('p.set-empty.pv-empty', w(all.length ? 'no_match' : 'empty')));
   };
-  const find = /** @type {HTMLInputElement} */ (h('input.pv-find-input', { type: 'search', value: dialog[queryKey] ?? '', placeholder: t('privacy.search'), 'aria-label': t('privacy.search'), spellcheck: 'false', autocomplete: 'off' }));
+  const find = /** @type {HTMLInputElement} */ (h('input.pv-find-input', { type: 'search', value: dialog[queryKey] ?? '', placeholder: w('search'), 'aria-label': w('search'), spellcheck: 'false', autocomplete: 'off' }));
   find.addEventListener('input', () => {
     dialog[queryKey] = find.value;
     drawList();
   });
   drawList();
-  const input = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.pv-input', { rows: 2, placeholder: t('privacy.add_hint'), spellcheck: 'false', autocomplete: 'off' }));
+  const input = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.pv-input', { rows: 2, placeholder: w('add_hint'), spellcheck: 'false', autocomplete: 'off' }));
   const submit = async () => {
     const got = batchChange(input.value, add, remove);
     if (!got.changes.length) {

@@ -696,7 +696,14 @@
         "empty": "没有私密目录",
         "search": "搜索目录",
         "no_match": "没有对得上的目录",
-        "in_workspace": "每个工作区"
+        "in_workspace": "每个工作区",
+        "readonly": {
+          "drop_ask": "是否确认从列表中删除此路径？",
+          "add_hint": "一行一个，例如 ~/.bashrc、/etc/hosts 或工作区里的 Makefile（Shift+回车换行）",
+          "empty": "没有受保护的路径",
+          "search": "搜索路径",
+          "no_match": "没有对得上的路径"
+        }
       },
       "skin": "主题",
       "skin_factory": "默认主题",
@@ -1233,7 +1240,14 @@
         "empty": "No private folders",
         "search": "Search folders",
         "no_match": "No matching folders",
-        "in_workspace": "Every workspace"
+        "in_workspace": "Every workspace",
+        "readonly": {
+          "drop_ask": "Remove this path from the list?",
+          "add_hint": "One per line, e.g. ~/.bashrc, /etc/hosts or Makefile in the workspace (Shift+Enter for a new line)",
+          "empty": "No protected paths",
+          "search": "Search paths",
+          "no_match": "No matching paths"
+        }
       },
       "skin": "Theme",
       "skin_factory": "Default theme",
@@ -1770,7 +1784,14 @@
         "empty": "プライベートフォルダはありません",
         "search": "フォルダを検索",
         "no_match": "一致するフォルダはありません",
-        "in_workspace": "各ワークスペース"
+        "in_workspace": "各ワークスペース",
+        "readonly": {
+          "drop_ask": "このパスを一覧から削除しますか？",
+          "add_hint": "1 行に 1 つ。例：~/.bashrc、/etc/hosts、ワークスペースの Makefile（Shift+Enter で改行）",
+          "empty": "保護するパスはありません",
+          "search": "パスを検索",
+          "no_match": "一致するパスはありません"
+        }
       },
       "skin": "テーマ",
       "skin_factory": "デフォルトテーマ",

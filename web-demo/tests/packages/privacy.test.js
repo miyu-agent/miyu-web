@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { privateRows, dropChange, addChange, canRestore, batchChange, findRows, pairIn, ADD, REMOVE } from '../../packages/settings/privacy-model.js';
+import { privateRows, dropChange, addChange, canRestore, batchChange, findRows, pairIn, inWorkspace, ADD, REMOVE } from '../../packages/settings/privacy-model.js';
 
 const shipped = [{ value: '~/.ssh', name: '~/.ssh' }, { value: '~/.gnupg', name: '~/.gnupg' }, { value: '~/.aws', name: '~/.aws' }];
 const items = (add, remove) => [{ key: ADD, entry: { value: add } }, { key: REMOVE, options: shipped, entry: { value: remove } }];
@@ -53,4 +53,12 @@ test('只禁写（核心 5-17）同一个画法：键照那一对的；一组里
   assert.equal(pairIn([add, remove])?.add, 'sandbox.readonly.add');
   assert.equal(pairIn([add]), null);
   assert.equal(pairIn(items([], []))?.enabled, 'sandbox.private.enabled');
+  // 受保护的路径（核心 5-17 下上）用自己的说法
+  assert.equal(pairIn([add, remove])?.words, 'readonly');
+  assert.equal(pairIn(items([], []))?.words, null);
+});
+
+test('每个工作区里的那一处：相对路径才算，Windows 的绝对路径不算', () => {
+  for (const p of ['.git/hooks', '.mcp.json', 'Makefile', 'src/.env']) assert.equal(inWorkspace(p), true, p);
+  for (const p of ['~/.bashrc', '~', '/etc/hosts', 'C:\\Users\\me\\.gitconfig', 'd:/keys', '\\\\server\\share']) assert.equal(inWorkspace(p), false, p);
 });
