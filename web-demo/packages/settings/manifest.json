@@ -780,6 +780,8 @@
         }
       },
       "skin": "主题",
+      "render_timeline": "时间线",
+      "render_markdown": "回答排版",
       "skin_factory": "默认主题",
       "palette_label": "配色方案",
       "mcp_login": {
@@ -1399,6 +1401,8 @@
         }
       },
       "skin": "Theme",
+      "render_timeline": "Timeline",
+      "render_markdown": "Reply layout",
       "skin_factory": "Default theme",
       "palette_label": "Color scheme",
       "mcp_login": {
@@ -2018,6 +2022,8 @@
         }
       },
       "skin": "テーマ",
+      "render_timeline": "タイムライン",
+      "render_markdown": "回答のレイアウト",
       "skin_factory": "デフォルトテーマ",
       "palette_label": "配色",
       "mcp_login": {

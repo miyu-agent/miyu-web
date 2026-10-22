@@ -19,7 +19,10 @@
     "lightbox~",
     "theme~",
     "backstage~",
-    "personas~"
+    "personas~",
+    "seams",
+    "render.timeline~",
+    "render.markdown~"
   ],
   "settings": {},
   "provides": {

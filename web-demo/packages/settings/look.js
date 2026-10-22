@@ -50,8 +50,9 @@ export function drawLook(dialog) {
     };
     const current = palettes.find((p) => p.id === chosen);
     // 两组（2026-10-21 项目主人定叫法，照终端的外观页）：「主题」（形状和材质那一层，有主题包才有这一组）、「配色方案」（明暗、卡片、主色）
-    const skin = await skinRow(dialog);
-    replace(el, h('div.set-look', skin ? groupBlock(ctx.text('skin'), [skin]) : null,
+    // 「主题」一组还有「时间线」「回答排版」两行（蓝图 web.md「换画法」第 6 条）：能用的不止一个才出
+    const rows = [await skinRow(dialog), seamRow(dialog, 'render.timeline', 'render_timeline'), seamRow(dialog, 'render.markdown', 'render_markdown')].filter(Boolean);
+    replace(el, h('div.set-look', rows.length ? groupBlock(ctx.text('skin'), rows) : null,
       groupBlock(ctx.text('palette_label'), [scheme.el, h('div.set-themes', palettes.map(card)), seedRow(dialog, current?.seeds?.())])));
   };
   const el = later(fill);
@@ -77,6 +78,21 @@ async function skinRow(dialog) {
     dialog.drawBody();
   });
   return shell({ name: ctx.text('skin'), control: pick }).el;
+}
+
+/**
+ * 换画法的一行（「时间线」「回答排版」）：下拉，能用的提供者一个一项；只有一个能用的（出厂）不出这一行。选了当场换（对话区整个重画）。
+ * @param {any} dialog @param {string} seam 职能 @param {string} label 这一行的名字（包的字）
+ */
+function seamRow(dialog, seam, label) {
+  const ctx = dialog.ctx;
+  const list = ctx.packages.seams?.list(seam) ?? [];
+  if (list.length < 2) return null;
+  const pick = select(dialog, list.map((/** @type {any} */ p) => ({ value: p.id, name: p.name })), ctx.packages.seams.current(seam) ?? '', (/** @type {string} */ v) => {
+    ctx.packages.seams.set(seam, v);
+    dialog.drawBody();
+  });
+  return shell({ name: ctx.text(label), control: pick }).el;
 }
 
 /**

@@ -8,6 +8,10 @@
     { "id": "skin" },
     { "id": "skin-pixel", "disabled": true },
     { "id": "welcome" },
+    { "id": "timeline-default" },
+    { "id": "timeline-plain", "disabled": true },
+    { "id": "markdown-default" },
+    { "id": "markdown-plain", "disabled": true },
     { "id": "app" },
     { "id": "rail" },
     { "id": "mermaid" },
@@ -28,5 +32,5 @@
     { "id": "widgets" },
     { "id": "mascot" }
   ],
-  "seams": {}
+  "seams": { "render.timeline": "default", "render.markdown": "default" }
 }

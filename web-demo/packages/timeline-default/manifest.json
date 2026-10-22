@@ -1,0 +1,32 @@
+{
+  "id": "timeline-default",
+  "version": "0.1.0",
+  "name": {
+    "zh": "出厂时间线",
+    "en": "Default timeline",
+    "ja": "標準タイムライン"
+  },
+  "summary": {
+    "zh": "时间线的出厂画法：一步一行，点开看细节",
+    "en": "The built-in timeline: one row per step, click to see details",
+    "ja": "標準のタイムライン：1 ステップ 1 行、クリックで詳細"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "职能「时间线」（render.timeline）的出厂提供者。停用了又没有别的时间线，每段只写收起那一行的字。"
+  },
+  "inject": [
+    "seams"
+  ],
+  "provides": {
+    "seams": [
+      "render.timeline"
+    ]
+  },
+  "settings": {},
+  "text": {
+    "zh": { "name": "出厂" },
+    "en": { "name": "Default" },
+    "ja": { "name": "標準" }
+  }
+}

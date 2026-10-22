@@ -236,10 +236,10 @@ export class Follow {
   /**
    * 人点开、收起了时间线的一段、一步：被点的那一行钉在原地，动画走完照人在不在底下重新定（一段照 `timeline.json` 的
    * `fold_ms`、一步（回报那一行照一步做）照 `step_ms`）。
-   * @param {Element} node 被点的那一行
+   * @param {Element} node 被点的那一行 @param {number|null} [hold] 换上去的时间线说了钉多久（毫秒，`env.pin`）
    */
-  toggled(node) {
-    const ms = node.closest('.tl-step, .note') ? res.timeline.step_ms : res.timeline.fold_ms;
+  toggled(node, hold = null) {
+    const ms = typeof hold === 'number' && hold >= 0 ? hold : node.closest('.tl-step, .note') ? res.timeline.step_ms : res.timeline.fold_ms;
     this.hold = { node, top: offsetIn(node, this.el) };
     clearTimeout(this.holdTimer);
     this.holdTimer = window.setTimeout(() => {

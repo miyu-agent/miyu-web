@@ -5988,5 +5988,53 @@
     "select": [
       ".adm-lead"
     ]
+  },
+  "tl.fallback": {
+    "zh": "兜底的时间线（没有时间线的画法时）",
+    "select": [
+      ".tl-fallback"
+    ]
+  },
+  "md.fallback": {
+    "zh": "兜底的回答（没有回答排版时，照原文写）",
+    "select": [
+      ".md-fallback"
+    ]
+  },
+  "tlp.segment": {
+    "zh": "纯文字时间线（样板）的一段",
+    "select": [
+      ".tlp"
+    ]
+  },
+  "tlp.line": {
+    "zh": "纯文字时间线的一行",
+    "select": [
+      ".tlp-line"
+    ]
+  },
+  "tlp.time": {
+    "zh": "纯文字时间线的用时",
+    "select": [
+      ".tlp-time"
+    ]
+  },
+  "tlp.detail": {
+    "zh": "纯文字时间线点开的细节",
+    "select": [
+      ".tlp-detail"
+    ]
+  },
+  "tlp.label": {
+    "zh": "纯文字时间线细节的标签",
+    "select": [
+      ".tlp-label"
+    ]
+  },
+  "tlp.text": {
+    "zh": "纯文字时间线细节的原文",
+    "select": [
+      ".tlp-text"
+    ]
   }
 }

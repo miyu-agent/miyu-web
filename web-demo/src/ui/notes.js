@@ -6,7 +6,7 @@
 import { h, icon } from './dom.js';
 import { res, t } from '../util/res.js';
 import { blobUrl } from '../core/host.js';
-import { renderMarkdown } from '../markdown/render.js';
+import { drawMarkdown } from './render.js';
 import { workspaceText } from '../model/notes.js';
 
 /**
@@ -67,7 +67,7 @@ function detailNode(detail, where, markdown) {
   const section = (label, ...body) => h('div.tl-detail', h('div.tl-label', label), ...body);
   const report = (/** @type {string} */ text) => {
     const md = h('div.reply.markdown-body.note-report');
-    renderMarkdown(md, text, { say: markdown.say, hooks: markdown.hooks('note'), streaming: false });
+    drawMarkdown(md, text, { say: markdown.say, hooks: markdown.hooks('note'), streaming: false });
     return md;
   };
   if (detail.kind === 'text') {

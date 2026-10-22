@@ -1,0 +1,32 @@
+{
+  "id": "markdown-default",
+  "version": "0.1.0",
+  "name": {
+    "zh": "出厂回答排版",
+    "en": "Default reply layout",
+    "ja": "標準の回答レイアウト"
+  },
+  "summary": {
+    "zh": "回答的 Markdown 出厂画法：标题、列表、表格、代码高亮、公式",
+    "en": "The built-in Markdown for replies: headings, lists, tables, code highlighting, math",
+    "ja": "標準の Markdown 表示：見出し・リスト・表・コードハイライト・数式"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "职能「回答排版」（render.markdown）的出厂提供者。停用了又没有别的排版，回答照原文写。"
+  },
+  "inject": [
+    "seams"
+  ],
+  "provides": {
+    "seams": [
+      "render.markdown"
+    ]
+  },
+  "settings": {},
+  "text": {
+    "zh": { "name": "出厂" },
+    "en": { "name": "Default" },
+    "ja": { "name": "標準" }
+  }
+}

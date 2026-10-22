@@ -14,7 +14,8 @@ import { KERNEL_SERVICES } from '../src/kernel/services.js';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PACKAGES = join(ROOT, 'packages');
 /** 搬的过程里还直接用旧代码的包：拆完一个删一个 */
-const LEGACY = new Set(['app']);
+// 出厂时间线、出厂回答排版（蓝图 web.md「换画法」）：代码还在 src/ui、src/markdown（回报那一行、预览工作区也用），包只登记提供者
+const LEGACY = new Set(['app', 'timeline-default', 'markdown-default']);
 const SEAMS = ['theme', 'persona', 'markdown', 'highlight', 'math', 'lightbox'];
 
 /** 目录下全部 `.js`。 */
@@ -73,7 +74,7 @@ test('每份清单合法：编号和目录一样、有种类、设置项的出�
 });
 
 test('inject 的服务都有人提供：内核的、别的包 provides 的、职能', () => {
-  const provided = new Set([...KERNEL_SERVICES, ...SEAMS, ...ids.flatMap((id) => manifests[id].provides?.services ?? [])]);
+  const provided = new Set([...KERNEL_SERVICES, ...SEAMS, ...ids.flatMap((id) => [...(manifests[id].provides?.services ?? []), ...(manifests[id].provides?.seams ?? [])])]);
   const bad = ids.flatMap((id) => (manifests[id].inject ?? []).map((n) => n.replace(/[?~]$/, '')).filter((n) => !provided.has(n)).map((n) => `${id} 要 ${n}`));
   assert.deepEqual(bad, []);
 });
