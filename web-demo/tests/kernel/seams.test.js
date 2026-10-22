@@ -25,11 +25,15 @@ test('不止一个能用、配置没写：报「不止一个」，不偷偷用�
   assert.equal(s.choose('theme').provider?.id, 'tokyonight');
 });
 
-test('配置写的那个不在、不能用：报出来，不换成别的', () => {
+test('配置写的那个不在、不能用：照没写的选（剩一个用它，不止一个报不止一个，一个都没有报缺的）（2026-10-22 换画法）', () => {
   const s = new Seams();
-  s.provide('theme', theme('morning'), 'p1');
   s.prefer({ theme: 'sepia' });
   assert.deepEqual(s.choose('theme'), { error: 'missing', wanted: 'sepia' });
+  s.provide('theme', theme('morning'), 'p1');
+  assert.equal(s.choose('theme').provider?.id, 'morning');
+  s.provide('theme', theme('tokyonight'), 'p2');
+  assert.deepEqual(s.choose('theme'), { error: 'ambiguous', choices: ['morning', 'tokyonight'] });
+  assert.deepEqual(s.providers('theme').map((r) => `${r.owner}:${r.provider.id}`), ['p1:morning', 'p2:tokyonight']);
 });
 
 test('提供者拿掉、配置改了：选出来的变了就通知', () => {

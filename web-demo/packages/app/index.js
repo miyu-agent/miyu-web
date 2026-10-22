@@ -6,7 +6,7 @@ import { App } from '../../src/ui/app.js';
 import { withdrawQueued } from '../../src/ui/commands.js';
 import { useConnection as linkCardsUse } from '../../src/ui/linkcards.js';
 import { codeBlock, copy } from '../../src/markdown/build.js';
-import { renderMarkdown } from '../../src/markdown/render.js';
+import { drawMarkdown, useRenderers } from '../../src/ui/render.js';
 import { PALETTE, colorOf } from '../../src/model/project.js';
 import { t } from '../../src/util/res.js';
 
@@ -14,12 +14,15 @@ import { t } from '../../src/util/res.js';
 export function apply(ctx) {
   // 链接卡片经这条连接问桥
   linkCardsUse(ctx.core);
+  // 时间线、回答的排版照选中的提供者画（蓝图 web.md「换画法」）：用的时候再找，换了整个重画
+  useRenderers(ctx);
   // 图片点开找灯箱：用的时候再找（`lightbox~`），灯箱装上、停了整页不重来
   const app = new App(ctx.sessions, ctx.core, ctx.host, ctx, () => ctx.lightbox);
   app.mount(ctx.page.root);
+  ctx.seams.watch((/** @type {string} */ name) => { if (name.startsWith('render.')) app.chat.redraw(); });
   // 对话区：别的包经它拿滚的那一层、正文那一列、你说的话
   // Markdown 的代码块、复制：mermaid 这类包经它用；整段画（知识库页的片段、原文）：`render(容器, 原文)`
-  ctx.provide('markdown', { codeBlock, copy, render: (/** @type {HTMLElement} */ el, /** @type {string} */ text) => renderMarkdown(el, text, { streaming: false }) });
+  ctx.provide('markdown', { codeBlock, copy, render: (/** @type {HTMLElement} */ el, /** @type {string} */ text) => drawMarkdown(el, text, { streaming: false }) });
   // 斜杠命令：别的包登记自己的（`/settings`、`/pkg` 这类）
   ctx.provide('commands', app.commands);
   // 皮肤样张（蓝图 web.md「皮肤」第 7 条）：设置页「皮肤」那一行的「样张」也开它

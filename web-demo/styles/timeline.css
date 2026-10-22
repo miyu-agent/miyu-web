@@ -296,3 +296,6 @@
 }
 /* 她说话的头下面那一份：上下留一点白，别贴着头像那一行；等比缩到 0.55，左边不动（旧版用户觉得偏大；2026-09-30 项目主人：0.7 还大） */
 .miyu-run.typing-run { margin: calc(3px * var(--space)) 0 calc(5px * var(--space)) calc(2px * var(--space)); transform: scale(0.55); transform-origin: left center; }
+
+/* 兜底的一段（没有时间线的提供者、提供者出错了，蓝图 web.md「换画法」第 5 条）：只写收起那一行的字 */
+.tl-fallback { margin: calc(4px * var(--space)) 0; font: calc(13px * var(--text-scale)) / 1.5 var(--timeline-font, var(--font-mono)); color: var(--timeline-fg, var(--text-soft)); }

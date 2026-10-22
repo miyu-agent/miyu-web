@@ -121,3 +121,6 @@
 }
 .assistant-content .markdown-body td { border-bottom: var(--md-td-line, 1px solid color-mix(in srgb, var(--line) 70%, transparent)); }
 .assistant-content .markdown-body tr:last-child td { border-bottom: 0; }
+
+/* 兜底的回答（没有排版的提供者、提供者出错了，蓝图 web.md「换画法」第 5 条）：照原文写，留着换行 */
+.md-fallback { white-space: pre-wrap; }

@@ -1,0 +1,32 @@
+{
+  "id": "markdown-plain",
+  "version": "0.1.0",
+  "name": {
+    "zh": "纯文字排版（样板）",
+    "en": "Plain reply layout (sample)",
+    "ja": "シンプルな回答レイアウト（見本）"
+  },
+  "summary": {
+    "zh": "换画法的样板：只认段落、标题、列表、代码和媒体，别的照原文",
+    "en": "A sample replacement layout: paragraphs, headings, lists, code and media only",
+    "ja": "差し替えの見本：段落・見出し・リスト・コード・メディアだけ"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "写回答排版的例子（蓝图 web.md「换画法」第 7 条）：照四个接口问别的包（mermaid 图、媒体卡片、图片、链接卡片），换了排版这些照样在。开了以后在设置「通用」的「主题」一组选「回答排版」。"
+  },
+  "inject": [
+    "seams"
+  ],
+  "provides": {
+    "seams": [
+      "render.markdown"
+    ]
+  },
+  "settings": {},
+  "text": {
+    "zh": { "name": "纯文字" },
+    "en": { "name": "Plain" },
+    "ja": { "name": "シンプル" }
+  }
+}

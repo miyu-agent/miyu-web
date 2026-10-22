@@ -11,7 +11,7 @@ import { spring } from '../lib/motion.js';
 import { res, t, moreIcons } from '../util/res.js';
 import { row, peek, messagePeek, thinkingTail, commandLines, details, kindOf, quiet } from '../model/words.js';
 import { imageCard } from './media.js';
-import { renderMarkdown } from '../markdown/render.js';
+import { drawMarkdown } from './render.js';
 import { blobUrl } from '../core/host.js';
 
 export class StepView {
@@ -287,7 +287,7 @@ export class StepView {
   /** 知识库的文档（读到的那一页、查到的片段）照 Markdown 画，里面的图不画（`styles/timeline.css`）。 @param {string} text */
   markdownNode(text) {
     const md = h('div.markdown-body.tl-found-doc');
-    renderMarkdown(md, text, { streaming: false });
+    drawMarkdown(md, text, { streaming: false });
     return md;
   }
 

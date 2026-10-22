@@ -16,7 +16,7 @@ import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { shownList, panelList, codeLanguage, undismissed } from '../model/artifacts.js';
 import { blobUrl } from '../core/host.js';
-import { renderMarkdown } from '../markdown/render.js';
+import { drawMarkdown } from './render.js';
 import { paint } from '../markdown/highlight.js';
 import { copy } from '../markdown/build.js';
 import { richHooks } from './rich.js';
@@ -349,7 +349,7 @@ export function blobType(a) {
 function preview(kind, text, where, say, ext) {
   if (kind === 'markdown') {
     const body = h('article.markdown-body.artifact-markdown');
-    renderMarkdown(body, text, { hooks: richHooks(where, say, ext)('artifact'), say });
+    drawMarkdown(body, text, { hooks: richHooks(where, say, ext)('artifact'), say });
     return body;
   }
   // HTML：`srcdoc` 放进沙盒（没有 allow-same-origin，碰不到页面），最前面垫一条不许联网的内容安全策略

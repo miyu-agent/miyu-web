@@ -1,0 +1,35 @@
+{
+  "id": "timeline-plain",
+  "version": "0.1.0",
+  "name": {
+    "zh": "纯文字时间线（样板）",
+    "en": "Plain-text timeline (sample)",
+    "ja": "テキストだけのタイムライン（見本）"
+  },
+  "summary": {
+    "zh": "换画法的样板：一步一行等宽字，点一行展开细节",
+    "en": "A sample replacement timeline: one monospace line per step, click to expand",
+    "ja": "差し替えの見本：1 ステップ 1 行の等幅表示、クリックで詳細"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "写时间线画法的例子（蓝图 web.md「换画法」第 7 条）：只经职能给的 env 拿数据和出厂写法，不碰页面的旧代码。开了以后在设置「通用」的「主题」一组选「时间线」。"
+  },
+  "inject": [
+    "seams"
+  ],
+  "provides": {
+    "seams": [
+      "render.timeline"
+    ]
+  },
+  "settings": {},
+  "styles": [
+    "style.css"
+  ],
+  "text": {
+    "zh": { "name": "纯文字", "steps": "{n} 步", "images": "图 {n} 张", "loading": "取结果中…" },
+    "en": { "name": "Plain text", "steps": "{n} steps", "images": "{n} images", "loading": "Loading result…" },
+    "ja": { "name": "テキスト", "steps": "{n} ステップ", "images": "画像 {n} 枚", "loading": "結果を取得中…" }
+  }
+}

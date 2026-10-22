@@ -7,8 +7,8 @@
 
 import { h } from './dom.js';
 import { res, t } from '../util/res.js';
-import { SegmentView, Ticker, waitingNode } from './timeline.js';
-import { renderMarkdown } from '../markdown/render.js';
+import { Ticker, waitingNode } from './timeline.js';
+import { segmentView, drawMarkdown } from './render.js';
 import { richHooks } from './rich.js';
 import { Follow } from './follow.js';
 import { userNode, endNode } from './said.js';
@@ -62,11 +62,12 @@ export class Chat {
     /** @type {Array<{key: string, text: string, node: HTMLElement}>} */
     this.prompts = [];
     // 人点开、收起时间线（`timeline.js`、`steps.js` 发的）：被点的那一行钉在原地
-    this.list.addEventListener('tl-toggle', (e) => this.scroll.toggled(/** @type {Element} */ (e.target)));
+    // 换上去的时间线经 `env.pin` 发同一个事件，带上钉多久（`detail.ms`，蓝图「换画法」第 2 条）
+    this.list.addEventListener('tl-toggle', (e) => this.scroll.toggled(/** @type {Element} */ (e.target), /** @type {CustomEvent} */ (e).detail?.ms));
     this.ticker = new Ticker(this.list);
     /** 换了会话以后画过一次了：之后新来的时间线的步淡入，第一次画的（读回来的历史）不淡入。 */
     this.settled = false;
-    /** @type {Map<string, {node: HTMLElement, content: HTMLElement|null, sig: string, items: Map<string, {node: HTMLElement, sig: string, view?: SegmentView}>}>} */
+    /** @type {Map<string, {node: HTMLElement, content: HTMLElement|null, sig: string, items: Map<string, {node: HTMLElement, sig: string, view?: ReturnType<typeof segmentView>}>}>} */
     this.blocks = new Map();
   }
 
@@ -309,6 +310,11 @@ export class Chat {
   }
 }
 
+/** 换上去的时间线点开、收起之前调：被点的那一行钉在原地 `ms` 毫秒（不写的照出厂那一段收起的时长）。 @param {Element} node @param {number} [ms] */
+function pin(node, ms) {
+  node.dispatchEvent(new CustomEvent('tl-toggle', { bubbles: true, detail: { ms } }));
+}
+
 /**
  * 她的一块里的条目：照编号对上，变了的换掉，没了的去掉。时间线的一段不换：一直是同一个节点，照新的样子改
  * （`timeline.js`），点开的、淡入过的都留着。
@@ -323,11 +329,13 @@ function reconcile(parent, known, items, chat) {
     let rec = known.get(it.key);
     if (it.type === 'steps') {
       if (!rec) {
-        const view = new SegmentView(chat.where, chat.settled);
+        const view = segmentView({ where: chat.where, fresh: chat.settled, pin });
         rec = { node: view.el, sig: '', view };
         known.set(it.key, rec);
       }
       rec.view.update(it);
+      // 画的时候出错、换成兜底的那一下节点换了
+      rec.node = rec.view.el;
     } else {
       const sig = sigOf(it);
       if (!rec || rec.sig !== sig) {
@@ -414,6 +422,6 @@ function itemNode(it, chat) {
   // 她 show 过的（核心 D-5）：图片缩略图，别的一张卡片，点了在右栏打开
   if (it.type === 'shown') return shownNode(it.shown, { lightbox: chat.ext?.lightbox, reveal: chat.on.reveal });
   const node = h('div.reply.markdown-body');
-  renderMarkdown(node, it.text, { say: chat.markdown.say, hooks: chat.markdown.hooks(it.scope), streaming: it.streaming });
+  drawMarkdown(node, it.text, { say: chat.markdown.say, hooks: chat.markdown.hooks(it.scope), streaming: it.streaming });
   return node;
 }

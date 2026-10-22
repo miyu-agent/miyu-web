@@ -1,0 +1,10 @@
+/* 纯文字时间线（样板，蓝图 web.md「换画法」第 7 条）：只用主题的颜色变量 */
+.tlp { margin: calc(4px * var(--space)) 0; font: calc(12.5px * var(--text-scale)) / 1.6 var(--font-mono); color: var(--text-soft); }
+.tlp-line { display: block; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; white-space: pre-wrap; overflow-wrap: anywhere; }
+button.tlp-line { cursor: pointer; }
+button.tlp-line:hover { color: var(--text); }
+.tlp-line.is-failed { color: var(--danger); }
+.tlp-time { opacity: 0.7; }
+.tlp-detail { margin: calc(2px * var(--space)) 0 calc(6px * var(--space)) calc(16px * var(--space)); padding-left: calc(8px * var(--space)); border-left: 1px solid var(--line); }
+.tlp-label { color: var(--text-soft); opacity: 0.8; }
+.tlp-text { margin: 0; max-height: calc(240px * var(--space)); overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font: inherit; }

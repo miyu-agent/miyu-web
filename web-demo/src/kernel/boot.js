@@ -205,6 +205,8 @@ export async function boot(root) {
     },
   });
   const sync = () => loader.sync(rows(distro.packages, storage.get(USER_LAYER, {})));
+  // 职能选哪个：发行版的默认，这个浏览器的个人那一层（内核那一行配置的 `seams`）盖在上面（蓝图 `web/architecture.md`「职能」的选法）
+  const seamPrefs = () => ({ ...distro.seams, ...storage.get(USER_LAYER, {})[KERNEL]?.config?.seams });
 
   // 内核自己：编进内核的服务
   const kernel = new Fiber(registry, {
@@ -259,6 +261,24 @@ export async function boot(root) {
         },
       });
       ctx.provide('packages', {
+        /**
+         * 职能（时间线、回答的排版这类）：能用的提供者 `{id, name, owner}`、现在用的是哪个（`null` 是没有）、换一个（记进个人那一层，
+         * 当场换；设置页「主题」一组用，蓝图 web.md「换画法」第 6 条）
+         */
+        seams: {
+          list: (/** @type {string} */ name) => seams.providers(name).map((r) => ({ id: r.provider.id, name: /** @type {any} */ (r.provider).name ?? r.provider.id, owner: r.owner })),
+          current: (/** @type {string} */ name) => {
+            const choice = seams.choose(name);
+            return 'provider' in choice ? choice.provider.id : null;
+          },
+          set: (/** @type {string} */ name, /** @type {string} */ id) => {
+            const user = storage.get(USER_LAYER, {});
+            const config = user[KERNEL]?.config ?? {};
+            user[KERNEL] = { ...user[KERNEL], config: { ...config, seams: { ...config.seams, [name]: id } } };
+            storage.set(USER_LAYER, user);
+            seams.prefer(seamPrefs());
+          },
+        },
         /** 每个包：状态，加上清单里的名字、种类（读不到清单的只有编号） */
         list: async () => Promise.all(loader.status().map(async (s) => ({ ...s, manifest: await manifestOf(s.id).catch(() => null) }))),
         status: () => loader.status(),
@@ -290,7 +310,7 @@ export async function boot(root) {
     if ('provider' in choice) registry.set(name, choice.provider, kernel);
     else registry.unset(name, kernel);
   });
-  seams.prefer(distro.seams ?? {});
+  seams.prefer(seamPrefs());
 
   await sync();
   if (!root.childElementCount) showStatus(root, loader.status());

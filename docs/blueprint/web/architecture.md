@@ -206,6 +206,9 @@ flowchart TB
 | `theme-persona` | 可选 | `slots`、`personas~` | — | — | `theme.palettes`（「跟随人格」；带 `seeds()`，选了经 `personas.setSeed` 存人格的主题色） | `veil`（live） |
 | `theme-wallpaper` | 可选 | `slots`、`host`、`packages` | — | — | `theme.palettes`（「跟随壁纸」，读不到不挂；是图的带 `seeds()`，设置页画「主色」） | `seed`（live，主色，空着的用第一个） |
 | `app` | 基础 | `core`、`sessions`、`host`、`page`、`slots`、`packages`、`lightbox~`、`theme~` | `chat`、`markdown`、`commands`、`composer` | `stage.right`、`stage.info`（list）、`markdown.code`（keyed）、`composer.above`、`composer.bar`、`composer.head`、`composer.payload`、`composer.footer`、`composer.float`（list） | — | 还在 `resources/layout.json` 等处，拆出去的包带走自己的 |
+| `timeline-default` | 可选 | `seams` | — | — | 职能 `render.timeline`（「出厂」；画法还在 `src/ui/timeline.js`、`steps.js`） | — |
+| `markdown-default` | 可选 | `seams` | — | — | 职能 `render.markdown`（「出厂」；画法还在 `src/markdown/`） | — |
+| `timeline-plain`、`markdown-plain` | 可选（样板，默认停用） | `seams` | — | — | 职能 `render.timeline`、`render.markdown`（「纯文字」，`web.md`「换画法」第 7 条） | — |
 | `rail` | 可选 | `slots`、`chat` | — | — | `stage.right` | `min_prompts`、`current_at`、`jump_margin`、`gutter`、`close_ms` |
 | `mermaid` | 可选 | `slots`、`core`、`host`、`markdown`、`lightbox~` | — | — | `markdown.code`（键 `mermaid`） | `max_height` |
 | `lightbox` | 可选 | — | `lightbox` | — | — | — |
