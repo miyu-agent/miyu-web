@@ -146,6 +146,28 @@ function openAdd(dialog, title, hint, submit) {
   input.focus();
 }
 
+/**
+ * 设置页右边那一栏的最底下垫 `px` 高的空（`--set-hold`）：收起页尾那一块时滚着的位置不往回缩。垫的只留够现在这个位置要的那么多，往上滚了跟着缩，缩到 0 就不管了。
+ * @param {HTMLElement} el 收起的那一块 @param {number} px
+ */
+function holdBottom(el, px) {
+  const box = /** @type {HTMLElement|null} */ (el.closest('.set-body'));
+  if (!box) return;
+  const held = () => Number.parseFloat(box.style.getPropertyValue('--set-hold')) || 0;
+  box.style.setProperty('--set-hold', `${held() + px}px`);
+  const trim = () => {
+    // 不垫的话内容多高；现在这个位置往下还要多少才够得着窗口底
+    const need = Math.max(0, Math.ceil(box.scrollTop + box.clientHeight - (box.scrollHeight - held())));
+    if (need < held()) box.style.setProperty('--set-hold', `${need}px`);
+    if (need === 0) {
+      box.style.removeProperty('--set-hold');
+      box.removeEventListener('scroll', trim);
+    }
+  };
+  box.addEventListener('scroll', trim, { passive: true });
+  setTimeout(trim, FOLD_MS * 2);
+}
+
 /** 收起、展开走多久（毫秒，乘上动效快慢） */
 const FOLD_MS = 240;
 
@@ -159,10 +181,10 @@ function fold(dialog, key, off, ...kids) {
   const el = h('div.pv-fold', h('div.pv-body', ...kids));
   const was = (dialog.pvOff ??= {})[key];
   if (!was) dialog.pvOff[key] = { off, at: -Infinity };
-  el.classList.toggle('is-off', off);
-  el.inert = off;
-  // 重画的那一块进了页面才量得出多高：同一段代码放进页面以后、画出来之前接着走
-  queueMicrotask(() => { if (el.isConnected) fold.go(dialog, key, off, el); });
+  // 重画的那一块当场接着走（照上一次量的高）：放进页面以后页面会照原来的位置滚回去，这时它要已经是走到一半的高，不然先量成 0、整页往上一跳
+  // （2026-10-22 项目主人：受保护的路径那一组在最底下，拨开关整页跳一下）；还没量过的进了页面再量
+  fold.go(dialog, key, off, el);
+  if (!dialog.pvOff[key].full) queueMicrotask(() => { if (el.isConnected) fold.go(dialog, key, off, el); });
   return el;
 }
 
@@ -172,17 +194,23 @@ function fold(dialog, key, off, ...kids) {
  */
 fold.go = (dialog, key, off, el) => {
   const now = performance.now();
-  if (dialog.pvOff[key].off !== off) dialog.pvOff[key] = { off, at: now };
-  el.classList.toggle('is-off', off);
-  el.inert = off;
+  if (dialog.pvOff[key].off !== off) dialog.pvOff[key] = { off, at: now, full: dialog.pvOff[key].full };
   const body = /** @type {HTMLElement} */ (el.firstElementChild);
   for (const a of [...el.getAnimations(), ...body.getAnimations()]) a.cancel();
   const scale = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale'));
   const ms = FOLD_MS * (Number.isFinite(scale) ? scale : 1);
   const since = now - dialog.pvOff[key].at;
-  if (!(ms > 0 && since < ms)) return;
-  // 照里面那一块实际多高走（收着的时候外面高 0，里面照样排着）
-  const full = `${body.offsetHeight}px`;
+  const moving = ms > 0 && since < ms;
+  // 先量、先垫，再换成收着的样子、接上动画：换了以后再量会照高 0 排一遍，滚着的位置当场往回缩（整页跳一下）
+  // 照里面那一块实际多高走（收着的时候外面高 0，里面照样排着）；不在页面里的照上一次量的
+  if (moving && el.isConnected && body.offsetHeight) dialog.pvOff[key].full = body.offsetHeight;
+  // 收起的是页尾那一块时（受保护的路径在最底下）：底下先垫上收掉的那么高，整页不跟着往下滑，只有表收起；往上滚的时候垫的跟着缩回去
+  // （2026-10-22 项目主人：拨开关的动画怪怪的，录屏里整页跳了一下）
+  if (moving && off && el.isConnected && since === 0 && dialog.pvOff[key].full) holdBottom(el, dialog.pvOff[key].full);
+  el.classList.toggle('is-off', off);
+  el.inert = off;
+  if (!moving || !dialog.pvOff[key].full) return;
+  const full = `${dialog.pvOff[key].full}px`;
   const go = (/** @type {Element} */ node, /** @type {Keyframe[]} */ frames) => { node.animate(frames, { duration: ms, easing: 'ease' }).currentTime = since; };
   go(el, off ? [{ height: full }, { height: '0px' }] : [{ height: '0px' }, { height: full }]);
   go(body, off ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }]);
