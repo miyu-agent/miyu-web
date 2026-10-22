@@ -106,16 +106,28 @@ export function privateGroup(dialog, name, items) {
       error));
 }
 
+/** 收起、展开走多久（毫秒，乘上动效快慢） */
+const FOLD_MS = 240;
+
 /**
  * 开关下面那一块：关着的收起（高度收到 0、淡出），开了展开（2026-10-22 项目主人：原来灰掉、不能改）。拨了开关设置页整个重画，
- * 照上一次画的样子先画出来、下一帧换成现在的，才走得出过渡；头一次画的直接是现在的样子。
+ * 而且一拨会重画两次（存的回执、核心推来的改动各一次），新画的那一块接着上一块走到哪儿往下走：记下哪一刻换的，走的时候照过了多久接上；
+ * 头一次画的直接是现在的样子。
  * @param {any} dialog @param {string} key 记上一次样子用的 @param {boolean} off @param {...any} kids
  */
 function fold(dialog, key, off, ...kids) {
   const was = (dialog.pvOff ??= {})[key];
-  dialog.pvOff[key] = off;
-  const from = was === undefined ? off : was;
-  const el = h(`div.pv-fold${from ? '.is-off' : ''}`, { inert: off || undefined }, h('div.pv-body', ...kids));
-  if (from !== off) requestAnimationFrame(() => requestAnimationFrame(() => el.classList.toggle('is-off', off)));
+  const now = performance.now();
+  if (!was || was.off !== off) dialog.pvOff[key] = { off, at: was ? now : -Infinity };
+  const body = h('div.pv-body', ...kids);
+  const el = h(`div.pv-fold${off ? '.is-off' : ''}`, { inert: off || undefined }, body);
+  const scale = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-scale'));
+  const ms = FOLD_MS * (Number.isFinite(scale) ? scale : 1);
+  const since = now - dialog.pvOff[key].at;
+  if (ms > 0 && since < ms) {
+    const go = (/** @type {Element} */ node, /** @type {Keyframe[]} */ frames) => { node.animate(frames, { duration: ms, easing: 'ease' }).currentTime = since; };
+    go(el, off ? [{ gridTemplateRows: '1fr' }, { gridTemplateRows: '0fr' }] : [{ gridTemplateRows: '0fr' }, { gridTemplateRows: '1fr' }]);
+    go(body, off ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }]);
+  }
   return el;
 }
