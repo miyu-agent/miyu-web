@@ -204,8 +204,12 @@ export class MemoryPage {
       const editing = this.el.querySelector('.mem-detail [data-dirty]');
       if (editing) return;
     }
-    // 一条的详情在列表上面弹一个小窗（2026-10-20 项目主人：改成浮动窗口），列表留在后面
-    replace(this.el, this.problem ? this.problemCard() : [this.page(), this.open ? this.detail() : this.history ? this.historyPop() : null]);
+    // 一条的详情在列表上面弹一个小窗（2026-10-20 项目主人：改成浮动窗口），列表留在后面。小窗本来就开着的（保存以后重读、推来的变化）：
+    // 新画的那一个不再播进场的动画（2026-10-22 项目主人：保存之后浮动窗口闪了两下）
+    const steady = !!this.el.querySelector(':scope > .mem-modal:not(.is-leaving)');
+    const modal = this.problem ? null : this.open ? this.detail() : this.history ? this.historyPop() : null;
+    if (steady && modal) modal.classList.add('is-steady');
+    replace(this.el, this.problem ? this.problemCard() : [this.page(), modal]);
   }
 
   problemCard() {
@@ -270,7 +274,7 @@ export class MemoryPage {
       h('div.mem-list', rows, more),
       h('div.mem-foot.set-pinned', h('span', t(retiredCount ? 'foot_retired' : 'foot', { live: c.all, retired: retiredCount })), clear),
       // 「记一条」在设置框正中弹一个小窗（2026-10-20 项目主人：新建以浮动窗口出现更好）：点外面（还没写字的）、`Esc`、「取消」收起
-      this.adding ? h('div.mem-modal', {
+      this.adding ? h(`div.mem-modal${this.el.querySelector('.mem-modal:not(.is-leaving) .mem-add') ? '.is-steady' : ''}`, {
         onclick: (/** @type {Event} */ e) => {
           if (e.target !== e.currentTarget || /** @type {HTMLTextAreaElement|null} */ (this.el.querySelector('.mem-add textarea'))?.value.trim()) return;
           this.closeAdd();

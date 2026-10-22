@@ -145,6 +145,8 @@
 /* 进出同设置里别的小窗（2026-10-20 项目主人：浮动窗口的打开和退出动画应当统一）：遮罩淡入淡出，卡片从 0.97 放大出来、缩回去淡掉 */
 .mem-modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: calc(24px * var(--space)); background: color-mix(in srgb, var(--surface) 45%, transparent); animation: fade-in var(--motion-in) var(--ease-out) backwards; }
 .mem-modal.is-leaving { animation: fade-out var(--motion-out) var(--ease-in) both; }
+/* 开着的小窗重画（保存以后、推来的变化）：不再播进场的动画 */
+.mem-modal.is-steady, .mem-modal.is-steady .mem-pop, .mem-modal.is-steady .mem-add { animation: none; }
 .mem-modal .mem-add { width: min(520px, 100%); background: var(--surface); box-shadow: var(--card-shadow), 0 16px 40px rgb(0 0 0 / 18%); animation: pop-in var(--motion-in) var(--ease-out) both; }
 .mem-modal.is-leaving .mem-add, .mem-modal.is-leaving .mem-pop { animation: pop-out var(--motion-out) var(--ease-in) both; }
 @media (prefers-reduced-motion: reduce) { .mem-modal, .mem-modal .mem-add, .mem-pop { animation: none; } }
