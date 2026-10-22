@@ -45,7 +45,8 @@ test('换了工作区那一行：换回会话自己的默认工作区写「默�
 
 test('说了还要等多久的（核心 3-5 四补 retry_after_ms）：429 写「约 N 小时后恢复」，别的接在人话后面；档位同终端', () => {
   assert.equal(failureText({ class: 'auth', status: 429, message: 'HTTP 429: Free usage limit reached.', retry_after_ms: 47137000 }), '请求受限，约 13 小时后恢复：HTTP 429: Free usage limit reached.');
-  assert.equal(failureText({ class: 'cooling', retry_after_ms: 90000 }).endsWith('，约 2 分钟后恢复'), true);
+  assert.equal(failureText({ class: 'cooling', retry_after_ms: 90000, message: 'all candidates cooling' }), '模型都在冷却，约 2 分钟后恢复', '冷却的不接原话（同终端）');
+  assert.equal(failureText({ class: 'other', status: 402, message: 'quota', retry_after_ms: 7_200_000 }), '额度不足，约 2 小时后恢复：quota');
   assert.equal(failureText({ class: 'other', status: 429 }), '请求受限，请稍后重试', '没说要等多久的照旧');
   assert.deepEqual(waitSpan(500), { n: 1, unit: 'seconds' });
   assert.deepEqual(waitSpan(59_400), { n: 60, unit: 'seconds' });

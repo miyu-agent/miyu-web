@@ -179,7 +179,8 @@ export function failureText(f) {
   const wait = span ? t(`retry_after.${span.unit}`, { n: span.n }) : null;
   if (KERNEL_CLASSES.includes(cls)) {
     const head = wait ? t('retry_after.join', { head: classes[cls] ?? cls, wait }) : classes[cls] ?? cls;
-    return message ? t('reason_with', { head, message }) : head;
+    // 模型都在冷却、说了要等多久的不接原话（同终端：那句是内核自己的英文）
+    return message && !(wait && cls === 'cooling') ? t('reason_with', { head, message }) : head;
   }
   const status = f.status ?? (cls === 'rate_limited' ? 429 : null);
   const base = status != null ? res.text.status_hints[String(status)] : null;
