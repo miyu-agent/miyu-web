@@ -38,7 +38,8 @@
 .set-head { display: flex; align-items: center; gap: calc(8px * var(--space)); padding: calc(14px * var(--space)) calc(14px * var(--space)) calc(10px * var(--space)) calc(24px * var(--space)); }
 .set-title { flex: 1; font-size: calc(17px * var(--text-scale)); font-weight: 600; }
 .set-back { display: none; align-items: center; gap: calc(2px * var(--space)); padding: calc(4px * var(--space)) calc(6px * var(--space)) calc(4px * var(--space)) calc(2px * var(--space)); border: 0; border-radius: var(--r-8); background: transparent; color: var(--text-soft); font: calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer; }
-.set-body { position: relative; flex: 1; min-height: 0; padding: 0 calc(24px * var(--space)) calc(24px * var(--space)); overflow-x: hidden; overflow-y: auto; }
+/* `--set-hold`：页尾那一块收起时垫在最底下的空，免得整页跟着往下滑（私密目录、受保护的路径的总开关，`privacy.js`） */
+.set-body { position: relative; flex: 1; min-height: 0; padding: 0 calc(24px * var(--space)) calc(24px * var(--space) + var(--set-hold, 0px)); overflow-x: hidden; overflow-y: auto; overflow-anchor: none; }
 /* 点进去的一层（subpage.js）：页头左边的返回箭头一直在（不写字），进去新的从右边滑进来、原来的往左滑走，回来反过来 */
 .set-layer.has-sub .set-back { display: inline-flex; }
 .set-layer.has-sub .set-back-text { display: none; }
