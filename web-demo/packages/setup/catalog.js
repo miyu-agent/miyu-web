@@ -16,6 +16,8 @@ export class Catalog {
     this.personas = null;
     /** @type {import('./model.js').Preset[]|null} */
     this.presets = null;
+    /** @type {{name?: string, summary?: string, icon?: string}|null} 「无工具」那一项（核心 P-16 下；旧核心没有） */
+    this.noTools = null;
     /** 配置项 `persona.default`、`preset.default` 的最终值 */
     this.personaDefault = /** @type {string|null} */ (null);
     this.presetDefault = /** @type {string|null} */ (null);
@@ -39,7 +41,10 @@ export class Catalog {
       this.moreIcons(),
     ]);
     this.personas = personas;
-    this.presets = presets;
+    // 「无工具」（核心 P-16 下：`preset.list` 末尾一项 `preset: null`）单拿出来：它不是能编辑、能设成默认的预设，
+    // 只在新会话、换预设的菜单里列（蓝图 web.md「人格、预设、工作区」第 6 条）；混在预设里的话卡片、编辑、引导都照编号找，找不到
+    this.noTools = presets?.find((p) => p?.preset === null) ?? null;
+    this.presets = presets?.filter((p) => p?.preset != null) ?? null;
     this.personaDefault = got?.items?.['persona.default']?.value ?? null;
     this.presetDefault = got?.items?.['preset.default']?.value ?? null;
     const bad = [...(personas ?? []), ...(presets ?? [])].some((x) => x.problem);
