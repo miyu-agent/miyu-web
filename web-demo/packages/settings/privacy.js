@@ -128,7 +128,10 @@ function fold(dialog, key, off, ...kids) {
   const el = h('div.pv-fold', h('div.pv-body', ...kids));
   const was = (dialog.pvOff ??= {})[key];
   if (!was) dialog.pvOff[key] = { off, at: -Infinity };
-  fold.go(dialog, key, off, el);
+  el.classList.toggle('is-off', off);
+  el.inert = off;
+  // 重画的那一块进了页面才量得出多高：同一段代码放进页面以后、画出来之前接着走
+  queueMicrotask(() => { if (el.isConnected) fold.go(dialog, key, off, el); });
   return el;
 }
 
@@ -147,7 +150,9 @@ fold.go = (dialog, key, off, el) => {
   const ms = FOLD_MS * (Number.isFinite(scale) ? scale : 1);
   const since = now - dialog.pvOff[key].at;
   if (!(ms > 0 && since < ms)) return;
+  // 照里面那一块实际多高走（收着的时候外面高 0，里面照样排着）
+  const full = `${body.offsetHeight}px`;
   const go = (/** @type {Element} */ node, /** @type {Keyframe[]} */ frames) => { node.animate(frames, { duration: ms, easing: 'ease' }).currentTime = since; };
-  go(el, off ? [{ gridTemplateRows: '1fr' }, { gridTemplateRows: '0fr' }] : [{ gridTemplateRows: '0fr' }, { gridTemplateRows: '1fr' }]);
+  go(el, off ? [{ height: full }, { height: '0px' }] : [{ height: '0px' }, { height: full }]);
   go(body, off ? [{ opacity: 1 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }]);
 };
