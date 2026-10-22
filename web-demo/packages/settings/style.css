@@ -430,6 +430,7 @@ body > .set-ask { z-index: 95; }
 
 /* 核心拉起的扩展（「软件包」页，extensions.js）：停了的说明红字；标准错误等宽、暗底；要批准的那一块暖色底，不画描边 */
 .set-desc.is-error { color: var(--danger); }
+.set-desc.is-warn { color: var(--t-warn, var(--gold)); }
 .set-link { padding: 0; border: 0; background: none; color: var(--accent); font: calc(12px * var(--text-scale)) var(--font-ui); cursor: pointer; }
 .set-link:hover { text-decoration: underline; }
 .set-ext-output { margin: 0 0 calc(8px * var(--space)); padding: calc(8px * var(--space)) calc(10px * var(--space)); max-height: 200px; overflow: auto; border-radius: var(--r-8); background: var(--surface-2); color: var(--text-soft); font: calc(11.5px * var(--text-scale))/1.5 var(--font-mono); white-space: pre-wrap; word-break: break-all; }
@@ -527,6 +528,8 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 /* 运行中前面一个绿点（同软件包页的状态）；多选、删除 */
 .set-tool-state.is-on::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: calc(6px * var(--space)); border-radius: var(--r-round); background: var(--online); vertical-align: 1px; }
 .set-tool-state.is-error { color: var(--danger); }
+.set-tool-state.is-warn { color: var(--t-warn, var(--gold)); }
+.mcp-login-error { margin-top: calc(4px * var(--space)); }
 .set-tool-icon { flex: none; width: 32px; height: 32px; border-radius: var(--r-8); }
 .set-tool-icon .icon { width: calc(16px * var(--space)); height: calc(16px * var(--space)); }
 .set-tool-icon.is-danger { color: var(--danger); }

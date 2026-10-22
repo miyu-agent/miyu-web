@@ -230,7 +230,8 @@
           "failed_repeatedly": "连续失败 5 次，已停止",
           "not_installed": "程序未安装",
           "cannot_start": "无法启动",
-          "protocol_mismatch": "版本不兼容"
+          "protocol_mismatch": "版本不兼容",
+          "needs_login": "需要登录"
         }
       },
       "reset": "恢复默认",
@@ -391,6 +392,7 @@
         "mcp": "MCP 服务",
         "mcp_restart": "重启",
         "mcp_stopped": "服务已停止",
+        "mcp_login": "服务需要登录",
         "mcp_covered": "被个人设置中的同名服务替代",
         "covered": "被个人设置替代",
         "depends_missing": "缺少依赖：{names}",
@@ -698,7 +700,17 @@
       },
       "skin": "主题",
       "skin_factory": "默认主题",
-      "palette_label": "配色方案"
+      "palette_label": "配色方案",
+      "mcp_login": {
+        "needs": "需要登录",
+        "waiting": "等待在浏览器中完成登录…",
+        "login": "登录",
+        "reopen": "重新打开登录页",
+        "blocked": "浏览器拦截了弹出窗口",
+        "unregistered": "这个服务不支持自动注册，需要先在服务方注册应用，把 client_id 写进这个服务的设置",
+        "failed": "登录失败",
+        "failed_why": "登录失败：{why}"
+      }
     },
     "en": {
       "title": "Settings",
@@ -755,7 +767,8 @@
           "failed_repeatedly": "Failed 5 times in a row, stopped",
           "not_installed": "Program not installed",
           "cannot_start": "Can't start",
-          "protocol_mismatch": "Incompatible version"
+          "protocol_mismatch": "Incompatible version",
+          "needs_login": "Sign-in required"
         }
       },
       "reset": "Reset to default",
@@ -916,6 +929,7 @@
         "mcp": "MCP servers",
         "mcp_restart": "Restart",
         "mcp_stopped": "Server stopped",
+        "mcp_login": "Service needs sign-in",
         "mcp_covered": "Replaced by the server of the same name in personal settings",
         "covered": "Replaced by personal settings",
         "depends_missing": "Missing dependencies: {names}",
@@ -1223,7 +1237,17 @@
       },
       "skin": "Theme",
       "skin_factory": "Default theme",
-      "palette_label": "Color scheme"
+      "palette_label": "Color scheme",
+      "mcp_login": {
+        "needs": "Sign-in required",
+        "waiting": "Waiting for sign-in in the browser…",
+        "login": "Sign in",
+        "reopen": "Reopen sign-in page",
+        "blocked": "The browser blocked the pop-up",
+        "unregistered": "This service doesn't support automatic registration. Register an app with the service first and add its client_id to this service's settings",
+        "failed": "Sign-in failed",
+        "failed_why": "Sign-in failed: {why}"
+      }
     },
     "ja": {
       "title": "設定",
@@ -1280,7 +1304,8 @@
           "failed_repeatedly": "5 回続けて失敗したため停止しました",
           "not_installed": "プログラムがインストールされていません",
           "cannot_start": "起動できません",
-          "protocol_mismatch": "バージョンが合わないため起動しません"
+          "protocol_mismatch": "バージョンが合わないため起動しません",
+          "needs_login": "ログインが必要"
         }
       },
       "reset": "デフォルトに戻す",
@@ -1441,6 +1466,7 @@
         "mcp": "MCP サーバー",
         "mcp_restart": "再起動",
         "mcp_stopped": "サーバーが停止",
+        "mcp_login": "サービスのログインが必要",
         "mcp_covered": "個人設定の同名サーバーに置き換えられています",
         "covered": "個人設定に置き換え済み",
         "depends_missing": "依存パッケージ不足：{names}",
@@ -1748,7 +1774,17 @@
       },
       "skin": "テーマ",
       "skin_factory": "デフォルトテーマ",
-      "palette_label": "配色"
+      "palette_label": "配色",
+      "mcp_login": {
+        "needs": "ログインが必要",
+        "waiting": "ブラウザでのログインを待っています…",
+        "login": "ログイン",
+        "reopen": "ログインページを再度開く",
+        "blocked": "ブラウザがポップアップをブロックしました",
+        "unregistered": "このサービスは自動登録に対応していません。先にサービス側でアプリを登録し、client_id をこのサービスの設定に書いてください",
+        "failed": "ログインに失敗しました",
+        "failed_why": "ログインに失敗しました：{why}"
+      }
     }
   },
   "styles": [

@@ -195,8 +195,13 @@ export function browserHost() {
     wallpaper: (/** @type {boolean} */ dark) => wallpaper(key, dark),
     /** 桌面壁纸换了：桥推过来（见上面的 `wallpaperChanges`） */
     wallpaperChanges: (/** @type {() => void} */ changed) => wallpaperChanges(key, changed),
-    /** 外面的链接：新标签页。 */
-    open: (/** @type {string} */ url) => { window.open(url, '_blank', 'noopener'); },
+    /** 外面的链接：新标签页；交回开了没有（被浏览器拦了的是 false）。 */
+    open: (/** @type {string} */ url) => {
+      // 不写 noopener：写了的 window.open 一律回 null，看不出被浏览器拦了没有；开了马上断掉 opener，同 noopener
+      const tab = window.open(url, '_blank');
+      if (tab) tab.opener = null;
+      return !!tab;
+    },
     /** 重新载入页面 */
     restart: () => location.reload(),
     /** 接住页面里的链接：浏览器自己会办，什么都不做；交回怎么不接。 */

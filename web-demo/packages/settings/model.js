@@ -367,8 +367,11 @@ export function applyPackageChange(list, id, entry) {
   return list.map((p) => (p.package === id ? entry : p));
 }
 
-/** 包开着、它带的 MCP 服务有停下的（核心 X-4：`mcp` 每一格的 `state`；被个人设置里同名的替代了的不算，F-9 补的 `covered`）。 @param {any} p */
-export const mcpStopped = (p) => p.enabled !== false && (p.mcp ?? []).some((s) => s.state === 'stopped' && !s.covered);
+/** 包开着、它带的 MCP 服务有停下的（核心 X-4：`mcp` 每一格的 `state`；被个人设置里同名的替代了的不算，F-9 补的 `covered`；要浏览器登录的另算，X-42 上）。 @param {any} p */
+export const mcpStopped = (p) => p.enabled !== false && (p.mcp ?? []).some((s) => s.state === 'stopped' && !s.covered && s.reason !== 'needs_login');
+
+/** 包开着、带的网址服务有要浏览器登录的（核心 X-42 上；不算「服务已停止」）。 @param {any} p */
+export const mcpNeedsLogin = (p) => p.enabled !== false && (p.mcp ?? []).some((s) => s.state === 'stopped' && !s.covered && s.reason === 'needs_login');
 
 /**
  * 几个包的编号换成给人看的名字（核心 F-11：缺的依赖 `missing`、依赖它的 `by` 都是编号）：列表里有、有名字的照名字，没装的照编号；先后照原样。

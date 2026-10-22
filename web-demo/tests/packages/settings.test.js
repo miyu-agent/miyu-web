@@ -291,6 +291,12 @@ test('软件包列表的推送：整项换、空的拿掉、新的照编号排�
   assert.equal(mcpStopped({ enabled: true, mcp: [{ name: 'x', state: 'running' }, { name: 'y', state: 'stopped' }] }), true);
   assert.equal(mcpStopped({ enabled: false, mcp: [{ name: 'y', state: 'stopped' }] }), false, '关着的不算');
   assert.equal(mcpStopped({ enabled: true }), false);
+  // 要浏览器登录的另算「服务需要登录」（核心 X-42 上）
+  const { mcpNeedsLogin } = await import('../../packages/settings/model.js');
+  const login = { enabled: true, mcp: [{ name: 'notion', state: 'stopped', reason: 'needs_login' }] };
+  assert.equal(mcpStopped(login), false);
+  assert.equal(mcpNeedsLogin(login), true);
+  assert.equal(mcpNeedsLogin({ ...login, enabled: false }), false, '关着的不算');
 });
 
 test('依赖的编号换成名字：列表里有名字的照名字，没装的照编号，先后照原样；三种语言都有「缺少依赖」（核心 F-11）', async () => {

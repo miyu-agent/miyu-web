@@ -11,7 +11,7 @@
 import { confirmIn } from './confirm.js';
 import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField, findBox } from './rows.js';
-import { splitKey, itemFor, mcpStopped, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy } from './model.js';
+import { splitKey, itemFor, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy } from './model.js';
 import { openPage, probeSites } from './backstage.js';
 import { serverRow } from './mcp-servers.js';
 import { stateText } from './extensions.js';
@@ -116,6 +116,7 @@ function packageRow(dialog, p) {
   // 服务全被个人设置里同名的替代了（F-9 补的 `covered`，`status` 照旧 `off`）：写「被个人设置替代」，不当关着
   const state = p.covered && !bad ? h('span.set-pkg-status', t('pkg.covered'))
     : mcpStopped(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_stopped'))
+    : mcpNeedsLogin(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_login'))
     : QUIET.has(p.status) ? null : h(`span.set-pkg-status${bad ? '.is-bad' : p.status === 'running' ? '.is-on' : ''}`, t(`pkg.status.${p.status}`));
   const control = p.required ? h('span.set-pkg-status', t('pkg.required'))
     : 'enabled' in p ? switchFor(dialog, p) : null;

@@ -7,6 +7,7 @@
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { groupBlock, toggle, select, findBox } from './rows.js';
 import { stateText } from './extensions.js';
+import { loginState, loginText, loginButton, loginErrorNode } from './mcp-login.js';
 import { openInfo } from './core-packages.js';
 import { openServerForm } from './mcp-form.js';
 import { confirmIn } from './confirm.js';
@@ -203,7 +204,10 @@ function toolRow(dialog, item, view) {
   const selecting = !!view.selecting;
   const can = deletable(item);
   const picked = selecting && view.selected.has(item.id);
+  const login = item.kind === 'mcp' ? serverState(dialog, item).login : null;
   const controls = selecting ? [] : [
+    // 要浏览器登录的（核心 X-42 上）：加载方式下拉前面一个「登录」
+    login?.needs ? loginButton(dialog, item.name, login, { small: true }) : null,
     item.load ? loadSelect(dialog, item) : null,
     item.on !== null ? switchFor(dialog, item) : null,
     can ? askFirst(dialog, iconBtn('trash-2', t('tools.delete'), () => {}, '.is-danger.set-tool-del'), t('tools.delete_ask', { name: item.name }), () => removeItems(dialog, item.kind, [item])) : null,
@@ -211,7 +215,7 @@ function toolRow(dialog, item, view) {
   const tag = item.kind === 'mcp' && item.own ? null : h('span.set-pkg-tag', sourceText(dialog, item));
   return h(`div.set-row.set-pkg${selecting ? (can ? '.is-expandable.is-picking' : '.is-unpickable') : '.is-expandable'}${picked ? '.is-picked' : ''}`, {
     onclick: (/** @type {MouseEvent} */ e) => {
-      if (/** @type {Element} */ (e.target).closest('.set-switch, .set-select, .set-tool-del')) return;
+      if (/** @type {Element} */ (e.target).closest('.set-switch, .set-select, .set-tool-del, .mcp-login')) return;
       if (!selecting) return openTool(dialog, item);
       if (!can) return;
       view.selected = e.shiftKey ? range(view.selected, view.order ?? [], view.last, item.id) : flip(view.selected, item.id);
@@ -233,25 +237,31 @@ function toolRow(dialog, item, view) {
 function descLine(dialog, item) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   if (item.kind !== 'mcp') return item.desc ? h('p.set-desc', item.desc) : null;
-  const { text, bad, running } = serverState(dialog, item);
+  const { text, bad, running, warn, login } = serverState(dialog, item);
   const tools = Array.isArray(item.raw.tools) ? t('tools.tools_n', { count: item.raw.tools.length }) : null;
-  return h('p.set-desc', stateNode(text, bad, running), tools ? ` · ${tools}` : null);
+  return [h('p.set-desc', stateNode(text, bad, running, warn), tools ? ` · ${tools}` : null), loginErrorNode(login)];
 }
 
 /**
- * 服务现在怎样（同软件包信息页「MCP 服务」那一行）：被个人设置里同名的替代了的写那一句；包关着的、服务关着的「已停用」；停了的照原因，红字。
+ * 服务现在怎样（同软件包信息页「MCP 服务」那一行）：被个人设置里同名的替代了的写那一句；包关着的、服务关着的「已停用」；停了的照原因，红字；
+ * 要浏览器登录的（核心 X-42 上）不算出错：「需要登录」「等待在浏览器中完成登录…」，warn 色。
  * @param {any} dialog @param {ToolItem} item
  */
 function serverState(dialog, item) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const s = item.raw;
-  if (item.covered) return { text: t('pkg.mcp_covered'), bad: false, running: false };
-  const on = s.enabled !== false && s.state !== 'off';
-  return { text: stateText(t, { ...s, on }), bad: on && s.state === 'stopped', running: on && s.state === 'running' };
+  const on = !item.covered && s.enabled !== false && s.state !== 'off';
+  const login = loginState(dialog, s, on);
+  if (item.covered) return { text: t('pkg.mcp_covered'), bad: false, running: false, warn: false, login };
+  if (login.needs) return { text: loginText(t, login), bad: false, running: false, warn: true, login };
+  return { text: stateText(t, { ...s, on }), bad: on && s.state === 'stopped', running: on && s.state === 'running', warn: false, login };
 }
 
-/** 状态的字：运行中前面一个绿点（同软件包页，2026-10-20 项目主人），停了的红字。 @param {string} text @param {boolean} bad @param {boolean} running */
-const stateNode = (text, bad, running) => h(`span.set-tool-state${bad ? '.is-error' : ''}${running ? '.is-on' : ''}`, text);
+/**
+ * 状态的字：运行中前面一个绿点（同软件包页，2026-10-20 项目主人），停了的红字，要登录的 warn 色。
+ * @param {string} text @param {boolean} bad @param {boolean} running @param {boolean} [warn]
+ */
+const stateNode = (text, bad, running, warn = false) => h(`span.set-tool-state${bad ? '.is-error' : ''}${running ? '.is-on' : ''}${warn ? '.is-warn' : ''}`, text);
 
 /** 加载方式的下拉：懒加载（`need_load` 是真的）、完整。 @param {any} dialog @param {ToolItem} item */
 function loadSelect(dialog, item) {
@@ -326,8 +336,10 @@ function toolDetail(dialog, kind, id) {
   const state = kind === 'mcp' ? serverState(dialog, item) : null;
   // MCP 自己写的不写「来源 · 自制」（同列表），只写状态
   const ownMcp = kind === 'mcp' && item.own;
-  const meta = h('p.set-pkg-card-meta', ownMcp ? null : [t('tools.field.source'), ' · ', sourceNode], state ? [ownMcp ? null : ' · ', stateNode(state.text, state.bad, state.running)] : null);
+  const meta = h('p.set-pkg-card-meta', ownMcp ? null : [t('tools.field.source'), ' · ', sourceNode], state ? [ownMcp ? null : ' · ', stateNode(state.text, state.bad, state.running, state.warn)] : null);
   const actions = kind === 'mcp' ? serverActions(dialog, item) : [];
+  // 要浏览器登录的：「登录」排最前面，主按钮（核心 X-42 上）
+  if (state?.login.needs) actions.unshift(loginButton(dialog, item.name, state.login, { primary: true }));
   const stderr = Array.isArray(s.stderr) ? s.stderr.join('\n') : s.stderr ?? '';
   dialog.mcpShowing ??= new Set();
   const showing = kind === 'mcp' && !!state?.bad && !!stderr && dialog.mcpShowing.has(id);
@@ -345,7 +357,8 @@ function toolDetail(dialog, kind, id) {
         h('div.set-pkg-card-name', item.title ?? item.name),
         item.desc ? h('p.set-pkg-card-desc', item.desc) : null,
         meta,
-        actions.length ? h('div.set-pkg-card-actions', actions) : null),
+        actions.length ? h('div.set-pkg-card-actions', actions) : null,
+        state ? loginErrorNode(state.login) : null),
       item.on !== null ? h('div.set-control', switchFor(dialog, item)) : null),
     showing ? h('pre.set-ext-output', stderr) : null);
   const line = (/** @type {string} */ name, /** @type {any} */ value, /** @type {any} */ note = null) => h('div.set-row',

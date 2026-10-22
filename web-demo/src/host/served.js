@@ -110,7 +110,12 @@ export function servedHost() {
     /** 桌面壁纸：网页软件不给 */
     wallpaper: async (/** @type {boolean} */ dark) => null,
     wallpaperChanges: (/** @type {() => void} */ changed) => () => {},
-    open: (/** @type {string} */ url) => { window.open(url, '_blank', 'noopener'); },
+    open: (/** @type {string} */ url) => {
+      // 不写 noopener：写了的 window.open 一律回 null，看不出被浏览器拦了没有；开了马上断掉 opener，同 noopener
+      const tab = window.open(url, '_blank');
+      if (tab) tab.opener = null;
+      return !!tab;
+    },
     /** 重新载入页面 */
     restart: () => location.reload(),
     intercept: (/** @type {HTMLElement} */ root) => () => {},

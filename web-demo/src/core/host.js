@@ -32,9 +32,9 @@ export function blobUrl(hash, type, how = {}) {
 }
 
 
-/** 外面的链接：浏览器是新标签页，桌面端是系统的浏览器。 */
+/** 外面的链接：浏览器是新标签页，桌面端是系统的浏览器；交回开了没有。 */
 export function openExternal(url) {
-  host?.open(url);
+  return !!host?.open(url);
 }
 
 /** 写进剪贴板。 */

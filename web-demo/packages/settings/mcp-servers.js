@@ -5,6 +5,7 @@
 
 import { h } from '../../src/lib/dom.js';
 import { stateText } from './extensions.js';
+import { loginState, loginText, loginButton, loginErrorNode } from './mcp-login.js';
 
 /**
  * 一个服务一行（连展开的输出）。
@@ -16,14 +17,17 @@ export function serverRow(dialog, key, s, opts) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
   dialog.mcpShowing ??= new Set();
   const showing = /** @type {Set<string>} */ (dialog.mcpShowing);
-  const stopped = opts.on && !s.covered && s.state === 'stopped';
+  // 要浏览器登录的（核心 X-42 上）不算停了：「需要登录」warn 色，右边一个「登录」
+  const login = loginState(dialog, s, opts.on && s.state !== 'off');
+  const stopped = opts.on && !s.covered && s.state === 'stopped' && !login.needs;
   const stderr = Array.isArray(s.stderr) ? s.stderr.join('\n') : s.stderr ?? '';
   const peek = stopped && stderr ? h('button.set-link', { type: 'button', onclick: () => { if (showing.has(key)) showing.delete(key); else showing.add(key); dialog.drawBody(); } },
     t(showing.has(key) ? 'ext.hide_output' : 'ext.show_output')) : null;
-  const desc = s.covered ? t('pkg.mcp_covered') : stateText(t, { ...s, on: opts.on && s.state !== 'off' });
+  const desc = s.covered ? t('pkg.mcp_covered') : login.needs ? loginText(t, login) : stateText(t, { ...s, on: opts.on && s.state !== 'off' });
+  const action = login.needs ? loginButton(dialog, s.name, login, { small: true }) : opts.action ?? null;
   return [
-    h('div.set-row', h('div.set-text', h('div.set-name', h('span', s.name)), h(`p.set-desc${stopped ? '.is-error' : ''}`, desc), peek),
-      opts.action ? h('div.set-control', opts.action) : null),
+    h('div.set-row', h('div.set-text', h('div.set-name', h('span', s.name)), h(`p.set-desc${stopped ? '.is-error' : login.needs ? '.is-warn' : ''}`, desc), peek, loginErrorNode(login)),
+      action ? h('div.set-control', action) : null),
     showing.has(key) && stderr ? h('pre.set-ext-output', stderr) : null,
   ];
 }
