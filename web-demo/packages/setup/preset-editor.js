@@ -1,15 +1,14 @@
 // @ts-check
 //! 预设的详情（蓝图 `web.md`「人格、预设、工作区」第 6 条）：浮起来的卡片里（`float.js`）——名字、功能开关（功能照核心 F-3 下的 `features`：
 //! 一个功能一个开关，有几件工具的把工具平铺在下面、一件一个开关——2026-10-09 项目主人：「每一个工具都是一个功能，直接平铺，用组名做分隔线」，
-//! 和终端对齐；2026-10-08 项目主人：预设不要说明，
-//! 「没什么意义」；不带默认人格，人格、预设互不引用）。都是点了当场存（`preset.set` 只带改的那一项，不带 `expect`）：名字回车、离开时存，开关点了就存；功能、工具照核心给的
+//! 和终端对齐；简单描述一行（2026-10-23 项目主人定预设也要描述，推翻 10-08 的「预设不要说明」）；不带默认人格，人格、预设互不引用）。都是点了当场存（`preset.set` 只带改的那一项，不带 `expect`）：名字回车、离开时存，开关点了就存；功能、工具照核心给的
 //! 名字（照连接的语言），没装的写「没安装」。图标（核心 P-5，`preset.icon`，Lucide 的名字）：点开一排先列设置项 `preset_icons` 那些，能搜整套，
 //! 「不用图标」删掉这一层写的；选了当场存。删除照核心的 `remove`，同人格。
 
 import { h, icon, replace, hasIcon, iconNames } from '../../src/lib/dom.js';
 import { field, askFirst } from './form.js';
 import { refusalText } from './persona-editor.js';
-import { featureGroups } from './model.js';
+import { featureGroups, summaryChange } from './model.js';
 
 /** @typedef {{saved: () => void, removed: (remains: boolean) => void, close: () => void}} Hooks */
 
@@ -55,6 +54,14 @@ export class PresetEditor {
     const label = typeof got.name === 'string' ? got.name : '';
     this.title.textContent = label || this.id;
     const name = this.kit.text(label, '', (text) => { if (text) this.set([{ key: 'preset.name', value: text }]); });
+    // 简单描述（2026-10-23 项目主人定预设也要描述）：回车、离开框就存，同名字；清空发空字（盖住出厂的那句，同人格的说明）
+    let said = typeof got.summary === 'string' ? got.summary : '';
+    const summary = this.kit.text(said, t('edit.summary_hint'), (text) => {
+      const changes = summaryChange('preset', said, text);
+      if (!changes.length) return;
+      said = text.trim();
+      this.set(changes);
+    });
     const list = Array.isArray(got.features) ? got.features : [];
     /** 没列出来的功能默认开不开：`on` 的预设才照全局开关（核心 X-27） */
     this.unlisted = got.unlisted;
@@ -65,6 +72,7 @@ export class PresetEditor {
     const remove = got.remove ? askFirst(this.kit, t(`edit.${got.remove}`), () => t(`edit.${got.remove}_ask`, { name: this.title.textContent || this.id }), () => this.drop()) : null;
     replace(this.body,
       field(t('edit.name'), name),
+      field(t('edit.summary'), summary),
       field(t('edit.icon'), this.iconRow(got, label)),
       field(t('edit.features'), list.length ? features : h('p.setup-empty', t('edit.no_features'))),
       this.note,

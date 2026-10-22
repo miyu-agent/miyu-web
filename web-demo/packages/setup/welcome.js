@@ -285,6 +285,8 @@ export class PresetStep {
         const on = this.chosen === p.preset;
         return h(`button.setup-choice${on ? '.is-on' : ''}`, { type: 'button', onclick: () => { this.chosen = p.preset; draw(); this.host.ready(); } },
           h('span.setup-choice-name', presetName(p)),
+          // 简单描述（2026-10-23 项目主人定预设也要描述）：没有的不写
+          p.summary ? h('span.setup-choice-hint', p.summary) : null,
           // 每张卡片照同一个先后、排成对齐的格子：同一个功能在每张卡片的同一个位置，一眼比得出区别（2026-10-10 项目主人：全列，要方便读）
           h('span.setup-chips', this.all.map((f) => {
             const on = (this.features.get(p.preset) ?? []).find((x) => x.id === f.id)?.on ?? false;

@@ -282,7 +282,7 @@ export function apply(ctx) {
     infoMenu.show(anchor, {
       title: t('info.switch_preset'), below: true, back,
       rows: (catalog.presets ?? []).map((p) => ({
-        title: presetName(p), desc: p.problem ? t('preset_bad') : '', current: p.preset === now, off: !!p.problem, keep: true,
+        title: presetName(p), desc: p.problem ? t('preset_bad') : p.summary ?? '', current: p.preset === now, off: !!p.problem, keep: true,
         action: p.problem ? undefined : editAction('preset', p.preset, () => { if (anchor.isConnected) switchPreset(anchor, session, now, back); }, () => infoMenu.close()),
         pick: () => { if (p.preset !== now) confirmSwitch(anchor, session, { preset: p.preset }, back); },
       })),
@@ -383,12 +383,12 @@ export function apply(ctx) {
   ];
 
   /**
-   * 预设的几行：照 `preset.list`，一行一个名字（预设不写说明）；写错的暗着。给了 `reopen` 的同人格多一个编辑。
+   * 预设的几行：照 `preset.list`，一行一个名字，下面简单描述（没有的不写，2026-10-23）；写错的暗着。给了 `reopen` 的同人格多一个编辑。
    * @param {string|null} chosen @param {(preset: string) => void} pick @param {() => void} [reopen] @param {() => void} [before]
    */
   const presetRows = (chosen, pick, reopen, before) => (catalog.presets ?? []).map((p) => ({
     title: presetName(p),
-    desc: p.problem ? t('preset_bad') : '',
+    desc: p.problem ? t('preset_bad') : p.summary ?? '',
     tip: p.problem ? catalog.problemOf('preset', p).map((x) => problemText(ctx, x)).join('\n') : undefined,
     current: p.preset === chosen && !p.problem,
     off: !!p.problem,

@@ -45,8 +45,8 @@ const KINDS = {
     editor: (ctx, kit, catalog, id, hooks, look) => new PersonaEditor(ctx, kit, catalog, id, hooks, look),
   },
   preset: {
-    // 预设不写说明（2026-10-08 项目主人：没什么意义，名字已经说清了）
-    list: (c) => c.presets, fallback: (c) => c.presetDefault ?? 'full', name: presetName, none: 'presets.none', add: 'edit.new_preset', intro: null, summary: false,
+    // 预设也写简单描述（2026-10-23 项目主人定，推翻 10-08 的「预设不写说明」）；没有的不写
+    list: (c) => c.presets, fallback: (c) => c.presetDefault ?? 'full', name: presetName, none: 'presets.none', add: 'edit.new_preset', intro: null, summary: true,
     create: (core, name) => core.request('preset.set', { changes: [{ key: 'preset.name', value: name }] }).then((r) => r?.preset),
     editor: (ctx, kit, catalog, id, hooks, look) => new PresetEditor(ctx, kit, catalog, id, hooks, look),
   },
