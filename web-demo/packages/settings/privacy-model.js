@@ -11,8 +11,8 @@ export const REMOVE = 'sandbox.private.remove';
  */
 export const PAIRS = [
   { add: ADD, remove: REMOVE, enabled: 'sandbox.private.enabled', words: null },
-  // 受保护的路径（核心 5-17 下上）：有文件，表里的字说「路径」不说「目录」（`privacy.readonly.*`）
-  { add: 'sandbox.readonly.add', remove: 'sandbox.readonly.remove', enabled: null, words: 'readonly' },
+  // 受保护的路径（核心 5-17 下上）：有文件，表里的字说「路径」不说「目录」（`privacy.readonly.*`）；总开关核心 5-17 下上补起有，旧核心没有这一项的不画开关
+  { add: 'sandbox.readonly.add', remove: 'sandbox.readonly.remove', enabled: 'sandbox.readonly.enabled', words: 'readonly' },
 ];
 
 /** 是不是每个工作区里的那一处（相对路径）：不是 `~`、`/`、Windows 的 `C:\…`、`\\…` 开头的 @param {string} path */
