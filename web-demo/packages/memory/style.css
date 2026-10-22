@@ -193,3 +193,8 @@
 /* 卡片头一行的「查看过程」 */
 .dream-open { flex: none; margin-left: auto; padding: 0 calc(6px * var(--space)); border: 0; border-radius: var(--r-5); background: none; color: var(--accent); font: calc(12px * var(--text-scale)) var(--font-ui); cursor: pointer; }
 .dream-open:hover { background: var(--surface-2); }
+
+/* 「认识的人」那一类（核心 E-1 上）：内容前面一个小标签写是谁；「记一条」、详情里「是谁」那一行 */
+.mem-who { display: inline-block; margin-right: calc(6px * var(--space)); padding: 0 calc(6px * var(--space)); border-radius: var(--r-5); background: var(--accent-soft, var(--surface-2)); color: var(--accent); font-size: calc(12px * var(--text-scale)); line-height: 1.6; vertical-align: 1px; }
+.mem-who-input { width: 100%; box-sizing: border-box; }
+.mem-who-input[hidden] { display: none; }

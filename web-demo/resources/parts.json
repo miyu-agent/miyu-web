@@ -5997,5 +5997,11 @@
     "select": [
       ".pulse-withdraw"
     ]
+  },
+  "mem.who": {
+    "zh": "记忆页：「认识的人」内容前面写是谁的小标签",
+    "select": [
+      ".mem-who"
+    ]
   }
 }

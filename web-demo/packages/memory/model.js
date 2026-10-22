@@ -3,7 +3,8 @@
 //! 120 字）。界面在 `page.js`。
 
 /** 类别的先后（核心 `memory.md`「一条记忆」） */
-export const CLASSES = /** @type {const} */ (['user', 'feedback', 'episode', 'reference']);
+// 「认识的人」（`person`，核心 E-1 上）：她认识的别人，一条记下是谁（`who`）
+export const CLASSES = /** @type {const} */ (['user', 'person', 'feedback', 'episode', 'reference']);
 
 /** 作废了没有：核心作废时没写原因的给空字符串，不是 `null` 就算作废 @param {{retired?: string|null}} m */
 export const isRetired = (m) => m.retired != null;
@@ -14,7 +15,7 @@ export const KEYWORDS_MAX = 200;
 
 /**
  * @typedef {{id: string, class: string, text: string, by?: string, at?: string, used?: number, used_at?: string|null,
- *   sources?: {session: string, turn: number}[], retired?: string|null, venue?: string|null, keywords?: string|null}} Memory
+ *   sources?: {session: string, turn: number}[], retired?: string|null, venue?: string|null, keywords?: string|null, who?: string|null}} Memory
  */
 
 /** 字数照码点数（一个汉字、一个表情都算一个） @param {string} s */
@@ -45,12 +46,14 @@ export function visible(list, f) {
 export const hasKeywords = (list) => list.some((m) => Object.prototype.hasOwnProperty.call(m, 'keywords'));
 
 /**
- * 存详情：只带改了的（`memory.update`）。内容去掉前后空白；关键词清空写空字符串（核心照它去掉关键词）。没改的交 `null`。
+ * 存详情：只带改了的（`memory.update`）。内容去掉前后空白；关键词清空写空字符串（核心照它去掉关键词）；「认识的人」那一类的是谁（`who`）
+ * 去掉前后空白，空的不改。没改的交 `null`。
  * @param {Memory} m 原来的 @param {string} text 框里的内容 @param {string|null} keywords 框里的关键词（不认关键词的核心交 `null`）
- * @returns {{id: string, text?: string, keywords?: string}|null}
+ * @param {string|null} [who] 框里的是谁（不是「认识的人」的交 `null`）
+ * @returns {{id: string, text?: string, keywords?: string, who?: string}|null}
  */
-export function updateOf(m, text, keywords) {
-  /** @type {{id: string, text?: string, keywords?: string}} */
+export function updateOf(m, text, keywords, who = null) {
+  /** @type {{id: string, text?: string, keywords?: string, who?: string}} */
   const out = { id: m.id };
   const t = text.trim();
   if (t && t !== m.text) out.text = t;
@@ -58,23 +61,28 @@ export function updateOf(m, text, keywords) {
     const k = keywords.trim();
     if (k !== (m.keywords ?? '')) out.keywords = k;
   }
-  return 'text' in out || 'keywords' in out ? out : null;
+  if (who != null) {
+    const w = who.trim();
+    if (w && w !== (m.who ?? '')) out.who = w;
+  }
+  return 'text' in out || 'keywords' in out || 'who' in out ? out : null;
 }
 
 /**
- * 存不存得了：内容不空、不超长，关键词不超长，有改的。
- * @param {Memory} m @param {string} text @param {string|null} keywords
+ * 存不存得了：内容不空、不超长，关键词不超长，「认识的人」的是谁不空，有改的。
+ * @param {Memory} m @param {string} text @param {string|null} keywords @param {string|null} [who]
  */
-export function canSave(m, text, keywords) {
+export function canSave(m, text, keywords, who = null) {
   if (!text.trim() || chars(text.trim()) > TEXT_MAX) return false;
   if (keywords != null && chars(keywords.trim()) > KEYWORDS_MAX) return false;
-  return updateOf(m, text, keywords) != null;
+  if (who != null && !who.trim()) return false;
+  return updateOf(m, text, keywords, who) != null;
 }
 
-/** 底下那一行暗字说存了会怎样 @param {{text?: string, keywords?: string}|null} change */
+/** 底下那一行暗字说存了会怎样：改了内容、是谁的存成新的一条（核心 E-1 上：只改是谁的也照旧文新记一条） @param {{text?: string, keywords?: string, who?: string}|null} change */
 export function saveNote(change) {
   if (!change) return null;
-  return 'text' in change ? 'detail.note_new' : 'detail.note_same';
+  return 'text' in change || 'who' in change ? 'detail.note_new' : 'detail.note_same';
 }
 
 /**

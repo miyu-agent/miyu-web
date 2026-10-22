@@ -12,7 +12,7 @@ const list = [
 ];
 
 test('数的是没作废的：一共几条、每一类几条', () => {
-  assert.deepEqual(counts(list), { all: 4, user: 1, feedback: 1, episode: 1, reference: 1 });
+  assert.deepEqual(counts(list), { all: 4, user: 1, person: 0, feedback: 1, episode: 1, reference: 1 });
 });
 
 test('筛：类别、作废的看不看', () => {
@@ -76,4 +76,14 @@ test('关键词拆成一个个：中文、英文逗号、顿号、分号都算�
   assert.deepEqual(splitKeywords(''), []);
   assert.deepEqual(splitKeywords(null), []);
   assert.equal(joinKeywords(['猫', '豆豆']), '猫, 豆豆');
+});
+
+test('认识的人（核心 E-1 上）：是谁改了也存成新的一条；空的不存；不是这一类的不带 who', () => {
+  const p = { id: 'm9', class: 'person', text: '喜欢猫', who: 'qq:10086', keywords: null };
+  assert.equal(updateOf(p, '喜欢猫', null, 'qq:10086'), null);
+  assert.deepEqual(updateOf(p, '喜欢猫', null, ' 小明 '), { id: 'm9', who: '小明' });
+  assert.equal(saveNote(updateOf(p, '喜欢猫', null, '小明')), 'detail.note_new');
+  assert.equal(canSave(p, '喜欢猫', null, '  '), false);
+  assert.equal(canSave(p, '喜欢狗', null, 'qq:10086'), true);
+  assert.deepEqual(updateOf({ id: 'm1', class: 'user', text: 'a' }, 'b', null), { id: 'm1', text: 'b' });
 });

@@ -105,6 +105,7 @@
       "dream_command": "整理记忆",
       "add": "记一条",
       "add_hint": "要记住的一句话，最多 {n} 字",
+      "add_who": "是谁（名字或平台编号，例如 qq:10086）",
       "add_keywords": "关键词（可留空）：打一个按回车或逗号",
       "cancel": "取消",
       "remember": "记住",
@@ -112,6 +113,7 @@
       "classes": {
         "all": "全部",
         "user": "关于用户",
+        "person": "认识的人",
         "feedback": "对 AI 的要求",
         "episode": "发生过的事",
         "reference": "资料位置"
@@ -144,6 +146,7 @@
         "keywords_hint": "打一个按回车或逗号",
         "keywords_note": "只用来找到这一条，AI 看不到这一行。整理记忆时会慢慢补上",
         "class": "类别",
+        "who": "是谁",
         "at": "记下",
         "by_person": "你记的",
         "by_tool": "AI 记的",
@@ -252,6 +255,7 @@
       "dream_command": "Tidy up memories",
       "add": "Add",
       "add_hint": "One sentence to remember, up to {n} characters",
+      "add_who": "Who (name or platform ID, e.g. qq:10086)",
       "add_keywords": "Keywords (optional): type one, press Enter or a comma",
       "cancel": "Cancel",
       "remember": "Remember",
@@ -259,6 +263,7 @@
       "classes": {
         "all": "All",
         "user": "About the user",
+        "person": "People",
         "feedback": "Requests for the AI",
         "episode": "What happened",
         "reference": "Where things are"
@@ -291,6 +296,7 @@
         "keywords_hint": "Type one, press Enter or a comma",
         "keywords_note": "Only used to find this memory. The AI doesn't see this line. Tidying fills it in over time",
         "class": "Kind",
+        "who": "Who",
         "at": "Saved",
         "by_person": "by you",
         "by_tool": "by the AI",
@@ -399,6 +405,7 @@
       "dream_command": "記憶を整理",
       "add": "追加",
       "add_hint": "覚えてほしい一文（{n} 文字まで）",
+      "add_who": "誰か（名前またはプラットフォームの ID、例：qq:10086）",
       "add_keywords": "キーワード（空欄可）：入力して Enter かカンマ",
       "cancel": "キャンセル",
       "remember": "覚える",
@@ -406,6 +413,7 @@
       "classes": {
         "all": "すべて",
         "user": "ユーザーについて",
+        "person": "知り合い",
         "feedback": "AI への要望",
         "episode": "出来事",
         "reference": "資料の場所"
@@ -438,6 +446,7 @@
         "keywords_hint": "入力して Enter かカンマ",
         "keywords_note": "この記憶を探すためだけに使います。AI にはこの行は見えません。整理のたびに少しずつ補われます",
         "class": "種類",
+        "who": "誰か",
         "at": "記録",
         "by_person": "あなたが記録",
         "by_tool": "AI が記録",

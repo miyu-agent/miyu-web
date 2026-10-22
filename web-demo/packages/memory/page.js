@@ -355,7 +355,8 @@ export class MemoryPage {
     const t = this.t;
     const at = m.at ? Date.parse(m.at) : NaN;
     return h(`div.mem-row${isRetired(m) ? '.is-retired' : ''}`, { role: 'button', tabindex: '0', onclick: () => this.openDetail(m.id), onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter') this.openDetail(m.id); } },
-      h('span.mem-text', this.marked(m.text)),
+      // 「认识的人」那一类：内容前面一个小标签写是谁（核心 E-1 上的 `who`）
+      h('span.mem-text', m.who ? h('span.mem-who', m.who) : null, this.marked(m.text)),
       // 右边一格：日期、用到几次；作废的悬停时换成「找回」（同一格，不挤下一行）
       h('span.mem-side',
         h('span.mem-meta', h('span', [t(`classes.${m.class}`), Number.isFinite(at) ? agoText(at, Date.now(), this.t) : ''].filter(Boolean).join(' · ')), h('span', m.used ? t('used', { n: m.used }) : t('unused'))),
@@ -378,19 +379,25 @@ export class MemoryPage {
     const kw = this.keywords ? keywordBox(null, t('add_keywords')) : null;
     const count = h('span.mem-count', `0 / ${TEXT_MAX}`);
     const ok = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'submit', disabled: true }, t('remember')));
+    // 选了「认识的人」的多一行「是谁」，必填（核心 E-1 上：`memory.remember` 带 `who`）
+    const who = /** @type {HTMLInputElement} */ (h('input.set-input.mem-who-input', { type: 'text', placeholder: t('add_who'), hidden: true, spellcheck: 'false', autocomplete: 'off' }));
     const kinds = h('div.mem-chips', CLASSES.map((k) => h(`button.mem-chip${k === cls ? '.is-on' : ''}`, { type: 'button', onclick: (/** @type {Event} */ e) => {
       cls = k;
       for (const b of kinds.children) b.classList.toggle('is-on', b === e.currentTarget);
+      who.hidden = cls !== 'person';
+      sync();
+      if (!who.hidden) who.focus();
     } }, t(`classes.${k}`))));
     const sync = () => {
       const n = chars(area.value.trim());
       count.textContent = `${n} / ${TEXT_MAX}`;
       count.classList.toggle('is-over', n > TEXT_MAX);
-      ok.disabled = !area.value.trim() || n > TEXT_MAX || (kw != null && chars(kw.value.trim()) > KEYWORDS_MAX);
+      ok.disabled = !area.value.trim() || n > TEXT_MAX || (kw != null && chars(kw.value.trim()) > KEYWORDS_MAX) || (cls === 'person' && !who.value.trim());
     };
     area.addEventListener('input', sync);
+    who.addEventListener('input', sync);
     kw?.addEventListener('input', sync);
-    const form = h('form.mem-add', kinds, area, kw, h('div.mem-add-foot', count,
+    const form = h('form.mem-add', kinds, who, area, kw, h('div.mem-add-foot', count,
       h('button.set-btn', { type: 'button', onclick: () => this.closeAdd() }, t('cancel')), ok));
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -399,6 +406,7 @@ export class MemoryPage {
       /** @type {any} */
       const params = { persona: this.persona, class: cls, text: area.value.trim() };
       if (kw?.value.trim()) params.keywords = kw.value.trim();
+      if (cls === 'person') params.who = who.value.trim();
       try {
         await this.ctx.core.request('memory.remember', params);
         this.adding = false;
@@ -439,6 +447,8 @@ export class MemoryPage {
     const kw = withKw ? keywordBox(m.keywords ?? null, t('detail.keywords_hint'), ro) : null;
     const count = h('span.mem-count', `${chars(m.text)} / ${TEXT_MAX}`);
     const kwCount = kw ? h('span.mem-count', `${chars(m.keywords ?? '')} / ${KEYWORDS_MAX}`) : null;
+    // 「认识的人」那一类：一行「是谁」，改了同改内容，存成新的一条（核心 E-1 上）
+    const who = m.class === 'person' ? /** @type {HTMLInputElement} */ (h('input.set-input.mem-who-input', { type: 'text', value: m.who ?? '', disabled: ro, spellcheck: 'false', autocomplete: 'off' })) : null;
     const note = h('span.mem-note');
     const save = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'submit', disabled: true }, t('detail.save')));
     const sync = () => {
@@ -450,12 +460,12 @@ export class MemoryPage {
         kwCount.textContent = `${k} / ${KEYWORDS_MAX}`;
         kwCount.classList.toggle('is-over', k > KEYWORDS_MAX);
       }
-      const change = updateOf(m, area.value, kw ? kw.value : null);
+      const change = updateOf(m, area.value, kw ? kw.value : null, who ? who.value : null);
       const said = saveNote(change);
       note.textContent = said ? t(said) : '';
-      save.disabled = !canSave(m, area.value, kw ? kw.value : null);
+      save.disabled = !canSave(m, area.value, kw ? kw.value : null, who ? who.value : null);
     };
-    for (const el of [area, kw]) el?.addEventListener('input', () => { el.dataset.dirty = '1'; sync(); });
+    for (const el of [area, kw, who]) el?.addEventListener('input', () => { el.dataset.dirty = '1'; sync(); });
     const at = m.at ? Date.parse(m.at) : NaN;
     const usedAt = m.used_at ? Date.parse(m.used_at) : NaN;
     const row = (/** @type {string} */ label, /** @type {any} */ value) => h('div.mem-field', h('span.mem-label', label), h('div.mem-value', value));
@@ -467,6 +477,7 @@ export class MemoryPage {
       row(t('detail.text'), [area, count]),
       kw ? row(t('detail.keywords'), [kw, h('div.mem-kw-foot', h('span.mem-hint', t('detail.keywords_note')), kwCount)]) : null,
       row(t('detail.class'), h('span.mem-plain', t(`classes.${m.class}`))),
+      who ? row(t('detail.who'), who) : null,
       row(t('detail.at'), h('span.mem-plain', [Number.isFinite(at) ? new Date(at).toLocaleDateString() : '', t(m.by === 'person' ? 'detail.by_person' : 'detail.by_tool')].filter(Boolean).join(' · '))),
       row(t('detail.used'), h(`span.mem-plain${m.used ? '' : '.is-faint'}`, m.used ? t('detail.used_n', { n: m.used, when: Number.isFinite(usedAt) ? agoText(usedAt, Date.now(), this.t) : '' }) : t('unused'))),
       row(t('detail.sources'), sources.length ? h('div.mem-sources', sources) : h('span.mem-plain.is-faint', t('detail.no_source'))),
@@ -475,7 +486,7 @@ export class MemoryPage {
         h('button.set-btn.is-danger', { type: 'button', onclick: () => this.forget(m.id) }, icon('trash-2'), t('detail.forget')), save));
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const change = updateOf(m, area.value, kw ? kw.value : null);
+      const change = updateOf(m, area.value, kw ? kw.value : null, who ? who.value : null);
       if (!change || save.disabled) return;
       save.disabled = true;
       try {
@@ -483,9 +494,10 @@ export class MemoryPage {
         this.kit.toast(t('detail.saved'));
         this.open = got?.id ?? m.id;
         // 先照改了的记下：重读以后它不在列表里（不再命中搜索）的照这一份画
-        this.seen = { ...m, id: this.open, ...('text' in change ? { text: change.text } : {}), ...('keywords' in change ? { keywords: change.keywords || null } : {}) };
+        this.seen = { ...m, id: this.open, ...('text' in change ? { text: change.text } : {}), ...('keywords' in change ? { keywords: change.keywords || null } : {}), ...('who' in change ? { who: change.who } : {}) };
         delete area.dataset.dirty;
         if (kw) delete kw.dataset.dirty;
+        if (who) delete who.dataset.dirty;
         await this.reload();
         // 改了内容的是新编号：详情换到新的那一条
         this.draw();
