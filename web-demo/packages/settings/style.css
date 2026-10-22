@@ -696,29 +696,25 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .acc-enter-btn { flex: none; }
 
 /* 管理员后台（第 12d 条）：盖满窗口的独立整页；左边一栏照主题（同主界面的左栏，2026-10-22 项目主人：要跟着主题设置） */
-.adm-page { position: fixed; inset: 0; z-index: 85; display: grid; grid-template-columns: 220px minmax(0, 1fr); background: var(--surface); color: var(--text); animation: fade-in var(--motion-in) var(--ease-out) both; }
-/* 顶上贯穿整页一道强调色细条：在管理员后台里（2026-10-22 项目主人：要有后台的感觉） */
-.adm-stripe { position: absolute; z-index: 2; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); pointer-events: none; }
-.adm-nav { display: flex; flex-direction: column; gap: 2px; padding: calc(16px * var(--space)) calc(12px * var(--space)) calc(14px * var(--space)); background: var(--sidebar-bg, var(--surface-1)); overflow: auto; }
-.adm-brand { display: flex; align-items: center; gap: 8px; margin: 2px 2px 12px; padding: 8px 10px; border-radius: var(--r-10); background: var(--accent-soft, color-mix(in srgb, var(--accent) 12%, transparent)); color: var(--accent); font-size: calc(12.5px * var(--text-scale)); font-weight: 600; }
-.adm-brand .icon, .adm-nav-item .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); flex: none; }
-.adm-nav-item { display: flex; align-items: center; gap: 9px; height: 34px; padding: 0 10px; border: 0; border-radius: var(--r-8); background: none; color: var(--text); font: calc(13.5px * var(--text-scale)) var(--font-ui); text-align: left; text-decoration: none; cursor: pointer; }
-.adm-nav-item:hover { background: var(--item-hover, color-mix(in srgb, var(--text) 5%, transparent)); }
-.adm-nav-item.is-on { background: var(--sidebar-active, var(--surface-3)); box-shadow: var(--sidebar-active-shadow, none); }
-.adm-nav-item .icon { color: var(--text-soft); }
+.adm-page {
+  /* 整页底色掺一点强调色，左栏浓一些（2026-10-22 项目主人选的样板三 B3：靠颜色认出是后台，不要顶栏） */
+  --adm-tint: color-mix(in srgb, var(--accent) 4%, var(--surface)); --adm-nav: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  position: fixed; inset: 0; z-index: 85; display: grid; grid-template-columns: 228px minmax(0, 1fr); background: var(--adm-tint); color: var(--text); animation: fade-in var(--motion-in) var(--ease-out) both;
+}
+.adm-nav { display: flex; flex-direction: column; gap: 3px; padding: calc(18px * var(--space)) calc(14px * var(--space)) calc(14px * var(--space)); background: var(--adm-nav); box-shadow: inset -1px 0 0 color-mix(in srgb, var(--accent) 18%, var(--surface)); overflow: auto; }
+.adm-brand { display: flex; align-items: center; gap: 8px; margin: 2px 6px 18px; color: var(--accent); font-size: calc(14.5px * var(--text-scale)); font-weight: 700; letter-spacing: 0.02em; }
+.adm-brand .icon { width: calc(17px * var(--space)); height: calc(17px * var(--space)); flex: none; }
+.adm-nav-item { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 12px; border: 0; border-radius: var(--r-12); background: none; color: var(--text); font: calc(14px * var(--text-scale)) var(--font-ui); text-align: left; text-decoration: none; cursor: pointer; transition: background-color calc(0.15s * var(--motion-scale)) ease; }
+.adm-nav-item .icon { width: calc(16px * var(--space)); height: calc(16px * var(--space)); flex: none; color: var(--text-soft); }
+.adm-nav-item:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.adm-nav-item.is-on { background: var(--accent); color: var(--on-primary); box-shadow: 0 6px 14px -8px color-mix(in srgb, var(--accent) 80%, transparent); }
+.adm-nav-item.is-on .icon { color: var(--on-primary); }
 .adm-exit { margin-top: auto; color: var(--text-soft); }
-.adm-main { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; min-height: 0; }
-/* 内容区的顶栏：「管理员后台 › 页名」，右边「回到 Miyu」 */
-.adm-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 52px; padding: 3px calc(32px * var(--space)) 0; box-shadow: inset 0 -1px 0 var(--line); }
-.adm-crumbs { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: calc(14px * var(--text-scale)); }
-.adm-crumb-root { display: inline-flex; align-items: center; gap: 6px; color: var(--text-soft); }
-.adm-crumb-root .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); color: var(--accent); }
-.adm-crumb-sep { color: var(--text-faint); }
-.adm-crumb-here { color: var(--text); font-weight: 600; }
-.adm-top-exit .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
-.adm-body { overflow: auto; background: color-mix(in srgb, var(--surface-2) 45%, var(--surface)); }
+.adm-body { overflow: auto; }
 /* 内容贴着左栏铺开，不在窗口正中浮着 */
-.adm-inner { max-width: 1080px; box-sizing: border-box; padding: calc(24px * var(--space)) calc(32px * var(--space)) calc(48px * var(--space)); }
+.adm-inner { max-width: 1080px; box-sizing: border-box; padding: calc(28px * var(--space)) calc(32px * var(--space)) calc(48px * var(--space)); }
+.adm-title { margin: 0 0 calc(4px * var(--space)); font-size: calc(22px * var(--text-scale)); font-weight: 600; }
+.adm-lead { margin: 0 0 calc(18px * var(--space)); color: var(--text-soft); font-size: calc(13px * var(--text-scale)); }
 /* 每一组一张卡片：组名在卡片的头一行，组的按钮在头一行右边 */
 .adm-inner .set-group { margin: 0 0 calc(16px * var(--space)); padding: calc(14px * var(--space)) calc(20px * var(--space)) calc(8px * var(--space)); border-radius: var(--r-12); background: var(--surface-1); box-shadow: var(--card-shadow); }
 .adm-inner .set-group-name { margin-bottom: calc(6px * var(--space)); color: var(--text); font-size: calc(13.5px * var(--text-scale)); }
@@ -736,7 +732,5 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
   .adm-nav { flex-direction: row; flex-wrap: wrap; }
   .adm-brand { display: none; }
   .adm-exit { margin-top: 0; }
-  .adm-top { padding: 3px 16px 0; }
-  .adm-top-exit { display: none; }
   .adm-inner { padding: 16px; }
 }

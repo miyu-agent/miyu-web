@@ -5939,33 +5939,6 @@
       ".adm-exit"
     ]
   },
-  "adm.stripe": {
-    "zh": "管理员后台：顶上一道强调色细条",
-    "select": [
-      ".adm-stripe"
-    ]
-  },
-  "adm.top": {
-    "zh": "管理员后台：内容区的顶栏",
-    "select": [
-      ".adm-top"
-    ]
-  },
-  "adm.crumbs": {
-    "zh": "管理员后台：顶栏的「管理员后台 › 页名」",
-    "select": [
-      ".adm-crumbs",
-      ".adm-crumb-root",
-      ".adm-crumb-sep",
-      ".adm-crumb-here"
-    ]
-  },
-  "adm.body": {
-    "zh": "管理员后台：内容区的底",
-    "select": [
-      ".adm-body"
-    ]
-  },
   "adm.card": {
     "zh": "管理员后台：一组一张卡片",
     "select": [
@@ -6002,6 +5975,18 @@
     "zh": "记忆页：「认识的人」内容前面写是谁的小标签",
     "select": [
       ".mem-who"
+    ]
+  },
+  "adm.title": {
+    "zh": "管理员后台：页名",
+    "select": [
+      ".adm-title"
+    ]
+  },
+  "adm.lead": {
+    "zh": "管理员后台：页名下面那一句说明",
+    "select": [
+      ".adm-lead"
     ]
   }
 }

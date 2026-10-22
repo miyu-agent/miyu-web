@@ -1,7 +1,7 @@
 // @ts-check
 //! 管理员后台（蓝图 `web.md`「设置页」第 12d 条；2026-10-22 项目主人看了三种样板选「独立整页」）：盖满整个窗口的一页，走网页自己的路由
-//! `#admin=<页>`，刷新还在原来那一页。整页跟着主题，靠顶上一道强调色细条、内容区的顶栏（面包屑、回到 Miyu）、卡片认出是后台；左栏同主界面的
-//! 左栏（一页一行，最下面「回到 Miyu」），内容贴着左栏铺开、每组一张卡片。现在两页：总览、账号与邀请
+//! `#admin=<页>`，刷新还在原来那一页。整页跟着主题，靠颜色认出是后台（2026-10-22 项目主人选的样板三 B3）：整页底色掺一点强调色、左栏掺得浓一些，
+//! 选中的那一页实心强调色；内容贴着左栏铺开，页名、一句说明，每组一张卡片。现在两页：总览、账号与邀请
 //! （「邀请」「成员」两组和 `account.js` 共用）；用量、模型与密钥、系统软件这些等核心给了再加。不是管理员的正中一张卡。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
@@ -66,8 +66,7 @@ export class AdminPage {
     /** 这一页记的东西（关了清掉） @type {any} */
     this.state = {};
     this.title = '';
-    /** @type {HTMLElement|null} */
-    this.top = null;
+
     this.onKey = (/** @type {KeyboardEvent} */ e) => {
       if (e.key !== 'Escape' || document.querySelector('.set-tool-modal, body > .set-ask')) return;
       e.preventDefault();
@@ -85,9 +84,8 @@ export class AdminPage {
     this.page = page;
     if (!this.el) {
       this.nav = h('nav.adm-nav');
-      this.top = h('header.adm-top');
       this.body = h('div.adm-body');
-      this.el = h('div.adm-page', { role: 'main', 'aria-label': this.ctx.text('admin.title') }, h('div.adm-stripe'), this.nav, h('div.adm-main', this.top, this.body));
+      this.el = h('div.adm-page', { role: 'main', 'aria-label': this.ctx.text('admin.title') }, this.nav, this.body);
       document.body.append(this.el);
       // 带着网址刷新进来的：内核先藏着主界面（`is-admin-route`），后台出来了露回去（关的时候底下就是主界面）
       document.documentElement.classList.remove('is-admin-route');
@@ -120,7 +118,7 @@ export class AdminPage {
   }
 
   draw() {
-    if (!this.el || !this.nav || !this.body || !this.top) return;
+    if (!this.el || !this.nav || !this.body) return;
     const t = (/** @type {string} */ k, /** @type {any} */ f) => this.ctx.text(k, f);
     const st = stateOf(this.view());
     const route = this.ctx.host.route;
@@ -133,10 +131,6 @@ export class AdminPage {
         this.show(p);
       } }, icon(ICONS[p]), h('span', t(`admin.pages.${p}`)))),
       h('button.adm-nav-item.adm-exit', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), h('span', t('admin.exit'))));
-    // 顶栏：「管理员后台 › 页名」，右边「回到 Miyu」
-    replace(this.top,
-      h('div.adm-crumbs', h('span.adm-crumb-root', icon('shield'), t('admin.short')), h('span.adm-crumb-sep', '›'), h('span.adm-crumb-here', t(`admin.pages.${this.page}`))),
-      h('button.set-btn.adm-top-exit', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), t('admin.exit')));
     if (st.loaded && !st.admin) {
       replace(this.body, h('div.adm-denied', h('p', t(st.error ? 'admin.failed' : 'admin.denied')), st.error ? h('p.set-desc', st.error) : null,
         h('button.set-btn', { type: 'button', onclick: () => this.back() }, t('admin.exit'))));
@@ -146,7 +140,8 @@ export class AdminPage {
     const kids = !st.loaded ? [h('p.set-empty', t('admin.loading'))]
       : this.page === 'accounts' ? [inviteGroup(view), memberGroup(view)]
         : this.overview();
-    replace(this.body, h('div.adm-inner', ...kids, st.error ? h('p.set-error', st.error) : null));
+    replace(this.body, h('div.adm-inner', h('h2.adm-title', t(`admin.pages.${this.page}`)), h('p.adm-lead', t(`admin.leads.${this.page}`)),
+      ...kids, st.error ? h('p.set-error', st.error) : null));
   }
 
   /** 总览：一排数，下面「最近」。 */
