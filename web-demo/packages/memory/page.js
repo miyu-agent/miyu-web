@@ -192,6 +192,8 @@ export class MemoryPage {
 
   draw() {
     if (!this.kit) return;
+    // 小窗正在收起：不重画，免得退场的动画被截掉（收完了 `fadeModal` 再画）
+    if (this.el.querySelector('.mem-modal.is-leaving')) return;
     // 「记一条」的小窗里写着字的：不重画，免得冲掉（收起以后再画）
     if (this.adding && /** @type {HTMLTextAreaElement|null} */ (this.el.querySelector('.mem-add textarea'))?.value.trim()) return;
     if (this.adding || this.open || this.history) this.el.dataset.setDismiss = '1';
@@ -503,8 +505,8 @@ export class MemoryPage {
         if (kw) delete kw.dataset.dirty;
         if (who) delete who.dataset.dirty;
         await this.reload();
-        // 改了内容的是新编号：详情换到新的那一条
-        this.draw();
+        // 存好了收起小窗（2026-10-22 项目主人：点保存应该关掉浮动窗口；原来留着、换到新的那一条）
+        this.closeDetail();
       } catch (err) {
         save.disabled = false;
         const why = /** @type {any} */ (err)?.data;
