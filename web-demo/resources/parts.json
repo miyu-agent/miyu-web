@@ -6013,6 +6013,30 @@
       ".mem-taken"
     ]
   },
+  "mem.filter": {
+    "zh": "记忆页：搜索框旁的筛选按钮",
+    "select": [
+      ".mem-filter"
+    ]
+  },
+  "mem.filter-n": {
+    "zh": "筛选菜单里每一类的条数",
+    "select": [
+      ".mem-filter-n"
+    ]
+  },
+  "mem.filter-sep": {
+    "zh": "筛选菜单里的分隔线",
+    "select": [
+      ".mem-filter-sep"
+    ]
+  },
+  "mem.filter-toggle": {
+    "zh": "筛选菜单里「显示作废的」那一行",
+    "select": [
+      ".mem-filter-toggle"
+    ]
+  },
   "adm.title": {
     "zh": "管理员后台：页名",
     "select": [

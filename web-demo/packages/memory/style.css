@@ -222,3 +222,18 @@
 .mem-card-area { min-height: 132px; }
 .mem-taken { justify-self: start; margin-top: calc(4px * var(--space)); padding: 0; border: 0; background: none; color: var(--accent); font: calc(12px * var(--text-scale)) var(--font-ui); cursor: pointer; }
 .mem-taken[hidden] { display: none; }
+
+/* 筛选（第 4 条）：搜索框右边的按钮、它下面的菜单、筛着的那几样小块 */
+.mem-page { position: relative; }
+.mem-filter { flex: none; }
+.mem-filter.is-on { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.mem-filter-menu { position: absolute; z-index: 6; min-width: 200px; max-height: 360px; }
+.mem-filter-menu.is-steady { animation: none; }
+.mem-filter-menu .set-menu-item { display: flex; align-items: center; gap: calc(8px * var(--space)); }
+.mem-filter-menu .set-menu-item > span:first-child { flex: 1; text-align: left; }
+.mem-filter-menu .set-menu-item .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); color: var(--accent); }
+.mem-filter-n { flex: none !important; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); font-variant-numeric: tabular-nums; }
+.mem-filter-sep { height: 1px; margin: calc(4px * var(--space)) calc(6px * var(--space)); background: var(--line); }
+.mem-filter-toggle { display: flex; align-items: center; justify-content: space-between; gap: calc(12px * var(--space)); height: 32px; padding: 0 calc(10px * var(--space)); color: var(--text); font-size: calc(13px * var(--text-scale)); cursor: pointer; }
+.mem-filters { display: flex; flex-wrap: wrap; gap: calc(6px * var(--space)); }
+.mem-filter-chip .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); }

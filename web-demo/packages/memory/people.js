@@ -4,6 +4,7 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { keywordBox } from './keywords.js';
+import { filterButton, filterChips } from './filter.js';
 import { CARD_MAX, NAMES_MAX, NAME_MAX, chars, agoText, isRetired, cardMatches, cardChange, cardProblem, splitKeywords } from './model.js';
 
 /**
@@ -16,7 +17,7 @@ export function tabsRow(page) {
   const t = page.t;
   const live = page.cards.filter((c) => !isRetired(c)).length;
   const tab = (/** @type {'memory'|'people'} */ k, /** @type {any[]} */ ...kids) => h(`button.mem-chip.mem-tab${page.tab === k ? '.is-on' : ''}`, {
-    type: 'button', onclick: () => { if (page.tab !== k) { page.tab = k; page.draw(); } },
+    type: 'button', onclick: () => { if (page.tab !== k) { page.tab = k; page.filterOpen = false; page.draw(); } },
   }, ...kids);
   return h('div.mem-tabs', tab('memory', t('tabs.memory')), tab('people', t('tabs.people'), h('span.mem-n', String(live))));
 }
@@ -37,7 +38,7 @@ export function peoplePage(page) {
   });
   find.addEventListener('compositionend', () => find.dispatchEvent(new Event('input')));
   const add = h('button.set-btn.is-primary', { type: 'button', disabled: !page.persona, onclick: () => { page.person = ''; page.draw(); page.el.querySelector('.mem-card-form .mem-who-input')?.focus(); } },
-    icon('user-plus'), t('people.add'));
+    icon('plus'), t('people.add'));
   const live = all.filter((c) => !isRetired(c)).length;
   const retired = all.length - live;
   const cards = shown.length
@@ -45,9 +46,8 @@ export function peoplePage(page) {
     : h('p.mem-empty', all.some((c) => !isRetired(c)) || q ? t('people.no_match') : t('people.empty', { name }));
   return h('div.mem-list-page',
     tabsRow(page),
-    h('div.mem-tools', page.picker(), h('label.mem-find', icon('search'), find),
-      h('label.mem-retired', page.kit.toggle(page.cardsRetired, (/** @type {boolean} */ on) => { page.cardsRetired = on; page.draw(); return true; }), h('span', t('show_retired'))),
-      add),
+    h('div.mem-tools', page.picker(), h('label.mem-find', icon('search'), find), filterButton(page), add),
+    filterChips(page),
     page.tidyingLine(),
     h('div.mem-list', cards),
     h('div.mem-foot.set-pinned', h('span', page.cardsRetired && retired ? t('people.foot_retired', { live, retired }) : t('people.foot', { live }))));

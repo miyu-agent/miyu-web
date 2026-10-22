@@ -200,6 +200,11 @@
         "names_note": "群名片、外号这类，搜得到，AI 不拿它认人",
         "text_hint": "这个人是谁、怎么认识的、喜好、近况……最多 {n} 字",
         "taken": "已经有这个人的卡了，点这里打开"
+      },
+      "filter": {
+        "title": "筛选",
+        "remove": "去掉这一项筛选",
+        "retired": "含作废的"
       }
     },
     "en": {
@@ -368,6 +373,11 @@
         "names_note": "Group nicknames and the like. Searchable; the AI doesn’t use them to identify anyone",
         "text_hint": "Who they are, how you met, likes, recent news… up to {n} characters",
         "taken": "This person already has a card. Click to open it"
+      },
+      "filter": {
+        "title": "Filter",
+        "remove": "Remove this filter",
+        "retired": "Including retired"
       }
     },
     "ja": {
@@ -536,6 +546,11 @@
         "names_note": "グループでの表示名やあだ名など。検索できますが、AI は人の識別には使いません",
         "text_hint": "どんな人か、出会い、好み、近況… {n} 文字まで",
         "taken": "この人のカードはもうあります。クリックで開く"
+      },
+      "filter": {
+        "title": "絞り込み",
+        "remove": "この絞り込みを外す",
+        "retired": "無効化したものを含む"
       }
     }
   }

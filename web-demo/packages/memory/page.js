@@ -8,6 +8,7 @@ import { h, icon, replace } from '../../src/lib/dom.js';
 import { keywordBox } from './keywords.js';
 import { DreamCard } from './dream.js';
 import { tabsRow, peoplePage, cardPop } from './people.js';
+import { filterButton, filterChips, filterMenu } from './filter.js';
 import { CLASSES, TEXT_MAX, KEYWORDS_MAX, chars, counts, visible, hasKeywords, updateOf, canSave, saveNote, shortId, agoText, isRetired, tidying } from './model.js';
 
 /** 一次列几条（滚到底再多读一批） */
@@ -46,6 +47,8 @@ export class MemoryPage {
     /** 「认识的人」的搜索（网页自己筛）、显示作废的 */
     this.peopleQuery = '';
     this.cardsRetired = false;
+    /** 筛选的菜单开着（第 4 条） */
+    this.filterOpen = false;
     /** 「整理记录」的小窗开着（蓝图第 13a 条第 4 条） */
     this.history = false;
     /** @type {any} */
@@ -233,7 +236,13 @@ export class MemoryPage {
     const steady = !!this.el.querySelector(':scope > .mem-modal:not(.is-leaving)');
     const modal = this.problem ? null : this.open ? this.detail() : this.person != null ? cardPop(this) : this.history ? this.historyPop() : null;
     if (steady && modal) modal.classList.add('is-steady');
+    const menuWas = !!this.el.querySelector('.mem-filter-menu:not(.is-leaving)');
     replace(this.el, this.problem ? this.problemCard() : [this.page(), modal]);
+    // 筛选的菜单开着：照新画的按钮再挂一个（拨了开关重读、推来的变化都不收起它）
+    if (this.filterOpen && !this.problem) {
+      const menu = filterMenu(this, menuWas);
+      if (menu) this.el.append(menu);
+    }
   }
 
   problemCard() {
@@ -286,10 +295,6 @@ export class MemoryPage {
       onmouseleave: () => { if (busy) { label.textContent = t('dreaming'); dream.replaceChildren(mark, label); } },
     }, mark, label);
     const add = h('button.set-btn.is-primary', { type: 'button', disabled: !this.persona, onclick: () => { this.adding = true; this.draw(); this.el.querySelector('.mem-add textarea')?.focus(); } }, icon('plus'), t('add'));
-    const chips = h('div.mem-chips',
-      ['all', ...CLASSES].map((k) => h(`button.mem-chip${this.cls === k ? '.is-on' : ''}${k === 'all' ? '' : `.is-${k}`}`, { type: 'button', onclick: () => { this.cls = k; this.draw(); } },
-        t(`classes.${k}`), h('span.mem-n', String(c[k] ?? 0)))),
-      h('label.mem-retired', this.kit.toggle(this.retired, (/** @type {boolean} */ on) => { this.retired = on; this.reload(); return true; }), h('span', t('show_retired'))));
     const rows = shown.length
       ? shown.map((m) => this.row(m))
       : h('p.mem-empty', this.list.length || this.query.trim() ? t('no_match') : t('empty', { name }));
@@ -299,10 +304,10 @@ export class MemoryPage {
       icon('trash-2'), t('clear'));
     return h('div.mem-list-page',
       tabsRow(this),
-      h('div.mem-tools', picker, h('label.mem-find', icon('search'), find), dream, this.historyButton(), add),
+      h('div.mem-tools', picker, h('label.mem-find', icon('search'), find), filterButton(this), dream, this.historyButton(), add),
+      filterChips(this),
       this.tidyingLine(),
       this.cardShown ? this.card?.el ?? null : null,
-      chips,
       h('div.mem-list', rows, more),
       h('div.mem-foot.set-pinned', h('span', t(retiredCount ? 'foot_retired' : 'foot', { live: c.all, retired: retiredCount })), clear),
       // 「记一条」在设置框正中弹一个小窗（2026-10-20 项目主人：新建以浮动窗口出现更好）：点外面（还没写字的）、`Esc`、「取消」收起
