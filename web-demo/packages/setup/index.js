@@ -34,7 +34,9 @@ export function apply(ctx) {
   const row = h('div.setup-row', { hidden: true }, personaBtn, presetBtn, workBtn, menu.el);
   const infoMenu = new Menu(t('info.back'));
   const info = h('div.setup-info', { hidden: true });
-  const infoWrap = h('div.setup-info-wrap', info, infoMenu.el);
+  // 整理会话左上角标题外面、紧挨着左边的「<」（2026-10-22 项目主人：同网页常用的返回；原来是标题块里面的箭头）
+  const back = h('button.setup-back', { type: 'button', hidden: true, onclick: () => chat.back?.() }, icon('chevron-left'));
+  const infoWrap = h('div.setup-info-wrap', back, info, infoMenu.el);
   /** 左上角那一条里的路径：工作区的菜单开在它下面、和它左边对齐（2026-10-09 项目主人指出原来开在整条的左边，错位了） @type {HTMLElement|null} */
   let pathBtn = null;
 
@@ -148,6 +150,7 @@ export function apply(ctx) {
       used, session ? [chat.persona(session), chat.preset(session), chat.defaultWorkdirOf?.(session) ?? null] : null, project && [project.project, project.name, chat.projectColor?.(project.color)], title]);
     if (!force && sig === drawn) return;
     drawn = sig;
+    back.hidden = true;
     if (!session) {
       // 在项目里新建的空会话：左上角「项目名 / 新会话」；别的空会话不画那一条
       infoMenu.close();
@@ -190,8 +193,10 @@ export function apply(ctx) {
     if (chat.dream?.(session)) {
       infoMenu.close();
       const hint = chat.backHint?.() ?? t('info.back');
-      replace(info, h('button.setup-info-part.is-back', { type: 'button', title: hint, 'aria-label': hint, onclick: () => chat.back?.() }, icon('arrow-left')),
-        h('span.setup-info-part.is-title.is-still', h('span', title ?? t('info.untitled'))));
+      back.title = hint;
+      back.setAttribute('aria-label', hint);
+      back.hidden = false;
+      replace(info, h('span.setup-info-part.is-title.is-still', h('span', title ?? t('info.untitled'))));
       pathBtn = null;
       info.hidden = false;
       return;

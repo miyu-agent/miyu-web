@@ -4,6 +4,7 @@
 //! （一行一个，能一次加好几个），右边上下两个按钮「添加」「重置」。改一下存一下，拒了的照核心的话写在框下面。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { leave } from '../../src/lib/motion.js';
 import { tilde } from '../../src/lib/format.js';
 import { layerFor, expectFor } from './model.js';
 import { confirmIn } from './confirm.js';
@@ -44,16 +45,19 @@ export function privateGroup(dialog, name, items) {
     error.hidden = !why;
     error.textContent = why ?? '';
   };
-  /** 存几项（一条 `config.set`，成了设置页重读重画） @param {{key: string, value?: string[], unset?: true}[]} changes */
-  const store = async (changes) => {
-    if (!changes.length) return true;
+  /**
+   * 存几项（一条 `config.set`，成了设置页重读重画），交回拒了的话（成了是 `null`）；`quiet` 的不写在组下面（添加的小框自己写）。
+   * @param {{key: string, value?: string[], unset?: true}[]} changes @param {boolean} [quiet]
+   */
+  const store = async (changes, quiet = false) => {
+    if (!changes.length) return null;
     const layer = layerFor(add);
     const why = await dialog.saveMany(layer, changes.map((c) => {
       const item = c.key === pair.add ? add : remove;
       return { ...c, expect: expectFor(item.entry, layer) };
     }));
-    say(why);
-    return !why;
+    if (!quiet) say(why);
+    return why ?? null;
   };
   const all = privateRows(add, remove);
   const list = h('div.pv-list');
@@ -79,40 +83,74 @@ export function privateGroup(dialog, name, items) {
     drawList();
   });
   drawList();
-  const input = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.pv-input', { rows: 2, placeholder: w('add_hint'), spellcheck: 'false', autocomplete: 'off' }));
-  const submit = async () => {
-    const got = batchChange(input.value, add, remove);
-    if (!got.changes.length) {
-      say(got.skipped.length ? t('privacy.already', { paths: got.skipped.join('、') }) : null);
-      return;
-    }
-    if (!(await store(got.changes))) return;
-    input.value = '';
-    // 加了别的、跳过了已经在的：也说一句（设置页重画以后写在新的那一块里）
-    if (got.skipped.length) dialog.toast(t('privacy.already', { paths: got.skipped.join('、') }));
-  };
-  // 回车加，Shift+回车换行写下一个
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); submit(); }
-  });
-  // 一直都在，跟出厂一样的灰着：有时有有时没有，框的宽度会跟着变（2026-10-21 项目主人）
-  const restore = h('button.set-btn', {
-    type: 'button', disabled: !canRestore(add, remove),
+  // 搜索框右边两个图标按钮：「+」点了弹一个写路径的小框，「↺」重置（2026-10-22 项目主人：去掉表下面写路径的框）；一直都在，跟出厂一样的「重置」灰着
+  const plus = /** @type {HTMLButtonElement} */ (h('button.icon-button.pv-tool', {
+    type: 'button', title: t('privacy.add'), 'aria-label': t('privacy.add'),
+    onclick: () => openAdd(dialog, plus, w('add_hint'), async (text) => {
+      const got = batchChange(text, add, remove);
+      if (!got.changes.length) return got.skipped.length ? t('privacy.already', { paths: got.skipped.join('、') }) : '';
+      const why = await store(got.changes, true);
+      if (why) return why;
+      // 加了别的、跳过了已经在的：也说一句
+      if (got.skipped.length) dialog.toast(t('privacy.already', { paths: got.skipped.join('、') }));
+      return null;
+    }),
+  }, icon('plus')));
+  const restore = h('button.icon-button.pv-tool', {
+    type: 'button', title: t('privacy.restore'), 'aria-label': t('privacy.restore'), disabled: !canRestore(add, remove),
     // 先弹窗问（2026-10-21 项目主人）：「确认重置私密目录列表至出厂状态吗？」，名字照组名
     onclick: async (/** @type {Event} */ e) => {
       if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('privacy.restore_ask', { name }), yes: t('privacy.restore'), no: t('privacy.cancel') }))) return;
       store(restoreChange(add, remove));
     },
-  }, t('privacy.restore'));
+  }, icon('rotate-ccw'));
   const body = fold(dialog, pair.add, off,
     add.description ? h('p.set-desc.pv-desc', add.description) : null,
-    h('div.pv-box', h('label.pv-find', icon('search'), find), list),
-    h('div.pv-add', input, h('div.pv-buttons', h('button.set-btn.is-primary', { type: 'button', onclick: submit }, t('privacy.add')), restore)),
+    h('div.pv-box', h('div.pv-find', icon('search'), find, plus, restore), list),
     error);
   return h('section.set-group',
     h('h3.set-group-name', name),
     others.length ? h('div.set-rows', others) : null,
     body);
+}
+
+/**
+ * 「+」点了弹的小框（同设置页别的浮层，开在按钮下面、右边对齐）：写路径的框（一行一个，`Enter` 加、`Shift+Enter` 换行），「取消」「添加」。
+ * `submit` 交回拒了的话（写在小框里）、空的字（什么也不说，留着），`null` 是成了（收起）。
+ * @param {any} dialog @param {HTMLElement} at @param {string} hint @param {(text: string) => Promise<string|null>} submit
+ */
+function openAdd(dialog, at, hint, submit) {
+  const t = (/** @type {string} */ k) => dialog.ctx.text(k);
+  dialog.panel.querySelector('.pv-add-pop')?.remove();
+  const input = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.pv-input', { rows: 3, placeholder: hint, spellcheck: 'false', autocomplete: 'off' }));
+  const error = h('p.set-error', { hidden: true });
+  const close = () => leave(pop, () => pop.remove());
+  const go = async () => {
+    const why = await submit(input.value);
+    if (why === null) { close(); return; }
+    error.hidden = !why;
+    error.textContent = why;
+  };
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); go(); }
+    if (e.key === 'Escape') { e.stopPropagation(); close(); }
+  });
+  const pop = h('div.set-menu.pv-add-pop', { role: 'dialog', 'aria-label': t('privacy.add'), 'data-set-dismiss': '1' },
+    input, error,
+    h('div.pv-add-foot', h('button.set-btn', { type: 'button', onclick: () => close() }, t('privacy.cancel')), h('button.set-btn.is-primary', { type: 'button', onclick: go }, t('privacy.add'))));
+  pop.addEventListener('set-dismiss', close);
+  const box = at.getBoundingClientRect();
+  const panel = dialog.panel.getBoundingClientRect();
+  const zoom = panel.width / dialog.panel.offsetWidth || 1;
+  pop.style.top = `${(box.bottom - panel.top) / zoom + 6}px`;
+  pop.style.right = `${(panel.right - box.right) / zoom}px`;
+  dialog.panel.append(pop);
+  input.focus();
+  const away = (/** @type {MouseEvent} */ e) => {
+    if (!pop.isConnected) { document.removeEventListener('pointerdown', away, true); return; }
+    if (!pop.contains(/** @type {Node} */ (e.target)) && e.target !== at && !at.contains(/** @type {Node} */ (e.target))) { document.removeEventListener('pointerdown', away, true); close(); }
+  };
+  document.addEventListener('pointerdown', away, true);
 }
 
 /** 收起、展开走多久（毫秒，乘上动效快慢） */

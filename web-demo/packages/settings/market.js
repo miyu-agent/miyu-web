@@ -113,7 +113,7 @@ export function drawMarket(dialog) {
   const upgradable = upgradableOf(m);
   const grid = h('div.mk-grid');
   const empty = h('p.set-empty', { hidden: true }, t('market.no_match'));
-  const statusChips = h('div.set-pkg-chips', { role: 'tablist' });
+  const statusChips = h('div.set-pkg-chips.mk-chips', { role: 'tablist' });
   const extra = h('div.mk-extra');
   const chip = (/** @type {string} */ f, /** @type {boolean} */ on, /** @type {number} */ n, /** @type {() => void} */ go) => h(`button.set-pkg-chip${on ? '.is-on' : ''}${n ? '' : '.is-off'}`, {
     type: 'button', role: 'tab', 'aria-selected': String(on), onclick: go,

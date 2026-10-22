@@ -94,8 +94,9 @@ export class Sidebar {
     /** 三栏的头（栏头不带图标，2026-10-19 项目主人）：点了收起、展开，箭头悬停才露；「会话」那一栏的头多选时写「已选 N 个」、换成全选、删除、退出 */
     this.groupHeader = sectionHead(this, 'sessions', this.groupTitle, this.groupTools);
     this.pinnedHeader = sectionHead(this, 'pin', h('span', t('sidebar.pinned')), null);
-    // 终端集成开的会话单开一栏（核心 8-33 四补的 `origin: "terminal"`；2026-10-21 项目主人选「单独一组」）
-    this.terminalHeader = sectionHead(this, 'terminal', h('span', t('sidebar.terminal')), null);
+    // 终端集成开的会话（核心 8-33 四补的 `origin: "terminal"`）：「会话」那一栏最后单成一组，组头同时间组（2026-10-22 项目主人：叫「终端集成」，
+    // 放在「近 30 天」下面、「查看全部」上面；原来单开一栏）
+    this.terminalHeader = h('div.session-group-header.is-time', { dataset: { key: 'group:terminal' } }, h('span', t('sidebar.terminal')));
     this.projectsHeader = sectionHead(this, 'projects', h('span', t('sidebar.projects')), h('span.session-group-tools',
       h('button.icon-button.session-group-button.is-select', { type: 'button', title: t('sidebar.new_project'), 'aria-label': t('sidebar.new_project'), onclick: () => on.editProject(null) }, icon('plus'))));
     /** 「会话」那一栏里按时间分的几组的头（蓝图「会话整理和项目」第 2 条）：近 7 天、近 30 天、30 天前；「最近」那一组不另画头，就是「会话」那一栏的头 */
@@ -260,8 +261,7 @@ export class Sidebar {
       current, this.menuFor, this.moving, this.renaming, this.selecting, [...this.selected], cap.more, termCap.more, this.on.dark()]);
     if (sig !== this.drawn) {
       this.drawn = sig;
-      const all = cap.more ? h('button.session-all', { type: 'button', onclick: () => this.on.viewAll() }, t('sidebar.view_all')) : null;
-      const termAll = termCap.more ? h('button.session-all', { type: 'button', onclick: () => this.on.viewAll() }, t('sidebar.view_all')) : null;
+      const all = cap.more || termCap.more ? h('button.session-all', { type: 'button', onclick: () => this.on.viewAll() }, t('sidebar.view_all')) : null;
       const draw = (row) => (row.kind === 'session' ? this.item(row, row.session === current) : this.doneRow(row));
       const was = this.positions();
       const bar = {
@@ -286,8 +286,7 @@ export class Sidebar {
       replace(this.items, [
         pinned.length ? section('pin', this.pinnedHeader, pinnedRows.map(draw), 'pin') : null,
         showProjects ? section('projects', this.projectsHeader, blocks.map((b) => projectBlock(bar, b)), null) : null,
-        section('sessions', this.groupHeader, [...sessionsBody, all], 'loose'),
-        termRows.length ? section('terminal', this.terminalHeader, [...termRows.map(draw), termAll], null) : null,
+        section('sessions', this.groupHeader, [...sessionsBody, ...(termRows.length ? [this.terminalHeader, ...termRows.map(draw)] : []), all], 'loose'),
       ]);
       this.slide(was);
       this.placeMenu();

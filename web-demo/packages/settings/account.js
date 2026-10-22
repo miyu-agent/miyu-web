@@ -96,17 +96,21 @@ function inviteGroup(dialog) {
   const st = stateOf(dialog);
   const days = /** @type {HTMLSelectElement} */ (h('select.set-select.acc-days', { 'aria-label': t('account.days_label'), onchange: () => { st.days = Number(days.value); } },
     DAYS.map((d) => h('option', { value: String(d), selected: d === st.days }, t('account.days', { n: d })))));
+  // 等核心回的时候按钮写「正在生成…」；小窗开着时不重读列表（2026-10-22 项目主人：偶尔点了没弹窗，点一下别处才出来——小窗刚出来下面整页就重画），
+  // 收起小窗再重读
   const make = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'button', onclick: async () => {
     make.disabled = true;
+    make.replaceChildren(icon('loader-circle'), t('account.making'));
+    make.classList.add('is-busy');
     try {
       const got = await dialog.ctx.core.request('account.invite', { days: st.days });
-      showInvite(dialog, got);
-      st.loaded = false;
-      load(dialog);
+      showInvite(dialog, got, () => { st.loaded = false; load(dialog); });
     } catch (err) {
       dialog.toast(/** @type {any} */ (err)?.message ?? String(err));
     } finally {
       make.disabled = false;
+      make.classList.remove('is-busy');
+      make.replaceChildren(icon('plus'), t('account.invite'));
     }
   } }, icon('plus'), t('account.invite')));
   const now = Date.now();
@@ -137,9 +141,9 @@ function inviteGroup(dialog) {
 
 /**
  * 生成好的邀请：小窗里写注册链接（走桥的不给）和邀请码，各一个「复制」；码只显示这一次。
- * @param {any} dialog @param {{code: string, id: string, expires: string}} got
+ * @param {any} dialog @param {{code: string, id: string, expires: string}} got @param {() => void} closed 收起以后（重读列表）
  */
-function showInvite(dialog, got) {
+function showInvite(dialog, got, closed) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
   const link = dialog.ctx.host?.inviteLink?.(got.code) ?? null;
   const copyRow = (/** @type {string} */ label, /** @type {string} */ text) => {
@@ -169,7 +173,7 @@ function showInvite(dialog, got) {
     copyRow(t('account.code'), got.code),
     h('div.set-tool-pop-foot', h('button.set-btn.is-primary', { type: 'button', onclick: () => close() }, t('account.done'))));
   const modal = h('div.set-tool-modal', { 'data-set-dismiss': '1', onclick: (/** @type {Event} */ e) => { if (e.target === e.currentTarget) close(); } }, pop);
-  const close = () => leave(modal, () => modal.remove());
+  const close = () => leave(modal, () => { modal.remove(); closed(); });
   modal.addEventListener('set-dismiss', close);
   dialog.panel.append(modal);
 }

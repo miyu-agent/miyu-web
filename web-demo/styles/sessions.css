@@ -83,11 +83,12 @@
 .sessions-sort { display: inline-flex; align-items: center; gap: calc(4px * var(--space)); height: 28px; padding: 0 calc(8px * var(--space)); border: 0; border-radius: var(--r-8); background: none; color: var(--text-soft); font: calc(12.5px * var(--text-scale)) var(--font-ui); cursor: pointer; }
 .sessions-sort:hover { background: var(--surface-2); color: var(--text); }
 .sessions-sort .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); }
-/* 时间分组的组头：滚的时候贴在顶上 */
+/* 时间分组的组头：滚的时候贴在顶上；不是第一组的上面多留一段空（2026-10-22 项目主人：组头混在会话里看不清） */
 .sessions-group {
   position: sticky; top: 0; z-index: 2; padding: calc(14px * var(--space)) calc(10px * var(--space)) calc(6px * var(--space)); background: var(--surface); color: var(--text-faint);
   font-size: calc(11.5px * var(--text-scale)); font-weight: 600; letter-spacing: 0.04em;
 }
+.sessions-group:not(:first-child) { padding-top: calc(26px * var(--space)); }
 .sessions-unread { flex: none; }
 .sessions-agents.is-running { color: var(--gold); }
 

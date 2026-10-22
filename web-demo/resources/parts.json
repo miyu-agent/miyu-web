@@ -5878,5 +5878,17 @@
     "select": [
       ".acc-copy-value"
     ]
+  },
+  "setup.back": {
+    "zh": "整理会话左上角标题左边的「<」",
+    "select": [
+      ".setup-back"
+    ]
+  },
+  "pv.tool": {
+    "zh": "私密目录、受保护的路径：搜索框右边的「+」「↺」",
+    "select": [
+      ".pv-tool"
+    ]
   }
 }

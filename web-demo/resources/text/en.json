@@ -35,7 +35,7 @@
     "pin": "Pin",
     "unpin": "Unpin",
     "pinned": "Pinned",
-    "terminal": "Terminal",
+    "terminal": "Terminal integration",
     "drop_pin": "Drop here to pin",
     "groups": {
       "recent": "Recent",

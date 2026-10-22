@@ -12,7 +12,7 @@
 .setup-btn .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); flex: none; color: var(--text-faint); }
 .setup-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.setup-info-wrap { position: relative; min-width: 0; }
+.setup-info-wrap { position: relative; display: flex; align-items: center; gap: calc(4px * var(--space)); min-width: 0; }
 .setup-info {
   /* 材质同它下面弹出的会话信息卡片（`.setup-menu`）：同样的底色、细边、磨砂，影淡一档（2026-10-20 项目主人：两个控件的材质、设计不一样，要统一） */
   display: inline-flex; align-items: center; gap: calc(6px * var(--space)); max-width: 100%; height: 28px; padding: 0 calc(10px * var(--space)); border: var(--float-border, 1px solid var(--line)); border-radius: var(--float-radius, var(--r-9)); box-sizing: border-box;
@@ -356,8 +356,10 @@
 /* 整理会话：标题点不了，左边一个「←」回到打开它之前的地方（2026-10-22 项目主人） */
 .setup-info-part.is-title.is-still { cursor: default; }
 .setup-info-part.is-title.is-still:hover { color: var(--text-soft); }
-.setup-info-part.is-back { justify-content: center; width: 20px; height: 20px; margin-left: calc(-4px * var(--space)); padding: 0; border: 0; border-radius: var(--r-6); background: none; color: var(--text-soft); cursor: pointer; }
-.setup-info-part.is-back:hover { background: var(--surface-2); color: var(--text); }
+.setup-back { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 28px; height: 28px; padding: 0; border: 0; border-radius: var(--r-8); background: none; color: var(--text-soft); cursor: pointer; }
+.setup-back[hidden] { display: none; }
+.setup-back:hover { background: var(--surface-2); color: var(--text); }
+.setup-back .icon { width: calc(18px * var(--space)); height: calc(18px * var(--space)); }
 .setup-info-part.is-project .icon { color: var(--project-color); }
 .setup-info-part.is-project span { max-width: 180px; }
 .setup-info-slash { color: var(--text-faint); opacity: 0.6; }
