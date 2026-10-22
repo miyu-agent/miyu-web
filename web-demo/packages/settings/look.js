@@ -50,8 +50,8 @@ export function drawLook(dialog) {
     };
     const current = palettes.find((p) => p.id === chosen);
     // 两组（2026-10-21 项目主人定叫法，照终端的外观页）：「主题」（形状和材质那一层，有主题包才有这一组）、「配色方案」（明暗、卡片、主色）
-    // 「主题」一组还有「时间线」「回答排版」两行（蓝图 web.md「换画法」第 6 条）：能用的不止一个才出
-    const rows = [await skinRow(dialog), seamRow(dialog, 'render.timeline', 'render_timeline'), seamRow(dialog, 'render.markdown', 'render_markdown')].filter(Boolean);
+    // 「主题」一组还有「AI 输出样式」一行（蓝图 web.md「换画法」第 6 条）：不止一种样式才出
+    const rows = [await skinRow(dialog), styleRow(dialog)].filter(Boolean);
     replace(el, h('div.set-look', rows.length ? groupBlock(ctx.text('skin'), rows) : null,
       groupBlock(ctx.text('palette_label'), [scheme.el, h('div.set-themes', palettes.map(card)), seedRow(dialog, current?.seeds?.())])));
   };
@@ -80,19 +80,29 @@ async function skinRow(dialog) {
   return shell({ name: ctx.text('skin'), control: pick }).el;
 }
 
+/** 「AI 输出样式」管的两个职能（时间线的一段、回答的排版）。 */
+const STYLE_SEAMS = ['render.timeline', 'render.markdown'];
+
 /**
- * 换画法的一行（「时间线」「回答排版」）：下拉，能用的提供者一个一项；只有一个能用的（出厂）不出这一行。选了当场换（对话区整个重画）。
- * @param {any} dialog @param {string} seam 职能 @param {string} label 这一行的名字（包的字）
+ * 「AI 输出样式」一行（2026-10-23 项目主人：「时间线」「回答排版」两行合成一行）：两个职能里同一个编号的并成一项，名字照先登记的那个；
+ * 选了两样都换成它，只提供了一样的另一样用出厂的。两样不是同一个编号的（旧的选法）照非出厂的那一个写。只有一种样式的不出这一行。
+ * @param {any} dialog
  */
-function seamRow(dialog, seam, label) {
+function styleRow(dialog) {
   const ctx = dialog.ctx;
-  const list = ctx.packages.seams?.list(seam) ?? [];
-  if (list.length < 2) return null;
-  const pick = select(dialog, list.map((/** @type {any} */ p) => ({ value: p.id, name: p.name })), ctx.packages.seams.current(seam) ?? '', (/** @type {string} */ v) => {
-    ctx.packages.seams.set(seam, v);
+  const seams = ctx.packages.seams;
+  if (!seams) return null;
+  /** @type {Map<string, string>} 编号 → 名字 */
+  const styles = new Map();
+  for (const seam of STYLE_SEAMS) for (const p of seams.list(seam)) if (!styles.has(p.id)) styles.set(p.id, p.name);
+  if (styles.size < 2) return null;
+  const now = STYLE_SEAMS.map((seam) => seams.current(seam));
+  const chosen = now.find((id) => id && id !== 'default') ?? now.find(Boolean) ?? '';
+  const pick = select(dialog, [...styles].map(([value, name]) => ({ value, name })), chosen, (/** @type {string} */ v) => {
+    for (const seam of STYLE_SEAMS) seams.set(seam, seams.list(seam).some((/** @type {any} */ p) => p.id === v) ? v : 'default');
     dialog.drawBody();
   });
-  return shell({ name: ctx.text(label), control: pick }).el;
+  return shell({ name: ctx.text('output_style'), control: pick }).el;
 }
 
 /**
