@@ -10,7 +10,9 @@ import { entriesBeat, statusRetry, localWords } from './model.js';
 /** @param {any} ctx */
 export function apply(ctx) {
   // 词库照界面语言挑（每一档每种语言各一组）
-  const line = new PulseLine({ ...ctx.config, words: localWords(ctx.config.words, ctx.local) }, (path, fields) => ctx.text(path, fields));
+  // 排着的那几行点了撤回（核心 `session.withdraw`，蓝图「排队的消息」第 4a 条）：交给整页 app 的 `chat`
+  const line = new PulseLine({ ...ctx.config, words: localWords(ctx.config.words, ctx.local) }, (path, fields) => ctx.text(path, fields),
+    ctx.chat?.withdraw ? (seq) => ctx.chat.withdraw(seq) : null);
   const root = document.documentElement;
   ctx.effect(() => () => {
     line.set(null);
@@ -28,7 +30,7 @@ export function apply(ctx) {
       start: run.start,
       beat: entriesBeat(v.entries, st),
       retry: statusRetry(st, run.turn),
-      queued: v.queued.map((q) => q.text),
+      queued: v.queued.map((q) => ({ seq: q.seq, text: q.text })),
       waiting: wait,
     } : null);
     root.style.setProperty('--pulse-lines', String(1 + (run ? v.queued.length : 0)));

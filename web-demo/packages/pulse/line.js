@@ -13,7 +13,7 @@ import { clock } from '../../src/lib/format.js';
 import { Pulse, widest, dotCount, retryLine } from './model.js';
 
 /**
- * @typedef {{id: string, start: number, beat: unknown, retry: {attempt: number, limit: number, message: string, failover?: boolean, due?: number}|null, queued: string[], waiting?: string|null}} PulseState
+ * @typedef {{id: string, start: number, beat: unknown, retry: {attempt: number, limit: number, message: string, failover?: boolean, due?: number}|null, queued: {seq: number, text: string}[], waiting?: string|null}} PulseState
  *   在跑的那一轮（会话加回合、开始的时刻）、这一轮出过的事的记号（`entriesBeat`）、在等的重试、排着的话（蓝图「排队的消息」）；`waiting` 是
  *   在等你确认、回答时写的那几个字（「等你回答」：静止的，不扫流光、不轮点、不写用时）
  */
@@ -22,8 +22,10 @@ export class PulseLine {
   /**
    * @param {{sweep_seconds: number, dim: number, lift: number, dot_mark: string, dot_count: number, tick_ms: number, words: any}} config 这个包的设置项
    * @param {(path: string, fields?: any) => string} t 这个包的字
+   * @param {((seq: number) => any)|null} [withdraw] 排着的那一行点了：撤回它（核心 `session.withdraw`）；没有的那几行不能点
    */
-  constructor(config, t) {
+  constructor(config, t, withdraw = null) {
+    this.withdraw = withdraw;
     this.config = config;
     this.t = t;
     this.pulse = new Pulse();
@@ -102,7 +104,13 @@ export class PulseLine {
     const queued = JSON.stringify(s.queued);
     if (queued !== this.drawnQueue) {
       this.drawnQueue = queued;
-      this.queue.replaceChildren(...s.queued.map((text) => h('div.pulse-queued', h('span.pulse-arrow', '↳ '), h('span.pulse-queued-text', text.replace(/\s+/g, ' ').trim()))));
+      // 能撤回的：一行一个按钮，悬停铺一层淡底、行末露「撤回」（蓝图「排队的消息」第 4a 条，同终端）
+      this.queue.replaceChildren(...s.queued.map((q) => {
+        const parts = [h('span.pulse-arrow', '↳ '), h('span.pulse-queued-text', q.text.replace(/\s+/g, ' ').trim())];
+        if (!this.withdraw) return h('div.pulse-queued', ...parts);
+        return h('button.pulse-queued.is-withdrawable', { type: 'button', title: this.t('withdraw_tip'), onclick: () => this.withdraw?.(q.seq) },
+          ...parts, h('span.pulse-withdraw', this.t('withdraw')));
+      }));
     }
   }
 }

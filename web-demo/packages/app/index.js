@@ -3,6 +3,7 @@
 //! 拆出去，拆完这个包就没了。它是搬的过程里唯一还直接 `import` 旧代码（`src/ui/`、`src/core/`）的包。
 
 import { App } from '../../src/ui/app.js';
+import { withdrawQueued } from '../../src/ui/commands.js';
 import { useConnection as linkCardsUse } from '../../src/ui/linkcards.js';
 import { codeBlock, copy } from '../../src/markdown/build.js';
 import { renderMarkdown } from '../../src/markdown/render.js';
@@ -91,6 +92,8 @@ export function apply(ctx) {
     parentOf: (id) => app.parentOf(id),
     /** 整理会话的 `dream`（核心 D-1 下：`{persona | session, manual, from?}`），别的会话是 `null` */
     dream: (id) => app.dreamOf(id),
+    /** 撤回一条排着的话（核心 `session.withdraw`；运行状态行下面那几行点了撤回），字放回输入框 @param {number} seq */
+    withdraw: (seq) => (app.current ? withdrawQueued(app, app.current, seq) : Promise.resolve()),
     /** 同输入框上面的「← 返回」（整理会话左上角标题左边那个「←」）：交回回去了没有；`backHint` 是它的悬停提示，没有去处的是 `null` */
     back: () => app.back?.go() ?? false,
     backHint: () => app.back?.hint() ?? null,

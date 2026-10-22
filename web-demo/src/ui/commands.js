@@ -13,7 +13,7 @@ import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { fitAbove } from './fit.js';
 import { Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText } from '../model/commands.js';
-import { itemsOf } from '../model/entries.js';
+import { itemsOf, seqOf } from '../model/entries.js';
 import { copy } from '../markdown/build.js';
 import { Refusal } from '../core/connection.js';
 
@@ -377,7 +377,34 @@ function opened(app) {
 async function undo(app) {
   const session = opened(app);
   if (!session) return;
+  // 有排着的（在回答时发的、还没被听到的）先撤排着的，一次一条、最新的先撤（核心 759bfcfa 的 `session.withdraw`，同终端）
+  if (app.queuedNow?.length) {
+    await withdrawQueued(app, session, null);
+    return;
+  }
   await revertLatest(app, session);
+}
+
+/**
+ * 撤回一条排着的话（核心 759bfcfa 的 `session.withdraw`；蓝图「排队的消息」第 4a 条）：不打断这一轮，那一行照推来的 `message.withdrawn` 去掉，
+ * 字和附件放回输入框（还看着这个会话、框里没字的才放），提示「已撤回」。`seq` 是那一条的序号，`null` 撤最新的；来不及的（`already_heard`）照核心的话说。
+ * @param {App} app @param {string} session @param {number|null} seq
+ */
+export async function withdrawQueued(app, session, seq) {
+  const list = app.queuedNow ?? [];
+  const item = seq == null ? list.at(-1) : list.find((/** @type {any} */ q) => q.seq === seq);
+  try {
+    await app.store.conn.request('session.withdraw', seq == null ? { session } : { session, message: seq });
+  } catch (err) {
+    app.composer.say(refusalText(err));
+    return;
+  }
+  const s = app.store.sessions.get(session);
+  const entry = item && s ? s.view.list.find((/** @type {any} */ e) => e.kind === 'user' && seqOf(e.id) === item.seq) : null;
+  const kept = entry ? keptAttachments(entry, app.composer.recall.items) : [];
+  const text = item?.text ?? '';
+  if ((text || kept.length) && app.current === session) app.composer.putBack(text, kept.length ? { session, parts: { attachments: kept } } : null);
+  app.composer.say(t('commands.withdrawn'));
 }
 
 /**

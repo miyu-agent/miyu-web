@@ -5958,5 +5958,11 @@
     "select": [
       ".adm-denied"
     ]
+  },
+  "pulse.withdraw": {
+    "zh": "排着的话行末悬停露的「撤回」",
+    "select": [
+      ".pulse-withdraw"
+    ]
   }
 }

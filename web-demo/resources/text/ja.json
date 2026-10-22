@@ -260,6 +260,7 @@
     "unknown": "そのコマンドはありません",
     "not_open": "このセッションはまだ始まっていません",
     "undone": "取り消しました",
+    "withdrawn": "取り消しました",
     "nothing_to_copy": "コピーできる返信がまだありません",
     "undone_jobs": "取り消しました · {count} 件のタスクを停止しました",
     "language_changed": "表示言語：{name}",

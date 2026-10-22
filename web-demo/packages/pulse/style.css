@@ -13,6 +13,11 @@
 .pulse-queued { display: flex; height: var(--pulse-row); color: var(--text-soft); font-size: calc(13px * var(--text-scale)); white-space: nowrap; }
 .pulse-arrow { flex: none; color: var(--text-faint); white-space: pre; }
 .pulse-queued-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* 能撤回的那几行（核心 session.withdraw，蓝图「排队的消息」第 4a 条）：点得到（外面那一层不接指针），悬停铺一层淡底、行末露「撤回」 */
+.pulse-queued.is-withdrawable { box-sizing: border-box; width: 100%; margin: 0 calc(-6px * var(--space)); padding: 0 calc(6px * var(--space)); border: 0; border-radius: var(--r-6); background: none; font-family: inherit; line-height: inherit; text-align: left; pointer-events: auto; cursor: pointer; }
+.pulse-queued.is-withdrawable:hover { background: var(--item-hover, color-mix(in srgb, var(--text) 5%, transparent)); color: var(--text); }
+.pulse-withdraw { flex: none; margin-left: auto; padding-left: calc(10px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); opacity: 0; transition: opacity calc(0.15s * var(--motion-scale)) ease; }
+.pulse-queued.is-withdrawable:hover .pulse-withdraw, .pulse-queued.is-withdrawable:focus-visible .pulse-withdraw { opacity: 1; }
 /* 词和点一格：底下垫一个看不见的最宽的词加满的点，后面的用时不左右跳 */
 .pulse-lead { display: inline-grid; flex: none; }
 .pulse-lead > * { grid-area: 1 / 1; }
