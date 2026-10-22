@@ -25,7 +25,7 @@ test('谁说的：你的、别的账号的、子代理发给她的（标题照�
 });
 
 test('出错那一句：402、404 加人话；内核自己查出来的写分类，有原话的接后面；没原话的写分类', () => {
-  assert.equal(failureText({ class: 'other', message: 'no money', status: 402 }), '额度不足：no money');
+  assert.equal(failureText({ class: 'other', message: 'no money', status: 402 }), '额度已用完：no money');
   // 一轮里连着写到输出上限（核心 3-10）：内核的分类，写人话
   assert.equal(failureText({ class: 'output_limit' }), '回复超过了输出上限');
   assert.equal(failureText({ class: 'other', message: 'model not found', status: 404 }), '未找到，请检查端点地址和模型名：model not found');
@@ -44,10 +44,10 @@ test('换了工作区那一行：换回会话自己的默认工作区写「默�
 });
 
 test('说了还要等多久的（核心 3-5 四补 retry_after_ms）：429 写「约 N 小时后恢复」，别的接在人话后面；档位同终端', () => {
-  assert.equal(failureText({ class: 'auth', status: 429, message: 'HTTP 429: Free usage limit reached.', retry_after_ms: 47137000 }), '请求受限，约 13 小时后恢复：HTTP 429: Free usage limit reached.');
+  assert.equal(failureText({ class: 'auth', status: 429, message: 'HTTP 429: Free usage limit reached.', retry_after_ms: 47137000 }), '请求受限或额度不足，约 13 小时后恢复：HTTP 429: Free usage limit reached.');
   assert.equal(failureText({ class: 'cooling', retry_after_ms: 90000, message: 'all candidates cooling' }), '模型都在冷却，约 2 分钟后恢复', '冷却的不接原话（同终端）');
-  assert.equal(failureText({ class: 'other', status: 402, message: 'quota', retry_after_ms: 7_200_000 }), '额度不足，约 2 小时后恢复：quota');
-  assert.equal(failureText({ class: 'other', status: 429 }), '请求受限，请稍后重试', '没说要等多久的照旧');
+  assert.equal(failureText({ class: 'other', status: 402, message: 'quota', retry_after_ms: 7_200_000 }), '额度已用完，约 2 小时后恢复：quota');
+  assert.equal(failureText({ class: 'other', status: 429 }), '请求受限或额度不足，请稍后重试', '没说要等多久的照旧');
   assert.deepEqual(waitSpan(500), { n: 1, unit: 'seconds' });
   assert.deepEqual(waitSpan(59_400), { n: 60, unit: 'seconds' });
   assert.deepEqual(waitSpan(60_001), { n: 2, unit: 'minutes' });

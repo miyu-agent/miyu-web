@@ -334,12 +334,12 @@
     "minutes": "back in about {n} min",
     "hours": "back in about {n} h",
     "days": "back in about {n} days",
-    "limited": "Rate limited, {wait}",
+    "limited": "Rate limited or out of quota, {wait}",
     "join": "{head}, {wait}"
   },
   "status_hints": {
-    "429": "Rate limited, try again later",
-    "402": "Out of credit",
+    "429": "Rate limited or out of quota, try again later",
+    "402": "Quota used up",
     "404": "Not found: check the endpoint address and the model name"
   },
   "notes": {

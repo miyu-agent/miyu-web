@@ -334,7 +334,7 @@
     "minutes": "約 {n} 分後に回復",
     "hours": "約 {n} 時間後に回復",
     "days": "約 {n} 日後に回復",
-    "limited": "リクエスト制限中、{wait}",
+    "limited": "レート制限か利用枠不足、{wait}",
     "join": "{head}、{wait}"
   },
   "status_hints": {
