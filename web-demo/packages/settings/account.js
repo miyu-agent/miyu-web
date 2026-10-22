@@ -81,7 +81,7 @@ export function drawAccount(dialog) {
   const t = (/** @type {string} */ k) => dialog.ctx.text(k);
   const enter = st.admin ? h('section.set-group', h('div.acc-enter',
     h('div.set-text', h('div.set-name', h('span', t('account.admin_title'))), h('p.set-desc', t('account.admin_desc'))),
-    h('button.set-btn.acc-enter-btn', { type: 'button', onclick: () => { dialog.close(); dialog.ctx.host.route.go('#admin=overview'); } }, t('account.admin_enter'), icon('chevron-right')))) : null;
+    h('button.set-btn.is-primary.acc-enter-btn', { type: 'button', onclick: () => { dialog.close(); dialog.ctx.host.route.go('#admin=overview'); } }, t('account.admin_enter'), icon('chevron-right')))) : null;
   return [enter, mine(dialog), st.error ? h('p.set-error', st.error) : null];
 }
 

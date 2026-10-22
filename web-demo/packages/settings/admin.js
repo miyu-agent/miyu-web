@@ -85,6 +85,8 @@ export class AdminPage {
       this.body = h('div.adm-body');
       this.el = h('div.adm-page', { role: 'main', 'aria-label': this.ctx.text('admin.title') }, this.nav, this.body);
       document.body.append(this.el);
+      // 带着网址刷新进来的：内核先藏着主界面（`is-admin-route`），后台出来了露回去（关的时候底下就是主界面）
+      document.documentElement.classList.remove('is-admin-route');
       document.addEventListener('keydown', this.onKey);
       this.title = document.title;
       document.title = this.ctx.text('admin.tab_title');

@@ -638,7 +638,8 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .pv-tool { flex: none; width: 28px; height: 28px; }
 .pv-tool .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); }
 .pv-tool:disabled { opacity: 0.4; cursor: default; }
-.pv-add-pop { width: min(460px, 100%); }
+.pv-add-pop { width: min(540px, 100%); }
+.pv-add-pop .pv-input { min-height: 132px; }
 .pv-find .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
 .pv-find-input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: calc(13px * var(--text-scale)) var(--font-ui); }
 .pv-find-input::-webkit-search-cancel-button { display: none; }
@@ -688,19 +689,18 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 
 /* 账号页最上面「管理员后台」的入口卡片（第 12c 条） */
 .acc-enter { display: flex; align-items: center; gap: calc(14px * var(--space)); padding: calc(14px * var(--space)) calc(16px * var(--space)); border-radius: var(--r-12); background: var(--surface-1); box-shadow: var(--card-shadow); }
-.acc-enter-btn { flex: none; background: #1f2430; color: #f1d27a; }
-.acc-enter-btn:hover { background: #2a3040; color: #f1d27a; }
+.acc-enter-btn { flex: none; }
 
-/* 管理员后台（第 12d 条）：盖满窗口的独立整页，左边一栏深色 */
+/* 管理员后台（第 12d 条）：盖满窗口的独立整页；左边一栏照主题（同主界面的左栏，2026-10-22 项目主人：要跟着主题设置） */
 .adm-page { position: fixed; inset: 0; z-index: 85; display: grid; grid-template-columns: 220px minmax(0, 1fr); background: var(--surface); color: var(--text); animation: fade-in var(--motion-in) var(--ease-out) both; }
-.adm-nav { display: flex; flex-direction: column; gap: 2px; padding: calc(14px * var(--space)) calc(12px * var(--space)); background: #1f2430; overflow: auto; }
-.adm-brand { display: flex; align-items: center; gap: 8px; margin: 2px 2px 12px; padding: 8px 10px; border-radius: var(--r-10); background: #2a3040; color: #f1d27a; font-size: calc(12.5px * var(--text-scale)); font-weight: 600; }
+.adm-nav { display: flex; flex-direction: column; gap: 2px; padding: calc(14px * var(--space)) calc(12px * var(--space)); background: var(--sidebar-bg, var(--surface-1)); overflow: auto; }
+.adm-brand { display: flex; align-items: center; gap: 8px; margin: 2px 2px 12px; padding: 8px 10px; border-radius: var(--r-10); background: var(--accent-soft, color-mix(in srgb, var(--accent) 12%, transparent)); color: var(--accent); font-size: calc(12.5px * var(--text-scale)); font-weight: 600; }
 .adm-brand .icon, .adm-nav-item .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); flex: none; }
-.adm-nav-item { display: flex; align-items: center; gap: 9px; height: 34px; padding: 0 10px; border: 0; border-radius: var(--r-8); background: none; color: #d9dde6; font: calc(13.5px * var(--text-scale)) var(--font-ui); text-align: left; text-decoration: none; cursor: pointer; }
-.adm-nav-item:hover { background: #2a3040; }
-.adm-nav-item.is-on { background: #2f3646; color: #fff; }
-.adm-nav-item .icon { color: #8b93a7; }
-.adm-exit { margin-top: auto; color: #b6bccb; }
+.adm-nav-item { display: flex; align-items: center; gap: 9px; height: 34px; padding: 0 10px; border: 0; border-radius: var(--r-8); background: none; color: var(--text); font: calc(13.5px * var(--text-scale)) var(--font-ui); text-align: left; text-decoration: none; cursor: pointer; }
+.adm-nav-item:hover { background: var(--item-hover, color-mix(in srgb, var(--text) 5%, transparent)); }
+.adm-nav-item.is-on { background: var(--sidebar-active, var(--surface-3)); box-shadow: var(--sidebar-active-shadow, none); }
+.adm-nav-item .icon { color: var(--text-soft); }
+.adm-exit { margin-top: auto; color: var(--text-soft); }
 .adm-body { overflow: auto; }
 .adm-inner { width: min(860px, 100%); box-sizing: border-box; margin: 0 auto; padding: calc(28px * var(--space)) calc(32px * var(--space)) calc(48px * var(--space)); }
 .adm-title { margin: 0 0 calc(18px * var(--space)); font-size: calc(20px * var(--text-scale)); font-weight: 600; }

@@ -123,7 +123,7 @@ export function privateGroup(dialog, name, items) {
 function openAdd(dialog, title, hint, submit) {
   const t = (/** @type {string} */ k) => dialog.ctx.text(k);
   dialog.panel.querySelector('.pv-add-modal')?.remove();
-  const input = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.pv-input', { rows: 3, placeholder: hint, spellcheck: 'false', autocomplete: 'off' }));
+  const input = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.pv-input', { rows: 6, placeholder: hint, spellcheck: 'false', autocomplete: 'off' }));
   const error = h('p.set-error', { hidden: true });
   const close = () => leave(modal, () => modal.remove());
   const go = async () => {
