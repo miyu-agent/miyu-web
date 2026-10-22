@@ -203,7 +203,18 @@
       "missing": "无法获取修改前后的内容"
     },
     "changed": "修改",
-    "skill": "使用技能"
+    "skill": "使用技能",
+    "nested": {
+      "section": "脚本调用的工具 · {n} 次",
+      "running": "运行中",
+      "error": "出错",
+      "denied": "被拒绝",
+      "needs_approval": "需要确认，脚本里没问",
+      "cancelled": "已取消",
+      "reason": "原因",
+      "cut": "…（共 {bytes} 字节）",
+      "loading": "读取中…"
+    }
   },
   "markdown": {
     "code": "代码",

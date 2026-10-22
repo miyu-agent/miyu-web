@@ -13,6 +13,7 @@ import { row, peek, messagePeek, thinkingTail, commandLines, details, kindOf, qu
 import { imageCard } from './media.js';
 import { drawMarkdown } from './render.js';
 import { blobUrl } from '../core/host.js';
+import { NestedList } from './nested.js';
 
 export class StepView {
   /**
@@ -68,18 +69,20 @@ export class StepView {
       this.said = h('span.tl-said');
       // 编辑、写入：加减的行数（`+3 -1`）
       this.diff = h('span.tl-diff');
+      // 执行命令：脚本最近调的那个工具（`#12 翻记忆`，核心 M-5 上）
+      this.nestedTail = h('span.tl-nested-tail', { hidden: true });
       this.status = h('span.tl-status');
       // 留言：收着时那一行后面接留言开头的预览（2026-10-01 项目主人定）
       const message = kindOf(step.name) === 'message';
       // 编号和预览中间一个 `·`（2026-10-01 项目主人定）
       this.peek = message ? h('span.tl-peek', h('span.tl-peek-sep', t('timeline.peek_sep')), h('span')) : null;
       this.row = h('button.tl-row', { type: 'button', onclick: toggle },
-        this.node, h('span.tl-head', this.name, this.time, this.subject, this.said, this.diff), this.peek, this.status);
+        this.node, h('span.tl-head', this.name, this.time, this.subject, this.said, this.diff, this.nestedTail), this.peek, this.status);
       this.command = h('div.tl-command', { onclick: toggle });
       // 点开的细节：点这一块也收起（点的是链接、按钮、图，或者拖选了字的不算；蓝图「压缩、清空」里的开关规矩）
       this.body = h('div.tl-body', {
         onclick: (/** @type {MouseEvent} */ e) => {
-          if (/** @type {Element} */ (e.target).closest('a, button, input, textarea, .conversation-media')) return;
+          if (/** @type {Element} */ (e.target).closest('a, button, input, textarea, .conversation-media, .tl-nested')) return;
           toggle(e);
         },
       });
@@ -231,6 +234,11 @@ export class StepView {
       replace(this.diff, r.diff ? [h('span.tl-added', `+${r.diff.added}`), ' ', h('span.tl-removed', `-${r.diff.removed}`)] : []);
     }
     this.diff.hidden = !r.diff;
+    const tail = r.nested ?? null;
+    setText(this.nestedTail, tail?.text ?? '');
+    this.nestedTail.hidden = !tail;
+    this.nestedTail.classList.toggle('is-danger', tail?.tone === 'danger');
+    this.nestedTail.classList.toggle('is-warn', tail?.tone === 'warn');
     if (this.peek) {
       const text = messagePeek(step);
       setText(/** @type {HTMLElement} */ (this.peek.lastChild), text);
@@ -258,7 +266,10 @@ export class StepView {
       step = { ...step, output: this.output ?? '' };
     }
     const body = JSON.stringify([step.output, step.status, step.args, step.said, step.detail ?? null]);
-    if (body === this.drawnBody) return;
+    if (body === this.drawnBody) {
+      this.drawNested(step);
+      return;
+    }
     this.drawnBody = body;
     /** @type {[any, HTMLElement][]} 差异卡片：问到核心算好的差异以后换掉 */
     const cards = [];
@@ -282,6 +293,16 @@ export class StepView {
       return h('div.tl-detail', h('div.tl-label', s.label), h('pre', s.text));
     }));
     if (cards.length) this.fullDiff(step, cards);
+    this.drawNested(step);
+  }
+
+  /** 点开着的执行命令：脚本调用的工具那一段接在细节后面，条目上那一格变了接着要（命令还在跑也画）。 @param {any} step */
+  drawNested(step) {
+    if (!step.nested || !step.callId || !this.where.nested) return;
+    const call = step.callId;
+    this.nestedList ??= new NestedList((after) => this.where.nested?.(call, after) ?? Promise.resolve(null));
+    if (this.nestedList.el.parentNode !== this.body) this.body.append(this.nestedList.el);
+    this.nestedList.sync(step.nested);
   }
 
   /** 知识库的文档（读到的那一页、查到的片段）照 Markdown 画，里面的图不画（`styles/timeline.css`）。 @param {string} text */

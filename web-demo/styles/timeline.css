@@ -299,3 +299,22 @@
 
 /* 兜底的一段（没有时间线的提供者、提供者出错了，蓝图 web.md「换画法」第 5 条）：只写收起那一行的字 */
 .tl-fallback { margin: calc(4px * var(--space)) 0; font: calc(13px * var(--text-scale)) / 1.5 var(--timeline-font, var(--font-mono)); color: var(--timeline-fg, var(--text-soft)); }
+
+/* 脚本里调的工具（蓝图「时间线」的「脚本里调的工具」，核心 M-5 上）：执行命令那一行后面的 `#12 翻记忆`，点开的那一段 */
+.tl-nested-tail { color: var(--tl-soft); font-weight: 400; white-space: nowrap; }
+.tl-nested-tail::before { content: ' · '; }
+.tl-nested-tail.is-danger { color: var(--danger); }
+.tl-nested-tail.is-warn { color: var(--warn); }
+.tl-nested-list { display: grid; gap: 1px; }
+.tl-nested-row { display: flex; align-items: baseline; gap: calc(8px * var(--space)); width: 100%; min-width: 0; padding: calc(3px * var(--space)) calc(6px * var(--space)); border: 0; border-radius: var(--r-6); background: none; color: var(--text); font: 600 calc(11.5px * var(--text-scale)) / 1.5 var(--font-ui); text-align: left; cursor: pointer; }
+.tl-nested-row:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
+.tl-nested-n { flex: none; color: var(--text-faint); font: 400 calc(11px * var(--text-scale)) var(--font-mono); font-variant-numeric: tabular-nums; }
+.tl-nested-name { flex: none; }
+.tl-nested-object { flex: 1; min-width: 0; overflow: hidden; color: var(--tl-soft); font: 400 calc(11px * var(--text-scale)) var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
+.tl-nested-state { display: inline-flex; flex: none; align-items: center; gap: calc(4px * var(--space)); margin-left: auto; color: var(--tl-soft); font-weight: 400; font-size: calc(11px * var(--text-scale)); }
+.tl-nested-state .icon { width: 12px; height: 12px; animation: tl-spin calc(900ms * var(--motion-scale)) linear infinite; }
+.tl-nested-state.is-danger { color: var(--danger); }
+.tl-nested-state.is-warn { color: var(--warn); }
+.tl-nested-state.is-faint { color: var(--text-faint); }
+.tl-nested-more { margin: calc(2px * var(--space)) 0 calc(6px * var(--space)) calc(26px * var(--space)); }
+.tl-nested-more pre { max-height: 220px; overflow: auto; }

@@ -8,6 +8,7 @@
 import { res, t } from '../util/res.js';
 import { toolDuration } from './format.js';
 import { fromArgs, compare } from './diff.js';
+import { nestedTail } from '../lib/nested.js';
 
 /** 留言发给父会话时 `to` 写的（`tools/send_message.md`） */
 const PARENT = 'parent';
@@ -53,7 +54,8 @@ export const failed = (step) => step.kind === 'tool' && (step.status === 'error'
  * @typedef {{since: number, format: 'secs'|'tenths'|'job'}} Timer 走表：从 `since` 起，`secs` 整秒 `12s`、`tenths`
  *   一位小数 `1.2 s`、`job` 读秒 `3m 05s`
  * @typedef {{icon: string, name: string, subject: string|null, mono: boolean, said: string|null, took: string|null,
- *   timer: Timer|null, failed: boolean, diff: {added: number, removed: number}|null}} Row `diff`：编辑、写入这一步加减的行数
+ *   timer: Timer|null, failed: boolean, diff: {added: number, removed: number}|null, nested?: {text: string, tone: string|null}|null}} Row
+ *   `diff`：编辑、写入这一步加减的行数；`nested`：执行命令里脚本最近调的那个工具（`#12 翻记忆`，核心 M-5 上）
  */
 
 /**
@@ -104,7 +106,7 @@ function titled(step, kind, base) {
   if (kind === 'command') {
     const took = step.state === 'done' && step.duration != null ? toolDuration(step.duration) : null;
     const timer = step.state === 'running' && step.start != null ? { since: step.start, format: /** @type {const} */ ('job') } : null;
-    return { ...base, icon, name, subject: object, took, timer, failed: bad };
+    return { ...base, icon, name, subject: object, took, timer, failed: bad, nested: nestedTail(step.nested) };
   }
   if (kind === 'agent') {
     const subject = step.job ? t('timeline.agent_subject', { job: step.job, title: object ?? '' }) : t('timeline.agent_pending', { title: object ?? '' });

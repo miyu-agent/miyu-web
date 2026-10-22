@@ -8,10 +8,12 @@
  *   status: string|null, output: string, said: {key: string, fields: Record<string, string>}|null, callId: string|null,
  *   start: number|null, end: number|null, duration: number|null, job?: string|null, toTitle?: string|null,
  *   title?: {name: string, object?: string, said?: string}|null, lines?: {added: number, removed: number}|null, images?: any[], approval?: any,
- *   files?: {path: string, action: 'created'|'changed'|'trashed'}[], skill?: {name: string, title: string}|null, detail?: any}} Tool
+ *   files?: {path: string, action: 'created'|'changed'|'trashed'}[], skill?: {name: string, title: string}|null, detail?: any,
+ *   nested?: {count: number, last: any}|null}} Tool
  *   `duration` 是这一步的用时（执行命令写在名字后面）；`job` 是派出去的任务的编号（派子代理那一行写它）；`toTitle` 是留言发给的那个子代理的
  *   标题（点开写在「发给」里；找不到的是 `null`）；`title`、`lines`、`images`、`approval`、`files` 是核心给的标题那一句、改了多少行、
- *   结果里的图、确认、改了哪些文件；`detail` 是给人看的结构化结果（翻记忆、查知识库、读文档）
+ *   结果里的图、确认、改了哪些文件；`detail` 是给人看的结构化结果（翻记忆、查知识库、读文档）；`nested` 是脚本里经 `miyu call` 调的工具
+ *   （核心 M-5 上：个数和最近一个）
  * @typedef {Thought|Tool} Step
  * @typedef {{type: 'steps', key: string, turn: number|null, finished: boolean, steps: Step[], summary?: {failed: boolean, spans: {text: string, tone: string}[]}}} Segment
  *   `summary` 是收起那一行（核心给的）

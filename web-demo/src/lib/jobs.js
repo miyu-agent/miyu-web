@@ -4,8 +4,8 @@
 
 /**
  * @typedef {{job: string, what: string, title: string, session: string|null, state: string, since: number|null, ended: number|null,
- *   duration: number|null, code: number|null, signal: number|null, command: string|null}} Task 一个任务（后台命令带着命令本身；
- *   子代理的是 `null`）
+ *   duration: number|null, code: number|null, signal: number|null, command: string|null, nested: any}} Task 一个任务（后台命令带着命令本身；
+ *   子代理的是 `null`；`nested` 是脚本里经 `miyu call` 调的工具，核心 M-5 上：个数和最近一个）
  */
 
 /** 在跑的有几个。 */
@@ -39,7 +39,7 @@ export function tasksFromStatus(jobs) {
       job: j.job, what: j.what, title: j.title ?? '', session: j.session ?? null,
       state: j.state === 'stopped' ? j.why ?? 'stopped' : j.state,
       since, ended, duration: since != null && ended != null ? ended - since : null,
-      code: j.exit_code ?? null, signal: j.signal ?? null, command: j.command ?? null,
+      code: j.exit_code ?? null, signal: j.signal ?? null, command: j.command ?? null, nested: j.nested ?? null,
     };
   });
   const by = (/** @type {string} */ state) => list.filter((x) => (state === 'running' ? x.state === 'running' : x.state !== 'running')).sort((a, b) => compareJobs(b.job, a.job));

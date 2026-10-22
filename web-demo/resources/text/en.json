@@ -203,7 +203,18 @@
       "missing": "Can't get the content before and after the change"
     },
     "changed": "Changed",
-    "skill": "Use skill"
+    "skill": "Use skill",
+    "nested": {
+      "section": "Tools called by the script · {n}",
+      "running": "Running",
+      "error": "Failed",
+      "denied": "Denied",
+      "needs_approval": "Needs approval — not asked in a script",
+      "cancelled": "Cancelled",
+      "reason": "Reason",
+      "cut": "… ({bytes} bytes in total)",
+      "loading": "Loading…"
+    }
   },
   "markdown": {
     "code": "Code",

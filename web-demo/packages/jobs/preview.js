@@ -18,8 +18,9 @@ export class Preview {
    * @param {(owner: string, job: string, after?: number) => Promise<{output: string, lines?: number, truncated?: boolean, running?: boolean, size?: number, more?: boolean}>} read
    *   不带 `after` 的读最后几行；带的读那个字节往后的，没有新的等着
    * @param {number} keep 最多露几行
+   * @param {(owner: string, job: string) => {el: HTMLElement, sync: (nested: any) => void}|null} [nested] 脚本调用的工具那一段（核心 M-5 上）
    */
-  constructor(task, t, read, keep) {
+  constructor(task, t, read, keep, nested) {
     this.task = task;
     this.t = t;
     this.read = read;
@@ -29,6 +30,12 @@ export class Preview {
     this.el = h('div.jobs-preview',
       section(t('preview.command'), h('pre.jobs-command', task.command ?? t('preview.no_command'))),
       section(t('preview.output'), this.head, this.out));
+    // 脚本调用的工具（蓝图「时间线」的「脚本里调的工具」第 3 条）：接在「输出」后面，条目上那一格变了接着要
+    this.nested = nested?.(task.owner, task.job) ?? null;
+    if (this.nested) {
+      this.el.append(this.nested.el);
+      this.nested.sync(task.nested);
+    }
     /** 露着的字、一共几行 */
     this.tail = new Tail(keep);
     /** 读到第几个字节了；没有（还没读、核心不给）的不接着读 */
@@ -38,6 +45,11 @@ export class Preview {
     this.done = false;
     /** 第几回接着读：停了、重新开始的换一个，晾着的回来对不上就丢掉 */
     this.run = 0;
+  }
+
+  /** 会话状态里这个任务的 `nested` 变了 @param {any} nested */
+  syncNested(nested) {
+    this.nested?.sync(nested);
   }
 
   /** 开始读（展开、浮层重新打开）：没读过的读最后几行，跑着的接着往下读到结束。 */

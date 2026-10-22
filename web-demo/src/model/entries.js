@@ -13,6 +13,7 @@
 import { res, t } from '../util/res.js';
 import { short, hitRate, seconds, hhmm } from './format.js';
 import { shownOf } from './artifacts.js';
+import { nestedTail } from '../lib/nested.js';
 import { speakerOf, moduleNote, peerNote, changeNote, modelNote, compactedNote, failureText, recapNote, compactFailedNote, workspaceNote } from './notes.js';
 
 /** 权限级别：只读的写 `read_only`，别的照 `level`（`tui.md`「正文」第 4 条）。 @param {any} p */
@@ -257,6 +258,8 @@ export function stepOf(e) {
     files: e.files ?? [],
     // 给人看的结构化结果（核心 10-17：翻记忆、查知识库、读文档；老日志、出错的没有）
     detail: e.detail && typeof e.detail === 'object' ? e.detail : null,
+    // 脚本里经 `miyu call` 调的工具（核心 M-5 上）：个数和最近一个，点开照 `view.detail` 要整份
+    nested: e.nested && typeof e.nested === 'object' ? e.nested : null,
     // 读的是技能的 SKILL.md（视图条目的 `skill`，`{name, title}`）：那一行写「使用技能 · 显示名」
     skill: e.skill && typeof e.skill.name === 'string' ? { name: e.skill.name, title: typeof e.skill.title === 'string' && e.skill.title ? e.skill.title : e.skill.name } : null,
   };
@@ -368,6 +371,9 @@ function jobNote(e, jobs) {
     text = e.signal != null ? t(`notes.${what}.signal`, { title, signal: e.signal }) : e.exit_code != null ? t(`notes.${what}.failed`, { title, code: e.exit_code }) : t('notes.command.failed_plain', { title });
   } else if (texts[e.reason]) text = t(`notes.${what}.${e.reason}`, { title });
   else text = t(`notes.${what}.stopped`, { title });
+  // 脚本里调过工具的后台命令（核心 M-5 上，旁白带最后那一份）：后面接 `#12 翻记忆`
+  const tail = what === 'command' ? nestedTail(e.nested) : null;
+  if (tail) text += ` · ${tail.text}`;
   const detail = what === 'agent'
     ? { kind: 'text', text: e.report ?? '', truncated: false }
     : { kind: 'output', command: e.command ?? jobs.get(e.job)?.command ?? null, hash: e.output?.blob ?? null, chars: e.output?.chars ?? null };

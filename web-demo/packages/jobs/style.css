@@ -102,3 +102,8 @@
   .jobs-dot, .jobs-row.is-running .jobs-state-mark .icon { animation: none; }
   .jobs-fold { transition: none; }
 }
+/* 脚本最近调的那个工具（核心 M-5 上）：标题、编号后面的 `#12 翻记忆` */
+.jobs-nested { flex: none; color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); white-space: nowrap; }
+.jobs-nested.is-danger { color: var(--danger); }
+.jobs-nested.is-warn { color: var(--warn); }
+.jobs-preview .tl-nested { margin-top: calc(8px * var(--space)); }

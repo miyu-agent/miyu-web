@@ -13,6 +13,7 @@ import { show, hide } from '../../src/lib/motion.js';
 import { clock, seconds } from '../../src/lib/format.js';
 import { sections } from './sections.js';
 import { Preview } from './preview.js';
+import { nestedTail, nestedSig } from '../../src/lib/nested.js';
 
 /**
  * @typedef {import('./sections.js').Node} Node 一个任务：谁派的（`owner`，停它时照它），它是子代理的，下面挂着它的会话派的
@@ -30,7 +31,8 @@ export class JobsPanel {
    * @param {(path: string, fields?: any) => string} t 这个包的字
    * @param {{tick_ms: number, fold_ms: number}} config
    * @param {{stop: (owner: string, job: string) => Promise<void>, enter: (session: string) => void,
-   *   read: (owner: string, job: string) => Promise<any>}} on 停掉一个、进一个子代理的会话、读一条后台命令的输出
+   *   read: (owner: string, job: string) => Promise<any>, nested?: (owner: string, job: string) => any}} on 停掉一个、进一个子代理的会话、
+   *   读一条后台命令的输出、脚本调用的工具那一段
    */
   constructor(t, config, on) {
     this.t = t;
@@ -138,7 +140,7 @@ export class JobsPanel {
   draw() {
     const t = this.t;
     const s = sections(this.tasks);
-    const sig = JSON.stringify([s.live, s.done].map((part) => part.map((l) => [keyOf(l.task), l.task.state, l.task.title, l.depth, l.spawned, l.last, l.guides, l.kids, l.orphan])).concat([[...this.stopping]]));
+    const sig = JSON.stringify([s.live, s.done].map((part) => part.map((l) => [keyOf(l.task), l.task.state, l.task.title, l.depth, l.spawned, l.last, l.guides, l.kids, l.orphan, nestedSig(l.task.nested)])).concat([[...this.stopping]]));
     const running = s.live.filter((l) => l.task.state === 'running').length;
     const paused = s.live.length - running;
     const counts = [running && t('counts.running', { count: running }), paused && t('counts.paused', { count: paused }), s.counts.done && t('counts.done', { count: s.counts.done })];
@@ -195,6 +197,8 @@ export class JobsPanel {
     const task = line.task;
     const agent = task.what === 'agent';
     const key = keyOf(task);
+    const tail = agent ? null : nestedTail(task.nested);
+    this.previews.get(key)?.syncNested(task.nested);
     const stoppable = task.state === 'running' || task.state === 'paused';
     const stop = stoppable
       ? h('button.jobs-stop', {
@@ -220,7 +224,9 @@ export class JobsPanel {
     treeLines(line),
     h('span.jobs-mark', icon(agent ? 'bot' : 'square-terminal')),
     h('span.jobs-text', h('span.jobs-title', { title: task.title }, task.title), h('span.jobs-id', task.job),
-      line.spawned ? h('span.jobs-spawned', t('spawned', { count: line.spawned })) : null),
+      line.spawned ? h('span.jobs-spawned', t('spawned', { count: line.spawned })) : null,
+      // 脚本最近调的那个工具（`#12 翻记忆`，核心 M-5 上）
+      tail ? h(`span.jobs-nested${tail.tone ? `.is-${tail.tone}` : ''}`, tail.text) : null),
     h('span.jobs-state', h('span.jobs-state-mark', stateMark(task.state)), h('span.jobs-state-text', this.stateText(task, now))),
     stop);
     return preview ? [row, preview] : [row];
@@ -237,7 +243,7 @@ export class JobsPanel {
     const key = keyOf(task);
     const open = !this.previews.has(key);
     if (open) {
-      const p = new Preview(task, this.t, this.on.read, this.config.preview_lines);
+      const p = new Preview(task, this.t, this.on.read, this.config.preview_lines, this.on.nested);
       this.previews.set(key, p);
       replace(/** @type {HTMLElement} */ (fold.firstChild), p.el);
       p.start();

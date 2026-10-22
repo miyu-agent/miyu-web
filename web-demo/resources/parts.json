@@ -6096,5 +6096,41 @@
     "select": [
       ".tlp-text"
     ]
+  },
+  "tl.nested-tail": {
+    "zh": "时间线：执行命令后面脚本最近调的工具",
+    "select": [
+      ".tl-nested-tail"
+    ]
+  },
+  "tl.nested-row": {
+    "zh": "时间线：脚本调用的工具里的一个",
+    "select": [
+      ".tl-nested-row"
+    ]
+  },
+  "tl.nested-n": {
+    "zh": "脚本调用的工具的序号",
+    "select": [
+      ".tl-nested-n"
+    ]
+  },
+  "tl.nested-object": {
+    "zh": "脚本调用的工具的对象",
+    "select": [
+      ".tl-nested-object"
+    ]
+  },
+  "tl.nested-state": {
+    "zh": "脚本调用的工具的状态",
+    "select": [
+      ".tl-nested-state"
+    ]
+  },
+  "jobs.nested": {
+    "zh": "后台任务：脚本最近调的工具",
+    "select": [
+      ".jobs-nested"
+    ]
   }
 }

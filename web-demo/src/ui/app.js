@@ -55,7 +55,7 @@ export class App {
   constructor(store, conn, info, ctx, lightbox) {
     this.ctx = ctx;
     /** 软件包接进来的：挂载位、现在的灯箱（`rich.js` 的 `Ext`） */
-    this.ext = { slots: ctx.slots, lightbox, storage: ctx.storage, account: info.account ?? null, titleOf: (id) => this.titleOf(id), detail: (session, call) => this.callDetail(session, call), summary: (session, upto) => this.compactionSummary(session, upto) };
+    this.ext = { slots: ctx.slots, lightbox, storage: ctx.storage, account: info.account ?? null, titleOf: (id) => this.titleOf(id), detail: (session, call) => this.callDetail(session, call), nested: (session, which, after) => this.nestedDetail(session, which, after), summary: (session, upto) => this.compactionSummary(session, upto) };
     /** 一次调用改了什么（`view.detail`）：同一次调用的结果不会变，照「会话 调用」记着只问一次 @type {Map<string, Promise<any>>} */
     this.details = new Map();
     this.store = store;
@@ -597,6 +597,17 @@ export class App {
     const key = `${session} ${call}`;
     if (!this.details.has(key)) this.details.set(key, this.store.conn.request('view.detail', { session, call }).catch(() => null));
     return /** @type {Promise<any>} */ (this.details.get(key));
+  }
+
+  /**
+   * 脚本里调的工具（`view.detail` 的 `nested`，核心 M-5 上）：`which` 是 `{call}`（前台那次命令）或 `{job}`（后台命令）；`after` 是已经有的最大序号，
+   * 只要它以后的（加上以前还在跑的）。在跑的会变，不记着。问不到的（旧核心、没有）交 `null`。
+   * @param {string} session @param {{call?: string, job?: string}} which @param {number|null} after
+   */
+  nestedDetail(session, which, after) {
+    if (isGallery(session)) return Promise.resolve(this.gallery?.nested?.[which.call ?? which.job ?? ''] ?? null);
+    const params = { session, ...which, ...(after != null ? { nested_after: after } : {}) };
+    return this.store.conn.request('view.detail', params).then((r) => (Array.isArray(r?.nested) ? r.nested : null), () => null);
   }
 
   /**

@@ -3,6 +3,7 @@
 //! 拆出去，拆完这个包就没了。它是搬的过程里唯一还直接 `import` 旧代码（`src/ui/`、`src/core/`）的包。
 
 import { App } from '../../src/ui/app.js';
+import { NestedList } from '../../src/ui/nested.js';
 import { withdrawQueued } from '../../src/ui/commands.js';
 import { useConnection as linkCardsUse } from '../../src/ui/linkcards.js';
 import { codeBlock, copy } from '../../src/markdown/build.js';
@@ -38,6 +39,11 @@ export function apply(ctx) {
      * （记忆页：回到原来看的会话、再打开那一份的记忆页），`title` 写在悬停提示里
      */
     open: (id, opts) => app.open(id, false, opts),
+    /** 后台命令里脚本调用的工具那一段（核心 M-5 上，`view.detail {session, job}`）：后台任务浮层的预览接在后面；条目上那一格变了交给 `sync` */
+    nestedList: (/** @type {string} */ session, /** @type {string} */ job) => {
+      const list = new NestedList((after) => app.nestedDetail(session, { job }, after));
+      return { el: list.el, sync: (/** @type {any} */ nested) => list.sync(nested) };
+    },
     /** 还没开的新会话先开出来（照说第一句话一样，带上选的人格、预设、工作区），交回会话编号：空会话里打 `/dream` */
     ensure: async () => { await app.ensureSession(); return app.current; },
     /** 正在看的会话在不在回答；打断它（照两下 `Esc`） */

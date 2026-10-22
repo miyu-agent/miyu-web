@@ -26,6 +26,14 @@ test('思考：在想的写「正在思考」、整秒走表；想完「已思�
   assert.equal(row(thought('x')).took, null);
 });
 
+test('执行命令里脚本调过工具的（核心 M-5 上）：那一行带最近那一个；别的工具、没调过的没有', () => {
+  const title = { name: '执行命令', object: '批量' };
+  const nested = { count: 2, last: { n: 2, name: 'memory_search', title: { name: '翻记忆' }, state: 'needs_approval' } };
+  assert.deepEqual(row(tool('shell', { command: 'x' }, { title, nested })).nested, { text: '#2 翻记忆', tone: 'warn' });
+  assert.equal(row(tool('shell', { command: 'x' }, { title })).nested, null);
+  assert.equal(row(tool('read', { file_path: 'a' }, { title: { name: '读取' }, nested })).nested, undefined);
+});
+
 test('执行命令：图标 square-terminal（带外框），名字、对象照核心的标题；用时照这一步的用时，在跑的走表', () => {
   const title = { name: '执行命令', object: '列目录' };
   const r = row(tool('shell', { command: 'ls -la', description: '列目录' }, { duration: 23, title }));

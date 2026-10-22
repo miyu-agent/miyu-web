@@ -157,6 +157,18 @@ test('核心补上的格（9-8 三补）：后台命令的回报带退出码、�
   assert.deepEqual(itemsOf(jobs, { state: 'idle' }).items.map((it) => it.text), ['后台命令完成 · 跑测试 · 20.0s', '后台命令失败 · 编译 · 退出码 101', '后台命令失败 · 睡 · 信号 9']);
 });
 
+test('脚本里调过工具的（核心 M-5 上）：执行命令那一步带上 nested；后台命令的回报后面接 #n 显示名', () => {
+  const nested = { count: 4, last: { n: 4, name: 'memory_search', title: { name: '翻记忆', object: '猫' }, state: 'ok' } };
+  const entries = [
+    { id: 'g1.0', kind: 'group', turn: 1, steps: ['t1.1'], summary: [], at: AT },
+    { id: 't1.1', kind: 'tool', turn: 1, call: 'c1', name: 'shell', state: 'ok', nested, at: AT },
+    { id: 'e2', kind: 'notice', what: 'job', job: 'j1', job_kind: 'command', title: '批量', mark: 'done', took_ms: 2000, nested, at: AT },
+  ];
+  const got = itemsOf(entries, { state: 'idle' }).items;
+  assert.deepEqual(got[0].steps[0].nested, nested);
+  assert.equal(got[1].text, '后台命令完成 · 批量 · 2.0s · #4 翻记忆');
+});
+
 test('要人确认、没定就取消了的那一步：这一段后面一行交给 asking 画「批准已取消」；定了的、没要确认的不出（验收 W-99）', async () => {
   const { reportOf } = await import('../packages/asking/model.js');
   const approval = { access: 'write', detail: { paths: [{ path: '/etc/x' }] } };

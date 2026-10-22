@@ -30,6 +30,8 @@ export function apply(ctx) {
       }
     },
     enter: (id) => ctx.chat.open(id),
+    // 后台命令里脚本调用的工具（核心 M-5 上）：预览接在后面的那一段，对话区那边画（旧的对话区没有的不画）
+    nested: (owner, job) => ctx.chat.nestedList?.(owner, job) ?? null,
     // 后台命令的输出：照派它的会话读最后几行（施工 7-4 补）；带 `after` 的读那个字节往后的，没有新的等着（核心 V-6 上）
     read: (owner, job, after) => ctx.core.request('job.output', after === undefined
       ? { session: owner, job, tail: ctx.config.preview_lines }
