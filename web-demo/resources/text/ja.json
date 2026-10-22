@@ -329,6 +329,14 @@
   "esc_interrupt_hint": "もう一度 Esc で中断",
   "interrupt": "中断",
   "slot_failed": "この部分でエラーが発生しました（{owner}：{reason}）",
+  "retry_after": {
+    "seconds": "約 {n} 秒後に回復",
+    "minutes": "約 {n} 分後に回復",
+    "hours": "約 {n} 時間後に回復",
+    "days": "約 {n} 日後に回復",
+    "limited": "リクエスト制限中、{wait}",
+    "join": "{head}、{wait}"
+  },
   "status_hints": {
     "429": "レート制限か利用枠不足です。しばらくして再試行してください",
     "402": "利用枠を使い切りました",

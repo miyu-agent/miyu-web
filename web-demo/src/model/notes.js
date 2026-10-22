@@ -151,17 +151,39 @@ export function changeNote(e) {
 }
 
 /**
+ * 还要等多久（核心 3-5 四补的 `retry_after_ms`）写成「约 N 小时后恢复」里的 N 和单位，同终端的档位：不到 1 分钟写秒、不到 1 小时写分钟（向上取整）、
+ * 不到 1 天写小时（四舍五入、至少 1）、再长写天（四舍五入、至少 1）；不写绝对时刻。没有、不是正数的交 `null`。
+ * @param {unknown} ms
+ * @returns {{n: number, unit: 'seconds'|'minutes'|'hours'|'days'}|null}
+ */
+export function waitSpan(ms) {
+  if (typeof ms !== 'number' || !Number.isFinite(ms) || ms <= 0) return null;
+  const s = ms / 1000;
+  if (s < 60) return { n: Math.max(1, Math.ceil(s)), unit: 'seconds' };
+  if (s < 3600) return { n: Math.ceil(s / 60), unit: 'minutes' };
+  if (s < 86400) return { n: Math.max(1, Math.round(s / 3600)), unit: 'hours' };
+  return { n: Math.max(1, Math.round(s / 86400)), unit: 'days' };
+}
+
+/**
  * 出错那一句（收尾那一行的「出错了：…」）：供应商的原话照写；429、402、404 前面加一句人话（以前的日志没有状态码，限速的当 429）；
- * 内核自己查出来的写分类的人话，有原话的接后面；什么都没有的写分类。
- * @param {{class?: string, message?: string, status?: number}} f `model.called` 的 `error`
+ * 内核自己查出来的写分类的人话，有原话的接后面；什么都没有的写分类。说了还要等多久的（`retry_after_ms`）：429 的「请稍后重试」换成
+ * 「约 N 小时后恢复」，别的人话后面接「，约 N 分钟后恢复」（2026-10-22 项目主人）。
+ * @param {{class?: string, message?: string, status?: number, retry_after_ms?: number}} f `model.called` 的 `error`
  */
 export function failureText(f) {
   const classes = res.text.error_classes;
   const message = (f.message ?? '').trim();
   const cls = f.class ?? 'other';
-  if (KERNEL_CLASSES.includes(cls)) return message ? t('reason_with', { head: classes[cls] ?? cls, message }) : classes[cls] ?? cls;
+  const span = waitSpan(f.retry_after_ms);
+  const wait = span ? t(`retry_after.${span.unit}`, { n: span.n }) : null;
+  if (KERNEL_CLASSES.includes(cls)) {
+    const head = wait ? t('retry_after.join', { head: classes[cls] ?? cls, wait }) : classes[cls] ?? cls;
+    return message ? t('reason_with', { head, message }) : head;
+  }
   const status = f.status ?? (cls === 'rate_limited' ? 429 : null);
-  const hint = status != null ? res.text.status_hints[String(status)] : null;
+  const base = status != null ? res.text.status_hints[String(status)] : null;
+  const hint = base && wait ? (status === 429 ? t('retry_after.limited', { wait }) : t('retry_after.join', { head: base, wait })) : base;
   if (hint) return message ? t('reason_with', { head: hint, message }) : hint;
   return message || classes[cls] || cls;
 }

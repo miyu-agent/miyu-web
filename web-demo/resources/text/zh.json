@@ -329,6 +329,14 @@
   "esc_interrupt_hint": "再按一次 Esc 打断",
   "interrupt": "打断",
   "slot_failed": "此区块出错（{owner}：{reason}）",
+  "retry_after": {
+    "seconds": "约 {n} 秒后恢复",
+    "minutes": "约 {n} 分钟后恢复",
+    "hours": "约 {n} 小时后恢复",
+    "days": "约 {n} 天后恢复",
+    "limited": "请求受限，{wait}",
+    "join": "{head}，{wait}"
+  },
   "status_hints": {
     "429": "请求受限，请稍后重试",
     "402": "额度不足",

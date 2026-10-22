@@ -329,6 +329,14 @@
   "esc_interrupt_hint": "Press Esc again to interrupt",
   "interrupt": "Interrupt",
   "slot_failed": "This block failed ({owner}: {reason})",
+  "retry_after": {
+    "seconds": "back in about {n}s",
+    "minutes": "back in about {n} min",
+    "hours": "back in about {n} h",
+    "days": "back in about {n} days",
+    "limited": "Rate limited, {wait}",
+    "join": "{head}, {wait}"
+  },
   "status_hints": {
     "429": "Rate limited, try again later",
     "402": "Out of credit",

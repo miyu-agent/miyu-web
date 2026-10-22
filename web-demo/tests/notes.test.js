@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { failureText, speakerOf, workspaceText } from '../src/model/notes.js';
+import { failureText, speakerOf, workspaceText, waitSpan } from '../src/model/notes.js';
 
 loadRes();
 
@@ -41,4 +41,18 @@ test('换了工作区那一行：换回会话自己的默认工作区写「默�
   assert.equal(workspaceText(def, def, '/home/a'), '工作区切换：默认工作区');
   assert.equal(workspaceText('/home/a/src', def, '/home/a'), '工作区切换：~/src');
   assert.equal(workspaceText(def, null, '/home/a'), '工作区切换：~/.miyu/home/admin/workspace/0199a000-0000-7000-8000-000000000002');
+});
+
+test('说了还要等多久的（核心 3-5 四补 retry_after_ms）：429 写「约 N 小时后恢复」，别的接在人话后面；档位同终端', () => {
+  assert.equal(failureText({ class: 'auth', status: 429, message: 'HTTP 429: Free usage limit reached.', retry_after_ms: 47137000 }), '请求受限，约 13 小时后恢复：HTTP 429: Free usage limit reached.');
+  assert.equal(failureText({ class: 'cooling', retry_after_ms: 90000 }).endsWith('，约 2 分钟后恢复'), true);
+  assert.equal(failureText({ class: 'other', status: 429 }), '请求受限，请稍后重试', '没说要等多久的照旧');
+  assert.deepEqual(waitSpan(500), { n: 1, unit: 'seconds' });
+  assert.deepEqual(waitSpan(59_400), { n: 60, unit: 'seconds' });
+  assert.deepEqual(waitSpan(60_001), { n: 2, unit: 'minutes' });
+  assert.deepEqual(waitSpan(3_600_000), { n: 1, unit: 'hours' });
+  assert.deepEqual(waitSpan(5_400_000), { n: 2, unit: 'hours' });
+  assert.deepEqual(waitSpan(86_400_000 * 2.4), { n: 2, unit: 'days' });
+  assert.equal(waitSpan(0), null);
+  assert.equal(waitSpan(undefined), null);
 });
