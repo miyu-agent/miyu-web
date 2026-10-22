@@ -72,11 +72,6 @@ export function apply(ctx) {
     dark: () => scheme() === 'dark',
     /** 一个主题这时实际的颜色（`{page, tui}`；都交不出的是 `null`） */
     colorsOf,
-    /** 现在这套主题浅的、深的那一份颜色（不管这时是浅是深；管理员后台的左栏一直用深的那一份）；交不出的是 `null` @param {'light'|'dark'} s */
-    colorsFor: (s) => {
-      const p = chosen();
-      return p ? colorsIn(palettes(), p, s) : null;
-    },
     /** 切浅深（左栏的按钮）：「明暗」成了定的另一边，记进个人那一层 */
     toggle: () => ctx.packages.set('theme', { config: { scheme: scheme() === 'dark' ? 'light' : 'dark' } }),
   });

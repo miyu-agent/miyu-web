@@ -5939,10 +5939,43 @@
       ".adm-exit"
     ]
   },
-  "adm.title": {
-    "zh": "管理员后台：页的标题",
+  "adm.stripe": {
+    "zh": "管理员后台：顶上一道强调色细条",
     "select": [
-      ".adm-title"
+      ".adm-stripe"
+    ]
+  },
+  "adm.top": {
+    "zh": "管理员后台：内容区的顶栏",
+    "select": [
+      ".adm-top"
+    ]
+  },
+  "adm.crumbs": {
+    "zh": "管理员后台：顶栏的「管理员后台 › 页名」",
+    "select": [
+      ".adm-crumbs",
+      ".adm-crumb-root",
+      ".adm-crumb-sep",
+      ".adm-crumb-here"
+    ]
+  },
+  "adm.body": {
+    "zh": "管理员后台：内容区的底",
+    "select": [
+      ".adm-body"
+    ]
+  },
+  "adm.card": {
+    "zh": "管理员后台：一组一张卡片",
+    "select": [
+      ".adm-inner .set-group"
+    ]
+  },
+  "adm.stat-icon": {
+    "zh": "管理员后台：总览的数前面的图标",
+    "select": [
+      ".adm-stat-icon"
     ]
   },
   "adm.stat": {

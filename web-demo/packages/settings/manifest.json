@@ -687,6 +687,7 @@
       },
       "admin": {
         "title": "Miyu 管理员后台",
+        "short": "管理员后台",
         "tab_title": "管理员后台 · Miyu",
         "exit": "回到 Miyu",
         "loading": "正在读…",
@@ -1304,6 +1305,7 @@
       },
       "admin": {
         "title": "Miyu admin console",
+        "short": "Admin console",
         "tab_title": "Admin console · Miyu",
         "exit": "Back to Miyu",
         "loading": "Loading…",
@@ -1921,6 +1923,7 @@
       },
       "admin": {
         "title": "Miyu 管理コンソール",
+        "short": "管理コンソール",
         "tab_title": "管理コンソール · Miyu",
         "exit": "Miyu に戻る",
         "loading": "読み込み中…",

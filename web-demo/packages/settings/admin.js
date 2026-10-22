@@ -1,6 +1,7 @@
 // @ts-check
 //! 管理员后台（蓝图 `web.md`「设置页」第 12d 条；2026-10-22 项目主人看了三种样板选「独立整页」）：盖满整个窗口的一页，走网页自己的路由
-//! `#admin=<页>`，刷新还在原来那一页。左边一栏深色（一页一行，最下面「回到 Miyu」），右边内容同设置页的组、行。现在两页：总览、账号与邀请
+//! `#admin=<页>`，刷新还在原来那一页。整页跟着主题，靠顶上一道强调色细条、内容区的顶栏（面包屑、回到 Miyu）、卡片认出是后台；左栏同主界面的
+//! 左栏（一页一行，最下面「回到 Miyu」），内容贴着左栏铺开、每组一张卡片。现在两页：总览、账号与邀请
 //! （「邀请」「成员」两组和 `account.js` 共用）；用量、模型与密钥、系统软件这些等核心给了再加。不是管理员的正中一张卡。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
@@ -65,8 +66,8 @@ export class AdminPage {
     /** 这一页记的东西（关了清掉） @type {any} */
     this.state = {};
     this.title = '';
-    /** 左栏上写着的颜色变量（换主题先拿掉） @type {string[]} */
-    this.navVars = [];
+    /** @type {HTMLElement|null} */
+    this.top = null;
     this.onKey = (/** @type {KeyboardEvent} */ e) => {
       if (e.key !== 'Escape' || document.querySelector('.set-tool-modal, body > .set-ask')) return;
       e.preventDefault();
@@ -84,8 +85,9 @@ export class AdminPage {
     this.page = page;
     if (!this.el) {
       this.nav = h('nav.adm-nav');
+      this.top = h('header.adm-top');
       this.body = h('div.adm-body');
-      this.el = h('div.adm-page', { role: 'main', 'aria-label': this.ctx.text('admin.title') }, this.nav, this.body);
+      this.el = h('div.adm-page', { role: 'main', 'aria-label': this.ctx.text('admin.title') }, h('div.adm-stripe'), this.nav, h('div.adm-main', this.top, this.body));
       document.body.append(this.el);
       // 带着网址刷新进来的：内核先藏着主界面（`is-admin-route`），后台出来了露回去（关的时候底下就是主界面）
       document.documentElement.classList.remove('is-admin-route');
@@ -117,26 +119,8 @@ export class AdminPage {
     setTimeout(() => el.remove(), 2000);
   }
 
-  /**
-   * 左栏一直是暗色（2026-10-22 项目主人：浅色主题下也是暗色）：照现在这套主题深色那一份颜色，写成这一栏自己的变量；没有主题服务的照页面的。
-   */
-  paintNav() {
-    if (!this.nav) return;
-    const dark = this.ctx.theme?.colorsFor?.('dark');
-    for (const name of this.navVars ?? []) this.nav.style.removeProperty(name);
-    this.navVars = [];
-    if (!dark?.page) return;
-    for (const [k, v] of Object.entries(dark.page)) {
-      const name = `--${k.replaceAll('_', '-')}`;
-      this.nav.style.setProperty(name, String(v));
-      this.navVars.push(name);
-    }
-    this.nav.style.colorScheme = 'dark';
-  }
-
   draw() {
-    if (!this.el || !this.nav || !this.body) return;
-    this.paintNav();
+    if (!this.el || !this.nav || !this.body || !this.top) return;
     const t = (/** @type {string} */ k, /** @type {any} */ f) => this.ctx.text(k, f);
     const st = stateOf(this.view());
     const route = this.ctx.host.route;
@@ -149,6 +133,10 @@ export class AdminPage {
         this.show(p);
       } }, icon(ICONS[p]), h('span', t(`admin.pages.${p}`)))),
       h('button.adm-nav-item.adm-exit', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), h('span', t('admin.exit'))));
+    // 顶栏：「管理员后台 › 页名」，右边「回到 Miyu」
+    replace(this.top,
+      h('div.adm-crumbs', h('span.adm-crumb-root', icon('shield'), t('admin.short')), h('span.adm-crumb-sep', '›'), h('span.adm-crumb-here', t(`admin.pages.${this.page}`))),
+      h('button.set-btn.adm-top-exit', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), t('admin.exit')));
     if (st.loaded && !st.admin) {
       replace(this.body, h('div.adm-denied', h('p', t(st.error ? 'admin.failed' : 'admin.denied')), st.error ? h('p.set-desc', st.error) : null,
         h('button.set-btn', { type: 'button', onclick: () => this.back() }, t('admin.exit'))));
@@ -158,7 +146,7 @@ export class AdminPage {
     const kids = !st.loaded ? [h('p.set-empty', t('admin.loading'))]
       : this.page === 'accounts' ? [inviteGroup(view), memberGroup(view)]
         : this.overview();
-    replace(this.body, h('div.adm-inner', h('h2.adm-title', t(`admin.pages.${this.page}`)), ...kids, st.error ? h('p.set-error', st.error) : null));
+    replace(this.body, h('div.adm-inner', ...kids, st.error ? h('p.set-error', st.error) : null));
   }
 
   /** 总览：一排数，下面「最近」。 */
@@ -169,12 +157,12 @@ export class AdminPage {
     const off = st.accounts.filter((/** @type {any} */ a) => a.disabled).length;
     const people = st.accounts.filter((/** @type {any} */ a) => a.kind !== 'system').length;
     const open = st.invites.filter((/** @type {any} */ i) => inviteState(i, now) === 'open').length;
-    const stat = (/** @type {string|number} */ n, /** @type {string} */ label) => h('div.adm-stat', h('b', String(n)), h('span', label));
+    const stat = (/** @type {string|number} */ n, /** @type {string} */ label, /** @type {string} */ mark) => h('div.adm-stat', h('span.adm-stat-icon', icon(mark)), h('div', h('b', String(n)), h('span', label)));
     const events = recentEvents(st.invites, st.accounts).slice(0, 8);
     return [
       h('div.adm-stats',
-        stat(people, off ? t('admin.stat_accounts_off', { n: off }) : t('admin.stat_accounts')),
-        stat(open, t('admin.stat_invites'))),
+        stat(people, off ? t('admin.stat_accounts_off', { n: off }) : t('admin.stat_accounts'), 'user-round'),
+        stat(open, t('admin.stat_invites'), 'key-round')),
       h('section.set-group', h('h3.set-group-name', t('admin.recent')),
         events.length ? h('div.set-rows', events.map((e) => h('div.set-row',
           h('div.set-text', h('div.set-name', h('span', t(`admin.event.${e.kind}`, { who: e.who }))), e.at ? h('p.set-desc', when(e.at)) : null))))
