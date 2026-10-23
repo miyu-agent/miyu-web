@@ -5,9 +5,13 @@
 /** 一直有的几条（`text/*.json` 的 `tips.<名字>`） */
 export const TIPS = ['slash', 'mention', 'newline', 'history', 'history_list', 'stash', 'level'];
 
-/** 现在有的几条 @param {{attachments?: boolean}} has 靠软件包的那几样在不在 @returns {string[]} */
+/**
+ * 现在有的几条：靠软件包的照它在不在；成员（核心 Y-2下下上）`@` 选文件读本机文件调不了，不提那一条。
+ * @param {{attachments?: boolean, member?: boolean}} has @returns {string[]}
+ */
 export function tipsFor(has) {
-  return has.attachments ? [...TIPS, 'attach'] : [...TIPS];
+  const base = has.member ? TIPS.filter((x) => x !== 'mention') : TIPS;
+  return has.attachments ? [...base, 'attach'] : [...base];
 }
 
 /**

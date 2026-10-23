@@ -55,6 +55,8 @@ test('点一下换下一级：工作区 → 开放权限 → 只读 → 工作�
   const { nextLevel, levelLabel } = await import('../src/model/footer.js');
   assert.deepEqual(['workspace', 'full', 'read_only'].map(nextLevel), ['full', 'read_only', 'workspace']);
   assert.equal(levelLabel('full'), '⏵⏵ 开放权限');
+  // 成员（核心 Y-2下下上）不到开放权限：工作区 ↔ 只读；已经在开放权限上的照旧往下走
+  assert.deepEqual(['workspace', 'full', 'read_only'].map((l) => nextLevel(l, true)), ['read_only', 'read_only', 'workspace']);
 });
 
 test('换级别发给核心的参数：只读只开只读开关，常用的那一级不动；工作区、开放权限写级别并关掉只读', async () => {

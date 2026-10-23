@@ -180,6 +180,7 @@
     "lost": "The bridge restarted and the key changed: open the new link it printed."
   },
   "level_tip": "Click to switch permission level: Workspace → Full access → Read-only",
+  "level_tip_member": "Click to switch permission level: Workspace → Read-only",
   "copied": "Copied {count} character(s)",
   "copy_failed": "Couldn't copy: {reason}",
   "reason_with": "{head}: {message}",
@@ -506,6 +507,7 @@
     "open_usage": "Open in Usage"
   },
   "model_menu": {
+    "member": "Models are set by the administrator",
     "tip": "Switch model",
     "models": "Models",
     "pools": "Model pools",
