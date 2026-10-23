@@ -175,7 +175,6 @@
       "retry_wait": " · {wait} 后重试 {attempt}/{limit}：{message}",
       "retry_failover": " · 换端点重试 {attempt}/{limit}：{message}",
       "waiting_ask": "等待回答",
-      "waiting_approve": "等待批准",
       "withdraw": "撤回",
       "withdraw_tip": "撤回这条，放回输入框"
     },
@@ -184,7 +183,6 @@
       "retry_wait": " · Retrying in {wait} {attempt}/{limit}: {message}",
       "retry_failover": " · Retrying on another endpoint {attempt}/{limit}: {message}",
       "waiting_ask": "Waiting for your answer",
-      "waiting_approve": "Waiting for your approval",
       "withdraw": "Withdraw",
       "withdraw_tip": "Withdraw this message and put it back in the input box"
     },
@@ -193,7 +191,6 @@
       "retry_wait": " · {wait}後に再試行 {attempt}/{limit}：{message}",
       "retry_failover": " · エンドポイントを替えて再試行 {attempt}/{limit}：{message}",
       "waiting_ask": "回答を待っています",
-      "waiting_approve": "承認を待っています",
       "withdraw": "取り消す",
       "withdraw_tip": "このメッセージを取り消して入力欄に戻す"
     }

@@ -72,7 +72,7 @@ export class PulseLine {
     if (!s) return;
     const now = Date.now();
     // 在等你确认、回答：一行静止的字（蓝图「运行状态行」），了结了照常走、流光从头扫
-    if (s.waiting) {
+    if (s.waiting != null) {
       if (this.drawn !== -1) {
         this.drawn = -1;
         const wait = h('span.pulse-shine.is-waiting', s.waiting);
