@@ -2,7 +2,7 @@
 //! 她的回答 → 一串块（蓝图 `web.md`「她的回答：Markdown」第 2 条，照旧版 `app.js:4736-5076`）。纯函数，不碰 DOM：
 //! 块交给 `build.js` 造 DOM，这里测得了。
 //!
-//! 照这个先后认：空行；围起来的代码（```` ``` ```` 加语言，`~~~` 不算）；认领的一行（`options.line`，以后的音视频卡片）；
+//! 照这个先后认：空行；缩进 4 列的代码块（2026-10-23）；围起来的代码（```` ``` ```` 加语言，`~~~` 不算）；认领的一行（`options.line`，以后的音视频卡片）；
 //! 独占几行的公式 `$$…$$`、`\[…\]`；表格；分隔线；标题（`#` 是 h2，往下顺延）；无序列表（`[ ]`、`[x]` 是任务）、
 //! 有序列表（照缩进套，2026-10-23）；引用（去掉 `>` 以后照整条回答认块，2026-10-23）；段落（软换行照换行）。块里的字交给 `inline.js`。
 //! 另外两种（2026-10-23）：独占一行的 `<details>`…`</details>` 折叠块，里面照整条回答认块；`[^名字]: 内容` 脚注的定义，
@@ -93,6 +93,18 @@ function parseLines(lines, from, to, line, notes, depth) {
       i += 1;
       continue;
     }
+    // 缩进 4 列以上的几行是代码块（中间的空行也算）；段落下面接着的缩进行在段落那里接走了，到不了这儿
+    if (indentOf(text) >= 4) {
+      const body = [];
+      let end = i;
+      for (let k = i; k < to && (!lines[k].trim() || indentOf(lines[k]) >= 4); k += 1) {
+        body.push(dedent(lines[k], 4));
+        if (lines[k].trim()) end = k + 1;
+      }
+      blocks.push({ type: 'code', lang: '', text: body.slice(0, end - i).join('\n'), closed: true });
+      i = end;
+      continue;
+    }
     const fence = FENCE_OPEN.exec(text);
     if (fence) {
       const body = [];
@@ -178,9 +190,10 @@ function parseLines(lines, from, to, line, notes, depth) {
       blocks.push({ type: 'quote', blocks: depth < MAX_DEPTH ? parseLines(quoted, 0, quoted.length, line, notes, depth + 1) : [{ type: 'para', kids: inline(quoted.join('\n')) }] });
       continue;
     }
-    const para = [text];
+    // 段落每行开头的空白不要（缩进接着的行还是这一段，照 CommonMark）
+    const para = [text.replace(/^[ \t]+/, '')];
     i += 1;
-    while (i < to && lines[i].trim() && !startsBlock(lines, i, to, claim)) para.push(lines[i++]);
+    while (i < to && lines[i].trim() && !startsBlock(lines, i, to, claim)) para.push(lines[i++].replace(/^[ \t]+/, ''));
     blocks.push({ type: 'para', kids: inline(para.join('\n')) });
   }
   return blocks;

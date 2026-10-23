@@ -440,3 +440,12 @@ test('引用式链接：定义行从正文拿走（写在后面也认），[字]
   // 段落下面紧跟着的定义也拿走
   assert.deepEqual(parse('字 [d]\n[d]: https://d.com/'), [para('字 ', link('https://d.com/', ['d']))]);
 });
+
+test('缩进 4 列的几行是代码块（中间空行也算、去掉缩进）；段落下面接着的缩进行还是那一段；列表项里的照项的缩进算（2026-10-23）', () => {
+  const code = (text) => ({ type: 'code', lang: '', text, closed: true });
+  assert.deepEqual(parse('前面：\n\n    no lang\n\n    plain text\n\t# 不是标题\n\n后面'), [para('前面：'), code('no lang\n\nplain text\n# 不是标题'), para('后面')]);
+  assert.deepEqual(parse('一段\n    接着的'), [para('一段', BR, '接着的')]);
+  // 「1. 」的内容从第 3 列起：空行以后缩进 4 列的是项里的第二段，缩进 7 列的才是项里的代码块
+  assert.deepEqual(parse('1. 项\n\n    第二段'), [{ type: 'list', ordered: true, task: false, items: [{ check: null, kids: ['项'], blocks: [para('第二段')] }] }]);
+  assert.deepEqual(parse('1. 项\n\n       代码'), [{ type: 'list', ordered: true, task: false, items: [{ check: null, kids: ['项'], blocks: [code('代码')] }] }]);
+});
