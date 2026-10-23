@@ -173,7 +173,7 @@ export class Dashboard {
         type: 'button', title: t('stop'), 'aria-label': t('stop'), disabled: this.stopping.has(x.key),
         onclick: (/** @type {MouseEvent} */ e) => { e.stopPropagation(); this.halt(x); },
       }, h('span.dash-stop-mark'))
-      : h('span.dash-stop-gap');
+      : null;
     const elapsed = running ? (x.since != null ? jobDuration((now - x.since) / 1000) : '') : x.duration != null ? jobDuration(x.duration / 1000) : '';
     const open = () => {
       if (agent && x.session) this.on.enter(x.session);

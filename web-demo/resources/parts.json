@@ -6554,7 +6554,7 @@
     ]
   },
   "dash.stop": {
-    "zh": "仪表盘：一行末尾的停止按钮",
+    "zh": "仪表盘：一行末尾的停止按钮（指针移上去才出）",
     "select": [
       ".dash-stop"
     ]
@@ -6563,12 +6563,6 @@
     "zh": "仪表盘：停止按钮里的实心方块",
     "select": [
       ".dash-stop-mark"
-    ]
-  },
-  "dash.stop-gap": {
-    "zh": "仪表盘：没有停止按钮的行末尾占的位",
-    "select": [
-      ".dash-stop-gap"
     ]
   },
   "dash.fold-row": {

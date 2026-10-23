@@ -1,5 +1,5 @@
 /* 仪表盘（软件包 `dashboard`，蓝图 web.md「仪表盘」）：右边那一栏里三张白卡片（待办、后台任务、文件修改），点进去的输出、差异；
-   对话区右上角的开关。行高宽松（34px、13.5px 字），状态只用图标，层级用圆角的连接线。 */
+   对话区右上角的开关。一行 30px、13px 字（2026-10-24 项目主人：原来太松），状态只用图标、贴着用时，层级用圆角的连接线。 */
 
 .dash-toggle { position: relative; width: 30px; height: 30px; }
 .dash-toggle.is-active { color: var(--accent); }
@@ -9,40 +9,42 @@
 .dash-badge.is-running { border: 2px solid color-mix(in srgb, var(--accent) 25%, transparent); border-top-color: var(--accent); animation: tl-spin calc(0.9s * var(--motion-scale)) linear infinite; }
 .dash-badge.is-waiting { background: var(--t-warn); box-shadow: 0 0 0 2px var(--surface); }
 
-.dash { display: grid; min-height: 0; height: 100%; color: var(--text); font-family: var(--font-ui); }
-.dash-list { display: flex; flex-direction: column; min-height: 0; padding: calc(12px * var(--space)) calc(8px * var(--space)) calc(2px * var(--space)) 0; overflow: hidden; }
+.dash { --dash-edge: color-mix(in srgb, var(--line) 60%, transparent); display: grid; min-height: 0; height: 100%; color: var(--text); font-family: var(--font-ui); }
+.dash-list { display: flex; flex-direction: column; min-height: 0; padding: calc(10px * var(--space)) calc(6px * var(--space)) 0; overflow: hidden; }
 .side-column.is-overlay .dash-list { padding: calc(10px * var(--space)) calc(6px * var(--space)) 0; }
 .dash-list[hidden], .dash-detail[hidden] { display: none; }
 /* 什么都还没有：同卡片的样子，一句暗字 */
-.dash-empty { margin: 0 4px; padding: calc(14px * var(--space)); border: 1px solid var(--line); border-radius: var(--r-14); background: var(--surface-1); box-shadow: var(--card-shadow); color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
+.dash-empty { margin: 0 4px; padding: calc(14px * var(--space)); border: 1px solid var(--dash-edge); border-radius: var(--r-12); background: var(--surface-1); box-shadow: var(--card-shadow); color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
 .dash-empty[hidden] { display: none; }
 /* 一张卡放在展开那一层里：空的收成 0 高（同时间线点开一步的缓动）；待办、文件修改先缩，后台任务至少露 5 行 */
 .dash-slot { flex: 0 3 auto; min-height: 0; display: grid; }
 .dash-slot.is-on { min-height: min(var(--dash-min, 140px), max-content); }
 /* 卡片之间的空写在卡片自己身上（收着的连空一起收掉）；里面那一层左右留 4px，卡片的影不被裁掉 */
 .dash-slot > .unfold-inner { min-height: 0; display: grid; padding: 0 4px; }
-.dash-slot:has(.dash-tasks) { flex: 0 1 auto; --dash-min: 214px; }
+.dash-slot:has(.dash-tasks) { flex: 0 1 auto; --dash-min: 184px; }
 .dash-card {
-  min-height: 0; overflow-y: auto; padding: 0 0 calc(8px * var(--space)); border: 1px solid var(--line); border-radius: var(--r-14);
-  margin-bottom: calc(10px * var(--space)); background: var(--surface-1); box-shadow: var(--card-shadow); scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+  min-height: 0; overflow-y: auto; padding: 0 0 calc(6px * var(--space)); border: 1px solid var(--dash-edge); border-radius: var(--r-12);
+  margin-bottom: calc(10px * var(--space)); background: var(--surface-1); box-shadow: var(--card-shadow); scrollbar-width: thin; scrollbar-color: transparent transparent;
 }
-.dash-head { display: flex; align-items: center; gap: calc(8px * var(--space)); height: 40px; padding: 4px calc(10px * var(--space)) 0 calc(14px * var(--space)); }
+/* 卡片里的滚动条平常不画，指针在卡片上才露（同对话区） */
+.dash-card:hover { scrollbar-color: var(--scrollbar-color, var(--line-strong) transparent); }
+.dash-head { display: flex; align-items: center; gap: calc(8px * var(--space)); height: 36px; padding: 2px calc(8px * var(--space)) 0 calc(12px * var(--space)); }
 .dash-head.is-sticky { position: sticky; z-index: 1; top: 0; background: var(--surface-1); }
-.dash-title { font-size: calc(13.5px * var(--text-scale)); font-weight: 600; }
-.dash-count { color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); white-space: nowrap; }
+.dash-title { font-size: calc(13px * var(--text-scale)); font-weight: 600; }
+.dash-count { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); white-space: nowrap; }
 .dash-count.is-waiting { color: var(--t-warn); }
 .dash-gap { flex: 1; }
-.dash-progress { width: 72px; height: 4px; overflow: hidden; border-radius: var(--r-pill); background: var(--line); }
+.dash-progress { width: 56px; height: 3px; overflow: hidden; border-radius: var(--r-pill); background: var(--line); }
 .dash-progress-bar { display: block; height: 100%; background: var(--accent); }
-.dash-stop-all { height: 26px; padding: 0 6px; border: 0; background: none; color: var(--text-soft); font: inherit; font-size: calc(12.5px * var(--text-scale)); cursor: pointer; }
+.dash-stop-all { height: 24px; padding: 0 4px; border: 0; background: none; color: var(--text-soft); font: inherit; font-size: calc(12px * var(--text-scale)); cursor: pointer; }
 .dash-stop-all:hover { color: var(--text); }
 
 /* 待办 */
-.dash-todo-row { display: flex; align-items: center; gap: calc(10px * var(--space)); min-height: 32px; padding: 0 calc(14px * var(--space)); font-size: calc(13.5px * var(--text-scale)); }
+.dash-todo-row { display: flex; align-items: center; gap: calc(8px * var(--space)); min-height: 30px; padding: 0 calc(12px * var(--space)); font-size: calc(13px * var(--text-scale)); }
 .dash-todo-row.is-doing { font-weight: 600; }
-.dash-todo-row.is-done { color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
+.dash-todo-row.is-done { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
 .dash-todo-mark { display: inline-grid; flex: none; place-items: center; width: 14px; }
-.dash-todo-mark .icon { width: 14px; height: 14px; }
+.dash-todo-mark .icon { width: 13px; height: 13px; }
 .dash-todo-row.is-doing .dash-todo-mark { color: var(--accent); }
 .dash-todo-row.is-doing .dash-todo-mark .icon { animation: tl-spin calc(1s * var(--motion-scale)) linear infinite; }
 .dash-todo-row.is-done .dash-todo-mark { color: var(--online); }
@@ -51,19 +53,19 @@
 
 /* 后台任务、文件的一行 */
 .dash-row {
-  position: relative; display: flex; align-items: center; gap: calc(8px * var(--space)); width: 100%; height: 34px; box-sizing: border-box;
-  padding: 0 calc(10px * var(--space)) 0 calc(14px + var(--depth, 0) * 26px); border: 0; background: none; color: inherit; font: inherit;
-  font-size: calc(13.5px * var(--text-scale)); text-align: left; cursor: pointer;
+  position: relative; display: flex; align-items: center; gap: calc(8px * var(--space)); width: 100%; height: 30px; box-sizing: border-box;
+  padding: 0 calc(10px * var(--space)) 0 calc(12px + var(--depth, 0) * 22px); border: 0; background: none; color: inherit; font: inherit;
+  font-size: calc(13px * var(--text-scale)); text-align: left; cursor: pointer;
 }
 .dash-row:hover { background: color-mix(in srgb, var(--text) 4%, transparent); }
 .dash-row:focus { outline: none; }
 .dash-row:focus-visible { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); }
 .dash-task.is-attention { background: color-mix(in srgb, var(--t-warn) 10%, transparent); }
 .dash-task.is-ended { color: var(--text-soft); }
-.dash-lead { display: grid; flex: none; place-items: center; width: 15px; height: 15px; }
+.dash-lead { display: grid; flex: none; place-items: center; width: 14px; height: 14px; }
 .dash-lead > * { grid-area: 1 / 1; }
 .dash-kind { display: inline-grid; place-items: center; color: var(--text-soft); }
-.dash-kind .icon { width: 15px; height: 15px; }
+.dash-kind .icon { width: 14px; height: 14px; }
 /* 有子任务的那一行指针移上去：种类图标换成展开、收起的箭头 */
 .dash-twisty { display: none; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: var(--r-4); background: none; color: var(--text); cursor: pointer; }
 .dash-twisty .icon { width: 14px; height: 14px; }
@@ -76,41 +78,44 @@
 .dash-name.is-split > .dash-command { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .dash-name.is-split > .dash-sep, .dash-name.is-split > .dash-id { flex: none; }
 .dash-sep { color: var(--text-faint); }
-.dash-id { color: var(--text-faint); font-family: var(--font-mono); font-size: calc(11.5px * var(--text-scale)); }
-.dash-state { display: inline-grid; flex: none; place-items: center; width: 15px; color: var(--text-faint); }
-.dash-state .icon { width: 14px; height: 14px; }
+.dash-id { color: var(--text-faint); font-family: var(--font-mono); font-size: calc(11px * var(--text-scale)); }
+.dash-state { display: inline-grid; flex: none; place-items: center; width: 13px; color: var(--text-faint); }
+.dash-state .icon { width: 12px; height: 12px; }
 .dash-state.is-running { color: var(--accent); }
 .dash-state.is-running .icon { animation: tl-spin calc(1s * var(--motion-scale)) linear infinite; }
 .dash-state.is-confirm, .dash-state.is-ask, .dash-state.is-paused { color: var(--t-warn); }
 .dash-state.is-done { color: var(--online); }
 .dash-state.is-failed { color: var(--danger); }
 .dash-ended-mark { width: 9px; height: 9px; border-radius: var(--r-2); background: var(--text-faint); }
-.dash-time { flex: none; min-width: 44px; color: var(--text-faint); font-family: var(--font-mono); font-size: calc(12px * var(--text-scale)); text-align: right; }
-.dash-stop, .dash-stop-gap { display: inline-grid; flex: none; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: var(--r-6); background: none; cursor: pointer; }
+.dash-time { flex: none; min-width: 34px; margin-left: calc(-3px * var(--space)); color: var(--text-faint); font-family: var(--font-mono); font-size: calc(11.5px * var(--text-scale)); text-align: right; }
+/* 停止：平常不出，指针移到那一行、键盘停在上面时顶替用时那一格（2026-10-24 项目主人：每行一个方块看着一大片） */
+.dash-stop { display: none; flex: none; place-items: center; width: 34px; height: 22px; margin-left: calc(-3px * var(--space)); padding: 0; border: 0; border-radius: var(--r-6); background: none; cursor: pointer; }
+.dash-task:hover .dash-stop, .dash-task:focus-within .dash-stop { display: inline-grid; }
+.dash-task:hover .dash-stop ~ .dash-time, .dash-task:focus-within .dash-stop ~ .dash-time, .dash-task:hover .dash-time:has(+ .dash-stop), .dash-task:focus-within .dash-time:has(+ .dash-stop) { display: none; }
 .dash-stop:hover { background: color-mix(in srgb, var(--text) 8%, transparent); }
 .dash-stop:disabled { opacity: 0.4; cursor: default; }
-.dash-stop-mark { width: 9px; height: 9px; border-radius: var(--r-2); background: var(--text-soft); }
-.dash-fold-row { height: 30px; gap: calc(6px * var(--space)); color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
+.dash-stop-mark { width: 8px; height: 8px; border-radius: var(--r-2); background: var(--text-soft); }
+.dash-fold-row { height: 28px; gap: calc(6px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
 .dash-fold-row .icon { width: 12px; height: 12px; }
 .dash-fold-count { font-family: var(--font-mono); font-size: calc(12px * var(--text-scale)); }
-/* 连接线：第 n 道在 21 + 26n px；上面几层还没完的穿过去，自己这一层一段竖线、一小段横线接到图标（圆角） */
+/* 连接线：第 n 道在 19 + 22n px（上一层图标的正中）；上面几层还没完的穿过去，自己这一层一段竖线、一小段横线接到图标（圆角） */
 .dash-lines-tree { position: absolute; inset: 0; pointer-events: none; }
-.dash-guide, .dash-elbow { position: absolute; left: calc(21px + var(--level) * 26px); border-left: 1px solid var(--line-strong); opacity: 0.55; }
+.dash-guide, .dash-elbow { position: absolute; left: calc(19px + var(--level) * 22px); border-left: 1px solid var(--line-strong); opacity: 0.55; }
 .dash-guide { top: 0; bottom: 0; }
 .dash-guide.is-below { top: 50%; }
-.dash-elbow { top: 0; height: 50%; width: 11px; border-bottom: 1px solid var(--line-strong); border-bottom-left-radius: 5px; }
+.dash-elbow { top: 0; height: 50%; width: 10px; border-bottom: 1px solid var(--line-strong); border-bottom-left-radius: 5px; }
 
 /* 文件修改 */
-.dash-file { gap: calc(10px * var(--space)); height: 32px; }
+.dash-file { gap: calc(8px * var(--space)); height: 30px; }
 .dash-file.is-created .dash-kind { color: var(--online); }
 .dash-file-name { flex: none; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dash-file-dir { min-width: 0; overflow: hidden; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
-.dash-lines { flex: none; font-family: var(--font-mono); font-size: calc(12px * var(--text-scale)); }
+.dash-file-dir { min-width: 0; overflow: hidden; color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
+.dash-lines { flex: none; margin-left: auto; font-family: var(--font-mono); font-size: calc(11.5px * var(--text-scale)); }
 .dash-add { color: var(--diff-add); }
 .dash-del { color: var(--diff-del); }
 
 /* 点进去的：头一行返回箭头（不写字、不铺底）；输出等宽贴着底；差异带新旧行号 */
-.dash-detail { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; margin: calc(8px * var(--space)) calc(10px * var(--space)) calc(10px * var(--space)) calc(4px * var(--space)); overflow: hidden; border: 1px solid var(--line); border-radius: var(--r-14); background: var(--surface-1); box-shadow: var(--card-shadow); }
+.dash-detail { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; margin: calc(10px * var(--space)); overflow: hidden; border: 1px solid var(--dash-edge); border-radius: var(--r-12); background: var(--surface-1); box-shadow: var(--card-shadow); }
 .dash-detail-head { display: flex; align-items: center; gap: calc(8px * var(--space)); height: 46px; padding: 0 calc(8px * var(--space)); border-bottom: 1px solid var(--line); font-size: calc(13.5px * var(--text-scale)); }
 .dash-back, .dash-icon { display: inline-grid; flex: none; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: var(--r-7); background: none; color: var(--text-soft); cursor: pointer; }
 .dash-back:hover, .dash-icon:hover:not(:disabled) { color: var(--text); }
