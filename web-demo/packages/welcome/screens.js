@@ -208,7 +208,7 @@ export function embedScreen(g, state) {
     ? t('embed.local_note_download', { size: bytes(state.size) })
     : t(`embed.${v}_note`);
   const draw = () => replace(list, ['local', 'off'].map((v) => h(`button.wl-lang${v === chosen ? '.is-on' : ''}`, { type: 'button', onclick: () => { chosen = v; draw(); } },
-    h('span.wl-lang-name', t(`embed.${v}`)), h('span.wl-lang-note', note(v)),
+    h('span.wl-lang-name', t(`embed.${v}`)), note(v) ? h('span.wl-lang-note', note(v)) : null,
     v === chosen ? h('span.wl-check', icon('check')) : null)));
   draw();
   const body = h('div.wl-embed', list);

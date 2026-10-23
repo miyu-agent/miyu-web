@@ -27,7 +27,7 @@ import { placeOf } from '../model/paths.js';
 import { useHost } from '../core/host.js';
 import { browserHost } from '../host/browser.js';
 import { servedHost } from '../host/served.js';
-import { signIn } from './signin.js';
+import { SIGNIN_SCHEME, signIn } from './signin.js';
 import { accountStorage } from './storage.js';
 import { useIcons } from '../lib/dom.js';
 import { KERNEL_SERVICES } from './services.js';
@@ -217,6 +217,8 @@ export async function boot(root) {
       ctx.provide('sessions', store);
       ctx.provide('host', {
         kind: host.kind,
+        /** 「账号」那几屏右上角点过的明暗（主题还没起来时记的，`signin.js`）：引导照它换成主题的设置；读一次就拿掉 */
+        signinScheme: takeSigninScheme(host.store),
         account,
         /** 退出登录（拿登录令牌连的才有）：忘掉登录令牌、重新载入；走桥的是 `null` */
         signOut: host.signOut ?? null,
@@ -338,4 +340,15 @@ function showStatus(root, status) {
     list.append(li);
   }
   root.replaceChildren(list);
+}
+
+/** 「账号」那几屏记的明暗：读出来、拿掉（只交一次）；没有的是 `null`。 @param {any} store */
+function takeSigninScheme(store) {
+  try {
+    const v = store?.getItem(SIGNIN_SCHEME) ?? null;
+    store?.removeItem?.(SIGNIN_SCHEME);
+    return v === 'dark' || v === 'light' ? v : null;
+  } catch {
+    return null;
+  }
 }

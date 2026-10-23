@@ -149,7 +149,9 @@
     },
     "username_hint": "用户名（小写字母开头）",
     "show_password": "显示密码",
-    "hide_password": "隐藏密码"
+    "hide_password": "隐藏密码",
+    "to_light": "切换到浅色",
+    "to_dark": "切换到深色"
   },
   "boot": {
     "connecting_web": "正在连接…",

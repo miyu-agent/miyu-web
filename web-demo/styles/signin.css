@@ -77,3 +77,17 @@
 .si-eye { position: absolute; top: 0; right: 0; display: grid; width: 44px; height: 46px; padding: 0; place-items: center; border: 0; background: none; color: var(--si-dim); cursor: pointer; }
 .si-eye:hover, .si-eye[aria-pressed="true"] { color: var(--text, var(--si-text)); }
 .si-eye .icon { width: 18px; height: 18px; }
+
+/* 右上角的明暗按钮点过的（2026-10-23 项目主人：创建账号界面无法切换明暗）：照点的那一种，盖过系统的 */
+:root[data-si-scheme="dark"] .si { color-scheme: dark;
+    --si-surface: #1a1b26; --si-surface-1: #24283b; --si-surface-2: #262a3d; --si-surface-3: #2e3348; --si-text: #c0caf5; --si-soft: #9aa3c7;
+    --si-accent: #7aa2f7; --si-on-accent: #16161e; --si-danger: #f7768e; --si-line: #2e3348; --si-star: rgba(255, 255, 255, 0.55); --si-card: rgba(36, 40, 59, 0.86);
+}
+:root[data-si-scheme="light"] .si { color-scheme: light;
+  --si-surface: #faf9f7; --si-surface-1: #ffffff; --si-surface-2: #efece7; --si-surface-3: #e6e2db; --si-text: #1d1c1a; --si-soft: #625d56;
+  --si-accent: #3a63c9; --si-on-accent: #ffffff; --si-danger: #c2413b; --si-line: #e2ddd5; --si-star: rgba(29, 28, 26, 0.26); --si-card: rgba(255, 255, 255, 0.84);
+}
+.si-corner { position: fixed; z-index: 2; top: 16px; right: 16px; display: grid; width: 36px; height: 36px; padding: 0; place-items: center; border: 0; border-radius: 0;
+  background: var(--si-cell); color: var(--text-soft, var(--si-soft)); cursor: pointer; box-shadow: inset 0 -3px 0 var(--si-cell-hi); }
+.si-corner:hover, .si-corner:focus-visible { outline: 0; color: var(--text, var(--si-text)); background: var(--si-cell-hi); }
+.si-corner .icon { width: 16px; height: 16px; }

@@ -267,7 +267,11 @@ export class Body {
     if (!d || !b) return null;
     if (!d.moved) return Math.min(1, (performance.now() - d.t0) / this.config.jump.charge_ms);
     const max = this.config.drag.max_throw;
-    this.at = { ...b, vx: clamp(d.vx, max), vy: clamp(d.vy, max), ground: null };
+    // 速度只在指针挪的时候算：拖到地方停住一会儿再松手的，照停了多久把速度消掉（停过 0.05 秒起，每 0.06 秒剩三成多），轻轻放下不扔出去
+    // （2026-10-23 项目主人：吉祥物没法站在列表上——拖过去停住松手，照停之前的速度飞出去了）
+    const still = performance.now() - d.t;
+    const k = still > 50 ? Math.exp(-(still - 50) / 60) : 1;
+    this.at = { ...b, vx: clamp(d.vx * k, max), vy: clamp(d.vy * k, max), ground: null };
     return null;
   }
 

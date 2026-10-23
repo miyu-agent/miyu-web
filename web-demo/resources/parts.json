@@ -6300,5 +6300,11 @@
     "select": [
       ".si-eye"
     ]
+  },
+  "signin.corner": {
+    "zh": "登录、注册：右上角的明暗按钮",
+    "select": [
+      ".si-corner"
+    ]
   }
 }

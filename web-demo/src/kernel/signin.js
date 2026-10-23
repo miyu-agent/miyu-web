@@ -61,6 +61,48 @@ export function registerProblem(username, password, again) {
   return accountProblem(username, password, again);
 }
 
+/** 这几屏自己记的明暗（主题还没起来，2026-10-23 项目主人：创建账号界面无法切换明暗）；引导起来以后照它换成主题的设置（`welcome`） */
+export const SIGNIN_SCHEME = 'miyu.signin.scheme';
+
+/** 记明暗的地方：宿主的 `store`（`signIn` 一开始交进来；不碰平台的存储） @type {{getItem: (k: string) => string|null, setItem: (k: string, v: string) => void}|null} */
+let schemeStore = null;
+
+/** 现在是不是深色：点过的照点的，没点过的照系统 */
+const signinDark = () => {
+  const set = document.documentElement.dataset.siScheme;
+  return set ? set === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+};
+
+/** 右上角的明暗按钮：同引导右上角那一个（深色时太阳、浅色时月亮），点了换到另一种，记在这台设备上交给引导 */
+function schemeButton() {
+  try {
+    const kept = schemeStore?.getItem(SIGNIN_SCHEME);
+    if (kept === 'dark' || kept === 'light') document.documentElement.dataset.siScheme = kept;
+  } catch {
+    // 存不了的照系统
+  }
+  const btn = h('button.si-corner', { type: 'button' });
+  const draw = () => {
+    const dark = signinDark();
+    replace(btn, icon(dark ? 'sun' : 'moon'));
+    const label = t(dark ? 'signin.to_light' : 'signin.to_dark');
+    btn.title = label;
+    btn.setAttribute('aria-label', label);
+  };
+  btn.addEventListener('click', () => {
+    const next = signinDark() ? 'light' : 'dark';
+    document.documentElement.dataset.siScheme = next;
+    try {
+      schemeStore?.setItem(SIGNIN_SCHEME, next);
+    } catch {
+      // 存不了的只这一屏换
+    }
+    draw();
+  });
+  draw();
+  return btn;
+}
+
 /**
  * 一行：名字放进框里当占位（2026-10-22 项目主人：不再左边一列名字），读屏照旧读得到名字。
  * @param {string} name @param {HTMLInputElement} input
@@ -123,7 +165,7 @@ function screen(root, spec) {
       error.textContent = why;
       error.hidden = !why;
     });
-    replace(root, h(`div.si${spec.login ? '.is-login' : ''}`, form));
+    replace(root, h(`div.si${spec.login ? '.is-login' : ''}`, form, schemeButton()));
     /** @type {HTMLElement|null} */ (form.querySelector('input'))?.focus();
   });
 }
@@ -263,6 +305,7 @@ async function accountScreen(root, conn) {
  * @returns {Promise<{conn: Connection, hello: any, setup: boolean}>}
  */
 export async function signIn(host, greeting, root, offline, retry = /** @type {number[]} */ ([])) {
+  schemeStore = host.store ?? null;
   let error = '';
   let last = '';
   /** 这一次在「账号」一屏设过账号：重连上来的那一次照它交 `setup: true` */

@@ -225,3 +225,6 @@
 .wl-layer .setup-choice-more { color: var(--px-soft); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--px-soft) 45%, transparent); text-underline-offset: 3px; }
 .wl-layer .setup-choice-more:hover, .wl-layer .setup-choice-more:focus-visible { color: var(--px-tx); }
 .wl-layer .setup-float { --px-c: var(--px-cell); border-radius: 0; background: var(--px-c); box-shadow: 0 -3px 0 0 var(--px-c), 0 3px 0 0 var(--px-c), -3px 0 0 0 var(--px-c), 3px 0 0 0 var(--px-c), 0 12px 32px rgb(0 0 0 / 0.35); }
+
+/* 引导开着（连同一起来盖着的那一层底色）：左上角的左栏开关、左边沿划出左栏的那一条不露（2026-10-23 项目主人：引导里左上角有个左栏的小按钮，悬停还会划出左栏） */
+:root:has(.wl-layer, .wl-cover) .sidebar-toggle, :root:has(.wl-layer, .wl-cover) .sidebar-peek-zone { display: none; }

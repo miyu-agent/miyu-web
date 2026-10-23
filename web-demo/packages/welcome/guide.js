@@ -15,6 +15,10 @@ const CHOICES = '.ob-row:not([disabled]), .wl-lang, .setup-choice, .ob-model';
 const SELECTS = new Set(['wl-lang', 'setup-choice', 'ob-model']);
 /** 吉祥物站的那一块：这一屏内容里第一块看得见的（第一行选项、第一个框），站在它上沿靠右（2026-10-10 项目主人选的，同对话页站在输入框上） */
 // 一家一行的列表在自己的框里滚：站在框上（站在第一行上的，往下划会跟着那一行被弹上去，2026-10-19 项目主人）
+/** 能站的几块（2026-10-23 项目主人：吉祥物要能站在列表上） */
+const STANDABLE = '.wl-title, .ob-row, .ob-model, .wl-lang, .setup-choice';
+/** 能站的最多几块 */
+const ROW_ANCHORS = 12;
 const SURFACES = '.ob-list > .ob-rows:first-child, .ob-row, .wl-lang, .setup-choice, .ob-input, .set-input, .setup-area, .set-select';
 /** 平常站的地方离那一块右边多远 */
 const HOME_RIGHT = 40;
@@ -58,6 +62,7 @@ export class Guide {
     this.schemeBtn = /** @type {HTMLButtonElement} */ (h('button.wl-corner-btn', { type: 'button', onclick: () => { ctx.theme?.toggle(); requestAnimationFrame(() => this.drawCorner()); } }));
     this.corner = h('div.wl-corner', { hidden: !ctx.theme }, this.schemeBtn);
     this.layer = h('div.wl-layer', { role: 'dialog', 'aria-modal': 'true' }, sky(ctx.config.stars), this.ground, this.page, this.corner);
+    this.takeScheme();
     this.drawCorner();
     /** @type {HTMLButtonElement|null} */
     this.nextBtn = null;
@@ -67,6 +72,8 @@ export class Guide {
     this.unstage = /** @type {(() => void)|null} */ (null);
     /** 站的那一段挂进吉祥物的落脚点（挂载位 `mascot.anchors`）；拿下来的函数 */
     this.unmount = /** @type {(() => void)|null} */ (null);
+    /** 内容里能站的那几块挂进落脚点；拿下来的函数 @type {(() => void)|null} */
+    this.unmountRows = null;
     /** 画了第几屏：台子的编号带着它（换了一屏，旧的台子就没了，吉祥物照新的站） */
     this.shown = 0;
     /** 人格、预设还在读的那一下：台子照上一屏的留着，不让她掉下去 @type {{platforms: any[], home: any}|null} */
@@ -144,6 +151,8 @@ export class Guide {
     this.unstage = null;
     this.unmount?.();
     this.unmount = null;
+    this.unmountRows?.();
+    this.unmountRows = null;
     this.layer.classList.add('is-leaving');
     this.uncover();
     const gone = () => this.layer.remove();
@@ -228,6 +237,13 @@ export class Guide {
    * 文字那一块闪一下，原来等待屏、读到的那一屏各淡入一遍）。
    * @param {Screen} screen @param {1|-1} dir 往前走的从右边滑进来，往回的从左边
    */
+  /** 「账号」那几屏右上角点过明暗的（主题还没起来时记在这台设备上，宿主交 `signinScheme`）：照它换成主题的设置 */
+  takeScheme() {
+    const want = this.ctx.host?.signinScheme ?? null;
+    delete document.documentElement.dataset.siScheme;
+    if ((want === 'dark' || want === 'light') && this.ctx.theme && !!this.ctx.theme.dark?.() !== (want === 'dark')) this.ctx.theme.toggle?.();
+  }
+
   /** 右上角的明暗按钮照现在的明暗画（主题那一屏换了明暗、系统换了也跟着：每换一屏重画一次）。 */
   drawCorner() {
     const dark = !!this.ctx.theme?.dark?.();
@@ -390,6 +406,22 @@ export class Guide {
         return p ? { left: p.x1, right: p.x2, top: p.y, bottom: p.y, key: p.id } : null;
       },
     }) ?? null;
+    // 内容里的标题、选项、卡片也能站（2026-10-23 项目主人：吉祥物没法站在列表上，拖上去就掉下去）：最多 12 块，照这一屏看得见的先后，
+    // 一块一格；回家照旧是地面（`home`），跳回去的时候不往这些上落
+    if (!this.unmountRows) {
+      const offs = [];
+      for (let i = 0; i < ROW_ANCHORS; i += 1) {
+        offs.push(this.ctx.slots?.mount('mascot.anchors', {
+          id: `welcome.row-${i}`, kind: 'ground', edge: 'top', inset: 0, group: 'welcome', zh: '第一次引导里能站的选项、卡片',
+          at: () => {
+            const el = this.rows()[i];
+            const r = el?.getBoundingClientRect();
+            return r && r.width ? { left: r.left, right: r.right, top: r.top, bottom: r.top, key: `${this.shown}-${i}` } : null;
+          },
+        }));
+      }
+      this.unmountRows = () => { for (const off of offs) off?.(); };
+    }
     // 新的舞台直接换掉旧的（不先撤：撤了它先往输入框跳，新舞台就跳不成了）
     this.unstage = mascot.stage({
       group: 'welcome',
@@ -409,6 +441,15 @@ export class Guide {
     const list = top ? [top] : [];
     // 几步里只有地面一块（像素关卡，2026-10-19）：原来选项、按钮那一排也是台子，跳回家时半路落在选项上下不来
     return list;
+  }
+
+  /** 这一屏能站的几块（标题、选项、卡片）：在窗口里露着的，照先后；滚在框外面的不算。 */
+  rows() {
+    const view = this.page.getBoundingClientRect();
+    return /** @type {HTMLElement[]} */ ([...this.slot.querySelectorAll(STANDABLE)]).filter((el) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.top >= view.top && r.top <= view.bottom - 56;
+    }).slice(0, ROW_ANCHORS);
   }
 
   /** 这一屏吉祥物站的那一块：屏自己指了的照它，不然是内容里第一块看得见的。 */

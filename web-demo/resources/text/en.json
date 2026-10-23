@@ -149,7 +149,9 @@
     },
     "username_hint": "Username (starts with a lowercase letter)",
     "show_password": "Show password",
-    "hide_password": "Hide password"
+    "hide_password": "Hide password",
+    "to_light": "Switch to light",
+    "to_dark": "Switch to dark"
   },
   "boot": {
     "connecting_web": "Connecting…",

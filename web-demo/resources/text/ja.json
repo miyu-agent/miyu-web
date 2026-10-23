@@ -149,7 +149,9 @@
     },
     "username_hint": "ユーザー名（小文字で始まる）",
     "show_password": "パスワードを表示",
-    "hide_password": "パスワードを隠す"
+    "hide_password": "パスワードを隠す",
+    "to_light": "ライトに切り替え",
+    "to_dark": "ダークに切り替え"
   },
   "boot": {
     "connecting_web": "接続中…",
