@@ -12,7 +12,7 @@
 /* 推开正文的：和左栏对称的一整条栏，同左栏的底色，从上铺到底，和对话区之间一道细线（2026-10-24 项目主人：原来像几张浮着的卡片） */
 .side-column:not(.is-overlay) { background: var(--side-bg, var(--sidebar-bg)); box-shadow: inset 1px 0 0 var(--line); }
 /* 这一栏开着：对话区右边的跳转条不画（挤在栏边的缝里，同一天项目主人） */
-.app-shell.has-side .stage-right { display: none; }
+.app-shell.has-side .stage-right, .app-shell.is-side-claimed.has-artifacts .stage-right { display: none; }
 .side-column[hidden] { display: none; }
 .side-column.is-overlay {
   position: fixed; z-index: 46; top: 8px; right: 8px; bottom: 8px; width: min(340px, calc(100vw - 16px));
@@ -78,6 +78,14 @@
 .artifact-title-button strong { min-width: 0; overflow: hidden; font-size: calc(13px * var(--text-scale)); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .artifact-title-button small, .artifact-resource-item small { flex: none; color: var(--text-faint); font: 600 calc(9px * var(--text-scale)) var(--font-code); letter-spacing: 0.04em; }
 .artifact-title-button .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); flex: none; }
+/* 右侧边栏要了它（蓝图「预览工作区」第 2 条，装着仪表盘）：最左边返回箭头（同仪表盘点进去的：不写字、不铺底），标题不再是下拉 */
+.artifact-back { display: inline-grid; flex: none; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: var(--r-7); background: none; color: var(--text-soft); cursor: pointer; }
+.artifact-back:hover { color: var(--text); }
+.artifact-back[hidden] { display: none; }
+.artifact-back .icon { width: 16px; height: 16px; }
+.artifact-title-button:disabled { cursor: default; }
+.artifact-title-button:disabled:hover { background: transparent; }
+.artifact-title-button:disabled .icon { display: none; }
 .artifact-resource-menu {
   position: absolute; top: calc(100% + 7px); left: 0; z-index: 5; display: grid; width: min(320px, 70vw); max-height: min(360px, 50dvh);
   padding: calc(5px * var(--space)); overflow-y: auto; border: var(--float-border, 1px solid var(--line-strong)); border-radius: var(--float-radius, var(--radius)); background: var(--float-bg, var(--surface-1));

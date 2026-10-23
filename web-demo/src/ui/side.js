@@ -57,6 +57,22 @@ export class SideColumn {
     return innerWidth / scale - NARROW_WIDTH >= res.artifacts.chat_min;
   }
 
+  /** 预览工作区展示过的那几样（正在看的会话的，拿掉的不算）、面板里挂着几件、来了新的没看、开没开着（`side.work`） */
+  works() {
+    const a = this.artifacts;
+    return {
+      list: a.list.map((x) => ({ path: x.path, name: x.name, title: x.title ?? null, kind: x.kind, seq: x.seq })),
+      panel: a.panelItems, fresh: a.fresh, open: a.open,
+    };
+  }
+
+  /** 工作区开在面板那一页 */
+  openPanel() {
+    this.artifacts.tab = 'panel';
+    if (this.artifacts.open) this.artifacts.setTab('panel');
+    else this.artifacts.setOpen(true);
+  }
+
   /** 这一栏空着不（预览工作区没占着）：包自己开之前问一句，别把人开着的工作区挤掉 */
   free() {
     return !this.artifacts.open;

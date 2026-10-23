@@ -2722,6 +2722,12 @@
       ".artifact-resource-remove"
     ]
   },
+  "artifact.back": {
+    "zh": "预览工作区：右侧边栏要了它时最左边的返回箭头",
+    "select": [
+      ".artifact-back"
+    ]
+  },
   "artifact.action": {
     "zh": "预览工作区：动作",
     "select": [

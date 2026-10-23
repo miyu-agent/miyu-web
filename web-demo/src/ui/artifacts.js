@@ -10,6 +10,8 @@
 //! - 宽度能拖，记在这个浏览器里；来了新的、工作区关着时，开关按钮上一个圆点；窗口够宽时自动打开。
 //! - 扩展的界面块放进来时（挂载位 `stage.panel`，软件包 `widgets`；2026-10-15 项目主人定）这一栏顶上两个标签「工作区」「面板」，开关按钮
 //!   产物、面板有一样就露；面板那一页露没露告诉 `panelShown`（界面块照它订阅、叫不叫程序干活）。没有界面块的和原来一样。
+//! - 右侧边栏要了它（`claim`，软件包「仪表盘」经服务 `side.work`；2026-10-24 项目主人定）：自己的开关不露，头一行最左边返回箭头（交给要它的那一边）
+//!   代替「关」，标题不再是下拉（展示过的列在右侧边栏的卡片上）；还回去照原来的样子。列表、面板、开没开、来了新的没看变了告诉 `onChange` 登记的。
 
 import { h, icon, replace, setUrl } from './dom.js';
 import { show, hide, reduced } from '../lib/motion.js';
@@ -72,6 +74,12 @@ export class Artifacts {
     this.onTakeOver = () => {};
     /** 正文换宽换到第几回（新的一回来了，旧的那一回淡完不再换） */
     this.swapToken = 0;
+    /** 右侧边栏要了它：返回箭头交给谁（`claim`）；`null` 是原来的样子 @type {{back: () => void}|null} */
+    this.claimed = null;
+    /** 来了新的、还没看（窗口窄没自动打开的；开了、`seen` 了清掉） */
+    this.fresh = false;
+    /** 变了告诉谁（`onChange`） @type {Set<() => void>} */
+    this.listeners = new Set();
     /** 看哪一页：`work` 产物、`panel` 界面块 */
     this.tab = 'work';
     /** 面板里挂着几件（`stage.panel`） */
@@ -81,8 +89,11 @@ export class Artifacts {
     this.panel = h('div.artifact-panel', { hidden: true });
     this.tabWork = h('button.artifact-tab', { type: 'button', onclick: () => this.setTab('work') }, t('artifacts.tab_work'));
     this.tabPanel = h('button.artifact-tab', { type: 'button', onclick: () => this.setTab('panel') }, t('artifacts.tab_panel'));
-    this.tabs = h('div.artifact-tabs', { hidden: true }, this.tabWork, this.tabPanel,
-      h('button.icon-button.artifact-action', { type: 'button', title: t('artifacts.close'), onclick: () => this.setOpen(false) }, icon('x')));
+    const back = () => h('button.icon-button.artifact-back', { type: 'button', hidden: true, title: t('artifacts.back'), 'aria-label': t('artifacts.back'), onclick: () => this.claimed?.back() }, icon('chevron-left'));
+    this.backTabs = back();
+    this.backHead = back();
+    this.tabsClose = h('button.icon-button.artifact-action', { type: 'button', title: t('artifacts.close'), onclick: () => this.setOpen(false) }, icon('x'));
+    this.tabs = h('div.artifact-tabs', { hidden: true }, this.backTabs, this.tabWork, this.tabPanel, this.tabsClose);
     this.emptyWork = h('p.artifact-empty', { hidden: true }, t('artifacts.empty'));
     this.headerClose = h('button.icon-button.artifact-action', { type: 'button', title: t('artifacts.close'), onclick: () => this.setOpen(false) }, icon('x'));
     this.toggle = h('button.icon-button.artifact-toggle', { type: 'button', hidden: true, title: t('artifacts.toggle'), onclick: () => this.setOpen(!this.open) }, icon('panel-right'));
@@ -101,7 +112,7 @@ export class Artifacts {
       h('div.artifact-resize-handle', { title: t('artifacts.resize'), onpointerdown: (e) => this.resize(e) }),
       this.tabs,
       this.header = h('header.artifact-header',
-        h('div.artifact-leading', this.modes, h('div.artifact-resource-wrap', this.titleButton, this.menu)),
+        h('div.artifact-leading', this.backHead, this.modes, h('div.artifact-resource-wrap', this.titleButton, this.menu)),
         h('div.artifact-actions',
           h('button.icon-button.artifact-action', { type: 'button', title: t('artifacts.copy'), onclick: () => this.copySource() }, icon('copy')),
           this.download, this.maxButton, this.headerClose)),
@@ -134,7 +145,10 @@ export class Artifacts {
       this.tab = 'work';
       // 窗口够宽的自动打开；窄的只在开关按钮上点一个圆点
       if (innerWidth > res.artifacts.auto_open_from) this.setOpen(true);
-      else this.toggle.classList.add('has-new');
+      else {
+        this.toggle.classList.add('has-new');
+        this.fresh = true;
+      }
     }
     if (!this.list.some((a) => a.path === this.current)) this.current = this.list[0]?.path ?? null;
     this.syncChrome();
@@ -175,7 +189,7 @@ export class Artifacts {
     if (was !== this.open && swap) this.swapWidth(apply, this.open ? SWAP_SHIFT : -SWAP_SHIFT);
     else apply();
     this.toggle.classList.toggle('is-active', this.open);
-    if (this.open) this.toggle.classList.remove('has-new');
+    if (this.open) this.markSeen();
     if (!this.open && this.maximized) this.setMaximized(false);
     // 里面的东西等这一栏滑完再画（网页那一种载入、跑起来重，滑到一半时做会顿一下）；关上以前看的那一样没变的不重画，直接露出来
     if (this.open) this.settleAt = performance.now() + (parseFloat(getComputedStyle(this.shell).getPropertyValue('--artifact-in')) * 1000 || 0);
@@ -235,11 +249,66 @@ export class Artifacts {
     this.view.hidden = !work || !this.list.length;
     this.emptyWork.hidden = !(work && tabs && !this.list.length);
     this.panel.hidden = work;
-    this.toggle.hidden = !this.hasContent();
+    const claimed = !!this.claimed;
+    this.toggle.hidden = !this.hasContent() || claimed;
+    this.headerClose.hidden = tabs || claimed;
+    this.tabsClose.hidden = claimed;
+    this.backTabs.hidden = !claimed;
+    this.backHead.hidden = !claimed || tabs;
+    this.titleButton.disabled = claimed;
     const shown = this.open && !work;
     if (shown !== this.panelOn) {
       this.panelOn = shown;
       this.panelShown(shown);
+    }
+    this.tell();
+  }
+
+  /** 来了新的看过了（开了、右侧边栏把它列出来了）：开关上的圆点去掉 */
+  markSeen() {
+    this.toggle.classList.remove('has-new');
+    if (!this.fresh) return;
+    this.fresh = false;
+    this.tell();
+  }
+
+  /**
+   * 右侧边栏要了它（2026-10-24 项目主人定）：自己的开关不露、返回箭头代替「关」、标题不再是下拉；交回怎么还回去。
+   * @param {() => void} back 点返回箭头
+   */
+  claim(back) {
+    const mine = { back };
+    this.claimed = mine;
+    hide(this.menu);
+    this.el.classList.add('is-claimed');
+    this.shell.classList.add('is-side-claimed');
+    this.syncChrome();
+    return () => {
+      if (this.claimed !== mine) return;
+      this.claimed = null;
+      this.el.classList.remove('is-claimed');
+      this.shell.classList.remove('is-side-claimed');
+      this.syncChrome();
+    };
+  }
+
+  /** 列表、面板、开没开、来了新的没看变了告诉 `fn`；交回怎么不听 @param {() => void} fn */
+  onChange(fn) {
+    this.listeners.add(fn);
+    return () => this.listeners.delete(fn);
+  }
+
+  /** 变了才告诉（每画一次都会叫到这里） */
+  tell() {
+    const sig = JSON.stringify([this.list.map((a) => [a.path, a.seq, a.title ?? null]), this.panelItems, this.open, this.fresh, this.where.session]);
+    if (sig === this.told) return;
+    this.told = sig;
+    for (const fn of this.listeners) {
+      try {
+        fn();
+      } catch (err) {
+        console.error('预览工作区的变动通知出错了', err);
+      }
     }
   }
 
