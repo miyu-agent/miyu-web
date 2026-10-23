@@ -4,7 +4,7 @@
 //!
 //! 照这个先后认：独占一行的「标题（地址）」；`\(…\)`、`$$…$$`、`$…$` 公式；反斜杠转义；换行；`` `代码` ``；
 //! `![说明](地址)` 图片（旧版没有，蓝图「图片」第 1 条加的）；`[^名字]` 脚注的引用；`[字](地址)`；不带属性的 `<br>`；
-//! 成对、不带属性的 `<kbd>` 这几个（第 1 条，2026-10-23）；`<地址>`；裸地址；`~~删除~~`；`**粗**`、`__粗__`；`*斜*`、`_斜_`。
+//! 成对、不带属性的 `<kbd>` 这几个（第 1 条，2026-10-23）；`<地址>`；裸地址；`~~删除~~`；`***粗斜***`、`___粗斜___`；`**粗**`、`__粗__`；`*斜*`、`_斜_`。
 //! 认不出的照字。嵌套最多 `markdown.json` 的 `inline_depth` 层，再深的整段照字。
 //!
 //! 节点：字是字符串（挨着的并成一段）；别的是 `{type, …}`，见 [`Inline`]。
@@ -204,6 +204,15 @@ export function inline(source, depth = 0, inLink = false) {
       const end = text.indexOf('~~', i + 2);
       if (end > i + 2 && text.slice(i + 2, end).trim()) {
         emit({ type: 'del', kids: deeper(text.slice(i + 2, end)) }, end + 2);
+        continue;
+      }
+    }
+    // 粗斜：三个的两头，粗体里套斜体（2026-10-23：原来先认成粗、里面剩一个 * 照字）
+    const both = text.startsWith('***', i) ? '***' : text.startsWith('___', i) ? '___' : null;
+    if (both && !(both === '___' && isWordChar(text[i - 1]))) {
+      const end = both === '___' ? underscoreCloser(text, i + 3, '___') : text.indexOf('***', i + 3);
+      if (end > i + 3 && text.slice(i + 3, end).trim()) {
+        emit({ type: 'strong', kids: [{ type: 'em', kids: deeper(text.slice(i + 3, end)) }] }, end + 3);
         continue;
       }
     }

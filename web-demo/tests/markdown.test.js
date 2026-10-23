@@ -419,3 +419,11 @@ test('折叠块：<details> 到配对的 </details>，标题在同一行、下�
     { type: 'footnotes', items: [{ id: 'n', kids: ['注'] }] },
   ]);
 });
+
+test('粗斜：***x***、___x___ 是粗体里套斜体；词内的 ___ 不算；混着粗、斜的照旧（2026-10-23）', () => {
+  const bi = (...kids) => ({ type: 'strong', kids: [{ type: 'em', kids }] });
+  assert.deepEqual(inline('***粗斜体***、___也是___'), [bi('粗斜体'), '、', bi('也是')]);
+  assert.deepEqual(inline('a___b___c'), ['a___b___c']);
+  assert.deepEqual(inline('**粗** *斜*'), [{ type: 'strong', kids: ['粗'] }, ' ', { type: 'em', kids: ['斜'] }]);
+  assert.deepEqual(inline('***没收尾'), ['***没收尾']);
+});
