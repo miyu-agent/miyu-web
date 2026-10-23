@@ -6378,5 +6378,11 @@
     "select": [
       ".markdown-body .footnote-ref > button"
     ]
+  },
+  "side.column": {
+    "zh": "右边那一栏给软件包用的（仪表盘这类）：窄栏、宽栏、盖在上面",
+    "select": [
+      ".side-column"
+    ]
   }
 }

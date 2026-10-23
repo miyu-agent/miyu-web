@@ -68,6 +68,8 @@ export class Artifacts {
     this.entries = [];
     /** 开、关、拖完宽度、最大化以后叫（整页看对话那一列够不够宽，不够的收起左栏） */
     this.onLayout = () => {};
+    /** 要占右边那一栏时（仪表盘开着的让出来） */
+    this.onTakeOver = () => {};
     /** 正文换宽换到第几回（新的一回来了，旧的那一回淡完不再换） */
     this.swapToken = 0;
     /** 看哪一页：`work` 产物、`panel` 界面块 */
@@ -148,8 +150,11 @@ export class Artifacts {
     else this.setOpen(true);
   }
 
-  /** 开、关。 */
-  setOpen(open) {
+  /**
+   * 开、关。`swap: false` 的不走换宽动画（右边那一栏换给仪表盘时，它自己在动画里，`side.js`）。
+   * @param {boolean} open @param {{swap?: boolean}} [opts]
+   */
+  setOpen(open, { swap = true } = {}) {
     this.open = open && this.hasContent();
     // 没有产物、只有面板的：开着就看面板
     if (this.open && !this.list.length) this.tab = 'panel';
@@ -160,12 +165,14 @@ export class Artifacts {
     // 换宽的那一下（连左栏自动收起、放回）不过渡宽：挂着不过渡的类换，量一下让它生效，再拿掉
     const apply = () => {
       this.shell.classList.add('is-artifact-swapping');
+      // 右边那一栏给仪表盘占着的：一下子让出来（服务 `side`）
+      if (this.open) this.onTakeOver();
       this.shell.classList.toggle('has-artifacts', this.open);
       this.onLayout();
       void this.shell.offsetWidth;
       this.shell.classList.remove('is-artifact-swapping');
     };
-    if (was !== this.open) this.swapWidth(apply, this.open ? SWAP_SHIFT : -SWAP_SHIFT);
+    if (was !== this.open && swap) this.swapWidth(apply, this.open ? SWAP_SHIFT : -SWAP_SHIFT);
     else apply();
     this.toggle.classList.toggle('is-active', this.open);
     if (this.open) this.toggle.classList.remove('has-new');
