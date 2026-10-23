@@ -1,7 +1,8 @@
 /* 输入框这一块（蓝图 web.md「输入框」「输入框下面那一行」「提示」）：圆角 20px 照 Claude 网页端；
    框里上面写字、右下角发送；框下面一行照 TUI 的「框下面那一行」。和正文同一列、同宽。 */
 
-.composer-dock { width: min(100%, var(--chat-w, 980px)); margin: 0 auto; padding: 0 calc(30px * var(--space)) calc(10px * var(--space)); }
+/* 输入框两边各比正文宽出 12px（正文 30px，这一层 18px）：一样宽时正文看着比输入框往左超出一点（2026-10-23 项目主人） */
+.composer-dock { width: min(100%, var(--chat-w, 980px)); margin: 0 auto; padding: 0 calc(18px * var(--space)) calc(10px * var(--space)); }
 
 /* 框：不画边，只靠一层软阴影浮起来；聚焦时只把阴影加深，不换边线、不加光晕（2026-09-30 项目主人定）。
    边框留着 1px 透明的：框里的字、提示、命令列表照它对齐 */
@@ -93,7 +94,7 @@
 .footer-middle:empty { display: none; }
 
 @media (max-width: 836px) {
-  .composer-dock { padding: 0 clamp(16px, 4vw, 28px) calc(8px * var(--space)); }
+  .composer-dock { padding: 0 max(6px, calc(clamp(16px, 4vw, 28px) - 12px)) calc(8px * var(--space)); }
 }
 
 /* 换级别（蓝图「输入框下面那一行」）：级别那一格原地换，不上下移：旧的先淡出、糊开一点（前 45%），新的接着淡入、由糊变清
