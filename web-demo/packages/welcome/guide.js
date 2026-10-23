@@ -150,8 +150,8 @@ export class Guide {
     document.addEventListener('focusin', this.onFocus);
     this.page.addEventListener('scroll', this.onScroll, { passive: true });
     this.go(step in BACK ? step : 'hello', 1);
-    // 内置语义模型那一屏出不出：问到了重画步骤条（「语义模型」那一段）
-    embedState(this.ctx.core).then((got) => {
+    // 内置语义模型那一屏出不出：问到了重画步骤条（「语义模型」那一段）；成员不走那一屏、读不到配置清单，不问
+    if (!this.ctx.host?.member) embedState(this.ctx.core).then((got) => {
       this.embed = got;
       if (!this.head.hidden) this.drawSteps();
     });

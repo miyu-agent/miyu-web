@@ -306,8 +306,6 @@ const RUNS = {
   // 界面语言（蓝图「界面语言」第 3 条）：不带参数的开一个浮层选；写了 auto 或表里的一种直接换，写别的提示能写哪些
   language: (app, spec, words) => {
     const lang = app.ctx.language;
-    // 成员照浏览器的语言，改不了（核心 Y-2下下上：配置读的是机主那一份）
-    if (lang.locked) return app.composer.say(t('language.locked'));
     const want = (words ?? '').trim();
     if (!want) {
       const { items, current } = lang.options();

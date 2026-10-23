@@ -435,7 +435,8 @@ export class App {
     // 打开页面时进哪个会话照共用的 `ui.startup`（蓝图「连核心」第 4 条）：先是新会话，读到 `recent` 再换到最近的那个；
     // 这一会儿人已经动了（开了别的会话、打了字）的不换
     this.open(null);
-    this.store.conn.request('config.get', { keys: ['ui.startup'] }).catch(() => null).then((reply) => {
+    // 成员读不了配置（核心 Y-2下下上）：照新会话
+    if (!this.member) this.store.conn.request('config.get', { keys: ['ui.startup'] }).catch(() => null).then((reply) => {
       const id = startupSession(reply, this.ranked());
       if (id && this.current === null && !this.composer.input.value) this.open(id);
     });

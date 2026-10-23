@@ -23,6 +23,7 @@
   "inject": [
     "slots",
     "core",
+    "host",
     "commands",
     "chat",
     "settings~",

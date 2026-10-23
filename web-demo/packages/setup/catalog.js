@@ -8,9 +8,13 @@ import { problemsOf } from './model.js';
 import { PersonaImages } from './avatars.js';
 
 export class Catalog {
-  /** @param {{request: (method: string, params: any) => Promise<any>}} core @param {() => Promise<void>} [moreIcons] 读整套图标（内核的 `icons`） */
-  constructor(core, moreIcons = () => Promise.resolve()) {
+  /**
+   * @param {{request: (method: string, params: any) => Promise<any>}} core @param {() => Promise<void>} [moreIcons] 读整套图标（内核的 `icons`）
+   * @param {boolean} [member] 是成员（核心 Y-2下下上）：默认人格、预设（配置）和 `check` 调不了，不问
+   */
+  constructor(core, moreIcons = () => Promise.resolve(), member = false) {
     this.core = core;
+    this.member = member;
     this.moreIcons = moreIcons;
     /** @type {import('./model.js').Persona[]|null} */
     this.personas = null;
@@ -37,7 +41,7 @@ export class Catalog {
     const [personas, presets, got] = await Promise.all([
       this.core.request('persona.list', {}).then((r) => r?.personas ?? [], () => null),
       this.core.request('preset.list', {}).then((r) => r?.presets ?? [], () => null),
-      this.core.request('config.get', { keys: ['persona.default', 'preset.default'] }).catch(() => null),
+      this.member ? null : this.core.request('config.get', { keys: ['persona.default', 'preset.default'] }).catch(() => null),
       this.moreIcons(),
     ]);
     this.personas = personas;
@@ -48,7 +52,7 @@ export class Catalog {
     this.personaDefault = got?.items?.['persona.default']?.value ?? null;
     this.presetDefault = got?.items?.['preset.default']?.value ?? null;
     const bad = [...(personas ?? []), ...(presets ?? [])].some((x) => x.problem);
-    this.problems = bad ? await this.core.request('check', {}).then((r) => r?.problems ?? [], () => []) : [];
+    this.problems = bad && !this.member ? await this.core.request('check', {}).then((r) => r?.problems ?? [], () => []) : [];
     // 重读完叫一声：左上角、对话区的头像、主题色、背景图照新的列表重画（编辑卡片里改了主题色、换了背景图，不等别的事来再画）
     this.changed();
   }
