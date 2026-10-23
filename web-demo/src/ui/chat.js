@@ -6,6 +6,7 @@
 //! 选中的字、滚到哪都不丢）。滚到哪由 `follow.js` 管：跟着最新的、不往回退、长回答停住、点开时钉住被点的那一行。
 
 import { h } from './dom.js';
+import { reduced } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { Ticker, waitingNode } from './timeline.js';
 import { segmentView, drawMarkdown } from './render.js';
@@ -64,6 +65,10 @@ export class Chat {
     // 人点开、收起时间线（`timeline.js`、`steps.js` 发的）：被点的那一行钉在原地
     // 换上去的时间线经 `env.pin` 发同一个事件，带上钉多久（`detail.ms`，蓝图「换画法」第 2 条）
     this.list.addEventListener('tl-toggle', (e) => this.scroll.toggled(/** @type {Element} */ (e.target), /** @type {CustomEvent} */ (e).detail?.ms));
+    // 换会话淡入走完：拿掉那个类（不然下一次挪进旧的那一层时还带着）
+    this.list.addEventListener('animationend', (e) => { if (e.target === this.list) this.list.classList.remove('is-switching-in'); });
+    /** 换会话时旧的那一屏（`reset` 的 `animate`）：同一时间只有一层 @type {HTMLElement|null} */
+    this.ghost = null;
     this.ticker = new Ticker(this.list);
     /** 换了会话以后画过一次了：之后新来的时间线的步淡入，第一次画的（读回来的历史）不淡入。 */
     this.settled = false;
@@ -167,12 +172,48 @@ export class Chat {
     return got === undefined ? this.look : got ?? { persona: block.persona, name: block.persona };
   }
 
-  reset() {
+  /**
+   * 换了会话：清空重画。`animate` 的（换到别的会话，蓝图「动效」换会话那一行）：旧的那一屏挪进一层原地淡出（不占地方、不能点），
+   * 新画的正文等它退完再淡入、从下面 6px 升上来；正在淡入又换的，当时的样子接着淡出，只留一层。
+   * @param {{animate?: boolean}} [opts]
+   */
+  reset({ animate = false } = {}) {
+    const old = [...this.list.children].filter((n) => n !== this.compacting.el && n !== this.tail);
+    this.ghost?.remove();
+    this.ghost = null;
+    if (animate && old.length && !reduced() && this.el.isConnected) this.ghost = this.fadeOut(old);
     this.blocks.clear();
     this.anchored.clear();
     this.list.replaceChildren(this.compacting.el, this.tail);
     this.scroll.toLatest(true);
     this.settled = false;
+    this.list.classList.remove('is-switching-in');
+    if (this.ghost) {
+      void this.list.offsetWidth;
+      this.list.classList.add('is-switching-in');
+    }
+  }
+
+  /**
+   * 旧的那一屏：同样的一层（`.chat-scroll` 的样子、正文那一列的类）盖在对话区原处，节点挪过去（不复制），淡完拿掉。
+   * @param {Element[]} nodes
+   */
+  fadeOut(nodes) {
+    const list = h('div', { class: this.list.className });
+    list.classList.remove('is-switching-in');
+    list.style.marginTop = `${this.list.offsetTop - this.el.scrollTop}px`;
+    list.append(...nodes);
+    const ghost = h('div', { class: `${this.el.className} chat-ghost`, 'aria-hidden': 'true', inert: true }, list);
+    Object.assign(ghost.style, { top: `${this.el.offsetTop}px`, left: `${this.el.offsetLeft}px`, width: `${this.el.clientWidth}px`, height: `${this.el.clientHeight}px` });
+    this.el.after(ghost);
+    const done = () => {
+      ghost.remove();
+      if (this.ghost === ghost) this.ghost = null;
+    };
+    ghost.addEventListener('animationend', (e) => { if (e.target === ghost) done(); });
+    // 动画没走（时长是 0、标签页在后台）的也拿掉
+    setTimeout(done, 400);
+    return ghost;
   }
 
   /** 挂进来的画法变了（装了、停了 mermaid 这类包）：照上一次的条目整个重画，滚到哪留着，时间线不淡入。 */

@@ -7,6 +7,12 @@
 .stage.is-empty .chat-scroll { flex: 0 0 0; }
 /* 滚动条平时不画，指针在对话区上才露（2026-10-23 项目主人：右边那一道细线不好看） */
 .chat-scroll { scrollbar-color: transparent transparent; }
+/* 换会话（蓝图 web.md「动效」换会话那一行；2026-10-24 项目主人）：旧的那一屏挪进同样的一层原地淡出，新画的正文等它退完再淡入、
+   从下面 6px 升上来；只动正文那一列 */
+.chat-scroll.chat-ghost { position: absolute; z-index: 2; overflow: hidden; pointer-events: none; animation: fade-out calc(0.1s * var(--motion-scale)) var(--ease-in) both; }
+.chat-scroll > .timeline.is-switching-in { animation: switch-in calc(0.18s * var(--motion-scale)) var(--ease-out) calc(0.1s * var(--motion-scale)) both; }
+@keyframes switch-in { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .chat-scroll.chat-ghost, .chat-scroll > .timeline.is-switching-in { animation: none; } }
 .chat-scroll:hover { scrollbar-color: var(--scrollbar-color, var(--line-strong) transparent); }
 /* 新会话首页输入框下面（挂载位 stage.home：扩展的界面块）：和输入框一样宽，只在空会话里露 */
 .stage-home { display: none; width: min(100%, var(--chat-w, 980px)); margin: 0 auto; padding: 0 calc(30px * var(--space)); }

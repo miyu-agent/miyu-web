@@ -3029,6 +3029,12 @@
       ".slot-failed"
     ]
   },
+  "chat.ghost": {
+    "zh": "换会话时旧的那一屏（原地淡出的那一层）",
+    "select": [
+      ".chat-ghost"
+    ]
+  },
   "chat.crumbs": {
     "zh": "子代理的会话左上角：上面几层的那几颗小片",
     "select": [
