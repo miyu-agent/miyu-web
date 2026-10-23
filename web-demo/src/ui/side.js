@@ -57,12 +57,12 @@ export class SideColumn {
     return innerWidth / scale - NARROW_WIDTH >= res.artifacts.chat_min;
   }
 
-  /** 预览工作区展示过的那几样（正在看的会话的，拿掉的不算）、面板里挂着几件、来了新的没看、开没开着（`side.work`） */
+  /** 预览工作区展示过的那几样（主会话的，拿掉的不算）、面板里挂着几件、来了新的没看、开没开着、在不在借着看别的（`side.work`） */
   works() {
     const a = this.artifacts;
     return {
       list: a.list.map((x) => ({ path: x.path, name: x.name, title: x.title ?? null, kind: x.kind, seq: x.seq })),
-      panel: a.panelItems, fresh: a.fresh, open: a.open,
+      panel: a.panelItems, fresh: a.fresh, open: a.open, presenting: !!a.presenting,
     };
   }
 

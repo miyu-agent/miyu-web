@@ -1,7 +1,7 @@
 // @ts-check
 //! 仪表盘（软件包 `dashboard`，蓝图 `web.md`「仪表盘」）：右侧边栏。对话区右上角一个右栏开关（挂载位 `stage.tools`，同左栏开关），点了在
-//! 右边那一栏（服务 `side`）打开四张卡：待办、后台任务、文件修改、展示文件；点进去看后台命令的输出、文件的差异，子代理在主区打开，
-//! 展示文件交给预览工作区（`side.work`：要了它，返回箭头回到四张卡，自己的开关不露）。
+//! 右边那一栏（服务 `side`）打开四张卡：待办、后台任务、文件修改、展示文件；子代理在主区打开，展示文件、后台命令的输出、文件的差异都开在
+//! 预览工作区（`side.work`：要了它，返回箭头回到四张卡，自己的开关不露；输出、差异借它的框 `present`）。
 //! 窗口够宽时做一栏推开正文，并广播 `dashboard.active {on: true}`（软件包 `jobs`、`todo` 照它不画输入框那边的）；不够宽的盖在上面。
 //! 照对话区每画一次的事件 `view.changed` 画：画的是正在看的会话这一串最上面那个（主会话）的待办、后台任务、文件修改；点子代理在主区
 //! 打开它，这一栏留着、照旧画主会话的，正在看的那一行高亮。子代理照它自己的会话状态往下挂（读进来了的）。
@@ -44,11 +44,9 @@ export function apply(ctx) {
       : { session: owner, job, after, wait: true }),
     detail: (call) => ctx.core.request('view.detail', { session, call }),
     where: () => ({ workdir: ctx.chat.workdir() ?? null, home: ctx.chat.home() ?? null }),
-    // 点进去变宽、回来变窄；盖在上面的、收起了的不动
-    focus: (wide) => {
-      const mode = side.mode();
-      if (mode === 'narrow' || mode === 'wide') side.open(wide ? 'wide' : 'narrow');
-    },
+    // 后台命令的输出、文件的差异：借预览工作区的框看（同展示文件，返回回到四张卡）
+    present: (spec) => work.present(spec),
+    leave: () => backToCards(),
     // 展示文件：预览工作区占过这一栏看它（返回回到四张卡）；面板那一页；从右栏拿掉
     show: (path) => work.open(path),
     panel: () => work.panel(),
@@ -61,14 +59,16 @@ export function apply(ctx) {
   const badge = h('span.dash-badge', { hidden: true });
   const button = h('button.icon-button.dash-toggle', { type: 'button', onclick: () => toggle() }, icon('panel-right'), badge);
   ctx.slots.mount('stage.tools', { id: 'dashboard', order: 10, render: () => button });
-  // 预览工作区换成右侧边栏点进去的样子：返回箭头回到四张卡（窗口窄的回到盖着的那一层）
-  ctx.effect(() => work.claim(() => {
+  /** 从预览工作区回到四张卡（窗口窄的回到盖着的那一层） */
+  function backToCards() {
     if (side.fits()) side.open('narrow');
     else {
       work.close();
       side.open('overlay');
     }
-  }));
+  }
+  // 预览工作区换成右侧边栏点进去的样子：返回箭头回到四张卡
+  ctx.effect(() => work.claim(() => backToCards()));
   ctx.effect(() => work.onChange(() => redraw()));
 
   const closedMap = () => {
@@ -93,10 +93,7 @@ export function apply(ctx) {
       rememberClosed();
       if (side.mode()) side.close();
       if (work.state().open) work.close();
-    } else {
-      if (dash.viewing) dash.back();
-      side.open(side.fits() ? 'narrow' : 'overlay');
-    }
+    } else side.open(side.fits() ? 'narrow' : 'overlay');
   };
 
   /** 广播的上一份：变了才发 */
@@ -149,7 +146,6 @@ export function apply(ctx) {
     announce(s.fits);
     // 右侧边栏开着：展示文件卡里列着，来了新的算看过了
     if (s.mode) work.seen();
-    if (!side.mode() && dash.viewing) dash.back();
     syncButton();
   }));
   announce(side.fits());

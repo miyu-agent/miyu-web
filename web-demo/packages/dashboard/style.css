@@ -19,7 +19,6 @@
 .dash { --dash-edge: color-mix(in srgb, var(--line) 60%, transparent); display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; height: 100%; color: var(--text); font-family: var(--font-ui); }
 .dash-list { display: flex; flex-direction: column; min-height: 0; padding: calc(10px * var(--space)) calc(6px * var(--space)) 0; overflow: hidden; }
 .side-column.is-overlay .dash-list { padding: calc(10px * var(--space)) calc(6px * var(--space)) 0; }
-.dash-list[hidden], .dash-detail[hidden] { display: none; }
 /* 什么都还没有：同卡片的样子，一句暗字 */
 .dash-empty { margin: 0 4px; padding: calc(14px * var(--space)); border: 1px solid var(--dash-edge); border-radius: var(--r-12); background: var(--surface-1); box-shadow: var(--card-shadow); color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
 .dash-empty[hidden] { display: none; }
@@ -135,15 +134,12 @@
 .dash-remove:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
 .dash-shown:hover .dash-remove, .dash-shown:focus-within .dash-remove { display: inline-grid; }
 @media (hover: none) { .dash-remove { display: inline-grid; } }
-/* 点进去的：头一行返回箭头（不写字、不铺底）；输出等宽贴着底；差异带新旧行号 */
-.dash-detail { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; margin: calc(10px * var(--space)); overflow: hidden; border: 1px solid var(--dash-edge); border-radius: var(--r-12); background: var(--surface-1); box-shadow: var(--card-shadow); }
-.dash-detail-head { display: flex; align-items: center; gap: calc(8px * var(--space)); height: 46px; padding: 0 calc(8px * var(--space)); border-bottom: 1px solid var(--line); font-size: calc(13.5px * var(--text-scale)); }
-.dash-back, .dash-icon { display: inline-grid; flex: none; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: var(--r-7); background: none; color: var(--text-soft); cursor: pointer; }
-.dash-back:hover, .dash-icon:hover:not(:disabled) { color: var(--text); }
-.dash-icon:disabled { opacity: 0.35; cursor: default; }
-.dash-back .icon { width: 16px; height: 16px; }
-.dash-icon .icon { width: 15px; height: 15px; }
-.dash-detail-head .dash-file-name { font-weight: 600; }
+/* 点进去的输出、差异（放在预览工作区的框里）：输出等宽贴着底；差异带新旧行号 */
+/* 借预览工作区的框看的（`present`）：输出占满、贴着底，底下一行「跟着最新的」；头一行里的名字截长、文件名加粗 */
+.dash-present { display: grid; grid-template-rows: minmax(0, 1fr) auto; height: 100%; }
+.artifact-custom .dash-name { flex: 1 1 auto; font-size: calc(13px * var(--text-scale)); }
+.artifact-custom .dash-file-name { font-weight: 600; font-size: calc(13px * var(--text-scale)); }
+.artifact-custom .dash-kind { color: var(--text-soft); }
 .dash-output { margin: 0; padding: calc(12px * var(--space)) calc(16px * var(--space)); overflow: auto; background: color-mix(in srgb, var(--surface-2) 40%, var(--surface-1)); color: var(--text); font: calc(12.5px * var(--text-scale))/1.65 var(--font-mono); white-space: pre-wrap; word-break: break-word; }
 .dash-follow { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 calc(16px * var(--space)); border-top: 1px solid var(--line); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
 .dash-follow[hidden] { display: none; }

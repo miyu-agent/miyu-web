@@ -1,6 +1,7 @@
 // @ts-check
 //! 仪表盘的样子（软件包 `dashboard`，蓝图 `web.md`「仪表盘」第 4、5 条）：四张卡（待办、后台任务、文件修改、展示文件，空的整张不出），
-//! 点进去的两种（后台命令的输出、文件的差异）；子代理点了交给外面在主区打开，展示文件点了交给外面开预览工作区。数据变了才重画那张卡（在收的字每来一段都会来一次）；在跑的用时
+//! 点进去的两种（后台命令的输出、文件的差异）画好交给外面放进预览工作区的框（`present`，同展示文件，2026-10-24 项目主人：「都右栏 show 吧」）；
+//! 子代理点了交给外面在主区打开，展示文件点了交给外面开预览工作区。数据变了才重画那张卡（在收的字每来一段都会来一次）；在跑的用时
 //! 每 `tick_ms` 只改那几个字。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
@@ -25,12 +26,13 @@ const SHOWN_ICON = { image: 'image', pdf: 'file-text', html: 'globe', markdown: 
  *   read: (owner: string, job: string, after?: number) => Promise<any>,
  *   detail: (call: string) => Promise<any>,
  *   where: () => {workdir: string|null, home: string|null},
- *   focus: (wide: boolean) => void,
+ *   present: (spec: {lead: Node[], actions: Node[], body: Node, leave: () => void}) => void,
+ *   leave: () => void,
  *   show: (path: string) => void,
  *   panel: () => void,
  *   dismiss: (path: string) => void,
- * }} On 停一个任务、在主区打开子代理的会话、读后台命令的输出、取一次编辑的差异、工作区和家目录、点进去（变宽）和回来、
- *   预览工作区开一样展示文件、开面板、从右栏拿掉一样
+ * }} On 停一个任务、在主区打开子代理的会话、读后台命令的输出、取一次编辑的差异、工作区和家目录、把点进去的那一样放进预览工作区的框、
+ *   从那里回到四张卡、预览工作区开一样展示文件、开面板、从右栏拿掉一样
  */
 
 export class Dashboard {
@@ -65,8 +67,7 @@ export class Dashboard {
     this.slots = { todo: wrap(this.todoCard), tasks: wrap(this.taskCard), files: wrap(this.fileCard), shown: wrap(this.shownCard) };
     this.empty = h('div.dash-empty', { hidden: true }, t('empty'));
     this.list = h('div.dash-list', this.slots.todo, this.slots.tasks, this.slots.files, this.slots.shown, this.empty);
-    this.detail = h('div.dash-detail', { hidden: true });
-    this.el = h('div.dash', this.list, this.detail);
+    this.el = h('div.dash', this.list);
     /** 点进去看着的那一样：`{kind: 'output', node}`、`{kind: 'diff', index}`；回来的是 `null` @type {any} */
     this.viewing = null;
     /** 读输出读到第几回：换了、回来了的晾着的回应丢掉 */
@@ -319,26 +320,45 @@ export class Dashboard {
 
   // ── 点进去 ──
 
-  /** 头一行：返回箭头（不写字、不铺底），接着的几样，右边的按钮 @param {any[]} middle @param {any[]} right */
-  head(middle, right) {
-    return h('div.dash-detail-head',
-      h('button.dash-back', { type: 'button', title: this.t('back'), 'aria-label': this.t('back'), onclick: () => this.back() }, icon('chevron-left')),
-      ...middle, h('span.dash-gap'), ...right);
+  /**
+   * 画好的那一样放进预览工作区的框（头一行最左边的返回箭头是那个框的）：`lead` 接在返回箭头后面，`actions` 在右边最大化前面；交回去时
+   * （回到四张卡、开了别的、收起）记着的这一样清掉。
+   * @param {any} viewing @param {Node[]} lead @param {Node[]} actions @param {Node} body
+   */
+  present(viewing, lead, actions, body) {
+    const run = ++this.run;
+    this.viewing = viewing;
+    this.on.present({
+      lead, actions, body,
+      leave: () => {
+        if (run !== this.run) return;
+        this.run++;
+        const had = this.viewing;
+        this.viewing = null;
+        if (had?.kind === 'diff') {
+          this.sigs.files = '';
+          this.drawFiles();
+        }
+      },
+    });
+    return run;
+  }
+
+  /** 工作区头一行右边的一个小按钮（同工作区自己的那几个） @param {string} ic @param {string} label @param {() => void} onclick @param {boolean} [off] */
+  action(ic, label, onclick, off = false) {
+    return h('button.icon-button.artifact-action', { type: 'button', title: this.t(label), 'aria-label': this.t(label), disabled: off, onclick }, icon(ic));
   }
 
   /** 后台命令的输出：先读最后几行，跑着的带 `after`、`wait` 接着读；贴着底，往上翻停住 @param {Node} x */
   showOutput(x) {
     const t = this.t;
-    const run = ++this.run;
-    this.viewing = { kind: 'output', node: x };
     const running = x.state === 'running' || x.state === 'paused';
     const out = h('pre.dash-output', t('loading'));
     const follow = h('div.dash-follow', h('i.dash-follow-dot'), t('follow'));
-    const stop = running ? h('button.dash-stop', { type: 'button', title: t('stop'), 'aria-label': t('stop'), onclick: () => this.halt(x) }, h('span.dash-stop-mark')) : null;
-    replace(this.detail,
-      this.head([h('span.dash-kind', icon('square-terminal')), h('span.dash-name.is-split', { title: x.command || x.title || x.job }, h('span.dash-command', x.command || x.title || x.job), h('span.dash-sep', ' · '), h('span.dash-id', x.job))], [stop]),
-      out, follow);
-    this.enter();
+    const stop = running ? this.action('circle-stop', 'stop', () => this.halt(x)) : null;
+    const run = this.present({ kind: 'output', node: x },
+      [h('span.dash-kind', icon('square-terminal')), h('span.dash-name.is-split', { title: x.command || x.title || x.job }, h('span.dash-command', x.command || x.title || x.job), h('span.dash-sep', ' · '), h('span.dash-id', x.job))],
+      stop ? [stop] : [], h('div.dash-present', out, follow));
     /** @type {string[]} */
     let kept = [];
     const keep = this.config.preview_lines;
@@ -377,27 +397,21 @@ export class Dashboard {
     })();
   }
 
-  /** 一个文件的差异：每一次编辑的差异照先后接起来，中间一道细线 @param {number} index */
+  /** 一个文件的差异：每一次编辑的差异照先后接起来，中间一道细线；右边上一个、下一个文件 @param {number} index */
   async showDiff(index) {
     const t = this.t;
     const files = this.data.files;
     const f = files[index];
     if (!f) return;
-    const run = ++this.run;
-    this.viewing = { kind: 'diff', index };
-    this.sigs.files = '';
-    this.drawFiles();
     const { name, dir } = splitPath(f.path, this.on.where());
     const body = h('div.dash-diff', h('div.dash-diff-note', t('loading')));
-    const nav = (/** @type {number} */ step, /** @type {string} */ ic, /** @type {string} */ label) => h('button.dash-icon', {
-      type: 'button', title: t(label), 'aria-label': t(label), disabled: !files[index + step], onclick: () => this.showDiff(index + step),
-    }, icon(ic));
-    replace(this.detail,
-      this.head([h('span.dash-kind', icon(f.created ? 'file-plus' : 'file')), h('strong.dash-file-name', name), dir ? h('span.dash-file-dir', dir) : null,
-        h('span.dash-lines', f.added ? h('span.dash-add', `+${f.added}`) : null, ' ', f.removed ? h('span.dash-del', `−${f.removed}`) : null)],
-      [nav(-1, 'arrow-up', 'prev'), nav(1, 'arrow-down', 'next')]),
+    const run = this.present({ kind: 'diff', index },
+      [h('span.dash-kind', icon(f.created ? 'file-plus' : 'file')), h('strong.dash-file-name', name), dir ? h('span.dash-file-dir', dir) : null,
+        h('span.dash-lines', f.added ? h('span.dash-add', `+${f.added}`) : null, ' ', f.removed ? h('span.dash-del', `−${f.removed}`) : null)].filter((x) => x !== null),
+      [this.action('arrow-up', 'prev', () => this.showDiff(index - 1), !files[index - 1]), this.action('arrow-down', 'next', () => this.showDiff(index + 1), !files[index + 1])],
       body);
-    this.enter();
+    this.sigs.files = '';
+    this.drawFiles();
     const parts = await Promise.all(f.calls.map((call) => this.on.detail(call).catch(() => null)));
     if (run !== this.run) return;
     const blocks = parts.map((got) => {
@@ -412,26 +426,10 @@ export class Dashboard {
     replace(body, blocks.length ? blocks : [h('div.dash-diff-note', t('no_detail'))]);
   }
 
-  /** 换成点进去的那一样：这一栏变宽 */
-  enter() {
-    this.list.hidden = true;
-    this.detail.hidden = false;
-    this.on.focus(true);
-  }
-
-  /** 回到仪表盘 */
+  /** 回到四张卡（换了一串会话）：看着的那一样交回去，预览工作区让出这一栏 */
   back() {
-    this.run++;
-    const had = this.viewing;
-    this.viewing = null;
-    this.detail.hidden = true;
-    replace(this.detail);
-    this.list.hidden = false;
-    if (had?.kind === 'diff') {
-      this.sigs.files = '';
-      this.drawFiles();
-    }
-    this.on.focus(false);
+    if (!this.viewing) return;
+    this.on.leave();
   }
 
   /** 停用了：停掉计时 */

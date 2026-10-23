@@ -108,6 +108,10 @@
 .artifact-resource-remove .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); }
 @media (hover: none) { .artifact-resource-remove { opacity: 1; } }
 .artifact-actions { display: flex; flex: none; align-items: center; gap: calc(1px * var(--space)); }
+/* 借这个框看别的（`present`：右侧边栏点后台命令、文件修改）：头一行换成交来的几样、按钮，没有预览源码、标题下拉、复制、下载 */
+.artifact-custom, .artifact-custom-actions { display: contents; }
+.artifact-header.is-presenting .artifact-mode-switch, .artifact-header.is-presenting .artifact-resource-wrap, .artifact-header.is-presenting .artifact-file-action { display: none; }
+.artifact-header:not(.is-presenting) .artifact-custom, .artifact-header:not(.is-presenting) .artifact-custom-actions { display: none; }
 .artifact-action { width: 28px; height: 28px; color: var(--text-faint); }
 .artifact-action:hover { background: var(--surface-2); color: var(--text); }
 
