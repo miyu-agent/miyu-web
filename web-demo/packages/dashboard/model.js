@@ -42,6 +42,18 @@ export function counts(tree) {
   return { running: all.filter((x) => x.state === 'running' || x.state === 'paused').length, waiting: all.filter((x) => x.attention).length };
 }
 
+/**
+ * 右栏开关上的提醒点（第 3 条）：开着的不画；等人的橙色在先，来了新展示没看的 accent 圆点其次，有在跑的转圈最后。
+ * @param {{running: number, waiting: number}} n @param {{open: boolean, fresh: boolean}} at
+ * @returns {'waiting'|'new'|'running'|null}
+ */
+export function badgeOf(n, { open, fresh }) {
+  if (open) return null;
+  if (n.waiting > 0) return 'waiting';
+  if (fresh) return 'new';
+  return n.running > 0 ? 'running' : null;
+}
+
 /** 全部停止停哪几个：停一个子代理连它派的一起停，它下面的不再单停 @param {Node[]} tree @returns {Node[]} */
 export const stoppable = (tree) => tree.flatMap((x) => (x.state === 'running' || x.state === 'paused' ? [x] : stoppable(x.kids)));
 

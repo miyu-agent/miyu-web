@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { taskTree, rowsOf, counts, stoppable, fileChanges, splitPath, todoView, diffRows, attentionOf } from '../packages/dashboard/model.js';
+import { taskTree, rowsOf, counts, stoppable, fileChanges, splitPath, todoView, diffRows, attentionOf, badgeOf } from '../packages/dashboard/model.js';
 
 const AT = '2026-10-23T10:00:00Z';
 const job = (id, what, state, extra = {}) => ({ job: id, what, title: `t${id}`, state, started: AT, ...extra });
@@ -86,4 +86,12 @@ test('差异的一行行：段头起新旧行号，加的只有新号、删的�
     { kind: 'add', old: null, now: 11, text: 'new' },
     { kind: 'same', old: 12, now: 12, text: 'tail' },
   ]);
+});
+
+test('右栏开关上的提醒点（2026-10-24）：开着不画；等人的在先，来了新展示没看的其次，在跑的最后', () => {
+  assert.equal(badgeOf({ running: 3, waiting: 1 }, { open: true, fresh: true }), null);
+  assert.equal(badgeOf({ running: 3, waiting: 1 }, { open: false, fresh: true }), 'waiting');
+  assert.equal(badgeOf({ running: 3, waiting: 0 }, { open: false, fresh: true }), 'new');
+  assert.equal(badgeOf({ running: 3, waiting: 0 }, { open: false, fresh: false }), 'running');
+  assert.equal(badgeOf({ running: 0, waiting: 0 }, { open: false, fresh: false }), null);
 });

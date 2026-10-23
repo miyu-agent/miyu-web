@@ -6612,6 +6612,18 @@
       ".dash-elbow"
     ]
   },
+  "dash.shown": {
+    "zh": "仪表盘：展示过的一样（点了开预览工作区看它）",
+    "select": [
+      ".dash-shown"
+    ]
+  },
+  "dash.remove": {
+    "zh": "仪表盘：展示文件一行右边悬停才露的 ✕（从右栏拿掉）",
+    "select": [
+      ".dash-remove"
+    ]
+  },
   "dash.file": {
     "zh": "仪表盘：改过的一个文件",
     "select": [

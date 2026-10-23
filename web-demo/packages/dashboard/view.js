@@ -1,6 +1,6 @@
 // @ts-check
-//! 仪表盘的样子（软件包 `dashboard`，蓝图 `web.md`「仪表盘」第 4、5 条）：三张卡（待办、后台任务、文件修改，空的整张不出），点进去的
-//! 两种（后台命令的输出、文件的差异）；子代理点了交给外面在主区打开。数据变了才重画那张卡（在收的字每来一段都会来一次）；在跑的用时
+//! 仪表盘的样子（软件包 `dashboard`，蓝图 `web.md`「仪表盘」第 4、5 条）：四张卡（待办、后台任务、文件修改、展示文件，空的整张不出），
+//! 点进去的两种（后台命令的输出、文件的差异）；子代理点了交给外面在主区打开，展示文件点了交给外面开预览工作区。数据变了才重画那张卡（在收的字每来一段都会来一次）；在跑的用时
 //! 每 `tick_ms` 只改那几个字。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
@@ -12,10 +12,13 @@ import { rowsOf, counts, stoppable, todoView, splitPath, diffRows } from './mode
 const NO_METHOD = -32601;
 /** 任务种类的图标 @type {Record<string, string>} */
 const KIND_ICON = { agent: 'bot', command: 'square-terminal' };
+/** 展示文件种类的图标 @type {Record<string, string>} */
+const SHOWN_ICON = { image: 'image', pdf: 'file-text', html: 'globe', markdown: 'file-text', code: 'file-code', text: 'file-text' };
 
 /**
  * @typedef {import('./model.js').Node} Node
  * @typedef {import('./model.js').FileChange} FileChange
+ * @typedef {{path: string, name: string, title: string|null, kind: string}} Shown 展示过的一样
  * @typedef {{
  *   stop: (owner: string, job: string) => Promise<void>,
  *   enter: (session: string) => void,
@@ -23,7 +26,11 @@ const KIND_ICON = { agent: 'bot', command: 'square-terminal' };
  *   detail: (call: string) => Promise<any>,
  *   where: () => {workdir: string|null, home: string|null},
  *   focus: (wide: boolean) => void,
- * }} On 停一个任务、在主区打开子代理的会话、读后台命令的输出、取一次编辑的差异、工作区和家目录、点进去（变宽）和回来
+ *   show: (path: string) => void,
+ *   panel: () => void,
+ *   dismiss: (path: string) => void,
+ * }} On 停一个任务、在主区打开子代理的会话、读后台命令的输出、取一次编辑的差异、工作区和家目录、点进去（变宽）和回来、
+ *   预览工作区开一样展示文件、开面板、从右栏拿掉一样
  */
 
 export class Dashboard {
@@ -41,18 +48,20 @@ export class Dashboard {
     this.expanded = new Set();
     this.doneOpen = false;
     this.filesOpen = false;
+    this.shownOpen = false;
     /** 点过停止、还没等到回报的 */
     this.stopping = new Set();
-    /** @type {{todos: any[], tree: Node[], files: FileChange[], current?: string|null}} */
-    this.data = { todos: [], tree: [], files: [], current: null };
-    this.sigs = { todo: '', tasks: '', files: '' };
+    /** @type {Data} */
+    this.data = { todos: [], tree: [], files: [], current: null, shown: [], panel: 0 };
+    this.sigs = { todo: '', tasks: '', files: '', shown: '' };
     this.todoCard = h('section.dash-card.dash-todo', { 'aria-label': t('todo') });
     this.taskCard = h('section.dash-card.dash-tasks', { 'aria-label': t('tasks') });
     this.fileCard = h('section.dash-card.dash-files', { 'aria-label': t('files') });
+    this.shownCard = h('section.dash-card.dash-shown-card', { 'aria-label': t('shown') });
     const wrap = (/** @type {HTMLElement} */ card) => h('div.unfold.dash-slot', h('div.unfold-inner', card));
-    this.slots = { todo: wrap(this.todoCard), tasks: wrap(this.taskCard), files: wrap(this.fileCard) };
+    this.slots = { todo: wrap(this.todoCard), tasks: wrap(this.taskCard), files: wrap(this.fileCard), shown: wrap(this.shownCard) };
     this.empty = h('div.dash-empty', { hidden: true }, t('empty'));
-    this.list = h('div.dash-list', this.slots.todo, this.slots.tasks, this.slots.files, this.empty);
+    this.list = h('div.dash-list', this.slots.todo, this.slots.tasks, this.slots.files, this.slots.shown, this.empty);
     this.detail = h('div.dash-detail', { hidden: true });
     this.el = h('div.dash', this.list, this.detail);
     /** 点进去看着的那一样：`{kind: 'output', node}`、`{kind: 'diff', index}`；回来的是 `null` @type {any} */
@@ -62,7 +71,11 @@ export class Dashboard {
     this.timer = 0;
   }
 
-  /** 新的一份数据（`current` 是主区正在看的会话）：变了的卡重画，空的收起 @param {{todos: any[], tree: Node[], files: FileChange[], current?: string|null}} data */
+  /**
+   * 新的一份数据（`current` 是主区正在看的会话，`shown` 预览工作区展示过的、`panel` 面板里挂着几件）：变了的卡重画，空的收起
+   * @typedef {{todos: any[], tree: Node[], files: FileChange[], current?: string|null, shown?: Shown[], panel?: number}} Data
+   * @param {Data} data
+   */
   update(data) {
     this.data = data;
     const all = (/** @type {Node[]} */ xs) => xs.flatMap((x) => [x, ...all(x.kids)]);
@@ -71,7 +84,8 @@ export class Dashboard {
     this.drawTodo();
     this.drawTasks();
     this.drawFiles();
-    const any = data.todos.length > 0 || data.tree.length > 0 || data.files.length > 0;
+    this.drawShown();
+    const any = data.todos.length > 0 || data.tree.length > 0 || data.files.length > 0 || (data.shown?.length ?? 0) > 0 || (data.panel ?? 0) > 0;
     this.empty.hidden = any;
     // 看着的后台命令没了、文件没了：回到仪表盘
     if (this.viewing?.kind === 'diff' && !data.files[this.viewing.index]) this.back();
@@ -240,6 +254,41 @@ export class Dashboard {
           h('span.dash-lines', f.added ? h('span.dash-add', `+${f.added}`) : null, f.added && f.removed ? ' ' : null, f.removed ? h('span.dash-del', `−${f.removed}`) : null));
       }),
       rest > 0 ? h('button.dash-row.dash-fold-row', { type: 'button', onclick: () => { this.filesOpen = true; this.drawFiles(); } }, icon('chevron-down'), h('span.dash-fold-count', `(${rest})`)) : null);
+  }
+
+  // ── 展示文件 ──
+
+  /** 预览工作区展示过的（最后展示的在前）：点了交给外面开工作区看它；悬停露出 ✕ 从右栏拿掉；面板挂着东西的最后一行「面板」 */
+  drawShown() {
+    const t = this.t;
+    const list = this.data.shown ?? [];
+    const panel = this.data.panel ?? 0;
+    unfold(this.slots.shown, list.length > 0 || panel > 0);
+    const sig = JSON.stringify([list, panel, this.shownOpen]);
+    if (sig === this.sigs.shown) return;
+    this.sigs.shown = sig;
+    if (!list.length && !panel) return;
+    const where = this.on.where();
+    const max = this.config.file_rows;
+    const rows = this.shownOpen || list.length <= max ? list : list.slice(0, max);
+    const rest = list.length - rows.length;
+    replace(this.shownCard,
+      h('div.dash-head', h('strong.dash-title', t('shown')), list.length ? h('span.dash-count', t('shown_count', { count: list.length })) : null),
+      rows.map((a) => {
+        const { name, dir } = splitPath(a.path, where);
+        const label = a.title || name;
+        const open = () => this.on.show(a.path);
+        return h('div.dash-row.dash-file.dash-shown', {
+          role: 'button', tabindex: '0', title: a.path, onclick: open, onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter') open(); },
+        },
+        h('span.dash-kind', icon(SHOWN_ICON[a.kind] ?? 'file')), h('span.dash-file-name', label), dir ? h('span.dash-file-dir', dir) : null, h('span.dash-gap'),
+        h('button.dash-remove', {
+          type: 'button', title: t('remove'), 'aria-label': t('remove_named', { name: label }),
+          onclick: (/** @type {MouseEvent} */ e) => { e.stopPropagation(); this.on.dismiss(a.path); },
+        }, icon('x')));
+      }),
+      rest > 0 ? h('button.dash-row.dash-fold-row', { type: 'button', onclick: () => { this.shownOpen = true; this.drawShown(); } }, icon('chevron-down'), h('span.dash-fold-count', `(${rest})`)) : null,
+      panel > 0 ? h('button.dash-row.dash-file.dash-panel-row', { type: 'button', onclick: () => this.on.panel() }, h('span.dash-kind', icon('puzzle')), h('span.dash-file-name', t('panel'))) : null);
   }
 
   // ── 点进去 ──
