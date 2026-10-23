@@ -362,13 +362,21 @@ export class Dashboard {
     /** @type {string[]} */
     let kept = [];
     const keep = this.config.preview_lines;
+    // 贴着底：记着，不每次现量（头几回画的时候工作区还在换宽、没露出来，量出来是 0，原来就此不贴底了）；人往上翻停住，翻回底接着贴；
+    // 框换了大小（浮现完、拖宽度、最大化）照记着的贴回去
+    let stick = true;
+    const pin = () => { if (stick) out.scrollTop = out.scrollHeight; follow.hidden = !stick; };
     const draw = () => {
-      const stick = out.scrollTop + out.clientHeight >= out.scrollHeight - 4;
       out.textContent = kept.length ? kept.join('\n') : t('no_output');
-      if (stick) out.scrollTop = out.scrollHeight;
-      follow.hidden = !stick;
+      pin();
     };
-    out.addEventListener('scroll', () => { follow.hidden = out.scrollTop + out.clientHeight < out.scrollHeight - 4; }, { passive: true });
+    out.addEventListener('scroll', () => {
+      if (!out.clientHeight) return;
+      stick = out.scrollTop + out.clientHeight >= out.scrollHeight - 4;
+      follow.hidden = !stick;
+    }, { passive: true });
+    const sized = new ResizeObserver(() => pin());
+    sized.observe(out);
     const add = (/** @type {string} */ text) => {
       if (!text) return;
       const parts = text.split('\n');
@@ -381,7 +389,7 @@ export class Dashboard {
       try {
         for (;;) {
           const got = await this.on.read(x.owner, x.job, size === null ? undefined : size);
-          if (run !== this.run) return;
+          if (run !== this.run) return sized.disconnect();
           if (size === null) kept = String(got?.output ?? '').split('\n').slice(-keep);
           else add(String(got?.output ?? ''));
           if (kept.length === 1 && kept[0] === '') kept = [];
