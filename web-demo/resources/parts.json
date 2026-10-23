@@ -6384,5 +6384,359 @@
     "select": [
       ".side-column"
     ]
+  },
+  "dash": {
+    "zh": "仪表盘：整块（右边那一栏里）",
+    "select": [
+      ".dash"
+    ]
+  },
+  "dash.list": {
+    "zh": "仪表盘：三张卡排着的那一列",
+    "select": [
+      ".dash-list"
+    ]
+  },
+  "dash.empty": {
+    "zh": "仪表盘：什么都还没有时的那一句",
+    "select": [
+      ".dash-empty"
+    ]
+  },
+  "dash.slot": {
+    "zh": "仪表盘：一张卡外面展开、收起的那一层",
+    "select": [
+      ".dash-slot"
+    ]
+  },
+  "dash.card": {
+    "zh": "仪表盘：一张卡（待办、后台任务、文件修改）",
+    "select": [
+      ".dash-card"
+    ]
+  },
+  "dash.head": {
+    "zh": "仪表盘：卡的头一行（后台任务的滚动时钉在上面）",
+    "select": [
+      ".dash-head"
+    ]
+  },
+  "dash.title": {
+    "zh": "仪表盘：卡的标题",
+    "select": [
+      ".dash-title"
+    ]
+  },
+  "dash.count": {
+    "zh": "仪表盘：标题旁的数（几个在跑、几个等你、已完成几项）",
+    "select": [
+      ".dash-count"
+    ]
+  },
+  "dash.gap": {
+    "zh": "仪表盘：头一行中间撑开的空",
+    "select": [
+      ".dash-gap"
+    ]
+  },
+  "dash.progress": {
+    "zh": "仪表盘：待办的进度条",
+    "select": [
+      ".dash-progress"
+    ]
+  },
+  "dash.progress-bar": {
+    "zh": "仪表盘：待办进度条里填满的那段",
+    "select": [
+      ".dash-progress-bar"
+    ]
+  },
+  "dash.stop-all": {
+    "zh": "仪表盘：「全部停止」",
+    "select": [
+      ".dash-stop-all"
+    ]
+  },
+  "dash.todo-row": {
+    "zh": "仪表盘：待办的一项",
+    "select": [
+      ".dash-todo-row"
+    ]
+  },
+  "dash.todo-mark": {
+    "zh": "仪表盘：待办一项前面的记号",
+    "select": [
+      ".dash-todo-mark"
+    ]
+  },
+  "dash.todo-ring": {
+    "zh": "仪表盘：没做的待办那个空圈",
+    "select": [
+      ".dash-todo-ring"
+    ]
+  },
+  "dash.todo-text": {
+    "zh": "仪表盘：待办的字",
+    "select": [
+      ".dash-todo-text"
+    ]
+  },
+  "dash.row": {
+    "zh": "仪表盘：后台任务、文件的一行",
+    "select": [
+      ".dash-row"
+    ]
+  },
+  "dash.task": {
+    "zh": "仪表盘：后台任务的一行（等人的铺浅橙底）",
+    "select": [
+      ".dash-task"
+    ]
+  },
+  "dash.lead": {
+    "zh": "仪表盘：一行最前面放图标的那一格",
+    "select": [
+      ".dash-lead"
+    ]
+  },
+  "dash.kind": {
+    "zh": "仪表盘：任务种类、文件的图标",
+    "select": [
+      ".dash-kind"
+    ]
+  },
+  "dash.twisty": {
+    "zh": "仪表盘：有子任务的行指针移上去换出来的箭头",
+    "select": [
+      ".dash-twisty"
+    ]
+  },
+  "dash.name": {
+    "zh": "仪表盘：任务名字",
+    "select": [
+      ".dash-name"
+    ]
+  },
+  "dash.command": {
+    "zh": "仪表盘：后台命令的命令行",
+    "select": [
+      ".dash-command"
+    ]
+  },
+  "dash.sep": {
+    "zh": "仪表盘：名字和编号之间的点",
+    "select": [
+      ".dash-sep"
+    ]
+  },
+  "dash.id": {
+    "zh": "仪表盘：任务编号",
+    "select": [
+      ".dash-id"
+    ]
+  },
+  "dash.state": {
+    "zh": "仪表盘：任务状态的图标",
+    "select": [
+      ".dash-state"
+    ]
+  },
+  "dash.ended-mark": {
+    "zh": "仪表盘：被停掉的任务那个方块",
+    "select": [
+      ".dash-ended-mark"
+    ]
+  },
+  "dash.time": {
+    "zh": "仪表盘：跑了多久",
+    "select": [
+      ".dash-time"
+    ]
+  },
+  "dash.stop": {
+    "zh": "仪表盘：一行末尾的停止按钮",
+    "select": [
+      ".dash-stop"
+    ]
+  },
+  "dash.stop-mark": {
+    "zh": "仪表盘：停止按钮里的实心方块",
+    "select": [
+      ".dash-stop-mark"
+    ]
+  },
+  "dash.stop-gap": {
+    "zh": "仪表盘：没有停止按钮的行末尾占的位",
+    "select": [
+      ".dash-stop-gap"
+    ]
+  },
+  "dash.fold-row": {
+    "zh": "仪表盘：收起来的那一行（「(N)」「✓ (N)」）",
+    "select": [
+      ".dash-fold-row"
+    ]
+  },
+  "dash.fold-count": {
+    "zh": "仪表盘：收起来那一行的数",
+    "select": [
+      ".dash-fold-count"
+    ]
+  },
+  "dash.lines-tree": {
+    "zh": "仪表盘：子任务连接线那一层",
+    "select": [
+      ".dash-lines-tree"
+    ]
+  },
+  "dash.guide": {
+    "zh": "仪表盘：上面几层穿下来的竖线",
+    "select": [
+      ".dash-guide"
+    ]
+  },
+  "dash.elbow": {
+    "zh": "仪表盘：接到这一行图标的拐角线",
+    "select": [
+      ".dash-elbow"
+    ]
+  },
+  "dash.file": {
+    "zh": "仪表盘：改过的一个文件",
+    "select": [
+      ".dash-file"
+    ]
+  },
+  "dash.file-name": {
+    "zh": "仪表盘：文件名",
+    "select": [
+      ".dash-file-name"
+    ]
+  },
+  "dash.file-dir": {
+    "zh": "仪表盘：文件所在目录（暗字）",
+    "select": [
+      ".dash-file-dir"
+    ]
+  },
+  "dash.lines": {
+    "zh": "仪表盘：加减几行",
+    "select": [
+      ".dash-lines"
+    ]
+  },
+  "dash.add": {
+    "zh": "仪表盘：加了几行",
+    "select": [
+      ".dash-add"
+    ]
+  },
+  "dash.del": {
+    "zh": "仪表盘：删了几行",
+    "select": [
+      ".dash-del"
+    ]
+  },
+  "dash.detail": {
+    "zh": "仪表盘：点进去的那一页（输出、差异）",
+    "select": [
+      ".dash-detail"
+    ]
+  },
+  "dash.detail-head": {
+    "zh": "仪表盘：点进去那一页的头一行",
+    "select": [
+      ".dash-detail-head"
+    ]
+  },
+  "dash.back": {
+    "zh": "仪表盘：返回箭头",
+    "select": [
+      ".dash-back"
+    ]
+  },
+  "dash.icon": {
+    "zh": "仪表盘：点进去那一页头上的图标按钮（上一个、下一个文件）",
+    "select": [
+      ".dash-icon"
+    ]
+  },
+  "dash.output": {
+    "zh": "仪表盘：后台命令的输出",
+    "select": [
+      ".dash-output"
+    ]
+  },
+  "dash.follow": {
+    "zh": "仪表盘：输出底下「还在跑」那一行",
+    "select": [
+      ".dash-follow"
+    ]
+  },
+  "dash.follow-dot": {
+    "zh": "仪表盘：「还在跑」前面的点",
+    "select": [
+      ".dash-follow-dot"
+    ]
+  },
+  "dash.diff": {
+    "zh": "仪表盘：文件的差异",
+    "select": [
+      ".dash-diff"
+    ]
+  },
+  "dash.diff-block": {
+    "zh": "仪表盘：差异里一次修改那一段",
+    "select": [
+      ".dash-diff-block"
+    ]
+  },
+  "dash.diff-hunk": {
+    "zh": "仪表盘：差异的段头",
+    "select": [
+      ".dash-diff-hunk"
+    ]
+  },
+  "dash.diff-line": {
+    "zh": "仪表盘：差异的一行",
+    "select": [
+      ".dash-diff-line"
+    ]
+  },
+  "dash.diff-no": {
+    "zh": "仪表盘：差异的行号",
+    "select": [
+      ".dash-diff-no"
+    ]
+  },
+  "dash.diff-mark": {
+    "zh": "仪表盘：差异行前的加减号",
+    "select": [
+      ".dash-diff-mark"
+    ]
+  },
+  "dash.diff-text": {
+    "zh": "仪表盘：差异行的字",
+    "select": [
+      ".dash-diff-text"
+    ]
+  },
+  "dash.diff-note": {
+    "zh": "仪表盘：差异给不出来时的那一句",
+    "select": [
+      ".dash-diff-note"
+    ]
+  },
+  "dash.toggle": {
+    "zh": "仪表盘：对话区右上角的开关",
+    "select": [
+      ".dash-toggle"
+    ]
+  },
+  "dash.badge": {
+    "zh": "仪表盘：开关上的小点（转圈的在跑、橙色的等你）",
+    "select": [
+      ".dash-badge"
+    ]
   }
 }

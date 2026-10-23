@@ -1,0 +1,209 @@
+{
+  "id": "dashboard",
+  "version": "0.1.0",
+  "name": {
+    "zh": "仪表盘",
+    "en": "Dashboard",
+    "ja": "ダッシュボード"
+  },
+  "summary": {
+    "zh": "右边一栏看待办、后台任务和文件修改",
+    "en": "See to-dos, background tasks and file changes in a side column",
+    "ja": "右の列で ToDo、バックグラウンドタスク、ファイルの変更を見る"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "对话区右上角一个按钮，点了在右边那一栏打开三张卡：待办、后台任务（子代理再派的挂在下面）、文件修改；点进去看后台命令的输出、文件的差异，子代理在主区打开。窗口够宽时做一栏，输入框那边的待办、后台任务不画；不够宽的盖在上面。停用了一切照旧。"
+  },
+  "inject": [
+    "slots",
+    "side",
+    "sessions",
+    "chat",
+    "core",
+    "composer",
+    "storage"
+  ],
+  "settings": {
+    "tick_ms": {
+      "type": "duration",
+      "default": 1000,
+      "name": {
+        "zh": "在跑的用时多久走一次"
+      }
+    },
+    "todo_rows": {
+      "type": "number",
+      "default": 6,
+      "min": 1,
+      "max": 30,
+      "integer": true,
+      "name": {
+        "zh": "待办最多露几项"
+      }
+    },
+    "file_rows": {
+      "type": "number",
+      "default": 5,
+      "min": 1,
+      "max": 30,
+      "integer": true,
+      "name": {
+        "zh": "文件修改最多露几个"
+      }
+    },
+    "preview_lines": {
+      "type": "number",
+      "default": 400,
+      "min": 1,
+      "max": 5000,
+      "integer": true,
+      "name": {
+        "zh": "后台命令的输出最多留几行"
+      }
+    }
+  },
+  "styles": [
+    "style.css"
+  ],
+  "text": {
+    "zh": {
+      "toggle": "仪表盘",
+      "todo": "待办",
+      "tasks": "后台任务",
+      "files": "文件修改",
+      "running": "{count} 个运行中",
+      "waiting": "· {count} 个等你",
+      "stop_all": "全部停止",
+      "stop": "停止",
+      "done_items": "已完成 {count} 项",
+      "more_items": "还有 {count} 项",
+      "more_tasks": "还有 {count} 个，展开",
+      "files_count": "{count} 个文件",
+      "back": "回到仪表盘",
+      "empty": "这个会话还没有待办、后台任务和文件修改",
+      "enter": "在主区打开这个子代理的会话",
+      "open_output": "看输出",
+      "follow": "跟着最新的",
+      "loading": "加载中…",
+      "no_output": "（暂无输出）",
+      "no_api": "核心版本过旧，不支持读取输出",
+      "prev": "上一个文件",
+      "next": "下一个文件",
+      "no_detail": "这次改动的差异读不到",
+      "expand": "展开",
+      "collapse": "收起",
+      "skipped": {
+        "too_big": "文件太大，算不出差异",
+        "binary": "不是文字文件，没有差异",
+        "missing": "改前、改后的内容取不到"
+      },
+      "states": {
+        "running": "运行中",
+        "paused": "等待输入",
+        "done": "完成",
+        "failed": "失败",
+        "stopped": "已停止",
+        "timed_out": "超时已停止",
+        "too_large": "输出太大，已停止",
+        "undone": "随撤销停止",
+        "restarted": "因重启停止",
+        "aborted": "中断：核心已退出",
+        "confirm": "等你确认",
+        "ask": "在问你"
+      }
+    },
+    "en": {
+      "toggle": "Dashboard",
+      "todo": "To-do",
+      "tasks": "Background tasks",
+      "files": "File changes",
+      "running": "{count} running",
+      "waiting": "· {count} need you",
+      "stop_all": "Stop all",
+      "stop": "Stop",
+      "done_items": "{count} done",
+      "more_items": "{count} more",
+      "more_tasks": "{count} more, expand",
+      "files_count": "{count} files",
+      "back": "Back to dashboard",
+      "empty": "No to-dos, background tasks or file changes in this session yet",
+      "enter": "Open this subagent's session",
+      "open_output": "View output",
+      "follow": "Following the latest",
+      "loading": "Loading…",
+      "no_output": "(No output yet)",
+      "no_api": "The core is too old to read output",
+      "prev": "Previous file",
+      "next": "Next file",
+      "no_detail": "Can't read the diff for this change",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "skipped": {
+        "too_big": "File too large to diff",
+        "binary": "Not a text file, no diff",
+        "missing": "Before/after contents unavailable"
+      },
+      "states": {
+        "running": "Running",
+        "paused": "Waiting for input",
+        "done": "Done",
+        "failed": "Failed",
+        "stopped": "Stopped",
+        "timed_out": "Stopped: time limit",
+        "too_large": "Stopped: output too large",
+        "undone": "Stopped by undo",
+        "restarted": "Stopped by restart",
+        "aborted": "Aborted: core exited",
+        "confirm": "Needs your confirmation",
+        "ask": "Asking you"
+      }
+    },
+    "ja": {
+      "toggle": "ダッシュボード",
+      "todo": "ToDo",
+      "tasks": "バックグラウンドタスク",
+      "files": "ファイルの変更",
+      "running": "{count} 件実行中",
+      "waiting": "· {count} 件があなた待ち",
+      "stop_all": "すべて停止",
+      "stop": "停止",
+      "done_items": "{count} 件完了",
+      "more_items": "ほか {count} 件",
+      "more_tasks": "ほか {count} 件、展開",
+      "files_count": "{count} ファイル",
+      "back": "ダッシュボードに戻る",
+      "empty": "このセッションにはまだ ToDo、バックグラウンドタスク、ファイルの変更がありません",
+      "enter": "このサブエージェントのセッションを開く",
+      "open_output": "出力を見る",
+      "follow": "最新を追従中",
+      "loading": "読み込み中…",
+      "no_output": "（まだ出力なし）",
+      "no_api": "コアが古く、出力を読めません",
+      "prev": "前のファイル",
+      "next": "次のファイル",
+      "no_detail": "この変更の差分を読めません",
+      "expand": "展開",
+      "collapse": "折りたたむ",
+      "skipped": {
+        "too_big": "ファイルが大きすぎて差分を出せません",
+        "binary": "テキストファイルではないため差分なし",
+        "missing": "変更前後の内容を取得できません"
+      },
+      "states": {
+        "running": "実行中",
+        "paused": "入力待ち",
+        "done": "完了",
+        "failed": "失敗",
+        "stopped": "停止",
+        "timed_out": "時間切れで停止",
+        "too_large": "出力が大きすぎて停止",
+        "undone": "取り消しで停止",
+        "restarted": "再起動で停止",
+        "aborted": "中断：コアが終了",
+        "confirm": "確認待ち",
+        "ask": "質問中"
+      }
+    }
+  }
+}
