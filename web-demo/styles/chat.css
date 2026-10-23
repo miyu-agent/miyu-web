@@ -198,6 +198,8 @@
 /* 她那一轮、提示行缩不缩进照各自的（中途换了人格，旧的照回复时的人格：`chat.js` 的 `block`）；压缩的进度、正文末尾那一格照现在的人格 */
 .timeline.is-bare .compacting, .timeline.is-bare .chat-tail { padding-left: 0; }
 .assistant-message.is-bare, .note.is-bare { padding-left: 0; }
+/* 软件包挂进来的提示行（整理记忆的结果那一行这类）没有 is-bare：不带人格的时间线里照样不缩进，和正文、子代理那些提示行对齐（2026-10-23 项目主人） */
+.timeline.is-bare > .note { padding-left: 0; }
 .assistant-content { color: var(--text); font-family: var(--font-read); font-size: var(--md-size, calc(14px * var(--text-scale))); line-height: var(--md-line, 1.72); }
 .assistant-content > * + * { margin-top: calc(10px * var(--space)); }
 
