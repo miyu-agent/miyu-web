@@ -8,7 +8,7 @@ import { h, replace } from './dom.js';
 import { res } from '../util/res.js';
 
 /** 窄栏多宽（px，自己的 CSS 像素） */
-export const NARROW_WIDTH = 364;
+export const NARROW_WIDTH = 312;
 
 /** @typedef {'narrow'|'wide'|'overlay'} Mode */
 
