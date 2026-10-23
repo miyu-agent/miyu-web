@@ -3126,15 +3126,9 @@
     ]
   },
   "composer.stash": {
-    "zh": "输入框：暂存着东西时框下面那一排的小片（点了取回）",
+    "zh": "输入框：暂存着东西时框下面那一排的保存图标（点了取回）",
     "select": [
       ".composer-stash"
-    ]
-  },
-  "composer.stash-text": {
-    "zh": "输入框：暂存小片里那句的第一行",
-    "select": [
-      ".composer-stash-text"
     ]
   },
   "composer.left": {
