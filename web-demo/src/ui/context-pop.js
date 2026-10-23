@@ -12,7 +12,10 @@ import { scaledParts, bar, share, toneOf, useRows } from '../model/context.js';
 /** @typedef {'context'|'total'} Kind */
 
 export class ContextPop {
-  /** @param {{session: () => string|null, request: (method: string, params: any) => Promise<any>}} on */
+  /**
+   * @param {{session: () => string|null, preview: () => Record<string, any>, request: (method: string, params: any) => Promise<any>}} on
+   *   `session` 正在看的会话；`preview` 还没开的新会话问预览带的人格、预设
+   */
   constructor(on) {
     this.on = on;
     this.body = h('div.ctx-pop-body');
@@ -114,9 +117,9 @@ export class ContextPop {
     const kind = this.kind;
     const session = this.on.session();
     const seq = ++this.seq;
-    if (!session) return;
+    if (!session && kind !== 'context') return;
     const got = await (kind === 'context'
-      ? this.on.request('session.context', { session })
+      ? this.on.request('session.context', session ? { session } : this.on.preview())
       : this.on.request('usage.query', { session, tree: true, group: ['use'] }).then((r) => {
         // 旧核心不认 `use`：分组照样回，行里没有这一格
         if (r?.rows?.length && !r.rows.some((/** @type {any} */ x) => 'use' in x)) throw Object.assign(new Error('no use'), { code: -32601 });
@@ -144,11 +147,12 @@ export class ContextPop {
     const track = h('div.ctx-bar',
       b.segments.map((s) => h('span.ctx-bar-seg', { style: `width: ${(s.ratio * 100).toFixed(3)}%; --tone: var(--${toneOf(s.part)})` })),
       b.line != null ? h('span.ctx-bar-line', { style: `left: ${(b.line * 100).toFixed(3)}%` }) : null);
-    const rows = h('div.ctx-rows', parts.map((p) => this.partRows(p, 0, b.full)));
+    // 每块占已用的几成（2026-10-23 项目主人定：占窗口的在窗口大时都是「<0.1%」）
+    const rows = h('div.ctx-rows', parts.map((p) => this.partRows(p, 0, used)));
     return [head, track, rows, c.line ? h('div.ctx-pop-foot', t('context_pop.line', { line: short(c.line) })) : null];
   }
 
-  /** 一块一行，有子项的能展开 @param {import('../model/context.js').Part} p @param {number} depth @param {number} full */
+  /** 一块一行，有子项的能展开 @param {import('../model/context.js').Part} p @param {number} depth @param {number} full 百分比照它算（已用的） */
   partRows(p, depth, full) {
     const kids = p.children ?? [];
     const open = this.opened.has(p.part);

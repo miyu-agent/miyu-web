@@ -21,7 +21,7 @@ import { Artifacts } from './artifacts.js';
 import { runCommand, runUnlisted, refusalText, redo, copyTurn, Commands, revertLatest } from './commands.js';
 import { coreSpecs } from '../model/commands.js';
 import { rank, startupSession } from '../model/session.js';
-import { statusFooter, levelLabel, nextLevel, levelParams } from '../model/footer.js';
+import { statusFooter, levelLabel, nextLevel, levelParams, previewPart } from '../model/footer.js';
 import { itemsOf, levelOf } from '../model/entries.js';
 import { compactingOf, lastTurn, turnEnded, untouchedTurnOf } from '../model/view-state.js';
 import { copy } from '../markdown/build.js';
@@ -68,6 +68,8 @@ export class App {
     this.pendingLevel = /** @type {string|null} */ (null);
     /** 还没开的新会话里选的模型（换模型的菜单、`/model`）：开会话时带上 */
     this.pendingModel = /** @type {string|null} */ (null);
+    /** 新会话的上下文预览：照哪组人格、预设问的，问到的 */
+    this.preview = /** @type {{sig: string, data: any}|null} */ (null);
     /** 还没开的新会话里选的人格、预设、工作区（软件包 `setup` 经服务 `chat` 改）：开会话时带上，没选的照默认 */
     // 人格 `null` 是没选（照默认的），`false` 是明着不用人格；`project` 是在哪个项目里新建的（蓝图「会话整理和项目」第 9 条，开会话时带上）
     this.draft = /** @type {{persona: string|false|null, preset: string|null, cwd: string|null, project: string|null}} */ ({ persona: null, preset: null, cwd: null, project: null });
@@ -208,6 +210,7 @@ export class App {
       session: () => this.current,
       // 上下文明细、累计按用途的浮窗问核心（蓝图「上下文明细、累计按用途」）
       request: (method, params) => this.store.conn.request(method, params),
+      preview: () => this.previewParams(),
       // 换模型的菜单（蓝图「换模型的菜单」）：每次打开问一次 `model.list`；选了下一轮生效
       // 会话列表（`/sessions`，蓝图「会话列表」）：全部顶层会话照会话表；在不在跑、看没看过：读过日志的照日志，没读过的照会话表
       sessions: {
@@ -517,6 +520,8 @@ export class App {
     this.pendingLevel = null;
     this.pendingModel = null;
     this.draft = { persona: null, preset: null, cwd: null, project: null };
+    // 回到新会话再问一次预览（技能、工具可能变了）
+    this.preview = null;
     this.current = id;
     this.sessionsPage?.close();
     // 没读过的会话第一次打开时才读、订阅：子代理的不进会话表的顶层；全部会话那一页开的老会话进（`listed`）
@@ -674,6 +679,35 @@ export class App {
   setLooker(fn) {
     this.looker = fn;
     this.syncLook();
+  }
+
+  /** 新会话预览上下文带的人格、预设（同开会话时带的：人格是 `false` 的明着不用，发 `null`） */
+  previewParams() {
+    const { persona, preset } = this.draft;
+    return { ...(persona === false ? { persona: null } : persona ? { persona } : {}), ...(preset ? { preset } : {}) };
+  }
+
+  /**
+   * 新会话的上下文预览（`session.context` 不写 `session`，核心 CX-1 下）：人格、预设变了再问一次，问到了重画；交回这时有的（没问到、
+   * 旧核心不支持的是 `null`）。
+   */
+  loadPreview() {
+    const params = this.previewParams();
+    const sig = JSON.stringify(params);
+    if (this.preview?.sig !== sig) {
+      const mine = { sig, data: /** @type {any} */ (null) };
+      this.preview = mine;
+      this.store.conn.request('session.context', params).then((got) => {
+        if (this.preview !== mine) return;
+        mine.data = got;
+        this.schedule();
+      }, (/** @type {any} */ err) => {
+        // 连上之前问的（不是核心拒的：旧核心不认、参数不对）过一会儿再问
+        if (err?.code === -32601 || err?.code === -32602) return;
+        setTimeout(() => { if (this.preview === mine) { this.preview = null; this.schedule(); } }, 3000);
+      });
+    }
+    return this.preview.data;
   }
 
   setDraft(patch) {
@@ -1081,6 +1115,11 @@ export class App {
     // 排着的话（打断时有排着的不撤那一轮）
     this.queuedNow = view.queued ?? [];
     const f = statusFooter(s?.view.status ?? null, s?.limits ?? {});
+    // 还没开的新会话：上下文那一格照核心的预览写（蓝图「上下文明细、累计按用途」第 1 条）
+    if (!this.current) {
+      const part = previewPart(this.loadPreview());
+      if (part) f.right = [...f.right.filter((p) => p.key !== 'context'), part];
+    }
     // 框下面的模型（蓝图「换模型的菜单」第 1 条）：新会话、选过还没生效的、用着池的照引用写；别的照核心报的模型、端点
     const ref = this.modelRef();
     const picked = this.current ? this.picked.get(this.current) : null;

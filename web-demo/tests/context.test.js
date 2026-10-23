@@ -4,6 +4,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { scaledParts, bar, share, toneOf, useRows } from '../src/model/context.js';
+import { previewPart } from '../src/model/footer.js';
+import { loadRes } from './support.js';
+
+loadRes();
 
 const SAMPLE = {
   window: 128000, line: 102400, used: 45231, basis: 'measured', anchor: 41000, estimated_total: 43800,
@@ -63,4 +67,11 @@ test('用途：不认得的归 other、加起来，照 token 从多到少排，0
   ]);
   assert.deepEqual(rows.map((r) => [r.use, r.tokens]), [['compaction', 900], ['main', 500], ['other', 50]]);
   assert.deepEqual(rows[2].amounts, [{ currency: 'USD', amount: 0.03 }]);
+});
+
+test('新会话的上下文那一格照预览写，写法同开了的；没有数的不写', () => {
+  assert.deepEqual(previewPart({ used: 3434, window: 1000000 }), { key: 'context', text: '3.4k/1M(0.3%)' });
+  assert.deepEqual(previewPart({ used: 3434 }), { key: 'context', text: '3.4k' });
+  assert.equal(previewPart({ used: 0 }), null);
+  assert.equal(previewPart(null), null);
 });

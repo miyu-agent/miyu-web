@@ -22,13 +22,25 @@ export function statusFooter(status, limits = {}) {
   if (speed && speed.output > 0 && speed.ms > 0) right.push({ key: 'speed', text: t('speed', { rate: Math.round((speed.output * 1000) / speed.ms) }) });
   const used = status?.context?.used ?? 0;
   const window = status?.context?.window ?? limits.window;
-  if (used > 0) right.push({ key: 'context', text: window ? t('context', { used: short(used), window: short(window), percent: percentTenths(used, window) }) : short(used) });
+  if (used > 0) right.push({ key: 'context', text: contextText(used, window) });
   const all = status?.usage?.usage;
   const main = status?.usage?.main;
   if (all && input(all) + all.output > 0) {
     right.push({ key: 'total', text: t('total', { tokens: short(input(all) + all.output), percent: hitRate(main?.cache_read ?? 0, main ? input(main) : 0) }) });
   }
   return { left: { level, label: levelLabel(level), model: status?.model?.model ?? null, endpoint: status?.model?.endpoint ?? null }, right };
+}
+
+/** 上下文那一格：`5.3k/1M(0.5%)`，没窗口的只写用了多少 @param {number} used @param {number|undefined} window */
+export const contextText = (used, window) => (window ? t('context', { used: short(used), window: short(window), percent: percentTenths(used, window) }) : short(used));
+
+/**
+ * 还没开的新会话：上下文那一格照核心的预览写（`session.context` 不写 `session`，蓝图「上下文明细、累计按用途」第 1 条），写法同开了的。
+ * @param {{used?: number, window?: number}|null} preview
+ */
+export function previewPart(preview) {
+  const used = preview?.used ?? 0;
+  return used > 0 ? { key: 'context', text: contextText(used, preview?.window) } : null;
 }
 
 /** 左边的级别：图标加名字，`▣ 工作区`（图标照 TUI 的 `layout.json`）。 */
