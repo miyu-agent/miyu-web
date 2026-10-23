@@ -42,7 +42,7 @@
 .conversation-media.is-sticker .conversation-media-fallback { border-radius: var(--radius); background: var(--surface-soft); }
 
 /* 视频：原生控制条，右上角全页播放 */
-.video-card { display: flex; flex-direction: column; align-items: center; margin: calc(10px * var(--space)) 0 calc(4px * var(--space)); }
+.video-card { display: flex; flex-direction: column; align-items: flex-start; margin: calc(10px * var(--space)) 0 calc(4px * var(--space)); }
 .video-shell { position: relative; width: min(100%, 480px); }
 .video-shell video { display: block; width: 100%; max-height: 56vh; border-radius: var(--card-radius, var(--radius)); background: var(--card-bg, #000); box-shadow: var(--card-elev, var(--card-shadow)); }
 .vfs-btn {
@@ -52,10 +52,12 @@
 .vfs-btn .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); }
 .video-shell:hover .vfs-btn, .vfs-btn:focus-visible { opacity: 1; }
 .video-shell.is-webfs {
-  position: fixed; z-index: 70; display: grid; width: auto; max-width: none; padding: calc(28px * var(--space)); place-items: center;
-  background: rgb(0 0 0 / 93%); inset: 0;
+  /* 整页放大了（`--ui-scale`）：照窗口的大小除掉放大，正好铺满，不比窗口大 */
+  position: fixed; z-index: 70; top: 0; left: 0; display: grid; box-sizing: border-box; width: calc(100vw / var(--ui-scale, 1)); height: calc(100dvh / var(--ui-scale, 1));
+  max-width: none; padding: calc(28px * var(--space)); place-items: center; background: rgb(0 0 0 / 93%);
 }
-.video-shell.is-webfs video { width: 100%; height: 100%; max-height: none; object-fit: contain; box-shadow: none; }
+/* 视频钉在这一层里（四边留 28px），高照这一层算，不照宽按比例长出窗口 */
+.video-shell.is-webfs video { position: absolute; top: calc(28px * var(--space)); left: calc(28px * var(--space)); width: calc(100% - 56px * var(--space)); height: calc(100% - 56px * var(--space)); max-height: none; object-fit: contain; box-shadow: none; }
 .video-shell.is-webfs .vfs-btn { top: 16px; right: 16px; opacity: 1; }
 .video-caption {
   max-width: min(100%, 480px); margin-top: calc(7px * var(--space)); overflow: hidden; color: var(--text-soft); font-size: calc(11px * var(--text-scale));

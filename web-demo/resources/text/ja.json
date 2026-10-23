@@ -230,7 +230,8 @@
   },
   "media": {
     "image_failed": "画像を読み込めませんでした",
-    "fullscreen": "全画面表示",
+    "fill_window": "ウィンドウいっぱいに表示",
+    "fill_restore": "元に戻す",
     "progress": "再生位置",
     "volume": "音量",
     "download": "ダウンロード",

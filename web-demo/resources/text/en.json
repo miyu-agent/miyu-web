@@ -230,7 +230,8 @@
   },
   "media": {
     "image_failed": "Image failed to load",
-    "fullscreen": "Full screen",
+    "fill_window": "Fill window",
+    "fill_restore": "Restore",
     "progress": "Playback progress",
     "volume": "Volume",
     "download": "Download",

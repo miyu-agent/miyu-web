@@ -94,10 +94,14 @@ export function videoCard(what) {
   const video = h('video', { controls: true, preload: 'metadata', playsinline: true });
   setUrl(video, 'src', what.url);
   const shell = h('div.video-shell', video);
-  const full = h('button.vfs-btn', { type: 'button', title: t('media.fullscreen'), 'aria-label': t('media.fullscreen') }, icon('maximize-2'));
+  // 铺满窗口（不是浏览器的全屏，那个在控制条里）：再点收回
+  const full = h('button.vfs-btn', { type: 'button', title: t('media.fill_window'), 'aria-label': t('media.fill_window') }, icon('maximize-2'));
   full.addEventListener('click', () => {
     const on = shell.classList.toggle('is-webfs');
     replace(full, icon(on ? 'minimize-2' : 'maximize-2'));
+    const label = t(on ? 'media.fill_restore' : 'media.fill_window');
+    full.title = label;
+    full.setAttribute('aria-label', label);
   });
   shell.append(full);
   return h('div.video-card', shell, h('div.video-caption', { title: what.name }, what.name));

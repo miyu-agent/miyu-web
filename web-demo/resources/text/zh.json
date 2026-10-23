@@ -230,7 +230,8 @@
   },
   "media": {
     "image_failed": "图片载入失败",
-    "fullscreen": "全屏",
+    "fill_window": "铺满窗口",
+    "fill_restore": "收回",
     "progress": "播放进度",
     "volume": "音量",
     "download": "下载",
