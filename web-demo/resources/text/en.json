@@ -222,7 +222,11 @@
   },
   "markdown": {
     "code": "Code",
-    "copy_code": "Copy code"
+    "copy_code": "Copy code",
+    "details": "Details",
+    "footnotes": "Footnotes",
+    "footnote_back": "Back to text",
+    "footnote_jump": "Footnote {n}"
   },
   "media": {
     "image_failed": "Image failed to load",

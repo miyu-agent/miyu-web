@@ -5,14 +5,16 @@
 
 import { h, icon } from '../ui/dom.js';
 import { t } from '../util/res.js';
-import { filePath } from './inline.js';
+import { filePath, TAGS } from './inline.js';
 import { math } from './math.js';
 import { paint } from './highlight.js';
 import { writeClipboard } from '../core/host.js';
 
 /**
  * 造 DOM 时带着的：扩展点（`render.js` 的 `Hooks`）和提示（复制成了没有）。
- * @typedef {{hooks: import('./render.js').Hooks, say?: (text: string, good?: boolean) => void}} Context
+ * `notes` 是这条回答的脚注，名字 → 号、那一条、正文里引用它的上标（`build` 先造好，引用、「↩」照它滚）。
+ * @typedef {{hooks: import('./render.js').Hooks, say?: (text: string, good?: boolean) => void, notes?: Map<string, Note>}} Context
+ * @typedef {{n: number, item: HTMLElement, refs: HTMLElement[]}} Note
  */
 
 /**
@@ -23,8 +25,18 @@ import { writeClipboard } from '../core/host.js';
  */
 export function build(blocks, ctx) {
   const frag = document.createDocumentFragment();
-  for (const b of blocks) frag.append(block(b, ctx));
+  const foot = blocks.find((b) => b.type === 'footnotes');
+  /** @type {Map<string, Note>} */
+  const notes = new Map();
+  if (foot?.type === 'footnotes') foot.items.forEach((it, k) => notes.set(it.id, { n: k + 1, item: h('li'), refs: [] }));
+  const inner = { ...ctx, notes };
+  for (const b of blocks) frag.append(block(b, inner));
   return frag;
+}
+
+/** 平滑滚到一处，停在视野正中（脚注的号、「↩」） @param {Element|undefined} el */
+function jump(el) {
+  el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 /** @param {import('./parse.js').Block} b @param {Context} ctx @returns {Node|string} */
@@ -48,6 +60,18 @@ function block(b, ctx) {
         : h('li.task-list-item', h('input', { type: 'checkbox', checked: it.check, disabled: true }), h('span', kids(it.kids, ctx))))));
     case 'quote':
       return h('blockquote', kids(b.kids, ctx));
+    case 'details':
+      // 折叠块（第 2 条）：标题一行能点，里面照整条回答造
+      return h('details.md-details', h('summary', b.summary ? kids(b.summary, ctx) : t('markdown.details')),
+        h('div.md-details-body', b.blocks.map((x) => block(x, ctx))));
+    case 'footnotes':
+      return h('section.footnotes', { 'aria-label': t('markdown.footnotes') }, h('ol', b.items.map((it) => {
+        const note = /** @type {Note} */ (ctx.notes?.get(it.id));
+        const back = t('markdown.footnote_back');
+        note.item.append(...[kids(it.kids, ctx)].flat(Infinity).filter((x) => x != null), ' ',
+          h('button.footnote-back', { type: 'button', title: back, 'aria-label': back, onclick: () => jump(note.refs[0]) }, '↩'));
+        return note.item;
+      })));
     default:
       return h('p', kids(b.kids, ctx));
   }
@@ -99,6 +123,17 @@ function inlineNode(n, ctx) {
     case 'image':
       // 没接扩展点、扩展点不认的（比如地址是个 mailto:）照原文写
       return ctx.hooks.image?.(n.src, n.alt) ?? `![${n.alt}](${n.src})`;
+    case 'tag':
+      // 放行的标签照名字新造（第 1 条），名字不在表里的照字
+      return TAGS.includes(n.tag) ? h(n.tag, kids(n.kids, ctx)) : kids(n.kids, ctx);
+    case 'fnref': {
+      // 脚注的引用：有定义的画成上标的号，点了滚到那一条；没定义的照原文
+      const note = ctx.notes?.get(n.id);
+      if (!note) return n.raw;
+      const ref = h('sup.footnote-ref', h('button', { type: 'button', title: t('markdown.footnote_jump', { n: note.n }), onclick: () => jump(note.item) }, String(note.n)));
+      note.refs.push(ref);
+      return ref;
+    }
     case 'titled':
       // 标题和地址在同一个链接里，点哪儿都能走；地址那半截退半档（旧版 `.link-url`）
       return [n.indent || null, link(n.href, '.auto-link.title-link', [

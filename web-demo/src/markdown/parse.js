@@ -5,8 +5,10 @@
 //! 照这个先后认：空行；围起来的代码（```` ``` ```` 加语言，`~~~` 不算）；认领的一行（`options.line`，以后的音视频卡片）；
 //! 独占几行的公式 `$$…$$`、`\[…\]`；表格；分隔线；标题（`#` 是 h2，往下顺延）；无序列表（不嵌套，`[ ]`、`[x]` 是任务）；
 //! 有序列表（不嵌套、不认起始数）；引用（里面只认行内的写法）；段落（软换行照换行）。块里的字交给 `inline.js`。
+//! 另外两种（2026-10-23）：独占一行的 `<details>`…`</details>` 折叠块，里面照整条回答认块；`[^名字]: 内容` 脚注的定义，
+//! 从正文里拿走，照定义的先后收在最后一块 `footnotes` 里。
 
-import { inline } from './inline.js';
+import { inline, FOOTNOTE_NAME } from './inline.js';
 
 /**
  * 一块。`code` 的 `closed` 是围栏收齐了没有：没收齐的代码到末尾为止（在收的时候，见 `stream.js`）；
@@ -19,7 +21,10 @@ import { inline } from './inline.js';
  *   | {type: 'table', align: string[], head: import('./inline.js').Inline[][], rows: import('./inline.js').Inline[][][]}
  *   | {type: 'hr'}
  *   | {type: 'list', ordered: boolean, start?: number, task: boolean, items: {check: boolean|null, kids: import('./inline.js').Inline[]}[]}
- *   | {type: 'line', text: string, value: any}} Block
+ *   | {type: 'line', text: string, value: any}
+ *   | {type: 'details', summary: import('./inline.js').Inline[]|null, blocks: Block[]}
+ *   | {type: 'footnotes', items: {id: string, kids: import('./inline.js').Inline[]}[]}} Block
+ * `details` 的 `summary` 是 `null` 的是没写 `<summary>`；`footnotes` 只在最后，一条回答最多一块。
  */
 
 /** 围栏的开头：```` ``` ```` 加可有可无的语言，别的字不许有（`stream.js` 照同一个认）。 */
@@ -34,6 +39,12 @@ const NUMBERED = /^\s*(\d+)[.)]\s+(.+)$/;
 const TASK = /^\[([ xX])\]\s+(.*)$/;
 const QUOTE = /^\s*>\s?(.*)$/;
 const MATH_DELIMS = [['$$', '$$'], ['\\[', '\\]']];
+/** 折叠块（第 2 条）：开头一行 `<details>`，后面可以紧跟 `<summary>…</summary>`；独占一行的标题、收尾。都不带属性。 */
+const DETAILS_OPEN = /^\s*<details>\s*(?:<summary>(.*?)<\/summary>\s*)?$/i;
+const SUMMARY = /^\s*<summary>(.*?)<\/summary>\s*$/i;
+const DETAILS_CLOSE = /^\s*<\/details>\s*$/i;
+/** 脚注的定义：`[^名字]: 内容`；下面缩进的几行接着算它的。 */
+const FOOTNOTE_DEF = new RegExp(`^\\[\\^(${FOOTNOTE_NAME})\\]:\\s?(.*)$`);
 
 /**
  * 解析一条回答。
@@ -44,6 +55,20 @@ const MATH_DELIMS = [['$$', '$$'], ['\\[', '\\]']];
  */
 export function parse(source, { line } = {}) {
   const lines = String(source ?? '').replace(/\r\n?/g, '\n').split('\n');
+  /** @type {Map<string, import('./inline.js').Inline[]>} */
+  const notes = new Map();
+  const blocks = parseLines(lines, 0, lines.length, line, notes, 0);
+  if (notes.size) blocks.push({ type: 'footnotes', items: [...notes].map(([id, kids]) => ({ id, kids })) });
+  return blocks;
+}
+
+/**
+ * `lines` 的 `[from, to)` 那几行认成块；脚注的定义收进 `notes`（同一个名字的留第一条）。`depth` 是套了几层折叠块。
+ * @param {string[]} lines @param {number} from @param {number} to
+ * @param {((line: string) => any)|undefined} line @param {Map<string, import('./inline.js').Inline[]>} notes @param {number} depth
+ * @returns {Block[]}
+ */
+function parseLines(lines, from, to, line, notes, depth) {
   const asked = new Map();
   /** 这一行有没有被认领：问过的记着，段落里问过的，轮到它当块时不再问。 */
   const claim = (i) => {
@@ -53,8 +78,8 @@ export function parse(source, { line } = {}) {
   };
   /** @type {Block[]} */
   const blocks = [];
-  let i = 0;
-  while (i < lines.length) {
+  let i = from;
+  while (i < to) {
     const text = lines[i];
     if (!text.trim()) {
       i += 1;
@@ -65,8 +90,8 @@ export function parse(source, { line } = {}) {
       const body = [];
       const start = i;
       i += 1;
-      while (i < lines.length && !FENCE_CLOSE.test(lines[i])) body.push(lines[i++]);
-      const closed = i < lines.length;
+      while (i < to && !FENCE_CLOSE.test(lines[i])) body.push(lines[i++]);
+      const closed = i < to;
       if (closed) i += 1;
       // 语言写 math 的围起来的一段是独占几行的公式（2026-10-19 项目主人让终端认，两个头一样）；还没收的照代码画，收了再排；`latex` 照源码画
       if (closed && fence[1].toLowerCase() === 'math') blocks.push({ type: 'math', tex: body.join('\n'), raw: lines.slice(start, i).join('\n') });
@@ -79,13 +104,38 @@ export function parse(source, { line } = {}) {
       i += 1;
       continue;
     }
-    const math = /^\s*(\$\$|\\\[)/.test(text) ? mathBlock(lines, i) : null;
+    const opened = DETAILS_OPEN.exec(text);
+    if (opened && depth < 8) {
+      const end = detailsEnd(lines, i + 1, to);
+      let start = i + 1;
+      let summary = opened[1] ?? null;
+      if (summary == null) {
+        // 标题可以在下一行，中间隔着空行也行
+        let k = start;
+        while (k < end && !lines[k].trim()) k += 1;
+        const named = k < end ? SUMMARY.exec(lines[k]) : null;
+        if (named) { summary = named[1]; start = k + 1; }
+      }
+      blocks.push({ type: 'details', summary: summary == null ? null : inline(summary), blocks: parseLines(lines, start, end, line, notes, depth + 1) });
+      i = Math.min(to, end + 1);
+      continue;
+    }
+    const note = FOOTNOTE_DEF.exec(text);
+    if (note) {
+      const body = [note[2]];
+      i += 1;
+      // 下面缩进的几行接着算它的；空行以后还缩进着的也算
+      while (i < to && (/^(?: {2,}|\t)\S/.test(lines[i]) || (!lines[i].trim() && i + 1 < to && /^(?: {2,}|\t)\S/.test(lines[i + 1])))) body.push(lines[i++].trim());
+      if (!notes.has(note[1])) notes.set(note[1], inline(body.join('\n').trim()));
+      continue;
+    }
+    const math = /^\s*(\$\$|\\\[)/.test(text) ? mathBlock(lines, i, to) : null;
     if (math) {
       blocks.push({ type: 'math', tex: math.tex, raw: lines.slice(i, math.next).join('\n') });
       i = math.next;
       continue;
     }
-    const tabled = isTableStart(lines, i) ? table(lines, i) : null;
+    const tabled = isTableStart(lines, i, to) ? table(lines, i, to) : null;
     if (tabled) {
       blocks.push(tabled.block);
       i = tabled.next;
@@ -102,7 +152,7 @@ export function parse(source, { line } = {}) {
       i += 1;
       continue;
     }
-    const listed = list(lines, i);
+    const listed = list(lines, i, to);
     if (listed) {
       blocks.push(listed.block);
       i = listed.next;
@@ -110,23 +160,33 @@ export function parse(source, { line } = {}) {
     }
     if (/^\s*>/.test(text)) {
       const quoted = [];
-      for (let m; i < lines.length && (m = QUOTE.exec(lines[i])); i += 1) quoted.push(m[1]);
+      for (let m; i < to && (m = QUOTE.exec(lines[i])); i += 1) quoted.push(m[1]);
       blocks.push({ type: 'quote', kids: inline(quoted.join('\n')) });
       continue;
     }
     const para = [text];
     i += 1;
-    while (i < lines.length && lines[i].trim() && !startsBlock(lines, i, claim)) para.push(lines[i++]);
+    while (i < to && lines[i].trim() && !startsBlock(lines, i, to, claim)) para.push(lines[i++]);
     blocks.push({ type: 'para', kids: inline(para.join('\n')) });
   }
   return blocks;
 }
 
+/** 从 `from` 起配对的 `</details>` 在第几行（照层数配对）；没有的是 `to`（在收的时候到末尾为止）。 */
+function detailsEnd(lines, from, to) {
+  let level = 1;
+  for (let i = from; i < to; i += 1) {
+    if (DETAILS_OPEN.test(lines[i])) level += 1;
+    else if (DETAILS_CLOSE.test(lines[i]) && --level === 0) return i;
+  }
+  return to;
+}
+
 /** 这一行能不能开一块：段落碰到它就断开。 */
-function startsBlock(lines, i, claim) {
+function startsBlock(lines, i, to, claim) {
   const text = lines[i];
-  return /^\s*```/.test(text) || /^#{1,6}\s+/.test(text) || /^\s*[-*+]\s+/.test(text) || /^\s*\d+[.)]\s+/.test(text)
-    || /^\s*>/.test(text) || isRule(text) || isTableStart(lines, i) || /^\s*\$\$/.test(text) || /^\s*\\\[\s*$/.test(text)
+  return DETAILS_OPEN.test(text) || DETAILS_CLOSE.test(text) || FOOTNOTE_DEF.test(text) || /^\s*```/.test(text) || /^#{1,6}\s+/.test(text) || /^\s*[-*+]\s+/.test(text) || /^\s*\d+[.)]\s+/.test(text)
+    || /^\s*>/.test(text) || isRule(text) || isTableStart(lines, i, to) || /^\s*\$\$/.test(text) || /^\s*\\\[\s*$/.test(text)
     || claim(i) != null;
 }
 
@@ -140,14 +200,14 @@ function isRule(text) {
  * 独占几行的公式：`{tex, next}`（`next` 是公式后面那一行），没收齐的是 `null`（在收的时候照原文，收齐了下一次重画自己变公式）。
  * 开头那一行、收尾那一行可以带着公式的字；一行里开了又收的也算。
  */
-function mathBlock(lines, index) {
+function mathBlock(lines, index, to) {
   const first = lines[index].trim();
   for (const [open, close] of MATH_DELIMS) {
     if (!first.startsWith(open)) continue;
     const rest = first.slice(open.length);
     if (rest.length > close.length && rest.endsWith(close)) return { tex: rest.slice(0, -close.length), next: index + 1 };
     const body = rest && rest !== close ? [rest] : [];
-    for (let i = index + 1; i < lines.length; i += 1) {
+    for (let i = index + 1; i < to; i += 1) {
       const candidate = lines[i].trim();
       if (candidate.endsWith(close)) {
         if (candidate !== close) body.push(candidate.slice(0, -close.length));
@@ -216,8 +276,8 @@ function alignments(line) {
 }
 
 /** 这一行加下一行是不是表格的头：表头和分隔行的列数得一样。 */
-function isTableStart(lines, i) {
-  if (i + 1 >= lines.length) return false;
+function isTableStart(lines, i, to) {
+  if (i + 1 >= to) return false;
   const head = row(lines[i]);
   const align = alignments(lines[i + 1]);
   return Boolean(align && head.separated && head.cells.length === align.length);
@@ -227,12 +287,12 @@ function isTableStart(lines, i) {
  * 一张表：表头、分隔行，下面一行行到空行或者没有 `|` 的一行为止；格数照表头，少的补空，多的丢掉。
  * @returns {{block: Block, next: number}} `next` 是表格后面那一行
  */
-function table(lines, start) {
+function table(lines, start, to) {
   const head = row(lines[start]).cells;
   const align = /** @type {string[]} */ (alignments(lines[start + 1]));
   const rows = [];
   let i = start + 2;
-  for (; i < lines.length && lines[i].trim(); i += 1) {
+  for (; i < to && lines[i].trim(); i += 1) {
     const r = row(lines[i]);
     if (!r.separated) break;
     rows.push(head.map((_, k) => inline(r.cells[k] ?? '')));
@@ -246,12 +306,12 @@ function table(lines, start) {
  * `2.`、`3.` 照原样接着数）。不是列表的是 `null`。
  * @returns {{block: Block, next: number}|null}
  */
-function list(lines, start) {
+function list(lines, start, to) {
   for (const [pattern, ordered] of /** @type {[RegExp, boolean][]} */ ([[BULLET, false], [NUMBERED, true]])) {
     if (!pattern.test(lines[start])) continue;
     const items = [];
     let i = start;
-    for (let m; i < lines.length && (m = pattern.exec(lines[i])); i += 1) {
+    for (let m; i < to && (m = pattern.exec(lines[i])); i += 1) {
       const text = ordered ? m[2] : m[1];
       const task = ordered ? null : TASK.exec(text);
       items.push(task ? { check: task[1] !== ' ', kids: inline(task[2]) } : { check: null, kids: inline(text) });

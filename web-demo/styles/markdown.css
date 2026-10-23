@@ -140,3 +140,32 @@
 .assistant-content .markdown-body table { font-size: calc(13px * var(--text-scale)); }
 .assistant-content .markdown-body blockquote { border-left-width: 2px; background: none; color: var(--text-soft); }
 .assistant-content .markdown-body > :is(p, h2, h3, h4, h5, h6, ul, ol, blockquote) { max-width: 40em; }
+
+/* 折叠块、脚注、按键（蓝图「她的回答：Markdown」第 10 条，2026-10-23） */
+.markdown-body .md-details { margin: 0.6em 0; }
+.markdown-body .md-details > summary {
+  display: inline-flex; align-items: center; gap: 6px; list-style: none; color: var(--text-soft); font-weight: 600; cursor: pointer;
+  transition: color calc(0.15s * var(--motion-scale)) ease;
+}
+.markdown-body .md-details > summary::-webkit-details-marker { display: none; }
+.markdown-body .md-details > summary::before {
+  content: ""; width: 0; height: 0; border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-left: 5px solid currentColor;
+  transition: transform calc(0.15s * var(--motion-scale)) ease;
+}
+.markdown-body .md-details[open] > summary::before { transform: rotate(90deg); }
+.markdown-body .md-details > summary:hover { color: var(--text); }
+.markdown-body .md-details-body { margin-top: 0.4em; padding-left: 12px; border-left: 2px solid var(--line); }
+.markdown-body .md-details-body > :first-child { margin-top: 0; }
+.markdown-body .md-details-body > :last-child { margin-bottom: 0; }
+.markdown-body .footnote-ref { line-height: 0; }
+.markdown-body .footnote-ref > button { padding: 0 1px; border: 0; background: none; color: var(--accent); font: inherit; font-size: 0.78em; line-height: 1; cursor: pointer; }
+.markdown-body .footnote-ref > button:hover { text-decoration: underline; }
+.markdown-body .footnotes { margin-top: 1.4em; padding-top: 0.6em; border-top: 1px solid var(--line); color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); }
+.markdown-body .footnotes ol { margin: 0; padding-left: 1.6em; }
+.markdown-body .footnote-back { padding: 0 2px; border: 0; background: none; color: var(--text-faint); font: inherit; cursor: pointer; }
+.markdown-body .footnote-back:hover { color: var(--accent); }
+.markdown-body kbd {
+  display: inline-block; padding: 0 5px; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: var(--r-4);
+  background: var(--surface-2); font: 0.82em/1.5 var(--font-mono); vertical-align: 0.06em;
+}
+.markdown-body mark { padding: 0 2px; border-radius: var(--r-2); background: color-mix(in srgb, var(--gold) 30%, transparent); color: inherit; }

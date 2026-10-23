@@ -6348,5 +6348,59 @@
     "select": [
       ".chat-grip"
     ]
+  },
+  "markdown.details": {
+    "zh": "回答：折叠块（<details>）",
+    "select": [
+      ".markdown-body .md-details"
+    ]
+  },
+  "markdown.details-body": {
+    "zh": "回答：折叠块展开的内容",
+    "select": [
+      ".markdown-body .md-details-body"
+    ]
+  },
+  "markdown.footnote-ref": {
+    "zh": "回答：正文里脚注的号",
+    "select": [
+      ".markdown-body .footnote-ref"
+    ]
+  },
+  "markdown.footnotes": {
+    "zh": "回答：最后的「脚注」",
+    "select": [
+      ".markdown-body .footnotes"
+    ]
+  },
+  "markdown.footnote-back": {
+    "zh": "回答：脚注后面回到正文的「↩」",
+    "select": [
+      ".markdown-body .footnote-back"
+    ]
+  },
+  "markdown.kbd": {
+    "zh": "回答：按键（<kbd>）",
+    "select": [
+      ".markdown-body kbd"
+    ]
+  },
+  "markdown.mark": {
+    "zh": "回答：标记（<mark>）",
+    "select": [
+      ".markdown-body mark"
+    ]
+  },
+  "markdown.details-summary": {
+    "zh": "回答：折叠块能点的标题一行",
+    "select": [
+      ".markdown-body .md-details > summary"
+    ]
+  },
+  "markdown.footnote-ref-button": {
+    "zh": "回答：脚注的号（能点的那个）",
+    "select": [
+      ".markdown-body .footnote-ref > button"
+    ]
   }
 }

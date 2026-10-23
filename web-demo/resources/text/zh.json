@@ -222,7 +222,11 @@
   },
   "markdown": {
     "code": "代码",
-    "copy_code": "复制代码"
+    "copy_code": "复制代码",
+    "details": "详情",
+    "footnotes": "脚注",
+    "footnote_back": "回到正文",
+    "footnote_jump": "第 {n} 条脚注"
   },
   "media": {
     "image_failed": "图片载入失败",

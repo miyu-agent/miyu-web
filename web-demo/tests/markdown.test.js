@@ -339,3 +339,48 @@ test('图片：![说明](地址)，地址照写（本机的由扩展点换成桥
   assert.deepEqual(inline('![没收齐](a.png'), ['![没收齐](a.png']);
   assert.deepEqual(inline('![](有 空格.png)'), ['![](有 空格.png)']);
 });
+
+// ── 放行的标签、折叠块、脚注（第 1、2、3 条，2026-10-23 项目主人看到 <kbd>、<details> 原样写着） ──
+
+test('成对、不带属性的 <kbd> 这几个画成标签，里面照行内；带属性的、不放行的、没配对的照字', () => {
+  assert.deepEqual(inline('按 <kbd>Ctrl</kbd> + <KBD>S</KBD>'), ['按 ', { type: 'tag', tag: 'kbd', kids: ['Ctrl'] }, ' + ', { type: 'tag', tag: 'kbd', kids: ['S'] }]);
+  assert.deepEqual(inline('H<sub>2</sub>O <mark>**重**</mark>'), ['H', { type: 'tag', tag: 'sub', kids: ['2'] }, 'O ', { type: 'tag', tag: 'mark', kids: [{ type: 'strong', kids: ['重'] }] }]);
+  assert.deepEqual(inline('<kbd class="x">a</kbd>'), ['<kbd class="x">a</kbd>']);
+  assert.deepEqual(inline('<span>a</span> <kbd>没收尾'), ['<span>a</span> <kbd>没收尾']);
+  assert.deepEqual(inline('`<kbd>a</kbd>`'), [{ type: 'code', text: '<kbd>a</kbd>' }]);
+  // <s> 和 <sub> 不混
+  assert.deepEqual(inline('<s>删</s><sup>1</sup>'), [{ type: 'tag', tag: 's', kids: ['删'] }, { type: 'tag', tag: 'sup', kids: ['1'] }]);
+});
+
+test('脚注：[^名字]: 的一行从正文拿走，照定义的先后收在最后一块；缩进的下一行接着算；引用是 fnref', () => {
+  const blocks = parse('正文[^a]，再一个[^b]。\n\n[^b]: 第二条\n[^a]: 第一条\n  接着一行\n\n后面的段落');
+  assert.deepEqual(blocks, [
+    para('正文', { type: 'fnref', id: 'a', raw: '[^a]' }, '，再一个', { type: 'fnref', id: 'b', raw: '[^b]' }, '。'),
+    para('后面的段落'),
+    { type: 'footnotes', items: [{ id: 'b', kids: ['第二条'] }, { id: 'a', kids: ['第一条', BR, '接着一行'] }] },
+  ]);
+  // 段落里的定义也断开段落；没有定义的引用照样是 fnref（造 DOM 时照原文写）
+  assert.deepEqual(parse('一段\n[^1]: 定义'), [para('一段'), { type: 'footnotes', items: [{ id: '1', kids: ['定义'] }] }]);
+  assert.deepEqual(parse('没定义[^x]'), [para('没定义', { type: 'fnref', id: 'x', raw: '[^x]' })]);
+  // [^ 后面带空白的不是脚注
+  assert.deepEqual(inline('[^a b]'), ['[^a b]']);
+});
+
+test('折叠块：<details> 到配对的 </details>，标题在同一行、下一行（隔空行也行）都认，里面照整条认块；能套着；没收尾的到末尾', () => {
+  const summary = (s) => [s];
+  assert.deepEqual(parse('<details>\n<summary>点开看更多</summary>\n\n藏起来的。\n\n- 一项\n</details>\n\n后面'), [
+    { type: 'details', summary: summary('点开看更多'), blocks: [para('藏起来的。'), { type: 'list', ordered: false, task: false, items: [{ check: null, kids: ['一项'] }] }] },
+    para('后面'),
+  ]);
+  assert.deepEqual(parse('<details><summary>外</summary>\n<details>\n\n<summary>里</summary>\n内容\n</details>\n外面的\n</details>'), [
+    { type: 'details', summary: summary('外'), blocks: [{ type: 'details', summary: summary('里'), blocks: [para('内容')] }, para('外面的')] },
+  ]);
+  assert.deepEqual(parse('<details>\n没写标题'), [{ type: 'details', summary: null, blocks: [para('没写标题')] }]);
+  // 带属性的、不独占一行的照字
+  assert.deepEqual(parse('<details open>\n字\n</details>'), [para('<details open>', BR, '字'), para('</details>')]);
+  // 折叠块里的脚注定义也收到最后
+  assert.deepEqual(parse('<details>\n看[^n]\n[^n]: 注\n</details>'), [
+    { type: 'details', summary: null, blocks: [para('看', { type: 'fnref', id: 'n', raw: '[^n]' })] },
+    { type: 'footnotes', items: [{ id: 'n', kids: ['注'] }] },
+  ]);
+});

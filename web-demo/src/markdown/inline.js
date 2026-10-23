@@ -3,7 +3,8 @@
 //! 节点交给 `build.js` 造 DOM，这里测得了。
 //!
 //! 照这个先后认：独占一行的「标题（地址）」；`\(…\)`、`$$…$$`、`$…$` 公式；反斜杠转义；换行；`` `代码` ``；
-//! `![说明](地址)` 图片（旧版没有，蓝图「图片」第 1 条加的）；`[字](地址)`；不带属性的 `<br>`；`<地址>`；裸地址；`~~删除~~`；`**粗**`、`__粗__`；`*斜*`、`_斜_`。
+//! `![说明](地址)` 图片（旧版没有，蓝图「图片」第 1 条加的）；`[^名字]` 脚注的引用；`[字](地址)`；不带属性的 `<br>`；
+//! 成对、不带属性的 `<kbd>` 这几个（第 1 条，2026-10-23）；`<地址>`；裸地址；`~~删除~~`；`**粗**`、`__粗__`；`*斜*`、`_斜_`。
 //! 认不出的照字。嵌套最多 `markdown.json` 的 `inline_depth` 层，再深的整段照字。
 //!
 //! 节点：字是字符串（挨着的并成一段）；别的是 `{type, …}`，见 [`Inline`]。
@@ -20,7 +21,10 @@ import { res } from '../util/res.js';
  *   | {type: 'autolink', href: string, text: string}
  *   | {type: 'image', src: string, alt: string}
  *   | {type: 'titled', href: string, indent: string, title: Inline[], gap: string, open: string, url: string, close: string}
- *   | {type: 'del' | 'strong' | 'em', kids: Inline[]}} Inline
+ *   | {type: 'del' | 'strong' | 'em', kids: Inline[]}
+ *   | {type: 'tag', tag: string, kids: Inline[]}
+ *   | {type: 'fnref', id: string, raw: string}} Inline
+ *   `tag` 是放行的成对标签（`TAGS` 里的，名字小写）；`fnref` 是 `[^名字]`，有没有定义造 DOM 时才知道，没有的照 `raw` 写；
  *   `math` 的 `raw` 是原文：KaTeX 排不了时照它写（第 6 条）；`autolink` 是 `<地址>` 和裸地址，字照原样；
  *   `titled` 是「标题（地址）」一整行，标题、括号、地址都在同一个链接里
  */
@@ -32,6 +36,12 @@ const PROTOCOLS = ['http:', 'https:', 'file:'];
 const ESCAPES = '\\`*_[]|~$';
 /** 不带属性的 `<br>`、`<br/>`、`<br />`，大小写不论；粘着从游标处试。带属性的、别的标签照字（第 1 条）。 */
 const BREAK_TAG = /<br[ \t]*\/?>/iy;
+/** 放行的成对行内标签（第 1 条）：不带属性，里面照行内的写法；配不上收尾的照字。 */
+export const TAGS = ['kbd', 'sub', 'sup', 'mark', 'ins', 'u', 's', 'del'];
+const OPEN_TAG = new RegExp(`<(${TAGS.join('|')})>`, 'iy');
+/** 脚注的引用 `[^名字]`：名字不带空白、`]`，最长 40 个字（同 `parse.js` 的定义）。 */
+export const FOOTNOTE_NAME = '[^\\]\\s]{1,40}';
+const FOOTNOTE_REF = new RegExp(`\\[\\^(${FOOTNOTE_NAME})\\]`, 'y');
 /**
  * 裸地址：中日韩的标点一个都不进地址（「…archlinux.org、AUR」里顿号后面还有字母，只修末尾不够，
  * 整段会被 `new URL` 当成域名；旧版实测）。汉字本身不排除：维基那种中文路径是合法的。
@@ -140,6 +150,14 @@ export function inline(source, depth = 0, inLink = false) {
         continue;
       }
     }
+    if (c === '[' && text[i + 1] === '^') {
+      FOOTNOTE_REF.lastIndex = i;
+      const ref = FOOTNOTE_REF.exec(text);
+      if (ref) {
+        emit({ type: 'fnref', id: ref[1], raw: ref[0] }, i + ref[0].length);
+        continue;
+      }
+    }
     if (c === '[') {
       const labelEnd = text.indexOf('](', i + 1);
       const urlEnd = labelEnd >= 0 ? text.indexOf(')', labelEnd + 2) : -1;
@@ -155,6 +173,14 @@ export function inline(source, depth = 0, inLink = false) {
       const br = BREAK_TAG.exec(text);
       if (br) {
         emit({ type: 'br' }, i + br[0].length);
+        continue;
+      }
+      OPEN_TAG.lastIndex = i;
+      const open = OPEN_TAG.exec(text);
+      const tag = open?.[1].toLowerCase();
+      const end = tag ? text.toLowerCase().indexOf(`</${tag}>`, i + open[0].length) : -1;
+      if (tag && end > i + open[0].length) {
+        emit({ type: 'tag', tag, kids: deeper(text.slice(i + open[0].length, end)) }, end + tag.length + 3);
         continue;
       }
     }
