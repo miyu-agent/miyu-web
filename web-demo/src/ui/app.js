@@ -946,7 +946,8 @@ export class App {
     if (collapsed || a.maximized || innerWidth <= res.layout.narrow_below) return;
     const scale = parseFloat(getComputedStyle(this.root).zoom) || 1;
     const width = innerWidth / scale;
-    const sidebar = this.sidebar.el.getBoundingClientRect().width || 252;
+    // 量出来的是屏幕上的像素，换成自己的 CSS 像素（原来没换：放大 1.1 时左栏多算 25px，正好放得下的也自动收起）
+    const sidebar = (this.sidebar.el.getBoundingClientRect().width / scale) || 252;
     const right = a.open || sideMode === 'wide' ? a.ratio * width : this.side.narrowWidth();
     if (width - sidebar - right >= res.artifacts.chat_min) return;
     this.autoCollapsed = true;
