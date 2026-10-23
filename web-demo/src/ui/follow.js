@@ -57,6 +57,8 @@ export class Follow {
     this.kept = /** @type {{top: number}|null} */ (null);
     /** 新的一屏从哪起（`scrollTop`）：清空以后那一行顶上去的地方；你发话时回到它，不回到 0 */
     this.base = 0;
+    /** 上一次对的时候视口多高：输入框那一块变矮（运行状态行收起）视口变高时，内容跟着往下贴住输入框 */
+    this.lastView = 0;
     el.addEventListener('scroll', () => this.scrolled(), { passive: true });
     /** 人最后一次动（按下指针、滚轮、触摸、翻页键）是什么时候：这之后一小会儿里的滚动才算人滚的 */
     this.intentAt = 0;
@@ -69,6 +71,15 @@ export class Follow {
     document.addEventListener('keydown', (e) => { if (['PageUp', 'PageDown', 'ArrowUp', 'ArrowDown', 'Home', 'End', ' '].includes(e.key)) intend(); }, { capture: true });
     el.addEventListener('wheel', (e) => { if (e.deltaY < 0) this.leave(); }, { passive: true });
     el.addEventListener('keydown', (e) => { if (['PageUp', 'ArrowUp', 'Home'].includes(e.key)) this.leave(); });
+    // 从别的标签页切回来：藏着的时候一帧都没走，攒下来的一下放到位，不当着人的面滑过去（2026-10-23 项目主人：切回来看到内容
+    // 刚滑下来）；切回来后一小会儿里的都一下到位
+    this.shownAt = 0;
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') return;
+      this.shownAt = performance.now();
+      if (this.glideTo != null && this.follow) this.place(this.glideTo, this.el.clientHeight, this.list.offsetHeight);
+      this.anchor();
+    });
     // 高度一变就对一次：收起、展开是动画，一帧一帧地变
     const watch = new ResizeObserver(() => this.anchor());
     watch.observe(list);
@@ -89,7 +100,10 @@ export class Follow {
     this.placed = null;
     this.hold = null;
     this.follow = !up && atBottom(this.el, res.layout.follow_within);
-    if (!this.follow) this.floor = Math.min(this.floor, this.el.scrollTop);
+    if (!this.follow) {
+      this.floor = Math.min(this.floor, this.el.scrollTop);
+      this.trim();
+    }
     if (this.pin) {
       this.pin.auto = false;
       if (this.follow) this.pin = null;
@@ -127,6 +141,16 @@ export class Follow {
     this.follow = false;
     this.floor = Math.min(this.floor, this.el.scrollTop);
     if (this.pin) this.pin.auto = false;
+    this.trim();
+  }
+
+  /**
+   * 人滚开了：垫的空白只留到视口底下够用的那么多，往下滚到内容的底就到头，滚不进一片空白（2026-10-23 项目主人：能往下滚出
+   * 一块空白，字一来又没了）。往上滚的视口不动；人在空白里的照旧垫着到视口底下。
+   */
+  trim() {
+    const pad = padFor(this.el.scrollTop, this.el.clientHeight, this.list.offsetHeight);
+    if (pad < this.spacer.offsetHeight) this.spacer.style.height = `${pad}px`;
   }
 
   /** 照现在的样子放视口：钉着一行的保它不动；停住的正文钉在顶上；跟着最新的往下走，碰到长过视口的正文停住。 */
@@ -146,9 +170,19 @@ export class Follow {
       if (reply?.key === this.pin.key) this.place(Math.max(0, offsetIn(reply.node, this.list) - margin), view, natural);
       return;
     }
-    if (!this.follow) return;
+    if (!this.follow) {
+      this.lastView = view;
+      return;
+    }
+    // 视口变高（输入框那一块变矮：一轮结束运行状态行收起）：最新的内容跟着往下，贴住输入框一起走，不留一截空档等收（2026-10-23
+    // 逐帧量出来：原来视口不动、接着往上缓，收完再把空档慢慢收掉，看着先往上再往下，项目主人说像弹簧）
+    if (this.lastView && view > this.lastView) this.floor = Math.max(this.base, this.floor - (view - this.lastView));
+    this.lastView = view;
+    // 不往回退照的是视口真到了哪，不是还在缓的那个目标：缓着的时候内容变矮（上一步的命令收起），停在真到的地方，不接着滑进
+    // 垫的空白（同一天量出来：原来照目标算，视口接着往下滑，输入框上面空一截，下一行字来才填上）
+    const at = Math.max(this.el.scrollTop, this.placed ?? 0);
     // 收得多、最新的要整个退到视口上面去的：跟着往上走，底边留在视口 `follow_keep` 那么深的地方（不越过清空那一行）
-    let { top } = anchorAt(this.floor, view, natural, view * res.layout.follow_keep, this.base);
+    let { top } = anchorAt(Math.min(this.floor, at), view, natural, view * res.layout.follow_keep, this.base);
     if (reply?.streaming && !this.pinned.has(reply.key)) {
       const pin = pinAt(top, offsetIn(reply.node, this.list), margin);
       if (pin.pinned) {
@@ -163,15 +197,24 @@ export class Follow {
   }
 
   /**
-   * 跟着最新的往下走：缓过去，不一下跳到位（蓝图「滚动」：追着要到的位置走，一帧走剩下的 `glide_rate`）。往回、一下要走
-   * 过一屏的、减少动画的照旧一下到位；人一滚（`intentAt`）就停下来交给人。走的时候每一帧记下放到了哪（`placed`），
-   * 浏览器报的滚动不当成人滚的。
+   * 跟着最新的往下走：缓过去，不一下跳到位（蓝图「滚动」：追着要到的位置走，照时间算，`glide_ms` 走完剩下的六成多）。字一行一行
+   * 来得比缓完快，连成一段匀着走，不走一下停一下（2026-10-23 项目主人：一抖一抖的；原来一帧走剩下的一成八，一行一百多毫秒就走完、
+   * 停下等下一行）。往回、一下要走过一屏的、减少动画的、刚切回这个标签页的照旧一下到位；人一滚（`intentAt`）就停下来交给人。
+   * 走的时候每一帧记下放到了哪（`placed`），浏览器报的滚动不当成人滚的。
+   * 内容变矮时浏览器先把视口收回去（内容加垫的不够高，滚不到原来的地方），这一下不算视口在那：垫上以后当场放回自己放的地方，
+   * 不从被收到的地方缓回去（2026-10-23 逐帧量出来：一轮结束收起时间线，视口被收到 0 又缓上去，看着先往上再往下）。
    */
   glide(top, view, natural) {
     this.spacer.style.height = `${padFor(top, view, natural)}px`;
+    if (this.placed != null && this.el.scrollTop < this.placed - 1 && performance.now() - this.intentAt > res.layout.scroll_intent_ms) {
+      this.el.scrollTop = Math.min(this.placed, top);
+      this.placed = this.el.scrollTop;
+      this.lastTop = this.placed;
+    }
     const from = this.el.scrollTop;
     const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced || top <= from || top - from > view) {
+    const hidden = typeof document !== 'undefined' && (document.visibilityState === 'hidden' || performance.now() - this.shownAt < 300);
+    if (reduced || hidden || top <= from || top - from > view) {
       this.glideTo = null;
       this.place(top, view, natural);
       return;
@@ -180,19 +223,28 @@ export class Follow {
     if (this.gliding) return;
     this.gliding = true;
     const start = performance.now();
-    const step = () => {
+    let last = start;
+    // 这一帧走到哪：照上一帧过了多久算（一帧走 `1 - e^(-dt/τ)`），帧率不同走得一样快；滚动层的 `scrollTop` 会被取整，
+    // 走的进度记在 `at` 里，不照读回来的数接着算（不然慢的时候一帧走不满一个像素，一直停着）
+    let at = from;
+    const step = (/** @type {number} */ now) => {
       const to = this.glideTo;
       if (to == null || this.intentAt > start || !this.follow) {
         this.gliding = false;
         return;
       }
-      const at = this.el.scrollTop;
+      if (Math.abs(this.el.scrollTop - at) > 2) at = this.el.scrollTop;
       const left = to - at;
       if (Math.abs(left) < 0.5) {
         this.gliding = false;
         return;
       }
-      this.el.scrollTop = at + (Math.abs(left) < 1 ? left : left * res.layout.glide_rate);
+      const dt = Math.min(64, Math.max(0, now - last));
+      last = now;
+      // 快到的时候不一像素一像素地蹭（尾巴拖半秒多，看着在漂）：最慢一毫秒走 0.06 像素
+      const move = Math.max(Math.abs(left) * (1 - Math.exp(-dt / res.layout.glide_ms)), 0.06 * dt);
+      at += Math.sign(left) * Math.min(Math.abs(left), move);
+      this.el.scrollTop = at;
       this.placed = this.el.scrollTop;
       this.lastTop = this.placed;
       requestAnimationFrame(step);

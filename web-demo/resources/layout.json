@@ -37,7 +37,7 @@
   "result_image_thumb": 96,
   "narrow_below": 836,
   "follow_within": 48,
-  "glide_rate": 0.18,
+  "glide_ms": 240,
   "follow_keep": 0.4,
   "scroll_intent_ms": 1000,
   "release_ms": 320,
