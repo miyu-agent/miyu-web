@@ -271,6 +271,40 @@ export function apply(ctx) {
   watch.observe(box, { subtree: true, attributes: true, attributeFilter: ['hidden', 'class'], childList: true });
   const resized = new ResizeObserver(wake);
   resized.observe(box);
+  // 框挪了、大小没变（宽屏下框照最宽画、居中：开关左右栏、进出工作区时只是平移，上面那个不报；2026-10-24 项目主人：
+  // 「吉祥物跟不上」）：外面那几层变了大小、哪一层开始过渡、点了按了以后，一帧一帧量框的位置，变了推一帧（站在框上的
+  // 跟着挪），连着几帧不动、也没在淡了才停；站在框上时照框外面那几层的透明度一起淡（换宽时框先淡掉、换好再滑回来淡入）
+  const outer = /** @type {HTMLElement[]} */ ([]);
+  for (let at = box.parentElement; at && at !== document.body; at = at.parentElement) outer.push(at);
+  const shifted = new ResizeObserver(() => follow());
+  for (const at of outer) shifted.observe(at);
+  /** 跟的那一帧、连着几帧没动、上一帧框在哪 */
+  let followFrame = 0;
+  let still = 0;
+  let lastBox = '';
+  const STILL_FRAMES = 8;
+  const fadeOf = () => [box, ...outer].reduce((o, at) => o * (parseFloat(getComputedStyle(at).opacity) || 0), 1);
+  function follow() {
+    still = 0;
+    if (!followFrame && !document.hidden) followFrame = requestAnimationFrame(followStep);
+  }
+  function followStep() {
+    followFrame = 0;
+    const r = box.getBoundingClientRect();
+    const sig = `${Math.round(r.left)},${Math.round(r.right)},${Math.round(r.top)}`;
+    const onBox = !stage && !behavior.body.hang && behavior.body.at?.ground?.id === homeId;
+    const fade = onBox ? fadeOf() : 1;
+    layer.style.opacity = fade < 0.995 ? fade.toFixed(3) : '';
+    if (sig !== lastBox) {
+      lastBox = sig;
+      still = 0;
+      wake();
+    } else still++;
+    if (still < STILL_FRAMES || fade < 0.995) followFrame = requestAnimationFrame(followStep);
+  }
+  const onTransition = (/** @type {TransitionEvent} */ e) => {
+    if (e.target instanceof Node && e.target.contains(box)) follow();
+  };
   // 别的包让它先藏着（`data-mascot="hold"`）、放开了：推一帧
   const held = new MutationObserver(wake);
   held.observe(document.body, { attributes: true, attributeFilter: ['data-mascot'] });
@@ -278,6 +312,7 @@ export function apply(ctx) {
     [document, 'pointermove', onMove, { passive: true }], [document, 'keydown', onKey, true], [document, 'input', onType, true], [document, 'focusout', onBlur, true],
     [canvas, 'pointerdown', onDown], [canvas, 'pointermove', onDrag], [canvas, 'pointerup', onUp], [canvas, 'pointercancel', onUp],
     [window, 'resize', wake], [document, 'visibilitychange', wake], [narrow, 'change', wake], [document, 'scroll', onScroll, { capture: true, passive: true }],
+    [document, 'transitionrun', onTransition, true], [document, 'click', follow, true], [document, 'keyup', follow, true],
   ];
   for (const [target, name, fn, opt] of listen) target.addEventListener(name, fn, opt);
   // 舞台那一块变了（换了一屏、长高了）：推一帧照新的台子站
@@ -291,6 +326,8 @@ export function apply(ctx) {
     held.disconnect();
     watch.disconnect();
     resized.disconnect();
+    shifted.disconnect();
+    if (followFrame) cancelAnimationFrame(followFrame);
     behavior.destroy();
     layer.remove();
   });
