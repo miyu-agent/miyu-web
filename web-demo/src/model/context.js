@@ -9,7 +9,7 @@
 
 /** 顶层几块的颜色（CSS 变量名），别的照 `text-faint` */
 export const PART_TONES = /** @type {Record<string, string>} */ ({
-  system: 'accent', tools: 't-thought', demos: 'ribbon', summary: 'online', messages: 'gold', output: 't-full',
+  system: 'accent', tools: 't-thought', demos: 'ribbon', summary: 'online', messages: 'gold', output: 'ctx-output',
 });
 
 /** 认得的用途，照这几样写名字；别的归「其他」 */
@@ -58,7 +58,7 @@ export function toneOf(part) {
 
 /** 用途的颜色（CSS 变量名） */
 export const USE_TONES = /** @type {Record<string, string>} */ ({
-  main: 'accent', compaction: 't-thought', subagent: 'ribbon', recap: 'online', title: 'gold', memory: 't-read-only', other: 'text-faint',
+  main: 'accent', compaction: 't-code-type', subagent: 'ribbon', recap: 'online', title: 'ctx-title', memory: 'text-soft', other: 'text-faint',
 });
 
 /**

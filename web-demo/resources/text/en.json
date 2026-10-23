@@ -480,7 +480,7 @@
     "no_usage": "No usage yet",
     "with_subagents": "Includes subagents",
     "use": {
-      "main": "Conversation",
+      "main": "Main session",
       "compaction": "Compaction",
       "subagent": "Subagents",
       "recap": "Recap",
@@ -494,8 +494,7 @@
     "output": "out {n}",
     "unpriced": "{n} unpriced",
     "open_usage": "Open in Usage",
-    "by_part": "Conversation by part",
-    "by_part_note": "{n} requests · split proportionally"
+    "parts_note": "Split proportionally"
   },
   "model_menu": {
     "tip": "Switch model",

@@ -480,7 +480,7 @@
     "no_usage": "还没有用量",
     "with_subagents": "含子代理",
     "use": {
-      "main": "主对话",
+      "main": "主会话",
       "compaction": "压缩",
       "subagent": "子代理",
       "recap": "回顾",
@@ -494,8 +494,7 @@
     "output": "输出 {n}",
     "unpriced": "{n} 次没价格",
     "open_usage": "在用量页看",
-    "by_part": "主对话按部分",
-    "by_part_note": "{n} 次请求 · 按比例分摊"
+    "parts_note": "按比例分摊"
   },
   "model_menu": {
     "tip": "换模型",

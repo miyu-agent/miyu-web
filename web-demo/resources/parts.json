@@ -3269,6 +3269,30 @@
       ".ctx-use-line"
     ]
   },
+  "context.bar-group": {
+    "zh": "累计按用途：横条里一个用途那一块（主会话照各部分拆开）",
+    "select": [
+      ".ctx-bar-group"
+    ]
+  },
+  "context.use-parts": {
+    "zh": "累计按用途：主会话下面列各部分的那一行彩色小字",
+    "select": [
+      ".ctx-use-parts"
+    ]
+  },
+  "context.use-part": {
+    "zh": "累计按用途：各部分里的一项（色块、名字）",
+    "select": [
+      ".ctx-use-part"
+    ]
+  },
+  "context.use-part-n": {
+    "zh": "累计按用途：各部分里一项的 token 数",
+    "select": [
+      ".ctx-use-part-n"
+    ]
+  },
   "context.pop-link": {
     "zh": "累计按用途：「在用量页看」",
     "select": [
@@ -6305,24 +6329,6 @@
     "zh": "登录、注册：右上角的明暗按钮",
     "select": [
       ".si-corner"
-    ]
-  },
-  "context.parts": {
-    "zh": "累计按用途：主对话按部分那一段",
-    "select": [
-      ".ctx-parts"
-    ]
-  },
-  "context.parts-head": {
-    "zh": "累计按用途：主对话按部分的小标题",
-    "select": [
-      ".ctx-parts-head"
-    ]
-  },
-  "context.parts-note": {
-    "zh": "累计按用途：主对话按部分的暗字",
-    "select": [
-      ".ctx-parts-note"
     ]
   },
   "timeline.progress": {

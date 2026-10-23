@@ -256,7 +256,7 @@
 .footer-cell:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); }
 /* 浮窗：同换模型的菜单的底、细线、阴影、进出（第 2 条） */
 .ctx-pop {
-  position: absolute; z-index: 45; bottom: calc(100% + 6px); width: 300px; max-width: calc(100% - 8px); padding: calc(10px * var(--space)) calc(12px * var(--space));
+  position: absolute; z-index: 45; bottom: calc(100% + 6px); width: 320px; max-width: calc(100% - 8px); padding: calc(10px * var(--space)) calc(12px * var(--space));
   border: var(--float-border, 1px solid var(--line)); border-radius: var(--float-radius, var(--r-12)); background: var(--float-bg, color-mix(in srgb, var(--surface-1) 94%, transparent));
   -webkit-backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur)))); backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur)))); box-shadow: var(--float-elev, var(--float-shadow));
   color: var(--text); font: calc(13px * var(--text-scale))/1.35 var(--font-ui); white-space: normal; text-align: left;
@@ -293,22 +293,28 @@
 .ctx-row.is-child .ctx-dot { background: color-mix(in srgb, var(--tone) 50%, var(--surface-1)); }
 .ctx-row-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ctx-row.is-child .ctx-row-name { color: var(--text-soft); }
-.ctx-row-n { flex: none; font: calc(12px * var(--text-scale)) var(--font-mono); }
+.ctx-row-n { flex: none; font: calc(12.5px * var(--text-scale)) var(--font-mono); }
 .ctx-row-pct { flex: none; min-width: 3.6em; color: var(--text-faint); font: calc(11.5px * var(--text-scale)) var(--font-mono); text-align: right; }
-.ctx-row.is-use { align-items: flex-start; padding: calc(4px * var(--space)) calc(4px * var(--space)); }
+.ctx-row.is-use { align-items: flex-start; padding: calc(5px * var(--space)) calc(4px * var(--space)); }
 .ctx-row.is-use > .ctx-dot { margin-top: 0.42em; }
+.ctx-row.is-use > .ctx-dot.is-blank { background: none; }
 .ctx-use-text { display: flex; flex: 1; flex-direction: column; min-width: 0; }
 .ctx-use-top { display: flex; align-items: baseline; gap: calc(6px * var(--space)); }
 .ctx-use-top .ctx-row-pct { min-width: 4.5em; }
-.ctx-use-line { overflow: hidden; color: var(--text-faint); font-size: calc(11px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
+.ctx-use-line { overflow: hidden; color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }
 .ctx-pop-foot-row { display: flex; align-items: center; justify-content: space-between; gap: calc(8px * var(--space)); }
 .ctx-pop-link { display: inline-flex; align-items: center; gap: 2px; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; }
 .ctx-pop-link:hover { text-decoration: underline; }
 .ctx-pop-link .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); }
 @media (prefers-reduced-motion: reduce) { .ctx-pop, .ctx-pop.is-leaving, .ctx-pop.is-below, .ctx-pop.is-below.is-leaving { animation: none; } }
 
-/* 累计浮窗里「主对话按部分」那一段（核心 CX-3）：上面一道细线隔开 */
-.ctx-parts { margin-top: calc(10px * var(--space)); padding-top: calc(10px * var(--space)); border-top: 1px solid var(--line); }
-.ctx-parts-head { display: flex; align-items: baseline; justify-content: space-between; gap: calc(8px * var(--space)); margin-bottom: calc(6px * var(--space)); color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); font-weight: 600; }
-.ctx-parts-head > :first-child { flex: none; white-space: nowrap; }
-.ctx-parts-note { min-width: 0; overflow: hidden; color: var(--text-faint); font-size: calc(11px * var(--text-scale)); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+/* 累计浮窗的一根横条：用途之间留缝，主会话那一块照各部分拆开；主会话下面一行彩色小字写各部分（核心 CX-3） */
+/* 主题里没有的两样：「AI 输出」金和粉之间的橙、「起标题」蓝和粉之间的紫，明暗两套都和各部分分得开 */
+.ctx-pop { --ctx-output: color-mix(in oklab, var(--gold) 45%, var(--ribbon)); --ctx-title: color-mix(in oklab, var(--accent) 50%, var(--ribbon)); }
+.ctx-bar.is-split { gap: 2px; background: none; }
+.ctx-bar-group { display: flex; min-width: 3px; height: 100%; }
+.ctx-bar-group > .ctx-bar-seg { min-width: 1px; }
+.ctx-use-parts { display: flex; flex-wrap: wrap; gap: 0 calc(10px * var(--space)); margin-top: 2px; font-size: calc(11.5px * var(--text-scale)); line-height: 1.5; }
+.ctx-use-part { display: inline-flex; align-items: center; gap: 4px; color: var(--tone); white-space: nowrap; cursor: default; }
+.ctx-use-part > .ctx-dot { width: 7px; height: 7px; }
+.ctx-use-part-n { font-family: var(--font-mono); opacity: 0.8; }

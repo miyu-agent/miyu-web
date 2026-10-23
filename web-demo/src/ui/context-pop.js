@@ -126,7 +126,7 @@ export class ContextPop {
       ? this.on.request('session.context', session ? { session } : this.on.preview())
       : Promise.all([
         this.on.request('usage.query', { session, tree: true, group: ['use'] }),
-        // 主对话照上下文的块分开的累计（核心 CX-3）：旧核心没有的不画那一段
+        // 主会话照上下文的块分开的累计（核心 CX-3）：旧核心没有的主会话不拆
         this.on.request('session.usage_parts', { session, tree: true }).catch(() => null),
       ]).then(([r, parts]) => {
         // 旧核心不认 `use`：分组照样回，行里没有这一格
@@ -195,9 +195,9 @@ export class ContextPop {
   }
 
   /**
-   * 累计那一个（蓝图「上下文明细、累计按用途」第 4 条）：合计和花费、照用途分色的横条、一个用途一行（下面一行暗字写请求、命中、输入、输出），
-   * 最下面「含子代理」和「在用量页看」。
-   * 用途下面一段「主对话按部分」（核心 CX-3 的 `session.usage_parts`）：同上下文明细的块，多一块「AI 输出」，一根横条、一块一行能展开。
+   * 累计那一个（蓝图「上下文明细、累计按用途」第 4 条）：合计和花费、一根横条（照用途一块接一块，主会话那一块再照它的各部分拆开）、
+   * 一个用途一行（下面一行暗字写请求、命中、输入、输出；主会话再列一行彩色小字写各部分），最下面「含子代理」和「在用量页看」。
+   * 各部分是核心 CX-3 的 `session.usage_parts`：同上下文明细的块，多一块「AI 输出」；旧核心没有的主会话不拆。
    * @param {{rows?: any[], parts?: {requests: number, input: number, output: number, parts: import('../model/context.js').Part[]}|null}} r
    */
   usageView(r) {
@@ -205,7 +205,12 @@ export class ContextPop {
     const sum = rows.reduce((n, x) => n + x.tokens, 0);
     const cost = money(costOf(rows));
     const session = this.on.session();
+    const parts = (r.parts?.parts ?? []).filter((x) => (x.tokens ?? 0) > 0);
+    const partSum = parts.reduce((n, x) => n + x.tokens, 0);
+    /** 这个用途拆成哪几块（只有主会话、核心给了的拆） @param {string} use */
+    const split = (use) => (use === 'main' && partSum > 0 ? parts : null);
     const tone = (/** @type {string} */ use) => `--tone: var(--${USE_TONES[use] ?? 'text-faint'})`;
+    const partTone = (/** @type {import('../model/context.js').Part} */ p) => `--tone: var(--${toneOf(p.part)})`;
     const line = (/** @type {import('../model/context.js').UseRow} */ x) => [
       t('context_pop.requests', { n: x.requests.toLocaleString() }),
       t('context_pop.hit', { percent: hitRate(x.usage.cache_read, inputOf(x.usage)) }),
@@ -213,31 +218,35 @@ export class ContextPop {
       t('context_pop.output', { n: short(x.usage.output) }),
       x.unpriced ? t('context_pop.unpriced', { n: x.unpriced.toLocaleString() }) : null,
     ].filter(Boolean).join(' · ');
+    // 横条：用途之间留缝（`flex` 照 token 分，缝不挤掉比例）；拆开的那一块里各部分照它在这一块里的比例
+    const track = h('div.ctx-bar.is-split', rows.map((x) => {
+      const ps = split(x.use);
+      return h('span.ctx-bar-group', { style: `flex: ${x.tokens} 1 0px` },
+        ps ? ps.map((p) => h('span.ctx-bar-seg', { style: `flex: ${p.tokens} 1 0px; ${partTone(p)}` }))
+          : h('span.ctx-bar-seg', { style: `flex: 1 1 0px; ${tone(x.use)}` }));
+    }));
+    /** 各部分一行彩色小字；指针停上去提示子项 @param {import('../model/context.js').Part[]} ps */
+    const partsLine = (ps) => h('span.ctx-use-parts', { title: t('context_pop.parts_note') }, ps.map((p) => h('span.ctx-use-part', {
+      style: partTone(p),
+      title: (p.children ?? []).filter((k) => k.tokens > 0).map((k) => `${k.label} ${short(k.tokens)}`).join(' · ') || null,
+    }, h('span.ctx-dot'), h('span', p.label), h('span.ctx-use-part-n', short(p.tokens)))));
     return [
       h('div.ctx-pop-head', h('strong.ctx-pop-title', t('context_pop.usage_title')), h('span.ctx-pop-sum', cost ? `${short(sum)} · ${cost}` : short(sum))),
-      rows.length ? h('div.ctx-bar', rows.map((x) => h('span.ctx-bar-seg', { style: `width: ${((x.tokens / sum) * 100).toFixed(3)}%; ${tone(x.use)}` }))) : null,
+      rows.length ? track : null,
       rows.length
-        ? h('div.ctx-rows', rows.map((x) => h('div.ctx-row.is-use', { style: tone(x.use) },
-          h('span.ctx-dot'),
-          h('span.ctx-use-text', h('span.ctx-use-top', h('span.ctx-row-name', t(`context_pop.use.${x.use}`)), h('span.ctx-row-n', short(x.tokens)),
-            x.amounts.length ? h('span.ctx-row-pct', money(x.amounts)) : null),
-          h('span.ctx-use-line', line(x))))))
+        ? h('div.ctx-rows', rows.map((x) => {
+          const ps = split(x.use);
+          return h('div.ctx-row.is-use', { style: tone(x.use) },
+            // 拆开的主会话不要色点（颜色都在下面的小字里），留着位置对齐
+            h(`span.ctx-dot${ps ? '.is-blank' : ''}`),
+            h('span.ctx-use-text', h('span.ctx-use-top', h('span.ctx-row-name', t(`context_pop.use.${x.use}`)), h('span.ctx-row-n', short(x.tokens)),
+              x.amounts.length ? h('span.ctx-row-pct', money(x.amounts)) : null),
+            h('span.ctx-use-line', line(x)),
+            ps ? partsLine(ps) : null));
+        }))
         : h('div.ctx-pop-note', t('context_pop.no_usage')),
-      this.partsView(r.parts ?? null),
       h('div.ctx-pop-foot.ctx-pop-foot-row', h('span', t('context_pop.with_subagents')),
         session && this.on.openUsage ? h('button.ctx-pop-link', { type: 'button', onclick: () => { const id = session; this.close(); this.on.openUsage?.(id); } }, t('context_pop.open_usage'), icon('chevron-right')) : null),
     ];
   }
-
-  /** 主对话按部分：一行小标题（几次请求），一根横条，一块一行（百分比照这一段的合计） @param {{requests: number, input: number, output: number, parts: import('../model/context.js').Part[]}|null} p */
-  partsView(p) {
-    const parts = (p?.parts ?? []).filter((x) => (x.tokens ?? 0) > 0);
-    if (!parts.length) return null;
-    const full = parts.reduce((n, x) => n + x.tokens, 0) || 1;
-    return h('div.ctx-parts',
-      h('div.ctx-parts-head', h('span', t('context_pop.by_part')), h('span.ctx-parts-note', t('context_pop.by_part_note', { n: (p?.requests ?? 0).toLocaleString() }))),
-      h('div.ctx-bar', parts.map((x) => h('span.ctx-bar-seg', { style: `width: ${((x.tokens / full) * 100).toFixed(3)}%; --tone: var(--${toneOf(x.part)})` }))),
-      h('div.ctx-rows', parts.map((x) => this.partRows(x, 0, full))));
-  }
-
 }
