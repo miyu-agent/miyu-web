@@ -43,8 +43,8 @@ export class Dashboard {
     this.filesOpen = false;
     /** 点过停止、还没等到回报的 */
     this.stopping = new Set();
-    /** @type {{todos: any[], tree: Node[], files: FileChange[]}} */
-    this.data = { todos: [], tree: [], files: [] };
+    /** @type {{todos: any[], tree: Node[], files: FileChange[], current?: string|null}} */
+    this.data = { todos: [], tree: [], files: [], current: null };
     this.sigs = { todo: '', tasks: '', files: '' };
     this.todoCard = h('section.dash-card.dash-todo', { 'aria-label': t('todo') });
     this.taskCard = h('section.dash-card.dash-tasks', { 'aria-label': t('tasks') });
@@ -62,7 +62,7 @@ export class Dashboard {
     this.timer = 0;
   }
 
-  /** 新的一份数据：变了的卡重画，空的收起 @param {{todos: any[], tree: Node[], files: FileChange[]}} data */
+  /** 新的一份数据（`current` 是主区正在看的会话）：变了的卡重画，空的收起 @param {{todos: any[], tree: Node[], files: FileChange[], current?: string|null}} data */
   update(data) {
     this.data = data;
     const all = (/** @type {Node[]} */ xs) => xs.flatMap((x) => [x, ...all(x.kids)]);
@@ -129,7 +129,7 @@ export class Dashboard {
     unfold(this.slots.tasks, tree.length > 0);
     const rows = rowsOf(tree, { collapsed: this.collapsed, expanded: this.expanded, doneOpen: this.doneOpen });
     const n = counts(tree);
-    const sig = JSON.stringify([rows.map((r) => (r.type === 'task' ? [r.node.key, r.node.state, r.node.title, r.node.attention, r.depth, r.last, r.guides, r.open, r.hasKids] : [r.type, r.count, r.type === 'more' ? r.running : r.open])), n, [...this.stopping]]);
+    const sig = JSON.stringify([rows.map((r) => (r.type === 'task' ? [r.node.key, r.node.state, r.node.title, r.node.attention, r.depth, r.last, r.guides, r.open, r.hasKids] : [r.type, r.count, r.type === 'more' ? r.running : r.open])), n, [...this.stopping], this.data.current]);
     if (sig === this.sigs.tasks) return;
     this.sigs.tasks = sig;
     if (!tree.length) return;
@@ -179,8 +179,10 @@ export class Dashboard {
       if (agent && x.session) this.on.enter(x.session);
       else if (!agent) this.showOutput(x);
     };
-    return h(`div.dash-row.dash-task${x.attention ? '.is-attention' : ''}${running ? '' : '.is-ended'}${r.hasKids ? '.has-kids' : ''}`, {
-      role: 'button', tabindex: '0', style: `--depth: ${r.depth}`, title: agent ? t('enter') : t('open_output'),
+    // 主区正在看的那个子代理：浅底（点进子代理以后这一栏留着，方便换到别的）
+    const current = agent && !!x.session && x.session === this.data.current;
+    return h(`div.dash-row.dash-task${x.attention ? '.is-attention' : ''}${running ? '' : '.is-ended'}${r.hasKids ? '.has-kids' : ''}${current ? '.is-current' : ''}`, {
+      role: 'button', tabindex: '0', style: `--depth: ${r.depth}`, title: agent ? t('enter') : t('open_output'), 'aria-current': current ? 'true' : null,
       onclick: open, onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter') open(); },
     },
     lines(r.guides, r.depth, r.last),
