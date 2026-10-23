@@ -59,7 +59,7 @@ export function apply(ctx) {
   const draftNow = () => {
     const d = chat.draft();
     if (chat.current() || d.project || d.persona != null || d.preset != null || d.cwd != null || !catalog.personas || !catalog.presets) return d;
-    return { ...d, ...(lastChoice(ctx.sessions.index.all(), catalog.personas, catalog.presets, (id) => chat.preset(id)) ?? {}) };
+    return { ...d, ...(lastChoice(ctx.sessions.index.all(), catalog.personas, catalog.presets) ?? {}) };
   };
   /** 空会话里实际会用的预设、人格（没选的照默认算；预设不再带默认人格，2026-10-08 项目主人） */
   const inUse = () => {
@@ -136,7 +136,7 @@ export function apply(ctx) {
     // 在项目里新建的不照上一次（项目没写的照默认，蓝图「会话整理和项目」第 9 条）
     const fresh = chat.draft();
     if (!session && !fresh.project && fresh.persona == null && fresh.preset == null && fresh.cwd == null && catalog.personas && catalog.presets) {
-      const pick = lastChoice(ctx.sessions.index.all(), catalog.personas, catalog.presets, (id) => chat.preset(id));
+      const pick = lastChoice(ctx.sessions.index.all(), catalog.personas, catalog.presets);
       if (pick && Object.keys(pick).length) chat.setDraft(pick);
     }
     // 先选上再画头像（`inUse` 照上一次的算，这里只是跟着选上的换）
