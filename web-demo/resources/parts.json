@@ -6342,5 +6342,11 @@
     "select": [
       ".markdown-body strong"
     ]
+  },
+  "chat.grip": {
+    "zh": "对话区：正文那一列两边拖宽窄的抓手（悬停露出的小把手是它的 ::after）",
+    "select": [
+      ".chat-grip"
+    ]
   }
 }

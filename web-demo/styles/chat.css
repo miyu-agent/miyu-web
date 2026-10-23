@@ -304,4 +304,11 @@
 
 /* 对话那一列两边沿看不见的抓手（chat-width.js；2026-10-23 项目主人：照 DeepSeek Harness 能拖，但不要看得出来的线）：不画东西，只有指针变成左右箭头 */
 .chat-grip { position: absolute; z-index: 6; top: 0; bottom: 0; width: 12px; cursor: ew-resize; touch-action: none; }
+/* 指针移上去抓手正中淡入一个竖着的小把手，拖着的时候换强调色（2026-10-23 项目主人：移上去要有表示） */
+.chat-grip::after {
+  content: ""; position: absolute; top: 50%; left: 4px; width: 4px; height: 36px; margin-top: -18px; border-radius: var(--r-pill);
+  background: var(--line-strong); opacity: 0; transition: opacity calc(0.15s * var(--motion-scale)) ease, background-color calc(0.15s * var(--motion-scale)) ease;
+}
+.chat-grip:hover::after, .chat-grip.is-dragging::after { opacity: 1; }
+.chat-grip.is-dragging::after { background: var(--accent); }
 :root.is-chat-resizing, :root.is-chat-resizing * { cursor: ew-resize !important; user-select: none !important; }

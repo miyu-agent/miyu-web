@@ -1,6 +1,6 @@
 // @ts-check
 //! 对话那一列的宽能拖（蓝图 `web.md`「样子」三列那一条下面；2026-10-23 项目主人：照 DeepSeek Harness，两边能拖，但不要看得出来的线）：
-//! 这一列左右两边沿各一条看不见的抓手，按住拖两边一起对称地变宽变窄；双击回到出厂的宽；记在这台设备上（内核的 `storage`，按账号分开）。
+//! 这一列左右两边沿各一条看不见的抓手（指针移上去正中淡入一个小把手），按住拖两边一起对称地变宽变窄；双击回到出厂的宽；记在这台设备上（内核的 `storage`，按账号分开）。
 //! 宽写在对话区上的 `--chat-w`，正文、输入框、空会话的首页照它（styles/chat.css、composer.css）。
 
 import { h, scaleOf } from './dom.js';
@@ -87,6 +87,7 @@ export class ChatWidth {
     const k = scaleOf(this.stage) || 1;
     const center = r.left + r.width / 2;
     grip.setPointerCapture(e.pointerId);
+    grip.classList.add('is-dragging');
     document.documentElement.classList.add('is-chat-resizing');
     const move = (/** @type {PointerEvent} */ ev) => {
       const room = this.stage.getBoundingClientRect().width;
@@ -97,6 +98,7 @@ export class ChatWidth {
       grip.removeEventListener('pointermove', move);
       grip.removeEventListener('pointerup', up);
       grip.removeEventListener('pointercancel', up);
+      grip.classList.remove('is-dragging');
       document.documentElement.classList.remove('is-chat-resizing');
       this.set(this.width === DEFAULT_WIDTH ? null : this.width);
     };
