@@ -7,7 +7,7 @@ import { h, icon, replace, scaleOf } from './dom.js';
 import { show, hide, unfold } from '../lib/motion.js';
 import { t } from '../util/res.js';
 import { short, money } from '../lib/format.js';
-import { scaledParts, bar, share, toneOf, useRows, USE_TONES, costOf } from '../model/context.js';
+import { scaledParts, bar, share, toneOf, useRows, USE_TONES, costOf, partsMinus } from '../model/context.js';
 
 /** @typedef {'context'|'total'} Kind */
 
@@ -151,12 +151,13 @@ export class ContextPop {
       ? this.on.request('session.context', session ? { session } : this.on.preview())
       : Promise.all([
         this.on.request('usage.query', { session, tree: true, group: ['use'] }),
-        // 主会话照上下文的块分开的累计（核心 CX-3）：旧核心没有的主会话不拆
+        // 照上下文的块分开的累计（核心 CX-3）：主会话自己的、连子代理的，相减是子代理的；旧核心没有的都不拆
+        this.on.request('session.usage_parts', { session }).catch(() => null),
         this.on.request('session.usage_parts', { session, tree: true }).catch(() => null),
-      ]).then(([r, parts]) => {
+      ]).then(([r, parts, all]) => {
         // 旧核心不认 `use`：分组照样回，行里没有这一格
         if (r?.rows?.length && !r.rows.some((/** @type {any} */ x) => 'use' in x)) throw Object.assign(new Error('no use'), { code: -32601 });
-        return { ...r, parts };
+        return { ...r, parts, all };
       })).catch((/** @type {any} */ e) => (e?.code === -32601 || e?.code === -32602 ? false : this.data));
     if (seq !== this.seq || this.kind !== kind) return;
     const data = got ?? false;
@@ -228,32 +229,40 @@ export class ContextPop {
 
   /**
    * 累计那一个（蓝图「上下文明细、累计按用途」第 4 条）：合计和花费、一根横条（照用途一块接一块，主会话那一块再照它的各部分拆开）、
-   * 一列，照上下文明细的样子（2026-10-23 项目主人）：一个用途一行，主会话能展开出它的各部分，最下面「含子代理」和「在用量页看」。
-   * 各部分是核心 CX-3 的 `session.usage_parts`：同上下文明细的块，多一块「AI 输出」；旧核心没有的主会话不拆。
-   * @param {{rows?: any[], parts?: {requests: number, input: number, output: number, parts: import('../model/context.js').Part[]}|null}} r
+   * 一列，照上下文明细的样子（2026-10-23 项目主人）：一个用途一行，主会话、子代理能展开出各部分，最下面「含子代理」和「在用量页看」。
+   * 各部分是核心 CX-3 的 `session.usage_parts`：同上下文明细的块，多一块「AI 输出」；`parts` 是主会话自己的，`all` 连子代理，
+   * 相减是子代理的（2026-10-24 项目主人问子代理为什么没有明细）；旧核心没有的不拆。
+   * @typedef {{requests: number, input: number, output: number, parts: import('../model/context.js').Part[]}} UsageParts
+   * @param {{rows?: any[], parts?: UsageParts|null, all?: UsageParts|null}} r
    */
   usageView(r) {
     const rows = useRows(r.rows ?? []);
     const sum = rows.reduce((n, x) => n + x.tokens, 0);
     const cost = money(costOf(rows));
     const session = this.on.session();
-    const parts = (r.parts?.parts ?? []).filter((x) => (x.tokens ?? 0) > 0);
-    const partSum = parts.reduce((n, x) => n + x.tokens, 0);
-    /** 一块照比例摊成主会话的数（连子项，0 的不要） @param {import('../model/context.js').Part} p @param {number} f @returns {import('../model/context.js').Part} */
+    const own = (r.parts?.parts ?? []).filter((x) => (x.tokens ?? 0) > 0);
+    // 子代理的：连子代理的减去主会话自己的（`all` 没有的旧核心、没问到的不拆）
+    const kids = r.all ? partsMinus(r.all.parts ?? [], r.parts?.parts ?? []) : [];
+    /** 一块照比例摊成那一行的数（连子项，0 的不要） @param {import('../model/context.js').Part} p @param {number} f @returns {import('../model/context.js').Part} */
     const scale = (p, f) => ({ ...p, tokens: Math.round(p.tokens * f), children: (p.children ?? []).filter((k) => k.tokens > 0).map((k) => scale(k, f)) });
-    // 一个用途一行，同上下文明细的块：主会话的子项是它的各部分（核心给了的）
+    /** 一个用途的各部分摊成它那一行的数 @param {import('../model/context.js').Part[]} ps @param {number} total */
+    const spread = (ps, total) => {
+      const n = ps.reduce((m, x) => m + x.tokens, 0);
+      return n > 0 ? ps.map((p) => scale(p, total / n)) : [];
+    };
+    // 一个用途一行，同上下文明细的块：主会话、子代理的子项是各自的各部分（核心给了的）
     const tree = rows.map((x) => ({
       part: `use:${x.use}`, label: t(`context_pop.use.${x.use}`), tokens: x.tokens, tone: USE_TONES[x.use] ?? 'text-faint',
-      children: x.use === 'main' && partSum > 0 ? parts.map((p) => scale(p, x.tokens / partSum)) : [],
+      children: x.use === 'main' ? spread(own, x.tokens) : x.use === 'subagent' ? spread(kids, x.tokens) : [],
     }));
-    const main = tree.find((x) => x.part === 'use:main');
+    const split = tree.filter((x) => x.children.length);
     const seg = (/** @type {number} */ n, /** @type {string} */ tone) => h('span.ctx-bar-seg', { style: `flex: ${n} 1 0px; --tone: var(--${tone})` });
     // 横条：用途之间留缝；主会话展开着的时候那一块照各部分拆开
     const track = h('div.ctx-bar.is-split');
     const drawBar = () => replace(track, tree.map((x) => h('span.ctx-bar-group', { style: `flex: ${x.tokens} 1 0px` },
-      x === main && this.opened.has(x.part) && x.children?.length ? x.children.map((p) => seg(p.tokens, toneOf(p.part))) : seg(1, x.tone))));
+      split.includes(x) && this.opened.has(x.part) ? x.children.map((p) => seg(p.tokens, toneOf(p.part))) : seg(1, x.tone))));
     drawBar();
-    this.onFlip = (part) => { if (part === main?.part) drawBar(); };
+    this.onFlip = (part) => { if (split.some((x) => x.part === part)) drawBar(); };
     return [
       h('div.ctx-pop-head', h('strong.ctx-pop-title', t('context_pop.usage_title')), h('span.ctx-pop-sum', cost ? `${short(sum)} · ${cost}` : short(sum))),
       rows.length ? track : null,

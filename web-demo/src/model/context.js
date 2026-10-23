@@ -32,6 +32,21 @@ export function scaledParts(c) {
 }
 
 /**
+ * 子代理的各部分（蓝图「上下文明细、累计按用途」第 4 条）：连子代理的（`session.usage_parts` 的 `tree: true`）照块的编号逐块减去主会话
+ * 自己的（`tree: false`），子项一样；减完是 0 的、减成负的（两次问之间又多了请求）不要。
+ * @param {Part[]} all @param {Part[]} own
+ * @returns {Part[]}
+ */
+export function partsMinus(all, own) {
+  const mine = new Map((own ?? []).map((p) => [p.part, p]));
+  return (all ?? []).map((p) => {
+    const o = mine.get(p.part);
+    const kids = partsMinus(p.children ?? [], o?.children ?? []);
+    return { ...p, tokens: Math.max(0, (p.tokens ?? 0) - (o?.tokens ?? 0)), children: kids.length ? kids : undefined };
+  }).filter((p) => p.tokens > 0);
+}
+
+/**
  * 横条：顶层一块一段，宽是占「满格」的几成（满格是窗口，没窗口的是用了多少）；压缩线的位置（没窗口、没线的是 `null`）。
  * @param {Context} c @param {Part[]} parts 摊好的
  * @returns {{full: number, segments: {part: string, ratio: number}[], line: number|null}}

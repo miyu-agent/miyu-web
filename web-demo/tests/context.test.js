@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { scaledParts, bar, share, toneOf, useRows } from '../src/model/context.js';
+import { scaledParts, bar, share, toneOf, useRows, partsMinus } from '../src/model/context.js';
 import { previewPart } from '../src/model/footer.js';
 import { loadRes } from './support.js';
 
@@ -74,4 +74,26 @@ test('新会话的上下文那一格照预览写，写法同开了的；没有�
   assert.deepEqual(previewPart({ used: 3434 }), { key: 'context', text: '3.4k' });
   assert.equal(previewPart({ used: 0 }), null);
   assert.equal(previewPart(null), null);
+});
+
+test('子代理的各部分：连子代理的逐块减去主会话自己的，子项一样；减成 0、负的不要（2026-10-24 项目主人问子代理为什么没有明细）', () => {
+  const all = [
+    { part: 'system', label: '系统提示', tokens: 300 },
+    { part: 'messages', label: '对话', tokens: 900, children: [{ part: 'messages.user', label: '你说的', tokens: 400 }, { part: 'messages.tool', label: '工具结果', tokens: 500 }] },
+    { part: 'output', label: 'AI 输出', tokens: 120 },
+    { part: 'tools', label: '工具说明', tokens: 50 },
+  ];
+  const own = [
+    { part: 'system', label: '系统提示', tokens: 100 },
+    { part: 'messages', label: '对话', tokens: 600, children: [{ part: 'messages.user', label: '你说的', tokens: 400 }, { part: 'messages.tool', label: '工具结果', tokens: 200 }] },
+    { part: 'output', label: 'AI 输出', tokens: 130 },
+    { part: 'tools', label: '工具说明', tokens: 50 },
+  ];
+  assert.deepEqual(partsMinus(all, own), [
+    { part: 'system', label: '系统提示', tokens: 200, children: undefined },
+    { part: 'messages', label: '对话', tokens: 300, children: [{ part: 'messages.tool', label: '工具结果', tokens: 300, children: undefined }] },
+  ]);
+  // 主会话自己没有的块照原样
+  assert.deepEqual(partsMinus([{ part: 'demos', label: '示范', tokens: 7 }], []), [{ part: 'demos', label: '示范', tokens: 7, children: undefined }]);
+  assert.deepEqual(partsMinus([], own), []);
 });
