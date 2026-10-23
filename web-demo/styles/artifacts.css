@@ -10,7 +10,11 @@
 .app-shell.has-side.is-sidebar-collapsed { grid-template-columns: 0px minmax(0, 1fr) var(--side-w, 312px); }
 .side-column { grid-column: 3; grid-row: 1; min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr); overflow: hidden; animation: artifact-in var(--artifact-in) var(--artifact-ease-in) both; }
 /* 推开正文的：和左栏对称的一整条栏，同左栏的底色，从上铺到底，和对话区之间一道细线（2026-10-24 项目主人：原来像几张浮着的卡片） */
-.side-column:not(.is-overlay) { background: var(--side-bg, var(--sidebar-bg)); box-shadow: inset 1px 0 0 var(--line); }
+.side-column:not(.is-overlay) { position: relative; background: var(--side-bg, var(--sidebar-bg)); box-shadow: inset 1px 0 0 var(--line); }
+/* 窄栏左边缘拖着改宽（2026-10-24 项目主人，同预览工作区拖左边那条）：拖的时候整页不选字、指针一直是左右箭头 */
+.side-resize-handle { position: absolute; top: 0; bottom: 0; left: 0; z-index: 3; width: 8px; cursor: col-resize; touch-action: none; }
+.side-resize-handle[hidden], .side-column.is-overlay .side-resize-handle, .side-column.is-leaving .side-resize-handle { display: none; }
+.app-shell.is-side-resizing { cursor: col-resize; user-select: none; }
 /* 这一栏开着：对话区右边的跳转条不画（挤在栏边的缝里，同一天项目主人） */
 .app-shell.has-side .stage-right, .app-shell.is-side-claimed.has-artifacts .stage-right { display: none; }
 .side-column[hidden] { display: none; }

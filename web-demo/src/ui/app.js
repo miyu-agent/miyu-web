@@ -22,7 +22,7 @@ import { runCommand, runUnlisted, refusalText, redo, copyTurn, Commands, revertL
 import { coreSpecs } from '../model/commands.js';
 import { rank, startupSession } from '../model/session.js';
 import { ChatWidth } from './chat-width.js';
-import { SideColumn, NARROW_WIDTH } from './side.js';
+import { SideColumn } from './side.js';
 import { statusFooter, levelLabel, nextLevel, levelParams, previewPart } from '../model/footer.js';
 import { itemsOf, levelOf } from '../model/entries.js';
 import { compactingOf, lastTurn, turnEnded, untouchedTurnOf } from '../model/view-state.js';
@@ -377,7 +377,16 @@ export class App {
     this.stageTools.append(tools, this.artifacts.toggle);
     ctx.effect(() => mountList(tools, ctx.slots, 'stage.tools', failedSlot));
     // 右边那一栏给软件包用（服务 `side`，蓝图「仪表盘」）：和预览工作区互斥
-    this.side = new SideColumn(this.root, this.artifacts, () => this.fitArtifacts());
+    // 窄栏拖过的宽记在这台设备上；最宽到对话那一列只剩 `chat_min`（左栏开着的照它的宽算）
+    this.side = new SideColumn(this.root, this.artifacts, () => this.fitArtifacts(), {
+      storage: ctx.storage,
+      room: () => {
+        const scale = parseFloat(getComputedStyle(this.root).zoom) || 1;
+        // 量出来的是屏幕上的像素，换成自己的 CSS 像素
+        const left = this.root.classList.contains('is-sidebar-collapsed') ? 0 : (this.sidebar.el.getBoundingClientRect().width / scale) || 252;
+        return innerWidth / scale - left - res.artifacts.chat_min;
+      },
+    });
     this.root.append(this.side.el);
     this.artifacts.onTakeOver = () => this.side.yield();
     this.artifacts.alongside = () => this.side.fadeable();
@@ -912,6 +921,8 @@ export class App {
     this.root.classList.remove('is-sidebar-peek');
     this.root.classList.toggle('is-sidebar-collapsed', yes);
     if (remember) this.ctx.storage.set(COLLAPSED, yes);
+    // 右边窄栏拖宽过的：左栏放回来以后照放得下的重新夹
+    this.side?.fitWidth();
     this.titleToggle();
   }
 
@@ -922,6 +933,7 @@ export class App {
    */
   fitArtifacts() {
     const a = this.artifacts;
+    this.side?.fitWidth();
     const collapsed = this.root.classList.contains('is-sidebar-collapsed');
     // 右边那一栏推着正文的（预览工作区，或者服务 `side` 的窄栏、宽栏）多宽
     const sideMode = this.side?.mode;
@@ -935,7 +947,7 @@ export class App {
     const scale = parseFloat(getComputedStyle(this.root).zoom) || 1;
     const width = innerWidth / scale;
     const sidebar = this.sidebar.el.getBoundingClientRect().width || 252;
-    const right = a.open || sideMode === 'wide' ? a.ratio * width : NARROW_WIDTH;
+    const right = a.open || sideMode === 'wide' ? a.ratio * width : this.side.narrowWidth();
     if (width - sidebar - right >= res.artifacts.chat_min) return;
     this.autoCollapsed = true;
     this.collapse(true, false);

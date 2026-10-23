@@ -5,13 +5,26 @@
 //! 才浮现（不在 0 宽的时候先放掉动画），收起时浮在原处淡掉、往右偏（不跟着那一列收成 0 被裁掉）；预览工作区占过来时跟着正文一起淡掉
 //! （`fadeable`）；回到这一栏时正文从左边挪回来（2026-10-24 项目主人：右栏开合、进出工作区没有动画，返回的不对）。
 //! 放不放得下照左栏自动收起那一套算（`fits`）；布局变了（窗口拉宽拉窄、预览工作区把这一栏占走、点外面收起）告诉包。
+//! 窄栏左边缘能拖着改宽（2026-10-24 项目主人）：最窄 `NARROW_WIDTH`，最宽到对话那一列只剩 `chat_min`（`room`），拖过的记在这台设备上；
+//! 放不下记下的宽时照放得下的最宽画，不改记下的。
 
 import { h, replace } from './dom.js';
 import { show, hide } from '../lib/motion.js';
-import { res } from '../util/res.js';
+import { res, t } from '../util/res.js';
 
-/** 窄栏多宽（px，自己的 CSS 像素） */
+/** 窄栏最窄多宽（px，自己的 CSS 像素；没拖过的就是这么宽） */
 export const NARROW_WIDTH = 312;
+/** 拖过的宽记在这台设备上的名字（内核的 `storage` 会带上账号） */
+const WIDTH = 'side_width';
+
+/**
+ * 窄栏画多宽：照要的（拖过的、记下的），夹在最窄和放得下的最宽之间；放得下的比最窄还窄的照最窄（放不放得下包自己照 `fits` 管）。
+ * @param {number} want @param {number} room 对话那一列只剩 `chat_min` 时这一栏能有多宽
+ */
+export function sideWidth(want, room) {
+  const w = Number.isFinite(want) && want > 0 ? want : NARROW_WIDTH;
+  return Math.round(Math.max(NARROW_WIDTH, Math.min(w, Number.isFinite(room) ? room : w)));
+}
 
 /** @typedef {'narrow'|'wide'|'overlay'} Mode */
 
@@ -20,12 +33,20 @@ export class SideColumn {
    * @param {HTMLElement} shell 三列那一层
    * @param {import('./artifacts.js').Artifacts} artifacts 预览工作区（互斥、借它的换宽动画）
    * @param {() => void} relayout 布局变了（自动收起、放回左栏）
+   * @param {{storage?: {get: (key: string, fallback: any) => any, set: (key: string, value: any) => void}, room?: () => number}} [opts]
+   *   记拖过的宽、对话那一列只剩 `chat_min` 时这一栏能有多宽
    */
-  constructor(shell, artifacts, relayout) {
+  constructor(shell, artifacts, relayout, opts = {}) {
     this.shell = shell;
     this.artifacts = artifacts;
     this.relayout = relayout;
-    this.el = h('aside.side-column', { hidden: true });
+    this.storage = opts.storage ?? null;
+    this.room = opts.room ?? (() => Infinity);
+    /** 拖过的宽（没拖过的是最窄） */
+    this.width = Number(this.storage?.get(WIDTH, 0)) || NARROW_WIDTH;
+    // 左边缘拖着改宽：只在窄栏露（盖在上面的、点进去看工作区的不露）
+    this.handle = h('div.side-resize-handle', { hidden: true, title: t('artifacts.resize'), onpointerdown: (/** @type {PointerEvent} */ e) => this.resize(e) });
+    this.el = h('aside.side-column', { hidden: true }, this.handle);
     /** @type {Mode|null} */
     this.mode = null;
     /** @type {Set<(state: {mode: Mode|null, fits: boolean, why: string}) => void>} */
@@ -45,12 +66,47 @@ export class SideColumn {
 
   /** 放进一块内容（同一时间只有一块）；交回怎么拿掉 @param {Node} node */
   mount(node) {
-    replace(this.el, node);
+    replace(this.el, this.handle, node);
     return () => {
-      if (this.el.firstChild !== node) return;
+      if (this.el.lastChild !== node) return;
       this.close('unmounted');
-      replace(this.el);
+      replace(this.el, this.handle);
     };
+  }
+
+  /** 窄栏现在画多宽（拖过的，夹在放得下的里） */
+  narrowWidth() {
+    return sideWidth(this.width, this.room());
+  }
+
+  /** 窗口、左栏变了：推着正文的窄栏照放得下的重新夹一次宽 */
+  fitWidth() {
+    if (this.mode === 'narrow' && this.shell.classList.contains('has-side')) this.shell.style.setProperty('--side-w', `${this.narrowWidth()}px`);
+  }
+
+  /** 拖左边缘改宽：拖的时候不过渡（三列那一层的宽一下一下跟着指针），松手记下来、叫一次布局 @param {PointerEvent} e */
+  resize(e) {
+    if (this.mode !== 'narrow' || e.button !== 0) return;
+    e.preventDefault();
+    const handle = this.handle;
+    handle.setPointerCapture(e.pointerId);
+    this.shell.classList.add('is-artifact-resizing', 'is-side-resizing');
+    const scale = parseFloat(getComputedStyle(this.shell).zoom) || 1;
+    const move = (/** @type {PointerEvent} */ m) => {
+      this.width = sideWidth((innerWidth - m.clientX) / scale, this.room());
+      this.shell.style.setProperty('--side-w', `${this.width}px`);
+    };
+    const up = () => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointercancel', up);
+      this.shell.classList.remove('is-artifact-resizing', 'is-side-resizing');
+      this.storage?.set(WIDTH, this.width);
+      this.relayout();
+      this.tell('resize');
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', up, { once: true });
+    handle.addEventListener('pointercancel', up, { once: true });
   }
 
   /** 开着时对话那一列还剩得下 `chat_min` 不：窄栏的宽照算，左栏会自动收起的不算它（照「仪表盘」第 2 条）；窄屏一律放不下 */
@@ -86,6 +142,7 @@ export class SideColumn {
     if (this.mode === mode) return;
     const was = this.mode;
     this.mode = mode;
+    this.handle.hidden = mode !== 'narrow';
     this.el.classList.toggle('is-overlay', mode === 'overlay');
     if (mode === 'overlay') {
       // 盖在上面：不动那一列，在自己的位置上浮现；原来推着正文的收回去
@@ -107,6 +164,7 @@ export class SideColumn {
     if (!this.mode) return;
     const was = this.mode;
     this.mode = null;
+    this.handle.hidden = true;
     this.listen(false);
     hide(this.el);
     if (was !== 'overlay') this.swap(false, -1);
@@ -122,6 +180,7 @@ export class SideColumn {
   yield() {
     if (!this.mode) return;
     this.mode = null;
+    this.handle.hidden = true;
     this.listen(false);
     this.el.classList.remove('is-overlay');
     this.el.hidden = true;
@@ -138,7 +197,7 @@ export class SideColumn {
     const apply = () => {
       this.shell.classList.add('is-artifact-swapping');
       // 收起时浮在原处淡掉的那一下照收起之前的宽（`--side-w` 不跟着换）
-      if (on) this.shell.style.setProperty('--side-w', this.mode === 'wide' ? 'calc(var(--artifact-ratio) * 100vw / var(--ui-scale))' : `${NARROW_WIDTH}px`);
+      if (on) this.shell.style.setProperty('--side-w', this.mode === 'wide' ? 'calc(var(--artifact-ratio) * 100vw / var(--ui-scale))' : `${this.narrowWidth()}px`);
       this.shell.classList.toggle('has-side', on);
       // 换宽要在工作区关上之前：它关的时候量一下、拿掉不过渡宽的类，晚了这一列的宽就连续变过去（2026-10-24 量到从 0 长到 343px）
       if (on && this.artifacts.open) this.artifacts.setOpen(false, { swap: false });
