@@ -95,21 +95,28 @@ export function apply(ctx) {
     notice(w);
     return w.platforms.some((p) => p.id === 'floor') ? w.platforms : [...w.platforms, floor()];
   };
+  /** 上一帧摆的位置（一样的不再写样式） */
+  let placed = '';
   const behavior = new Behavior(c, {
     draw: (pose) => sprite.draw(pose),
     sleeping: (on) => { zz.hidden = !on; },
     place: ({ x, y, rot, clip }) => {
       // 脚底是画布里最下面一行有东西的底边：照它对到台子上，歪绕着脚（蹲、抻在模型里画，不拉伸图片）
       const foot = (sprite.bottom + 1) * c.pixel;
-      el.style.transform = `translate(${Math.round(x - size().w / 2)}px, ${Math.round(y - foot)}px)`;
-      el.style.visibility = '';
-      body.style.transformOrigin = `50% ${foot}px`;
-      body.style.transform = `rotate(${rot.toFixed(2)}deg)`;
-      scaler.style.transformOrigin = `50% ${foot}px`;
-      scaler.style.transform = `scale(${stage?.scale ?? 1})`;
-      body.style.setProperty('--foot-gap', `${size().h - foot}px`);
-      // 扒着一道边：藏在那一块后面的那一截裁掉
-      el.style.clipPath = clip ? `inset(0px ${clip.right.toFixed(1)}px 0px ${clip.left.toFixed(1)}px)` : '';
+      // 和上一帧一样的不再写：每写一次样式都要重算，下一帧量落脚点时逼着整页重排
+      const sig = [Math.round(x - size().w / 2), Math.round(y - foot), foot, rot.toFixed(2), stage?.scale ?? 1, size().h, clip ? `${clip.left.toFixed(1)},${clip.right.toFixed(1)}` : ''].join('|');
+      if (sig !== placed) {
+        placed = sig;
+        el.style.transform = `translate(${Math.round(x - size().w / 2)}px, ${Math.round(y - foot)}px)`;
+        el.style.visibility = '';
+        body.style.transformOrigin = `50% ${foot}px`;
+        body.style.transform = `rotate(${rot.toFixed(2)}deg)`;
+        scaler.style.transformOrigin = `50% ${foot}px`;
+        scaler.style.transform = `scale(${stage?.scale ?? 1})`;
+        body.style.setProperty('--foot-gap', `${size().h - foot}px`);
+        // 扒着一道边：藏在那一块后面的那一截裁掉
+        el.style.clipPath = clip ? `inset(0px ${clip.right.toFixed(1)}px 0px ${clip.left.toFixed(1)}px)` : '';
+      }
       watchAround();
     },
     platforms,

@@ -21,6 +21,9 @@ export const KINDS = /** @type {const} */ (['ground', 'perch', 'ledge', 'hotspot
 /** 扒边至少要这么长才算（像素） */
 const MIN_LEDGE = 24;
 
+/** 量过的落脚点最多信多久（毫秒）：页面没报变化、自己挪了的（过渡、动画）这么久以后跟上 */
+const STALE_MS = 200;
+
 export class Anchors {
   /**
    * @param {{size: () => {w: number, h: number}, inset: () => number, layer: Element, kinds: readonly string[]}} o 身子多大、台面两头默认让多少、
@@ -35,7 +38,7 @@ export class Anchors {
     /** 一块东西一个号（`all` 的每一个都要有自己的编号，滚动、重排了还是它） @type {WeakMap<Element, number>} */
     this.serial = new WeakMap();
     this.next = 1;
-    /** @type {{group: string|null, world: World}|null} */
+    /** @type {{group: string|null, world: World, at: number}|null} */
     this.cache = null;
   }
 
@@ -68,17 +71,17 @@ export class Anchors {
   }
 
   /**
-   * 量这一帧（`group` 是舞台的；`null` 是平常的页面：表里的、没写 `group` 的。整页的底边哪个舞台都算）。一帧里只量一次。
+   * 量一次（`group` 是舞台的；`null` 是平常的页面：表里的、没写 `group` 的。整页的底边哪个舞台都算）。量过的留着，页面变了
+   * （`drop`：改了 DOM、改窗口、滚动……）或者过了 `STALE_MS` 才重量：原来每一帧都量，长会话里每一帧都逼着整页重排，
+   * 开关预览工作区、闲着都卡（2026-10-23 项目主人）
    * @param {string|null} group
    * @returns {World}
    */
   world(group) {
-    if (this.cache && this.cache.group === group) return this.cache.world;
+    const now = performance.now();
+    if (this.cache && this.cache.group === group && now - this.cache.at < STALE_MS) return this.cache.world;
     const world = this.measure(group);
-    this.cache = { group, world };
-    requestAnimationFrame(() => {
-      if (this.cache?.world === world) this.cache = null;
-    });
+    this.cache = { group, world, at: now };
     return world;
   }
 
