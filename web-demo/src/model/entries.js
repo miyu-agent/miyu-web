@@ -376,8 +376,10 @@ function jobNote(e, jobs) {
   // 脚本里调过工具的后台命令（核心 M-5 上，旁白带最后那一份）：后面接 `#12 翻记忆`
   const tail = what === 'command' ? nestedTail(e.nested) : null;
   if (tail) text += ` · ${tail.text}`;
+  // 子代理的报告是空的（只有空白的也算）：这一行不能点开，没有空的那一块（2026-10-23 项目主人）
+  const report = typeof e.report === 'string' ? e.report.trim() : '';
   const detail = what === 'agent'
-    ? { kind: 'text', text: e.report ?? '', truncated: false }
+    ? (report ? { kind: 'text', text: e.report, truncated: false } : null)
     : { kind: 'output', command: e.command ?? jobs.get(e.job)?.command ?? null, hash: e.output?.blob ?? null, chars: e.output?.chars ?? null,
       job: e.job ?? null, nested: !!e.nested?.count };
   return { type: 'note', key: e.id, seq: seqOf(e.id), turn: null, tone, mark: marks[tone] ?? '', text, detail };

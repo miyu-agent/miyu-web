@@ -157,6 +157,17 @@ test('核心补上的格（9-8 三补）：后台命令的回报带退出码、�
   assert.deepEqual(itemsOf(jobs, { state: 'idle' }).items.map((it) => it.text), ['后台命令完成 · 跑测试 · 20.0s', '后台命令失败 · 编译 · 退出码 101', '后台命令失败 · 睡 · 信号 9']);
 });
 
+test('子代理的报告是空的（只有空白的也算）：那一行不能点开（2026-10-23 项目主人）；有字的照旧能点开', () => {
+  const jobs = [
+    { id: 'e1', kind: 'notice', what: 'job', job: 'j1', job_kind: 'agent', title: '三号', mark: 'stopped', reason: 'stopped', report: '', at: AT },
+    { id: 'e2', kind: 'notice', what: 'job', job: 'j2', job_kind: 'agent', title: '五号', mark: 'stopped', reason: 'stopped', report: '  \n ', at: AT },
+    { id: 'e3', kind: 'notice', what: 'job', job: 'j3', job_kind: 'agent', title: '九号', mark: 'stopped', reason: 'stopped', at: AT },
+    { id: 'e4', kind: 'notice', what: 'job', job: 'j4', job_kind: 'agent', title: '四号', mark: 'done', report: '查完了', at: AT },
+  ];
+  const got = itemsOf(jobs, { state: 'idle' }).items;
+  assert.deepEqual(got.map((it) => it.detail?.text ?? null), [null, null, null, '查完了']);
+});
+
 test('脚本里调过工具的（核心 M-5 上）：执行命令那一步带上 nested；后台命令的回报后面接 #n 显示名', () => {
   const nested = { count: 4, last: { n: 4, name: 'memory_search', title: { name: '翻记忆', object: '猫' }, state: 'ok' } };
   const entries = [
