@@ -189,7 +189,7 @@ export class Dashboard {
         lines(r.guides, r.depth, true), h('span.dash-state', icon('chevron-up')), h('span.dash-fold-count', t('collapse')));
     }
     if (r.type === 'more') {
-      return h('button.dash-row.dash-fold-row', { type: 'button', style: `--depth: ${r.depth}`, 'aria-label': t('more_tasks', { count: r.count }), onclick: () => { this.expanded.add(r.parent); this.drawTasks(); } },
+      return h('button.dash-row.dash-fold-row', { type: 'button', style: `--depth: ${r.depth}`, 'aria-expanded': 'false', 'aria-label': t('more_tasks', { count: r.count }), onclick: () => { this.expanded.add(r.parent); this.drawTasks(); } },
         lines(r.guides, r.depth, true), h('span.dash-fold-count', `(${r.count})`), h(`span.dash-state${r.running ? '.is-running' : '.is-done'}`, icon(r.running ? 'loader-circle' : 'check')));
     }
     const x = r.node;
