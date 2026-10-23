@@ -108,9 +108,13 @@ export class SettingsDialog {
   /** 读核心的配置清单、最终值；模型列表另读（可能慢：核心要去供应商那边拉），读完了模型页跟着重画。 */
   async load() {
     const core = this.ctx.core;
-    const [schema, got, packages, skills, scripts] = await Promise.all([core.request('config.schema', {}), core.request('config.get', { all: true }),
+    // 成员（核心 Y-2下下上）：配置清单、软件包、模型列表调不了，不问；左栏只留成员用得上的几页（`entries`，蓝图「连核心」第 1 条「成员」那一款）
+    const member = !!this.ctx.host?.member;
+    const [schema, got, packages, skills, scripts] = await Promise.all([
+      member ? { pages: [], items: [] } : core.request('config.schema', {}),
+      member ? { items: {} } : core.request('config.get', { all: true }),
       // 核心的软件包（9-1）：「默认界面」的选项照它列（读不到的旧核心是空的）
-      core.request('package.list', {}).then((r) => r?.packages ?? [], () => []),
+      member ? [] : core.request('package.list', {}).then((r) => r?.packages ?? [], () => []),
       // 技能、脚本两页（核心 X-26、X-27；没有推送，打开、改了配置时重读）：旧核心没有的是 `null`，不出那一页
       core.request('skill.list', {}).then((r) => (Array.isArray(r?.skills) ? r : null), () => null),
       core.request('script.list', {}).then((r) => (Array.isArray(r?.scripts) ? r : null), () => null),
@@ -126,6 +130,7 @@ export class SettingsDialog {
     this.got = got;
     const cfg = this.ctx.config;
     this.pages = buildPages(schema, got, { merge: cfg.merge, moveGroups: cfg.move_groups, hide: cfg.hide_prefixes });
+    if (member) return;
     this.modelsPromise = this.loadModels();
     await Promise.all([this.extensions.start(), this.feed.start()]);
   }
@@ -166,7 +171,12 @@ export class SettingsDialog {
       const i = order.indexOf(id);
       return i >= 0 ? i : order.indexOf('advanced') - 0.5;
     };
-    return all.sort((a, b) => rank(a.id) - rank(b.id));
+    // 成员：没有核心的配置页，主题单开一页「通用」；下载软件、软件后台、MCP 是整台机器的，不露
+    const member = !!this.ctx.host?.member;
+    const mine = member
+      ? [...(all.some((e) => e.id === 'general') ? [] : [{ id: 'general', name: named('general') }]), ...all.filter((e) => !['market', 'backstage', 'mcp'].includes(e.id))]
+      : all;
+    return mine.sort((a, b) => rank(a.id) - rank(b.id));
   }
 
   /**
@@ -283,6 +293,9 @@ export class SettingsDialog {
     else if (this.current === 'account') kids = drawAccount(this);
     // 高级：一组一行，点进去看（`advanced.js`，2026-10-19 项目主人：不平铺）
     else if (this.current === 'advanced' && page) kids = drawAdvanced(this, page);
+    // 成员：通用页只有主题，下面一句暗字（配置每人一份在核心 Y-2下下中）；软件包页只列网页自己的组件
+    else if (this.current === 'general' && !page && this.ctx.host?.member) kids = [drawLook(this), h('p.set-empty', this.ctx.text('member_note'))];
+    else if (this.current === 'packages' && this.ctx.host?.member) kids = [drawPackages(this)];
     else if (this.current === 'packages') {
       // 顶上搜索、筛选，核心的软件包一个一行、点进去是它的信息页，最后一段网页自己的组件（`core-packages.js`）
       kids = [
