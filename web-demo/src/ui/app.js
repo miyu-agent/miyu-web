@@ -287,9 +287,8 @@ export class App {
         h('div.stage-float',
           h('button.icon-button.mobile-menu-button', { type: 'button', title: t('sidebar.expand'), onclick: () => this.drawer(true) }, icon('panel-left'))),
         this.lostBar = h('div.bridge-lost', { hidden: true, role: 'alert' }, t('boot.lost')),
-        this.crumbs.el,
-        // 对话区左上角浮着的一小条（挂载位 `stage.info`：软件包 `setup` 画人格、工作区）
-        this.stageInfo = h('div.stage-info'),
+        // 对话区左上角浮着的一小条（挂载位 `stage.info`：软件包 `setup` 画标题）；看着子代理时前面接上面几层的小片（`crumbs`，CSS 排在最前）
+        this.stageInfo = h('div.stage-info', this.crumbs.el),
         this.chat.el,
         this.stageRight = h('div.stage-right'),
         // 右上角的按钮（预览工作区的开关；以后看这个会话改了哪些文件的那一个也放这儿），和左上角的左栏开关对称

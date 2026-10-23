@@ -9,7 +9,6 @@
      @token --stage-bg 对话区的底
      @token --stage-fade 正文滚到输入框上沿时那一截淡出（background 的值；对话区的底换成图时写 none）
      @token --stage-fade-top 正文滚到左上角那一条下面时的淡出
-     @token --crumbs-bg 子代理的会话顶上那条路径的底
      @token --side-edge 左栏和对话区之间那条线（box-shadow 的写法）
      @token --side-width 左栏多宽
      @token --side-peek 左栏收起后临时浮出来时的影

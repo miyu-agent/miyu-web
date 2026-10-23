@@ -24,13 +24,13 @@
 }
 .timeline { width: min(100%, var(--chat-w, 980px)); margin: 0 auto; padding: calc(24px * var(--space)) calc(30px * var(--space)) calc(14px * var(--space)); }
 /* 顶上的淡出：左上角浮着的那一条（stage.info）露着时，正文滚到它下面淡掉（原来透出字），正文也从它下面起（原来「上下文已清空」
-   这类第一行被它挡住）；看着子代理时它在路径那一行里，不占正文，两样都不要（2026-10-10 项目主人） */
+   这类第一行被它挡住；2026-10-10 项目主人）；子代理的会话同主会话（2026-10-24 起顶上不再有路径那一条通栏） */
 .chat-fade-top {
   position: sticky; z-index: 3; top: 0; display: none; height: calc(var(--stage-info-h, 0px) + 26px); margin-bottom: calc(-1 * (var(--stage-info-h, 0px) + calc(26px * var(--space))));
   pointer-events: none; background: var(--stage-fade-top, linear-gradient(to bottom, var(--surface) 62%, color-mix(in srgb, var(--surface) 0%, transparent)));
 }
-.stage.has-info:not(:has(.chat-crumbs:not([hidden]))) .chat-fade-top { display: block; }
-.stage.has-info:not(:has(.chat-crumbs:not([hidden]))) .timeline { padding-top: calc(var(--stage-info-h, 0px) + calc(30px * var(--space))); }
+.stage.has-info .chat-fade-top { display: block; }
+.stage.has-info .timeline { padding-top: calc(var(--stage-info-h, 0px) + calc(30px * var(--space))); }
 
 /* 你说的话：下面 27px 的空算在它里面，悬停到按钮上不断 */
 .user-message { position: relative; display: grid; justify-items: end; padding-bottom: calc(27px * var(--space)); }
@@ -265,32 +265,24 @@
 .stage-right { display: contents; }
 /* 对话区右上角的按钮（预览工作区的开关，以后看改了哪些文件的那一个也放这儿）：和左上角的左栏开关对称 */
 .stage-tools { position: absolute; z-index: 14; top: 19px; right: 14px; display: flex; gap: calc(4px * var(--space)); }
-.stage:has(.stage-tools > :not([hidden])) .chat-crumbs:not([hidden]) + .stage-info { right: 56px; }
 @media (max-width: 836px) { .stage-tools { top: max(11px, calc(env(safe-area-inset-top) + 3px)); right: 8px; } }
 .slot-failed { color: var(--danger); font-size: calc(12px * var(--text-scale)); }
 
-/* 子代理的会话顶上那条路径（蓝图 web.md「对话区」的「子代理的会话顶上那条路径」）：高 40px，占着地方（正文从它下面起），下面一根
-   line 细线；路径，前面几段 text_soft、悬停 text、能点，最后一段 text。左栏收起、窄屏时让开左上角的按钮。回派它的那一层的按钮在
-   输入框正上方（composer.css 的 .back-row） */
-.chat-crumbs {
-  display: flex; flex: none; align-items: center; gap: calc(6px * var(--space)); height: 40px; padding: 0 calc(16px * var(--space)); border-bottom: var(--divider, 1px solid var(--line));
-  background: var(--crumbs-bg, var(--surface)); animation: drop-in var(--motion-in) var(--ease-out) both;
-}
-.chat-crumbs.is-leaving { animation: lift-out var(--motion-out) var(--ease-in) both; }
-.app-shell.is-sidebar-collapsed .chat-crumbs { padding-left: calc(52px * var(--space)); }
-.crumb-path { display: flex; min-width: 0; align-items: center; gap: calc(2px * var(--space)); font-size: calc(13px * var(--text-scale)); }
+/* 子代理的会话顶上那条路径（蓝图 web.md「对话区」的「子代理的会话顶上那条路径」）：左上角标题那一颗小片前面，一颗颗分开的小片写上面
+   几层，材质同标题那一颗（setup 的 .setup-info），字暗一档、点了进那个会话；没有通栏、没有线（2026-10-24 项目主人：子代理不要顶栏，
+   应该和主会话一样，路径多一个 tag、别放一个里面）。回派它的那一层的按钮在输入框正上方（composer.css 的 .back-row） */
+.chat-crumbs { display: flex; flex: none; order: -1; min-width: 0; align-items: center; gap: calc(6px * var(--space)); animation: fade-in var(--motion-in) var(--ease-out) both; }
+.chat-crumbs[hidden] { display: none; }
+.chat-crumbs.is-leaving { animation: fade-out var(--motion-out) var(--ease-in) both; }
 .crumb {
-  min-width: 0; max-width: 220px; padding: calc(3px * var(--space)) calc(6px * var(--space)); overflow: hidden; border: 0; border-radius: var(--r-6); background: none;
-  color: var(--text-soft); font: inherit; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;
+  display: inline-flex; flex: 0 1 auto; align-items: center; min-width: 0; max-width: 220px; height: 28px; padding: 0 calc(10px * var(--space)); box-sizing: border-box;
+  border: var(--float-border, 1px solid var(--line)); border-radius: var(--float-radius, var(--r-9)); background: var(--float-bg, color-mix(in srgb, var(--surface-1) 90%, transparent));
+  box-shadow: var(--float-elev, var(--card-shadow)); -webkit-backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur)))); backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur))));
+  color: var(--text-faint); font: inherit; font-size: calc(12px * var(--text-scale)); cursor: pointer; transition: color calc(0.12s * var(--motion-scale)) ease;
 }
-.crumb:hover { background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--text); }
-.crumb.is-here { flex: 1 1 auto; padding: calc(3px * var(--space)) calc(6px * var(--space)); color: var(--text); cursor: default; }
-.crumb-sep { display: grid; flex: none; place-items: center; color: var(--text-faint); }
-.crumb-sep .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); }
-.crumb-gap { flex: none; padding: 0 calc(4px * var(--space)); color: var(--text-faint); }
-@media (max-width: 836px) {
-  .chat-crumbs, .app-shell.is-sidebar-collapsed .chat-crumbs { padding-left: calc(52px * var(--space)); }
-}
+.crumb > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+button.crumb:hover, button.crumb:focus-visible { outline: none; color: var(--text-soft); }
+.crumb.is-gap { flex: none; cursor: default; }
 
 /* 桥重启过、换了口令（蓝图 web.md「连核心」第 9 条）：对话区顶上一条，占着地方，warn 色的字、淡底；进来从上面落下 */
 .bridge-lost {
@@ -298,13 +290,12 @@
   animation: drop-in var(--motion-in) var(--ease-out) both;
 }
 
-/* 对话区左上角浮着的一小条（挂载位 stage.info，软件包 setup 画人格、工作区，蓝图 web.md「人格、预设、工作区」第 5 条）：
-   左栏收起、窄屏时让开左上角的按钮；看着子代理时顶上有路径那一行，接在那一行的右边 */
+/* 对话区左上角浮着的一小条（挂载位 stage.info，软件包 setup 画标题，蓝图 web.md「人格、预设、工作区」第 11 条）：
+   左栏收起、窄屏时让开左上角的按钮；看着子代理时前面接上面几层的小片（.chat-crumbs，order -1） */
 .stage-info { position: absolute; z-index: 14; top: 12px; left: 16px; display: flex; gap: calc(6px * var(--space)); max-width: calc(100% - 96px); pointer-events: none; }
 .stage-info:empty { display: none; }
 .stage-info > * { pointer-events: auto; }
 .app-shell.is-sidebar-collapsed .stage-info { top: 20px; left: 56px; }
-.chat-crumbs:not([hidden]) + .stage-info { top: 7px; right: 16px; left: auto; max-width: 45%; }
 @media (max-width: 836px) { .stage-info { left: 56px; } }
 
 /* 正文最上面一行（按页读，蓝图 web.md「连核心」第 3a 条）：读更早的一页时「正在读更早的…」，翻到头了「已经是开头」；暗色、居中 */

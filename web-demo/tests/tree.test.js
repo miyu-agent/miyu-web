@@ -4,7 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { treeRows, capTops, pathOf } from '../src/model/tree.js';
+import { treeRows, capTops, pathOf, crumbsOf } from '../src/model/tree.js';
 
 const top = (id, extra = {}) => ({ session: id, title: id, running: false, unread: false, ...extra });
 const kid = (id, running = false, paused = false) => ({ session: id, title: `子 ${id}`, running, paused });
@@ -77,4 +77,12 @@ test('(N) 连子代理再派的一起数：一层层往下在跑的都算，结�
   const closed = state({ open: new Map([['a', false]]) });
   assert.deepEqual(brief(treeRows([top('a')], of, closed)), ['0:a▸(4)*'], 'a1、x1、x2，结束了的 a2 下面在跑的 y1 也算');
   assert.deepEqual(brief(treeRows([top('a')], of, state())).slice(0, 2), ['0:a▾', '1:a1▸(2)*'], 'a1 下面：x1、x2（x1 绕回 a1 的不再数）');
+});
+
+test('子代理的会话左上角：上面几层一颗颗小片，不含现在这一个；超过 4 层的留主会话和最后两层，中间一颗「…」（2026-10-24 项目主人：子代理不要顶栏）', () => {
+  assert.deepEqual(crumbsOf(['a'], 4), []);
+  assert.deepEqual(crumbsOf(['a', 'b'], 4), ['a']);
+  assert.deepEqual(crumbsOf(['a', 'b', 'c', 'd'], 4), ['a', 'b', 'c']);
+  assert.deepEqual(crumbsOf(['a', 'b', 'c', 'd', 'e'], 4), ['a', null, 'c', 'd']);
+  assert.deepEqual(crumbsOf(['a', 'b', 'c', 'd', 'e', 'f', 'g'], 4), ['a', null, 'e', 'f']);
 });

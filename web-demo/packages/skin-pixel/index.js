@@ -33,7 +33,6 @@ export const tokens = {
   '--stage-bg': GRID,
   '--stage-fade': 'none',
   '--stage-fade-top': 'none',
-  '--crumbs-bg': 'var(--skin-cell)',
   '--side-edge': 'inset -3px 0 0 0 var(--skin-edge)',
   '--side-peek': `${frame(EDGE)}, ${drop(6)}`,
   '--avatar-border': '3px solid var(--skin-edge)',

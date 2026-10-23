@@ -1600,12 +1600,6 @@
       ".setup-info-part"
     ]
   },
-  "setup.info-sep": {
-    "zh": "人格、预设、工作区：信息间隔",
-    "select": [
-      ".setup-info-sep"
-    ]
-  },
   "setup.menu-name": {
     "zh": "人格、预设、工作区：菜单名字",
     "select": [
@@ -3053,33 +3047,15 @@
     ]
   },
   "chat.crumbs": {
-    "zh": "子代理的会话顶上那条路径",
+    "zh": "子代理的会话左上角：上面几层的那几颗小片",
     "select": [
       ".chat-crumbs"
     ]
   },
-  "crumb.path": {
-    "zh": "路径：路径",
-    "select": [
-      ".crumb-path"
-    ]
-  },
   "crumb": {
-    "zh": "路径：",
+    "zh": "子代理的会话左上角：上面一层的一颗小片（点了进那个会话；中间收起的那颗是「…」）",
     "select": [
       ".crumb"
-    ]
-  },
-  "crumb.sep": {
-    "zh": "路径：间隔",
-    "select": [
-      ".crumb-sep"
-    ]
-  },
-  "crumb.gap": {
-    "zh": "路径：空隙",
-    "select": [
-      ".crumb-gap"
     ]
   },
   "bridge.lost": {
