@@ -56,7 +56,7 @@ export class Artifacts {
     /** @type {import('../model/artifacts.js').Shown[]} */
     this.list = [];
     this.current = /** @type {string|null} */ (null);
-    /** 每个会话看过的最大序号：比它新的算「来了新的」。 */
+    /** 每个会话看过的最新一样的先后（`order`）：比它新的算「来了新的」。 */
     this.seen = new Map();
     this.where = /** @type {import('./rich.js').Where} */ ({ session: null, home: null, cwd: null });
     this.drawn = '';
@@ -125,19 +125,22 @@ export class Artifacts {
   }
 
   /**
-   * 照这个会话的条目更新：列表、开关按钮、自动打开。
+   * 照这个会话的条目更新：列表、开关按钮、自动打开。会话的视图还没读进来（`ready` 假）的不记「看过的」：读进来以后已经有的不算新来的
+   * （2026-10-24 项目主人：进一个以前展示过文件的会话，工作区自己打开了——原来头一次照空的记下，读进来的全算新来的）。
    * @param {any[]} entries 视图里的条目
    * @param {import('./rich.js').Where} where
+   * @param {boolean} [ready] 会话的视图读进来了
    */
-  update(entries, where) {
+  update(entries, where, ready = true) {
     this.where = where;
     this.entries = entries;
     const session = where.session;
     this.list = undismissed(panelList(shownList(entries)), session ? this.dismissed[session] : undefined);
-    const newest = this.list[0]?.seq ?? 0;
+    // 先后照 `order`（同一轮里展示的几样也分得出新旧）；往上翻读到的更早的比记下的旧，不算新来的
+    const newest = this.list[0]?.order ?? 0;
     const seen = session ? this.seen.get(session) : undefined;
-    // 打开会话时已经有的不算新来的
-    if (session && seen === undefined) this.seen.set(session, newest);
+    // 打开会话时已经有的不算新来的（读进来以后才记）
+    if (session && seen === undefined && ready) this.seen.set(session, newest);
     const fresh = session != null && seen !== undefined && newest > seen;
     if (fresh && session) {
       this.seen.set(session, newest);
