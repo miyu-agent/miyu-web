@@ -141,6 +141,9 @@
 /* 收起时留着淡掉的那一份抽屉：贴着框的下沿，盖在写字的地方上面，不接鼠标 */
 .composer.is-morphing > .composer-takeover-ghost { position: absolute; right: 0; bottom: 0; left: 0; z-index: 2; pointer-events: none; background: inherit; border-radius: inherit; }
 .composer-takeover-ghost > .composer-takeover { display: block; }
+/* 留着的那一份是照抄的：里面的进场动画会重放一遍（先透明再出来），收的时候先闪一下空白框再冒出来（2026-10-23 项目主人：批准时框抖；
+   逐帧录出来的），照抄的一律不放动画 */
+.composer-takeover-ghost, .composer-takeover-ghost * { animation: none !important; transition: none !important; }
 
 /* 跳到底部（蓝图 web.md「输入框」）：框右上角、框上沿上面 10px 浮一个圆按钮；进来从下面升上来，走的时候沉下去 */
 .composer-jump {

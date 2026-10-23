@@ -29,6 +29,11 @@ export function apply(ctx) {
    * 收起会弹）。取消了的一直不再开，状态里没有它了再忘掉。
    */
   const cancelled = new Set();
+  /**
+   * 答过、核心收下了的：回应回来那一下对话区的会话状态可能还没换（还写着在等这一问），照它会再开一下、马上又收（2026-10-23 项目
+   * 主人：批准时框抖抖的；逐帧录出来是收起以后又开了一下）。同取消了的：状态里没有它了再忘掉。
+   */
+  const answered = new Set();
   /** 开着的这一个 @type {{d: import('./model.js').Drawer, session: string|null}|null} */
   let showing = null;
   /** 最近一次对话区画的（事件 `view.changed`）：会话、会话状态、条目 @type {{session: string|null, status: any, entries: any[]}|null} */
@@ -59,6 +64,7 @@ export function apply(ctx) {
           ? { decision: result.decision, ...(result.reason ? { reason: result.reason } : {}) }
           : { answers: result.answers };
         await ctx.core.request('session.answer', { session, call: d.id, ...answer });
+        answered.add(keyOf(session, d.id));
       }
     } catch (err) {
       if (err?.reason !== 'not_asking') ctx.composer.say(err?.message ?? String(err));
@@ -75,7 +81,10 @@ export function apply(ctx) {
   /** 开着的没有了，开下一个：正在看的会话里还没了结的（不算正在等回应的）。 */
   const next = () => {
     if (drawer.open) return;
-    const real = view ? pending(view).find((/** @type {any} */ d) => !answering.has(keyOf(view?.session ?? null, d.id)) && !cancelled.has(keyOf(view?.session ?? null, d.id))) : null;
+    const real = view ? pending(view).find((/** @type {any} */ d) => {
+      const key = keyOf(view?.session ?? null, d.id);
+      return !answering.has(key) && !cancelled.has(key) && !answered.has(key);
+    }) : null;
     if (!real) return;
     showing = { d: real, session: view?.session ?? null };
     // 先画好抽屉再占框：框照画好的抽屉量高度（反过来量到的是空的，先缩成一条再跳上去）
@@ -91,6 +100,7 @@ export function apply(ctx) {
     // 取消了的、状态里已经没有了的忘掉（只看正在看的这个会话的）
     const waiting = new Set(pending(v).map((/** @type {any} */ d) => keyOf(v.session, d.id)));
     for (const k of cancelled) if (k.startsWith(`${v.session ?? ''} `) && !waiting.has(k)) cancelled.delete(k);
+    for (const k of answered) if (k.startsWith(`${v.session ?? ''} `) && !waiting.has(k)) answered.delete(k);
     if (showing) {
       const still = showing.session === v.session && pending(v).some((/** @type {any} */ d) => d.id === showing?.d.id);
       if (!still) {

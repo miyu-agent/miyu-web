@@ -214,13 +214,23 @@ export class Composer {
     // （2026-10-20 项目主人：点取消以后收起的动画会弹）
     const ghost = !open && motion && this.takeoverEl.childNodes.length ? h('div.composer-takeover-ghost', { 'aria-hidden': 'true' }, this.takeoverEl.cloneNode(true)) : null;
     box.classList.toggle('is-taken', open);
+    // 收回来：写字的地方先照现在的字定好高度（不放它自己的高度过渡），再量框缓到多高；原来缓完框才量，写字的地方在缓的时候量错
+    // 成一大截，框收完又长高、再缩回去（2026-10-23 逐帧录出来：批准以后框抖一下）
+    if (!open) {
+      const was = this.input.style.transition;
+      this.input.style.transition = 'none';
+      this.changed();
+      void this.input.offsetHeight;
+      this.input.style.transition = was;
+    }
     const to = box.offsetHeight;
     if (from && to && from !== to && motion) {
       // 缓的时候里面的东西贴着框的下沿（`is-morphing`）：上沿往上长把抽屉从上面露出来，收的时候上沿往下收
       box.classList.add('is-morphing');
       if (ghost) {
         box.append(ghost);
-        ghost.animate([{ opacity: 1 }, { opacity: 0 }], { duration: ms, easing: 'ease-out', fill: 'forwards' });
+        // 框收得差不多了才淡掉：一开始就淡，底下写字的地方透出来和抽屉的字叠在一起
+        ghost.animate([{ opacity: 1 }, { opacity: 1, offset: 0.55 }, { opacity: 0 }], { duration: ms, easing: 'ease-in', fill: 'forwards' });
       }
       box.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: ms, easing: 'cubic-bezier(0.2, 0, 0, 1)' })
         .finished.catch(() => {}).finally(() => {
@@ -228,10 +238,7 @@ export class Composer {
           ghost?.remove();
         });
     }
-    if (!open) {
-      this.changed();
-      this.input.focus();
-    }
+    if (!open) this.input.focus();
   }
 
   /** 在回答时：框里有字照样发（先排着，蓝图「排队的消息」），空着的发送按钮变成打断；命令照常能执行。 */
