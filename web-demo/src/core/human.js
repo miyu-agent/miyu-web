@@ -14,12 +14,13 @@
  * 字问不到的照原样报出去，由开机那里决定怎么办。
  * @param {import('./connection.js').Connection} conn
  * @param {string} language 界面语言的代码（`zh`、`ja`）；核心那边哪个包没有这种语言的照英文
+ * @param {boolean} [packages] 问不问 `package.list`（包的图标）：成员调不了（核心 Y-2下下上），不问
  * @returns {Promise<Human>}
  */
-export async function loadHuman(conn, language) {
+export async function loadHuman(conn, language, packages = true) {
   const [got, listed] = await Promise.all([
     conn.request('human.get', { language }),
-    conn.request('package.list', {}).then((r) => r?.packages ?? [], () => []),
+    packages ? conn.request('package.list', {}).then((r) => r?.packages ?? [], () => []) : [],
   ]);
   return { tools: got?.tools ?? {}, said: got?.said ?? {}, packages: got?.packages ?? {}, icons: iconsOf(listed) };
 }

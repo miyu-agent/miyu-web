@@ -124,7 +124,8 @@ export class MemoryPage {
     this.loaded = true;
     const [list, got] = await Promise.all([
       this.ctx.core.request('persona.list', {}).then((r) => r?.personas ?? [], () => []),
-      this.ctx.core.request('config.get', { keys: ['persona.default'] }).catch(() => null),
+      // 成员读不了配置（核心 Y-2下下上）：没有默认人格，照列表第一个
+      this.ctx.host?.member ? null : this.ctx.core.request('config.get', { keys: ['persona.default'] }).catch(() => null),
     ]);
     this.personas = list.filter((/** @type {any} */ p) => !p.problem).map((/** @type {any} */ p) => ({ persona: p.persona, name: p.name || p.persona }));
     // 无人格不是人格（`persona.list` 里没有），自己加一项

@@ -111,7 +111,7 @@ export async function boot(root) {
   // 新会话在哪个目录里干活、家目录：握手回应的 `host`（核心施工 W-3；新会话默认在账号的工作区）
   const info = placeOf(hello);
   // 给人看的字（工具的显示名、结果那一句）：问核心的 `human.get`；拿不到的照工具名写
-  res.human = await loadHuman(conn, language.code).catch((err) => {
+  res.human = await loadHuman(conn, language.code, !member).catch((err) => {
     console.error(`拿不到给人看的字：${err.message}`);
     return { tools: {}, said: {}, packages: {}, icons: {} };
   });

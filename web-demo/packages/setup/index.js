@@ -25,7 +25,7 @@ export function apply(ctx) {
   const t = (key, fields) => ctx.text(key, fields);
   const chat = ctx.chat;
   /** 有哪些人格、预设，默认是哪个；读不到（旧核心）的那一样的按钮不出 */
-  const catalog = new Catalog(ctx.core, () => ctx.icons.more());
+  const catalog = new Catalog(ctx.core, () => ctx.icons.more(), !!ctx.host?.member);
 
   const menu = new Menu();
   const personaBtn = h('button.setup-btn', { type: 'button', onclick: () => openPersonas() });
