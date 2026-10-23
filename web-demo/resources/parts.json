@@ -6660,28 +6660,28 @@
       ".dash-del"
     ]
   },
-  "dash.detail": {
-    "zh": "仪表盘：点进去的那一页（输出、差异）",
+  "dash.present": {
+    "zh": "仪表盘：放进预览工作区框里的输出（占满、底下一行「跟着最新的」）",
     "select": [
-      ".dash-detail"
+      ".dash-present"
     ]
   },
-  "dash.detail-head": {
-    "zh": "仪表盘：点进去那一页的头一行",
+  "artifacts.custom": {
+    "zh": "预览工作区：借这个框看别的时，头一行接在返回箭头后面的几样",
     "select": [
-      ".dash-detail-head"
+      ".artifact-custom"
     ]
   },
-  "dash.back": {
-    "zh": "仪表盘：返回箭头",
+  "artifacts.custom-actions": {
+    "zh": "预览工作区：借这个框看别的时，头一行右边交来的按钮",
     "select": [
-      ".dash-back"
+      ".artifact-custom-actions"
     ]
   },
-  "dash.icon": {
-    "zh": "仪表盘：点进去那一页头上的图标按钮（上一个、下一个文件）",
+  "artifacts.file-action": {
+    "zh": "预览工作区：复制、下载（借着看别的时不露）",
     "select": [
-      ".dash-icon"
+      ".artifact-file-action"
     ]
   },
   "dash.output": {

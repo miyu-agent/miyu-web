@@ -12,6 +12,8 @@
 //!   产物、面板有一样就露；面板那一页露没露告诉 `panelShown`（界面块照它订阅、叫不叫程序干活）。没有界面块的和原来一样。
 //! - 右侧边栏要了它（`claim`，软件包「仪表盘」经服务 `side.work`；2026-10-24 项目主人定）：自己的开关不露，头一行最左边返回箭头（交给要它的那一边）
 //!   代替「关」，标题不再是下拉（展示过的列在右侧边栏的卡片上）；还回去照原来的样子。列表、面板、开没开、来了新的没看变了告诉 `onChange` 登记的。
+//! - 别的东西借这个框看（`present`，右侧边栏点后台命令、文件修改；2026-10-24 项目主人：「都右栏 show 吧」）：头一行换成交来的几样和按钮，
+//!   里面换成交来的一块；开别的展示文件、收起、交回去（`unpresent`）时告诉交来的那一边（`leave`）。
 
 import { h, icon, replace, setUrl } from './dom.js';
 import { show, hide, reduced } from '../lib/motion.js';
@@ -80,6 +82,10 @@ export class Artifacts {
     this.fresh = false;
     /** 变了告诉谁（`onChange`） @type {Set<() => void>} */
     this.listeners = new Set();
+    /** 借这个框看的（`present`）：头一行的几样、按钮、里面那一块、交回去时叫谁；`null` 是在看展示文件 @type {Present|null} */
+    this.presenting = null;
+    this.custom = h('div.artifact-custom');
+    this.customActions = h('div.artifact-custom-actions');
     /** 看哪一页：`work` 产物、`panel` 界面块 */
     this.tab = 'work';
     /** 面板里挂着几件（`stage.panel`） */
@@ -105,16 +111,16 @@ export class Artifacts {
     this.menu = h('div.artifact-resource-menu', { role: 'menu', hidden: true });
     this.titleButton = h('button.artifact-title-button', { type: 'button', title: t('artifacts.list'), onclick: () => (this.menu.hidden || this.menu.classList.contains('is-leaving') ? show(this.menu) : hide(this.menu)) },
       this.title, this.badge, icon('chevron-down'));
-    this.download = h('a.icon-button.artifact-action', { title: t('artifacts.download'), 'aria-label': t('artifacts.download'), download: '' }, icon('download'));
+    this.download = h('a.icon-button.artifact-action.artifact-file-action', { title: t('artifacts.download'), 'aria-label': t('artifacts.download'), download: '' }, icon('download'));
     this.maxButton = h('button.icon-button.artifact-action', { type: 'button', onclick: () => this.setMaximized(!this.maximized) });
     this.view = h('div.artifact-view');
     this.el = h('aside.artifact-workspace', { hidden: true },
       h('div.artifact-resize-handle', { title: t('artifacts.resize'), onpointerdown: (e) => this.resize(e) }),
       this.tabs,
       this.header = h('header.artifact-header',
-        h('div.artifact-leading', this.backHead, this.modes, h('div.artifact-resource-wrap', this.titleButton, this.menu)),
-        h('div.artifact-actions',
-          h('button.icon-button.artifact-action', { type: 'button', title: t('artifacts.copy'), onclick: () => this.copySource() }, icon('copy')),
+        h('div.artifact-leading', this.backHead, this.modes, h('div.artifact-resource-wrap', this.titleButton, this.menu), this.custom),
+        h('div.artifact-actions', this.customActions,
+          h('button.icon-button.artifact-action.artifact-file-action', { type: 'button', title: t('artifacts.copy'), onclick: () => this.copySource() }, icon('copy')),
           this.download, this.maxButton, this.headerClose)),
       this.view, this.emptyWork, this.panel);
     document.addEventListener('click', (e) => {
@@ -144,6 +150,8 @@ export class Artifacts {
     const fresh = session != null && seen !== undefined && newest > seen;
     if (fresh && session) {
       this.seen.set(session, newest);
+      // 借着这个框看命令输出、差异的时候来了新展示：换成看它（同自动打开）
+      this.unpresent();
       this.current = this.list[0].path;
       this.tab = 'work';
       // 窗口够宽的自动打开；窄的只在开关按钮上点一个圆点
@@ -161,6 +169,7 @@ export class Artifacts {
 
   /** 打开展示过的那一个（对话里点了它的卡片、灯箱里点了「在右栏打开」）；还没进列表的（条目刚到）记下，进了列表再看它。 @param {string} path */
   reveal(path) {
+    this.unpresent();
     this.current = path;
     this.tab = 'work';
     if (this.open) this.draw(true);
@@ -174,7 +183,7 @@ export class Artifacts {
   setOpen(open, { swap = true } = {}) {
     this.open = open && this.hasContent();
     // 没有产物、只有面板的：开着就看面板
-    if (this.open && !this.list.length) this.tab = 'panel';
+    if (this.open && !this.list.length && !this.presenting) this.tab = 'panel';
     // 这一栏在自己的位置上浮现、淡掉（`artifacts.css`）；那一列一下子就是最终的宽，正文淡出、换宽、淡入（蓝图「动效」）
     if (this.open) show(this.el);
     else hide(this.el);
@@ -194,6 +203,8 @@ export class Artifacts {
     this.toggle.classList.toggle('is-active', this.open);
     if (this.open) this.markSeen();
     if (!this.open && this.maximized) this.setMaximized(false);
+    // 收起了：借着看的交回去（下回打开照展示文件画）
+    if (!this.open) this.unpresent();
     // 里面的东西等这一栏滑完再画（网页那一种载入、跑起来重，滑到一半时做会顿一下）；关上以前看的那一样没变的不重画，直接露出来
     if (this.open) this.settleAt = performance.now() + (parseFloat(getComputedStyle(this.shell).getPropertyValue('--artifact-in')) * 1000 || 0);
     if (this.open && this.tab === 'work') this.draw();
@@ -220,9 +231,42 @@ export class Artifacts {
     }, () => {});
   }
 
-  /** 产物、面板有一样就有东西可看。 */
+  /** 产物、面板有一样，或者有借着看的，就有东西可看。 */
   hasContent() {
-    return this.list.length > 0 || this.panelItems > 0;
+    return this.list.length > 0 || this.panelItems > 0 || !!this.presenting;
+  }
+
+  /**
+   * 借这个框看别的（右侧边栏点后台命令、文件修改）：头一行最左边返回箭头（要了它的那一边处理），接着交来的几样，右边交来的按钮加最大化；
+   * 里面换成交来的一块。原来借着看的先交回去。没开的打开（同打开一样展示文件）。
+   * @param {Present} spec
+   */
+  present(spec) {
+    const was = this.presenting;
+    this.presenting = spec;
+    if (was && was !== spec) was.leave?.();
+    this.tab = 'work';
+    hide(this.menu);
+    // 在取的展示文件不再画进来
+    this.token++;
+    this.drawn = '';
+    replace(this.custom, ...spec.lead);
+    replace(this.customActions, ...spec.actions);
+    replace(this.view, spec.body);
+    this.syncChrome();
+    if (!this.open) this.setOpen(true);
+  }
+
+  /** 借着看的交回去（告诉交来的那一边）；没有的什么也不做。下回照展示文件画 */
+  unpresent() {
+    const was = this.presenting;
+    if (!was) return;
+    this.presenting = null;
+    this.drawn = '';
+    replace(this.custom);
+    replace(this.customActions);
+    was.leave?.();
+    this.syncChrome();
   }
 
   /** 面板里挂了几件（`ui/app.js` 看着 `stage.panel` 叫）：都拿掉了、产物也没有的收起来。 @param {number} n */
@@ -247,10 +291,13 @@ export class Artifacts {
     this.tabs.hidden = !tabs;
     this.tabWork.classList.toggle('is-active', work);
     this.tabPanel.classList.toggle('is-active', !work);
-    this.header.hidden = !work || !this.list.length;
+    const presenting = !!this.presenting;
+    const has = this.list.length > 0 || presenting;
+    this.header.hidden = !work || !has;
+    this.header.classList.toggle('is-presenting', presenting);
     this.headerClose.hidden = tabs;
-    this.view.hidden = !work || !this.list.length;
-    this.emptyWork.hidden = !(work && tabs && !this.list.length);
+    this.view.hidden = !work || !has;
+    this.emptyWork.hidden = !(work && tabs && !has);
     this.panel.hidden = work;
     const claimed = !!this.claimed;
     this.toggle.hidden = !this.hasContent() || claimed;
@@ -352,6 +399,8 @@ export class Artifacts {
 
   /** 画当前这一个；`force` 为假时，同一个文件没改过就不重画。 */
   async draw(force = false) {
+    // 借着看命令输出、差异的时候不画展示文件
+    if (this.presenting) return;
     const a = this.list.find((x) => x.path === this.current);
     const session = this.where.session;
     if (!a || !session) return;
@@ -453,6 +502,11 @@ export class Artifacts {
     copy(a.kind === 'image' || a.kind === 'pdf' ? a.path : this.text ?? '', this.say);
   }
 }
+
+/**
+ * 借这个框看的一样（`present`）：头一行接在返回箭头后面的几样、右边的按钮、里面那一块，交回去时叫的。
+ * @typedef {{lead: Node[], actions: Node[], body: Node, leave?: () => void}} Present
+ */
 
 /** 记着的删掉的那一份读回来：读不懂的当没有。 @param {any} got @returns {Record<string, Record<string, number>>} */
 function readDismissed(got) {

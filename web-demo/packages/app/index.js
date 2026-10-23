@@ -38,7 +38,7 @@ export function apply(ctx) {
     fits: () => app.side.fits(),
     free: () => app.side.free(),
     onChange: (/** @type {(state: any) => void} */ fn) => app.side.on(fn),
-    // 预览工作区（蓝图「仪表盘」第 1、4、5 条）：展示过的那几样、打开一样或面板、拿掉、收起、看过了；`claim` 换成右侧边栏点进去的样子
+    // 预览工作区（蓝图「仪表盘」第 1、4、5 条）：展示过的那几样、打开一样或面板、拿掉、收起、看过了；`claim` 换成右侧边栏点进去的样子；`present` 借它的框看别的
     work: {
       state: () => app.side.works(),
       open: (/** @type {string} */ path) => app.artifacts.reveal(path),
@@ -47,6 +47,9 @@ export function apply(ctx) {
       close: () => app.artifacts.setOpen(false),
       seen: () => app.artifacts.markSeen(),
       claim: (/** @type {() => void} */ back) => app.artifacts.claim(back),
+      // 借这个框看命令输出、差异（`ui/artifacts.js` 的 `present`）；交回去
+      present: (/** @type {any} */ spec) => app.artifacts.present(spec),
+      unpresent: () => app.artifacts.unpresent(),
       onChange: (/** @type {() => void} */ fn) => app.artifacts.onChange(fn),
     },
   });
