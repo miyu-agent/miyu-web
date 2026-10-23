@@ -5,12 +5,17 @@
 /* 那一列一下子就是最终的宽（不过渡宽：连续变的话正文一行行跟着重排、字在动画里跳），正文那一列由 `ui/artifacts.js` 淡出、换宽、淡入 */
 .app-shell.has-artifacts { grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale)); }
 .app-shell.has-artifacts.is-sidebar-collapsed { grid-template-columns: 0px minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale)); }
+/* 开关这一栏换宽的那一下（连左栏自动收起、放回）、拖宽度的时候：不过渡宽（三列那一层平常挂着左栏开关用的过渡，不拿掉的话换完又连续变 0.28 秒） */
+.app-shell.is-artifact-swapping, .app-shell.is-artifact-swapping.is-sidebar-collapsed,
+.app-shell.is-artifact-resizing, .app-shell.is-artifact-resizing.is-sidebar-collapsed { transition: none; }
 
 .artifact-workspace {
   position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr); width: calc(var(--artifact-ratio) * 100vw / var(--ui-scale) - 16px);
   min-width: 0; margin: calc(8px * var(--space)) calc(10px * var(--space)) calc(10px * var(--space)) calc(6px * var(--space)); justify-self: end; overflow: hidden;
   border: 1px solid var(--line); border-radius: var(--r-14); background: var(--surface-1); box-shadow: var(--artifact-shadow);
   animation: artifact-in var(--artifact-in) var(--artifact-ease-in) both;
+  /* 盖在对话区里浮着的东西（句子那一列短横线 z-index 12 这些）上面：换宽之前、淡掉的时候对话区伸在这一栏底下 */
+  z-index: 13;
 }
 /* 开、关（2026-10-23 项目主人看了四种样板选「浮现」）：这一栏一开始就是最终的宽，不从屏幕外飞进来，在自己的位置上从透明、往右偏 24px 浮现；
    关的时候淡掉、往右偏 24px。不缩放：缩放时字会抖 */

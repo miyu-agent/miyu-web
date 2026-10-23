@@ -157,9 +157,13 @@ export class Artifacts {
     if (this.open) show(this.el);
     else hide(this.el);
     const was = this.shell.classList.contains('has-artifacts');
+    // 换宽的那一下（连左栏自动收起、放回）不过渡宽：挂着不过渡的类换，量一下让它生效，再拿掉
     const apply = () => {
+      this.shell.classList.add('is-artifact-swapping');
       this.shell.classList.toggle('has-artifacts', this.open);
       this.onLayout();
+      void this.shell.offsetWidth;
+      this.shell.classList.remove('is-artifact-swapping');
     };
     if (was !== this.open) this.swapWidth(apply, this.open ? SWAP_SHIFT : -SWAP_SHIFT);
     else apply();
