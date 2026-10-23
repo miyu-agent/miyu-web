@@ -46,7 +46,9 @@ export function apply(ctx) {
     const p = catalog.personas?.find((x) => x.persona === id);
     return p ? personaName(p) : id;
   };
+  /** 预设的名字；`false` 是「无工具」（核心 P-16 下，名字照核心给的） */
   const presetNameOf = (id) => {
+    if (id === false) return catalog.noTools ? presetName(catalog.noTools) : '';
     const p = catalog.presets?.find((x) => x.preset === id);
     return p ? presetName(p) : id;
   };
@@ -57,7 +59,7 @@ export function apply(ctx) {
   const draftNow = () => {
     const d = chat.draft();
     if (chat.current() || d.project || d.persona != null || d.preset != null || d.cwd != null || !catalog.personas || !catalog.presets) return d;
-    return { ...d, ...(lastChoice(ctx.sessions.index.all(), catalog.personas, catalog.presets) ?? {}) };
+    return { ...d, ...(lastChoice(ctx.sessions.index.all(), catalog.personas, catalog.presets, (id) => chat.preset(id)) ?? {}) };
   };
   /** 空会话里实际会用的预设、人格（没选的照默认算；预设不再带默认人格，2026-10-08 项目主人） */
   const inUse = () => {
@@ -134,7 +136,7 @@ export function apply(ctx) {
     // 在项目里新建的不照上一次（项目没写的照默认，蓝图「会话整理和项目」第 9 条）
     const fresh = chat.draft();
     if (!session && !fresh.project && fresh.persona == null && fresh.preset == null && fresh.cwd == null && catalog.personas && catalog.presets) {
-      const pick = lastChoice(ctx.sessions.index.all(), catalog.personas, catalog.presets);
+      const pick = lastChoice(ctx.sessions.index.all(), catalog.personas, catalog.presets, (id) => chat.preset(id));
       if (pick && Object.keys(pick).length) chat.setDraft(pick);
     }
     // 先选上再画头像（`inUse` 照上一次的算，这里只是跟着选上的换）
@@ -161,15 +163,15 @@ export function apply(ctx) {
       replace(personaBtn, icon('user-round'), h('span', draft.persona === false ? t('no_persona') : draft.persona ? nameOf(draft.persona) : t('choose_persona')));
       personaBtn.classList.toggle('is-set', draft.persona != null);
       presetBtn.hidden = !catalog.presets;
-      replace(presetBtn, icon('toggle-right'), h('span', draft.preset ? presetNameOf(draft.preset) : t('choose_preset')));
-      presetBtn.classList.toggle('is-set', !!draft.preset);
+      replace(presetBtn, icon('toggle-right'), h('span', draft.preset != null ? presetNameOf(draft.preset) : t('choose_preset')));
+      presetBtn.classList.toggle('is-set', draft.preset != null);
       // 选了默认工作区的写「默认工作区」：它的目录名是数据目录里的 `workspace`，写出来像没翻译的字（2026-10-08 项目主人）
       const workLabel = !draft.cwd ? t('set_workspace') : draft.cwd === chat.defaultWorkdir() ? t('default_workspace') : dirName(tilde(draft.cwd, home()));
       replace(workBtn, icon('folder'), h('span', workLabel));
       workBtn.classList.toggle('is-set', !!draft.cwd);
       workBtn.title = tilde(draft.cwd ?? chat.defaultWorkdir(), home());
       // 没选、默认的又用不了：锁住输入框（第 2 条）。预设一定要有（Y12）；人格可以没有，只有算出来的默认人格文件写错了才锁
-      const needPreset = !!catalog.presets && !draft.preset && !defaultUsable(catalog.presets, used?.preset ?? null, 'preset');
+      const needPreset = !!catalog.presets && draft.preset == null && !defaultUsable(catalog.presets, used?.preset ?? null, 'preset');
       const needPersona = !!catalog.personas && draft.persona == null && !!used?.persona && !defaultUsable(catalog.personas, used.persona);
       presetBtn.classList.toggle('is-need', needPreset);
       personaBtn.classList.toggle('is-need', needPersona);
@@ -250,7 +252,7 @@ export function apply(ctx) {
           pick: () => { if (catalog.personas) switchPersona(anchor, session, persona, back); },
           ...(persona && ctx.settings ? { action: { icon: 'pencil', title: t('info.edit_persona'), run: () => { infoMenu.close(); editPersona(ctx, catalog, persona, ctx.settings.kit); } } } : {}),
         },
-        { label: t('info.preset'), title: preset ? presetNameOf(preset) : t('info.preset_default'), more: !!catalog.presets, keep: true, pick: () => { if (catalog.presets) switchPreset(anchor, session, preset, back); } },
+        { label: t('info.preset'), title: preset != null ? presetNameOf(preset) : t('info.preset_default'), more: !!catalog.presets, keep: true, pick: () => { if (catalog.presets) switchPreset(anchor, session, preset, back); } },
         {
           label: t('info.workspace'), title: path, still: true, wrap: true, pick: () => {},
           action: { icon: 'folder-open', title: ctx.text('folders.open_short'), run: () => browse(ctx, infoMenu, anchor, true, chat.workdir(), pickDir, (p) => tilde(p, home())) },
@@ -281,18 +283,23 @@ export function apply(ctx) {
   const switchPreset = (anchor, session, now, back) => {
     infoMenu.show(anchor, {
       title: t('info.switch_preset'), below: true, back,
-      rows: (catalog.presets ?? []).map((p) => ({
-        title: presetName(p), desc: p.problem ? t('preset_bad') : p.summary ?? '', current: p.preset === now, off: !!p.problem, keep: true,
-        action: p.problem ? undefined : editAction('preset', p.preset, () => { if (anchor.isConnected) switchPreset(anchor, session, now, back); }, () => infoMenu.close()),
-        pick: () => { if (p.preset !== now) confirmSwitch(anchor, session, { preset: p.preset }, back); },
-      })),
+      rows: [
+        ...(catalog.presets ?? []).map((p) => ({
+          title: presetName(p), desc: p.problem ? t('preset_bad') : p.summary ?? '', current: p.preset === now, off: !!p.problem, keep: true,
+          action: p.problem ? undefined : editAction('preset', p.preset, () => { if (anchor.isConnected) switchPreset(anchor, session, now, back); }, () => infoMenu.close()),
+          pick: () => { if (p.preset !== now) confirmSwitch(anchor, session, { preset: p.preset }, back); },
+        })),
+        // 最后一行「无工具」：交 `preset: null`
+        ...(catalog.noTools ? [{ title: presetName(catalog.noTools), desc: catalog.noTools.summary ?? '', current: now === false, keep: true,
+          pick: () => { if (now !== false) confirmSwitch(anchor, session, { preset: null }, back); } }] : []),
+      ],
     });
   };
 
   /**
    * 换之前问一句（2026-10-19 项目主人定的字）：「切换前会压缩上下文以避免缓存断裂导致的额外消耗，确认切换吗？」，「取消」「确认」。确认了发
    * `session.configure`；回答进行中的（`turn_running`）、人格没了的照核心的话说一句。
-   * @param {HTMLElement} anchor @param {string} session @param {{persona?: string|null, preset?: string}} change @param {() => void} back
+   * @param {HTMLElement} anchor @param {string} session @param {{persona?: string|null, preset?: string|null}} change @param {() => void} back
    */
   const confirmSwitch = (anchor, session, change, back) => {
     // 没有能压缩的（核心的 `compactable` 是假）：不问、直接换（2026-10-20 项目主人：没什么可压缩的，切换就不应该提示要压缩；终端一样）
@@ -303,7 +310,7 @@ export function apply(ctx) {
     }
     const button = (/** @type {string} */ label, /** @type {boolean} */ primary, /** @type {() => void} */ onclick) => h(`button.setup-menu-btn${primary ? '.is-primary' : ''}`, { type: 'button', onclick }, label);
     infoMenu.show(anchor, {
-      title: t(change.preset ? 'info.switch_preset' : 'info.switch_persona'), below: true, back,
+      title: t('preset' in change ? 'info.switch_preset' : 'info.switch_persona'), below: true, back,
       rows: [],
       note: t('info.switch_confirm'),
       foot: [
@@ -384,17 +391,21 @@ export function apply(ctx) {
 
   /**
    * 预设的几行：照 `preset.list`，一行一个名字，下面简单描述（没有的不写，2026-10-23）；写错的暗着。给了 `reopen` 的同人格多一个编辑。
-   * @param {string|null} chosen @param {(preset: string) => void} pick @param {() => void} [reopen] @param {() => void} [before]
+   * 最后一行「无工具」（核心 P-16 下）：选了交 `false`，不能编辑。
+   * @param {string|false|null} chosen @param {(preset: string|false) => void} pick @param {() => void} [reopen] @param {() => void} [before]
    */
-  const presetRows = (chosen, pick, reopen, before) => (catalog.presets ?? []).map((p) => ({
-    title: presetName(p),
-    desc: p.problem ? t('preset_bad') : p.summary ?? '',
-    tip: p.problem ? catalog.problemOf('preset', p).map((x) => problemText(ctx, x)).join('\n') : undefined,
-    current: p.preset === chosen && !p.problem,
-    off: !!p.problem,
-    action: p.problem ? undefined : editAction('preset', p.preset, reopen, before),
-    pick: () => pick(p.preset),
-  }));
+  const presetRows = (chosen, pick, reopen, before) => [
+    ...(catalog.presets ?? []).map((p) => ({
+      title: presetName(p),
+      desc: p.problem ? t('preset_bad') : p.summary ?? '',
+      tip: p.problem ? catalog.problemOf('preset', p).map((x) => problemText(ctx, x)).join('\n') : undefined,
+      current: p.preset === chosen && !p.problem,
+      off: !!p.problem,
+      action: p.problem ? undefined : editAction('preset', p.preset, reopen, before),
+      pick: () => pick(p.preset),
+    })),
+    ...(catalog.noTools ? [{ title: presetName(catalog.noTools), desc: catalog.noTools.summary ?? '', current: chosen === false, pick: () => pick(false) }] : []),
+  ];
 
   const openPersonas = () => {
     if (!catalog.personas) return;
@@ -571,7 +582,7 @@ export function apply(ctx) {
       listOf(t('info.switch_persona'), personaRows(now, (p) => { if (p !== now) confirmInList(session, { persona: p }); }, () => pickFor('persona')));
     } else {
       const now = chat.preset(session);
-      listOf(t('info.switch_preset'), presetRows(now, (p) => { if (p !== now) confirmInList(session, { preset: p }); }, () => pickFor('preset')));
+      listOf(t('info.switch_preset'), presetRows(now, (p) => { if (p !== now) confirmInList(session, { preset: p === false ? null : p }); }, () => pickFor('preset')));
     }
   };
   ctx.commands.register({ name: 'persona', summary: t('command_persona') }, () => pickFor('persona'));

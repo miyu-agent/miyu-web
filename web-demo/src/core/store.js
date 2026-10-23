@@ -178,12 +178,12 @@ export class Store {
    */
   async create(cwd, model = null, persona = null, preset = null, chosen = false, project = null) {
     // 还没开的新会话里选过模型（核心施工 8-8）、人格（P-1）、预设（P-2）的，开的时候带上；不写的核心照默认（预设的默认人格、配置项）。
-    // 人格是 `false` 的是明着不用人格，发 `null`（核心：不看预设、默认人格；2026-10-08 项目主人：人格可以留空）。
+    // 人格是 `false` 的是明着不用人格，发 `null`（核心：不看预设、默认人格；2026-10-08 项目主人：人格可以留空）。预设是 `false` 的是「无工具」，也发 `null`（核心 P-16 下）。
     // 目录是人选的（或者照上一次会话预选上的）带 `chosen`：太宽也照用，回应带 `wide`（核心 9-7 补，2026-10-09 项目主人：手动选的别自动切）
     // 在项目里开的带 `project`（核心 H-2）：没写的人格、预设核心照项目的
     const who = persona === false ? { persona: null } : persona ? { persona } : {};
     const { session, wide, cwd: used } = await this.conn.request('session.create', {
-      cwd, ...(model ? { model } : {}), ...who, ...(preset ? { preset } : {}), ...(chosen ? { chosen: true } : {}), ...(project ? { project } : {}),
+      cwd, ...(model ? { model } : {}), ...who, ...(preset === false ? { preset: null } : preset ? { preset } : {}), ...(chosen ? { chosen: true } : {}), ...(project ? { project } : {}),
     });
     /** 刚开的这个会话的目录太宽（照人选的用着）：外面照它提醒一句 */
     this.createdWide = wide === true ? session : null;

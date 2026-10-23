@@ -60,18 +60,25 @@ export function personaInUse(chosen, fallback, list) {
  * 新会话先选上上一次的（2026-10-09 项目主人：不然每次新会话都要选好麻烦）：会话表里最新的那个顶层会话的人格、预设。工作区不跟
  * （2026-10-22 项目主人：上一个会话换到 `~` 以后新建会话也跟着在 `~`，不对），新会话一律从默认工作区开始。
  * 那个会话没人格的选「无人格」（`false`）；人格、预设已经没了、写错了的不选（照默认的）；一个会话都没有的交 `null`。
- * @param {{oneshot?: boolean, parent?: string|null, persona?: string, preset?: string, cwd?: string}[]} sessions 从新到旧
+ * @param {{session?: string, oneshot?: boolean, parent?: string|null, persona?: string, preset?: string|null, no_tools?: boolean, cwd?: string}[]} sessions 从新到旧
  * @param {Persona[]} personas @param {Preset[]} presets
- * @returns {{persona?: string|false, preset?: string}|null}
+ * @param {((session: string) => string|false|null|undefined)|null} [presetOf] 会话现在用的预设（`false` 是「无工具」）；不给的照会话表
+ * @returns {{persona?: string|false, preset?: string|false}|null}
  */
-export function lastChoice(sessions, personas, presets) {
-  const last = sessions.find((e) => !e.oneshot && !e.parent);
-  if (!last) return null;
-  /** @type {{persona?: string|false, preset?: string}} */
+export function lastChoice(sessions, personas, presets, presetOf = null) {
+  const found = sessions.find((e) => !e.oneshot && !e.parent);
+  if (!found) return null;
+  // 预设照会话现在的（中途换过的，会话表里还是开的时候那个）：`false` 是「无工具」
+  const now = presetOf ? presetOf(found.session) : undefined;
+  const last = now === undefined ? found : { ...found, preset: now === false ? null : now, no_tools: now === false };
+  /** @type {{persona?: string|false, preset?: string|false}} */
   const out = {};
   if (!last.persona) out.persona = false;
   else if (defaultUsable(personas, last.persona)) out.persona = last.persona;
-  if (last.preset && defaultUsable(presets, last.preset, 'preset')) out.preset = last.preset;
+  // 上一个是「无工具」的（核心 P-16 下：`preset` 是 `null` 又带 `no_tools`）接着选它；写着预设编号的照编号（中途换回来的）
+  if (last.preset) {
+    if (defaultUsable(presets, last.preset, 'preset')) out.preset = last.preset;
+  } else if (last.no_tools) out.preset = false;
   return out;
 }
 

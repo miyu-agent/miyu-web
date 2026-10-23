@@ -72,7 +72,7 @@ export class App {
     this.preview = /** @type {{sig: string, data: any}|null} */ (null);
     /** 还没开的新会话里选的人格、预设、工作区（软件包 `setup` 经服务 `chat` 改）：开会话时带上，没选的照默认 */
     // 人格 `null` 是没选（照默认的），`false` 是明着不用人格；`project` 是在哪个项目里新建的（蓝图「会话整理和项目」第 9 条，开会话时带上）
-    this.draft = /** @type {{persona: string|false|null, preset: string|null, cwd: string|null, project: string|null}} */ ({ persona: null, preset: null, cwd: null, project: null });
+    this.draft = /** @type {{persona: string|false|null, preset: string|false|null, cwd: string|null, project: string|null}} */ ({ persona: null, preset: null, cwd: null, project: null });
     /** 会话用的人格画成什么样（名字、头像）：软件包 `setup` 经 `chat.look` 交来；没人交的照旧的一份（`resources/persona.json`） */
     this.looker = /** @type {((session: string|null) => import('./chat.js').Look|null|undefined)|null} */ (null);
     /** 上一次交给对话区、输入框的（一样的不再交） */
@@ -654,7 +654,7 @@ export class App {
     this.composer.menu.update(this.composer.input.value);
   }
 
-  /** 还没开的新会话改人格、预设、工作区（软件包 `setup`）：告诉软件包（`draft.changed`），重画（`@` 照它列文件）。 @param {Partial<{persona: string|false|null, preset: string|null, cwd: string|null}>} patch */
+  /** 还没开的新会话改人格、预设、工作区（软件包 `setup`）：告诉软件包（`draft.changed`），重画（`@` 照它列文件）。 @param {Partial<{persona: string|false|null, preset: string|false|null, cwd: string|null}>} patch */
   /**
    * 正在看的会话的人格画成什么样，交给对话区（她那一轮的头）和输入框（占位字）。`looker` 交 `undefined` 的是还不知道（人格列表没读完），
    * 照旧不动；`null` 是无人格（2026-10-10 项目主人：无人格的会话不应该显示头像和 AI 名称）。
@@ -684,7 +684,7 @@ export class App {
   /** 新会话预览上下文带的人格、预设（同开会话时带的：人格是 `false` 的明着不用，发 `null`） */
   previewParams() {
     const { persona, preset } = this.draft;
-    return { ...(persona === false ? { persona: null } : persona ? { persona } : {}), ...(preset ? { preset } : {}) };
+    return { ...(persona === false ? { persona: null } : persona ? { persona } : {}), ...(preset === false ? { preset: null } : preset ? { preset } : {}) };
   }
 
   /**

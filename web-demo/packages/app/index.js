@@ -85,7 +85,12 @@ export function apply(ctx) {
     /** 人格列表、新会话选的人格变了：照 `look` 重新取一次 */
     refreshLook: () => app.syncLook(),
     /** 会话用的预设（核心 P-2：会话状态的 `preset`，没读进来的照会话表；以前的会话没有，是 `null`） */
-    preset: (id) => app.store.sessions.get(id)?.view.status?.preset ?? app.store.index.get(id)?.preset ?? null,
+    // 选了「无工具」的（核心 P-16 下：`preset` 是 `null` 又带 `no_tools: true`；会话状态里写成空字的也是）是 `false`
+    preset: (id) => {
+      const now = app.store.sessions.get(id)?.view.status?.preset;
+      if (now === '') return false;
+      return now ?? (app.store.index.get(id)?.no_tools ? false : app.store.index.get(id)?.preset ?? null);
+    },
     /** 项目（核心 H-1）：现在的一张表、一个项目；没有的是 `null` */
     projects: () => app.store.projects.list,
     project: (id) => app.store.projects.get(id),

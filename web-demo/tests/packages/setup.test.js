@@ -118,6 +118,9 @@ test('新会话先选上上一次的：最新的顶层会话的人格、预设�
   const presets = [{ preset: 'full', name: '全部功能' }, { preset: 'dev', name: '基础功能' }];
   assert.deepEqual(lastChoice([{ parent: 'p', persona: 'miyu' }, { oneshot: true }, { persona: 'miyu', preset: 'dev', cwd: '/w' }], personas, presets), { persona: 'miyu', preset: 'dev' }, '工作区不跟（2026-10-22 项目主人）');
   assert.deepEqual(lastChoice([{ preset: 'full', cwd: '/w' }], personas, presets), { persona: false, preset: 'full' });
+  assert.deepEqual(lastChoice([{ persona: 'miyu', preset: null, no_tools: true }], personas, presets), { persona: 'miyu', preset: false }, '上一个是「无工具」的接着选它（核心 P-16 下）');
+  assert.deepEqual(lastChoice([{ session: 's', persona: 'miyu', preset: null, no_tools: true }], personas, presets, () => 'dev'), { persona: 'miyu', preset: 'dev' }, '中途换回来的照会话现在的');
+  assert.deepEqual(lastChoice([{ session: 's', persona: 'miyu', preset: 'dev' }], personas, presets, () => false), { persona: 'miyu', preset: false }, '中途换成无工具的');
   // 上一个会话在它自己的默认工作区里（核心 5-14）：不预选目录
   assert.deepEqual(lastChoice([{ preset: 'full', cwd: '/w/s1', default_workspace: '/w/s1' }], personas, presets), { persona: false, preset: 'full' });
   assert.deepEqual(lastChoice([{ preset: 'full', cwd: '/src', default_workspace: '/w/s1' }], personas, presets), { persona: false, preset: 'full' });
