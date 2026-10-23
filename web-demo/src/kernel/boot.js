@@ -67,7 +67,7 @@ export async function boot(root) {
   const greeting = { protocol: [1, 1], head: { kind: 'web', version: '0.0.0' }, locale: language.tag, caps: { input: true } };
   // 开线、握手（凭据、登录框、「账号」那一屏在 `signin.js`）。断了自己重连（蓝图 `web.md`「连核心」第 1 条）：连上以后重新握手、补上漏掉的，
   // 见下面 `onReopen`。连不上：走桥的问口令还对不对，照它写为什么（口令用不了、桥没在跑、桥连不上核心）；直接连的就是网页软件没在跑
-  const { conn, hello, setup } = await signIn(host, greeting, root, async (err) => {
+  const { conn, hello, setup, member } = await signIn(host, greeting, root, async (err) => {
     if (err.message !== 'bridge') throw new Offline('core', err.message);
     if (served) throw new Offline('web');
     const key = await host.check();
@@ -89,13 +89,14 @@ export async function boot(root) {
   let setting = settingOf(res.languages, distro.kernel ?? {}, storage.get(USER_LAYER, {})[KERNEL]?.config ?? {});
   /** 核心有没有配置的接口（`config.get`）：没有的，`/language` 只记在这台设备上 */
   let viaCore = false;
-  const readCore = () => conn.request('config.get', { keys: ['ui.language'] }).then((got) => {
+  // 成员（核心 Y-2下下上）：配置读的是机主那一份、也订不了，不读，照浏览器（蓝图「界面语言」第 5 条成员那一款）
+  const readCore = () => (member ? Promise.resolve(null) : conn.request('config.get', { keys: ['ui.language'] }).then((got) => {
     viaCore = true;
     return fromConfig(got);
   }, (err) => {
     if (err?.code !== NO_METHOD) console.error(`读不到个人设置的界面语言：${err.message}`);
     return null;
-  });
+  }));
   const fromCore = await readCore();
   if (fromCore) setting = fromCore;
   const chosen = pick(setting, browser, res.languages);
@@ -220,6 +221,8 @@ export async function boot(root) {
         /** 「账号」那几屏右上角点过的明暗（主题还没起来时记的，`signin.js`）：引导照它换成主题的设置；读一次就拿掉 */
         signinScheme: takeSigninScheme(host.store),
         account,
+        /** 是成员（核心 Y-2下下上：配置、模型列表、链接预览、读本机文件这些调不了）：各处照它不露用不了的（蓝图「连核心」第 1 条「成员」那一款） */
+        member: !!member,
         /** 退出登录（拿登录令牌连的才有）：忘掉登录令牌、重新载入；走桥的是 `null` */
         signOut: host.signOut ?? null,
         /** 注册链接（账号页的「邀请」）：直接连网页软件的才有，走桥的交 `null` */
@@ -249,6 +252,8 @@ export async function boot(root) {
       // 界面的字、收起那一行的写法有一样变了重新载入页面（界面的字在内核起来时装，包的字在加载时取）
       ctx.provide('language', {
         current: language,
+        /** 成员改不了界面语言（照浏览器）：`/language`、设置页那一行照它不露 */
+        locked: !!member,
         get setting() { return setting; },
         choices: /** @type {string[]} */ (languageSpec(res.languages).choices),
         /** `/language` 浮层里的几行 */

@@ -307,6 +307,7 @@
     }
   },
   "language": {
+    "locked": "The interface language is set by the administrator",
     "title": "Interface language",
     "hint": "↑↓ select · Enter switch · Esc close",
     "auto": "Follow browser ({name})",

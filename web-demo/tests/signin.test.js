@@ -5,21 +5,22 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { refusedText, accountProblem, registerProblem, signIn } from '../src/kernel/signin.js';
+import { refusedText, accountProblem, registerProblem, signIn, accessOf } from '../src/kernel/signin.js';
 import { Refusal } from '../src/core/connection.js';
 
 loadRes();
 
-/** 一条假的线：收到 `hello` 照 `answer(参数)` 回（抛 `Refusal` 的回成拒绝、回完断开）；记下每一次握手的参数。 */
-function fakeLine(answer, sent) {
+/** 一条假的线：收到 `hello` 照 `answer(参数, 方法)` 回（抛 `Refusal` 的回成拒绝、回完断开）；记下每一次握手的参数（`methods` 给了的另记方法名）。 */
+function fakeLine(answer, sent, methods = []) {
   return () => {
     const ws = { readyState: 0, onopen: null, onmessage: null, onclose: null, onerror: null,
       send(text) {
         const m = JSON.parse(text);
         sent.push(m.params);
+        methods.push(m.method);
         let reply;
         try {
-          reply = { jsonrpc: '2.0', id: m.id, result: answer(m.params) };
+          reply = { jsonrpc: '2.0', id: m.id, result: answer(m.params, m.method) };
         } catch (err) {
           reply = { jsonrpc: '2.0', id: m.id, error: { code: -32010, message: err.message, data: { reason: err.reason, ...(err.data ?? {}) } } };
         }
@@ -84,17 +85,44 @@ test('凭邀请码注册（核心 Y-1 上）：邀请码不对的照原因写；
   assert.match(registerProblem('bob', 'password1', 'password2') ?? '', /不一样/);
 });
 
-test('成员（握手的 account 不是 admin）：试一次 config.get，放开了的照常起页面；管理员不试', async () => {
+test('是谁（核心 Y-2下下上）：握手带 admin 的照它；没带的先试 persona.list（被拒是 Y-2 以前的成员）、再试 config.get（被拒是成员）；走桥的、admin 不试', async () => {
+  const no = () => { throw new Refusal('没有权限。', -32010, 'not_permitted'); };
+  /** 假核心：`refuse` 里的方法回 not_permitted，别的回空对象；记下问了哪几个 @param {string[]} refuse */
+  const core = (refuse) => {
+    const asked = /** @type {string[]} */ ([]);
+    return { asked, request: async (/** @type {string} */ m) => { asked.push(m); if (refuse.includes(m)) no(); return {}; } };
+  };
+  const c1 = core([]);
+  assert.equal(await accessOf(c1, { account: 'bob', admin: false }), 'member', 'hello 带 admin 的不试');
+  assert.equal(await accessOf(c1, { account: 'bob', admin: true }), 'owner');
+  assert.equal(await accessOf(c1, { view: 1 }), 'owner', '走桥的、没带账号的是机主');
+  assert.equal(await accessOf(c1, { account: 'admin' }), 'owner');
+  assert.deepEqual(c1.asked, []);
+  const member = core(['config.get']);
+  assert.equal(await accessOf(member, { account: 'bob' }), 'member');
+  assert.deepEqual(member.asked, ['persona.list', 'config.get']);
+  const old = core(['persona.list', 'config.get']);
+  assert.equal(await accessOf(old, { account: 'bob' }), 'blocked', 'Y-2 以前：人格都调不了');
+  assert.deepEqual(old.asked, ['persona.list'], '被挡的不再试第二样');
+  assert.equal(await accessOf(core([]), { account: 'shorin' }), 'owner', '起了名字的机主照样认出来');
+  // 别的错（旧核心没有这个方法）不算被拒
+  const odd = { request: async () => { throw new Refusal('x', -32601, null); } };
+  assert.equal(await accessOf(odd, { account: 'bob' }), 'owner');
+
+  // 连起来：成员照常起页面，交回 member
   const sent = [];
+  const methods = [];
   const served = {
     kind: 'served', check: async () => 'down',
-    channel: fakeLine((p) => (p.keys ? { values: {} } : { view: 1, account: 'bob' }), sent),
+    channel: fakeLine((p, m) => (m === 'config.get' ? no() : m === 'hello' ? { view: 1, account: 'bob' } : {}), sent, methods),
     credential: () => ({ login: 'tok' }), remember: () => {}, forget: () => {},
   };
   const got = await signIn(served, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
   assert.equal(got.hello.account, 'bob');
-  assert.deepEqual(sent.map((p) => (p.keys ? 'config.get' : 'hello')), ['hello', 'config.get']);
+  assert.equal(got.member, true);
+  assert.deepEqual(methods, ['hello', 'persona.list', 'config.get']);
   const admin = [];
-  await signIn({ ...served, channel: fakeLine(() => ({ view: 1, account: 'admin' }), admin) }, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
+  const bridgeGot = await signIn({ ...served, channel: fakeLine(() => ({ view: 1, account: 'admin' }), admin) }, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
   assert.equal(admin.length, 1, '管理员只握手');
+  assert.equal(bridgeGot.member, false);
 });

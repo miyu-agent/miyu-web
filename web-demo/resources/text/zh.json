@@ -307,6 +307,7 @@
     }
   },
   "language": {
+    "locked": "界面语言由管理员设置",
     "title": "界面语言",
     "hint": "↑↓ 选择 · Enter 切换 · Esc 关闭",
     "auto": "跟随浏览器（{name}）",

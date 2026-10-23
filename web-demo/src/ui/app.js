@@ -189,8 +189,8 @@ export class App {
     // 正文里交给软件包画的条目（确认和提问了结以后留的，按 `asking`）；挂的变了，正文重画
     ctx.slots.declare('chat.item', 'keyed');
     ctx.slots.watch('chat.item', () => this.chat.redraw());
-    /** 斜杠命令：出厂的一份加软件包登记的（服务 `commands`） */
-    this.commands = new Commands(res.commands.commands);
+    /** 斜杠命令：出厂的一份加软件包登记的（服务 `commands`）；成员改不了界面语言，不列 `/language`（蓝图「连核心」第 1 条「成员」那一款） */
+    this.commands = new Commands(res.commands.commands.filter((/** @type {any} */ c) => !(info.member && c.name === 'language')));
     this.composer = new Composer({
       send: (text, extra) => this.send(text, extra),
       interrupt: () => this.interrupt(),
