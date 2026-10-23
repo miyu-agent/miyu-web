@@ -166,8 +166,9 @@
 .markdown-body .md-details-body { margin-top: 0.4em; padding-left: 12px; border-left: 2px solid var(--line); }
 .markdown-body .md-details-body > :first-child { margin-top: 0; }
 .markdown-body .md-details-body > :last-child { margin-bottom: 0; }
-.markdown-body .footnote-ref { line-height: 0; }
-.markdown-body .footnote-ref > button { padding: 0 1px; border: 0; background: none; color: var(--accent); font: inherit; font-size: 0.78em; line-height: 1; cursor: pointer; }
+/* 上标本身照 0.8 倍、里面的号不再缩（原来上标缩一号、号又缩 0.78，只剩 9px） */
+.markdown-body .footnote-ref { font-size: 0.8em; line-height: 0; vertical-align: super; }
+.markdown-body .footnote-ref > button { padding: 0 2px; border: 0; background: none; color: var(--accent); font: inherit; font-size: 1em; font-weight: 600; line-height: 1; cursor: pointer; }
 .markdown-body .footnote-ref > button:hover { text-decoration: underline; }
 .markdown-body .footnotes { margin-top: 1.4em; padding-top: 0.6em; border-top: 1px solid var(--line); color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); }
 .markdown-body .footnotes ol { margin: 0; padding-left: 1.6em; }
