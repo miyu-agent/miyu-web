@@ -21,6 +21,7 @@ import { Artifacts } from './artifacts.js';
 import { runCommand, runUnlisted, refusalText, redo, copyTurn, Commands, revertLatest } from './commands.js';
 import { coreSpecs } from '../model/commands.js';
 import { rank, startupSession } from '../model/session.js';
+import { ChatWidth } from './chat-width.js';
 import { statusFooter, levelLabel, nextLevel, levelParams, previewPart } from '../model/footer.js';
 import { itemsOf, levelOf } from '../model/entries.js';
 import { compactingOf, lastTurn, turnEnded, untouchedTurnOf } from '../model/view-state.js';
@@ -294,6 +295,8 @@ export class App {
         this.composer.el,
         // 新会话的首页、输入框下面（挂载位 `stage.home`：扩展的界面块，软件包 `widgets`）；只在输入框居中的空会话里露（styles/chat.css）
         this.stageHome = h('div.stage-home')));
+    // 对话那一列的宽能拖（蓝图「样子」三列那一条下面）：两边沿看不见的抓手
+    this.chatWidth = new ChatWidth(this.stageEl, () => this.stageEl.querySelector('.chat-scroll > .timeline'), ctx.storage);
     // 左上角浮着的那一条露着没有、多高：露着时正文从它下面起、顶上淡出（`.has-info`、`--stage-info-h`，styles/chat.css）
     const infoSize = new ResizeObserver(() => {
       const tall = this.stageInfo.getBoundingClientRect().height;

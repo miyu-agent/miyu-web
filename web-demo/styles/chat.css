@@ -6,7 +6,7 @@
 .stage.is-empty { justify-content: center; }
 .stage.is-empty .chat-scroll { flex: 0 0 0; }
 /* 新会话首页输入框下面（挂载位 stage.home：扩展的界面块）：和输入框一样宽，只在空会话里露 */
-.stage-home { display: none; width: min(100%, 980px); margin: 0 auto; padding: 0 calc(30px * var(--space)); }
+.stage-home { display: none; width: min(100%, var(--chat-w, 980px)); margin: 0 auto; padding: 0 calc(30px * var(--space)); }
 .stage.is-empty .stage-home:not(:empty) { display: block; }
 /* 正文滚到输入框上沿时淡出去，不是一刀切断（2026-09-30 改） */
 .chat-scroll {
@@ -19,7 +19,7 @@
   position: sticky; bottom: 0; height: 28px; margin-top: calc(-28px * var(--space)); pointer-events: none;
   background: var(--stage-fade, linear-gradient(to bottom, color-mix(in srgb, var(--surface) 0%, transparent), var(--surface)));
 }
-.timeline { width: min(100%, 980px); margin: 0 auto; padding: calc(24px * var(--space)) calc(30px * var(--space)) calc(14px * var(--space)); }
+.timeline { width: min(100%, var(--chat-w, 980px)); margin: 0 auto; padding: calc(24px * var(--space)) calc(30px * var(--space)) calc(14px * var(--space)); }
 /* 顶上的淡出：左上角浮着的那一条（stage.info）露着时，正文滚到它下面淡掉（原来透出字），正文也从它下面起（原来「上下文已清空」
    这类第一行被它挡住）；看着子代理时它在路径那一行里，不占正文，两样都不要（2026-10-10 项目主人） */
 .chat-fade-top {
@@ -301,3 +301,7 @@
 .chat-older[hidden] { display: none; }
 /* 全部会话那一页（项目页）开着：左上角那一条（会话标题、项目名）不画（2026-10-19 项目主人：从项目会话点进项目页，原来会话的那一条还在） */
 .stage:has(> .sessions-page:not([hidden]):not(.is-leaving)) .stage-info { display: none; }
+
+/* 对话那一列两边沿看不见的抓手（chat-width.js；2026-10-23 项目主人：照 DeepSeek Harness 能拖，但不要看得出来的线）：不画东西，只有指针变成左右箭头 */
+.chat-grip { position: absolute; z-index: 6; top: 0; bottom: 0; width: 12px; cursor: ew-resize; touch-action: none; }
+:root.is-chat-resizing, :root.is-chat-resizing * { cursor: ew-resize !important; user-select: none !important; }
