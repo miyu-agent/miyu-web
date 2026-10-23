@@ -528,11 +528,12 @@ export class App {
     this.draft = { persona: null, preset: null, cwd: null, project: null };
     // 回到新会话再问一次预览（技能、工具可能变了）
     this.preview = null;
+    const other = id !== this.current;
     this.current = id;
     this.sessionsPage?.close();
     // 没读过的会话第一次打开时才读、订阅：子代理的不进会话表的顶层；全部会话那一页开的老会话进（`listed`）
     if (id) this.store.ensure(id, listed).catch((err) => this.composer.say(refusalText(err)));
-    this.chat.reset();
+    this.chat.reset({ animate: other });
     // 换会话换一条小提示（蓝图「输入框」写字的地方）
     this.composer.newTip();
     // 换会话当场摆好输入框，不播从中间滑下去的动画（2026-10-10 项目主人：切换会话每次都动一下）
