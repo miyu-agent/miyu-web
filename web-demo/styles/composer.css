@@ -93,7 +93,7 @@
 .footer-middle:empty { display: none; }
 
 @media (max-width: 836px) {
-  .composer-dock { padding: 0 calc(10px * var(--space)) calc(8px * var(--space)); }
+  .composer-dock { padding: 0 clamp(16px, 4vw, 28px) calc(8px * var(--space)); }
 }
 
 /* 换级别（蓝图「输入框下面那一行」）：级别那一格原地换，不上下移：旧的先淡出、糊开一点（前 45%），新的接着淡入、由糊变清

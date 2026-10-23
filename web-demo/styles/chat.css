@@ -5,6 +5,9 @@
 /* 空会话（新会话、还没有一句话）：输入框在对话区正中，发出第一句话滑到底下（app.js 放动画；蓝图「对话区」的「空会话」） */
 .stage.is-empty { justify-content: center; }
 .stage.is-empty .chat-scroll { flex: 0 0 0; }
+/* 滚动条平时不画，指针在对话区上才露（2026-10-23 项目主人：右边那一道细线不好看） */
+.chat-scroll { scrollbar-color: transparent transparent; }
+.chat-scroll:hover { scrollbar-color: var(--scrollbar-color, var(--line-strong) transparent); }
 /* 新会话首页输入框下面（挂载位 stage.home：扩展的界面块）：和输入框一样宽，只在空会话里露 */
 .stage-home { display: none; width: min(100%, var(--chat-w, 980px)); margin: 0 auto; padding: 0 calc(30px * var(--space)); }
 .stage.is-empty .stage-home:not(:empty) { display: block; }
@@ -247,7 +250,7 @@
 @media (max-width: 836px) {
   .note { padding-left: calc(38px * var(--space)); }
   .chat-tail { padding-left: calc(38px * var(--space)); }
-  .timeline { padding: calc(22px * var(--space)) calc(13px * var(--space)) calc(12px * var(--space)); }
+  .timeline { padding: calc(22px * var(--space)) clamp(16px, 4vw, 28px) calc(12px * var(--space)); }
   .user-bubble, .user-attachments { max-width: 86%; }
   .assistant-message { max-width: 100%; padding-left: calc(38px * var(--space)); }
   .assistant-label img, .assistant-initial { width: 28px; height: 28px; }
