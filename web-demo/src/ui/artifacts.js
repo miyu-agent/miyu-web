@@ -28,6 +28,13 @@ const DISMISSED = 'artifacts_dismissed';
 /** 删掉的最多记几个会话的（多了扔掉最早记的） */
 const DISMISSED_SESSIONS = 200;
 
+
+/** 开关这一栏时正文那一列淡出、换宽、淡入的：正文、输入框、空会话的首页（套在里面的只动外面那一层） */
+const SWAPS = '.chat-scroll > .timeline, .composer-dock, .stage-home';
+/** 正文淡掉多久、淡回来多久（毫秒）、从多远挪回来（px）（蓝图「动效」） */
+const SWAP_OUT_MS = 90;
+const SWAP_IN_MS = 260;
+const SWAP_SHIFT = 24;
 export class Artifacts {
   /**
    * @param {HTMLElement} shell 整页（`.app-shell`）：开关时换它的类、宽度
@@ -61,8 +68,8 @@ export class Artifacts {
     this.entries = [];
     /** 开、关、拖完宽度、最大化以后叫（整页看对话那一列够不够宽，不够的收起左栏） */
     this.onLayout = () => {};
-    /** @type {ReturnType<typeof setTimeout>|undefined} 收起的那一下挂的类，走完拿掉 */
-    this.leavingTimer = undefined;
+    /** 正文换宽换到第几回（新的一回来了，旧的那一回淡完不再换） */
+    this.swapToken = 0;
     /** 看哪一页：`work` 产物、`panel` 界面块 */
     this.tab = 'work';
     /** 面板里挂着几件（`stage.panel`） */
@@ -146,15 +153,16 @@ export class Artifacts {
     this.open = open && this.hasContent();
     // 没有产物、只有面板的：开着就看面板
     if (this.open && !this.list.length) this.tab = 'panel';
-    // 那一列长出来、收回去，里面跟着淡入淡出（蓝图「动效」）
+    // 这一栏在自己的位置上浮现、淡掉（`artifacts.css`）；那一列一下子就是最终的宽，正文淡出、换宽、淡入（蓝图「动效」）
     if (this.open) show(this.el);
     else hide(this.el);
-    // 收起时那一列照收起的曲线走（`artifacts.css`），走完拿掉
-    clearTimeout(this.leavingTimer);
     const was = this.shell.classList.contains('has-artifacts');
-    this.shell.classList.toggle('is-artifacts-leaving', was && !this.open);
-    if (was && !this.open) this.leavingTimer = setTimeout(() => this.shell.classList.remove('is-artifacts-leaving'), 400);
-    this.shell.classList.toggle('has-artifacts', this.open);
+    const apply = () => {
+      this.shell.classList.toggle('has-artifacts', this.open);
+      this.onLayout();
+    };
+    if (was !== this.open) this.swapWidth(apply, this.open ? SWAP_SHIFT : -SWAP_SHIFT);
+    else apply();
     this.toggle.classList.toggle('is-active', this.open);
     if (this.open) this.toggle.classList.remove('has-new');
     if (!this.open && this.maximized) this.setMaximized(false);
@@ -162,8 +170,26 @@ export class Artifacts {
     if (this.open) this.settleAt = performance.now() + (parseFloat(getComputedStyle(this.shell).getPropertyValue('--artifact-in')) * 1000 || 0);
     if (this.open && this.tab === 'work') this.draw();
     this.syncChrome();
-    this.onLayout();
     this.changed();
+  }
+
+  /**
+   * 正文那一列换宽：先很快淡掉，换（`apply`），再从 `dx` 挪回来淡入（字只重排这一次，被淡出淡入盖住）。正在换的接着换；减少动效的直接换。
+   * @param {() => void} apply @param {number} dx
+   */
+  swapWidth(apply, dx) {
+    const els = /** @type {HTMLElement[]} */ ([...this.shell.querySelectorAll(SWAPS)]).filter((el, _, all) => !all.some((o) => o !== el && o.contains(el)));
+    const token = ++this.swapToken;
+    for (const el of els) for (const a of el.getAnimations()) if (a.id === 'swap') a.cancel();
+    if (reduced() || !els.length || typeof els[0].animate !== 'function') return apply();
+    const out = els.map((el) => el.animate([{ opacity: 1 }, { opacity: 0 }], { id: 'swap', duration: SWAP_OUT_MS, easing: 'ease-in', fill: 'forwards' }));
+    out[0].finished.then(() => {
+      if (token !== this.swapToken) return;
+      apply();
+      for (const a of out) a.cancel();
+      const easing = getComputedStyle(this.shell).getPropertyValue('--artifact-ease-in').trim() || 'ease-out';
+      for (const el of els) el.animate([{ opacity: 0, transform: `translateX(${dx}px)` }, { opacity: 1, transform: 'none' }], { id: 'swap', duration: SWAP_IN_MS, easing });
+    }, () => {});
   }
 
   /** 产物、面板有一样就有东西可看。 */

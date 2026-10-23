@@ -1,15 +1,10 @@
 /* 预览工作区（蓝图 web.md「预览工作区」，照旧版 styles.css:4893-5476、3996-4033）：右边一栏，打开时顶替会话概况；
    宽度是窗口宽的几成（--artifact-ratio，拖左边那条改）；最大化铺满窗口；窄屏是盖在上面的一层。 */
 
-.app-shell { --artifact-in: 0.34s; --artifact-out: 0.24s; --artifact-ease-in: cubic-bezier(0.32, 0.72, 0, 1); --artifact-ease-out: cubic-bezier(0.4, 0, 1, 1); }
-.app-shell.has-artifacts {
-  grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale));
-  transition: grid-template-columns var(--artifact-in) var(--artifact-ease-in);
-}
+.app-shell { --artifact-in: 0.32s; --artifact-out: 0.2s; --artifact-ease-in: cubic-bezier(0.22, 1, 0.36, 1); --artifact-ease-out: ease-in; }
+/* 那一列一下子就是最终的宽（不过渡宽：连续变的话正文一行行跟着重排、字在动画里跳），正文那一列由 `ui/artifacts.js` 淡出、换宽、淡入 */
+.app-shell.has-artifacts { grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale)); }
 .app-shell.has-artifacts.is-sidebar-collapsed { grid-template-columns: 0px minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale)); }
-/* 收起时那一列照收起的曲线（类在收的那一下挂上，走完拿掉）；拖宽度时不过渡，跟手 */
-.app-shell.is-artifacts-leaving { transition: grid-template-columns var(--artifact-out) var(--artifact-ease-out); }
-.app-shell.is-artifact-resizing { transition: none; }
 
 .artifact-workspace {
   position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr); width: calc(var(--artifact-ratio) * 100vw / var(--ui-scale) - 16px);
@@ -17,13 +12,12 @@
   border: 1px solid var(--line); border-radius: var(--r-14); background: var(--surface-1); box-shadow: var(--artifact-shadow);
   animation: artifact-in var(--artifact-in) var(--artifact-ease-in) both;
 }
-/* 开、关（2026-10-17 项目主人：右栏比左栏大得多，不照左栏那一套）：这一栏一开始就是最终的宽，里面的东西不跟着挤；整张从右边滑进来，
-   和那一列长出来同一条曲线、同样长，左边沿正好贴着那一列的左边（不压到对话上）；开 0.34 秒先快后很慢，关 0.24 秒先慢后快，滑回右边外面 */
+/* 开、关（2026-10-23 项目主人看了四种样板选「浮现」）：这一栏一开始就是最终的宽，不从屏幕外飞进来，在自己的位置上从透明、往右偏 24px 浮现；
+   关的时候淡掉、往右偏 24px。不缩放：缩放时字会抖 */
 .artifact-workspace.is-leaving { animation: artifact-out var(--artifact-out) var(--artifact-ease-out) both; }
-@keyframes artifact-in { from { transform: translateX(calc(100% + 16px)); } }
-@keyframes artifact-out { to { transform: translateX(calc(100% + 16px)); } }
+@keyframes artifact-in { from { opacity: 0; transform: translateX(24px); } }
+@keyframes artifact-out { to { opacity: 0; transform: translateX(24px); } }
 @media (prefers-reduced-motion: reduce) {
-  .app-shell.has-artifacts, .app-shell.is-artifacts-leaving { transition: none; }
   .artifact-workspace, .artifact-workspace.is-leaving { animation-duration: calc(1ms * var(--motion-scale)); }
 }
 /* 最大化、窄屏：铺满（`justify-self: end` 对固定定位的也起作用，不改回来会缩成按内容算的宽、贴在右边） */
