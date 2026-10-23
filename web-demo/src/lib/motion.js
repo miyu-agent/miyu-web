@@ -24,7 +24,7 @@ export function span(durations, delays) {
 }
 
 /** 系统设了减少动画。 */
-const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+export const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * 退场：加 `is-leaving`，自己的动画走完调 `done`（拿掉、藏起来）。没有退场动画的、减少动画的，马上调。
@@ -71,23 +71,6 @@ export function hide(el) {
 export function show(el) {
   leaving.get(el)?.();
   el.hidden = false;
-}
-
-/**
- * 一块已经换到了新位置，让它看着从原来的地方滑过去（FLIP：只动 `transform`，不再重排）。正在滑的接着从当时的位置滑；
- * 减少动效的不滑。
- * @param {HTMLElement} el
- * @param {number} dx 原来的位置比现在偏右多少（自己的 CSS 像素）
- * @param {number} duration 毫秒
- * @param {string} easing CSS 的曲线
- */
-export function glide(el, dx, duration, easing) {
-  const now = el.getAnimations?.().find((a) => a.id === 'glide');
-  const from = now ? new DOMMatrixReadOnly(getComputedStyle(el).transform).m41 : 0;
-  now?.cancel();
-  const offset = dx + from;
-  if (Math.abs(offset) < 1 || reduced() || typeof el.animate !== 'function') return;
-  el.animate([{ transform: `translateX(${offset}px)` }, { transform: 'none' }], { duration, easing, id: 'glide' });
 }
 
 /**

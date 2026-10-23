@@ -11,8 +11,8 @@
 //! - 扩展的界面块放进来时（挂载位 `stage.panel`，软件包 `widgets`；2026-10-15 项目主人定）这一栏顶上两个标签「工作区」「面板」，开关按钮
 //!   产物、面板有一样就露；面板那一页露没露告诉 `panelShown`（界面块照它订阅、叫不叫程序干活）。没有界面块的和原来一样。
 
-import { h, icon, replace, setUrl, scaleOf } from './dom.js';
-import { show, hide, glide } from '../lib/motion.js';
+import { h, icon, replace, setUrl } from './dom.js';
+import { show, hide, reduced } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { shownList, panelList, codeLanguage, undismissed } from '../model/artifacts.js';
 import { blobUrl } from '../core/host.js';
@@ -27,8 +27,7 @@ const WIDTH = 'artifacts_width';
 const DISMISSED = 'artifacts_dismissed';
 /** 删掉的最多记几个会话的（多了扔掉最早记的） */
 const DISMISSED_SESSIONS = 200;
-/** 开关那一栏时跟着滑过去的：正文那一列、输入框、空会话的首页（套在里面的只滑外面那一层） */
-const GLIDES = '.chat-scroll > .timeline, .composer-dock, .stage-home';
+
 export class Artifacts {
   /**
    * @param {HTMLElement} shell 整页（`.app-shell`）：开关时换它的类、宽度
@@ -62,6 +61,8 @@ export class Artifacts {
     this.entries = [];
     /** 开、关、拖完宽度、最大化以后叫（整页看对话那一列够不够宽，不够的收起左栏） */
     this.onLayout = () => {};
+    /** @type {ReturnType<typeof setTimeout>|undefined} 收起的那一下挂的类，走完拿掉 */
+    this.leavingTimer = undefined;
     /** 看哪一页：`work` 产物、`panel` 界面块 */
     this.tab = 'work';
     /** 面板里挂着几件（`stage.panel`） */
@@ -148,19 +149,18 @@ export class Artifacts {
     // 那一列长出来、收回去，里面跟着淡入淡出（蓝图「动效」）
     if (this.open) show(this.el);
     else hide(this.el);
-    // 那一列一下子就是最终的宽，正文那一列从原来的位置照这一栏的曲线滑过去（蓝图「动效」；宽一帧一帧变的话长会话每帧都整个重排）
-    const flips = [...this.shell.querySelectorAll(GLIDES)].filter((el, _, all) => !all.some((o) => o !== el && o.contains(el)));
-    const before = flips.map((el) => el.getBoundingClientRect().left);
+    // 收起时那一列照收起的曲线走（`artifacts.css`），走完拿掉
+    clearTimeout(this.leavingTimer);
+    const was = this.shell.classList.contains('has-artifacts');
+    this.shell.classList.toggle('is-artifacts-leaving', was && !this.open);
+    if (was && !this.open) this.leavingTimer = setTimeout(() => this.shell.classList.remove('is-artifacts-leaving'), 400);
     this.shell.classList.toggle('has-artifacts', this.open);
-    const style = getComputedStyle(this.shell);
-    const duration = parseFloat(style.getPropertyValue(this.open ? '--artifact-in' : '--artifact-out')) * 1000 || 0;
-    const easing = style.getPropertyValue(this.open ? '--artifact-ease-in' : '--artifact-ease-out').trim() || 'ease';
-    const k = scaleOf(this.shell) || 1;
-    flips.forEach((el, i) => glide(/** @type {HTMLElement} */ (el), (before[i] - el.getBoundingClientRect().left) / k, duration, easing));
     this.toggle.classList.toggle('is-active', this.open);
     if (this.open) this.toggle.classList.remove('has-new');
     if (!this.open && this.maximized) this.setMaximized(false);
-    if (this.open && this.tab === 'work') this.draw(true);
+    // 里面的东西等这一栏滑完再画（网页那一种载入、跑起来重，滑到一半时做会顿一下）；关上以前看的那一样没变的不重画，直接露出来
+    if (this.open) this.settleAt = performance.now() + (parseFloat(getComputedStyle(this.shell).getPropertyValue('--artifact-in')) * 1000 || 0);
+    if (this.open && this.tab === 'work') this.draw();
     this.syncChrome();
     this.onLayout();
     this.changed();
@@ -267,8 +267,15 @@ export class Artifacts {
     if (token !== this.token) return;
     if (a.kind === 'image') return replace(this.view, imageStage(url, a.name));
     // PDF 交给浏览器自己的阅读器
-    if (a.kind === 'pdf') return replace(this.view, h('iframe.artifact-frame.is-pdf', { src: url, title: a.name }));
+    if (a.kind === 'pdf') {
+      replace(this.view, h('div.artifact-loading', icon('loader-circle'), t('artifacts.loading')));
+      await this.settled();
+      if (token !== this.token) return;
+      return replace(this.view, h('iframe.artifact-frame.is-pdf', { src: url, title: a.name }));
+    }
     replace(this.view, h('div.artifact-loading', icon('loader-circle'), t('artifacts.loading')));
+    await this.settled();
+    if (token !== this.token) return;
     fetch(url, { cache: 'no-store' })
       .then((r) => (r.ok ? r.text() : Promise.reject(new Error(`${r.status} ${r.statusText}`))))
       .then((text) => {
@@ -278,8 +285,16 @@ export class Artifacts {
       })
       .catch((err) => {
         if (token !== this.token) return;
+        // 没取到的下次打开再试
+        this.drawn = '';
         replace(this.view, h('div.artifact-failure', icon('circle-alert'), t('artifacts.failed_with', { reason: err.message })));
       });
+  }
+
+  /** 等这一栏滑完（刚打开的；减少动效的不等） */
+  settled() {
+    const wait = (this.settleAt ?? 0) - performance.now();
+    return wait > 0 && !reduced() ? new Promise((r) => setTimeout(r, wait)) : Promise.resolve();
   }
 
   /** 展示过的全部：当前的打勾，点哪个看哪个；悬停露出右边的 ✕，点了从右栏拿掉这一样。 */

@@ -2,10 +2,14 @@
    宽度是窗口宽的几成（--artifact-ratio，拖左边那条改）；最大化铺满窗口；窄屏是盖在上面的一层。 */
 
 .app-shell { --artifact-in: 0.34s; --artifact-out: 0.24s; --artifact-ease-in: cubic-bezier(0.32, 0.72, 0, 1); --artifact-ease-out: cubic-bezier(0.4, 0, 1, 1); }
-/* 那一列开关时一下子就是最终的宽（不过渡宽：一帧一帧地变，长会话每一帧都整个重排，2026-10-23 项目主人嫌卡），正文那一列由
-   `ui/artifacts.js` 照同一条曲线从原来的位置滑过去（只动 transform） */
-.app-shell.has-artifacts { grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale)); }
+.app-shell.has-artifacts {
+  grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale));
+  transition: grid-template-columns var(--artifact-in) var(--artifact-ease-in);
+}
 .app-shell.has-artifacts.is-sidebar-collapsed { grid-template-columns: 0px minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale)); }
+/* 收起时那一列照收起的曲线（类在收的那一下挂上，走完拿掉）；拖宽度时不过渡，跟手 */
+.app-shell.is-artifacts-leaving { transition: grid-template-columns var(--artifact-out) var(--artifact-ease-out); }
+.app-shell.is-artifact-resizing { transition: none; }
 
 .artifact-workspace {
   position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr); width: calc(var(--artifact-ratio) * 100vw / var(--ui-scale) - 16px);
@@ -19,6 +23,7 @@
 @keyframes artifact-in { from { transform: translateX(calc(100% + 16px)); } }
 @keyframes artifact-out { to { transform: translateX(calc(100% + 16px)); } }
 @media (prefers-reduced-motion: reduce) {
+  .app-shell.has-artifacts, .app-shell.is-artifacts-leaving { transition: none; }
   .artifact-workspace, .artifact-workspace.is-leaving { animation-duration: calc(1ms * var(--motion-scale)); }
 }
 /* 最大化、窄屏：铺满（`justify-self: end` 对固定定位的也起作用，不改回来会缩成按内容算的宽、贴在右边） */
