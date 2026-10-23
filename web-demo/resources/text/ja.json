@@ -115,9 +115,8 @@
     "throttled": "試行回数が多すぎます。{seconds} 秒後に再試行してください",
     "bad_code": "このリンクは使用済みか期限切れです。ターミナルで miyu web をもう一度実行してください",
     "account_title": "アカウント作成",
-    "account_sub": "Web へのログインに使います。忘れたらターミナルで miyu web --reset",
+    "account_sub": "ユーザー名がそのままアカウントになり、後から変更できません。パスワードを忘れたらターミナルで miyu web --reset を実行します",
     "next": "次へ",
-    "bad_username": "ユーザー名は小文字で始め、小文字・数字・- ・_ のみ、32 文字以内",
     "short_password": "パスワードは {min} 文字以上",
     "mismatch": "パスワードが一致しません",
     "failed": "ログイントークンを受け取れませんでした",
@@ -147,7 +146,8 @@
       "profile": "あなたについて",
       "preset": "プリセット",
       "sandbox": "サンドボックス"
-    }
+    },
+    "username_hint": "ユーザー名（小文字で始まる。例：shorin）"
   },
   "boot": {
     "connecting_web": "接続中…",

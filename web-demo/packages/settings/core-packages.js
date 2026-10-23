@@ -297,12 +297,16 @@ function refusal(dialog, err) {
 
 /** 平台接入那个软件的信息页上，终端管理员在这个平台上的号用的配置项（带占位，核心 O-3）。 */
 const BINDING = 'external.bindings.<external>';
-/** 终端管理员是哪个本机账号：现在只有这一个（核心 `package-pages.md`「平台接入的软件」第 2 条） */
-const ADMIN = 'admin';
+/**
+ * 终端管理员是哪个本机账号（核心 `package-pages.md`「平台接入的软件」第 2 条）：核心 Y-12 中上起是机主，账号编号是注册时起的，不再固定叫
+ * `admin`；改系统配置的只有机主，就是这个页面登录的账号。旧核心没有账号的照旧写 `admin`。
+ * @param {any} ctx
+ */
+const machineOwner = (ctx) => ctx.host?.account ?? 'admin';
 
 /**
  * 「终端管理员的 QQ 号」（2026-10-10 项目主人选 B：放在平台接入那个软件的信息页上，只填号码）：一个号一块，✕ 删掉，＋ 加一个。头替人写成
- * `external.bindings.<平台>:<号>`，值是本机账号：标的是终端管理员，写 `admin`，不照这个页面登录的是谁；账号那一列不画，多用户以后再加。平台照 `package.list` 的
+ * `external.bindings.<平台>:<号>`，值是本机账号：标的是终端管理员（机主，`machineOwner`）；账号那一列不画，多用户以后再加。平台照 `package.list` 的
  * `connection.platform`，不写死 QQ。写在系统配置，当场生效。
  * @param {any} dialog @param {string} platform
  */
@@ -333,7 +337,7 @@ function ownerAccounts(dialog, platform) {
         dialog.toast(t('pkg.owner_bad'));
         return;
       }
-      if (!numbers.includes(n)) save(n, { value: ADMIN });
+      if (!numbers.includes(n)) save(n, { value: machineOwner(ctx) });
     });
     field.placeholder = t('pkg.owner_hint');
     add.replaceWith(field);

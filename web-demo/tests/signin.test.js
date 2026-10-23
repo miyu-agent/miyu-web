@@ -41,8 +41,9 @@ test('被拒的几种：令牌作废的不写字（出登录框），密码不�
   assert.equal(refusedText(new Error('x')), null);
 });
 
-test('「账号」那一屏：用户名照路径里的名字的写法，密码至少 8 个字节、不能全是空白，两次要一样', () => {
-  assert.equal(accountProblem('admin', 'password1', 'password1'), null);
+test('「账号」那一屏：用户名照账号编号的写法（核心 Y-12 中上：注册的是机主），密码至少 8 个字节、不能全是空白，两次要一样', () => {
+  assert.equal(accountProblem('shorin', 'password1', 'password1'), null);
+  assert.match(accountProblem('my_name', 'password1', 'password1') ?? '', /小写字母开头/, '账号编号不收下划线');
   assert.match(accountProblem('Admin', 'password1', 'password1') ?? '', /小写字母开头/);
   assert.match(accountProblem('admin', 'short', 'short') ?? '', /至少 8/);
   assert.match(accountProblem('admin', '        ', '        ') ?? '', /至少 8/);

@@ -2,7 +2,8 @@
 //! 起页面时握手（蓝图 `web.md`「连核心」第 1 条下面几款；协议 `web-module.md` 第一条）：开一条线，照宿主给的凭据握手。走桥的不带凭据
 //! （桥出示本机令牌）；直接连网页软件的带一次性码、登录令牌，都没有的先出登录框，带用户名、密码。被拒的（`bad_login`、`bad_password`、
 //! `login_throttled`、`bad_code`）核心回完就断开：关掉这条线（不让它自己重连），在登录框上写为什么，人再点「登录」时重新开一条。
-//! 握手回 `setup: true` 的出「账号」一屏（引导的样子，步骤条第一段），`account.setup` 设好用户名和密码；同一条线接着用。
+//! 握手回 `setup: true` 的出「账号」一屏（引导的样子，步骤条第一段），`account.setup` 注册机主（核心 Y-12 中上起；已经有机主的是重设密码）；
+//! 核心回完就断开这条线，照记下的登录令牌重新开一条（走桥的照旧出示本机令牌，这时就是机主）。
 //! 凭邀请码注册（核心 Y-1 上）：地址带 `#invite=` 的、登录框里点「用邀请码注册」填的，握手带 `invite`；回 `register: true` 的出「注册账号」一屏，
 //! `account.register` 拿到登录令牌，同一条线接着用。成员（核心 Y-2 以前只能调 `human.get`、`account.logout`）：试一次 `config.get` 被拒成
 //! `not_permitted` 的出一张卡「已登录」+「退出登录」，不往下起页面。
@@ -15,8 +16,6 @@ import { Connection, Refusal } from '../core/connection.js';
 
 /** 「账号」那一屏的步骤条：后面几段照引导（`packages/welcome` 的 `NUMBERED`） */
 const STEPS = ['account', 'language', 'model', 'persona', 'theme', 'profile', 'preset', 'sandbox'];
-/** 用户名的写法（核心 `kernel/ids.md`「路径里的名字」） */
-const USERNAME = /^[a-z][a-z0-9_-]{0,31}$/;
 /** 注册的用户名就是账号编号：小写字母开头，只用小写字母、数字、`-`，最多 32 个，不能叫 `users`（核心 Y-1 上） */
 const MEMBER_NAME = /^[a-z][a-z0-9-]{0,31}$/;
 /** 密码最短几个字节（`web-module.md` 第一条第 4 款） */
@@ -42,11 +41,12 @@ export function refusedText(err) {
 }
 
 /**
- * 「账号」那一屏填的哪里不对：用户名不合写法、密码太短、两次不一样；对的交 `null`。
+ * 「账号」那一屏填的哪里不对：用户名不合账号编号的写法、密码太短、两次不一样；对的交 `null`。
  * @param {string} username @param {string} password @param {string} again
  */
 export function accountProblem(username, password, again) {
-  if (!USERNAME.test(username)) return t('signin.bad_username');
+  // 用户名就是机主的账号编号（核心 Y-12 中上），写法同注册的
+  if (!MEMBER_NAME.test(username)) return t('signin.bad_member_name');
   if (new TextEncoder().encode(password).length < PASSWORD_MIN || !password.trim()) return t('signin.short_password', { min: PASSWORD_MIN });
   if (password !== again) return t('signin.mismatch');
   return null;
@@ -68,6 +68,12 @@ export function registerProblem(username, password, again) {
 const field = (name, input) => {
   input.placeholder = name;
   return h('label.si-field', h('span.si-field-name', name), input);
+};
+
+/** 占位里名字后面接一句写法（「用户名（小写字母开头，例如 shorin）」） @param {HTMLElement} row @param {HTMLInputElement} input @param {string} hint */
+const withHint = (row, input, hint) => {
+  input.placeholder = hint;
+  return row;
 };
 
 /** @param {string} type @param {string} value @param {string} auto */
@@ -210,14 +216,15 @@ async function memberBlocked(conn) {
  * @returns {Promise<{token: string, expires?: string}>}
  */
 async function accountScreen(root, conn) {
-  const user = input('text', 'admin', 'username');
+  // 用户名就是机主的账号编号（核心 Y-12 中上）：空着，不再先填 admin（admin 是系统、不能登录）
+  const user = input('text', '', 'username');
   const password = input('password', '', 'new-password');
   const again = input('password', '', 'new-password');
   /** @type {any} */
   let login = null;
   await screen(root, {
     login: false, title: t('signin.account_title'), sub: '', note: t('signin.account_sub'), button: t('signin.next'),
-    fields: [field(t('signin.username'), user), field(t('signin.password'), password), field(t('signin.again'), again)],
+    fields: [withHint(field(t('signin.username'), user), user, t('signin.username_hint')), field(t('signin.password'), password), field(t('signin.again'), again)],
     submit: async () => {
       const why = accountProblem(user.value.trim(), password.value, again.value);
       if (why) return why;
@@ -244,6 +251,8 @@ async function accountScreen(root, conn) {
 export async function signIn(host, greeting, root, offline, retry = /** @type {number[]} */ ([])) {
   let error = '';
   let last = '';
+  /** 这一次在「账号」一屏设过账号：重连上来的那一次照它交 `setup: true` */
+  let registered = false;
   for (;;) {
     let credential = host.credential();
     if (!credential && host.kind === 'served') {
@@ -266,11 +275,14 @@ export async function signIn(host, greeting, root, offline, retry = /** @type {n
         replace(root, h('div.boot-wait', t('boot.connecting_web')));
       }
       if (hello?.account && hello.account !== 'admin' && await memberBlocked(conn)) await memberCard(root, conn, hello.account, host);
-      if (!hello?.setup) return { conn, hello, setup: false };
+      if (!hello?.setup) return { conn, hello, setup: !!registered };
       const login = await accountScreen(root, conn);
       host.remember(login);
-      replace(root);
-      return { conn, hello, setup: true };
+      // 核心回完就断开（核心 Y-12 中上）：关掉这一条、照记下的登录令牌重新握手；这一次设过账号，引导第一段算走过
+      conn.close();
+      registered = true;
+      replace(root, h('div.boot-wait', t('boot.connecting_web')));
+      continue;
     } catch (err) {
       const why = refusedText(err);
       conn.close();

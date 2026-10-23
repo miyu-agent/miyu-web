@@ -10,7 +10,7 @@
 
 | 桥现在干的 | 以后谁干 | 协议上叫什么 | 步 |
 |---|---|---|---|
-| 1. 页面文件、WebSocket、访问口令、核对 Origin | 网页软件；身份由核心验：第一次用一次性码给管理员设用户名和密码，以后用它们登录 | 握手的 `code`、`user`、`password`、`login`，`account.setup_code`、`account.setup`、`account.logout` | W-8、W-9 |
+| 1. 页面文件、WebSocket、访问口令、核对 Origin | 网页软件；身份由核心验：第一次用一次性码注册机主的用户名和密码（核心 Y-12 中上起；以前是给 admin 设），以后用它们登录 | 握手的 `code`、`user`、`password`、`login`，`account.setup_code`、`account.setup`、`account.logout` | W-8、W-9 |
 | 2. `web.human` 给人看的字 | 核心 | `human.get` | W-1 |
 | 3. `web.info`、`web.realpath` | 核心 | 握手回应的 `host`，`fs.realpath` | W-3 |
 | 4. `/file`、`/blob` | 内容由核心给，地址由网页软件给 | `blob.get`、`fs.read`；网页软件的 `/media` | W-6、W-10 |
@@ -183,7 +183,7 @@
 
 **`account.setup_code`**（W-8）：没有参数。回应 `{"code": <一次性码>, "expires": <时刻>, "first": <还没设过密码>}`。
 
-**`account.setup`**（W-8）：`username`、`password`，都是字符串。回应 `{"username": …, "login": {"expires": <时刻>, "token": <登录令牌>}}`。
+**`account.setup`**（W-8）：`username`、`password`，都是字符串。回应 `{"username": …, "login": {"expires": <时刻>, "token": <登录令牌>}}`（核心 Y-12 中上起多 `account`）。核心 Y-12 中上起：还没有机主时这一步注册的是机主（用户名就是账号编号，`admin`、系统账号、已有的回 `username_taken`），已经有机主的是重设机主的密码；回完核心断开这条线，头照登录令牌重连。
 
 **`account.logout`**（W-8）：`all` 布尔，不写是 `false`。回应 `{"revoked": <作废了几个>}`。
 

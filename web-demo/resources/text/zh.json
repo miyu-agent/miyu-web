@@ -115,9 +115,8 @@
     "throttled": "尝试次数过多，{seconds} 秒后再试",
     "bad_code": "这个链接已用过或已过期：在终端里再运行一次 miyu web",
     "account_title": "创建账号",
-    "account_sub": "网页登录用，忘了可在终端运行 miyu web --reset 重设",
+    "account_sub": "用户名就是你的账号，之后不能改；忘了密码可在终端运行 miyu web --reset 重设",
     "next": "下一步",
-    "bad_username": "用户名须以小写字母开头，仅含小写字母、数字、- 和 _，最长 32 个字符",
     "short_password": "密码至少 {min} 个字符",
     "mismatch": "两次输入的密码不一样",
     "failed": "没拿到登录令牌",
@@ -147,7 +146,8 @@
       "profile": "关于你",
       "preset": "预设",
       "sandbox": "沙盒"
-    }
+    },
+    "username_hint": "用户名（小写字母开头，例如 shorin）"
   },
   "boot": {
     "connecting_web": "正在连接…",
