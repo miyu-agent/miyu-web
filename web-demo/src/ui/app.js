@@ -22,6 +22,7 @@ import { runCommand, runUnlisted, refusalText, redo, copyTurn, Commands, revertL
 import { coreSpecs } from '../model/commands.js';
 import { rank, startupSession } from '../model/session.js';
 import { ChatWidth } from './chat-width.js';
+import { SideColumn, NARROW_WIDTH } from './side.js';
 import { statusFooter, levelLabel, nextLevel, levelParams, previewPart } from '../model/footer.js';
 import { itemsOf, levelOf } from '../model/entries.js';
 import { compactingOf, lastTurn, turnEnded, untouchedTurnOf } from '../model/view-state.js';
@@ -370,7 +371,15 @@ export class App {
     this.artifacts = new Artifacts(this.root, (text, good) => this.composer.say(text, good), () => this.schedule(), this.ext,
       (shown) => ctx.emit('panel.changed', shown));
     this.root.append(this.artifacts.el);
-    this.stageTools.append(this.artifacts.toggle);
+    // 右上角那一排：软件包挂的按钮（挂载位 `stage.tools`，仪表盘的开关这类）排在预览工作区开关前面
+    ctx.slots.declare('stage.tools', 'list');
+    const tools = h('div.stage-tools-slot');
+    this.stageTools.append(tools, this.artifacts.toggle);
+    ctx.effect(() => mountList(tools, ctx.slots, 'stage.tools', failedSlot));
+    // 右边那一栏给软件包用（服务 `side`，蓝图「仪表盘」）：和预览工作区互斥
+    this.side = new SideColumn(this.root, this.artifacts, () => this.fitArtifacts());
+    this.root.append(this.side.el);
+    this.artifacts.onTakeOver = () => this.side.yield();
     // 右栏开着、对话挤得不够时自动收起左栏，关上放回来（`fitArtifacts`）
     this.autoCollapsed = false;
     this.artifacts.onLayout = () => this.fitArtifacts();
@@ -913,7 +922,10 @@ export class App {
   fitArtifacts() {
     const a = this.artifacts;
     const collapsed = this.root.classList.contains('is-sidebar-collapsed');
-    if (!a.open) {
+    // 右边那一栏推着正文的（预览工作区，或者服务 `side` 的窄栏、宽栏）多宽
+    const sideMode = this.side?.mode;
+    const pushing = a.open || sideMode === 'narrow' || sideMode === 'wide';
+    if (!pushing) {
       if (this.autoCollapsed && collapsed) this.collapse(false, false);
       this.autoCollapsed = false;
       return;
@@ -922,7 +934,8 @@ export class App {
     const scale = parseFloat(getComputedStyle(this.root).zoom) || 1;
     const width = innerWidth / scale;
     const sidebar = this.sidebar.el.getBoundingClientRect().width || 252;
-    if (width - sidebar - a.ratio * width >= res.artifacts.chat_min) return;
+    const right = a.open || sideMode === 'wide' ? a.ratio * width : NARROW_WIDTH;
+    if (width - sidebar - right >= res.artifacts.chat_min) return;
     this.autoCollapsed = true;
     this.collapse(true, false);
   }

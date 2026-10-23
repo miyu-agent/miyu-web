@@ -28,6 +28,16 @@ export function apply(ctx) {
   ctx.provide('commands', app.commands);
   // 皮肤样张（蓝图 web.md「皮肤」第 7 条）：设置页「皮肤」那一行的「样张」也开它
   ctx.effect(() => app.commands.register({ name: 'gallery', summary: t('gallery.command') }, () => { app.openGallery().catch((err) => app.composer.say(err.message)); }));
+  // 右边那一栏（蓝图「仪表盘」第 1 条）：和预览工作区互斥；放一块内容，照窄栏、宽栏、盖在上面打开，布局变了告诉包
+  ctx.provide('side', {
+    mount: (/** @type {Node} */ node) => app.side.mount(node),
+    open: (/** @type {'narrow'|'wide'|'overlay'} */ mode) => app.side.open(mode),
+    close: (/** @type {string|undefined} */ why) => app.side.close(why),
+    mode: () => app.side.mode,
+    fits: () => app.side.fits(),
+    free: () => app.side.free(),
+    onChange: (/** @type {(state: any) => void} */ fn) => app.side.on(fn),
+  });
   ctx.provide('chat', {
     /** 正在看的会话（还没开的新会话是 `null`） */
     current: () => app.current,

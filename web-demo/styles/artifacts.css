@@ -5,6 +5,16 @@
 /* 那一列一下子就是最终的宽（不过渡宽：连续变的话正文一行行跟着重排、字在动画里跳），正文那一列由 `ui/artifacts.js` 淡出、换宽、淡入 */
 .app-shell.has-artifacts { grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale)); }
 .app-shell.has-artifacts.is-sidebar-collapsed { grid-template-columns: 0px minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale)); }
+/* 右边那一栏给软件包用（服务 `side`，蓝图「仪表盘」）：窄栏、宽栏推开正文，和预览工作区互斥；盖在上面的不推（窗口不够宽） */
+.app-shell.has-side { grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) var(--side-w, 364px); }
+.app-shell.has-side.is-sidebar-collapsed { grid-template-columns: 0px minmax(0, 1fr) var(--side-w, 364px); }
+.side-column { grid-column: 3; grid-row: 1; min-width: 0; min-height: 0; display: grid; overflow: hidden; animation: artifact-in var(--artifact-in) var(--artifact-ease-in) both; }
+.side-column[hidden] { display: none; }
+.side-column.is-overlay {
+  position: fixed; z-index: 46; top: 8px; right: 8px; bottom: 8px; width: min(380px, calc(100vw - 16px));
+  border-radius: var(--r-14); background: var(--surface); box-shadow: var(--float-elev, var(--float-shadow));
+}
+.stage-tools-slot { display: contents; }
 /* 开关这一栏换宽的那一下（连左栏自动收起、放回）、拖宽度的时候：不过渡宽（三列那一层平常挂着左栏开关用的过渡，不拿掉的话换完又连续变 0.28 秒） */
 .app-shell.is-artifact-swapping, .app-shell.is-artifact-swapping.is-sidebar-collapsed,
 .app-shell.is-artifact-resizing, .app-shell.is-artifact-resizing.is-sidebar-collapsed { transition: none; }

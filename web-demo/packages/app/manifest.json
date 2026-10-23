@@ -30,7 +30,8 @@
       "chat",
       "markdown",
       "commands",
-      "composer"
+      "composer",
+      "side"
     ]
   }
 }
