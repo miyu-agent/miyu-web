@@ -2,7 +2,8 @@
 //! 仪表盘（软件包 `dashboard`，蓝图 `web.md`「仪表盘」）：对话区右上角预览工作区开关旁边一个按钮（挂载位 `stage.tools`），点了在右边
 //! 那一栏（服务 `side`，和预览工作区互斥）打开三张卡：待办、后台任务、文件修改；点进去看后台命令的输出、文件的差异，子代理在主区打开。
 //! 窗口够宽时做一栏推开正文，并广播 `dashboard.active {on: true}`（软件包 `jobs`、`todo` 照它不画输入框那边的）；不够宽的盖在上面。
-//! 照对话区每画一次的事件 `view.changed`（条目、会话状态、待办）画；子代理照它自己的会话状态往下挂（读进来了的）。
+//! 照对话区每画一次的事件 `view.changed` 画：画的是正在看的会话这一串最上面那个（主会话）的待办、后台任务、文件修改；点子代理在主区
+//! 打开它，这一栏留着、照旧画主会话的，正在看的那一行高亮。子代理照它自己的会话状态往下挂（读进来了的）。
 
 import { h, icon } from '../../src/lib/dom.js';
 import { Dashboard } from './view.js';
@@ -16,9 +17,11 @@ const CLOSED_MAX = 200;
 export function apply(ctx) {
   const t = (/** @type {string} */ path, /** @type {any} */ fields) => ctx.text(path, fields);
   const side = ctx.side;
-  /** @type {string|null} */
-  let session = ctx.chat.current();
-  /** 上一次对话区带来的 @type {{todos: any[], entries: any[], status: any}} */
+  /** 主区正在看的会话、它这一串最上面那个（仪表盘画的是它的） @type {string|null} */
+  let current = ctx.chat.current();
+  const topOf = (/** @type {string|null} */ id) => (id ? ctx.chat.topOf(id) : null);
+  let session = topOf(current);
+  /** 主会话的待办、条目、会话状态：正在看的就是它的照对话区带来的，看着子代理的照读进来了的 @type {{todos: any[], entries: any[], status: any}} */
   let last = { todos: [], entries: [], status: null };
   /** 这个标签页里自己开过的会话（头一回有东西才自己开） */
   const opened = new Set();
@@ -99,7 +102,7 @@ export function apply(ctx) {
   const redraw = () => {
     const tree = session ? taskTree(session, last.status, statusOf) : [];
     const todos = Array.isArray(last.todos) ? last.todos : [];
-    dash.update({ todos, tree, files: fileChanges(last.entries) });
+    dash.update({ todos, tree, files: fileChanges(last.entries), current });
     // 窗口够宽时，一个会话里头一回有后台任务或待办就自己打开；人关过的不开、预览工作区开着的不挤掉它（第 3 条）
     if (session && !side.mode() && side.fits() && side.free() && (tree.length || todos.length) && !opened.has(session) && !closedMap()[session]) {
       opened.add(session);
@@ -131,11 +134,17 @@ export function apply(ctx) {
   });
 
   ctx.on('view.changed', (/** @type {any} */ v) => {
-    if (v.session !== session) {
-      session = v.session ?? null;
+    current = v.session ?? null;
+    const top = topOf(current);
+    // 换到别的一串：回到仪表盘、画那一串的；在同一串里进出子代理不动
+    if (top !== session) {
+      session = top;
       if (dash.viewing) dash.back();
     }
-    last = { todos: v.todos ?? [], entries: v.entries ?? [], status: v.status ?? null };
+    const own = session && session !== current ? ctx.sessions.sessions.get(session) : null;
+    last = own
+      ? { todos: own.todos ?? [], entries: own.view?.list ?? [], status: own.view?.status ?? null }
+      : { todos: v.todos ?? [], entries: v.entries ?? [], status: v.status ?? null };
     redraw();
   });
   redraw();

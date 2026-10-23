@@ -10,6 +10,7 @@ import { codeBlock, copy } from '../../src/markdown/build.js';
 import { drawMarkdown, useRenderers } from '../../src/ui/render.js';
 import { PALETTE, colorOf } from '../../src/model/project.js';
 import { t } from '../../src/util/res.js';
+import { pathOf } from '../../src/model/tree.js';
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -106,6 +107,8 @@ export function apply(ctx) {
     project: (id) => app.store.projects.get(id),
     /** 一个会话在哪个项目（子代理的照它的主会话；`null` 是还没开的新会话，照选的）；不在的是 `null`：在项目里的不画人格、预设、工作区（项目定好了） */
     projectOf: (session) => app.projectOfSession(session),
+    /** 一个会话这一串最上面的那个（子代理的、孙代理的照父会话往上找；顶层的就是它自己） */
+    topOf: (/** @type {string} */ session) => pathOf(session, (x) => app.parentOf(x))[0] ?? session,
     /** 删项目，连里面的会话一起删（项目设置那一个窗口的「删除项目」） */
     deleteProject: (id) => app.deleteProject(id),
     /** 打开一个项目的页（左上角的项目名） */
