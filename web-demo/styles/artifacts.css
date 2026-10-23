@@ -114,7 +114,6 @@
 /* 输入框右下角的开关：有产物才露；来了新的、工作区关着时一个圆点 */
 .artifact-toggle { position: relative; width: 30px; height: 30px; }
 .artifact-toggle .icon { width: calc(16px * var(--space)); height: calc(16px * var(--space)); }
-.artifact-toggle.is-active { color: var(--accent); }
 .artifact-toggle.has-new::after {
   position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; border: 1px solid var(--surface-1); border-radius: var(--r-round);
   background: var(--accent); content: "";
