@@ -35,11 +35,11 @@ export function counts(list) {
 }
 
 /**
- * 列哪几条：类别（`all` 是全部）、作废的看不看。
- * @param {Memory[]} list @param {{cls: string, retired: boolean}} f
+ * 列哪几条：勾了的几类（空的是全部）、作废的看不看。
+ * @param {Memory[]} list @param {{cls: string[], retired: boolean}} f
  */
 export function visible(list, f) {
-  return list.filter((m) => (f.retired || !isRetired(m)) && (f.cls === 'all' || m.class === f.cls));
+  return list.filter((m) => (f.retired || !isRetired(m)) && (f.cls.length === 0 || f.cls.includes(m.class)));
 }
 
 /** 核心给的记忆带不带关键词这一格（R-15 上以前的没有）：有一条带了就算有 @param {Memory[]} list */

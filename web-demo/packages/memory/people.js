@@ -53,15 +53,16 @@ export function peoplePage(page) {
     h('div.mem-foot.set-pinned', h('span', page.cardsRetired && retired ? t('people.foot_retired', { live, retired }) : t('people.foot', { live }))));
 }
 
-/** 一张卡：是谁、叫法、正文（四行截掉）、谁写的 · 多久以前；作废的悬停右下换成「找回」。 @param {import('./page.js').MemoryPage} page @param {Card} c @param {string} q */
+/** 一张小卡：是谁和关键词一行、正文（两行截掉）、谁写的 · 多久以前；作废的悬停右下换成「找回」。 @param {import('./page.js').MemoryPage} page @param {Card} c @param {string} q */
 function cardNode(page, c, q) {
   const t = page.t;
   const at = c.at ? Date.parse(c.at) : NaN;
   const meta = [t(c.by === 'person' ? 'people.by_person' : 'people.by_module'), Number.isFinite(at) ? agoText(at, Date.now(), t) : ''].filter(Boolean).join(' · ');
   const open = () => { page.person = c.who; page.draw(); };
   return h(`div.mem-card${isRetired(c) ? '.is-retired' : ''}`, { role: 'button', tabindex: '0', onclick: open, onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter') open(); } },
-    h('strong.mem-card-who', page.marked(c.who, q)),
-    c.names?.length ? h('span.mem-card-names', c.names.map((n) => h('span.mem-who', page.marked(n, q)))) : null,
+    // 头一行：是谁，后面接关键词的小块（一行放不下的截掉）
+    h('div.mem-card-head', h('strong.mem-card-who', page.marked(c.who, q)),
+      c.names?.length ? h('span.mem-card-names', c.names.map((n) => h('span.mem-who', page.marked(n, q)))) : null),
     h('span.mem-card-text', page.marked(c.text, q)),
     h('span.mem-card-foot',
       h('span.mem-card-meta', meta),

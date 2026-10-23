@@ -28,7 +28,9 @@ export class MemoryPage {
   constructor(ctx) {
     this.ctx = ctx;
     this.t = (/** @type {string} */ key, /** @type {any} */ fields) => ctx.text(key, fields);
-    this.el = h('div.mem-page.set-fill');
+    /** 重画只换这一层；筛选的菜单挂在外面，重画碰不到它（`filter.js`） */
+    this.body = h('div.mem-body');
+    this.el = h('div.mem-page.set-fill', this.body);
     // `Esc`：「记一条」、一条的详情的小窗开着时先收起它（设置框找带 `data-set-dismiss` 的发 `set-dismiss`）
     this.el.addEventListener('set-dismiss', () => {
       if (this.adding) this.closeAdd();
@@ -61,7 +63,7 @@ export class MemoryPage {
     this.list = [];
     this.limit = PAGE;
     this.query = '';
-    this.cls = 'all';
+    this.cls = /** @type {string[]} */ ([]);
     this.retired = false;
     this.adding = false;
     /** 开着详情的那一条 @type {string|null} */
@@ -233,14 +235,15 @@ export class MemoryPage {
     }
     // 一条的详情在列表上面弹一个小窗（2026-10-20 项目主人：改成浮动窗口），列表留在后面。小窗本来就开着的（保存以后重读、推来的变化）：
     // 新画的那一个不再播进场的动画（2026-10-22 项目主人：保存之后浮动窗口闪了两下）
-    const steady = !!this.el.querySelector(':scope > .mem-modal:not(.is-leaving)');
+    const steady = !!this.body.querySelector(':scope > .mem-modal:not(.is-leaving)');
     const modal = this.problem ? null : this.open ? this.detail() : this.person != null ? cardPop(this) : this.history ? this.historyPop() : null;
     if (steady && modal) modal.classList.add('is-steady');
-    const menuWas = !!this.el.querySelector('.mem-filter-menu:not(.is-leaving)');
-    replace(this.el, this.problem ? this.problemCard() : [this.page(), modal]);
-    // 筛选的菜单开着：照新画的按钮再挂一个（拨了开关重读、推来的变化都不收起它）
+    const was = this.el.querySelector(':scope > .mem-filter-menu:not(.is-leaving)');
+    replace(this.body, this.problem ? this.problemCard() : [this.page(), modal]);
+    // 筛选的菜单开着：照新画的按钮换一个（勾了一类、拨了开关重读、推来的变化都不收起它）；收着的留给 `closeFilter` 放退场
     if (this.filterOpen && !this.problem) {
-      const menu = filterMenu(this, menuWas);
+      const menu = filterMenu(this, !!was);
+      was?.remove();
       if (menu) this.el.append(menu);
     }
   }
@@ -258,7 +261,7 @@ export class MemoryPage {
     return this.personas.length
       ? this.kit.select(this.personas.map((p) => ({ value: p.persona, name: p.name })), this.persona, (/** @type {string} */ v) => {
         this.persona = v;
-        this.cls = 'all';
+        this.cls = /** @type {string[]} */ ([]);
         this.query = '';
         this.peopleQuery = '';
         this.adding = false;

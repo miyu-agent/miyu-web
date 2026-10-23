@@ -16,11 +16,12 @@ test('数的是没作废的：一共几条、每一类几条', () => {
 });
 
 test('筛：类别、作废的看不看', () => {
-  assert.deepEqual(visible(list, { cls: 'all', retired: false }).map((x) => x.id), ['m1', 'm2', 'm4', 'm5']);
-  assert.deepEqual(visible(list, { cls: 'user', retired: true }).map((x) => x.id), ['m1', 'm3']);
-  assert.deepEqual(visible(list, { cls: 'user', retired: false }).map((x) => x.id), ['m1']);
-  assert.deepEqual(visible(list, { cls: 'episode', retired: true }).map((x) => x.id), ['m4', 'm6'], '没写原因作废的（空字符串）也算作废');
-  assert.deepEqual(visible(list, { cls: 'episode', retired: false }).map((x) => x.id), ['m4']);
+  assert.deepEqual(visible(list, { cls: [], retired: false }).map((x) => x.id), ['m1', 'm2', 'm4', 'm5']);
+  assert.deepEqual(visible(list, { cls: ['user'], retired: true }).map((x) => x.id), ['m1', 'm3']);
+  assert.deepEqual(visible(list, { cls: ['user'], retired: false }).map((x) => x.id), ['m1']);
+  assert.deepEqual(visible(list, { cls: ['episode'], retired: true }).map((x) => x.id), ['m4', 'm6'], '没写原因作废的（空字符串）也算作废');
+  assert.deepEqual(visible(list, { cls: ['episode'], retired: false }).map((x) => x.id), ['m4']);
+  assert.deepEqual(visible(list, { cls: ['user', 'episode'], retired: false }).map((x) => x.id), ['m1', 'm4'], '多选：勾了的几类都列（2026-10-23 项目主人）');
 });
 
 test('存详情只带改了的：只改关键词的不带 text，清空关键词写空字符串，没改的交 null', () => {
