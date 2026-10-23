@@ -6,7 +6,7 @@
 //!
 //! 每一格怎么来（2026-10-14 项目主人定，两个头同一套，终端的方案页「终端配色方案」）：
 //! - 归了色板的（`KIND`）：照原色表里这一格的明度（HCT 的 tone），从那条色板取同一明度的颜色：明暗层次和默认主题一样，只换色相。
-//!   底、正文、思考一类归中性；暗字、线、斜体、引用、注释一类归中性变体；强调色、链接、表头、终端的粗体归主色；`gold` 归次色；
+//!   底、正文一类归中性；暗字、线、斜体、引用、注释一类归中性变体；强调色、链接、表头、终端的粗体归主色；`gold`、终端的思考归次色（思考 2026-10-23 项目主人在终端定：原来归中性，和暗字像两种灰）；
 //!   `ribbon`、图片、终端的行内代码归第三色（粗体、行内代码 2026-10-17 项目主人在终端定的：原来归中性，和正文一个颜色）；吉祥物头归中性、耳朵归中性变体、眼睛归主色、鳍归第三色（原来照抄）。不再用 MD3 的角色。
 //! - 有含义的颜色（出错、增删、警告、代码着色……，没归色板的 `#rrggbb`）：色相往主色靠一点（`Blend.harmonize`，最多转 15°），明度、彩度照原色表。
 //! - 阴影、遮罩照原色表的样子，浅色的影换成这一套的字色；写成算式的照抄。
@@ -32,7 +32,7 @@ const KIND = {
     gold: 's', ribbon: 't',
   },
   tui: {
-    thought: 'n', thought_hover: 'n', shade: 'n', md_math: 'n', diagram_backdrop: 'n',
+    thought: 's', thought_hover: 's', shade: 'n', md_math: 'n', diagram_backdrop: 'n',
     mascot_head: 'n', mascot_head_shade: 'n', mascot_outline: 'n',
     dim: 'nv', hover: 'nv', md_italic: 'nv', md_quote: 'nv', diagram_text: 'nv', diagram_line: 'nv', code_comment: 'nv', code_operator: 'nv',
     mascot_ear: 'nv', mascot_ear_shade: 'nv',

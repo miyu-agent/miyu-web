@@ -14,7 +14,7 @@ test('照主色生成：每一格照原色表那一格的明度、从对应色�
   // 终端「改后 · 深色」那一列（参照都是 tokyonight 同一格）：两个头逐格一样
   const terminal = { surface: '#1f1b19', text: '#d3cac7', accent: '#c89981' };
   for (const [k, v] of Object.entries(terminal)) assert.equal(dark.page[k], v, `page.${k}`);
-  const tui = { thought: '#9f9794', md_quote: '#9a8a83', code_comment: '#6c5e58', md_link: '#b2866f', md_image: '#948e62', error: '#f9786c',
+  const tui = { thought: '#ac9488', md_quote: '#9a8a83', code_comment: '#6c5e58', md_link: '#b2866f', md_image: '#948e62', error: '#f9786c',
     code_keyword: '#cf94eb', mascot_head: '#d3cac7', mascot_ear: '#6c5e58', mascot_fin: '#a7a073' };
   for (const [k, v] of Object.entries(tui)) assert.equal(dark.tui[k], v, `tui.${k}`);
   // 明暗层次和原色表一样：底、浮起来的、左栏的明度照默认主题那一格（差不过 1）
@@ -45,8 +45,8 @@ test('有含义的颜色色相不变、往主色靠一点；不带颜色的取�
     const d = turned(DESIGN.dark.page[k], brown.page[k]);
     assert.ok(d > 0.5 && d <= 15.5, `${k} 转了 ${d.toFixed(1)}°（最多 15°）`);
   }
-  // 深色原色表是 tokyonight：思考、暗字、注释、引用带着它的青、蓝，生成的换成这一套的中性色（彩度低）
-  for (const k of ['thought', 'dim', 'code_comment', 'md_quote']) assert.ok(Hct.fromInt(argbFromHex(brown.tui[k])).chroma < 12, `${k} 是中性的：${brown.tui[k]}`);
+  // 深色原色表是 tokyonight：暗字、注释、引用带着它的青、蓝，生成的换成这一套的中性色（彩度低）；思考 2026-10-23 起归次色
+  for (const k of ['dim', 'code_comment', 'md_quote']) assert.ok(Hct.fromInt(argbFromHex(brown.tui[k])).chroma < 12, `${k} 是中性的：${brown.tui[k]}`);
   assert.notEqual(brown.tui.mascot_eye, DESIGN.dark.tui.mascot_eye, '吉祥物跟着换（项目主人 10-14 定）');
   assert.ok(turned(brown.tui.mascot_eye, brown.page.accent) < 5, '眼睛照主色');
   assert.equal(brown.page.card_shadow, DESIGN.dark.page.card_shadow, '深色的影照黑');
