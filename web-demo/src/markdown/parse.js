@@ -8,7 +8,7 @@
 //! 另外两种（2026-10-23）：独占一行的 `<details>`…`</details>` 折叠块，里面照整条回答认块；`[^名字]: 内容` 脚注的定义，
 //! 从正文里拿走，照定义的先后收在最后一块 `footnotes` 里。
 
-import { inline, FOOTNOTE_NAME } from './inline.js';
+import { inline, FOOTNOTE_NAME, validLinkUrl, refKey, withRefs } from './inline.js';
 
 /**
  * 一块。`code` 的 `closed` 是围栏收齐了没有：没收齐的代码到末尾为止（在收的时候，见 `stream.js`）；
@@ -48,6 +48,8 @@ const MAX_DEPTH = 8;
 const DETAILS_OPEN = /^\s*<details>\s*(?:<summary>(.*?)<\/summary>\s*)?$/i;
 const SUMMARY = /^\s*<summary>(.*?)<\/summary>\s*$/i;
 const DETAILS_CLOSE = /^\s*<\/details>\s*$/i;
+/** 链接定义：`[名字]: 地址`，地址可以 `<>` 括起来，后面可以跟 `"标题"`、`'标题'`、`(标题)`（名字不是 `^` 开头的，那是脚注） */
+const REF_DEF = /^ {0,3}\[([^\]^][^\]]{0,99})\]:[ \t]*<?([^\s<>]+)>?(?:[ \t]+(?:"([^"]*)"|'([^']*)'|\(([^)]*)\)))?[ \t]*$/;
 /** 脚注的定义：`[^名字]: 内容`；下面缩进的几行接着算它的。 */
 const FOOTNOTE_DEF = new RegExp(`^\\[\\^(${FOOTNOTE_NAME})\\]:\\s?(.*)$`);
 
@@ -62,7 +64,8 @@ export function parse(source, { line } = {}) {
   const lines = String(source ?? '').replace(/\r\n?/g, '\n').split('\n');
   /** @type {Map<string, import('./inline.js').Inline[]>} */
   const notes = new Map();
-  const blocks = parseLines(lines, 0, lines.length, line, notes, 0);
+  // 链接定义先收齐（写在用到它的后面也认），解析时行内照它认引用式链接
+  const blocks = withRefs(refDefs(lines), () => parseLines(lines, 0, lines.length, line, notes, 0));
   if (notes.size) blocks.push({ type: 'footnotes', items: [...notes].map(([id, kids]) => ({ id, kids })) });
   return blocks;
 }
@@ -125,6 +128,11 @@ function parseLines(lines, from, to, line, notes, depth) {
       i = Math.min(to, end + 1);
       continue;
     }
+    // 认得的链接定义从正文里拿走（定义早就收好了）
+    if (isRefDef(text)) {
+      i += 1;
+      continue;
+    }
     const note = FOOTNOTE_DEF.exec(text);
     if (note) {
       const body = [note[2]];
@@ -178,6 +186,34 @@ function parseLines(lines, from, to, line, notes, depth) {
   return blocks;
 }
 
+/** 这一行的链接定义：`{key, href, title}`，不是的、地址不认的是 `null`。 @param {string} text */
+function refDef(text) {
+  const m = REF_DEF.exec(text);
+  const href = m ? validLinkUrl(m[2]) : null;
+  return m && href ? { key: refKey(m[1]), href, title: m[3] ?? m[4] ?? m[5] ?? null } : null;
+}
+
+const isRefDef = (/** @type {string} */ text) => refDef(text) != null;
+
+/**
+ * 整条回答里的链接定义（围起来的代码里的不算）：名字 → `{href, title}`，同一个名字留第一条。
+ * @param {string[]} lines
+ */
+function refDefs(lines) {
+  /** @type {Map<string, {href: string, title: string|null}>} */
+  const out = new Map();
+  let fenced = false;
+  for (const text of lines) {
+    if (fenced ? FENCE_CLOSE.test(text) : FENCE_OPEN.test(text)) {
+      fenced = !fenced;
+      continue;
+    }
+    const def = fenced ? null : refDef(text);
+    if (def && !out.has(def.key)) out.set(def.key, { href: def.href, title: def.title });
+  }
+  return out;
+}
+
 /** 从 `from` 起配对的 `</details>` 在第几行（照层数配对）；没有的是 `to`（在收的时候到末尾为止）。 */
 function detailsEnd(lines, from, to) {
   let level = 1;
@@ -191,7 +227,7 @@ function detailsEnd(lines, from, to) {
 /** 这一行能不能开一块：段落碰到它就断开。 */
 function startsBlock(lines, i, to, claim) {
   const text = lines[i];
-  return DETAILS_OPEN.test(text) || DETAILS_CLOSE.test(text) || FOOTNOTE_DEF.test(text) || /^\s*```/.test(text) || /^#{1,6}\s+/.test(text) || /^\s*[-*+]\s+/.test(text) || /^\s*\d+[.)]\s+/.test(text)
+  return DETAILS_OPEN.test(text) || DETAILS_CLOSE.test(text) || FOOTNOTE_DEF.test(text) || isRefDef(text) || /^\s*```/.test(text) || /^#{1,6}\s+/.test(text) || /^\s*[-*+]\s+/.test(text) || /^\s*\d+[.)]\s+/.test(text)
     || /^\s*>/.test(text) || isRule(text) || isTableStart(lines, i, to) || /^\s*\$\$/.test(text) || /^\s*\\\[\s*$/.test(text)
     || claim(i) != null;
 }

@@ -3,7 +3,7 @@
 //! 节点交给 `build.js` 造 DOM，这里测得了。
 //!
 //! 照这个先后认：独占一行的「标题（地址）」；`\(…\)`、`$$…$$`、`$…$` 公式；反斜杠转义；换行；`` `代码` ``；
-//! `![说明](地址)` 图片（旧版没有，蓝图「图片」第 1 条加的）；`[^名字]` 脚注的引用；`[字](地址)`；不带属性的 `<br>`；
+//! `![说明](地址)` 图片（旧版没有，蓝图「图片」第 1 条加的）；`[^名字]` 脚注的引用；`[字](地址)`；引用式链接 `[字][名字]`、`[名字]`（照 `parse.js` 收的定义）；不带属性的 `<br>`；
 //! 成对、不带属性的 `<kbd>` 这几个（第 1 条，2026-10-23）；`<地址>`；裸地址；`~~删除~~`；`***粗斜***`、`___粗斜___`；`**粗**`、`__粗__`；`*斜*`、`_斜_`。
 //! 认不出的照字。嵌套最多 `markdown.json` 的 `inline_depth` 层，再深的整段照字。
 //!
@@ -17,7 +17,7 @@ import { res } from '../util/res.js';
  *   | {type: 'br'}
  *   | {type: 'code', text: string}
  *   | {type: 'math', tex: string, raw: string}
- *   | {type: 'link', href: string, kids: Inline[]}
+ *   | {type: 'link', href: string, kids: Inline[], title?: string}
  *   | {type: 'autolink', href: string, text: string}
  *   | {type: 'image', src: string, alt: string}
  *   | {type: 'titled', href: string, indent: string, title: Inline[], gap: string, open: string, url: string, close: string}
@@ -28,6 +28,30 @@ import { res } from '../util/res.js';
  *   `math` 的 `raw` 是原文：KaTeX 排不了时照它写（第 6 条）；`autolink` 是 `<地址>` 和裸地址，字照原样；
  *   `titled` 是「标题（地址）」一整行，标题、括号、地址都在同一个链接里
  */
+
+/**
+ * 这一条回答的链接定义（`[名字]: 地址`，`parse.js` 解析前收好、解析完拿掉）：名字照 `refKey` 规范过 → `{href, title}`。
+ * 解析是同步的一口气，挂在模块上不会串到别的回答。
+ * @type {Map<string, {href: string, title: string|null}>}
+ */
+let refs = new Map();
+
+/** 链接定义的名字：不分大小写、空白并成一个 @param {string} label */
+export const refKey = (label) => label.trim().replace(/\s+/g, ' ').toLowerCase();
+
+/**
+ * 照这几条链接定义跑 `fn`（里面的 `inline` 认引用式链接）。
+ * @template T @param {Map<string, {href: string, title: string|null}>} defs @param {() => T} fn @returns {T}
+ */
+export function withRefs(defs, fn) {
+  const was = refs;
+  refs = defs;
+  try {
+    return fn();
+  } finally {
+    refs = was;
+  }
+}
 
 /** 只认这几种地址（第 3 条）。`file` 在里面是因为模型会拿它指本机路径（旧版 `app.js:4246`）。 */
 const SCHEME = /^(?:https?|file):\/\//i;
@@ -158,6 +182,14 @@ export function inline(source, depth = 0, inLink = false) {
         continue;
       }
     }
+    // 引用式链接：`[字][名字]`、`[名字][]`、`[名字]`，照这条回答的链接定义；没定义的往下照别的认（最后照字）
+    if (c === '[' && !inLink && refs.size) {
+      const ref = refAt(text, i);
+      if (ref) {
+        emit({ type: 'link', href: ref.href, kids: inline(ref.label, depth + 1, true), ...(ref.title ? { title: ref.title } : {}) }, ref.end);
+        continue;
+      }
+    }
     if (c === '[') {
       const labelEnd = text.indexOf('](', i + 1);
       const urlEnd = labelEnd >= 0 ? text.indexOf(')', labelEnd + 2) : -1;
@@ -235,6 +267,26 @@ export function inline(source, depth = 0, inLink = false) {
   }
   if (text.length > plain) push(out, text.slice(plain));
   return out;
+}
+
+/**
+ * 从 `i`（一个 `[`）起的引用式链接：`{label, href, title, end}`，`end` 是后面那一个字的位置；不是的（后面跟着 `(` 的是普通链接）、
+ * 没定义的是 `null`。
+ * @param {string} text @param {number} i
+ */
+function refAt(text, i) {
+  const close = text.indexOf(']', i + 1);
+  if (close <= i + 1 || text.slice(i + 1, close).includes('[')) return null;
+  const label = text.slice(i + 1, close);
+  if (text[close + 1] === '(') return null;
+  if (text[close + 1] === '[') {
+    const close2 = text.indexOf(']', close + 2);
+    if (close2 < 0) return null;
+    const def = refs.get(refKey(close2 === close + 2 ? label : text.slice(close + 2, close2)));
+    return def ? { label, ...def, end: close2 + 1 } : null;
+  }
+  const def = refs.get(refKey(label));
+  return def ? { label, ...def, end: close + 1 } : null;
 }
 
 /** 接上一个节点：字和前面的字并成一段。 */

@@ -427,3 +427,16 @@ test('粗斜：***x***、___x___ 是粗体里套斜体；词内的 ___ 不算；
   assert.deepEqual(inline('**粗** *斜*'), [{ type: 'strong', kids: ['粗'] }, ' ', { type: 'em', kids: ['斜'] }]);
   assert.deepEqual(inline('***没收尾'), ['***没收尾']);
 });
+
+test('引用式链接：定义行从正文拿走（写在后面也认），[字][名字]、[名字][]、[名字] 照定义成链接；没定义的、地址不认的照字（2026-10-23）', () => {
+  const link = (href, kids, title) => ({ type: 'link', href, kids, ...(title ? { title } : {}) });
+  assert.deepEqual(parse('看 [Miyu][miyu]、[Spec][] 和 [MIYU]。\n\n[miyu]: https://github.com/a/b\n[spec]: <https://spec.commonmark.org> "规范"'), [
+    para('看 ', link('https://github.com/a/b', ['Miyu']), '、', link('https://spec.commonmark.org/', ['Spec'], '规范'), ' 和 ', link('https://github.com/a/b', ['MIYU']), '。'),
+  ]);
+  // 没定义的、地址不认的定义照字；普通链接照旧；围起来的代码里的定义不算
+  assert.deepEqual(parse('[没有][x] [y]\n\n[y]: javascript:alert(1)'), [para('[没有][x] [y]'), para('[y]: javascript:alert(1)')]);
+  assert.deepEqual(parse('[a](https://a.com/)\n\n[a]: https://b.com/'), [para(link('https://a.com/', ['a']))]);
+  assert.deepEqual(parse('```\n[c]: https://c.com\n```\n[c]'), [{ type: 'code', lang: '', text: '[c]: https://c.com', closed: true }, para('[c]')]);
+  // 段落下面紧跟着的定义也拿走
+  assert.deepEqual(parse('字 [d]\n[d]: https://d.com/'), [para('字 ', link('https://d.com/', ['d']))]);
+});

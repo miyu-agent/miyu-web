@@ -120,8 +120,12 @@ function inlineNode(n, ctx) {
       return h('code', n.text);
     case 'math':
       return math(n.tex, false, n.raw);
-    case 'link':
-      return link(n.href, '', kids(n.kids, ctx), ctx);
+    case 'link': {
+      const a = link(n.href, '', kids(n.kids, ctx), ctx);
+      // 写了标题的悬停看标题（本机路径的悬停照旧看全路径）
+      if (n.title && a instanceof HTMLElement && !a.title) a.title = n.title;
+      return a;
+    }
     case 'autolink':
       return link(n.href, '.auto-link', [n.text], ctx);
     case 'image':
