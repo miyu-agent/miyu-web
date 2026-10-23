@@ -1066,7 +1066,7 @@ export class App {
     if (this.switching) return;
     const session = this.current;
     if (!session) {
-      this.pendingLevel = nextLevel(this.pendingLevel ?? footer([], {}).left.level, this.member);
+      this.pendingLevel = nextLevel(this.pendingLevel ?? statusFooter(null).left.level, this.member);
       this.render();
       return;
     }
