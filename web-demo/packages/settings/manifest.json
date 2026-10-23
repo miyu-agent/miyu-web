@@ -190,7 +190,9 @@
       "no_match": "未找到「{query}」",
       "loading": "正在加载配置…",
       "load_failed": "无法加载配置：{reason}",
+      "member_note": "模型、配置、软件这些由管理员设置",
       "pages": {
+        "general": "通用",
         "packages": "软件包",
         "account": "账号",
         "backstage": "软件后台",
@@ -820,7 +822,9 @@
       "no_match": "No results for “{query}”",
       "loading": "Loading settings…",
       "load_failed": "Couldn't load settings: {reason}",
+      "member_note": "Models, settings and software are managed by the administrator",
       "pages": {
+        "general": "General",
         "packages": "Packages",
         "account": "Account",
         "backstage": "Dashboards",
@@ -1450,7 +1454,9 @@
       "no_match": "「{query}」は見つかりません",
       "loading": "設定を読み込み中…",
       "load_failed": "設定を読み込めません：{reason}",
+      "member_note": "モデル・設定・ソフトは管理者が管理します",
       "pages": {
+        "general": "一般",
         "packages": "パッケージ",
         "account": "アカウント",
         "backstage": "ソフトの管理画面",
