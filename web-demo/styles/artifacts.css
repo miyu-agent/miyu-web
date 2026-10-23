@@ -14,6 +14,11 @@
 /* 这一栏开着：对话区右边的跳转条不画（挤在栏边的缝里，同一天项目主人） */
 .app-shell.has-side .stage-right, .app-shell.is-side-claimed.has-artifacts .stage-right { display: none; }
 .side-column[hidden] { display: none; }
+/* 收起（蓝图「动效」右侧边栏那一行）：淡掉、往右偏 24px；推开正文的那一种浮在原处淡（那一列马上换回原来的宽，不浮起来会被裁成 0 宽），
+   照收起之前的宽，盖在对话区上面 */
+.side-column.is-leaving { animation: artifact-out var(--artifact-out) var(--artifact-ease-out) both; }
+.side-column.is-leaving:not(.is-overlay) { position: fixed; z-index: 13; top: 0; right: 0; bottom: 0; width: var(--side-w, 312px); }
+@media (prefers-reduced-motion: reduce) { .side-column, .side-column.is-leaving { animation-duration: calc(1ms * var(--motion-scale)); } }
 .side-column.is-overlay {
   position: fixed; z-index: 46; top: 8px; right: 8px; bottom: 8px; width: min(340px, calc(100vw - 16px));
   border-radius: var(--r-14); background: var(--surface); box-shadow: var(--float-elev, var(--float-shadow));
@@ -24,6 +29,8 @@
 .app-shell.is-artifact-resizing, .app-shell.is-artifact-resizing.is-sidebar-collapsed { transition: none; }
 
 .artifact-workspace {
+  /* 钉在第三列（同右侧边栏一格）：关的时候那一列换给右侧边栏了，不钉的话被挤到下一行最左边，淡掉的那一下看不见 */
+  grid-column: 3; grid-row: 1;
   position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr); width: calc(var(--artifact-ratio) * 100vw / var(--ui-scale) - 16px);
   min-width: 0; margin: calc(8px * var(--space)) calc(10px * var(--space)) calc(10px * var(--space)) calc(6px * var(--space)); justify-self: end; overflow: hidden;
   border: 1px solid var(--line); border-radius: var(--r-14); background: var(--surface-1); box-shadow: var(--artifact-shadow);

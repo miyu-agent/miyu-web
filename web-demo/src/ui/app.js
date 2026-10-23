@@ -381,6 +381,7 @@ export class App {
     this.side = new SideColumn(this.root, this.artifacts, () => this.fitArtifacts());
     this.root.append(this.side.el);
     this.artifacts.onTakeOver = () => this.side.yield();
+    this.artifacts.alongside = () => this.side.fadeable();
     // 右栏开着、对话挤得不够时自动收起左栏，关上放回来（`fitArtifacts`）
     this.autoCollapsed = false;
     this.artifacts.onLayout = () => this.fitArtifacts();

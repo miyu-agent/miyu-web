@@ -74,6 +74,8 @@ export class Artifacts {
     this.onLayout = () => {};
     /** 要占右边那一栏时（仪表盘开着的让出来） */
     this.onTakeOver = () => {};
+    /** 要占右边那一栏时跟着正文一起淡掉的（开着的右侧边栏，`side.js` 的 `fadeable`） @type {() => HTMLElement[]} */
+    this.alongside = () => [];
     /** 正文换宽换到第几回（新的一回来了，旧的那一回淡完不再换） */
     this.swapToken = 0;
     /** 右侧边栏要了它：返回箭头交给谁（`claim`）；`null` 是原来的样子 @type {{back: () => void}|null} */
@@ -184,21 +186,23 @@ export class Artifacts {
     this.open = open && this.hasContent();
     // 没有产物、只有面板的：开着就看面板
     if (this.open && !this.list.length && !this.presenting) this.tab = 'panel';
-    // 这一栏在自己的位置上浮现、淡掉（`artifacts.css`）；那一列一下子就是最终的宽，正文淡出、换宽、淡入（蓝图「动效」）
-    if (this.open) show(this.el);
-    else hide(this.el);
+    // 这一栏在自己的位置上浮现、淡掉（`artifacts.css`）；那一列一下子就是最终的宽，正文淡出、换宽、淡入（蓝图「动效」）。
+    // 浮现等换好宽再放（原来一开就放，右侧边栏占着那一栏的时候工作区在窄的那一列里浮现了一半才换宽，2026-10-24 项目主人：进工作区没有动画）
     const was = this.shell.classList.contains('has-artifacts');
+    if (!this.open) hide(this.el);
+    else if (was || !swap) show(this.el);
     // 换宽的那一下（连左栏自动收起、放回）不过渡宽：挂着不过渡的类换，量一下让它生效，再拿掉
     const apply = () => {
       this.shell.classList.add('is-artifact-swapping');
-      // 右边那一栏给仪表盘占着的：一下子让出来（服务 `side`）
+      // 右边那一栏给仪表盘占着的：一下子让出来（服务 `side`；已经跟着正文淡掉了）
       if (this.open) this.onTakeOver();
       this.shell.classList.toggle('has-artifacts', this.open);
+      if (this.open) show(this.el);
       this.onLayout();
       void this.shell.offsetWidth;
       this.shell.classList.remove('is-artifact-swapping');
     };
-    if (was !== this.open && swap) this.swapWidth(apply, this.open ? SWAP_SHIFT : -SWAP_SHIFT);
+    if (was !== this.open && swap) this.swapWidth(apply, this.open ? SWAP_SHIFT : -SWAP_SHIFT, this.open ? this.alongside() : []);
     else apply();
     this.toggle.classList.toggle('is-active', this.open);
     if (this.open) this.markSeen();
@@ -206,7 +210,7 @@ export class Artifacts {
     // 收起了：借着看的交回去（下回打开照展示文件画）
     if (!this.open) this.unpresent();
     // 里面的东西等这一栏滑完再画（网页那一种载入、跑起来重，滑到一半时做会顿一下）；关上以前看的那一样没变的不重画，直接露出来
-    if (this.open) this.settleAt = performance.now() + (parseFloat(getComputedStyle(this.shell).getPropertyValue('--artifact-in')) * 1000 || 0);
+    if (this.open) this.settleAt = performance.now() + (was || !swap ? 0 : SWAP_OUT_MS) + (parseFloat(getComputedStyle(this.shell).getPropertyValue('--artifact-in')) * 1000 || 0);
     if (this.open && this.tab === 'work') this.draw();
     this.syncChrome();
     this.changed();
@@ -214,14 +218,15 @@ export class Artifacts {
 
   /**
    * 正文那一列换宽：先很快淡掉，换（`apply`），再从 `dx` 挪回来淡入（字只重排这一次，被淡出淡入盖住）。正在换的接着换；减少动效的直接换。
-   * @param {() => void} apply @param {number} dx
+   * `gone` 是跟着一起淡掉、换完就藏起来的（预览工作区占过来时开着的右侧边栏），不淡回来。
+   * @param {() => void} apply @param {number} dx @param {HTMLElement[]} [gone]
    */
-  swapWidth(apply, dx) {
+  swapWidth(apply, dx, gone = []) {
     const els = /** @type {HTMLElement[]} */ ([...this.shell.querySelectorAll(SWAPS)]).filter((el, _, all) => !all.some((o) => o !== el && o.contains(el)));
     const token = ++this.swapToken;
-    for (const el of els) for (const a of el.getAnimations()) if (a.id === 'swap') a.cancel();
+    for (const el of [...els, ...gone]) for (const a of el.getAnimations()) if (a.id === 'swap') a.cancel();
     if (reduced() || !els.length || typeof els[0].animate !== 'function') return apply();
-    const out = els.map((el) => el.animate([{ opacity: 1 }, { opacity: 0 }], { id: 'swap', duration: SWAP_OUT_MS, easing: 'ease-in', fill: 'forwards' }));
+    const out = [...els, ...gone].map((el) => el.animate([{ opacity: 1 }, { opacity: 0 }], { id: 'swap', duration: SWAP_OUT_MS, easing: 'ease-in', fill: 'forwards' }));
     out[0].finished.then(() => {
       if (token !== this.swapToken) return;
       apply();
