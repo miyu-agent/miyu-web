@@ -9,10 +9,13 @@
 //!
 //! 原来演示用的「她用 `write` 写进工作目录下 `artifacts/` 的文件」那一套去掉了（2026-10-17 项目主人定：有了 `show`，右栏只放展示过的）。
 
+
+import { res } from '../util/res.js';
 /**
  * @typedef {{path: string, blob: string, name: string, title: string|null, kind: string, type: string, size: number|null,
  *   language: string|null, width: number|null, height: number|null, id: string, seq: number, turn: number|null}} Shown
- *   `kind` 是 `image`、`pdf`、`html`、`markdown`、`code`、`text`、`file`（别的文件：只能下载，不进右栏）；`type` 是核心认的媒体类型
+ *   `kind` 是 `image`、`pdf`、`html`、`markdown`、`code`、`text`、`video`、`audio`（在正文里播，不进右栏）、`file`（别的文件：只能下载，
+ *   不进右栏）；`type` 是核心认的媒体类型（核心认成别的文件、后缀是音视频的，照后缀换成的）
  */
 
 /** 条目编号里的序号（`e12` → 12）。 @param {string} id */
@@ -26,12 +29,13 @@ const seqOf = (id) => Number.parseInt(String(id).replace(/^[a-z]+/, ''), 10) || 
 export function shownOf(e) {
   const s = e?.kind === 'tool' ? e.shown : null;
   if (!s || typeof s.blob !== 'string' || !s.blob || typeof s.path !== 'string') return null;
-  const type = typeof s.media_type === 'string' ? s.media_type : 'application/octet-stream';
+  const name = typeof s.name === 'string' && s.name ? s.name : s.path.split('/').pop() ?? s.path;
+  const type = mediaGuess(typeof s.media_type === 'string' ? s.media_type : 'application/octet-stream', name);
   const language = typeof s.language === 'string' && s.language ? s.language : null;
   return {
     path: s.path,
     blob: s.blob,
-    name: typeof s.name === 'string' && s.name ? s.name : s.path.split('/').pop() ?? s.path,
+    name,
     title: typeof s.title === 'string' && s.title ? s.title : null,
     kind: shownKind(type, language),
     type,
@@ -64,7 +68,24 @@ export function shownList(entries) {
 }
 
 /** 右栏里看得了的（别的文件只在对话里一张卡片，能下载）。 @param {Shown[]} list */
-export const panelList = (list) => list.filter((s) => s.kind !== 'file');
+export const panelList = (list) => list.filter((s) => !INLINE_ONLY.includes(s.kind));
+
+/** 只在正文里的（右栏不放）：别的文件只能下载，音视频在正文里播 */
+const INLINE_ONLY = ['file', 'video', 'audio'];
+
+/**
+ * 核心认成别的文件的，后缀是视频、音频的照后缀换成媒体类型（核心的 `show` 还不认音视频，2026-10-23）；换成的得在桥的 `blob_types` 里，
+ * 不然照原样。别的照核心给的。
+ * @param {string} type @param {string} name
+ */
+export function mediaGuess(type, name) {
+  if (type !== 'application/octet-stream') return type;
+  const dot = name.lastIndexOf('.');
+  const ext = dot < 0 ? '' : name.slice(dot + 1).toLowerCase();
+  if (!ext || !(res.cards?.video?.includes(ext) || res.cards?.audio?.includes(ext))) return type;
+  const guess = res.media?.types?.[ext];
+  return guess && res.media?.blob_types?.includes(guess) ? guess : type;
+}
 
 /**
  * 下拉里删掉的不列（2026-10-17 项目主人定）：记着删的时候那一次展示的序号，同一个路径后来又展示了（序号更新）的照旧列。
@@ -83,6 +104,8 @@ export function shownKind(type, language = null) {
   if (type === 'text/html') return 'html';
   if (type === 'text/markdown') return 'markdown';
   if (type === 'text/plain') return language ? 'code' : 'text';
+  if (type.startsWith('video/')) return 'video';
+  if (type.startsWith('audio/')) return 'audio';
   return 'file';
 }
 

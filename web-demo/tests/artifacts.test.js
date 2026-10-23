@@ -56,3 +56,17 @@ test('下拉里删掉的不列；同一个路径后来又展示了（序号更�
   const again = shownList([step('b1.0', '/w/a.png', 'image/png'), step('b2.0', '/w/r.html', 'text/html'), step('b5.0', '/w/r.html', 'text/html')]);
   assert.deepEqual(undismissed(again, { '/w/r.html': 2 }).map((s) => s.path), ['/w/r.html', '/w/a.png'], '又展示了一次，回来');
 });
+
+test('音视频（2026-10-23 项目主人：show 出来的只能下载）：video/*、audio/* 是视频、音频；核心认成别的文件、后缀是音视频的照后缀换；都不进右栏', () => {
+  assert.equal(shownKind('video/mp4'), 'video');
+  assert.equal(shownKind('audio/mpeg'), 'audio');
+  const tool = (path, media_type) => ({ kind: 'tool', id: 'e3', shown: { path, blob: 'sha256:aa', media_type, size: 10 } });
+  const v = shownOf(tool('/w/测试视频.MP4', 'application/octet-stream'));
+  assert.equal(v?.kind, 'video');
+  assert.equal(v?.type, 'video/mp4');
+  assert.equal(shownOf(tool('/w/a.mp3', 'application/octet-stream'))?.type, 'audio/mpeg');
+  // 桥不给的类型（mkv）照别的文件；不是音视频后缀的照旧
+  assert.equal(shownOf(tool('/w/a.mkv', 'application/octet-stream'))?.kind, 'file');
+  assert.equal(shownOf(tool('/w/a.bin', 'application/octet-stream'))?.kind, 'file');
+  assert.deepEqual(panelList([v, shownOf(tool('/w/a.png', 'image/png'))]).map((s) => s.kind), ['image']);
+});

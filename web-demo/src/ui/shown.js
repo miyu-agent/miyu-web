@@ -1,13 +1,13 @@
 // @ts-check
 //! 她 `show` 过的东西在正文里画成什么（蓝图 `web.md`「展示」；核心 D-5，设计 35 第三节；2026-10-17 项目主人定：画在正文里，和她发的图
-//! 一样）：图片画缩略图（照回答里的图，点开是灯箱，灯箱里多「在右栏打开」）；别的画一张卡片：图标照种类、标题（没写的照文件名）、
+//! 一样）：图片画缩略图（照回答里的图，点开是灯箱，灯箱里多「在右栏打开」）；视频、音频画成播放器；别的画一张卡片：图标照种类、标题（没写的照文件名）、
 //! 一行小字写种类和大小，点了在右栏打开；别的文件（右栏看不了的）点了下载，存成原来的名字。
 
 import { h, icon, setUrl } from './dom.js';
 import { t } from '../util/res.js';
 import { bytes } from '../lib/format.js';
 import { blobUrl } from '../core/host.js';
-import { imageCard } from './media.js';
+import { imageCard, videoCard, audioCard } from './media.js';
 import { blobType } from './artifacts.js';
 
 /** 卡片的图标照种类 */
@@ -27,6 +27,9 @@ export function shownNode(s, how) {
       vector: s.type === 'image/svg+xml',
     });
   }
+  // 音视频在正文里直接播（同回答里单独一行的音视频地址）
+  if (s.kind === 'video') return videoCard({ url: blobUrl(s.blob, blobType(s)), name: s.title ?? s.name });
+  if (s.kind === 'audio') return audioCard({ url: blobUrl(s.blob, blobType(s)), name: s.title ?? s.name, download: blobUrl(s.blob, blobType(s), { download: true, name: s.name }) });
   const label = s.title ?? s.name;
   const sub = [t(`artifacts.types.${s.kind}`), s.size != null ? bytes(s.size) : null].filter(Boolean).join(' · ');
   const body = [h('span.shown-card-icon', icon(ICONS[s.kind] ?? 'file')), h('span.shown-card-text', h('span.shown-card-name', label), h('span.shown-card-sub', sub))];

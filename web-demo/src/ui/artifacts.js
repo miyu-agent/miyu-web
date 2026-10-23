@@ -337,12 +337,14 @@ function readDismissed(got) {
 }
 
 /**
- * 取 blob 时写的媒体类型（桥只认 `media.json` 的 `blob_types`）：图片、PDF 照核心认的；字照 `text/plain` 取（页面拿去当字显示，HTML
+ * 取 blob 时写的媒体类型（桥只认 `media.json` 的 `blob_types`）：图片、PDF、音视频照核心认的；字照 `text/plain` 取（页面拿去当字显示，HTML
  * 在沙盒里跑，不在页面的来源里跑）；别的文件照 `application/octet-stream`。
  * @param {import('../model/artifacts.js').Shown} a
  */
 export function blobType(a) {
   if (a.kind === 'image' || a.kind === 'pdf') return a.type;
+  // 音视频照它的媒体类型取（桥认得的才行，不认得的照别的文件），播放器才能拖进度
+  if (a.kind === 'video' || a.kind === 'audio') return res.media?.blob_types?.includes(a.type) ? a.type : 'application/octet-stream';
   if (a.kind === 'file') return 'application/octet-stream';
   return 'text/plain';
 }

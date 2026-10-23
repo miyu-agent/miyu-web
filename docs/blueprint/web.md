@@ -366,7 +366,7 @@
 **展示**（核心 D-5，设计 35「展示」；2026-10-17 项目主人定）：她用 `show {path, title?}` 把一个文件给你看，视图里那一步的工具条目带 `shown`（`{path, blob, name, media_type, size, title?, language?, width?, height?}`）。内容是展示那一刻存下的 blob，经桥的 `/blob` 取：她以后改了、删了那个文件，展示过的那一份不变。
 
 1. 正文里（项目主人定：和她发的图一样）：排在那一步所在的一段后面，一样一条；那一步照常在时间线里。图片画缩略图（照「图片」第 3 条，宽高核心给了的先占好地方，点开是灯箱，灯箱里多「在右栏打开」）；别的画一张卡片：左边一个 36px 的图标（网页 `globe`、Markdown 和文字 `file-text`、代码 `file-code`、PDF 和别的 `file`，`accent` 一成四的底），标题（她写的，没写的照文件名，一行放不下截掉），下面一行小字「HTML · 12 KB」，右边一个小图标（在右栏打开的 `panel-right`，下载的 `download`）；样子照你的话上的文件卡（不画描边，一点点影），最宽 420px。点卡片在右栏打开它；别的文件（右栏看不了的）点了下载，存成原来的名字。没展示成的（太大、没有、目录）没有这一格，那一步照出错画，正文里不出。
-2. 种类照核心认的媒体类型：`image/*` 图片，`application/pdf` PDF，`text/html` HTML，`text/markdown` Markdown，`text/plain` 带 `language` 的是代码（照回答里的代码块那一套上色）、不带的是文字，别的（`application/octet-stream`）是别的文件。
+2. 种类照核心认的媒体类型：`image/*` 图片，`application/pdf` PDF，`text/html` HTML，`text/markdown` Markdown，`text/plain` 带 `language` 的是代码（照回答里的代码块那一套上色）、不带的是文字，`video/*` 视频、`audio/*` 音频，别的（`application/octet-stream`）是别的文件。核心认成别的文件、文件名的后缀是视频、音频的（`resources/cards.json`，媒体类型照 `media.json`，桥的 `blob_types` 里有的才算）照视频、音频（2026-10-23 项目主人：show 出来的视频、音频只能下载；核心的 `show` 还不认音视频，已经请核心补）。视频、音频在正文里直接画成播放器，同回答里单独一行的音视频地址（「音视频、图片卡片」），blob 照它的媒体类型取（能拖进度）；不进右栏。
 3. 同一个路径再展示一次（`path` 是核心换成真实位置的绝对路径）：右栏里换掉那一张、排到最前；正文里两次各是一条（各是那一刻的样子）。撤掉那一轮，核心把那一步藏起来，正文和右栏里跟着都没了，右栏回到上一次展示的那一份。
 
 **预览工作区**（artifact；照旧版 `index.html:314-362`、`app.js:5475-6448`；2026-10-17 起放她 `show` 过的，见上面「展示」）：
