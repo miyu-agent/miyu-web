@@ -305,6 +305,9 @@
 .tl-nested-tail::before { content: ' · '; }
 .tl-nested-tail.is-danger { color: var(--danger); }
 .tl-nested-tail.is-warn { color: var(--warn); }
+/* 执行中的进度（核心 X-45 补）：接在那一行最后，暗色，一行放不下截掉 */
+.tl-progress { min-width: 0; overflow: hidden; color: var(--tl-soft); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.tl-progress::before { content: ' · '; }
 .tl-nested-list { display: grid; gap: 1px; }
 .tl-nested-row { display: flex; align-items: baseline; gap: calc(8px * var(--space)); width: 100%; min-width: 0; padding: calc(3px * var(--space)) calc(6px * var(--space)); border: 0; border-radius: var(--r-6); background: none; color: var(--text); font: 600 calc(11.5px * var(--text-scale)) / 1.5 var(--font-ui); text-align: left; cursor: pointer; }
 .tl-nested-row:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }

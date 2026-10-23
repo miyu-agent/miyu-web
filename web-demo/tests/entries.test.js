@@ -169,6 +169,17 @@ test('脚本里调过工具的（核心 M-5 上）：执行命令那一步带上
   assert.equal(got[1].text, '后台命令完成 · 批量 · 2.0s · #4 翻记忆');
 });
 
+test('执行中的进度（核心 X-45 补）：在跑的那一步带上 progress（去掉首尾空白），做完了的、空的不带', () => {
+  const entries = [
+    { id: 'g1.0', kind: 'group', turn: 1, steps: ['t1.1', 't1.2', 't1.3'], summary: [], at: AT },
+    { id: 't1.1', kind: 'tool', turn: 1, call: 'c1', name: 'shell', state: 'running', progress: '  视频 3.0 MiB / 16.5 MiB（18%） ', at: AT },
+    { id: 't1.2', kind: 'tool', turn: 1, call: 'c2', name: 'shell', state: 'ok', progress: '残留的', at: AT },
+    { id: 't1.3', kind: 'tool', turn: 1, call: 'c3', name: 'shell', state: 'running', progress: '   ', at: AT },
+  ];
+  const steps = itemsOf(entries, { state: 'running' }).items[0].steps;
+  assert.deepEqual(steps.map((x) => x.progress), ['视频 3.0 MiB / 16.5 MiB（18%）', null, null]);
+});
+
 test('要人确认、没定就取消了的那一步：这一段后面一行交给 asking 画「批准已取消」；定了的、没要确认的不出（验收 W-99）', async () => {
   const { reportOf } = await import('../packages/asking/model.js');
   const approval = { access: 'write', detail: { paths: [{ path: '/etc/x' }] } };

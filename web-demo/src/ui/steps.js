@@ -71,13 +71,15 @@ export class StepView {
       this.diff = h('span.tl-diff');
       // 执行命令：脚本最近调的那个工具（`#12 翻记忆`，核心 M-5 上）
       this.nestedTail = h('span.tl-nested-tail', { hidden: true });
+      // 执行中的进度（核心 X-45 补）：那一行后面接「· 视频 3.0 MiB / 16.5 MiB（18%）」，暗色、原地换，结果来了收掉
+      this.progress = h('span.tl-progress', { hidden: true });
       this.status = h('span.tl-status');
       // 留言：收着时那一行后面接留言开头的预览（2026-10-01 项目主人定）
       const message = kindOf(step.name) === 'message';
       // 编号和预览中间一个 `·`（2026-10-01 项目主人定）
       this.peek = message ? h('span.tl-peek', h('span.tl-peek-sep', t('timeline.peek_sep')), h('span')) : null;
       this.row = h('button.tl-row', { type: 'button', onclick: toggle },
-        this.node, h('span.tl-head', this.name, this.time, this.subject, this.said, this.diff, this.nestedTail), this.peek, this.status);
+        this.node, h('span.tl-head', this.name, this.time, this.subject, this.said, this.diff, this.nestedTail, this.progress), this.peek, this.status);
       this.command = h('div.tl-command', { onclick: toggle });
       // 点开的细节：点这一块也收起（点的是链接、按钮、图，或者拖选了字的不算；蓝图「压缩、清空」里的开关规矩）
       this.body = h('div.tl-body', {
@@ -239,6 +241,10 @@ export class StepView {
     this.nestedTail.hidden = !tail;
     this.nestedTail.classList.toggle('is-danger', tail?.tone === 'danger');
     this.nestedTail.classList.toggle('is-warn', tail?.tone === 'warn');
+    const progress = step.progress ?? null;
+    setText(this.progress, progress ?? '');
+    this.progress.hidden = !progress;
+    this.progress.title = progress ?? '';
     if (this.peek) {
       const text = messagePeek(step);
       setText(/** @type {HTMLElement} */ (this.peek.lastChild), text);

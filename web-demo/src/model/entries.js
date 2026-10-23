@@ -260,6 +260,8 @@ export function stepOf(e) {
     detail: e.detail && typeof e.detail === 'object' ? e.detail : null,
     // 脚本里经 `miyu call` 调的工具（核心 M-5 上）：个数和最近一个，点开照 `view.detail` 要整份
     nested: e.nested && typeof e.nested === 'object' ? e.nested : null,
+    // 执行中的进度（核心 X-45 补：脚本印的 `miyu-progress: ` 整行，核心切好、去了前缀，取最新一条）：在跑的才有，结果来了核心就不带
+    progress: e.state === 'running' && typeof e.progress === 'string' && e.progress.trim() ? e.progress.trim() : null,
     // 读的是技能的 SKILL.md（视图条目的 `skill`，`{name, title}`）：那一行写「使用技能 · 显示名」
     skill: e.skill && typeof e.skill.name === 'string' ? { name: e.skill.name, title: typeof e.skill.title === 'string' && e.skill.title ? e.skill.title : e.skill.name } : null,
   };

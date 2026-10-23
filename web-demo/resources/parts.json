@@ -6324,5 +6324,11 @@
     "select": [
       ".ctx-parts-note"
     ]
+  },
+  "timeline.progress": {
+    "zh": "时间线：执行中那一步后面的进度",
+    "select": [
+      ".tl-progress"
+    ]
   }
 }
