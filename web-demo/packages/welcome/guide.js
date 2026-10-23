@@ -10,6 +10,21 @@ import { helloScreen, languageScreen, profileScreen, embedScreen, embedState, do
 const BACK = /** @type {Record<string, string|null>} */ ({ hello: null, language: 'hello', model: 'language', persona: 'model', theme: 'persona', profile: 'theme', preset: 'profile', embed: 'preset', done: 'embed' });
 /** 进步骤条的几步（`embed` 只在那一屏出的时候列，`Guide.numbered`；沙盒那一步 2026-10-19 项目主人去掉了） */
 export const NUMBERED = ['language', 'model', 'persona', 'theme', 'profile', 'preset', 'embed'];
+/** 从头到尾的先后 */
+const ORDER = ['hello', 'language', 'model', 'persona', 'theme', 'profile', 'preset', 'embed', 'done'];
+/** 成员走的几步（核心 Y-2下下上：界面语言、模型、关于你、预设、语义模型那几步写配置，成员写不了；蓝图「连核心」第 1 条「成员」那一款） */
+export const MEMBER_STEPS = ['hello', 'persona', 'theme', 'done'];
+
+/**
+ * 成员走到的那一步：要去的这一步成员走不了的，照走的方向找下一个走得了的（往前到「完成」，往回到「欢迎」）。
+ * @param {string} step @param {1|-1} dir @returns {string}
+ */
+export function memberStep(step, dir) {
+  let i = ORDER.indexOf(step);
+  if (i < 0) return step;
+  while (i > 0 && i < ORDER.length - 1 && !MEMBER_STEPS.includes(ORDER[i])) i += dir;
+  return ORDER[i];
+}
 /** 换一屏要选中的选项（`↑` `↓` 换着选的：选了就是它；别的只挪焦点） */
 const CHOICES = '.ob-row:not([disabled]), .wl-lang, .setup-choice, .ob-model';
 const SELECTS = new Set(['wl-lang', 'setup-choice', 'ob-model']);
@@ -101,6 +116,7 @@ export class Guide {
 
   /** 步骤条列的几步。 */
   numbered() {
+    if (this.ctx.host?.member) return NUMBERED.filter((s) => MEMBER_STEPS.includes(s));
     return NUMBERED.filter((s) => s !== 'embed' || this.embed);
   }
 
@@ -170,6 +186,7 @@ export class Guide {
 
   /** 走到一步。 @param {string} step @param {1|-1} dir */
   async go(step, dir) {
+    if (this.ctx.host?.member) step = memberStep(step, dir);
     this.step = step;
     this.ctx.mascot?.busy?.(false, false);
     const host = { ready: () => this.sync(), mascot: this.ctx.mascot ?? null, panel: this.layer };
@@ -507,7 +524,8 @@ export class Guide {
    * （2026-10-19 项目主人：边淡出边换会话掉帧）。
    */
   async finish() {
-    await this.ctx.core.request('config.set', { layer: 'personal', changes: [{ key: 'ui.welcomed', value: true }] });
+    // 成员写不了配置（核心 Y-2下下上）：走没走过只记在这台设备上（`welcome.done`，照账号分开）
+    if (!this.ctx.host?.member) await this.ctx.core.request('config.set', { layer: 'personal', changes: [{ key: 'ui.welcomed', value: true }] });
     this.ctx.storage.set(STEP_KEY, null);
     this.ctx.storage.set(DONE_KEY, true);
     this.ctx.chat.open(null);

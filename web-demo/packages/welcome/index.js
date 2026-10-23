@@ -32,6 +32,13 @@ export function apply(ctx) {
     setTimeout(() => cover.remove(), 220);
   };
   const start = async () => {
+    // 成员（核心 Y-2下下上）：读不到、写不了 `ui.welcomed`，照这台设备上记的；没走过的从欢迎页走成员那几步
+    if (ctx.host?.member) {
+      if (done) return uncover();
+      guide = new Guide(ctx, () => uncover(true), release);
+      guide.open('hello');
+      return;
+    }
     let got;
     try {
       got = await ctx.core.request('config.get', { keys: ['ui.welcomed'] });
