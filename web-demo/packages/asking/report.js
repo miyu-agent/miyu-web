@@ -10,17 +10,18 @@ export class Reports {
     this.text = text;
   }
 
-  /** 卡片（蓝图「确认和提问」第 6 条）：提问一道一块；取消的照别的提示行，暗色一行。 @param {any} r @param {boolean} fresh */
+  /** 提问当成时间线的一步（蓝图「确认和提问」第 6 条，2026-10-24 项目主人：不要卡片）：一道一行「短名：回答」，第一行前面一个图标；取消的照别的提示行，暗色一行。 @param {any} r @param {boolean} fresh */
   node(r, fresh) {
     const t = this.text;
     const cls = fresh ? '.is-fresh' : '';
     if (r.type === 'answered') {
-      return h(`div.asking-report.asking-card${cls}`,
-        h('div.asking-card-head', icon('message-circle'), h('span', t('answered_title') + (r.who ? t('answered_who', { who: r.who }) : ''))),
-        h('div.asking-card-rows', r.rows.map((row) => h('div.asking-card-row',
-          h('div.asking-card-label', row.label),
-          row.answer?.text ? h('div.asking-card-answer', row.answer.text) : row.answer ? null : h('div.asking-card-answer.is-missing', t('unanswered')),
-          row.answer?.notes ? h('div.asking-card-notes', t('notes_line', { notes: row.answer.notes })) : null))));
+      return h(`div.asking-report.asking-answered${cls}`, r.rows.map((/** @type {any} */ row, /** @type {number} */ i) => h('div.asked-line',
+        h('span.asked-node', i === 0 ? icon('message-circle') : null),
+        h('div.asked-text',
+          h('span.asked-label', `${row.label}${t('answer_sep')}`),
+          row.answer?.text ? h('span.asked-answer', row.answer.text) : row.answer ? null : h('span.asked-answer.is-missing', t('unanswered')),
+          i === 0 && r.who ? h('span.asked-who', t('answered_who', { who: r.who })) : null,
+          row.answer?.notes ? h('div.asked-notes', t('notes_line', { notes: row.answer.notes })) : null))));
     }
     return h(`div.asking-report.is-cancelled${cls}`, h('span.asking-dot', '●'), t(r.kind === 'ask' ? 'cancelled_question' : 'cancelled_approval'));
   }

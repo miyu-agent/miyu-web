@@ -61,7 +61,6 @@
       ".shown-card",
       ".project-card",
       ".diff-file",
-      ".asking-card",
       ".attach-chip",
       ".set-pool",
       ".set-pkg-card",
@@ -509,28 +508,46 @@
       ".asking-cancel"
     ]
   },
-  "asking.card-head": {
-    "zh": "确认和提问：卡片头上一行",
+  "asking.answered": {
+    "zh": "确认和提问：答完的提问（时间线里的一步）",
     "select": [
-      ".asking-card-head"
+      ".asking-answered"
     ]
   },
-  "asking.card-label": {
-    "zh": "确认和提问：卡片标签",
+  "asking.asked-line": {
+    "zh": "确认和提问：答完的提问，一道一行",
     "select": [
-      ".asking-card-label"
+      ".asked-line"
     ]
   },
-  "asking.card-answer": {
-    "zh": "确认和提问：卡片回答",
+  "asking.asked-node": {
+    "zh": "确认和提问：答完的提问前面放图标的那一格",
     "select": [
-      ".asking-card-answer"
+      ".asked-node"
     ]
   },
-  "asking.card-notes": {
-    "zh": "确认和提问：卡片补充",
+  "asking.asked-text": {
+    "zh": "确认和提问：答完的提问那一行的字",
     "select": [
-      ".asking-card-notes"
+      ".asked-text"
+    ]
+  },
+  "asking.asked-answer": {
+    "zh": "确认和提问：答完的提问的回答",
+    "select": [
+      ".asked-answer"
+    ]
+  },
+  "asking.asked-who": {
+    "zh": "确认和提问：答完的提问是谁问的（子代理、后台命令）",
+    "select": [
+      ".asked-who"
+    ]
+  },
+  "asking.asked-notes": {
+    "zh": "确认和提问：答完的提问的补充",
+    "select": [
+      ".asked-notes"
     ]
   },
   "asking.report": {
