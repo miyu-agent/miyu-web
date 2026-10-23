@@ -492,13 +492,7 @@
       "memory": "记忆",
       "other": "其他"
     },
-    "requests": "{n} 次",
-    "hit": "命中 {percent}%",
-    "input": "输入 {n}",
-    "output": "输出 {n}",
-    "unpriced": "{n} 次没价格",
-    "open_usage": "在用量页看",
-    "parts_note": "按比例分摊"
+    "open_usage": "在用量页看"
   },
   "model_menu": {
     "tip": "换模型",

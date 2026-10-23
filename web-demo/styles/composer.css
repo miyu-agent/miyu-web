@@ -295,26 +295,19 @@
 .ctx-row.is-child .ctx-row-name { color: var(--text-soft); }
 .ctx-row-n { flex: none; font: calc(12.5px * var(--text-scale)) var(--font-mono); }
 .ctx-row-pct { flex: none; min-width: 3.6em; color: var(--text-faint); font: calc(11.5px * var(--text-scale)) var(--font-mono); text-align: right; }
-.ctx-row.is-use { align-items: flex-start; padding: calc(5px * var(--space)) calc(4px * var(--space)); }
-.ctx-row.is-use > .ctx-dot { margin-top: 0.42em; }
-.ctx-row.is-use > .ctx-dot.is-blank { background: none; }
-.ctx-use-text { display: flex; flex: 1; flex-direction: column; min-width: 0; }
-.ctx-use-top { display: flex; align-items: baseline; gap: calc(6px * var(--space)); }
-.ctx-use-top .ctx-row-pct { min-width: 4.5em; }
-.ctx-use-line { overflow: hidden; color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }
 .ctx-pop-foot-row { display: flex; align-items: center; justify-content: space-between; gap: calc(8px * var(--space)); }
 .ctx-pop-link { display: inline-flex; align-items: center; gap: 2px; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; }
 .ctx-pop-link:hover { text-decoration: underline; }
 .ctx-pop-link .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); }
 @media (prefers-reduced-motion: reduce) { .ctx-pop, .ctx-pop.is-leaving, .ctx-pop.is-below, .ctx-pop.is-below.is-leaving { animation: none; } }
 
-/* 累计浮窗的一根横条：用途之间留缝，主会话那一块照各部分拆开；主会话下面一行彩色小字写各部分（核心 CX-3） */
+/* 累计浮窗的一根横条：用途之间留缝，主会话那一块照各部分拆开（核心 CX-3）；下面一列只写百分比 */
 /* 主题里没有的两样：「AI 输出」金和粉之间的橙、「起标题」蓝和粉之间的紫，明暗两套都和各部分分得开 */
 .ctx-pop { --ctx-output: color-mix(in oklab, var(--gold) 45%, var(--ribbon)); --ctx-title: color-mix(in oklab, var(--accent) 50%, var(--ribbon)); }
 .ctx-bar.is-split { gap: 2px; background: none; }
+.ctx-rows.is-usage .ctx-row { padding-left: calc((6px + var(--depth, 0) * 16px) * var(--space)); }
+.ctx-rows.is-usage .ctx-row-pct { color: var(--text-soft); font-size: calc(12px * var(--text-scale)); }
+.ctx-row > .ctx-dot.is-blank { background: none; }
+.ctx-rows.is-usage .ctx-row.is-child .ctx-dot { background: var(--tone); }
 .ctx-bar-group { display: flex; min-width: 3px; height: 100%; }
 .ctx-bar-group > .ctx-bar-seg { min-width: 1px; }
-.ctx-use-parts { display: flex; flex-wrap: wrap; gap: 0 calc(10px * var(--space)); margin-top: 2px; font-size: calc(11.5px * var(--text-scale)); line-height: 1.5; }
-.ctx-use-part { display: inline-flex; align-items: center; gap: 4px; color: var(--tone); white-space: nowrap; cursor: default; }
-.ctx-use-part > .ctx-dot { width: 7px; height: 7px; }
-.ctx-use-part-n { font-family: var(--font-mono); opacity: 0.8; }

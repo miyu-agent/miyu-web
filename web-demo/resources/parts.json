@@ -3263,34 +3263,10 @@
       ".ctx-row-pct"
     ]
   },
-  "context.use-line": {
-    "zh": "累计按用途：一行下面的请求、命中、输入、输出",
-    "select": [
-      ".ctx-use-line"
-    ]
-  },
   "context.bar-group": {
     "zh": "累计按用途：横条里一个用途那一块（主会话照各部分拆开）",
     "select": [
       ".ctx-bar-group"
-    ]
-  },
-  "context.use-parts": {
-    "zh": "累计按用途：主会话下面列各部分的那一行彩色小字",
-    "select": [
-      ".ctx-use-parts"
-    ]
-  },
-  "context.use-part": {
-    "zh": "累计按用途：各部分里的一项（色块、名字）",
-    "select": [
-      ".ctx-use-part"
-    ]
-  },
-  "context.use-part-n": {
-    "zh": "累计按用途：各部分里一项的 token 数",
-    "select": [
-      ".ctx-use-part-n"
     ]
   },
   "context.pop-link": {

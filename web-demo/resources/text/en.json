@@ -492,13 +492,7 @@
       "memory": "Memory",
       "other": "Other"
     },
-    "requests": "{n} requests",
-    "hit": "{percent}% cached",
-    "input": "in {n}",
-    "output": "out {n}",
-    "unpriced": "{n} unpriced",
-    "open_usage": "Open in Usage",
-    "parts_note": "Split proportionally"
+    "open_usage": "Open in Usage"
   },
   "model_menu": {
     "tip": "Switch model",

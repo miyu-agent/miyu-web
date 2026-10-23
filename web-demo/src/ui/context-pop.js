@@ -6,8 +6,8 @@
 import { h, icon, replace, scaleOf } from './dom.js';
 import { show, hide, unfold } from '../lib/motion.js';
 import { t } from '../util/res.js';
-import { short, money, hitRate } from '../lib/format.js';
-import { scaledParts, bar, share, toneOf, useRows, USE_TONES, inputOf, costOf } from '../model/context.js';
+import { short, money } from '../lib/format.js';
+import { scaledParts, bar, share, toneOf, useRows, USE_TONES, costOf } from '../model/context.js';
 
 /** @typedef {'context'|'total'} Kind */
 
@@ -196,7 +196,7 @@ export class ContextPop {
 
   /**
    * 累计那一个（蓝图「上下文明细、累计按用途」第 4 条）：合计和花费、一根横条（照用途一块接一块，主会话那一块再照它的各部分拆开）、
-   * 一个用途一行（下面一行暗字写请求、命中、输入、输出；主会话再列一行彩色小字写各部分），最下面「含子代理」和「在用量页看」。
+   * 一列：一个用途一行、主会话下面缩进一档列各部分，只写百分比（2026-10-23 项目主人：字太多，细的去用量页看），最下面「含子代理」和「在用量页看」。
    * 各部分是核心 CX-3 的 `session.usage_parts`：同上下文明细的块，多一块「AI 输出」；旧核心没有的主会话不拆。
    * @param {{rows?: any[], parts?: {requests: number, input: number, output: number, parts: import('../model/context.js').Part[]}|null}} r
    */
@@ -211,13 +211,6 @@ export class ContextPop {
     const split = (use) => (use === 'main' && partSum > 0 ? parts : null);
     const tone = (/** @type {string} */ use) => `--tone: var(--${USE_TONES[use] ?? 'text-faint'})`;
     const partTone = (/** @type {import('../model/context.js').Part} */ p) => `--tone: var(--${toneOf(p.part)})`;
-    const line = (/** @type {import('../model/context.js').UseRow} */ x) => [
-      t('context_pop.requests', { n: x.requests.toLocaleString() }),
-      t('context_pop.hit', { percent: hitRate(x.usage.cache_read, inputOf(x.usage)) }),
-      t('context_pop.input', { n: short(inputOf(x.usage)) }),
-      t('context_pop.output', { n: short(x.usage.output) }),
-      x.unpriced ? t('context_pop.unpriced', { n: x.unpriced.toLocaleString() }) : null,
-    ].filter(Boolean).join(' · ');
     // 横条：用途之间留缝（`flex` 照 token 分，缝不挤掉比例）；拆开的那一块里各部分照它在这一块里的比例
     const track = h('div.ctx-bar.is-split', rows.map((x) => {
       const ps = split(x.use);
@@ -225,24 +218,18 @@ export class ContextPop {
         ps ? ps.map((p) => h('span.ctx-bar-seg', { style: `flex: ${p.tokens} 1 0px; ${partTone(p)}` }))
           : h('span.ctx-bar-seg', { style: `flex: 1 1 0px; ${tone(x.use)}` }));
     }));
-    /** 各部分一行彩色小字；指针停上去提示子项 @param {import('../model/context.js').Part[]} ps */
-    const partsLine = (ps) => h('span.ctx-use-parts', { title: t('context_pop.parts_note') }, ps.map((p) => h('span.ctx-use-part', {
-      style: partTone(p),
-      title: (p.children ?? []).filter((k) => k.tokens > 0).map((k) => `${k.label} ${short(k.tokens)}`).join(' · ') || null,
-    }, h('span.ctx-dot'), h('span', p.label), h('span.ctx-use-part-n', short(p.tokens)))));
+    /** 一列里的一行：色点、名字、占整个会话合计的百分比（`depth` 1 是主会话下面的部分） @param {string} style @param {string} name @param {number} tokens @param {number} depth @param {boolean} [blank] */
+    const row = (style, name, tokens, depth, blank = false) => h(`div.ctx-row${depth ? '.is-child' : ''}`, { style: `--depth: ${depth}; ${style}` },
+      h(`span.ctx-dot${blank ? '.is-blank' : ''}`), h('span.ctx-row-name', name), h('span.ctx-row-pct', `${share(tokens, sum)}%`));
     return [
       h('div.ctx-pop-head', h('strong.ctx-pop-title', t('context_pop.usage_title')), h('span.ctx-pop-sum', cost ? `${short(sum)} · ${cost}` : short(sum))),
       rows.length ? track : null,
       rows.length
-        ? h('div.ctx-rows', rows.map((x) => {
+        ? h('div.ctx-rows.is-usage', rows.map((x) => {
           const ps = split(x.use);
-          return h('div.ctx-row.is-use', { style: tone(x.use) },
-            // 拆开的主会话不要色点（颜色都在下面的小字里），留着位置对齐
-            h(`span.ctx-dot${ps ? '.is-blank' : ''}`),
-            h('span.ctx-use-text', h('span.ctx-use-top', h('span.ctx-row-name', t(`context_pop.use.${x.use}`)), h('span.ctx-row-n', short(x.tokens)),
-              x.amounts.length ? h('span.ctx-row-pct', money(x.amounts)) : null),
-            h('span.ctx-use-line', line(x)),
-            ps ? partsLine(ps) : null));
+          // 拆开的主会话不画色点（颜色在下面各部分那几行），各部分照它在主会话里的比例摊成占整个会话的
+          return [row(tone(x.use), t(`context_pop.use.${x.use}`), x.tokens, 0, !!ps),
+            ...(ps ?? []).map((p) => row(partTone(p), p.label, (p.tokens / partSum) * x.tokens, 1))];
         }))
         : h('div.ctx-pop-note', t('context_pop.no_usage')),
       h('div.ctx-pop-foot.ctx-pop-foot-row', h('span', t('context_pop.with_subagents')),
