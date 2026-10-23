@@ -4,7 +4,7 @@
 //!
 //! 照这个先后认：空行；围起来的代码（```` ``` ```` 加语言，`~~~` 不算）；认领的一行（`options.line`，以后的音视频卡片）；
 //! 独占几行的公式 `$$…$$`、`\[…\]`；表格；分隔线；标题（`#` 是 h2，往下顺延）；无序列表（不嵌套，`[ ]`、`[x]` 是任务）；
-//! 有序列表（不嵌套、不认起始数）；引用（里面只认行内的写法）；段落（软换行照换行）。块里的字交给 `inline.js`。
+//! 有序列表（不嵌套、不认起始数）；引用（去掉 `>` 以后照整条回答认块，2026-10-23）；段落（软换行照换行）。块里的字交给 `inline.js`。
 //! 另外两种（2026-10-23）：独占一行的 `<details>`…`</details>` 折叠块，里面照整条回答认块；`[^名字]: 内容` 脚注的定义，
 //! 从正文里拿走，照定义的先后收在最后一块 `footnotes` 里。
 
@@ -14,7 +14,8 @@ import { inline, FOOTNOTE_NAME } from './inline.js';
  * 一块。`code` 的 `closed` 是围栏收齐了没有：没收齐的代码到末尾为止（在收的时候，见 `stream.js`）；
  * `table` 的 `align` 一列一个（`left`、`center`、`right`，空的是没定）；列表的一项 `check` 是任务的勾（`null` 不是任务）；
  * `line` 是认领的一行，`value` 是认领时给的东西，原样放着。
- * @typedef {{type: 'para' | 'quote', kids: import('./inline.js').Inline[]}
+ * @typedef {{type: 'para', kids: import('./inline.js').Inline[]}
+ *   | {type: 'quote', blocks: Block[]}
  *   | {type: 'heading', level: number, kids: import('./inline.js').Inline[]}
  *   | {type: 'code', lang: string, text: string, closed: boolean}
  *   | {type: 'math', tex: string, raw: string}
@@ -39,6 +40,8 @@ const NUMBERED = /^\s*(\d+)[.)]\s+(.+)$/;
 const TASK = /^\[([ xX])\]\s+(.*)$/;
 const QUOTE = /^\s*>\s?(.*)$/;
 const MATH_DELIMS = [['$$', '$$'], ['\\[', '\\]']];
+/** 引用、折叠块、列表一共最多套几层（再深的整段照行内写） */
+const MAX_DEPTH = 8;
 /** 折叠块（第 2 条）：开头一行 `<details>`，后面可以紧跟 `<summary>…</summary>`；独占一行的标题、收尾。都不带属性。 */
 const DETAILS_OPEN = /^\s*<details>\s*(?:<summary>(.*?)<\/summary>\s*)?$/i;
 const SUMMARY = /^\s*<summary>(.*?)<\/summary>\s*$/i;
@@ -63,7 +66,7 @@ export function parse(source, { line } = {}) {
 }
 
 /**
- * `lines` 的 `[from, to)` 那几行认成块；脚注的定义收进 `notes`（同一个名字的留第一条）。`depth` 是套了几层折叠块。
+ * `lines` 的 `[from, to)` 那几行认成块；脚注的定义收进 `notes`（同一个名字的留第一条）。`depth` 是套了几层（折叠块、引用、列表）。
  * @param {string[]} lines @param {number} from @param {number} to
  * @param {((line: string) => any)|undefined} line @param {Map<string, import('./inline.js').Inline[]>} notes @param {number} depth
  * @returns {Block[]}
@@ -105,7 +108,7 @@ function parseLines(lines, from, to, line, notes, depth) {
       continue;
     }
     const opened = DETAILS_OPEN.exec(text);
-    if (opened && depth < 8) {
+    if (opened && depth < MAX_DEPTH) {
       const end = detailsEnd(lines, i + 1, to);
       let start = i + 1;
       let summary = opened[1] ?? null;
@@ -161,7 +164,8 @@ function parseLines(lines, from, to, line, notes, depth) {
     if (/^\s*>/.test(text)) {
       const quoted = [];
       for (let m; i < to && (m = QUOTE.exec(lines[i])); i += 1) quoted.push(m[1]);
-      blocks.push({ type: 'quote', kids: inline(quoted.join('\n')) });
+      // 去掉 `>` 以后照整条回答认块（引用里能套引用、列表、代码块）；套太深的整段照行内
+      blocks.push({ type: 'quote', blocks: depth < MAX_DEPTH ? parseLines(quoted, 0, quoted.length, line, notes, depth + 1) : [{ type: 'para', kids: inline(quoted.join('\n')) }] });
       continue;
     }
     const para = [text];

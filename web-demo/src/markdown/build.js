@@ -59,7 +59,7 @@ function block(b, ctx) {
         ? h('li', kids(it.kids, ctx))
         : h('li.task-list-item', h('input', { type: 'checkbox', checked: it.check, disabled: true }), h('span', kids(it.kids, ctx))))));
     case 'quote':
-      return h('blockquote', kids(b.kids, ctx));
+      return h('blockquote', b.blocks.map((x) => block(x, ctx)));
     case 'details':
       // 折叠块（第 2 条）：标题一行能点，里面照整条回答造
       return h('details.md-details', h('summary', b.summary ? kids(b.summary, ctx) : t('markdown.details')),

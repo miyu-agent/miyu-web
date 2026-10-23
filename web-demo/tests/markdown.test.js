@@ -118,11 +118,26 @@ test('有序列表：. 和 ) 都算，第一项的号照原样起（中间隔了
   assert.deepEqual(parse('1. a\n\n- x\n\n2. b').filter((b) => b.ordered).map((b) => b.start ?? 1), [1, 2]);
 });
 
-test('引用：连着的 > 行合成一块，里面只认行内的写法', () => {
-  assert.deepEqual(parse('> a\n>**b**\n> # 不是标题\n\n> c'), [
-    { type: 'quote', kids: ['a', BR, { type: 'strong', kids: ['b'] }, BR, '# 不是标题'] },
-    { type: 'quote', kids: ['c'] },
+test('引用：连着的 > 行合成一块，去掉 > 以后照整条回答认块（2026-10-23）', () => {
+  assert.deepEqual(parse('> a\n>**b**\n> # 标题\n\n> c'), [
+    { type: 'quote', blocks: [para('a', BR, { type: 'strong', kids: ['b'] }), { type: 'heading', level: 2, kids: ['标题'] }] },
+    { type: 'quote', blocks: [para('c')] },
   ]);
+  // 套着的引用、引用里的列表、代码块
+  assert.deepEqual(parse('> 外\n> > 里\n>\n> - 一项\n>\n> ```bash\n> echo 1\n> ```'), [
+    { type: 'quote', blocks: [
+      para('外'),
+      { type: 'quote', blocks: [para('里')] },
+      { type: 'list', ordered: false, task: false, items: [{ check: null, kids: ['一项'] }] },
+      { type: 'code', lang: 'bash', text: 'echo 1', closed: true },
+    ] },
+  ]);
+  // 套太深的整段照行内
+  const deep = parse('>'.repeat(12) + ' x');
+  let b = deep[0], n = 0;
+  while (b?.type === 'quote') { n += 1; b = b.blocks[0]; }
+  assert.equal(n, 9);
+  assert.equal(b.type, 'para');
 });
 
 test('独占一行的认领（以后的音视频卡片）：认领了的单独一块，段落在那里断开；每行只问一次', () => {

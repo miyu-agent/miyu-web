@@ -29,6 +29,10 @@
   margin: 0 0 calc(10px * var(--space)); padding: calc(7px * var(--space)) calc(13px * var(--space)); border-left: var(--md-quote-border, 3px solid var(--accent)); border-radius: var(--md-quote-radius, 0 var(--radius) var(--radius) 0);
   background: var(--md-quote-bg, color-mix(in srgb, var(--accent-soft) 35%, transparent)); color: var(--md-quote-fg, var(--text-soft)); font-size: calc(14px * var(--text-scale));
 }
+/* 引用里照整条回答认块（2026-10-23）：头一块不空上面、最后一块不空下面；套着的引用往里缩一档 */
+.markdown-body blockquote > :first-child { margin-top: 0; }
+.markdown-body blockquote > :last-child { margin-bottom: 0; }
+.markdown-body blockquote blockquote { margin-left: 0; }
 .markdown-body hr { height: 1px; margin: calc(14px * var(--space)) 0; border: 0; background: var(--md-hr, var(--line)); }
 .markdown-body del { color: var(--text-faint); }
 
