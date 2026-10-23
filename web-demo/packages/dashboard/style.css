@@ -1,7 +1,12 @@
 /* 仪表盘（软件包 `dashboard`，蓝图 web.md「仪表盘」）：右侧边栏里四张白卡片（待办、后台任务、文件修改、展示文件），点进去的输出、差异；
    对话区右上角的开关。一行 30px、13px 字（2026-10-24 项目主人：原来太松），状态只用图标、贴着用时，层级用圆角的连接线。 */
 
-.dash-toggle { position: relative; width: 30px; height: 30px; }
+.dash-toggle { position: relative; width: 30px; height: 30px; transition: opacity var(--motion-in) var(--ease-out); }
+/* 右栏开关：任何时候都不铺底（悬停也不铺）；右栏开着时平常不露，指针移到右上角那一排、键盘停在上面才露（2026-10-24 项目主人） */
+.dash-toggle, .dash-toggle:hover { background: transparent; }
+.dash-toggle.is-open { opacity: 0; }
+.stage-tools:hover .dash-toggle.is-open, .dash-toggle.is-open:focus-visible { opacity: 1; }
+@media (hover: none) { .dash-toggle.is-open { opacity: 1; } }
 .dash-toggle .icon { width: calc(16px * var(--space)); height: calc(16px * var(--space)); }
 /* 关着时的提醒：有在跑的转圈小点，有等人的橙色小点 */
 .dash-badge { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: var(--r-round); pointer-events: none; }
@@ -10,19 +15,23 @@
 /* 来了新展示、还没看（同原来预览工作区开关上的圆点） */
 .dash-badge.is-new { width: 6px; height: 6px; background: var(--accent); box-shadow: 0 0 0 2px var(--surface); }
 
-.dash { --dash-edge: color-mix(in srgb, var(--line) 60%, transparent); display: grid; min-height: 0; height: 100%; color: var(--text); font-family: var(--font-ui); }
+/* 一行占满这一栏的高、不被内容撑开：卡片多了在卡里滚（2026-10-24 项目主人：展开了滚不动——原来那一行照内容高，卡片撑出窗口被裁掉） */
+.dash { --dash-edge: color-mix(in srgb, var(--line) 60%, transparent); display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; height: 100%; color: var(--text); font-family: var(--font-ui); }
 .dash-list { display: flex; flex-direction: column; min-height: 0; padding: calc(10px * var(--space)) calc(6px * var(--space)) 0; overflow: hidden; }
 .side-column.is-overlay .dash-list { padding: calc(10px * var(--space)) calc(6px * var(--space)) 0; }
 .dash-list[hidden], .dash-detail[hidden] { display: none; }
 /* 什么都还没有：同卡片的样子，一句暗字 */
 .dash-empty { margin: 0 4px; padding: calc(14px * var(--space)); border: 1px solid var(--dash-edge); border-radius: var(--r-12); background: var(--surface-1); box-shadow: var(--card-shadow); color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
 .dash-empty[hidden] { display: none; }
-/* 一张卡放在展开那一层里：空的收成 0 高（同时间线点开一步的缓动）；待办、文件修改先缩，后台任务至少露 5 行 */
-.dash-slot { flex: 0 3 auto; min-height: 0; display: grid; }
-.dash-slot.is-on { min-height: min(var(--dash-min, 140px), max-content); }
+/* 一张卡放在展开那一层里：空的收成 0 高（同时间线点开一步的缓动）；放不下时待办、文件修改、展示文件先缩（缩得快），后台任务缩得慢，
+   缩了的在卡里滚。不写 `min(…, max-content)`：`min()` 里不认 `max-content`，整条作废回到 `auto`，卡片就缩不了、滚不动 */
+.dash-slot { flex: 0 4 auto; min-height: 0; display: grid; }
+/* 缩到哪为止（第 4 条「窗口很矮」）：后台任务留 5 行，别的留 3 行（`view.js` 照行数写 `--dash-floor`）；本来就不到这么多行的不缩 */
+.dash-slot.is-on { min-height: var(--dash-floor, 0px); }
+.dash-slot.is-on.is-short { flex-shrink: 0; min-height: 0; }
 /* 卡片之间的空写在卡片自己身上（收着的连空一起收掉）；里面那一层左右留 4px，卡片的影不被裁掉 */
 .dash-slot > .unfold-inner { min-height: 0; display: grid; padding: 0 4px; }
-.dash-slot:has(.dash-tasks) { flex: 0 1 auto; --dash-min: 184px; }
+.dash-slot:has(.dash-tasks) { flex: 0 1 auto; }
 .dash-card {
   min-height: 0; overflow-y: auto; padding: 0 0 calc(6px * var(--space)); border: 1px solid var(--dash-edge); border-radius: var(--r-12);
   margin-bottom: calc(10px * var(--space)); background: var(--surface-1); box-shadow: var(--card-shadow); scrollbar-width: thin; scrollbar-color: transparent transparent;
@@ -43,12 +52,12 @@
 /* 待办 */
 .dash-todo-row { display: flex; align-items: center; gap: calc(8px * var(--space)); min-height: 30px; padding: 0 calc(12px * var(--space)); font-size: calc(13px * var(--text-scale)); }
 .dash-todo-row.is-doing { font-weight: 600; }
-.dash-todo-row.is-done { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
+.dash-todo-row.is-finished { color: var(--text-faint); }
 .dash-todo-mark { display: inline-grid; flex: none; place-items: center; width: 14px; }
 .dash-todo-mark .icon { width: 13px; height: 13px; }
 .dash-todo-row.is-doing .dash-todo-mark { color: var(--accent); }
 .dash-todo-row.is-doing .dash-todo-mark .icon { animation: tl-spin calc(1s * var(--motion-scale)) linear infinite; }
-.dash-todo-row.is-done .dash-todo-mark { color: var(--online); }
+.dash-todo-row.is-finished .dash-todo-mark { color: var(--online); }
 .dash-todo-ring { width: 12px; height: 12px; border: 1.6px solid var(--text-faint); border-radius: var(--r-round); box-sizing: border-box; }
 .dash-todo-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -101,7 +110,7 @@
 .dash-stop-mark { width: 8px; height: 8px; border-radius: var(--r-2); background: var(--text-soft); }
 .dash-fold-row { height: 28px; gap: calc(6px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
 .dash-fold-row .icon { width: 12px; height: 12px; }
-.dash-fold-count { font-family: var(--font-mono); font-size: calc(12px * var(--text-scale)); }
+.dash-fold-count { font-size: calc(12px * var(--text-scale)); font-variant-numeric: tabular-nums; }
 /* 连接线：第 n 道在 19 + 22n px（上一层图标的正中）；上面几层还没完的穿过去，自己这一层一段竖线、一小段横线接到图标（圆角） */
 .dash-lines-tree { position: absolute; inset: 0; pointer-events: none; }
 .dash-guide, .dash-elbow { position: absolute; left: calc(19px + var(--level) * 22px); border-left: 1px solid var(--line-strong); opacity: 0.55; }

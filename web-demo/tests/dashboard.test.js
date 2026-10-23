@@ -42,6 +42,11 @@ test('摊行：做完的顶层收成最后一行「✓ (N)」，开着的接着�
   const open = rowsOf(tree, { expanded: new Set(['main:j1']), doneOpen: true });
   assert.equal(open.filter((r) => r.type === 'task').length, 1 + 5 + 2);
   assert.ok(!open.some((r) => r.type === 'more'));
+  // 展开了的兄弟最后一行「收起」（2026-10-24 项目主人：展开了收不回），接在第二层、它前面那一个不再是这一层最后一个
+  const less = open.findIndex((r) => r.type === 'less');
+  assert.ok(less > 0 && open[less].type === 'less' && open[less].parent === 'main:j1' && open[less].depth === 1);
+  const before = open[less - 1];
+  assert.equal(before.type === 'task' && before.last, false);
   // 收起 j1
   const shut = rowsOf(tree, { collapsed: new Set(['main:j1']) });
   assert.deepEqual(shut.map((r) => r.type), ['task', 'done']);
@@ -75,6 +80,16 @@ test('待办：没做完的照先后最多露几项，剩下的、做完的数�
   assert.equal(v.more, 1);
   assert.equal(v.done, 1);
   assert.equal(v.total, 4);
+  assert.equal(v.fold, false);
+  assert.deepEqual(v.finished, []);
+  // 人展开了：全露、要「收起」那一行；做完的列出来
+  const w = todoView(todos, 2, { open: true, doneOpen: true });
+  assert.deepEqual(w.shown.map((x) => x.content), ['b', 'c', 'd']);
+  assert.equal(w.more, 0);
+  assert.equal(w.fold, true);
+  assert.deepEqual(w.finished.map((x) => x.content), ['a']);
+  // 放得下的展开了也不要「收起」
+  assert.equal(todoView(todos, 5, { open: true }).fold, false);
 });
 
 test('差异的一行行：段头起新旧行号，加的只有新号、删的只有旧号，「文件末尾没有换行」那一句不要', () => {
