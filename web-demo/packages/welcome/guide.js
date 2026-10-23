@@ -19,6 +19,14 @@ const SELECTS = new Set(['wl-lang', 'setup-choice', 'ob-model']);
 const STANDABLE = '.wl-title, .ob-row, .ob-model, .wl-lang, .setup-choice';
 /** 能站的最多几块 */
 const ROW_ANCHORS = 12;
+/** 能站的那几块各自的编号（同一块一直是同一个） */
+const ROW_KEYS = new WeakMap();
+let rowSeq = 0;
+/** @param {Element} el */
+const rowKey = (el) => {
+  if (!ROW_KEYS.has(el)) ROW_KEYS.set(el, ++rowSeq);
+  return ROW_KEYS.get(el);
+};
 const SURFACES = '.ob-list > .ob-rows:first-child, .ob-row, .wl-lang, .setup-choice, .ob-input, .set-input, .setup-area, .set-select';
 /** 平常站的地方离那一块右边多远 */
 const HOME_RIGHT = 40;
@@ -416,7 +424,8 @@ export class Guide {
           at: () => {
             const el = this.rows()[i];
             const r = el?.getBoundingClientRect();
-            return r && r.width ? { left: r.left, right: r.right, top: r.top, bottom: r.top, key: `${this.shown}-${i}` } : null;
+            // 编号照那一块自己（列表滚了，第 i 块换成别的一块：编号跟着换，原来站在上面的掉下去，不瞬移到别的一块上）
+            return el && r?.width ? { left: r.left, right: r.right, top: r.top, bottom: r.top, key: `${this.shown}-${rowKey(el)}` } : null;
           },
         }));
       }
@@ -448,7 +457,11 @@ export class Guide {
     const view = this.page.getBoundingClientRect();
     return /** @type {HTMLElement[]} */ ([...this.slot.querySelectorAll(STANDABLE)]).filter((el) => {
       const r = el.getBoundingClientRect();
-      return r.width > 0 && r.top >= view.top && r.top <= view.bottom - 56;
+      if (!(r.width > 0 && r.top >= view.top && r.top <= view.bottom - 56)) return false;
+      // 上沿那一点真看得见：滚出了列表自己那一框的（被框裁掉、被淡出那一截盖住的）不算（2026-10-23 项目主人：吉祥物停在半空）
+      // 吉祥物自己那一层不算（站在上面的时候脚下那一点是它）
+      const hit = document.elementsFromPoint((Math.max(r.left, 0) + Math.min(r.right, innerWidth)) / 2, r.top + 3).find((x) => !x.closest('.mascot-layer'));
+      return !!hit && (el === hit || el.contains(hit));
     }).slice(0, ROW_ANCHORS);
   }
 

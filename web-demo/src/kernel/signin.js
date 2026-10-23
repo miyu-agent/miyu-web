@@ -111,7 +111,8 @@ const field = (name, input) => {
   input.placeholder = name;
   // 密码框右边一个眼睛，点了显示、再点藏起（2026-10-23 项目主人：密码框要不要支持显示密码）
   const eye = input.type === 'password' ? h('button.si-eye', {
-    type: 'button', title: t('signin.show_password'), 'aria-label': t('signin.show_password'), 'aria-pressed': 'false',
+    // 不进 Tab 的先后（2026-10-23 项目主人：输了密码按 Tab 期望到下一个框，不是到眼睛上）
+    type: 'button', tabindex: '-1', title: t('signin.show_password'), 'aria-label': t('signin.show_password'), 'aria-pressed': 'false',
     onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(),
     onclick: (/** @type {MouseEvent} */ e) => {
       e.preventDefault();
