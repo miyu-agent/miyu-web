@@ -3,7 +3,8 @@
 //! 横条一块多宽；照 `usage.query` 按 `use` 分的行排用途。界面在 `ui/context-pop.js`。
 
 /**
- * @typedef {{part: string, label: string, tokens: number, children?: Part[]}} Part
+ * @typedef {{part: string, label: string, tokens: number, tone?: string, children?: Part[]}} Part
+ *   `tone` 是自己定的颜色（累计那一个里的用途），不写的照 `part` 认
  * @typedef {{window?: number, line?: number, used?: number, basis?: string, anchor?: number, estimated_total?: number, parts?: Part[]}} Context
  */
 

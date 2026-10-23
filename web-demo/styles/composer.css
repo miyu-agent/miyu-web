@@ -302,13 +302,9 @@
 .ctx-pop-link .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); }
 @media (prefers-reduced-motion: reduce) { .ctx-pop, .ctx-pop.is-leaving, .ctx-pop.is-below, .ctx-pop.is-below.is-leaving { animation: none; } }
 
-/* 累计浮窗的一根横条：用途之间留缝，主会话那一块照各部分拆开（核心 CX-3）；下面一列只写百分比 */
+/* 累计浮窗的一根横条：用途之间留缝，主会话展开着时那一块照各部分拆开（核心 CX-3） */
 /* 主题里没有的两样：「AI 输出」金和粉之间的橙、「起标题」蓝和粉之间的紫，明暗两套都和各部分分得开 */
 .ctx-pop { --ctx-output: color-mix(in oklab, var(--gold) 45%, var(--ribbon)); --ctx-title: color-mix(in oklab, var(--accent) 50%, var(--ribbon)); }
 .ctx-bar.is-split { gap: 2px; background: none; }
-.ctx-rows.is-usage .ctx-row { padding-left: calc((6px + var(--depth, 0) * 16px) * var(--space)); }
-.ctx-rows.is-usage .ctx-row-pct { color: var(--text-soft); font-size: calc(12px * var(--text-scale)); }
-.ctx-row > .ctx-dot.is-blank { background: none; }
-.ctx-rows.is-usage .ctx-row.is-child .ctx-dot { background: var(--tone); }
 .ctx-bar-group { display: flex; min-width: 3px; height: 100%; }
 .ctx-bar-group > .ctx-bar-seg { min-width: 1px; }

@@ -26,6 +26,8 @@ export class ContextPop {
     this.anchor = null;
     /** 展开着的块（`part`） @type {Set<string>} */
     this.opened = new Set();
+    /** 展开、收起了一块以后（累计那一个照它重画横条） @type {((part: string) => void)|null} */
+    this.onFlip = null;
     /** 上一次问到的（`null` 是还在问；`false` 是核心不支持） @type {any} */
     this.data = null;
     this.seq = 0;
@@ -146,6 +148,7 @@ export class ContextPop {
 
   /** @param {import('../model/context.js').Context} c */
   contextView(c) {
+    this.onFlip = null;
     const parts = scaledParts(c);
     const used = c.used ?? parts.reduce((n, p) => n + p.tokens, 0);
     const b = bar(c, parts);
@@ -171,7 +174,7 @@ export class ContextPop {
     if (box) unfold(box, open);
     const flip = () => this.flip(p.part, row, /** @type {HTMLElement} */ (box));
     const row = h(`div.ctx-row${kids.length ? '.is-parent' : ''}${open ? '.is-open' : ''}${depth ? '.is-child' : ''}`, {
-      style: `--depth: ${depth}; --tone: var(--${toneOf(p.part)})`,
+      style: `--depth: ${depth}; --tone: var(--${p.tone ?? toneOf(p.part)})`,
       role: kids.length ? 'button' : null, tabindex: kids.length ? '0' : null, 'aria-expanded': kids.length ? String(open) : null,
       onclick: kids.length ? flip : null,
       onkeydown: kids.length ? (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } } : null,
@@ -192,11 +195,12 @@ export class ContextPop {
     row.classList.toggle('is-open', on);
     row.setAttribute('aria-expanded', String(on));
     unfold(box, on);
+    this.onFlip?.(part);
   }
 
   /**
    * 累计那一个（蓝图「上下文明细、累计按用途」第 4 条）：合计和花费、一根横条（照用途一块接一块，主会话那一块再照它的各部分拆开）、
-   * 一列：一个用途一行、主会话下面缩进一档列各部分，只写百分比（2026-10-23 项目主人：字太多，细的去用量页看），最下面「含子代理」和「在用量页看」。
+   * 一列，照上下文明细的样子（2026-10-23 项目主人）：一个用途一行，主会话能展开出它的各部分，最下面「含子代理」和「在用量页看」。
    * 各部分是核心 CX-3 的 `session.usage_parts`：同上下文明细的块，多一块「AI 输出」；旧核心没有的主会话不拆。
    * @param {{rows?: any[], parts?: {requests: number, input: number, output: number, parts: import('../model/context.js').Part[]}|null}} r
    */
@@ -207,33 +211,28 @@ export class ContextPop {
     const session = this.on.session();
     const parts = (r.parts?.parts ?? []).filter((x) => (x.tokens ?? 0) > 0);
     const partSum = parts.reduce((n, x) => n + x.tokens, 0);
-    /** 这个用途拆成哪几块（只有主会话、核心给了的拆） @param {string} use */
-    const split = (use) => (use === 'main' && partSum > 0 ? parts : null);
-    const tone = (/** @type {string} */ use) => `--tone: var(--${USE_TONES[use] ?? 'text-faint'})`;
-    const partTone = (/** @type {import('../model/context.js').Part} */ p) => `--tone: var(--${toneOf(p.part)})`;
-    // 横条：用途之间留缝（`flex` 照 token 分，缝不挤掉比例）；拆开的那一块里各部分照它在这一块里的比例
-    const track = h('div.ctx-bar.is-split', rows.map((x) => {
-      const ps = split(x.use);
-      return h('span.ctx-bar-group', { style: `flex: ${x.tokens} 1 0px` },
-        ps ? ps.map((p) => h('span.ctx-bar-seg', { style: `flex: ${p.tokens} 1 0px; ${partTone(p)}` }))
-          : h('span.ctx-bar-seg', { style: `flex: 1 1 0px; ${tone(x.use)}` }));
+    /** 一块照比例摊成主会话的数（连子项，0 的不要） @param {import('../model/context.js').Part} p @param {number} f @returns {import('../model/context.js').Part} */
+    const scale = (p, f) => ({ ...p, tokens: Math.round(p.tokens * f), children: (p.children ?? []).filter((k) => k.tokens > 0).map((k) => scale(k, f)) });
+    // 一个用途一行，同上下文明细的块：主会话的子项是它的各部分（核心给了的）
+    const tree = rows.map((x) => ({
+      part: `use:${x.use}`, label: t(`context_pop.use.${x.use}`), tokens: x.tokens, tone: USE_TONES[x.use] ?? 'text-faint',
+      children: x.use === 'main' && partSum > 0 ? parts.map((p) => scale(p, x.tokens / partSum)) : [],
     }));
-    /** 一列里的一行：色点、名字、占整个会话合计的百分比（`depth` 1 是主会话下面的部分） @param {string} style @param {string} name @param {number} tokens @param {number} depth @param {boolean} [blank] */
-    const row = (style, name, tokens, depth, blank = false) => h(`div.ctx-row${depth ? '.is-child' : ''}`, { style: `--depth: ${depth}; ${style}` },
-      h(`span.ctx-dot${blank ? '.is-blank' : ''}`), h('span.ctx-row-name', name), h('span.ctx-row-pct', `${share(tokens, sum)}%`));
+    const main = tree.find((x) => x.part === 'use:main');
+    const seg = (/** @type {number} */ n, /** @type {string} */ tone) => h('span.ctx-bar-seg', { style: `flex: ${n} 1 0px; --tone: var(--${tone})` });
+    // 横条：用途之间留缝；主会话展开着的时候那一块照各部分拆开
+    const track = h('div.ctx-bar.is-split');
+    const drawBar = () => replace(track, tree.map((x) => h('span.ctx-bar-group', { style: `flex: ${x.tokens} 1 0px` },
+      x === main && this.opened.has(x.part) && x.children?.length ? x.children.map((p) => seg(p.tokens, toneOf(p.part))) : seg(1, x.tone))));
+    drawBar();
+    this.onFlip = (part) => { if (part === main?.part) drawBar(); };
     return [
       h('div.ctx-pop-head', h('strong.ctx-pop-title', t('context_pop.usage_title')), h('span.ctx-pop-sum', cost ? `${short(sum)} · ${cost}` : short(sum))),
       rows.length ? track : null,
-      rows.length
-        ? h('div.ctx-rows.is-usage', rows.map((x) => {
-          const ps = split(x.use);
-          // 拆开的主会话不画色点（颜色在下面各部分那几行），各部分照它在主会话里的比例摊成占整个会话的
-          return [row(tone(x.use), t(`context_pop.use.${x.use}`), x.tokens, 0, !!ps),
-            ...(ps ?? []).map((p) => row(partTone(p), p.label, (p.tokens / partSum) * x.tokens, 1))];
-        }))
-        : h('div.ctx-pop-note', t('context_pop.no_usage')),
+      rows.length ? h('div.ctx-rows', tree.map((x) => this.partRows(x, 0, sum))) : h('div.ctx-pop-note', t('context_pop.no_usage')),
       h('div.ctx-pop-foot.ctx-pop-foot-row', h('span', t('context_pop.with_subagents')),
         session && this.on.openUsage ? h('button.ctx-pop-link', { type: 'button', onclick: () => { const id = session; this.close(); this.on.openUsage?.(id); } }, t('context_pop.open_usage'), icon('chevron-right')) : null),
     ];
   }
+
 }
