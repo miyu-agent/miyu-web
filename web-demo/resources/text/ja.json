@@ -67,8 +67,16 @@
     "back_to": "「{title}」に戻る",
     "new_session": "新しいセッション"
   },
-  "placeholder": "{name} にメッセージを送信",
-  "placeholder_bare": "メッセージを送信",
+  "tips": {
+    "slash": "/ でコマンド一覧",
+    "mention": "@ でファイルを選ぶ",
+    "newline": "Shift+Enter で改行",
+    "history": "空のまま ↑ で前のメッセージを呼び出す",
+    "history_list": "Ctrl+R で送ったメッセージを検索",
+    "stash": "Ctrl+S で下書きを退避、空のまま押すと戻す",
+    "level": "Tab で権限レベルを切り替え",
+    "attach": "画像やファイルはドラッグか貼り付けで一緒に送れます"
+  },
   "send": "送信",
   "esc_clear_hint": "もう一度 Esc でクリア",
   "cleared": "クリアしました · ↑ で復元",

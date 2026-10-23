@@ -534,6 +534,8 @@ export class App {
     // 没读过的会话第一次打开时才读、订阅：子代理的不进会话表的顶层；全部会话那一页开的老会话进（`listed`）
     if (id) this.store.ensure(id, listed).catch((err) => this.composer.say(refusalText(err)));
     this.chat.reset();
+    // 换会话换一条小提示（蓝图「输入框」写字的地方）
+    this.composer.newTip();
     // 换会话当场摆好输入框，不播从中间滑下去的动画（2026-10-10 项目主人：切换会话每次都动一下）
     this.centerIfEmpty(!id, false);
     this.syncLook();
@@ -663,7 +665,7 @@ export class App {
 
   /** 还没开的新会话改人格、预设、工作区（软件包 `setup`）：告诉软件包（`draft.changed`），重画（`@` 照它列文件）。 @param {Partial<{persona: string|false|null, preset: string|false|null, cwd: string|null}>} patch */
   /**
-   * 正在看的会话的人格画成什么样，交给对话区（她那一轮的头）和输入框（占位字）。`looker` 交 `undefined` 的是还不知道（人格列表没读完），
+   * 正在看的会话的人格画成什么样，交给对话区（她那一轮的头）。`looker` 交 `undefined` 的是还不知道（人格列表没读完），
    * 照旧不动；`null` 是无人格（2026-10-10 项目主人：无人格的会话不应该显示头像和 AI 名称）。
    */
   syncLook() {
@@ -676,7 +678,6 @@ export class App {
     this.lookSig = sig;
     this.chat.setLook(look);
     this.sidebar.setLook(look);
-    this.composer.setName(look?.name ?? null);
     // 软件包跟着它变（跟着人格的主题色，`theme-persona`）：状态事件，晚起来的包先拿到最后一份；`null` 是无人格
     this.ctx.publish('look.changed', look);
     this.schedule();

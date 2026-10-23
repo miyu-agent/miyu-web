@@ -38,6 +38,7 @@ import { Recall } from '../model/history.js';
 import { show, hide, span } from '../lib/motion.js';
 import { isNewline, insertNewline } from '../lib/newline.js';
 import { stash } from '../model/stash.js';
+import { tipsFor, pickTip } from '../model/tips.js';
 
 /** 空会话里打了、带着字就先开会话的核心命令（`commands.json` 的 `opens_session`） */
 const opensSession = () => new Set((res.commands.opens_session ?? []).map((/** @type {string} */ n) => n.toLowerCase()));
@@ -77,14 +78,16 @@ export class Composer {
     /** 认领了没在回答、框里没字时的两下 `Esc` 的（软件包经 `composer.claimEscape`；整理记忆时叫停整理） @type {{hint: string, run: () => void}|null} */
     this.escapeClaim = null;
     this.noticeTimer = 0;
+    /** 空着时写的那条小提示（`tips.<名字>`；`null` 是还没挑） @type {string|null} */
+    this.tip = null;
     this.input = /** @type {HTMLTextAreaElement} */ (h('textarea.composer-input', {
       rows: 1,
       spellcheck: 'false',
-      placeholder: t('placeholder', { name: res.persona.name }),
       onkeydown: (ev) => this.key(ev),
       // 接着打字（输入法打的也算）：帮助让开
       oninput: () => { this.help.close(); this.changed(); },
     }));
+    this.input.placeholder = this.placeholder();
     // 一开始框里没字：先灰着（原来先是能发的蓝色，挂好了才变灰，刷新时右下角闪一下）
     this.sendButton = h('button.composer-send', { type: 'button', title: t('send'), disabled: true, onclick: () => this.submit() }, icon('arrow-up'));
     this.notice = h('div.composer-notice', { hidden: true });
@@ -302,14 +305,20 @@ export class Composer {
     this.syncButton();
   }
 
-  /** 空着时的占位字：照会话用的人格写「给 X 发消息」，无人格的会话不写名字（`setName`）。 */
+  /** 空着时的占位字：一条小提示（`model/tips.js`，2026-10-24 项目主人定：不再写「给 X 发消息」）；还没挑的先挑一条。 */
   placeholder() {
-    return this.name ? t('placeholder', { name: this.name }) : t('placeholder_bare');
+    if (this.tip == null) this.tip = pickTip(this.tipList(), null, Math.random());
+    return this.tip ? t(`tips.${this.tip}`) : '';
   }
 
-  /** 换会话用的人格的名字（`null` 是无人格）：没锁着的换掉占位字。 @param {string|null} name */
-  setName(name) {
-    this.name = name;
+  /** 现在有的几条：附件照软件包挂没挂上（挂载位 `composer.payload` 的 `attachments`） */
+  tipList() {
+    return tipsFor({ attachments: this.payload().some((p) => p.id === 'attachments') });
+  }
+
+  /** 换一条小提示（换会话、发完一句框又空了）：不和上一条一样；锁着的照旧写锁的字。 */
+  newTip() {
+    this.tip = pickTip(this.tipList(), this.tip ?? null, Math.random());
     if (!this.locked) this.input.placeholder = this.placeholder();
   }
 
@@ -392,6 +401,7 @@ export class Composer {
     this.remember(text, Object.keys(extra).length ? extra : null);
     if (ok) {
       this.blocks = new Map();
+      if (this.input.value === '') this.newTip();
       return;
     }
     // 拒了：字放回去（框里又写了的不覆盖），附件放回去

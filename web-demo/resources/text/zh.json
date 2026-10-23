@@ -67,8 +67,16 @@
     "back_to": "回到「{title}」",
     "new_session": "新会话"
   },
-  "placeholder": "给 {name} 发消息",
-  "placeholder_bare": "发消息",
+  "tips": {
+    "slash": "输入 / 看所有命令",
+    "mention": "输入 @ 选文件写进话里",
+    "newline": "Shift+Enter 换行",
+    "history": "空着按 ↑ 翻出上一句",
+    "history_list": "Ctrl+R 搜以前发过的话",
+    "stash": "Ctrl+S 先存起这句，空着再按取回来",
+    "level": "Tab 换权限级别",
+    "attach": "把图片、文件拖进来或粘贴进来，跟着话一起发"
+  },
   "send": "发送",
   "esc_clear_hint": "再按一次 Esc 清空",
   "cleared": "已清空 · ↑ 恢复",
