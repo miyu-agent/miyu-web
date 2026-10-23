@@ -10,7 +10,7 @@
 //! 这几屏在软件包加载以前画（主题、引导还没来），样子在 `styles/signin.css`：同第一次引导的「像素关卡」场景，正中一张像素描边的卡片，吉祥物
 //! 蹲在卡片上沿（静态图，2026-10-22 项目主人选的样板二 B）。
 
-import { h, replace } from '../lib/dom.js';
+import { h, icon, replace } from '../lib/dom.js';
 import { t } from '../util/res.js';
 import { Connection, Refusal } from '../core/connection.js';
 
@@ -67,10 +67,24 @@ export function registerProblem(username, password, again) {
  */
 const field = (name, input) => {
   input.placeholder = name;
-  return h('label.si-field', h('span.si-field-name', name), input);
+  // 密码框右边一个眼睛，点了显示、再点藏起（2026-10-23 项目主人：密码框要不要支持显示密码）
+  const eye = input.type === 'password' ? h('button.si-eye', {
+    type: 'button', title: t('signin.show_password'), 'aria-label': t('signin.show_password'), 'aria-pressed': 'false',
+    onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(),
+    onclick: (/** @type {MouseEvent} */ e) => {
+      e.preventDefault();
+      const shown = input.type === 'password';
+      input.type = shown ? 'text' : 'password';
+      const label = t(shown ? 'signin.hide_password' : 'signin.show_password');
+      /** @type {HTMLElement} */ (e.currentTarget).setAttribute('aria-pressed', String(shown));
+      /** @type {HTMLElement} */ (e.currentTarget).title = label;
+      /** @type {HTMLElement} */ (e.currentTarget).setAttribute('aria-label', label);
+    },
+  }, icon('eye')) : null;
+  return h(`label.si-field${eye ? '.has-eye' : ''}`, h('span.si-field-name', name), input, eye);
 };
 
-/** 占位里名字后面接一句写法（「用户名（小写字母开头，例如 shorin）」） @param {HTMLElement} row @param {HTMLInputElement} input @param {string} hint */
+/** 占位里名字后面接一句写法（「用户名（小写字母开头）」） @param {HTMLElement} row @param {HTMLInputElement} input @param {string} hint */
 const withHint = (row, input, hint) => {
   input.placeholder = hint;
   return row;
@@ -281,7 +295,7 @@ export async function signIn(host, greeting, root, offline, retry = /** @type {n
       // 核心回完就断开（核心 Y-12 中上）：关掉这一条、照记下的登录令牌重新握手；这一次设过账号，引导第一段算走过
       conn.close();
       registered = true;
-      replace(root, h('div.boot-wait', t('boot.connecting_web')));
+      // 这一屏照旧留着，重连上来直接换成引导（2026-10-23 项目主人：从创建账号到引导像刷新了一下：原来先换成「正在连接」一屏）
       continue;
     } catch (err) {
       const why = refusedText(err);

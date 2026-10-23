@@ -73,7 +73,8 @@ export async function boot(root) {
     const key = await host.check();
     throw new Offline(key === 'ok' ? 'core' : key, key === 'ok' ? t('no_bridge') : '');
   }, res.layout.reconnect_ms);
-  root.replaceChildren();
+  // 刚在「账号」一屏注册的：那一屏留着，等页面起好换掉（2026-10-23 项目主人：从创建账号到引导像刷新了一下，原来先清成一片空白）
+  if (!setup) root.replaceChildren();
   // 带着管理员后台的网址打开、刷新（`#admin=`，设置包的整页）：后台画出来以前不露主界面，后台起来了自己去掉这一层（2026-10-22 项目主人：F5 先看到
   // 主界面再进后台）；设置包没起来的过一会儿照样露出来
   if (/(?:^#|&)admin(?:=|&|$)/.test(host.route.current())) {

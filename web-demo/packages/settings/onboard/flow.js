@@ -9,7 +9,7 @@ import { h, icon, replace } from '../../../src/lib/dom.js';
 import { logoEl } from '../../../src/lib/logo.js';
 import { secretName } from '../model.js';
 import { select } from '../rows.js';
-import { providerRows, usableIds, testParams, setupChanges, noPools, modelOrder, filterNames, failureOf, validUrl, cleanUrl, customId, customIdProblem } from './logic.js';
+import { providerRows, mineRows, usableIds, testParams, setupChanges, noPools, modelOrder, filterNames, failureOf, validUrl, cleanUrl, customId, customIdProblem } from './logic.js';
 
 /** 模型最多列几个（再多的搜） */
 const MAX_MODELS = 200;
@@ -58,6 +58,8 @@ export class ProviderFlow {
     /** 配好了、密钥取得到的（`usableIds`）：选一家那一屏标「已配置」 */
     this.usable = /** @type {Set<string>} */ (new Set());
     this.chat = /** @type {string|null} */ (null);
+    /** 配置里有的几家（`model.list` 的 `providers`）：常用、本机里没有的另列一组 @type {any[]} */
+    this.providers = [];
     this.failed = /** @type {string|null} */ (null);
     /** 自定义的接口有哪几种（配置清单 `providers.<id>.driver` 的选项） */
     this.drivers = /** @type {{value: string, name: string}[]} */ ([]);
@@ -83,6 +85,7 @@ export class ProviderFlow {
       this.detect = detect;
       this.configured = new Set((models?.providers ?? []).map((/** @type {any} */ p) => p.id));
       this.usable = usableIds(models?.providers ?? []);
+      this.providers = models?.providers ?? [];
       this.chat = models?.uses?.chat ?? null;
       const driver = (schema?.items ?? []).find((/** @type {any} */ i) => i.key === 'providers.<id>.driver');
       this.drivers = (driver?.options ?? []).map((/** @type {any} */ o) => ({ value: o.value, name: o.name ?? o.value }));
@@ -102,7 +105,11 @@ export class ProviderFlow {
     const t = this.t;
     if (this.failed) return { title: t('onboard.title_list'), sub: t('onboard.sub_list'), body: h('p.ob-note.is-bad', t('onboard.load_failed', { reason: this.failed })) };
     const { common, local } = providerRows(this.featured, this.detect, this.usable);
-    const groups = [h('div.ob-rows', common.map((r) => this.rowButton(r)))];
+    const mine = mineRows(this.providers, [...common, ...local]);
+    const groups = [];
+    if (mine.length) groups.push(h('div.ob-group-name', t('onboard.mine')), h('div.ob-rows', mine.map((r) => this.rowButton(r))));
+    if (mine.length) groups.push(h('div.ob-group-name', t('onboard.common')));
+    groups.push(h('div.ob-rows', common.map((r) => this.rowButton(r))));
     if (local.length) groups.push(h('div.ob-group-name', t('onboard.local')), h('div.ob-rows', local.map((r) => this.rowButton(r))));
     groups.push(h('div.ob-group-name', t('onboard.other')), h('div.ob-rows',
       h('button.ob-row', { type: 'button', onclick: () => this.host.show(this.search(), 1) }, h('span.ob-row-name', t('onboard.search_more')), h('span.ob-row-arrow', icon('chevron-right'))),
@@ -425,6 +432,8 @@ export class ProviderFlow {
       if (changes.length) await core.request('config.set', { layer: 'personal', changes });
       this.configured.add(id);
       this.usable.add(id);
+      // 存好的这一家记进「已配好」那一组（点了返回再回来，列表里看得到它）
+      if (!this.providers.some((p) => p.id === id)) this.providers.push({ id, name: target.kind === 'custom' ? target.name || id : name || id });
       this.stale = null;
       this.host.done({ id, model, name: name || id });
       return null;

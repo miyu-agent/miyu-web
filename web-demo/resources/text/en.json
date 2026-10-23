@@ -147,7 +147,9 @@
       "preset": "Preset",
       "sandbox": "Sandbox"
     },
-    "username_hint": "Username (starts with a lowercase letter, e.g. shorin)"
+    "username_hint": "Username (starts with a lowercase letter)",
+    "show_password": "Show password",
+    "hide_password": "Hide password"
   },
   "boot": {
     "connecting_web": "Connecting…",

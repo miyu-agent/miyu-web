@@ -149,3 +149,10 @@ test('自定义的显示名称写进 providers.<id>.name，空着的不写', asy
   const plain = setupChanges({ kind: 'custom', driver: 'openai-chat', base_url: 'http://h:1/v1', id: 'magpie', name: null }, null, { taken: new Set() });
   assert.ok(!plain.changes.some((c) => c.key === 'providers.magpie.name'));
 });
+
+test('配置里有、常用和本机里都没有的几家另列一组「已配好」（2026-10-23 项目主人：建好了自定义的点了返回，列表里没有）', async () => {
+  const { mineRows } = await import('../../packages/settings/onboard/logic.js');
+  const shown = [{ kind: 'catalog', id: 'deepseek', name: 'DeepSeek', supported: true, configured: 'deepseek', env: null }];
+  const rows = mineRows([{ id: 'deepseek', name: 'DeepSeek' }, { id: 'magpie', name: { value: 'Magpie 中转' } }, { id: 'local2' }], shown);
+  assert.deepEqual(rows.map((r) => [r.kind, r.id, r.name, r.configured]), [['mine', 'magpie', 'Magpie 中转', 'magpie'], ['mine', 'local2', 'local2', 'local2']]);
+});

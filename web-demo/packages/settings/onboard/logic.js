@@ -2,7 +2,7 @@
 //! 接一家供应商的纯逻辑（蓝图 `web.md`「第一次引导」第 5–7、12 条；照核心 `cli/setup.md` 第 3–10 条，写的东西和 `miyu setup` 一样）：
 //! 选一家那一屏有哪几行、标什么；配置里的编号怎么起（目录里的、自定义的）；`provider.test` 带什么；存的时候写哪几项。
 
-import { validId } from '../model.js';
+import { validId, providerName } from '../model.js';
 
 /** 通用的二级域名：`api.example.co.uk` 取 `example`（`cli/setup.md` 第 4 条第 3 款） */
 const SECOND_LEVEL = new Set(['co', 'com', 'net', 'org', 'edu', 'gov', 'ac']);
@@ -67,7 +67,8 @@ export const cleanUrl = (text) => text.trim().replace(/\/+$/, '');
 
 /**
  * @typedef {{kind: 'catalog', id: string, name: string, supported: boolean, configured: string|null, env: string|null, logo?: any}
- *   | {kind: 'local', id: string, name: string, base_url: string, host: string, configured: string|null, logo?: any}} Row
+ *   | {kind: 'local', id: string, name: string, base_url: string, host: string, configured: string|null, logo?: any}
+ *   | {kind: 'mine', id: string, name: string, configured: string, logo?: any}} Row
  *   一行：常用的一家（`configured` 是配置里的编号，没配的是 `null`；`env` 是找到的变量），本机的一家；`logo` 是核心给的图标（`src/lib/logo.js`），
  *   核心给图标的（目录里有一项带 `logo` 这一格）每一行都带（没有的 `null`，画名称的第一个字），老核心的不带（不画图标位）
  */
@@ -107,6 +108,18 @@ export function providerRows(featured, detect, configured) {
     return /** @type {Row} */ ({ kind: 'local', id: l.provider, name: l.name || l.provider, base_url: l.base_url, host, configured: l.configured ?? null, ...logoOf(l) });
   });
   return { common, local };
+}
+
+/**
+ * 配置里已经有、常用和本机里都没有的几家（自定义的、搜出来接的）：一家一行，排在最前面（2026-10-23 项目主人：建好了自定义的，点了返回，
+ * 列表里哪儿都没有，再建同一个 ID 又说已经有了）。
+ * @param {any[]} providers `model.list` 的 `providers` @param {Row[]} shown 常用、本机那几行（它们里已经有的不再列）
+ * @returns {Row[]}
+ */
+export function mineRows(providers, shown) {
+  const taken = new Set(shown.map((r) => r.configured).filter(Boolean));
+  return (providers ?? []).filter((p) => p?.id && !taken.has(p.id))
+    .map((p) => /** @type {Row} */ ({ kind: 'mine', id: p.id, name: providerName(p), configured: p.id, ...('logo' in p ? { logo: p.logo ?? null } : {}) }));
 }
 
 /**

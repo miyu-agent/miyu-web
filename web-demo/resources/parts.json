@@ -6294,5 +6294,11 @@
     "select": [
       ".setup-float-foot"
     ]
+  },
+  "signin.eye": {
+    "zh": "登录、注册：密码框右边的眼睛",
+    "select": [
+      ".si-eye"
+    ]
   }
 }
