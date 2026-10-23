@@ -18,6 +18,8 @@
 
 /* 列表：不嵌套；任务列表的勾选框不能点 */
 .markdown-body ul, .markdown-body ol { display: grid; margin: 0 0 var(--md-gap, calc(10px * var(--space))); padding-left: var(--md-list-indent, calc(20px * var(--space))); gap: var(--md-list-gap, calc(3px * var(--space))); }
+/* 套着的子列表、项里的第二段（2026-10-23）：上面空 3px，和上一层的字之间不空行 */
+.markdown-body li > :is(ul, ol, p, .code-block, blockquote, .markdown-table-scroll) { margin: calc(3px * var(--space)) 0 0; }
 .markdown-body li::marker { color: var(--md-marker, var(--text-soft)); }
 .markdown-body .task-list { padding-left: calc(2px * var(--space)); }
 .markdown-body .task-list-item {

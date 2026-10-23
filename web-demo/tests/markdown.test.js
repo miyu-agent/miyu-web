@@ -88,15 +88,35 @@ test('标题：# 是 h2，往下顺延，最多 h6；# 后面要空格', () => {
   assert.deepEqual(parse('字\n# 标题'), [para('字'), { type: 'heading', level: 2, kids: ['标题'] }]);
 });
 
-test('无序列表：-、*、+ 都算，缩进的也摊平（不嵌套）；一行不是项就结束', () => {
+test('无序列表：-、*、+ 混着写算一张；缩进到内容那一列的是子列表（2026-10-23 起能套）；没缩进又不是项的一行就结束', () => {
+  const ul = (...items) => ({ type: 'list', ordered: false, task: false, items });
   assert.deepEqual(parse('- a\n* **b**\n  + c\n后面'), [
-    { type: 'list', ordered: false, task: false, items: [
-      { check: null, kids: ['a'] },
-      { check: null, kids: [{ type: 'strong', kids: ['b'] }] },
-      { check: null, kids: ['c'] },
-    ] },
+    ul({ check: null, kids: ['a'] }, { check: null, kids: [{ type: 'strong', kids: ['b'] }], blocks: [ul({ check: null, kids: ['c'] })] }),
     para('后面'),
   ]);
+});
+
+test('列表能套：三层、有序套无序、任务列表套；续行接在字后面；空行以后还缩进着的是第二段；子项的代码块', () => {
+  const ul = (...items) => ({ type: 'list', ordered: false, task: false, items });
+  const it = (kids, blocks) => (blocks ? { check: null, kids, blocks } : { check: null, kids });
+  assert.deepEqual(parse('- 一\n  - 二\n    - 三\n- 四'), [
+    ul(it(['一'], [ul(it(['二'], [ul(it(['三']))]))]), it(['四'])),
+  ]);
+  assert.deepEqual(parse('1. 安装\n   - 下载\n   - 解压\n2. 使用'), [
+    { type: 'list', ordered: true, task: false, items: [it(['安装'], [ul(it(['下载']), it(['解压']))]), it(['使用'])] },
+  ]);
+  assert.deepEqual(parse('- [x] 写\n  - [ ] 改'), [
+    { type: 'list', ordered: false, task: true, items: [{ check: true, kids: ['写'], blocks: [{ type: 'list', ordered: false, task: true, items: [{ check: false, kids: ['改'] }] }] }] },
+  ]);
+  // 续行：缩进到内容那一列、缩进不够但比记号深的都接在字后面
+  assert.deepEqual(parse('- 第一行\n  第二行\n - 第三行'), [ul(it(['第一行', BR, '第二行']), it(['第三行']))]);
+  assert.deepEqual(parse('- 第一段\n\n  第二段\n- 下一项'), [ul(it(['第一段'], [para('第二段')]), it(['下一项']))]);
+  assert.deepEqual(parse('- 代码：\n  ```js\n  a()\n  ```'), [ul(it(['代码：'], [{ type: 'code', lang: 'js', text: 'a()', closed: true }]))]);
+  // 项之间空一行还是同一张；有序、无序换了是两张
+  assert.equal(parse('- a\n\n- b').length, 1);
+  assert.deepEqual(parse('- a\n1. b').map((b) => b.ordered), [false, true]);
+  // 空行以后没缩进的段落不吃进去
+  assert.deepEqual(parse('- a\n\n后面'), [ul(it(['a'])), para('后面')]);
 });
 
 test('任务列表：[ ]、[x]、[X]；混着普通项的整张还是任务列表', () => {

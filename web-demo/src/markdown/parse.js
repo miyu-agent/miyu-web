@@ -3,8 +3,8 @@
 //! 块交给 `build.js` 造 DOM，这里测得了。
 //!
 //! 照这个先后认：空行；围起来的代码（```` ``` ```` 加语言，`~~~` 不算）；认领的一行（`options.line`，以后的音视频卡片）；
-//! 独占几行的公式 `$$…$$`、`\[…\]`；表格；分隔线；标题（`#` 是 h2，往下顺延）；无序列表（不嵌套，`[ ]`、`[x]` 是任务）；
-//! 有序列表（不嵌套、不认起始数）；引用（去掉 `>` 以后照整条回答认块，2026-10-23）；段落（软换行照换行）。块里的字交给 `inline.js`。
+//! 独占几行的公式 `$$…$$`、`\[…\]`；表格；分隔线；标题（`#` 是 h2，往下顺延）；无序列表（`[ ]`、`[x]` 是任务）、
+//! 有序列表（照缩进套，2026-10-23）；引用（去掉 `>` 以后照整条回答认块，2026-10-23）；段落（软换行照换行）。块里的字交给 `inline.js`。
 //! 另外两种（2026-10-23）：独占一行的 `<details>`…`</details>` 折叠块，里面照整条回答认块；`[^名字]: 内容` 脚注的定义，
 //! 从正文里拿走，照定义的先后收在最后一块 `footnotes` 里。
 
@@ -21,11 +21,13 @@ import { inline, FOOTNOTE_NAME } from './inline.js';
  *   | {type: 'math', tex: string, raw: string}
  *   | {type: 'table', align: string[], head: import('./inline.js').Inline[][], rows: import('./inline.js').Inline[][][]}
  *   | {type: 'hr'}
- *   | {type: 'list', ordered: boolean, start?: number, task: boolean, items: {check: boolean|null, kids: import('./inline.js').Inline[]}[]}
+ *   | {type: 'list', ordered: boolean, start?: number, task: boolean, items: Item[]}
  *   | {type: 'line', text: string, value: any}
  *   | {type: 'details', summary: import('./inline.js').Inline[]|null, blocks: Block[]}
  *   | {type: 'footnotes', items: {id: string, kids: import('./inline.js').Inline[]}[]}} Block
  * `details` 的 `summary` 是 `null` 的是没写 `<summary>`；`footnotes` 只在最后，一条回答最多一块。
+ * @typedef {{check: boolean|null, kids: import('./inline.js').Inline[], blocks?: Block[]}} Item
+ *   列表的一项：`kids` 是开头那一段的字（紧凑地画在记号后面），`blocks` 是下面别的块（子列表、第二段、代码块），没有的不写
  */
 
 /** 围栏的开头：```` ``` ```` 加可有可无的语言，别的字不许有（`stream.js` 照同一个认）。 */
@@ -35,8 +37,8 @@ export const FENCE_CLOSE = /^\s*```\s*$/;
 /** 认的语言名（第 2 条）；不像的当没写。 */
 const LANG = /^[\w.+-]{1,40}$/;
 const HEADING = /^(#{1,6})\s+(.+)$/;
-const BULLET = /^\s*[-*+]\s+(.+)$/;
-const NUMBERED = /^\s*(\d+)[.)]\s+(.+)$/;
+/** 列表的一项：缩进、记号（`-`、`*`、`+` 或者 `1.`、`1)`）、记号后面的空白、字 */
+const ITEM = /^([ \t]*)([-*+]|\d{1,9}[.)])([ \t]+)(\S.*)$/;
 const TASK = /^\[([ xX])\]\s+(.*)$/;
 const QUOTE = /^\s*>\s?(.*)$/;
 const MATH_DELIMS = [['$$', '$$'], ['\\[', '\\]']];
@@ -155,7 +157,7 @@ function parseLines(lines, from, to, line, notes, depth) {
       i += 1;
       continue;
     }
-    const listed = list(lines, i, to);
+    const listed = list(lines, i, to, line, notes, depth);
     if (listed) {
       blocks.push(listed.block);
       i = listed.next;
@@ -304,24 +306,86 @@ function table(lines, start, to) {
   return { block: { type: 'table', align, head: head.map((c) => inline(c)), rows }, next: i };
 }
 
+/** 这几个空白占几列（Tab 算到下一个 4 的倍数） @param {string} ws */
+function cols(ws) {
+  let n = 0;
+  for (const c of ws) n = c === '\t' ? n + 4 - (n % 4) : n + 1;
+  return n;
+}
+
+/** 一行开头的空白占几列 @param {string} text */
+const indentOf = (text) => cols(/^[ \t]*/.exec(text)?.[0] ?? '');
+
+/** 去掉一行开头 `n` 列的空白（不够的去掉全部；Tab 拆开的剩下的照空格补上） @param {string} text @param {number} n */
+function dedent(text, n) {
+  let col = 0;
+  let k = 0;
+  while (k < text.length && col < n && (text[k] === ' ' || text[k] === '\t')) {
+    col = text[k] === '\t' ? col + 4 - (col % 4) : col + 1;
+    k += 1;
+  }
+  return ' '.repeat(Math.max(0, col - n)) + text.slice(k);
+}
+
 /**
- * 从这一行起的列表：先认无序的、再认有序的；连着的项合成一张，缩进的也摊平（不嵌套）；一行不是项就结束。
- * 无序的项以 `[ ]`、`[x]` 开头的是任务，有一项是任务整张就是任务列表；有序的记第一项的号（`start`，中间隔了别的段落的
- * `2.`、`3.` 照原样接着数）。不是列表的是 `null`。
+ * 这一行是不是列表的一项：`{indent, ordered, start, content, text}`，`content` 是这一项的内容从第几列起（记号后面的字那一列；
+ * 记号后面空了 5 列以上的照 1 列算，CommonMark 的规矩），不是的是 `null`。
+ * @param {string} text
+ */
+function itemAt(text) {
+  const m = ITEM.exec(text);
+  if (!m) return null;
+  const indent = cols(m[1]);
+  const gap = cols(m[3]);
+  return { indent, ordered: /\d/.test(m[2]), start: Number.parseInt(m[2], 10), content: indent + m[2].length + (gap > 4 ? 1 : gap), text: m[4] };
+}
+
+/**
+ * 从这一行起的列表（2026-10-23 起能套）：一项的内容从记号后面的字那一列起，下面缩进到这一列的行都归它（空行以后还缩进着的也算），
+ * 去掉这么多缩进以后照整条回答认块；缩进不到这一列、但比记号深的一行接在字后面；没缩进又不是项的一行、换了有序无序，列表结束。
+ * 开头是 `[ ]`、`[x]` 的项是任务，有一项是任务整张就是任务列表；有序的记第一项的号（`start`）。不是列表的是 `null`。
+ * @param {string[]} lines @param {number} start @param {number} to
+ * @param {((line: string) => any)|undefined} line @param {Map<string, import('./inline.js').Inline[]>} notes @param {number} depth
  * @returns {{block: Block, next: number}|null}
  */
-function list(lines, start, to) {
-  for (const [pattern, ordered] of /** @type {[RegExp, boolean][]} */ ([[BULLET, false], [NUMBERED, true]])) {
-    if (!pattern.test(lines[start])) continue;
-    const items = [];
-    let i = start;
-    for (let m; i < to && (m = pattern.exec(lines[i])); i += 1) {
-      const text = ordered ? m[2] : m[1];
-      const task = ordered ? null : TASK.exec(text);
-      items.push(task ? { check: task[1] !== ' ', kids: inline(task[2]) } : { check: null, kids: inline(text) });
+function list(lines, start, to, line, notes, depth) {
+  const first = itemAt(lines[start]);
+  if (!first) return null;
+  /** @type {Item[]} */
+  const items = [];
+  let i = start;
+  let top = first;
+  for (let m = first; m && m.ordered === first.ordered && m.indent < top.content; m = i < to ? itemAt(lines[i]) : null) {
+    top = m;
+    const task = first.ordered ? null : TASK.exec(m.text);
+    const body = [task ? task[2] : m.text];
+    i += 1;
+    while (i < to) {
+      const text = lines[i];
+      if (!text.trim()) {
+        // 空行：后面还缩进到这一项的内容那一列的才接着算这一项
+        let k = i;
+        while (k < to && !lines[k].trim()) k += 1;
+        if (k >= to || indentOf(lines[k]) < m.content) break;
+        while (i < k) { body.push(''); i += 1; }
+        continue;
+      }
+      const ind = indentOf(text);
+      if (ind >= m.content) body.push(dedent(text, m.content));
+      // 缩进不到内容那一列、但比记号深的（不是别的项）：接在字后面
+      else if (ind > m.indent && !itemAt(text) && body.at(-1)?.trim()) body.push(text.trim());
+      else break;
+      i += 1;
     }
-    const first = ordered ? Number(/** @type {RegExpExecArray} */ (NUMBERED.exec(lines[start]))[1]) : 1;
-    return { block: { type: 'list', ordered, ...(first !== 1 ? { start: first } : {}), task: items.some((it) => it.check != null), items }, next: i };
+    const blocks = depth < MAX_DEPTH ? parseLines(body, 0, body.length, line, notes, depth + 1) : [{ type: 'para', kids: inline(body.join('\n')) }];
+    const head = blocks[0]?.type === 'para' ? blocks.shift() : null;
+    items.push({ check: task ? task[1] !== ' ' : null, kids: head?.type === 'para' ? head.kids : [], ...(blocks.length ? { blocks } : {}) });
+    // 项和项之间的空行跳过（下一行是同一张表的项才接着）
+    let k = i;
+    while (k < to && !lines[k].trim()) k += 1;
+    const next = k < to ? itemAt(lines[k]) : null;
+    if (k > i && !(next && next.ordered === first.ordered && next.indent < m.content)) break;
+    i = k;
   }
-  return null;
+  return { block: { type: 'list', ordered: first.ordered, ...(first.ordered && first.start !== 1 ? { start: first.start } : {}), task: items.some((it) => it.check != null), items }, next: i };
 }

@@ -55,9 +55,13 @@ function block(b, ctx) {
     case 'heading':
       return h(`h${b.level}`, kids(b.kids, ctx));
     case 'list':
-      return h(b.ordered ? 'ol' : `ul${b.task ? '.task-list' : ''}`, b.start != null ? { start: b.start } : null, b.items.map((it) => (it.check == null
-        ? h('li', kids(it.kids, ctx))
-        : h('li.task-list-item', h('input', { type: 'checkbox', checked: it.check, disabled: true }), h('span', kids(it.kids, ctx))))));
+      // 一项：开头那一段紧凑地写在记号后面，下面的块（子列表、第二段、代码块）接着画
+      return h(b.ordered ? 'ol' : `ul${b.task ? '.task-list' : ''}`, b.start != null ? { start: b.start } : null, b.items.map((it) => {
+        const more = (it.blocks ?? []).map((x) => block(x, ctx));
+        return it.check == null
+          ? h('li', kids(it.kids, ctx), more)
+          : h('li.task-list-item', h('input', { type: 'checkbox', checked: it.check, disabled: true }), h('span', kids(it.kids, ctx), more));
+      }));
     case 'quote':
       return h('blockquote', b.blocks.map((x) => block(x, ctx)));
     case 'details':
