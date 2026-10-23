@@ -24,6 +24,8 @@ const known = new Map();
 const cards = new Map();
 /** 容器 → 还没到点的定时。 */
 const pending = new WeakMap();
+/** 核心回过 `not_permitted`（成员调不了链接预览，核心 Y-2下下上）：这个页面里不再问，一律照普通链接 */
+let refused = false;
 
 /** 入口连上核心以后交进来。 */
 export function useConnection(c) {
@@ -55,13 +57,14 @@ function soleLink(p) {
 export function previewFor(url) {
   if (!lookups.has(url)) {
     let again = false;
-    const ask = conn
+    const ask = conn && !refused
       ? conn.request('link.preview', { url }).then((r) => {
         again = !r?.card && r?.why === 'unreachable';
         return r?.card ?? null;
       }).catch((err) => {
         again = err?.reason === 'disconnected';
-        console.error(`取不到链接卡片 ${url}：${err.message}`);
+        if (err?.reason === 'not_permitted') refused = true;
+        else console.error(`取不到链接卡片 ${url}：${err.message}`);
         return null;
       }).then((preview) => {
         if (again) lookups.delete(url);

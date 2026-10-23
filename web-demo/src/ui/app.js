@@ -245,6 +245,9 @@ export class App {
       files: (plan, fresh, onUpdate, stale) => listFiles(this.store.conn, this.workdir(), plan, fresh, onUpdate, stale),
       where: () => ({ cwd: this.workdir(), home: this.home }),
     }, () => this.commands.list(), () => ctx.slots.list('composer.payload'));
+    /** 是成员（核心 Y-2下下上）：模型列表调不了、权限级别不到开放权限（蓝图「连核心」第 1 条「成员」那一款） */
+    this.member = !!info.member;
+    this.composer.setMember(this.member);
     // 框里：下面一排左边的按钮、写字的地方上面一排（附件这类软件包画）；跟着话一起发的不画，发的时候交出来
     const failedSlot = (owner, reason) => h('div.slot-failed', t('slot_failed', { owner, reason }));
     ctx.slots.declare('composer.bar', 'list');
@@ -979,6 +982,8 @@ export class App {
 
   /** 问一次 `model.list`，记下来（新会话框下面照它写默认的那一个）。 */
   async loadModels() {
+    // 成员调不了模型列表（核心 Y-2下下上）：不问，菜单里写「模型由管理员设置」
+    if (this.member) throw Object.assign(new Error(t('model_menu.member')), { member: true });
     this.models = await this.store.conn.request('model.list', {});
     // 框下面那一截照列表写显示名：列表来了重画一次
     this.schedule();
@@ -1075,11 +1080,11 @@ export class App {
     if (this.switching) return;
     const session = this.current;
     if (!session) {
-      this.pendingLevel = nextLevel(this.pendingLevel ?? footer([], {}).left.level);
+      this.pendingLevel = nextLevel(this.pendingLevel ?? footer([], {}).left.level, this.member);
       this.render();
       return;
     }
-    await this.setLevel(session, nextLevel(this.levelNow(session)));
+    await this.setLevel(session, nextLevel(this.levelNow(session), this.member));
   }
 
   /** 新会话刚开：点过的级别和核心开出来的不一样的，说第一句话之前发给核心。 */
