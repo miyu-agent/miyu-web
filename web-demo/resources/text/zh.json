@@ -493,7 +493,9 @@
     "input": "输入 {n}",
     "output": "输出 {n}",
     "unpriced": "{n} 次没价格",
-    "open_usage": "在用量页看"
+    "open_usage": "在用量页看",
+    "by_part": "主对话按部分",
+    "by_part_note": "{n} 次请求 · 按比例分摊"
   },
   "model_menu": {
     "tip": "换模型",

@@ -6306,5 +6306,23 @@
     "select": [
       ".si-corner"
     ]
+  },
+  "context.parts": {
+    "zh": "累计按用途：主对话按部分那一段",
+    "select": [
+      ".ctx-parts"
+    ]
+  },
+  "context.parts-head": {
+    "zh": "累计按用途：主对话按部分的小标题",
+    "select": [
+      ".ctx-parts-head"
+    ]
+  },
+  "context.parts-note": {
+    "zh": "累计按用途：主对话按部分的暗字",
+    "select": [
+      ".ctx-parts-note"
+    ]
   }
 }

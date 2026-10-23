@@ -124,10 +124,14 @@ export class ContextPop {
     if (!session && kind !== 'context') return;
     const got = await (kind === 'context'
       ? this.on.request('session.context', session ? { session } : this.on.preview())
-      : this.on.request('usage.query', { session, tree: true, group: ['use'] }).then((r) => {
+      : Promise.all([
+        this.on.request('usage.query', { session, tree: true, group: ['use'] }),
+        // 主对话照上下文的块分开的累计（核心 CX-3）：旧核心没有的不画那一段
+        this.on.request('session.usage_parts', { session, tree: true }).catch(() => null),
+      ]).then(([r, parts]) => {
         // 旧核心不认 `use`：分组照样回，行里没有这一格
         if (r?.rows?.length && !r.rows.some((/** @type {any} */ x) => 'use' in x)) throw Object.assign(new Error('no use'), { code: -32601 });
-        return r;
+        return { ...r, parts };
       })).catch((/** @type {any} */ e) => (e?.code === -32601 || e?.code === -32602 ? false : this.data));
     if (seq !== this.seq || this.kind !== kind) return;
     this.data = got ?? false;
@@ -193,7 +197,8 @@ export class ContextPop {
   /**
    * 累计那一个（蓝图「上下文明细、累计按用途」第 4 条）：合计和花费、照用途分色的横条、一个用途一行（下面一行暗字写请求、命中、输入、输出），
    * 最下面「含子代理」和「在用量页看」。
-   * @param {{rows?: any[]}} r
+   * 用途下面一段「主对话按部分」（核心 CX-3 的 `session.usage_parts`）：同上下文明细的块，多一块「AI 输出」，一根横条、一块一行能展开。
+   * @param {{rows?: any[], parts?: {requests: number, input: number, output: number, parts: import('../model/context.js').Part[]}|null}} r
    */
   usageView(r) {
     const rows = useRows(r.rows ?? []);
@@ -218,9 +223,21 @@ export class ContextPop {
             x.amounts.length ? h('span.ctx-row-pct', money(x.amounts)) : null),
           h('span.ctx-use-line', line(x))))))
         : h('div.ctx-pop-note', t('context_pop.no_usage')),
+      this.partsView(r.parts ?? null),
       h('div.ctx-pop-foot.ctx-pop-foot-row', h('span', t('context_pop.with_subagents')),
         session && this.on.openUsage ? h('button.ctx-pop-link', { type: 'button', onclick: () => { const id = session; this.close(); this.on.openUsage?.(id); } }, t('context_pop.open_usage'), icon('chevron-right')) : null),
     ];
+  }
+
+  /** 主对话按部分：一行小标题（几次请求），一根横条，一块一行（百分比照这一段的合计） @param {{requests: number, input: number, output: number, parts: import('../model/context.js').Part[]}|null} p */
+  partsView(p) {
+    const parts = (p?.parts ?? []).filter((x) => (x.tokens ?? 0) > 0);
+    if (!parts.length) return null;
+    const full = parts.reduce((n, x) => n + x.tokens, 0) || 1;
+    return h('div.ctx-parts',
+      h('div.ctx-parts-head', h('span', t('context_pop.by_part')), h('span.ctx-parts-note', t('context_pop.by_part_note', { n: (p?.requests ?? 0).toLocaleString() }))),
+      h('div.ctx-bar', parts.map((x) => h('span.ctx-bar-seg', { style: `width: ${((x.tokens / full) * 100).toFixed(3)}%; --tone: var(--${toneOf(x.part)})` }))),
+      h('div.ctx-rows', parts.map((x) => this.partRows(x, 0, full))));
   }
 
 }

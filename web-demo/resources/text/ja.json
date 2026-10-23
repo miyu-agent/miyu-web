@@ -493,7 +493,9 @@
     "input": "入力 {n}",
     "output": "出力 {n}",
     "unpriced": "価格なし {n} 回",
-    "open_usage": "使用量ページで見る"
+    "open_usage": "使用量ページで見る",
+    "by_part": "会話の内訳",
+    "by_part_note": "{n} 回 · 比例で按分"
   },
   "model_menu": {
     "tip": "モデルを変更",

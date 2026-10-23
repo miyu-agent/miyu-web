@@ -9,7 +9,7 @@
 
 /** 顶层几块的颜色（CSS 变量名），别的照 `text-faint` */
 export const PART_TONES = /** @type {Record<string, string>} */ ({
-  system: 'accent', tools: 't-thought', demos: 'ribbon', summary: 'online', messages: 'gold',
+  system: 'accent', tools: 't-thought', demos: 'ribbon', summary: 'online', messages: 'gold', output: 't-full',
 });
 
 /** 认得的用途，照这几样写名字；别的归「其他」 */

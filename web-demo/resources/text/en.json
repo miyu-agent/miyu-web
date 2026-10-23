@@ -493,7 +493,9 @@
     "input": "in {n}",
     "output": "out {n}",
     "unpriced": "{n} unpriced",
-    "open_usage": "Open in Usage"
+    "open_usage": "Open in Usage",
+    "by_part": "Conversation by part",
+    "by_part_note": "{n} requests · split proportionally"
   },
   "model_menu": {
     "tip": "Switch model",
