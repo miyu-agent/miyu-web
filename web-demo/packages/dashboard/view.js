@@ -49,6 +49,9 @@ export class Dashboard {
     this.doneOpen = false;
     this.filesOpen = false;
     this.shownOpen = false;
+    /** 待办：放不下的展开了、做完的列出来了 */
+    this.todoOpen = false;
+    this.todoDoneOpen = false;
     /** 点过停止、还没等到回报的 */
     this.stopping = new Set();
     /** @type {Data} */
@@ -92,6 +95,15 @@ export class Dashboard {
     this.syncTimer();
   }
 
+  /**
+   * 窗口矮、放不下时一张卡缩到哪为止（第 4 条）：留 `keep` 行（头一行 36、一行 30、上下边、卡片下面的空）；本来就不到 `keep` 行的不缩。
+   * @param {HTMLElement} slot @param {number} rows 这张卡现在几行 @param {number} keep
+   */
+  floor(slot, rows, keep) {
+    slot.classList.toggle('is-short', rows <= keep);
+    slot.style.setProperty('--dash-floor', `${54 + keep * 30}px`);
+  }
+
   /** 每 `tick_ms` 只改在跑的用时；没有在跑的不走 */
   syncTimer() {
     const running = counts(this.data.tree).running > 0;
@@ -114,8 +126,8 @@ export class Dashboard {
 
   drawTodo() {
     const t = this.t;
-    const v = todoView(this.data.todos, this.config.todo_rows);
-    const sig = JSON.stringify(this.data.todos);
+    const v = todoView(this.data.todos, this.config.todo_rows, { open: this.todoOpen, doneOpen: this.todoDoneOpen });
+    const sig = JSON.stringify([this.data.todos, this.todoOpen, this.todoDoneOpen]);
     unfold(this.slots.todo, v.total > 0);
     if (sig === this.sigs.todo) return;
     this.sigs.todo = sig;
@@ -123,16 +135,19 @@ export class Dashboard {
     const ratio = v.total ? v.done / v.total : 0;
     const row = (/** @type {any} */ x) => {
       const doing = x.status === 'in_progress';
-      return h(`div.dash-todo-row${doing ? '.is-doing' : ''}`, h('span.dash-todo-mark', doing ? icon('loader-circle') : h('i.dash-todo-ring')), h('span.dash-todo-text', x.content));
+      const done = x.status === 'completed';
+      return h(`div.dash-todo-row${doing ? '.is-doing' : ''}${done ? '.is-finished' : ''}`,
+        h('span.dash-todo-mark', doing ? icon('loader-circle') : done ? icon('check') : h('i.dash-todo-ring')), h('span.dash-todo-text', x.content));
     };
-    const tail = v.done || v.more
-      ? h('div.dash-todo-row.is-done', h('span.dash-todo-mark', icon('check')),
-        h('span.dash-todo-text', [v.done ? t('done_items', { count: v.done }) : null, v.more ? t('more_items', { count: v.more }) : null].filter(Boolean).join(' · ')))
-      : null;
+    // 放不下的「还有 N 项」（不打钩，2026-10-24 项目主人）、展开了的「收起」；做完的「✓ 已完成 N 项」自己就是开关
+    const more = v.more ? foldRow('chevron-down', t('more_items', { count: v.more }), () => { this.todoOpen = true; this.drawTodo(); }, false)
+      : v.fold ? foldRow('chevron-up', t('collapse'), () => { this.todoOpen = false; this.drawTodo(); }, true) : null;
+    const done = v.done ? foldRow('check', t('done_items', { count: v.done }), () => { this.todoDoneOpen = !this.todoDoneOpen; this.drawTodo(); }, this.todoDoneOpen, 'is-done') : null;
     replace(this.todoCard,
-      h('div.dash-head', h('strong.dash-title', t('todo')), h('span.dash-count', `${v.done}/${v.total}`), h('span.dash-gap'),
+      h('div.dash-head.is-sticky', h('strong.dash-title', t('todo')), h('span.dash-count', `${v.done}/${v.total}`), h('span.dash-gap'),
         h('span.dash-progress', h('span.dash-progress-bar', { style: `width: ${(ratio * 100).toFixed(1)}%` }))),
-      v.shown.map(row), tail);
+      v.shown.map(row), more, done, v.finished.map(row));
+    this.floor(this.slots.todo, v.shown.length + (more ? 1 : 0) + (done ? 1 : 0) + v.finished.length, 3);
   }
 
   // ── 后台任务 ──
@@ -143,7 +158,8 @@ export class Dashboard {
     unfold(this.slots.tasks, tree.length > 0);
     const rows = rowsOf(tree, { collapsed: this.collapsed, expanded: this.expanded, doneOpen: this.doneOpen });
     const n = counts(tree);
-    const sig = JSON.stringify([rows.map((r) => (r.type === 'task' ? [r.node.key, r.node.state, r.node.title, r.node.attention, r.depth, r.last, r.guides, r.open, r.hasKids] : [r.type, r.count, r.type === 'more' ? r.running : r.open])), n, [...this.stopping], this.data.current]);
+    const sig = JSON.stringify([rows.map((r) => (r.type === 'task' ? [r.node.key, r.node.state, r.node.title, r.node.attention, r.depth, r.last, r.guides, r.open, r.hasKids]
+      : r.type === 'less' ? [r.type, r.parent] : [r.type, r.count, r.type === 'more' ? r.running : r.open])), n, [...this.stopping], this.data.current]);
     if (sig === this.sigs.tasks) return;
     this.sigs.tasks = sig;
     if (!tree.length) return;
@@ -156,14 +172,20 @@ export class Dashboard {
         h('span.dash-gap'),
         many ? h('button.dash-stop-all', { type: 'button', onclick: () => this.stopAll() }, t('stop_all')) : null),
       rows.map((r) => this.taskRow(r, now)));
+    this.floor(this.slots.tasks, rows.length, 5);
   }
 
   /** @param {import('./model.js').Row} r @param {number} now */
   taskRow(r, now) {
     const t = this.t;
     if (r.type === 'done') {
+      // 「✓ 已完成（N）」（2026-10-24 项目主人：原来只写「✓ (N)」）；点了展开、再点收回
       return h('button.dash-row.dash-fold-row', { type: 'button', 'aria-expanded': String(r.open), onclick: () => { this.doneOpen = !this.doneOpen; this.drawTasks(); } },
-        h('span.dash-state.is-done', icon('check')), h('span.dash-fold-count', `(${r.count})`));
+        h('span.dash-state.is-done', icon('check')), h('span.dash-fold-count', t('done_tasks', { count: r.count })));
+    }
+    if (r.type === 'less') {
+      return h('button.dash-row.dash-fold-row', { type: 'button', style: `--depth: ${r.depth}`, 'aria-expanded': 'true', onclick: () => { this.expanded.delete(r.parent); this.drawTasks(); } },
+        lines(r.guides, r.depth, true), h('span.dash-state', icon('chevron-up')), h('span.dash-fold-count', t('collapse')));
     }
     if (r.type === 'more') {
       return h('button.dash-row.dash-fold-row', { type: 'button', style: `--depth: ${r.depth}`, 'aria-label': t('more_tasks', { count: r.count }), onclick: () => { this.expanded.add(r.parent); this.drawTasks(); } },
@@ -245,7 +267,7 @@ export class Dashboard {
     const shown = this.filesOpen || files.length <= max ? files : files.slice(0, max);
     const rest = files.length - shown.length;
     replace(this.fileCard,
-      h('div.dash-head', h('strong.dash-title', t('files')), h('span.dash-count', t('files_count', { count: files.length })), h('span.dash-gap'),
+      h('div.dash-head.is-sticky', h('strong.dash-title', t('files')), h('span.dash-count', t('files_count', { count: files.length })), h('span.dash-gap'),
         h('span.dash-lines', h('span.dash-add', `+${added}`), ' ', h('span.dash-del', `−${removed}`))),
       shown.map((f, i) => {
         const { name, dir } = splitPath(f.path, where);
@@ -253,7 +275,9 @@ export class Dashboard {
           h('span.dash-kind', icon(f.created ? 'file-plus' : 'file')), h('span.dash-file-name', name), dir ? h('span.dash-file-dir', dir) : null, h('span.dash-gap'),
           h('span.dash-lines', f.added ? h('span.dash-add', `+${f.added}`) : null, f.added && f.removed ? ' ' : null, f.removed ? h('span.dash-del', `−${f.removed}`) : null));
       }),
-      rest > 0 ? h('button.dash-row.dash-fold-row', { type: 'button', onclick: () => { this.filesOpen = true; this.drawFiles(); } }, icon('chevron-down'), h('span.dash-fold-count', `(${rest})`)) : null);
+      rest > 0 ? foldRow('chevron-down', `(${rest})`, () => { this.filesOpen = true; this.drawFiles(); }, false)
+        : this.filesOpen && files.length > max ? foldRow('chevron-up', t('collapse'), () => { this.filesOpen = false; this.drawFiles(); }, true) : null);
+    this.floor(this.slots.files, shown.length + (rest > 0 || files.length > max ? 1 : 0), 3);
   }
 
   // ── 展示文件 ──
@@ -273,7 +297,7 @@ export class Dashboard {
     const rows = this.shownOpen || list.length <= max ? list : list.slice(0, max);
     const rest = list.length - rows.length;
     replace(this.shownCard,
-      h('div.dash-head', h('strong.dash-title', t('shown')), list.length ? h('span.dash-count', t('shown_count', { count: list.length })) : null),
+      h('div.dash-head.is-sticky', h('strong.dash-title', t('shown')), list.length ? h('span.dash-count', t('shown_count', { count: list.length })) : null),
       rows.map((a) => {
         const { name, dir } = splitPath(a.path, where);
         const label = a.title || name;
@@ -287,8 +311,10 @@ export class Dashboard {
           onclick: (/** @type {MouseEvent} */ e) => { e.stopPropagation(); this.on.dismiss(a.path); },
         }, icon('x')));
       }),
-      rest > 0 ? h('button.dash-row.dash-fold-row', { type: 'button', onclick: () => { this.shownOpen = true; this.drawShown(); } }, icon('chevron-down'), h('span.dash-fold-count', `(${rest})`)) : null,
+      rest > 0 ? foldRow('chevron-down', `(${rest})`, () => { this.shownOpen = true; this.drawShown(); }, false)
+        : this.shownOpen && list.length > max ? foldRow('chevron-up', t('collapse'), () => { this.shownOpen = false; this.drawShown(); }, true) : null,
       panel > 0 ? h('button.dash-row.dash-file.dash-panel-row', { type: 'button', onclick: () => this.on.panel() }, h('span.dash-kind', icon('puzzle')), h('span.dash-file-name', t('panel'))) : null);
+    this.floor(this.slots.shown, rows.length + (rest > 0 || list.length > max ? 1 : 0) + (panel > 0 ? 1 : 0), 3);
   }
 
   // ── 点进去 ──
@@ -414,6 +440,15 @@ export class Dashboard {
     this.timer = 0;
     this.run++;
   }
+}
+
+/**
+ * 收起来的、展开了的那一行（第 4 条：「还有 N 项」「(N)」「收起」「✓ 已完成 N 项」）：小图标加暗字，点了展开、收回。
+ * @param {string} ic @param {string} label @param {() => void} onclick @param {boolean} open 展开着 @param {string} [tone] 图标那一格的样子
+ */
+function foldRow(ic, label, onclick, open, tone = '') {
+  return h('button.dash-row.dash-fold-row', { type: 'button', 'aria-expanded': String(open), onclick },
+    h(`span.dash-state${tone ? `.${tone}` : ''}`, icon(ic)), h('span.dash-fold-count', label));
 }
 
 /** 状态只用图标（第 4 条） @param {string} state */

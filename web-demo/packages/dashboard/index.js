@@ -113,6 +113,8 @@ export function apply(ctx) {
     button.title = label;
     button.setAttribute('aria-label', label);
     button.setAttribute('aria-expanded', String(open));
+    // 开着时平常不露，指针移过来才露（`style.css`）
+    button.classList.toggle('is-open', open);
     const n = counts(session ? taskTree(session, last.status, statusOf) : []);
     const mark = badgeOf(n, { open, fresh: work.state().fresh });
     badge.hidden = !mark;

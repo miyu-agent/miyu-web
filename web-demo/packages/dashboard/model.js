@@ -59,9 +59,10 @@ export const stoppable = (tree) => tree.flatMap((x) => (x.state === 'running' ||
 
 /**
  * 一行：一个任务（`depth` 第几层，`guides` 上面每一层还没完的要不要穿一道竖线，`last` 是不是这一层最后一个），收起来的兄弟（`more`），
- * 做完的顶层（`done`，开着的时候它后面接着那几个）。
+ * 展开了的兄弟最后那一行「收起」（`less`），做完的顶层（`done`，开着的时候它后面接着那几个）。
  * @typedef {{type: 'task', node: Node, depth: number, guides: boolean[], last: boolean, hasKids: boolean, open: boolean}
  *   | {type: 'more', parent: string, depth: number, guides: boolean[], count: number, running: boolean}
+ *   | {type: 'less', parent: string, depth: number, guides: boolean[]}
  *   | {type: 'done', count: number, open: boolean}} Row
  */
 
@@ -70,8 +71,9 @@ export const SIBLINGS_MAX = 3;
 export const SIBLINGS_SHOWN = 2;
 
 /**
- * 摊成一行行（第 4 条）：在跑的顶层照先后，做完的顶层收在最后一行「✓ (N)」（`doneOpen` 的接着列出来）；子任务挂在下面，人收起了的
- * （`collapsed`）不露；同一层兄弟多于 3 个、没被展开（`expanded`）的只露前 2 个，剩下的收成一行。
+ * 摊成一行行（第 4 条）：在跑的顶层照先后，做完的顶层收在最后一行「✓ 已完成（N）」（`doneOpen` 的接着列出来）；子任务挂在下面，人收起了的
+ * （`collapsed`）不露；同一层兄弟多于 3 个、没被展开（`expanded`）的只露前 2 个，剩下的收成一行；展开了的最后一行「收起」（2026-10-24 项目主人：
+ * 展开了收不回）。
  * @param {Node[]} tree @param {{collapsed?: Set<string>, expanded?: Set<string>, doneOpen?: boolean}} [opts]
  * @returns {Row[]}
  */
@@ -80,10 +82,12 @@ export function rowsOf(tree, { collapsed = new Set(), expanded = new Set(), done
   const out = [];
   /** @param {Node[]} list @param {number} depth @param {boolean[]} guides @param {string} parent */
   const walk = (list, depth, guides, parent) => {
-    const fold = depth > 0 && list.length > SIBLINGS_MAX && !expanded.has(parent);
+    const many = depth > 0 && list.length > SIBLINGS_MAX;
+    const fold = many && !expanded.has(parent);
     const shown = fold ? list.slice(0, SIBLINGS_SHOWN) : list;
     shown.forEach((node, i) => {
-      const last = !fold && i === shown.length - 1;
+      // 后面还有收起来的那一行、「收起」那一行的，不是这一层最后一个
+      const last = !many && i === shown.length - 1;
       const hasKids = node.kids.length > 0;
       const open = hasKids && !collapsed.has(node.key);
       out.push({ type: 'task', node, depth, guides, last, hasKids, open });
@@ -92,7 +96,7 @@ export function rowsOf(tree, { collapsed = new Set(), expanded = new Set(), done
     if (fold) {
       const rest = list.slice(SIBLINGS_SHOWN);
       out.push({ type: 'more', parent, depth, guides, count: rest.length, running: rest.some(live) });
-    }
+    } else if (many) out.push({ type: 'less', parent, depth, guides });
   };
   const top = tree.filter(live);
   const done = tree.filter((x) => !live(x));
@@ -160,13 +164,19 @@ export function splitPath(path, { workdir = null, home = null } = {}) {
 }
 
 /**
- * 待办露哪几项（第 4 条）：没做完的照先后最多露 `max` 项（在做的、没做的），剩下的数，做完的数。
- * @param {{content: string, status: string}[]} todos @param {number} max
+ * 待办露哪几项（第 4 条）：没做完的照先后最多露 `max` 项（在做的、没做的），剩下的数（`more`，收成「还有 N 项」）；人展开了（`open`）的
+ * 全露，`fold` 说要不要「收起」那一行；做完的数，人展开了（`doneOpen`）的列在 `finished`。
+ * @param {{content: string, status: string}[]} todos @param {number} max @param {{open?: boolean, doneOpen?: boolean}} [opts]
  */
-export function todoView(todos, max) {
+export function todoView(todos, max, { open = false, doneOpen = false } = {}) {
   const list = Array.isArray(todos) ? todos : [];
-  const open = list.filter((x) => x?.status !== 'completed');
-  return { total: list.length, done: list.length - open.length, shown: open.slice(0, max), more: Math.max(0, open.length - max) };
+  const left = list.filter((x) => x?.status !== 'completed');
+  const finished = list.filter((x) => x?.status === 'completed');
+  const many = left.length > max;
+  return {
+    total: list.length, done: finished.length, shown: many && !open ? left.slice(0, max) : left, more: many && !open ? left.length - max : 0,
+    fold: many && open, finished: doneOpen ? finished : [],
+  };
 }
 
 /**
