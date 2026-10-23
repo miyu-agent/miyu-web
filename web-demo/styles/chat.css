@@ -99,6 +99,8 @@
 /* 正文末尾、最后一轮下面（挂载位 chat.tail：确认和提问了结以后留的）：和回报那一行一样缩进 */
 .chat-tail { padding-left: calc(40px * var(--space)); }
 .chat-tail > * { margin-bottom: calc(30px * var(--space)); }
+/* 挂在这里的提示行（整理记忆的结果那一行这类）：这一层已经缩进了，不再缩第二次，和正文里的提示行对齐 */
+.chat-tail .note { padding-left: 0; }
 .note-line { display: flex; align-items: baseline; gap: calc(8px * var(--space)); min-width: 0; }
 .note-text { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .note-line.tone-good .note-mark { color: var(--t-good); }
