@@ -38,6 +38,17 @@ export function apply(ctx) {
     fits: () => app.side.fits(),
     free: () => app.side.free(),
     onChange: (/** @type {(state: any) => void} */ fn) => app.side.on(fn),
+    // 预览工作区（蓝图「仪表盘」第 1、4、5 条）：展示过的那几样、打开一样或面板、拿掉、收起、看过了；`claim` 换成右侧边栏点进去的样子
+    work: {
+      state: () => app.side.works(),
+      open: (/** @type {string} */ path) => app.artifacts.reveal(path),
+      panel: () => app.side.openPanel(),
+      dismiss: (/** @type {string} */ path) => app.artifacts.dismiss(path),
+      close: () => app.artifacts.setOpen(false),
+      seen: () => app.artifacts.markSeen(),
+      claim: (/** @type {() => void} */ back) => app.artifacts.claim(back),
+      onChange: (/** @type {() => void} */ fn) => app.artifacts.onChange(fn),
+    },
   });
   ctx.provide('chat', {
     /** 正在看的会话（还没开的新会话是 `null`） */

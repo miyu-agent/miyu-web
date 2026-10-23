@@ -249,6 +249,7 @@
     "maximize": "Maximize",
     "restore": "Restore",
     "close": "Close",
+    "back": "Back",
     "list": "Shown items",
     "loading": "Loading…",
     "failed": "Failed to load file",
