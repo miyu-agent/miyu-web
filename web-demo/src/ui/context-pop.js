@@ -4,17 +4,17 @@
 //! 再点那一格收起。数怎么摊、怎么排在 `model/context.js`。
 
 import { h, icon, replace, scaleOf } from './dom.js';
-import { show, hide } from '../lib/motion.js';
+import { show, hide, unfold } from '../lib/motion.js';
 import { t } from '../util/res.js';
-import { short, money } from '../lib/format.js';
-import { scaledParts, bar, share, toneOf, useRows } from '../model/context.js';
+import { short, money, hitRate } from '../lib/format.js';
+import { scaledParts, bar, share, toneOf, useRows, USE_TONES, inputOf, costOf } from '../model/context.js';
 
 /** @typedef {'context'|'total'} Kind */
 
 export class ContextPop {
   /**
-   * @param {{session: () => string|null, preview: () => Record<string, any>, request: (method: string, params: any) => Promise<any>}} on
-   *   `session` 正在看的会话；`preview` 还没开的新会话问预览带的人格、预设
+   * @param {{session: () => string|null, preview: () => Record<string, any>, request: (method: string, params: any) => Promise<any>, openUsage?: (session: string) => void}} on
+   *   `session` 正在看的会话；`preview` 还没开的新会话问预览带的人格、预设；`openUsage` 开设置的用量页、弹这个会话的细则（没装用量页的没有）
    */
   constructor(on) {
     this.on = on;
@@ -100,10 +100,14 @@ export class ContextPop {
     this.load();
   }
 
-  /** 摆在那一格上面，左边对齐那一格，放不下往左挪（量的是屏幕像素，整页放大以后换回自己的 CSS 像素） */
+  /**
+   * 摆在那一格上面，左边对齐那一格，放不下往左挪（量的是屏幕像素，整页放大以后换回自己的 CSS 像素）；还没开的新会话输入框在正中，
+   * 摆在下面（2026-10-23 项目主人）
+   */
   place() {
     const parent = this.el.parentElement;
     if (!parent || !this.anchor) return;
+    this.el.classList.toggle('is-below', !!this.el.closest('.is-empty'));
     const scale = scaleOf(parent);
     const box = this.anchor.getBoundingClientRect();
     const root = parent.getBoundingClientRect();
@@ -152,47 +156,71 @@ export class ContextPop {
     return [head, track, rows, c.line ? h('div.ctx-pop-foot', t('context_pop.line', { line: short(c.line) })) : null];
   }
 
-  /** 一块一行，有子项的能展开 @param {import('../model/context.js').Part} p @param {number} depth @param {number} full 百分比照它算（已用的） */
+  /**
+   * 一块一行，有子项的能展开：子项那一块一直画着，收着的高度是 0，展开、收起照 `unfold` 缓（同时间线点开一步）。
+   * @param {import('../model/context.js').Part} p @param {number} depth @param {number} full 百分比照它算（已用的）
+   */
   partRows(p, depth, full) {
     const kids = p.children ?? [];
     const open = this.opened.has(p.part);
+    const box = kids.length ? h('div.unfold.ctx-kids', h('div.unfold-inner', kids.map((k) => this.partRows(k, depth + 1, full)))) : null;
+    if (box) unfold(box, open);
+    const flip = () => this.flip(p.part, row, /** @type {HTMLElement} */ (box));
     const row = h(`div.ctx-row${kids.length ? '.is-parent' : ''}${open ? '.is-open' : ''}${depth ? '.is-child' : ''}`, {
       style: `--depth: ${depth}; --tone: var(--${toneOf(p.part)})`,
       role: kids.length ? 'button' : null, tabindex: kids.length ? '0' : null, 'aria-expanded': kids.length ? String(open) : null,
-      onclick: kids.length ? () => this.flip(p.part) : null,
-      onkeydown: kids.length ? (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.flip(p.part); } } : null,
+      onclick: kids.length ? flip : null,
+      onkeydown: kids.length ? (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } } : null,
     },
     h('span.ctx-row-arrow', kids.length ? icon('chevron-right') : null),
     h('span.ctx-dot'),
     h('span.ctx-row-name', p.label),
     h('span.ctx-row-n', short(p.tokens)),
     h('span.ctx-row-pct', `${share(p.tokens, full)}%`));
-    return [row, open ? kids.map((k) => this.partRows(k, depth + 1, full)) : null];
+    return [row, box];
   }
 
-  /** @param {string} part */
-  flip(part) {
-    if (this.opened.has(part)) this.opened.delete(part);
-    else this.opened.add(part);
-    this.draw();
+  /** 展开、收起一块：不重画，只换这一行和它下面那一块的开关（高度缓过去） @param {string} part @param {HTMLElement} row @param {HTMLElement} box */
+  flip(part, row, box) {
+    const on = !this.opened.has(part);
+    if (on) this.opened.add(part);
+    else this.opened.delete(part);
+    row.classList.toggle('is-open', on);
+    row.setAttribute('aria-expanded', String(on));
+    unfold(box, on);
   }
 
-  /** @param {{rows?: any[]}} r */
+  /**
+   * 累计那一个（蓝图「上下文明细、累计按用途」第 4 条）：合计和花费、照用途分色的横条、一个用途一行（下面一行暗字写请求、命中、输入、输出），
+   * 最下面「含子代理」和「在用量页看」。
+   * @param {{rows?: any[]}} r
+   */
   usageView(r) {
     const rows = useRows(r.rows ?? []);
     const sum = rows.reduce((n, x) => n + x.tokens, 0);
-    const all = new Map();
-    for (const x of rows) for (const a of x.amounts) all.set(a.currency, (all.get(a.currency) ?? 0) + a.amount);
-    const cost = money([...all].map(([currency, amount]) => ({ currency, amount })));
-    // 一行都没有花费的不留花费那一列（不然数字不靠右）
-    const priced = rows.some((x) => x.amounts.length);
+    const cost = money(costOf(rows));
+    const session = this.on.session();
+    const tone = (/** @type {string} */ use) => `--tone: var(--${USE_TONES[use] ?? 'text-faint'})`;
+    const line = (/** @type {import('../model/context.js').UseRow} */ x) => [
+      t('context_pop.requests', { n: x.requests.toLocaleString() }),
+      t('context_pop.hit', { percent: hitRate(x.usage.cache_read, inputOf(x.usage)) }),
+      t('context_pop.input', { n: short(inputOf(x.usage)) }),
+      t('context_pop.output', { n: short(x.usage.output) }),
+      x.unpriced ? t('context_pop.unpriced', { n: x.unpriced.toLocaleString() }) : null,
+    ].filter(Boolean).join(' · ');
     return [
-      h('div.ctx-pop-head', h('strong.ctx-pop-title', t('context_pop.usage_title')), h('span.ctx-pop-sum', short(sum))),
+      h('div.ctx-pop-head', h('strong.ctx-pop-title', t('context_pop.usage_title')), h('span.ctx-pop-sum', cost ? `${short(sum)} · ${cost}` : short(sum))),
+      rows.length ? h('div.ctx-bar', rows.map((x) => h('span.ctx-bar-seg', { style: `width: ${((x.tokens / sum) * 100).toFixed(3)}%; ${tone(x.use)}` }))) : null,
       rows.length
-        ? h('div.ctx-rows', rows.map((x) => h('div.ctx-row.is-use', h('span.ctx-row-name', t(`context_pop.use.${x.use}`)),
-          h('span.ctx-row-n', short(x.tokens)), priced ? h('span.ctx-row-pct', money(x.amounts)) : null)))
+        ? h('div.ctx-rows', rows.map((x) => h('div.ctx-row.is-use', { style: tone(x.use) },
+          h('span.ctx-dot'),
+          h('span.ctx-use-text', h('span.ctx-use-top', h('span.ctx-row-name', t(`context_pop.use.${x.use}`)), h('span.ctx-row-n', short(x.tokens)),
+            x.amounts.length ? h('span.ctx-row-pct', money(x.amounts)) : null),
+          h('span.ctx-use-line', line(x))))))
         : h('div.ctx-pop-note', t('context_pop.no_usage')),
-      h('div.ctx-pop-foot', cost ? t('context_pop.with_cost', { cost }) : t('context_pop.with_subagents')),
+      h('div.ctx-pop-foot.ctx-pop-foot-row', h('span', t('context_pop.with_subagents')),
+        session && this.on.openUsage ? h('button.ctx-pop-link', { type: 'button', onclick: () => { const id = session; this.close(); this.on.openUsage?.(id); } }, t('context_pop.open_usage'), icon('chevron-right')) : null),
     ];
   }
+
 }

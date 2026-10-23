@@ -261,6 +261,11 @@
   animation: menu-grow 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 .ctx-pop.is-leaving { animation: menu-shrink 0.18s var(--ease-in) both; }
+/* 新会话输入框在正中：往下弹，从那一格往下长 */
+.ctx-pop.is-below { top: calc(100% + 6px); bottom: auto; transform-origin: var(--origin, 24px) 0; animation-name: ctx-drop; }
+.ctx-pop.is-below.is-leaving { animation-name: ctx-lift; }
+@keyframes ctx-drop { from { opacity: 0; transform: translateY(-6px) scale(0.96); } }
+@keyframes ctx-lift { to { opacity: 0; transform: translateY(-4px) scale(0.98); } }
 .ctx-pop-head { display: flex; align-items: baseline; gap: calc(8px * var(--space)); margin-bottom: calc(8px * var(--space)); }
 .ctx-pop-title { font-weight: 600; }
 .ctx-pop-sum { margin-left: auto; color: var(--text-soft); font: calc(12px * var(--text-scale)) var(--font-mono); }
@@ -287,6 +292,14 @@
 .ctx-row.is-child .ctx-row-name { color: var(--text-soft); }
 .ctx-row-n { flex: none; font: calc(12px * var(--text-scale)) var(--font-mono); }
 .ctx-row-pct { flex: none; min-width: 3.6em; color: var(--text-faint); font: calc(11.5px * var(--text-scale)) var(--font-mono); text-align: right; }
-.ctx-row.is-use { padding-left: calc(4px * var(--space)); }
-.ctx-row.is-use > .ctx-row-pct { min-width: 4.5em; }
-@media (prefers-reduced-motion: reduce) { .ctx-pop, .ctx-pop.is-leaving { animation: none; } }
+.ctx-row.is-use { align-items: flex-start; padding: calc(4px * var(--space)) calc(4px * var(--space)); }
+.ctx-row.is-use > .ctx-dot { margin-top: 0.42em; }
+.ctx-use-text { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.ctx-use-top { display: flex; align-items: baseline; gap: calc(6px * var(--space)); }
+.ctx-use-top .ctx-row-pct { min-width: 4.5em; }
+.ctx-use-line { overflow: hidden; color: var(--text-faint); font-size: calc(11px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
+.ctx-pop-foot-row { display: flex; align-items: center; justify-content: space-between; gap: calc(8px * var(--space)); }
+.ctx-pop-link { display: inline-flex; align-items: center; gap: 2px; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; }
+.ctx-pop-link:hover { text-decoration: underline; }
+.ctx-pop-link .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); }
+@media (prefers-reduced-motion: reduce) { .ctx-pop, .ctx-pop.is-leaving, .ctx-pop.is-below, .ctx-pop.is-below.is-leaving { animation: none; } }

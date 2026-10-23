@@ -60,7 +60,7 @@ export class Composer {
    *   command: (spec: import('../model/commands.js').Spec, words: string|null) => void,
    *   history: {load: () => import('../model/history.js').Item[], save: (items: import('../model/history.js').Item[]) => void},
    *   commandsOpened?: () => void, allCommands?: () => Promise<import('../model/commands.js').Spec[]>,
-   *   session: () => string|null, models: import('./model-menu.js').On, request: (method: string, params: any) => Promise<any>, preview: () => Record<string, any>, files: (plan: any, fresh: boolean, onUpdate: (found: any) => void, stale: () => boolean) => Promise<any>, where: () => {cwd: string|null, home: string|null}} on
+   *   session: () => string|null, models: import('./model-menu.js').On, request: (method: string, params: any) => Promise<any>, preview: () => Record<string, any>, openUsage?: (session: string) => void, files: (plan: any, fresh: boolean, onUpdate: (found: any) => void, stale: () => boolean) => Promise<any>, where: () => {cwd: string|null, home: string|null}} on
    *   `send` 交回核心收没收；`history` 读、存输入历史（这台设备上、按账号分开）；`session` 正在看的会话；`models` 换模型的菜单问核心要列表、现在用的、选定了做什么；`files` 问核心列、找文件
    *   （`core/files.js`，没建完的先交 `onUpdate`、`stale` 说不要了就停）；`where` 这个会话的工作目录、家目录（`@` 选文件写路径照它）
    * @param {() => import('../model/commands.js').Spec[]} specs 现在的全部斜杠命令（出厂的加软件包登记的）
@@ -106,7 +106,7 @@ export class Composer {
     this.status = h('span.footer-status');
     this.middle = h('span.footer-middle');
     /** 上下文、累计那两格点了开的浮窗（蓝图「上下文明细、累计按用途」） */
-    this.contextPop = new ContextPop({ session: on.session, preview: on.preview, request: on.request });
+    this.contextPop = new ContextPop({ session: on.session, preview: on.preview, request: on.request, openUsage: on.openUsage });
     this.footer = h('div.composer-footer', this.left, this.middle, h('span.footer-end', this.status, this.right), this.modelMenu.el, this.contextPop.el);
     // 从命令列表里点的、选中回车的：记成 `/名字`
     this.menu = new CommandList({

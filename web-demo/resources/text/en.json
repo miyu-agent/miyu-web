@@ -475,7 +475,6 @@
     "usage_title": "This session so far",
     "no_usage": "No usage yet",
     "with_subagents": "Includes subagents",
-    "with_cost": "Includes subagents · {cost} total",
     "use": {
       "main": "Conversation",
       "compaction": "Compaction",
@@ -484,7 +483,13 @@
       "title": "Titles",
       "memory": "Memory",
       "other": "Other"
-    }
+    },
+    "requests": "{n} requests",
+    "hit": "{percent}% cached",
+    "input": "in {n}",
+    "output": "out {n}",
+    "unpriced": "{n} unpriced",
+    "open_usage": "Open in Usage"
   },
   "model_menu": {
     "tip": "Switch model",

@@ -9,4 +9,9 @@ import { UsagePage } from './page.js';
 export function apply(ctx) {
   const page = new UsagePage(ctx);
   ctx.slots.mount('settings.section', { id: 'usage', name: ctx.text('title'), render: (/** @type {any} */ kit) => page.render(kit) });
+  // 框下面累计浮窗的「在用量页看」（蓝图「上下文明细、累计按用途」第 4 条）：时间段全部、按会话，弹这个会话的细则
+  ctx.on('usage.show', (/** @type {{session: string}} */ e) => {
+    page.focus(e.session);
+    ctx.settings?.open?.('usage');
+  });
 }

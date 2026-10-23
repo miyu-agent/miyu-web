@@ -475,7 +475,6 @@
     "usage_title": "このセッションの累計",
     "no_usage": "まだ使用量はありません",
     "with_subagents": "サブエージェントを含む",
-    "with_cost": "サブエージェントを含む · 合計 {cost}",
     "use": {
       "main": "会話",
       "compaction": "圧縮",
@@ -484,7 +483,13 @@
       "title": "タイトル",
       "memory": "記憶",
       "other": "その他"
-    }
+    },
+    "requests": "{n} 回",
+    "hit": "キャッシュ {percent}%",
+    "input": "入力 {n}",
+    "output": "出力 {n}",
+    "unpriced": "価格なし {n} 回",
+    "open_usage": "使用量ページで見る"
   },
   "model_menu": {
     "tip": "モデルを変更",

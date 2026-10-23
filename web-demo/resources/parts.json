@@ -3275,6 +3275,18 @@
       ".ctx-row-pct"
     ]
   },
+  "context.use-line": {
+    "zh": "累计按用途：一行下面的请求、命中、输入、输出",
+    "select": [
+      ".ctx-use-line"
+    ]
+  },
+  "context.pop-link": {
+    "zh": "累计按用途：「在用量页看」",
+    "select": [
+      ".ctx-pop-link"
+    ]
+  },
   "model.menu-search-input": {
     "zh": "换模型的菜单：菜单搜索写字的框",
     "select": [

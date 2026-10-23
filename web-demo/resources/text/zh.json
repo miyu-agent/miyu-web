@@ -475,7 +475,6 @@
     "usage_title": "本会话累计",
     "no_usage": "还没有用量",
     "with_subagents": "含子代理",
-    "with_cost": "含子代理 · 共 {cost}",
     "use": {
       "main": "主对话",
       "compaction": "压缩",
@@ -484,7 +483,13 @@
       "title": "起标题",
       "memory": "记忆",
       "other": "其他"
-    }
+    },
+    "requests": "{n} 次",
+    "hit": "命中 {percent}%",
+    "input": "输入 {n}",
+    "output": "输出 {n}",
+    "unpriced": "{n} 次没价格",
+    "open_usage": "在用量页看"
   },
   "model_menu": {
     "tip": "换模型",

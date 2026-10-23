@@ -59,6 +59,16 @@ export class UsagePage {
     this.old = false;
     /** 第几次读（换得快的，早读的晚回来不画） */
     this.round = 0;
+    /** 读完要弹细则的会话（`focus`） @type {{session: string, until: number}|undefined} */
+    this.pending = undefined;
+  }
+
+  /** 下一次读完弹这个会话的细则（框下面累计浮窗的「在用量页看」）：时间段全部、按会话、列全部 @param {string} session */
+  focus(session) {
+    this.range = 'all';
+    this.group = 'session';
+    this.all = true;
+    this.pending = { session, until: Date.now() + 5000 };
   }
 
   /** 设置页画这一页：每次打开重读，交回同一块。 @param {any} kit */
@@ -110,6 +120,9 @@ export class UsagePage {
         rows: rows?.rows ?? [],
         at: Date.now(),
       };
+      // 设置页打开时会连着读两次：几秒里每次读完都弹它，人关了小窗、过了这几秒就不再弹
+      if (this.pending && Date.now() < this.pending.until) this.open = this.pending.session;
+      else this.pending = undefined;
     } catch (err) {
       if (round !== this.round) return;
       const e = /** @type {any} */ (err);
@@ -212,6 +225,7 @@ export class UsagePage {
 
   /** 收起细则的小窗：只拿掉它，不重画 */
   closePop() {
+    this.pending = undefined;
     if (this.open === undefined) return;
     this.open = undefined;
     this.openRow = null;
