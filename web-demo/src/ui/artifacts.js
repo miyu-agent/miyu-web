@@ -11,8 +11,8 @@
 //! - 扩展的界面块放进来时（挂载位 `stage.panel`，软件包 `widgets`；2026-10-15 项目主人定）这一栏顶上两个标签「工作区」「面板」，开关按钮
 //!   产物、面板有一样就露；面板那一页露没露告诉 `panelShown`（界面块照它订阅、叫不叫程序干活）。没有界面块的和原来一样。
 
-import { h, icon, replace, setUrl } from './dom.js';
-import { show, hide } from '../lib/motion.js';
+import { h, icon, replace, setUrl, scaleOf } from './dom.js';
+import { show, hide, glide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { shownList, panelList, codeLanguage, undismissed } from '../model/artifacts.js';
 import { blobUrl } from '../core/host.js';
@@ -27,7 +27,8 @@ const WIDTH = 'artifacts_width';
 const DISMISSED = 'artifacts_dismissed';
 /** 删掉的最多记几个会话的（多了扔掉最早记的） */
 const DISMISSED_SESSIONS = 200;
-
+/** 开关那一栏时跟着滑过去的：正文那一列、输入框、空会话的首页（套在里面的只滑外面那一层） */
+const GLIDES = '.chat-scroll > .timeline, .composer-dock, .stage-home';
 export class Artifacts {
   /**
    * @param {HTMLElement} shell 整页（`.app-shell`）：开关时换它的类、宽度
@@ -61,8 +62,6 @@ export class Artifacts {
     this.entries = [];
     /** 开、关、拖完宽度、最大化以后叫（整页看对话那一列够不够宽，不够的收起左栏） */
     this.onLayout = () => {};
-    /** @type {ReturnType<typeof setTimeout>|undefined} 收起的那一下挂的类，走完拿掉 */
-    this.leavingTimer = undefined;
     /** 看哪一页：`work` 产物、`panel` 界面块 */
     this.tab = 'work';
     /** 面板里挂着几件（`stage.panel`） */
@@ -149,12 +148,15 @@ export class Artifacts {
     // 那一列长出来、收回去，里面跟着淡入淡出（蓝图「动效」）
     if (this.open) show(this.el);
     else hide(this.el);
-    // 收起时那一列照收起的曲线走（`artifacts.css`），走完拿掉
-    clearTimeout(this.leavingTimer);
-    const was = this.shell.classList.contains('has-artifacts');
-    this.shell.classList.toggle('is-artifacts-leaving', was && !this.open);
-    if (was && !this.open) this.leavingTimer = setTimeout(() => this.shell.classList.remove('is-artifacts-leaving'), 400);
+    // 那一列一下子就是最终的宽，正文那一列从原来的位置照这一栏的曲线滑过去（蓝图「动效」；宽一帧一帧变的话长会话每帧都整个重排）
+    const flips = [...this.shell.querySelectorAll(GLIDES)].filter((el, _, all) => !all.some((o) => o !== el && o.contains(el)));
+    const before = flips.map((el) => el.getBoundingClientRect().left);
     this.shell.classList.toggle('has-artifacts', this.open);
+    const style = getComputedStyle(this.shell);
+    const duration = parseFloat(style.getPropertyValue(this.open ? '--artifact-in' : '--artifact-out')) * 1000 || 0;
+    const easing = style.getPropertyValue(this.open ? '--artifact-ease-in' : '--artifact-ease-out').trim() || 'ease';
+    const k = scaleOf(this.shell) || 1;
+    flips.forEach((el, i) => glide(/** @type {HTMLElement} */ (el), (before[i] - el.getBoundingClientRect().left) / k, duration, easing));
     this.toggle.classList.toggle('is-active', this.open);
     if (this.open) this.toggle.classList.remove('has-new');
     if (!this.open && this.maximized) this.setMaximized(false);

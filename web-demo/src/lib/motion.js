@@ -74,6 +74,23 @@ export function show(el) {
 }
 
 /**
+ * 一块已经换到了新位置，让它看着从原来的地方滑过去（FLIP：只动 `transform`，不再重排）。正在滑的接着从当时的位置滑；
+ * 减少动效的不滑。
+ * @param {HTMLElement} el
+ * @param {number} dx 原来的位置比现在偏右多少（自己的 CSS 像素）
+ * @param {number} duration 毫秒
+ * @param {string} easing CSS 的曲线
+ */
+export function glide(el, dx, duration, easing) {
+  const now = el.getAnimations?.().find((a) => a.id === 'glide');
+  const from = now ? new DOMMatrixReadOnly(getComputedStyle(el).transform).m41 : 0;
+  now?.cancel();
+  const offset = dx + from;
+  if (Math.abs(offset) < 1 || reduced() || typeof el.animate !== 'function') return;
+  el.animate([{ transform: `translateX(${offset}px)` }, { transform: 'none' }], { duration, easing, id: 'glide' });
+}
+
+/**
  * 占着地方的一块出来、收回去：CSS 照 `is-on` 把高度从 0 长出来、收回 0（`base.css` 的 `.unfold`、`.unfold-inner`）。是过渡不是
  * 动画，收到一半又要出来的从当时的高度倒回去。收着的里面的东西留着（收的时候还看得到），不能点、读屏不读。
  * @param {HTMLElement} el
