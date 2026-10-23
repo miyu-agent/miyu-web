@@ -292,6 +292,8 @@ export class App {
         this.stageInfo = h('div.stage-info'),
         this.chat.el,
         this.stageRight = h('div.stage-right'),
+        // 右上角的按钮（预览工作区的开关；以后看这个会话改了哪些文件的那一个也放这儿），和左上角的左栏开关对称
+        this.stageTools = h('div.stage-tools'),
         this.composer.el,
         // 新会话的首页、输入框下面（挂载位 `stage.home`：扩展的界面块，软件包 `widgets`）；只在输入框居中的空会话里露（styles/chat.css）
         this.stageHome = h('div.stage-home')));
@@ -369,7 +371,7 @@ export class App {
     this.artifacts = new Artifacts(this.root, (text, good) => this.composer.say(text, good), () => this.schedule(), this.ext,
       (shown) => ctx.emit('panel.changed', shown));
     this.root.append(this.artifacts.el);
-    this.composer.sendButton.before(this.artifacts.toggle);
+    this.stageTools.append(this.artifacts.toggle);
     // 右栏开着、对话挤得不够时自动收起左栏，关上放回来（`fitArtifacts`）
     this.autoCollapsed = false;
     this.artifacts.onLayout = () => this.fitArtifacts();
