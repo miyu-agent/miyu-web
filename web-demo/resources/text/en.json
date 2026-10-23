@@ -476,8 +476,8 @@
   },
   "jump_bottom": "Jump to bottom",
   "stash": {
-    "mark": "Stashed",
-    "hint": "Ctrl+S to restore",
+    "hint": "Click or press Ctrl+S to restore",
+    "restore": "Restore stashed: {text}",
     "stashed": "Stashed · Ctrl+S to restore",
     "empty": "Nothing stashed"
   },

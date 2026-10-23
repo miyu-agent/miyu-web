@@ -476,8 +476,8 @@
   },
   "jump_bottom": "一番下へ",
   "stash": {
-    "mark": "退避中",
-    "hint": "Ctrl+S で戻す",
+    "hint": "クリックか Ctrl+S で戻す",
+    "restore": "退避したものを戻す：{text}",
     "stashed": "退避しました · Ctrl+S で戻す",
     "empty": "退避したものはありません"
   },

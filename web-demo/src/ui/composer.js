@@ -154,11 +154,12 @@ export class Composer {
     this.takeoverEl = h('div.composer-takeover');
     /** 跳到底部（蓝图「输入框」）：浮在框右上角，正文离底部远了才露；点了做什么由整页接（`onJump`） */
     this.jumpButton = h('button.composer-jump', { type: 'button', hidden: true, title: t('jump_bottom'), 'aria-label': t('jump_bottom'), onclick: () => this.onJump?.() }, icon('arrow-down'));
-    /** Ctrl+S 暂存着的（`model/stash.js`）：只在这个页面里；存着时框第一行最右边暗色写「已暂存」 */
+    /** Ctrl+S 暂存着的（`model/stash.js`）：只在这个页面里；存着时框下面那一排左边一颗小片，写那句的第一行，点了取回 */
     this.stashed = /** @type {import('../model/stash.js').Draft|null} */ (null);
-    this.stashMark = h('span.composer-stash', { hidden: true, title: t('stash.hint') }, t('stash.mark'));
-    this.field = h('div.composer-field', this.backdrop, this.input, this.stashMark);
-    this.box = h('div.composer', this.notice, this.jumpButton, this.takeoverEl, this.head, this.field, this.bar = h('div.composer-bar', this.tools, this.sendButton), this.menu.el, this.picker.el, this.help.el, this.historyList.el, this.sessionList.el, this.mention.el, this.float);
+    this.stashText = h('span.composer-stash-text');
+    this.stashChip = h('button.composer-stash', { type: 'button', hidden: true, onclick: () => { this.toggleStash(); this.input.focus(); } }, icon('square-pen'), this.stashText);
+    this.field = h('div.composer-field', this.backdrop, this.input);
+    this.box = h('div.composer', this.notice, this.jumpButton, this.takeoverEl, this.head, this.field, this.bar = h('div.composer-bar', h('div.composer-left', this.tools, this.stashChip), this.sendButton), this.menu.el, this.picker.el, this.help.el, this.historyList.el, this.sessionList.el, this.mention.el, this.float);
     this.el = h('div.composer-dock', this.box, this.footer);
     this.parts = /** @type {{key: string, text: string}[]} */ ([]);
     /** 撤销时放回框里的那句：恢复时还没动过的收回去（`tui.md`「输入框」第 7 条）。 */
@@ -181,7 +182,7 @@ export class Composer {
     else hide(this.jumpButton);
   }
 
-  /** Ctrl+S：框里的字和文件块存起来、取回来、互换（`model/stash.js`）；存着东西时框第一行最右边写「已暂存」。 */
+  /** Ctrl+S：框里的字和文件块存起来、取回来、互换（`model/stash.js`）；存着东西时框下面那一排左边的小片写那句的第一行。 */
   toggleStash() {
     const text = this.input.value;
     const current = { text, blocks: /** @type {[string, string][]} */ ([...this.blocks].filter(([label]) => text.includes(label))) };
@@ -193,9 +194,18 @@ export class Composer {
       this.input.setSelectionRange(r.input.text.length, r.input.text.length);
       this.changed();
     }
-    this.stashMark.hidden = !this.stashed;
-    this.field.classList.toggle('has-stash', !!this.stashed);
+    this.syncStash();
     if (r.said === 'stashed' || r.said === 'empty') this.say(t(`stash.${r.said}`));
+  }
+
+  /** 暂存的小片：露不露、写那句的第一行（长的照 CSS 省略），悬停看整句 */
+  syncStash() {
+    const text = this.stashed?.text ?? '';
+    const line = text.split('\n').find((x) => x.trim()) ?? '';
+    this.stashChip.hidden = !this.stashed;
+    this.stashText.textContent = line.trim();
+    this.stashChip.title = `${text}\n${t('stash.hint')}`;
+    this.stashChip.setAttribute('aria-label', t('stash.restore', { text: line.trim() }));
   }
 
   /**

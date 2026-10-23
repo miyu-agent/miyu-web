@@ -476,8 +476,8 @@
   },
   "jump_bottom": "回到底部",
   "stash": {
-    "mark": "已暂存",
-    "hint": "Ctrl+S 取回",
+    "hint": "点一下或按 Ctrl+S 取回",
+    "restore": "取回暂存的：{text}",
     "stashed": "已暂存 · Ctrl+S 取回",
     "empty": "没有暂存内容"
   },
