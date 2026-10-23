@@ -8,6 +8,9 @@
 //!   （2026-10-01 项目主人指出：长的时间线收起到上面去了，视口没跟过去，只剩空白）。
 //!   一轮结束了（不会再有字来填）还垫着的，收起的动画走完以后慢慢收掉（`release`），不越过清空那一行（同一天项目主人指出：
 //!   一轮结束以后底下留着一大块空档，发一句话才没）。
+//!   视口往上走的这一下照收完以后的样子一开始就算好终点，和收起的动画同时开始、同样长、同一条曲线缓过去（`folding`），不一帧一帧
+//!   追着内容的底边走（2026-10-24 项目主人：收起后先往上、再把你的那句话拿回来，很好，但不稳、有点抖——追着底边走时前一半不动、
+//!   过了四成那一刻突然以收起最快的速度动起来，收的时候新来一行字又顿一下）；收的时候新来的字接在下面，不管它，收完照常跟。
 //! - 清空了上下文：「上下文已清空」那一行顶到视口最上面，下面空着接新的（`toTop`，照终端的 `Ctrl+L`）；之后发话、她回答都从它
 //!   下面接着排，不跳到底（`base`：新的一屏从这里起），排满一屏以后照常跟着最新的。换了会话才忘掉。
 //! - 她的一段正文长过视口：第一行顶到视口最上面就停住，停住以后上面的内容变短（前面那一段收起）它也钉在那里；
@@ -21,6 +24,7 @@
 //! - 重做（编辑、重来）：记住那一句在屏幕上的位置，撤掉的内容空出来的地方垫着、视口不退，重发的那一句落回同一个位置。
 
 import { res } from '../util/res.js';
+import { cubicBezier, parseBezier, reduced } from '../lib/motion.js';
 import { offsetIn } from './dom.js';
 import { anchorAt, atBottom, pinAt, padFor } from '../model/anchor.js';
 
@@ -35,6 +39,12 @@ export class Follow {
     this.list = list;
     this.spacer = spacer;
     this.follow = true;
+    /**
+     * 跟着最新的时一段时间线在收（`folding`）：视口从 `from` 照 `ease` 缓到收完以后该停的地方（第一次量的时候算，照那一刻的视口高
+     * 再算一遍）；`gone` 是那几段收掉的高度加起来以前的正文高，`null` 是还没量。
+     * @type {{start: number, ms: number, from: number, wraps: HTMLElement[], ease: (k: number) => number, rest: number|null}|null}
+     */
+    this.fold = null;
     /** 跟着最新的时视口到过的最深处（`scrollTop`）：内容变短也不往回退。 */
     this.floor = 0;
     /** 自己最后一次把视口放到哪：滚动事件落在这里的是自己放的，不是人滚的。 */
@@ -99,6 +109,7 @@ export class Follow {
     }
     this.placed = null;
     this.hold = null;
+    this.fold = null;
     this.follow = !up && atBottom(this.el, res.layout.follow_within);
     if (!this.follow) {
       this.floor = Math.min(this.floor, this.el.scrollTop);
@@ -138,6 +149,7 @@ export class Follow {
   leave() {
     this.placed = null;
     this.hold = null;
+    this.fold = null;
     this.follow = false;
     this.floor = Math.min(this.floor, this.el.scrollTop);
     if (this.pin) this.pin.auto = false;
@@ -171,9 +183,11 @@ export class Follow {
       return;
     }
     if (!this.follow) {
+      this.fold = null;
       this.lastView = view;
       return;
     }
+    if (this.fold && this.folded(view, natural)) return;
     // 视口变高（输入框那一块变矮：一轮结束运行状态行收起）：最新的内容跟着往下，贴住输入框一起走，不留一截空档等收（2026-10-23
     // 逐帧量出来：原来视口不动、接着往上缓，收完再把空档慢慢收掉，看着先往上再往下，项目主人说像弹簧）
     if (this.lastView && view > this.lastView) this.floor = Math.max(this.base, this.floor - (view - this.lastView));
@@ -263,12 +277,71 @@ export class Follow {
   }
 
   /**
+   * 一段时间线开着的收起来了（`timeline.js` 发的 `tl-fold`）：跟着最新的、没钉着一行的，视口照收完以后的样子缓过去，和收起的动画
+   * 同时开始、同样长（`timeline.json` 的 `fold_ms`）、同一条曲线（那一段的 `--tl-ease`）。收到一半又收一段的，从当时的地方接着算。
+   * 减少动画的不缓（收起也是一下子），照常放。
+   * @param {HTMLElement} wrap 收起来的那一层（`.tl-wrap`：高度从现在收到 0）
+   */
+  folding(wrap) {
+    if (!this.follow || this.hold || this.pin?.auto || reduced()) return;
+    // 同 CSS 的 `--tl-fold`（`timeline.js` 照 `fold_ms` 写，不乘 `--motion-scale`）
+    const ms = res.timeline.fold_ms;
+    if (!(ms > 0)) return;
+    const now = performance.now();
+    const from = this.fold ? this.foldTop(this.fold, now, this.el.clientHeight) ?? this.el.scrollTop : this.el.scrollTop;
+    const wraps = [...(this.fold?.wraps ?? []).filter((w) => w.isConnected && w !== wrap), wrap];
+    const curve = cubicBezier(...parseBezier(getComputedStyle(wrap).getPropertyValue('--tl-ease')));
+    this.fold = { start: now, ms, from, wraps, ease: curve, rest: null };
+    const step = () => {
+      if (!this.fold) return;
+      this.anchor();
+      if (this.fold) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  /**
+   * 收着的时候放视口（`anchor` 里，跟着最新的时）：照算好的曲线放；收完了（或者不用往上走）交回 `false`，照常算。
+   * @param {number} view @param {number} natural
+   */
+  folded(view, natural) {
+    const f = /** @type {NonNullable<typeof this.fold>} */ (this.fold);
+    // 第一次量（这一轮画完、收起的动画刚开始）：那几段收完以后正文剩多高
+    if (f.rest == null) f.rest = natural - f.wraps.reduce((sum, w) => sum + (w.isConnected ? w.offsetHeight : 0), 0);
+    const now = performance.now();
+    const top = this.foldTop(f, now, view);
+    if (top == null) {
+      this.fold = null;
+      return false;
+    }
+    this.place(top, view, natural);
+    this.floor = top;
+    this.lastView = view;
+    if (now - f.start >= f.ms) this.fold = null;
+    return true;
+  }
+
+  /**
+   * 收着的这一刻视口该在哪：从 `from` 照曲线缓到收完以后的停处（照现在的视口高算：一轮结束时输入框那一块也在变矮）；
+   * 停处不比 `from` 高（不用往上走）的交回 `null`。
+   * @param {NonNullable<typeof this.fold>} f @param {number} now @param {number} view
+   */
+  foldTop(f, now, view) {
+    if (f.rest == null) return null;
+    const { top: to } = anchorAt(Math.min(this.floor, f.from), view, f.rest, view * res.layout.follow_keep, this.base);
+    if (to >= f.from - 1) return null;
+    const k = Math.min(1, Math.max(0, (now - f.start) / f.ms));
+    return f.from + (to - f.from) * f.ease(k);
+  }
+
+  /**
    * 清空了上下文：那一行顶到视口最上面（留 `pin_margin`），下面空着接新的，往上滚还看得到以前的；接着照常跟着最新的。
    * @param {Element} node 「上下文已清空」那一行
    */
   toTop(node) {
     const top = Math.max(0, offsetIn(node, this.list) - res.layout.pin_margin);
     this.hold = null;
+    this.fold = null;
     this.pin = null;
     this.kept = null;
     this.follow = true;
@@ -293,6 +366,7 @@ export class Follow {
   toggled(node, hold = null) {
     const ms = typeof hold === 'number' && hold >= 0 ? hold : node.closest('.tl-step, .note') ? res.timeline.step_ms : res.timeline.fold_ms;
     this.hold = { node, top: offsetIn(node, this.el) };
+    this.fold = null;
     clearTimeout(this.holdTimer);
     this.holdTimer = window.setTimeout(() => {
       this.hold = null;
@@ -310,6 +384,7 @@ export class Follow {
     this.floor = this.el.scrollTop;
     this.follow = true;
     this.hold = null;
+    this.fold = null;
     this.pin = null;
   }
 
@@ -345,6 +420,7 @@ export class Follow {
     this.follow = true;
     this.floor = this.base;
     this.hold = null;
+    this.fold = null;
     this.pin = null;
     if (!this.base) this.spacer.style.height = '0px';
   }

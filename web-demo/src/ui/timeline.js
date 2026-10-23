@@ -80,7 +80,11 @@ export class SegmentView {
     if (sig && sig === this.drawnSig) return;
     this.drawnSig = sig;
     this.el.classList.toggle('is-live', !segment.finished);
+    // 开着的收起来（她开口、一轮结束、人点了收起）：告诉对话区，跟着最新的时视口照收完以后的样子缓过去（`follow.js` 的 `folding`）；
+    // 读回来的历史（`.is-static`）不放动画，不发
+    const folding = !expanded && this.el.classList.contains('is-open') && !this.el.classList.contains('is-static');
     this.el.classList.toggle('is-open', expanded);
+    if (folding) this.el.dispatchEvent(new CustomEvent('tl-fold', { bubbles: true, detail: { wrap: this.el.querySelector(':scope > .tl-wrap') } }));
     // 收起那一行：做完了才有
     this.summary.hidden = !segment.finished;
     if (segment.finished) {
