@@ -76,7 +76,7 @@
 .code-toolbar {
   display: flex; min-height: 30px; align-items: center; justify-content: space-between; padding: calc(3px * var(--space)) calc(6px * var(--space)) 0 calc(14px * var(--space));
   color: var(--md-toolbar-fg, color-mix(in srgb, var(--code-ink) 50%, transparent));
-  font-family: var(--font-mono); font-size: calc(10px * var(--text-scale)); letter-spacing: 0.14em; text-transform: uppercase;
+  font-family: var(--font-mono); font-size: calc(10px * var(--text-scale));
 }
 .code-copy-button {
   display: grid; width: 25px; height: 23px; place-items: center; padding: 0; border: 0; border-radius: var(--radius);
@@ -143,7 +143,8 @@
 .assistant-content .markdown-body strong { font-weight: 600; }
 .assistant-content .markdown-body p { margin-bottom: 0.8em; }
 .assistant-content .code-block { --code-bg: color-mix(in srgb, var(--surface-2) 55%, transparent); box-shadow: none; }
-.assistant-content .code-toolbar { min-height: 24px; font-size: calc(9px * var(--text-scale)); opacity: 0.75; }
+/* 语言名照原样小写、不转大写不拉字距，没写语言的「代码」同一个字号（2026-10-23） */
+.assistant-content .code-toolbar { min-height: 24px; font-size: calc(10.5px * var(--text-scale)); opacity: 0.75; }
 .assistant-content .code-block pre { font-size: calc(12px * var(--text-scale)); }
 .assistant-content .markdown-body code:not(pre code) { padding: 0 calc(4px * var(--space)); background: color-mix(in srgb, var(--text) 6%, transparent); font-size: 0.86em; }
 .assistant-content .markdown-body table { font-size: calc(13px * var(--text-scale)); }

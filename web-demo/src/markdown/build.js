@@ -92,7 +92,8 @@ export function codeBlock(b, ctx) {
   const label = t('markdown.copy_code');
   return h('div.code-block',
     h('div.code-toolbar',
-      h('span', b.lang || t('markdown.code')),
+      // 语言名照原样小写（蓝图第 5 条）
+      h('span', b.lang ? b.lang.toLowerCase() : t('markdown.code')),
       h('button.code-copy-button', { type: 'button', title: label, 'aria-label': label, onclick: () => copy(b.text, ctx.say) }, icon('copy'))),
     h('pre', code));
 }
