@@ -64,6 +64,12 @@ function block(b, ctx) {
       }));
     case 'quote':
       return h('blockquote', b.blocks.map((x) => block(x, ctx)));
+    case 'html': {
+      // 放行的块（第 1 条）：照名字新造，`<center>` 造成居中的 div；属性只有挑剩的 style、title
+      const style = [b.tag === 'center' ? 'text-align: center' : '', b.attrs.style ?? ''].filter(Boolean).join('; ');
+      const attrs = { ...(style ? { style } : {}), ...(b.attrs.title ? { title: b.attrs.title } : {}) };
+      return h(`${b.tag === 'center' ? 'div' : b.tag}.md-html`, attrs, b.kids ? kids(b.kids, ctx) : (b.blocks ?? []).map((x) => block(x, ctx)));
+    }
     case 'details':
       // 折叠块（第 2 条）：标题一行能点，里面照整条回答造
       return h('details.md-details', h('summary', b.summary ? kids(b.summary, ctx) : t('markdown.details')),
@@ -134,7 +140,7 @@ function inlineNode(n, ctx) {
       return ctx.hooks.image?.(n.src, n.alt, n.title ?? null) ?? `![${n.alt}](${n.src})`;
     case 'tag':
       // 放行的标签照名字新造（第 1 条），名字不在表里的照字
-      return TAGS.includes(n.tag) ? h(n.tag, kids(n.kids, ctx)) : kids(n.kids, ctx);
+      return TAGS.includes(n.tag) ? h(n.tag, n.attrs ?? null, kids(n.kids, ctx)) : kids(n.kids, ctx);
     case 'fnref': {
       // 脚注的引用：有定义的画成上标的号，点了滚到那一条；没定义的照原文
       const note = ctx.notes?.get(n.id);

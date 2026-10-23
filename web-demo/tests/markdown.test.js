@@ -377,11 +377,12 @@ test('图片：![说明](地址)，地址照写（本机的由扩展点换成桥
 
 // ── 放行的标签、折叠块、脚注（第 1、2、3 条，2026-10-23 项目主人看到 <kbd>、<details> 原样写着） ──
 
-test('成对、不带属性的 <kbd> 这几个画成标签，里面照行内；带属性的、不放行的、没配对的照字', () => {
+test('成对的 <kbd> 这几个画成标签，里面照行内；不放行的、没配对的照字', () => {
   assert.deepEqual(inline('按 <kbd>Ctrl</kbd> + <KBD>S</KBD>'), ['按 ', { type: 'tag', tag: 'kbd', kids: ['Ctrl'] }, ' + ', { type: 'tag', tag: 'kbd', kids: ['S'] }]);
   assert.deepEqual(inline('H<sub>2</sub>O <mark>**重**</mark>'), ['H', { type: 'tag', tag: 'sub', kids: ['2'] }, 'O ', { type: 'tag', tag: 'mark', kids: [{ type: 'strong', kids: ['重'] }] }]);
-  assert.deepEqual(inline('<kbd class="x">a</kbd>'), ['<kbd class="x">a</kbd>']);
-  assert.deepEqual(inline('<span>a</span> <kbd>没收尾'), ['<span>a</span> <kbd>没收尾']);
+  // 带属性的照样画（2026-10-23 起），认不得的属性丢掉
+  assert.deepEqual(inline('<kbd class="x">a</kbd>'), [{ type: 'tag', tag: 'kbd', kids: ['a'] }]);
+  assert.deepEqual(inline('<abbr>a</abbr> <kbd>没收尾'), ['<abbr>a</abbr> <kbd>没收尾']);
   assert.deepEqual(inline('`<kbd>a</kbd>`'), [{ type: 'code', text: '<kbd>a</kbd>' }]);
   // <s> 和 <sub> 不混
   assert.deepEqual(inline('<s>删</s><sup>1</sup>'), [{ type: 'tag', tag: 's', kids: ['删'] }, { type: 'tag', tag: 'sup', kids: ['1'] }]);
@@ -459,4 +460,30 @@ test('链接、图片带标题：[字](地址 "标题")、![说明](地址 \'标
   // 标题没收尾的照字；本机路径带空格的（括号里没有引号）照原来的认法到右括号
   assert.deepEqual(inline('[a](https://a.com "t)'), ['[a](', { type: 'autolink', href: 'https://a.com/', text: 'https://a.com' }, ' "t)']);
   assert.deepEqual(inline('[本机](file:///tmp/a b.md)'), [{ type: 'link', href: 'file:///tmp/a%20b.md', kids: ['本机'] }]);
+});
+
+test('带属性的 HTML（2026-10-23 项目主人：<p align="center">、<span style="color: …"> 原样写着）：只留安全的 style、title，标签照样画', async () => {
+  const { safeAttrs } = await import('../src/markdown/html.js');
+  assert.deepEqual(safeAttrs('style="color: #e06c9f"'), { style: 'color: #e06c9f' });
+  assert.deepEqual(safeAttrs('align="CENTER" title="提示"'), { title: '提示', style: 'text-align: center' });
+  // 定位、尺寸、背景图、事件、不像的值都丢掉
+  assert.deepEqual(safeAttrs('style="position: fixed; inset: 0; background: url(x); color: red; font-weight: 700" onclick="x()"'), { style: 'color: red; font-weight: 700' });
+  assert.deepEqual(safeAttrs('style="color: expression(alert(1))"'), {});
+  assert.deepEqual(inline('<span style="color: #e06c9f">彩色</span>'), [{ type: 'tag', tag: 'span', attrs: { style: 'color: #e06c9f' }, kids: ['彩色'] }]);
+  // 同名套着的按层数配对
+  assert.deepEqual(inline('<span>外<span>里</span>还是外</span>后'), [{ type: 'tag', tag: 'span', kids: ['外', { type: 'tag', tag: 'span', kids: ['里'] }, '还是外'] }, '后']);
+  // 不放行的标签照字
+  assert.deepEqual(inline('<script>x</script>'), ['<script>x</script>']);
+});
+
+test('<p> <div> <center> 起头的块：同一行收尾的里面照行内；几行的到配对的收尾、里面照整条认块；没收尾的照段落', () => {
+  assert.deepEqual(parse('<p align="center">居中一段话</p>'), [{ type: 'html', tag: 'p', attrs: { style: 'text-align: center' }, kids: ['居中一段话'] }]);
+  assert.deepEqual(parse('<div style="color: gray">\n\n- 一项\n\n</div>\n后面'), [
+    { type: 'html', tag: 'div', attrs: { style: 'color: gray' }, blocks: [{ type: 'list', ordered: false, task: false, items: [{ check: null, kids: ['一项'] }] }] },
+    para('后面'),
+  ]);
+  assert.deepEqual(parse('<center>\n字\n</center>'), [{ type: 'html', tag: 'center', attrs: {}, blocks: [para('字')] }]);
+  assert.equal(parse('<div>\n没收尾')[0].type, 'para');
+  // 段落里碰到它断开
+  assert.deepEqual(parse('一段\n<p>二</p>').map((b) => b.type), ['para', 'html']);
 });

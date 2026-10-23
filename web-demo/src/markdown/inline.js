@@ -10,6 +10,7 @@
 //! 节点：字是字符串（挨着的并成一段）；别的是 `{type, …}`，见 [`Inline`]。
 
 import { res } from '../util/res.js';
+import { INLINE_TAGS, safeAttrs } from './html.js';
 
 /**
  * 一个行内节点。
@@ -22,7 +23,7 @@ import { res } from '../util/res.js';
  *   | {type: 'image', src: string, alt: string, title?: string}
  *   | {type: 'titled', href: string, indent: string, title: Inline[], gap: string, open: string, url: string, close: string}
  *   | {type: 'del' | 'strong' | 'em', kids: Inline[]}
- *   | {type: 'tag', tag: string, kids: Inline[]}
+ *   | {type: 'tag', tag: string, attrs?: {style?: string, title?: string}, kids: Inline[]}
  *   | {type: 'fnref', id: string, raw: string}} Inline
  *   `tag` 是放行的成对标签（`TAGS` 里的，名字小写）；`fnref` 是 `[^名字]`，有没有定义造 DOM 时才知道，没有的照 `raw` 写；
  *   `math` 的 `raw` 是原文：KaTeX 排不了时照它写（第 6 条）；`autolink` 是 `<地址>` 和裸地址，字照原样；
@@ -61,8 +62,9 @@ const ESCAPES = '\\`*_[]|~$';
 /** 不带属性的 `<br>`、`<br/>`、`<br />`，大小写不论；粘着从游标处试。带属性的、别的标签照字（第 1 条）。 */
 const BREAK_TAG = /<br[ \t]*\/?>/iy;
 /** 放行的成对行内标签（第 1 条）：不带属性，里面照行内的写法；配不上收尾的照字。 */
-export const TAGS = ['kbd', 'sub', 'sup', 'mark', 'ins', 'u', 's', 'del'];
-const OPEN_TAG = new RegExp(`<(${TAGS.join('|')})>`, 'iy');
+export const TAGS = INLINE_TAGS;
+/** 放行的标签开头：名字后面可以跟属性（`html.js` 挑剩安全的几样），不跨 `<`、`>` */
+const OPEN_TAG = new RegExp(`<(${TAGS.join('|')})(\\s[^<>]*)?>`, 'iy');
 /** 脚注的引用 `[^名字]`：名字不带空白、`]`，最长 40 个字（同 `parse.js` 的定义）。 */
 export const FOOTNOTE_NAME = '[^\\]\\s]{1,40}';
 const FOOTNOTE_REF = new RegExp(`\\[\\^(${FOOTNOTE_NAME})\\]`, 'y');
@@ -217,9 +219,10 @@ export function inline(source, depth = 0, inLink = false) {
       OPEN_TAG.lastIndex = i;
       const open = OPEN_TAG.exec(text);
       const tag = open?.[1].toLowerCase();
-      const end = tag ? text.toLowerCase().indexOf(`</${tag}>`, i + open[0].length) : -1;
-      if (tag && end > i + open[0].length) {
-        emit({ type: 'tag', tag, kids: deeper(text.slice(i + open[0].length, end)) }, end + tag.length + 3);
+      const close = tag ? closeOf(text, i + open[0].length, tag) : null;
+      if (tag && open && close && close.start > i + open[0].length) {
+        const attrs = safeAttrs(open[2] ?? '');
+        emit({ type: 'tag', tag, ...(Object.keys(attrs).length ? { attrs } : {}), kids: deeper(text.slice(i + open[0].length, close.start)) }, close.end);
         continue;
       }
     }
@@ -336,6 +339,22 @@ function refAt(text, i) {
   }
   const def = refs.get(refKey(label));
   return def ? { label, ...def, end: close + 1 } : null;
+}
+
+/**
+ * 从 `from` 起配对的 `</tag>`：同名的套着的按层数配对（`<span>a<span>b</span></span>`）。没有的是 `null`。
+ * @param {string} text @param {number} from @param {string} tag
+ * @returns {{start: number, end: number}|null}
+ */
+export function closeOf(text, from, tag) {
+  const re = new RegExp(`<(/?)${tag}(?=[\\s>])[^<>]*>`, 'gi');
+  re.lastIndex = from;
+  let depth = 1;
+  for (let m; (m = re.exec(text));) {
+    if (!m[1]) depth += 1;
+    else if (--depth === 0) return { start: m.index, end: m.index + m[0].length };
+  }
+  return null;
 }
 
 /** 接上一个节点：字和前面的字并成一段。 */

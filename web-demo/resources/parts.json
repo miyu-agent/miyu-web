@@ -6378,5 +6378,11 @@
     "select": [
       ".markdown-body .footnote-ref > button"
     ]
+  },
+  "markdown.html-block": {
+    "zh": "回答：放行的 HTML 块（<p> <div> <center>）",
+    "select": [
+      ".markdown-body .md-html"
+    ]
   }
 }

@@ -9,6 +9,7 @@
 //! 从正文里拿走，照定义的先后收在最后一块 `footnotes` 里。
 
 import { inline, FOOTNOTE_NAME, validLinkUrl, refKey, withRefs } from './inline.js';
+import { BLOCK_TAGS, safeAttrs } from './html.js';
 
 /**
  * 一块。`code` 的 `closed` 是围栏收齐了没有：没收齐的代码到末尾为止（在收的时候，见 `stream.js`）；
@@ -24,6 +25,7 @@ import { inline, FOOTNOTE_NAME, validLinkUrl, refKey, withRefs } from './inline.
  *   | {type: 'list', ordered: boolean, start?: number, task: boolean, items: Item[]}
  *   | {type: 'line', text: string, value: any}
  *   | {type: 'details', summary: import('./inline.js').Inline[]|null, blocks: Block[]}
+ *   | {type: 'html', tag: string, attrs: {style?: string, title?: string}, kids?: import('./inline.js').Inline[], blocks?: Block[]}
  *   | {type: 'footnotes', items: {id: string, kids: import('./inline.js').Inline[]}[]}} Block
  * `details` 的 `summary` 是 `null` 的是没写 `<summary>`；`footnotes` 只在最后，一条回答最多一块。
  * @typedef {{check: boolean|null, kids: import('./inline.js').Inline[], blocks?: Block[]}} Item
@@ -45,6 +47,8 @@ const MATH_DELIMS = [['$$', '$$'], ['\\[', '\\]']];
 /** 引用、折叠块、列表一共最多套几层（再深的整段照行内写） */
 const MAX_DEPTH = 8;
 /** 折叠块（第 2 条）：开头一行 `<details>`，后面可以紧跟 `<summary>…</summary>`；独占一行的标题、收尾。都不带属性。 */
+/** 独占一行起头的块 `<p>` `<div>` `<center>`（第 1 条）：名字后面可以跟属性；同一行收尾的里面照行内，几行的到配对的收尾那一行 */
+const HTML_OPEN = new RegExp(`^\\s*<(${BLOCK_TAGS.join('|')})(\\s[^<>]*)?>(.*)$`, 'i');
 const DETAILS_OPEN = /^\s*<details>\s*(?:<summary>(.*?)<\/summary>\s*)?$/i;
 const SUMMARY = /^\s*<summary>(.*?)<\/summary>\s*$/i;
 const DETAILS_CLOSE = /^\s*<\/details>\s*$/i;
@@ -138,6 +142,13 @@ function parseLines(lines, from, to, line, notes, depth) {
       }
       blocks.push({ type: 'details', summary: summary == null ? null : inline(summary), blocks: parseLines(lines, start, end, line, notes, depth + 1) });
       i = Math.min(to, end + 1);
+      continue;
+    }
+    const html = HTML_OPEN.exec(text);
+    const htmlBlock = html ? htmlOf(lines, i, to, html, depth, (from, until) => parseLines(lines, from, until, line, notes, depth + 1)) : null;
+    if (htmlBlock) {
+      blocks.push(htmlBlock.block);
+      i = htmlBlock.next;
       continue;
     }
     // 认得的链接定义从正文里拿走（定义早就收好了）
@@ -237,10 +248,34 @@ function detailsEnd(lines, from, to) {
   return to;
 }
 
+/**
+ * `<p>` `<div>` `<center>` 起头的一块：同一行收尾的（`<p align="center">字</p>`）里面照行内；几行的到配对的独占一行的收尾为止
+ * （同名的套着的按层数配对），里面照整条回答认块；没收尾的不算（照段落写）。属性照 `html.js` 挑剩安全的。
+ * @param {string[]} lines @param {number} i @param {number} to @param {RegExpExecArray} m @param {number} depth
+ * @param {(from: number, until: number) => Block[]} inner
+ * @returns {{block: Block, next: number}|null}
+ */
+function htmlOf(lines, i, to, m, depth, inner) {
+  const tag = m[1].toLowerCase();
+  const attrs = safeAttrs(m[2] ?? '');
+  const rest = m[3] ?? '';
+  const close = new RegExp(`</${tag}>\\s*$`, 'i');
+  if (close.test(rest)) return { block: { type: 'html', tag, attrs, kids: inline(rest.replace(close, '')) }, next: i + 1 };
+  if (rest.trim() || depth >= MAX_DEPTH) return null;
+  const open = new RegExp(`^\\s*<${tag}(\\s[^<>]*)?>\\s*$`, 'i');
+  const only = new RegExp(`^\\s*</${tag}>\\s*$`, 'i');
+  let level = 1;
+  for (let k = i + 1; k < to; k += 1) {
+    if (open.test(lines[k])) level += 1;
+    else if (only.test(lines[k]) && --level === 0) return { block: { type: 'html', tag, attrs, blocks: inner(i + 1, k) }, next: k + 1 };
+  }
+  return null;
+}
+
 /** 这一行能不能开一块：段落碰到它就断开。 */
 function startsBlock(lines, i, to, claim) {
   const text = lines[i];
-  return DETAILS_OPEN.test(text) || DETAILS_CLOSE.test(text) || FOOTNOTE_DEF.test(text) || isRefDef(text) || /^\s*```/.test(text) || /^#{1,6}\s+/.test(text) || /^\s*[-*+]\s+/.test(text) || /^\s*\d+[.)]\s+/.test(text)
+  return DETAILS_OPEN.test(text) || HTML_OPEN.test(text) || DETAILS_CLOSE.test(text) || FOOTNOTE_DEF.test(text) || isRefDef(text) || /^\s*```/.test(text) || /^#{1,6}\s+/.test(text) || /^\s*[-*+]\s+/.test(text) || /^\s*\d+[.)]\s+/.test(text)
     || /^\s*>/.test(text) || isRule(text) || isTableStart(lines, i, to) || /^\s*\$\$/.test(text) || /^\s*\\\[\s*$/.test(text)
     || claim(i) != null;
 }

@@ -179,3 +179,7 @@
   background: var(--surface-2); font: 0.82em/1.5 var(--font-mono); vertical-align: 0.06em;
 }
 .markdown-body mark { padding: 0 2px; border-radius: var(--r-2); background: color-mix(in srgb, var(--gold) 30%, transparent); color: inherit; }
+
+/* 放行的块 <p> <div> <center>（蓝图「她的回答：Markdown」第 1 条）：同段落的上下间距 */
+.markdown-body .md-html { margin: 0 0 0.8em; }
+.markdown-body .md-html > :last-child { margin-bottom: 0; }
