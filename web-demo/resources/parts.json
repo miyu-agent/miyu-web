@@ -6252,5 +6252,17 @@
     "select": [
       ".jobs-nested"
     ]
+  },
+  "note.out": {
+    "zh": "回报那一行点开：竖线和缩进",
+    "select": [
+      ".note-out"
+    ]
+  },
+  "note.cmd": {
+    "zh": "回报那一行点开：命令",
+    "select": [
+      ".note-cmd"
+    ]
   }
 }

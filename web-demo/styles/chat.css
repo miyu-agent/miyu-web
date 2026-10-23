@@ -113,6 +113,17 @@
 .note.is-open > .note-line > .tl-chevron { transform: rotate(90deg); }
 .note.is-open .note-detail { cursor: pointer; }
 .note-detail { margin-top: calc(8px * var(--space)); margin-left: 0; font-family: var(--font-ui); font-weight: 400; }
+/* 后台命令点开：照时间线里点开一步执行命令（2026-10-23 项目主人）——左边一根竖线从圆点往下，命令写在竖线右边、不进底色块，
+   下面一块底色里是输出、脚本调用的工具。时间线那几个颜色在这里也要（.tl-nested 用 --tl-soft） */
+.note-out {
+  --tl-soft: var(--timeline-fg, color-mix(in srgb, var(--text) 62%, var(--surface)));
+  --tl-rail: var(--timeline-rail, color-mix(in srgb, var(--line-strong) 75%, var(--line)));
+  position: relative; margin-top: calc(4px * var(--space)); padding: 0 0 calc(2px * var(--space)) calc(16px * var(--space));
+}
+.note-out::before { position: absolute; top: 0; bottom: calc(2px * var(--space)); left: calc(3.5px * var(--space)); width: 1px; background: var(--tl-rail); content: ""; }
+.note-cmd { max-height: calc(5 * 1.7em); margin: 0 0 calc(6px * var(--space)); overflow: hidden; color: var(--tl-soft); font: 400 calc(11px * var(--text-scale))/1.7 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.note-out > .note-detail { margin-top: 0; }
+.note-out .note-detail pre { max-height: 300px; font-size: calc(11.5px * var(--text-scale)); line-height: 1.65; }
 /* 点开、收起：和时间线点开一步同一个壳（高度从 0 长出来、收回去，淡入淡出，timeline.css 的 .tl-fold） */
 .note .tl-fold { --tl-ease: cubic-bezier(0.22, 0.61, 0.36, 1); }
 .note.is-open > .tl-fold { grid-template-rows: 1fr; opacity: 1; }

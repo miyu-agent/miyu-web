@@ -7,6 +7,7 @@ import { h, icon } from './dom.js';
 import { res, t } from '../util/res.js';
 import { blobUrl } from '../core/host.js';
 import { drawMarkdown } from './render.js';
+import { NestedList } from './nested.js';
 import { workspaceText } from '../model/notes.js';
 
 /**
@@ -80,8 +81,18 @@ function detailNode(detail, where, markdown) {
     });
     return h('div.tl-body.note-detail', box);
   }
-  const command = detail.command ? section(n.command_label, h('pre', detail.command)) : null;
-  if (!detail.hash) return h('div.tl-body.note-detail', command, section(n.output_label, h('div.note-detail-head', n.no_output)));
+  // 后台命令：照时间线里点开一步执行命令的样子（2026-10-23 项目主人）——左边一根竖线，命令写在竖线右边、不进底色块，
+  // 下面一块底色里是输出，脚本里调过工具的接「脚本调用的工具」那一段
+  const command = detail.command ? h('div.note-cmd', detail.command) : null;
+  let nested = null;
+  if (detail.nested && detail.job && where.nestedJob) {
+    const job = detail.job;
+    const list = new NestedList((after) => where.nestedJob(job, after));
+    list.more();
+    nested = list.el;
+  }
+  const wrap = (/** @type {any} */ output) => h('div.note-out', command, h('div.tl-body.note-detail', output, nested));
+  if (!detail.hash) return wrap(section(n.output_label, h('div.note-detail-head', n.no_output)));
   const pre = h('pre', n.loading);
   const head = h('div.note-detail-head', { hidden: true });
   blobUrl(detail.hash, 'text/plain').then((url) => fetch(url))
@@ -96,5 +107,5 @@ function detailNode(detail, where, markdown) {
       pre.textContent = lines.slice(-tail).join('\n');
     })
     .catch((err) => { pre.textContent = t('notes.load_failed', { reason: err.message }); });
-  return h('div.tl-body.note-detail', command, section(n.output_label, head, pre));
+  return wrap(section(n.output_label, head, pre));
 }

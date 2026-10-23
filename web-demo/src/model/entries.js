@@ -376,7 +376,8 @@ function jobNote(e, jobs) {
   if (tail) text += ` · ${tail.text}`;
   const detail = what === 'agent'
     ? { kind: 'text', text: e.report ?? '', truncated: false }
-    : { kind: 'output', command: e.command ?? jobs.get(e.job)?.command ?? null, hash: e.output?.blob ?? null, chars: e.output?.chars ?? null };
+    : { kind: 'output', command: e.command ?? jobs.get(e.job)?.command ?? null, hash: e.output?.blob ?? null, chars: e.output?.chars ?? null,
+      job: e.job ?? null, nested: !!e.nested?.count };
   return { type: 'note', key: e.id, seq: seqOf(e.id), turn: null, tone, mark: marks[tone] ?? '', text, detail };
 }
 

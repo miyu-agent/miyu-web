@@ -11,7 +11,7 @@ import { shortSession } from './words.js';
  * @typedef {{what: string, title: string, session: string|null, command: string|null}} Job 派出去的一个任务（会话状态的任务表、
  *   后台任务的旁白；`model/entries.js` 的 `jobsOf`）
  * @typedef {{kind: string, account: string|null, name: string}} Speaker 一句话是谁说的
- * @typedef {{kind: 'output', command: string|null, hash: string|null, chars: number|null}|{kind: 'text', text: string, truncated: boolean}} Detail
+ * @typedef {{kind: 'output', command: string|null, hash: string|null, chars: number|null, job?: string|null, nested?: boolean}|{kind: 'text', text: string, truncated: boolean}} Detail
  *   点开一行看什么：后台命令的命令和整份输出（blob），子代理交回的正文（Markdown）
  */
 
