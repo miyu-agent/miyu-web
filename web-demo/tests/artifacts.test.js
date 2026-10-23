@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { shownOf, shownList, panelList, shownKind, codeLanguage, undismissed } from '../src/model/artifacts.js';
+import { shownOf, shownList, panelList, shownKind, codeLanguage, undismissed, orderOf } from '../src/model/artifacts.js';
 
 loadRes();
 
@@ -69,4 +69,16 @@ test('音视频（2026-10-23 项目主人：show 出来的只能下载）：vide
   assert.equal(shownOf(tool('/w/a.mkv', 'application/octet-stream'))?.kind, 'file');
   assert.equal(shownOf(tool('/w/a.bin', 'application/octet-stream'))?.kind, 'file');
   assert.deepEqual(panelList([v, shownOf(tool('/w/a.png', 'image/png'))]).map((s) => s.kind), ['image']);
+});
+
+test('同一轮里展示了几样：后展示的在前（2026-10-24 项目主人：原来同一轮的几样倒过来了）；先后照轮里的第几步，十位数也对', () => {
+  const list = shownList([
+    step('b9.1', '/w/shot.png', 'image/png'),
+    step('b9.3', '/w/readme.md', 'text/markdown'),
+    step('b9.10', '/w/page.html', 'text/html'),
+    step('b8.5', '/w/old.md', 'text/markdown'),
+  ]);
+  assert.deepEqual(list.map((s) => s.name), ['page.html', 'readme.md', 'shot.png', 'old.md']);
+  assert.ok(orderOf('b9.10') > orderOf('b9.3') && orderOf('b10.0') > orderOf('b9.10'));
+  assert.equal(list[0].seq, 9, '拿掉照轮次记，和原来记下的对得上');
 });

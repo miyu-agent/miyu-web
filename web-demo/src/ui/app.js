@@ -1153,7 +1153,13 @@ export class App {
     const level = this.current ? null : this.pendingLevel;
     if (level) f.left = { ...f.left, level, label: levelLabel(level) };
     this.composer.drawFooter(f);
-    this.artifacts.update(s ? s.view.list : [], this.chat.where);
+    // 预览工作区照正在看的会话；右侧边栏要了它的（仪表盘）照这一串最上面那个会话（2026-10-24 项目主人：展示文件卡跟着主会话，同另外三张卡）
+    const top = this.artifacts.claimed && this.current ? pathOf(this.current, (id) => this.parentOf(id))[0] : this.current;
+    // 那个会话还没读进来（直接从左栏点开的子代理）的照正在看的
+    const root = top && top !== this.current ? this.store.sessions.get(top) ?? null : null;
+    const shownFrom = root ?? s;
+    const where = root ? { ...this.chat.where, session: top } : this.chat.where;
+    this.artifacts.update(shownFrom ? shownFrom.view.list : [], where, !shownFrom || shownFrom.base !== null);
     this.followKids();
   }
 }

@@ -13,13 +13,23 @@
 import { res } from '../util/res.js';
 /**
  * @typedef {{path: string, blob: string, name: string, title: string|null, kind: string, type: string, size: number|null,
- *   language: string|null, width: number|null, height: number|null, id: string, seq: number, turn: number|null}} Shown
+ *   language: string|null, width: number|null, height: number|null, id: string, seq: number, order: number, turn: number|null}} Shown
  *   `kind` 是 `image`、`pdf`、`html`、`markdown`、`code`、`text`、`video`、`audio`（在正文里播，不进右栏）、`file`（别的文件：只能下载，
  *   不进右栏）；`type` 是核心认的媒体类型（核心认成别的文件、后缀是音视频的，照后缀换成的）
  */
 
-/** 条目编号里的序号（`e12` → 12）。 @param {string} id */
+/** 条目编号里的序号（`e12` → 12，`b9.3` → 9：是第几轮的）。拿掉的照它记（`undismissed`）。 @param {string} id */
 const seqOf = (id) => Number.parseInt(String(id).replace(/^[a-z]+/, ''), 10) || 0;
+
+/**
+ * 条目的先后（`b9.3` → 9 轮里的第 3 步）：同一轮展示了几样的也分得出谁后展示（2026-10-24 项目主人：同一轮的几样在右栏里倒过来了）；
+ * 排先后、看来没来新的照它。
+ * @param {string} id
+ */
+export function orderOf(id) {
+  const m = /^[a-z]*(\d+)(?:\.(\d+))?/.exec(String(id));
+  return m ? Number(m[1]) * 1e6 + Number(m[2] ?? 0) : 0;
+}
 
 /**
  * 一条工具条目带的展示；不是展示、没展示成（没有 `shown`、没有 `blob`）的是 `null`。
@@ -45,6 +55,7 @@ export function shownOf(e) {
     height: Number.isFinite(s.height) ? s.height : null,
     id: e.id,
     seq: seqOf(e.id),
+    order: orderOf(e.id),
     turn: e.turn ?? null,
   };
 }
@@ -64,7 +75,7 @@ export function shownList(entries) {
     last.delete(s.path);
     last.set(s.path, s);
   }
-  return [...last.values()].sort((a, b) => b.seq - a.seq);
+  return [...last.values()].sort((a, b) => b.order - a.order);
 }
 
 /** 右栏里看得了的（别的文件只在对话里一张卡片，能下载）。 @param {Shown[]} list */
