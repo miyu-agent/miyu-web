@@ -28,6 +28,10 @@ export class ThemeStep {
     this.t = (/** @type {string} */ key, /** @type {any} */ fields) => ctx.text(key, fields);
     this.note = h('p.setup-error', { hidden: true });
     this.schemeBox = h('div');
+    /** 「主题」（皮肤）：2026-10-23 项目主人要的，这一屏叫「配置外观」，主题也放进来；没有皮肤包的不出 */
+    this.skinBox = h('div');
+    this.skinRow = /** @type {HTMLElement|null} */ (null);
+    this.skin = '';
     /** 「配色方案」：照 `theme.palettes` 挂进来的几套一套一块（2026-10-19 项目主人：原来没得选） */
     this.paletteBox = h('div.setup-palettes');
     /** 选着的那一套（网页的设置项 `palette`，空着的是第一套） @type {string} */
@@ -51,6 +55,8 @@ export class ThemeStep {
     } catch (err) {
       this.say(/** @type {any} */ (err)?.message ?? String(err));
     }
+    const skin = await this.ctx.packages.settings('skin').catch(() => null);
+    this.skin = skin?.values?.pack ?? '';
     const theme = await this.ctx.packages.settings('theme').catch(() => null);
     this.scheme = theme?.values?.scheme ?? 'auto';
     this.persona = this.ctx.slots.list('theme.palettes').some((/** @type {any} */ p) => p.id === PERSONA_PALETTE);
@@ -67,12 +73,14 @@ export class ThemeStep {
     this.look.paint();
     this.paintScheme();
     this.paintPalettes();
+    const skinPick = this.paintSkin();
     const body = h('div.setup-editor.is-welcome',
       // 小窗口：缩小的对话页，照真的主题画，换了当场跟着变（2026-10-19 项目主人：引导页自己是像素的那一套，换了看不到效果）
       h('div.wl-preview', { 'aria-hidden': 'true' },
         h('div.wl-preview-side', h('i'), h('i'), h('i')),
         h('div.wl-preview-chat', h('i.me'), h('i.ai'), h('i.ai'), h('i.ai.short'), h('i.box'), h('i.send'))),
       field(t('edit.avatar'), this.look.avatarBox),
+      skinPick ? field(t('welcome.skin'), this.skinBox) : null,
       field(t('welcome.scheme'), this.schemeBox),
       field(t('welcome.palette'), this.paletteBox),
       // 「主色」：照主色生成的那几套都有（跟随人格照头像取、能自选；跟随壁纸照壁纸取；2026-10-19 项目主人：原来叫「配色」，md3 配色的时候都出现）
@@ -86,6 +94,20 @@ export class ThemeStep {
       next: { ready: () => true, run: async () => null },
       focus: null,
     };
+  }
+
+  /** 「主题」：出厂，再照 `skin.packs` 一套一项（同设置页「外观」的「主题」那一行），选了当场换；没有皮肤包的交回假的、不出这一行。 */
+  paintSkin() {
+    const packs = this.ctx.slots.list('skin.packs').length ? (this.ctx.skin?.list?.() ?? []) : [];
+    if (!packs.length) return false;
+    const options = [{ value: '', name: this.t('welcome.skin_factory') }, ...packs.map((/** @type {any} */ p) => ({ value: p.id, name: p.name }))];
+    const chosen = packs.some((/** @type {any} */ p) => p.id === this.skin) ? this.skin : '';
+    replace(this.skinBox, this.kit.select(options, chosen, async (/** @type {string} */ v) => {
+      this.skin = v;
+      this.paintSkin();
+      await this.ctx.packages.set('skin', { config: { pack: v } }).catch((/** @type {any} */ err) => this.say(err?.message ?? String(err)));
+    }));
+    return true;
   }
 
   /** 「明暗」：跟随系统、浅色、深色，选了当场写进网页的设置。 */

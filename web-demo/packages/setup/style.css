@@ -298,16 +298,17 @@
 .setup-choice-name { font-weight: 600; }
 .setup-choice-hint { color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
 .setup-choice-check { position: absolute; top: 12px; right: 14px; color: var(--accent); font-weight: 600; }
-/* 功能：对齐的几列字，开着的前面打勾，关着的灰字（2026-10-10 项目主人：小块撑满格子空档大、字不居中，不好看；改成这样，「深度」那一节） */
-.setup-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: calc(3px * var(--space)) calc(16px * var(--space)); }
-.setup-chip { overflow: hidden; color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
-.setup-chip::before { content: '✓'; display: inline-block; width: 1.1em; color: var(--accent); }
-.setup-chip.is-off { color: var(--text-faint); }
-.setup-chip.is-off::before { content: '–'; color: var(--text-faint); }
-.setup-choice-wrap { border-radius: var(--r-12); }
-.setup-choice-wrap.is-on { background: var(--surface-3); }
-.setup-choice-wrap.is-on > .setup-choice { background: transparent; }
-.setup-choice-open { display: grid; padding: 0 calc(14px * var(--space)) calc(12px * var(--space)); gap: calc(4px * var(--space)); }
+/* 一个预设开了哪些功能（浮出来的卡片，2026-10-23 项目主人：卡片上不再全列）：对齐的几列字，开着的前面打勾，关着的灰字 */
+.setup-feature-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: calc(6px * var(--space)) calc(16px * var(--space)); }
+.setup-feature-item { display: flex; gap: calc(6px * var(--space)); overflow: hidden; color: var(--text-soft); font-size: calc(13px * var(--text-scale)); white-space: nowrap; }
+.setup-feature-item.is-off { color: var(--text-faint); }
+.setup-feature-mark { flex: none; width: 1.1em; color: var(--accent); }
+.setup-feature-item.is-off .setup-feature-mark { color: var(--text-faint); }
+/* 卡片右下「查看功能」：暗字，悬停加下划线 */
+.setup-choice-more { justify-self: start; margin-top: calc(2px * var(--space)); color: var(--accent); font-size: calc(12.5px * var(--text-scale)); cursor: pointer; }
+.setup-choice-more:hover, .setup-choice-more:focus-visible { outline: 0; text-decoration: underline; }
+.setup-float-foot { display: flex; justify-content: flex-end; margin-top: calc(10px * var(--space)); }
+.setup-choice-open { display: grid; gap: calc(4px * var(--space)); }
 .setup-editor.is-welcome { padding: 0; }
 
 /* 引导「主题」那一屏的配色方案（2026-10-19 项目主人）：一套一块，上面一小块照这一套的颜色画的样子，下面名字；选中的一圈主色 */

@@ -32,7 +32,8 @@
     "sessions",
     "packages",
     "settings~",
-    "memory~"
+    "memory~",
+    "skin~"
   ],
   "settings": {
     "avatar_side": {
@@ -278,7 +279,7 @@
         "persona_title": "创建人格",
         "persona_edit": "设置人格",
         "persona_sub": "人格决定AI的说话方式和记忆，可在设置中修改",
-        "theme_title": "选择配色方案",
+        "theme_title": "配置外观",
         "theme_sub": "可在设置中修改",
         "scheme": "明暗",
         "scheme_auto": "跟随系统",
@@ -292,7 +293,13 @@
         "custom_hint": "选择启用的功能",
         "save_failed": "保存失败",
         "palette": "配色方案",
-        "skip": "跳过"
+        "skip": "跳过",
+        "skin": "主题",
+        "skin_factory": "默认主题",
+        "preset_features": "查看功能",
+        "custom_on": "开着 {n} 项功能 · 点了修改",
+        "custom_done": "完成",
+        "close": "关闭"
       },
       "project": {
         "title_new": "新建项目",
@@ -478,7 +485,7 @@
         "persona_title": "Create persona",
         "persona_edit": "Set up persona",
         "persona_sub": "The persona sets how the AI speaks and what it remembers. Editable in Settings",
-        "theme_title": "Choose a color scheme",
+        "theme_title": "Appearance",
         "theme_sub": "Editable in Settings",
         "scheme": "Appearance",
         "scheme_auto": "System",
@@ -492,7 +499,13 @@
         "custom_hint": "Choose which features are enabled",
         "save_failed": "Save failed",
         "palette": "Color scheme",
-        "skip": "Skip"
+        "skip": "Skip",
+        "skin": "Theme",
+        "skin_factory": "Default theme",
+        "preset_features": "View features",
+        "custom_on": "{n} features on · click to edit",
+        "custom_done": "Done",
+        "close": "Close"
       },
       "project": {
         "title_new": "New project",
@@ -678,7 +691,7 @@
         "persona_title": "人格を作成",
         "persona_edit": "人格を設定",
         "persona_sub": "人格は AI の話し方と記憶を決めます。設定で変更できます",
-        "theme_title": "配色を選ぶ",
+        "theme_title": "外観の設定",
         "theme_sub": "設定で変更できます",
         "scheme": "明暗",
         "scheme_auto": "システムに合わせる",
@@ -692,7 +705,13 @@
         "custom_hint": "有効にする機能を選択",
         "save_failed": "保存に失敗しました",
         "palette": "配色テーマ",
-        "skip": "スキップ"
+        "skip": "スキップ",
+        "skin": "テーマ",
+        "skin_factory": "既定のテーマ",
+        "preset_features": "機能を見る",
+        "custom_on": "{n} 個の機能が有効 · クリックで変更",
+        "custom_done": "完了",
+        "close": "閉じる"
       },
       "project": {
         "title_new": "新しいプロジェクト",

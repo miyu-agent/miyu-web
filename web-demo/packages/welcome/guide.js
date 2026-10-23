@@ -54,7 +54,11 @@ export class Guide {
     this.page = h('div.wl-page', h('div.wl-col', this.head, this.slot));
     /** 最底下一条像素的地面（像素关卡，2026-10-19）：吉祥物在几步里站在它上面 */
     this.ground = h('div.wl-ground', { 'aria-hidden': 'true' });
-    this.layer = h('div.wl-layer', { role: 'dialog', 'aria-modal': 'true' }, sky(ctx.config.stars), this.ground, this.page);
+    // 右上角整个引导一直在的几个按钮（2026-10-23 项目主人：例如切换明暗，不然太难受）：明暗，同左栏底下那一个（深色时太阳、浅色时月亮）
+    this.schemeBtn = /** @type {HTMLButtonElement} */ (h('button.wl-corner-btn', { type: 'button', onclick: () => { ctx.theme?.toggle(); requestAnimationFrame(() => this.drawCorner()); } }));
+    this.corner = h('div.wl-corner', { hidden: !ctx.theme }, this.schemeBtn);
+    this.layer = h('div.wl-layer', { role: 'dialog', 'aria-modal': 'true' }, sky(ctx.config.stars), this.ground, this.page, this.corner);
+    this.drawCorner();
     /** @type {HTMLButtonElement|null} */
     this.nextBtn = null;
     this.error = h('p.wl-error', { hidden: true });
@@ -224,7 +228,17 @@ export class Guide {
    * 文字那一块闪一下，原来等待屏、读到的那一屏各淡入一遍）。
    * @param {Screen} screen @param {1|-1} dir 往前走的从右边滑进来，往回的从左边
    */
+  /** 右上角的明暗按钮照现在的明暗画（主题那一屏换了明暗、系统换了也跟着：每换一屏重画一次）。 */
+  drawCorner() {
+    const dark = !!this.ctx.theme?.dark?.();
+    replace(this.schemeBtn, icon(dark ? 'sun' : 'moon'));
+    const label = this.t(dark ? 'to_light' : 'to_dark');
+    this.schemeBtn.title = label;
+    this.schemeBtn.setAttribute('aria-label', label);
+  }
+
   show(screen, dir) {
+    this.drawCorner();
     const after = this.screen?.kind === 'wait' && this.screenStep === this.step;
     this.screen = screen;
     this.screenStep = this.step;

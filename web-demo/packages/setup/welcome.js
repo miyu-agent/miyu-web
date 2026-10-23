@@ -6,7 +6,7 @@
 //! 每一屏交 `{title, sub, body, next: {ready, run}, focus}`，上一步、下一步的按钮由引导画；`run` 交回出错的字，成了是 `null`。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { unfold } from '../../src/lib/motion.js';
+import { floatCard } from './float.js';
 import { field, area } from './form.js';
 import { Pairs } from './pairs.js';
 import { personaSave, halfPair, personaName, presetName } from './model.js';
@@ -275,9 +275,13 @@ export class PresetStep {
     this.all = all;
   }
 
+  /**
+   * 选预设那一屏（2026-10-23 项目主人：卡片只写名字和描述，功能的开关点「查看功能」浮出来看；自定义点了浮出来改，关得上）：一张卡片
+   * 一个预设，名字、简单描述（软换行），右下「查看功能」；最后一张「自定义」，选了以后写起的名字和开着几项。
+   */
   screen() {
     const t = this.t;
-    const box = h('div.setup-choices');
+    const box = h('div.setup-choices.is-compact');
     this.customName = this.kit.field('', t('welcome.name_hint'));
     this.customName.addEventListener('input', () => this.host.ready());
     const draw = () => {
@@ -287,32 +291,22 @@ export class PresetStep {
           h('span.setup-choice-name', presetName(p)),
           // 简单描述（2026-10-23 项目主人定预设也要描述）：没有的不写
           p.summary ? h('span.setup-choice-hint', p.summary) : null,
-          // 每张卡片照同一个先后、排成对齐的格子：同一个功能在每张卡片的同一个位置，一眼比得出区别（2026-10-10 项目主人：全列，要方便读）
-          h('span.setup-chips', this.all.map((f) => {
-            const on = (this.features.get(p.preset) ?? []).find((x) => x.id === f.id)?.on ?? false;
-            return h(`span.setup-chip${on ? '' : '.is-off'}`, { title: f.name ?? f.id }, f.name ?? f.id);
-          })),
+          h('span.setup-choice-more', { role: 'button', tabindex: '0',
+            onclick: (/** @type {Event} */ e) => { e.stopPropagation(); this.showFeatures(box, presetName(p), this.features.get(p.preset) ?? []); },
+            onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); this.showFeatures(box, presetName(p), this.features.get(p.preset) ?? []); } },
+          }, t('welcome.preset_features')),
           on ? h('span.setup-choice-check', '✓') : null);
       });
       const custom = this.chosen === 'custom';
-      const head = h(`button.setup-choice${custom ? '.is-on' : ''}`, { type: 'button', onclick: () => { if (custom) return; this.chosen = 'custom'; draw(); this.host.ready(); this.customName?.focus(); } },
-        h('span.setup-choice-name', t('welcome.custom')), custom ? null : h('span.setup-choice-hint', t('welcome.custom_hint')), custom ? h('span.setup-choice-check', '✓') : null);
-      // 自定义展开的那一块一直在、照「动效」长出来、收回去（2026-10-19 项目主人：原来收起没有动画，换了一张就整块没了）
-      wrap.classList.toggle('is-on', custom);
-      // 展开的那一块不挪开再放回（挪了过渡就断了）：只换头上那一行、前面几张卡片
-      if (wrap.firstChild && wrap.firstChild !== open) wrap.replaceChild(head, wrap.firstChild);
-      else wrap.prepend(head);
-      if (!open.isConnected || open.parentNode !== wrap) wrap.append(open);
-      unfold(open, custom);
-      for (const el of [...box.children]) if (el !== wrap) el.remove();
-      if (!wrap.isConnected) box.append(wrap);
-      for (const c of cards) box.insertBefore(c, wrap);
+      const named = this.customName?.value.trim() ?? '';
+      const onCount = [...this.customOn.values()].filter(Boolean).length;
+      const head = h(`button.setup-choice${custom ? '.is-on' : ''}`, { type: 'button', onclick: () => this.editCustom(box, draw) },
+        h('span.setup-choice-name', custom && named ? `${t('welcome.custom')} · ${named}` : t('welcome.custom')),
+        h('span.setup-choice-hint', custom ? t('welcome.custom_on', { n: onCount }) : t('welcome.custom_hint')),
+        custom ? h('span.setup-choice-check', '✓') : null);
+      replace(box, cards, head);
     };
-    const wrap = h('div.setup-choice-wrap');
-    const open = h('div.unfold.setup-choice-unfold', h('div.unfold-inner', h('div.setup-choice-open',
-      field(t('edit.name'), /** @type {HTMLElement} */ (this.customName)),
-      h('div.setup-features', (this.all ?? []).map((f) => h('div.setup-feature', h('span.setup-feature-name', { title: f.summary ?? null }, f.name ?? f.id),
-        this.kit.toggle(this.customOn.get(f.id) !== false, (v) => { this.customOn.set(f.id, v); return true; })))))));
+    this.redraw = draw;
     draw();
     return {
       title: t('welcome.preset_title'),
@@ -321,6 +315,56 @@ export class PresetStep {
       next: { ready: () => this.chosen !== 'custom' || !!this.customName?.value.trim(), run: () => this.save() },
       focus: /** @type {HTMLElement|null} */ (box.querySelector('.setup-choice.is-on')),
     };
+  }
+
+  /** 一个预设开了哪些功能：浮出来一张卡片，一项一行，开着的 ✓、关着的 — 暗着；只看不改。 @param {HTMLElement} from @param {string} name @param {any[]} list */
+  showFeatures(from, name, list) {
+    const t = this.t;
+    const rows = h('div.setup-feature-list', (this.all ?? []).map((f) => {
+      const on = list.find((x) => x.id === f.id)?.on ?? false;
+      return h(`div.setup-feature-item${on ? '' : '.is-off'}`, { title: f.summary ?? null }, h('span.setup-feature-mark', on ? '✓' : '—'), h('span', f.name ?? f.id));
+    }));
+    const card = floatCard({ title: name, body: rows, close: t('welcome.close'), onDismiss: () => { off(); card.close(); } });
+    const off = this.escCloses(() => { off(); card.close(); });
+    card.mount(from);
+  }
+
+  /** 自定义：浮出来改名字、一项一项开关，「完成」收起、选上它；名字空着的「完成」灰着。 @param {HTMLElement} from @param {() => void} draw */
+  editCustom(from, draw) {
+    const t = this.t;
+    const name = /** @type {HTMLInputElement} */ (this.customName);
+    const done = /** @type {HTMLButtonElement} */ (h('button.setup-float-done.wl-btn.is-primary', { type: 'button', disabled: !name.value.trim(), onclick: () => finish() }, t('welcome.custom_done')));
+    const sync = () => { done.disabled = !name.value.trim(); };
+    name.addEventListener('input', sync);
+    const body = h('div.setup-choice-open',
+      field(t('edit.name'), name),
+      h('div.setup-features', (this.all ?? []).map((f) => h('div.setup-feature', h('span.setup-feature-name', { title: f.summary ?? null }, f.name ?? f.id),
+        this.kit.toggle(this.customOn.get(f.id) !== false, (v) => { this.customOn.set(f.id, v); return true; })))),
+      h('div.setup-float-foot', done));
+    const close = () => { off(); name.removeEventListener('input', sync); card.close(); };
+    const finish = () => {
+      if (!name.value.trim()) return;
+      this.chosen = 'custom';
+      close();
+      draw();
+      this.host.ready();
+    };
+    const card = floatCard({ title: t('welcome.custom'), body, close: t('welcome.close'), onDismiss: () => { close(); draw(); } });
+    const off = this.escCloses(() => { close(); draw(); });
+    card.mount(from);
+    queueMicrotask(() => name.focus());
+  }
+
+  /** 浮着的卡片开着时 `Esc` 先收它（引导自己的 `Esc` 不往下走）；交回拿掉的函数。 @param {() => void} run */
+  escCloses(run) {
+    const key = (/** @type {KeyboardEvent} */ e) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      run();
+    };
+    document.addEventListener('keydown', key, true);
+    return () => document.removeEventListener('keydown', key, true);
   }
 
   /** 存：自定义的先建；和现在的默认不一样的设成默认预设。 */

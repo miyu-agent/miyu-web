@@ -27,6 +27,15 @@
 .ob-note.is-bad { color: var(--danger); }
 
 .ob-field { display: grid; grid-template-columns: 96px minmax(0, 1fr); align-items: center; gap: 12px; min-height: 32px; }
+/* 一家、自定义那一屏：名字那一列照最长的名字（2026-10-23 项目主人：左边空档太大），各行对齐；摘要、结果、模型占满两列 */
+.ob-provider { grid-template-columns: max-content minmax(0, 1fr); column-gap: 14px; }
+.ob-provider > .ob-field:not([hidden]) { display: contents; }
+.ob-provider > .ob-field > .ob-field-name { min-height: 32px; }
+.ob-provider > :not(.ob-field), .ob-provider > .ob-field.is-bare > .ob-field-control { grid-column: 1 / -1; }
+.ob-summary { display: flex; align-items: center; gap: 10px; min-height: 32px; color: var(--text-soft); font-size: 13.5px; }
+.ob-summary-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ob-summary-edit { padding: 0; border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; }
+.ob-summary-edit:hover { text-decoration: underline; }
 .ob-field-error { margin: 4px 0 0; color: var(--danger); font-size: 12px; }
 .ob-field-name { align-self: start; color: var(--text-soft); font-size: 13.5px; line-height: 32px; }
 .ob-field-control { min-width: 0; }

@@ -113,7 +113,7 @@ export function providerRows(featured, detect, configured) {
  * @typedef {{kind: 'configured', id: string}
  *   | {kind: 'catalog', catalog: string, env: string|null}
  *   | {kind: 'local', catalog: string}
- *   | {kind: 'custom', driver: string, base_url: string, id?: string}} Target 要接的那一家：配好了的、目录里的、本机的服务、自定义的（`id` 人起的编号，空着照主机名起）
+ *   | {kind: 'custom', driver: string, base_url: string, id?: string, name?: string|null}} Target 要接的那一家：配好了的、目录里的、本机的服务、自定义的（`id` 人起的编号，空着照主机名起；`name` 显示名称，空着照 ID）
  * @typedef {{value: string}|{env: string}|null} Key 这一次用的密钥：贴的、环境变量、不要
  */
 
@@ -156,6 +156,7 @@ export function setupChanges(target, key, opts) {
     if (target.kind !== 'custom' && id !== target.catalog) put('catalog', target.catalog);
     if (target.kind === 'custom') {
       put('driver', target.driver);
+      if (target.name) put('name', target.name);
       changes.push({ key: `providers.${id}.base_url`, input: target.base_url });
     }
     if (target.kind === 'local') put('local', true);
@@ -182,8 +183,22 @@ export function modelOrder(models, tried) {
 
 /** 照搜索框里的字挑模型（不分大小写，空着全部）。 @param {string[]} models @param {string} query */
 export function filterNames(models, query) {
-  const q = query.trim().toLowerCase();
-  return q ? models.filter((m) => m.toLowerCase().includes(q)) : models;
+  // 空格分开的几个词都要有（不分先后），每个词也可以是跳着的几个字（「cline deepseek」找得到 clinepass/cline-pass/deepseek-v4.1-flash，
+  // 「dsflash」找得到 deepseek-flash；2026-10-23 项目主人：搜索不支持模糊搜索）；连着含着的排前面
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (!words.length) return models;
+  const loose = (/** @type {string} */ text, /** @type {string} */ w) => {
+    let i = 0;
+    for (const ch of text) if (ch === w[i]) i += 1;
+    return i >= w.length;
+  };
+  const scored = [];
+  for (const m of models) {
+    const low = m.toLowerCase();
+    if (!words.every((w) => low.includes(w) || loose(low, w))) continue;
+    scored.push({ m, exact: words.every((w) => low.includes(w)) ? 0 : 1 });
+  }
+  return scored.sort((a, b) => a.exact - b.exact).map((x) => x.m);
 }
 
 /**

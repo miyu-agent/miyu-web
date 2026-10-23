@@ -458,7 +458,7 @@
         "key_paste": "粘贴密钥",
         "key_env": "环境变量 {name}",
         "key_optional": "可留空",
-        "id_auto": "照地址的主机名起",
+        "id_auto": "取个 ID，例如 magpie",
         "test": "测试连接",
         "testing": "正在测试…",
         "test_busy": "正在连接 {name}，读取模型列表…",
@@ -489,7 +489,10 @@
         "next": "下一步",
         "save": "保存",
         "save_failed": "保存失败：{reason}",
-        "back": "上一步"
+        "back": "上一步",
+        "name": "显示名称",
+        "name_hint": "可留空，默认同 ID",
+        "edit": "修改"
       },
       "main_color": "主色",
       "main_color_auto": "自动",
@@ -688,7 +691,10 @@
       "admin": {
         "title": "Miyu 管理员后台",
         "short": "管理员后台",
-        "leads": { "overview": "账号和邀请的概况、最近的动静", "accounts": "发邀请码给别人注册，停用、启用成员" },
+        "leads": {
+          "overview": "账号和邀请的概况、最近的动静",
+          "accounts": "发邀请码给别人注册，停用、启用成员"
+        },
         "tab_title": "管理员后台 · Miyu",
         "exit": "回到 Miyu",
         "loading": "正在读…",
@@ -1078,7 +1084,7 @@
         "key_paste": "Paste API key",
         "key_env": "Environment variable {name}",
         "key_optional": "Optional",
-        "id_auto": "From the URL's host name",
+        "id_auto": "Pick an ID, e.g. magpie",
         "test": "Test connection",
         "testing": "Testing…",
         "test_busy": "Connecting to {name} and reading its models…",
@@ -1109,7 +1115,10 @@
         "next": "Next",
         "save": "Save",
         "save_failed": "Save failed: {reason}",
-        "back": "Back"
+        "back": "Back",
+        "name": "Display name",
+        "name_hint": "Optional, defaults to the ID",
+        "edit": "Edit"
       },
       "main_color": "Main color",
       "main_color_auto": "Auto",
@@ -1308,7 +1317,10 @@
       "admin": {
         "title": "Miyu admin console",
         "short": "Admin console",
-        "leads": { "overview": "Accounts and invites at a glance, and what happened lately", "accounts": "Send invite codes so people can sign up; disable or enable members" },
+        "leads": {
+          "overview": "Accounts and invites at a glance, and what happened lately",
+          "accounts": "Send invite codes so people can sign up; disable or enable members"
+        },
         "tab_title": "Admin console · Miyu",
         "exit": "Back to Miyu",
         "loading": "Loading…",
@@ -1698,7 +1710,7 @@
         "key_paste": "キーを貼り付け",
         "key_env": "環境変数 {name}",
         "key_optional": "空欄可",
-        "id_auto": "アドレスのホスト名から作成",
+        "id_auto": "ID を付ける（例：magpie）",
         "test": "接続テスト",
         "testing": "テスト中…",
         "test_busy": "{name} に接続してモデル一覧を読み込み中…",
@@ -1729,7 +1741,10 @@
         "next": "次へ",
         "save": "保存",
         "save_failed": "保存に失敗しました：{reason}",
-        "back": "戻る"
+        "back": "戻る",
+        "name": "表示名",
+        "name_hint": "空欄可（ID と同じ）",
+        "edit": "変更"
       },
       "main_color": "メインカラー",
       "main_color_auto": "自動",
@@ -1928,7 +1943,10 @@
       "admin": {
         "title": "Miyu 管理コンソール",
         "short": "管理コンソール",
-        "leads": { "overview": "アカウントと招待の概要、最近の動き", "accounts": "招待コードを送って登録してもらい、メンバーを停止・再開します" },
+        "leads": {
+          "overview": "アカウントと招待の概要、最近の動き",
+          "accounts": "招待コードを送って登録してもらい、メンバーを停止・再開します"
+        },
         "tab_title": "管理コンソール · Miyu",
         "exit": "Miyu に戻る",
         "loading": "読み込み中…",

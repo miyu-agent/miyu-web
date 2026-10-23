@@ -7,14 +7,17 @@
 
 .wl-layer {
   --px-bg: var(--surface);
-  --px-cell: color-mix(in srgb, var(--accent) 10%, var(--surface-2)); --px-cell-hi: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
-  --px-cell-on: color-mix(in srgb, var(--accent) 26%, var(--surface-2)); --px-edge: color-mix(in srgb, var(--accent) 45%, var(--surface-3));
+  /* 深色的格子、边不掺那么多主色，只比底亮一点（2026-10-23 项目主人：暗色模式有点瞎眼） */
+  --px-cell: light-dark(color-mix(in srgb, var(--accent) 10%, var(--surface-2)), color-mix(in srgb, var(--surface-2) 55%, var(--surface)));
+  --px-cell-hi: light-dark(color-mix(in srgb, var(--accent) 16%, var(--surface-2)), color-mix(in srgb, var(--surface-2) 85%, var(--surface)));
+  --px-cell-on: light-dark(color-mix(in srgb, var(--accent) 26%, var(--surface-2)), color-mix(in srgb, var(--accent) 14%, var(--surface-2)));
+  --px-edge: light-dark(color-mix(in srgb, var(--accent) 45%, var(--surface-3)), color-mix(in srgb, var(--accent) 22%, var(--surface-3)));
   --px-ground: color-mix(in srgb, var(--accent) 24%, var(--surface-3)); --px-ground-2: color-mix(in srgb, var(--accent) 16%, var(--surface-3));
   --px-tx: var(--text); --px-soft: var(--text-soft); --px-dim: color-mix(in srgb, var(--text-soft) 78%, var(--surface));
   /* 黄照明暗各一份：浅底上原来那个黄看不清 */
   --px-yel: light-dark(#e0a300, #ffd75e); --px-yel-dark: light-dark(#9c6f00, #c99a1e); --px-yel-ink: #241c05;
   --px-blu: var(--accent); --px-blu-dark: color-mix(in srgb, var(--accent) 55%, #000); --px-ink: var(--on-primary);
-  --px-star: light-dark(color-mix(in srgb, var(--text) 30%, transparent), #ffffff);
+  --px-star: light-dark(color-mix(in srgb, var(--text) 30%, transparent), color-mix(in srgb, #ffffff 55%, transparent));
   --px-head: "Miyu Pixel CJK", var(--font-ui); --px-font: "Miyu Pixel", ui-monospace, monospace;
   /* 真的主题记一份：主题那一屏的小窗口照它画（下面一层换成像素的那一套） */
   --keep-surface: var(--surface); --keep-sidebar: var(--sidebar-bg); --keep-surface-1: var(--surface-1); --keep-surface-2: var(--surface-2);
@@ -63,7 +66,8 @@
 /* 窗口矮的时候「上一步」「下一步」钉在地面正上方，一直露着：底下垫一截页面的底色，往上淡出，滚过去的内容从它后面过；放得下的照常排在内容下面 */
 .wl-foot { position: sticky; bottom: 56px; z-index: 1; padding: calc(16px * var(--space)) calc(8px * var(--space)) calc(14px * var(--space)); margin: calc(30px * var(--space)) calc(-8px * var(--space)) calc(-14px * var(--space)); background: linear-gradient(transparent, var(--px-bg) 14px); }
 .wl-foot > span:empty { display: none; }
-.wl-link { display: inline-flex; align-items: center; gap: calc(6px * var(--space)); height: 36px; padding: 0 calc(8px * var(--space)); border: 0; background: transparent; color: var(--px-dim); font: calc(9px * var(--text-scale)) var(--px-font); cursor: pointer; }
+.wl-link { display: inline-flex; align-items: center; gap: calc(6px * var(--space)); height: 36px; padding: 0 calc(8px * var(--space)); border: 0; background: transparent; color: var(--px-dim); font: calc(14px * var(--text-scale)) var(--px-head); cursor: pointer; }
+/* 「上一步」原来 9px 的像素英文字，中文落到别的字体里又小又糊（2026-10-23 项目主人：太小）：照标题的方块中文字 14px */
 .wl-link:hover, .wl-link:focus-visible { outline: 0; color: var(--px-tx); }
 .wl-link svg { display: none; }
 .wl-link::before { content: "◀"; font-size: calc(9px * var(--text-scale)); }
@@ -91,11 +95,13 @@
 /* 完成：像拿到道具（2026-10-19 项目主人：原来掉彩色方块的礼花不适合）：CLEAR! 落下来顿一下，「获得 …」隔 0.3 秒一行弹上来，最后出按钮；
    只动透明度和位移 */
 .wl-layer.is-done .wl-screen.is-center { padding-top: calc(70px * var(--space)); }
-.wl-layer.is-done .wl-title { color: var(--px-yel); font: calc(22px * var(--text-scale))/1.4 var(--px-font); text-shadow: 3px 3px 0 #b5410f; }
+.wl-layer.is-done .wl-title { color: var(--px-yel); font: calc(34px * var(--text-scale))/1.4 var(--px-font); text-shadow: 4px 4px 0 #b5410f; }
 .wl-layer.is-done .wl-screen.is-center .wl-body { order: 1; margin-top: calc(20px * var(--space)); }
 .wl-done { display: grid; justify-items: center; gap: calc(8px * var(--space)); }
 .wl-pills { display: grid; justify-items: center; gap: calc(8px * var(--space)); }
-.wl-pill { color: var(--px-dim); font-size: calc(13.5px * var(--text-scale)); }
+.wl-pill { color: var(--px-dim); font-size: calc(17px * var(--text-scale)); }
+/* 完成那一屏（2026-10-23 项目主人：字太小）：「获得 …」17px，按钮大一号 */
+.wl-layer.is-done .wl-btn { min-width: 168px; height: 46px; font-size: calc(18px * var(--text-scale)); }
 .wl-pill b { color: var(--px-tx); font-weight: 500; }
 .wl-layer.is-done .wl-screen { animation: none; }
 .wl-layer.is-done .wl-title { animation: wl-drop calc(0.42s * var(--motion-scale)) cubic-bezier(0.3, 1.5, 0.6, 1) both; }
@@ -150,8 +156,6 @@
 .wl-layer .ob-model { min-height: 38px; margin: calc(3px * var(--space)); padding-left: calc(30px * var(--space)); }
 .wl-layer .setup-choices { gap: calc(14px * var(--space)); }
 .wl-layer .setup-choice { margin: calc(3px * var(--space)); padding-left: calc(30px * var(--space)); }
-.wl-layer .setup-chip { border-radius: 0; }
-.wl-layer .setup-choice-wrap, .wl-layer .setup-choice-wrap.is-on { border-radius: 0; background: transparent; box-shadow: none; }
 .wl-layer .setup-choice-open { padding: calc(10px * var(--space)) calc(14px * var(--space)) calc(12px * var(--space)); margin: calc(6px * var(--space)) calc(3px * var(--space)) 0; background: var(--px-cell); }
 /* 长的列表在自己的框里滚，底下留出一截、淡出 */
 .wl-layer .ob-list > .ob-rows:first-child, .wl-layer .ob-scroll {
@@ -212,3 +216,12 @@
 .wl-preview-chat .ai.short { width: 46%; }
 .wl-preview-chat .box { position: absolute; left: 14px; right: 14px; bottom: 12px; height: 26px; background: var(--surface-1); }
 .wl-preview-chat .send { position: absolute; right: 20px; bottom: 17px; width: 16px; height: 16px; background: var(--accent); }
+
+/* 右上角一直在的按钮（明暗）：像素块，悬停亮一档 */
+.wl-corner { position: absolute; z-index: 5; top: 16px; right: 16px; display: flex; gap: 8px; }
+.wl-corner-btn { --px-c: var(--px-cell); display: grid; width: 34px; height: 34px; padding: 0; place-items: center; border: 0; border-radius: 0; background: var(--px-c); color: var(--px-soft); cursor: pointer;
+  box-shadow: 0 -3px 0 0 var(--px-c), 0 3px 0 0 var(--px-c), -3px 0 0 0 var(--px-c), 3px 0 0 0 var(--px-c); }
+.wl-corner-btn:hover, .wl-corner-btn:focus-visible { outline: 0; --px-c: var(--px-cell-hi); color: var(--px-tx); }
+.wl-corner-btn .icon { width: 16px; height: 16px; }
+.wl-layer .setup-choice-more { color: var(--px-yel); }
+.wl-layer .setup-float { --px-c: var(--px-cell); border-radius: 0; background: var(--px-c); box-shadow: 0 -3px 0 0 var(--px-c), 0 3px 0 0 var(--px-c), -3px 0 0 0 var(--px-c), 3px 0 0 0 var(--px-c), 0 12px 32px rgb(0 0 0 / 0.35); }

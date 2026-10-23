@@ -132,3 +132,20 @@ test('自定义的编号：人起的照它存，写法不对、重了的说哪�
   assert.ok(changes.some((c) => c.key === 'providers.my-relay.base_url'));
   assert.equal(setupChanges({ kind: 'custom', driver: 'openai-chat', base_url: 'https://api.example.com/v1' }, null, { taken: new Set() }).id, 'example', '没起的照主机名');
 });
+
+test('找模型：空格分开的几个词都要有，词也可以跳着；连着含着的排前面（2026-10-23 项目主人：搜索不支持模糊搜索）', async () => {
+  const { filterNames } = await import('../../packages/settings/onboard/logic.js');
+  const list = ['clinepass/cline-free/mimo-v2.6-flash', 'clinepass/cline-pass/deepseek-v4.1-flash', 'deepseek/deepseek-flash', 'anthropic/claude-haiku-5-5'];
+  assert.deepEqual(filterNames(list, 'cline deepseek'), ['clinepass/cline-pass/deepseek-v4.1-flash']);
+  assert.deepEqual(filterNames(list, 'dsflash'), ['clinepass/cline-pass/deepseek-v4.1-flash', 'deepseek/deepseek-flash']);
+  assert.deepEqual(filterNames(list, 'flash'), ['clinepass/cline-free/mimo-v2.6-flash', 'clinepass/cline-pass/deepseek-v4.1-flash', 'deepseek/deepseek-flash']);
+  assert.deepEqual(filterNames(list, '  '), list);
+});
+
+test('自定义的显示名称写进 providers.<id>.name，空着的不写', async () => {
+  const { setupChanges } = await import('../../packages/settings/onboard/logic.js');
+  const named = setupChanges({ kind: 'custom', driver: 'openai-chat', base_url: 'http://h:1/v1', id: 'magpie', name: 'Magpie 中转' }, null, { taken: new Set() });
+  assert.ok(named.changes.some((c) => c.key === 'providers.magpie.name' && c.value === 'Magpie 中转'));
+  const plain = setupChanges({ kind: 'custom', driver: 'openai-chat', base_url: 'http://h:1/v1', id: 'magpie', name: null }, null, { taken: new Set() });
+  assert.ok(!plain.changes.some((c) => c.key === 'providers.magpie.name'));
+});

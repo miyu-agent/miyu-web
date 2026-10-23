@@ -20,8 +20,8 @@ export function floatCard(o) {
   scrim.addEventListener('set-dismiss', () => o.onDismiss());
   return {
     el: scrim,
-    /** 放进 `from` 所在的设置框里（找不到的放整页上）。 @param {HTMLElement} from */
-    mount: (from) => (from.closest('.set-panel') ?? document.body).append(scrim),
+    /** 放进 `from` 所在的设置框、第一次引导那一层里（找不到的放整页上）。 @param {HTMLElement} from */
+    mount: (from) => (from.closest('.set-panel, .wl-layer') ?? document.body).append(scrim),
     /** @param {Node|string} text */
     setTitle: (text) => replace(title, text),
     /** @param {Node} node */

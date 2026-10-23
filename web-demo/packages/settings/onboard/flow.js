@@ -168,7 +168,8 @@ export class ProviderFlow {
     if (target.kind === 'configured') keyRow = this.fieldRow(t('onboard.key'), h('span.ob-fixed', t('onboard.key_configured')));
     else if (target.kind === 'catalog') {
       keyInput = this.keyField(target.env ? t('onboard.key_env', { name: target.env }) : t('onboard.key_paste'));
-      keyRow = this.fieldRow(t('onboard.key'), keyInput);
+      // 只有一行密码框：左边不写「密钥」，框占满、居中（2026-10-23 项目主人：占位里已经写了，左边的字还让框不居中）
+      keyRow = this.fieldRow(null, keyInput);
     }
     const key = () => {
       const text = keyInput?.value.trim() ?? '';
@@ -203,9 +204,11 @@ export class ProviderFlow {
       return !why;
     };
     idInput.addEventListener('input', () => { idTyped = true; checkId(); this.host.ready(); });
-    const target = () => /** @type {Target} */ ({ kind: 'custom', driver, base_url: cleanUrl(url.value), id: idOf() });
+    // 显示名称（2026-10-23 项目主人要的）：可留空，留空的照 ID
+    const nameInput = /** @type {HTMLInputElement} */ (h('input.set-input.ob-input', { type: 'text', placeholder: t('onboard.name_hint'), spellcheck: 'false', autocomplete: 'off' }));
+    const target = () => /** @type {Target} */ ({ kind: 'custom', driver, base_url: cleanUrl(url.value), id: idOf(), name: nameInput.value.trim() || null });
     // 编号在第一行（2026-10-14 项目主人：编号应该在最上面一项；终端 miyu setup 同一个口径）
-    const rows = [this.fieldRow(t('models.form.id'), h('div', idInput, idError)), this.fieldRow(t('onboard.url'), url), this.fieldRow(t('onboard.driver'), seg), this.fieldRow(t('onboard.key'), keyInput)];
+    const rows = [this.fieldRow(t('models.form.id'), h('div', idInput, idError)), this.fieldRow(t('onboard.name'), nameInput), this.fieldRow(t('onboard.url'), url), this.fieldRow(t('onboard.driver'), seg), this.fieldRow(t('onboard.key'), keyInput)];
     const key = () => (keyInput.value.trim() ? { value: keyInput.value.trim() } : null);
     url.addEventListener('input', () => {
       if (!idTyped) {
@@ -225,9 +228,9 @@ export class ProviderFlow {
     return input;
   }
 
-  /** 一行：左边名字，右边控件。 @param {string} name @param {HTMLElement} control */
+  /** 一行：左边名字，右边控件；没有名字的控件占满整行。 @param {string|null} name @param {HTMLElement} control */
   fieldRow(name, control) {
-    return h('div.ob-field', h('span.ob-field-name', name), h('div.ob-field-control', control));
+    return name == null ? h('div.ob-field.is-bare', h('div.ob-field-control', control)) : h('div.ob-field', h('span.ob-field-name', name), h('div.ob-field-control', control));
   }
 
   /**
@@ -258,6 +261,7 @@ export class ProviderFlow {
     // 框里改了：之前测的不算了，主按钮回到「测试连接」
     this.stale = () => {
       state.force = false;
+      fold(false);
       if (state.ok) {
         state.ok = null;
         state.chosen = null;
@@ -315,6 +319,8 @@ export class ProviderFlow {
       if (got?.ok) {
         this.host.mascot?.busy(false);
         state.ok = got;
+        // 测成了：上面填的几行收成一行摘要（2026-10-23 项目主人：都配了，没必要再摆着），点「修改」再摊开
+        fold(true);
         const list = modelOrder(got.models ?? [], got.model ?? null);
         state.chosen = got.model ?? list[0] ?? null;
         result.className = 'ob-result is-good';
@@ -335,7 +341,18 @@ export class ProviderFlow {
       }
       this.host.ready();
     };
-    const body = h('div.ob-provider', fields, modelRow, result, models);
+    // 测成以后上面几行收成的那一行：这一家的名字或 ID、地址，右边「修改」
+    const summary = h('div.ob-summary', { hidden: true });
+    const fold = (/** @type {boolean} */ on) => {
+      if (fields.length < 2) return;
+      for (const el of fields) el.hidden = on;
+      summary.hidden = !on;
+      if (!on) return;
+      const tg = target();
+      const what = tg.kind === 'custom' ? [tg.name || tg.id, tg.base_url].filter(Boolean).join(' · ') : name;
+      replace(summary, h('span.ob-summary-text', what), h('button.ob-summary-edit', { type: 'button', onclick: () => fold(false) }, t('onboard.edit')));
+    };
+    const body = h('div.ob-provider', summary, fields, modelRow, result, models);
     if (opts.auto) queueMicrotask(run);
     const save = async () => {
       if (state.ok) return this.save(target(), keyOf(), opts.pasted(), state.chosen, name);

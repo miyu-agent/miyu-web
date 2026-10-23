@@ -1877,18 +1877,6 @@
       ".setup-choice-check"
     ]
   },
-  "setup.chip": {
-    "zh": "人格、预设、工作区：小块",
-    "select": [
-      ".setup-chip"
-    ]
-  },
-  "setup.choice-wrap": {
-    "zh": "人格、预设、工作区：选项外框",
-    "select": [
-      ".setup-choice-wrap"
-    ]
-  },
   "setup.palette-sample": {
     "zh": "人格、预设、工作区：配色小样",
     "select": [
@@ -6263,6 +6251,48 @@
     "zh": "回报那一行点开：命令",
     "select": [
       ".note-cmd"
+    ]
+  },
+  "welcome.corner": {
+    "zh": "第一次引导：右上角一直在的按钮",
+    "select": [
+      ".wl-corner"
+    ]
+  },
+  "welcome.corner-btn": {
+    "zh": "第一次引导：右上角的明暗按钮",
+    "select": [
+      ".wl-corner-btn"
+    ]
+  },
+  "setup.feature-list": {
+    "zh": "预设开了哪些功能：几列",
+    "select": [
+      ".setup-feature-list"
+    ]
+  },
+  "setup.feature-item": {
+    "zh": "预设开了哪些功能：一项",
+    "select": [
+      ".setup-feature-item"
+    ]
+  },
+  "setup.feature-mark": {
+    "zh": "预设开了哪些功能：打勾",
+    "select": [
+      ".setup-feature-mark"
+    ]
+  },
+  "setup.choice-more": {
+    "zh": "选预设：「查看功能」",
+    "select": [
+      ".setup-choice-more"
+    ]
+  },
+  "setup.float-foot": {
+    "zh": "浮起来的卡片：底下一排按钮",
+    "select": [
+      ".setup-float-foot"
     ]
   }
 }
