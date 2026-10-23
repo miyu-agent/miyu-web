@@ -11,6 +11,9 @@ import { scaledParts, bar, share, toneOf, useRows, USE_TONES, costOf } from '../
 
 /** @typedef {'context'|'total'} Kind */
 
+/** 头一次打开等问到了再露，最多等多久（毫秒） */
+const SHOW_WAIT_MS = 150;
+
 export class ContextPop {
   /**
    * @param {{session: () => string|null, preview: () => Record<string, any>, request: (method: string, params: any) => Promise<any>, openUsage?: (session: string) => void}} on
@@ -26,6 +29,10 @@ export class ContextPop {
     this.anchor = null;
     /** 展开着的块（`part`） @type {Set<string>} */
     this.opened = new Set();
+    /** 问过的，照会话和哪一个记着（下次打开先照它画） @type {Map<string, any>} */
+    this.cache = new Map();
+    /** @type {ReturnType<typeof setTimeout>|undefined} 头一次打开最多等多久再露 */
+    this.showTimer = undefined;
     /** 展开、收起了一块以后（累计那一个照它重画横条） @type {((part: string) => void)|null} */
     this.onFlip = null;
     /** 上一次问到的（`null` 是还在问；`false` 是核心不支持） @type {any} */
@@ -66,17 +73,33 @@ export class ContextPop {
     this.sig = sig;
     this.opened.clear();
     anchor.classList.add('is-open');
-    this.data = null;
+    // 这个会话这一个问过的先照上一次的画；头一次的等问到了再露（最多等 SHOW_WAIT_MS）：原来先写「正在读…」、几十毫秒后换成内容，高度一变就跳
+    this.data = this.cache.get(this.cacheKey()) ?? null;
+    clearTimeout(this.showTimer);
+    if (this.data !== null) this.reveal();
+    else this.showTimer = setTimeout(() => this.reveal(), SHOW_WAIT_MS);
+    this.load();
+  }
+
+  /** 这个会话这一个（记上一次问到的用） */
+  cacheKey() {
+    return `${this.kind}\n${this.on.session() ?? ''}`;
+  }
+
+  /** 露出来：照现在有的画好、摆好，再放进场 */
+  reveal() {
+    clearTimeout(this.showTimer);
+    if (!this.isOpen || !this.el.hidden) return;
+    this.draw();
     show(this.el);
     this.place();
-    this.draw();
-    this.load();
   }
 
   close() {
     if (!this.isOpen) return;
     this.kind = null;
     this.seq += 1;
+    clearTimeout(this.showTimer);
     this.anchor?.classList.remove('is-open');
     document.removeEventListener('pointerdown', this.onDown, true);
     document.removeEventListener('keydown', this.onKey, true);
@@ -115,8 +138,8 @@ export class ContextPop {
     const root = parent.getBoundingClientRect();
     const width = this.el.offsetWidth;
     const left = Math.min((box.left - root.left) / scale, root.width / scale - width);
-    this.el.style.left = `${Math.max(0, left)}px`;
-    this.el.style.setProperty('--origin', `${(box.left - root.left) / scale - Math.max(0, left) + box.width / scale / 2}px`);
+    // 取整数像素：落在半个像素上的字，动画前后画得不一样，看着跳一下
+    this.el.style.left = `${Math.round(Math.max(0, left))}px`;
   }
 
   async load() {
@@ -136,8 +159,13 @@ export class ContextPop {
         return { ...r, parts };
       })).catch((/** @type {any} */ e) => (e?.code === -32601 || e?.code === -32602 ? false : this.data));
     if (seq !== this.seq || this.kind !== kind) return;
-    this.data = got ?? false;
-    this.draw();
+    const data = got ?? false;
+    // 和画着的一样的不重画（照上一次画的那一份，问到的没变）
+    const same = JSON.stringify(data) === JSON.stringify(this.data);
+    this.data = data;
+    if (data !== false) this.cache.set(this.cacheKey(), data);
+    if (this.el.hidden) this.reveal();
+    else if (!same) this.draw();
   }
 
   draw() {
