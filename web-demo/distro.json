@@ -25,6 +25,7 @@
     { "id": "pulse" },
     { "id": "attachments" },
     { "id": "jobs" },
+    { "id": "dashboard" },
     { "id": "goal" },
     { "id": "notify" },
     { "id": "settings" },
