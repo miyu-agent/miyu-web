@@ -7,13 +7,13 @@
     "ja": "ダッシュボード"
   },
   "summary": {
-    "zh": "右边一栏看待办、后台任务和文件修改",
-    "en": "See to-dos, background tasks and file changes in a side column",
-    "ja": "右の列で ToDo、バックグラウンドタスク、ファイルの変更を見る"
+    "zh": "右侧边栏：待办、后台任务、文件修改、展示文件",
+    "en": "Right sidebar: to-dos, background tasks, file changes and shown files",
+    "ja": "右サイドバー：ToDo、バックグラウンドタスク、ファイルの変更、表示したファイル"
   },
   "kind": "optional",
   "description": {
-    "zh": "对话区右上角一个按钮，点了在右边那一栏打开三张卡：待办、后台任务（子代理再派的挂在下面）、文件修改；点进去看后台命令的输出、文件的差异，子代理在主区打开。窗口够宽时做一栏，输入框那边的待办、后台任务不画；不够宽的盖在上面。停用了一切照旧。"
+    "zh": "对话区右上角一个右栏开关（同左栏开关），点了开、收右侧边栏：四张卡，待办、后台任务（子代理再派的挂在下面）、文件修改、展示文件；点进去看后台命令的输出、文件的差异、展示的文件（预览工作区占过这一栏，左上角返回），子代理在主区打开。窗口够宽时做一栏，输入框那边的待办、后台任务不画；不够宽的盖在上面。停用了一切照旧，预览工作区照原来的样子。"
   },
   "inject": [
     "slots",
@@ -68,7 +68,6 @@
   ],
   "text": {
     "zh": {
-      "toggle": "仪表盘",
       "todo": "待办",
       "tasks": "后台任务",
       "files": "文件修改",
@@ -81,7 +80,7 @@
       "more_tasks": "还有 {count} 个，展开",
       "files_count": "{count} 个文件",
       "back": "回到仪表盘",
-      "empty": "这个会话还没有待办、后台任务和文件修改",
+      "empty": "这个会话还没有待办、后台任务、文件修改和展示文件",
       "enter": "在主区打开这个子代理的会话",
       "open_output": "看输出",
       "follow": "跟着最新的",
@@ -111,10 +110,16 @@
         "aborted": "中断：核心已退出",
         "confirm": "等你确认",
         "ask": "在问你"
-      }
+      },
+      "toggle_open": "展开右栏",
+      "toggle_close": "收起右栏",
+      "shown": "展示文件",
+      "shown_count": "{count} 个",
+      "panel": "面板",
+      "remove": "从右栏拿掉",
+      "remove_named": "从右栏拿掉 {name}"
     },
     "en": {
-      "toggle": "Dashboard",
       "todo": "To-do",
       "tasks": "Background tasks",
       "files": "File changes",
@@ -127,7 +132,7 @@
       "more_tasks": "{count} more, expand",
       "files_count": "{count} files",
       "back": "Back to dashboard",
-      "empty": "No to-dos, background tasks or file changes in this session yet",
+      "empty": "No to-dos, background tasks, file changes or shown files in this session yet",
       "enter": "Open this subagent's session",
       "open_output": "View output",
       "follow": "Following the latest",
@@ -157,10 +162,16 @@
         "aborted": "Aborted: core exited",
         "confirm": "Needs your confirmation",
         "ask": "Asking you"
-      }
+      },
+      "toggle_open": "Expand right sidebar",
+      "toggle_close": "Collapse right sidebar",
+      "shown": "Shown files",
+      "shown_count": "{count}",
+      "panel": "Panel",
+      "remove": "Remove from sidebar",
+      "remove_named": "Remove {name} from sidebar"
     },
     "ja": {
-      "toggle": "ダッシュボード",
       "todo": "ToDo",
       "tasks": "バックグラウンドタスク",
       "files": "ファイルの変更",
@@ -173,7 +184,7 @@
       "more_tasks": "ほか {count} 件、展開",
       "files_count": "{count} ファイル",
       "back": "ダッシュボードに戻る",
-      "empty": "このセッションにはまだ ToDo、バックグラウンドタスク、ファイルの変更がありません",
+      "empty": "このセッションにはまだ ToDo、バックグラウンドタスク、ファイルの変更、表示したファイルがありません",
       "enter": "このサブエージェントのセッションを開く",
       "open_output": "出力を見る",
       "follow": "最新を追従中",
@@ -203,7 +214,14 @@
         "aborted": "中断：コアが終了",
         "confirm": "確認待ち",
         "ask": "質問中"
-      }
+      },
+      "toggle_open": "右サイドバーを開く",
+      "toggle_close": "右サイドバーを閉じる",
+      "shown": "表示したファイル",
+      "shown_count": "{count} 件",
+      "panel": "パネル",
+      "remove": "サイドバーから外す",
+      "remove_named": "{name} をサイドバーから外す"
     }
   }
 }

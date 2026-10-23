@@ -1,13 +1,14 @@
-/* 仪表盘（软件包 `dashboard`，蓝图 web.md「仪表盘」）：右边那一栏里三张白卡片（待办、后台任务、文件修改），点进去的输出、差异；
+/* 仪表盘（软件包 `dashboard`，蓝图 web.md「仪表盘」）：右侧边栏里四张白卡片（待办、后台任务、文件修改、展示文件），点进去的输出、差异；
    对话区右上角的开关。一行 30px、13px 字（2026-10-24 项目主人：原来太松），状态只用图标、贴着用时，层级用圆角的连接线。 */
 
 .dash-toggle { position: relative; width: 30px; height: 30px; }
-.dash-toggle.is-active { color: var(--accent); }
 .dash-toggle .icon { width: calc(16px * var(--space)); height: calc(16px * var(--space)); }
 /* 关着时的提醒：有在跑的转圈小点，有等人的橙色小点 */
 .dash-badge { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: var(--r-round); pointer-events: none; }
 .dash-badge.is-running { border: 2px solid color-mix(in srgb, var(--accent) 25%, transparent); border-top-color: var(--accent); animation: tl-spin calc(0.9s * var(--motion-scale)) linear infinite; }
 .dash-badge.is-waiting { background: var(--t-warn); box-shadow: 0 0 0 2px var(--surface); }
+/* 来了新展示、还没看（同原来预览工作区开关上的圆点） */
+.dash-badge.is-new { width: 6px; height: 6px; background: var(--accent); box-shadow: 0 0 0 2px var(--surface); }
 
 .dash { --dash-edge: color-mix(in srgb, var(--line) 60%, transparent); display: grid; min-height: 0; height: 100%; color: var(--text); font-family: var(--font-ui); }
 .dash-list { display: flex; flex-direction: column; min-height: 0; padding: calc(10px * var(--space)) calc(6px * var(--space)) 0; overflow: hidden; }
@@ -117,6 +118,14 @@
 .dash-add { color: var(--diff-add); }
 .dash-del { color: var(--diff-del); }
 
+
+/* 展示文件：同文件修改的一行；悬停露出右边的 ✕（触屏上一直露），点了从右栏拿掉这一样；面板挂着东西的最后一行「面板」 */
+.dash-shown .dash-file-name { max-width: 70%; }
+.dash-remove { display: none; flex: none; place-items: center; width: 22px; height: 22px; margin-right: calc(-4px * var(--space)); padding: 0; border: 0; border-radius: var(--r-6); background: none; color: var(--text-faint); cursor: pointer; }
+.dash-remove .icon { width: 13px; height: 13px; }
+.dash-remove:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
+.dash-shown:hover .dash-remove, .dash-shown:focus-within .dash-remove { display: inline-grid; }
+@media (hover: none) { .dash-remove { display: inline-grid; } }
 /* 点进去的：头一行返回箭头（不写字、不铺底）；输出等宽贴着底；差异带新旧行号 */
 .dash-detail { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; margin: calc(10px * var(--space)); overflow: hidden; border: 1px solid var(--dash-edge); border-radius: var(--r-12); background: var(--surface-1); box-shadow: var(--card-shadow); }
 .dash-detail-head { display: flex; align-items: center; gap: calc(8px * var(--space)); height: 46px; padding: 0 calc(8px * var(--space)); border-bottom: 1px solid var(--line); font-size: calc(13.5px * var(--text-scale)); }
