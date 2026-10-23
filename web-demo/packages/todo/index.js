@@ -14,5 +14,15 @@ export function apply(ctx) {
   ctx.on('session.created', ({ to }) => dock.show(to));
   // 待办（核心 D-3）：对话区每画一次带着正在看的会话的清单
   ctx.on('view.changed', (/** @type {any} */ v) => dock.setReal(v.session ?? null, v.todos ?? []));
-  ctx.slots.mount('composer.above', { id: 'todo', order: 10, render: () => dock.el });
+  // 仪表盘做右边一栏的时候（窗口够宽，事件 `dashboard.active`，蓝图「仪表盘」第 2 条）不画：待办在那边看；窗口窄了、仪表盘停用了再挂回来
+  /** @type {(() => void)|null} */
+  let mounted = null;
+  const mount = () => { mounted = ctx.slots.mount('composer.above', { id: 'todo', order: 10, render: () => dock.el }); };
+  mount();
+  ctx.on('dashboard.active', (/** @type {{on?: boolean}|undefined} */ s) => {
+    if (s?.on && mounted) {
+      mounted();
+      mounted = null;
+    } else if (!s?.on && !mounted) mount();
+  });
 }
