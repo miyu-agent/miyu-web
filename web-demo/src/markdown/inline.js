@@ -19,7 +19,7 @@ import { res } from '../util/res.js';
  *   | {type: 'math', tex: string, raw: string}
  *   | {type: 'link', href: string, kids: Inline[], title?: string}
  *   | {type: 'autolink', href: string, text: string}
- *   | {type: 'image', src: string, alt: string}
+ *   | {type: 'image', src: string, alt: string, title?: string}
  *   | {type: 'titled', href: string, indent: string, title: Inline[], gap: string, open: string, url: string, close: string}
  *   | {type: 'del' | 'strong' | 'em', kids: Inline[]}
  *   | {type: 'tag', tag: string, kids: Inline[]}
@@ -167,10 +167,9 @@ export function inline(source, depth = 0, inLink = false) {
     // 图片的地址照写，不挑协议：本机的路径（相对的、~/ 的）由扩展点换成桥的地址（build.js 的 hooks.image）
     if (c === '!' && text[i + 1] === '[') {
       const labelEnd = text.indexOf('](', i + 2);
-      const urlEnd = labelEnd >= 0 ? text.indexOf(')', labelEnd + 2) : -1;
-      const src = urlEnd > labelEnd + 2 ? text.slice(labelEnd + 2, urlEnd).trim() : '';
-      if (labelEnd >= 0 && src && !/\s/.test(src)) {
-        emit({ type: 'image', src, alt: text.slice(i + 2, labelEnd) }, urlEnd + 1);
+      const dest = labelEnd >= 0 ? destAt(text, labelEnd + 2) : null;
+      if (dest && dest.url) {
+        emit({ type: 'image', src: dest.url, alt: text.slice(i + 2, labelEnd), ...(dest.title ? { title: dest.title } : {}) }, dest.end);
         continue;
       }
     }
@@ -192,10 +191,18 @@ export function inline(source, depth = 0, inLink = false) {
     }
     if (c === '[') {
       const labelEnd = text.indexOf('](', i + 1);
-      const urlEnd = labelEnd >= 0 ? text.indexOf(')', labelEnd + 2) : -1;
-      const href = labelEnd > i + 1 && urlEnd > labelEnd + 2 ? validLinkUrl(text.slice(labelEnd + 2, urlEnd)) : null;
-      if (href) {
-        emit({ type: 'link', href, kids: inline(text.slice(i + 1, labelEnd), depth + 1, true) }, urlEnd + 1);
+      const dest = labelEnd > i + 1 ? destAt(text, labelEnd + 2) : null;
+      const href = dest ? validLinkUrl(dest.url) : null;
+      if (dest && href) {
+        emit({ type: 'link', href, kids: inline(text.slice(i + 1, labelEnd), depth + 1, true), ...(dest.title ? { title: dest.title } : {}) }, dest.end);
+        continue;
+      }
+      // 拆不开、括号里又没有引号的照原来的认法：到第一个右括号为止整截是地址（本机路径常带空格：`[本机](file:///tmp/a b.md)`）
+      const urlEnd = labelEnd > i + 1 ? text.indexOf(')', labelEnd + 2) : -1;
+      const raw = urlEnd > labelEnd + 2 ? text.slice(labelEnd + 2, urlEnd) : '';
+      const loose = raw && !/["']/.test(raw) ? validLinkUrl(raw) : null;
+      if (loose) {
+        emit({ type: 'link', href: loose, kids: inline(text.slice(i + 1, labelEnd), depth + 1, true) }, urlEnd + 1);
         continue;
       }
     }
@@ -267,6 +274,48 @@ export function inline(source, depth = 0, inLink = false) {
   }
   if (text.length > plain) push(out, text.slice(plain));
   return out;
+}
+
+/**
+ * `[字](` 后面那一截（从 `from` 起）：地址（可以 `<>` 括起来；不括的到空白或右括号为止，成对的括号算在地址里）、可有可无的标题
+ * （`"…"`、`'…'`、`(…)`），再是右括号。`{url, title, end}`，`end` 是右括号后面那一个字；拆不开的是 `null`（照字）。
+ * @param {string} text @param {number} from
+ */
+function destAt(text, from) {
+  let k = from;
+  const skip = () => { while (text[k] === ' ' || text[k] === '\t') k += 1; };
+  skip();
+  let url = '';
+  if (text[k] === '<') {
+    const close = text.indexOf('>', k + 1);
+    if (close < 0 || /[\n<]/.test(text.slice(k + 1, close))) return null;
+    url = text.slice(k + 1, close);
+    k = close + 1;
+  } else {
+    let depth = 0;
+    const start = k;
+    for (; k < text.length && !/\s/.test(text[k]); k += 1) {
+      if (text[k] === '(') depth += 1;
+      else if (text[k] === ')') {
+        if (depth === 0) break;
+        depth -= 1;
+      }
+    }
+    url = text.slice(start, k);
+  }
+  const gap = k;
+  skip();
+  /** @type {string|null} */
+  let title = null;
+  const quote = /** @type {Record<string, string>} */ ({ '"': '"', "'": "'", '(': ')' })[text[k]];
+  if (quote && k > gap) {
+    const close = text.indexOf(quote, k + 1);
+    if (close < 0) return null;
+    title = text.slice(k + 1, close);
+    k = close + 1;
+    skip();
+  }
+  return text[k] === ')' && url ? { url, title, end: k + 1 } : null;
 }
 
 /**

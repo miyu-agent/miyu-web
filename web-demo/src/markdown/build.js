@@ -130,7 +130,7 @@ function inlineNode(n, ctx) {
       return link(n.href, '.auto-link', [n.text], ctx);
     case 'image':
       // 没接扩展点、扩展点不认的（比如地址是个 mailto:）照原文写
-      return ctx.hooks.image?.(n.src, n.alt) ?? `![${n.alt}](${n.src})`;
+      return ctx.hooks.image?.(n.src, n.alt, n.title ?? null) ?? `![${n.alt}](${n.src})`;
     case 'tag':
       // 放行的标签照名字新造（第 1 条），名字不在表里的照字
       return TAGS.includes(n.tag) ? h(n.tag, kids(n.kids, ctx)) : kids(n.kids, ctx);

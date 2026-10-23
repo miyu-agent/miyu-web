@@ -449,3 +449,14 @@ test('缩进 4 列的几行是代码块（中间空行也算、去掉缩进）�
   assert.deepEqual(parse('1. 项\n\n    第二段'), [{ type: 'list', ordered: true, task: false, items: [{ check: null, kids: ['项'], blocks: [para('第二段')] }] }]);
   assert.deepEqual(parse('1. 项\n\n       代码'), [{ type: 'list', ordered: true, task: false, items: [{ check: null, kids: ['项'], blocks: [code('代码')] }] }]);
 });
+
+test('链接、图片带标题：[字](地址 "标题")、![说明](地址 \'标题\')、<地址>、成对括号的地址；拆不开的照字（2026-10-23）', () => {
+  assert.deepEqual(inline('[文档](https://a.com/x "看文档")'), [{ type: 'link', href: 'https://a.com/x', kids: ['文档'], title: '看文档' }]);
+  assert.deepEqual(inline('![占位图](https://via.placeholder.com/150 "占位")'), [{ type: 'image', src: 'https://via.placeholder.com/150', alt: '占位图', title: '占位' }]);
+  assert.deepEqual(inline("![图](a.png 'b')"), [{ type: 'image', src: 'a.png', alt: '图', title: 'b' }]);
+  assert.deepEqual(inline('![图](<有 空格.png>)'), [{ type: 'image', src: '有 空格.png', alt: '图' }]);
+  assert.deepEqual(inline('[维基](https://zh.wikipedia.org/wiki/A_(B))。'), [{ type: 'link', href: 'https://zh.wikipedia.org/wiki/A_(B)', kids: ['维基'] }, '。']);
+  // 标题没收尾的照字；本机路径带空格的（括号里没有引号）照原来的认法到右括号
+  assert.deepEqual(inline('[a](https://a.com "t)'), ['[a](', { type: 'autolink', href: 'https://a.com/', text: 'https://a.com' }, ' "t)']);
+  assert.deepEqual(inline('[本机](file:///tmp/a b.md)'), [{ type: 'link', href: 'file:///tmp/a%20b.md', kids: ['本机'] }]);
+});

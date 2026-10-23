@@ -93,13 +93,14 @@ function hooksFor(scope, where, say, made, ext) {
       });
     },
     // 照扩展名：图片、视频、音频画成卡片；不是图的（网页、文档）照链接写（蓝图「图片」第 1 条）
-    image: (src, alt) => {
-      const name = alt || decodeSafe(src.split(/[?#]/)[0].split('/').pop() || src);
+    // 写了标题的照标题当名字（悬停、灯箱里写它）
+    image: (src, alt, title) => {
+      const name = title || alt || decodeSafe(src.split(/[?#]/)[0].split('/').pop() || src);
       const kind = embedKind(src);
       if (!kind) return asLink(src, name);
       const got = url(src);
       if (!got) return null;
-      return reuse(`image:${src}\n${alt}`, () => {
+      return reuse(`image:${src}\n${alt}\n${title ?? ''}`, () => {
         if (kind === 'video') return videoCard({ url: got, name });
         if (kind === 'audio') return audioCard({ url: got, name, download: url(src, true) ?? undefined });
         return imageCard({ url: got, name, lightbox: ext?.lightbox, tried: localPath(src, where) ?? undefined });

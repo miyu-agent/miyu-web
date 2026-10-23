@@ -17,7 +17,7 @@ import { build } from './build.js';
  *   最后那一块都是 `false`，这时画出来的东西下一次重画就扔掉，贵的活（画图、取数）留到 `true` 再做
  * @property {(line: string) => (Node|null)} [line] 独占一行的字（原样，带着两头的空白）：给一个节点，这一行就单独画成
  *   它，段落在这里断开；给 `null` 照平常的写法认（以后的音视频、图片卡片）。每画一次每一行最多问一次，围栏里的不问
- * @property {(src: string, alt: string) => (Node|null)} [image] `![说明](地址)`：给一张图的节点（蓝图「图片」）；给 `null`
+ * @property {(src: string, alt: string, title: string|null) => (Node|null)} [image] `![说明](地址 "标题")`：给一张图的节点（蓝图「图片」）；给 `null`
  *   照原文写
  * @property {(container: HTMLElement) => void} [after] 每画完一次调一次，拿到画好的容器（以后的链接卡片：找出
  *   独占一段的链接换成卡片）。这时容器可能还没放进页面（`ui/chat.js` 画好了才换上去）；在收的回答每来一段都会调，
