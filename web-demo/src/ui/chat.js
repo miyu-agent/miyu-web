@@ -65,6 +65,8 @@ export class Chat {
     // 人点开、收起时间线（`timeline.js`、`steps.js` 发的）：被点的那一行钉在原地
     // 换上去的时间线经 `env.pin` 发同一个事件，带上钉多久（`detail.ms`，蓝图「换画法」第 2 条）
     this.list.addEventListener('tl-toggle', (e) => this.scroll.toggled(/** @type {Element} */ (e.target), /** @type {CustomEvent} */ (e).detail?.ms));
+    // 一段时间线开着的收起来了：跟着最新的时视口照收完以后的样子、同一条曲线缓过去
+    this.list.addEventListener('tl-fold', (e) => { const wrap = /** @type {CustomEvent} */ (e).detail?.wrap; if (wrap) this.scroll.folding(wrap); });
     // 换会话淡入走完：拿掉那个类（不然下一次挪进旧的那一层时还带着）
     this.list.addEventListener('animationend', (e) => { if (e.target === this.list) this.list.classList.remove('is-switching-in'); });
     /** 换会话时旧的那一屏（`reset` 的 `animate`）：同一时间只有一层 @type {HTMLElement|null} */
