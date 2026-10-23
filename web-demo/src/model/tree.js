@@ -95,3 +95,14 @@ export function pathOf(id, parentOf) {
   }
   return path;
 }
+
+/**
+ * 子代理的会话左上角画哪几颗上面几层的小片（蓝图「对话区」的「子代理的会话顶上那条路径」；不含现在这一个，它是标题那一颗）：
+ * 连现在这个超过 `keep` 层的，留主会话和最后 `keep - 2` 层，中间一颗 `null`（`…`）。
+ * @template T @param {T[]} path 从主会话一层层到这一个（`pathOf`） @param {number} keep @returns {(T|null)[]}
+ */
+export function crumbsOf(path, keep) {
+  const up = path.slice(0, -1);
+  if (path.length <= keep) return up;
+  return [up[0], null, ...up.slice(up.length - Math.max(1, keep - 2))];
+}

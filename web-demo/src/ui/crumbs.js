@@ -1,12 +1,13 @@
 // @ts-check
-//! 子代理的会话顶上那条路径（蓝图 `web.md`「对话区」的「子代理的会话顶上那条路径」）：看着子代理的会话时，对话区顶上一条
-//! `主会话 › 上层 › 这一个`，前面几段点了进那个会话，最后一段是现在这个、不能点。主会话里没有。路径照 `model/tree.js` 的 `pathOf`
-//! 找（派它的会话照子会话 `session.created` 的 `parent`）；太长的从中间几段起收成 `…`。回派它的那一层的按钮不在这里，在输入框正上方
-//! （`BackButton`：从下面进的子代理，回去不用跑到顶上）。
+//! 子代理的会话顶上那条路径（蓝图 `web.md`「对话区」的「子代理的会话顶上那条路径」）：看着子代理的会话时，左上角标题那一颗小片
+//! （软件包 setup 画）前面，一颗颗分开的小片写上面几层（主会话、上一层……），点了进那个会话；现在这一个的标题不在这里画。主会话里没有。
+//! 2026-10-24 项目主人：子代理不要顶栏、和主会话一样，路径多几颗小片、别放在一颗里。路径照 `model/tree.js` 的 `pathOf` 找；太长的
+//! 中间收成一颗 `…`。回派它的那一层的按钮不在这里，在输入框正上方（`BackButton`：从下面进的子代理，回去不用跑到顶上）。
 
 import { h, icon, replace } from './dom.js';
 import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
+import { crumbsOf } from '../model/tree.js';
 
 export class Crumbs {
   /** @param {(id: string) => void} open 进一个会话 */
@@ -17,7 +18,7 @@ export class Crumbs {
   }
 
   /**
-   * 照路径画；只有一段（主会话、新会话）的藏起来。
+   * 照路径画上面几层（最后一段是现在这个，不画）；只有一段（主会话、新会话）的藏起来。
    * @param {{session: string, title: string|null}[]} path 从主会话一层层到这一个
    */
   draw(path) {
@@ -28,19 +29,11 @@ export class Crumbs {
       if (!this.el.hidden) hide(this.el);
       return;
     }
-    const keep = res.layout.crumbs_keep;
-    // 太长的：留头一段和后面 `keep - 1` 段，中间收成一个 `…`
-    const shown = path.length > keep ? [path[0], null, ...path.slice(path.length - (keep - 1))] : path;
-    const parts = shown.flatMap((p, i) => {
-      const sep = i ? [h('span.crumb-sep', { 'aria-hidden': 'true' }, icon('chevron-right'))] : [];
-      if (!p) return [...sep, h('span.crumb-gap', '…')];
+    replace(this.el, crumbsOf(path, res.layout.crumbs_keep).map((p) => {
+      if (!p) return h('span.crumb.is-gap', { 'aria-hidden': 'true' }, '…');
       const title = p.title ?? t('sidebar.untitled');
-      const last = i === shown.length - 1;
-      return [...sep, last
-        ? h('span.crumb.is-here', { title, 'aria-current': 'page' }, title)
-        : h('button.crumb', { type: 'button', title, onclick: () => this.open(p.session) }, title)];
-    });
-    replace(this.el, h('div.crumb-path', parts));
+      return h('button.crumb', { type: 'button', title, onclick: () => this.open(p.session) }, h('span', title));
+    }));
     if (this.el.hidden) show(this.el);
   }
 }

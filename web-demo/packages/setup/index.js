@@ -203,24 +203,16 @@ export function apply(ctx) {
       info.hidden = false;
       return;
     }
-    // 主会话（2026-10-19 项目主人第三版）：左上角写标题（项目里的前面多「项目名 /」，点项目名进项目页），点标题出菜单：人格、预设、工作区（原来平铺在这一条上）
-    if (!chat.parentOf?.(session)) {
-      const titleBtn = h('button.setup-info-part.is-title', { type: 'button', title: title ?? '', 'aria-haspopup': 'menu', onclick: () => openInfo(titleBtn, session, persona, preset, path) },
-        h('span', title ?? t('info.untitled')));
-      pathBtn = titleBtn;
-      replace(info, project ? [projectPart(project), h('span.setup-info-slash', '/')] : null, titleBtn);
-      info.hidden = false;
-      // 卡片开着时人格、预设、工作区换了：卡片当场跟着改（2026-10-22 项目主人：换了工作区卡片里还是旧的）；翻进去的那几页不动
-      if (infoMenu.open && infoMenu.view?.card === session) showInfo(titleBtn, session, persona, preset, path);
-      return;
-    }
-    // 子代理的会话（顶上有路径那一条写着标题）：照旧平铺人格 · 预设 · 工作目录
-    const sep = () => h('span.setup-info-sep', '·');
-    replace(info,
-      persona ? [h('span.setup-info-part', icon('user-round'), h('b', nameOf(persona))), sep()] : null,
-      preset ? [h('span.setup-info-part', icon('toggle-right'), h('b', presetNameOf(preset))), sep()] : null,
-      pathBtn = h('button.setup-info-part.is-path', { type: 'button', title: tilde(cwd, home()), onclick: () => openWorkspaces(pathBtn ?? info, true) }, icon('folder'), h('span', path)));
+    // 左上角写标题（2026-10-19 项目主人第三版），点标题出菜单：人格、预设、工作区（原来平铺在这一条上）。主会话在项目里的前面多「项目名 /」，
+    // 点项目名进项目页；子代理的会话同主会话（2026-10-24 项目主人：子代理不要顶栏，和主会话一样只是标题不一样），前面上面几层的小片由
+    // 整页画（`ui/crumbs.js`），不再写项目名
+    const titleBtn = h('button.setup-info-part.is-title', { type: 'button', title: title ?? '', 'aria-haspopup': 'menu', onclick: () => openInfo(titleBtn, session, persona, preset, path) },
+      h('span', title ?? t('info.untitled')));
+    pathBtn = titleBtn;
+    replace(info, project && !chat.parentOf?.(session) ? [projectPart(project), h('span.setup-info-slash', '/')] : null, titleBtn);
     info.hidden = false;
+    // 卡片开着时人格、预设、工作区换了：卡片当场跟着改（2026-10-22 项目主人：换了工作区卡片里还是旧的）；翻进去的那几页不动
+    if (infoMenu.open && infoMenu.view?.card === session) showInfo(titleBtn, session, persona, preset, path);
   };
 
   /** 左上角的项目名：项目颜色的文件夹加名字，点了进项目页 @param {any} p */
