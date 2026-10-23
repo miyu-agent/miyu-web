@@ -193,11 +193,11 @@
 /* 她那一轮、提示行缩不缩进照各自的（中途换了人格，旧的照回复时的人格：`chat.js` 的 `block`）；压缩的进度、正文末尾那一格照现在的人格 */
 .timeline.is-bare .compacting, .timeline.is-bare .chat-tail { padding-left: 0; }
 .assistant-message.is-bare, .note.is-bare { padding-left: 0; }
-.assistant-content { color: var(--text); font-family: var(--font-read); font-size: var(--md-size, calc(15px * var(--text-scale))); line-height: var(--md-line, 1.75); }
+.assistant-content { color: var(--text); font-family: var(--font-read); font-size: var(--md-size, calc(14px * var(--text-scale))); line-height: var(--md-line, 1.72); }
 .assistant-content > * + * { margin-top: calc(10px * var(--space)); }
 
 /* 收尾那一行（tui.md「正文」第 4 条）：和上面的回答之间空一行（正文的一行高），等宽 13px、暗；出错的红 */
-.assistant-content > .turn-end { margin-top: calc(calc(15px * var(--space)) * 1.75); }
+.assistant-content > .turn-end { margin-top: calc(calc(14px * var(--space)) * 1.72); }
 /* 她正在回答时来的回报：夹在她这一块里，上下两段时间线中间；已经在她的内容那一列里，不再缩进，上下留和时间线一样的空 */
 .assistant-content > .note { margin-top: calc(12px * var(--space)); margin-bottom: calc(12px * var(--space)); padding-left: 0; }
 .turn-end { display: flex; flex-wrap: wrap; align-items: center; column-gap: calc(10px * var(--space)); color: var(--turn-end-fg, var(--t-dim)); font: var(--turn-end-font, calc(13px * var(--text-scale))/1.6 var(--font-mono)); }

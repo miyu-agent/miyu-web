@@ -6330,5 +6330,11 @@
     "select": [
       ".tl-progress"
     ]
+  },
+  "markdown.strong": {
+    "zh": "回答：粗体",
+    "select": [
+      ".markdown-body strong"
+    ]
   }
 }
