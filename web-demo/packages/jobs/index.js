@@ -50,6 +50,21 @@ export function apply(ctx) {
   redo(session, session ? statusOf(session) : null);
   ctx.on('view.changed', (v) => redo(v.session, v.status));
   ctx.on('jobs.open', () => panel.open());
-  ctx.slots.mount('composer.footer', { id: 'jobs', order: 10, render: () => panel.button });
-  ctx.slots.mount('composer.float', { id: 'jobs', order: 10, render: () => panel.el });
+  // 仪表盘做右边一栏的时候（窗口够宽，事件 `dashboard.active`，蓝图「仪表盘」第 2 条）不画：后台任务在那边看；窗口窄了、仪表盘停用了再挂回来
+  /** @type {Array<() => void>} */
+  let mounted = [];
+  const mountAll = () => {
+    mounted = [
+      ctx.slots.mount('composer.footer', { id: 'jobs', order: 10, render: () => panel.button }),
+      ctx.slots.mount('composer.float', { id: 'jobs', order: 10, render: () => panel.el }),
+    ];
+  };
+  mountAll();
+  ctx.on('dashboard.active', (/** @type {{on?: boolean}|undefined} */ s) => {
+    if (s?.on && mounted.length) {
+      panel.close();
+      for (const undo of mounted) undo();
+      mounted = [];
+    } else if (!s?.on && !mounted.length) mountAll();
+  });
 }
