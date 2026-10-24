@@ -69,6 +69,15 @@ test('测试的参数：配好的带 provider，别的带 candidate，贴的密�
   assert.deepEqual(testParams({ kind: 'custom', driver: 'anthropic', base_url: 'https://r.example.com/v1' }, null, 'm-1'), { candidate: { driver: 'anthropic', base_url: 'https://r.example.com/v1' }, model: 'm-1' });
 });
 
+test('配好了的一家「重新设置」贴了新的密钥：照它的接口、地址当候选测，存的时候照同一个编号写新的 key（2026-10-24 项目主人）', () => {
+  const zen = { kind: /** @type {const} */ ('configured'), id: 'deepseek', driver: 'openai-chat', base_url: 'https://api.deepseek.com' };
+  assert.deepEqual(testParams(zen, { value: 'sk-2' }, null), { candidate: { driver: 'openai-chat', base_url: 'https://api.deepseek.com', key: { value: 'sk-2' } } });
+  assert.deepEqual(testParams(zen, null, null), { provider: 'deepseek' }, '没贴的照配置里那一份测');
+  assert.deepEqual(testParams({ kind: 'configured', id: 'deepseek' }, { value: 'sk-2' }, null), { provider: 'deepseek' }, '不知道地址的照配置里那一份测');
+  assert.deepEqual(setupChanges(zen, { secret: 'deepseek-new' }, { chat: null, taken: new Set() }), { id: 'deepseek', changes: [{ key: 'providers.deepseek.key', value: { secret: 'deepseek-new' } }] });
+  assert.deepEqual(setupChanges(zen, null, { chat: null, taken: new Set() }).changes, [], '跳过、没贴新的：什么都不写');
+});
+
 test('存：目录里的一家写密钥，改过写法的另写 catalog，本机的写 local，自定义写接口和地址，没池的建三个', () => {
   const taken = new Set(['example']);
   assert.deepEqual(setupChanges({ kind: 'catalog', catalog: 'deepseek', env: null }, { secret: 'deepseek-abc' }, { chat: 'deepseek-v4', taken }), {

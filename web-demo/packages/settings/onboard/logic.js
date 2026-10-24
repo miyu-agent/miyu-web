@@ -123,7 +123,7 @@ export function mineRows(providers, shown) {
 }
 
 /**
- * @typedef {{kind: 'configured', id: string}
+ * @typedef {{kind: 'configured', id: string, driver?: string|null, base_url?: string|null}
  *   | {kind: 'catalog', catalog: string, env: string|null}
  *   | {kind: 'local', catalog: string}
  *   | {kind: 'custom', driver: string, base_url: string, id?: string, name?: string|null}} Target 要接的那一家：配好了的、目录里的、本机的服务、自定义的（`id` 人起的编号，空着照主机名起；`name` 显示名称，空着照 ID）
@@ -137,7 +137,9 @@ export function mineRows(providers, shown) {
 export function testParams(target, key, model) {
   /** @type {Record<string, any>} */
   const params = {};
-  if (target.kind === 'configured') params.provider = target.id;
+  // 配好了的一家「重新设置」贴了新的密钥：照它的接口、地址当候选测（`provider` 只认配置里那一份密钥）
+  if (target.kind === 'configured' && !(key && target.driver && target.base_url)) params.provider = target.id;
+  else if (target.kind === 'configured') params.candidate = { driver: target.driver, base_url: target.base_url, key };
   else {
     /** @type {Record<string, any>} */
     const candidate = {};
@@ -162,8 +164,11 @@ export function setupChanges(target, key, opts) {
   /** @type {{key: string, value?: any, input?: string}[]} */
   const changes = [];
   let id;
-  if (target.kind === 'configured') id = target.id;
-  else {
+  if (target.kind === 'configured') {
+    id = target.id;
+    // 「重新设置」贴了新的密钥：照同一个编号写新的 `key`
+    if (key) changes.push({ key: `providers.${id}.key`, value: key });
+  } else {
     id = target.kind === 'custom' ? target.id || customId(target.base_url, opts.taken) : configId(target.catalog);
     const put = (/** @type {string} */ field, /** @type {any} */ value) => changes.push({ key: `providers.${id}.${field}`, value });
     if (target.kind !== 'custom' && id !== target.catalog) put('catalog', target.catalog);
