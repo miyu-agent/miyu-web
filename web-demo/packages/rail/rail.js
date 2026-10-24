@@ -1,13 +1,13 @@
 // @ts-check
 //! 右边的跳转条（蓝图 `web.md`「右边的跳转条」，照 ChatGPT 网页端）：你说的一句话一条短横线，正在看的那条亮；指针靠近
 //! 弹出一个浮层列出每一句，点哪句平滑滚到哪句（浮层照样开着，指针离开才收）。哪一句算正在看的由 `reading.js` 算。
-//! 右边的空白放不下它（预览工作区开着、窗口窄）就不画，不压着正文。数都是这个包的设置项（清单）。
+//! 任何宽度都画（窄屏、预览工作区开着、右栏开着缝放不下时也画，贴着对话区右边缘；2026-10-24 项目主人）。数都是这个包的设置项（清单）。
 
-import { h, offsetIn, scaleOf } from '../../src/lib/dom.js';
+import { h, offsetIn } from '../../src/lib/dom.js';
 import { reading } from './reading.js';
 
 /**
- * @typedef {{min_prompts: number, current_at: number, jump_margin: number, gutter: number, close_ms: number}} Config 这个包的设置项
+ * @typedef {{min_prompts: number, current_at: number, jump_margin: number, close_ms: number}} Config 这个包的设置项
  */
 
 /** @typedef {{key: string, text: string, node: HTMLElement}} Prompt 你说的一句：编号、原话、气泡那一块 */
@@ -15,13 +15,11 @@ import { reading } from './reading.js';
 export class PromptRail {
   /**
    * @param {HTMLElement} scroller 对话区滚的那一层
-   * @param {HTMLElement} list 正文那一列：量它右边还空多少
    * @param {Config} config
    */
-  constructor(scroller, list, config) {
+  constructor(scroller, config) {
     this.config = config;
     this.scroller = scroller;
-    this.content = list;
     /** @type {Prompt[]} */
     this.prompts = [];
     this.drawn = '';
@@ -39,17 +37,9 @@ export class PromptRail {
       if (!frame) frame = requestAnimationFrame(() => { frame = 0; this.mark(); });
     };
     scroller.addEventListener('scroll', this.onScroll, { passive: true });
-    this.watch = new ResizeObserver(() => this.fit());
+    // 换宽、换高以后哪一句算正在看的会变
+    this.watch = new ResizeObserver(() => this.mark());
     this.watch.observe(scroller);
-  }
-
-  /** 画不画：句子够多、右边的空白放得下（`rail.min_prompts`、`rail.gutter`）。 */
-  fit() {
-    const { min_prompts: least, gutter } = this.config;
-    // 正文右边到对话区右边空多少，照 CSS 像素（屏幕上量的除掉整页放大）
-    const pad = parseFloat(getComputedStyle(this.content).paddingRight) || 0;
-    const room = (this.scroller.getBoundingClientRect().right - this.content.getBoundingClientRect().right) / scaleOf(this.scroller) + pad;
-    this.el.hidden = this.prompts.length < least || room < gutter;
   }
 
   /**
@@ -58,7 +48,8 @@ export class PromptRail {
    */
   update(prompts) {
     this.prompts = prompts;
-    this.fit();
+    // 画不画只看句子够不够（`rail.min_prompts`）
+    this.el.hidden = prompts.length < this.config.min_prompts;
     const sig = JSON.stringify(prompts.map((p) => [p.key, p.text]));
     if (sig !== this.drawn) {
       this.drawn = sig;

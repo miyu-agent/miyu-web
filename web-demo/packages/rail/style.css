@@ -32,4 +32,3 @@
 }
 .rail-item:hover { background: var(--item-hover, var(--surface-2)); color: var(--item-fg-hover, var(--text)); }
 .rail-item.is-current { background: var(--item-active, var(--surface-3)); color: var(--item-fg-active, var(--text)); }
-@media (max-width: 836px) { .prompt-rail { display: none; } }

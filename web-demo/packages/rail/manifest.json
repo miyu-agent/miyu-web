@@ -46,14 +46,6 @@
         "zh": "跳过去那一句离视口顶多远（px）"
       }
     },
-    "gutter": {
-      "type": "number",
-      "default": 40,
-      "min": 0,
-      "name": {
-        "zh": "右边空白少于这么宽（px）就不画"
-      }
-    },
     "close_ms": {
       "type": "duration",
       "default": 200,

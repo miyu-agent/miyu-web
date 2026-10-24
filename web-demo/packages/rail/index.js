@@ -10,7 +10,7 @@ export function apply(ctx) {
     id: 'rail',
     order: 10,
     render: () => {
-      const rail = new PromptRail(ctx.chat.scroller, ctx.chat.list, ctx.config);
+      const rail = new PromptRail(ctx.chat.scroller, ctx.config);
       const off = ctx.chat.onPrompts((prompts) => rail.update(prompts));
       return { el: rail.el, dispose: () => { off(); rail.dispose(); } };
     },

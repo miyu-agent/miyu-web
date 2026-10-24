@@ -209,7 +209,7 @@ flowchart TB
 | `timeline-default` | 可选 | `seams` | — | — | 职能 `render.timeline`（「出厂」；画法还在 `src/ui/timeline.js`、`steps.js`） | — |
 | `markdown-default` | 可选 | `seams` | — | — | 职能 `render.markdown`（「出厂」；画法还在 `src/markdown/`） | — |
 | `timeline-plain`、`markdown-plain` | 可选（样板，默认停用） | `seams` | — | — | 职能 `render.timeline`、`render.markdown`（「纯文字」，`web.md`「换画法」第 7 条） | — |
-| `rail` | 可选 | `slots`、`chat` | — | — | `stage.right` | `min_prompts`、`current_at`、`jump_margin`、`gutter`、`close_ms` |
+| `rail` | 可选 | `slots`、`chat` | — | — | `stage.right` | `min_prompts`、`current_at`、`jump_margin`、`close_ms` |
 | `mermaid` | 可选 | `slots`、`core`、`host`、`markdown`、`lightbox~` | — | — | `markdown.code`（键 `mermaid`） | `max_height` |
 | `lightbox` | 可选 | — | `lightbox` | — | — | — |
 | `todo` | 可选 | `slots`、`chat` | — | — | `composer.above`（order 10） | `rows`、`marks`、`hold_ms` |
