@@ -714,6 +714,8 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .acc-kind.is-off { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
 .acc-member.is-disabled .acc-name { color: var(--text-faint); }
 .acc-disable:hover { color: var(--danger); }
+/* 成员一行右边：设成、撤掉管理员，停用、启用 */
+.acc-actions { display: flex; flex: none; align-items: center; gap: calc(6px * var(--space)); }
 .acc-pop { width: min(520px, 100%); }
 .acc-make .is-busy [data-icon="loader-circle"] { animation: set-spin calc(0.9s * var(--motion-scale)) linear infinite; }
 .acc-copy { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: calc(10px * var(--space)); margin-top: calc(10px * var(--space)); }

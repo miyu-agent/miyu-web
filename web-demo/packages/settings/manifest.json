@@ -772,13 +772,17 @@
         "done": "好了",
         "members": "成员",
         "kind": {
-          "admin": "管理员",
+          "admin": "机主",
           "member": "成员",
           "system": "系统"
         },
         "disabled": "已停用",
         "created": "{at} 注册",
         "disable": "停用",
+        "make_admin": "设成管理员",
+        "drop_admin": "撤掉管理员",
+        "make_admin_ask": "把 {name} 设成管理员？管理员能在管理员模式里改大家共用的设置、软件和账号。",
+        "role_admin": "管理员",
         "enable": "启用",
         "disable_ask": "停用 {name} 吗？这个账号的登录会全部作废，连着的会断开，数据留着。"
       },
@@ -1417,13 +1421,17 @@
         "done": "Done",
         "members": "Members",
         "kind": {
-          "admin": "Admin",
+          "admin": "Owner",
           "member": "Member",
           "system": "System"
         },
         "disabled": "Disabled",
         "created": "Joined {at}",
         "disable": "Disable",
+        "make_admin": "Make admin",
+        "drop_admin": "Remove admin",
+        "make_admin_ask": "Make {name} an admin? Admins can change shared settings, software and accounts in admin mode.",
+        "role_admin": "Admin",
         "enable": "Enable",
         "disable_ask": "Disable {name}? All of this account’s sign-ins end and open connections drop; the data stays."
       },
@@ -2062,13 +2070,17 @@
         "done": "完了",
         "members": "メンバー",
         "kind": {
-          "admin": "管理者",
+          "admin": "オーナー",
           "member": "メンバー",
           "system": "システム"
         },
         "disabled": "停止中",
         "created": "{at} 登録",
         "disable": "停止",
+        "make_admin": "管理者にする",
+        "drop_admin": "管理者を外す",
+        "make_admin_ask": "{name} を管理者にしますか？管理者は管理者モードで共用の設定・ソフト・アカウントを変更できます。",
+        "role_admin": "管理者",
         "enable": "再開",
         "disable_ask": "{name} を停止しますか？このアカウントのログインはすべて無効になり、接続も切れます。データは残ります。"
       },

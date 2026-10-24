@@ -6444,6 +6444,12 @@
       ".is-admin-locked"
     ]
   },
+  "settings.acc-actions": {
+    "zh": "管理员后台：成员一行右边那几个按钮（设成、撤掉管理员，停用、启用）",
+    "select": [
+      ".acc-actions"
+    ]
+  },
   "settings.for-all": {
     "zh": "设置：管理员模式里带个人那一层的项名字下面「大家的默认」",
     "select": [

@@ -225,12 +225,25 @@ export function memberGroup(view) {
       st.loaded = false;
       load(view);
     } }, t(a.disabled ? 'account.enable' : 'account.disable')) : null;
+    // 设成、撤掉管理员（核心 Y-12中下）：只有成员那几行有，机主恒是管理员；设之前问一句，撤掉不问；停用了的照核心原话（`member_disabled`）
+    const role = a.kind === 'member' ? h('button.set-btn.is-small.acc-role', { type: 'button', onclick: async (/** @type {Event} */ e) => {
+      if (!a.admin && !(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('account.make_admin_ask', { name }), yes: t('account.make_admin'), no: t('account.cancel') }))) return;
+      try {
+        await view.ctx.core.request('account.set_admin', { account: a.account, admin: !a.admin });
+      } catch (err) {
+        view.toast(/** @type {any} */ (err)?.message ?? String(err));
+        return;
+      }
+      st.loaded = false;
+      load(view);
+    } }, t(a.admin ? 'account.drop_admin' : 'account.make_admin')) : null;
     return h(`div.set-row.acc-member${a.disabled ? '.is-disabled' : ''}`,
       h('div.set-text', h('div.set-name', h('span.acc-name', name),
         h(`span.acc-kind.is-${a.kind}`, t(`account.kind.${a.kind}`)),
+        a.kind === 'member' && a.admin ? h('span.acc-kind.is-admin', t('account.role_admin')) : null,
         a.disabled ? h('span.acc-kind.is-off', t('account.disabled')) : null),
       a.created ? h('p.set-desc', t('account.created', { at: when(a.created) })) : null),
-      toggle);
+      role || toggle ? h('div.acc-actions', role, toggle) : null);
   });
   return h('section.set-group', h('h3.set-group-name', t('account.members')), h('div.set-rows', rows));
 }
