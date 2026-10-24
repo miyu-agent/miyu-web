@@ -53,13 +53,6 @@ export function buildPages(schema, got, opts = {}) {
 }
 
 /**
- * 名字下面那一行小字（蓝图第 7 条）：只写什么时候生效，当场生效的交 `null`（整行不出现）。值来自哪一层不写（2026-10-08 项目主人：
- * 「默认」「个人设置」这类来处是核心怎么存，用户用不上）。
- * @param {string} applies @returns {string|null}
- */
-export const noteOf = (applies) => (applies === 'now' || applies === 'live' ? null : applies);
-
-/**
  * 成员的「新会话的权限级别」能选哪几项（蓝图「连核心」第 1 条「成员」那一款，2026-10-24 项目主人定）：成员到不了开放权限，去掉 `full`。
  * @param {{value: any, name: string}[]} options 清单里的选项 @returns {{value: any, name: string}[]}
  */

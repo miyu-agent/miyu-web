@@ -48,7 +48,7 @@ export const stateOf = (view) => (view.state.accounts ??= { loading: false, load
 export async function load(view) {
   const st = stateOf(view);
   if (st.loading) return;
-  // 管理员平时（没开管理员模式）：邀请、账号表是系统那一层（核心 Y-12下上），不读，两组写「在管理员模式里改」（蓝图「管理员模式」第 4 条）
+  // 管理员平时（没开管理员模式）：邀请、账号表是系统那一层（核心 Y-12下上），不读，两组写「仅管理员可以修改」（蓝图「管理员模式」第 4 条）
   if (view.ctx.admin?.locked) {
     Object.assign(st, { admin: true, locked: true, loaded: true, error: null });
     view.redraw();
@@ -114,7 +114,7 @@ function mine(dialog) {
 }
 
 /** 「邀请」：有效期、生成邀请；一个邀请一行。 @param {View} view */
-/** 平时锁着的一组：组名，下面「在管理员模式里改 · 进入管理员模式」 @param {View} view @param {string} name */
+/** 平时锁着的一组：组名，下面「仅管理员可以修改」，隔开一点「进入管理员模式」（只有管理员看得到这一组） @param {View} view @param {string} name */
 export function lockedGroup(view, name) {
   return h('section.set-group', h('h3.set-group-name', name), h('p.set-locked', h('span', view.ctx.text('admin_mode.locked')),
     h('button.set-link', { type: 'button', onclick: () => view.ctx.admin?.set(true) }, view.ctx.text('admin_mode.enter'))));

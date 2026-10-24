@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildPages, listElement, noteOf, duplicates, layerFor, expectFor, writtenIn, envRef, inputText, search, pagesWithErrors, splitKey, templateOf, realKey, itemFor, shortCount, comboState, COMBO_OTHER } from '../../packages/settings/model.js';
+import { buildPages, listElement, duplicates, layerFor, expectFor, writtenIn, envRef, inputText, search, pagesWithErrors, splitKey, templateOf, realKey, itemFor, shortCount, comboState, COMBO_OTHER } from '../../packages/settings/model.js';
 import { problems } from '../../src/kernel/config.js';
 
 const schema = {
@@ -115,13 +115,6 @@ test('项少的页并进别的页、个别组挪页；并掉的页不单列，�
   assert.deepEqual(pages[1].groups, []);
   const none = buildPages(schema, { items: got.items, problems: [] }, { merge: { models: 'general' }, moveGroups: { log: 'general' } });
   assert.deepEqual(none.map((p) => p.id), ['general'], '一项都没有、也没有问题的页不列');
-});
-
-test('名字下面那一行小字：只写什么时候生效，当场生效的整行不出；来自哪一层不写（2026-10-08 项目主人）', () => {
-  assert.equal(noteOf('now'), null);
-  assert.equal(noteOf('live'), null);
-  assert.equal(noteOf('next_turn'), 'next_turn');
-  assert.equal(noteOf('new_session'), 'new_session');
 });
 
 test('同一家里重了的显示名', () => {

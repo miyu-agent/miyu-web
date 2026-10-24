@@ -4,7 +4,7 @@
 //! （`look.js`）共用 `shell`。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { noteOf, envRef, inputText, listElement, layerFor, layerOf, valueIn, writtenIn, secretName, referenceOptions, comboState, COMBO_OTHER } from './model.js';
+import { envRef, inputText, listElement, layerFor, layerOf, valueIn, writtenIn, secretName, referenceOptions, comboState, COMBO_OTHER } from './model.js';
 
 /**
  * 一组：组名，下面一行行。
@@ -60,19 +60,6 @@ export function shell(o) {
 }
 
 /**
- * 名字下面那一行小字（第 7 条）：不是当场生效的写什么时候生效，当场生效的交 `null`；精简的（模型详情：每一项都是下一轮生效）不写。
- * 值来自哪一层不写（2026-10-08 项目主人）。
- * @param {any} dialog @param {import('./model.js').Item} item @param {boolean} [compact]
- */
-/** 说明里已经写了什么时候生效的，不再另写一行（2026-10-21 项目主人：新会话的权限级别说明写了「修改后开新会话生效」） */
-const SAYS_WHEN = new Set(['permission.level']);
-
-function appliesLine(dialog, item, compact) {
-  const when = compact || SAYS_WHEN.has(item.key) ? null : noteOf(item.applies);
-  return when ? dialog.ctx.text(`applies.${when}`) : null;
-}
-
-/**
  * 核心的一项（第 4–8 条）。`compact` 的不写说明、不写生效时机（模型详情里：名字已经说清了，每一项都是下一轮生效）。
  * @param {any} dialog 设置页的弹窗（`dialog.js`）
  * @param {import('./model.js').Item} item
@@ -116,13 +103,11 @@ export function coreRow(dialog, item, opts = {}) {
   };
   const written = writtenIn(item.entry, layerOf(item, admin));
   const made = editor?.options ? control(dialog, { ...item, control: 'select', options: editor.options() }, value, save) : control(dialog, item, value, save, saveSecret);
-  // 管理员模式里：「大家的默认」，个人那一层也写了的接「你的个人设置盖过了它」
-  const forAllNote = forAll ? h('span.set-for-all', ctx.text('admin_mode.default'), writtenIn(item.entry, 'personal') ? ` · ${ctx.text('admin_mode.overridden')}` : '') : null;
-  const applies = appliesLine(dialog, item, opts.compact);
   row = shell({
     name: item.name,
     description: opts.compact ? '' : item.description,
-    source: locked ? dialog.lockLine(true) : forAllNote ? [forAllNote, applies ? ` · ${applies}` : null] : applies,
+    // 名字下面只有锁着的那一句；什么时候生效、谁的默认、盖过了谁都不写（2026-10-24 项目主人）
+    source: locked ? dialog.lockLine(true) : null,
     problems: item.problems,
     control: locked ? h('span.is-admin-locked', { inert: '' }, made) : made,
     reset: written && !locked ? () => save({ unset: true }) : null,

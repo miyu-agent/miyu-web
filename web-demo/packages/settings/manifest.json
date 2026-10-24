@@ -200,12 +200,11 @@
       "member_note": "模型、配置、软件这些由管理员设置",
       "admin_mode": {
         "label": "管理员模式",
-        "bar": "管理员模式 · 改的是大家共用的",
-        "locked": "在管理员模式里改",
+        "locked": "仅管理员可以修改",
         "enter": "进入管理员模式",
-        "required": "这一项要在管理员模式里改",
-        "default": "大家的默认",
-        "overridden": "你的个人设置盖过了它"
+        "required": "这一项仅管理员可以修改",
+        "locked_packages": "部分软件包仅管理员可以修改",
+        "member_privacy": "普通用户运行在沙盒中，应用默认的隐私和安全设置，无法自行修改"
       },
       "pages": {
         "general": "通用",
@@ -221,15 +220,6 @@
         "none": "未设置"
       },
       "from_env": "来自环境变量 {name}",
-      "applies": {
-        "now": "立即生效",
-        "new_session": "新会话生效",
-        "next_turn": "下一轮生效",
-        "restart": "重启核心后生效",
-        "head_start": "重启后生效",
-        "live": "立即生效",
-        "reload": "重新加载后生效"
-      },
       "ext": {
         "run": "运行",
         "perms": "权限",
@@ -851,12 +841,11 @@
       "member_note": "Models, settings and software are managed by the administrator",
       "admin_mode": {
         "label": "Admin mode",
-        "bar": "Admin mode · changes apply to everyone",
-        "locked": "Change this in admin mode",
+        "locked": "Only admins can change this",
         "enter": "Enter admin mode",
-        "required": "This needs admin mode",
-        "default": "Everyone's default",
-        "overridden": "Your personal setting overrides this"
+        "required": "Only admins can change this",
+        "locked_packages": "Some packages can only be changed by admins",
+        "member_privacy": "Regular users run in a sandbox with the default privacy and security settings, and cannot change them"
       },
       "pages": {
         "general": "General",
@@ -872,15 +861,6 @@
         "none": "Not set"
       },
       "from_env": "From environment variable {name}",
-      "applies": {
-        "now": "Applies immediately",
-        "new_session": "Applies to new sessions",
-        "next_turn": "Applies next turn",
-        "restart": "Applies after core restart",
-        "head_start": "Applies after restart",
-        "live": "Applies immediately",
-        "reload": "Applies after reload"
-      },
       "ext": {
         "run": "Run",
         "perms": "Permissions",
@@ -1502,12 +1482,11 @@
       "member_note": "モデル・設定・ソフトは管理者が管理します",
       "admin_mode": {
         "label": "管理者モード",
-        "bar": "管理者モード · みんなの共用設定を変更します",
-        "locked": "管理者モードで変更",
+        "locked": "管理者のみ変更できます",
         "enter": "管理者モードに入る",
-        "required": "これは管理者モードで変更します",
-        "default": "みんなの既定",
-        "overridden": "個人設定で上書きされています"
+        "required": "この項目は管理者のみ変更できます",
+        "locked_packages": "一部のパッケージは管理者のみ変更できます",
+        "member_privacy": "一般ユーザーはサンドボックス内で動作し、既定のプライバシーとセキュリティ設定が適用されます。自分で変更することはできません"
       },
       "pages": {
         "general": "一般",
@@ -1523,15 +1502,6 @@
         "none": "未設定"
       },
       "from_env": "環境変数 {name} から",
-      "applies": {
-        "now": "すぐに反映",
-        "new_session": "新しいセッションに反映",
-        "next_turn": "次のターンから反映されます",
-        "restart": "コア再起動後に反映",
-        "head_start": "再起動後に反映",
-        "live": "すぐに反映",
-        "reload": "再読み込み後に反映"
-      },
       "ext": {
         "run": "実行",
         "perms": "権限",
