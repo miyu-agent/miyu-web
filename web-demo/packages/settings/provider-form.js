@@ -44,7 +44,7 @@ export function providerForm(dialog, providers) {
   const envField = input({ value: keyRef.startsWith('env:') ? keyRef.slice(4) : '', placeholder: 'DEEPSEEK_API_KEY' });
   const keyBox = h('div.set-form-key');
   // 管理员选粘贴的密钥存到哪一份（大家共用、只给我）；成员只有自己那一份
-  const scope = secretScope(dialog);
+  const scope = secretScope(ctx);
   const kindButtons = ['secret', 'env'].map((kind) => h('button.set-seg-item', { type: 'button', onclick: () => { keyKind = kind; drawKey(); } }, t(`key_${kind}`)));
   const drawKey = () => {
     kindButtons.forEach((b, n) => b.classList.toggle('is-on', ['secret', 'env'][n] === keyKind));

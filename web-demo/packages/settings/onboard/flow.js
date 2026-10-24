@@ -8,6 +8,7 @@
 import { h, icon, replace } from '../../../src/lib/dom.js';
 import { logoEl } from '../../../src/lib/logo.js';
 import { secretName } from '../model.js';
+import { secretScope } from '../rows.js';
 import { select } from '../rows.js';
 import { providerRows, mineRows, usableIds, testParams, setupChanges, noPools, modelOrder, filterNames, failureOf, validUrl, cleanUrl, customId, customIdProblem } from './logic.js';
 
@@ -175,8 +176,10 @@ export class ProviderFlow {
     if (target.kind === 'configured') keyRow = this.fieldRow(t('onboard.key'), h('span.ob-fixed', t('onboard.key_configured')));
     else if (target.kind === 'catalog') {
       keyInput = this.keyField(target.env ? t('onboard.key_env', { name: target.env }) : t('onboard.key_paste'));
-      // 只有一行密码框：左边不写「密钥」，框占满、居中（2026-10-23 项目主人：占位里已经写了，左边的字还让框不居中）
-      keyRow = this.fieldRow(null, keyInput);
+      // 只有一行密码框：左边不写「密钥」，框占满、居中（2026-10-23 项目主人：占位里已经写了，左边的字还让框不居中）；
+      // 设置页里管理员下面多一排「存到 大家共用 | 只给我」（引导里不出，照核心的默认）
+      const scope = this.scope();
+      keyRow = scope.el ? h('div', this.fieldRow(null, keyInput), this.fieldRow(null, scope.el)) : this.fieldRow(null, keyInput);
     }
     const key = () => {
       const text = keyInput?.value.trim() ?? '';
@@ -226,6 +229,12 @@ export class ProviderFlow {
       this.stale?.();
     });
     return this.testing(target, '', rows, key, () => validUrl(cleanUrl(url.value)) && checkId(), idInput, { auto: false, pasted: () => !!keyInput.value.trim(), title: t('onboard.custom_title') });
+  }
+
+  /** 这一家粘贴的密钥存到哪一份：设置页里的管理员才选（`rows.js` 的 `secretScope`），引导里照核心的默认；记着，存的时候用 */
+  scope() {
+    this.keyScope = this.mode === 'settings' ? secretScope(this.ctx) : { el: null, params: () => ({}) };
+    return this.keyScope;
   }
 
   /** 密钥框：不回显，改了要重测。 @param {string} hint */
@@ -424,7 +433,7 @@ export class ProviderFlow {
       let ref = key?.env ? { env: key.env } : null;
       if (pasted && key?.value) {
         const secret = secretName(id, Date.now());
-        await core.request('secret.set', { name: secret, value: key.value });
+        await core.request('secret.set', { name: secret, value: key.value, ...(this.keyScope?.params() ?? {}) });
         ref = { secret };
       }
       const { changes } = setupChanges(target, ref, { chat: welcome ? model : null, pools: welcome && noPools(items), taken });

@@ -96,7 +96,7 @@ export function coreRow(dialog, item, opts = {}) {
   // 密钥（`type: secret`）：粘贴的先存成一个新名字的密钥（`secret.set`，不覆盖原来的），再把引用写进配置——人不用知道
   // `{ secret = … }` 怎么写（2026-10-10 当用户试「接入QQ的令牌」：写纯文字会被核心拒）
   // 管理员选存到哪一份（大家共用、只给我）；成员只有自己那一份
-  const scope = secretScope(dialog);
+  const scope = secretScope(ctx);
   const saveSecret = async (text) => {
     row.busy();
     const name = secretName(item.key.toLowerCase().replace(/[^a-z0-9]+/g, '-'), Date.now());
@@ -275,21 +275,24 @@ export function areaField(text, commit) {
 }
 
 /**
- * 存密钥存到哪一份（蓝图「连核心」第 1 条下面「存密钥存到哪一份」，核心 Y-2下下中中）：管理员一个下拉「存到：大家共用 / 只给我」，出厂
+ * 存密钥存到哪一份（蓝图「连核心」第 1 条下面「存密钥存到哪一份」，核心 Y-2下下中中）：管理员一排两段「存到 大家共用 | 只给我」，出厂
  * 大家共用；成员、不认 `layer` 的老核心没有（`el` 是 `null`，`params` 不写 `layer`，照核心的默认）。
- * @param {any} dialog @returns {{el: HTMLElement|null, params: () => {layer?: 'system'|'personal'}}}
+ * @param {any} ctx 设置包的 ctx @returns {{el: HTMLElement|null, params: () => {layer?: 'system'|'personal'}}}
  */
-export function secretScope(dialog) {
-  const ctx = dialog.ctx;
+export function secretScope(ctx) {
   if (!ctx.host?.secretLayers || ctx.host?.member) return { el: null, params: () => ({}) };
   /** @type {'system'|'personal'} */
   let layer = 'system';
-  const options = [{ value: 'system', name: ctx.text('secret_scope.system') }, { value: 'personal', name: ctx.text('secret_scope.personal') }];
-  const button = select(dialog, options, layer, (v) => {
-    layer = v;
-    /** @type {HTMLElement} */ (button.firstChild).textContent = options.find((o) => o.value === v)?.name ?? '';
+  const items = /** @type {const} */ (['system', 'personal']).map((v) => h('button.set-seg-item', {
+    type: 'button', 'aria-pressed': String(v === layer), onclick: () => { layer = v; draw(); },
+  }, ctx.text(`secret_scope.${v}`)));
+  const draw = () => items.forEach((b, i) => {
+    const on = ['system', 'personal'][i] === layer;
+    b.classList.toggle('is-on', on);
+    b.setAttribute('aria-pressed', String(on));
   });
-  return { el: h('span.set-secret-scope', h('span.set-secret-scope-label', ctx.text('secret_scope.label')), button), params: () => ({ layer }) };
+  draw();
+  return { el: h('span.set-secret-scope', h('span.set-secret-scope-label', ctx.text('secret_scope.label')), h('div.set-seg', items)), params: () => ({ layer }) };
 }
 
 /**
