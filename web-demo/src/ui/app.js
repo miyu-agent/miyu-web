@@ -190,7 +190,7 @@ export class App {
     ctx.slots.declare('chat.item', 'keyed');
     ctx.slots.watch('chat.item', () => this.chat.redraw());
     /** 斜杠命令：出厂的一份加软件包登记的（服务 `commands`）；成员改不了界面语言，不列 `/language`（蓝图「连核心」第 1 条「成员」那一款） */
-    this.commands = new Commands(res.commands.commands.filter((/** @type {any} */ c) => !(info.member && c.name === 'language')));
+    this.commands = new Commands(res.commands.commands.filter((/** @type {any} */ c) => !(info.configless && c.name === 'language')));
     this.composer = new Composer({
       send: (text, extra) => this.send(text, extra),
       interrupt: () => this.interrupt(),
@@ -245,8 +245,9 @@ export class App {
       files: (plan, fresh, onUpdate, stale) => listFiles(this.store.conn, this.workdir(), plan, fresh, onUpdate, stale),
       where: () => ({ cwd: this.workdir(), home: this.home }),
     }, () => this.commands.list(), () => ctx.slots.list('composer.payload'));
-    /** 是成员（核心 Y-2下下上）：模型列表调不了、权限级别不到开放权限（蓝图「连核心」第 1 条「成员」那一款） */
+    /** 是成员：权限级别不到开放权限；老核心上的（`configless`）模型列表、配置也调不了（蓝图「连核心」第 1 条「成员」那一款） */
     this.member = !!info.member;
+    this.configless = !!info.configless;
     this.composer.setMember(this.member);
     // 框里：下面一排左边的按钮、写字的地方上面一排（附件这类软件包画）；跟着话一起发的不画，发的时候交出来
     const failedSlot = (owner, reason) => h('div.slot-failed', t('slot_failed', { owner, reason }));
@@ -446,8 +447,8 @@ export class App {
     // 打开页面时进哪个会话照共用的 `ui.startup`（蓝图「连核心」第 4 条）：先是新会话，读到 `recent` 再换到最近的那个；
     // 这一会儿人已经动了（开了别的会话、打了字）的不换
     this.open(null);
-    // 成员读不了配置（核心 Y-2下下上）：照新会话
-    if (!this.member) this.store.conn.request('config.get', { keys: ['ui.startup'] }).catch(() => null).then((reply) => {
+    // 老核心上的成员读不了配置（Y-2下下上）：照新会话
+    if (!this.configless) this.store.conn.request('config.get', { keys: ['ui.startup'] }).catch(() => null).then((reply) => {
       const id = startupSession(reply, this.ranked());
       if (id && this.current === null && !this.composer.input.value) this.open(id);
     });
@@ -983,8 +984,8 @@ export class App {
 
   /** 问一次 `model.list`，记下来（新会话框下面照它写默认的那一个）。 */
   async loadModels() {
-    // 成员调不了模型列表（核心 Y-2下下上）：不问，菜单里写「模型由管理员设置」
-    if (this.member) throw Object.assign(new Error(t('model_menu.member')), { member: true });
+    // 老核心上的成员调不了模型列表（Y-2下下上）：不问，菜单里写「模型由管理员设置」
+    if (this.configless) throw Object.assign(new Error(t('model_menu.member')), { member: true });
     this.models = await this.store.conn.request('model.list', {});
     // 框下面那一截照列表写显示名：列表来了重画一次
     this.schedule();

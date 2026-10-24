@@ -209,9 +209,9 @@ function toolRow(dialog, item, view) {
   const controls = selecting ? [] : [
     // 要浏览器登录的（核心 X-42 上）：加载方式下拉前面一个「登录」
     login?.needs ? loginButton(dialog, item.name, login, { small: true }) : null,
-    // 开关、加载方式写的是配置，成员写不了（核心 Y-2下下上）：不露
-    item.load && !memberOf(dialog) ? loadSelect(dialog, item) : null,
-    item.on !== null && !memberOf(dialog) ? switchFor(dialog, item) : null,
+    // 开关、加载方式写的是配置，老核心上的成员写不了（Y-2下下上）：不露
+    item.load && !configlessOf(dialog) ? loadSelect(dialog, item) : null,
+    item.on !== null && !configlessOf(dialog) ? switchFor(dialog, item) : null,
     can ? askFirst(dialog, iconBtn('trash-2', t('tools.delete'), () => {}, '.is-danger.set-tool-del'), t('tools.delete_ask', { name: item.name }), () => removeItems(dialog, item.kind, [item])) : null,
   ].filter(Boolean);
   const tag = item.kind === 'mcp' && item.own ? null : h('span.set-pkg-tag', sourceText(dialog, item));
@@ -272,8 +272,10 @@ function loadSelect(dialog, item) {
   return select(dialog, options, item.load?.value ?? true, (v) => setLoading(dialog, item, v));
 }
 
-/** 是成员（核心 Y-2下下上：配置、整台机器的事调不了） @param {any} dialog */
+/** 是成员（整台机器的事调不了） @param {any} dialog */
 const memberOf = (dialog) => !!dialog.ctx.host?.member;
+/** 老核心（Y-2下下上）上的成员：配置也写不了 @param {any} dialog */
+const configlessOf = (dialog) => !!dialog.ctx.host?.configless;
 
 /** 全局开关。 @param {any} dialog @param {ToolItem} item */
 function switchFor(dialog, item) {
@@ -366,7 +368,7 @@ function toolDetail(dialog, kind, id) {
         meta,
         actions.length ? h('div.set-pkg-card-actions', actions) : null,
         state ? loginErrorNode(state.login) : null),
-      item.on !== null && !memberOf(dialog) ? h('div.set-control', switchFor(dialog, item)) : null),
+      item.on !== null && !configlessOf(dialog) ? h('div.set-control', switchFor(dialog, item)) : null),
     showing ? h('pre.set-ext-output', stderr) : null);
   const line = (/** @type {string} */ name, /** @type {any} */ value, /** @type {any} */ note = null) => h('div.set-row',
     h('div.set-text', h('div.set-name', h('span', name)), note ? h('p.set-desc', note) : null), h('div.set-control.set-tool-value', value));
@@ -396,7 +398,7 @@ function toolDetail(dialog, kind, id) {
           h('span', skippedWhy(t, x)))))));
     }
   }
-  if (item.load && !memberOf(dialog)) {
+  if (item.load && !configlessOf(dialog)) {
     const reset = item.load.by === 'setting' ? h('button.set-link', { type: 'button', onclick: () => setLoading(dialog, item, null) }, t('tools.load_reset')) : null;
     rows.push(line(t('tools.field.load'), loadSelect(dialog, item), item.load.by === 'setting' ? [t('tools.load_set'), ' · ', reset] : null));
   }

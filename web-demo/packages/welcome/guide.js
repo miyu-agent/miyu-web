@@ -12,7 +12,7 @@ const BACK = /** @type {Record<string, string|null>} */ ({ hello: null, language
 export const NUMBERED = ['language', 'model', 'persona', 'theme', 'profile', 'preset', 'embed'];
 /** 从头到尾的先后 */
 const ORDER = ['hello', 'language', 'model', 'persona', 'theme', 'profile', 'preset', 'embed', 'done'];
-/** 成员走的几步（核心 Y-2下下上：界面语言、模型、关于你、预设、语义模型那几步写配置，成员写不了；蓝图「连核心」第 1 条「成员」那一款） */
+/** 老核心上的成员走的几步（Y-2下下上：界面语言、模型、关于你、预设、语义模型那几步写配置，成员写不了；蓝图「连核心」第 1 条「成员」那一款） */
 export const MEMBER_STEPS = ['hello', 'persona', 'theme', 'done'];
 
 /**
@@ -116,8 +116,9 @@ export class Guide {
 
   /** 步骤条列的几步。 */
   numbered() {
-    if (this.ctx.host?.member) return NUMBERED.filter((s) => MEMBER_STEPS.includes(s));
-    return NUMBERED.filter((s) => s !== 'embed' || this.embed);
+    if (this.ctx.host?.configless) return NUMBERED.filter((s) => MEMBER_STEPS.includes(s));
+    // 成员装不了包（内置语义模型），那一屏不出
+    return NUMBERED.filter((s) => s !== 'embed' || (this.embed && !this.ctx.host?.member));
   }
 
   /**
@@ -150,7 +151,7 @@ export class Guide {
     document.addEventListener('focusin', this.onFocus);
     this.page.addEventListener('scroll', this.onScroll, { passive: true });
     this.go(step in BACK ? step : 'hello', 1);
-    // 内置语义模型那一屏出不出：问到了重画步骤条（「语义模型」那一段）；成员不走那一屏、读不到配置清单，不问
+    // 内置语义模型那一屏出不出：问到了重画步骤条（「语义模型」那一段）；成员装不了包、不走那一屏，不问
     if (!this.ctx.host?.member) embedState(this.ctx.core).then((got) => {
       this.embed = got;
       if (!this.head.hidden) this.drawSteps();
@@ -186,7 +187,9 @@ export class Guide {
 
   /** 走到一步。 @param {string} step @param {1|-1} dir */
   async go(step, dir) {
-    if (this.ctx.host?.member) step = memberStep(step, dir);
+    if (this.ctx.host?.configless) step = memberStep(step, dir);
+    // 成员装不了包：内置语义模型那一屏跳过（往前到完成，往回到预设）
+    if (step === 'embed' && this.ctx.host?.member) step = dir > 0 ? 'done' : 'preset';
     this.step = step;
     this.ctx.mascot?.busy?.(false, false);
     const host = { ready: () => this.sync(), mascot: this.ctx.mascot ?? null, panel: this.layer };
@@ -524,8 +527,8 @@ export class Guide {
    * （2026-10-19 项目主人：边淡出边换会话掉帧）。
    */
   async finish() {
-    // 成员写不了配置（核心 Y-2下下上）：走没走过只记在这台设备上（`welcome.done`，照账号分开）
-    if (!this.ctx.host?.member) await this.ctx.core.request('config.set', { layer: 'personal', changes: [{ key: 'ui.welcomed', value: true }] });
+    // 老核心上的成员写不了配置（Y-2下下上）：走没走过只记在这台设备上（`welcome.done`，照账号分开）
+    if (!this.ctx.host?.configless) await this.ctx.core.request('config.set', { layer: 'personal', changes: [{ key: 'ui.welcomed', value: true }] });
     this.ctx.storage.set(STEP_KEY, null);
     this.ctx.storage.set(DONE_KEY, true);
     this.ctx.chat.open(null);
