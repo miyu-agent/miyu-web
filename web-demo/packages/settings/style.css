@@ -71,6 +71,7 @@
 .set-gear.is-admin .set-gear-dot { display: block; }
 /* 锁着的控件：灰着、点不了 */
 .is-admin-locked { opacity: 0.5; pointer-events: none; }
+.set-body.is-admin-page .set-btn, .set-body.is-admin-page .set-switch { opacity: 0.5; pointer-events: none; }
 .set-empty { padding: calc(24px * var(--space)) 0; color: var(--text-faint); font-size: calc(13px * var(--text-scale)); }
 .set-empty.is-bad { color: var(--danger); }
 .set-group { margin-top: calc(12px * var(--space)); }

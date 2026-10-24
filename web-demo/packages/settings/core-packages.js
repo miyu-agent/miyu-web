@@ -143,6 +143,12 @@ export function openInfo(dialog, id) {
  * 展开要批准的那一块（批了照 `extensions.js` 开）。程序不在的灰着。
  * @param {any} dialog @param {any} p
  */
+/** 平时锁着系统那一层的控件灰着、点不了 @param {any} dialog @param {HTMLElement} el */
+const lockedIf = (dialog, el) => {
+  if (dialog.adminLocked) el.classList.add('is-admin-locked');
+  return el;
+};
+
 function switchFor(dialog, p) {
   const id = p.package;
   const el = toggle(!!p.enabled, async (on) => {
@@ -161,6 +167,8 @@ function switchFor(dialog, p) {
     }
   });
   if (p.status === 'program_missing') el.setAttribute('disabled', '');
+  // 开关软件包是系统那一层：平时锁着灰着（蓝图「管理员模式」第 4 条）
+  if (dialog.adminLocked) el.classList.add('is-admin-locked');
   return el;
 }
 
@@ -220,7 +228,7 @@ function infoCard(dialog, p, e) {
   const meta = [p.version ? t('pkg.version', { version: p.version }) : null, from && !from.startsWith('pkg.') ? from : null, author].filter(Boolean).join(' · ');
   const upstream = typeof p.upstream === 'string' && /^https:\/\/[^\s]+$/.test(p.upstream) ? p.upstream : null;
   const control = p.required ? h('span.set-pkg-status', t('pkg.required'))
-    : e ? toggle(e.on, (on) => (on ? dialog.extensions.turnOn(e) : dialog.extensions.act('extension.disable', { package: id })))
+    : e ? lockedIf(dialog, toggle(e.on, (on) => (on ? dialog.extensions.turnOn(e) : dialog.extensions.act('extension.disable', { package: id }))))
     : 'enabled' in p ? switchFor(dialog, p) : null;
   const stderr = e ? (Array.isArray(e.stderr) ? e.stderr.join('\n') : e.stderr ?? '') : '';
   const showing = !!e && dialog.extensions.showing.has(id);
@@ -273,6 +281,7 @@ function removeButton(dialog, p) {
   if (p.required || p.layer === 'shipped') return null;
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const button = h('button.set-btn.is-danger', { type: 'button', onclick: async () => {
+    if (dialog.adminGuard()) return;
     if (!await confirmIn(button, { text: t('pkg.uninstall_ask', { name: p.name ?? p.package }), yes: t('ask_yes'), no: t('ask_no') })) return;
     try {
       await dialog.ctx.core.request('package.remove', { package: p.package });
@@ -360,6 +369,7 @@ function mcpGroup(dialog, p) {
   const on = p.enabled !== false;
   // 都被个人设置里同名的替代了的不给「重启」：重启的是这个包的服务，它们不起
   const restart = on && !list.every((s) => s.covered) ? h('button.set-btn.is-small', { type: 'button', onclick: async () => {
+    if (dialog.adminGuard()) return;
     try {
       const got = await dialog.ctx.core.request('package.restart', { package: p.package });
       if (got?.package) dialog.packages = dialog.packages.map((x) => (x.package === got.package ? got : x));

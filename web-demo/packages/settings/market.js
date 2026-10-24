@@ -32,7 +32,8 @@ export async function loadMarket(dialog, force = false, draw = true) {
   const m = stateOf(dialog);
   m.loading = true;
   try {
-    if (force) await dialog.ctx.core.request('package.sync', { force: true });
+    // 同步软件源是系统那一层：平时锁着的只读本机记着的索引
+    if (force && !dialog.adminLocked) await dialog.ctx.core.request('package.sync', { force: true });
     const got = await dialog.ctx.core.request('package.search', {});
     m.list = Array.isArray(got?.packages) ? got.packages : [];
     m.generated = got?.generated ?? null;
@@ -244,6 +245,8 @@ function actionButton(dialog, p, upgradable, big) {
 /** 看一眼（只照索引说，不下载）：同一个编号只问一次，刷新了重问 @param {any} dialog @param {string} id */
 function previewOf(dialog, id) {
   const m = stateOf(dialog);
+  // 预览也算系统那一层（核心 Y-12下上）：平时锁着的不问，照「在管理员模式里改」说
+  if (dialog.adminLocked) return Promise.reject(Object.assign(new Error(dialog.ctx.text('admin_mode.locked')), { reason: 'admin_locked' }));
   if (!m.previews.has(id)) m.previews.set(id, dialog.ctx.core.request('package.install', { source: id, preview: true }));
   return /** @type {Promise<any>} */ (m.previews.get(id));
 }
@@ -286,6 +289,7 @@ async function upgrade(dialog, ids) {
  * @param {any} dialog @param {string} id @param {() => Promise<any>} call @param {(got: any) => void} done
  */
 async function run(dialog, id, call, done) {
+  if (dialog.adminGuard()) return;
   const m = stateOf(dialog);
   m.busy = id;
   m.progress = null;
@@ -343,6 +347,7 @@ async function confirmAll(dialog) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
   const m = stateOf(dialog);
   let got;
+  if (dialog.adminGuard()) return;
   try {
     got = await dialog.ctx.core.request('package.upgrade', { preview: true });
   } catch (err) {

@@ -279,6 +279,13 @@ export class SettingsDialog {
       h('button.set-link', { type: 'button', onclick: () => this.ctx.admin?.set(true) }, this.ctx.text('admin_mode.enter')));
   }
 
+  /** 改系统那一层的动作先问一句：平时锁着的不发请求，提示「这一项要在管理员模式里改」、能一键进入；交回拦下了没有 */
+  adminGuard() {
+    if (!this.adminLocked) return false;
+    this.adminPrompt();
+    return true;
+  }
+
   /** 核心说要先进管理员模式（没锁住的地方）：提示一句，后面「进入管理员模式」，多停一会儿 */
   adminPrompt() {
     this.panel.querySelector('.set-toast')?.remove();
@@ -366,6 +373,10 @@ export class SettingsDialog {
           h('a.set-repo-link', { href: SOURCE_URL, target: '_blank', rel: 'noopener noreferrer' }, this.ctx.text('source_link'))) : null,
       ];
     }
+    // 整页都是系统那一层的（下载软件、MCP）、软件包页核心那一段：平时页顶一行「在管理员模式里改」；整页的按钮灰着（蓝图「管理员模式」第 4 条）
+    const systemPage = this.current === 'market' || this.current === 'mcp';
+    if (this.adminLocked && (systemPage || this.current === 'packages') && Array.isArray(kids)) kids = [this.lockLine(), ...kids];
+    this.body.classList.toggle('is-admin-page', this.adminLocked && systemPage);
     swap(this.body, kids, dir, restore ?? scroll);
   }
 

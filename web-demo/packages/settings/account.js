@@ -42,12 +42,19 @@ function when(at) {
  */
 
 /** 这一处记的东西 @param {View} view */
-export const stateOf = (view) => (view.state.accounts ??= { loading: false, loaded: false, admin: false, invites: [], accounts: [], error: null, days: 7 });
+export const stateOf = (view) => (view.state.accounts ??= { loading: false, loaded: false, admin: false, locked: false, invites: [], accounts: [], error: null, days: 7 });
 
 /** 读邀请、账号表；不是管理员的（`not_permitted`）不算出错。读完重画。 @param {View} view */
 export async function load(view) {
   const st = stateOf(view);
   if (st.loading) return;
+  // 管理员平时（没开管理员模式）：邀请、账号表是系统那一层（核心 Y-12下上），不读，两组写「在管理员模式里改」（蓝图「管理员模式」第 4 条）
+  if (view.ctx.admin?.locked) {
+    Object.assign(st, { admin: true, locked: true, loaded: true, error: null });
+    view.redraw();
+    return;
+  }
+  st.locked = false;
   st.loading = true;
   try {
     const [invites, list] = await Promise.all([view.ctx.core.request('account.invites', {}), view.ctx.core.request('account.list', {})]);
@@ -107,9 +114,16 @@ function mine(dialog) {
 }
 
 /** 「邀请」：有效期、生成邀请；一个邀请一行。 @param {View} view */
+/** 平时锁着的一组：组名，下面「在管理员模式里改 · 进入管理员模式」 @param {View} view @param {string} name */
+export function lockedGroup(view, name) {
+  return h('section.set-group', h('h3.set-group-name', name), h('p.set-locked', h('span', view.ctx.text('admin_mode.locked')),
+    h('button.set-link', { type: 'button', onclick: () => view.ctx.admin?.set(true) }, view.ctx.text('admin_mode.enter'))));
+}
+
 export function inviteGroup(view) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => view.ctx.text(k, f);
   const st = stateOf(view);
+  if (st.locked) return lockedGroup(view, t('account.invites'));
   const days = /** @type {HTMLSelectElement} */ (h('select.set-select.acc-days', { 'aria-label': t('account.days_label'), onchange: () => { st.days = Number(days.value); } },
     DAYS.map((d) => h('option', { value: String(d), selected: d === st.days }, t('account.days', { n: d })))));
   // 等核心回的时候按钮写「正在生成…」；小窗开着时不重读列表（2026-10-22 项目主人：偶尔点了没弹窗，点一下别处才出来——小窗刚出来下面整页就重画），
@@ -198,6 +212,7 @@ function showInvite(view, got, closed) {
 export function memberGroup(view) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => view.ctx.text(k, f);
   const st = stateOf(view);
+  if (st.locked) return lockedGroup(view, t('account.members'));
   const rows = sortAccounts(st.accounts).map((a) => {
     const name = a.username ?? a.account;
     const toggle = a.kind === 'member' ? h(`button.set-btn.is-small${a.disabled ? '' : '.acc-disable'}`, { type: 'button', onclick: async (/** @type {Event} */ e) => {
