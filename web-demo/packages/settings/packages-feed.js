@@ -24,7 +24,7 @@ export class PackageFeed {
       const got = await this.dialog.ctx.core.request('subscribe', { stream: 'packages' });
       if (Array.isArray(got?.packages)) this.dialog.packages = got.packages;
     } catch {
-      // 旧核心没有这个流：照 `package.list` 读的那一份，不跟推送
+      // 旧核心没有这个流、核心 e1cc0d5e8 以前组里的管理员订不了（`not_permitted`）：照 `package.list` 读的那一份，不跟推送，不报错
       this.live = false;
     }
     // 订上以后再读，读完到订上之间的变化不会漏（推来的照名字换）

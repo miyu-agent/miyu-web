@@ -43,6 +43,7 @@ export class Extensions {
       const got = await this.ctx.core.request('subscribe', { stream: 'extensions' });
       this.entries = new Map((got?.extensions ?? []).map((e) => [e.package, e]));
     } catch {
+      // 旧核心、核心 e1cc0d5e8 以前组里的管理员订不了（`not_permitted`）：不跟推送，不报错
       this.live = false;
     }
   }
