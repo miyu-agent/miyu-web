@@ -362,3 +362,10 @@ test('成员只写得了个人设置（核心 Y-2下下中中）：personal 的�
   // 不写的照旧全列
   assert.ok(buildPages(schema, got).flatMap((p) => p.groups.flatMap((g) => g.items.map((i) => i.key))).includes('log.level'));
 });
+
+test('成员的「新会话的权限级别」不列开放权限（2026-10-24 项目主人定）', async () => {
+  const { memberLevels } = await import('../../packages/settings/model.js');
+  const options = [{ value: 'workspace', name: '工作区' }, { value: 'full', name: '开放权限' }, { value: 'read_only', name: '只读' }];
+  assert.deepEqual(memberLevels(options).map((o) => o.value), ['workspace', 'read_only']);
+  assert.deepEqual(memberLevels([]), []);
+});
