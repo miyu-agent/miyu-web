@@ -39,7 +39,8 @@ export function drawProviders(dialog, list) {
   const same = sameNamed(all);
   const stored = ctx.storage?.get(SHARED_OPEN, null);
   const open = sharedOpen(shared.length, typeof stored === 'boolean' ? stored : null);
-  const item = (/** @type {any} */ x, /** @type {string} */ s) => providerItem(dialog, x, s, x.id === p?.id && s === side, logos, same.has(x.id));
+  // 两块里都有的一家，「共用」那一格不写用不了的原因：核心合出来的状态是自用那一份的
+  const item = (/** @type {any} */ x, /** @type {string} */ s) => providerItem(dialog, x, s, x.id === p?.id && s === side, logos, same.has(x.id), s === 'shared' && both.has(x.id));
   const list_ = h('div.set-prov-list',
     mine.length ? [h('div.set-prov-group', ctx.text('secret_scope.personal')), ...mine.map((x) => item(x, 'mine'))] : null,
     shared.length ? [
@@ -71,9 +72,9 @@ export function drawProviders(dialog, list) {
  * 左边一格：图标、名称，下面暗色小字：用不了的原因（warn 色），能用的写地址的主机名；和别家同名的多一行地址从哪来（主机名、
  * `$环境变量`），好分开。
  */
-function providerItem(dialog, x, side, on, logos, same) {
+function providerItem(dialog, x, side, on, logos, same, merged = false) {
   const ctx = dialog.ctx;
-  const shared = sharedState(x.models ?? []);
+  const shared = merged ? null : sharedState(x.models ?? []);
   const reason = shared ? h('small.is-warn', ctx.text(`models.short_states.${shared}`)) : null;
   const where = same ? whereOf(x.base_url) : reason ? null : hostOf(x.base_url);
   // 两样都有的各占一行（一行放不下，原因会被截掉）
