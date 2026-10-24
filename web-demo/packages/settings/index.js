@@ -8,6 +8,7 @@ import { h, icon } from '../../src/lib/dom.js';
 import { SettingsDialog } from './dialog.js';
 import { ProviderFlow } from './onboard/flow.js';
 import { sectionKit } from './kit.js';
+import { memberLevels } from './model.js';
 import { AdminPage, parseAdmin } from './admin.js';
 
 /** @param {any} ctx */
@@ -71,12 +72,21 @@ export function apply(ctx) {
     /** 关上（记忆详情里点出处打开那个会话） */
     close: () => dialog?.close(),
   });
-  // 「默认界面」（`ui.head`，核心 9-3）：下拉的选项照核心的软件包清单（界面包），名字照清单
+  // 「默认界面」（`ui.head`，核心 9-3）：下拉的选项照核心的软件包清单（界面包），名字照清单；成员读不到软件包，不露（2026-10-24 项目主人定）
   ctx.slots.mount('settings.editor', {
     id: 'settings-head',
     key: 'ui.head',
+    hidden: () => !!ctx.host?.member,
     options: () => (dialog?.heads ?? []).map((p) => ({ value: p.package, name: p.name ?? p.package })),
   });
+  // 「新会话的权限级别」：成员到不了开放权限（核心 Y-2下下上 起），下拉不列那一项（2026-10-24 项目主人定）
+  if (ctx.host?.member) {
+    ctx.slots.mount('settings.editor', {
+      id: 'settings-level',
+      key: 'permission.level',
+      options: () => memberLevels(dialog?.schema?.items?.find((/** @type {any} */ i) => i.key === 'permission.level')?.options ?? []),
+    });
+  }
 
   ctx.commands.register({ name: 'settings', summary: ctx.text('command_settings') }, () => open(null));
   ctx.commands.register({ name: 'config', summary: ctx.text('command_config') }, () => open('models'));
