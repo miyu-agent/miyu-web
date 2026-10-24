@@ -137,7 +137,7 @@ function keyBlock(dialog, p) {
   const unwritten = !p.key;
   const changing = dialog.keyEdit === p.id;
   if (key.set && !changing) {
-    // 存在哪一份照 `secret.list`（「已设置 · 大家共用」「已设置 · 只给我」，蓝图「连核心」第 1 条「存密钥存到哪一份」）
+    // 存在哪一份照 `secret.list`（「已设置 · 共用」「已设置 · 自用」，蓝图「连核心」第 1 条「存密钥存到哪一份」）
     const state = key.ref?.startsWith('env:') ? ctx.text('from_env', { name: key.ref.slice(4) }) : t('key_saved') + secretTag(dialog, key.ref);
     return h('div.set-key-line', h('span', t('key')), h('span.set-key-state', state),
       h('button.set-btn.is-small', { type: 'button', onclick: () => { dialog.keyEdit = p.id; dialog.drawBody(); } }, t('key_change')));

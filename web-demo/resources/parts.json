@@ -6403,7 +6403,7 @@
     ]
   },
   "settings.secret-scope": {
-    "zh": "设置：存密钥存到哪一份的下拉（大家共用、只给我）",
+    "zh": "设置：存密钥存到哪一份的两段切换（共用、自用）",
     "select": [
       ".set-secret-scope"
     ]
