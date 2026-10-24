@@ -3,8 +3,8 @@
 //! - 空会话：输入框正上方「选择人格」「选择预设」「设置工作区」三个按钮（挂载位 `composer.above`），选了以后按钮上的字换成选中的；没选的照默认
 //!   的用，开会话时由整页带上（服务 `chat` 的 `draft`、`setDraft`）。默认的预设、（照预设算出来的）默认人格用不了，锁住输入框，选了才能打字。
 //! - 开着的会话：对话区左上角一小条（挂载位 `stage.info`）：人格名 · 预设名 · 工作目录，点目录那一截换工作区。
-//! - 右侧边栏的「会话信息」卡（挂进仪表盘的挂载位 `side.cards`，`session-card.js`）：同样的人格、预设、工作区，加上下文、用量；这张卡露着
-//!   的时候点左上角的标题不弹卡片（2026-10-24 主会话定）。
+//! - 右侧边栏的「会话信息」卡（挂进仪表盘的挂载位 `side.cards`，`session-card.js`）：同样的人格、预设、工作区，加上下文、用量；右栏开着
+//!   点左上角的标题也照旧弹卡片（2026-10-24 项目主人改主意）。
 //! - `/workspace [路径]`：换这个会话在哪干活（服务 `chat` 的 `setWorkdir`，核心 9-7 的 `session.set_workspace`）；不带路径的开工作区的菜单。
 //! - 设置页：「人格」「预设」两页（`settings.section`），通用页的默认人格、默认预设给下拉的选项（`settings.editor`）。
 //! - 左栏左上角的头像点了（事件 `persona.open`）：直接在页面上开这个会话用的人格的编辑卡片（`quick-edit.js`）。
@@ -256,8 +256,6 @@ export function apply(ctx) {
   const openInfo = (anchor, session, persona, preset, path) => {
     // 开着的时候再点：在翻进去的那一页的回到卡片（2026-10-19 项目主人），在卡片上的收起
     if (infoMenu.open) return infoMenu.view?.back ? infoMenu.view.back() : infoMenu.close();
-    // 右侧边栏的「会话信息」卡露着：同样的东西、同样的换法都在那里，这里不弹（2026-10-24 主会话定）
-    if (sessionCard.visible()) return;
     showInfo(anchor, session, persona, preset, path);
   };
   /** @param {HTMLElement} anchor @param {string} session @param {string|null} persona @param {string|null} preset @param {string} path */

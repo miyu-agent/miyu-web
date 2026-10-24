@@ -47,12 +47,6 @@ export class SessionCard {
     };
   }
 
-  /** 这张卡露着没有（右栏开着、没关掉这张）：露着的时候点左上角标题不弹卡片 */
-  visible() {
-    const el = this.card?.el;
-    return !!el && el.isConnected && el.getClientRects().length > 0 && !el.closest('[hidden], [inert]');
-  }
-
   /** 会话换了、人格预设工作区换了（`setup` 画左上角那一条时叫） @param {Info|null} info */
   set(info) {
     const was = this.info?.session ?? null;
