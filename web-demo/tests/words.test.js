@@ -289,3 +289,12 @@ test('软件包的工具用包的图标（2026-10-16 项目主人）：照 human
     res.human = saved;
   }
 });
+
+test('派子代理那一步：参数里 fork 是真的画分叉 git-fork，别的照 bot（核心 A-F；2026-10-24 项目主人：只换图标）', () => {
+  const title = { name: '派子代理', object: 'j2 · 查资料' };
+  assert.equal(row(tool('subagent', { description: '查资料', prompt: '…', fork: true }, { title })).icon, 'git-fork');
+  assert.equal(row(tool('subagent', { description: '查资料', prompt: '…' }, { title })).icon, 'bot');
+  assert.equal(row(tool('subagent', null, { args: '{"description":"查资料","fork":true}', parsed: undefined, title })).icon, 'git-fork', '只有一段字的照字认');
+  assert.equal(row(tool('subagent', null, { args: '{"description":"查资料","fork":tr', parsed: undefined, state: 'running', status: null, title })).icon, 'bot', '参数还在写');
+  assert.equal(res.timeline.icon_fork, 'git-fork');
+});

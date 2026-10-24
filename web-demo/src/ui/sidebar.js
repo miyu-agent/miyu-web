@@ -689,12 +689,12 @@ function lead(it) {
   return h('span.session-lead');
 }
 
-/** 子代理的记号：在跑的转圈，停在半路的暂停；别的第一层是机器人，再往下是空心的圆（正在看的实心）。 */
+/** 子代理的记号：在跑的转圈，停在半路的暂停；别的第一层是机器人（分叉出来的是分叉），再往下是空心的圆（正在看的实心）。 */
 function childLead(it, depth, active) {
   if (it.running) return h('span.session-lead.session-run-spinner', frameNow());
   if (it.paused) return h('span.session-lead.session-paused', { title: t('sidebar.paused') }, icon('circle-pause'));
   if (depth > 1) return h('span.session-lead.session-node', h(`i${active ? '.is-on' : ''}`));
-  return h('span.session-lead.session-bot', icon('bot'));
+  return h('span.session-lead.session-bot', icon(it.forked ? 'git-fork' : 'bot'));
 }
 
 /**

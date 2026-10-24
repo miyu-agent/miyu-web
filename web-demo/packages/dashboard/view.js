@@ -17,6 +17,8 @@ const CARD_CLASS = { todo: 'dash-todo', tasks: 'dash-tasks', files: 'dash-files'
 const NO_METHOD = -32601;
 /** 任务种类的图标 @type {Record<string, string>} */
 const KIND_ICON = { agent: 'bot', command: 'square-terminal' };
+/** 一个任务的种类图标：分叉出来的子代理画分叉（2026-10-24 项目主人：只换图标），别的照种类、不认的插头 @param {Node} x */
+const kindIcon = (x) => (x.what === 'agent' && x.fork ? 'git-fork' : KIND_ICON[x.what] ?? 'plug');
 /** 展示文件种类的图标 @type {Record<string, string>} */
 const SHOWN_ICON = { image: 'image', pdf: 'file-text', html: 'globe', markdown: 'file-text', code: 'file-code', text: 'file-text' };
 
@@ -299,7 +301,7 @@ export class Dashboard {
     const stateKey = x.attention ?? x.state;
     const label = t(`states.${stateKey}`);
     // 子代理、后台命令；别的（往后的 `miyu call` 这类）一律插头
-    const kind = h('span.dash-kind', icon(KIND_ICON[x.what] ?? 'plug'));
+    const kind = h('span.dash-kind', icon(kindIcon(x)));
     const twisty = r.hasKids
       ? h('button.dash-twisty', {
         type: 'button', 'aria-expanded': String(r.open), 'aria-label': t(r.open ? 'collapse' : 'expand'),
@@ -713,7 +715,7 @@ export class Dashboard {
     const stateKey = x.attention ?? x.state;
     const elapsed = running ? (x.since != null ? jobDuration((Date.now() - x.since) / 1000) : '') : x.duration != null ? jobDuration(x.duration / 1000) : '';
     return h('div.dash-brief',
-      h('div.dash-brief-head', h('span.dash-kind', icon('bot')), h('strong.dash-brief-name', x.title || x.job), h('span.dash-sep', ' · '), h('span.dash-id', x.job)),
+      h('div.dash-brief-head', h('span.dash-kind', icon(kindIcon(x))), h('strong.dash-brief-name', x.title || x.job), h('span.dash-sep', ' · '), h('span.dash-id', x.job)),
       h('div.dash-brief-line', h(`span.dash-state.is-${stateKey}`, stateIcon(stateKey)), h('span', t(`states.${stateKey}`)),
         h('span.dash-time', running && x.since != null ? { dataset: { since: String(x.since) } } : null, elapsed)),
       x.session ? h('div.dash-brief-foot', h('button.dash-brief-open', { type: 'button', onclick: () => this.on.enter(/** @type {string} */ (x.session)) }, t('open_session'))) : null);

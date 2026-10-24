@@ -88,6 +88,21 @@ export function packageIcon(name) {
 }
 
 /**
+ * 派子代理的那一步是不是分叉出来的（核心 A-F：`subagent` 的参数 `fork` 是真的；2026-10-24 项目主人：只把机器人换成分叉）。参数是一段 JSON 字，
+ * 还没写完、写坏了的、旧核心没有这一格的照普通子代理。
+ * @param {unknown} args
+ */
+export function forkedCall(args) {
+  if (args && typeof args === 'object') return /** @type {any} */ (args).fork === true;
+  if (typeof args !== 'string' || !args.includes('fork')) return false;
+  try {
+    return JSON.parse(args)?.fork === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * 照核心给的标题那一句（9-8，`view.md`「标题那一句」）：显示名、对象、结果那一句、经谁做的都是核心照连接的语言写好的；派子代理写「编号 · 描述」，
  * 留言的对象核心已经写成任务编号、「父会话」或「会话 短编号」；用时、走表、图标、出错照原来的规矩。
  * @param {any} step @param {string|null} kind @param {any} base
@@ -96,7 +111,7 @@ function titled(step, kind, base) {
   const title = step.title ?? { name: res.human?.tools?.[step.name]?.name ?? step.name };
   if (step.state === 'preparing') return { ...base, icon: 'loader-circle', name: title.name ?? '', timer: step.start != null ? { since: step.start, format: 'tenths' } : null };
   const bad = failed(step);
-  const icon = bad ? 'circle-alert' : res.timeline.icons[step.name] ?? packageIcon(step.name) ?? res.timeline.icon_default;
+  const icon = bad ? 'circle-alert' : step.name === 'subagent' && forkedCall(step.parsed ?? step.args) ? res.timeline.icon_fork : res.timeline.icons[step.name] ?? packageIcon(step.name) ?? res.timeline.icon_default;
   // 经谁做的（核心 3c40e3c3 的 `title.via`，例如网络搜索的来源 Exa）写在名字后面的括号里：「网络搜索（Exa）」（2026-10-19 项目主人定，照终端）
   const name = title.via ? t('timeline.via', { name: title.name ?? step.name, via: title.via }) : title.name ?? step.name;
   const object = title.object ?? null;

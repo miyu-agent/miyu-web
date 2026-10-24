@@ -43,6 +43,7 @@
     "web_fetch": "globe"
   },
   "icon_default": "wrench",
+  "icon_fork": "git-fork",
   "thinking_rows": 10,
   "roll_ms": 180,
   "session_short": 8,

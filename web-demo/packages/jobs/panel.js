@@ -222,7 +222,7 @@ export class JobsPanel {
       dataset: { since: task.since == null ? '' : String(task.since) }, onclick: click,
     },
     treeLines(line),
-    h('span.jobs-mark', icon(agent ? 'bot' : 'square-terminal')),
+    h('span.jobs-mark', icon(agent ? (task.fork ? 'git-fork' : 'bot') : 'square-terminal')),
     h('span.jobs-text', h('span.jobs-title', { title: task.title }, task.title), h('span.jobs-id', task.job),
       line.spawned ? h('span.jobs-spawned', t('spawned', { count: line.spawned })) : null,
       // 脚本最近调的那个工具（`#12 翻记忆`，核心 M-5 上）
