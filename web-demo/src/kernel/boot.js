@@ -123,6 +123,7 @@ export async function boot(root) {
   // 管理员模式（蓝图「管理员模式」）：握手 `admin: true` 的人有这个开关；开着时系统那一层的写请求带 `scope`，重连回到平常
   const admin = new AdminMode(hello?.admin === true);
   conn.scopeFor = (method, params) => (admin.on && systemWrite(method, params) ? 'system' : null);
+  conn.onAdminRequired = () => admin.required();
   const store = new Store(conn);
   await store.boot();
   // 断了又连上了（核心重启过）：重新握手，读进来了的会话重新订阅、补上漏掉的，断着时别处开的会话接上

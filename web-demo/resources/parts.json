@@ -6408,6 +6408,42 @@
       ".set-prov-prefer"
     ]
   },
+  "settings.admin-bar": {
+    "zh": "设置：管理员模式开着时右边最上面那一条淡橙色窄条",
+    "select": [
+      ".set-admin-bar"
+    ]
+  },
+  "settings.admin-row": {
+    "zh": "设置：左栏最下面「管理员模式」那一行开关",
+    "select": [
+      ".set-admin-row"
+    ]
+  },
+  "settings.locked": {
+    "zh": "设置：锁着的地方那一行「在管理员模式里改」",
+    "select": [
+      ".set-locked"
+    ]
+  },
+  "settings.gear": {
+    "zh": "左栏底部的设置齿轮",
+    "select": [
+      ".set-gear"
+    ]
+  },
+  "settings.gear-dot": {
+    "zh": "设置齿轮右上角管理员模式开着的橙色小点",
+    "select": [
+      ".set-gear-dot"
+    ]
+  },
+  "settings.admin-locked": {
+    "zh": "设置：平时锁着的控件（灰着、点不了）",
+    "select": [
+      ".is-admin-locked"
+    ]
+  },
   "settings.secret-box": {
     "zh": "设置：密钥框连「存到哪一份」的下拉那一块",
     "select": [
