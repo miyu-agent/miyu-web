@@ -206,3 +206,27 @@ export function diffRows(lines) {
   }
   return out;
 }
+
+/**
+ * 右栏的卡片照什么先后排（蓝图「仪表盘」第 4 条）：设置 `cards` 里写了的照它的先后在前，没写的照各自的 `order`（一样的照 `id`）接在后面；
+ * `cards_off` 里的不出。同一个 `id` 挂了几次的，挂载位已经只留后来的那一个。
+ * @template {{id: string, order?: number}} T
+ * @param {T[]} entries @param {{order?: string[], off?: string[]}} [opts]
+ * @returns {T[]}
+ */
+export function arrange(entries, { order = [], off = [] } = {}) {
+  const at = new Map(order.map((id, i) => [id, i]));
+  const hidden = new Set(off);
+  return entries
+    .filter((e) => !hidden.has(e.id))
+    .map((e, i) => ({ e, i }))
+    .sort((a, b) => {
+      const x = at.get(a.e.id);
+      const y = at.get(b.e.id);
+      if (x != null && y != null) return x - y;
+      if (x != null) return -1;
+      if (y != null) return 1;
+      return (a.e.order ?? 0) - (b.e.order ?? 0) || String(a.e.id).localeCompare(String(b.e.id)) || a.i - b.i;
+    })
+    .map(({ e }) => e);
+}

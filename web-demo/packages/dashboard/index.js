@@ -1,6 +1,7 @@
 // @ts-check
 //! 仪表盘（软件包 `dashboard`，蓝图 `web.md`「仪表盘」）：右侧边栏。对话区右上角一个右栏开关（挂载位 `stage.tools`，同左栏开关），点了在
-//! 右边那一栏（服务 `side`）打开四张卡：待办、后台任务、文件修改、展示文件；子代理在主区打开，展示文件、后台命令的输出、文件的差异都开在
+//! 右边那一栏（服务 `side`）打开一叠卡片：卡片是挂载位 `side.cards`（这个包声明、画外壳，`cards.js`），谁都能挂；这个包自己挂待办、后台任务、
+//! 文件修改、展示文件四张（会话信息由 `setup` 挂）；子代理在主区打开，展示文件、后台命令的输出、文件的差异都开在
 //! 预览工作区（`side.work`：要了它，返回箭头回到四张卡，自己的开关不露；输出、差异借它的框 `present`）。
 //! 窗口够宽时做一栏推开正文，并广播 `dashboard.active {on: true}`（软件包 `jobs`、`todo` 照它不画输入框那边的）；不够宽的盖在上面。
 //! 照对话区每画一次的事件 `view.changed` 画：画的是正在看的会话这一串最上面那个（主会话）的待办、后台任务、文件修改；点子代理在主区
@@ -8,6 +9,7 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { Dashboard } from './view.js';
+import { Cards } from './cards.js';
 import { taskTree, fileChanges, counts, badgeOf } from './model.js';
 
 /** 人关过仪表盘的会话（这台设备、照账号记着，最多记这么多个） */
@@ -54,6 +56,19 @@ export function apply(ctx) {
   });
   ctx.effect(() => () => dash.destroy());
   ctx.effect(() => side.mount(dash.el));
+
+  // 卡片：挂载位 `side.cards`（蓝图「仪表盘」第 4 条），外壳照这个包的设置排先后、关掉、最多露几行；自己的四张也经它挂
+  ctx.slots.declare('side.cards', 'list');
+  const cards = new Cards(dash.list, ctx.slots, ctx.config, (owner, reason) => h('div.slot-failed', t('card_failed', { owner, reason })), () => dash.setEmpty(cards.any()));
+  ctx.effect(() => cards.start());
+  /** @type {Array<{id: 'todo'|'tasks'|'files'|'shown', order: number, keep: number, shrink: number}>} */
+  const own = [
+    { id: 'todo', order: 20, keep: 3, shrink: 4 },
+    { id: 'tasks', order: 30, keep: 5, shrink: 1 },
+    { id: 'files', order: 40, keep: 3, shrink: 4 },
+    { id: 'shown', order: 50, keep: 3, shrink: 4 },
+  ];
+  for (const c of own) ctx.slots.mount('side.cards', { ...c, render: (/** @type {any} */ card) => dash.attach(c.id, card) });
 
   // 右栏开关：同左栏开关（不铺底，开着也不变色）；关着时一个提醒点：等人的橙色、来了新展示的 accent、在跑的转圈
   const badge = h('span.dash-badge', { hidden: true });

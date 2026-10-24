@@ -1,14 +1,16 @@
 // @ts-check
-//! 仪表盘的样子（软件包 `dashboard`，蓝图 `web.md`「仪表盘」第 4、5 条）：四张卡（待办、后台任务、文件修改、展示文件，空的整张不出），
+//! 仪表盘的样子（软件包 `dashboard`，蓝图 `web.md`「仪表盘」第 4、5 条）：四张卡（待办、后台任务、文件修改、展示文件，空的整张不出）的内容——
+//! 外壳由挂载位 `side.cards`（`cards.js`）画，这里拿交来的 `card` 写头一行、内容（`attach`），关掉了的那张不画；
 //! 点进去的两种（后台命令的输出、文件的差异）画好交给外面放进预览工作区的框（`present`，同展示文件，2026-10-24 项目主人：「都右栏 show 吧」）；
 //! 子代理点了交给外面在主区打开，展示文件点了交给外面开预览工作区。数据变了才重画那张卡（在收的字每来一段都会来一次）；在跑的用时
 //! 每 `tick_ms` 只改那几个字。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { unfold } from '../../src/lib/motion.js';
 import { jobDuration } from '../../src/lib/format.js';
 import { rowsOf, counts, stoppable, todoView, splitPath, diffRows } from './model.js';
 
+/** 四张卡的外壳上加的类（样式、脚本照它认哪一张） */
+const CARD_CLASS = { todo: 'dash-todo', tasks: 'dash-tasks', files: 'dash-files', shown: 'dash-shown-card' };
 /** JSON-RPC 的「没有这个方法」 */
 const NO_METHOD = -32601;
 /** 任务种类的图标 @type {Record<string, string>} */
@@ -17,6 +19,7 @@ const KIND_ICON = { agent: 'bot', command: 'square-terminal' };
 const SHOWN_ICON = { image: 'image', pdf: 'file-text', html: 'globe', markdown: 'file-text', code: 'file-code', text: 'file-text' };
 
 /**
+ * @typedef {import('./cards.js').Card} Card
  * @typedef {import('./model.js').Node} Node
  * @typedef {import('./model.js').FileChange} FileChange
  * @typedef {{path: string, name: string, title: string|null, kind: string}} Shown 展示过的一样
@@ -59,14 +62,10 @@ export class Dashboard {
     /** @type {Data} */
     this.data = { todos: [], tree: [], files: [], current: null, shown: [], panel: 0 };
     this.sigs = { todo: '', tasks: '', files: '', shown: '' };
-    this.todoCard = h('section.dash-card.dash-todo', { 'aria-label': t('todo') });
-    this.taskCard = h('section.dash-card.dash-tasks', { 'aria-label': t('tasks') });
-    this.fileCard = h('section.dash-card.dash-files', { 'aria-label': t('files') });
-    this.shownCard = h('section.dash-card.dash-shown-card', { 'aria-label': t('shown') });
-    const wrap = (/** @type {HTMLElement} */ card) => h('div.unfold.dash-slot', h('div.unfold-inner', card));
-    this.slots = { todo: wrap(this.todoCard), tasks: wrap(this.taskCard), files: wrap(this.fileCard), shown: wrap(this.shownCard) };
+    /** 挂载位交来的四张卡（关掉了的没有） @type {{todo?: Card, tasks?: Card, files?: Card, shown?: Card}} */
+    this.cards = {};
     this.empty = h('div.dash-empty', { hidden: true }, t('empty'));
-    this.list = h('div.dash-list', this.slots.todo, this.slots.tasks, this.slots.files, this.slots.shown, this.empty);
+    this.list = h('div.dash-list', this.empty);
     this.el = h('div.dash', this.list);
     /** 点进去看着的那一样：`{kind: 'output', node}`、`{kind: 'diff', index}`；回来的是 `null` @type {any} */
     this.viewing = null;
@@ -89,20 +88,33 @@ export class Dashboard {
     this.drawTasks();
     this.drawFiles();
     this.drawShown();
-    const any = data.todos.length > 0 || data.tree.length > 0 || data.files.length > 0 || (data.shown?.length ?? 0) > 0 || (data.panel ?? 0) > 0;
-    this.empty.hidden = any;
     // 看着的后台命令没了、文件没了：回到仪表盘
     if (this.viewing?.kind === 'diff' && !data.files[this.viewing.index]) this.back();
     this.syncTimer();
   }
 
   /**
-   * 窗口矮、放不下时一张卡缩到哪为止（第 4 条）：留 `keep` 行（头一行 36、一行 30、上下边、卡片下面的空）；本来就不到 `keep` 行的不缩。
-   * @param {HTMLElement} slot @param {number} rows 这张卡现在几行 @param {number} keep
+   * 挂载位交来一张卡（`todo`、`tasks`、`files`、`shown`）：写上标题、照现在的数画一次；交回拿下来时怎么收拾
+   * @param {'todo'|'tasks'|'files'|'shown'} id @param {Card} card
    */
-  floor(slot, rows, keep) {
-    slot.classList.toggle('is-short', rows <= keep);
-    slot.style.setProperty('--dash-floor', `${54 + keep * 30}px`);
+  attach(id, card) {
+    const t = this.t;
+    this.cards[id] = card;
+    card.el.classList.add(CARD_CLASS[id]);
+    card.title(t(id));
+    this.sigs[id] = '';
+    if (id === 'todo') this.drawTodo();
+    else if (id === 'tasks') this.drawTasks();
+    else if (id === 'files') this.drawFiles();
+    else this.drawShown();
+    return () => {
+      if (this.cards[id] === card) delete this.cards[id];
+    };
+  }
+
+  /** 「什么都还没有」那一句：一张卡都没露的时候出 @param {boolean} any */
+  setEmpty(any) {
+    this.empty.hidden = any;
   }
 
   /** 每 `tick_ms` 只改在跑的用时；没有在跑的不走 */
@@ -129,7 +141,9 @@ export class Dashboard {
     const t = this.t;
     const v = todoView(this.data.todos, this.config.todo_rows, { open: this.todoOpen, doneOpen: this.todoDoneOpen });
     const sig = JSON.stringify([this.data.todos, this.todoOpen, this.todoDoneOpen]);
-    unfold(this.slots.todo, v.total > 0);
+    const card = this.cards.todo;
+    if (!card) return;
+    card.show(v.total > 0);
     if (sig === this.sigs.todo) return;
     this.sigs.todo = sig;
     if (!v.total) return;
@@ -144,11 +158,10 @@ export class Dashboard {
     const more = v.more ? foldRow('chevron-down', t('more_items', { count: v.more }), () => { this.todoOpen = true; this.drawTodo(); }, false)
       : v.fold ? foldRow('chevron-up', t('collapse'), () => { this.todoOpen = false; this.drawTodo(); }, true) : null;
     const done = v.done ? foldRow('check', t('done_items', { count: v.done }), () => { this.todoDoneOpen = !this.todoDoneOpen; this.drawTodo(); }, this.todoDoneOpen, 'is-done') : null;
-    replace(this.todoCard,
-      h('div.dash-head.is-sticky', h('strong.dash-title', t('todo')), h('span.dash-count', `${v.done}/${v.total}`), h('span.dash-gap'),
-        h('span.dash-progress', h('span.dash-progress-bar', { style: `width: ${(ratio * 100).toFixed(1)}%` }))),
-      v.shown.map(row), more, done, v.finished.map(row));
-    this.floor(this.slots.todo, v.shown.length + (more ? 1 : 0) + (done ? 1 : 0) + v.finished.length, 3);
+    card.head(h('span.dash-count', `${v.done}/${v.total}`), card.gap(),
+      h('span.dash-progress', h('span.dash-progress-bar', { style: `width: ${(ratio * 100).toFixed(1)}%` })));
+    card.body(v.shown.map(row), more, done, v.finished.map(row));
+    card.size(v.shown.length + (more ? 1 : 0) + (done ? 1 : 0) + v.finished.length);
   }
 
   // ── 后台任务 ──
@@ -156,7 +169,9 @@ export class Dashboard {
   drawTasks() {
     const t = this.t;
     const tree = this.data.tree;
-    unfold(this.slots.tasks, tree.length > 0);
+    const card = this.cards.tasks;
+    if (!card) return;
+    card.show(tree.length > 0);
     const rows = rowsOf(tree, { collapsed: this.collapsed, expanded: this.expanded, doneOpen: this.doneOpen });
     const n = counts(tree);
     const sig = JSON.stringify([rows.map((r) => (r.type === 'task' ? [r.node.key, r.node.state, r.node.title, r.node.attention, r.depth, r.last, r.guides, r.open, r.hasKids]
@@ -166,14 +181,13 @@ export class Dashboard {
     if (!tree.length) return;
     const now = Date.now();
     const many = stoppable(tree).length > 1;
-    replace(this.taskCard,
-      h('div.dash-head.is-sticky', h('strong.dash-title', t('tasks')),
-        n.running ? h('span.dash-count', t('running', { count: n.running })) : null,
-        n.waiting ? h('span.dash-count.is-waiting', t('waiting', { count: n.waiting })) : null,
-        h('span.dash-gap'),
-        many ? h('button.dash-stop-all', { type: 'button', onclick: () => this.stopAll() }, t('stop_all')) : null),
-      rows.map((r) => this.taskRow(r, now)));
-    this.floor(this.slots.tasks, rows.length, 5);
+    card.head(
+      n.running ? h('span.dash-count', t('running', { count: n.running })) : null,
+      n.waiting ? h('span.dash-count.is-waiting', t('waiting', { count: n.waiting })) : null,
+      card.gap(),
+      many ? h('button.dash-stop-all', { type: 'button', onclick: () => this.stopAll() }, t('stop_all')) : null);
+    card.body(rows.map((r) => this.taskRow(r, now)));
+    card.size(rows.length);
   }
 
   /** @param {import('./model.js').Row} r @param {number} now */
@@ -264,7 +278,9 @@ export class Dashboard {
   drawFiles() {
     const t = this.t;
     const files = this.data.files;
-    unfold(this.slots.files, files.length > 0);
+    const card = this.cards.files;
+    if (!card) return;
+    card.show(files.length > 0);
     const sig = JSON.stringify([files, this.filesOpen, this.viewing?.kind === 'diff' ? this.viewing.index : -1]);
     if (sig === this.sigs.files) return;
     this.sigs.files = sig;
@@ -275,9 +291,9 @@ export class Dashboard {
     const max = this.config.file_rows;
     const shown = this.filesOpen || files.length <= max ? files : files.slice(0, max);
     const rest = files.length - shown.length;
-    replace(this.fileCard,
-      h('div.dash-head.is-sticky', h('strong.dash-title', t('files')), h('span.dash-count', t('files_count', { count: files.length })), h('span.dash-gap'),
-        h('span.dash-lines', h('span.dash-add', `+${added}`), ' ', h('span.dash-del', `−${removed}`))),
+    card.head(h('span.dash-count', t('files_count', { count: files.length })), card.gap(),
+      h('span.dash-lines', h('span.dash-add', `+${added}`), ' ', h('span.dash-del', `−${removed}`)));
+    card.body(
       shown.map((f, i) => {
         const { name, dir } = splitPath(f.path, where);
         return h(`button.dash-row.dash-file${f.created ? '.is-created' : ''}`, { type: 'button', title: f.path, onclick: () => this.showDiff(i) },
@@ -286,7 +302,7 @@ export class Dashboard {
       }),
       rest > 0 ? foldRow('chevron-down', `(${rest})`, () => { this.filesOpen = true; this.drawFiles(); }, false)
         : this.filesOpen && files.length > max ? foldRow('chevron-up', t('collapse'), () => { this.filesOpen = false; this.drawFiles(); }, true) : null);
-    this.floor(this.slots.files, shown.length + (rest > 0 || files.length > max ? 1 : 0), 3);
+    card.size(shown.length + (rest > 0 || files.length > max ? 1 : 0));
   }
 
   // ── 展示文件 ──
@@ -296,7 +312,9 @@ export class Dashboard {
     const t = this.t;
     const list = this.data.shown ?? [];
     const panel = this.data.panel ?? 0;
-    unfold(this.slots.shown, list.length > 0 || panel > 0);
+    const card = this.cards.shown;
+    if (!card) return;
+    card.show(list.length > 0 || panel > 0);
     const sig = JSON.stringify([list, panel, this.shownOpen]);
     if (sig === this.sigs.shown) return;
     this.sigs.shown = sig;
@@ -305,8 +323,8 @@ export class Dashboard {
     const max = this.config.file_rows;
     const rows = this.shownOpen || list.length <= max ? list : list.slice(0, max);
     const rest = list.length - rows.length;
-    replace(this.shownCard,
-      h('div.dash-head.is-sticky', h('strong.dash-title', t('shown')), list.length ? h('span.dash-count', t('shown_count', { count: list.length })) : null),
+    card.head(list.length ? h('span.dash-count', t('shown_count', { count: list.length })) : null);
+    card.body(
       rows.map((a) => {
         const { name, dir } = splitPath(a.path, where);
         const label = a.title || name;
@@ -323,7 +341,7 @@ export class Dashboard {
       rest > 0 ? foldRow('chevron-down', `(${rest})`, () => { this.shownOpen = true; this.drawShown(); }, false)
         : this.shownOpen && list.length > max ? foldRow('chevron-up', t('collapse'), () => { this.shownOpen = false; this.drawShown(); }, true) : null,
       panel > 0 ? h('button.dash-row.dash-file.dash-panel-row', { type: 'button', onclick: () => this.on.panel() }, h('span.dash-kind', icon('puzzle')), h('span.dash-file-name', t('panel'))) : null);
-    this.floor(this.slots.shown, rows.length + (rest > 0 || list.length > max ? 1 : 0) + (panel > 0 ? 1 : 0), 3);
+    card.size(rows.length + (rest > 0 || list.length > max ? 1 : 0) + (panel > 0 ? 1 : 0));
   }
 
   // ── 点进去 ──

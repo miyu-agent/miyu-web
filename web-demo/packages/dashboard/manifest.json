@@ -52,6 +52,26 @@
         "zh": "文件修改最多露几个"
       }
     },
+    "cards": {
+      "type": "list",
+      "of": "text",
+      "default": ["session", "todo", "tasks", "files", "shown"],
+      "name": {
+        "zh": "右栏卡片的先后（卡的编号；没写的照各自的先后接在后面）",
+        "en": "Order of the sidebar cards (card ids; others follow in their own order)",
+        "ja": "右サイドバーのカードの順（カードの ID。書いていないものは後ろに続く）"
+      }
+    },
+    "cards_off": {
+      "type": "list",
+      "of": "text",
+      "default": [],
+      "name": {
+        "zh": "右栏不出的卡片（卡的编号）",
+        "en": "Sidebar cards to hide (card ids)",
+        "ja": "右サイドバーに出さないカード（カードの ID）"
+      }
+    },
     "preview_lines": {
       "type": "number",
       "default": 400,
@@ -82,6 +102,7 @@
       "files_count": "{count} 个文件",
       "back": "回到仪表盘",
       "empty": "这个会话还没有待办、后台任务、文件修改和展示文件",
+      "card_failed": "这张卡出错了（{owner}）：{reason}",
       "enter": "在主区打开这个子代理的会话",
       "open_output": "看输出",
       "follow": "跟着最新的",
@@ -135,6 +156,7 @@
       "files_count": "{count} files",
       "back": "Back to dashboard",
       "empty": "No to-dos, background tasks, file changes or shown files in this session yet",
+      "card_failed": "This card failed ({owner}): {reason}",
       "enter": "Open this subagent's session",
       "open_output": "View output",
       "follow": "Following the latest",
@@ -188,6 +210,7 @@
       "files_count": "{count} ファイル",
       "back": "ダッシュボードに戻る",
       "empty": "このセッションにはまだ ToDo、バックグラウンドタスク、ファイルの変更、表示したファイルがありません",
+      "card_failed": "このカードでエラーが起きました（{owner}）：{reason}",
       "enter": "このサブエージェントのセッションを開く",
       "open_output": "出力を見る",
       "follow": "最新を追従中",

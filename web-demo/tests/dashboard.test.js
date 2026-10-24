@@ -110,3 +110,15 @@ test('右栏开关上的提醒点（2026-10-24）：开着不画；等人的在�
   assert.equal(badgeOf({ running: 3, waiting: 0 }, { open: false, fresh: false }), 'running');
   assert.equal(badgeOf({ running: 0, waiting: 0 }, { open: false, fresh: false }), null);
 });
+
+test('右栏的卡片照设置排：cards 里写了的照它在前，没写的照 order 接在后面，cards_off 的不出（2026-10-24 项目主人：卡片做成模块）', async () => {
+  const { arrange } = await import('../packages/dashboard/model.js');
+  const e = (id, order) => ({ id, order });
+  const all = [e('tasks', 20), e('weather', 5), e('session', 0), e('todo', 10), e('usage', 5), e('files', 30), e('shown', 40)];
+  assert.deepEqual(arrange(all, { order: ['session', 'todo', 'tasks', 'files', 'shown'] }).map((x) => x.id),
+    ['session', 'todo', 'tasks', 'files', 'shown', 'usage', 'weather'], '没写进设置的照 order，一样的照编号');
+  assert.deepEqual(arrange(all, { order: ['files', 'session'], off: ['todo', 'weather'] }).map((x) => x.id),
+    ['files', 'session', 'usage', 'tasks', 'shown'], '换了先后、关掉两张');
+  assert.deepEqual(arrange(all).map((x) => x.id), ['session', 'usage', 'weather', 'todo', 'tasks', 'files', 'shown'], '没设置的全照 order');
+  assert.deepEqual(arrange([], { order: ['session'] }), []);
+});
