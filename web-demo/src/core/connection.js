@@ -31,6 +31,8 @@ export class Connection {
     this.open = open;
     this.retry = retry;
     this.check = check;
+    /** 这一个请求带不带 `scope`（管理员模式，内核交进来）；`null` 是不带 @type {((method: string, params: any) => string|null)|null} */
+    this.scopeFor = null;
     /** 口令用不了了：不再重连 */
     this.gaveUp = false;
     /** @type {Set<() => void>} */
@@ -120,7 +122,9 @@ export class Connection {
         reject(new Refusal('核心断开了', -32000, 'disconnected'));
         return;
       }
-      const line = JSON.stringify({ jsonrpc: '2.0', id, method, params });
+      // 管理员模式开着、改的是系统那一层的：外壳里带 `scope`（和 `method` 同级，蓝图「管理员模式」第 1 条）
+      const scope = this.scopeFor?.(method, params) ?? null;
+      const line = JSON.stringify(scope ? { jsonrpc: '2.0', id, method, params, scope } : { jsonrpc: '2.0', id, method, params });
       if (tooLong(line)) {
         reject(new Refusal('请求太大，超过 1 MiB', -32602, 'too_large'));
         return;

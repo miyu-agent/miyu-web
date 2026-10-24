@@ -31,6 +31,8 @@ import { SIGNIN_SCHEME, signIn } from './signin.js';
 import { accountStorage } from './storage.js';
 import { useIcons } from '../lib/dom.js';
 import { KERNEL_SERVICES } from './services.js';
+import { AdminMode } from './admin.js';
+import { systemWrite } from '../model/admin-mode.js';
 
 /** 个人那一层（停用、启用、改配置）存在这台设备上的名字（带上账号）；核心有了个人设置以后搬进账号的家目录。 */
 /** JSON-RPC 的「没有这个方法」：连的核心还没有配置的接口 */
@@ -64,7 +66,8 @@ export async function boot(root) {
   // 旧代码（src/ui）经它拿地址、开外链、写剪贴板
   useHost(host);
   // 能当场确认、回答（确认和提问的抽屉，核心 D-1、D-2）：核心照造会话的那个连接的 `caps.input` 定这个会话有没有人能确认、回答
-  const greeting = { protocol: [1, 1], head: { kind: 'web', version: '0.0.0' }, locale: language.tag, caps: { input: true } };
+  // 认识管理员模式（`scope`，核心 Y-12下上；蓝图「管理员模式」第 1 条）：核心只对声明了的连接要求改系统那一层带 `scope`
+  const greeting = { protocol: [1, 1], head: { kind: 'web', version: '0.0.0' }, locale: language.tag, caps: { input: true, scope: true } };
   // 开线、握手（凭据、登录框、「账号」那一屏在 `signin.js`）。断了自己重连（蓝图 `web.md`「连核心」第 1 条）：连上以后重新握手、补上漏掉的，
   // 见下面 `onReopen`。连不上：走桥的问口令还对不对，照它写为什么（口令用不了、桥没在跑、桥连不上核心）；直接连的就是网页软件没在跑
   const { conn, hello, setup, member, configless } = await signIn(host, greeting, root, async (err) => {
@@ -117,10 +120,14 @@ export async function boot(root) {
   });
   // 正文、状态照条目画（蓝图 `web.md`「照条目画」）：握手的 `view` 要 1 起（核心 9-8），旧核心不画，写「核心版本过旧」
   if ((hello?.view ?? 0) < 1) throw new Offline('old');
+  // 管理员模式（蓝图「管理员模式」）：握手 `admin: true` 的人有这个开关；开着时系统那一层的写请求带 `scope`，重连回到平常
+  const admin = new AdminMode(hello?.admin === true);
+  conn.scopeFor = (method, params) => (admin.on && systemWrite(method, params) ? 'system' : null);
   const store = new Store(conn);
   await store.boot();
   // 断了又连上了（核心重启过）：重新握手，读进来了的会话重新订阅、补上漏掉的，断着时别处开的会话接上
   conn.onReopen(() => {
+    admin.set(false);
     conn.request('hello', { ...greeting, ...(host.credential() ?? {}) })
       .then(() => store.resume())
       // 配置的订阅也要等重新握手以后（蓝图「界面语言」第 5 条）
@@ -215,6 +222,7 @@ export async function boot(root) {
     manifest: { id: 'kernel' },
     apply: (ctx) => {
       ctx.provide('core', conn);
+      ctx.provide('admin', admin);
       ctx.provide('sessions', store);
       ctx.provide('host', {
         kind: host.kind,
