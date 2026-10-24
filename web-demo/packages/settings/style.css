@@ -187,6 +187,17 @@
 .set-prov:hover { background: var(--item-hover, var(--surface-2)); color: var(--item-fg-hover, var(--text)); }
 .set-prov.is-on { background: var(--item-active, var(--sidebar-active)); box-shadow: var(--item-elev-active, var(--sidebar-active-shadow)); color: var(--item-fg-active, var(--text)); }
 .set-prov.is-add { color: var(--text-faint); }
+/* 供应商分两块（蓝图「设置页」第 14 条）：组名一行暗字；「共用」那一行能点，整块收起、展开（收着时写「共用（N）」） */
+.set-prov-group { display: flex; align-items: center; gap: calc(4px * var(--space)); margin: calc(8px * var(--space)) 0 calc(2px * var(--space)); padding: 0 calc(10px * var(--space)); color: var(--text-faint); font: 600 calc(11.5px * var(--text-scale)) var(--font-ui); }
+.set-prov-group:first-child { margin-top: 0; }
+.set-prov-group.is-toggle { width: 100%; min-height: 26px; border: 0; border-radius: var(--r-6); background: none; text-align: left; cursor: pointer; }
+.set-prov-group.is-toggle:hover { color: var(--text-soft); background: var(--item-hover, var(--surface-2)); }
+.set-prov-group .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); }
+/* 两块里都有的「自用」那一格：名称下面暗字「优先用这一份」 */
+.set-prov-prefer { display: block; color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); }
+/* 成员看「共用」的：模型一行点不进详情 */
+.set-model.is-static { cursor: default; }
+.set-model.is-static:hover { background: var(--item-bg, transparent); }
 .set-prov.is-add .icon { width: calc(16px * var(--space)); height: calc(16px * var(--space)); margin: 0 calc(1px * var(--space)); }
 .set-prov-main { min-width: 0; }
 /* 右边头上：图标、名称（大一号）、地址，右边两个按钮；不画分隔线，靠留白分开下面几块 */

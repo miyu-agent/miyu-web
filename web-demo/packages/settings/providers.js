@@ -5,7 +5,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { hasLogos, logoEl } from '../../src/lib/logo.js';
-import { duplicates, inputText, providerName, hostOf, whereOf, sameNamed, layerFor, secretName, keyChange, providerRemoval } from './model.js';
+import { duplicates, inputText, providerName, hostOf, whereOf, sameNamed, secretName, keyChange, providerRemoval, providerSides, sharedOpen, providerLayer, keyIn } from './model.js';
 import { modelName, metaOf, sharedState, loadingRow, searchable, refreshProvider, testLine } from './model-bits.js';
 import { openForm } from './provider-form.js';
 import { secretScope, secretTag } from './rows.js';
@@ -13,19 +13,49 @@ import { confirmIn } from './confirm.js';
 import { openAdd } from './add-provider.js';
 import { drawer } from './model-detail.js';
 
+/** 「共用」那一块开着没有：记在这台设备上（蓝图「设置页」第 14 条「供应商分两块」） */
+const SHARED_OPEN = 'settings.shared_open';
+
 /** @param {any} dialog @param {{providers?: any[]}} list `model.list` */
 export function drawProviders(dialog, list) {
   const ctx = dialog.ctx;
   const all = list.providers ?? [];
-  // 记着的那一家（刚建好、模型列表还没读回来的）不在表里时先看第一家，不改记着的
-  const p = all.find((x) => x.id === dialog.provider) ?? all[0];
+  // 两块（2026-10-24 项目主人定）：自用在上、共用在下，两边都有的两块里各一格
+  const { mine, shared, both } = providerSides(all, dialog.got ?? {});
+  const inSide = (/** @type {string} */ s) => (s === 'shared' ? shared : mine).find((x) => x.id === dialog.provider);
+  // 记着的那一格（编号、哪一块）；刚建好、模型列表还没读回来的不在表里时先看第一格，不改记着的
+  let side = dialog.providerSide === 'shared' ? 'shared' : 'mine';
+  let p = inSide(side);
+  if (!p && inSide(side === 'mine' ? 'shared' : 'mine')) {
+    side = side === 'mine' ? 'shared' : 'mine';
+    p = inSide(side);
+  }
+  if (!p) {
+    side = mine.length ? 'mine' : 'shared';
+    p = mine[0] ?? shared[0];
+  }
+  dialog.providerSide = side;
   const logos = hasLogos(all);
   const same = sameNamed(all);
-  const side = h('div.set-prov-list',
-    all.map((x) => providerItem(dialog, x, x.id === p?.id, logos, same.has(x.id))),
+  const stored = ctx.storage?.get(SHARED_OPEN, null);
+  const open = sharedOpen(shared.length, typeof stored === 'boolean' ? stored : null);
+  const item = (/** @type {any} */ x, /** @type {string} */ s) => providerItem(dialog, x, s, x.id === p?.id && s === side, logos, same.has(x.id));
+  const list_ = h('div.set-prov-list',
+    mine.length ? [h('div.set-prov-group', ctx.text('secret_scope.personal')), ...mine.map((x) => item(x, 'mine'))] : null,
+    shared.length ? [
+      h('button.set-prov-group.is-toggle', {
+        type: 'button', 'aria-expanded': String(open),
+        onclick: () => { ctx.storage?.set(SHARED_OPEN, !open); dialog.drawBody(); },
+      }, icon(open ? 'chevron-down' : 'chevron-right'), h('span', open ? ctx.text('secret_scope.system') : ctx.text('models.shared_folded', { count: shared.length }))),
+      ...(open ? shared.map((x) => item(x, 'shared')) : []),
+    ] : null,
     h('button.set-prov.is-add', { type: 'button', onclick: () => openAdd(dialog) }, icon('plus'), h('span', ctx.text('models.add_provider'))));
-  if (!p) return h('div.set-prov-wrap', side);
-  const main = h('div.set-prov-main', head(dialog, p, logos), keyBlock(dialog, p), models(dialog, p));
+  if (!p) return h('div.set-prov-wrap', list_);
+  // 成员看「共用」的只读：名称、地址、密钥那一行「已设置」，没有测试、编辑、删除、更换，模型点不进详情
+  // 两块里都有的一家：「共用」那一格的密钥照系统那一层写的那一格（核心合出来的是自用盖过的那一份）
+  const sharedKey = side === 'shared' && both.has(p.id) ? keyIn(p.id, dialog.got ?? {}, 'system') : undefined;
+  const view = { readonly: side === 'shared' && !!ctx.host?.member, prefer: side === 'mine' && both.has(p.id), sharedKey };
+  const main = h('div.set-prov-main', head(dialog, p, logos, view), keyBlock(dialog, p, view), models(dialog, p, view));
   // 详情盖着右边整栏（挂在 `.set-main` 上，滚正文时它不跟着走）
   const detail = dialog.modelDetail ? drawer(dialog, p, (p.models ?? []).find((m) => m.model === dialog.modelDetail)) : null;
   if (detail) {
@@ -34,14 +64,14 @@ export function drawProviders(dialog, list) {
     dialog.panel.querySelector('.set-main')?.append(detail);
   }
   dialog.drawerFor = dialog.modelDetail;
-  return h('div.set-prov-wrap', side, main);
+  return h('div.set-prov-wrap', list_, main);
 }
 
 /**
  * 左边一格：图标、名称，下面暗色小字：用不了的原因（warn 色），能用的写地址的主机名；和别家同名的多一行地址从哪来（主机名、
  * `$环境变量`），好分开。
  */
-function providerItem(dialog, x, on, logos, same) {
+function providerItem(dialog, x, side, on, logos, same) {
   const ctx = dialog.ctx;
   const shared = sharedState(x.models ?? []);
   const reason = shared ? h('small.is-warn', ctx.text(`models.short_states.${shared}`)) : null;
@@ -50,12 +80,16 @@ function providerItem(dialog, x, on, logos, same) {
   const sub = [where ? h('small', where) : null, reason];
   return h(`button.set-prov${on ? '.is-on' : ''}`, {
     type: 'button',
-    onclick: () => { dialog.provider = x.id; dialog.modelDetail = null; dialog.keyEdit = null; dialog.tested = null; if (dialog.modelQuery) dialog.modelQuery.providers = ''; dialog.drawBody(); },
+    onclick: () => { dialog.provider = x.id; dialog.providerSide = side; dialog.modelDetail = null; dialog.keyEdit = null; dialog.tested = null; if (dialog.modelQuery) dialog.modelQuery.providers = ''; dialog.drawBody(); },
   }, logos ? logoEl(x.logo ?? null, providerName(x)) : null, h('span.set-prov-text', h('span', providerName(x)), sub));
 }
 
-/** 头上：图标、名称、地址，「测试连接」「编辑」；接口是猜的写一行；测试的结果写在下面。 */
-function head(dialog, p, logos) {
+/**
+ * 头上：图标、名称、地址，「测试连接」「编辑」；接口是猜的写一行；测试的结果写在下面。成员看「共用」的（`readonly`）没有按钮；
+ * 两块里都有的「自用」那一格名称下面一行「优先用这一份」（核心照自用盖过共用，`prefer`）。
+ * @param {any} dialog @param {any} p @param {boolean} logos @param {{readonly?: boolean, prefer?: boolean}} [view]
+ */
+function head(dialog, p, logos, view = {}) {
   const ctx = dialog.ctx;
   const address = typeof p.base_url === 'object' && p.base_url?.env ? ctx.text('from_env', { name: p.base_url.env }) : inputText(p.base_url);
   // 测的结果记在弹窗上（`dialog.tested`）：测成了会重读这一家的模型、整块重画，结果照它画回来（原来写在这一次画的元素上，重画就没了）
@@ -85,8 +119,9 @@ function head(dialog, p, logos) {
   // 别的「用不了」（没有密钥的在密钥那一块说）在头下面写一次
   const shared = sharedState(p.models ?? []);
   return h('div.set-prov-head',
-    h('div.set-prov-title', logo, h('div', h('strong', providerName(p)), h('span', { title: address }, address)),
-      h('div.set-prov-buttons', test, h('button.set-btn', { type: 'button', onclick: openForm(dialog, p.id) }, ctx.text('models.edit')), removeButton(dialog, p))),
+    h('div.set-prov-title', logo, h('div', h('strong', providerName(p)), h('span', { title: address }, address),
+      view.prefer ? h('small.set-prov-prefer', ctx.text('models.prefer_mine')) : null),
+      view.readonly ? null : h('div.set-prov-buttons', test, h('button.set-btn', { type: 'button', onclick: openForm(dialog, p.id) }, ctx.text('models.edit')), removeButton(dialog, p))),
     // 核心推不出接口、先照 openai-chat 用的（`driver_from: default`，核心 8-26）：写明是猜的，猜错了请求会出错
     p.driver_from === 'default' ? h('p.set-prov-note', ctx.text('models.driver_guess_line', { driver: p.driver ?? '' })) : null,
     shared && shared !== 'no_key' ? h('p.set-prov-warn', ctx.text(`models.states.${shared}`)) : null,
@@ -101,7 +136,7 @@ function head(dialog, p, logos) {
 function removeButton(dialog, p) {
   const ctx = dialog.ctx;
   const template = dialog.schema.items.find((/** @type {any} */ i) => i.key === 'providers.<id>.driver');
-  const layer = layerFor(template ?? { layers: ['personal'] });
+  const layer = providerLayer(dialog.providerSide, template);
   const removal = providerRemoval(p.id, dialog.got, layer);
   if (!removal.length) return null;
   const chat = dialog.got?.items?.['models.chat']?.value;
@@ -130,12 +165,17 @@ function removeButton(dialog, p) {
  * 配置里没写密钥的（没有 `key` 这一格：核心照不带认证头用，本机的服务这类）同样一个框能补，不写「不可用」（2026-10-13 验收 W-139）。
  * 存的先后同编辑表：粘贴的先 `secret.set` 存成新名字，再一条 `config.set` 写引用。明文只在框里，存完就扔。
  */
-function keyBlock(dialog, p) {
+function keyBlock(dialog, p, view = {}) {
   const ctx = dialog.ctx;
   const t = (k, f) => ctx.text(`models.${k}`, f);
-  const key = p.key ?? { set: false, ref: null };
+  // 照系统那一层写的（两块里都有的「共用」那一格）：设没设照 `secret.list`（环境变量的照合出来的）
+  const key = view.sharedKey !== undefined
+    ? { set: view.sharedKey?.startsWith('secret:') ? dialog.secretLayers?.get(view.sharedKey.slice(7)) != null : !!view.sharedKey && !!p.key?.set, ref: view.sharedKey }
+    : p.key ?? { set: false, ref: null };
   const unwritten = !p.key;
   const changing = dialog.keyEdit === p.id;
+  // 成员看「共用」的：只一行「已设置」（没设的写没有密钥），换不了
+  if (view.readonly) return h('div.set-key-line', h('span', t('key')), h('span.set-key-state', key.set ? t('key_saved') : t('states.no_key')));
   if (key.set && !changing) {
     // 存在哪一份照 `secret.list`（「已设置 · 共用」「已设置 · 自用」，蓝图「连核心」第 1 条「存密钥存到哪一份」）
     const state = key.ref?.startsWith('env:') ? ctx.text('from_env', { name: key.ref.slice(4) }) : t('key_saved') + secretTag(dialog, key.ref);
@@ -156,7 +196,7 @@ function keyBlock(dialog, p) {
     save.disabled = true;
     error.hidden = true;
     const template = dialog.schema.items.find((i) => i.key === 'providers.<id>.key') ?? dialog.schema.items.find((i) => i.key === 'providers.<id>.driver');
-    const layer = layerFor(template ?? { layers: ['personal'] });
+    const layer = providerLayer(dialog.providerSide, template);
     let ref;
     if (kind === 'secret') {
       const name = secretName(p.id, Date.now());
@@ -197,8 +237,8 @@ function keyBlock(dialog, p) {
     error);
 }
 
-/** 模型：一行「模型 N」和搜索框，下面一个一行；点一行滑进详情。 */
-function models(dialog, p) {
+/** 模型：一行「模型 N」和搜索框，下面一个一行；点一行滑进详情（成员看「共用」的点不进，`readonly`）。 */
+function models(dialog, p, view = {}) {
   const ctx = dialog.ctx;
   const all = p.models ?? [];
   // 还没有模型的一家：请核心去拉一次（这个弹窗里每家一次），拉的时候写「正在读模型列表」
@@ -208,7 +248,7 @@ function models(dialog, p) {
   const dup = duplicates(all.map(modelName));
   const rows = all.map((m) => ({
     name: modelName(m), model: m.model,
-    node: h(`button.set-model${dialog.modelDetail === m.model ? '.is-on' : ''}`, { type: 'button', onclick: () => { dialog.modelDetail = m.model; dialog.drawBody(); } },
+    node: h(view.readonly ? 'div.set-model.is-static' : `button.set-model${dialog.modelDetail === m.model ? '.is-on' : ''}`, view.readonly ? {} : { type: 'button', onclick: () => { dialog.modelDetail = m.model; dialog.drawBody(); } },
       h('span.set-model-name', modelName(m), dup.has(modelName(m)) ? h('code.set-model-id', m.model) : null),
       !shared && m.state && m.state !== 'ok' ? h('em.set-model-state', ctx.text(`models.states.${m.state}`)) : null,
       h('span.set-model-meta', metaOf(ctx, m, true))),

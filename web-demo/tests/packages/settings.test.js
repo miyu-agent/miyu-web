@@ -369,3 +369,39 @@ test('成员的「新会话的权限级别」不列开放权限（2026-10-24 项
   assert.deepEqual(memberLevels(options).map((o) => o.value), ['workspace', 'read_only']);
   assert.deepEqual(memberLevels([]), []);
 });
+
+test('供应商分两块（2026-10-24 项目主人定）：自用照个人设置里有没有这一家，共用照系统配置里有的、哪一层都没写的；两边都有的两块里各一格', async () => {
+  const { providerLayers, providerSides, sharedOpen } = await import('../../packages/settings/model.js');
+  const at = (layer) => ({ layers: [{ origin: { layer }, used: true, value: 'x' }], origin: { layer }, value: 'x' });
+  const got = { items: {
+    'providers.mine.driver': at('personal'),
+    'providers.team.driver': at('system'),
+    'providers.dual.base_url': at('system'),
+    'providers.dual.key': at('personal'),
+    'providers.dualx.driver': at('personal'),
+  } };
+  assert.deepEqual([...providerLayers('dual', got)].sort(), ['personal', 'system']);
+  assert.deepEqual([...providerLayers('dualx', got)], ['personal'], '前缀撞了的（dual 和 dualx）不算到一起');
+  assert.deepEqual([...providerLayers('builtin', got)], []);
+  const sides = providerSides(['mine', 'team', 'dual', 'builtin'].map((id) => ({ id })), got);
+  assert.deepEqual(sides.mine.map((p) => p.id), ['mine', 'dual']);
+  assert.deepEqual(sides.shared.map((p) => p.id), ['team', 'dual', 'builtin'], '哪一层都没写的（出厂带的）算共用');
+  assert.deepEqual([...sides.both], ['dual']);
+  assert.equal(sharedOpen(3, null), true);
+  assert.equal(sharedOpen(4, null), false, '多于 3 家一开始收着');
+  assert.equal(sharedOpen(9, true), true, '人点过的照点过的');
+  assert.equal(sharedOpen(1, false), false);
+});
+
+test('两块里都有的一家：共用那一格的密钥照系统那一层写的那一格', async () => {
+  const { keyIn } = await import('../../packages/settings/model.js');
+  const got = { items: { 'providers.deepseek.key': { layers: [
+    { origin: { layer: 'personal' }, used: true, value: { secret: 'mine-1' } },
+    { origin: { layer: 'system' }, used: false, value: { secret: 'team-1' } },
+  ] }, 'providers.envy.key': { layers: [{ origin: { layer: 'system' }, used: true, value: { env: 'X_KEY' } }] } } };
+  assert.equal(keyIn('deepseek', got, 'system'), 'secret:team-1');
+  assert.equal(keyIn('deepseek', got, 'personal'), 'secret:mine-1');
+  assert.equal(keyIn('envy', got, 'system'), 'env:X_KEY');
+  assert.equal(keyIn('envy', got, 'personal'), null);
+  assert.equal(keyIn('none', got, 'system'), null);
+});

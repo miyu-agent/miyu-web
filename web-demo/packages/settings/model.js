@@ -313,6 +313,66 @@ export function providerRemoval(id, got, layer) {
   return Object.keys(got.items ?? {}).filter((k) => k.startsWith(prefix) && writtenIn(got.items[k], layer)).map((k) => ({ key: k, unset: true, expect: expectFor(got.items[k], layer) }));
 }
 
+/**
+ * 一家供应商写在哪几层（`config.get {all: true}` 里 `providers.<编号>.*` 每一格的 `layers`）：`personal` 自用、`system` 共用
+ * （蓝图「设置页」第 14 条「供应商分两块」）。
+ * @param {string} id @param {{items?: Record<string, Entry>}} got @returns {Set<'personal'|'system'>}
+ */
+export function providerLayers(id, got) {
+  const prefix = `providers.${keySegment(id)}.`;
+  /** @type {Set<'personal'|'system'>} */
+  const out = new Set();
+  for (const [k, entry] of Object.entries(got?.items ?? {})) {
+    if (!k.startsWith(prefix)) continue;
+    if (writtenIn(entry, 'personal')) out.add('personal');
+    if (writtenIn(entry, 'system')) out.add('system');
+  }
+  return out;
+}
+
+/**
+ * 供应商分两块：自用（个人设置里有这一家的）在上，共用（系统配置里有的，连哪一层都没写的）在下；两边都有的两块里各一格（`both`）。
+ * @template {{id: string}} P
+ * @param {P[]} providers `model.list` 的 `providers` @param {{items?: Record<string, Entry>}} got
+ * @returns {{mine: P[], shared: P[], both: Set<string>}}
+ */
+export function providerSides(providers, got) {
+  /** @type {P[]} */
+  const mine = [];
+  /** @type {P[]} */
+  const shared = [];
+  const both = new Set();
+  for (const p of providers) {
+    const layers = providerLayers(p.id, got);
+    if (layers.has('personal')) mine.push(p);
+    if (layers.has('system') || !layers.has('personal')) shared.push(p);
+    if (layers.has('personal') && layers.has('system')) both.add(p.id);
+  }
+  return { mine, shared, both };
+}
+
+/**
+ * 选中的那一格写在哪一层：「共用」那一块的（`side` 是 `shared`）写系统配置，「自用」的照清单（个人设置）。
+ * @param {string|null|undefined} side @param {any} template 清单里的一项
+ */
+export const providerLayer = (side, template) => (side === 'shared' ? 'system' : layerFor(template ?? { layers: ['personal'] }));
+
+/**
+ * 一家供应商在某一层写的密钥（`providers.<编号>.key` 那一格这一层的值）：`secret:<名字>`、`env:<变量>`，这一层没写的是 `null`。两块里都有的
+ * 一家，核心合出来的是自用盖过共用的那一份，「共用」那一格的密钥照系统那一层写的算。
+ * @param {string} id @param {{items?: Record<string, Entry>}} got @param {string} layer
+ */
+export function keyIn(id, got, layer) {
+  const entry = got?.items?.[`providers.${keySegment(id)}.key`];
+  const value = entry?.layers?.find((l) => l.origin.layer === layer)?.value;
+  if (value && typeof value === 'object' && typeof value.secret === 'string') return `secret:${value.secret}`;
+  if (value && typeof value === 'object' && typeof value.env === 'string') return `env:${value.env}`;
+  return null;
+}
+
+/** 「共用」那一块开着没有：人点过的照点过的（这台设备上记的，`null` 是没点过），没点过的多于 3 家收着。 @param {number} count @param {boolean|null} stored */
+export const sharedOpen = (count, stored) => (typeof stored === 'boolean' ? stored : count <= 3);
+
 /** 删一个池：它在这一层写着的几项（`pools.<id>.*`）各一条 `unset`。 @param {string} id @param {{items: Record<string, Entry>}} got @param {string} layer */
 export function poolRemoval(id, got, layer) {
   const prefix = `pools.${keySegment(id)}.`;
