@@ -31,7 +31,10 @@
 /* 卡片之间的空写在卡片自己身上（收着的连空一起收掉）；里面那一层左右留 4px，卡片的影不被裁掉 */
 .dash-slot > .unfold-inner { min-height: 0; display: grid; padding: 0 4px; }
 .dash-slot:has(.dash-tasks) { flex: 0 1 auto; }
+/* 每张卡最大多高：头一行 36 加「最多露几行」（`--card-rows`，设置 `card_rows`，外壳写上）行、一行 30，加底下的空和边；超出的在卡里滚、头一行钉住
+   （2026-10-24 项目主人：43 个后台任务一列铺到底） */
 .dash-card {
+  max-height: calc(36px + var(--card-rows, 9999) * 30px + 8px);
   min-height: 0; overflow-y: auto; padding: 0 0 calc(6px * var(--space)); border: 1px solid var(--dash-edge); border-radius: var(--r-12);
   margin-bottom: calc(10px * var(--space)); background: var(--surface-1); box-shadow: var(--card-shadow); scrollbar-width: thin; scrollbar-color: transparent transparent;
 }

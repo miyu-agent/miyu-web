@@ -72,6 +72,36 @@
         "ja": "右サイドバーに出さないカード（カードの ID）"
       }
     },
+    "card_rows": {
+      "type": "map",
+      "of": "number",
+      "min": 1,
+      "max": 200,
+      "integer": true,
+      "default": {
+        "todo": 8,
+        "tasks": 12,
+        "files": 8,
+        "shown": 8
+      },
+      "name": {
+        "zh": "右栏每张卡最多露几行（卡的编号 → 行数；多的在卡里滚）",
+        "en": "Most rows each sidebar card shows (card id → rows; the rest scroll inside the card)",
+        "ja": "右サイドバーの各カードに出す最大行数（カードの ID → 行数。あふれた分はカードの中でスクロール）"
+      }
+    },
+    "card_rows_default": {
+      "type": "number",
+      "default": 10,
+      "min": 1,
+      "max": 200,
+      "integer": true,
+      "name": {
+        "zh": "右栏的卡没写行数时最多露几行",
+        "en": "Most rows for a sidebar card not listed above",
+        "ja": "上に書いていないカードの最大行数"
+      }
+    },
     "preview_lines": {
       "type": "number",
       "default": 400,
