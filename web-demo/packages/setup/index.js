@@ -50,10 +50,10 @@ export function apply(ctx) {
     request: (method, params) => ctx.core.request(method, params),
     context: () => ctx.composer.openContext?.(),
   });
+  ctx.effect(() => () => cardMenu.destroy());
   ctx.slots.mount('side.cards', {
     id: 'session', order: 0, keep: Infinity, shrink: 0, head: false,
     render: (/** @type {any} */ card) => {
-      card.el.append(cardMenu.el);
       const off = sessionCard.attach(card);
       return () => { cardMenu.close(); off(); };
     },

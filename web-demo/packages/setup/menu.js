@@ -22,13 +22,18 @@ import { h, icon, replace } from '../../src/lib/dom.js';
 export class Menu {
   /**
    * @param {string} [backLabel] 返回箭头的提示
-   * @param {{floating?: boolean}} [opts] `floating`：浮在最上面一层、贴着按的那一行开（右侧边栏「会话信息」卡里的：卡片会滚、会裁掉，
-   *   不能照外面那一层定位），右边和那一行对齐
+   * @param {{floating?: boolean}} [opts] `floating`：放在页面最上面一层（`body` 下面）、贴着按的那一行开（右侧边栏「会话信息」卡里的：
+   *   卡片会滚，右栏会裁掉——2026-10-24 项目主人：菜单左半截被右栏裁了），右边和那一行对齐、照窗口放
    */
   constructor(backLabel = '', { floating = false } = {}) {
     this.backLabel = backLabel;
     this.floating = floating;
     this.el = h(`div.setup-menu${floating ? '.is-floating' : ''}`, { hidden: true, role: 'menu' });
+    // 右侧边栏盖在上面（窗口窄）时点菜单不算点了外面（`data-keeps-side`，`ui/side.js`）
+    if (floating) {
+      this.el.dataset.keepsSide = '';
+      document.body.append(this.el);
+    }
     /** @type {{el: HTMLElement, row: Row}[]} */
     this.items = [];
     this.at = -1;
@@ -93,11 +98,14 @@ export class Menu {
     this.el.classList.toggle('is-ask', !view.rows.length && !!view.note);
     // 左边对齐：左上角那一条里的按钮开的，和那一条的左边对齐（不是按钮自己的左边，差一截内边距；2026-10-20 项目主人：没对齐）
     if (this.floating) {
-      // 浮在最上面一层：照那一行在窗口里的位置放（整页缩放了的，量出来的是放大以后的，写回去要除掉）；右边和它对齐、开在它下面
+      // 放在 `body` 下面、照窗口放：整页的放大（界面缩放）自己带上（`zoom`，同那一行量出来的倍数），位置照那一行在窗口里的位置，
+      // 写回去要除掉这个倍数；右边和它对齐、开在它下面，左边出不了窗口
       const r = anchor.getBoundingClientRect();
-      const scale = (anchor.offsetWidth ? r.width / anchor.offsetWidth : 1) || 1;
+      // 量出来的倍数带着取整的零头（1.10095）：取到两位，字不发虚
+      const scale = Math.round(((anchor.offsetWidth ? r.width / anchor.offsetWidth : 1) || 1) * 100) / 100;
+      this.el.style.zoom = String(scale);
       this.el.style.left = 'auto';
-      this.el.style.right = `${Math.max(8, (innerWidth - r.right) / scale)}px`;
+      this.el.style.right = `${Math.max(8, innerWidth - r.right) / scale}px`;
       this.el.style.top = `${(r.bottom + 6) / scale}px`;
     } else {
       const edge = /** @type {HTMLElement} */ (anchor.closest('.setup-info') ?? anchor);
@@ -148,6 +156,12 @@ export class Menu {
     const r = this.el.getBoundingClientRect();
     const over = this.view?.below ? r.bottom - (innerHeight - 8) : 8 - r.top;
     if (over > 0) list.style.maxHeight = `${Math.max(96, list.clientHeight - over)}px`;
+  }
+
+  /** 不用了（包停了）：放在 `body` 下面的拿掉 */
+  destroy() {
+    this.close();
+    if (this.floating) this.el.remove();
   }
 
   close() {
