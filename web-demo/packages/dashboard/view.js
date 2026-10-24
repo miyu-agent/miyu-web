@@ -94,6 +94,12 @@ export class Dashboard {
     /** 读输出读到第几回：换了、回来了的晾着的回应丢掉 */
     this.run = 0;
     this.timer = 0;
+    /**
+     * 后台任务卡里滚出去、看不见的行（2026-10-24 项目主人压力测试 170 多个后台任务，网页变慢）：一百多个转圈的图标，看不见的也一直在转、一直
+     * 重画（量下来 15 秒里 CPU 忙 9.6 秒，停了转圈只剩 3.3 秒）。照卡片看得见的那一截打上 `is-away`：转圈停下、用时不每秒改，滚进来当场改一次
+     * @type {IntersectionObserver|null}
+     */
+    this.away = null;
   }
 
   /**
@@ -154,9 +160,33 @@ export class Dashboard {
     }
   }
 
+  /** 看着后台任务卡里哪几行看不见（`is-away`） @param {Card} card @param {HTMLElement[]} rows */
+  watchAway(card, rows) {
+    if (typeof IntersectionObserver !== 'function') return;
+    if (this.away?.root !== card.el) {
+      this.away?.disconnect();
+      this.away = new IntersectionObserver((list) => {
+        const now = Date.now();
+        for (const e of list) {
+          const el = /** @type {HTMLElement} */ (e.target);
+          el.classList.toggle('is-away', !e.isIntersecting);
+          if (e.isIntersecting) for (const t of el.querySelectorAll('[data-since]')) this.since(/** @type {HTMLElement} */ (t), now);
+        }
+      }, { root: card.el, rootMargin: '60px 0px' });
+    } else this.away.disconnect();
+    for (const r of rows) if (r.querySelector('[data-since], .dash-state.is-running')) this.away.observe(r);
+  }
+
+  /** 改一格用时 @param {HTMLElement} el @param {number} now */
+  since(el, now) {
+    const since = Number(el.dataset.since);
+    if (Number.isFinite(since) && since > 0) el.textContent = jobDuration((now - since) / 1000);
+  }
+
   tick() {
     const now = Date.now();
-    for (const el of this.el.querySelectorAll('[data-since]')) {
+    // 看不见的行不改（滚进来的时候 `watchAway` 当场改）
+    for (const el of this.el.querySelectorAll('.dash-row:not(.is-away) [data-since]')) {
       const since = Number(/** @type {HTMLElement} */ (el).dataset.since);
       if (Number.isFinite(since) && since > 0) el.textContent = jobDuration((now - since) / 1000);
     }
@@ -220,8 +250,10 @@ export class Dashboard {
       card.gap(),
       // 点了以后到全都停完之前写「停止中」、灰着不能再点（2026-10-24 项目主人）
       many || this.stoppingAll ? h('button.dash-stop-all', { type: 'button', disabled: this.stoppingAll, onclick: () => this.stopAll() }, t(this.stoppingAll ? 'stopping_all' : 'stop_all')) : null);
-    card.body(rows.map((r) => this.taskRow(r, now)));
+    const nodes = rows.map((r) => this.taskRow(r, now));
+    card.body(nodes);
     card.size(rows.length);
+    this.watchAway(card, nodes);
   }
 
   /** @param {import('./model.js').Row} r @param {number} now */
@@ -534,6 +566,7 @@ export class Dashboard {
 
   /** 停用了：停掉计时 */
   destroy() {
+    this.away?.disconnect();
     clearInterval(this.timer);
     this.timer = 0;
     this.run++;

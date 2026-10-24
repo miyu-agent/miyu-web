@@ -112,6 +112,8 @@
 .dash-state .icon { width: 12px; height: 12px; }
 .dash-state.is-running { color: var(--accent); }
 .dash-state.is-running .icon { animation: tl-spin calc(1s * var(--motion-scale)) linear infinite; }
+/* 滚出卡片、看不见的那几行不转（`view.js` 的 `watchAway`：一百多个任务时转圈的图标一直重画，2026-10-24 项目主人压力测试） */
+.dash-row.is-away .icon { animation: none; }
 .dash-state.is-confirm, .dash-state.is-ask, .dash-state.is-paused { color: var(--t-warn); }
 .dash-state.is-done { color: var(--online); }
 .dash-state.is-failed { color: var(--danger); }
