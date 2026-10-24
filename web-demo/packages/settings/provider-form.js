@@ -4,7 +4,7 @@
 //! 明文只在框里，存完、取消就扔。
 
 import { h, replace } from '../../src/lib/dom.js';
-import { validId, secretName, providerChanges, layerFor, envRef, inputText } from './model.js';
+import { validId, secretName, providerChanges, layerFor, envRef, inputText, providerLayer } from './model.js';
 import { secretScope } from './rows.js';
 import { select } from './rows.js';
 
@@ -19,7 +19,8 @@ export function providerForm(dialog, providers) {
   const editing = dialog.providerForm.id;
   const p = providers.find((x) => x.id === editing) ?? null;
   const template = (field) => dialog.schema.items.find((i) => i.key === `providers.<id>.${field}`);
-  const layer = layerFor(template('driver') ?? { layers: ['personal'] });
+  // 改的是「共用」那一块里的一家：写系统配置；新建的照清单（个人设置）
+  const layer = editing ? providerLayer(dialog.providerSide, template('driver')) : layerFor(template('driver') ?? { layers: ['personal'] });
   const close = () => { dialog.providerForm = null; dialog.drawBody(); };
 
   const input = (attrs) => /** @type {HTMLInputElement} */ (h('input.set-input', { type: 'text', spellcheck: 'false', autocomplete: 'off', ...attrs }));
