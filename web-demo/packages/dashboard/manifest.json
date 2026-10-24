@@ -32,26 +32,6 @@
         "zh": "在跑的用时多久走一次"
       }
     },
-    "todo_rows": {
-      "type": "number",
-      "default": 6,
-      "min": 1,
-      "max": 30,
-      "integer": true,
-      "name": {
-        "zh": "待办最多露几项"
-      }
-    },
-    "file_rows": {
-      "type": "number",
-      "default": 5,
-      "min": 1,
-      "max": 30,
-      "integer": true,
-      "name": {
-        "zh": "文件修改最多露几个"
-      }
-    },
     "cards": {
       "type": "list",
       "of": "text",
@@ -79,10 +59,10 @@
       "max": 200,
       "integer": true,
       "default": {
-        "todo": 8,
-        "tasks": 12,
-        "files": 8,
-        "shown": 8
+        "todo": 6,
+        "tasks": 10,
+        "files": 10,
+        "shown": 10
       },
       "name": {
         "zh": "右栏每张卡最多露几行（卡的编号 → 行数；多的在卡里滚）",

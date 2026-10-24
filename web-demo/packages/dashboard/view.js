@@ -42,7 +42,7 @@ const SHOWN_ICON = { image: 'image', pdf: 'file-text', html: 'globe', markdown: 
 export class Dashboard {
   /**
    * @param {(path: string, fields?: any) => string} t 这个包的字
-   * @param {{tick_ms: number, todo_rows: number, file_rows: number, preview_lines: number}} config
+   * @param {{tick_ms: number, preview_lines: number}} config
    * @param {On} on
    */
   constructor(t, config, on) {
@@ -147,7 +147,8 @@ export class Dashboard {
 
   drawTodo() {
     const t = this.t;
-    const v = todoView(this.data.todos, this.config.todo_rows, { open: this.todoOpen, doneOpen: this.todoDoneOpen });
+    // 露几项照这张卡最多露几行：留两行给「还有 N 项」「已完成 N 项」（2026-10-24：原来的「待办最多露几项」并进卡的行数）
+    const v = todoView(this.data.todos, foldAt(this.cards.todo, 2), { open: this.todoOpen, doneOpen: this.todoDoneOpen });
     const sig = JSON.stringify([this.data.todos, this.todoOpen, this.todoDoneOpen]);
     const card = this.cards.todo;
     if (!card) return;
@@ -307,7 +308,8 @@ export class Dashboard {
     const where = this.on.where();
     const added = files.reduce((n, f) => n + f.added, 0);
     const removed = files.reduce((n, f) => n + f.removed, 0);
-    const max = this.config.file_rows;
+    // 露几个照这张卡最多露几行：留一行给「(N)」（原来的「文件修改最多露几个」并进卡的行数）
+    const max = foldAt(card, 1);
     const shown = this.filesOpen || files.length <= max ? files : files.slice(0, max);
     const rest = files.length - shown.length;
     card.head(h('span.dash-count', t('files_count', { count: files.length })), card.gap(),
@@ -339,7 +341,8 @@ export class Dashboard {
     this.sigs.shown = sig;
     if (!list.length && !panel) return;
     const where = this.on.where();
-    const max = this.config.file_rows;
+    // 露几个照这张卡最多露几行：留一行给「(N)」（原来的「文件修改最多露几个」并进卡的行数）
+    const max = foldAt(card, 1);
     const rows = this.shownOpen || list.length <= max ? list : list.slice(0, max);
     const rest = list.length - rows.length;
     card.head(list.length ? h('span.dash-count', t('shown_count', { count: list.length })) : null);
@@ -500,6 +503,15 @@ export class Dashboard {
 function foldRow(ic, label, onclick, open, tone = '') {
   return h('button.dash-row.dash-fold-row', { type: 'button', 'aria-expanded': String(open), onclick },
     h(`span.dash-state${tone ? `.${tone}` : ''}`, icon(ic)), h('span.dash-fold-count', label));
+}
+
+/**
+ * 一张卡里露几项就收起：照它最多露几行，留 `spare` 行给收起来的那几行；没写行数的不收（照内容高）；至少 1 项。
+ * @param {Card|undefined} card @param {number} spare
+ */
+function foldAt(card, spare) {
+  const rows = card?.maxRows() ?? Infinity;
+  return Number.isFinite(rows) ? Math.max(1, rows - spare) : Infinity;
 }
 
 /** 状态只用图标（第 4 条） @param {string} state */
