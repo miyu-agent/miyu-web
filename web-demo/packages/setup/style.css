@@ -31,6 +31,8 @@
   animation: rise-in var(--motion-in) var(--ease-out) both;
 }
 .setup-menu.is-below { top: calc(100% + 6px); bottom: auto; }
+/* 浮在最上面一层（右侧边栏「会话信息」卡里点人格、预设、工作区开的）：贴着那一行，位置由 `menu.js` 写 */
+.setup-menu.is-floating { position: fixed; z-index: 60; bottom: auto; }
 .setup-menu[hidden] { display: none; }
 /* 头一行照选语言的浮层：标题、右边暗色写按键 */
 .setup-menu-head { display: flex; align-items: baseline; gap: calc(12px * var(--space)); padding: calc(5px * var(--space)) calc(10px * var(--space)) calc(8px * var(--space)); line-height: calc(18px * var(--text-scale)); }
@@ -383,3 +385,29 @@
 .setup-menu-back { display: grid; flex: none; place-items: center; width: 24px; height: 24px; margin: calc(-3px * var(--space)) calc(2px * var(--space)) calc(-3px * var(--space)) calc(-6px * var(--space)); padding: 0; border: 0; border-radius: var(--r-7); background: transparent; color: var(--text-soft); cursor: pointer; }
 .setup-menu-back:hover { background: var(--surface-2); color: var(--text); }
 .setup-menu-back .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); }
+
+/* 右侧边栏的「会话信息」卡（蓝图 web.md「仪表盘」第 4 条，2026-10-24 项目主人）：标题、编号、人格预设工作区三行、上下文横条、本会话用量；
+   外壳（底、边、头一行）是仪表盘画的。字、行高同那里的一行（30px、13px）；横条的颜色同上下文明细的分块 */
+.setup-card-title { padding: calc(2px * var(--space)) calc(12px * var(--space)) 0; color: var(--text); font-size: calc(13px * var(--text-scale)); font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
+.setup-card-id {
+  display: block; max-width: calc(100% - 24px); margin: calc(2px * var(--space)) calc(12px * var(--space)) calc(4px * var(--space)); padding: 0; overflow: hidden; border: 0; background: none;
+  color: var(--text-faint); font: calc(11px * var(--text-scale))/1.5 var(--font-mono); text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;
+}
+.setup-card-id:hover, .setup-card-id:focus-visible { outline: none; color: var(--text-soft); }
+.setup-card-pair {
+  display: flex; align-items: baseline; gap: calc(8px * var(--space)); width: 100%; min-height: 30px; box-sizing: border-box; padding: calc(6px * var(--space)) calc(10px * var(--space)) calc(6px * var(--space)) calc(12px * var(--space));
+  border: 0; background: none; color: var(--text); font: inherit; font-size: calc(13px * var(--text-scale)); line-height: 1.4; text-align: left; cursor: pointer;
+}
+.setup-card-pair:hover, .setup-card-pair:focus-visible { outline: none; background: color-mix(in srgb, var(--text) 4%, transparent); }
+.setup-card-label { flex: none; min-width: 3.5em; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
+.setup-card-value { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.setup-card-more { flex: none; align-self: center; display: inline-grid; color: var(--text-faint); opacity: 0; transition: opacity calc(0.12s * var(--motion-scale)) ease; }
+.setup-card-more .icon { width: 12px; height: 12px; }
+.setup-card-pair:hover .setup-card-more, .setup-card-pair:focus-visible .setup-card-more { opacity: 1; }
+@media (hover: none) { .setup-card-more { opacity: 1; } }
+.setup-card-stat { --ctx-output: color-mix(in oklab, var(--gold) 45%, var(--ribbon)); padding: calc(4px * var(--space)) 0 calc(4px * var(--space)); }
+.setup-card-line { display: flex; align-items: baseline; justify-content: space-between; gap: calc(8px * var(--space)); min-height: 26px; padding: 0 calc(12px * var(--space)); font-size: calc(13px * var(--text-scale)); line-height: 26px; }
+.setup-card-num { min-width: 0; overflow: hidden; color: var(--text-soft); font: calc(11.5px * var(--text-scale))/26px var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
+.setup-card-bar { position: relative; display: flex; height: 6px; margin: calc(2px * var(--space)) calc(12px * var(--space)) calc(4px * var(--space)); overflow: hidden; border-radius: var(--r-pill); background: var(--line); }
+.setup-card-seg { flex: none; height: 100%; background: var(--tone); }
+.setup-card-mark { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--text-soft); }

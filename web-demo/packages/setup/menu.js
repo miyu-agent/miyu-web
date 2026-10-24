@@ -20,10 +20,15 @@ import { h, icon, replace } from '../../src/lib/dom.js';
  */
 
 export class Menu {
-  /** @param {string} [backLabel] 返回箭头的提示 */
-  constructor(backLabel = '') {
+  /**
+   * @param {string} [backLabel] 返回箭头的提示
+   * @param {{floating?: boolean}} [opts] `floating`：浮在最上面一层、贴着按的那一行开（右侧边栏「会话信息」卡里的：卡片会滚、会裁掉，
+   *   不能照外面那一层定位），右边和那一行对齐
+   */
+  constructor(backLabel = '', { floating = false } = {}) {
     this.backLabel = backLabel;
-    this.el = h('div.setup-menu', { hidden: true, role: 'menu' });
+    this.floating = floating;
+    this.el = h(`div.setup-menu${floating ? '.is-floating' : ''}`, { hidden: true, role: 'menu' });
     /** @type {{el: HTMLElement, row: Row}[]} */
     this.items = [];
     this.at = -1;
@@ -87,8 +92,17 @@ export class Menu {
     // 只有一句话和按钮的一屏（问一句的：换人格前的确认）：话照正文的颜色、大一点
     this.el.classList.toggle('is-ask', !view.rows.length && !!view.note);
     // 左边对齐：左上角那一条里的按钮开的，和那一条的左边对齐（不是按钮自己的左边，差一截内边距；2026-10-20 项目主人：没对齐）
-    const edge = /** @type {HTMLElement} */ (anchor.closest('.setup-info') ?? anchor);
-    this.el.style.left = `${edge.offsetLeft}px`;
+    if (this.floating) {
+      // 浮在最上面一层：照那一行在窗口里的位置放（整页缩放了的，量出来的是放大以后的，写回去要除掉）；右边和它对齐、开在它下面
+      const r = anchor.getBoundingClientRect();
+      const scale = (anchor.offsetWidth ? r.width / anchor.offsetWidth : 1) || 1;
+      this.el.style.left = 'auto';
+      this.el.style.right = `${Math.max(8, (innerWidth - r.right) / scale)}px`;
+      this.el.style.top = `${(r.bottom + 6) / scale}px`;
+    } else {
+      const edge = /** @type {HTMLElement} */ (anchor.closest('.setup-info') ?? anchor);
+      this.el.style.left = `${edge.offsetLeft}px`;
+    }
     const wasOpen = !this.el.hidden;
     this.el.hidden = false;
     // 开着菜单的那个按钮：箭头跟着朝下（左上角的标题）

@@ -351,6 +351,13 @@
         "yes": "是",
         "no": "否"
       },
+      "card": {
+        "title": "会话信息",
+        "copy_id": "复制会话编号",
+        "copied": "已复制 {count} 个字",
+        "context": "上下文",
+        "usage": "本会话用量"
+      },
       "follow_default": "跟随默认",
       "command_persona": "换人格",
       "command_preset": "换预设",
@@ -557,6 +564,13 @@
         "yes": "Yes",
         "no": "No"
       },
+      "card": {
+        "title": "Session",
+        "copy_id": "Copy session id",
+        "copied": "Copied {count} characters",
+        "context": "Context",
+        "usage": "Usage this session"
+      },
       "follow_default": "Follow default",
       "command_persona": "Switch persona",
       "command_preset": "Switch preset",
@@ -762,6 +776,13 @@
         "changed_preset": "使用中のプリセットが変更されました。次のターンでキャッシュはすべて無効になります。先にコンテキストを圧縮することをおすすめします。",
         "yes": "はい",
         "no": "いいえ"
+      },
+      "card": {
+        "title": "セッション情報",
+        "copy_id": "セッション ID をコピー",
+        "copied": "{count} 文字コピーしました",
+        "context": "コンテキスト",
+        "usage": "このセッションの使用量"
       },
       "follow_default": "デフォルトに従う",
       "command_persona": "人格を切り替え",
