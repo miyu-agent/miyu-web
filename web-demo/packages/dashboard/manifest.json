@@ -2,14 +2,14 @@
   "id": "dashboard",
   "version": "0.1.0",
   "name": {
-    "zh": "仪表盘",
-    "en": "Dashboard",
-    "ja": "ダッシュボード"
+    "zh": "右侧边栏",
+    "en": "Right sidebar",
+    "ja": "右サイドバー"
   },
   "summary": {
-    "zh": "右侧边栏：待办、后台任务、文件修改、展示文件",
-    "en": "Right sidebar: to-dos, background tasks, file changes and shown files",
-    "ja": "右サイドバー：ToDo、バックグラウンドタスク、ファイルの変更、表示したファイル"
+    "zh": "右侧边栏：会话信息、待办、后台任务、文件修改、展示文件",
+    "en": "Right sidebar: session info, to-dos, background tasks, file changes and shown files",
+    "ja": "右サイドバー：セッション情報、ToDo、バックグラウンドタスク、ファイルの変更、表示したファイル"
   },
   "kind": "optional",
   "description": {
@@ -22,7 +22,8 @@
     "chat",
     "core",
     "composer",
-    "storage"
+    "storage",
+    "packages"
   ],
   "settings": {
     "tick_ms": {
@@ -33,6 +34,7 @@
       }
     },
     "cards": {
+      "applies": "live",
       "type": "list",
       "of": "text",
       "default": ["session", "todo", "tasks", "files", "shown"],
@@ -43,6 +45,7 @@
       }
     },
     "cards_off": {
+      "applies": "live",
       "type": "list",
       "of": "text",
       "default": [],
@@ -53,6 +56,7 @@
       }
     },
     "card_rows": {
+      "applies": "live",
       "type": "map",
       "of": "number",
       "min": 1,
@@ -71,6 +75,7 @@
       }
     },
     "card_rows_default": {
+      "applies": "live",
       "type": "number",
       "default": 10,
       "min": 1,
@@ -98,6 +103,14 @@
   ],
   "text": {
     "zh": {
+      "set": {
+        "cards": "卡片",
+        "cards_hint": "拖动左边的把手排先后（也可以聚焦把手按 Alt+↑、Alt+↓），右边设最多露几行、开关这张卡",
+        "rows": "最多露几行",
+        "drag": "拖动排序",
+        "drag_named": "拖动「{name}」排序（Alt+↑、Alt+↓ 挪一格）",
+        "reset": "恢复默认"
+      },
       "todo": "待办",
       "tasks": "后台任务",
       "files": "文件修改",
@@ -156,6 +169,14 @@
       "remove_named": "从右栏拿掉 {name}"
     },
     "en": {
+      "set": {
+        "cards": "Cards",
+        "cards_hint": "Drag the handle to reorder (or focus it and press Alt+↑ / Alt+↓); set how many rows each card shows, or turn it off",
+        "rows": "Most rows",
+        "drag": "Drag to reorder",
+        "drag_named": "Drag “{name}” to reorder (Alt+↑ / Alt+↓ moves one step)",
+        "reset": "Restore defaults"
+      },
       "todo": "To-do",
       "tasks": "Background tasks",
       "files": "File changes",
@@ -214,6 +235,14 @@
       "remove_named": "Remove {name} from sidebar"
     },
     "ja": {
+      "set": {
+        "cards": "カード",
+        "cards_hint": "左のハンドルをドラッグして並べ替え（ハンドルにフォーカスして Alt+↑・Alt+↓ でも可）。右で最大行数とオン・オフを設定",
+        "rows": "最大行数",
+        "drag": "ドラッグで並べ替え",
+        "drag_named": "「{name}」をドラッグで並べ替え（Alt+↑・Alt+↓ で一つ移動）",
+        "reset": "デフォルトに戻す"
+      },
       "todo": "ToDo",
       "tasks": "バックグラウンドタスク",
       "files": "ファイルの変更",

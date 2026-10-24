@@ -145,6 +145,12 @@ export class Dashboard {
     };
   }
 
+  /** 设置改了（卡片的行数）：四张卡照新的行数重画 */
+  refresh() {
+    this.sigs = { todo: '', tasks: '', files: '', shown: '' };
+    this.update(this.data);
+  }
+
   /** 「什么都还没有」那一句：一张卡都没露的时候出 @param {boolean} any */
   setEmpty(any) {
     this.empty.hidden = any;

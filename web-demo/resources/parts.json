@@ -6869,5 +6869,47 @@
     "select": [
       ".dash-search"
     ]
+  },
+  "dash.set-grip": {
+    "zh": "设置页的右侧边栏卡片：拖动把手",
+    "select": [
+      ".dash-set-grip"
+    ]
+  },
+  "dash.set-card": {
+    "zh": "设置页的右侧边栏卡片：一张卡一行",
+    "select": [
+      ".dash-set-card"
+    ]
+  },
+  "dash.set-rows": {
+    "zh": "设置页的右侧边栏卡片：「最多露几行」",
+    "select": [
+      ".dash-set-rows"
+    ]
+  },
+  "dash.set-ghost": {
+    "zh": "设置页的右侧边栏卡片：拖起来跟着指针的那一张",
+    "select": [
+      ".dash-set-ghost"
+    ]
+  },
+  "dash.set-line": {
+    "zh": "设置页的右侧边栏卡片：放下的位置那一道线",
+    "select": [
+      ".dash-set-line"
+    ]
+  },
+  "dash.set-hint": {
+    "zh": "设置页的右侧边栏卡片：上面那一句说明",
+    "select": [
+      ".dash-set-hint"
+    ]
+  },
+  "dash.set-foot": {
+    "zh": "设置页的右侧边栏卡片：底下「恢复默认」那一行",
+    "select": [
+      ".dash-set-foot"
+    ]
   }
 }

@@ -175,3 +175,24 @@
 .dash-diff-mark { color: var(--text-faint); user-select: none; }
 .dash-diff-text { min-width: 0; overflow-x: auto; }
 .dash-diff-note { padding: calc(12px * var(--space)) calc(16px * var(--space)); color: var(--text-faint); font-family: var(--font-ui); font-size: calc(12.5px * var(--text-scale)); }
+
+/* 设置页「右侧边栏」里的一块「卡片」（`settings-cards.js`，蓝图「仪表盘」第 4 条「设置」）：一行一张卡，左边拖动把手、卡片名、「最多露几行」、开关；
+   拖起来的那一行原处淡下去，一张浮起来的小卡片跟着指针，放下的位置一道 accent 的线（同左栏拖会话） */
+.dash-set-hint { margin: 0 0 calc(4px * var(--space)); }
+.dash-set-grip {
+  display: inline-grid; flex: none; place-items: center; width: 24px; height: 28px; margin-left: calc(-4px * var(--space)); padding: 0; border: 0; border-radius: var(--r-6);
+  background: none; color: var(--text-faint); cursor: grab; touch-action: none;
+}
+.dash-set-grip:hover, .dash-set-grip:focus-visible { outline: none; color: var(--text); background: color-mix(in srgb, var(--text) 6%, transparent); }
+.dash-set-grip .icon { width: 16px; height: 16px; }
+.dash-set-card { gap: calc(10px * var(--space)); }
+.dash-set-card.is-dragging { opacity: 0.35; }
+.dash-set-rows { display: inline-flex; align-items: center; gap: calc(8px * var(--space)); margin-right: calc(14px * var(--space)); color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); white-space: nowrap; }
+.dash-set-rows input { width: 56px; text-align: right; }
+.dash-set-foot { display: flex; justify-content: flex-end; padding-top: calc(10px * var(--space)); }
+.dash-set-ghost {
+  position: fixed; z-index: 121; top: 0; left: 0; box-sizing: border-box; padding: calc(9px * var(--space)) calc(14px * var(--space)); border-radius: var(--r-10);
+  background: var(--surface-1); box-shadow: var(--float-elev, var(--float-shadow)); color: var(--text); font-size: calc(13.5px * var(--text-scale)); pointer-events: none;
+}
+.dash-set-line { position: fixed; z-index: 120; top: 0; left: 0; height: 2px; border-radius: var(--r-pill); background: var(--accent); pointer-events: none; }
+body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; user-select: none; }

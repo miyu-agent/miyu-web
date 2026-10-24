@@ -52,7 +52,7 @@ export function apply(ctx) {
   });
   ctx.effect(() => () => cardMenu.destroy());
   ctx.slots.mount('side.cards', {
-    id: 'session', order: 0, keep: Infinity, shrink: 0, head: false,
+    id: 'session', order: 0, keep: Infinity, shrink: 0, head: false, rows: false, name: t('card.title'),
     render: (/** @type {any} */ card) => {
       const off = sessionCard.attach(card);
       return () => { cardMenu.close(); off(); };

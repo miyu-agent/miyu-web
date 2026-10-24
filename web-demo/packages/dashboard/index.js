@@ -10,6 +10,7 @@
 import { h, icon } from '../../src/lib/dom.js';
 import { Dashboard } from './view.js';
 import { Cards } from './cards.js';
+import { cardsBlock } from './settings-cards.js';
 import { taskTree, fileChanges, counts, badgeOf } from './model.js';
 
 /** 人关过仪表盘的会话（这台设备、照账号记着，最多记这么多个） */
@@ -68,7 +69,18 @@ export function apply(ctx) {
     { id: 'files', order: 40, keep: 3, shrink: 4 },
     { id: 'shown', order: 50, keep: 3, shrink: 4 },
   ];
-  for (const c of own) ctx.slots.mount('side.cards', { ...c, render: (/** @type {any} */ card) => dash.attach(c.id, card) });
+  for (const c of own) ctx.slots.mount('side.cards', { ...c, name: t(c.id), render: (/** @type {any} */ card) => dash.attach(c.id, card) });
+  // 设置页「软件包」→「右侧边栏」里一块「卡片」（挂载位 `settings.package`）：拖着排先后、每张的行数、开关；这几项是 `live`，改了当场照新的排
+  let config = ctx.config;
+  ctx.watchConfig((/** @type {any} */ next) => {
+    config = next;
+    cards.reconfigure(next);
+    dash.refresh();
+  });
+  ctx.slots.mount('settings.package', {
+    id: 'dashboard-cards', key: 'dashboard', keys: ['cards', 'cards_off', 'card_rows', 'card_rows_default'],
+    render: (/** @type {any} */ kit) => cardsBlock(ctx, kit, () => config, (id) => cards.nameOf(id)),
+  });
 
   // 右栏开关：同左栏开关（不铺底，开着也不变色）；关着时一个提醒点：等人的橙色、来了新展示的 accent、在跑的转圈
   const badge = h('span.dash-badge', { hidden: true });
