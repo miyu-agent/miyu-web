@@ -4,7 +4,7 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { coreRow, textField } from './rows.js';
-import { itemFor, inputText, layerFor, writtenIn, expectFor } from './model.js';
+import { itemFor, inputText, layerOf, writtenIn, expectFor } from './model.js';
 import { modelName } from './model-bits.js';
 
 /** 一个模型的详情：从右边滑进来，只有名字和控件；`Esc`、✕ 收回。 */
@@ -49,7 +49,7 @@ function prices(dialog, item) {
   const inputs = new Map();
   // 照显示的整份写：有字的都写（没改的也写，五项一起成一套），空着的这一层写过才删
   const saveAll = async () => {
-    const layer = layerFor(parts[0].it);
+    const layer = layerOf(parts[0].it, !!dialog.ctx.admin?.on);
     const changes = parts.flatMap(({ name, it }) => {
       const text = inputs.get(name)?.value.trim() ?? '';
       const expect = expectFor(it.entry, layer);
@@ -61,7 +61,7 @@ function prices(dialog, item) {
   };
   let changed = false;
   const cells = parts.map(({ name, it }) => {
-    changed ||= writtenIn(it.entry, layerFor(it));
+    changed ||= writtenIn(it.entry, layerOf(it, !!dialog.ctx.admin?.on));
     const field = /** @type {HTMLInputElement} */ (textField(inputText(it.entry?.value ?? ''), name === 'currency' ? 'text' : 'number', '', saveAll));
     inputs.set(name, field);
     return h(`label.set-price${name === 'currency' ? '.is-currency' : ''}`, h('span', ctx.text(`models.price_${name}`)), field);

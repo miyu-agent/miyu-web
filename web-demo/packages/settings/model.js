@@ -98,6 +98,25 @@ export function splitKey(key) {
 export const layerFor = (item) => (item.layers.includes('personal') ? 'personal' : 'system');
 
 /**
+ * 这一项写在哪一层（蓝图「管理员模式」第 5 条）：管理员模式里能写系统那一层的写系统（改的是大家的默认）；平时照 `layerFor`
+ * （能写个人的写个人，只能写系统的写系统——平时锁着）。
+ * @param {{layers: string[]}} item @param {boolean} [admin] 管理员模式开着
+ */
+export const layerOf = (item, admin = false) => (admin && item.layers.includes('system') ? 'system' : layerFor(item));
+
+/**
+ * 一项在某几层里最上面写着的值（从上往下找第一个写了的）；都没写的交 `undefined`。管理员模式里带个人那一层的项照系统那一层（没写的照出厂）画。
+ * @param {Entry|null|undefined} entry @param {string[]} layers
+ */
+export function valueIn(entry, layers) {
+  for (const layer of layers) {
+    const got = entry?.layers?.find((l) => l.origin.layer === layer);
+    if (got) return got.value;
+  }
+  return undefined;
+}
+
+/**
  * `config.set` 的 `expect`：这一层里这一项现在写着什么，`{value}` 或者没写 `{}`（数照数值比：`1` 对得上文件里的 `1.0`，核心 8-3 再补）。
  * @param {Entry|null} entry
  * @param {string} layer
