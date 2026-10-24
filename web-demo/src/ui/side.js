@@ -16,6 +16,10 @@ import { res, t } from '../util/res.js';
 export const NARROW_WIDTH = 252;
 /** 拖过的宽记在这台设备上的名字（内核的 `storage` 会带上账号） */
 const WIDTH = 'side_width';
+/** 原来的最窄（2026-10-24 改成照左栏以前）：记着的正好是它的，是那时拖到了最窄，现在照最窄（左栏的宽）画 */
+const OLD_NARROWEST = 312;
+/** 拖到离最窄（左栏的宽）这么近就吸过去（px，自己的 CSS 像素），好和左栏一样宽 */
+const SNAP_PX = 10;
 
 /**
  * 窄栏画多宽：照要的（拖过的、记下的；没拖过的是最窄），夹在最窄和放得下的最宽之间；放得下的比最窄还窄的照最窄（放不放得下包自己照
@@ -45,8 +49,9 @@ export class SideColumn {
     this.storage = opts.storage ?? null;
     this.room = opts.room ?? (() => Infinity);
     this.base = opts.base ?? (() => NARROW_WIDTH);
-    /** 拖过的宽（没拖过的是 0：照最窄） */
-    this.width = Number(this.storage?.get(WIDTH, 0)) || 0;
+    /** 拖过的宽（没拖过的、拖到过原来的最窄的是 0：照最窄，2026-10-24 项目主人：拖到最窄和左栏并不一样宽） */
+    const stored = Number(this.storage?.get(WIDTH, 0)) || 0;
+    this.width = stored === OLD_NARROWEST ? 0 : stored;
     // 左边缘拖着改宽：只在窄栏露（盖在上面的、点进去看工作区的不露）
     this.handle = h('div.side-resize-handle', { hidden: true, title: t('artifacts.resize'), onpointerdown: (/** @type {PointerEvent} */ e) => this.resize(e) });
     this.el = h('aside.side-column', { hidden: true }, this.handle);
@@ -97,7 +102,10 @@ export class SideColumn {
     this.shell.classList.add('is-artifact-resizing', 'is-side-resizing');
     const scale = parseFloat(getComputedStyle(this.shell).zoom) || 1;
     const move = (/** @type {PointerEvent} */ m) => {
-      this.width = sideWidth((innerWidth - m.clientX) / scale, this.room(), this.base());
+      const base = sideWidth(0, Infinity, this.base());
+      const w = sideWidth((innerWidth - m.clientX) / scale, this.room(), this.base());
+      // 拖到离左栏的宽很近：吸过去，和左栏一样宽
+      this.width = Math.abs(w - base) <= SNAP_PX ? base : w;
       this.shell.style.setProperty('--side-w', `${this.width}px`);
     };
     const up = () => {
