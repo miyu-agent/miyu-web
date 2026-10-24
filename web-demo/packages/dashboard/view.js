@@ -246,9 +246,17 @@ export class Dashboard {
     return this.on.stop(x.owner, x.job).finally(() => { this.sigs.tasks = ''; this.drawTasks(); });
   }
 
-  /** 全部停止：照先后一个个停（停一个子代理连它派的一起停） */
-  async stopAll() {
-    for (const x of stoppable(this.data.tree)) if (!this.stopping.has(x.key)) await this.halt(x);
+  /**
+   * 全部停止：一下子全都发出去、全都标成停在半路（2026-10-24 项目主人：原来一个个等着停，慢）；停一个子代理连它派的一起停，下面的不单停
+   * （`stoppable`）；等全都回了再重画一次。
+   */
+  stopAll() {
+    const all = stoppable(this.data.tree).filter((x) => !this.stopping.has(x.key));
+    if (!all.length) return Promise.resolve();
+    for (const x of all) this.stopping.add(x.key);
+    this.sigs.tasks = '';
+    this.drawTasks();
+    return Promise.allSettled(all.map((x) => this.on.stop(x.owner, x.job))).then(() => { this.sigs.tasks = ''; this.drawTasks(); });
   }
 
   // ── 文件修改 ──
