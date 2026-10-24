@@ -18,6 +18,9 @@ import { confirmIn } from './confirm.js';
  *   button: (label: string, opts: {primary?: boolean, danger?: boolean}, onclick: () => void) => HTMLButtonElement,
  *   toast: (text: string) => void,
  *   confirm: (from: Element, text: string) => Promise<boolean>,
+ *   number: (value: number, min: number, max: number, change: (n: number) => void) => HTMLInputElement,
+ *   row: (opts: {lead?: Node|null, name: string, desc?: string, control?: Node|Node[]|null}) => HTMLElement,
+ *   group: (title: string|null, ...rows: Node[]) => HTMLElement,
  * }} Kit
  */
 
@@ -41,5 +44,26 @@ export function sectionKit(dialog) {
     toast: (text) => dialog.toast(text),
     /** 删除、清空前弹窗问一句（`confirm.js`），答了「确认」才是 `true` */
     confirm: (from, text) => confirmIn(from, { text, yes: dialog.ctx.text('ask_yes'), no: dialog.ctx.text('ask_no') }),
+    /** 整数的数字框（悬停写范围）：改完（`Enter`、离开）照范围收下，写错的、出了范围的退回原来的 */
+    number: (value, min, max, change) => {
+      let now = value;
+      const input = textField(String(value), 'number', `${min} – ${max}`, (text) => {
+        const n = Number(text.trim());
+        if (!Number.isInteger(n) || n < min || n > max) {
+          input.value = String(now);
+          return;
+        }
+        if (n === now) return;
+        now = n;
+        change(n);
+      });
+      return input;
+    },
+    /** 一行（同设置页的一行：左边名字和一句说明，右边控件；`lead` 放在最左边，拖动把手这类） */
+    row: ({ lead = null, name, desc = '', control = null }) => h('div.set-row', lead,
+      h('div.set-text', h('div.set-name', h('span', name)), desc ? h('p.set-desc', desc) : null),
+      control ? h('div.set-control', control) : null),
+    /** 一组（同设置页的一组：组名，下面一行行） */
+    group: (title, ...rows) => h('section.set-group', title ? h('h3.set-group-name', title) : null, h('div.set-rows', rows)),
   };
 }

@@ -158,15 +158,15 @@ function fold(ctx, rows) {
  * 一个包的设置项（「软件包」页展开时）：`advanced` 的收在最后「高级（N）」里；主题的颜色包把终端那一组（`t_` 打头）也收进去。
  * @param {any} dialog @param {string} id 包
  */
-export function packageSettings(dialog, id) {
+export function packageSettings(dialog, id, skip = /** @type {string[]} */ ([])) {
   const ctx = dialog.ctx;
   return later(async (el) => {
     const got = await ctx.packages.settings(id);
     const specs = got.manifest.settings ?? {};
-    // 只列有控件能改的；结构复杂的（json、map、list）改不了，不列
-    const keys = editableKeys(specs);
+    // 只列有控件能改的；结构复杂的（json、map、list）改不了，不列；包自己画的那一块管着的（`skip`）不再单列
+    const keys = editableKeys(specs).filter((k) => !skip.includes(k));
     const hidden = (k) => specs[k].advanced || (id.startsWith('theme-') && /^(light_|dark_)?t_/.test(k));
-    const rowOf = (k) => packageRow(dialog, id, k, got, () => replace(el, packageSettings(dialog, id)));
+    const rowOf = (k) => packageRow(dialog, id, k, got, () => replace(el, packageSettings(dialog, id, skip)));
     replace(el, h('div.set-rows', keys.filter((k) => !hidden(k)).map(rowOf)), fold(ctx, keys.filter(hidden).map(rowOf)));
   });
 }

@@ -6,6 +6,7 @@
 import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { toggle } from './rows.js';
 import { packageSettings } from './look.js';
+import { sectionKit } from './kit.js';
 import { editableKeys, pkgMatch } from './model.js';
 
 export function drawPackages(dialog) {
@@ -73,6 +74,7 @@ function webPackagePage(dialog, id) {
     if (!p) return;
     const m = p.manifest ?? {};
     const why = problemOf(ctx, p);
+    const own = ownBlock(dialog, id);
     replace(box,
       m.summary ? h('p.set-sub-desc', ctx.local(m.summary)) : null,
       h('section.set-group', h('div.set-rows', h('div.set-row',
@@ -81,7 +83,23 @@ function webPackagePage(dialog, id) {
           await ctx.packages.set(id, { disabled: p.state !== 'disabled' });
           dialog.drawBody();
         }))))),
-      packageSettings(dialog, id));
+      own.node,
+      packageSettings(dialog, id, own.keys));
   }).catch((err) => replace(box, h('p.set-empty.is-bad', err.message)));
   return [box];
+}
+
+/**
+ * 包自己画的一块（挂载位 `settings.package`，键是包编号；蓝图「设置页」第 13 条）：画在「启用」那一行下面，它管着的几项（`keys`）不再单列；
+ * 停着的包、没挂的没有；画的时候出错的写原因。
+ * @param {any} dialog @param {string} id
+ * @returns {{node: Node|null, keys: string[]}}
+ */
+function ownBlock(dialog, id) {
+  const ctx = dialog.ctx;
+  const entry = ctx.slots.pick('settings.package', id);
+  if (!entry) return { node: null, keys: [] };
+  const out = ctx.slots.draw(entry, sectionKit(dialog));
+  const node = out instanceof Node ? out : out?.failed ? h('p.set-problem.is-error', `${out.owner}：${out.reason}`) : null;
+  return { node, keys: Array.isArray(entry.keys) ? entry.keys : [] };
 }

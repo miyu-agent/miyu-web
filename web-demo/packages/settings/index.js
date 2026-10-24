@@ -14,6 +14,8 @@ import { AdminPage, parseAdmin } from './admin.js';
 export function apply(ctx) {
   ctx.slots.declare('settings.section', 'list');
   ctx.slots.declare('settings.editor', 'keyed');
+  // 网页包的设置页里包自己画的一块（keyed，键是包编号；蓝图 web.md「设置页」第 13 条：右侧边栏的「卡片」）
+  ctx.slots.declare('settings.package', 'keyed');
   /** @type {SettingsDialog|null} */
   let dialog = null;
   const open = (page) => {
