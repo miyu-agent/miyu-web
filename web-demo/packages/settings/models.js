@@ -6,7 +6,6 @@
 
 import { h } from '../../src/lib/dom.js';
 import { providerForm } from './provider-form.js';
-import { drawAdd } from './add-provider.js';
 import { drawProviders } from './providers.js';
 import { drawDefaults } from './defaults.js';
 import { drawPools } from './pools.js';
@@ -21,11 +20,11 @@ export function drawModels(dialog) {
   const tabs = h('div.set-tabs', { role: 'tablist' }, TABS.map((id) => h(`button.set-tabbar${dialog.modelTab === id ? '.is-on' : ''}`, {
     type: 'button',
     role: 'tab',
-    onclick: () => { dialog.modelTab = id; dialog.modelDetail = null; dialog.providerForm = null; dialog.adding = null; dialog.keyEdit = null; dialog.drawBody(); },
+    onclick: () => { dialog.modelTab = id; dialog.modelDetail = null; dialog.providerForm = null; dialog.keyEdit = null; dialog.drawBody(); },
   }, ctx.text(`models.tabs.${id}`))));
   const list = dialog.models;
   if (!list) return [tabs, dialog.modelsLoading ? loadingRow(ctx) : h('p.set-empty.is-bad', ctx.text('load_failed', { reason: 'model.list' }))];
-  if (dialog.modelTab === 'providers') return [tabs, dialog.adding ? drawAdd(dialog) : dialog.providerForm ? providerForm(dialog, list.providers ?? []) : drawProviders(dialog, list)];
+  if (dialog.modelTab === 'providers') return [tabs, dialog.providerForm ? providerForm(dialog, list.providers ?? []) : drawProviders(dialog, list)];
   if (dialog.modelTab === 'pools') return [tabs, drawPools(dialog, list)];
   return [tabs, drawDefaults(dialog, list)];
 }

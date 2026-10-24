@@ -568,6 +568,8 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .set-tool-timeout .set-input { width: 96px; }
 .set-tool-error { margin: 0; color: var(--danger); font-size: calc(12.5px * var(--text-scale)); line-height: 1.5; }
 .set-tool-pop-foot { display: flex; justify-content: flex-end; gap: calc(8px * var(--space)); }
+/* 添加供应商的浮窗（`add-provider.js`）：一列供应商、测试的结果要宽一些，高度不超过设置框 */
+.set-add-pop { width: min(560px, 100%); max-height: min(680px, 100%); }
 /* 运行中前面一个绿点（同软件包页的状态）；多选、删除 */
 .set-tool-state.is-on::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: calc(6px * var(--space)); border-radius: var(--r-round); background: var(--online); vertical-align: 1px; }
 .set-tool-state.is-error { color: var(--danger); }
