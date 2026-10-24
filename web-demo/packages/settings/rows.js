@@ -4,7 +4,7 @@
 //! （`look.js`）共用 `shell`。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { noteOf, envRef, inputText, listElement, layerFor, writtenIn, secretName, referenceOptions, comboState, COMBO_OTHER } from './model.js';
+import { noteOf, envRef, inputText, listElement, layerFor, layerOf, valueIn, writtenIn, secretName, referenceOptions, comboState, COMBO_OTHER } from './model.js';
 
 /**
  * 一组：组名，下面一行行。
@@ -83,7 +83,12 @@ export function coreRow(dialog, item, opts = {}) {
   // 专门的编辑器（挂载位 `settings.editor`，照键）：别的包给这一项的选项（默认人格照人格列表），也可以把这一行藏了（没得选的）
   const editor = ctx.slots.pick('settings.editor', item.key);
   if (editor?.hidden?.()) return null;
-  const value = item.entry?.value ?? item.fact?.value;
+  // 照清单的 `layers` 画（蓝图「管理员模式」第 5 条）：只能写系统那一层的平时锁着；带个人那一层的，管理员模式里改的是大家的默认（照系统那一层画）
+  const admin = !!ctx.admin?.on;
+  const systemOnly = !item.layers.includes('personal');
+  const locked = systemOnly && !!dialog.adminLocked;
+  const forAll = admin && !systemOnly && item.layers.includes('system');
+  const value = forAll ? valueIn(item.entry, ['system', 'default']) ?? item.default ?? null : item.entry?.value ?? item.fact?.value;
   /** @type {ReturnType<typeof shell>} */
   let row;
   const save = async (change) => {
@@ -110,14 +115,18 @@ export function coreRow(dialog, item, opts = {}) {
     if (why) row.fail(why);
     else row.done();
   };
-  const written = writtenIn(item.entry, layerFor(item));
+  const written = writtenIn(item.entry, layerOf(item, admin));
+  const made = editor?.options ? control(dialog, { ...item, control: 'select', options: editor.options() }, value, save) : control(dialog, item, value, save, saveSecret, scope.el);
+  // 管理员模式里：「大家的默认」，个人那一层也写了的接「你的个人设置盖过了它」
+  const forAllNote = forAll ? h('span.set-for-all', ctx.text('admin_mode.default'), writtenIn(item.entry, 'personal') ? ` · ${ctx.text('admin_mode.overridden')}` : '') : null;
+  const applies = appliesLine(dialog, item, opts.compact);
   row = shell({
     name: item.name,
     description: opts.compact ? '' : item.description,
-    source: appliesLine(dialog, item, opts.compact),
+    source: locked ? dialog.lockLine(true) : forAllNote ? [forAllNote, applies ? ` · ${applies}` : null] : applies,
     problems: item.problems,
-    control: editor?.options ? control(dialog, { ...item, control: 'select', options: editor.options() }, value, save) : control(dialog, item, value, save, saveSecret, scope.el),
-    reset: written ? () => save({ unset: true }) : null,
+    control: locked ? h('span.is-admin-locked', { inert: '' }, made) : made,
+    reset: written && !locked ? () => save({ unset: true }) : null,
     resetTitle: ctx.text('reset'),
   });
   // 刚存成的：存完整页重读重画了，对勾画在新的这一行上

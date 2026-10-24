@@ -7,7 +7,7 @@ import { drawMarket, marketPush } from './market.js';
 import { drawAccount } from './account.js';
 import { hasPrivate, privateGroup } from './privacy.js';
 import { leave } from '../../src/lib/motion.js';
-import { buildPages, search, pagesWithErrors, layerFor, expectFor, navGroups, pkgMatch, ownerOf } from './model.js';
+import { buildPages, search, pagesWithErrors, layerOf, expectFor, navGroups, pkgMatch, ownerOf } from './model.js';
 import { coreRow, groupBlock, banner, toggle } from './rows.js';
 import { drawLook } from './look.js';
 import { drawPackages } from './packages.js';
@@ -273,9 +273,9 @@ export class SettingsDialog {
     return !!this.ctx.admin?.locked;
   }
 
-  /** 锁着的那一处写的一行：暗字「在管理员模式里改」，后面一个文字按钮「进入管理员模式」（蓝图「管理员模式」第 4 条） */
-  lockLine() {
-    return h('p.set-locked', h('span', this.ctx.text('admin_mode.locked')),
+  /** 锁着的那一处写的一行：暗字「在管理员模式里改」，后面一个文字按钮「进入管理员模式」（蓝图「管理员模式」第 4 条）；`inline` 的放进别的一行字里 @param {boolean} [inline] */
+  lockLine(inline = false) {
+    return h(inline ? 'span.set-locked' : 'p.set-locked', h('span', this.ctx.text('admin_mode.locked')),
       h('button.set-link', { type: 'button', onclick: () => this.ctx.admin?.set(true) }, this.ctx.text('admin_mode.enter')));
   }
 
@@ -370,13 +370,13 @@ export class SettingsDialog {
   }
 
   /**
-   * 存一项核心的配置（第 6 条）：写在哪一层照 `layerFor`，带上这一层读到的 `expect`。
+   * 存一项核心的配置（第 6 条）：写在哪一层照 `layerOf`（管理员模式里能写系统的写系统），带上这一层读到的 `expect`。
    * @param {import('./model.js').Item} item
    * @param {{value?: any, input?: string, unset?: true}} change
    * @returns {Promise<string|null>} 拒了的原因（给人看的一句）；成了是 `null`
    */
   save(item, change) {
-    const layer = layerFor(item);
+    const layer = layerOf(item, !!this.ctx.admin?.on);
     return this.saveMany(layer, [{ key: item.key, ...change, expect: expectFor(item.entry, layer) }]);
   }
 

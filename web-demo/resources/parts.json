@@ -6444,6 +6444,12 @@
       ".is-admin-locked"
     ]
   },
+  "settings.for-all": {
+    "zh": "设置：管理员模式里带个人那一层的项名字下面「大家的默认」",
+    "select": [
+      ".set-for-all"
+    ]
+  },
   "settings.secret-box": {
     "zh": "设置：密钥框连「存到哪一份」的下拉那一块",
     "select": [

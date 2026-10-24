@@ -5,7 +5,7 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { pickModels } from './picker.js';
-import { itemFor, layerFor, validId, keySegment, moveMember, poolRemoval, duplicates, providerName } from './model.js';
+import { itemFor, layerOf, validId, keySegment, moveMember, poolRemoval, duplicates, providerName } from './model.js';
 
 /**
  * @param {any} dialog
@@ -17,7 +17,7 @@ export function drawPools(dialog, list) {
   const all = (list.providers ?? []).flatMap((p) => (p.models ?? []).map((m) => ({ ref: m.ref, model: m.model, name: m.facts?.name?.value ?? m.model, provider: providerName(p) })));
   const byRef = new Map(all.map((r) => [r.ref, r]));
   const field = (id, name) => itemFor(dialog.schema, dialog.got, `pools.<id>.${name}`, { id });
-  const layer = layerFor(dialog.schema.items.find((i) => i.key === 'pools.<id>.models') ?? { layers: ['personal'] });
+  const layer = layerOf(dialog.schema.items.find((i) => i.key === 'pools.<id>.models') ?? { layers: ['personal'] }, !!ctx.admin?.on);
   const report = (why) => { if (why) dialog.toast(why); };
   // 成员那一块最高 `pool_rows` 行，多了自己滚；每个池滚到哪记在弹窗上，挪、删以后重画回到原处
   dialog.poolScroll ??= new Map();

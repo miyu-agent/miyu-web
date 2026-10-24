@@ -62,6 +62,9 @@
 .set-admin-bar[hidden] { display: none; }
 .set-admin-row { display: flex; align-items: center; justify-content: space-between; gap: calc(8px * var(--space)); min-height: 34px; padding: 0 calc(10px * var(--space)); color: var(--text-soft); font-size: calc(13px * var(--text-scale)); }
 .set-locked { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(8px * var(--space)); margin: calc(4px * var(--space)) 0; color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
+.set-source .set-locked { display: inline-flex; margin: 0; }
+/* 管理员模式里带个人那一层的项：名字下面「大家的默认」（个人那一层盖过了的接一句） */
+.set-for-all { color: color-mix(in srgb, var(--t-warn) 70%, var(--text-soft)); }
 .set-toast.is-action { display: flex; align-items: baseline; gap: calc(10px * var(--space)); }
 .set-gear { position: relative; }
 .set-gear-dot { position: absolute; top: 4px; right: 4px; display: none; width: 7px; height: 7px; border-radius: var(--r-round); background: var(--t-warn); box-shadow: 0 0 0 2px var(--side-bg, var(--sidebar-bg)); pointer-events: none; }

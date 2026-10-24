@@ -6,7 +6,7 @@
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { tilde } from '../../src/lib/format.js';
-import { layerFor, expectFor } from './model.js';
+import { layerOf, expectFor } from './model.js';
 import { confirmIn } from './confirm.js';
 import { privateRows, dropChange, batchChange, canRestore, restoreChange, findRows, pairIn, inWorkspace } from './privacy-model.js';
 import { coreRow } from './rows.js';
@@ -51,7 +51,7 @@ export function privateGroup(dialog, name, items) {
    */
   const store = async (changes, quiet = false) => {
     if (!changes.length) return null;
-    const layer = layerFor(add);
+    const layer = layerOf(add, !!dialog.ctx.admin?.on);
     const why = await dialog.saveMany(layer, changes.map((c) => {
       const item = c.key === pair.add ? add : remove;
       return { ...c, expect: expectFor(item.entry, layer) };
