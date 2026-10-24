@@ -87,7 +87,8 @@ export function drawCorePackages(dialog, page, web) {
     webCount = n;
     drawChips();
   });
-  return [h('div.set-pkg-tools', find, chips), empty, coreGroup, ...rest, webPart].filter(Boolean);
+  // 搜索框滚的时候钉在上面（2026-10-24 项目主人），筛选那一排跟着滚
+  return [h('div.set-pkg-pin', find), h('div.set-pkg-tools', chips), empty, coreGroup, ...rest, webPart].filter(Boolean);
 }
 
 /**

@@ -306,6 +306,9 @@
 .set-pkg.is-expandable:hover .set-pkg-arrow { color: var(--text-soft); }
 /* 核心软件包的一行（core-packages.js）：左边图标，右边状态（只写要留意的）、开关、箭头 */
 /* 软件包页顶上：搜索框、一排筛选（2026-10-20）；一行右边的小标签写它是哪一种 */
+/* 软件包页的搜索框：滚的时候钉在上面，底下垫一层同框的底色（两边铺到框边） */
+.set-pkg-pin { position: sticky; top: 0; z-index: 2; margin: 0 calc(-24px * var(--space)); padding: calc(2px * var(--space)) calc(24px * var(--space)) calc(10px * var(--space));
+  background: color-mix(in srgb, var(--surface) 94%, transparent); -webkit-backdrop-filter: blur(calc(16px * var(--blur))); backdrop-filter: blur(calc(16px * var(--blur))); }
 .set-pkg-tools { display: grid; gap: calc(10px * var(--space)); margin-bottom: calc(4px * var(--space)); }
 .set-pkg-find { display: flex; align-items: center; gap: calc(6px * var(--space)); height: 32px; padding: 0 calc(10px * var(--space)); border-radius: var(--field-radius, var(--r-8)); background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text-faint)); transition: background-color calc(0.15s * var(--motion-scale)) ease, box-shadow calc(0.15s * var(--motion-scale)) ease; }
 .set-pkg-find:hover { background: var(--field-hover, var(--surface-3)); }
