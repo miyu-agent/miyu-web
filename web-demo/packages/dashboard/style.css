@@ -40,6 +40,7 @@
 }
 /* 卡片里的滚动条平常不画，指针在卡片上才露（同对话区） */
 .dash-card:hover { scrollbar-color: var(--scrollbar-color, var(--line-strong) transparent); }
+.dash-card.is-bare { padding-top: calc(8px * var(--space)); }
 .dash-head { display: flex; align-items: center; gap: calc(8px * var(--space)); height: 36px; padding: 2px calc(8px * var(--space)) 0 calc(12px * var(--space)); }
 .dash-head.is-sticky { position: sticky; z-index: 1; top: 0; background: var(--surface-1); }
 .dash-title { font-size: calc(13px * var(--text-scale)); font-weight: 600; }

@@ -6839,5 +6839,23 @@
     "select": [
       ".setup-menu.is-floating"
     ]
+  },
+  "setup.card-path": {
+    "zh": "右侧边栏的会话信息卡：工作区的路径（中间省略）",
+    "select": [
+      ".setup-card-path"
+    ]
+  },
+  "setup.card-path-head": {
+    "zh": "右侧边栏的会话信息卡：路径的前一截（放不下末尾省略）",
+    "select": [
+      ".setup-card-path-head"
+    ]
+  },
+  "dash.card-bare": {
+    "zh": "右侧边栏：没有头一行的卡（会话信息）",
+    "select": [
+      ".dash-card.is-bare"
+    ]
   }
 }

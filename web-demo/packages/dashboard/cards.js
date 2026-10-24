@@ -4,7 +4,8 @@
 //! `cards_off`、`card_rows`、`card_rows_default`），没在设置里排过的照各自的 `order` 接在后面。
 //!
 //! 挂一张卡：`{id, order, keep?, shrink?, render(card)}`。`render` 只叫一次，交一个 `card`（见 `Card`）；交回一个函数的，拿下来时叫它收拾。
-//! `keep` 是窗口矮、放不下时这张卡至少留几行（出厂 3；`Infinity` 不缩），`shrink` 是放不下时谁先缩（越大越先，出厂 4、`0` 不缩）。
+//! `keep` 是窗口矮、放不下时这张卡至少留几行（出厂 3；`Infinity` 不缩），`shrink` 是放不下时谁先缩（越大越先，出厂 4、`0` 不缩），
+//! `head: false` 的没有头一行（会话信息：直接从会话标题开始）。
 
 import { h, replace } from '../../src/lib/dom.js';
 import { unfold } from '../../src/lib/motion.js';
@@ -83,7 +84,8 @@ export class Cards {
     const title = h('strong.dash-title');
     const head = h('div.dash-head.is-sticky', title);
     const body = h('div.dash-card-body');
-    const el = h('section.dash-card', { dataset: { card: id }, style: Number.isFinite(rows) ? `--card-rows: ${rows}` : null }, head, body);
+    const bare = entry.head === false;
+    const el = h(`section.dash-card${bare ? '.is-bare' : ''}`, { dataset: { card: id }, style: Number.isFinite(rows) ? `--card-rows: ${rows}` : null }, bare ? null : head, body);
     const slot = h('div.unfold.dash-slot', { dataset: { card: id } }, h('div.unfold-inner', el));
     const keep = entry.keep ?? 3;
     const shrink = entry.shrink ?? 4;

@@ -37,6 +37,7 @@ export class SessionCard {
   /** 挂载位交来一张卡：写上标题、照现在的画；交回拿下来时怎么收拾 @param {any} card */
   attach(card) {
     this.card = card;
+    // 没有头一行（2026-10-24 项目主人：直接从会话标题开始）；卡片名照旧写着，读屏、设置里照它认
     card.title(this.t('card.title'));
     this.sig = '';
     this.draw();
@@ -102,10 +103,13 @@ export class SessionCard {
     const sig = JSON.stringify([info, got]);
     if (sig === this.sig) return;
     this.sig = sig;
-    /** 一行左边暗字、右边值；点了开换的菜单（浮在这一行下面） @param {string} label @param {string} value @param {(anchor: HTMLElement) => void} pick @param {string} [tip] */
+    /**
+     * 一行左边暗字、右边值；点了开换的菜单（浮在这一行下面）。`value` 给节点的照它画（工作区那一行中间省略）
+     * @param {string} label @param {string|Node} value @param {(anchor: HTMLElement) => void} pick @param {string} [tip]
+     */
     const pair = (label, value, pick, tip) => {
-      const row = h('button.setup-card-pair', { type: 'button', title: tip ?? value, onclick: () => pick(row) },
-        h('span.setup-card-label', label), h('span.setup-card-value', value), h('span.setup-card-more', icon('chevron-right')));
+      const row = h('button.setup-card-pair', { type: 'button', title: tip ?? (typeof value === 'string' ? value : null), onclick: () => pick(row) },
+        h('span.setup-card-label', label), typeof value === 'string' ? h('span.setup-card-value', value) : value, h('span.setup-card-more', icon('chevron-right')));
       return row;
     };
     const c = got.context;
@@ -116,7 +120,7 @@ export class SessionCard {
       h('div.setup-card-pairs',
         pair(t('info.persona'), info.persona, (a) => this.on.persona(a)),
         pair(t('info.preset'), info.preset, (a) => this.on.preset(a)),
-        pair(t('info.workspace'), info.path, (a) => this.on.workspace(a), info.full)),
+        pair(t('info.workspace'), middle(info.path), (a) => this.on.workspace(a), info.full)),
       c && (c.used != null || c.parts?.length) ? this.contextView(c) : null,
       rows ? this.usageView(rows) : null);
     card.size(8);
@@ -143,4 +147,29 @@ export class SessionCard {
     const cost = money(costOf(rows));
     return h('div.setup-card-line', h('span.setup-card-label', t('card.usage')), h('span.setup-card-num', cost ? `${short(sum)} · ${cost}` : short(sum)));
   }
+}
+
+/**
+ * 路径放不下时中间省略（2026-10-24 项目主人）：前一截放不下的末尾省略号，最后一截（最后一段目录，最多 24 个字）一直露着，看着就是
+ * 「~/Documents/…/miyu-web」；没有 `/` 的（「默认工作区」）照原样。悬停看完整的由那一行的 `title` 管。
+ * @param {string} path
+ */
+export function middle(path) {
+  const cut = splitTail(path);
+  if (!cut.head) return h('span.setup-card-value', path);
+  return h('span.setup-card-value.setup-card-path', h('span.setup-card-path-head', cut.head), h('span.setup-card-path-tail', cut.tail));
+}
+
+/** 照最后一个 `/` 分成前一截、最后一截（最后一截太长的只留末尾 24 个字给它） @param {string} path */
+export function splitTail(path) {
+  const at = path.lastIndexOf('/', path.length - 2);
+  if (at <= 0) return { head: '', tail: path };
+  let head = path.slice(0, at + 1);
+  let tail = path.slice(at + 1);
+  const chars = [...tail];
+  if (chars.length > 24) {
+    head += chars.slice(0, chars.length - 24).join('');
+    tail = chars.slice(-24).join('');
+  }
+  return { head, tail };
 }
