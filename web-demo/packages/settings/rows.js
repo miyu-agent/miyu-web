@@ -95,7 +95,7 @@ export function coreRow(dialog, item, opts = {}) {
   };
   // 密钥（`type: secret`）：粘贴的先存成一个新名字的密钥（`secret.set`，不覆盖原来的），再把引用写进配置——人不用知道
   // `{ secret = … }` 怎么写（2026-10-10 当用户试「接入QQ的令牌」：写纯文字会被核心拒）
-  // 管理员选存到哪一份（大家共用、只给我）；成员只有自己那一份
+  // 管理员选存到哪一份（共用、自用）；成员只有自己那一份
   const scope = secretScope(ctx);
   const saveSecret = async (text) => {
     row.busy();
@@ -153,7 +153,7 @@ function control(dialog, item, value, save, saveSecret, scope = null) {
   }
   if (item.type === 'secret' && saveSecret) {
     // 密钥：密码框，空着是不改（设了的占位写「已设置」），粘贴了 `Enter`、离开时存
-    // 设了的占位接上是哪一份（「 · 大家共用」「 · 只给我」）
+    // 设了的占位接上是哪一份（「 · 共用」「 · 自用」）
     const kept = value && typeof value === 'object' && !env;
     const field = /** @type {HTMLInputElement} */ (h('input.set-input.is-text', { type: 'password', autocomplete: 'off', spellcheck: 'false',
       placeholder: kept ? ctx.text('secret_paste_keep') + secretTag(dialog, value?.secret) : ctx.text('secret_paste') }));
@@ -275,8 +275,8 @@ export function areaField(text, commit) {
 }
 
 /**
- * 存密钥存到哪一份（蓝图「连核心」第 1 条下面「存密钥存到哪一份」，核心 Y-2下下中中）：管理员一排两段「存到 大家共用 | 只给我」，出厂
- * 大家共用；成员、不认 `layer` 的老核心没有（`el` 是 `null`，`params` 不写 `layer`，照核心的默认）。
+ * 存密钥存到哪一份（蓝图「连核心」第 1 条下面「存密钥存到哪一份」，核心 Y-2下下中中）：管理员一排两段「存到 共用 | 自用」，出厂
+ * 共用；成员、不认 `layer` 的老核心没有（`el` 是 `null`，`params` 不写 `layer`，照核心的默认）。
  * @param {any} ctx 设置包的 ctx @returns {{el: HTMLElement|null, params: () => {layer?: 'system'|'personal'}}}
  */
 export function secretScope(ctx) {
@@ -296,7 +296,7 @@ export function secretScope(ctx) {
 }
 
 /**
- * 设了的密钥是哪一份（`secret.list` 每一行的 `layer`，设置页读进来的 `dialog.secretLayers`）：「 · 大家共用」「 · 只给我」，两份里都没有的、
+ * 设了的密钥是哪一份（`secret.list` 每一行的 `layer`，设置页读进来的 `dialog.secretLayers`）：「 · 共用」「 · 自用」，两份里都没有的、
  * 老核心没有这一格的交空字。
  * @param {any} dialog @param {string|null|undefined} ref 密钥的名字，或者 `secret:<名字>`
  */

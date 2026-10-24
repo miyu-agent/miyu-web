@@ -179,7 +179,7 @@ export class ProviderFlow {
     else if (target.kind === 'catalog') {
       keyInput = this.keyField(target.env ? t('onboard.key_env', { name: target.env }) : t('onboard.key_paste'));
       // 只有一行密码框：左边不写「密钥」，框占满、居中（2026-10-23 项目主人：占位里已经写了，左边的字还让框不居中）；
-      // 设置页里管理员下面多一排「存到 大家共用 | 只给我」（引导里不出，照核心的默认）
+      // 设置页里管理员下面多一排「存到 共用 | 自用」（引导里不出，照核心的默认）
       const scope = this.scope();
       keyRow = scope.el ? h('div', this.fieldRow(null, keyInput), this.fieldRow(null, scope.el)) : this.fieldRow(null, keyInput);
     }

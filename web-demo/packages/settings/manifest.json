@@ -190,8 +190,8 @@
       "load_failed": "无法加载配置：{reason}",
       "secret_scope": {
         "label": "存到",
-        "system": "大家共用",
-        "personal": "只给我"
+        "system": "共用",
+        "personal": "自用"
       },
       "member_note": "模型、配置、软件这些由管理员设置",
       "pages": {
@@ -826,7 +826,7 @@
       "secret_scope": {
         "label": "Save to",
         "system": "Shared",
-        "personal": "Only me"
+        "personal": "Mine"
       },
       "member_note": "Models, settings and software are managed by the administrator",
       "pages": {
@@ -1460,8 +1460,8 @@
       "load_failed": "設定を読み込めません：{reason}",
       "secret_scope": {
         "label": "保存先",
-        "system": "みんなで共有",
-        "personal": "自分だけ"
+        "system": "共用",
+        "personal": "自分用"
       },
       "member_note": "モデル・設定・ソフトは管理者が管理します",
       "pages": {

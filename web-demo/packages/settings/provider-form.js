@@ -43,7 +43,7 @@ export function providerForm(dialog, providers) {
   const secretField = input({ type: 'password', placeholder: p?.key?.set ? t('key_keep') : t('key_paste') });
   const envField = input({ value: keyRef.startsWith('env:') ? keyRef.slice(4) : '', placeholder: 'DEEPSEEK_API_KEY' });
   const keyBox = h('div.set-form-key');
-  // 管理员选粘贴的密钥存到哪一份（大家共用、只给我）；成员只有自己那一份
+  // 管理员选粘贴的密钥存到哪一份（共用、自用）；成员只有自己那一份
   const scope = secretScope(ctx);
   const kindButtons = ['secret', 'env'].map((kind) => h('button.set-seg-item', { type: 'button', onclick: () => { keyKind = kind; drawKey(); } }, t(`key_${kind}`)));
   const drawKey = () => {
