@@ -25,11 +25,12 @@ export const isTemplate = (key) => key.includes('<');
  * 对不上哪一项的问题挂在 `fallback` 那一页顶上。
  * @param {{pages: {id: string, name: string}[], groups: {id: string, name: string, page: string}[], items: SchemaItem[]}} schema
  * @param {{items: Record<string, Entry>, problems?: Problem[]}} got
- * @param {{fallback?: string, merge?: Record<string, string>, moveGroups?: Record<string, string>, hide?: string[]}} [opts]
+ * @param {{fallback?: string, merge?: Record<string, string>, moveGroups?: Record<string, string>, hide?: string[], personal?: boolean}} [opts]
  * @returns {Page[]}
  */
 export function buildPages(schema, got, opts = {}) {
-  const { fallback = 'advanced', merge = {}, moveGroups = {}, hide = [] } = opts;
+  // `personal`：只留能写在个人那一层的项（成员只写得了个人设置，核心 Y-2下下中中；蓝图「连核心」第 1 条「成员」那一款）
+  const { fallback = 'advanced', merge = {}, moveGroups = {}, hide = [], personal = false } = opts;
   const foreign = (key) => hide.some((prefix) => key.startsWith(prefix));
   const known = new Set(schema.items.map((i) => i.key));
   const problems = got.problems ?? [];
@@ -38,7 +39,7 @@ export function buildPages(schema, got, opts = {}) {
   for (const g of schema.groups) {
     const items = schema.items
       // 界面提示 `hidden` 的（核心 9-1 下：网页服务的空闲秒数这类）不画，照样能写、能查
-      .filter((i) => i.group === g.id && !i.hidden && !isTemplate(i.key) && !foreign(i.key))
+      .filter((i) => i.group === g.id && !i.hidden && !isTemplate(i.key) && !foreign(i.key) && (!personal || (i.layers ?? []).includes('personal')))
       .map((i) => ({ ...i, entry: got.items?.[i.key] ?? null, problems: problems.filter((x) => x.key === i.key) }))
       .sort((a, b) => Number(!!b.common) - Number(!!a.common));
     const home = moveGroups[g.id] ?? g.page;

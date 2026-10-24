@@ -10,11 +10,12 @@ import { PersonaImages } from './avatars.js';
 export class Catalog {
   /**
    * @param {{request: (method: string, params: any) => Promise<any>}} core @param {() => Promise<void>} [moreIcons] 读整套图标（内核的 `icons`）
-   * @param {boolean} [member] 是成员（核心 Y-2下下上）：默认人格、预设（配置）和 `check` 调不了，不问
+   * @param {{member?: boolean, configless?: boolean}} [who] 成员调不了 `check`；老核心上的成员（Y-2下下上）默认人格、预设（配置）也读不了，不问
    */
-  constructor(core, moreIcons = () => Promise.resolve(), member = false) {
+  constructor(core, moreIcons = () => Promise.resolve(), who = {}) {
     this.core = core;
-    this.member = member;
+    this.member = !!who.member;
+    this.configless = !!who.configless;
     this.moreIcons = moreIcons;
     /** @type {import('./model.js').Persona[]|null} */
     this.personas = null;
@@ -41,7 +42,7 @@ export class Catalog {
     const [personas, presets, got] = await Promise.all([
       this.core.request('persona.list', {}).then((r) => r?.personas ?? [], () => null),
       this.core.request('preset.list', {}).then((r) => r?.presets ?? [], () => null),
-      this.member ? null : this.core.request('config.get', { keys: ['persona.default', 'preset.default'] }).catch(() => null),
+      this.configless ? null : this.core.request('config.get', { keys: ['persona.default', 'preset.default'] }).catch(() => null),
       this.moreIcons(),
     ]);
     this.personas = personas;

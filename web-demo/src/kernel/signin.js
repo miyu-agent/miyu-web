@@ -255,11 +255,12 @@ function memberCard(root, conn, account, host) {
 }
 
 /**
- * 这个连接是谁（蓝图「连核心」第 1 条下面「成员」那一款，核心 Y-2下下上）：`owner` 机主，`member` 成员（照常起页面，配置这些调不了），
- * `blocked` 是 Y-2 以前的核心上的成员（什么都调不了）。握手带 `admin`（核心 Y-2下下中 起）的照它；没带账号的（走桥的、旧核心）是机主；
- * 别的先试 `persona.list`（成员 Y-2下下上 起才调得了）、再试 `config.get`（成员调不了）。只有 `not_permitted` 算数，别的错照机主往下起。
+ * 这个连接是谁（蓝图「连核心」第 1 条下面「成员」那一款）：`owner` 机主；`member` 成员（核心 Y-2下下中 起：有自己那一份配置）；
+ * `member-old` 老核心（Y-2下下上）上的成员（照常起页面，配置调不了）；`blocked` 是 Y-2 以前的核心上的成员（什么都调不了）。
+ * 握手带 `admin`（核心 Y-2下下中上 起）的照它；没带账号的（走桥的、旧核心）是机主；别的先试 `persona.list`（成员 Y-2下下上 起才调得了）、
+ * 再试 `config.get`（Y-2下下上 的成员调不了）。只有 `not_permitted` 算数，别的错照机主往下起。
  * @param {{request: (method: string, params: any) => Promise<any>}} conn @param {any} hello
- * @returns {Promise<'owner'|'member'|'blocked'>}
+ * @returns {Promise<'owner'|'member'|'member-old'|'blocked'>}
  */
 export async function accessOf(conn, hello) {
   if (typeof hello?.admin === 'boolean') return hello.admin ? 'owner' : 'member';
@@ -267,7 +268,7 @@ export async function accessOf(conn, hello) {
   const refused = (/** @type {string} */ method, /** @type {any} */ params) => conn.request(method, params)
     .then(() => false, (err) => err instanceof Refusal && err.reason === 'not_permitted');
   if (await refused('persona.list', {})) return 'blocked';
-  return (await refused('config.get', { keys: ['ui.language'] })) ? 'member' : 'owner';
+  return (await refused('config.get', { keys: ['ui.language'] })) ? 'member-old' : 'owner';
 }
 
 /**
@@ -306,7 +307,7 @@ async function accountScreen(root, conn) {
  * @param {any} greeting `hello` 的参数（不带凭据）
  * @param {HTMLElement} root 页面的根
  * @param {(err: any) => Promise<never>} offline 线开不了时照原来的写法抛
- * @returns {Promise<{conn: Connection, hello: any, setup: boolean, member: boolean}>}
+ * @returns {Promise<{conn: Connection, hello: any, setup: boolean, member: boolean, configless: boolean}>}
  */
 export async function signIn(host, greeting, root, offline, retry = /** @type {number[]} */ ([])) {
   schemeStore = host.store ?? null;
@@ -337,7 +338,7 @@ export async function signIn(host, greeting, root, offline, retry = /** @type {n
       }
       const access = hello?.setup ? 'owner' : await accessOf(conn, hello);
       if (access === 'blocked') await memberCard(root, conn, hello.account, host);
-      if (!hello?.setup) return { conn, hello, setup: !!registered, member: access === 'member' };
+      if (!hello?.setup) return { conn, hello, setup: !!registered, member: access === 'member' || access === 'member-old', configless: access === 'member-old' };
       const login = await accountScreen(root, conn);
       host.remember(login);
       // 核心回完就断开（核心 Y-12 中上）：关掉这一条、照记下的登录令牌重新握手；这一次设过账号，引导第一段算走过

@@ -351,3 +351,14 @@ test('列表加的一个元素：int、float 的照数交，读不成数的、�
   assert.equal(listElement('text', '123'), '123');
   assert.equal(listElement(undefined, '123'), '123');
 });
+
+test('成员只写得了个人设置（核心 Y-2下下中中）：personal 的只留能写在个人那一层的项，组、页空了的不列', () => {
+  const pages = buildPages(schema, got, { personal: true });
+  const keys = pages.flatMap((p) => p.groups.flatMap((g) => g.items.map((i) => i.key)));
+  assert.ok(!keys.includes('log.level'), '只能写在系统那一层的不列');
+  assert.ok(keys.every((k) => schema.items.find((i) => i.key === k)?.layers.includes('personal')));
+  const advanced = pages.find((p) => p.id === 'advanced');
+  assert.ok(!advanced || advanced.groups.every((g) => g.id !== 'log'), '整组都是系统那一层的：那一组不列');
+  // 不写的照旧全列
+  assert.ok(buildPages(schema, got).flatMap((p) => p.groups.flatMap((g) => g.items.map((i) => i.key))).includes('log.level'));
+});

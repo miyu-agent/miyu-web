@@ -85,7 +85,7 @@ test('凭邀请码注册（核心 Y-1 上）：邀请码不对的照原因写；
   assert.match(registerProblem('bob', 'password1', 'password2') ?? '', /不一样/);
 });
 
-test('是谁（核心 Y-2下下上）：握手带 admin 的照它；没带的先试 persona.list（被拒是 Y-2 以前的成员）、再试 config.get（被拒是成员）；走桥的、admin 不试', async () => {
+test('是谁：握手带 admin 的照它（核心 Y-2下下中上）；没带的先试 persona.list（被拒是 Y-2 以前的成员）、再试 config.get（被拒是 Y-2下下上 的成员）；走桥的、admin 不试', async () => {
   const no = () => { throw new Refusal('没有权限。', -32010, 'not_permitted'); };
   /** 假核心：`refuse` 里的方法回 not_permitted，别的回空对象；记下问了哪几个 @param {string[]} refuse */
   const core = (refuse) => {
@@ -99,7 +99,7 @@ test('是谁（核心 Y-2下下上）：握手带 admin 的照它；没带的先
   assert.equal(await accessOf(c1, { account: 'admin' }), 'owner');
   assert.deepEqual(c1.asked, []);
   const member = core(['config.get']);
-  assert.equal(await accessOf(member, { account: 'bob' }), 'member');
+  assert.equal(await accessOf(member, { account: 'bob' }), 'member-old', '老核心：配置调不了');
   assert.deepEqual(member.asked, ['persona.list', 'config.get']);
   const old = core(['persona.list', 'config.get']);
   assert.equal(await accessOf(old, { account: 'bob' }), 'blocked', 'Y-2 以前：人格都调不了');
@@ -120,9 +120,11 @@ test('是谁（核心 Y-2下下上）：握手带 admin 的照它；没带的先
   const got = await signIn(served, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
   assert.equal(got.hello.account, 'bob');
   assert.equal(got.member, true);
+  assert.equal(got.configless, true, '试探出来的是老核心上的成员');
   assert.deepEqual(methods, ['hello', 'persona.list', 'config.get']);
   const admin = [];
   const bridgeGot = await signIn({ ...served, channel: fakeLine(() => ({ view: 1, account: 'admin' }), admin) }, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
   assert.equal(admin.length, 1, '管理员只握手');
   assert.equal(bridgeGot.member, false);
+  assert.equal(bridgeGot.configless, false);
 });
