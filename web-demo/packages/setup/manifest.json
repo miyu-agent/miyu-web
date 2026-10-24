@@ -356,7 +356,8 @@
         "copy_id": "复制会话编号",
         "copied": "已复制 {count} 个字",
         "context": "上下文",
-        "usage": "本会话用量"
+        "usage": "本会话用量",
+        "open_context": "上下文明细"
       },
       "follow_default": "跟随默认",
       "command_persona": "换人格",
@@ -569,7 +570,8 @@
         "copy_id": "Copy session id",
         "copied": "Copied {count} characters",
         "context": "Context",
-        "usage": "Usage this session"
+        "usage": "Usage this session",
+        "open_context": "Context breakdown"
       },
       "follow_default": "Follow default",
       "command_persona": "Switch persona",
@@ -782,7 +784,8 @@
         "copy_id": "セッション ID をコピー",
         "copied": "{count} 文字コピーしました",
         "context": "コンテキスト",
-        "usage": "このセッションの使用量"
+        "usage": "このセッションの使用量",
+        "open_context": "コンテキストの内訳"
       },
       "follow_default": "デフォルトに従う",
       "command_persona": "人格を切り替え",

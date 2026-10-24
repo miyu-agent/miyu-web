@@ -14,7 +14,7 @@ const SETTLE_MS = 400;
 /**
  * @typedef {{session: string, title: string|null, persona: string, preset: string, path: string, full: string}} Info 人格、预设照名字写好的
  * @typedef {{persona: (anchor: HTMLElement) => void, preset: (anchor: HTMLElement) => void, workspace: (anchor: HTMLElement) => void,
- *   copy: (text: string) => void, request: (method: string, params: any) => Promise<any>}} On
+ *   copy: (text: string) => void, request: (method: string, params: any) => Promise<any>, context: () => void}} On
  */
 
 export class SessionCard {
@@ -132,7 +132,8 @@ export class SessionCard {
     const parts = scaledParts(c);
     const used = parts.reduce((n, p) => n + p.tokens, 0) || c.used || 0;
     const b = bar(c, parts);
-    return h('div.setup-card-stat',
+    // 整块能点：开上下文明细浮窗（同点框下面那一格，2026-10-24 项目主人）
+    return h('button.setup-card-stat', { type: 'button', title: t('card.open_context'), onclick: () => this.on.context() },
       h('div.setup-card-line', h('span.setup-card-label', t('card.context')),
         h('span.setup-card-num', c.window ? `${short(used)} / ${short(c.window)} · ${share(used, c.window)}%` : short(used))),
       h('div.setup-card-bar', { role: 'img', 'aria-label': c.window ? `${short(used)} / ${short(c.window)}` : short(used) },

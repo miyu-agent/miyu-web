@@ -48,6 +48,7 @@ export function apply(ctx) {
     workspace: (anchor) => browse(ctx, cardMenu, anchor, true, chat.workdir(), pickDir, (p) => tilde(p, home())),
     copy: (text) => Promise.resolve(ctx.host.clipboard?.write(text)).then(() => ctx.composer.say(t('card.copied', { count: [...text].length }), true), (err) => ctx.composer.say(err?.message ?? String(err))),
     request: (method, params) => ctx.core.request(method, params),
+    context: () => ctx.composer.openContext?.(),
   });
   ctx.slots.mount('side.cards', {
     id: 'session', order: 0, keep: Infinity, shrink: 0, head: false,

@@ -409,7 +409,11 @@
 .setup-card-more .icon { width: 12px; height: 12px; }
 .setup-card-pair:hover .setup-card-more, .setup-card-pair:focus-visible .setup-card-more { opacity: 1; }
 @media (hover: none) { .setup-card-more { opacity: 1; } }
-.setup-card-stat { --ctx-output: color-mix(in oklab, var(--gold) 45%, var(--ribbon)); padding: calc(4px * var(--space)) 0 calc(4px * var(--space)); }
+.setup-card-stat {
+  --ctx-output: color-mix(in oklab, var(--gold) 45%, var(--ribbon)); display: block; width: 100%; box-sizing: border-box; padding: calc(4px * var(--space)) 0 calc(4px * var(--space));
+  border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.setup-card-stat:hover, .setup-card-stat:focus-visible { outline: none; background: color-mix(in srgb, var(--text) 4%, transparent); }
 .setup-card-line { display: flex; align-items: baseline; justify-content: space-between; gap: calc(8px * var(--space)); min-height: 26px; padding: 0 calc(12px * var(--space)); font-size: calc(13px * var(--text-scale)); line-height: 26px; }
 .setup-card-num { min-width: 0; overflow: hidden; color: var(--text-soft); font: calc(11.5px * var(--text-scale))/26px var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
 .setup-card-bar { position: relative; display: flex; height: 6px; margin: calc(2px * var(--space)) calc(12px * var(--space)) calc(4px * var(--space)); overflow: hidden; border-radius: var(--r-pill); background: var(--line); }
