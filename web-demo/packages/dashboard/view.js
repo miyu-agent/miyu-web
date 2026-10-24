@@ -13,6 +13,11 @@ import { rowsOf, counts, stoppable, todoView, splitPath, diffRows } from './mode
 
 /** 四张卡的外壳上加的类（样式、脚本照它认哪一张） */
 const CARD_CLASS = { todo: 'dash-todo', tasks: 'dash-tasks', files: 'dash-files', shown: 'dash-shown-card' };
+/**
+ * 全部停止最多等多久就放开按钮（ms）：一下子发上百个 `job.stop` 时核心有一部分一直不回（2026-10-24 压力测试量到：103 个只回了 1 个、
+ * 99 个回了 33 个），不放开的话按钮一直灰着「停止中」、再也点不了
+ */
+const STOP_WAIT_MS = 15000;
 /** JSON-RPC 的「没有这个方法」 */
 const NO_METHOD = -32601;
 /** 任务种类的图标 @type {Record<string, string>} */
@@ -362,7 +367,11 @@ export class Dashboard {
     this.stoppingAll = true;
     this.sigs.tasks = '';
     this.drawTasks();
-    return Promise.allSettled(all.map((x) => this.on.stop(x.owner, x.job))).then(() => {
+    const done = Promise.allSettled(all.map((x) => this.on.stop(x.owner, x.job)));
+    const cap = new Promise((r) => setTimeout(r, STOP_WAIT_MS));
+    return Promise.race([done, cap]).then(() => {
+      // 到点了还有没回的：那几行的停止也放开（还在跑的能再点）
+      for (const x of all) this.stopping.delete(x.key);
       this.stoppingAll = false;
       this.sigs.tasks = '';
       this.drawTasks();
