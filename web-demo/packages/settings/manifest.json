@@ -475,7 +475,8 @@
         "test_busy_plain": "正在连接，读取模型列表…",
         "test_ok": "连接成功 · {count} 个模型",
         "no_list": "未获取到模型列表",
-        "save_anyway": "仍然保存",
+        "redo": "重新设置",
+        "skip_test": "跳过",
         "config_error": "配置错误",
         "classes": {
           "retryable": "临时错误",
@@ -1114,7 +1115,8 @@
         "test_busy_plain": "Connecting and reading the models…",
         "test_ok": "Connected · {count} models",
         "no_list": "No model list",
-        "save_anyway": "Save anyway",
+        "redo": "Set up again",
+        "skip_test": "Skip",
         "config_error": "Configuration error",
         "classes": {
           "retryable": "Temporary error",
@@ -1753,7 +1755,8 @@
         "test_busy_plain": "接続してモデル一覧を読み込み中…",
         "test_ok": "接続成功 · モデル {count} 個",
         "no_list": "モデル一覧を取得できませんでした",
-        "save_anyway": "それでも保存",
+        "redo": "設定し直す",
+        "skip_test": "スキップ",
         "config_error": "設定エラー",
         "classes": {
           "retryable": "一時的なエラー",

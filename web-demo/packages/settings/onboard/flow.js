@@ -169,7 +169,8 @@ export class ProviderFlow {
    */
   provider(r) {
     /** @type {Target} */
-    const target = r.configured ? { kind: 'configured', id: r.configured } : r.kind === 'local' ? { kind: 'local', catalog: r.id } : { kind: 'catalog', catalog: r.id, env: r.env };
+    const known = r.configured ? this.providers.find((p) => p.id === r.configured) : null;
+    const target = r.configured ? { kind: 'configured', id: r.configured, driver: known?.driver ?? null, base_url: known?.base_url ?? null } : r.kind === 'local' ? { kind: 'local', catalog: r.id } : { kind: 'catalog', catalog: r.id, env: r.env };
     const t = this.t;
     /** @type {HTMLInputElement|null} */
     let keyInput = null;
@@ -187,7 +188,17 @@ export class ProviderFlow {
     };
     // 没找到变量、又没贴的测不了
     const canTest = () => target.kind !== 'catalog' || !!key();
-    return this.testing(target, r.name, keyRow ? [keyRow] : [], key, canTest, keyInput, { auto: canTest() && !keyInput?.value, pasted: () => !!keyInput?.value.trim() });
+    // 「重新设置」（测不成以后）：配好了的一家「已配置」换成密码框，贴一个新的密钥再测；别的光标放进密钥框
+    const rekey = () => {
+      if (target.kind === 'configured' && !keyInput && keyRow) {
+        keyInput = this.keyField(t('onboard.key_paste'));
+        // 同一行换成只有一个密码框的样子（同没配过的一家：左边不写「密钥」）
+        keyRow.className = 'ob-field is-bare';
+        keyRow.replaceChildren(h('div.ob-field-control', keyInput));
+      }
+      return keyInput;
+    };
+    return this.testing(target, r.name, keyRow ? [keyRow] : [], key, canTest, keyInput, { auto: canTest() && !keyInput?.value, pasted: () => !!keyInput?.value.trim(), rekey });
   }
 
   /** 自定义（第 7 条）：地址、接口、密钥。 */
@@ -227,7 +238,7 @@ export class ProviderFlow {
       }
       this.stale?.();
     });
-    return this.testing(target, '', rows, key, () => validUrl(cleanUrl(url.value)) && checkId(), idInput, { auto: false, pasted: () => !!keyInput.value.trim(), title: t('onboard.custom_title') });
+    return this.testing(target, '', rows, key, () => validUrl(cleanUrl(url.value)) && checkId(), idInput, { auto: false, pasted: () => !!keyInput.value.trim(), title: t('onboard.custom_title'), rekey: () => keyInput });
   }
 
   /** 密钥框：不回显，改了要重测。 @param {string} hint */
@@ -244,15 +255,17 @@ export class ProviderFlow {
 
   /**
    * 测试连接、选模型那一段（一家、自定义共用）。主按钮只有一个（2026-10-10 项目主人：测试连接并进下一步）：没测过、改了框、没测成的写
-   * 「测试连接」，测着写「正在测试…」，测成了写「下一步」（设置页「保存」）。没测成的原话下面一个「仍然保存」（2026-10-13 项目主人）：
-   * 照填的存；引导里还没有模型的先露出「模型名称」，主按钮变「下一步」，填了才点得了。
+   * 「测试连接」，测着写「正在测试…」，测成了写「下一步」（设置页「保存」）。没测成的原话下面两个按钮（2026-10-24 项目主人：原来一个
+   * 「仍然保存」，测不通改不了密钥、还要手填模型名）：「重新设置」摊开上面几行、光标放进密钥框；「跳过」不测了照填的存，不写模型
+   * （模型列表照常问，问不到就空着）。没测成以后主按钮也是「跳过」，框里再改的回到「测试连接」。
    * @param {Target|(() => Target)} targetOf 自定义的随框里写的变
    * @param {string} name 这一家的名字（标题；自定义的是空的，接好了照编号）
    * @param {HTMLElement[]} fields 上面的几行
    * @param {() => any} keyOf 这一次用的密钥
    * @param {() => boolean} canTest 测得了没有（贴了密钥、地址写对了）
    * @param {HTMLElement|null} first 先把焦点放哪
-   * @param {{auto: boolean, pasted: () => boolean, title?: string}} opts 一进来就测；贴了密钥没有（存的时候要先存成密钥）
+   * @param {{auto: boolean, pasted: () => boolean, title?: string, rekey?: () => HTMLInputElement|null}} opts 一进来就测；贴了密钥没有（存的时候要先存成密钥）；
+   *   「重新设置」时交回密钥框（配好了的一家这时才换成密码框）
    * @returns {Screen}
    */
   testing(targetOf, name, fields, keyOf, canTest, first, opts) {
@@ -264,12 +277,12 @@ export class ProviderFlow {
     const result = h('div.ob-result', { hidden: true });
     const models = h('div.ob-models', { hidden: true });
     /** 测的结果：成了的模型、选了哪个 */
-    const state = { ok: /** @type {any} */ (null), chosen: /** @type {string|null} */ (null), running: false, gone: false, force: false };
+    const state = { ok: /** @type {any} */ (null), chosen: /** @type {string|null} */ (null), running: false, gone: false, failed: false };
     /** 测得了没有：没在测、贴了密钥（地址写对了）、要写模型名的写了 */
     const canRun = () => !state.running && canTest() && (modelRow.hidden || !!modelInput.value.trim());
     // 框里改了：之前测的不算了，主按钮回到「测试连接」
     this.stale = () => {
-      state.force = false;
+      state.failed = false;
       fold(false);
       if (state.ok) {
         state.ok = null;
@@ -279,34 +292,36 @@ export class ProviderFlow {
       }
       this.host.ready();
     };
-    modelInput.addEventListener('input', () => this.host.ready());
+    modelInput.addEventListener('input', () => { state.failed = false; this.host.ready(); });
     const enter = (/** @type {KeyboardEvent} */ e) => {
       if (e.key !== 'Enter' || e.isComposing || state.ok) return;
       e.preventDefault();
       e.stopPropagation();
-      if (state.force) anyway();
+      if (state.failed) skipHere();
       else if (canRun()) run();
     };
-    /** 仍然保存时用的模型：露出来的「模型名称」里填的；没填的是 `null` */
-    const typedModel = () => (modelRow.hidden ? null : modelInput.value.trim() || null);
-    /** 「仍然保存」：引导里没有模型的先请人填，填了照填的存；存不成的原因接在原话下面 */
-    const anyway = async () => {
-      state.force = true;
-      if (this.mode === 'welcome' && !typedModel()) {
-        modelRow.hidden = false;
-        queueMicrotask(() => modelInput.focus());
-        this.host.ready();
-        return;
-      }
-      const why = await save();
+    /** 「跳过」：不测了照填的存，不写模型；交回存不成的原因（主按钮的照宿主写在下面） */
+    const skip = () => this.save(target(), keyOf(), opts.pasted(), null, name);
+    /** 原话下面那个「跳过」：存不成的原因接在原话下面 */
+    const skipHere = async () => {
+      const why = await skip();
       if (why) replace(result, h('div.ob-result-line', icon('x'), h('span', why)));
+    };
+    /** 「重新设置」：上面几行摊开，光标放进密钥框（没有的放进第一个框），主按钮回到「测试连接」 */
+    const again = () => {
+      state.failed = false;
+      fold(false);
+      result.hidden = true;
+      const field = opts.rekey?.() ?? first;
+      this.host.ready();
+      queueMicrotask(() => field?.focus());
     };
     for (const el of [...fields, modelRow]) el.addEventListener('keydown', enter);
     const run = async () => {
       if (!canTest()) return;
       state.running = true;
       state.ok = null;
-      state.force = false;
+      state.failed = false;
       state.chosen = null;
       models.hidden = true;
       // 测着的那一两秒写一行在做什么（2026-10-19 项目主人：原来空着像卡住了）
@@ -341,8 +356,9 @@ export class ProviderFlow {
         this.host.mascot?.droop();
         const why = failureOf(got);
         result.className = 'ob-result is-bad';
+        state.failed = true;
         replace(result, h('div.ob-result-line', icon('x'), h('span', t(why.key) + (why.status ? ` · ${why.status}` : ''))), why.message ? h('p.ob-result-raw', why.message) : null,
-          h('button.ob-anyway', { type: 'button', onclick: anyway }, t('onboard.save_anyway')));
+          h('div.ob-fail-actions', h('button.ob-fail-btn', { type: 'button', onclick: again }, t('onboard.redo')), h('button.ob-fail-btn', { type: 'button', onclick: skipHere }, t('onboard.skip_test'))));
         if (why.needsModel) {
           modelRow.hidden = false;
           queueMicrotask(() => modelInput.focus());
@@ -363,11 +379,7 @@ export class ProviderFlow {
     };
     const body = h('div.ob-provider', summary, fields, modelRow, result, models);
     if (opts.auto) queueMicrotask(run);
-    const save = async () => {
-      if (state.ok) return this.save(target(), keyOf(), opts.pasted(), state.chosen, name);
-      if (state.force) return this.save(target(), keyOf(), opts.pasted(), typedModel(), name);
-      return null;
-    };
+    const save = async () => (state.ok ? this.save(target(), keyOf(), opts.pasted(), state.chosen, name) : null);
     return {
       title: opts.title ?? name,
       sub: null,
@@ -379,10 +391,11 @@ export class ProviderFlow {
         this.host.show(this.list(), -1);
       },
       next: {
-        label: () => (state.ok || state.force ? t(this.mode === 'welcome' ? 'onboard.next' : 'onboard.save') : t(state.running ? 'onboard.testing' : 'onboard.test')),
-        ready: () => (state.ok ? this.mode === 'settings' || !!state.chosen : state.force ? this.mode === 'settings' || !!typedModel() : canRun()),
+        label: () => (state.ok ? t(this.mode === 'welcome' ? 'onboard.next' : 'onboard.save') : state.failed ? t('onboard.skip_test') : t(state.running ? 'onboard.testing' : 'onboard.test')),
+        ready: () => (state.ok ? this.mode === 'settings' || !!state.chosen : state.failed || canRun()),
         run: async () => {
-          if (state.ok || state.force) return save();
+          if (state.ok) return save();
+          if (state.failed) return skip();
           await run();
           return null;
         },

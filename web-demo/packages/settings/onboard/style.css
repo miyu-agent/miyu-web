@@ -52,9 +52,10 @@
   display: -webkit-box; overflow: hidden; margin: 0 0 0 21px; color: var(--text-faint); font-size: 12px; overflow-wrap: anywhere;
   -webkit-box-orient: vertical; -webkit-line-clamp: 2;
 }
-/* 没测成也能接着走：原话下面一个小字按钮，和设置页的 `.set-link` 一个样子 */
-.ob-anyway { justify-self: start; margin: 4px 0 0 21px; padding: 0; border: 0; background: none; color: var(--accent); font: 12px var(--sans); cursor: pointer; }
-.ob-anyway:hover { text-decoration: underline; }
+/* 没测成：原话下面两个小字按钮「重新设置」「跳过」，和设置页的 `.set-link` 一个样子，中间隔开 */
+.ob-fail-actions { display: flex; gap: 16px; margin: 4px 0 0 21px; }
+.ob-fail-btn { padding: 0; border: 0; background: none; color: var(--accent); font: 12px var(--sans); cursor: pointer; }
+.ob-fail-btn:hover { text-decoration: underline; }
 .ob-models { display: grid; gap: 8px; }
 .ob-model-list { display: grid; max-height: min(320px, 42vh); overflow-y: auto; gap: 2px; }
 .ob-model {
