@@ -6911,5 +6911,113 @@
     "select": [
       ".dash-set-foot"
     ]
+  },
+  "artifacts.browse": {
+    "zh": "预览工作区：放大看展示文件时左边那一列",
+    "select": [
+      ".artifact-browse"
+    ]
+  },
+  "artifacts.browse-search": {
+    "zh": "预览工作区：那一列的搜索框",
+    "select": [
+      ".artifact-browse-search"
+    ]
+  },
+  "artifacts.browse-item": {
+    "zh": "预览工作区：那一列的一项",
+    "select": [
+      ".artifact-browse-item"
+    ]
+  },
+  "artifacts.browse-none": {
+    "zh": "预览工作区：那一列筛完一个都没有",
+    "select": [
+      ".artifact-browse-none"
+    ]
+  },
+  "artifacts.main": {
+    "zh": "预览工作区：预览区外面一层",
+    "select": [
+      ".artifact-main"
+    ]
+  },
+  "artifacts.browse-kind": {
+    "zh": "预览工作区：那一列一项右边的种类（暗字）",
+    "select": [
+      ".artifact-browse-kind"
+    ]
+  },
+  "dash.big": {
+    "zh": "右侧边栏放大看那一页（左边一列、右边一样）",
+    "select": [
+      ".dash-big"
+    ]
+  },
+  "dash.big-title": {
+    "zh": "右侧边栏放大看那一页：头一行的名字",
+    "select": [
+      ".dash-big-title"
+    ]
+  },
+  "dash.big-list": {
+    "zh": "右侧边栏放大看那一页：左边那一列",
+    "select": [
+      ".dash-big-list"
+    ]
+  },
+  "dash.big-none": {
+    "zh": "右侧边栏放大看那一页：一样都没有",
+    "select": [
+      ".dash-big-none"
+    ]
+  },
+  "dash.big-pane": {
+    "zh": "右侧边栏放大看那一页：右边选中的那一样",
+    "select": [
+      ".dash-big-pane"
+    ]
+  },
+  "dash.big-head": {
+    "zh": "右侧边栏放大看那一页：右边头一行",
+    "select": [
+      ".dash-big-head"
+    ]
+  },
+  "dash.brief": {
+    "zh": "右侧边栏放大看：子代理的简要",
+    "select": [
+      ".dash-brief"
+    ]
+  },
+  "dash.brief-head": {
+    "zh": "右侧边栏放大看：简要的头一行",
+    "select": [
+      ".dash-brief-head"
+    ]
+  },
+  "dash.brief-name": {
+    "zh": "右侧边栏放大看：简要里的名字",
+    "select": [
+      ".dash-brief-name"
+    ]
+  },
+  "dash.brief-line": {
+    "zh": "右侧边栏放大看：简要里状态、用时那一行",
+    "select": [
+      ".dash-brief-line"
+    ]
+  },
+  "dash.brief-open": {
+    "zh": "右侧边栏放大看：「打开会话」",
+    "select": [
+      ".dash-brief-open"
+    ]
+  },
+  "dash.title-link": {
+    "zh": "右侧边栏：能点的卡片标题（放大看）",
+    "select": [
+      ".dash-title.is-link"
+    ]
   }
 }

@@ -27,6 +27,7 @@ const CHROME_PX = 54;
  *   show: (on: boolean) => void,
  *   size: (rows: number) => void,
  *   maxRows: () => number,
+ *   link: (open: () => void) => void,
  * }} Card
  */
 
@@ -135,6 +136,18 @@ export class Cards {
         slot.style.setProperty('--dash-floor', `${CHROME_PX + floor * ROW_PX}px`);
       },
       maxRows: () => d.rows,
+      // 标题字能点（放大看，蓝图「仪表盘」第 4 条「放大看」）：悬停下划线、指针变手，回车、空格也行
+      link: (open) => {
+        title.classList.add('is-link');
+        title.setAttribute('role', 'button');
+        title.tabIndex = 0;
+        title.onclick = () => open();
+        title.onkeydown = (e) => {
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault();
+          open();
+        };
+      },
     };
     unfold(slot, false);
     this.drawn.set(entry, d);

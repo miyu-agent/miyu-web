@@ -36,6 +36,7 @@ const SHOWN_ICON = { image: 'image', pdf: 'file-text', html: 'globe', markdown: 
  *   show: (path: string) => void,
  *   panel: () => void,
  *   dismiss: (path: string) => void,
+ *   browse: () => void,
  * }} On 停一个任务、在主区打开子代理的会话、读后台命令的输出、取一次编辑的差异、工作区和家目录、把点进去的那一样放进预览工作区的框、
  *   从那里回到四张卡、预览工作区开一样展示文件、开面板、从右栏拿掉一样
  */
@@ -89,8 +90,15 @@ export class Dashboard {
     this.empty = h('div.dash-empty', { hidden: true }, t('empty'));
     this.list = h('div.dash-list', this.empty);
     this.el = h('div.dash', this.list);
-    /** 点进去看着的那一样：`{kind: 'output', node}`、`{kind: 'diff', index}`；回来的是 `null` @type {any} */
+    /** 点进去看着的那一样：`{kind: 'output', node}`、`{kind: 'diff', index}`、`{kind: 'big', of}`（放大看）；回来的是 `null` @type {any} */
     this.viewing = null;
+    /**
+     * 放大看的那一页（文件修改、后台任务；蓝图「仪表盘」第 4 条「放大看」）：左边一列、右边选中的那一样；`pane` 换一样就加一，晾着的回应丢掉
+     * @type {null|{of: 'files'|'tasks', list: HTMLElement, pane: HTMLElement, pick: string|null, seq: number, sig: string}}
+     */
+    this.big = null;
+    /** 放大看那一列里看不见的行（同 `away`，根是那一列） @type {IntersectionObserver|null} */
+    this.bigAway = null;
     /** 读输出读到第几回：换了、回来了的晾着的回应丢掉 */
     this.run = 0;
     this.timer = 0;
@@ -116,6 +124,7 @@ export class Dashboard {
     this.drawTasks();
     this.drawFiles();
     this.drawShown();
+    if (this.big) this.drawBig();
     // 看着的后台命令没了、文件没了：回到仪表盘
     if (this.viewing?.kind === 'diff' && !data.files[this.viewing.index]) this.back();
     this.syncTimer();
@@ -130,6 +139,8 @@ export class Dashboard {
     this.cards[id] = card;
     card.el.classList.add(CARD_CLASS[id]);
     card.title(t(id));
+    // 文件修改、后台任务、展示文件的标题字能点：放大看整张卡（待办、会话信息不做）
+    if (id !== 'todo') card.link(() => this.openBig(id));
     this.sigs[id] = '';
     if (id === 'todo') {
       card.body(this.todoParts.rows, this.todoParts.folds, this.todoParts.done);
@@ -191,8 +202,9 @@ export class Dashboard {
 
   tick() {
     const now = Date.now();
-    // 看不见的行不改（滚进来的时候 `watchAway` 当场改）
-    for (const el of this.el.querySelectorAll('.dash-row:not(.is-away) [data-since]')) {
+    // 看不见的行不改（滚进来的时候 `watchAway` 当场改）；放大看那一列、右边的简要也改
+    const scopes = [this.el, this.big?.list, this.big?.pane].filter(Boolean);
+    for (const el of scopes.flatMap((s) => [.../** @type {HTMLElement} */ (s).querySelectorAll('.dash-row:not(.is-away) [data-since], .dash-brief [data-since]')])) {
       const since = Number(/** @type {HTMLElement} */ (el).dataset.since);
       if (Number.isFinite(since) && since > 0) el.textContent = jobDuration((now - since) / 1000);
     }
@@ -262,8 +274,11 @@ export class Dashboard {
     this.watchAway(card, nodes);
   }
 
-  /** @param {import('./model.js').Row} r @param {number} now */
-  taskRow(r, now) {
+  /**
+   * 一行后台任务。`pick` 给了的是放大看那一列里的：点了交给它（不照卡片里的进会话、看输出），选中的那一行浅底
+   * @param {import('./model.js').Row} r @param {number} now @param {((x: Node) => void)|null} [pick] @param {string|null} [picked]
+   */
+  taskRow(r, now, pick = null, picked = null) {
     const t = this.t;
     if (r.type === 'done') {
       // 「✓ 已完成（N）」（2026-10-24 项目主人：原来只写「✓ (N)」）；点了展开、再点收回
@@ -299,12 +314,13 @@ export class Dashboard {
       : null;
     const elapsed = running ? (x.since != null ? jobDuration((now - x.since) / 1000) : '') : x.duration != null ? jobDuration(x.duration / 1000) : '';
     const open = () => {
-      if (agent && x.session) this.on.enter(x.session);
+      if (pick) pick(x);
+      else if (agent && x.session) this.on.enter(x.session);
       else if (!agent) this.showOutput(x);
     };
     // 主区正在看的那个子代理：浅底（点进子代理以后这一栏留着，方便换到别的）
     const current = agent && !!x.session && x.session === this.data.current;
-    return h(`div.dash-row.dash-task${x.attention ? '.is-attention' : ''}${running ? '' : '.is-ended'}${r.hasKids ? '.has-kids' : ''}${current ? '.is-current' : ''}`, {
+    return h(`div.dash-row.dash-task${x.attention ? '.is-attention' : ''}${running ? '' : '.is-ended'}${r.hasKids ? '.has-kids' : ''}${current ? '.is-current' : ''}${picked === x.key ? '.is-picked' : ''}`, {
       role: 'button', tabindex: '0', style: `--depth: ${r.depth}`, title: agent ? t('enter') : t('open_output'), 'aria-current': current ? 'true' : null,
       onclick: open, onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter') open(); },
     },
@@ -317,11 +333,12 @@ export class Dashboard {
     stop);
   }
 
-  /** 收起、展开一行的子任务 @param {string} key */
+  /** 收起、展开一行的子任务（卡片里、放大看里是同一份） @param {string} key */
   flip(key) {
     if (this.collapsed.has(key)) this.collapsed.delete(key);
     else this.collapsed.add(key);
     this.drawTasks();
+    if (this.big) this.drawBig();
   }
 
   /** 停一个：记着在停，等回报 @param {Node} x */
@@ -465,6 +482,10 @@ export class Dashboard {
         this.run++;
         const had = this.viewing;
         this.viewing = null;
+        if (had?.kind === 'big') {
+          this.big = null;
+          this.bigAway?.disconnect();
+        }
         if (had?.kind === 'diff') {
           this.sigs.files = '';
           this.drawFiles();
@@ -481,14 +502,27 @@ export class Dashboard {
 
   /** 后台命令的输出：先读最后几行，跑着的带 `after`、`wait` 接着读；贴着底，往上翻停住 @param {Node} x */
   showOutput(x) {
-    const t = this.t;
     const running = x.state === 'running' || x.state === 'paused';
+    const stop = running ? this.action('circle-stop', 'stop', () => this.halt(x)) : null;
+    const pane = h('div.dash-present');
+    const run = this.present({ kind: 'output', node: x }, this.outputLead(x), stop ? [stop] : [], pane);
+    this.outputPane(pane, x, () => run === this.run);
+  }
+
+  /** 后台命令那一页头一行：终端图标、「命令 · 编号」（命令长的截命令，编号一直露着） @param {Node} x */
+  outputLead(x) {
+    return [h('span.dash-kind', icon('square-terminal')), h('span.dash-name.is-split', { title: x.command || x.title || x.job }, h('span.dash-command', x.command || x.title || x.job), h('span.dash-sep', ' · '), h('span.dash-id', x.job))];
+  }
+
+  /**
+   * 一条后台命令的输出画进 `box`（点进去看的、放大看右半边的同一块）：`alive` 是假了就不再读（换了一样、回去了）
+   * @param {HTMLElement} box @param {Node} x @param {() => boolean} alive
+   */
+  outputPane(box, x, alive) {
+    const t = this.t;
     const out = h('pre.dash-output', t('loading'));
     const follow = h('div.dash-follow', h('i.dash-follow-dot'), t('follow'));
-    const stop = running ? this.action('circle-stop', 'stop', () => this.halt(x)) : null;
-    const run = this.present({ kind: 'output', node: x },
-      [h('span.dash-kind', icon('square-terminal')), h('span.dash-name.is-split', { title: x.command || x.title || x.job }, h('span.dash-command', x.command || x.title || x.job), h('span.dash-sep', ' · '), h('span.dash-id', x.job))],
-      stop ? [stop] : [], h('div.dash-present', out, follow));
+    replace(box, out, follow);
     /** @type {string[]} */
     let kept = [];
     const keep = this.config.preview_lines;
@@ -519,7 +553,7 @@ export class Dashboard {
       try {
         for (;;) {
           const got = await this.on.read(x.owner, x.job, size === null ? undefined : size);
-          if (run !== this.run) return sized.disconnect();
+          if (!alive()) return sized.disconnect();
           if (size === null) kept = String(got?.output ?? '').split('\n').slice(-keep);
           else add(String(got?.output ?? ''));
           if (kept.length === 1 && kept[0] === '') kept = [];
@@ -528,7 +562,7 @@ export class Dashboard {
           size = got.size;
         }
       } catch (err) {
-        if (run !== this.run) return;
+        if (!alive()) return;
         const e = /** @type {any} */ (err);
         out.textContent = e?.code === NO_METHOD ? t('no_api') : e?.message ?? String(err);
       }
@@ -536,22 +570,35 @@ export class Dashboard {
   }
 
   /** 一个文件的差异：每一次编辑的差异照先后接起来，中间一道细线；右边上一个、下一个文件 @param {number} index */
-  async showDiff(index) {
-    const t = this.t;
+  showDiff(index) {
     const files = this.data.files;
     const f = files[index];
     if (!f) return;
-    const { name, dir } = splitPath(f.path, this.on.where());
-    const body = h('div.dash-diff', h('div.dash-diff-note', t('loading')));
-    const run = this.present({ kind: 'diff', index },
-      [h('span.dash-kind', icon(f.created ? 'file-plus' : 'file')), h('strong.dash-file-name', name), dir ? h('span.dash-file-dir', dir) : null,
-        h('span.dash-lines', f.added ? h('span.dash-add', `+${f.added}`) : null, ' ', f.removed ? h('span.dash-del', `−${f.removed}`) : null)].filter((x) => x !== null),
+    const body = h('div.dash-diff');
+    const run = this.present({ kind: 'diff', index }, this.diffLead(f),
       [this.action('arrow-up', 'prev', () => this.showDiff(index - 1), !files[index - 1]), this.action('arrow-down', 'next', () => this.showDiff(index + 1), !files[index + 1])],
       body);
     this.sigs.files = '';
     this.drawFiles();
+    this.diffPane(body, f, () => run === this.run);
+  }
+
+  /** 文件那一页头一行：文件图标、文件名、暗字目录、`+n −m` @param {FileChange} f */
+  diffLead(f) {
+    const { name, dir } = splitPath(f.path, this.on.where());
+    return [h('span.dash-kind', icon(f.created ? 'file-plus' : 'file')), h('strong.dash-file-name', name), dir ? h('span.dash-file-dir', dir) : null,
+      h('span.dash-lines', f.added ? h('span.dash-add', `+${f.added}`) : null, ' ', f.removed ? h('span.dash-del', `−${f.removed}`) : null)].filter((x) => x !== null);
+  }
+
+  /**
+   * 一个文件的差异画进 `body`（点进去看的、放大看右半边的同一块）：每一次编辑取一回（`view.detail`），`alive` 是假了就不画
+   * @param {HTMLElement} body @param {FileChange} f @param {() => boolean} alive
+   */
+  async diffPane(body, f, alive) {
+    const t = this.t;
+    replace(body, h('div.dash-diff-note', t('loading')));
     const parts = await Promise.all(f.calls.map((call) => this.on.detail(call).catch(() => null)));
-    if (run !== this.run) return;
+    if (!alive()) return;
     const blocks = parts.map((got) => {
       const file = (got?.files ?? []).find((/** @type {any} */ x) => x?.path === f.path) ?? (got?.files ?? [])[0];
       if (!file) return h('div.dash-diff-note', t('no_detail'));
@@ -564,6 +611,131 @@ export class Dashboard {
     replace(body, blocks.length ? blocks : [h('div.dash-diff-note', t('no_detail'))]);
   }
 
+  // ── 放大看（蓝图「仪表盘」第 4 条「放大看」，2026-10-24 项目主人） ──
+
+  /**
+   * 点卡片的标题字：打开整张卡的大视图（工作区那么大的一页，左边一列、右边选中的那一样）。展示文件交给工作区自己（左边一列展示过的、
+   * 右边预览）；文件修改、后台任务借工作区的框画。先选上第一样。
+   * @param {'files'|'tasks'|'shown'} of
+   */
+  openBig(of) {
+    if (of === 'shown') return this.on.browse();
+    const list = h('div.dash-big-list');
+    const pane = h('div.dash-big-pane');
+    this.big = { of, list, pane, pick: null, seq: 0, sig: '' };
+    this.present({ kind: 'big', of }, [h('strong.dash-big-title', this.t(of))], [], h(`div.dash-big.is-${of}`, list, pane));
+    this.drawBig();
+  }
+
+  /** 放大看那一页照现在的数画（变了才重画左边那一列；选中的没了换成第一样） */
+  drawBig() {
+    const big = this.big;
+    if (!big) return;
+    if (big.of === 'files') {
+      const files = this.data.files;
+      // 选中的没了换成第一样（没了的才换：一样都没有的不再叫自己）
+      const want = files.some((f) => f.path === big.pick) ? big.pick : files[0]?.path ?? null;
+      if (want !== big.pick || (want && !big.pane.firstChild)) return this.pickBig(want);
+      const sig = JSON.stringify([files, big.pick]);
+      if (sig === big.sig) return;
+      big.sig = sig;
+      const where = this.on.where();
+      replace(big.list, files.length ? files.map((f) => {
+        const { name, dir } = splitPath(f.path, where);
+        return h(`button.dash-row.dash-file${f.created ? '.is-created' : ''}${f.path === big.pick ? '.is-picked' : ''}`, { type: 'button', title: f.path, onclick: () => this.pickBig(f.path) },
+          h('span.dash-kind', icon(f.created ? 'file-plus' : 'file')), h('span.dash-file-name', name), dir ? h('span.dash-file-dir', dir) : null, h('span.dash-gap'),
+          h('span.dash-lines', f.added ? h('span.dash-add', `+${f.added}`) : null, f.added && f.removed ? ' ' : null, f.removed ? h('span.dash-del', `−${f.removed}`) : null));
+      }) : h('p.dash-big-none', this.t('empty_files')));
+      return;
+    }
+    // 后台任务：完整的树，不收兄弟（「(N)」不出），做完的也列在后面；照样能展开、收起有子任务的那一行
+    const tree = this.data.tree;
+    const all = (/** @type {Node[]} */ xs) => xs.flatMap((x) => [x, ...all(x.kids)]);
+    const nodes = all(tree);
+    const want = nodes.some((x) => x.key === big.pick) ? big.pick : nodes[0]?.key ?? null;
+    if (want !== big.pick || (want && !big.pane.firstChild)) return this.pickBig(want);
+    const rows = rowsOf(tree, { collapsed: this.collapsed, expanded: new Set(nodes.map((x) => x.key)), doneOpen: true }).filter((r) => r.type === 'task');
+    const sig = JSON.stringify([rows.map((r) => r.type === 'task' ? [r.node.key, r.node.state, r.node.title, r.node.attention, r.depth, r.last, r.guides, r.open, r.hasKids] : r.type), [...this.stopping], big.pick]);
+    if (sig === big.sig) return;
+    big.sig = sig;
+    const now = Date.now();
+    const els = rows.map((r) => this.taskRow(r, now, (x) => this.pickBig(x.key, true), big.pick));
+    replace(big.list, els.length ? els : h('p.dash-big-none', this.t('empty_tasks')));
+    this.watchAwayIn(big.list, els);
+  }
+
+  /**
+   * 放大看里选一样：右边换成它（文件是差异；后台命令是实时输出；子代理是简要，`enter` 的照旧在主区进那个会话）
+   * @param {string|null} key 文件的路径、任务的 `key` @param {boolean} [enter]
+   */
+  pickBig(key, enter = false) {
+    const big = this.big;
+    if (!big) return;
+    const changed = big.pick !== key;
+    big.pick = key;
+    const seq = ++big.seq;
+    const alive = () => this.big === big && big.seq === seq;
+    if (big.of === 'files') {
+      const f = this.data.files.find((x) => x.path === key);
+      if (changed || !big.pane.firstChild) {
+        if (!f) replace(big.pane);
+        else {
+          const body = h('div.dash-diff');
+          replace(big.pane, h('div.dash-big-head', this.diffLead(f)), body);
+          this.diffPane(body, f, alive);
+        }
+      }
+      big.sig = '';
+      this.drawBig();
+      return;
+    }
+    const all = (/** @type {Node[]} */ xs) => xs.flatMap((n) => [n, ...all(n.kids)]);
+    const x = all(this.data.tree).find((n) => n.key === key);
+    if (x?.what === 'agent' && enter && x.session) this.on.enter(x.session);
+    if (changed || !big.pane.firstChild) {
+      if (!x) replace(big.pane);
+      else if (x.what === 'agent') replace(big.pane, this.brief(x));
+      else {
+        const box = h('div.dash-present');
+        const running = x.state === 'running' || x.state === 'paused';
+        replace(big.pane, h('div.dash-big-head', this.outputLead(x), h('span.dash-gap'), running ? this.action('circle-stop', 'stop', () => this.halt(x)) : null), box);
+        this.outputPane(box, x, alive);
+      }
+    }
+    big.sig = '';
+    this.drawBig();
+  }
+
+  /** 子代理的简要（放大看右边）：名字 · 编号、状态、用时，「打开会话」照旧在主区进那个会话 @param {Node} x */
+  brief(x) {
+    const t = this.t;
+    const running = x.state === 'running' || x.state === 'paused';
+    const stateKey = x.attention ?? x.state;
+    const elapsed = running ? (x.since != null ? jobDuration((Date.now() - x.since) / 1000) : '') : x.duration != null ? jobDuration(x.duration / 1000) : '';
+    return h('div.dash-brief',
+      h('div.dash-brief-head', h('span.dash-kind', icon('bot')), h('strong.dash-brief-name', x.title || x.job), h('span.dash-sep', ' · '), h('span.dash-id', x.job)),
+      h('div.dash-brief-line', h(`span.dash-state.is-${stateKey}`, stateIcon(stateKey)), h('span', t(`states.${stateKey}`)),
+        h('span.dash-time', running && x.since != null ? { dataset: { since: String(x.since) } } : null, elapsed)),
+      x.session ? h('div.dash-brief-foot', h('button.dash-brief-open', { type: 'button', onclick: () => this.on.enter(/** @type {string} */ (x.session)) }, t('open_session'))) : null);
+  }
+
+  /** 放大看那一列里看不见的行（同 `watchAway`，根是那一列） @param {HTMLElement} root @param {HTMLElement[]} rows */
+  watchAwayIn(root, rows) {
+    if (typeof IntersectionObserver !== 'function') return;
+    if (this.bigAway?.root !== root) {
+      this.bigAway?.disconnect();
+      this.bigAway = new IntersectionObserver((list) => {
+        const now = Date.now();
+        for (const e of list) {
+          const el = /** @type {HTMLElement} */ (e.target);
+          el.classList.toggle('is-away', !e.isIntersecting);
+          if (e.isIntersecting) for (const t of el.querySelectorAll('[data-since]')) this.since(/** @type {HTMLElement} */ (t), now);
+        }
+      }, { root, rootMargin: '60px 0px' });
+    } else this.bigAway.disconnect();
+    for (const r of rows) if (r.querySelector('[data-since], .dash-state.is-running')) this.bigAway.observe(r);
+  }
+
   /** 回到四张卡（换了一串会话）：看着的那一样交回去，预览工作区让出这一栏 */
   back() {
     if (!this.viewing) return;
@@ -573,6 +745,7 @@ export class Dashboard {
   /** 停用了：停掉计时 */
   destroy() {
     this.away?.disconnect();
+    this.bigAway?.disconnect();
     clearInterval(this.timer);
     this.timer = 0;
     this.run++;

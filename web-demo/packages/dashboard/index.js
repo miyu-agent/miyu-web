@@ -54,6 +54,8 @@ export function apply(ctx) {
     show: (path) => work.open(path),
     panel: () => work.panel(),
     dismiss: (path) => work.dismiss(path),
+    // 放大看展示文件：工作区左边多一列展示过的（带搜索），右边预览
+    browse: () => work.browse(),
   });
   ctx.effect(() => () => dash.destroy());
   ctx.effect(() => side.mount(dash.el));

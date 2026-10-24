@@ -24,6 +24,7 @@ import { drawMarkdown } from './render.js';
 import { paint } from '../markdown/highlight.js';
 import { copy } from '../markdown/build.js';
 import { richHooks } from './rich.js';
+import { fuzzyFilter } from '../lib/fuzzy.js';
 
 /** 拖到多宽，记在这台设备上的名字（内核的 `storage` 会带上账号；这个终端的状态） */
 const WIDTH = 'artifacts_width';
@@ -117,6 +118,24 @@ export class Artifacts {
     this.download = h('a.icon-button.artifact-action.artifact-file-action', { title: t('artifacts.download'), 'aria-label': t('artifacts.download'), download: '' }, icon('download'));
     this.maxButton = h('button.icon-button.artifact-action', { type: 'button', onclick: () => this.setMaximized(!this.maximized) });
     this.view = h('div.artifact-view');
+    // 放大看展示文件（右侧边栏点「展示文件」那几个字，蓝图「仪表盘」第 4 条「放大看」，2026-10-24 项目主人）：左边多一列列表（带搜索），右边照旧预览
+    this.browsing = false;
+    this.browseQuery = '';
+    this.browseInput = /** @type {HTMLInputElement} */ (h('input.artifact-browse-search', {
+      type: 'text', placeholder: t('artifacts.search'), 'aria-label': t('artifacts.search'), spellcheck: 'false', autocomplete: 'off',
+      oninput: () => { this.browseQuery = this.browseInput.value; this.drawBrowse(); },
+      onkeydown: (/** @type {KeyboardEvent} */ e) => {
+        if (e.key !== 'Escape' || !this.browseInput.value) return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.browseInput.value = '';
+        this.browseQuery = '';
+        this.drawBrowse();
+      },
+    }));
+    this.browseItems = h('div.artifact-browse-items');
+    this.browseList = h('div.artifact-browse', { hidden: true }, this.browseInput, this.browseItems);
+    this.main = h('div.artifact-main', this.browseList, this.view);
     this.el = h('aside.artifact-workspace', { hidden: true },
       h('div.artifact-resize-handle', { title: t('artifacts.resize'), onpointerdown: (e) => this.resize(e) }),
       this.tabs,
@@ -125,7 +144,7 @@ export class Artifacts {
         h('div.artifact-actions', this.customActions,
           h('button.icon-button.artifact-action.artifact-file-action', { type: 'button', title: t('artifacts.copy'), onclick: () => this.copySource() }, icon('copy')),
           this.download, this.maxButton, this.headerClose)),
-      this.view, this.emptyWork, this.panel);
+      this.main, this.emptyWork, this.panel);
     document.addEventListener('click', (e) => {
       if (!this.menu.hidden && !/** @type {Element} */ (e.target).closest?.('.artifact-resource-wrap')) hide(this.menu);
     });
@@ -145,6 +164,7 @@ export class Artifacts {
     this.entries = entries;
     const session = where.session;
     this.list = undismissed(panelList(shownList(entries)), session ? this.dismissed[session] : undefined);
+    this.drawBrowse();
     // 先后照 `order`（同一轮里展示的几样也分得出新旧）；往上翻读到的更早的比记下的旧，不算新来的
     const newest = this.list[0]?.order ?? 0;
     const seen = session ? this.seen.get(session) : undefined;
@@ -173,6 +193,7 @@ export class Artifacts {
   /** 打开展示过的那一个（对话里点了它的卡片、灯箱里点了「在右栏打开」）；还没进列表的（条目刚到）记下，进了列表再看它。 @param {string} path */
   reveal(path) {
     this.unpresent();
+    this.setBrowse(false);
     this.current = path;
     this.tab = 'work';
     if (this.open) this.draw(true);
@@ -209,7 +230,10 @@ export class Artifacts {
     if (this.open) this.markSeen();
     if (!this.open && this.maximized) this.setMaximized(false);
     // 收起了：借着看的交回去（下回打开照展示文件画）
-    if (!this.open) this.unpresent();
+    if (!this.open) {
+      this.unpresent();
+      this.setBrowse(false);
+    }
     // 里面的东西等这一栏滑完再画（网页那一种载入、跑起来重，滑到一半时做会顿一下）；关上以前看的那一样没变的不重画，直接露出来
     if (this.open) this.settleAt = performance.now() + (was || !swap ? 0 : SWAP_OUT_MS) + (parseFloat(getComputedStyle(this.shell).getPropertyValue('--artifact-in')) * 1000 || 0);
     if (this.open && this.tab === 'work') this.draw();
@@ -248,6 +272,7 @@ export class Artifacts {
    * @param {Present} spec
    */
   present(spec) {
+    this.setBrowse(false);
     const was = this.presenting;
     this.presenting = spec;
     if (was && was !== spec) was.leave?.();
@@ -303,6 +328,9 @@ export class Artifacts {
     this.header.classList.toggle('is-presenting', presenting);
     this.headerClose.hidden = tabs;
     this.view.hidden = !work || !has;
+    this.main.hidden = this.view.hidden;
+    this.browseList.hidden = !this.browsing || this.view.hidden;
+    this.el.classList.toggle('is-browsing', this.browsing && !this.view.hidden);
     this.emptyWork.hidden = !(work && tabs && !has);
     this.panel.hidden = work;
     const claimed = !!this.claimed;
@@ -459,6 +487,45 @@ export class Artifacts {
   settled() {
     const wait = (this.settleAt ?? 0) - performance.now();
     return wait > 0 && !reduced() ? new Promise((r) => setTimeout(r, wait)) : Promise.resolve();
+  }
+
+  /**
+   * 放大看展示文件（`side.work.browse`）：左边一列列表、带搜索，右边照旧预览；开着的就地换，没开的打开（看最后展示的那一样）。
+   * 点一样（`reveal`）、借着看别的（`present`）、收起时回到只看一样。
+   */
+  browse() {
+    this.unpresent();
+    this.tab = 'work';
+    // 每回放大看都从没筛开始（上一回搜的字不留）
+    this.browseInput.value = '';
+    this.browseQuery = '';
+    if (!this.current || !this.list.some((a) => a.path === this.current)) this.current = this.list[0]?.path ?? null;
+    this.setBrowse(true);
+    if (this.open) this.draw(true);
+    else this.setOpen(true);
+  }
+
+  /** @param {boolean} on */
+  setBrowse(on) {
+    if (this.browsing === on) return;
+    this.browsing = on;
+    if (on) this.drawBrowse();
+    this.syncChrome();
+  }
+
+  /** 放大看的那一列：照搜索框模糊筛（标题、文件名、路径），正在看的那一个浅底 */
+  drawBrowse() {
+    if (!this.browsing) return;
+    // 路径只拿最后两段目录去对：整条绝对路径里家目录的字都对得上
+    const list = fuzzyFilter(this.list, this.browseQuery.trim(), (a) => [a.title ?? '', a.name, a.path.split('/').slice(-3, -1).join('/')]);
+    replace(this.browseItems, list.length ? list.map((a) => h(`button.artifact-browse-item${a.path === this.current ? '.is-current' : ''}`, {
+      type: 'button', title: a.path, 'aria-current': a.path === this.current ? 'true' : null,
+      onclick: () => {
+        this.current = a.path;
+        this.draw(true);
+        this.drawBrowse();
+      },
+    }, h('span.artifact-browse-name', a.title ?? a.name), h('small.artifact-browse-kind', t(`artifacts.types.${a.kind}`)))) : h('p.artifact-browse-none', t('artifacts.no_match')));
   }
 
   /** 展示过的全部：当前的打勾，点哪个看哪个；悬停露出右边的 ✕，点了从右栏拿掉这一样。 */

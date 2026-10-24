@@ -278,6 +278,8 @@
     "empty": "还没有展示过东西",
     "download_named": "下载 {name}",
     "remove": "从列表移除",
+    "search": "搜索文件",
+    "no_match": "没有对得上的文件",
     "remove_named": "从列表移除 {name}"
   },
   "commands": {

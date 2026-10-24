@@ -58,6 +58,24 @@
 /* 顶上两个标签「工作区」「面板」（扩展的界面块放进来时才有，2026-10-15 项目主人定）：竖着排，内容那一块占满剩下的高 */
 .artifact-workspace { display: flex; flex-direction: column; }
 .artifact-workspace > .artifact-view, .artifact-panel { flex: 1; }
+/* 预览区外面一层：放大看展示文件时左边多一列列表（`browse`，蓝图「仪表盘」第 4 条「放大看」，2026-10-24 项目主人），平常只有预览 */
+.artifact-workspace > .artifact-main { display: flex; flex: 1; min-height: 0; }
+.artifact-main[hidden] { display: none; }
+.artifact-main > .artifact-view { flex: 1; min-width: 0; }
+.artifact-browse { display: flex; flex: none; flex-direction: column; gap: calc(6px * var(--space)); width: 240px; min-height: 0; box-sizing: border-box; padding: calc(8px * var(--space)); border-right: 1px solid var(--line); }
+.artifact-browse[hidden] { display: none; }
+.artifact-browse-search { flex: none; height: 28px; box-sizing: border-box; padding: 0 calc(10px * var(--space)); border: 0; border-radius: var(--r-8); background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); font: inherit; font-size: calc(12.5px * var(--text-scale)); outline: none; }
+.artifact-browse-search::placeholder { color: var(--text-faint); }
+.artifact-browse-items { display: flex; flex: 1; flex-direction: column; gap: 2px; min-height: 0; overflow-y: auto; }
+.artifact-browse-item {
+  display: flex; align-items: baseline; gap: calc(8px * var(--space)); width: 100%; min-height: 30px; box-sizing: border-box; padding: calc(5px * var(--space)) calc(8px * var(--space));
+  border: 0; border-radius: var(--r-8); background: none; color: var(--text); font: inherit; font-size: calc(13px * var(--text-scale)); text-align: left; cursor: pointer;
+}
+.artifact-browse-item:hover { background: color-mix(in srgb, var(--text) 5%, transparent); }
+.artifact-browse-item.is-current { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.artifact-browse-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.artifact-browse-kind { flex: none; color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); }
+.artifact-browse-none { margin: 0; padding: calc(8px * var(--space)); color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
 .artifact-tabs { display: flex; flex: none; align-items: center; gap: calc(4px * var(--space)); padding: calc(8px * var(--space)) calc(10px * var(--space)) 0 calc(12px * var(--space)); }
 .artifact-tabs > .artifact-action { margin-left: auto; }
 .artifact-tab { height: 30px; padding: 0 calc(12px * var(--space)); border: var(--item-border, 0); border-radius: var(--item-radius, var(--radius)); background: var(--item-bg, transparent); color: var(--item-fg, var(--text-soft)); font: inherit; font-size: calc(13px * var(--text-scale)); cursor: pointer; }

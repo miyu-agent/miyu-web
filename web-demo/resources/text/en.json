@@ -278,6 +278,8 @@
     "empty": "Nothing shown yet",
     "download_named": "Download {name}",
     "remove": "Remove from list",
+    "search": "Search files",
+    "no_match": "No matching files",
     "remove_named": "Remove {name} from list"
   },
   "commands": {
