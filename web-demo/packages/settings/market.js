@@ -245,7 +245,7 @@ function actionButton(dialog, p, upgradable, big) {
 /** 看一眼（只照索引说，不下载）：同一个编号只问一次，刷新了重问 @param {any} dialog @param {string} id */
 function previewOf(dialog, id) {
   const m = stateOf(dialog);
-  // 预览也算系统那一层（核心 Y-12下上）：平时锁着的不问，照「在管理员模式里改」说
+  // 预览也算系统那一层（核心 Y-12下上）：平时锁着的不问，照「仅管理员可以修改」说
   if (dialog.adminLocked) return Promise.reject(Object.assign(new Error(dialog.ctx.text('admin_mode.locked')), { reason: 'admin_locked' }));
   if (!m.previews.has(id)) m.previews.set(id, dialog.ctx.core.request('package.install', { source: id, preview: true }));
   return /** @type {Promise<any>} */ (m.previews.get(id));

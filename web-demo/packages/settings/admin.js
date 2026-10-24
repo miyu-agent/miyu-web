@@ -150,7 +150,7 @@ export class AdminPage {
     const kids = !st.loaded ? [h('p.set-empty', t('admin.loading'))]
       : this.page === 'accounts' ? [inviteGroup(view), memberGroup(view)]
         : this.overview();
-    replace(this.body, h('div.adm-inner', this.ctx.admin?.on ? h('div.set-admin-bar', { role: 'status' }, t('admin_mode.bar')) : null,
+    replace(this.body, h('div.adm-inner',
       h('h2.adm-title', t(`admin.pages.${this.page}`)), h('p.adm-lead', t(`admin.leads.${this.page}`)),
       ...kids, st.error ? h('p.set-error', st.error) : null));
   }

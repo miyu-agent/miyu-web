@@ -6408,10 +6408,10 @@
       ".set-prov-prefer"
     ]
   },
-  "settings.admin-bar": {
-    "zh": "设置：管理员模式开着时右边最上面那一条淡橙色窄条",
+  "settings.admin-tag": {
+    "zh": "设置：管理员模式开着时页名旁边那颗淡橙色小标签",
     "select": [
-      ".set-admin-bar"
+      ".set-admin-tag"
     ]
   },
   "settings.admin-row": {
@@ -6421,7 +6421,7 @@
     ]
   },
   "settings.locked": {
-    "zh": "设置：锁着的地方那一行「在管理员模式里改」",
+    "zh": "设置：锁着的地方那一行「仅管理员可以修改」（管理员后面隔开一个「进入管理员模式」）",
     "select": [
       ".set-locked"
     ]
@@ -6448,12 +6448,6 @@
     "zh": "管理员后台：成员一行右边那几个按钮（设成、撤掉管理员，停用、启用）",
     "select": [
       ".acc-actions"
-    ]
-  },
-  "settings.for-all": {
-    "zh": "设置：管理员模式里带个人那一层的项名字下面「大家的默认」",
-    "select": [
-      ".set-for-all"
     ]
   },
   "side.column": {

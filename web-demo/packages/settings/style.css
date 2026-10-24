@@ -36,7 +36,7 @@
 /* 右边（第 4 条）：页头钉住，下面自己滚 */
 .set-main { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .set-head { display: flex; align-items: center; gap: calc(8px * var(--space)); padding: calc(14px * var(--space)) calc(14px * var(--space)) calc(10px * var(--space)) calc(24px * var(--space)); }
-.set-title { flex: 1; font-size: calc(17px * var(--text-scale)); font-weight: 600; }
+.set-title { min-width: 0; font-size: calc(17px * var(--text-scale)); font-weight: 600; }
 .set-back { display: none; align-items: center; gap: calc(2px * var(--space)); padding: calc(4px * var(--space)) calc(6px * var(--space)) calc(4px * var(--space)) calc(2px * var(--space)); border: 0; border-radius: var(--r-8); background: transparent; color: var(--text-soft); font: calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer; }
 /* `--set-hold`：页尾那一块收起时垫在最底下的空，免得整页跟着往下滑（私密目录、受保护的路径的总开关，`privacy.js`） */
 .set-body { position: relative; flex: 1; min-height: 0; padding: 0 calc(24px * var(--space)) calc(24px * var(--space) + var(--set-hold, 0px)); overflow-x: hidden; overflow-y: auto; overflow-anchor: none; }
@@ -55,16 +55,15 @@
 @keyframes set-slide-from-left { from { opacity: 0; transform: translateX(-48px); } }
 @keyframes set-slide-to-left { to { opacity: 0; transform: translateX(-48px); } }
 @keyframes set-slide-to-right { to { opacity: 0; transform: translateX(48px); } }
-/* 管理员模式（蓝图「管理员模式」第 2、4 条）：右边最上面一条淡橙色窄条；左栏最下面一行开关；锁着的地方一行暗字和「进入管理员模式」；
-   齿轮右上角一个橙色小点 */
-.set-admin-bar { margin: 0 calc(24px * var(--space)) calc(8px * var(--space)); padding: calc(5px * var(--space)) calc(12px * var(--space)); border-radius: var(--r-8);
-  background: color-mix(in srgb, var(--t-warn) 14%, var(--surface-1)); color: color-mix(in srgb, var(--t-warn) 70%, var(--text)); font-size: calc(12.5px * var(--text-scale)); font-weight: 600; }
-.set-admin-bar[hidden] { display: none; }
+/* 管理员模式（蓝图「管理员模式」第 2、4 条）：页名旁边一颗淡橙色小标签；左栏最下面一行开关；锁着的地方一行暗字，管理员隔开一点后面「进入管理员模式」；
+   齿轮右上角一个橙色小点。页名不撑满，关闭按钮靠右 */
+.set-head .set-close { margin-left: auto; }
+.set-admin-tag { flex: none; padding: calc(2px * var(--space)) calc(8px * var(--space)); border-radius: var(--r-round);
+  background: color-mix(in srgb, var(--t-warn) 14%, var(--surface-1)); color: color-mix(in srgb, var(--t-warn) 70%, var(--text)); font-size: calc(11.5px * var(--text-scale)); font-weight: 600; }
+.set-admin-tag[hidden] { display: none; }
 .set-admin-row { display: flex; align-items: center; justify-content: space-between; gap: calc(8px * var(--space)); min-height: 34px; padding: 0 calc(10px * var(--space)); color: var(--text-soft); font-size: calc(13px * var(--text-scale)); }
-.set-locked { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(8px * var(--space)); margin: calc(4px * var(--space)) 0; color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
+.set-locked { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(16px * var(--space)); margin: calc(4px * var(--space)) 0; color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
 .set-source .set-locked { display: inline-flex; margin: 0; }
-/* 管理员模式里带个人那一层的项：名字下面「大家的默认」（个人那一层盖过了的接一句） */
-.set-for-all { color: color-mix(in srgb, var(--t-warn) 70%, var(--text-soft)); }
 .set-toast.is-action { display: flex; align-items: baseline; gap: calc(10px * var(--space)); }
 .set-gear { position: relative; }
 .set-gear-dot { position: absolute; top: 4px; right: 4px; display: none; width: 7px; height: 7px; border-radius: var(--r-round); background: var(--t-warn); box-shadow: 0 0 0 2px var(--side-bg, var(--sidebar-bg)); pointer-events: none; }

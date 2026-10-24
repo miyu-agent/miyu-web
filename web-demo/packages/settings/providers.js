@@ -53,11 +53,11 @@ export function drawProviders(dialog, list) {
     h('button.set-prov.is-add', { type: 'button', onclick: () => openAdd(dialog) }, icon('plus'), h('span', ctx.text('models.add_provider'))));
   if (!p) return h('div.set-prov-wrap', list_);
   // 「共用」的只有管理员模式里能改（写系统配置）；平时（成员、没开管理员模式的管理员）只读：名称、地址、密钥那一行「已设置」，
-  // 没有测试、编辑、删除、更换，模型点不进详情；管理员那几个按钮的地方写「在管理员模式里改」（蓝图「设置页」第 14 条、「管理员模式」第 4 条）
+  // 没有测试、编辑、删除、更换，模型点不进详情；那几个按钮的地方写「仅管理员可以修改」（管理员后面隔开一个「进入管理员模式」，成员只有那一句）（蓝图「设置页」第 14 条、「管理员模式」第 4 条）
   // 两块里都有的一家：「共用」那一格的密钥照系统那一层写的那一格（核心合出来的是自用盖过的那一份）
   const sharedKey = side === 'shared' && both.has(p.id) ? keyIn(p.id, dialog.got ?? {}, 'system') : undefined;
   const readonly = side === 'shared' && (!!ctx.host?.member || !ctx.admin?.on);
-  const view = { readonly, locked: readonly && !!dialog.adminLocked, prefer: side === 'mine' && both.has(p.id), sharedKey };
+  const view = { readonly, prefer: side === 'mine' && both.has(p.id), sharedKey };
   const main = h('div.set-prov-main', head(dialog, p, logos, view), keyBlock(dialog, p, view), models(dialog, p, view));
   // 详情盖着右边整栏（挂在 `.set-main` 上，滚正文时它不跟着走）
   const detail = dialog.modelDetail ? drawer(dialog, p, (p.models ?? []).find((m) => m.model === dialog.modelDetail)) : null;
@@ -88,9 +88,9 @@ function providerItem(dialog, x, side, on, logos, same, merged = false) {
 }
 
 /**
- * 头上：图标、名称、地址，「测试连接」「编辑」；接口是猜的写一行；测试的结果写在下面。成员看「共用」的（`readonly`）没有按钮；
+ * 头上：图标、名称、地址，「测试连接」「编辑」；接口是猜的写一行；测试的结果写在下面。看「共用」的平时（`readonly`）没有按钮，写一行「仅管理员可以修改」；
  * 两块里都有的「自用」那一格名称下面一行「优先用这一份」（核心照自用盖过共用，`prefer`）。
- * @param {any} dialog @param {any} p @param {boolean} logos @param {{readonly?: boolean, locked?: boolean, prefer?: boolean}} [view]
+ * @param {any} dialog @param {any} p @param {boolean} logos @param {{readonly?: boolean, prefer?: boolean}} [view]
  */
 function head(dialog, p, logos, view = {}) {
   const ctx = dialog.ctx;
@@ -124,7 +124,7 @@ function head(dialog, p, logos, view = {}) {
   return h('div.set-prov-head',
     h('div.set-prov-title', logo, h('div', h('strong', providerName(p)), h('span', { title: address }, address),
       view.prefer ? h('small.set-prov-prefer', ctx.text('models.prefer_mine')) : null),
-      view.locked ? dialog.lockLine() : view.readonly ? null : h('div.set-prov-buttons', test, h('button.set-btn', { type: 'button', onclick: openForm(dialog, p.id) }, ctx.text('models.edit')), removeButton(dialog, p))),
+      view.readonly ? dialog.lockLine() : h('div.set-prov-buttons', test, h('button.set-btn', { type: 'button', onclick: openForm(dialog, p.id) }, ctx.text('models.edit')), removeButton(dialog, p))),
     // 核心推不出接口、先照 openai-chat 用的（`driver_from: default`，核心 8-26）：写明是猜的，猜错了请求会出错
     p.driver_from === 'default' ? h('p.set-prov-note', ctx.text('models.driver_guess_line', { driver: p.driver ?? '' })) : null,
     shared && shared !== 'no_key' ? h('p.set-prov-warn', ctx.text(`models.states.${shared}`)) : null,
