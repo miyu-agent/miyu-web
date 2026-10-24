@@ -149,7 +149,7 @@ function keyBlock(dialog, p) {
     : { type: 'text', placeholder: 'DEEPSEEK_API_KEY', spellcheck: 'false', autocomplete: 'off' }));
   const error = h('p.set-error', { hidden: true });
   // 管理员选存到哪一份；成员只有自己那一份（环境变量的不出）
-  const scope = kind === 'secret' ? secretScope(dialog) : { el: null, params: () => ({}) };
+  const scope = kind === 'secret' ? secretScope(ctx) : { el: null, params: () => ({}) };
   const save = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'button', onclick: async () => {
     const text = field.value.trim();
     if (!text) return field.focus();
