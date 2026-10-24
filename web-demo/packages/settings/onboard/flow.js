@@ -8,7 +8,6 @@
 import { h, icon, replace } from '../../../src/lib/dom.js';
 import { logoEl } from '../../../src/lib/logo.js';
 import { secretName } from '../model.js';
-import { secretScope } from '../rows.js';
 import { select } from '../rows.js';
 import { providerRows, mineRows, usableIds, testParams, setupChanges, noPools, modelOrder, filterNames, failureOf, validUrl, cleanUrl, customId, customIdProblem } from './logic.js';
 
@@ -178,10 +177,8 @@ export class ProviderFlow {
     if (target.kind === 'configured') keyRow = this.fieldRow(t('onboard.key'), h('span.ob-fixed', t('onboard.key_configured')));
     else if (target.kind === 'catalog') {
       keyInput = this.keyField(target.env ? t('onboard.key_env', { name: target.env }) : t('onboard.key_paste'));
-      // 只有一行密码框：左边不写「密钥」，框占满、居中（2026-10-23 项目主人：占位里已经写了，左边的字还让框不居中）；
-      // 设置页里管理员下面多一排「存到 共用 | 自用」（引导里不出，照核心的默认）
-      const scope = this.scope();
-      keyRow = scope.el ? h('div', this.fieldRow(null, keyInput), this.fieldRow(null, scope.el)) : this.fieldRow(null, keyInput);
+      // 只有一行密码框：左边不写「密钥」，框占满、居中（2026-10-23 项目主人：占位里已经写了，左边的字还让框不居中）
+      keyRow = this.fieldRow(null, keyInput);
     }
     const key = () => {
       const text = keyInput?.value.trim() ?? '';
@@ -231,12 +228,6 @@ export class ProviderFlow {
       this.stale?.();
     });
     return this.testing(target, '', rows, key, () => validUrl(cleanUrl(url.value)) && checkId(), idInput, { auto: false, pasted: () => !!keyInput.value.trim(), title: t('onboard.custom_title') });
-  }
-
-  /** 这一家粘贴的密钥存到哪一份：设置页里的管理员才选（`rows.js` 的 `secretScope`），引导里照核心的默认；记着，存的时候用 */
-  scope() {
-    this.keyScope = this.mode === 'settings' ? secretScope(this.ctx) : { el: null, params: () => ({}) };
-    return this.keyScope;
   }
 
   /** 密钥框：不回显，改了要重测。 @param {string} hint */
@@ -435,12 +426,13 @@ export class ProviderFlow {
       let ref = key?.env ? { env: key.env } : null;
       if (pasted && key?.value) {
         const secret = secretName(id, Date.now());
-        await core.request('secret.set', { name: secret, value: key.value, ...(this.keyScope?.params() ?? {}) });
+        await core.request('secret.set', { name: secret, value: key.value });
         ref = { secret };
       }
       const { changes } = setupChanges(target, ref, { chat: welcome ? model : null, pools: welcome && noPools(items), taken });
       // 写个人设置，同设置页（2026-10-10 项目主人：引导里选了 DeepSeek，会话照旧是原来的 magpie——原来写系统配置，被个人设置里写着的盖住了）
-      if (changes.length) await core.request('config.set', { layer: 'personal', changes });
+      // 设置页里、管理员模式开着：整条写系统配置（这一家进「共用」，蓝图「设置页」第 14 条）；别的写个人设置
+      if (changes.length) await core.request('config.set', { layer: this.mode === 'settings' && this.ctx.admin?.on ? 'system' : 'personal', changes });
       this.configured.add(id);
       this.usable.add(id);
       // 存好的这一家记进「已配好」那一组（点了返回再回来，列表里看得到它）

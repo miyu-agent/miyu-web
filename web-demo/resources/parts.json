@@ -6450,24 +6450,6 @@
       ".set-for-all"
     ]
   },
-  "settings.secret-box": {
-    "zh": "设置：密钥框连「存到哪一份」的下拉那一块",
-    "select": [
-      ".set-secret-box"
-    ]
-  },
-  "settings.secret-scope": {
-    "zh": "设置：存密钥存到哪一份的两段切换（共用、自用）",
-    "select": [
-      ".set-secret-scope"
-    ]
-  },
-  "settings.secret-scope-label": {
-    "zh": "设置：「存到」那两个字",
-    "select": [
-      ".set-secret-scope-label"
-    ]
-  },
   "side.column": {
     "zh": "右边那一栏给软件包用的（仪表盘这类）：窄栏、宽栏、盖在上面",
     "select": [
