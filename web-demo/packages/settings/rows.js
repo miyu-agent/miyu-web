@@ -95,11 +95,13 @@ export function coreRow(dialog, item, opts = {}) {
   };
   // 密钥（`type: secret`）：粘贴的先存成一个新名字的密钥（`secret.set`，不覆盖原来的），再把引用写进配置——人不用知道
   // `{ secret = … }` 怎么写（2026-10-10 当用户试「接入QQ的令牌」：写纯文字会被核心拒）
+  // 管理员选存到哪一份（大家共用、只给我）；成员只有自己那一份
+  const scope = secretScope(dialog);
   const saveSecret = async (text) => {
     row.busy();
     const name = secretName(item.key.toLowerCase().replace(/[^a-z0-9]+/g, '-'), Date.now());
     try {
-      await ctx.core.request('secret.set', { name, value: text });
+      await ctx.core.request('secret.set', { name, value: text, ...scope.params() });
     } catch (err) {
       row.fail(err?.message ?? String(err));
       return;
@@ -114,7 +116,7 @@ export function coreRow(dialog, item, opts = {}) {
     description: opts.compact ? '' : item.description,
     source: appliesLine(dialog, item, opts.compact),
     problems: item.problems,
-    control: editor?.options ? control(dialog, { ...item, control: 'select', options: editor.options() }, value, save) : control(dialog, item, value, save, saveSecret),
+    control: editor?.options ? control(dialog, { ...item, control: 'select', options: editor.options() }, value, save) : control(dialog, item, value, save, saveSecret, scope.el),
     reset: written ? () => save({ unset: true }) : null,
     resetTitle: ctx.text('reset'),
   });
@@ -130,8 +132,9 @@ export function coreRow(dialog, item, opts = {}) {
  * @param {any} value 最终值
  * @param {(change: {value?: any, input?: string}) => any} save 存成了交回 `true`
  * @param {(text: string) => void} [saveSecret] 密钥：粘贴的那一串
+ * @param {HTMLElement|null} [scope] 密钥存到哪一份的下拉（管理员才有，`secretScope`）
  */
-function control(dialog, item, value, save, saveSecret) {
+function control(dialog, item, value, save, saveSecret, scope = null) {
   const ctx = dialog.ctx;
   if (item.control === 'toggle') return toggle(!!value, (on) => save({ value: on }));
   if (item.control === 'select') {
@@ -150,8 +153,10 @@ function control(dialog, item, value, save, saveSecret) {
   }
   if (item.type === 'secret' && saveSecret) {
     // 密钥：密码框，空着是不改（设了的占位写「已设置」），粘贴了 `Enter`、离开时存
+    // 设了的占位接上是哪一份（「 · 大家共用」「 · 只给我」）
+    const kept = value && typeof value === 'object' && !env;
     const field = /** @type {HTMLInputElement} */ (h('input.set-input.is-text', { type: 'password', autocomplete: 'off', spellcheck: 'false',
-      placeholder: ctx.text(value && typeof value === 'object' && !env ? 'secret_paste_keep' : 'secret_paste') }));
+      placeholder: kept ? ctx.text('secret_paste_keep') + secretTag(dialog, value?.secret) : ctx.text('secret_paste') }));
     const done = () => {
       const text = field.value.trim();
       field.value = '';
@@ -159,8 +164,9 @@ function control(dialog, item, value, save, saveSecret) {
     };
     field.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); field.blur(); } });
     field.addEventListener('blur', done);
-    if (!env) return field;
-    const label = h('button.set-env', { type: 'button', onclick: () => { label.replaceWith(field); field.focus(); } }, ctx.text('from_env', { name: env }));
+    const box = scope ? h('span.set-secret-box', field, scope) : field;
+    if (!env) return box;
+    const label = h('button.set-env', { type: 'button', onclick: () => { label.replaceWith(box); field.focus(); } }, ctx.text('from_env', { name: env }));
     return label;
   }
   // 文字、数：一行字，`Enter`、离开时存，整串交给核心照类型读（`input`）；清空了是从这一层删掉（回到默认）；环境变量引用的先写
@@ -266,6 +272,35 @@ export function areaField(text, commit) {
     if (area.value !== text) commit(area.value.trim());
   });
   return area;
+}
+
+/**
+ * 存密钥存到哪一份（蓝图「连核心」第 1 条下面「存密钥存到哪一份」，核心 Y-2下下中中）：管理员一个下拉「存到：大家共用 / 只给我」，出厂
+ * 大家共用；成员、不认 `layer` 的老核心没有（`el` 是 `null`，`params` 不写 `layer`，照核心的默认）。
+ * @param {any} dialog @returns {{el: HTMLElement|null, params: () => {layer?: 'system'|'personal'}}}
+ */
+export function secretScope(dialog) {
+  const ctx = dialog.ctx;
+  if (!ctx.host?.secretLayers || ctx.host?.member) return { el: null, params: () => ({}) };
+  /** @type {'system'|'personal'} */
+  let layer = 'system';
+  const options = [{ value: 'system', name: ctx.text('secret_scope.system') }, { value: 'personal', name: ctx.text('secret_scope.personal') }];
+  const button = select(dialog, options, layer, (v) => {
+    layer = v;
+    /** @type {HTMLElement} */ (button.firstChild).textContent = options.find((o) => o.value === v)?.name ?? '';
+  });
+  return { el: h('span.set-secret-scope', h('span.set-secret-scope-label', ctx.text('secret_scope.label')), button), params: () => ({ layer }) };
+}
+
+/**
+ * 设了的密钥是哪一份（`secret.list` 每一行的 `layer`，设置页读进来的 `dialog.secretLayers`）：「 · 大家共用」「 · 只给我」，两份里都没有的、
+ * 老核心没有这一格的交空字。
+ * @param {any} dialog @param {string|null|undefined} ref 密钥的名字，或者 `secret:<名字>`
+ */
+export function secretTag(dialog, ref) {
+  const name = typeof ref === 'string' ? ref.replace(/^secret:/, '') : null;
+  const layer = name ? dialog.secretLayers?.get(name) : null;
+  return layer === 'system' || layer === 'personal' ? ` · ${dialog.ctx.text(`secret_scope.${layer}`)}` : '';
 }
 
 /**

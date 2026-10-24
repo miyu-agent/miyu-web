@@ -5,6 +5,7 @@
 
 import { h, replace } from '../../src/lib/dom.js';
 import { validId, secretName, providerChanges, layerFor, envRef, inputText } from './model.js';
+import { secretScope } from './rows.js';
 import { select } from './rows.js';
 
 /**
@@ -42,10 +43,12 @@ export function providerForm(dialog, providers) {
   const secretField = input({ type: 'password', placeholder: p?.key?.set ? t('key_keep') : t('key_paste') });
   const envField = input({ value: keyRef.startsWith('env:') ? keyRef.slice(4) : '', placeholder: 'DEEPSEEK_API_KEY' });
   const keyBox = h('div.set-form-key');
+  // 管理员选粘贴的密钥存到哪一份（大家共用、只给我）；成员只有自己那一份
+  const scope = secretScope(dialog);
   const kindButtons = ['secret', 'env'].map((kind) => h('button.set-seg-item', { type: 'button', onclick: () => { keyKind = kind; drawKey(); } }, t(`key_${kind}`)));
   const drawKey = () => {
     kindButtons.forEach((b, n) => b.classList.toggle('is-on', ['secret', 'env'][n] === keyKind));
-    replace(keyBox, keyKind === 'secret' ? secretField : envField);
+    replace(keyBox, keyKind === 'secret' ? (scope.el ? h('span.set-secret-box', secretField, scope.el) : secretField) : envField);
   };
   drawKey();
 
@@ -61,7 +64,7 @@ export function providerForm(dialog, providers) {
     if (keyKind === 'secret' && secretField.value) {
       secret = secretName(id, Date.now());
       try {
-        await ctx.core.request('secret.set', { name: secret, value: secretField.value });
+        await ctx.core.request('secret.set', { name: secret, value: secretField.value, ...scope.params() });
       } catch (err) {
         return fail(err.message);
       }

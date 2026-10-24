@@ -188,6 +188,11 @@
       "no_match": "未找到「{query}」",
       "loading": "正在加载配置…",
       "load_failed": "无法加载配置：{reason}",
+      "secret_scope": {
+        "label": "存到",
+        "system": "大家共用",
+        "personal": "只给我"
+      },
       "member_note": "模型、配置、软件这些由管理员设置",
       "pages": {
         "general": "通用",
@@ -818,6 +823,11 @@
       "no_match": "No results for “{query}”",
       "loading": "Loading settings…",
       "load_failed": "Couldn't load settings: {reason}",
+      "secret_scope": {
+        "label": "Save to",
+        "system": "Shared",
+        "personal": "Only me"
+      },
       "member_note": "Models, settings and software are managed by the administrator",
       "pages": {
         "general": "General",
@@ -1448,6 +1458,11 @@
       "no_match": "「{query}」は見つかりません",
       "loading": "設定を読み込み中…",
       "load_failed": "設定を読み込めません：{reason}",
+      "secret_scope": {
+        "label": "保存先",
+        "system": "みんなで共有",
+        "personal": "自分だけ"
+      },
       "member_note": "モデル・設定・ソフトは管理者が管理します",
       "pages": {
         "general": "一般",

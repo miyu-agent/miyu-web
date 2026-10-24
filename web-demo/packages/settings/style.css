@@ -207,6 +207,11 @@
 .set-key-why { margin: 0 0 calc(10px * var(--space)); color: var(--t-warn, var(--gold)); font-size: calc(12.5px * var(--text-scale)); }
 .set-key-row { display: flex; flex-wrap: wrap; align-items: center; gap: calc(8px * var(--space)); }
 .set-key-row .set-input { flex: 1; min-width: 180px; background: var(--surface-1); }
+/* 存密钥存到哪一份（管理员才有，蓝图「连核心」第 1 条「存密钥存到哪一份」）：密钥框后面一个小下拉「存到 大家共用 ▾」 */
+.set-secret-box { display: flex; flex-wrap: wrap; align-items: center; gap: calc(8px * var(--space)); min-width: 0; }
+.set-secret-box > .set-input { flex: 1; min-width: 160px; }
+.set-secret-scope { display: inline-flex; flex: none; align-items: center; gap: calc(6px * var(--space)); }
+.set-secret-scope-label { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); white-space: nowrap; }
 .set-key-block .set-error { margin: calc(8px * var(--space)) 0 0; }
 .set-key-label { display: block; margin-bottom: calc(8px * var(--space)); color: var(--text-faint); font-size: calc(13px * var(--text-scale)); }
 .set-key-line { display: flex; align-items: center; gap: calc(12px * var(--space)); margin-top: calc(16px * var(--space)); font-size: calc(13px * var(--text-scale)); }

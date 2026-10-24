@@ -8,6 +8,7 @@ import { hasLogos, logoEl } from '../../src/lib/logo.js';
 import { duplicates, inputText, providerName, hostOf, whereOf, sameNamed, layerFor, secretName, keyChange, providerRemoval } from './model.js';
 import { modelName, metaOf, sharedState, loadingRow, searchable, refreshProvider, testLine } from './model-bits.js';
 import { openForm } from './provider-form.js';
+import { secretScope, secretTag } from './rows.js';
 import { confirmIn } from './confirm.js';
 import { openAdd } from './add-provider.js';
 import { drawer } from './model-detail.js';
@@ -136,7 +137,8 @@ function keyBlock(dialog, p) {
   const unwritten = !p.key;
   const changing = dialog.keyEdit === p.id;
   if (key.set && !changing) {
-    const state = key.ref?.startsWith('env:') ? ctx.text('from_env', { name: key.ref.slice(4) }) : t('key_saved');
+    // 存在哪一份照 `secret.list`（「已设置 · 大家共用」「已设置 · 只给我」，蓝图「连核心」第 1 条「存密钥存到哪一份」）
+    const state = key.ref?.startsWith('env:') ? ctx.text('from_env', { name: key.ref.slice(4) }) : t('key_saved') + secretTag(dialog, key.ref);
     return h('div.set-key-line', h('span', t('key')), h('span.set-key-state', state),
       h('button.set-btn.is-small', { type: 'button', onclick: () => { dialog.keyEdit = p.id; dialog.drawBody(); } }, t('key_change')));
   }
@@ -146,6 +148,8 @@ function keyBlock(dialog, p) {
     ? { type: 'password', placeholder: ctx.text('models.form.key_paste'), autocomplete: 'off' }
     : { type: 'text', placeholder: 'DEEPSEEK_API_KEY', spellcheck: 'false', autocomplete: 'off' }));
   const error = h('p.set-error', { hidden: true });
+  // 管理员选存到哪一份；成员只有自己那一份（环境变量的不出）
+  const scope = kind === 'secret' ? secretScope(dialog) : { el: null, params: () => ({}) };
   const save = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'button', onclick: async () => {
     const text = field.value.trim();
     if (!text) return field.focus();
@@ -157,7 +161,7 @@ function keyBlock(dialog, p) {
     if (kind === 'secret') {
       const name = secretName(p.id, Date.now());
       try {
-        await ctx.core.request('secret.set', { name, value: text });
+        await ctx.core.request('secret.set', { name, value: text, ...scope.params() });
       } catch (err) {
         save.disabled = false;
         error.textContent = err.message;
@@ -189,7 +193,7 @@ function keyBlock(dialog, p) {
   return h(`div.set-key-block${missing ? '.is-missing' : ''}`,
     missing ? h('p.set-key-why', t('states.no_key')) : null,
     unwritten ? h('span.set-key-label', t('key')) : null,
-    h('div.set-key-row', field, save, cancel, swap),
+    h('div.set-key-row', field, scope.el, save, cancel, swap),
     error);
 }
 

@@ -133,6 +133,11 @@ export class SettingsDialog {
     // 成员只写得了个人设置：只能写在系统那一层的项不露
     this.pages = buildPages(schema, got, { merge: cfg.merge, moveGroups: cfg.move_groups, hide: cfg.hide_prefixes, personal: member });
     if (!configless) this.modelsPromise = this.loadModels();
+    // 设了的密钥是哪一份（`secret.list` 的 `layer`，核心 Y-2下下中中）：「已设置」后面标出来；老核心上的成员调不了
+    /** @type {Map<string, string|null>} */
+    this.secretLayers = new Map();
+    if (!configless) await core.request('secret.list', {})
+      .then((r) => { this.secretLayers = new Map((r?.secrets ?? []).map((/** @type {any} */ s) => [s.name, s.layer ?? null])); }, () => {});
     // 扩展、软件包的订阅（连 MCP 的列表）成员调不了
     if (!member) await Promise.all([this.extensions.start(), this.feed.start()]);
   }
