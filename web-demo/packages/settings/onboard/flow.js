@@ -80,7 +80,9 @@ export class ProviderFlow {
     const quiet = (/** @type {Promise<any>} */ p) => p.catch(() => null);
     try {
       const [featured, detect, models, schema] = await Promise.all([
-        core.request('provider.catalog', { featured: true }), quiet(core.request('provider.detect', {})), quiet(core.request('model.list', {})), quiet(core.request('config.schema', {})),
+        core.request('provider.catalog', { featured: true }),
+        // 探本机的环境变量、端口：成员调不了（核心 Y-2下下中中），不问
+        this.ctx.host?.member ? null : quiet(core.request('provider.detect', {})), quiet(core.request('model.list', {})), quiet(core.request('config.schema', {})),
       ]);
       this.featured = featured?.providers ?? [];
       this.detect = detect;
