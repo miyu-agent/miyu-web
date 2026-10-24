@@ -50,7 +50,8 @@
 .dash-progress { width: 56px; height: 3px; overflow: hidden; border-radius: var(--r-pill); background: var(--line); }
 .dash-progress-bar { display: block; height: 100%; background: var(--accent); }
 .dash-stop-all { height: 24px; padding: 0 4px; border: 0; background: none; color: var(--text-soft); font: inherit; font-size: calc(12px * var(--text-scale)); cursor: pointer; }
-.dash-stop-all:hover { color: var(--text); }
+.dash-stop-all:hover:not(:disabled) { color: var(--text); }
+.dash-stop-all:disabled { color: var(--text-faint); cursor: default; }
 
 /* 待办 */
 .dash-todo-row { display: flex; align-items: center; gap: calc(8px * var(--space)); min-height: 30px; padding: 0 calc(12px * var(--space)); font-size: calc(13px * var(--text-scale)); }

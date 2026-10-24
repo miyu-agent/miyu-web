@@ -58,8 +58,9 @@ export class Dashboard {
     /** 待办：放不下的展开了、做完的列出来了 */
     this.todoOpen = false;
     this.todoDoneOpen = false;
-    /** 点过停止、还没等到回报的 */
+    /** 点过停止、还没等到回报的；点了「全部停止」还没全停完 */
     this.stopping = new Set();
+    this.stoppingAll = false;
     /** @type {Data} */
     this.data = { todos: [], tree: [], files: [], current: null, shown: [], panel: 0 };
     this.sigs = { todo: '', tasks: '', files: '', shown: '' };
@@ -187,7 +188,7 @@ export class Dashboard {
     const rows = rowsOf(tree, { collapsed: this.collapsed, expanded: this.expanded, doneOpen: this.doneOpen });
     const n = counts(tree);
     const sig = JSON.stringify([rows.map((r) => (r.type === 'task' ? [r.node.key, r.node.state, r.node.title, r.node.attention, r.depth, r.last, r.guides, r.open, r.hasKids]
-      : r.type === 'less' ? [r.type, r.parent] : [r.type, r.count, r.type === 'more' ? r.running : r.open])), n, [...this.stopping], this.data.current]);
+      : r.type === 'less' ? [r.type, r.parent] : [r.type, r.count, r.type === 'more' ? r.running : r.open])), n, [...this.stopping], this.stoppingAll, this.data.current]);
     if (sig === this.sigs.tasks) return;
     this.sigs.tasks = sig;
     if (!tree.length) return;
@@ -197,7 +198,8 @@ export class Dashboard {
       n.running ? h('span.dash-count', t('running', { count: n.running })) : null,
       n.waiting ? h('span.dash-count.is-waiting', t('waiting', { count: n.waiting })) : null,
       card.gap(),
-      many ? h('button.dash-stop-all', { type: 'button', onclick: () => this.stopAll() }, t('stop_all')) : null);
+      // 点了以后到全都停完之前写「停止中」、灰着不能再点（2026-10-24 项目主人）
+      many || this.stoppingAll ? h('button.dash-stop-all', { type: 'button', disabled: this.stoppingAll, onclick: () => this.stopAll() }, t(this.stoppingAll ? 'stopping_all' : 'stop_all')) : null);
     card.body(rows.map((r) => this.taskRow(r, now)));
     card.size(rows.length);
   }
@@ -278,11 +280,16 @@ export class Dashboard {
    */
   stopAll() {
     const all = stoppable(this.data.tree).filter((x) => !this.stopping.has(x.key));
-    if (!all.length) return Promise.resolve();
+    if (!all.length || this.stoppingAll) return Promise.resolve();
     for (const x of all) this.stopping.add(x.key);
+    this.stoppingAll = true;
     this.sigs.tasks = '';
     this.drawTasks();
-    return Promise.allSettled(all.map((x) => this.on.stop(x.owner, x.job))).then(() => { this.sigs.tasks = ''; this.drawTasks(); });
+    return Promise.allSettled(all.map((x) => this.on.stop(x.owner, x.job))).then(() => {
+      this.stoppingAll = false;
+      this.sigs.tasks = '';
+      this.drawTasks();
+    });
   }
 
   // ── 文件修改 ──
