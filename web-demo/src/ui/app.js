@@ -386,6 +386,8 @@ export class App {
         const left = this.root.classList.contains('is-sidebar-collapsed') ? 0 : (this.sidebar.el.getBoundingClientRect().width / scale) || 252;
         return innerWidth / scale - left - res.artifacts.chat_min;
       },
+      // 左栏自己的宽（收起着也照它：收起只是滑出去，宽不变）
+      base: () => (this.sidebar.el.getBoundingClientRect().width / (parseFloat(getComputedStyle(this.root).zoom) || 1)) || 252,
     });
     this.root.append(this.side.el);
     this.artifacts.onTakeOver = () => this.side.yield();

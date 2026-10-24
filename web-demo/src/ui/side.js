@@ -5,25 +5,27 @@
 //! 才浮现（不在 0 宽的时候先放掉动画），收起时浮在原处淡掉、往右偏（不跟着那一列收成 0 被裁掉）；预览工作区占过来时跟着正文一起淡掉
 //! （`fadeable`）；回到这一栏时正文从左边挪回来（2026-10-24 项目主人：右栏开合、进出工作区没有动画，返回的不对）。
 //! 放不放得下照左栏自动收起那一套算（`fits`）；布局变了（窗口拉宽拉窄、预览工作区把这一栏占走、点外面收起）告诉包。
-//! 窄栏左边缘能拖着改宽（2026-10-24 项目主人）：最窄 `NARROW_WIDTH`，最宽到对话那一列只剩 `chat_min`（`room`），拖过的记在这台设备上；
-//! 放不下记下的宽时照放得下的最宽画，不改记下的。
+//! 窄栏左边缘能拖着改宽（2026-10-24 项目主人）：默认、最窄都是左栏这时的宽（`base`，同一天项目主人：原来 312 比左栏宽一点），最宽到对话那一列
+//! 只剩 `chat_min`（`room`），拖过的记在这台设备上；放不下记下的宽时照放得下的最宽画，不改记下的。
 
 import { h, replace } from './dom.js';
 import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 
-/** 窄栏最窄多宽（px，自己的 CSS 像素；没拖过的就是这么宽） */
-export const NARROW_WIDTH = 312;
+/** 量不到左栏的宽时窄栏默认、最窄多宽（px，自己的 CSS 像素；同左栏出厂的宽） */
+export const NARROW_WIDTH = 252;
 /** 拖过的宽记在这台设备上的名字（内核的 `storage` 会带上账号） */
 const WIDTH = 'side_width';
 
 /**
- * 窄栏画多宽：照要的（拖过的、记下的），夹在最窄和放得下的最宽之间；放得下的比最窄还窄的照最窄（放不放得下包自己照 `fits` 管）。
- * @param {number} want @param {number} room 对话那一列只剩 `chat_min` 时这一栏能有多宽
+ * 窄栏画多宽：照要的（拖过的、记下的；没拖过的是最窄），夹在最窄和放得下的最宽之间；放得下的比最窄还窄的照最窄（放不放得下包自己照
+ * `fits` 管）。
+ * @param {number} want @param {number} room 对话那一列只剩 `chat_min` 时这一栏能有多宽 @param {number} [min] 最窄（左栏的宽）
  */
-export function sideWidth(want, room) {
-  const w = Number.isFinite(want) && want > 0 ? want : NARROW_WIDTH;
-  return Math.round(Math.max(NARROW_WIDTH, Math.min(w, Number.isFinite(room) ? room : w)));
+export function sideWidth(want, room, min = NARROW_WIDTH) {
+  const floor = Number.isFinite(min) && min > 0 ? min : NARROW_WIDTH;
+  const w = Number.isFinite(want) && want > 0 ? want : floor;
+  return Math.round(Math.max(floor, Math.min(w, Number.isFinite(room) ? room : w)));
 }
 
 /** @typedef {'narrow'|'wide'|'overlay'} Mode */
@@ -33,8 +35,8 @@ export class SideColumn {
    * @param {HTMLElement} shell 三列那一层
    * @param {import('./artifacts.js').Artifacts} artifacts 预览工作区（互斥、借它的换宽动画）
    * @param {() => void} relayout 布局变了（自动收起、放回左栏）
-   * @param {{storage?: {get: (key: string, fallback: any) => any, set: (key: string, value: any) => void}, room?: () => number}} [opts]
-   *   记拖过的宽、对话那一列只剩 `chat_min` 时这一栏能有多宽
+   * @param {{storage?: {get: (key: string, fallback: any) => any, set: (key: string, value: any) => void}, room?: () => number, base?: () => number}} [opts]
+   *   记拖过的宽、对话那一列只剩 `chat_min` 时这一栏能有多宽、左栏这时多宽（窄栏默认、最窄照它）
    */
   constructor(shell, artifacts, relayout, opts = {}) {
     this.shell = shell;
@@ -42,8 +44,9 @@ export class SideColumn {
     this.relayout = relayout;
     this.storage = opts.storage ?? null;
     this.room = opts.room ?? (() => Infinity);
-    /** 拖过的宽（没拖过的是最窄） */
-    this.width = Number(this.storage?.get(WIDTH, 0)) || NARROW_WIDTH;
+    this.base = opts.base ?? (() => NARROW_WIDTH);
+    /** 拖过的宽（没拖过的是 0：照最窄） */
+    this.width = Number(this.storage?.get(WIDTH, 0)) || 0;
     // 左边缘拖着改宽：只在窄栏露（盖在上面的、点进去看工作区的不露）
     this.handle = h('div.side-resize-handle', { hidden: true, title: t('artifacts.resize'), onpointerdown: (/** @type {PointerEvent} */ e) => this.resize(e) });
     this.el = h('aside.side-column', { hidden: true }, this.handle);
@@ -74,9 +77,9 @@ export class SideColumn {
     };
   }
 
-  /** 窄栏现在画多宽（拖过的，夹在放得下的里） */
+  /** 窄栏现在画多宽（拖过的，夹在放得下的里；没拖过的同左栏） */
   narrowWidth() {
-    return sideWidth(this.width, this.room());
+    return sideWidth(this.width, this.room(), this.base());
   }
 
   /** 窗口、左栏变了：推着正文的窄栏照放得下的重新夹一次宽 */
@@ -93,7 +96,7 @@ export class SideColumn {
     this.shell.classList.add('is-artifact-resizing', 'is-side-resizing');
     const scale = parseFloat(getComputedStyle(this.shell).zoom) || 1;
     const move = (/** @type {PointerEvent} */ m) => {
-      this.width = sideWidth((innerWidth - m.clientX) / scale, this.room());
+      this.width = sideWidth((innerWidth - m.clientX) / scale, this.room(), this.base());
       this.shell.style.setProperty('--side-w', `${this.width}px`);
     };
     const up = () => {
@@ -113,7 +116,7 @@ export class SideColumn {
   fits() {
     if (innerWidth <= res.layout.narrow_below) return false;
     const scale = parseFloat(getComputedStyle(this.shell).zoom) || 1;
-    return innerWidth / scale - NARROW_WIDTH >= res.artifacts.chat_min;
+    return innerWidth / scale - sideWidth(0, Infinity, this.base()) >= res.artifacts.chat_min;
   }
 
   /** 预览工作区展示过的那几样（主会话的，拿掉的不算）、面板里挂着几件、来了新的没看、开没开着、在不在借着看别的（`side.work`） */

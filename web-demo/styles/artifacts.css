@@ -6,8 +6,8 @@
 .app-shell.has-artifacts { grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale)); }
 .app-shell.has-artifacts.is-sidebar-collapsed { grid-template-columns: 0px minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale)); }
 /* 右边那一栏给软件包用（服务 `side`，蓝图「仪表盘」）：窄栏、宽栏推开正文，和预览工作区互斥；盖在上面的不推（窗口不够宽） */
-.app-shell.has-side { grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) var(--side-w, 312px); }
-.app-shell.has-side.is-sidebar-collapsed { grid-template-columns: 0px minmax(0, 1fr) var(--side-w, 312px); }
+.app-shell.has-side { grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) var(--side-w, 252px); }
+.app-shell.has-side.is-sidebar-collapsed { grid-template-columns: 0px minmax(0, 1fr) var(--side-w, 252px); }
 .side-column { grid-column: 3; grid-row: 1; min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr); overflow: hidden; animation: artifact-in var(--artifact-in) var(--artifact-ease-in) both; }
 /* 推开正文的：和左栏对称的一整条栏，同左栏的底色，从上铺到底，和对话区之间一道细线（2026-10-24 项目主人：原来像几张浮着的卡片） */
 .side-column:not(.is-overlay) { position: relative; background: var(--side-bg, var(--sidebar-bg)); box-shadow: inset 1px 0 0 var(--line); }
@@ -21,7 +21,7 @@
 /* 收起（蓝图「动效」右侧边栏那一行）：淡掉、往右偏 24px；推开正文的那一种浮在原处淡（那一列马上换回原来的宽，不浮起来会被裁成 0 宽），
    照收起之前的宽，盖在对话区上面 */
 .side-column.is-leaving { animation: artifact-out var(--artifact-out) var(--artifact-ease-out) both; }
-.side-column.is-leaving:not(.is-overlay) { position: fixed; z-index: 13; top: 0; right: 0; bottom: 0; width: var(--side-w, 312px); }
+.side-column.is-leaving:not(.is-overlay) { position: fixed; z-index: 13; top: 0; right: 0; bottom: 0; width: var(--side-w, 252px); }
 @media (prefers-reduced-motion: reduce) { .side-column, .side-column.is-leaving { animation-duration: calc(1ms * var(--motion-scale)); } }
 .side-column.is-overlay {
   position: fixed; z-index: 46; top: 8px; right: 8px; bottom: 8px; width: min(340px, calc(100vw - 16px));
