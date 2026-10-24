@@ -15,8 +15,8 @@
 .side-resize-handle { position: absolute; top: 0; bottom: 0; left: 0; z-index: 3; width: 8px; cursor: col-resize; touch-action: none; }
 .side-resize-handle[hidden], .side-column.is-overlay .side-resize-handle, .side-column.is-leaving .side-resize-handle { display: none; }
 .app-shell.is-side-resizing { cursor: col-resize; user-select: none; }
-/* 这一栏开着：对话区右边的跳转条不画（挤在栏边的缝里，同一天项目主人） */
-.app-shell.has-side .stage-right, .app-shell.is-side-claimed.has-artifacts .stage-right { display: none; }
+/* 这一栏开着：对话区右边的跳转条照旧画，在对话区和这一栏之间的缝里（它在对话区那一层，右边缘外侧就是这一栏），不压着拖宽度的那条
+   （2026-10-24 项目主人：要加回来；同一天早些时候藏过）；换宽的那一下跟着正文一起淡出、淡入（`artifacts.js` 的 `SWAPS`） */
 .side-column[hidden] { display: none; }
 /* 收起（蓝图「动效」右侧边栏那一行）：淡掉、往右偏 24px；推开正文的那一种浮在原处淡（那一列马上换回原来的宽，不浮起来会被裁成 0 宽），
    照收起之前的宽，盖在对话区上面 */

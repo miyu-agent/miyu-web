@@ -34,7 +34,8 @@ const DISMISSED_SESSIONS = 200;
 
 
 /** 开关这一栏时正文那一列淡出、换宽、淡入的：正文、输入框、空会话的首页（套在里面的只动外面那一层） */
-const SWAPS = '.chat-scroll > .timeline, .composer-dock, .stage-home';
+// 换宽时跟着淡出、淡入的：正文、输入框、空会话的首页，对话区右边挂进来的（跳转条：2026-10-24 项目主人要右栏开着也画，不先跳过去）
+const SWAPS = '.chat-scroll > .timeline, .composer-dock, .stage-home, .stage-right > *';
 /** 正文淡掉多久、淡回来多久（毫秒）、从多远挪回来（px）（蓝图「动效」） */
 const SWAP_OUT_MS = 90;
 const SWAP_IN_MS = 260;
