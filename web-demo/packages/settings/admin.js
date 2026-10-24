@@ -5,7 +5,7 @@
 //! （「邀请」「成员」两组和 `account.js` 共用）；用量、模型与密钥、系统软件这些等核心给了再加。不是管理员的正中一张卡。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { stateOf, load, inviteGroup, memberGroup, inviteState } from './account.js';
+import { stateOf, load, inviteGroup, memberGroup, inviteState, lockedGroup } from './account.js';
 
 /** 有哪几页（先后照左栏） */
 export const PAGES = /** @type {const} */ (['overview', 'accounts']);
@@ -66,6 +66,8 @@ export class AdminPage {
     /** 这一页记的东西（关了清掉） @type {any} */
     this.state = {};
     this.title = '';
+    /** 不听管理员模式了（关掉时） @type {(() => void)|null} */
+    this.offAdmin = null;
 
     this.onKey = (/** @type {KeyboardEvent} */ e) => {
       if (e.key !== 'Escape' || document.querySelector('.set-tool-modal, body > .set-ask')) return;
@@ -95,12 +97,20 @@ export class AdminPage {
     }
     const st = stateOf(this.view());
     if (!st.loaded) load(this.view());
+    // 管理员模式开、关：重读（开了读得到邀请、账号表了），重画；顶上的窄条跟着
+    this.offAdmin ??= this.ctx.admin?.onChange(() => {
+      if (!this.el) return;
+      this.state = {};
+      load(this.view());
+    }) ?? null;
     this.draw();
   }
 
   /** 关掉：标题换回来、记的东西清掉。 */
   close() {
     if (!this.el) return;
+    this.offAdmin?.();
+    this.offAdmin = null;
     this.el.remove();
     this.el = null;
     document.removeEventListener('keydown', this.onKey);
@@ -140,7 +150,8 @@ export class AdminPage {
     const kids = !st.loaded ? [h('p.set-empty', t('admin.loading'))]
       : this.page === 'accounts' ? [inviteGroup(view), memberGroup(view)]
         : this.overview();
-    replace(this.body, h('div.adm-inner', h('h2.adm-title', t(`admin.pages.${this.page}`)), h('p.adm-lead', t(`admin.leads.${this.page}`)),
+    replace(this.body, h('div.adm-inner', this.ctx.admin?.on ? h('div.set-admin-bar', { role: 'status' }, t('admin_mode.bar')) : null,
+      h('h2.adm-title', t(`admin.pages.${this.page}`)), h('p.adm-lead', t(`admin.leads.${this.page}`)),
       ...kids, st.error ? h('p.set-error', st.error) : null));
   }
 
@@ -148,6 +159,8 @@ export class AdminPage {
   overview() {
     const t = (/** @type {string} */ k, /** @type {any} */ f) => this.ctx.text(k, f);
     const st = stateOf(this.view());
+    // 平时锁着：数是照邀请、账号表算的，读不到（蓝图「管理员模式」第 4 条）
+    if (st.locked) return [lockedGroup(this.view(), t('admin.recent'))];
     const now = Date.now();
     const off = st.accounts.filter((/** @type {any} */ a) => a.disabled).length;
     const people = st.accounts.filter((/** @type {any} */ a) => a.kind !== 'system').length;

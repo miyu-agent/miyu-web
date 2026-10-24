@@ -156,6 +156,7 @@ async function removeItems(dialog, kind, list) {
       dialog.toast(err?.message ?? String(err));
     }
   } else {
+    if (dialog.adminGuard()) return;
     for (const item of list) {
       try {
         await dialog.ctx.core.request('mcp.remove', { name: item.name });
@@ -420,6 +421,7 @@ function serverActions(dialog, item) {
   const out = [];
   if (!item.covered && s.enabled !== false) {
     out.push(h('button.set-btn', { type: 'button', onclick: async () => {
+      if (dialog.adminGuard()) return;
       try {
         if (item.own) await dialog.ctx.core.request('mcp.restart', { name: item.name });
         else await dialog.ctx.core.request('package.restart', { package: item.package });
@@ -433,6 +435,7 @@ function serverActions(dialog, item) {
   // 网址的服务也能编辑（核心 X-32 下：`mcp.set` 收 `url`、`bearer`、`headers`）
   if (editable(dialog.skills)) out.push(h('button.set-btn', { type: 'button', onclick: () => openServerForm(dialog, s) }, t('tools.edit')));
   const remove = h('button.set-btn.is-danger', { type: 'button', onclick: async () => {
+    if (dialog.adminGuard()) return;
     if (!await confirmIn(remove, { text: t('tools.delete_ask', { name: item.name }), yes: t('ask_yes'), no: t('ask_no') })) return;
     try {
       await dialog.ctx.core.request('mcp.remove', { name: item.name });

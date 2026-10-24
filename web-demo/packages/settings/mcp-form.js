@@ -49,6 +49,7 @@ export function openServerForm(dialog, server) {
       say(t(`tools.form.bad.${got.problem}`, { line: got.line ?? 0 }), /** @type {any} */ (fields)[got.field] ?? null);
       return;
     }
+    if (dialog.adminGuard()) return;
     save.disabled = true;
     save.textContent = t('tools.form.saving');
     try {
