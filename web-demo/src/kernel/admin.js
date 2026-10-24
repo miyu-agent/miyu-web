@@ -9,6 +9,26 @@ export class AdminMode {
     this.on = false;
     /** @type {Set<(on: boolean) => void>} */
     this.listeners = new Set();
+    /** 核心回了 `admin_mode_required` 时叫的（设置页提示一句、能一键进入） @type {Set<() => void>} */
+    this.asks = new Set();
+  }
+
+  /** 核心说要先进管理员模式（连接收到 `admin_mode_required`）：叫听着的 */
+  required() {
+    if (!this.available || this.on) return;
+    for (const fn of this.asks) {
+      try {
+        fn();
+      } catch (err) {
+        console.error('管理员模式的提示出错了', err);
+      }
+    }
+  }
+
+  /** 听「要先进管理员模式」 @param {() => void} fn @returns {() => void} */
+  onRequired(fn) {
+    this.asks.add(fn);
+    return () => this.asks.delete(fn);
   }
 
   /** 开、关（没有这个开关的人开不了） @param {boolean} on */

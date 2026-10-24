@@ -97,11 +97,19 @@ export function apply(ctx) {
   ctx.commands.register({ name: 'pkg', summary: ctx.text('command_pkg') }, () => open('packages'));
   ctx.commands.register({ name: 'market', summary: ctx.text('command_market') }, () => open('market'));
 
+  const gear = h('button.icon-button.set-gear', { type: 'button', title: ctx.text('open'), 'aria-label': ctx.text('open'), onclick: () => open(null) }, icon('settings'), h('i.set-gear-dot', { 'aria-hidden': 'true' }));
   ctx.slots.mount('sidebar.actions', {
     id: 'settings',
     order: 10,
-    render: () => h('button.icon-button', { type: 'button', title: ctx.text('open'), 'aria-label': ctx.text('open'), onclick: () => open(null) }, icon('settings')),
+    render: () => gear,
   });
+  // 管理员模式开着：齿轮右上角一个橙色小点（设置页关了也在，蓝图「管理员模式」第 2 条）；核心说要先进管理员模式：设置页开着的提示一句、能一键进入，
+  // 关着的在输入框上面提示一句
+  ctx.effect(() => ctx.admin?.onChange((/** @type {boolean} */ on) => gear.classList.toggle('is-admin', on)) ?? (() => {}));
+  ctx.effect(() => ctx.admin?.onRequired(() => {
+    if (dialog?.isOpen) dialog.adminPrompt();
+    else ctx.composer?.say(ctx.text('admin_mode.required'));
+  }) ?? (() => {}));
 
   // `Ctrl+,`（macOS `⌘,`）：照系统软件打开偏好设置的习惯；浏览器不占这个键
   const onKey = (/** @type {KeyboardEvent} */ e) => {

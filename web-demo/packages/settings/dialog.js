@@ -8,7 +8,7 @@ import { drawAccount } from './account.js';
 import { hasPrivate, privateGroup } from './privacy.js';
 import { leave } from '../../src/lib/motion.js';
 import { buildPages, search, pagesWithErrors, layerFor, expectFor, navGroups, pkgMatch, ownerOf } from './model.js';
-import { coreRow, groupBlock, banner } from './rows.js';
+import { coreRow, groupBlock, banner, toggle } from './rows.js';
 import { drawLook } from './look.js';
 import { drawPackages } from './packages.js';
 import { drawModels } from './models.js';
@@ -62,6 +62,8 @@ export class SettingsDialog {
     this.nav = h('nav.set-nav');
     this.title = h('strong.set-title');
     this.body = h('div.set-body');
+    /** 管理员模式开着：右边最上面一条淡橙色的窄条（蓝图「管理员模式」第 2 条） */
+    this.adminBar = h('div.set-admin-bar', { role: 'status', hidden: !this.ctx.admin?.on }, this.ctx.text('admin_mode.bar'));
     /** 点进去的一层（软件包的设置，`subpage.js`） */
     this.sub = new Subpage();
     this.panel = h('section.set-panel', { role: 'dialog', 'aria-modal': 'true', 'aria-label': this.ctx.text('title'), style: `--set-w: ${cfg.width}px; --set-h: ${cfg.height}px` },
@@ -69,6 +71,7 @@ export class SettingsDialog {
       h('div.set-main',
         h('header.set-head', h('button.set-back', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), h('span.set-back-text', this.ctx.text('back')), h('span.set-back-sub', this.ctx.text('back_sub'))), this.title,
           h('button.icon-button.set-close', { type: 'button', title: this.ctx.text('close'), 'aria-label': this.ctx.text('close'), onclick: () => this.close() }, icon('x'))),
+        this.adminBar,
         this.body));
     // 设置框挡着拖放：拖文件到框上不弹输入框的「拖到这里」（框里自己收文件的那一块照收，`src/host/files.js` 的 `watchDrop`）
     this.root = h('div.set-layer', { dataset: { dropShield: '' } }, h('div.set-scrim', { onclick: () => this.close() }), this.panel);
@@ -77,6 +80,13 @@ export class SettingsDialog {
     this.narrow = matchMedia(`(max-width: ${cfg.narrow}px)`);
     document.addEventListener('keydown', this.onKey, true);
     this.ctx.core.onPush(this.onPush);
+    // 管理员模式开、关：窄条、左栏的开关、锁着的地方跟着重画
+    this.offAdmin = this.ctx.admin?.onChange((/** @type {boolean} */ on) => {
+      if (!this.isOpen) return;
+      this.adminBar.hidden = !on;
+      this.drawNav();
+      this.drawBody();
+    }) ?? null;
     this.current = page ?? lastPage;
     this.body.replaceChildren(h('p.set-empty', this.ctx.text('loading')));
     this.search.focus();
@@ -97,6 +107,8 @@ export class SettingsDialog {
     this.isOpen = false;
     document.removeEventListener('keydown', this.onKey, true);
     this.ctx.core.pushes?.delete(this.onPush);
+    this.offAdmin?.();
+    this.offAdmin = null;
     this.extensions.stop();
     this.feed.stop();
     this.sub.close();
@@ -248,7 +260,32 @@ export class SettingsDialog {
       items.push(h(`button.set-tab${e.id === this.current && !this.query ? '.is-on' : ''}`, { type: 'button', onclick: () => this.show(e.id) },
         icon(icons[e.id] ?? 'sliders-horizontal'), h('span', e.name), bad.has(e.id) ? h('i.set-dot') : null));
     }
+    // 最下面一行「管理员模式」的开关：只有握手 `admin: true` 的人有（蓝图「管理员模式」第 2 条）
+    if (this.ctx.admin?.available) {
+      items.push(h('hr.set-nav-rule'), h('div.set-admin-row', h('span', this.ctx.text('admin_mode.label')),
+        toggle(!!this.ctx.admin.on, async (/** @type {boolean} */ on) => { this.ctx.admin.set(on); return true; })));
+    }
     replace(this.nav, items);
+  }
+
+  /** 平时锁着系统那一层（管理员、没开管理员模式）：锁着的地方照它灰着、写「在管理员模式里改」 */
+  get adminLocked() {
+    return !!this.ctx.admin?.locked;
+  }
+
+  /** 锁着的那一处写的一行：暗字「在管理员模式里改」，后面一个文字按钮「进入管理员模式」（蓝图「管理员模式」第 4 条） */
+  lockLine() {
+    return h('p.set-locked', h('span', this.ctx.text('admin_mode.locked')),
+      h('button.set-link', { type: 'button', onclick: () => this.ctx.admin?.set(true) }, this.ctx.text('admin_mode.enter')));
+  }
+
+  /** 核心说要先进管理员模式（没锁住的地方）：提示一句，后面「进入管理员模式」，多停一会儿 */
+  adminPrompt() {
+    this.panel.querySelector('.set-toast')?.remove();
+    const el = h('div.set-toast.is-action', { role: 'status' }, h('span', this.ctx.text('admin_mode.required')),
+      h('button.set-link', { type: 'button', onclick: () => { this.ctx.admin?.set(true); leave(el, () => el.remove()); } }, this.ctx.text('admin_mode.enter')));
+    this.panel.append(el);
+    setTimeout(() => { if (el.isConnected) leave(el, () => el.remove()); }, 6000);
   }
 
   /**

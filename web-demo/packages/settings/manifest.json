@@ -20,9 +20,11 @@
     "icons",
     "core",
     "host",
+    "admin",
     "storage",
     "packages",
     "commands",
+    "composer~",
     "theme~",
     "backstage~",
     "skin~"
@@ -197,6 +199,15 @@
         "personal": "自用"
       },
       "member_note": "模型、配置、软件这些由管理员设置",
+      "admin_mode": {
+        "label": "管理员模式",
+        "bar": "管理员模式 · 改的是大家共用的",
+        "locked": "在管理员模式里改",
+        "enter": "进入管理员模式",
+        "required": "这一项要在管理员模式里改",
+        "default": "大家的默认",
+        "overridden": "你的个人设置盖过了它"
+      },
       "pages": {
         "general": "通用",
         "packages": "软件包",
@@ -836,6 +847,15 @@
         "personal": "Mine"
       },
       "member_note": "Models, settings and software are managed by the administrator",
+      "admin_mode": {
+        "label": "Admin mode",
+        "bar": "Admin mode · changes apply to everyone",
+        "locked": "Change this in admin mode",
+        "enter": "Enter admin mode",
+        "required": "This needs admin mode",
+        "default": "Everyone's default",
+        "overridden": "Your personal setting overrides this"
+      },
       "pages": {
         "general": "General",
         "packages": "Packages",
@@ -1475,6 +1495,15 @@
         "personal": "自分用"
       },
       "member_note": "モデル・設定・ソフトは管理者が管理します",
+      "admin_mode": {
+        "label": "管理者モード",
+        "bar": "管理者モード · みんなの共用設定を変更します",
+        "locked": "管理者モードで変更",
+        "enter": "管理者モードに入る",
+        "required": "これは管理者モードで変更します",
+        "default": "みんなの既定",
+        "overridden": "個人設定で上書きされています"
+      },
       "pages": {
         "general": "一般",
         "packages": "パッケージ",

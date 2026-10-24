@@ -33,6 +33,8 @@ export class Connection {
     this.check = check;
     /** 这一个请求带不带 `scope`（管理员模式，内核交进来）；`null` 是不带 @type {((method: string, params: any) => string|null)|null} */
     this.scopeFor = null;
+    /** 核心回了 `admin_mode_required`（内核交进来） @type {(() => void)|null} */
+    this.onAdminRequired = null;
     /** 口令用不了了：不再重连 */
     this.gaveUp = false;
     /** @type {Set<() => void>} */
@@ -102,7 +104,12 @@ export class Connection {
     const waiter = m.id != null ? this.waiting.get(m.id) : undefined;
     if (waiter) {
       this.waiting.delete(m.id);
-      if (m.error) waiter.reject(new Refusal(m.error.message, m.error.code, m.error.data?.reason ?? null, m.error.data ?? null));
+      if (m.error) {
+        const reason = m.error.data?.reason ?? null;
+        // 要先进管理员模式（蓝图「管理员模式」第 4 条）：告诉内核，设置页那边提示一句、能一键进入
+        if (reason === 'admin_mode_required') this.onAdminRequired?.();
+        waiter.reject(new Refusal(m.error.message, m.error.code, reason, m.error.data ?? null));
+      }
       else waiter.resolve(m.result);
       return;
     }
