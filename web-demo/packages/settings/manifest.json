@@ -194,7 +194,6 @@
       "loading": "正在加载配置…",
       "load_failed": "无法加载配置：{reason}",
       "secret_scope": {
-        "label": "存到",
         "system": "共用",
         "personal": "自用"
       },
@@ -842,7 +841,6 @@
       "loading": "Loading settings…",
       "load_failed": "Couldn't load settings: {reason}",
       "secret_scope": {
-        "label": "Save to",
         "system": "Shared",
         "personal": "Mine"
       },
@@ -1490,7 +1488,6 @@
       "loading": "設定を読み込み中…",
       "load_failed": "設定を読み込めません：{reason}",
       "secret_scope": {
-        "label": "保存先",
         "system": "共用",
         "personal": "自分用"
       },

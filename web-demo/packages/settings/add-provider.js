@@ -28,6 +28,8 @@ export function openAdd(dialog) {
     done: (got) => {
       if (dialog.adding === adding) dialog.adding = null;
       dialog.provider = got.id;
+      // 管理员模式里加的写在系统配置（「共用」那一块），平时的在「自用」
+      dialog.providerSide = dialog.ctx.admin?.on ? 'shared' : 'mine';
       Promise.resolve(dialog.modelsPromise).then(() => dialog.drawBody());
     },
     manual: () => {

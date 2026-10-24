@@ -100,13 +100,12 @@ export function coreRow(dialog, item, opts = {}) {
   };
   // 密钥（`type: secret`）：粘贴的先存成一个新名字的密钥（`secret.set`，不覆盖原来的），再把引用写进配置——人不用知道
   // `{ secret = … }` 怎么写（2026-10-10 当用户试「接入QQ的令牌」：写纯文字会被核心拒）
-  // 管理员选存到哪一份（共用、自用）；成员只有自己那一份
-  const scope = secretScope(ctx);
+  // 存到哪一份跟着管理员模式走：不写 `layer`，管理员模式里（带 scope）存共用、平时存自用（蓝图「存密钥存到哪一份」）
   const saveSecret = async (text) => {
     row.busy();
     const name = secretName(item.key.toLowerCase().replace(/[^a-z0-9]+/g, '-'), Date.now());
     try {
-      await ctx.core.request('secret.set', { name, value: text, ...scope.params() });
+      await ctx.core.request('secret.set', { name, value: text });
     } catch (err) {
       row.fail(err?.message ?? String(err));
       return;
@@ -116,7 +115,7 @@ export function coreRow(dialog, item, opts = {}) {
     else row.done();
   };
   const written = writtenIn(item.entry, layerOf(item, admin));
-  const made = editor?.options ? control(dialog, { ...item, control: 'select', options: editor.options() }, value, save) : control(dialog, item, value, save, saveSecret, scope.el);
+  const made = editor?.options ? control(dialog, { ...item, control: 'select', options: editor.options() }, value, save) : control(dialog, item, value, save, saveSecret);
   // 管理员模式里：「大家的默认」，个人那一层也写了的接「你的个人设置盖过了它」
   const forAllNote = forAll ? h('span.set-for-all', ctx.text('admin_mode.default'), writtenIn(item.entry, 'personal') ? ` · ${ctx.text('admin_mode.overridden')}` : '') : null;
   const applies = appliesLine(dialog, item, opts.compact);
@@ -141,9 +140,8 @@ export function coreRow(dialog, item, opts = {}) {
  * @param {any} value 最终值
  * @param {(change: {value?: any, input?: string}) => any} save 存成了交回 `true`
  * @param {(text: string) => void} [saveSecret] 密钥：粘贴的那一串
- * @param {HTMLElement|null} [scope] 密钥存到哪一份的下拉（管理员才有，`secretScope`）
  */
-function control(dialog, item, value, save, saveSecret, scope = null) {
+function control(dialog, item, value, save, saveSecret) {
   const ctx = dialog.ctx;
   if (item.control === 'toggle') return toggle(!!value, (on) => save({ value: on }));
   if (item.control === 'select') {
@@ -173,9 +171,8 @@ function control(dialog, item, value, save, saveSecret, scope = null) {
     };
     field.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); field.blur(); } });
     field.addEventListener('blur', done);
-    const box = scope ? h('span.set-secret-box', field, scope) : field;
-    if (!env) return box;
-    const label = h('button.set-env', { type: 'button', onclick: () => { label.replaceWith(box); field.focus(); } }, ctx.text('from_env', { name: env }));
+    if (!env) return field;
+    const label = h('button.set-env', { type: 'button', onclick: () => { label.replaceWith(field); field.focus(); } }, ctx.text('from_env', { name: env }));
     return label;
   }
   // 文字、数：一行字，`Enter`、离开时存，整串交给核心照类型读（`input`）；清空了是从这一层删掉（回到默认）；环境变量引用的先写
@@ -281,27 +278,6 @@ export function areaField(text, commit) {
     if (area.value !== text) commit(area.value.trim());
   });
   return area;
-}
-
-/**
- * 存密钥存到哪一份（蓝图「连核心」第 1 条下面「存密钥存到哪一份」，核心 Y-2下下中中）：管理员一排两段「存到 共用 | 自用」，出厂
- * 共用；成员、不认 `layer` 的老核心没有（`el` 是 `null`，`params` 不写 `layer`，照核心的默认）。
- * @param {any} ctx 设置包的 ctx @returns {{el: HTMLElement|null, params: () => {layer?: 'system'|'personal'}}}
- */
-export function secretScope(ctx) {
-  if (!ctx.host?.secretLayers || ctx.host?.member) return { el: null, params: () => ({}) };
-  /** @type {'system'|'personal'} */
-  let layer = 'system';
-  const items = /** @type {const} */ (['system', 'personal']).map((v) => h('button.set-seg-item', {
-    type: 'button', 'aria-pressed': String(v === layer), onclick: () => { layer = v; draw(); },
-  }, ctx.text(`secret_scope.${v}`)));
-  const draw = () => items.forEach((b, i) => {
-    const on = ['system', 'personal'][i] === layer;
-    b.classList.toggle('is-on', on);
-    b.setAttribute('aria-pressed', String(on));
-  });
-  draw();
-  return { el: h('span.set-secret-scope', h('span.set-secret-scope-label', ctx.text('secret_scope.label')), h('div.set-seg', items)), params: () => ({ layer }) };
 }
 
 /**
