@@ -81,12 +81,14 @@ export function apply(ctx) {
     hidden: () => !!ctx.host?.member,
     options: () => (dialog?.heads ?? []).map((p) => ({ value: p.package, name: p.name ?? p.package })),
   });
-  // 「新会话的权限级别」：成员到不了开放权限（核心 Y-2下下上 起），下拉不列那一项（2026-10-24 项目主人定）
+  // 「新会话的权限级别」：成员到不了开放权限（核心 Y-2下下上 起），下拉不列那一项；去掉以后只剩一项的整行不露（2026-10-24 项目主人定）
   if (ctx.host?.member) {
+    const levels = () => memberLevels(dialog?.schema?.items?.find((/** @type {any} */ i) => i.key === 'permission.level')?.options ?? []);
     ctx.slots.mount('settings.editor', {
       id: 'settings-level',
       key: 'permission.level',
-      options: () => memberLevels(dialog?.schema?.items?.find((/** @type {any} */ i) => i.key === 'permission.level')?.options ?? []),
+      hidden: () => levels().length <= 1,
+      options: levels,
     });
   }
 
