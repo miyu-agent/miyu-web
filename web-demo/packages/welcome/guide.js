@@ -4,7 +4,7 @@
 //! （步骤条）、上一步、下一步，管 `Enter`、`↑` `↓`、换屏的动画和吉祥物站哪。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { helloScreen, languageScreen, profileScreen, embedScreen, embedState, doneScreen, STEP_KEY, DONE_KEY } from './screens.js';
+import { helloScreen, languageScreen, profileScreen, embedScreen, embedState, embedOpts, doneScreen, STEP_KEY, DONE_KEY } from './screens.js';
 
 /** 步子的先后；`back` 是上一步回到哪 */
 const BACK = /** @type {Record<string, string|null>} */ ({ hello: null, language: 'hello', model: 'language', persona: 'model', theme: 'persona', profile: 'theme', preset: 'profile', embed: 'preset', done: 'embed' });
@@ -152,7 +152,7 @@ export class Guide {
     this.page.addEventListener('scroll', this.onScroll, { passive: true });
     this.go(step in BACK ? step : 'hello', 1);
     // 内置语义模型那一屏出不出：问到了重画步骤条（「语义模型」那一段）；成员装不了包、不走那一屏，不问
-    if (!this.ctx.host?.member) embedState(this.ctx.core).then((got) => {
+    if (!this.ctx.host?.member) embedState(this.ctx.core, embedOpts(this.ctx)).then((got) => {
       this.embed = got;
       if (!this.head.hidden) this.drawSteps();
     });
@@ -248,7 +248,7 @@ export class Guide {
       this.show(profileScreen(this), dir);
     } else if (step === 'embed') {
       // 再问一次（装没装、软件源里有没有，打开以后可能变了）：不出的跳过这一屏
-      const got = await embedState(this.ctx.core);
+      const got = await embedState(this.ctx.core, embedOpts(this.ctx));
       if (this.step !== step) return;
       this.embed = got;
       if (!got) {

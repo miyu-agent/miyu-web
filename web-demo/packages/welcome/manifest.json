@@ -17,6 +17,7 @@
   },
   "inject": [
     "core",
+    "admin",
     "host",
     "language",
     "storage",

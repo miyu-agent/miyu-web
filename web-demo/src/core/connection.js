@@ -121,8 +121,10 @@ export class Connection {
    *
    * # Errors
    * 核心拒绝的抛 `Refusal`；连接断了抛原因码是 `disconnected` 的 `Refusal`。
+   * `opts.scope` 指定这一个请求带的 `scope`（管理员的引导里装内置语义模型这种本来就是整台机器的事）；不写的照 `scopeFor`。
+   * @param {string} method @param {any} [params] @param {{scope?: string}} [opts]
    */
-  request(method, params = {}) {
+  request(method, params = {}, opts = {}) {
     const id = `web-${this.prefix}-${++this.n}`;
     return new Promise((resolve, reject) => {
       if (!this.ws || this.ws.readyState !== OPEN) {
@@ -130,7 +132,7 @@ export class Connection {
         return;
       }
       // 管理员模式开着、改的是系统那一层的：外壳里带 `scope`（和 `method` 同级，蓝图「管理员模式」第 1 条）
-      const scope = this.scopeFor?.(method, params) ?? null;
+      const scope = opts.scope ?? this.scopeFor?.(method, params) ?? null;
       const line = JSON.stringify(scope ? { jsonrpc: '2.0', id, method, params, scope } : { jsonrpc: '2.0', id, method, params });
       if (tooLong(line)) {
         reject(new Refusal('请求太大，超过 1 MiB', -32602, 'too_large'));

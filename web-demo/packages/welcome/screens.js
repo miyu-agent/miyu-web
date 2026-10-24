@@ -149,15 +149,19 @@ export function profileScreen(g) {
 /** 内置语义模型那一项（个人设置）：`local` 开、`off` 只用关键词 */
 export const EMBED_KEY = 'models.embedding';
 
+/** 装内置语义模型是整台机器的事（核心 Y-12下上）：管理员的引导里带 `scope`，不用先进管理员模式 @param {any} ctx */
+export const embedOpts = (ctx) => (ctx?.admin?.available ? { scope: 'system' } : {});
+
 /**
  * 内置语义模型的包（`embed`）装没装、没装的能不能从软件源装（核心 G-8，`docs/construction/G-8-引导里下语义模型.md`）：
  * - 装了：`config.schema` 里这一项的 `local` 选项不带 `available: false`（2026-10-18 shorin-ee 转来），交 `{installed: true}`；
  * - 没装：`package.install {"source": "embed", "preview": true}` 看一眼，交 `{installed: false, size}`（要下的字节数，照回应的 `download`）；
  *   连不上软件源（`source_unreachable`）的大小交 `null`，这一屏照样出，点「是」装的时候照核心的原话说装不上；
  * - 旧核心没有这一项、软件源里没有、没有本机能用的文件、旧核心不认 `source` 的：交 `null`，这一屏跳过。
- * @param {any} core @returns {Promise<{installed: true}|{installed: false, size: number|null}|null>}
+ * @param {any} core @param {{scope?: string}} [opts] 管理员的带 `scope`（`embedOpts`）
+ * @returns {Promise<{installed: true}|{installed: false, size: number|null}|null>}
  */
-export async function embedState(core) {
+export async function embedState(core, opts = {}) {
   let item;
   try {
     const schema = await core.request('config.schema', { keys: [EMBED_KEY] });
@@ -169,7 +173,7 @@ export async function embedState(core) {
   if (!local) return null;
   if (local.available !== false) return { installed: true };
   try {
-    const got = await core.request('package.install', { source: EMBED_PACKAGE, preview: true });
+    const got = await core.request('package.install', { source: EMBED_PACKAGE, preview: true }, opts);
     return { installed: false, size: typeof got?.download === 'number' ? got.download : null };
   } catch (err) {
     return /** @type {any} */ (err)?.reason === 'source_unreachable' ? { installed: false, size: null } : null;
@@ -234,7 +238,7 @@ export function embedScreen(g, state) {
     };
     core.onPush(onPush);
     try {
-      await core.request('package.install', { source: EMBED_PACKAGE });
+      await core.request('package.install', { source: EMBED_PACKAGE }, embedOpts(g.ctx));
       return null;
     } catch (err) {
       replace(body, list);
