@@ -1,6 +1,6 @@
 // @ts-check
 //! 上下文明细、累计按用途（蓝图 `web.md`「上下文明细、累计按用途」第 3、4 条）的纯逻辑：照核心 `session.context` 的回应摊数、
-//! 横条一块多宽；照 `usage.query` 按 `use` 分的行排用途。界面在 `ui/context-pop.js`。
+//! 横条一块多宽；照 `usage.query` 按 `use` 分的行排用途。界面在 `ui/context-pop.js`；右侧边栏的「会话信息」卡（软件包 `setup`）也照它画上下文的横条，所以放在 `lib`（软件包只能用 `lib`）。
 
 /**
  * @typedef {{part: string, label: string, tokens: number, tone?: string, children?: Part[]}} Part

@@ -1,13 +1,13 @@
 // @ts-check
 //! 上下文明细、累计按用途的浮窗（蓝图 `web.md`「上下文明细、累计按用途」）：点框下面那一行的上下文、累计那一格往上弹，
 //! 打开时问一次核心（`session.context`、`usage.query` 按 `use` 分），开着时那一格的字变了再问一次。一次只开一个；点外面、`Esc`、
-//! 再点那一格收起。数怎么摊、怎么排在 `model/context.js`。
+//! 再点那一格收起。数怎么摊、怎么排在 `lib/context.js`。
 
 import { h, icon, replace, scaleOf } from './dom.js';
 import { show, hide, unfold } from '../lib/motion.js';
 import { t } from '../util/res.js';
 import { short, money } from '../lib/format.js';
-import { scaledParts, bar, share, toneOf, useRows, USE_TONES, costOf, partsMinus } from '../model/context.js';
+import { scaledParts, bar, share, toneOf, useRows, USE_TONES, costOf, partsMinus } from '../lib/context.js';
 
 /** @typedef {'context'|'total'} Kind */
 
@@ -175,7 +175,7 @@ export class ContextPop {
     else replace(this.body, this.kind === 'context' ? this.contextView(this.data) : this.usageView(this.data));
   }
 
-  /** @param {import('../model/context.js').Context} c */
+  /** @param {import('../lib/context.js').Context} c */
   contextView(c) {
     this.onFlip = null;
     const parts = scaledParts(c);
@@ -194,7 +194,7 @@ export class ContextPop {
 
   /**
    * 一块一行，有子项的能展开：子项那一块一直画着，收着的高度是 0，展开、收起照 `unfold` 缓（同时间线点开一步）。
-   * @param {import('../model/context.js').Part} p @param {number} depth @param {number} full 百分比照它算（已用的）
+   * @param {import('../lib/context.js').Part} p @param {number} depth @param {number} full 百分比照它算（已用的）
    */
   partRows(p, depth, full) {
     const kids = p.children ?? [];
@@ -232,7 +232,7 @@ export class ContextPop {
    * 一列，照上下文明细的样子（2026-10-23 项目主人）：一个用途一行，主会话、子代理能展开出各部分，最下面「含子代理」和「在用量页看」。
    * 各部分是核心 CX-3 的 `session.usage_parts`：同上下文明细的块，多一块「AI 输出」；`parts` 是主会话自己的，`all` 连子代理，
    * 相减是子代理的（2026-10-24 项目主人问子代理为什么没有明细）；旧核心没有的不拆。
-   * @typedef {{requests: number, input: number, output: number, parts: import('../model/context.js').Part[]}} UsageParts
+   * @typedef {{requests: number, input: number, output: number, parts: import('../lib/context.js').Part[]}} UsageParts
    * @param {{rows?: any[], parts?: UsageParts|null, all?: UsageParts|null}} r
    */
   usageView(r) {
@@ -243,9 +243,9 @@ export class ContextPop {
     const own = (r.parts?.parts ?? []).filter((x) => (x.tokens ?? 0) > 0);
     // 子代理的：连子代理的减去主会话自己的（`all` 没有的旧核心、没问到的不拆）
     const kids = r.all ? partsMinus(r.all.parts ?? [], r.parts?.parts ?? []) : [];
-    /** 一块照比例摊成那一行的数（连子项，0 的不要） @param {import('../model/context.js').Part} p @param {number} f @returns {import('../model/context.js').Part} */
+    /** 一块照比例摊成那一行的数（连子项，0 的不要） @param {import('../lib/context.js').Part} p @param {number} f @returns {import('../lib/context.js').Part} */
     const scale = (p, f) => ({ ...p, tokens: Math.round(p.tokens * f), children: (p.children ?? []).filter((k) => k.tokens > 0).map((k) => scale(k, f)) });
-    /** 一个用途的各部分摊成它那一行的数 @param {import('../model/context.js').Part[]} ps @param {number} total */
+    /** 一个用途的各部分摊成它那一行的数 @param {import('../lib/context.js').Part[]} ps @param {number} total */
     const spread = (ps, total) => {
       const n = ps.reduce((m, x) => m + x.tokens, 0);
       return n > 0 ? ps.map((p) => scale(p, total / n)) : [];

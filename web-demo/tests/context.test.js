@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { scaledParts, bar, share, toneOf, useRows, partsMinus } from '../src/model/context.js';
+import { scaledParts, bar, share, toneOf, useRows, partsMinus } from '../src/lib/context.js';
 import { previewPart } from '../src/model/footer.js';
 import { loadRes } from './support.js';
 
