@@ -8,6 +8,7 @@
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { unfold } from '../../src/lib/motion.js';
 import { jobDuration } from '../../src/lib/format.js';
+import { fuzzyFilter } from '../../src/lib/fuzzy.js';
 import { rowsOf, counts, stoppable, todoView, splitPath, diffRows } from './model.js';
 
 /** 四张卡的外壳上加的类（样式、脚本照它认哪一张） */
@@ -69,6 +70,22 @@ export class Dashboard {
     // 待办的内容分三块一直在：没做完的几行、「还有 N 项」「已完成 N 项」那两行、做完的那一组（展开那一层：列出、收回照展开的缓动，
     // 2026-10-24 项目主人：原来一下就出来；只换里面的行，不整块重建——刚插进去的节点不会过渡）
     this.todoParts = { rows: h('div.dash-todo-rows'), folds: h('div.dash-todo-folds'), done: h('div.unfold.dash-todo-done', h('div.unfold-inner')) };
+    // 展示文件的搜索（2026-10-24 项目主人）：头一行右上角一个搜索图标，点了在「展示文件」右边换成搜索框；头一行这几样一直在、只切显示，
+    // 不每次重画头一行（一边打字一边丢焦点）。失去焦点、没写字的收回成图标；有字的不收回（看得见是筛过的），`Esc` 清空、收回
+    this.shownQuery = '';
+    this.shownCount = h('span.dash-count');
+    this.shownInput = /** @type {HTMLInputElement} */ (h('input.dash-search', {
+      type: 'text', hidden: true, placeholder: t('search_files'), 'aria-label': t('search_files'), spellcheck: 'false', autocomplete: 'off',
+      oninput: () => { this.shownQuery = this.shownInput.value; this.drawShown(); },
+      onkeydown: (/** @type {KeyboardEvent} */ e) => {
+        if (e.key !== 'Escape') return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.closeSearch(true);
+      },
+      onblur: () => { if (!this.shownInput.value.trim()) this.closeSearch(true); },
+    }));
+    this.shownSearch = h('button.dash-icon-btn', { type: 'button', title: t('search'), 'aria-label': t('search'), onclick: () => this.openSearch() }, icon('search'));
     this.empty = h('div.dash-empty', { hidden: true }, t('empty'));
     this.list = h('div.dash-list', this.empty);
     this.el = h('div.dash', this.list);
@@ -111,10 +128,12 @@ export class Dashboard {
     if (id === 'todo') {
       card.body(this.todoParts.rows, this.todoParts.folds, this.todoParts.done);
       this.drawTodo();
+    } else if (id === 'shown') {
+      card.head(this.shownInput, this.shownCount, card.gap(), this.shownSearch);
+      this.drawShown();
     }
     else if (id === 'tasks') this.drawTasks();
     else if (id === 'files') this.drawFiles();
-    else this.drawShown();
     return () => {
       if (this.cards[id] === card) delete this.cards[id];
     };
@@ -331,22 +350,27 @@ export class Dashboard {
   /** 预览工作区展示过的（最后展示的在前）：点了交给外面开工作区看它；悬停露出 ✕ 从右栏拿掉；面板挂着东西的最后一行「面板」 */
   drawShown() {
     const t = this.t;
-    const list = this.data.shown ?? [];
+    const all = this.data.shown ?? [];
     const panel = this.data.panel ?? 0;
     const card = this.cards.shown;
     if (!card) return;
-    card.show(list.length > 0 || panel > 0);
-    const sig = JSON.stringify([list, panel, this.shownOpen]);
+    card.show(all.length > 0 || panel > 0);
+    const query = this.shownQuery.trim();
+    const sig = JSON.stringify([all, panel, this.shownOpen, query]);
     if (sig === this.sigs.shown) return;
     this.sigs.shown = sig;
-    if (!list.length && !panel) return;
+    if (!all.length && !panel) return;
     const where = this.on.where();
+    // 照标题、文件名、写出来的那截目录（`~/…`，不拿绝对路径：家目录里的字都对得上）模糊筛（`lib/fuzzy.js`），筛着的时候「(N)」照筛出来的算
+    const list = fuzzyFilter(all, query, (a) => { const { name, dir } = splitPath(a.path, where); return [a.title ?? '', name, dir ?? '']; });
     // 露几个照这张卡最多露几行：留一行给「(N)」（原来的「文件修改最多露几个」并进卡的行数）
     const max = foldAt(card, 1);
     const rows = this.shownOpen || list.length <= max ? list : list.slice(0, max);
     const rest = list.length - rows.length;
-    card.head(list.length ? h('span.dash-count', t('shown_count', { count: list.length })) : null);
+    this.shownCount.textContent = all.length ? t('shown_count', { count: all.length }) : '';
+    this.shownCount.hidden = !this.shownInput.hidden;
     card.body(
+      query && !list.length ? h('div.dash-row.dash-fold-row.is-still', h('span.dash-fold-count', t('no_match'))) : null,
       rows.map((a) => {
         const { name, dir } = splitPath(a.path, where);
         const label = a.title || name;
@@ -364,6 +388,26 @@ export class Dashboard {
         : this.shownOpen && list.length > max ? foldRow('chevron-up', t('collapse'), () => { this.shownOpen = false; this.drawShown(); }, true) : null,
       panel > 0 ? h('button.dash-row.dash-file.dash-panel-row', { type: 'button', onclick: () => this.on.panel() }, h('span.dash-kind', icon('puzzle')), h('span.dash-file-name', t('panel'))) : null);
     card.size(rows.length + (rest > 0 || list.length > max ? 1 : 0) + (panel > 0 ? 1 : 0));
+  }
+
+  /** 点了搜索图标：换成搜索框、聚焦 */
+  openSearch() {
+    this.shownInput.hidden = false;
+    this.shownSearch.hidden = true;
+    this.shownCount.hidden = true;
+    this.shownInput.focus();
+  }
+
+  /** 收回成图标；`clear` 的连字一起清掉、不再筛 @param {boolean} clear */
+  closeSearch(clear) {
+    if (clear) {
+      this.shownInput.value = '';
+      this.shownQuery = '';
+    }
+    this.shownInput.hidden = true;
+    this.shownSearch.hidden = false;
+    this.shownCount.hidden = false;
+    this.drawShown();
   }
 
   // ── 点进去 ──

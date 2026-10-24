@@ -6857,5 +6857,17 @@
     "select": [
       ".dash-card.is-bare"
     ]
+  },
+  "dash.icon-btn": {
+    "zh": "右侧边栏：卡片头一行右边的小图标按钮（展示文件的搜索）",
+    "select": [
+      ".dash-icon-btn"
+    ]
+  },
+  "dash.search": {
+    "zh": "右侧边栏：展示文件的搜索框",
+    "select": [
+      ".dash-search"
+    ]
   }
 }

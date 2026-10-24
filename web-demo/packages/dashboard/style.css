@@ -43,10 +43,22 @@
 .dash-card.is-bare { padding-top: calc(8px * var(--space)); }
 .dash-head { display: flex; align-items: center; gap: calc(8px * var(--space)); height: 36px; padding: 2px calc(8px * var(--space)) 0 calc(12px * var(--space)); }
 .dash-head.is-sticky { position: sticky; z-index: 1; top: 0; background: var(--surface-1); }
-.dash-title { font-size: calc(13px * var(--text-scale)); font-weight: 600; }
+.dash-title { flex: none; font-size: calc(13px * var(--text-scale)); font-weight: 600; white-space: nowrap; }
 .dash-count { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); white-space: nowrap; }
 .dash-count.is-waiting { color: var(--t-warn); }
 .dash-gap { flex: 1; }
+/* 头一行右边的小图标按钮（展示文件的搜索）：不铺底，悬停深一档 */
+.dash-icon-btn { display: inline-grid; flex: none; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: var(--r-6); background: none; color: var(--text-faint); cursor: pointer; }
+.dash-icon-btn:hover, .dash-icon-btn:focus-visible { outline: none; color: var(--text); background: color-mix(in srgb, var(--text) 6%, transparent); }
+.dash-icon-btn .icon { width: 14px; height: 14px; }
+.dash-icon-btn[hidden] { display: none; }
+/* 展示文件的搜索框：在「展示文件」右边，占满头一行剩下的 */
+.dash-search { flex: 1 1 auto; min-width: 0; height: 24px; box-sizing: border-box; padding: 0 calc(8px * var(--space)); border: 0; border-radius: var(--r-6); background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); font: inherit; font-size: calc(12.5px * var(--text-scale)); outline: none; }
+.dash-search[hidden] { display: none; }
+.dash-search::placeholder { color: var(--text-faint); }
+.dash-head:has(.dash-search:not([hidden])) > .dash-gap { display: none; }
+.dash-fold-row.is-still { cursor: default; }
+.dash-fold-row.is-still:hover { background: none; }
 .dash-progress { width: 56px; height: 3px; overflow: hidden; border-radius: var(--r-pill); background: var(--line); }
 .dash-progress-bar { display: block; height: 100%; background: var(--accent); }
 .dash-stop-all { height: 24px; padding: 0 4px; border: 0; background: none; color: var(--text-soft); font: inherit; font-size: calc(12px * var(--text-scale)); cursor: pointer; }
