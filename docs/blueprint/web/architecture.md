@@ -195,7 +195,7 @@ flowchart TB
 
 2026-09-30 起一件件搬（「怎么搬」第 3 步进行中）。这张表跟着搬，拆出一个包改一行。
 
-**编进内核的服务**：`core`（连核心，现在经桥）、`sessions`（会话仓库）、`host`（宿主，见「宿主」：`kind`、这个页面登录成的账号 `account`、新会话的工作目录 `cwd`（握手回应的 `host.workspace`，核心施工 W-3；原来是起桥的目录）、家目录 `home`（`host.home`）、`files`、`open`、`clipboard`、`wallpaper`、网页自己的路由 `route`（网址 `#` 后面那一段：`current`、`go`、`back`、`replace`、`watch`；口令、一次性码读完就抹，`package=` 留着）；口令不出宿主）、`page`（页面的根）、`slots`、`seams`、`storage`（这台设备上存的：宿主给的存法，键带账号，读写兜着）、`packages`（列出每个包的状态和清单、停用启用、改个人那一层的配置：按项合，写 `null` 的删掉那一项）。名字列在 `src/kernel/services.js`，内核起来时查一遍都提供了。
+**编进内核的服务**：`core`（连核心，现在经桥）、`admin`（管理员模式的开关：`available` 握手 `admin: true` 的人才有、`on`、`locked` 平时锁着系统那一层、`set`、`onChange`；开着时连接给系统那一层的写请求带 `scope`，重连回到平常，`web.md`「管理员模式」）、`sessions`（会话仓库）、`host`（宿主，见「宿主」：`kind`、这个页面登录成的账号 `account`、新会话的工作目录 `cwd`（握手回应的 `host.workspace`，核心施工 W-3；原来是起桥的目录）、家目录 `home`（`host.home`）、`files`、`open`、`clipboard`、`wallpaper`、网页自己的路由 `route`（网址 `#` 后面那一段：`current`、`go`、`back`、`replace`、`watch`；口令、一次性码读完就抹，`package=` 留着）；口令不出宿主）、`page`（页面的根）、`slots`、`seams`、`storage`（这台设备上存的：宿主给的存法，键带账号，读写兜着）、`packages`（列出每个包的状态和清单、停用启用、改个人那一层的配置：按项合，写 `null` 的删掉那一项）。名字列在 `src/kernel/services.js`，内核起来时查一遍都提供了。
 
 | 包 | 种类 | 要（`inject`） | 提供的服务 | 声明的挂载位 | 挂进 | 设置项 |
 |---|---|---|---|---|---|---|
