@@ -6,6 +6,7 @@
 //! 每 `tick_ms` 只改那几个字。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { unfold } from '../../src/lib/motion.js';
 import { jobDuration } from '../../src/lib/format.js';
 import { rowsOf, counts, stoppable, todoView, splitPath, diffRows } from './model.js';
 
@@ -64,6 +65,9 @@ export class Dashboard {
     this.sigs = { todo: '', tasks: '', files: '', shown: '' };
     /** 挂载位交来的四张卡（关掉了的没有） @type {{todo?: Card, tasks?: Card, files?: Card, shown?: Card}} */
     this.cards = {};
+    // 待办的内容分三块一直在：没做完的几行、「还有 N 项」「已完成 N 项」那两行、做完的那一组（展开那一层：列出、收回照展开的缓动，
+    // 2026-10-24 项目主人：原来一下就出来；只换里面的行，不整块重建——刚插进去的节点不会过渡）
+    this.todoParts = { rows: h('div.dash-todo-rows'), folds: h('div.dash-todo-folds'), done: h('div.unfold.dash-todo-done', h('div.unfold-inner')) };
     this.empty = h('div.dash-empty', { hidden: true }, t('empty'));
     this.list = h('div.dash-list', this.empty);
     this.el = h('div.dash', this.list);
@@ -103,7 +107,10 @@ export class Dashboard {
     card.el.classList.add(CARD_CLASS[id]);
     card.title(t(id));
     this.sigs[id] = '';
-    if (id === 'todo') this.drawTodo();
+    if (id === 'todo') {
+      card.body(this.todoParts.rows, this.todoParts.folds, this.todoParts.done);
+      this.drawTodo();
+    }
     else if (id === 'tasks') this.drawTasks();
     else if (id === 'files') this.drawFiles();
     else this.drawShown();
@@ -160,7 +167,12 @@ export class Dashboard {
     const done = v.done ? foldRow('check', t('done_items', { count: v.done }), () => { this.todoDoneOpen = !this.todoDoneOpen; this.drawTodo(); }, this.todoDoneOpen, 'is-done') : null;
     card.head(h('span.dash-count', `${v.done}/${v.total}`), card.gap(),
       h('span.dash-progress', h('span.dash-progress-bar', { style: `width: ${(ratio * 100).toFixed(1)}%` })));
-    card.body(v.shown.map(row), more, done, v.finished.map(row));
+    const parts = this.todoParts;
+    replace(parts.rows, v.shown.map(row));
+    replace(parts.folds, more, done);
+    // 做完的那一组：收着的时候也照样画着（收回去的那一下要看得见），开合只切 `is-on`
+    replace(/** @type {HTMLElement} */ (parts.done.firstChild), this.data.todos.filter((x) => x?.status === 'completed').map(row));
+    unfold(parts.done, this.todoDoneOpen && v.done > 0);
     card.size(v.shown.length + (more ? 1 : 0) + (done ? 1 : 0) + v.finished.length);
   }
 
