@@ -31,7 +31,7 @@ export function providerForm(dialog, providers) {
   const nameField = input({ value: nameWritten, placeholder: fallback ? t('name_empty', { name: fallback }) : t('name_empty_new') });
   // 地址是环境变量引用的：框空着就是不改（照写「来自环境变量 X」当占位）
   const urlEnv = envRef(p?.base_url);
-  const urlField = input({ value: urlEnv ? '' : inputText(p?.base_url ?? ''), placeholder: urlEnv ? ctx.text('from_env', { name: urlEnv }) : 'https://…/v1' });
+  const urlField = input({ value: urlEnv ? '' : inputText(p?.base_url ?? ''), placeholder: urlEnv ? ctx.text('from_env', { name: urlEnv }) : 'https://…' });
   // 接口：用这一页自己的下拉（浏览器自带的下拉有边框），选了换掉按钮
   const drivers = template('driver')?.options ?? [];
   let driver = p?.driver ?? drivers[0]?.value ?? '';

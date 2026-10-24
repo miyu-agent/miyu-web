@@ -204,7 +204,7 @@ export class ProviderFlow {
   /** 自定义（第 7 条）：地址、接口、密钥。 */
   custom() {
     const t = this.t;
-    const url = /** @type {HTMLInputElement} */ (h('input.set-input.ob-input', { type: 'text', placeholder: 'https://…/v1', spellcheck: 'false', autocomplete: 'off' }));
+    const url = /** @type {HTMLInputElement} */ (h('input.set-input.ob-input', { type: 'text', placeholder: 'https://…', spellcheck: 'false', autocomplete: 'off' }));
     const drivers = this.drivers.length ? this.drivers : ['openai-chat', 'anthropic', 'openai-responses'].map((v) => ({ value: v, name: v }));
     let driver = drivers[0].value;
     // 接口：和设置页一样的下拉（三个名字放一排太挤）
