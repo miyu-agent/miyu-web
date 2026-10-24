@@ -250,6 +250,17 @@
 .set-model-id { display: block; overflow: hidden; color: var(--text-faint); font: calc(11px * var(--text-scale)) var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
 .set-model-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .set-model-meta { flex: none; margin-left: auto; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); white-space: nowrap; }
+/* 供应商那一页（第 14 条，2026-10-24 项目主人）：一长串模型只在模型列表那一块里自己滚，上面的名称、密钥那一行和「模型 N」、搜索框钉住；
+   左边一列多了也自己滚。窄的照整页滚 */
+@media (min-width: 641px) {
+  .set-body:has(> .set-prov-wrap), .set-body:has(> .set-slide > .set-prov-wrap) { display: flex; flex-direction: column; overflow-y: hidden; }
+  .set-slide:has(> .set-prov-wrap) { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+  .set-prov-wrap { flex: 1; grid-template-rows: minmax(0, 1fr); min-height: 0; }
+  .set-prov-list { min-height: 0; overflow-y: auto; }
+  .set-prov-main { display: flex; flex-direction: column; min-height: 0; }
+  .set-models { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+  .set-model-list { flex: 1; min-height: 0; overflow-y: auto; }
+}
 .set-drawer {
   position: absolute; top: 0; right: 0; bottom: 0; z-index: 4; width: min(380px, 100%); padding: 0 calc(16px * var(--space)) calc(16px * var(--space)); overflow-y: auto;
   border-left: var(--divider, 1px solid var(--line)); background: var(--surface); box-shadow: -12px 0 24px -18px rgba(0, 0, 0, 0.25);
