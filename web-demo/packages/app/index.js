@@ -43,7 +43,7 @@ export function apply(ctx) {
       state: () => app.side.works(),
       open: (/** @type {string} */ path) => app.artifacts.reveal(path),
       // 放大看：左边一列展示过的（带搜索），右边预览（右侧边栏点「展示文件」那几个字）
-      browse: () => app.artifacts.browse(),
+      browse: (/** @type {string|null|undefined} */ path) => app.artifacts.browse(path ?? null),
       panel: () => app.side.openPanel(),
       dismiss: (/** @type {string} */ path) => app.artifacts.dismiss(path),
       close: () => app.artifacts.setOpen(false),

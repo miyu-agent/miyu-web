@@ -50,12 +50,12 @@ export function apply(ctx) {
     // 后台命令的输出、文件的差异：借预览工作区的框看（同展示文件，返回回到四张卡）
     present: (spec) => work.present(spec),
     leave: () => backToCards(),
-    // 展示文件：预览工作区占过这一栏看它（返回回到四张卡）；面板那一页；从右栏拿掉
-    show: (path) => work.open(path),
+    // 展示文件：进放大看那一页、选上它（预览工作区占过这一栏，左边一列能收起，返回回到四张卡）；面板那一页；从右栏拿掉
+    show: (path) => work.browse(path),
     panel: () => work.panel(),
     dismiss: (path) => work.dismiss(path),
-    // 放大看展示文件：工作区左边多一列展示过的（带搜索），右边预览
-    browse: () => work.browse(),
+    // 放大看展示文件：工作区左边多一列展示过的（带搜索），右边预览；`path` 是卡片里点的那一样
+    browse: (path) => work.browse(path),
   });
   ctx.effect(() => () => dash.destroy());
   ctx.effect(() => side.mount(dash.el));

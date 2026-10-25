@@ -70,6 +70,11 @@ export class Split {
     this.button.setAttribute('aria-expanded', String(open));
   }
 
+  /** 回到这一档的默认（重新进放大看） */
+  reset() {
+    if (this.wide !== null) this.set(this.wide);
+  }
+
   /** 列表里点了一项：浮着的收回去，在流里的不动 */
   picked() {
     if (!this.wide && this.open) this.set(false);

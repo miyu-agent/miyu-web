@@ -278,6 +278,8 @@
     "empty": "まだ何も表示していません",
     "download_named": "{name} をダウンロード",
     "remove": "リストから外す",
+    "list_show": "リストを表示",
+    "list_hide": "リストを隠す",
     "search": "ファイルを検索",
     "no_match": "一致するファイルはありません",
     "remove_named": "{name} をリストから外す"

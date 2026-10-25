@@ -61,7 +61,6 @@
 /* 预览区外面一层：放大看展示文件时左边多一列列表（`browse`，蓝图「仪表盘」第 4 条「放大看」，2026-10-24 项目主人），平常只有预览 */
 .artifact-workspace > .artifact-main { display: flex; flex: 1; min-height: 0; }
 .artifact-main[hidden] { display: none; }
-.artifact-main > .artifact-view { flex: 1; min-width: 0; }
 /* 左边一列列表、右边一块，列表能收起（`lib/split.js`；放大看的文件修改、展示文件，蓝图「右侧边栏」第 4 条「放大看」，2026-10-26 项目主人）：
    够宽的在流里推开右边，收起时那一列 0.28 秒缩到 0、列表往左滑出去淡掉（同左栏收起：列表自己的宽不变，字不挤；展开先快后慢，收起先慢后快）；
    不够宽的浮在右边上面，从左边滑出来、右边一道影（同临时浮出的左栏），不压暗 */
@@ -79,10 +78,11 @@
 .artifact-split:not(.is-wide) > .artifact-split-side > * { width: 100%; opacity: 1; transform: none; transition: none; }
 /* 宽窄换一档的那一下（不是人点的）、减少动画的：不放动画 */
 .artifact-split.is-instant > .artifact-split-side, .artifact-split.is-instant > .artifact-split-side > * { transition: none; }
+/* 只看一样（不是放大看）：没有那一列 */
+.artifact-split.is-single > .artifact-split-side { display: none; }
 /* 头一行返回箭头旁边那个按钮：收、展左边的列表 */
 .artifact-split-toggle.icon-button { flex: none; }
-.artifact-browse { display: flex; flex: none; flex-direction: column; gap: calc(6px * var(--space)); width: 240px; min-height: 0; box-sizing: border-box; padding: calc(8px * var(--space)); border-right: 1px solid var(--line); }
-.artifact-browse[hidden] { display: none; }
+.artifact-browse { display: flex; flex-direction: column; gap: calc(6px * var(--space)); min-height: 0; box-sizing: border-box; padding: calc(8px * var(--space)); border-right: 1px solid var(--line); }
 .artifact-browse-search { flex: none; height: 28px; box-sizing: border-box; padding: 0 calc(10px * var(--space)); border: 0; border-radius: var(--r-8); background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); font: inherit; font-size: calc(12.5px * var(--text-scale)); outline: none; }
 .artifact-browse-search::placeholder { color: var(--text-faint); }
 .artifact-browse-items { display: flex; flex: 1; flex-direction: column; gap: 2px; min-height: 0; overflow-y: auto; }
