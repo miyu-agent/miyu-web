@@ -6984,36 +6984,6 @@
       ".dash-big-head"
     ]
   },
-  "dash.brief": {
-    "zh": "右侧边栏放大看：子代理的简要",
-    "select": [
-      ".dash-brief"
-    ]
-  },
-  "dash.brief-head": {
-    "zh": "右侧边栏放大看：简要的头一行",
-    "select": [
-      ".dash-brief-head"
-    ]
-  },
-  "dash.brief-name": {
-    "zh": "右侧边栏放大看：简要里的名字",
-    "select": [
-      ".dash-brief-name"
-    ]
-  },
-  "dash.brief-line": {
-    "zh": "右侧边栏放大看：简要里状态、用时那一行",
-    "select": [
-      ".dash-brief-line"
-    ]
-  },
-  "dash.brief-open": {
-    "zh": "右侧边栏放大看：「打开会话」",
-    "select": [
-      ".dash-brief-open"
-    ]
-  },
   "dash.title-link": {
     "zh": "右侧边栏：能点的卡片标题（放大看）",
     "select": [

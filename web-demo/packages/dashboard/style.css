@@ -209,11 +209,8 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; us
 .dash-big-pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .dash-big-pane > .dash-present, .dash-big-pane > .dash-diff { flex: 1; min-height: 0; height: auto; }
 .dash-big-head { display: flex; flex: none; align-items: center; gap: calc(8px * var(--space)); min-height: 40px; padding: 0 calc(10px * var(--space)) 0 calc(14px * var(--space)); border-bottom: 1px solid var(--line); font-size: calc(13px * var(--text-scale)); }
-/* 子代理的简要：名字 · 编号、状态、用时、「打开会话」 */
-.dash-brief { display: flex; flex-direction: column; gap: calc(10px * var(--space)); padding: calc(16px * var(--space)) calc(18px * var(--space)); font-size: calc(13px * var(--text-scale)); }
-.dash-brief-head { display: flex; align-items: center; gap: calc(6px * var(--space)); }
-.dash-brief-name { font-weight: 600; }
-.dash-brief-line { display: flex; align-items: center; gap: calc(8px * var(--space)); color: var(--text-soft); }
-.dash-brief-line .dash-time { min-width: 0; margin-left: calc(4px * var(--space)); }
-.dash-brief-open { align-self: flex-start; height: 30px; padding: 0 calc(14px * var(--space)); border: 0; border-radius: var(--r-8); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
-.dash-brief-open:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+/* 后台任务那一页：整页一列（2026-10-26 项目主人），名字不截，照这一页的宽写，还放不下的换行写全（行跟着变高，连接线照行高的一半接） */
+.dash-big.is-tasks { display: block; overflow: hidden; }
+.dash-big.is-tasks > .dash-big-list { height: 100%; box-sizing: border-box; border-right: 0; }
+.dash-big.is-tasks .dash-row { height: auto; min-height: 30px; padding-block: calc(4px * var(--space)); line-height: 18px; }
+.dash-big.is-tasks .dash-name, .dash-big.is-tasks .dash-command { overflow: visible; white-space: normal; overflow-wrap: anywhere; }

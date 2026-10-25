@@ -96,8 +96,8 @@ export function apply(ctx) {
       side.open('overlay');
     }
   }
-  // 预览工作区换成右侧边栏点进去的样子：返回箭头回到四张卡
-  ctx.effect(() => work.claim(() => backToCards()));
+  // 预览工作区换成右侧边栏点进去的样子：返回箭头回到四张卡（从放大看那一页点进去的先回到那一页）
+  ctx.effect(() => work.claim(() => { if (!dash.backOne()) backToCards(); }));
   ctx.effect(() => work.onChange(() => redraw()));
 
   const closedMap = () => {
