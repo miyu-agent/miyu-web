@@ -61,8 +61,7 @@ export class SideColumn {
     this.listeners = new Set();
     this.onDown = (/** @type {PointerEvent} */ e) => {
       const at = /** @type {Element} */ (e.target);
-      // 这一栏里的东西开的浮层（放在页面最上面一层的菜单，带 `data-keeps-side`）算里面，点了不收
-      if (this.mode !== 'overlay' || this.el.contains(at) || at.closest?.('.stage-tools, [data-keeps-side]')) return;
+      if (this.mode !== 'overlay' || this.el.contains(at) || at.closest?.('.stage-tools')) return;
       this.close('outside');
     };
     this.onKey = (/** @type {KeyboardEvent} */ e) => {

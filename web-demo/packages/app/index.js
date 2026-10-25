@@ -162,8 +162,6 @@ export function apply(ctx) {
     pick: (ask) => app.composer.picker.show(ask),
     /** 认领没在回答、框里没字时的两下 `Esc`（`{hint, run}`：第一下提示 `hint`，第二下 `run`；`null` 放开）：整理记忆时叫停整理 */
     claimEscape: (claim) => { app.composer.escapeClaim = claim; },
-    /** 开上下文明细的浮窗（同点框下面那一格、`/context`）：右侧边栏「会话信息」卡的上下文那一行点了用 */
-    openContext: () => app.composer.openContext(),
   });
   ctx.effect(() => () => ctx.page.root.replaceChildren());
 }

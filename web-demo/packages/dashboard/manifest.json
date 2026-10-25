@@ -37,7 +37,7 @@
       "applies": "live",
       "type": "list",
       "of": "text",
-      "default": ["session", "todo", "tasks", "files", "shown"],
+      "default": ["todo", "tasks", "files", "shown"],
       "name": {
         "zh": "右栏卡片的先后（卡的编号；没写的照各自的先后接在后面）",
         "en": "Order of the sidebar cards (card ids; others follow in their own order)",

@@ -121,12 +121,6 @@ test('右栏的卡片照设置排：cards 里写了的照它在前，没写的�
     ['files', 'session', 'usage', 'tasks', 'shown'], '换了先后、关掉两张');
   assert.deepEqual(arrange(all).map((x) => x.id), ['session', 'usage', 'weather', 'todo', 'tasks', 'files', 'shown'], '没设置的全照 order');
   assert.deepEqual(arrange([], { order: ['session'] }), []);
-});
-
-test('会话信息卡的工作区路径中间省略：照最后一个 / 分，最后一截最多留 24 个字（2026-10-24 项目主人）', async () => {
-  const { splitTail } = await import('../packages/setup/session-card.js');
-  assert.deepEqual(splitTail('~/Documents/github/miyu-agent/miyu-web'), { head: '~/Documents/github/miyu-agent/', tail: 'miyu-web' });
-  assert.deepEqual(splitTail('默认工作区'), { head: '', tail: '默认工作区' }, '没有 / 的照原样');
-  assert.deepEqual(splitTail('/'), { head: '', tail: '/' });
-  assert.deepEqual(splitTail('~/a/abcdefghijklmnopqrstuvwxyz0123'), { head: '~/a/abcdef', tail: 'ghijklmnopqrstuvwxyz0123' }, '最后一截 30 个字：只留末尾 24 个');
+  assert.deepEqual(arrange(all.filter((x) => x.id !== 'session'), { order: ['session', 'files'] }).map((x) => x.id), ['files', 'usage', 'weather', 'todo', 'tasks', 'shown'],
+    '记着的先后里有没挂着的卡（删掉了的会话信息）：跳过');
 });

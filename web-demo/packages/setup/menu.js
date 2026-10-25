@@ -8,9 +8,9 @@ import { h, icon, replace } from '../../src/lib/dom.js';
 
 /**
  * @typedef {{title: string, desc?: string, icon?: string, current?: boolean, off?: boolean, tip?: string, label?: string, more?: boolean, still?: boolean,
- *   danger?: boolean, keep?: boolean, wrap?: boolean, action?: {icon: string, title: string, run: () => void, key?: string}, pick: (el: HTMLElement) => void}} Row
+ *   danger?: boolean, keep?: boolean, wrap?: boolean, mono?: boolean, action?: {icon: string, title: string, run: () => void, key?: string}, pick: (el: HTMLElement) => void}} Row
  *   `label` 是左边暗字的名字（名字、值一行的样子，左上角的「会话信息」），`more` 末尾一个 ›，`still` 只是看的、点不了、不亮，`keep` 点了不收菜单，
- *   `wrap` 值太长换行写全（不截断），`action` 行末一个图标按钮（带 `key` 的，移到这一行按这个键也一样：人格、预设的编辑是 `e`）
+ *   `wrap` 值太长换行写全（不截断），`mono` 值用等宽暗字（会话编号），`action` 行末一个图标按钮（带 `key` 的，移到这一行按这个键也一样：人格、预设的编辑是 `e`）
  * @typedef {{section: string}} Section
  * @typedef {{divider: true}} Divider 一道细线
  * @typedef {{title: string, rows: (Row|Section|Divider)[], note?: string, foot?: HTMLElement[], back?: () => void, below?: boolean, action?: {icon: string, title: string, run: () => void}, card?: string}} View
@@ -20,20 +20,10 @@ import { h, icon, replace } from '../../src/lib/dom.js';
  */
 
 export class Menu {
-  /**
-   * @param {string} [backLabel] 返回箭头的提示
-   * @param {{floating?: boolean}} [opts] `floating`：放在页面最上面一层（`body` 下面）、贴着按的那一行开（右侧边栏「会话信息」卡里的：
-   *   卡片会滚，右栏会裁掉——2026-10-24 项目主人：菜单左半截被右栏裁了），右边和那一行对齐、照窗口放
-   */
-  constructor(backLabel = '', { floating = false } = {}) {
+  /** @param {string} [backLabel] 返回箭头的提示 */
+  constructor(backLabel = '') {
     this.backLabel = backLabel;
-    this.floating = floating;
-    this.el = h(`div.setup-menu${floating ? '.is-floating' : ''}`, { hidden: true, role: 'menu' });
-    // 右侧边栏盖在上面（窗口窄）时点菜单不算点了外面（`data-keeps-side`，`ui/side.js`）
-    if (floating) {
-      this.el.dataset.keepsSide = '';
-      document.body.append(this.el);
-    }
+    this.el = h('div.setup-menu', { hidden: true, role: 'menu' });
     /** @type {{el: HTMLElement, row: Row}[]} */
     this.items = [];
     this.at = -1;
@@ -70,7 +60,7 @@ export class Menu {
       if ('section' in r) return h('div.setup-menu-section', r.section);
       if ('divider' in r) return h('div.setup-menu-divider', { role: 'separator' });
       const text = h('div.setup-menu-text', h('span.setup-menu-title', r.title), r.desc ? h('span.setup-menu-desc', r.desc) : null);
-      const el = h(`div.setup-menu-row${r.current ? '.is-current' : ''}${r.off ? '.is-off' : ''}${r.label != null ? '.is-pair' : ''}${r.still ? '.is-still' : ''}${r.danger ? '.is-danger' : ''}${r.wrap ? '.is-wrap' : ''}`, {
+      const el = h(`div.setup-menu-row${r.current ? '.is-current' : ''}${r.off ? '.is-off' : ''}${r.label != null ? '.is-pair' : ''}${r.still ? '.is-still' : ''}${r.danger ? '.is-danger' : ''}${r.wrap ? '.is-wrap' : ''}${r.mono ? '.is-mono' : ''}`, {
         role: 'menuitem', title: r.tip ?? null,
         onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(),
         onmousemove: () => { if (!r.off && !r.still) this.mark(this.items.findIndex((x) => x.row === r)); },
@@ -97,20 +87,8 @@ export class Menu {
     // 只有一句话和按钮的一屏（问一句的：换人格前的确认）：话照正文的颜色、大一点
     this.el.classList.toggle('is-ask', !view.rows.length && !!view.note);
     // 左边对齐：左上角那一条里的按钮开的，和那一条的左边对齐（不是按钮自己的左边，差一截内边距；2026-10-20 项目主人：没对齐）
-    if (this.floating) {
-      // 放在 `body` 下面、照窗口放：整页的放大（界面缩放）自己带上（`zoom`，同那一行量出来的倍数），位置照那一行在窗口里的位置，
-      // 写回去要除掉这个倍数；右边和它对齐、开在它下面，左边出不了窗口
-      const r = anchor.getBoundingClientRect();
-      // 量出来的倍数带着取整的零头（1.10095）：取到两位，字不发虚
-      const scale = Math.round(((anchor.offsetWidth ? r.width / anchor.offsetWidth : 1) || 1) * 100) / 100;
-      this.el.style.zoom = String(scale);
-      this.el.style.left = 'auto';
-      this.el.style.right = `${Math.max(8, innerWidth - r.right) / scale}px`;
-      this.el.style.top = `${(r.bottom + 6) / scale}px`;
-    } else {
-      const edge = /** @type {HTMLElement} */ (anchor.closest('.setup-info') ?? anchor);
-      this.el.style.left = `${edge.offsetLeft}px`;
-    }
+    const edge = /** @type {HTMLElement} */ (anchor.closest('.setup-info') ?? anchor);
+    this.el.style.left = `${edge.offsetLeft}px`;
     const wasOpen = !this.el.hidden;
     this.el.hidden = false;
     // 开着菜单的那个按钮：箭头跟着朝下（左上角的标题）
@@ -156,12 +134,6 @@ export class Menu {
     const r = this.el.getBoundingClientRect();
     const over = this.view?.below ? r.bottom - (innerHeight - 8) : 8 - r.top;
     if (over > 0) list.style.maxHeight = `${Math.max(96, list.clientHeight - over)}px`;
-  }
-
-  /** 不用了（包停了）：放在 `body` 下面的拿掉 */
-  destroy() {
-    this.close();
-    if (this.floating) this.el.remove();
   }
 
   close() {

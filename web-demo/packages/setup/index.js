@@ -3,8 +3,6 @@
 //! - 空会话：输入框正上方「选择人格」「选择预设」「设置工作区」三个按钮（挂载位 `composer.above`），选了以后按钮上的字换成选中的；没选的照默认
 //!   的用，开会话时由整页带上（服务 `chat` 的 `draft`、`setDraft`）。默认的预设、（照预设算出来的）默认人格用不了，锁住输入框，选了才能打字。
 //! - 开着的会话：对话区左上角一小条（挂载位 `stage.info`）：人格名 · 预设名 · 工作目录，点目录那一截换工作区。
-//! - 右侧边栏的「会话信息」卡（挂进仪表盘的挂载位 `side.cards`，`session-card.js`）：同样的人格、预设、工作区，加上下文、用量；右栏开着
-//!   点左上角的标题也照旧弹卡片（2026-10-24 项目主人改主意）。
 //! - `/workspace [路径]`：换这个会话在哪干活（服务 `chat` 的 `setWorkdir`，核心 9-7 的 `session.set_workspace`）；不带路径的开工作区的菜单。
 //! - 设置页：「人格」「预设」两页（`settings.section`），通用页的默认人格、默认预设给下拉的选项（`settings.editor`）。
 //! - 左栏左上角的头像点了（事件 `persona.open`）：直接在页面上开这个会话用的人格的编辑卡片（`quick-edit.js`）。
@@ -19,7 +17,6 @@ import { PersonaStep, PresetStep } from './welcome.js';
 import { ThemeStep } from './theme-step.js';
 import { editPersona, editPreset } from './quick-edit.js';
 import { editProject } from './project-dialog.js';
-import { SessionCard } from './session-card.js';
 
 const RECENT = 'setup.recent';
 
@@ -40,24 +37,6 @@ export function apply(ctx) {
   // 整理会话左上角标题外面、紧挨着左边的「<」（2026-10-22 项目主人：同网页常用的返回；原来是标题块里面的箭头）
   const back = h('button.setup-back', { type: 'button', hidden: true, onclick: () => chat.back?.() }, icon('chevron-left'));
   const infoWrap = h('div.setup-info-wrap', back, info, infoMenu.el);
-  // 右侧边栏的「会话信息」卡：点人格、预设、工作区开的菜单浮在那一行下面（卡片会滚、会裁掉）
-  const cardMenu = new Menu(t('info.back'), { floating: true });
-  const sessionCard = new SessionCard(t, {
-    persona: (anchor) => { const s = chat.current(); if (s && catalog.personas) switchPersona(anchor, s, chat.persona(s), undefined, cardMenu); },
-    preset: (anchor) => { const s = chat.current(); if (s && catalog.presets) switchPreset(anchor, s, chat.preset(s), undefined, cardMenu); },
-    workspace: (anchor) => browse(ctx, cardMenu, anchor, true, chat.workdir(), pickDir, (p) => tilde(p, home())),
-    copy: (text) => Promise.resolve(ctx.host.clipboard?.write(text)).then(() => ctx.composer.say(t('card.copied', { count: [...text].length }), true), (err) => ctx.composer.say(err?.message ?? String(err))),
-    request: (method, params) => ctx.core.request(method, params),
-    context: () => ctx.composer.openContext?.(),
-  });
-  ctx.effect(() => () => cardMenu.destroy());
-  ctx.slots.mount('side.cards', {
-    id: 'session', order: 0, keep: Infinity, shrink: 0, head: false, rows: false, name: t('card.title'),
-    render: (/** @type {any} */ card) => {
-      const off = sessionCard.attach(card);
-      return () => { cardMenu.close(); off(); };
-    },
-  });
   /** 左上角那一条里的路径：工作区的菜单开在它下面、和它左边对齐（2026-10-09 项目主人指出原来开在整条的左边，错位了） @type {HTMLElement|null} */
   let pathBtn = null;
 
@@ -174,7 +153,6 @@ export function apply(ctx) {
     if (!force && sig === drawn) return;
     drawn = sig;
     back.hidden = true;
-    if (!session) sessionCard.set(null);
     if (!session) {
       // 在项目里新建的空会话：左上角「项目名 / 新会话」；别的空会话不画那一条
       infoMenu.close();
@@ -215,7 +193,6 @@ export function apply(ctx) {
     const path = own && cwd === own ? t('default_workspace') : tilde(cwd, home());
     // 整理会话：没有人格、预设、工作区可换，标题点了不出菜单；左边一个「←」，同输入框上面的「← 返回」（2026-10-22 项目主人）
     if (chat.dream?.(session)) {
-      sessionCard.set(null);
       infoMenu.close();
       const hint = chat.backHint?.() ?? t('info.back');
       back.title = hint;
@@ -232,10 +209,6 @@ export function apply(ctx) {
     const titleBtn = h('button.setup-info-part.is-title', { type: 'button', title: title ?? '', 'aria-haspopup': 'menu', onclick: () => openInfo(titleBtn, session, persona, preset, path) },
       h('span', title ?? t('info.untitled')));
     pathBtn = titleBtn;
-    sessionCard.set({
-      session, title, persona: persona ? nameOf(persona) : t('no_persona'), preset: preset != null ? presetNameOf(preset) : t('info.preset_default'),
-      path, full: tilde(cwd, home()),
-    });
     replace(info, project && !chat.parentOf?.(session) ? [projectPart(project), h('span.setup-info-slash', '/')] : null, titleBtn);
     info.hidden = false;
     // 卡片开着时人格、预设、工作区换了：卡片当场跟着改（2026-10-22 项目主人：换了工作区卡片里还是旧的）；翻进去的那几页不动
@@ -249,7 +222,8 @@ export function apply(ctx) {
   }, icon('folder'), h('span', p.name));
 
   /**
-   * 点标题出的卡片「会话信息」（2026-10-19 项目主人：只要信息、不要图标）：三行一样高，左边暗字、右边值——人格、预设（点了翻到换人格、换预设的那一页，会话
+   * 点标题出的卡片「会话信息」（2026-10-19 项目主人：只要信息、不要图标）：最上面一行会话编号（等宽暗字，点了复制，卡片不收；2026-10-26 项目主人：
+   * 右栏的会话信息卡删了，编号挪到这里），再三行一样高，左边暗字、右边值——人格、预设（点了翻到换人格、换预设的那一页，会话
    * 中途换，核心 P-13；人格那一行末尾一个铅笔开它的编辑卡片）、工作区（完整路径，长的换行写全；行末一个文件夹图标，点了直接开系统的选目录对话框换工作区）。
    * @param {HTMLElement} anchor @param {string} session @param {string|null} persona @param {string|null} preset @param {string} path
    */
@@ -258,6 +232,9 @@ export function apply(ctx) {
     if (infoMenu.open) return infoMenu.view?.back ? infoMenu.view.back() : infoMenu.close();
     showInfo(anchor, session, persona, preset, path);
   };
+  /** 复制会话编号：输入框上面提示「已复制 N 个字」 @param {string} id */
+  const copyId = (id) => Promise.resolve(ctx.host.clipboard?.write(id))
+    .then(() => ctx.composer.say(t('info.copied', { count: [...id].length }), true), (err) => ctx.composer.say(err?.message ?? String(err)));
   /** @param {HTMLElement} anchor @param {string} session @param {string|null} persona @param {string|null} preset @param {string} path */
   const showInfo = (anchor, session, persona, preset, path) => {
     const back = () => showInfo(anchor, session, persona, preset, path);
@@ -266,6 +243,7 @@ export function apply(ctx) {
       below: true,
       card: session,
       rows: [
+        { label: t('info.id'), title: session, tip: session, mono: true, keep: true, pick: () => copyId(session) },
         {
           label: t('info.persona'), title: persona ? nameOf(persona) : t('no_persona'), more: !!catalog.personas, keep: true,
           pick: () => { if (catalog.personas) switchPersona(anchor, session, persona, back); },
@@ -536,10 +514,7 @@ export function apply(ctx) {
     options: () => [{ value: null, name: t('follow_default') }, ...(catalog.presets ?? []).filter((p) => !p.problem).map((p) => ({ value: p.preset, name: presetName(p) }))],
   });
   ctx.slots.mount('stage.info', { id: 'setup', order: 10, render: () => infoWrap });
-  ctx.on('view.changed', (/** @type {any} */ v) => {
-    draw();
-    if (v?.session && v.session === chat.current()) sessionCard.status(v.status);
-  });
+  ctx.on('view.changed', () => draw());
   ctx.on('draft.changed', () => draw());
   ctx.on('session.opened', (id) => { if (id === null) load(); else draw(); });
   ctx.on('session.created', () => draw());
