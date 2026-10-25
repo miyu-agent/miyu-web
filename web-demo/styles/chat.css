@@ -216,8 +216,9 @@
 .turn-end { display: flex; flex-wrap: wrap; align-items: center; column-gap: calc(10px * var(--space)); color: var(--turn-end-fg, var(--t-dim)); font: var(--turn-end-font, calc(13px * var(--text-scale))/1.6 var(--font-mono)); }
 .turn-end-text { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .turn-end.tone-error { color: var(--t-error); }
-/* 打断的那一轮后面那一句「后台还有 N 个在跑」：点了打开后台任务（蓝图「后台任务」第 6 条） */
-.turn-end-jobs { padding: 0; border: 0; background: none; color: var(--text-soft); font: inherit; cursor: pointer; }
+/* 打断的那一轮后面那一句「· 后台仍有 N 个任务在运行」（蓝图「后台任务」第 6 条，点了打开后台任务）：字体、字号、颜色、字距同前面的「已中断」（2026-10-26 项目主人：原来 `text_soft`，看着像另一种字；按钮默认的字距、
+   词距不跟着父元素，照样写 inherit），能点只靠悬停时字亮一档、加下划线 */
+.turn-end-jobs { padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; word-spacing: inherit; cursor: pointer; }
 .turn-end-jobs:hover { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
 
 /* 你的话、她一轮末尾的按钮（said.js，照 Claude 网页端，2026-09-30 项目主人定）：28×28、圆角 8，图标 14px 暗，
