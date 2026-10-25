@@ -62,6 +62,25 @@
 .artifact-workspace > .artifact-main { display: flex; flex: 1; min-height: 0; }
 .artifact-main[hidden] { display: none; }
 .artifact-main > .artifact-view { flex: 1; min-width: 0; }
+/* 左边一列列表、右边一块，列表能收起（`lib/split.js`；放大看的文件修改、展示文件，蓝图「右侧边栏」第 4 条「放大看」，2026-10-26 项目主人）：
+   够宽的在流里推开右边，收起时那一列 0.28 秒缩到 0、列表往左滑出去淡掉（同左栏收起：列表自己的宽不变，字不挤；展开先快后慢，收起先慢后快）；
+   不够宽的浮在右边上面，从左边滑出来、右边一道影（同临时浮出的左栏），不压暗 */
+.artifact-split { position: relative; display: flex; flex: 1; height: 100%; min-width: 0; min-height: 0; overflow: hidden; }
+.artifact-split > :last-child { flex: 1; min-width: 0; min-height: 0; }
+.artifact-split-side { position: relative; display: flex; flex: none; width: 0; min-height: 0; overflow: hidden; transition: width var(--motion-pane) var(--ease-in); }
+.artifact-split-side > * { flex: none; width: 260px; height: 100%; box-sizing: border-box; opacity: 0; transform: translateX(-24px); transition: transform var(--motion-pane) var(--ease-in), opacity var(--motion-pane) var(--ease-in); }
+.artifact-split.is-wide.is-open > .artifact-split-side { width: 260px; transition-timing-function: var(--ease-out); }
+.artifact-split.is-wide.is-open > .artifact-split-side > * { opacity: 1; transform: none; transition-timing-function: var(--ease-out); }
+.artifact-split:not(.is-wide) > .artifact-split-side {
+  position: absolute; top: 0; bottom: 0; left: 0; z-index: 3; width: min(260px, 85%); overflow: visible; background: var(--surface-1); visibility: hidden;
+  transform: translateX(calc(-100% - 16px)); transition: transform var(--motion-pane) var(--ease-in), box-shadow var(--motion-pane) ease, visibility 0s linear var(--motion-pane);
+}
+.artifact-split:not(.is-wide).is-open > .artifact-split-side { box-shadow: var(--side-peek, var(--peek-shadow)); visibility: visible; transform: none; transition: transform var(--motion-pane) var(--ease-out), box-shadow var(--motion-pane) ease; }
+.artifact-split:not(.is-wide) > .artifact-split-side > * { width: 100%; opacity: 1; transform: none; transition: none; }
+/* 宽窄换一档的那一下（不是人点的）、减少动画的：不放动画 */
+.artifact-split.is-instant > .artifact-split-side, .artifact-split.is-instant > .artifact-split-side > * { transition: none; }
+/* 头一行返回箭头旁边那个按钮：收、展左边的列表 */
+.artifact-split-toggle.icon-button { flex: none; }
 .artifact-browse { display: flex; flex: none; flex-direction: column; gap: calc(6px * var(--space)); width: 240px; min-height: 0; box-sizing: border-box; padding: calc(8px * var(--space)); border-right: 1px solid var(--line); }
 .artifact-browse[hidden] { display: none; }
 .artifact-browse-search { flex: none; height: 28px; box-sizing: border-box; padding: 0 calc(10px * var(--space)); border: 0; border-radius: var(--r-8); background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); font: inherit; font-size: calc(12.5px * var(--text-scale)); outline: none; }

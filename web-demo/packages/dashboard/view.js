@@ -8,6 +8,7 @@
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { unfold } from '../../src/lib/motion.js';
 import { jobDuration } from '../../src/lib/format.js';
+import { Split } from '../../src/lib/split.js';
 import { fuzzyFilter } from '../../src/lib/fuzzy.js';
 import { rowsOf, counts, stoppable, todoView, splitPath, diffRows } from './model.js';
 
@@ -98,14 +99,14 @@ export class Dashboard {
     this.list = h('div.dash-list', this.empty);
     this.el = h('div.dash', this.list);
     /**
-     * 点进去看着的那一样：`{kind: 'output', node, from}`（`from` 是从放大看的哪一页点进来的，返回回到那一页）、`{kind: 'diff', index}`、
-     * `{kind: 'big', of}`（放大看）；回来的是 `null` @type {any}
+     * 点进去看着的那一样：`{kind: 'output', node, from}`（`from` 是从放大看的哪一页点进来的，返回回到那一页）、`{kind: 'big', of}`（放大看；
+     * 卡片里点一个文件也是它）；回来的是 `null` @type {any}
      */
     this.viewing = null;
     /**
-     * 放大看的那一页（文件修改、后台任务；蓝图「仪表盘」第 4 条「放大看」）：文件修改左边一列、右边选中的那一个（`pane`，换一个 `seq` 就加一，
-     * 晾着的回应丢掉）；后台任务整页一列（没有 `pane`）
-     * @type {null|{of: 'files'|'tasks', list: HTMLElement, pane: HTMLElement|null, pick: string|null, seq: number, sig: string}}
+     * 放大看的那一页（文件修改、后台任务；蓝图「仪表盘」第 4 条「放大看」）：文件修改左边一列（能收起，`split`）、右边选中的那一个（`pane`，
+     * 换一个 `seq` 就加一，晾着的回应丢掉），头一行右边上一个、下一个；后台任务整页一列（没有 `pane`）
+     * @type {null|{of: 'files'|'tasks', list: HTMLElement, pane: HTMLElement|null, split: Split|null, step: HTMLButtonElement[], pick: string|null, seq: number, sig: string}}
      */
     this.big = null;
     /** 放大看那一列里看不见的行（同 `away`，根是那一列） @type {IntersectionObserver|null} */
@@ -136,8 +137,6 @@ export class Dashboard {
     this.drawFiles();
     this.drawShown();
     if (this.big) this.drawBig();
-    // 看着的后台命令没了、文件没了：回到仪表盘
-    if (this.viewing?.kind === 'diff' && !data.files[this.viewing.index]) this.back();
     this.syncTimer();
   }
 
@@ -390,7 +389,7 @@ export class Dashboard {
     const card = this.cards.files;
     if (!card) return;
     card.show(files.length > 0);
-    const sig = JSON.stringify([files, this.filesOpen, this.viewing?.kind === 'diff' ? this.viewing.index : -1]);
+    const sig = JSON.stringify([files, this.filesOpen]);
     if (sig === this.sigs.files) return;
     this.sigs.files = sig;
     if (!files.length) return;
@@ -404,9 +403,10 @@ export class Dashboard {
     card.head(h('span.dash-count', t('files_count', { count: files.length })), card.gap(),
       h('span.dash-lines', h('span.dash-add', `+${added}`), ' ', h('span.dash-del', `−${removed}`)));
     card.body(
-      shown.map((f, i) => {
+      // 点一个进放大看那一页、选上它（2026-10-26 项目主人：换下一个不用先回到卡片）
+      shown.map((f) => {
         const { name, dir } = splitPath(f.path, where);
-        return h(`button.dash-row.dash-file${f.created ? '.is-created' : ''}`, { type: 'button', title: f.path, onclick: () => this.showDiff(i) },
+        return h(`button.dash-row.dash-file${f.created ? '.is-created' : ''}`, { type: 'button', title: f.path, onclick: () => this.openBig('files', f.path) },
           h('span.dash-kind', icon(f.created ? 'file-plus' : 'file')), h('span.dash-file-name', name), dir ? h('span.dash-file-dir', dir) : null, h('span.dash-gap'),
           h('span.dash-lines', f.added ? h('span.dash-add', `+${f.added}`) : null, f.added && f.removed ? ' ' : null, f.removed ? h('span.dash-del', `−${f.removed}`) : null));
       }),
@@ -498,12 +498,9 @@ export class Dashboard {
         const had = this.viewing;
         this.viewing = null;
         if (had?.kind === 'big') {
+          this.big?.split?.dispose();
           this.big = null;
           this.bigAway?.disconnect();
-        }
-        if (had?.kind === 'diff') {
-          this.sigs.files = '';
-          this.drawFiles();
         }
       },
     });
@@ -587,20 +584,6 @@ export class Dashboard {
     })();
   }
 
-  /** 一个文件的差异：每一次编辑的差异照先后接起来，中间一道细线；右边上一个、下一个文件 @param {number} index */
-  showDiff(index) {
-    const files = this.data.files;
-    const f = files[index];
-    if (!f) return;
-    const body = h('div.dash-diff');
-    const run = this.present({ kind: 'diff', index }, this.diffLead(f),
-      [this.action('arrow-up', 'prev', () => this.showDiff(index - 1), !files[index - 1]), this.action('arrow-down', 'next', () => this.showDiff(index + 1), !files[index + 1])],
-      body);
-    this.sigs.files = '';
-    this.drawFiles();
-    this.diffPane(body, f, () => run === this.run);
-  }
-
   /** 文件那一页头一行：文件图标、文件名、暗字目录、`+n −m` @param {FileChange} f */
   diffLead(f) {
     const { name, dir } = splitPath(f.path, this.on.where());
@@ -609,7 +592,7 @@ export class Dashboard {
   }
 
   /**
-   * 一个文件的差异画进 `body`（点进去看的、放大看右半边的同一块）：每一次编辑取一回（`view.detail`），`alive` 是假了就不画
+   * 一个文件的差异画进 `body`（放大看右半边）：每一次编辑取一回（`view.detail`），`alive` 是假了就不画
    * @param {HTMLElement} body @param {FileChange} f @param {() => boolean} alive
    */
   async diffPane(body, f, alive) {
@@ -633,16 +616,34 @@ export class Dashboard {
 
   /**
    * 点卡片的标题字：打开整张卡的大视图（工作区那么大的一页）。展示文件交给工作区自己（左边一列展示过的、右边预览）；文件修改、后台任务借
-   * 工作区的框画：文件修改左边一列、右边先选上第一个；后台任务整页一列（2026-10-26 项目主人：只是用更大的地方列后台任务）。
-   * @param {'files'|'tasks'|'shown'} of
+   * 工作区的框画：文件修改左边一列（能收起，`lib/split.js`）、右边选上 `pick`（卡片里点的那一个；点标题的选第一个）；后台任务整页一列
+   * （2026-10-26 项目主人：只是用更大的地方列后台任务）。文件修改那一页开着的就地换选中的。
+   * @param {'files'|'tasks'|'shown'} of @param {string|null} [pick]
    */
-  openBig(of) {
-    if (of === 'shown') return this.on.browse();
+  openBig(of, pick = null) {
+    if (of === 'shown') return this.on.browse(pick);
+    if (of === 'files' && this.big?.of === 'files' && this.viewing?.kind === 'big') return this.pickBig(pick ?? this.big.pick);
     const list = h('div.dash-big-list');
-    const pane = of === 'files' ? h('div.dash-big-pane') : null;
-    this.big = { of, list, pane, pick: null, seq: 0, sig: '' };
-    this.present({ kind: 'big', of }, [h('strong.dash-big-title', this.t(of))], [], h(`div.dash-big.is-${of}`, list, pane));
+    if (of === 'tasks') {
+      this.big = { of, list, pane: null, split: null, step: [], pick: null, seq: 0, sig: '' };
+      this.present({ kind: 'big', of }, [h('strong.dash-big-title', this.t(of))], [], h('div.dash-big.is-tasks', list));
+      this.drawBig();
+      return;
+    }
+    const pane = h('div.dash-big-pane');
+    const split = new Split(list, pane, { show: this.t('list_show'), hide: this.t('list_hide') });
+    const step = [this.action('arrow-up', 'prev', () => this.stepBig(-1)), this.action('arrow-down', 'next', () => this.stepBig(1))];
+    this.big = { of, list, pane, split, step, pick, seq: 0, sig: '' };
+    this.present({ kind: 'big', of }, [split.button, h('strong.dash-big-title', this.t(of))], step, h('div.dash-big.is-files', split.el));
     this.drawBig();
+  }
+
+  /** 文件修改那一页换上一个、下一个 @param {number} by */
+  stepBig(by) {
+    const files = this.data.files;
+    const at = files.findIndex((f) => f.path === this.big?.pick);
+    const to = files[at + by];
+    if (to) this.pickBig(to.path);
   }
 
   /** 返回箭头：从放大看那一页点进来的回到那一页（交回 `true`）；别的不管（回到卡片由外面做） */
@@ -668,10 +669,15 @@ export class Dashboard {
       const where = this.on.where();
       replace(big.list, files.length ? files.map((f) => {
         const { name, dir } = splitPath(f.path, where);
-        return h(`button.dash-row.dash-file${f.created ? '.is-created' : ''}${f.path === big.pick ? '.is-picked' : ''}`, { type: 'button', title: f.path, onclick: () => this.pickBig(f.path) },
+        const pick = () => { this.pickBig(f.path); big.split?.picked(); };
+        return h(`button.dash-row.dash-file${f.created ? '.is-created' : ''}${f.path === big.pick ? '.is-picked' : ''}`, { type: 'button', title: f.path, onclick: pick },
           h('span.dash-kind', icon(f.created ? 'file-plus' : 'file')), h('span.dash-file-name', name), dir ? h('span.dash-file-dir', dir) : null, h('span.dash-gap'),
           h('span.dash-lines', f.added ? h('span.dash-add', `+${f.added}`) : null, f.added && f.removed ? ' ' : null, f.removed ? h('span.dash-del', `−${f.removed}`) : null));
       }) : h('p.dash-big-none', this.t('empty_files')));
+      // 选中的那一个滚进列表里看得见的地方（卡片里点的可能在很下面）；上一个、下一个到头了灰着
+      big.list.querySelector('.is-picked')?.scrollIntoView({ block: 'nearest' });
+      const at = files.findIndex((f) => f.path === big.pick);
+      big.step.forEach((b, i) => { b.disabled = !files[at + (i ? 1 : -1)]; });
       return;
     }
     // 后台任务：一列完整的树，不收兄弟（「(N)」不出），做完的也列在后面；照样能展开、收起有子任务的那一行。点子代理同卡片（主区进那个会话），

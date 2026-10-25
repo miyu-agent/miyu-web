@@ -200,8 +200,8 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; us
 /* 卡片标题字能点（放大看）：悬停下划线、指针变手 */
 .dash-title.is-link { cursor: pointer; border-radius: var(--r-4); }
 .dash-title.is-link:hover, .dash-title.is-link:focus-visible { outline: none; text-decoration: underline; text-underline-offset: 3px; }
-/* 放大看那一页（蓝图「仪表盘」第 4 条「放大看」）：左边一列 260px（同卡片的一行），右边选中的那一样；两边各自滚 */
-.dash-big { display: grid; grid-template-columns: 260px minmax(0, 1fr); height: 100%; min-height: 0; color: var(--text); font-family: var(--font-ui); }
+/* 放大看那一页（蓝图「仪表盘」第 4 条「放大看」）：文件修改左边一列 260px（同卡片的一行，能收起：外面那一层 `.artifact-split` 在 styles/artifacts.css），右边选中的那一个；两边各自滚 */
+.dash-big { display: flex; height: 100%; min-height: 0; color: var(--text); font-family: var(--font-ui); }
 .dash-big-title { font-size: calc(13.5px * var(--text-scale)); font-weight: 600; }
 .dash-big-list { min-height: 0; overflow-y: auto; padding: calc(6px * var(--space)) 0; border-right: 1px solid var(--line); scrollbar-width: thin; }
 .dash-big-list .dash-row.is-picked { background: color-mix(in srgb, var(--accent) 12%, transparent); }

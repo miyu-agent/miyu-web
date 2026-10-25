@@ -6989,5 +6989,23 @@
     "select": [
       ".dash-title.is-link"
     ]
+  },
+  "artifacts.split": {
+    "zh": "预览工作区：放大看里左边一列列表、右边一块的外面一层（列表能收起）",
+    "select": [
+      ".artifact-split"
+    ]
+  },
+  "artifacts.split-side": {
+    "zh": "预览工作区：放大看里左边那一列（收起时缩到 0，窄的时候浮在上面）",
+    "select": [
+      ".artifact-split-side"
+    ]
+  },
+  "artifacts.split-toggle": {
+    "zh": "预览工作区：头一行返回箭头旁边收、展左边列表的按钮",
+    "select": [
+      ".artifact-split-toggle"
+    ]
   }
 }
