@@ -376,7 +376,7 @@
 .setup-menu-row.is-wrap .setup-menu-title { overflow: visible; white-space: normal; overflow-wrap: anywhere; line-height: 1.45; }
 /* 会话编号那一行：等宽暗字，悬停亮一档（点了复制） */
 .setup-menu-row.is-mono .setup-menu-title { color: var(--text-faint); font: calc(11.5px * var(--text-scale)) var(--font-mono); }
-.setup-menu-row.is-mono.is-active .setup-menu-title, .setup-menu-row.is-mono:hover .setup-menu-title { color: var(--text-soft); }
+.setup-menu-row.is-mono.is-selected .setup-menu-title { color: var(--text-soft); }
 .setup-menu-row.is-pair { max-width: 420px; }
 .setup-menu-action.is-inline { flex: none; align-self: center; margin: calc(-4px * var(--space)) calc(-4px * var(--space)) calc(-4px * var(--space)) calc(4px * var(--space)); }
 /* 问一句的一屏（会话中途换人格、预设前的确认） */

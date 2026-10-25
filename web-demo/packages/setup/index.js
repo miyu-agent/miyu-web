@@ -222,7 +222,7 @@ export function apply(ctx) {
   }, icon('folder'), h('span', p.name));
 
   /**
-   * 点标题出的卡片「会话信息」（2026-10-19 项目主人：只要信息、不要图标）：最上面一行会话编号（等宽暗字，点了复制，卡片不收；2026-10-26 项目主人：
+   * 点标题出的卡片「会话信息」（2026-10-19 项目主人：只要信息、不要图标）：最上面一行会话编号（等宽暗字，只用鼠标点，点了复制，卡片不收；2026-10-26 项目主人：
    * 右栏的会话信息卡删了，编号挪到这里），再三行一样高，左边暗字、右边值——人格、预设（点了翻到换人格、换预设的那一页，会话
    * 中途换，核心 P-13；人格那一行末尾一个铅笔开它的编辑卡片）、工作区（完整路径，长的换行写全；行末一个文件夹图标，点了直接开系统的选目录对话框换工作区）。
    * @param {HTMLElement} anchor @param {string} session @param {string|null} persona @param {string|null} preset @param {string} path
@@ -243,7 +243,8 @@ export function apply(ctx) {
       below: true,
       card: session,
       rows: [
-        { label: t('info.id'), title: session, tip: session, mono: true, keep: true, pick: () => copyId(session) },
+        // 编号只用鼠标点：打开时键盘停在人格那一行，Enter 照旧翻到换人格（2026-10-26 项目主人）
+        { label: t('info.id'), title: session, tip: session, mono: true, mouse: true, keep: true, pick: () => copyId(session) },
         {
           label: t('info.persona'), title: persona ? nameOf(persona) : t('no_persona'), more: !!catalog.personas, keep: true,
           pick: () => { if (catalog.personas) switchPersona(anchor, session, persona, back); },
