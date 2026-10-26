@@ -155,3 +155,12 @@ test('预设的功能分五段：功能、MCP 服务、脚本、技能、斜杠�
   assert.deepEqual(featureGroups([{ id: 'web' }]).map((g) => g.group), ['feature'], '只有包的功能：只一段');
   assert.deepEqual(featureGroups([]), []);
 });
+
+test('核心 ENV-1 起功能照包分组：包照第一次出现的先后、一个功能也一组；~home 排在包后面；没归包的接在最后照五段，「功能」那段叫 other', () => {
+  const list = [
+    { id: 'env-time', package: 'env' }, { id: 'read', package: 'read' }, { id: 'skill-notes', package: 'kit' }, { id: 'env-profile', package: 'env' },
+    { id: 'script-mine', package: '~home' }, { id: 'skill-loose' }, { id: 'gone', installed: false }, { id: 'mcp-x', package: '~home' },
+  ];
+  assert.deepEqual(featureGroups(list).map((g) => `${g.group}${g.package ? `(${g.package})` : ''}:${g.items.map((f) => f.id).join(',')}`),
+    ['package(env):env-time,env-profile', 'package(read):read', 'package(kit):skill-notes', 'home:script-mine,mcp-x', 'other:gone', 'skill:skill-loose']);
+});

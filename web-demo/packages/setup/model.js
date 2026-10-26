@@ -176,16 +176,37 @@ export function personaSave(before, after) {
  * `command-<名字>`），别的是包的功能。 */
 const FEATURE_GROUPS = /** @type {const} */ ([['mcp', 'mcp-'], ['script', 'script-'], ['skill', 'skill-'], ['command', 'command-']]);
 
+/** 机主私人的脚本、MCP 服务、模板命令归的「包」（核心 ENV-1） */
+export const HOME_PACKAGE = '~home';
+
 /**
- * 预设的功能分成五段：功能、MCP 服务、脚本、技能（2026-10-12 项目主人定），斜杠命令（2026-10-15 项目主人定）；段里照核心给的先后，
- * 空的段不要。
- * @template {{id: string}} F
+ * 预设的功能怎么分组。核心 ENV-1 起功能带 `package`：照包分组（项目主人：开关挂在包名下面），包照第一次出现的先后，`~home` 一组
+ * （`home`）排在包后面，一个功能的包也是一组；没有 `package` 的（不归包的技能、没装的）接在最后照五段分，这时「功能」那一段叫 `other`。
+ * 旧核心一个都没带 `package` 的分成五段：功能、MCP 服务、脚本、技能（2026-10-12 项目主人定），斜杠命令（2026-10-15 项目主人定）。
+ * 组里照核心的先后，空的不要。
+ * @template {{id: string, package?: string}} F
  * @param {F[]} list `preset.get` 的 `features`
- * @returns {{group: 'feature'|'mcp'|'script'|'skill'|'command', items: F[]}[]}
+ * @returns {{group: 'package'|'home'|'feature'|'other'|'mcp'|'script'|'skill'|'command', package?: string, items: F[]}[]}
  */
 export function featureGroups(list) {
+  const owned = (/** @type {F} */ f) => typeof f.package === 'string' && f.package !== '';
   const of = (/** @type {F} */ f) => FEATURE_GROUPS.find(([, prefix]) => String(f.id).startsWith(prefix))?.[0] ?? 'feature';
-  return /** @type {const} */ (['feature', 'mcp', 'script', 'skill', 'command'])
-    .map((group) => ({ group, items: list.filter((f) => of(f) === group) }))
+  const packaged = list.some(owned);
+  const kinds = /** @type {const} */ (['feature', 'mcp', 'script', 'skill', 'command'])
+    .map((kind) => ({ group: packaged && kind === 'feature' ? /** @type {const} */ ('other') : kind, items: list.filter((f) => !owned(f) && of(f) === kind) }))
     .filter((g) => g.items.length);
+  if (!packaged) return kinds;
+  /** @type {Map<string, F[]>} */
+  const byPackage = new Map();
+  for (const f of list) {
+    if (!owned(f) || f.package === HOME_PACKAGE) continue;
+    const id = /** @type {string} */ (f.package);
+    byPackage.set(id, [...(byPackage.get(id) ?? []), f]);
+  }
+  const home = list.filter((f) => f.package === HOME_PACKAGE);
+  return [
+    ...[...byPackage].map(([id, items]) => ({ group: /** @type {const} */ ('package'), package: id, items })),
+    ...(home.length ? [{ group: /** @type {const} */ ('home'), items: home }] : []),
+    ...kinds,
+  ];
 }

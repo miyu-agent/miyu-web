@@ -28,11 +28,19 @@ export class PresetEditor {
     this.body = h('div.setup-editor', h('p.setup-empty', this.t('page.loading')));
     /** 选图标的那一排开着 */
     this.picking = false;
+    /** 包编号 → 包名（`package.list`） @type {Map<string, string>} */
+    this.packageNames = new Map();
   }
 
   async load() {
     try {
-      this.draw(await this.ctx.core.request('preset.get', { preset: this.id }));
+      // 包名（功能照包分组的组名，核心 ENV-1）：读不到的写编号
+      const [got, packages] = await Promise.all([
+        this.ctx.core.request('preset.get', { preset: this.id }),
+        this.ctx.core.request('package.list', {}).then((/** @type {any} */ r) => r?.packages ?? [], () => []),
+      ]);
+      this.packageNames = new Map(packages.filter((/** @type {any} */ p) => p?.package && p.name).map((/** @type {any} */ p) => [p.package, p.name]));
+      this.draw(got);
     } catch (err) {
       replace(this.body, h('p.setup-error', refusalText(err)));
     }
@@ -65,9 +73,14 @@ export class PresetEditor {
     const list = Array.isArray(got.features) ? got.features : [];
     /** 没列出来的功能默认开不开：`on` 的预设才照全局开关（核心 X-27） */
     this.unlisted = got.unlisted;
-    // 分四段：功能、MCP 服务、脚本、技能（2026-10-12 项目主人），空的段不出；包的功能那一段不写小标题（左边这一格就叫「功能」，
+    // 照包分组、组名是包名（核心 ENV-1，`featureGroups`）；旧核心分五段，包的功能那一段不写小标题（左边这一格就叫「功能」，
     // 写了上下两个「功能」挨着），别的各一个
-    const features = h('div.setup-features', featureGroups(list).map((g) => [g.group === 'feature' ? null : h('div.setup-feature-group', t(`edit.feature_groups.${g.group}`)), g.items.map((f) => this.featureRow(f))]));
+    const groupName = (/** @type {{group: string, package?: string}} */ g) => (g.group === 'feature' ? null
+      : g.group === 'package' ? this.packageNames.get(/** @type {string} */ (g.package)) ?? g.package : t(`edit.feature_groups.${g.group}`));
+    const features = h('div.setup-features', featureGroups(list).map((g) => {
+      const name = groupName(g);
+      return [name ? h('div.setup-feature-group', name) : null, g.items.map((f) => this.featureRow(f))];
+    }));
     this.note = h('p.setup-error', { hidden: true });
     const remove = got.remove ? askFirst(this.kit, t(`edit.${got.remove}`), () => t(`edit.${got.remove}_ask`, { name: this.title.textContent || this.id }), () => this.drop()) : null;
     replace(this.body,
