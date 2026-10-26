@@ -53,6 +53,19 @@ test('摊行：做完的顶层收成最后一行「✓ (N)」，开着的接着�
   assert.equal(shut[0].type === 'task' && shut[0].open, false);
 });
 
+test('做完的子代理还有在跑的孩子：照常列在上面，不收进「已完成」；孩子都结束了才收（2026-10-26 项目主人）', () => {
+  const statuses = {
+    main: { jobs: [job('j1', 'agent', 'done', { session: 's1' }), job('j2', 'agent', 'done', { session: 's2' }), job('j3', 'command', 'done')] },
+    s1: { jobs: [job('j1', 'command', 'running')] },
+    s2: { jobs: [job('j1', 'command', 'done')] },
+  };
+  const tree = taskTree('main', statuses.main, (id) => statuses[id] ?? null);
+  const rows = rowsOf(tree, { doneOpen: false });
+  assert.deepEqual(rows.map((r) => (r.type === 'task' ? `${r.node.job}@${r.depth}:${r.node.state}` : `${r.type}${r.type === 'done' ? r.count : ''}`)),
+    ['j1@0:done', 'j1@1:running', 'done2'], 'j1 自己做完了、孩子还在跑：列在上面；j2（孩子也结束了）、j3 收起来');
+  assert.deepEqual(counts(tree).running, 1);
+});
+
 test('文件修改：做成了的、带 diff 的工具步按文件归在一起（先改的在前），新建的认出来；撤掉的、没做成的、没路径的不算', () => {
   const entries = [
     { kind: 'tool', call: 'c1', state: 'ok', args: '{"file_path":"/w/a.js"}', diff: { added: 3, removed: 1 } },

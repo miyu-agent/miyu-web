@@ -11,6 +11,11 @@ import { tasksFromStatus } from '../../src/lib/jobs.js';
 
 /** 在跑的（停在半路等人说话的也算） @param {Node} x */
 export const live = (x) => x.state === 'running' || x.state === 'paused' || !!x.attention;
+/**
+ * 一个任务连同它下面的都结束了（收进「已完成」照这个：子代理做完了、它起的后台命令还在跑的不算，2026-10-26 项目主人）
+ * @param {{state: string, attention?: any, kids?: any[]}} x @returns {boolean}
+ */
+export const settled = (x) => !live(x) && (x.kids ?? []).every(settled);
 
 /** 一个会话的会话状态里在等人的：确认在前 @param {any} status @returns {'confirm'|'ask'|null} */
 export function attentionOf(status) {
@@ -95,11 +100,12 @@ export function rowsOf(tree, { collapsed = new Set(), expanded = new Set(), done
     });
     if (fold) {
       const rest = list.slice(SIBLINGS_SHOWN);
-      out.push({ type: 'more', parent, depth, guides, count: rest.length, running: rest.some(live) });
+      out.push({ type: 'more', parent, depth, guides, count: rest.length, running: rest.some((x) => !settled(x)) });
     } else if (many) out.push({ type: 'less', parent, depth, guides });
   };
-  const top = tree.filter(live);
-  const done = tree.filter((x) => !live(x));
+  // 它和它下面的都结束了才收进「已完成」：做完的子代理还有在跑的孩子的照常列在上面
+  const top = tree.filter((x) => !settled(x));
+  const done = tree.filter(settled);
   walk(top, 0, [], '');
   if (done.length) {
     out.push({ type: 'done', count: done.length, open: doneOpen });
