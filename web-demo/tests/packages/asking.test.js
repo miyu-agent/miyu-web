@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { openAsk, openApproval, press, saveEdit, approvalHead, report, pendingFromStatus, reportOf, multiReady, submitMulti, withReason } from '../../packages/asking/model.js';
+import { openAsk, openApproval, press, saveEdit, approvalHead, report, pendingFromStatus, reportOf, multiReady, submitMulti, withReason, askKey, answerParams } from '../../packages/asking/model.js';
 
 const fake = JSON.parse(readFileSync(new URL('../fixtures/asking.json', import.meta.url), 'utf8'));
 const ask = (id) => fake.asks.find((a) => a.body.call_id === id);
@@ -130,6 +130,24 @@ test('还没了结的：会话状态的 waiting 照先后开；提问照那一�
   assert.deepEqual(pendingFromStatus(waiting(approve), entries).at(0)?.questions[0].options.map((o) => o.decision), ['once', 'session', 'deny'], '工作区那一项核心还不收');
   const bare = [{ ...entries[0], approval: { access: 'write' } }];
   assert.deepEqual(pendingFromStatus(waiting(approve), bare).at(0)?.questions[0].options.map((o) => o.decision), ['once', 'deny'], '没提规则的两项');
+});
+
+test('脚本里调的确认（核心 M-7 上；BS-1中上 起装包在命令里跑 miyu pkg）：答的时候带 nested、call 是那次 shell 的；同一次 shell 先后问的两件认成两问；装包卡片照旧认得出', () => {
+  const preview = { package: 'notes', version: '0.2.0', skills: ['notes'] };
+  const shell = (nested) => ({ id: 'b80.0', kind: 'tool', name: 'shell', call: 'c5', state: 'running', args: '{"command":"miyu pkg install ./notes"}',
+    approval: { access: 'install', nested, detail: { tool: 'package', install: '/home/u/notes', preview } } });
+  const waiting = (w) => ({ state: 'running', waiting: [w] });
+  const first = pendingFromStatus(waiting({ what: 'approve', entry: 'b80.0', call: 'c5', nested: 2 }), [shell(2)])[0];
+  assert.equal(first.id, 'c5');
+  assert.deepEqual(answerParams('s1', first, { decision: 'once' }), { session: 's1', call: 'c5', nested: 2, decision: 'once' });
+  const second = pendingFromStatus(waiting({ what: 'approve', entry: 'b80.0', call: 'c5', nested: 3 }), [shell(3)])[0];
+  assert.notEqual(askKey('s1', first), askKey('s1', second), '答了第一件，第二件跟着来时照样开');
+  // waiting 那一项没写的照那一步的 approval；都没有的不带（旧核心、直接调的）
+  assert.equal(pendingFromStatus(waiting({ what: 'approve', entry: 'b80.0', call: 'c5' }), [shell(4)])[0].body.nested, 4);
+  const plain = pendingFromStatus(waiting({ what: 'approve', entry: 'b80.0', call: 'c5' }), [shell(undefined)])[0];
+  assert.deepEqual(answerParams('s1', plain, { decision: 'deny' }), { session: 's1', call: 'c5', decision: 'deny' });
+  assert.equal(askKey('s1', plain), 's1 c5');
+  assert.equal(approvalHead(first.body, '/home/u', (k, f) => `${k}${f?.id ? `:${f.id}` : ''}`).plan?.title, 'plan.install:notes 0.2.0', '装包卡片照 detail.tool 认');
 });
 
 test('留下的照了结的那一条和问的那一条算：答了的卡片（题目照问的那一条）、确认了的（允许、不允许）都不留、问过没答就取消的一行', () => {

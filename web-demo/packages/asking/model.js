@@ -251,7 +251,9 @@ export function pendingFromStatus(status, entries) {
   for (const w of status?.waiting ?? []) {
     const e = byId.get(w.entry);
     if (w.what === 'approve') {
-      if (e?.approval) out.push(openApproval({ body: { call_id: w.call, ...e.approval } }));
+      // 脚本里调的（核心 M-7 上；BS-1中上 起装包走这条）：`waiting` 那一项和父 `shell` 那一步的 `approval` 带 `nested`，答的时候带上
+      const nested = Number.isInteger(w.nested) ? w.nested : e?.approval?.nested;
+      if (e?.approval) out.push(openApproval({ body: { call_id: w.call, ...e.approval, ...(Number.isInteger(nested) ? { nested } : {}) } }));
       continue;
     }
     let questions = [];
@@ -264,6 +266,18 @@ export function pendingFromStatus(status, entries) {
   }
   return out;
 }
+
+/**
+ * 一问认成哪一个：会话、调用编号，脚本里调的再加 `nested`（同一次 `shell` 先后问的几件是不同的几问）。
+ * @param {string|null} session @param {{id: string, body?: any}} d
+ */
+export const askKey = (session, d) => `${session ?? ''} ${d.id}${Number.isInteger(d.body?.nested) ? `#${d.body.nested}` : ''}`;
+
+/**
+ * 交给 `session.answer` 的参数（蓝图「确认和提问」第 5 条）：会话、调用编号、脚本里调的带 `nested`，再接回答。
+ * @param {string|null} session @param {{id: string, body?: any}} d @param {Record<string, any>} answer
+ */
+export const answerParams = (session, d, answer) => ({ session, call: d.id, ...(Number.isInteger(d.body?.nested) ? { nested: d.body.nested } : {}), ...answer });
 
 /**
  * 了结以后留下的（蓝图「确认和提问」第 6 条）：正文那一层在了结的那一条事件处放一条（`slot: 'asking'`），带着问的那一条；这里算留什么：

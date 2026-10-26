@@ -6,7 +6,7 @@
 
 import { Drawer } from './drawer.js';
 import { Reports } from './report.js';
-import { pendingFromStatus, reportOf } from './model.js';
+import { pendingFromStatus, reportOf, askKey, answerParams } from './model.js';
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -21,9 +21,9 @@ export function apply(ctx) {
       return got ? reports.node(got, how.fresh) : document.createElement('div');
     },
   });
-  /** 答了、取消了，等核心回应的调用：这时不再开。调用编号只在一个会话里唯一（换个会话从头编），照「会话 + 调用」认 */
+  /** 答了、取消了，等核心回应的调用：这时不再开。调用编号只在一个会话里唯一（换个会话从头编），照「会话 + 调用」认，脚本里调的再加 `nested`（`askKey`） */
   const answering = new Set();
-  const keyOf = (/** @type {string|null} */ session, /** @type {string} */ call) => `${session ?? ''} ${call}`;
+  const keyOf = askKey;
   /**
    * 取消了的（打断这一轮）：打断的回应比会话状态先到，那一下状态里还在等这一问，照它会再开一下、马上又收（框弹一下；2026-10-20 项目主人：点取消以后
    * 收起会弹）。取消了的一直不再开，状态里没有它了再忘掉。
@@ -53,23 +53,23 @@ export function apply(ctx) {
 
   /** 答了发 `session.answer`，取消打断这一轮（核心把在等的这一问记成取消）；拒了写一句（别处先答了的不写）。 */
   const send = async (session, d, result) => {
-    answering.add(keyOf(session, d.id));
+    answering.add(keyOf(session, d));
     try {
       if ('cancelled' in result) {
-        cancelled.add(keyOf(session, d.id));
+        cancelled.add(keyOf(session, d));
         await ctx.chat.interrupt();
       }
       else {
         const answer = result.kind === 'approve'
           ? { decision: result.decision, ...(result.reason ? { reason: result.reason } : {}) }
           : { answers: result.answers };
-        await ctx.core.request('session.answer', { session, call: d.id, ...answer });
-        answered.add(keyOf(session, d.id));
+        await ctx.core.request('session.answer', answerParams(session, d, answer));
+        answered.add(keyOf(session, d));
       }
     } catch (err) {
       if (err?.reason !== 'not_asking') ctx.composer.say(err?.message ?? String(err));
     } finally {
-      answering.delete(keyOf(session, d.id));
+      answering.delete(keyOf(session, d));
       // 核心先推后回应：这时会话状态已经不等这一问了；拒了的照会话状态还在等，再开
       if (view) sync(view);
     }
@@ -82,7 +82,7 @@ export function apply(ctx) {
   const next = () => {
     if (drawer.open) return;
     const real = view ? pending(view).find((/** @type {any} */ d) => {
-      const key = keyOf(view?.session ?? null, d.id);
+      const key = keyOf(view?.session ?? null, d);
       return !answering.has(key) && !cancelled.has(key) && !answered.has(key);
     }) : null;
     if (!real) return;
@@ -98,11 +98,11 @@ export function apply(ctx) {
   const sync = (/** @type {{session: string|null, status: any, entries: any[]}} */ v) => {
     view = v;
     // 取消了的、状态里已经没有了的忘掉（只看正在看的这个会话的）
-    const waiting = new Set(pending(v).map((/** @type {any} */ d) => keyOf(v.session, d.id)));
+    const waiting = new Set(pending(v).map((/** @type {any} */ d) => keyOf(v.session, d)));
     for (const k of cancelled) if (k.startsWith(`${v.session ?? ''} `) && !waiting.has(k)) cancelled.delete(k);
     for (const k of answered) if (k.startsWith(`${v.session ?? ''} `) && !waiting.has(k)) answered.delete(k);
     if (showing) {
-      const still = showing.session === v.session && pending(v).some((/** @type {any} */ d) => d.id === showing?.d.id);
+      const still = showing.session === v.session && pending(v).some((/** @type {any} */ d) => showing && keyOf(null, d) === keyOf(null, showing.d));
       if (!still) {
         showing = null;
         ctx.composer.takeover(false);
