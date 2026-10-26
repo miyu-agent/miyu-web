@@ -3,7 +3,8 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { scaledParts, bar, share, toneOf, useRows, partsMinus } from '../src/lib/context.js';
+import { scaledParts, bar, share, toneOf, useRows, partsMinus, costOf } from '../src/lib/context.js';
+import { costText } from '../src/lib/cost.js';
 import { previewPart } from '../src/model/footer.js';
 import { loadRes } from './support.js';
 
@@ -67,6 +68,18 @@ test('用途：不认得的归 other、加起来，照 token 从多到少排，0
   ]);
   assert.deepEqual(rows.map((r) => [r.use, r.tokens]), [['compaction', 900], ['main', 500], ['other', 50]]);
   assert.deepEqual(rows[2].amounts, [{ currency: 'USD', amount: 0.03 }]);
+});
+
+test('用途归到一起时换算成的也加在一起，没换成的、没换算的并在后面（核心 UC-1，2026-10-26 项目主人）', () => {
+  const u = (n) => ({ uncached: n, cache_read: 0, cache_write: 0, output: 0 });
+  const rows = useRows([
+    { use: 'main', usage: u(500), amounts: [{ currency: 'USD', amount: 1 }], converted: { currency: 'CNY', amount: 7.1 } },
+    { use: 'main', usage: u(100), amounts: [{ currency: 'EUR', amount: 1 }], converted: { currency: 'CNY', amount: 0, rest: [{ currency: 'EUR', amount: 1 }] } },
+    { use: 'title', usage: u(10), amounts: [{ currency: 'USD', amount: 0.01 }] },
+  ]);
+  assert.deepEqual(rows[0].converted, { currency: 'CNY', amount: 7.1, rest: [{ currency: 'EUR', amount: 1 }] });
+  assert.equal(rows[1].converted, undefined, '没换算的那一用途照旧只有 amounts');
+  assert.equal(costText(costOf(rows)), '¥7.10 + €1.00 + $0.01', '合计：换算成的在前，没换成的照币种接在后面');
 });
 
 test('新会话的上下文那一格照预览写，写法同开了的；没有数的不写', () => {

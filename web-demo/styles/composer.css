@@ -304,6 +304,10 @@
 .ctx-row-n { flex: none; font: calc(12.5px * var(--text-scale)) var(--font-mono); }
 .ctx-row-pct { flex: none; min-width: 3.6em; color: var(--text-faint); font: calc(11.5px * var(--text-scale)) var(--font-mono); text-align: right; }
 .ctx-pop-foot-row { display: flex; align-items: center; justify-content: space-between; gap: calc(8px * var(--space)); }
+/* 累计浮窗最下面的汇率来源（核心 UC-1：用到兜底源时才有） */
+.ctx-pop-rates { margin: calc(6px * var(--space)) 0 0; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
+.ctx-pop-rates a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.ctx-pop-rates a:hover { color: var(--text-soft); }
 .ctx-pop-link { display: inline-flex; align-items: center; gap: 2px; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; }
 .ctx-pop-link:hover { text-decoration: underline; }
 .ctx-pop-link .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); }

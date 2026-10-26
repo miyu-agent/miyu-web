@@ -497,6 +497,7 @@
     "usage_title": "本会话累计",
     "no_usage": "还没有用量",
     "with_subagents": "含子代理",
+    "rates_from": "汇率来自 {name}",
     "use": {
       "main": "主会话",
       "compaction": "压缩",

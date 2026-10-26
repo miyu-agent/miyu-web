@@ -2,6 +2,8 @@
 //! 上下文明细、累计按用途（蓝图 `web.md`「上下文明细、累计按用途」第 3、4 条）的纯逻辑：照核心 `session.context` 的回应摊数、
 //! 横条一块多宽；照 `usage.query` 按 `use` 分的行排用途。界面在 `ui/context-pop.js`；右侧边栏的「会话信息」卡（软件包 `setup`）也照它画上下文的横条，所以放在 `lib`（软件包只能用 `lib`）。
 
+import { addCosts } from './cost.js';
+
 /**
  * @typedef {{part: string, label: string, tokens: number, tone?: string, children?: Part[]}} Part
  *   `tone` 是自己定的颜色（累计那一个里的用途），不写的照 `part` 认
@@ -79,29 +81,29 @@ export const USE_TONES = /** @type {Record<string, string>} */ ({
 
 /**
  * @typedef {{uncached: number, cache_read: number, cache_write: number, output: number}} Usage
- * @typedef {{use: string, tokens: number, requests: number, unpriced: number, usage: Usage, amounts: {currency: string, amount: number}[]}} UseRow
+ * @typedef {{use: string, tokens: number, requests: number, unpriced: number, usage: Usage, amounts: {currency: string, amount: number}[], converted?: import('./cost.js').Converted}} UseRow
  */
 
 /**
- * 按用途的几行：照 `use` 归好（不认得的归 `other`）、加起来（请求、四项用量、没价格的次数、花费照币种），照 token 从多到少排，0 的不要。
+ * 按用途的几行：照 `use` 归好（不认得的归 `other`）、加起来（请求、四项用量、没价格的次数、花费照币种，换算成的加在一起：`cost.js` 的
+ * `addCosts`，核心 UC-1），照 token 从多到少排，0 的不要。
  * @param {any[]} rows `usage.query` 的 `rows`
  * @returns {UseRow[]}
  */
 export function useRows(rows) {
-  /** @type {Map<string, {use: string, requests: number, unpriced: number, usage: Usage, amounts: Map<string, number>}>} */
+  /** @type {Map<string, {use: string, requests: number, unpriced: number, usage: Usage, raw: any[]}>} */
   const by = new Map();
   for (const r of rows ?? []) {
     const use = USES.includes(r.use) ? r.use : 'other';
-    const x = by.get(use) ?? { use, requests: 0, unpriced: 0, usage: { uncached: 0, cache_read: 0, cache_write: 0, output: 0 }, amounts: new Map() };
+    const x = by.get(use) ?? { use, requests: 0, unpriced: 0, usage: { uncached: 0, cache_read: 0, cache_write: 0, output: 0 }, raw: [] };
     x.requests += r.requests ?? 0;
     x.unpriced += r.unpriced ?? 0;
     for (const k of /** @type {(keyof Usage)[]} */ (['uncached', 'cache_read', 'cache_write', 'output'])) x.usage[k] += r.usage?.[k] ?? 0;
-    for (const a of r.amounts ?? []) x.amounts.set(a.currency, (x.amounts.get(a.currency) ?? 0) + a.amount);
+    x.raw.push(r);
     by.set(use, x);
   }
   return [...by.values()]
-    .map((x) => ({ use: x.use, tokens: inputOf(x.usage) + x.usage.output, requests: x.requests, unpriced: x.unpriced, usage: x.usage,
-      amounts: [...x.amounts].map(([currency, amount]) => ({ currency, amount })) }))
+    .map((x) => ({ use: x.use, tokens: inputOf(x.usage) + x.usage.output, requests: x.requests, unpriced: x.unpriced, usage: x.usage, ...addCosts(x.raw) }))
     .filter((x) => x.tokens > 0)
     .sort((a, b) => b.tokens - a.tokens);
 }
@@ -109,10 +111,5 @@ export function useRows(rows) {
 /** 输入：没命中的、命中的、写缓存的 @param {Usage} u */
 export const inputOf = (u) => u.uncached + u.cache_read + u.cache_write;
 
-/** 几行的花费照币种加起来 @param {UseRow[]} rows */
-export function costOf(rows) {
-  /** @type {Map<string, number>} */
-  const all = new Map();
-  for (const x of rows) for (const a of x.amounts) all.set(a.currency, (all.get(a.currency) ?? 0) + a.amount);
-  return [...all].map(([currency, amount]) => ({ currency, amount }));
-}
+/** 几行的花费加起来：照币种各加各的，换算成的加在一起（`cost.js` 的 `addCosts`） @param {UseRow[]} rows */
+export const costOf = (rows) => addCosts(rows);

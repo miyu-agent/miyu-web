@@ -6941,5 +6941,17 @@
     "select": [
       ".use-rates a"
     ]
+  },
+  "composer.ctx-pop-rates": {
+    "zh": "累计浮窗：最下面一行小字「汇率来自 …」（用到兜底汇率源时）",
+    "select": [
+      ".ctx-pop-rates"
+    ]
+  },
+  "composer.ctx-pop-rates-link": {
+    "zh": "累计浮窗：来源那一行里的链接",
+    "select": [
+      ".ctx-pop-rates a"
+    ]
   }
 }

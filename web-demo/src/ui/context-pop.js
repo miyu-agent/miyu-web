@@ -6,7 +6,8 @@
 import { h, icon, replace, scaleOf } from './dom.js';
 import { show, hide, unfold } from '../lib/motion.js';
 import { t } from '../util/res.js';
-import { short, money } from '../lib/format.js';
+import { short } from '../lib/format.js';
+import { costText, ratesOf, rateName } from '../lib/cost.js';
 import { scaledParts, bar, share, toneOf, useRows, USE_TONES, costOf, partsMinus } from '../lib/context.js';
 
 /** @typedef {'context'|'total'} Kind */
@@ -233,12 +234,15 @@ export class ContextPop {
    * 各部分是核心 CX-3 的 `session.usage_parts`：同上下文明细的块，多一块「AI 输出」；`parts` 是主会话自己的，`all` 连子代理，
    * 相减是子代理的（2026-10-24 项目主人问子代理为什么没有明细）；旧核心没有的不拆。
    * @typedef {{requests: number, input: number, output: number, parts: import('../lib/context.js').Part[]}} UsageParts
-   * @param {{rows?: any[], parts?: UsageParts|null, all?: UsageParts|null}} r
+   * @param {{rows?: any[], rates?: import('../lib/cost.js').Rate[], parts?: UsageParts|null, all?: UsageParts|null}} r
    */
   usageView(r) {
     const rows = useRows(r.rows ?? []);
     const sum = rows.reduce((n, x) => n + x.tokens, 0);
-    const cost = money(costOf(rows));
+    const cost = costText(costOf(rows));
+    // 用到兜底汇率源的（核心 UC-1）：最下面一行小字注明来源，链到它给的地址
+    const rates = ratesOf(r);
+    const [before, after = ''] = t('context_pop.rates_from').split('{name}');
     const session = this.on.session();
     const own = (r.parts?.parts ?? []).filter((x) => (x.tokens ?? 0) > 0);
     // 子代理的：连子代理的减去主会话自己的（`all` 没有的旧核心、没问到的不拆）
@@ -269,6 +273,7 @@ export class ContextPop {
       rows.length ? h('div.ctx-rows', tree.map((x) => this.partRows(x, 0, sum))) : h('div.ctx-pop-note', t('context_pop.no_usage')),
       h('div.ctx-pop-foot.ctx-pop-foot-row', h('span', t('context_pop.with_subagents')),
         session && this.on.openUsage ? h('button.ctx-pop-link', { type: 'button', onclick: () => { const id = session; this.close(); this.on.openUsage?.(id); } }, t('context_pop.open_usage'), icon('chevron-right')) : null),
+      rates.length ? h('p.ctx-pop-rates', before, rates.map((x, i) => [i ? ' · ' : null, h('a', { href: x.url, target: '_blank', rel: 'noopener noreferrer' }, rateName(x))]), after) : null,
     ];
   }
 

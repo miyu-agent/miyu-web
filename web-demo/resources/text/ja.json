@@ -497,6 +497,7 @@
     "usage_title": "このセッションの累計",
     "no_usage": "まだ使用量はありません",
     "with_subagents": "サブエージェントを含む",
+    "rates_from": "為替レート提供：{name}",
     "use": {
       "main": "メインセッション",
       "compaction": "圧縮",

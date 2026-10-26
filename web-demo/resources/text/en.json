@@ -497,6 +497,7 @@
     "usage_title": "This session so far",
     "no_usage": "No usage yet",
     "with_subagents": "Includes subagents",
+    "rates_from": "Exchange rates by {name}",
     "use": {
       "main": "Main session",
       "compaction": "Compaction",
