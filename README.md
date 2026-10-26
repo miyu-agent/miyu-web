@@ -30,4 +30,6 @@ AGPL-3.0-or-later（2026-10-26 项目主人定：核心和第一方程序用 AGP
 | Prism 1.29.0（`web-demo/vendor/prism/`） | MIT | `web-demo/vendor/prism/LICENSE` |
 | KaTeX 0.18.4（`web-demo/vendor/katex/`，连它的字体） | MIT | `web-demo/vendor/katex/LICENSE` |
 
+吉祥物和默认头像（`web-demo/resources/assets/mascot.png`、`miyu-avatar.png`）是项目自己做的，和代码一样照 AGPL-3.0-or-later。
+
 拷来的库怎么用见 `web-demo/README.md`「拷进来的库」。
