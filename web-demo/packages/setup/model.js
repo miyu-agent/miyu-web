@@ -62,19 +62,24 @@ export function personaInUse(chosen, fallback, list) {
  * 那个会话没人格的选「无人格」（`false`）；人格、预设已经没了、写错了的不选（照默认的）；一个会话都没有的交 `null`。
  * @param {{session?: string, oneshot?: boolean, parent?: string|null, persona?: string, preset?: string|null, no_tools?: boolean, cwd?: string}[]} sessions 从新到旧
  * @param {Persona[]} personas @param {Preset[]} presets
+ * @param {false|string|null} [noTools] 无工具的会话接着选什么（`Catalog.noToolsAs`）：旧核心 `false`，新核心（P-17）出厂的 `none`
  * @returns {{persona?: string|false, preset?: string|false}|null}
  */
-export function lastChoice(sessions, personas, presets) {
+export function lastChoice(sessions, personas, presets, noTools = false) {
   const last = sessions.find((e) => !e.oneshot && !e.parent);
   if (!last) return null;
   /** @type {{persona?: string|false, preset?: string|false}} */
   const out = {};
   if (!last.persona) out.persona = false;
   else if (defaultUsable(personas, last.persona)) out.persona = last.persona;
-  // 上一个是「无工具」的（核心 P-16 下：`preset` 是 `null` 又带 `no_tools`；中途换了的，会话表当场跟着换）接着选它
+  // 上一个是「无工具」的（核心 P-16 下：`preset` 是 `null` 又带 `no_tools`；中途换了的，会话表当场跟着换）接着选它；
+  // 新核心（P-17）没有单拿的无工具了，选出厂的「无功能」
   if (last.preset) {
     if (defaultUsable(presets, last.preset, 'preset')) out.preset = last.preset;
-  } else if (last.no_tools) out.preset = false;
+  } else if (last.no_tools) {
+    if (noTools === false) out.preset = false;
+    else if (noTools && defaultUsable(presets, noTools, 'preset')) out.preset = noTools;
+  }
   return out;
 }
 

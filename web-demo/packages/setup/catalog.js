@@ -7,6 +7,9 @@
 import { problemsOf } from './model.js';
 import { PersonaImages } from './avatars.js';
 
+/** 出厂的「无功能」预设（核心 P-17）：全关、能编辑，替了原来 `preset: null` 的「无工具」 */
+export const NONE = 'none';
+
 export class Catalog {
   /**
    * @param {{request: (method: string, params: any) => Promise<any>}} core @param {() => Promise<void>} [moreIcons] 读整套图标（内核的 `icons`）
@@ -61,6 +64,16 @@ export class Catalog {
   /** 列表重读了、读到了一张新的图：叫听着的重画。 */
   changed() {
     for (const fn of this.listeners) fn();
+  }
+
+  /**
+   * 「无工具」的老会话（`preset: null` 又带 `no_tools`）该算在哪个预设上：旧核心是单拿的那一项（`false`），新核心（P-17）是出厂的
+   * `none`「无功能」；都没有的是 `null`。
+   * @returns {false|string|null}
+   */
+  noToolsAs() {
+    if (this.noTools) return false;
+    return this.presets?.some((p) => p.preset === NONE) ? NONE : null;
   }
 
   /** 一个写错的人格、预设，人看的那几句：`check` 里找到的，找不到的退回列表里那句原话。 @param {'persona'|'preset'} kind @param {{problem?: string} & Record<string, any>} item */

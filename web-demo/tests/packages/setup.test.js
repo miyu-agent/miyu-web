@@ -124,6 +124,28 @@ test('新会话先选上上一次的：最新的顶层会话的人格、预设�
   assert.deepEqual(lastChoice([{ preset: 'full', cwd: '/src', default_workspace: '/w/s1' }], personas, presets), { persona: false, preset: 'full' });
   assert.deepEqual(lastChoice([{ persona: 'gone', preset: 'gone', cwd: '/w' }], personas, presets), {});
   assert.equal(lastChoice([], personas, presets), null);
+  // 新核心（P-17）没有单拿的无工具，换成出厂的「无功能」：上一个是无工具的选 `none`；列表里没有它的不选
+  const withNone = [...presets, { preset: 'none', name: '无功能' }];
+  assert.deepEqual(lastChoice([{ persona: 'miyu', preset: null, no_tools: true }], personas, withNone, 'none'), { persona: 'miyu', preset: 'none' });
+  assert.deepEqual(lastChoice([{ persona: 'miyu', preset: null, no_tools: true }], personas, presets, null), { persona: 'miyu' });
+  assert.deepEqual(lastChoice([{ preset: 'none' }], personas, withNone, 'none'), { persona: false, preset: 'none' });
+});
+
+test('无工具的老会话算在哪个预设上：旧核心单拿的那一项（false），新核心出厂的 none（P-17），都没有的 null', async () => {
+  const { Catalog } = await import('../../packages/setup/catalog.js');
+  const reply = (presets) => ({ request: async (m) => (m === 'preset.list' ? { presets } : m === 'persona.list' ? { personas: [] } : { items: {} }) });
+  const old = new Catalog(reply([{ preset: 'full', name: '全部' }, { preset: null, name: '无工具' }]));
+  await old.load();
+  assert.equal(old.noToolsAs(), false);
+  assert.deepEqual(old.presets.map((p) => p.preset), ['full']);
+  const fresh = new Catalog(reply([{ preset: 'full', name: '全部' }, { preset: 'none', name: '无功能' }]));
+  await fresh.load();
+  assert.equal(fresh.noTools, null);
+  assert.equal(fresh.noToolsAs(), 'none');
+  assert.deepEqual(fresh.presets.map((p) => p.preset), ['full', 'none'], '「无功能」是普通预设，照列表画、能编辑');
+  const neither = new Catalog(reply([{ preset: 'full', name: '全部' }]));
+  await neither.load();
+  assert.equal(neither.noToolsAs(), null);
 });
 
 test('预设的功能分五段：功能、MCP 服务、脚本、技能、斜杠命令，段里照核心的先后，空的段不要（2026-10-12、10-15）', () => {

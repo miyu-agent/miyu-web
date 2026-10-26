@@ -46,9 +46,13 @@ export function apply(ctx) {
     const p = catalog.personas?.find((x) => x.persona === id);
     return p ? personaName(p) : id;
   };
-  /** 预设的名字；`false` 是「无工具」（核心 P-16 下，名字照核心给的） */
+  /** 预设的名字；`false` 是「无工具」（核心 P-16 下，名字照核心给的；新核心上照「无功能」写，P-17） */
   const presetNameOf = (id) => {
-    if (id === false) return catalog.noTools ? presetName(catalog.noTools) : '';
+    if (id === false) {
+      if (catalog.noTools) return presetName(catalog.noTools);
+      id = catalog.noToolsAs();
+      if (!id) return '';
+    }
     const p = catalog.presets?.find((x) => x.preset === id);
     return p ? presetName(p) : id;
   };
@@ -59,7 +63,7 @@ export function apply(ctx) {
   const draftNow = () => {
     const d = chat.draft();
     if (chat.current() || d.project || d.persona != null || d.preset != null || d.cwd != null || !catalog.personas || !catalog.presets) return d;
-    return { ...d, ...(lastChoice(ctx.sessions.index.all(), catalog.personas, catalog.presets) ?? {}) };
+    return { ...d, ...(lastChoice(ctx.sessions.index.all(), catalog.personas, catalog.presets, catalog.noToolsAs()) ?? {}) };
   };
   /** 空会话里实际会用的预设、人格（没选的照默认算；预设不再带默认人格，2026-10-08 项目主人） */
   const inUse = () => {
@@ -136,7 +140,7 @@ export function apply(ctx) {
     // 在项目里新建的不照上一次（项目没写的照默认，蓝图「会话整理和项目」第 9 条）
     const fresh = chat.draft();
     if (!session && !fresh.project && fresh.persona == null && fresh.preset == null && fresh.cwd == null && catalog.personas && catalog.presets) {
-      const pick = lastChoice(ctx.sessions.index.all(), catalog.personas, catalog.presets);
+      const pick = lastChoice(ctx.sessions.index.all(), catalog.personas, catalog.presets, catalog.noToolsAs());
       if (pick && Object.keys(pick).length) chat.setDraft(pick);
     }
     // 先选上再画头像（`inUse` 照上一次的算，这里只是跟着选上的换）
@@ -284,9 +288,9 @@ export function apply(ctx) {
       title: t('info.switch_preset'), below: true, back,
       rows: [
         ...(catalog.presets ?? []).map((p) => ({
-          title: presetName(p), desc: p.problem ? t('preset_bad') : p.summary ?? '', current: p.preset === now, off: !!p.problem, keep: true,
+          title: presetName(p), desc: p.problem ? t('preset_bad') : p.summary ?? '', current: sameAs(p.preset, now), off: !!p.problem, keep: true,
           action: p.problem ? undefined : editAction('preset', p.preset, () => { if (anchor.isConnected) switchPreset(anchor, session, now, back, m); }, () => m.close()),
-          pick: () => { if (p.preset !== now) confirmSwitch(anchor, session, { preset: p.preset }, back, m); },
+          pick: () => { if (!sameAs(p.preset, now)) confirmSwitch(anchor, session, { preset: p.preset }, back, m); },
         })),
         // 最后一行「无工具」：交 `preset: null`
         ...(catalog.noTools ? [{ title: presetName(catalog.noTools), desc: catalog.noTools.summary ?? '', current: now === false, keep: true,
@@ -389,6 +393,12 @@ export function apply(ctx) {
   ];
 
   /**
+   * 菜单里这一行算不算现在选的：无工具的老会话（`false`）在新核心上算「无功能」那一行（P-17）。
+   * @param {string} id @param {string|false|null} now
+   */
+  const sameAs = (id, now) => id === now || (now === false && !catalog.noTools && id === catalog.noToolsAs());
+
+  /**
    * 预设的几行：照 `preset.list`，一行一个名字，下面简单描述（没有的不写，2026-10-23）；写错的暗着。给了 `reopen` 的同人格多一个编辑。
    * 最后一行「无工具」（核心 P-16 下）：选了交 `false`，不能编辑。
    * @param {string|false|null} chosen @param {(preset: string|false) => void} pick @param {() => void} [reopen] @param {() => void} [before]
@@ -398,7 +408,7 @@ export function apply(ctx) {
       title: presetName(p),
       desc: p.problem ? t('preset_bad') : p.summary ?? '',
       tip: p.problem ? catalog.problemOf('preset', p).map((x) => problemText(ctx, x)).join('\n') : undefined,
-      current: p.preset === chosen && !p.problem,
+      current: sameAs(p.preset, chosen) && !p.problem,
       off: !!p.problem,
       action: p.problem ? undefined : editAction('preset', p.preset, reopen, before),
       pick: () => pick(p.preset),
