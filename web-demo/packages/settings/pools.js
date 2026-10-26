@@ -1,11 +1,13 @@
 // @ts-check
 //! 模型池（蓝图 `web.md`「设置页」第 14 条）：一个池一张卡片：头上 `@名字`、调用方式（固定、轮换）、「＋ 添加」（从还没进来的模型里
-//! 勾）、删除；下面成员一行一个（序号、名字、哪一家，悬停露出往上、往下、✕）。卡片下面一行「＋ 新建模型池」（同「＋ 添加供应商」，
-//! 2026-10-11：原来是一整块淡底的大卡），点了原地变成一张白卡写名字，回车建好。改了当场存，写进个人设置。
+//! 勾）、删除；下面成员一行一个（序号、名字、哪一家，悬停露出往上、往下、✕），最下面一行「子代理能选」开关。卡片下面一行
+//! 「＋ 新建模型池」（同「＋ 添加供应商」，2026-10-11：原来是一整块淡底的大卡），点了原地变成一张白卡写名字，回车建好。改了当场存，
+//! 写进个人设置。三个固定池（核心 Q-1：`fixed`）排最前、没有删除。
 
 import { h, icon } from '../../src/lib/dom.js';
 import { pickModels } from './picker.js';
-import { itemFor, layerOf, validId, keySegment, moveMember, poolRemoval, duplicates, providerName } from './model.js';
+import { toggle } from './rows.js';
+import { itemFor, layerOf, validId, keySegment, moveMember, poolRemoval, duplicates, providerName, poolOrder } from './model.js';
 import { twinsOf, copyOf } from '../../src/lib/provider-copy.js';
 
 /**
@@ -46,6 +48,16 @@ export function drawPools(dialog, list) {
     return box;
   };
 
+  // 「子代理能选」那一行：三个固定池是写死的键（`pools.lite.subagent`，核心 Q-1），人建的照 `pools.<id>.subagent`；清单里没有的不画
+  const subagentRow = (/** @type {any} */ pool) => {
+    const item = itemFor(dialog.schema, dialog.got, `pools.${keySegment(pool.name)}.subagent`, {}) ?? field(pool.name, 'subagent');
+    if (!item) return null;
+    const on = typeof item.entry?.value === 'boolean' ? item.entry.value : !!pool.subagent;
+    const locked = !item.layers.includes('personal') && !!dialog.adminLocked;
+    const sw = toggle(on, async (/** @type {boolean} */ next) => { const why = await dialog.save(item, { value: next }); report(why); return !why; });
+    return h('div.set-pool-foot', h('span', item.name), locked ? h('span.is-admin-locked', { inert: '' }, sw) : sw);
+  };
+
   const card = (pool) => {
     const members = field(pool.name, 'models');
     const strategy = field(pool.name, 'strategy');
@@ -79,9 +91,13 @@ export function drawPools(dialog, list) {
     }));
     return h('div.set-pool',
       h('div.set-pool-head', h('strong', `@${pool.name}`), seg, add,
-        removal.length ? h('button.set-reset.is-shown', { type: 'button', title: t('pool_delete'), 'aria-label': t('pool_delete'), onclick: async () => report(await dialog.saveMany(layer, removal)) }, icon('trash-2')) : null),
-      rows.length ? scroller(pool.name, rows) : h('span.set-muted', t('pool_empty')));
+        // 固定池没有删除，垃圾桶那一格留着空位（各张卡片的调用方式、「添加」上下对齐）
+        pool.fixed ? h('span.set-pool-gap', { 'aria-hidden': 'true' })
+          : removal.length ? h('button.set-reset.is-shown', { type: 'button', title: t('pool_delete'), 'aria-label': t('pool_delete'), onclick: async () => report(await dialog.saveMany(layer, removal)) }, icon('trash-2')) : null),
+      rows.length ? scroller(pool.name, rows) : h('span.set-muted', t('pool_empty')),
+      subagentRow(pool));
   };
+  const pools = poolOrder(list.pools ?? []);
 
   // 新建：卡片下面一行「＋ 新建模型池」，点了原地变成一张白卡：头上「@」加名字框，下面一行「回车创建 · Esc 取消」；回车建好（固定、
   // 没有成员），`Esc`、空着点别处回到那一行
@@ -106,5 +122,5 @@ export function drawPools(dialog, list) {
     create.replaceWith(box);
     input.focus();
   });
-  return h('div.set-pools', (list.pools ?? []).map(card), create);
+  return h('div.set-pools', pools.map(card), create);
 }

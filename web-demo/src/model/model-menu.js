@@ -33,7 +33,10 @@ export function menuOf(list, current) {
     const desc = (seen.get(name)?.size ?? 0) > 1 && name !== m.model ? `${provider} · ${m.model}` : provider;
     return { ref: m.ref, title: name, desc, current: m.ref === current, usable, why: usable ? '' : why(m), find: `${name}\n${m.model}\n${provider}`, ...(logos ? { logo: p.logo ?? null, brand: provider } : {}) };
   });
-  const pools = (list.pools ?? []).map((pool) => {
+  // 三个固定池（核心 Q-1：`fixed`）排最前，照 lite、normal、flagship；后面是人建的，照列表的先后（同设置页的模型池）
+  const rank = (/** @type {any} */ p) => { const i = FIXED_POOLS.indexOf(p.name); return i < 0 ? FIXED_POOLS.length : i; };
+  const ordered = [...(list.pools ?? []).filter((p) => p.fixed).sort((a, b) => rank(a) - rank(b)), ...(list.pools ?? []).filter((p) => !p.fixed)];
+  const pools = ordered.map((pool) => {
     const ref = `@${pool.name}`;
     const members = pool.models.map((r) => footerOf(r).model).join(t('list_sep'));
     // 轮流用的写一句；出错了换下一个是池本来的样子，不写（2026-10-10 项目主人：「出错时切换」没必要）
@@ -44,6 +47,9 @@ export function menuOf(list, current) {
   });
   return { models, pools };
 }
+
+/** 三个固定池（核心 Q-1）的先后 */
+const FIXED_POOLS = ['lite', 'normal', 'flagship'];
 
 /** 供应商的显示名（核心 8-21：`name.value`，已经照配置、目录、编号退好；旧核心是字或没有）。 */
 const providerName = (p) => (typeof p.name === 'object' ? p.name?.value : p.name) || baseOf(p.id);

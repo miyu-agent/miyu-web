@@ -6426,6 +6426,12 @@
       ".set-locked"
     ]
   },
+  "settings.pool-foot": {
+    "zh": "设置：模型池卡片最下面「子代理能选」那一行",
+    "select": [
+      ".set-pool-foot"
+    ]
+  },
   "settings.pkg-pin": {
     "zh": "设置：软件包页顶上钉住的搜索框那一条（滚的时候不跟着走）",
     "select": [

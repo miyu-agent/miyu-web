@@ -290,7 +290,7 @@
         "price_output": "输出",
         "price_cache_read": "缓存读",
         "price_cache_write": "缓存写",
-        "pool_empty": "空模型池不可用",
+        "pool_empty": "还没有成员，添加以后才能用",
         "new_pool": "新建模型池",
         "strategies": {
           "pin": "固定",
@@ -935,7 +935,7 @@
         "price_output": "Output",
         "price_cache_read": "Cache read",
         "price_cache_write": "Cache write",
-        "pool_empty": "Empty pools are unavailable",
+        "pool_empty": "No models yet — add some to use this pool",
         "new_pool": "New model pool",
         "strategies": {
           "pin": "Pin",
@@ -1580,7 +1580,7 @@
         "price_output": "出力",
         "price_cache_read": "キャッシュ読み取り",
         "price_cache_write": "キャッシュ書き込み",
-        "pool_empty": "空のプールは使えません",
+        "pool_empty": "まだメンバーがいません。追加すると使えます",
         "new_pool": "モデルプールを作成",
         "strategies": {
           "pin": "固定",

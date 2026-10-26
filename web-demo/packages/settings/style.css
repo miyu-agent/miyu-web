@@ -280,6 +280,8 @@
 .set-row.is-todo { opacity: 0.6; }
 .set-pools { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: calc(12px * var(--space)); margin-top: calc(14px * var(--space)); }
 .set-pool { display: flex; flex-direction: column; gap: calc(8px * var(--space)); padding: calc(12px * var(--space)) calc(14px * var(--space)); border: var(--card-border, 0); border-radius: var(--card-radius, var(--r-12)); background: var(--card-bg, var(--surface-1)); box-shadow: var(--card-elev, var(--card-shadow)); color: var(--text); font: calc(13px * var(--text-scale)) var(--font-ui); text-align: left; }
+.set-pool-gap { flex: none; width: 26px; }
+.set-pool-foot { display: flex; align-items: center; justify-content: space-between; gap: calc(8px * var(--space)); padding-top: calc(4px * var(--space)); color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); }
 .set-pool-head { display: flex; align-items: center; justify-content: space-between; gap: calc(8px * var(--space)); }
 .set-pool .set-chips { justify-content: flex-start; max-width: none; }
 /* 卡片下面一行「＋ 新建模型池」（同「＋ 添加供应商」，2026-10-11：原来是一整块淡底的大卡）；占满一行，不跟卡片挤在一格 */

@@ -164,6 +164,12 @@ test('同一家自用、共用两份（核心 PL-1）：两组挨着，供应商
   assert.deepEqual(menuOf(member, null).models.map((r) => r.desc), ['Relay']);
 });
 
+test('模型池那一页：三个固定池（核心 Q-1）排最前、照 lite、normal、flagship；空的暗着选不了', () => {
+  const pool = (name, fixed) => ({ name, strategy: 'pin', models: [], usable: false, subagent: true, fixed });
+  const { pools } = menuOf({ providers: [], pools: [pool('duo', false), pool('flagship', true), pool('lite', true), pool('normal', true)] }, null);
+  assert.deepEqual(pools.map((r) => [r.ref, r.usable]), [['@lite', false], ['@normal', false], ['@flagship', false], ['@duo', false]]);
+});
+
 test('模型池拿空了（核心 8-23 的 usable 是假）：暗着选不了，悬停写原因，下面一行空着（轮流用的只写那一句）', () => {
   const { pools } = menuOf({ ...LIST, pools: [{ name: 'gone', strategy: 'pin', models: [], usable: false }, { name: 'spin', strategy: 'rotate', models: [], usable: false }] }, null);
   assert.deepEqual(pools.map((r) => [r.ref, r.desc, r.usable, r.why]), [['@gone', '', false, '池中没有可用模型'], ['@spin', '轮流使用', false, '池中没有可用模型']]);
