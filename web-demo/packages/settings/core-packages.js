@@ -11,7 +11,7 @@
 import { confirmIn } from './confirm.js';
 import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField, findBox } from './rows.js';
-import { splitKey, itemFor, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy } from './model.js';
+import { splitKey, itemFor, plainItem, pkgSwitch, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy } from './model.js';
 import { openPage, probeSites } from './backstage.js';
 import { serverRow } from './mcp-servers.js';
 import { stateText } from './extensions.js';
@@ -119,8 +119,8 @@ function packageRow(dialog, p) {
     : mcpStopped(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_stopped'))
     : mcpNeedsLogin(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_login'))
     : QUIET.has(p.status) ? null : h(`span.set-pkg-status${bad ? '.is-bad' : p.status === 'running' ? '.is-on' : ''}`, t(`pkg.status.${p.status}`));
-  const control = p.required ? h('span.set-pkg-status', t('pkg.required'))
-    : 'enabled' in p ? switchFor(dialog, p) : null;
+  // 列表那一行的总闸照旧走 `package.enable`（核心照种类办），自己的开关照 `enabled`（扩展的跟着 `followExtension`）
+  const control = controlFor(dialog, p, null);
   return h('div.set-row.set-pkg.is-expandable', {
     onclick: (/** @type {MouseEvent} */ e) => {
       if (/** @type {Element} */ (e.target).closest('.set-switch')) return;
@@ -139,17 +139,41 @@ export function openInfo(dialog, id) {
   dialog.openSub(p?.name ?? id, () => infoPage(dialog, id), { bare: true });
 }
 
+/** 个人设置里把包 `id` 对自己关掉的那一项（核心 U23 末上：`config.schema` 给每个能关的包现拼一项）；核心没给的是 `null`。 @param {any} dialog @param {string} id */
+const offItem = (dialog, id) => (dialog.schema ? plainItem(dialog.schema, dialog.got ?? {}, `packages.${id}.off`) : null);
+
 /**
- * 开关：`package.enable`、`package.disable`，回应是那一项，换进列表重画。扩展还有没批的能力（`needs_approval`）的进它的信息页、
- * 展开要批准的那一块（批了照 `extensions.js` 开）。程序不在的灰着。
- * @param {any} dialog @param {any} p
+ * 一个包右边的开关（列表那一行、信息页卡片同一个）：跟着管理员模式换（2026-10-26 项目主人：管理员不是用户，管理员模式里的开关就是总闸）。
+ * 平时是自己的「把这个包关掉」（`model.js` 的 `pkgSwitch`）；核心没给那一项的（旧核心、必需的）、管理员模式里是总闸：扩展照 `e`，别的照 `enabled`。
+ * @param {any} dialog @param {any} p @param {any} e 扩展的状态（不是扩展的是 `null`）
  */
+function controlFor(dialog, p, e) {
+  const id = p.package;
+  const off = offItem(dialog, id);
+  const how = pkgSwitch(p, { admin: !!dialog.ctx.admin?.on, off, ...(e ? { system: !!e.on } : {}) });
+  if (!how) return null;
+  if (how.kind === 'required') return h('span.set-pkg-status', dialog.ctx.text('pkg.required'));
+  if (how.kind === 'own') {
+    // 自己的：关了写 `true`（只写个人层），开回来去掉这一项；存完设置页整页重读重画
+    const el = toggle(how.on, async (on) => !await dialog.save(off, on ? { unset: true } : { value: true }));
+    if (how.disabled) el.setAttribute('disabled', '');
+    return el;
+  }
+  if (e) return lockedIf(dialog, toggle(e.on, (on) => (on ? dialog.extensions.turnOn(e) : dialog.extensions.act('extension.disable', { package: id }))));
+  return switchFor(dialog, p);
+}
+
 /** 平时锁着系统那一层的控件灰着、点不了 @param {any} dialog @param {HTMLElement} el */
 const lockedIf = (dialog, el) => {
   if (dialog.adminLocked) el.classList.add('is-admin-locked');
   return el;
 };
 
+/**
+ * 总闸：`package.enable`、`package.disable`，回应是那一项，换进列表重画。扩展还有没批的能力（`needs_approval`）的进它的信息页、
+ * 展开要批准的那一块（批了照 `extensions.js` 开）。程序不在的灰着。
+ * @param {any} dialog @param {any} p
+ */
 function switchFor(dialog, p) {
   const id = p.package;
   const el = toggle(!!p.enabled, async (on) => {
@@ -194,7 +218,7 @@ function infoPage(dialog, id) {
   // 它的设置项：照每一项归哪个包（`ownerOf`），一组一块；组就是这个包的写「设置」，别的组（联网搜索的「API Key 和地址」）照组名
   const ids = new Set((dialog.packages ?? []).map((/** @type {any} */ x) => x.package));
   const groups = site ? [] : ((dialog.pages ?? []).find((/** @type {any} */ x) => x.id === 'packages')?.groups ?? [])
-    .map((/** @type {any} */ g) => ({ g, rows: g.items.filter((/** @type {any} */ item) => ownerOf(item, ids) === id).map((/** @type {any} */ item) => coreRow(dialog, item)).filter(Boolean) }))
+    .map((/** @type {any} */ g) => ({ g, rows: g.items.filter((/** @type {any} */ item) => ownerOf(item, ids) === id && item.key !== `packages.${id}.off`).map((/** @type {any} */ item) => coreRow(dialog, item)).filter(Boolean) }))
     .filter((/** @type {any} */ x) => x.rows.length);
   const ext = dialog.extensions;
   const head = dialog.extensions.entries.has(id)
@@ -228,9 +252,7 @@ function infoCard(dialog, p, e) {
   const author = typeof p.author === 'string' && p.author.trim() ? p.author.trim() : null;
   const meta = [p.version ? t('pkg.version', { version: p.version }) : null, from && !from.startsWith('pkg.') ? from : null, author].filter(Boolean).join(' · ');
   const upstream = typeof p.upstream === 'string' && /^https:\/\/[^\s]+$/.test(p.upstream) ? p.upstream : null;
-  const control = p.required ? h('span.set-pkg-status', t('pkg.required'))
-    : e ? lockedIf(dialog, toggle(e.on, (on) => (on ? dialog.extensions.turnOn(e) : dialog.extensions.act('extension.disable', { package: id }))))
-    : 'enabled' in p ? switchFor(dialog, p) : null;
+  const control = controlFor(dialog, p, e);
   const stderr = e ? (Array.isArray(e.stderr) ? e.stderr.join('\n') : e.stderr ?? '') : '';
   const showing = !!e && dialog.extensions.showing.has(id);
   const actions = [

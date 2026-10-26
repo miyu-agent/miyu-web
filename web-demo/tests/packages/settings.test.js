@@ -444,3 +444,18 @@ test('管理员模式里写哪一层（蓝图「管理员模式」第 5 条）�
   assert.equal(valueIn({ layers: [{ origin: { layer: 'default' }, value: 'd' }] }, ['system', 'default']), 'd');
   assert.equal(valueIn(null, ['system']), undefined);
 });
+
+test('软件包的开关跟着管理员模式换：平时是自己的「把这个包关掉」，管理员模式里、核心没给那一项的是总闸（2026-10-26 项目主人）', async () => {
+  const { pkgSwitch } = await import('../../packages/settings/model.js');
+  const off = (value) => ({ entry: value === undefined ? null : { value } });
+  const p = { package: 'kit', enabled: true };
+  assert.deepEqual(pkgSwitch(p, { admin: false, off: off() }), { kind: 'own', on: true, disabled: false });
+  assert.deepEqual(pkgSwitch(p, { admin: false, off: off(true) }), { kind: 'own', on: false, disabled: false });
+  assert.deepEqual(pkgSwitch(p, { admin: false, off: off(false) }), { kind: 'own', on: true, disabled: false });
+  assert.deepEqual(pkgSwitch({ ...p, enabled: false }, { admin: false, off: off() }), { kind: 'own', on: false, disabled: true }, '总闸关着：灰着关着');
+  assert.deepEqual(pkgSwitch(p, { admin: false, off: off(), system: false }), { kind: 'own', on: false, disabled: true }, '扩展照它的 on');
+  assert.deepEqual(pkgSwitch(p, { admin: true, off: off(true) }), { kind: 'system' }, '管理员模式里是总闸');
+  assert.deepEqual(pkgSwitch(p, { admin: false, off: null }), { kind: 'system' }, '旧核心没给那一项：照旧总闸');
+  assert.deepEqual(pkgSwitch({ package: 'x' }, { admin: false, off: null }), null, '没有总闸那一格');
+  assert.deepEqual(pkgSwitch({ ...p, required: true }, { admin: false, off: off() }), { kind: 'required' });
+});
