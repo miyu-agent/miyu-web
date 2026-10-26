@@ -16,3 +16,7 @@ cargo test --manifest-path web-demo/bridge/Cargo.toml
 ```
 
 网页的纯逻辑测试要核心的出厂资源（给人看的字）：`<核心检出>` 是核心仓库的检出，提交和 `Cargo.toml` 里钉的一样。
+
+## 许可证
+
+AGPL-3.0-or-later（2026-10-26 项目主人定：核心和第一方程序用 AGPL-3.0-or-later，开发包、作者模板、协议参考用 Apache-2.0），全文见 `LICENSE`。网页本身在网上提供服务：照 AGPL 第 13 条，改过的版本给别人用时要让用的人拿得到源码，设置「通用」页最底下有一行指向源码的链接（改了的版本把链接换成自己的源码地址）。`web-demo/` 里拷来的第三方库照它们各自的许可证，见 `web-demo/README.md`。

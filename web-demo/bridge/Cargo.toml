@@ -3,7 +3,7 @@ name = "miyu-web-bridge"
 version = "0.0.1"
 edition = "2024"
 publish = false
-license = "GPL-3.0-or-later"
+license = "AGPL-3.0-or-later"
 description = "网页演示的桥：给页面文件，把浏览器的 WebSocket 转到核心的本机套接字上。顶替核心里还没有的网页模块（设计 21 X5、04 P5）。"
 
 [dependencies]

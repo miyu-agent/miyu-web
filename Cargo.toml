@@ -6,7 +6,7 @@ members = ["crates/*"]
 version = "0.0.1"
 edition = "2024"
 rust-version = "1.97"
-license = "GPL-3.0-or-later"
+license = "AGPL-3.0-or-later"
 publish = false
 
 # 照核心仓库的那一份（设计 32 第五节）。
