@@ -19,4 +19,15 @@ cargo test --manifest-path web-demo/bridge/Cargo.toml
 
 ## 许可证
 
-AGPL-3.0-or-later（2026-10-26 项目主人定：核心和第一方程序用 AGPL-3.0-or-later，开发包、作者模板、协议参考用 Apache-2.0），全文见 `LICENSE`。网页本身在网上提供服务：照 AGPL 第 13 条，改过的版本给别人用时要让用的人拿得到源码，设置「通用」页最底下有一行指向源码的链接（改了的版本把链接换成自己的源码地址）。`web-demo/` 里拷来的第三方库照它们各自的许可证，见 `web-demo/README.md`。
+AGPL-3.0-or-later（2026-10-26 项目主人定：核心和第一方程序用 AGPL-3.0-or-later，开发包、作者模板、协议参考用 Apache-2.0），全文见 `LICENSE`。网页本身在网上提供服务：照 AGPL 第 13 条，改过的版本给别人用时要让用的人拿得到源码，设置「通用」页最底下有一行指向源码的链接（改了的版本把链接换成自己的源码地址）。不是这个仓库自己写的东西照它们原来的许可证，AGPL 只管这里自己写的部分：依赖照各自的 license（`Cargo.toml` 里的 crate 照 crates.io 上写的）；仓库里收的第三方资源（字体、图标、拷来的库）照各自的许可证，原文随附：
+
+| 资源 | 许可证 | 原文 |
+|---|---|---|
+| Lucide 图标（lucide-static 1.55.0，`web-demo/resources/lucide.json`、`lucide-all.json`；像素皮肤的图标 `web-demo/packages/skin-pixel/icons.json` 是照它画到格子上的） | ISC（其中从 Feather 来的那些另带 MIT） | `web-demo/resources/LICENSE-lucide.txt` |
+| Press Start 2P 字体（`web-demo/resources/fonts/press-start.ttf`） | SIL OFL 1.1 | `web-demo/resources/fonts/OFL-press-start.txt` |
+| 站酷庆科黄油体（`web-demo/resources/fonts/zcool-qingke.woff2`） | SIL OFL 1.1 | `web-demo/resources/fonts/OFL-zcool-qingke.txt` |
+| 缝合像素字体 Fusion Pixel（`web-demo/packages/skin-pixel/fonts/fusion-pixel-12px.woff2`，含方舟像素、Cubic 11、Galmuri） | SIL OFL 1.1 | `web-demo/packages/skin-pixel/fonts/OFL-fusion-pixel.txt`、`LICENSES/` |
+| Prism 1.29.0（`web-demo/vendor/prism/`） | MIT | `web-demo/vendor/prism/LICENSE` |
+| KaTeX 0.18.4（`web-demo/vendor/katex/`，连它的字体） | MIT | `web-demo/vendor/katex/LICENSE` |
+
+拷来的库怎么用见 `web-demo/README.md`「拷进来的库」。
