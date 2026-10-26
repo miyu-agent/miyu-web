@@ -4,7 +4,7 @@
 //!
 //! 请求是记忆模块拼的一大段（英文的指令在前），后面几段一行一条记忆：`m38 user 2026-10-22: 喜欢猫`。段头是一行以 `:` 结尾的字，照里面的词认是
 //! 哪一段：新记的（`since`）、相关的旧记忆（`related`）、轮到重看的（别的）。认不出来的只交编号到正文的对照，不数。
-//! 回答是 `{"revised": [{id, text}], "retired": [{id, kind, by, why}], "summary": "..."}`（`memory.organizer` 的约定），外面可能包着代码块。
+//! 回答是 `{"revised": [{id, text}], "retired": [{id, kind, by, why}], "summary": "..."}`（整理记忆那一次请求的约定：核心 Q-2 起它是旁路请求 `memory/organize`、照 `normal` 池走，配置项 `memory.organizer` 删了），外面可能包着代码块。
 
 /** 一行记忆：编号、种类、日子、正文 */
 const LINE = /^(m\d+)\s+\S+\s+\d{4}-\d{2}-\d{2}:\s?(.*)$/;
