@@ -4,6 +4,7 @@
 
 import { res, t } from '../util/res.js';
 import { hhmm } from './format.js';
+import { baseOf, twinsOf, copyOf, SYSTEM_COPY } from '../lib/provider-copy.js';
 
 /**
  * @typedef {{ref: string, title: string, desc: string, current: boolean, usable: boolean, why: string, find: string, logo?: any, brand?: string}} Row 一行：选了交给
@@ -18,15 +19,18 @@ import { hhmm } from './format.js';
  */
 export function menuOf(list, current) {
   if (!list) return { models: [], pools: [] };
-  // 上面写显示名（目录里没有的写模型名），下面写供应商的显示名；显示名重了的（同一个模型的几条线路）下面接模型名分开它们
-  const all = (list.providers ?? []).flatMap((p) => (p.models ?? []).map((m) => ({ p, m, name: m.facts?.name?.value || m.model, provider: providerName(p) })));
+  // 上面写显示名（目录里没有的写模型名），下面写供应商的显示名；显示名重了的（同一个模型的几条线路）下面接模型名分开它们。
+  // 同一家自用、共用两份都有的（核心 PL-1）供应商后面接「自用」「共用」；两份里同一个模型不算重名
+  const twins = twinsOf(list.providers);
+  const all = (list.providers ?? []).flatMap((p) => (p.models ?? []).map((m) => ({ p, m, name: m.facts?.name?.value || m.model, provider: providerLabel(p, twins) })));
   // 供应商的图标：核心给 `logo` 的每一行都带（没有的 `null`，画名称的第一个字），老核心的不带
   const logos = (list.providers ?? []).some((p) => p && typeof p === 'object' && 'logo' in p);
+  /** 每个显示名出现在哪几处（原编号 + 模型名：两份里同一个模型算一处） @type {Map<string, Set<string>>} */
   const seen = new Map();
-  for (const x of all) seen.set(x.name, (seen.get(x.name) ?? 0) + 1);
+  for (const x of all) seen.set(x.name, (seen.get(x.name) ?? new Set()).add(`${baseOf(x.p.id)}/${x.m.model}`));
   const models = all.map(({ p, m, name, provider }) => {
     const usable = m.state === 'ok';
-    const desc = (seen.get(name) ?? 0) > 1 && name !== m.model ? `${provider} · ${m.model}` : provider;
+    const desc = (seen.get(name)?.size ?? 0) > 1 && name !== m.model ? `${provider} · ${m.model}` : provider;
     return { ref: m.ref, title: name, desc, current: m.ref === current, usable, why: usable ? '' : why(m), find: `${name}\n${m.model}\n${provider}`, ...(logos ? { logo: p.logo ?? null, brand: provider } : {}) };
   });
   const pools = (list.pools ?? []).map((pool) => {
@@ -42,7 +46,13 @@ export function menuOf(list, current) {
 }
 
 /** 供应商的显示名（核心 8-21：`name.value`，已经照配置、目录、编号退好；旧核心是字或没有）。 */
-const providerName = (p) => (typeof p.name === 'object' ? p.name?.value : p.name) || p.id;
+const providerName = (p) => (typeof p.name === 'object' ? p.name?.value : p.name) || baseOf(p.id);
+
+/** 两份都有的接「 · 自用」「 · 共用」（蓝图「换模型的菜单」第 1、2 条）。 @param {string} name @param {'personal'|'system'|null} copy */
+const withCopy = (name, copy) => (copy ? `${name} · ${t(`model_menu.copy.${copy}`)}` : name);
+
+/** 一家写给人看的：显示名，两份都有的接是哪一份。 @param {any} p @param {Set<string>} twins */
+const providerLabel = (p, twins) => withCopy(providerName(p), copyOf(p.id, twins));
 
 /**
  * 搜索框：照 `find`（显示名、模型名、供应商）找，空格分开的几段都要有，不分大小写；空的全给。
@@ -77,11 +87,14 @@ export function footerOf(ref) {
  * @returns {{model: string|null, endpoint: string|null, full?: string}}
  */
 export function footerLabel(left, list) {
-  if (!list || !left.model || !left.endpoint || left.model.startsWith('@')) return left;
-  const p = (list.providers ?? []).find((x) => x.id === left.endpoint);
-  if (!p) return left;
+  if (!left.model || !left.endpoint || left.model.startsWith('@')) return left;
+  // 共用那份（`relay@system`）不露 `@system`：找不到的写原编号接「 · 共用」，悬停的完整写法同样（蓝图「换模型的菜单」第 1 条）
+  const shared = left.endpoint.endsWith(SYSTEM_COPY);
+  const full = shared ? withCopy(`${baseOf(left.endpoint)}/${left.model}`, 'system') : `${left.endpoint}/${left.model}`;
+  const p = list ? (list.providers ?? []).find((x) => x.id === left.endpoint) : null;
+  if (!p) return shared ? { ...left, endpoint: withCopy(baseOf(left.endpoint), 'system'), full } : left;
   const m = p.models?.find((x) => x.model === left.model);
-  return { model: m?.facts?.name?.value || left.model, endpoint: providerName(p), full: `${left.endpoint}/${left.model}` };
+  return { model: m?.facts?.name?.value || left.model, endpoint: providerLabel(p, twinsOf(list.providers)), full };
 }
 
 /**

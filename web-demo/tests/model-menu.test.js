@@ -139,6 +139,28 @@ test('框下面那一截写显示名和供应商的显示名（重名的也写�
   assert.deepEqual(footerLabel({ model: 'x', endpoint: 'nope' }, null), { model: 'x', endpoint: 'nope' }, '还没有列表');
 });
 
+test('同一家自用、共用两份（核心 PL-1）：两组挨着，供应商后面接「自用」「共用」，同一个模型不算重名；选了照 ref 发回；只有一份的不标', () => {
+  const named = (provider, name, display) => ({ model: name, ref: `${provider}/${name}`, facts: { name: { value: display } }, state: 'ok' });
+  const list = { providers: [
+    { id: 'relay', layer: 'personal', name: { value: 'Relay' }, models: [named('relay', 'm-1', 'M One')] },
+    { id: 'relay@system', layer: 'system', name: { value: 'Relay' }, models: [named('relay@system', 'm-1', 'M One')] },
+    { id: 'zen', layer: 'system', name: { value: 'Zen' }, models: [named('zen', 'big', 'Big')] },
+  ], pools: [] };
+  const { models } = menuOf(list, 'relay@system/m-1');
+  assert.deepEqual(models.map((r) => [r.ref, r.title, r.desc, r.current]), [
+    ['relay/m-1', 'M One', 'Relay · 自用', false],
+    ['relay@system/m-1', 'M One', 'Relay · 共用', true],
+    ['zen/big', 'Big', 'Zen', false],
+  ]);
+  assert.deepEqual(footerLabel({ model: 'm-1', endpoint: 'relay@system' }, list), { model: 'M One', endpoint: 'Relay · 共用', full: 'relay/m-1 · 共用' });
+  assert.deepEqual(footerLabel({ model: 'm-1', endpoint: 'relay' }, list), { model: 'M One', endpoint: 'Relay · 自用', full: 'relay/m-1' });
+  assert.deepEqual(footerLabel({ model: 'big', endpoint: 'zen' }, list).endpoint, 'Zen', '只有一份的不标');
+  assert.deepEqual(footerLabel({ model: 'm-1', endpoint: 'relay@system' }, null), { model: 'm-1', endpoint: 'relay · 共用', full: 'relay/m-1 · 共用' }, '还没有列表也不露 @system');
+  // 成员只有共用那一份（只有系统配置写了）：编号照原样、不标
+  const member = { providers: [{ id: 'relay', layer: 'system', name: { value: 'Relay' }, models: [named('relay', 'm-1', 'M One')] }], pools: [] };
+  assert.deepEqual(menuOf(member, null).models.map((r) => r.desc), ['Relay']);
+});
+
 test('模型池拿空了（核心 8-23 的 usable 是假）：暗着选不了，悬停写原因，下面一行空着（轮流用的只写那一句）', () => {
   const { pools } = menuOf({ ...LIST, pools: [{ name: 'gone', strategy: 'pin', models: [], usable: false }, { name: 'spin', strategy: 'rotate', models: [], usable: false }] }, null);
   assert.deepEqual(pools.map((r) => [r.ref, r.desc, r.usable, r.why]), [['@gone', '', false, '池中没有可用模型'], ['@spin', '轮流使用', false, '池中没有可用模型']]);

@@ -538,7 +538,11 @@
     },
     "no_pools": "未配置模型池",
     "search": "搜索模型",
-    "no_match": "无匹配结果"
+    "no_match": "无匹配结果",
+    "copy": {
+      "personal": "自用",
+      "system": "共用"
+    }
   },
   "help": {
     "title": "帮助",
