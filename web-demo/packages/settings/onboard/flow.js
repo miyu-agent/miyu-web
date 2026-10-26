@@ -8,6 +8,7 @@
 import { h, icon, replace } from '../../../src/lib/dom.js';
 import { logoEl } from '../../../src/lib/logo.js';
 import { secretName } from '../model.js';
+import { SYSTEM_COPY } from '../../../src/lib/provider-copy.js';
 import { select } from '../rows.js';
 import { providerRows, mineRows, usableIds, testParams, setupChanges, noPools, modelOrder, filterNames, failureOf, validUrl, cleanUrl, customId, customIdProblem } from './logic.js';
 
@@ -85,9 +86,11 @@ export class ProviderFlow {
       ]);
       this.featured = featured?.providers ?? [];
       this.detect = detect;
-      this.configured = new Set((models?.providers ?? []).map((/** @type {any} */ p) => p.id));
-      this.usable = usableIds(models?.providers ?? []);
-      this.providers = models?.providers ?? [];
+      // 同一家的共用那份（`<编号>@system`，核心 PL-1）不另列：接一家只照编号，两份都有的已经配好了
+      const providers = (models?.providers ?? []).filter((/** @type {any} */ p) => !p.id.endsWith(SYSTEM_COPY));
+      this.configured = new Set(providers.map((/** @type {any} */ p) => p.id));
+      this.usable = usableIds(providers);
+      this.providers = providers;
       this.chat = models?.uses?.chat ?? null;
       const driver = (schema?.items ?? []).find((/** @type {any} */ i) => i.key === 'providers.<id>.driver');
       this.drivers = (driver?.options ?? []).map((/** @type {any} */ o) => ({ value: o.value, name: o.name ?? o.value }));

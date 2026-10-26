@@ -2,6 +2,8 @@
 //! 设置页的纯逻辑（蓝图 `web.md`「设置页」）：核心的配置清单（`config.schema`）和最终值（`config.get`）合成一页页、一组组的项；
 //! 每一项来自哪一层、写在哪一层、`expect` 写什么、搜索对不对得上。不碰 DOM、不发请求。
 
+import { baseOf, hasLayers, twinsOf } from '../../src/lib/provider-copy.js';
+
 /**
  * @typedef {{key: string, type: string, control: string, name: string, description: string, page: string, group: string,
  *   common?: boolean, layers: string[], applies: string, default?: any, options?: {value: any, name: string}[],
@@ -227,7 +229,7 @@ export function duplicates(names) {
 export const validId = (id) => /^[a-z][a-z0-9_-]{0,31}$/.test(id);
 
 /** 粘贴的密钥存成的新名字：`<编号>-<时刻>`（不覆盖原来的，照终端第 7 条）；名字最长 64。 @param {string} id @param {number} now */
-export const secretName = (id, now) => `${id}-${now.toString(36)}`.slice(0, 64);
+export const secretName = (id, now) => `${baseOf(id)}-${now.toString(36)}`.slice(0, 64);
 
 /**
  * 存一家供应商的表要发的 `config.set` 的 `changes`（蓝图「设置页」第 14 条）：显示名、地址、接口、密钥，每项带这一层读到的
@@ -239,6 +241,7 @@ export const secretName = (id, now) => `${id}-${now.toString(36)}`.slice(0, 64);
  * @param {string|null} secret 粘贴的密钥存成的名字（`kind` 是 `secret` 时）
  */
 export function providerChanges(id, form, got, layer, secret) {
+  id = baseOf(id);
   const key = (field) => `providers.${keySegment(id)}.${field}`;
   const changes = [];
   const put = (field, change) => {
@@ -261,6 +264,7 @@ export function providerChanges(id, form, got, layer, secret) {
  * @param {string} id @param {{secret: string}|{env: string}} ref @param {{items?: Record<string, Entry>}} got @param {string} layer
  */
 export function keyChange(id, ref, got, layer) {
+  id = baseOf(id);
   const key = `providers.${keySegment(id)}.key`;
   return [{ key, value: ref, expect: expectFor(got.items?.[key] ?? null, layer) }];
 }
@@ -291,8 +295,12 @@ export function whereOf(url) {
  * @param {any[]} providers
  */
 export function sameNamed(providers) {
-  const names = duplicates(providers.map(providerName));
-  return new Set(providers.filter((p) => names.has(providerName(p))).map((p) => p.id));
+  // 同一家的自用、共用两份（核心 PL-1）不算同名：只照一份数，共用那份跟着自用那份
+  const twins = twinsOf(providers);
+  const counted = providers.filter((p) => !(p.id !== baseOf(p.id) && twins.has(baseOf(p.id))));
+  const names = duplicates(counted.map(providerName));
+  const same = new Set(counted.filter((p) => names.has(providerName(p))).map((p) => p.id));
+  return new Set(providers.filter((p) => same.has(baseOf(p.id))).map((p) => p.id));
 }
 
 /**
@@ -321,6 +329,8 @@ export function moveMember(list, i, dir) {
 
 /** 删一家供应商：它在这一层写着的几项（`providers.<id>.*`）各一条 `unset`（2026-10-19 项目主人：设置页原来少了删除）。 @param {string} id @param {{items: Record<string, Entry>}} got @param {string} layer */
 export function providerRemoval(id, got, layer) {
+  // 共用那份（`relay@system`，核心 PL-1）写在原编号底下
+  id = baseOf(id);
   const prefix = `providers.${keySegment(id)}.`;
   return Object.keys(got.items ?? {}).filter((k) => k.startsWith(prefix) && writtenIn(got.items[k], layer)).map((k) => ({ key: k, unset: true, expect: expectFor(got.items[k], layer) }));
 }
@@ -331,6 +341,7 @@ export function providerRemoval(id, got, layer) {
  * @param {string} id @param {{items?: Record<string, Entry>}} got @returns {Set<'personal'|'system'>}
  */
 export function providerLayers(id, got) {
+  id = baseOf(id);
   const prefix = `providers.${keySegment(id)}.`;
   /** @type {Set<'personal'|'system'>} */
   const out = new Set();
@@ -343,12 +354,17 @@ export function providerLayers(id, got) {
 }
 
 /**
- * 供应商分两块：自用（个人设置里有这一家的）在上，共用（系统配置里有的，连哪一层都没写的）在下；两边都有的两块里各一格（`both`）。
- * @template {{id: string}} P
+ * 供应商分两块：自用在上，共用在下。核心给 `layer` 的（PL-1）照它分，两层都写了的核心已经列成两家（`relay`、`relay@system`），
+ * 各进一块、各是各的（`both` 是两份都有的原编号，`layered` 真）。旧核心照 `config.get` 推：个人设置里有这一家的进自用，系统配置里有的
+ * （连哪一层都没写的）进共用，两边都有的两块里各一格、是同一份合出来的值。
+ * @template {{id: string, layer?: string}} P
  * @param {P[]} providers `model.list` 的 `providers` @param {{items?: Record<string, Entry>}} got
- * @returns {{mine: P[], shared: P[], both: Set<string>}}
+ * @returns {{mine: P[], shared: P[], both: Set<string>, layered: boolean}}
  */
 export function providerSides(providers, got) {
+  if (hasLayers(providers)) {
+    return { mine: providers.filter((p) => p.layer === 'personal'), shared: providers.filter((p) => p.layer !== 'personal'), both: twinsOf(providers), layered: true };
+  }
   /** @type {P[]} */
   const mine = [];
   /** @type {P[]} */
@@ -360,7 +376,7 @@ export function providerSides(providers, got) {
     if (layers.has('system') || !layers.has('personal')) shared.push(p);
     if (layers.has('personal') && layers.has('system')) both.add(p.id);
   }
-  return { mine, shared, both };
+  return { mine, shared, both, layered: false };
 }
 
 /**
@@ -375,6 +391,7 @@ export const providerLayer = (side, template) => (side === 'shared' ? 'system' :
  * @param {string} id @param {{items?: Record<string, Entry>}} got @param {string} layer
  */
 export function keyIn(id, got, layer) {
+  id = baseOf(id);
   const entry = got?.items?.[`providers.${keySegment(id)}.key`];
   const value = entry?.layers?.find((l) => l.origin.layer === layer)?.value;
   if (value && typeof value === 'object' && typeof value.secret === 'string') return `secret:${value.secret}`;
@@ -427,7 +444,7 @@ export function referenceOptions(list) {
   return [...models, ...pools];
 }
 
-export const providerName = (p) => (typeof p.name === 'object' ? p.name?.value : p.name) || p.id;
+export const providerName = (p) => (typeof p.name === 'object' ? p.name?.value : p.name) || baseOf(p.id);
 
 /** 网页包的设置项里有控件能改的类型；结构复杂的（`json`、`map`、`list`）在设置页改不了，不列（蓝图「设置页」第 11 条）。 */
 const EDITABLE = new Set(['boolean', 'choice', 'number', 'duration', 'color', 'text', 'key']);

@@ -12,6 +12,7 @@ import { secretTag } from './rows.js';
 import { confirmIn } from './confirm.js';
 import { openAdd } from './add-provider.js';
 import { drawer } from './model-detail.js';
+import { SYSTEM_COPY } from '../../src/lib/provider-copy.js';
 
 /** 「共用」那一块开着没有：记在这台设备上（蓝图「设置页」第 14 条「供应商分两块」） */
 const SHARED_OPEN = 'settings.shared_open';
@@ -21,8 +22,9 @@ export function drawProviders(dialog, list) {
   const ctx = dialog.ctx;
   const all = list.providers ?? [];
   // 两块（2026-10-24 项目主人定）：自用在上、共用在下，两边都有的两块里各一格
-  const { mine, shared, both } = providerSides(all, dialog.got ?? {});
-  const inSide = (/** @type {string} */ s) => (s === 'shared' ? shared : mine).find((x) => x.id === dialog.provider);
+  const { mine, shared, both, layered } = providerSides(all, dialog.got ?? {});
+  // 记的是原编号、要看共用那一格的（管理员模式里刚存好、两份都有的一家）：共用那一格是 `<编号>@system`（核心 PL-1）
+  const inSide = (/** @type {string} */ s) => (s === 'shared' ? shared : mine).find((x) => x.id === dialog.provider || (s === 'shared' && x.id === `${dialog.provider}${SYSTEM_COPY}`));
   // 记着的那一格（编号、哪一块）；刚建好、模型列表还没读回来的不在表里时先看第一格，不改记着的
   let side = dialog.providerSide === 'shared' ? 'shared' : 'mine';
   let p = inSide(side);
@@ -30,6 +32,8 @@ export function drawProviders(dialog, list) {
     side = side === 'mine' ? 'shared' : 'mine';
     p = inSide(side);
   }
+  // 照记着的找到了的记成它的编号（原编号找到的共用那一格换成 `@system` 的）
+  if (p) dialog.provider = p.id;
   if (!p) {
     side = mine.length ? 'mine' : 'shared';
     p = mine[0] ?? shared[0];
@@ -40,7 +44,7 @@ export function drawProviders(dialog, list) {
   const stored = ctx.storage?.get(SHARED_OPEN, null);
   const open = sharedOpen(shared.length, typeof stored === 'boolean' ? stored : null);
   // 两块里都有的一家，「共用」那一格不写用不了的原因：核心合出来的状态是自用那一份的
-  const item = (/** @type {any} */ x, /** @type {string} */ s) => providerItem(dialog, x, s, x.id === p?.id && s === side, logos, same.has(x.id), s === 'shared' && both.has(x.id));
+  const item = (/** @type {any} */ x, /** @type {string} */ s) => providerItem(dialog, x, s, x.id === p?.id && s === side, logos, same.has(x.id), !layered && s === 'shared' && both.has(x.id));
   const list_ = h('div.set-prov-list',
     mine.length ? [h('div.set-prov-group', ctx.text('secret_scope.personal')), ...mine.map((x) => item(x, 'mine'))] : null,
     shared.length ? [
@@ -55,9 +59,11 @@ export function drawProviders(dialog, list) {
   // 「共用」的只有管理员模式里能改（写系统配置）；平时（成员、没开管理员模式的管理员）只读：名称、地址、密钥那一行「已设置」，
   // 没有测试、编辑、删除、更换，模型点不进详情；那几个按钮的地方写「仅管理员可以修改」（管理员后面隔开一个「进入管理员模式」，成员只有那一句）（蓝图「设置页」第 14 条、「管理员模式」第 4 条）
   // 两块里都有的一家：「共用」那一格的密钥照系统那一层写的那一格（核心合出来的是自用盖过的那一份）
-  const sharedKey = side === 'shared' && both.has(p.id) ? keyIn(p.id, dialog.got ?? {}, 'system') : undefined;
+  // 核心给 `layer` 的（PL-1）：共用那一格是 `relay@system` 那一份，状态、密钥、模型都是它自己的，不用另找
+  const sharedKey = !layered && side === 'shared' && both.has(p.id) ? keyIn(p.id, dialog.got ?? {}, 'system') : undefined;
   const readonly = side === 'shared' && (!!ctx.host?.member || !ctx.admin?.on);
-  const view = { readonly, prefer: side === 'mine' && both.has(p.id), sharedKey };
+  // 「优先用这一份」只有旧核心写（两份合成一份、自用盖过共用）；PL-1 起两份各用各的，照选的模型引用
+  const view = { readonly, prefer: !layered && side === 'mine' && both.has(p.id), sharedKey };
   const main = h('div.set-prov-main', head(dialog, p, logos, view), keyBlock(dialog, p, view), models(dialog, p, view));
   // 详情盖着右边整栏（挂在 `.set-main` 上，滚正文时它不跟着走）
   const detail = dialog.modelDetail ? drawer(dialog, p, (p.models ?? []).find((m) => m.model === dialog.modelDetail)) : null;

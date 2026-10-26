@@ -6,6 +6,7 @@
 import { h, icon } from '../../src/lib/dom.js';
 import { pickModels } from './picker.js';
 import { itemFor, layerOf, validId, keySegment, moveMember, poolRemoval, duplicates, providerName } from './model.js';
+import { twinsOf, copyOf } from '../../src/lib/provider-copy.js';
 
 /**
  * @param {any} dialog
@@ -14,7 +15,10 @@ import { itemFor, layerOf, validId, keySegment, moveMember, poolRemoval, duplica
 export function drawPools(dialog, list) {
   const ctx = dialog.ctx;
   const t = (k, f) => ctx.text(`models.${k}`, f);
-  const all = (list.providers ?? []).flatMap((p) => (p.models ?? []).map((m) => ({ ref: m.ref, model: m.model, name: m.facts?.name?.value ?? m.model, provider: providerName(p) })));
+  // 同一家自用、共用两份都有的（核心 PL-1）：供应商后面接「 · 自用」「 · 共用」
+  const twins = twinsOf(list.providers);
+  const named = (/** @type {any} */ p) => { const copy = copyOf(p.id, twins); return copy ? `${providerName(p)} · ${ctx.text(`secret_scope.${copy}`)}` : providerName(p); };
+  const all = (list.providers ?? []).flatMap((p) => (p.models ?? []).map((m) => ({ ref: m.ref, model: m.model, name: m.facts?.name?.value ?? m.model, provider: named(p) })));
   const byRef = new Map(all.map((r) => [r.ref, r]));
   const field = (id, name) => itemFor(dialog.schema, dialog.got, `pools.<id>.${name}`, { id });
   const layer = layerOf(dialog.schema.items.find((i) => i.key === 'pools.<id>.models') ?? { layers: ['personal'] }, !!ctx.admin?.on);
@@ -54,12 +58,13 @@ export function drawPools(dialog, list) {
     }, t(`strategies.${s}`))));
     // 成员一行一个：序号、名字（池里重了的写模型名分开）、哪一家；悬停露出往上、往下、✕。配置里写着、认不出的照原样写
     const known = now.map((ref) => byRef.get(ref) ?? { ref, name: ref, model: ref, provider: '' });
-    const dup = duplicates(known.map((r) => r.name));
+    // 同一个模型在自用、共用两份里（核心 PL-1）不算重名：哪一份写在「哪一家」那一格
+    const dup = duplicates([...new Map(known.map((r) => [`${r.name}\n${r.model}`, r.name])).values()]);
     // 第一行的往上、最后一行的往下留着位置不露（一列一列对齐）
     const tool = (label, name, onclick, off) => h(`button.set-member-tool${off ? '.is-off' : ''}`, { type: 'button', title: label, 'aria-label': label, disabled: off ? true : null, onclick }, icon(name));
     const rows = known.map((r, i) => h('div.set-member',
       h('span.set-member-n', String(i + 1)),
-      h('span.set-model-name', { title: r.ref }, r.name, dup.has(r.name) ? h('code.set-model-id', r.model) : null),
+      h('span.set-model-name', { title: r.provider ? `${r.provider} / ${r.model}` : r.ref }, r.name, dup.has(r.name) ? h('code.set-model-id', r.model) : null),
       h('span.set-pick-provider', r.provider),
       h('span.set-member-tools',
         tool(t('pool_up'), 'arrow-up', () => setMembers(moveMember(now, i, -1)), i === 0),

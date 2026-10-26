@@ -8,6 +8,7 @@ import { h, icon } from '../../src/lib/dom.js';
 import { logoEl } from '../../src/lib/logo.js';
 import { filterModels, providerName, sameNamed, whereOf } from './model.js';
 import { modelName, metaOf, sharedState } from './model-bits.js';
+import { twinsOf, copyOf } from '../../src/lib/provider-copy.js';
 
 /**
  * @param {any} dialog
@@ -22,12 +23,15 @@ export function pickModel(dialog, anchor, groups, current, done) {
   const logos = groups.some((g) => 'logo' in g.provider);
   // 和别家同名的组头多写地址从哪来
   const same = sameNamed(groups.map((g) => g.provider));
+  // 同一家自用、共用两份都有的（核心 PL-1）：两组的组名后面暗字「自用」「共用」，只有一份的不标；照整份列表认（看图那一行可能只剩一份）
+  const twins = twinsOf(dialog.models?.providers ?? groups.map((g) => g.provider));
   /** 一组一组画好，搜索时只藏 @type {{head: HTMLElement, rows: {name: string, model: string, provider: string, node: HTMLElement, off: boolean, ref: string}[]}[]} */
   const drawn = groups.map(({ provider, models }) => {
     const reason = sharedState(provider.models ?? []);
     const where = same.has(provider.id) ? whereOf(provider.base_url) : null;
+    const copy = copyOf(provider.id, twins);
     const head = h('div.set-pick-group', logos ? logoEl(provider.logo ?? null, providerName(provider)) : null, h('span', providerName(provider)),
-      where ? h('small', where) : null, reason ? h('em', ctx.text(`models.short_states.${reason}`)) : null);
+      copy ? h('small', ctx.text(`secret_scope.${copy}`)) : null, where ? h('small', where) : null, reason ? h('em', ctx.text(`models.short_states.${reason}`)) : null);
     const rows = models.map(({ m, dup }) => {
       const off = !!m.state && m.state !== 'ok' && m.state !== 'cooling';
       const on = m.ref === current;
@@ -35,7 +39,7 @@ export function pickModel(dialog, anchor, groups, current, done) {
         h('span.set-model-name', modelName(m), dup ? h('code.set-model-id', m.model) : null),
         h('span.set-model-meta', metaOf(ctx, m)),
         h('span.set-pick-check', on ? icon('check') : null));
-      return { name: modelName(m), model: m.model, provider: providerName(provider), node, off, ref: m.ref };
+      return { name: modelName(m), model: m.model, provider: copy ? `${providerName(provider)} ${ctx.text(`secret_scope.${copy}`)}` : providerName(provider), node, off, ref: m.ref };
     });
     return { head, rows };
   });

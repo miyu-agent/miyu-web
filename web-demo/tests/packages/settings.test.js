@@ -386,6 +386,29 @@ test('供应商分两块（2026-10-24 项目主人定）：自用照个人设置
   assert.equal(sharedOpen(1, false), false);
 });
 
+test('核心给 layer 的（PL-1）：照 layer 分两块，两份各是一家；改共用那份写原编号；同一家两份不算同名', async () => {
+  const { providerSides, providerRemoval, keyChange, sameNamed, secretName, providerName } = await import('../../packages/settings/model.js');
+  const list = [
+    { id: 'relay', layer: 'personal', name: { value: 'Relay' } },
+    { id: 'relay@system', layer: 'system', name: { value: 'Relay' } },
+    { id: 'zen', layer: 'system', name: { value: 'Zen' } },
+    { id: 'mine', layer: 'personal', name: { value: 'Zen' } },
+  ];
+  const sides = providerSides(list, { items: {} });
+  assert.deepEqual(sides.mine.map((p) => p.id), ['relay', 'mine']);
+  assert.deepEqual(sides.shared.map((p) => p.id), ['relay@system', 'zen']);
+  assert.deepEqual([...sides.both], ['relay']);
+  assert.equal(sides.layered, true);
+  assert.equal(providerSides([{ id: 'a' }], { items: {} }).layered, false, '旧核心照原来的推法');
+  const at = (layer) => ({ layers: [{ origin: { layer }, used: true, value: 'x' }], origin: { layer }, value: 'x' });
+  const got = { items: { 'providers.relay.driver': at('system'), 'providers.relay.key': at('personal') } };
+  assert.deepEqual(providerRemoval('relay@system', got, 'system').map((c) => c.key), ['providers.relay.driver']);
+  assert.equal(keyChange('relay@system', { secret: 's' }, got, 'system')[0].key, 'providers.relay.key');
+  assert.match(secretName('relay@system', 1), /^relay-/);
+  assert.equal(providerName({ id: 'relay@system' }), 'relay', '没有显示名的不露 @system');
+  assert.deepEqual([...sameNamed(list)].sort(), ['mine', 'zen'], '两份同名不算，真同名的照算');
+});
+
 test('两块里都有的一家：共用那一格的密钥照系统那一层写的那一格', async () => {
   const { keyIn } = await import('../../packages/settings/model.js');
   const got = { items: { 'providers.deepseek.key': { layers: [
