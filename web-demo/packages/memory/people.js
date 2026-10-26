@@ -5,7 +5,7 @@
 import { h, icon } from '../../src/lib/dom.js';
 import { keywordBox } from './keywords.js';
 import { filterButton, filterChips } from './filter.js';
-import { CARD_MAX, NAMES_MAX, NAME_MAX, chars, agoText, isRetired, cardMatches, cardChange, cardProblem, splitKeywords } from './model.js';
+import { CARD_MAX, NAMES_MAX, NAME_MAX, chars, agoText, isRetired, cardMatches, cardChange, cardProblem, cardLimit, splitKeywords } from './model.js';
 
 /**
  * @typedef {{who: string, text: string, names?: string[], at?: string, by?: string, retired?: string|null}} Card
@@ -88,8 +88,10 @@ export function cardPop(page) {
   const who = adding ? /** @type {HTMLInputElement} */ (h('input.set-input.mem-who-input', { type: 'text', placeholder: t('add_who'), spellcheck: 'false', autocomplete: 'off' })) : null;
   const names = keywordBox((c?.names ?? []).join(', '), t('detail.keywords_hint'), ro);
   const namesCount = h('span.mem-count', `${c?.names?.length ?? 0} / ${NAMES_MAX}`);
-  const area = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.set-area.mem-area.mem-card-area', { disabled: ro, rows: '6', placeholder: adding ? t('people.text_hint', { n: CARD_MAX }) : null }, c?.text ?? ''));
-  const count = h('span.mem-count', `${chars(c?.text ?? '')} / ${CARD_MAX}`);
+  // 最多几个字：核心拒绝时给了 `data.limit` 的照它（记在这一页上，核心 E-2），没拒过的照 400
+  const max = () => page.cardMax ?? CARD_MAX;
+  const area = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.set-area.mem-area.mem-card-area', { disabled: ro, rows: '6', placeholder: adding ? t('people.text_hint', { n: max() }) : null }, c?.text ?? ''));
+  const count = h('span.mem-count', `${chars(c?.text ?? '')} / ${max()}`);
   // 「加一个人」：这个人已经有卡了的，提示一句、点了打开他的
   // （写着的字不要了：去掉记号，不然重画时当成正在改的、不换）
   const taken = h('button.mem-taken', { type: 'button', hidden: true, onclick: () => {
@@ -102,8 +104,8 @@ export function cardPop(page) {
   const save = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'submit', disabled: true }, t('detail.save')));
   const sync = () => {
     const n = chars(area.value.trim());
-    count.textContent = `${n} / ${CARD_MAX}`;
-    count.classList.toggle('is-over', n > CARD_MAX);
+    count.textContent = `${n} / ${max()}`;
+    count.classList.toggle('is-over', n > max());
     const list = splitKeywords(names.value);
     namesCount.textContent = `${list.length} / ${NAMES_MAX}`;
     namesCount.classList.toggle('is-over', list.length > NAMES_MAX || list.some((x) => chars(x) > NAME_MAX));
@@ -111,7 +113,7 @@ export function cardPop(page) {
     const dup = adding && !!w && all.some((x) => x.who === w);
     taken.hidden = !dup;
     taken.textContent = dup ? t('people.taken') : '';
-    save.disabled = dup || cardProblem(w, area.value, list) != null || (!adding && !cardChange(/** @type {Card} */ (c), area.value, list));
+    save.disabled = dup || cardProblem(w, area.value, list, max()) != null || (!adding && !cardChange(/** @type {Card} */ (c), area.value, list));
   };
   for (const el of [who, names, area]) el?.addEventListener('input', () => { el.dataset.dirty = '1'; sync(); });
   const at = c?.at ? Date.parse(c.at) : NaN;
@@ -140,9 +142,10 @@ export function cardPop(page) {
       await page.reload();
       page.closePerson();
     } catch (err) {
-      save.disabled = false;
+      page.cardMax = cardLimit(err, max());
+      sync();
       if (/** @type {any} */ (err)?.data?.reason === 'memory_too_long') count.classList.add('is-over');
-      page.say(page.refusal(err, CARD_MAX));
+      page.say(page.refusal(err, max()));
       if (/** @type {any} */ (err)?.data?.reason === 'unknown_memory') page.reload();
     }
   });
@@ -165,7 +168,7 @@ async function forgetCard(page, c) {
     await page.reload();
     page.closePerson();
   } catch (err) {
-    page.say(page.refusal(err, CARD_MAX));
+    page.say(page.refusal(err, page.cardMax ?? CARD_MAX));
     if (/** @type {any} */ (err)?.data?.reason === 'unknown_memory') page.reload();
   }
 }
@@ -177,6 +180,6 @@ async function restoreCard(page, c) {
     page.kit.toast(page.t('restored'));
     await page.reload();
   } catch (err) {
-    page.say(page.refusal(err, CARD_MAX));
+    page.say(page.refusal(err, page.cardMax ?? CARD_MAX));
   }
 }

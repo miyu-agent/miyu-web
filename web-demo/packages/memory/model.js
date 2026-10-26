@@ -142,8 +142,8 @@ export const joinKeywords = (words) => words.join(', ');
 
 // —— 人卡（蓝图「记忆页」第 14 条；核心 E-1 下） ——
 
-/** 一张卡最多几个字、几个叫法、一个叫法最多几个字 */
-export const CARD_MAX = 300;
+/** 一张卡最多几个字（核心 E-2：400；核心拒绝时给了 `data.limit` 的照它，`cardLimit`）、几个叫法、一个叫法最多几个字 */
+export const CARD_MAX = 400;
 export const NAMES_MAX = 8;
 export const NAME_MAX = 40;
 
@@ -158,13 +158,22 @@ export function cardMatches(c, q) {
 }
 
 /**
- * 写不写得了一张卡：是谁、内容不空，内容不超长，叫法不超过 8 个、一个不超过 40 字。交回哪一样不行（`who`、`text`、`names`），都行的 `null`。
- * @param {string} who @param {string} text @param {string[]} names
+ * 一张卡最多几个字：核心拒绝（`memory_too_long`）时给了 `data.limit` 的照它，不然照原来知道的 `known`。
+ * @param {any} err @param {number} known
  */
-export function cardProblem(who, text, names) {
+export function cardLimit(err, known) {
+  const d = err?.data;
+  return d?.reason === 'memory_too_long' && Number.isInteger(d.limit) && d.limit > 0 ? d.limit : known;
+}
+
+/**
+ * 写不写得了一张卡：是谁、内容不空，内容不超长（`max`，默认 {@link CARD_MAX}），叫法不超过 8 个、一个不超过 40 字。交回哪一样不行（`who`、`text`、`names`），都行的 `null`。
+ * @param {string} who @param {string} text @param {string[]} names @param {number} [max]
+ */
+export function cardProblem(who, text, names, max = CARD_MAX) {
   if (!who.trim()) return 'who';
   const t = text.trim();
-  if (!t || chars(t) > CARD_MAX) return 'text';
+  if (!t || chars(t) > max) return 'text';
   if (names.length > NAMES_MAX || names.some((n) => !n.trim() || chars(n) > NAME_MAX)) return 'names';
   return null;
 }

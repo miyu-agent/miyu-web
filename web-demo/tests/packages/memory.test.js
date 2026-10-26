@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { counts, visible, isRetired, updateOf, canSave, saveNote, chars, hasKeywords, shortId, TEXT_MAX, tidying, splitKeywords, joinKeywords, cardMatches, cardProblem, cardChange, CARD_MAX } from '../../packages/memory/model.js';
+import { counts, visible, isRetired, updateOf, canSave, saveNote, chars, hasKeywords, shortId, TEXT_MAX, tidying, splitKeywords, joinKeywords, cardMatches, cardProblem, cardChange, cardLimit, CARD_MAX } from '../../packages/memory/model.js';
 
 const m = (id, cls, text, extra = {}) => ({ id, class: cls, text, ...extra });
 const list = [
@@ -107,4 +107,16 @@ test('人卡（第 14 条）：照是谁、叫法、正文搜；是谁、内容�
   assert.ok(cardChange(card, '大学同学', ['明哥', 'Ming']));
   assert.ok(cardChange(card, '大学同学，喜欢打球', ['明哥']));
   assert.ok(!cardChange({ who: 'b', text: 'x' }, 'x', []));
+});
+
+test('人卡最多 400 字（核心 E-2）；核心拒绝时给了 data.limit 的照它，别的拒绝、没给的照原来知道的', () => {
+  assert.equal(CARD_MAX, 400);
+  assert.equal(cardProblem('a', '字'.repeat(400), []), null);
+  assert.equal(cardProblem('a', '字'.repeat(401), []), 'text');
+  assert.equal(cardProblem('a', '字'.repeat(401), [], 500), null, '照给的上限');
+  const tooLong = (limit) => ({ data: { reason: 'memory_too_long', field: 'text', limit } });
+  assert.equal(cardLimit(tooLong(500), CARD_MAX), 500);
+  assert.equal(cardLimit(tooLong(undefined), CARD_MAX), 400);
+  assert.equal(cardLimit({ data: { reason: 'unknown_memory' } }, 450), 450);
+  assert.equal(cardLimit(new Error('x'), 400), 400);
 });

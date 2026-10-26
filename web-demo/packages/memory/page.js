@@ -62,6 +62,8 @@ export class MemoryPage {
     /** 这一份的记忆（新的在前；搜着的是搜到的，最相关的在前） @type {import('./model.js').Memory[]} */
     this.list = [];
     this.limit = PAGE;
+    /** 人卡最多几个字：核心拒绝时给了 `data.limit` 的记在这里（核心 E-2），没拒过的是 `null`、照 `CARD_MAX` @type {number|null} */
+    this.cardMax = null;
     this.query = '';
     this.cls = /** @type {string[]} */ ([]);
     this.retired = false;
@@ -683,7 +685,7 @@ export class MemoryPage {
     }
   }
 
-  /** 核心拒了：照原因写一句 @param {any} err @param {number} [max] 内容最多几个字（人卡的是 300） */
+  /** 核心拒了：照原因写一句 @param {any} err @param {number} [max] 内容最多几个字（人卡的是 400，核心 E-2） */
   refusal(err, max = TEXT_MAX) {
     const d = err?.data;
     if (d?.reason === 'memory_too_long') return this.t(d.field === 'keywords' ? 'too_long_keywords' : 'too_long', { n: d.limit ?? (d.field === 'keywords' ? KEYWORDS_MAX : max) });
