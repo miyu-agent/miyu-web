@@ -298,7 +298,16 @@ function endItem(e, status) {
   const head = e.model || e.endpoint
     ? t('done', { time: hhmm(e.at), ...doneRef(e.endpoint ?? '', e.model ?? ''), elapsed: seconds(e.took_ms ?? 0) })
     : t('done_bare', { time: hhmm(e.at), elapsed: seconds(e.took_ms ?? 0) });
-  return { ...base, text: icon(level) + head + usageText(e.usage) };
+  return { ...base, text: icon(level) + head + speedText(e.speed) + usageText(e.usage) };
+}
+
+/**
+ * 这一轮的出字速度（核心 SP-1：轮的结束条目的 `speed: {output, ms}`，各次主请求的输出、首字到结束的毫秒加起来）：写整数 `tok/s`，接在用时后面；
+ * 没有这一格（旧核心）、`ms` 是 0 的不写（2026-10-26 项目主人：从框下面那一行挪过来）。 @param {any} s
+ */
+export function speedText(s) {
+  if (!s || !(s.output > 0) || !(s.ms > 0)) return '';
+  return t('done_speed', { rate: Math.round((s.output * 1000) / s.ms) });
 }
 
 /** 本轮用量：输入加输出，括号里是命中率；没有的不写。 @param {any} u */

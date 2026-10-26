@@ -1,6 +1,6 @@
 // @ts-check
-//! 输入框下面那一行：左边级别和模型，右边速度 · 上下文 · 累计；放不下时右边先丢速度、再丢累计
-//! （`tui.md`「框下面那一行」）。
+//! 输入框下面那一行：左边级别和模型，右边上下文 · 累计 · 花费；放不下时右边先丢花费、再丢累计（`tui.md`「框下面那一行」）。
+//! 速度 2026-10-26 起挪到每轮收尾那一行（`entries.test.js`）。
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -20,10 +20,10 @@ const status = {
   usage: { usage: u(1400, 10000, 1000), main: u(1300, 10000, 900) },
 };
 
-test('一个会话的底栏：级别、模型、速度（输出 ÷ 首字到说完）、上下文、累计（命中率照主请求）都照会话状态', () => {
+test('一个会话的底栏：级别、模型、上下文、累计（命中率照主请求）都照会话状态；会话状态里有速度也不写（2026-10-26 项目主人：挪到每轮收尾那一行）', () => {
   const f = statusFooter(status);
   assert.deepEqual(f.left, { level: 'workspace', label: '▣ 工作区', model: 'deepseek-v4', endpoint: 'deepseek' });
-  assert.deepEqual(f.right.map((p) => p.text), ['5 tok/s', '2.3k/1M(0.2%)', 'Σ12.4k(C88%)']);
+  assert.deepEqual(f.right.map((p) => p.text), ['2.3k/1M(0.2%)', 'Σ12.4k(C88%)']);
 });
 
 test('只读开着写只读，只读盖过常用的那一级；还是 0 的格子不写；没有会话状态的是工作区、什么数都不写', () => {
@@ -37,27 +37,27 @@ test('只读开着写只读，只读盖过常用的那一级；还是 0 的格�
 
 test('会话状态不知道窗口多大的照订阅回应的限额；都不知道的只写用了多少', () => {
   const unknown = { ...status, context: { used: 2300 } };
-  assert.equal(statusFooter(unknown, { window: 1_000_000 }).right[1].text, '2.3k/1M(0.2%)');
-  assert.equal(statusFooter(unknown, {}).right[1].text, '2.3k');
+  assert.equal(statusFooter(unknown, { window: 1_000_000 }).right[0].text, '2.3k/1M(0.2%)');
+  assert.equal(statusFooter(unknown, {}).right[0].text, '2.3k');
 });
 
 test('花费单独一格接在累计后面：有 converted 写它（rest 接在后面），没有的照 amounts，没定价的不写（核心 UC-1，2026-10-26 项目主人）', () => {
   const priced = (cost) => statusFooter({ ...status, usage: { ...status.usage, ...cost } }).right.map((p) => p.text);
-  assert.deepEqual(priced({ amounts: [{ currency: 'USD', amount: 0.045 }], converted: { currency: 'CNY', amount: 0.32 } }), ['5 tok/s', '2.3k/1M(0.2%)', 'Σ12.4k(C88%)', '¥0.32']);
+  assert.deepEqual(priced({ amounts: [{ currency: 'USD', amount: 0.045 }], converted: { currency: 'CNY', amount: 0.32 } }), ['2.3k/1M(0.2%)', 'Σ12.4k(C88%)', '¥0.32']);
   assert.deepEqual(priced({ amounts: [{ currency: 'USD', amount: 0.4 }, { currency: 'CNY', amount: 0.32 }], converted: { currency: 'CNY', amount: 0.32, rest: [{ currency: 'USD', amount: 0.4 }] } }).at(-1), '¥0.32 + $0.40');
   assert.deepEqual(priced({ amounts: [{ currency: 'USD', amount: 0.05 }] }).at(-1), '$0.05', '汇率还没有（第一次）：照 amounts');
   assert.deepEqual(priced({ amounts: [] }).at(-1), 'Σ12.4k(C88%)', '没定价：不写这一格');
   const parts = statusFooter({ ...status, usage: { ...status.usage, amounts: [], converted: { currency: 'CNY', amount: 0.32 } } }).right;
   const width = (ps) => ps.map((p) => p.text).join(' · ').length;
-  assert.deepEqual(fit(parts, 45, width).map((p) => p.key), ['speed', 'context', 'total'], '放不下：先丢花费');
-  assert.deepEqual(fit(parts, 30, width).map((p) => p.key), ['context', 'total'], '再丢速度');
+  assert.deepEqual(fit(parts, 36, width).map((p) => p.key), ['context', 'total', 'cost']);
+  assert.deepEqual(fit(parts, 30, width).map((p) => p.key), ['context', 'total'], '放不下：先丢花费');
 });
 
-test('放不下时先丢速度、再丢累计，上下文留到最后', () => {
+test('放不下时先丢累计，上下文留到最后', () => {
   const parts = statusFooter(status).right;
   const width = (ps) => ps.map((p) => p.text).join(' · ').length;
   const kept = (room) => fit(parts, room, width).map((p) => p.text);
-  assert.deepEqual(kept(100), ['5 tok/s', '2.3k/1M(0.2%)', 'Σ12.4k(C88%)']);
+  assert.deepEqual(kept(100), ['2.3k/1M(0.2%)', 'Σ12.4k(C88%)']);
   assert.deepEqual(kept(30), ['2.3k/1M(0.2%)', 'Σ12.4k(C88%)']);
   assert.deepEqual(kept(20), ['2.3k/1M(0.2%)']);
   assert.deepEqual(kept(5), []);

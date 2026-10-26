@@ -10,8 +10,8 @@ import { costText } from '../lib/cost.js';
 const input = (u) => u.uncached + u.cache_read + u.cache_write;
 
 /**
- * 照会话状态写（蓝图 `web.md`「照条目画」第 3 条；核心 9-8 补上的 `view.status`）：级别照 `permission`，模型照 `model`，速度照 `speed`
- * （输出 ÷ 首字到说完），上下文照 `context.used`（窗口照 `context.window`，没有的照订阅回应的限额），累计照 `usage`（全部请求，命中率照
+ * 照会话状态写（蓝图 `web.md`「照条目画」第 3 条；核心 9-8 补上的 `view.status`）：级别照 `permission`，模型照 `model`，
+ * 速度不写在这里（2026-10-26 项目主人：挪到每轮收尾那一行，`entries.js` 的 `endItem`），上下文照 `context.used`（窗口照 `context.window`，没有的照订阅回应的限额），累计照 `usage`（全部请求，命中率照
  * 主请求），花费照 `usage` 的 `converted`（核心 UC-1，没有的照 `amounts`；同累计只算这个会话自己，不连子代理；没定价的不写）；还是 0 的格子不写。
  * @param {any} status @param {{window?: number}} [limits] 订阅回应里的限额
  * @returns {{left: {level: string, label: string, model: string|null, endpoint: string|null}, right: {key: string, text: string}[]}}
@@ -19,8 +19,6 @@ const input = (u) => u.uncached + u.cache_read + u.cache_write;
 export function statusFooter(status, limits = {}) {
   const level = status?.permission ? levelOf(status.permission) : 'workspace';
   const right = [];
-  const speed = status?.speed;
-  if (speed && speed.output > 0 && speed.ms > 0) right.push({ key: 'speed', text: t('speed', { rate: Math.round((speed.output * 1000) / speed.ms) }) });
   const used = status?.context?.used ?? 0;
   const window = status?.context?.window ?? limits.window;
   if (used > 0) right.push({ key: 'context', text: contextText(used, window) });
@@ -71,8 +69,8 @@ export function levelParams(level) {
   return level === 'read_only' ? { read_only: true } : { level, read_only: false };
 }
 
-/** 丢格子的先后：先花费（2026-10-26 项目主人：窄的时候金额先让出来），再速度，再累计，上下文留到最后。 */
-const DROP = ['cost', 'speed', 'total', 'context'];
+/** 丢格子的先后：先花费（2026-10-26 项目主人：窄的时候金额先让出来），再累计，上下文留到最后。 */
+const DROP = ['cost', 'total', 'context'];
 
 /**
  * 右边放得下的几格：照 `DROP` 的先后一格格丢，直到 `measure` 量出来不超过 `room`。

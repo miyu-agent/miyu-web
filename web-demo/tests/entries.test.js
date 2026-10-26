@@ -245,3 +245,14 @@ test('她 show 过的（核心 D-5）：接在那一段后面画在正文里，�
   const shown = items.filter((it) => it.type === 'shown');
   assert.deepEqual(shown.map((it) => [it.key, it.shown.kind, it.shown.title]), [['b9.0.shown', 'image', null], ['b9.2.shown', 'html', '报告']]);
 });
+
+test('收尾那一行接这一轮的出字速度（核心 SP-1 的 speed：输出 ÷ 首字到结束），没有这一格、ms 是 0 的不写（2026-10-26 项目主人：从框下面那一行挪过来）', async () => {
+  const { speedText } = await import('../src/model/entries.js');
+  const end = turn3.find((e) => e.kind === 'end');
+  const done = (speed) => itemsOf(turn3.map((e) => (e === end ? { ...e, speed } : e)), { state: 'idle', permission: { level: 'workspace' } }, { account: 'admin' }).items.at(-1).text.replace(/\d\d:\d\d/, 'HH:MM');
+  assert.equal(done({ output: 1410, ms: 10000 }), '▣  HH:MM · dev/m1 · 2.2s · 141 tok/s · 4.2k(C25%)');
+  assert.equal(done(undefined), '▣  HH:MM · dev/m1 · 2.2s · 4.2k(C25%)');
+  assert.equal(speedText({ output: 50, ms: 0 }), '');
+  assert.equal(speedText({ output: 0, ms: 1000 }), '');
+  assert.equal(speedText({ output: 1001, ms: 3000 }), ' · 334 tok/s');
+});

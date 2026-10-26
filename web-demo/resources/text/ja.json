@@ -83,6 +83,7 @@
   "done": "{time} · {endpoint}/{model} · {elapsed}",
   "done_bare": "{time} · {elapsed}",
   "done_usage": " · {tokens}(C{percent}%)",
+  "done_speed": " · {rate} tok/s",
   "interrupted": "中断しました",
   "failed": "エラー：{message}",
   "error_classes": {
@@ -105,7 +106,6 @@
     "full": "フルアクセス",
     "read_only": "読み取り専用"
   },
-  "speed": "{rate} tok/s",
   "context": "{used}/{window}({percent}%)",
   "total": "Σ{tokens}(C{percent}%)",
   "refused": "拒否されました：{message}",
