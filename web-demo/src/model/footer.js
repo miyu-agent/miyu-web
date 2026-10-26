@@ -1,17 +1,18 @@
 // @ts-check
 //! 输入框下面那一行要写的字（蓝图 `web.md`「框下面那一行的数」，照 TUI 演示的 `ui/footer.rs`、`core/push.rs`）：
-//! 左边权限级别和模型，右边速度 · 上下文 · 累计；还是 0 的格子不写；放不下时右边先丢速度、再丢累计。
+//! 左边权限级别和模型，右边速度 · 上下文 · 累计 · 花费；还是 0 的格子不写；放不下时右边先丢花费、再丢速度、再丢累计。
 
 import { res, t } from '../util/res.js';
 import { short, hitRate, percentTenths } from './format.js';
 import { levelOf } from './entries.js';
+import { costText } from '../lib/cost.js';
 
 const input = (u) => u.uncached + u.cache_read + u.cache_write;
 
 /**
  * 照会话状态写（蓝图 `web.md`「照条目画」第 3 条；核心 9-8 补上的 `view.status`）：级别照 `permission`，模型照 `model`，速度照 `speed`
  * （输出 ÷ 首字到说完），上下文照 `context.used`（窗口照 `context.window`，没有的照订阅回应的限额），累计照 `usage`（全部请求，命中率照
- * 主请求）；还是 0 的格子不写。
+ * 主请求），花费照 `usage` 的 `converted`（核心 UC-1，没有的照 `amounts`；同累计只算这个会话自己，不连子代理；没定价的不写）；还是 0 的格子不写。
  * @param {any} status @param {{window?: number}} [limits] 订阅回应里的限额
  * @returns {{left: {level: string, label: string, model: string|null, endpoint: string|null}, right: {key: string, text: string}[]}}
  */
@@ -27,6 +28,9 @@ export function statusFooter(status, limits = {}) {
   const main = status?.usage?.main;
   if (all && input(all) + all.output > 0) {
     right.push({ key: 'total', text: t('total', { tokens: short(input(all) + all.output), percent: hitRate(main?.cache_read ?? 0, main ? input(main) : 0) }) });
+    // 花费单独一格接在累计后面（2026-10-26 项目主人）：窄的时候它先让出来，累计还在
+    const cost = costText(status.usage);
+    if (cost) right.push({ key: 'cost', text: cost });
   }
   return { left: { level, label: levelLabel(level), model: status?.model?.model ?? null, endpoint: status?.model?.endpoint ?? null }, right };
 }
@@ -61,8 +65,8 @@ export function levelParams(level) {
   return level === 'read_only' ? { read_only: true } : { level, read_only: false };
 }
 
-/** 丢格子的先后：先速度，再累计，上下文留到最后。 */
-const DROP = ['speed', 'total', 'context'];
+/** 丢格子的先后：先花费（2026-10-26 项目主人：窄的时候金额先让出来），再速度，再累计，上下文留到最后。 */
+const DROP = ['cost', 'speed', 'total', 'context'];
 
 /**
  * 右边放得下的几格：照 `DROP` 的先后一格格丢，直到 `measure` 量出来不超过 `room`。

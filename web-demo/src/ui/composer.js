@@ -852,7 +852,7 @@ export class Composer {
   }
 
   /**
-   * 右边：放不下的照先后丢（先速度，再累计，上下文最后），量的是真画出来的宽。左边量本来有多宽
+   * 右边：放不下的照先后丢（先花费，再速度，再累计，上下文最后），量的是真画出来的宽。左边量本来有多宽
    * （`scrollWidth`，不是被挤窄以后的）：右边先让，左边最后才截掉加 `…`（`tui.md`「框下面那一行」）。
    */
   drawRight() {
@@ -870,11 +870,12 @@ export class Composer {
       return this.right.offsetWidth;
     };
     const kept = fit(this.parts, room, measure);
-    // 上下文、累计两格是按钮：点了开明细（蓝图「上下文明细、累计按用途」第 1 条）；速度那一格只是字
+    // 上下文、累计两格是按钮：点了开明细（蓝图「上下文明细、累计按用途」第 1 条）；花费那一格点了同点累计；速度那一格只是字
     /** @type {Map<string, {el: HTMLElement, text: string}>} */
     const cells = new Map();
     replace(this.right, kept.map((p, i) => {
       const sep = i ? ' · ' : null;
+      if (p.key === 'cost') return [sep, h('button.footer-cell', { type: 'button', dataset: { kind: 'cost' }, title: t('context_pop.tip_total'), onclick: () => cells.get('total')?.el.click() }, p.text)];
       if (p.key !== 'context' && p.key !== 'total') return [sep, p.text];
       const kind = /** @type {'context'|'total'} */ (p.key);
       const el = h('button.footer-cell', { type: 'button', dataset: { kind }, title: t(`context_pop.tip_${kind}`), onclick: () => this.contextPop.toggle(kind, el, p.text) }, p.text);
