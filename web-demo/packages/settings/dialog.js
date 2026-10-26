@@ -27,6 +27,8 @@ const SAVED_MS = 1000;
 
 /** 上次看的那一页：这个终端记着（蓝图第 3 条），刷新就忘 */
 let lastPage = 'general';
+/** 网页的源码在哪（AGPL 第 13 条）：改了的版本照自己的源码地址换掉这一行 */
+const SOURCE_URL = 'https://github.com/miyu-agent/miyu-web';
 
 export class SettingsDialog {
   /** @param {any} ctx */
@@ -304,6 +306,9 @@ export class SettingsDialog {
           : this.extensions.entries.has(g.id)
           ? h('section.set-group', h('h3.set-group-name', g.name), this.extensions.body(g.id, g.items.map((item) => coreRow(this, item)).filter(Boolean)))
           : groupBlock(g.name, g.items.map((item) => coreRow(this, item))))),
+        // 最底下一行源码链接（蓝图「设置」第 12a 条，2026-10-26 许可证换成 AGPL-3.0-or-later：第 13 条要让用网页的人拿得到源码）
+        this.current === 'general' ? h('p.set-source', this.ctx.text('source_line'),
+          h('a.set-source-link', { href: SOURCE_URL, target: '_blank', rel: 'noopener noreferrer' }, this.ctx.text('source_link'))) : null,
       ];
     }
     swap(this.body, kids, dir, restore ?? scroll);

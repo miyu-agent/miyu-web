@@ -735,3 +735,8 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
   .adm-exit { margin-top: 0; }
   .adm-inner { padding: 16px; }
 }
+
+/* 通用页最底下的源码链接（蓝图「设置」第 12a 条，AGPL 第 13 条） */
+.set-source { margin: calc(24px * var(--space)) 0 calc(4px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
+.set-source-link { color: inherit; text-decoration: none; }
+.set-source-link:hover, .set-source-link:focus-visible { color: var(--text-soft); text-decoration: underline; outline: none; }

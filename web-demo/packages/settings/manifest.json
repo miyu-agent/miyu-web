@@ -179,6 +179,8 @@
   "text": {
     "zh": {
       "title": "设置",
+      "source_line": "Miyu 网页 · AGPL-3.0-or-later · ",
+      "source_link": "源代码",
       "open": "设置",
       "command_settings": "打开设置",
       "command_config": "打开设置：模型",
@@ -807,6 +809,8 @@
     },
     "en": {
       "title": "Settings",
+      "source_line": "Miyu Web · AGPL-3.0-or-later · ",
+      "source_link": "Source code",
       "open": "Settings",
       "command_settings": "Open settings",
       "command_config": "Open settings: models",
@@ -1435,6 +1439,8 @@
     },
     "ja": {
       "title": "設定",
+      "source_line": "Miyu Web · AGPL-3.0-or-later · ",
+      "source_link": "ソースコード",
       "open": "設定",
       "command_settings": "設定を開く",
       "command_config": "設定を開く：モデル",
