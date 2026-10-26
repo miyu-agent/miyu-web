@@ -77,11 +77,16 @@ export class ProviderFlow {
     this.host.show(this.list(), 1);
   }
 
-  /** 直接开「另配一份自用的」那一屏（设置页共用那一格的按钮）；返回回到选一家。 @param {string} id 原编号 */
+  /**
+   * 直接开「另配一份自用的」那一屏（设置页共用那一格的按钮）：前面没有选一家那一屏，不出「上一步」，左下角是「取消」（2026-10-26）。
+   * @param {string} id 原编号
+   */
   async startCopy(id) {
     this.host.show(this.waiting(), 1);
     await this.load();
-    this.host.show(this.sharedOnly.has(id) ? this.copy(id) : this.list(), 1);
+    if (!this.sharedOnly.has(id)) return this.host.show(this.list(), 1);
+    const screen = this.copy(id);
+    this.host.show({ ...screen, back: undefined }, 1);
   }
 
   /** 设置页里点了一家只有共用的：不当已配好，另配一份自用的（蓝图「设置页」第 14 条）。 @param {string|null} id */
