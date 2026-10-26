@@ -6,8 +6,8 @@ import { validId, providerName } from '../model.js';
 
 /** 通用的二级域名：`api.example.co.uk` 取 `example`（`cli/setup.md` 第 4 条第 3 款） */
 const SECOND_LEVEL = new Set(['co', 'com', 'net', 'org', 'edu', 'gov', 'ac']);
-/** 出厂的三个池：配置里一个池都没有时一起写（`cli/setup.md` 第 10 条） */
-export const DEFAULT_POOLS = ['lite', 'standard', 'flagship'];
+/** 出厂的三个池：旧核心（池没有 `fixed`）上配置里一个池都没有时一起写（`cli/setup.md` 第 10 条）；核心 Q-1 起三个固定池永远在，不写 */
+export const DEFAULT_POOLS = ['lite', 'normal', 'flagship'];
 
 /**
  * 目录里的编号写进配置用的编号（`cli/setup.md` 第 10 条）：别的字换成 `-`，不是字母开头的前面加 `p-`（`302ai` → `p-302ai`、

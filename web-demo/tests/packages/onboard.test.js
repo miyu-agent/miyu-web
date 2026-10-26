@@ -112,7 +112,7 @@ test('存：目录里的一家写密钥，改过写法的另写 catalog，本机
   });
   const pooled = setupChanges({ kind: 'configured', id: 'zen' }, null, { chat: 'big', pools: true, taken });
   assert.equal(pooled.id, 'zen');
-  assert.deepEqual(pooled.changes.map((c) => c.key), ['models.chat', 'pools.lite.models', 'pools.lite.subagent', 'pools.standard.models', 'pools.standard.subagent', 'pools.flagship.models', 'pools.flagship.subagent']);
+  assert.deepEqual(pooled.changes.map((c) => c.key), ['models.chat', 'pools.lite.models', 'pools.lite.subagent', 'pools.normal.models', 'pools.normal.subagent', 'pools.flagship.models', 'pools.flagship.subagent']);
   assert.deepEqual(pooled.changes[1], { key: 'pools.lite.models', value: [] });
   assert.equal(noPools({ 'models.chat': {} }), true);
   assert.equal(noPools({ 'pools.fast.models': {} }), false);

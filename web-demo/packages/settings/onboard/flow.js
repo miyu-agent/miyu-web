@@ -63,6 +63,7 @@ export class ProviderFlow {
     this.providers = [];
     /** 只有共用、还没有自用那份的几家（核心 PL-1 的 `layer` 是 `system`）：设置页里点了是「另配一份自用的」 @type {Set<string>} */
     this.sharedOnly = new Set();
+    this.fixedPools = false;
     this.failed = /** @type {string|null} */ (null);
     /** 自定义的接口有哪几种（配置清单 `providers.<id>.driver` 的选项） */
     this.drivers = /** @type {{value: string, name: string}[]} */ ([]);
@@ -112,6 +113,8 @@ export class ProviderFlow {
       this.providers = providers;
       this.sharedOnly = new Set(providers.filter((/** @type {any} */ p) => p.layer === 'system').map((/** @type {any} */ p) => p.id));
       this.chat = models?.uses?.chat ?? null;
+      /** 核心有三个固定池（Q-1：池带 `fixed`）：引导里不再预写池 */
+      this.fixedPools = (models?.pools ?? []).some((/** @type {any} */ p) => p && typeof p === 'object' && 'fixed' in p);
       const driver = (schema?.items ?? []).find((/** @type {any} */ i) => i.key === 'providers.<id>.driver');
       this.drivers = (driver?.options ?? []).map((/** @type {any} */ o) => ({ value: o.value, name: o.name ?? o.value }));
       this.failed = null;
@@ -492,7 +495,7 @@ export class ProviderFlow {
         await core.request('secret.set', { name: secret, value: key.value });
         ref = { secret };
       }
-      const { changes } = setupChanges(target, ref, { chat: welcome ? model : null, pools: welcome && noPools(items), taken });
+      const { changes } = setupChanges(target, ref, { chat: welcome ? model : null, pools: welcome && !this.fixedPools && noPools(items), taken });
       // 写个人设置，同设置页（2026-10-10 项目主人：引导里选了 DeepSeek，会话照旧是原来的 magpie——原来写系统配置，被个人设置里写着的盖住了）
       // 设置页里、管理员模式开着：整条写系统配置（这一家进「共用」，蓝图「设置页」第 14 条）；别的写个人设置
       // 另配一份自用的：不管开没开管理员模式都写个人设置
