@@ -210,3 +210,23 @@ export function featureGroups(list) {
     ...kinds,
   ];
 }
+
+/**
+ * 不写组名的包：只有一个功能、功能名和包名一样（基础系统拆出来的提问、改文件这类，组名和那一行写两遍）。连着的几个并成一块、
+ * 照原来的先后（`bare`，画的时候不写组名，和有组名的组之间留同样的间距）；名字不一样的、两个以上功能的照旧。
+ * @template {{group: string, package?: string, items: {name?: string, id: string}[]}} G
+ * @param {G[]} groups `featureGroups` 分好的 @param {Map<string, string>} names 包编号 → 包名（`package.list`），查不到的照编号
+ * @returns {(G & {bare?: false} | {group: 'package', bare: true, items: G['items']})[]}
+ */
+export function featureBlocks(groups, names) {
+  /** @type {any[]} */
+  const out = [];
+  for (const g of groups) {
+    const only = g.items.length === 1 ? g.items[0] : null;
+    const bare = g.group === 'package' && only && (only.name ?? only.id) === (names.get(/** @type {string} */ (g.package)) ?? g.package);
+    if (!bare) out.push(g);
+    else if (out.at(-1)?.bare) out.at(-1).items.push(only);
+    else out.push({ group: 'package', bare: true, items: [only] });
+  }
+  return out;
+}

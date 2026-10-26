@@ -8,7 +8,7 @@
 import { h, icon, replace, hasIcon, iconNames } from '../../src/lib/dom.js';
 import { field, askFirst } from './form.js';
 import { refusalText } from './persona-editor.js';
-import { featureGroups, summaryChange } from './model.js';
+import { featureGroups, featureBlocks, summaryChange } from './model.js';
 
 /** @typedef {{saved: () => void, removed: (remains: boolean) => void, close: () => void}} Hooks */
 
@@ -73,13 +73,13 @@ export class PresetEditor {
     const list = Array.isArray(got.features) ? got.features : [];
     /** 没列出来的功能默认开不开：`on` 的预设才照全局开关（核心 X-27） */
     this.unlisted = got.unlisted;
-    // 照包分组、组名是包名（核心 ENV-1，`featureGroups`）；旧核心分五段，包的功能那一段不写小标题（左边这一格就叫「功能」，
-    // 写了上下两个「功能」挨着），别的各一个
+    // 照包分组、组名是包名（核心 ENV-1，`featureGroups`）；一个功能、名字和包名一样的不写组名，连着的并成一块，前面留同样的组间距
+    // （`featureBlocks`）。旧核心分五段，包的功能那一段不写小标题（左边这一格就叫「功能」，写了上下两个「功能」挨着），别的各一个
     const groupName = (/** @type {{group: string, package?: string}} */ g) => (g.group === 'feature' ? null
       : g.group === 'package' ? this.packageNames.get(/** @type {string} */ (g.package)) ?? g.package : t(`edit.feature_groups.${g.group}`));
-    const features = h('div.setup-features', featureGroups(list).map((g) => {
-      const name = groupName(g);
-      return [name ? h('div.setup-feature-group', name) : null, g.items.map((f) => this.featureRow(f))];
+    const features = h('div.setup-features', featureBlocks(featureGroups(list), this.packageNames).map((g, i) => {
+      const head = g.bare ? (i ? h('div.setup-feature-gap') : null) : groupName(g);
+      return [typeof head === 'string' ? h('div.setup-feature-group', head) : head, g.items.map((f) => this.featureRow(f))];
     }));
     this.note = h('p.setup-error', { hidden: true });
     const remove = got.remove ? askFirst(this.kit, t(`edit.${got.remove}`), () => t(`edit.${got.remove}_ask`, { name: this.title.textContent || this.id }), () => this.drop()) : null;

@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave, featureGroups } from '../../packages/setup/model.js';
+import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave, featureGroups, featureBlocks } from '../../packages/setup/model.js';
 
 const list = [{ persona: 'engineer', name: null }, { persona: 'miyu', name: 'Miyu' }, { persona: 'bad', problem: 'persona.toml:2: …' }];
 
@@ -163,4 +163,18 @@ test('核心 ENV-1 起功能照包分组：包照第一次出现的先后、一�
   ];
   assert.deepEqual(featureGroups(list).map((g) => `${g.group}${g.package ? `(${g.package})` : ''}:${g.items.map((f) => f.id).join(',')}`),
     ['package(env):env-time,env-profile', 'package(read):read', 'package(kit):skill-notes', 'home:script-mine,mcp-x', 'other:gone', 'skill:skill-loose']);
+});
+
+test('一个功能、名字和包名一样的包不写组名，连着的并成一块；名字不一样的、两个以上的照旧写组名（2026-10-26 主会话）', () => {
+  const names = new Map([['ask_user', '提问'], ['edit', '改文件'], ['env', '注入环境信息'], ['read', '读文件'], ['web', '联网搜索']]);
+  const list = [
+    { id: 'ask_user', name: '提问', package: 'ask_user' }, { id: 'edit', name: '改文件', package: 'edit' },
+    { id: 'env-time', name: '时间', package: 'env' }, { id: 'env-cwd', name: '工作目录', package: 'env' },
+    { id: 'read', name: '读文件', package: 'read' }, { id: 'web', name: '搜网页', package: 'web' }, { id: 'odd', name: 'odd', package: 'odd' },
+    { id: 'skill-loose', name: '散的' },
+  ];
+  const shape = featureBlocks(featureGroups(list), names).map((g) => `${g.bare ? '·' : g.package ?? g.group}:${g.items.map((f) => f.id).join(',')}`);
+  assert.deepEqual(shape, ['·:ask_user,edit', 'env:env-time,env-cwd', '·:read', 'web:web', '·:odd', 'skill:skill-loose'],
+    '名字不一样的（联网搜索 / 搜网页）照旧；查不到包名的照编号比');
+  assert.deepEqual(featureBlocks(featureGroups([{ id: 'web' }]), new Map()).map((g) => g.group), ['feature'], '旧核心照五段');
 });
