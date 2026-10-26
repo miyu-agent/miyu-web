@@ -121,14 +121,14 @@ export class SettingsDialog {
   /** 读核心的配置清单、最终值；模型列表另读（可能慢：核心要去供应商那边拉），读完了模型页跟着重画。 */
   async load() {
     const core = this.ctx.core;
-    // 成员调不了软件包；老核心上的成员（Y-2下下上）配置清单、模型列表也调不了，不问；左栏只留成员用得上的几页（`entries`，蓝图「连核心」第 1 条「成员」那一款）
+    // 成员读得到软件包的列表（核心 U23-R，只读；旧核心拒了照空的）；老核心上的成员（Y-2下下上）配置清单、模型列表也调不了，不问；左栏只留成员用得上的几页（`entries`，蓝图「连核心」第 1 条「成员」那一款）
     const member = !!this.ctx.host?.member;
     const configless = !!this.ctx.host?.configless;
     const [schema, got, packages, skills, scripts] = await Promise.all([
       configless ? { pages: [], groups: [], items: [] } : core.request('config.schema', {}),
       configless ? { items: {} } : core.request('config.get', { all: true }),
       // 核心的软件包（9-1）：「默认界面」的选项照它列（读不到的旧核心是空的）
-      member ? [] : core.request('package.list', {}).then((r) => r?.packages ?? [], () => []),
+      core.request('package.list', {}).then((r) => r?.packages ?? [], () => []),
       // 技能、脚本两页（核心 X-26、X-27；没有推送，打开、改了配置时重读）：旧核心没有的是 `null`，不出那一页
       core.request('skill.list', {}).then((r) => (Array.isArray(r?.skills) ? r : null), () => null),
       core.request('script.list', {}).then((r) => (Array.isArray(r?.scripts) ? r : null), () => null),

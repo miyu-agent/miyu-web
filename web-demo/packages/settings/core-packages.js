@@ -230,7 +230,7 @@ function infoPage(dialog, id) {
     missing ? null : mcpGroup(dialog, p),
     ...groups.map((/** @type {any} */ x) => groupBlock(x.g.id === id ? t('pkg.settings') : x.g.name, x.rows)),
     // 平台接入的（没有自己网页的）：终端管理员在这个平台上的号，接在它的设置项后面
-    !site && !missing && p.connection?.platform ? ownerAccounts(dialog, p.connection.platform) : null,
+    !site && !missing && !dialog.ctx.host?.member && p.connection?.platform ? ownerAccounts(dialog, p.connection.platform) : null,
   ].filter(Boolean);
 }
 
@@ -242,6 +242,8 @@ function infoCard(dialog, p, e) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const id = p.package;
   const bad = BAD.has(p.status);
+  // 成员（U23-R 起读得到列表）：管理员才有的动作不出
+  const member = !!dialog.ctx.host?.member;
   // 状态：扩展照它跑得怎样（停下的写为什么）；别的只写要留意的（好好的「已启用」、关着的「已停用」开关已经说了）
   const status = e ? stateText(t, e)
     : p.status === 'depends_missing' && p.missing?.length ? t('pkg.depends_missing', { names: packageNames(dialog.packages, p.missing).join(t('pkg.sep')) })
@@ -256,11 +258,11 @@ function infoCard(dialog, p, e) {
   const stderr = e ? (Array.isArray(e.stderr) ? e.stderr.join('\n') : e.stderr ?? '') : '';
   const showing = !!e && dialog.extensions.showing.has(id);
   const actions = [
-    p.page && !bad && dialog.ctx.backstage ? openButton(dialog, id) : null,
+    p.page && !bad && dialog.ctx.backstage && !member ? openButton(dialog, id) : null,
     e && e.state === 'running' ? h('button.set-btn', { type: 'button', onclick: () => dialog.extensions.act('extension.restart', { package: id }) }, t('ext.restart')) : null,
     e && e.on && e.state === 'stopped' && stderr
       ? h('button.set-btn', { type: 'button', onclick: () => { dialog.extensions.toggleSet(dialog.extensions.showing, id); dialog.extensions.redraw(id); } }, t(showing ? 'ext.hide_output' : 'ext.show_output')) : null,
-    removeButton(dialog, p),
+    member ? null : removeButton(dialog, p),
   ].filter(Boolean);
   const caps = e?.capabilities ?? [];
   const unapproved = new Set(e?.unapproved ?? []);
@@ -391,7 +393,7 @@ function mcpGroup(dialog, p) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const on = p.enabled !== false;
   // 都被个人设置里同名的替代了的不给「重启」：重启的是这个包的服务，它们不起
-  const restart = on && !list.every((s) => s.covered) ? h('button.set-btn.is-small', { type: 'button', onclick: async () => {
+  const restart = on && !dialog.ctx.host?.member && !list.every((s) => s.covered) ? h('button.set-btn.is-small', { type: 'button', onclick: async () => {
     if (dialog.adminGuard()) return;
     try {
       const got = await dialog.ctx.core.request('package.restart', { package: p.package });
