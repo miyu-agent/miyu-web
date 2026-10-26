@@ -70,6 +70,16 @@ function why(m) {
 }
 
 /**
+ * 写给人看的 `供应商/模型`（时间线上一轮末尾那一行、换了模型的那一行）：共用那份（`relay@system/m`，核心 PL-1）不露 `@system`，
+ * 写 `relay/m · 共用`；别的照原样（蓝图「换模型的菜单」第 1 条）。
+ * @param {string} ref
+ */
+export function shownRef(ref) {
+  const { model, endpoint } = footerOf(ref);
+  return endpoint?.endsWith(SYSTEM_COPY) ? withCopy(`${baseOf(endpoint)}/${model}`, 'system') : ref;
+}
+
+/**
  * 框下面那一截：引用照第一个 `/` 拆成模型名和供应商（模型名里可以带 `/`）；池照原样写，不写供应商。
  * @param {string} ref
  * @returns {{model: string, endpoint: string|null}}

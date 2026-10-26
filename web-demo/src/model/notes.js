@@ -6,6 +6,7 @@
 import { res, t } from '../util/res.js';
 import { short, tilde } from './format.js';
 import { shortSession } from './words.js';
+import { shownRef } from './model-menu.js';
 
 /**
  * @typedef {{what: string, title: string, session: string|null, command: string|null}} Job 派出去的一个任务（会话状态的任务表、
@@ -126,7 +127,7 @@ export function compactFailedNote(e) {
  */
 export function modelNote(e) {
   const b = e.body;
-  const text = t('notes.model_replaced', { from: b.replaced, to: b.model });
+  const text = t('notes.model_replaced', { from: shownRef(String(b.replaced ?? '')), to: shownRef(String(b.model ?? '')) });
   return { type: 'note', key: `n${e.seq}`, seq: e.seq, turn: null, tone: 'stopped', mark: res.layout.note_marks.stopped ?? '', text };
 }
 
@@ -146,7 +147,7 @@ export function workspaceNote(e) {
  */
 export function changeNote(e) {
   const b = e.body;
-  const to = [b.endpoint, b.model].filter(Boolean).join('/') || b.ref || '';
+  const to = shownRef([b.endpoint, b.model].filter(Boolean).join('/') || b.ref || '');
   return { type: 'note', key: `m${e.seq}-${e.local}`, seq: e.seq, turn: null, tone: 'stopped', mark: res.layout.note_marks.stopped ?? '', text: t('notes.changed', { to }) };
 }
 

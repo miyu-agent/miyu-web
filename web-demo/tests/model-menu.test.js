@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { menuOf, filterRows, footerOf, footerLabel, effortLevels, effortRows, effortLabel, effortOf, effortChange, defaultModelChange } from '../src/model/model-menu.js';
+import { menuOf, filterRows, footerOf, footerLabel, shownRef, effortLevels, effortRows, effortLabel, effortOf, effortChange, defaultModelChange } from '../src/model/model-menu.js';
 
 loadRes();
 
@@ -156,6 +156,9 @@ test('同一家自用、共用两份（核心 PL-1）：两组挨着，供应商
   assert.deepEqual(footerLabel({ model: 'm-1', endpoint: 'relay' }, list), { model: 'M One', endpoint: 'Relay · 自用', full: 'relay/m-1' });
   assert.deepEqual(footerLabel({ model: 'big', endpoint: 'zen' }, list).endpoint, 'Zen', '只有一份的不标');
   assert.deepEqual(footerLabel({ model: 'm-1', endpoint: 'relay@system' }, null), { model: 'm-1', endpoint: 'relay · 共用', full: 'relay/m-1 · 共用' }, '还没有列表也不露 @system');
+  assert.equal(shownRef('relay@system/m-1'), 'relay/m-1 · 共用', '时间线上那一行也不露 @system');
+  assert.equal(shownRef('relay/m-1'), 'relay/m-1');
+  assert.equal(shownRef('@duo'), '@duo');
   // 成员只有共用那一份（只有系统配置写了）：编号照原样、不标
   const member = { providers: [{ id: 'relay', layer: 'system', name: { value: 'Relay' }, models: [named('relay', 'm-1', 'M One')] }], pools: [] };
   assert.deepEqual(menuOf(member, null).models.map((r) => r.desc), ['Relay']);
