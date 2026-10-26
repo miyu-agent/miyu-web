@@ -88,13 +88,14 @@ export function apply(ctx) {
   const badge = h('span.dash-badge', { hidden: true });
   const button = h('button.icon-button.dash-toggle', { type: 'button', onclick: () => toggle() }, icon('panel-right'), badge);
   ctx.slots.mount('stage.tools', { id: 'dashboard', order: 10, render: () => button });
-  /** 从预览工作区回到四张卡（窗口窄的回到盖着的那一层） */
+  /**
+   * 从预览工作区回到四张卡（窗口窄的回到盖着的那一层）。这一栏记着已经是那个样子的（`side.open` 当作开着、什么都不做）也把工作区关上，
+   * 不留在工作区里回不去
+   */
   function backToCards() {
-    if (side.fits()) side.open('narrow');
-    else {
-      work.close();
-      side.open('overlay');
-    }
+    const mode = side.fits() ? 'narrow' : 'overlay';
+    if (mode === 'overlay' || side.mode() === mode) work.close();
+    side.open(mode);
   }
   // 预览工作区换成右侧边栏点进去的样子：返回箭头回到四张卡（从放大看那一页点进去的先回到那一页）
   ctx.effect(() => work.claim(() => { if (!dash.backOne()) backToCards(); }));

@@ -100,6 +100,7 @@ export class Artifacts {
     this.panel = h('div.artifact-panel', { hidden: true });
     this.tabWork = h('button.artifact-tab', { type: 'button', onclick: () => this.setTab('work') }, t('artifacts.tab_work'));
     this.tabPanel = h('button.artifact-tab', { type: 'button', onclick: () => this.setTab('panel') }, t('artifacts.tab_panel'));
+    // 返回箭头只在右侧边栏要了这一栏时露：名字写「返回右侧边栏」，不和看着子代理时输入框上面回上一层的「← 返回」同名（2026-10-26）
     const back = () => h('button.icon-button.artifact-back', { type: 'button', hidden: true, title: t('artifacts.back'), 'aria-label': t('artifacts.back'), onclick: () => this.claimed?.back() }, icon('chevron-left'));
     this.backTabs = back();
     this.backHead = back();
