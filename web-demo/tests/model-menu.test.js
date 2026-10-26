@@ -164,10 +164,27 @@ test('同一家自用、共用两份（核心 PL-1）：两组挨着，供应商
   assert.deepEqual(menuOf(member, null).models.map((r) => r.desc), ['Relay']);
 });
 
-test('模型池那一页：三个固定池（核心 Q-1）排最前、照 lite、normal、flagship；空的暗着选不了', () => {
-  const pool = (name, fixed) => ({ name, strategy: 'pin', models: [], usable: false, subagent: true, fixed });
-  const { pools } = menuOf({ providers: [], pools: [pool('duo', false), pool('flagship', true), pool('lite', true), pool('normal', true)] }, null);
-  assert.deepEqual(pools.map((r) => [r.ref, r.usable]), [['@lite', false], ['@normal', false], ['@flagship', false], ['@duo', false]]);
+test('模型池那一页：三个固定池（核心 Q-1）排最前、照旗舰、日常、轻量，上面写显示名、下面暗字接 @flagship；空的暗着选不了（2026-10-26 项目主人）', () => {
+  const pool = (name, fixed, more = {}) => ({ name, strategy: 'pin', models: [], usable: false, subagent: true, fixed, ...more });
+  const { pools } = menuOf({ providers: [], pools: [pool('duo', false), pool('flagship', true, { strategy: 'rotate' }), pool('lite', true), pool('normal', true)] }, null);
+  assert.deepEqual(pools.map((r) => [r.ref, r.title, r.desc, r.usable]), [
+    ['@flagship', '旗舰', '@flagship · 轮流使用', false], ['@normal', '日常', '@normal', false], ['@lite', '轻量', '@lite', false], ['@duo', '@duo', '', false],
+  ]);
+  assert.deepEqual(filterRows(pools, '旗舰').map((r) => r.ref), ['@flagship'], '搜显示名找得到');
+  assert.deepEqual(filterRows(pools, '@lite').map((r) => r.ref), ['@lite'], '搜池名也找得到');
+});
+
+test('框下面那一截用着固定池的：写显示名，暗色那一格和悬停写 @flagship；人建的池照原样', () => {
+  assert.deepEqual(footerLabel(footerOf('@normal'), null), { model: '日常', endpoint: '@normal', full: '@normal' });
+  assert.deepEqual(footerLabel(footerOf('@duo'), null), { model: '@duo', endpoint: null });
+});
+
+test('固定池的显示名三语同终端：英文 Flagship、Everyday、Lite，日文 フラッグシップ、日常、ライト', async () => {
+  const { readFileSync } = await import('node:fs');
+  const names = (lang) => JSON.parse(readFileSync(new URL(`../resources/text/${lang}.json`, import.meta.url), 'utf8')).model_menu.fixed_pools;
+  assert.deepEqual(names('zh'), { flagship: '旗舰', normal: '日常', lite: '轻量' });
+  assert.deepEqual(names('en'), { flagship: 'Flagship', normal: 'Everyday', lite: 'Lite' });
+  assert.deepEqual(names('ja'), { flagship: 'フラッグシップ', normal: '日常', lite: 'ライト' });
 });
 
 test('模型池拿空了（核心 8-23 的 usable 是假）：暗着选不了，悬停写原因，下面一行空着（轮流用的只写那一句）', () => {

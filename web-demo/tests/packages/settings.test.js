@@ -409,10 +409,10 @@ test('核心给 layer 的（PL-1）：照 layer 分两块，两份各是一家�
   assert.deepEqual([...sameNamed(list)].sort(), ['mine', 'zen'], '两份同名不算，真同名的照算');
 });
 
-test('模型池的先后（核心 Q-1）：三个固定池排最前、照 lite、normal、flagship；人建的照原来的先后在后面', async () => {
+test('模型池的先后（核心 Q-1）：三个固定池排最前、照旗舰、日常、轻量（2026-10-26 项目主人）；人建的照原来的先后在后面', async () => {
   const { poolOrder } = await import('../../packages/settings/model.js');
   const got = poolOrder([{ name: 'duo' }, { name: 'flagship', fixed: true }, { name: 'aaa' }, { name: 'lite', fixed: true }, { name: 'normal', fixed: true }]);
-  assert.deepEqual(got.map((p) => p.name), ['lite', 'normal', 'flagship', 'duo', 'aaa']);
+  assert.deepEqual(got.map((p) => p.name), ['flagship', 'normal', 'lite', 'duo', 'aaa']);
   assert.deepEqual(poolOrder([{ name: 'b' }, { name: 'a' }]).map((p) => p.name), ['b', 'a'], '旧核心（没有 fixed）照原样');
 });
 

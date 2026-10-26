@@ -9,6 +9,12 @@ import { pickModels } from './picker.js';
 import { toggle } from './rows.js';
 import { itemFor, layerOf, validId, keySegment, moveMember, poolRemoval, duplicates, providerName, poolOrder } from './model.js';
 import { twinsOf, copyOf } from '../../src/lib/provider-copy.js';
+import { isFixedPool } from '../../src/lib/fixed-pools.js';
+
+/** 卡片头上的池名：固定池写显示名、后面暗字接 `@flagship`。 @param {any} ctx @param {string} name */
+const poolHead = (ctx, name) => (isFixedPool(name)
+  ? h('strong', ctx.text(`models.fixed_pools.${name}`), h('code.set-pool-ref', `@${name}`))
+  : h('strong', `@${name}`));
 
 /**
  * @param {any} dialog
@@ -90,7 +96,8 @@ export function drawPools(dialog, list) {
       setMembers([...now, ...picked]);
     }));
     return h('div.set-pool',
-      h('div.set-pool-head', h('strong', `@${pool.name}`), seg, add,
+      // 固定池写显示名，后面暗字接 `@flagship`（2026-10-26 项目主人定名，同终端）；人建的照旧写 `@名字`
+      h('div.set-pool-head', poolHead(ctx, pool.name), seg, add,
         // 固定池没有删除，垃圾桶那一格留着空位（各张卡片的调用方式、「添加」上下对齐）
         pool.fixed ? h('span.set-pool-gap', { 'aria-hidden': 'true' })
           : removal.length ? h('button.set-reset.is-shown', { type: 'button', title: t('pool_delete'), 'aria-label': t('pool_delete'), onclick: async () => report(await dialog.saveMany(layer, removal)) }, icon('trash-2')) : null),

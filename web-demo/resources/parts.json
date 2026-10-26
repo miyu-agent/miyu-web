@@ -6426,6 +6426,12 @@
       ".set-locked"
     ]
   },
+  "settings.pool-ref": {
+    "zh": "设置：固定池卡片头上显示名后面暗字的 @flagship",
+    "select": [
+      ".set-pool-ref"
+    ]
+  },
   "settings.pool-foot": {
     "zh": "设置：模型池卡片最下面「子代理能选」那一行",
     "select": [

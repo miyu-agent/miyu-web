@@ -511,6 +511,7 @@
     "open_usage": "Open in Usage"
   },
   "model_menu": {
+    "fixed_pools": { "flagship": "Flagship", "normal": "Everyday", "lite": "Lite" },
     "member": "Models are set by the administrator",
     "tip": "Switch model",
     "models": "Models",

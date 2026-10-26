@@ -5,6 +5,7 @@
 import { res, t } from '../util/res.js';
 import { hhmm } from './format.js';
 import { baseOf, twinsOf, copyOf, SYSTEM_COPY } from '../lib/provider-copy.js';
+import { poolOrder, isFixedPool } from '../lib/fixed-pools.js';
 
 /**
  * @typedef {{ref: string, title: string, desc: string, current: boolean, usable: boolean, why: string, find: string, logo?: any, brand?: string}} Row 一行：选了交给
@@ -33,23 +34,24 @@ export function menuOf(list, current) {
     const desc = (seen.get(name)?.size ?? 0) > 1 && name !== m.model ? `${provider} · ${m.model}` : provider;
     return { ref: m.ref, title: name, desc, current: m.ref === current, usable, why: usable ? '' : why(m), find: `${name}\n${m.model}\n${provider}`, ...(logos ? { logo: p.logo ?? null, brand: provider } : {}) };
   });
-  // 三个固定池（核心 Q-1：`fixed`）排最前，照 lite、normal、flagship；后面是人建的，照列表的先后（同设置页的模型池）
-  const rank = (/** @type {any} */ p) => { const i = FIXED_POOLS.indexOf(p.name); return i < 0 ? FIXED_POOLS.length : i; };
-  const ordered = [...(list.pools ?? []).filter((p) => p.fixed).sort((a, b) => rank(a) - rank(b)), ...(list.pools ?? []).filter((p) => !p.fixed)];
-  const pools = ordered.map((pool) => {
+  // 三个固定池（核心 Q-1：`fixed`）排最前，照旗舰、日常、轻量；后面是人建的，照列表的先后（同设置页的模型池，`lib/fixed-pools.js`）
+  const pools = poolOrder(list.pools ?? []).map((pool) => {
     const ref = `@${pool.name}`;
     const members = pool.models.map((r) => footerOf(r).model).join(t('list_sep'));
     // 轮流用的写一句；出错了换下一个是池本来的样子，不写（2026-10-10 项目主人：「出错时切换」没必要）
     const how = pool.strategy === 'rotate' ? t('model_menu.rotate') : '';
     // 成员是空的（下架的模型被核心拿空了，核心 8-23 的 `usable`）：暗着选不了，照它挑会是 `no_model`
     const usable = pool.usable !== false && pool.models.length > 0;
-    return { ref, title: ref, desc: [how, members].filter(Boolean).join(' · '), current: ref === current, usable, why: usable ? '' : t('model_menu.pool_empty'), find: `${ref}\n${members}` };
+    // 固定池上面写显示名（旗舰、日常、轻量），下面暗字前面接 `@flagship`（2026-10-26 项目主人定名，同终端）
+    const name = poolName(pool.name);
+    const desc = [name ? ref : '', how, members].filter(Boolean).join(' · ');
+    return { ref, title: name ?? ref, desc, current: ref === current, usable, why: usable ? '' : t('model_menu.pool_empty'), find: `${name ?? ''}\n${ref}\n${members}` };
   });
   return { models, pools };
 }
 
-/** 三个固定池（核心 Q-1）的先后 */
-const FIXED_POOLS = ['lite', 'normal', 'flagship'];
+/** 固定池的显示名（旗舰、日常、轻量，照界面语言）；人建的池没有，交回 `null`。 @param {string} name 池名，不带 `@` */
+export const poolName = (name) => (isFixedPool(name) ? t(`model_menu.fixed_pools.${name}`) : null);
 
 /** 供应商的显示名（核心 8-21：`name.value`，已经照配置、目录、编号退好；旧核心是字或没有）。 */
 const providerName = (p) => (typeof p.name === 'object' ? p.name?.value : p.name) || baseOf(p.id);
@@ -103,6 +105,9 @@ export function footerOf(ref) {
  * @returns {{model: string|null, endpoint: string|null, full?: string}}
  */
 export function footerLabel(left, list) {
+  // 用着固定池的写显示名，暗色那一格写 `@flagship`，悬停同样（2026-10-26 项目主人定名）
+  const fixed = left.model?.startsWith('@') ? poolName(left.model.slice(1)) : null;
+  if (fixed && left.model) return { model: fixed, endpoint: left.model, full: left.model };
   if (!left.model || !left.endpoint || left.model.startsWith('@')) return left;
   // 共用那份（`relay@system`）不露 `@system`：找不到的写原编号接「 · 共用」，悬停的完整写法同样（蓝图「换模型的菜单」第 1 条）
   const shared = left.endpoint.endsWith(SYSTEM_COPY);

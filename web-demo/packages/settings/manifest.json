@@ -291,6 +291,7 @@
         "price_cache_read": "缓存读",
         "price_cache_write": "缓存写",
         "pool_empty": "还没有成员，添加以后才能用",
+        "fixed_pools": { "flagship": "旗舰", "normal": "日常", "lite": "轻量" },
         "new_pool": "新建模型池",
         "strategies": {
           "pin": "固定",
@@ -936,6 +937,7 @@
         "price_cache_read": "Cache read",
         "price_cache_write": "Cache write",
         "pool_empty": "No models yet — add some to use this pool",
+        "fixed_pools": { "flagship": "Flagship", "normal": "Everyday", "lite": "Lite" },
         "new_pool": "New model pool",
         "strategies": {
           "pin": "Pin",
@@ -1581,6 +1583,7 @@
         "price_cache_read": "キャッシュ読み取り",
         "price_cache_write": "キャッシュ書き込み",
         "pool_empty": "まだメンバーがいません。追加すると使えます",
+        "fixed_pools": { "flagship": "フラッグシップ", "normal": "日常", "lite": "ライト" },
         "new_pool": "モデルプールを作成",
         "strategies": {
           "pin": "固定",

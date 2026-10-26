@@ -402,17 +402,8 @@ export function keyIn(id, got, layer) {
 /** 「共用」那一块开着没有：人点过的照点过的（这台设备上记的，`null` 是没点过），没点过的多于 3 家收着。 @param {number} count @param {boolean|null} stored */
 export const sharedOpen = (count, stored) => (typeof stored === 'boolean' ? stored : count <= 3);
 
-/** 三个固定池（核心 Q-1）的先后 */
-const FIXED_POOLS = ['lite', 'normal', 'flagship'];
-
-/**
- * 模型池那一页的先后（蓝图「设置页」第 14 条）：三个固定池（`fixed`）排最前，照 lite、normal、flagship；后面是人建的，照列表的先后。
- * @template {{name: string, fixed?: boolean}} P @param {P[]} pools @returns {P[]}
- */
-export function poolOrder(pools) {
-  const rank = (/** @type {P} */ p) => { const i = FIXED_POOLS.indexOf(p.name); return i < 0 ? FIXED_POOLS.length : i; };
-  return [...pools.filter((p) => p.fixed).sort((a, b) => rank(a) - rank(b)), ...pools.filter((p) => !p.fixed)];
-}
+/** 模型池那一页的先后（蓝图「设置页」第 14 条）：同换模型的菜单，固定池照旗舰、日常、轻量排最前 */
+export { poolOrder } from '../../src/lib/fixed-pools.js';
 
 /** 删一个池：它在这一层写着的几项（`pools.<id>.*`）各一条 `unset`。 @param {string} id @param {{items: Record<string, Entry>}} got @param {string} layer */
 export function poolRemoval(id, got, layer) {

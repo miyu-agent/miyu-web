@@ -511,6 +511,7 @@
     "open_usage": "使用量ページで見る"
   },
   "model_menu": {
+    "fixed_pools": { "flagship": "フラッグシップ", "normal": "日常", "lite": "ライト" },
     "member": "モデルは管理者が設定します",
     "tip": "モデルを変更",
     "models": "モデル",

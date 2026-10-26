@@ -433,6 +433,8 @@ body > .set-ask { z-index: 95; }
 
 /* 模型池的成员：一行一个 */
 .set-pool-head strong { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 固定池显示名后面的 `@flagship`：暗字、小一号、不加粗（2026-10-26 项目主人定名） */
+.set-pool-ref { margin-left: calc(6px * var(--space)); color: var(--text-faint); font: 400 calc(11.5px * var(--text-scale)) var(--font-mono); }
 .set-pool-head .set-seg { margin-left: 0; }
 .set-btn.is-small { height: 26px; gap: calc(4px * var(--space)); padding: 0 calc(8px * var(--space)); font-size: calc(12.5px * var(--text-scale)); }
 .set-btn.is-small .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
