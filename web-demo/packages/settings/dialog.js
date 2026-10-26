@@ -307,8 +307,8 @@ export class SettingsDialog {
           ? h('section.set-group', h('h3.set-group-name', g.name), this.extensions.body(g.id, g.items.map((item) => coreRow(this, item)).filter(Boolean)))
           : groupBlock(g.name, g.items.map((item) => coreRow(this, item))))),
         // 最底下一行源码链接（蓝图「设置」第 12a 条，2026-10-26 许可证换成 AGPL-3.0-or-later：第 13 条要让用网页的人拿得到源码）
-        this.current === 'general' ? h('p.set-source', this.ctx.text('source_line'),
-          h('a.set-source-link', { href: SOURCE_URL, target: '_blank', rel: 'noopener noreferrer' }, this.ctx.text('source_link'))) : null,
+        this.current === 'general' ? h('p.set-repo', this.ctx.text('source_line'),
+          h('a.set-repo-link', { href: SOURCE_URL, target: '_blank', rel: 'noopener noreferrer' }, this.ctx.text('source_link'))) : null,
       ];
     }
     swap(this.body, kids, dir, restore ?? scroll);

@@ -6918,16 +6918,16 @@
       ".artifact-split-toggle"
     ]
   },
-  "settings.source": {
+  "settings.repo": {
     "zh": "设置：通用页最底下的源码那一行",
     "select": [
-      ".set-source"
+      ".set-repo"
     ]
   },
-  "settings.source-link": {
+  "settings.repo-link": {
     "zh": "设置：源码那一行里的链接",
     "select": [
-      ".set-source-link"
+      ".set-repo-link"
     ]
   }
 }
