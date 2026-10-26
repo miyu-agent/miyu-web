@@ -1,6 +1,6 @@
 // @ts-check
 //! 长期目标在框下面那一行写成什么（软件包 `goal`，蓝图 `web.md`「长期目标」）：照会话状态的 `goal`（`view.md` 会话状态那一格：
-//! `{text, limit?, state, reason?, round}`）。纯的。
+//! `{text, limit?, state, reason?, round, resumes?}`）。纯的。
 
 /** 认得的状态；别的照跑着写 */
 const STATES = ['running', 'waiting', 'paused', 'blocked'];
@@ -10,7 +10,8 @@ const STATES = ['running', 'waiting', 'paused', 'blocked'];
  * （完成了的核心照最后的样子留着，这一行不再占地方；`/goal` 照样看得到）。
  * @param {any} goal 会话状态的 `goal`
  * @param {(path: string, fields?: Record<string, unknown>) => string} t 这个包的字
- * @returns {{text: string, tail: string, state: string, title: string}|null}
+ * 浮层头上的（`head`）是后面那一截，停过又接着跑过的再接「 · 恢复 3 次」（核心 GOAL-1 的 `resumes`，0 次不写；框上面那一截不写）。
+ * @returns {{text: string, tail: string, head: string, state: string, title: string}|null}
  */
 export function goalLine(goal, t) {
   if (!goal || typeof goal.text !== 'string' || !goal.text.trim() || goal.state === 'completed') return null;
@@ -20,5 +21,6 @@ export function goalLine(goal, t) {
   const reason = state === 'blocked' && typeof goal.reason === 'string' && goal.reason.trim() ? goal.reason.trim() : '';
   const label = reason ? t('blocked_why', { reason }) : t(`states.${state}`);
   const tail = state === 'running' ? rounds || label : label;
-  return { text: goal.text.trim(), tail, state, title: [goal.text.trim(), label, rounds].filter(Boolean).join(' · ') };
+  const resumes = Number.isInteger(goal.resumes) && goal.resumes > 0 ? t('resumes', { n: goal.resumes }) : '';
+  return { text: goal.text.trim(), tail, head: [tail, resumes].filter(Boolean).join(' · '), state, title: [goal.text.trim(), label, rounds].filter(Boolean).join(' · ') };
 }

@@ -30,6 +30,7 @@
       "rounds": "第 {round} 轮",
       "rounds_limited": "第 {round}/{limit} 轮",
       "blocked_why": "受阻：{reason}",
+      "resumes": "恢复 {n} 次",
       "states": {
         "running": "进行中",
         "waiting": "等待回复",
@@ -49,6 +50,7 @@
       "rounds": "Round {round}",
       "rounds_limited": "Round {round}/{limit}",
       "blocked_why": "Blocked: {reason}",
+      "resumes": "resumed {n}×",
       "states": {
         "running": "Running",
         "waiting": "Waiting for reply",
@@ -68,6 +70,7 @@
       "rounds": "{round} ラウンド目",
       "rounds_limited": "{round}/{limit} ラウンド目",
       "blocked_why": "行き詰まり：{reason}",
+      "resumes": "再開 {n} 回",
       "states": {
         "running": "進行中",
         "waiting": "返信待ち",

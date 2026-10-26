@@ -1,6 +1,6 @@
 // @ts-check
 //! 改长期目标的浮层（软件包 `goal`，蓝图 `web.md`「长期目标」第 3 条；2026-10-12 项目主人定）：点输入框右上方的目标打开，在输入框上面、
-//! 和后台任务的浮层同一个位置、同一个样子。头一行「目标」和状态（进行中 · 第 2 轮）；一个框放目标原文，只改原文（不改轮数上限）；
+//! 和后台任务的浮层同一个位置、同一个样子。头一行「目标」和状态（进行中 · 第 2 轮，停过又接着跑过的接「 · 恢复 3 次」）；一个框放目标原文，只改原文（不改轮数上限）；
 //! 底下「清除」（点一下变「确认清除」，再点才清）、「暂停」/「继续」，右边「保存」（原文没变、空着的点不了）。`Enter` 保存、
 //! `Shift+Enter` 换行，`Esc`、点外面、再点那一截关上。做法都交核心的 `/goal`（`edit <原文>`、`pause`、`resume`、`clear`），回执写进
 //! 提示；拒了的写在浮层里。保存、清除以后关上，暂停、继续留着（状态照推来的会话状态换）。
@@ -16,7 +16,7 @@ export class GoalPanel {
   constructor(t, on) {
     this.t = t;
     this.on = on;
-    /** @type {{text: string, state: string, tail: string}|null} 现在的目标 */
+    /** @type {{text: string, state: string, tail: string, head: string}|null} 现在的目标 */
     this.goal = null;
     this.state = h('span.goal-panel-state');
     this.field = /** @type {HTMLTextAreaElement} */ (h('textarea.goal-panel-field', { rows: 3, spellcheck: 'false' }));
@@ -76,7 +76,7 @@ export class GoalPanel {
     if (this.isOpen()) hide(this.el);
   }
 
-  /** 会话状态推来的目标变了（没有了的关上）；框里的字人在改，不冲掉。 @param {{text: string, state: string, tail: string}|null} goal */
+  /** 会话状态推来的目标变了（没有了的关上）；框里的字人在改，不冲掉。 @param {{text: string, state: string, tail: string, head: string}|null} goal */
   update(goal) {
     this.goal = goal;
     if (!goal) {
@@ -90,7 +90,7 @@ export class GoalPanel {
   sync() {
     const goal = this.goal;
     if (!goal) return;
-    this.state.textContent = goal.tail;
+    this.state.textContent = goal.head;
     this.pause.textContent = this.t(goal.state === 'paused' ? 'panel.resume' : 'panel.pause');
     this.clear.textContent = this.t(this.confirming ? 'panel.confirm_clear' : 'panel.clear');
     const text = this.field.value.trim();
