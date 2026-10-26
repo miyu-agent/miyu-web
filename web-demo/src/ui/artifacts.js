@@ -24,7 +24,7 @@ import { drawMarkdown } from './render.js';
 import { paint } from '../markdown/highlight.js';
 import { copy } from '../markdown/build.js';
 import { richHooks } from './rich.js';
-import { fuzzyFilter } from '../lib/fuzzy.js';
+import { fileFilter } from '../lib/fuzzy.js';
 import { Split } from '../lib/split.js';
 
 /** 拖到多宽，记在这台设备上的名字（内核的 `storage` 会带上账号；这个终端的状态） */
@@ -527,8 +527,8 @@ export class Artifacts {
   /** 放大看的那一列：照搜索框模糊筛（标题、文件名、路径），正在看的那一个浅底 */
   drawBrowse() {
     if (!this.browsing) return;
-    // 路径只拿最后两段目录去对：整条绝对路径里家目录的字都对得上
-    const list = fuzzyFilter(this.list, this.browseQuery.trim(), (a) => [a.title ?? '', a.name, a.path.split('/').slice(-3, -1).join('/')]);
+    // 标题、文件名模糊，目录只认连着的一截（同右侧边栏卡片，`fileFilter`）；路径只拿最后两段目录去对：整条绝对路径里家目录的字都对得上
+    const list = fileFilter(this.list, this.browseQuery.trim(), (a) => ({ names: [a.title ?? '', a.name], dirs: [a.path.split('/').slice(-3, -1).join('/')] }));
     replace(this.browseItems, list.length ? list.map((a) => h(`button.artifact-browse-item${a.path === this.current ? '.is-current' : ''}`, {
       type: 'button', title: a.path, 'aria-current': a.path === this.current ? 'true' : null,
       onclick: () => {

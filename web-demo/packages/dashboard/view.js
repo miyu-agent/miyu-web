@@ -9,7 +9,7 @@ import { h, icon, replace } from '../../src/lib/dom.js';
 import { unfold } from '../../src/lib/motion.js';
 import { jobDuration } from '../../src/lib/format.js';
 import { Split } from '../../src/lib/split.js';
-import { fuzzyFilter } from '../../src/lib/fuzzy.js';
+import { fileFilter } from '../../src/lib/fuzzy.js';
 import { rowsOf, counts, stoppable, todoView, splitPath, diffRows } from './model.js';
 
 /** 四张卡的外壳上加的类（样式、脚本照它认哪一张） */
@@ -431,8 +431,9 @@ export class Dashboard {
     this.sigs.shown = sig;
     if (!all.length && !panel) return;
     const where = this.on.where();
-    // 照标题、文件名、写出来的那截目录（`~/…`，不拿绝对路径：家目录里的字都对得上）模糊筛（`lib/fuzzy.js`），筛着的时候「(N)」照筛出来的算
-    const list = fuzzyFilter(all, query, (a) => { const { name, dir } = splitPath(a.path, where); return [a.title ?? '', name, dir ?? '']; });
+    // 标题、文件名模糊筛，写出来的那截目录（`~/…`，不拿绝对路径）只认连着的一截（`lib/fuzzy.js` 的 `fileFilter`，2026-10-26 项目主人：
+    // 原来目录也逐字母比，太松）；筛着的时候「(N)」照筛出来的算
+    const list = fileFilter(all, query, (a) => { const { name, dir } = splitPath(a.path, where); return { names: [a.title ?? '', name], dirs: [dir ?? ''] }; });
     // 露几个照这张卡最多露几行：留一行给「(N)」（原来的「文件修改最多露几个」并进卡的行数）
     const max = foldAt(card, 1);
     const rows = this.shownOpen || list.length <= max ? list : list.slice(0, max);
