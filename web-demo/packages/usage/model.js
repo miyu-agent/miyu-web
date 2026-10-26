@@ -1,11 +1,14 @@
 // @ts-check
-//! 用量页的纯逻辑（蓝图 `web.md`「用量页」）：照核心 `usage.query` 的行（分组的几格 + `requests`、`usage` 四项、`amounts`、`unpriced`）
+//! 用量页的纯逻辑（蓝图 `web.md`「用量页」）：照核心 `usage.query` 的行（分组的几格 + `requests`、`usage` 四项、`amounts`、`unpriced`，
+//! 核心 UC-1 起多 `converted`：花费照它写，`src/lib/cost.js`）
 //! 算输入、合计、花费怎么写，时间段从哪起、今天一小时一段，柱子照天还是照月，纵轴一格多少，名字照哪个字。界面在 `page.js`。
+
+import { addCosts, costKey } from '../../src/lib/cost.js';
 
 /**
  * @typedef {{uncached: number, cache_read: number, cache_write: number, output: number}} Usage
  * @typedef {{currency: string, amount: number}} Amount
- * @typedef {{requests: number, usage: Usage, amounts: Amount[], unpriced: number, [group: string]: any}} Row
+ * @typedef {{requests: number, usage: Usage, amounts: Amount[], unpriced: number, converted?: import('../../src/lib/cost.js').Converted, [group: string]: any}} Row
  * @typedef {{key: string, label: string, title: string, row: Row|null, now?: boolean}} Bar
  */
 
@@ -19,23 +22,25 @@ export const input = (u) => (u.uncached ?? 0) + (u.cache_read ?? 0) + (u.cache_w
 /** 输入加输出 @param {Usage} u */
 export const total = (u) => input(u) + (u.output ?? 0);
 
-/** 几行加成一行（照币种各加各的，先后照头一次出现的：核心给的先后已经是 `usage.currency` 排的） @param {Row[]} rows @returns {Row} */
+/**
+ * 几行加成一行：金额照币种各加各的（先后照头一次出现的：核心给的先后已经是 `usage.currency` 排的），换算成的加在一起、没换成的并在后面
+ * （`addCosts`）。
+ * @param {Row[]} rows @returns {Row}
+ */
 export function sum(rows) {
   const usage = ZERO();
-  /** @type {Map<string, number>} */
-  const amounts = new Map();
   let requests = 0, unpriced = 0;
   for (const r of rows) {
     requests += r.requests ?? 0;
     unpriced += r.unpriced ?? 0;
     for (const k of /** @type {(keyof Usage)[]} */ (['uncached', 'cache_read', 'cache_write', 'output'])) usage[k] += r.usage?.[k] ?? 0;
-    for (const a of r.amounts ?? []) amounts.set(a.currency, (amounts.get(a.currency) ?? 0) + a.amount);
   }
-  return { requests, usage, amounts: [...amounts].map(([currency, amount]) => ({ currency, amount })), unpriced };
+  return { requests, usage, ...addCosts(rows), unpriced };
 }
 
-/** 一笔钱、几笔钱的写法挪到了 `src/lib/format.js`（框下面累计的浮窗也用），这里照旧交出去 */
+/** 一笔钱、几笔钱的写法挪到了 `src/lib/format.js`、`src/lib/cost.js`（框下面累计的浮窗也用），这里照旧交出去 */
 export { amountText, money } from '../../src/lib/format.js';
+export { costText, costParts, ratesOf, uniqueRates, rateName } from '../../src/lib/cost.js';
 
 /** 本地日期 `2026-10-20` @param {Date} d */
 export const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -208,16 +213,12 @@ export function niceStep(max) {
 
 /**
  * 表的排法：照哪一列、正着还是倒着。数的那几列（请求、token、命中率、输出、花费）倒着是从大到小，名字照 `nameOf` 的字；
- * 花费照币种的先后（`order`，核心给的合计里的先后）一种一种比，只有没价格的最小。一样的照名字，`null` 那一行总在最后。
+ * 花费照换算成的那个数比，没换成的、没换算的照币种的先后（`order`，核心给的合计里的先后）一种一种比（`costKey`），只有没价格的最小。一样的照名字，`null` 那一行总在最后。
  * @typedef {'name'|'requests'|'tokens'|'hit'|'output'|'cost'} Column
  * @param {Row[]} rows @param {{by: Column, desc: boolean}} sort @param {string} group @param {string[]} [order] @param {(r: Row) => string} [nameOf]
  */
 export function sorted(rows, sort, group, order = [], nameOf = (r) => String(r[group])) {
-  const costs = (/** @type {Row} */ r) => {
-    if (!r.amounts?.length) return [-1];
-    const all = [...order, ...r.amounts.map((a) => a.currency).filter((c) => !order.includes(c))];
-    return all.map((c) => r.amounts.find((a) => a.currency === c)?.amount ?? 0);
-  };
+  const costs = (/** @type {Row} */ r) => costKey(r, order);
   /** @type {(r: Row) => number|number[]} */
   const value = {
     requests: (/** @type {Row} */ r) => r.requests,

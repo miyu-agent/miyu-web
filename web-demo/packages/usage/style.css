@@ -106,6 +106,10 @@
 .use-all { justify-self: start; padding: 0; border: 0; background: none; color: var(--accent); font: calc(12.5px * var(--text-scale)) var(--font-ui); cursor: pointer; }
 .use-all:hover { text-decoration: underline; }
 .use-chart .use-empty { display: grid; box-sizing: border-box; height: 190px; padding: 0; place-items: center; }
+/* 页底的汇率来源（用到兜底源时才有） */
+.use-rates { margin: calc(14px * var(--space)) 0 0; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
+.use-rates a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.use-rates a:hover { color: var(--text-soft); }
 .use-problem { padding: calc(34px * var(--space)) 0; color: var(--text-faint); font-size: calc(13px * var(--text-scale)); text-align: center; }
 
 @media (max-width: 640px) {

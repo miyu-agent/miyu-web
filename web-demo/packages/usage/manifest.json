@@ -44,6 +44,7 @@
         "hit": "缓存命中"
       },
       "unpriced_more": "另有 {n} 次没有价格",
+      "rates_from": "汇率来自 {name}",
       "times": "{n} 次",
       "sessions": "{n} 个会话",
       "in_out": "输入 {input} · 输出 {output}",
@@ -161,6 +162,7 @@
         "hit": "Cache hits"
       },
       "unpriced_more": "{n} more without a price",
+      "rates_from": "Exchange rates by {name}",
       "times": "{n}",
       "sessions": "{n} sessions",
       "in_out": "In {input} · out {output}",
@@ -278,6 +280,7 @@
         "hit": "キャッシュヒット"
       },
       "unpriced_more": "ほかに価格なし {n} 回",
+      "rates_from": "為替レート提供：{name}",
       "times": "{n} 回",
       "sessions": "{n} セッション",
       "in_out": "入力 {input} · 出力 {output}",

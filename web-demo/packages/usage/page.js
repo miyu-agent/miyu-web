@@ -6,7 +6,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { short, hitRate, hhmm } from '../../src/lib/format.js';
-import { input, total, sum, money, amountText, offsetOf, spanOf, spanParams, daysBetween, dayKey, hours, hourBars, dayBars, allBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, venueOf, splitModel } from './model.js';
+import { input, total, sum, amountText, costText, costParts, uniqueRates, rateName, offsetOf, spanOf, spanParams, daysBetween, dayKey, hours, hourBars, dayBars, allBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, venueOf, splitModel } from './model.js';
 
 /** 分组表先列几行 */
 const FIRST = 10;
@@ -61,6 +61,8 @@ export class UsagePage {
     this.round = 0;
     /** 读完要弹细则的会话（`focus`） @type {{session: string, until: number}|undefined} */
     this.pending = undefined;
+    /** 这一轮读到的汇率来源（只有用到兜底源时核心才写） @type {import('../../src/lib/cost.js').Rate[]} */
+    this.rates = [];
   }
 
   /** 下一次读完弹这个会话的细则（框下面累计浮窗的「在用量页看」）：时间段全部、按会话、列全部 @param {string} session */
@@ -80,9 +82,13 @@ export class UsagePage {
 
   // —— 读 ——
 
-  /** @param {any} params */
+  /** 问一次；用到兜底汇率源的记下来源（这一轮读的都算，换时间段、换分组重读时清掉），页底注明 @param {any} params */
   query(params) {
-    return this.ctx.core.request('usage.query', params);
+    const round = this.round;
+    return this.ctx.core.request('usage.query', params).then((/** @type {any} */ res) => {
+      if (round === this.round) this.rates = uniqueRates([this.rates, res?.rates, ...(res?.rows ?? []).map((/** @type {any} */ r) => r?.converted?.rates)]);
+      return res;
+    });
   }
 
   /** @param {unknown} err */
@@ -94,6 +100,7 @@ export class UsagePage {
   /** 重读这一段时间的数；`fresh` 的连会话表一起读。 @param {boolean} [fresh] */
   async reload(fresh = false) {
     const round = ++this.round;
+    this.rates = [];
     const now = new Date();
     const span = spanOf(this.range, now, this.custom);
     const params = spanParams(span);
@@ -207,7 +214,7 @@ export class UsagePage {
       return;
     }
     this.openRow = null;
-    replace(this.el, this.head(), this.range === 'custom' ? this.picker() : null, this.tiles(), this.bars(), this.table());
+    replace(this.el, this.head(), this.range === 'custom' ? this.picker() : null, this.tiles(), this.bars(), this.table(), this.credit());
     const row = this.openRow;
     if (!row) {
       this.open = undefined;
@@ -279,7 +286,7 @@ export class UsagePage {
     const d = this.data;
     const row = d?.total ?? sum([]);
     const u = row.usage;
-    const cost = money(row.amounts);
+    const cost = costText(row);
     /** @param {string} key @param {string} value @param {string} sub */
     const tile = (key, value, sub) => h('div.use-tile',
       h('span.use-tile-k', this.t(`tile.${key}`)),
@@ -364,7 +371,7 @@ export class UsagePage {
   tipLines(b) {
     if (!b.row) return [h('div.use-tip-head', h('b', b.title)), h('span.use-tip-none', this.t('tip.none'))];
     const u = b.row.usage;
-    const cost = money(b.row.amounts);
+    const cost = costText(b.row);
     /** @param {any} mark @param {string} name @param {string} value */
     const line = (mark, name, value) => h('div.use-tip-row', mark, h('span.use-tip-k', name), h('span.use-tip-v', value));
     return [
@@ -432,7 +439,7 @@ export class UsagePage {
       h('td.num', r.requests.toLocaleString()),
       h('td.num', short(total(r.usage))),
       h('td.num', `${hitRate(r.usage.cache_read, input(r.usage))}%`),
-      h('td.num', r.amounts.length ? [r.amounts.map((a) => h('div', amountText(a))), r.unpriced ? h('div.use-more', this.t('unpriced_part', { n: r.unpriced.toLocaleString() })) : null] : this.noCost(r)));
+      h('td.num', costParts(r).length ? [costParts(r).map((a) => h('div', amountText(a))), r.unpriced ? h('div.use-more', this.t('unpriced_part', { n: r.unpriced.toLocaleString() })) : null] : this.noCost(r)));
       if (open) this.openRow = r;
       body.append(tr);
     }
@@ -450,7 +457,7 @@ export class UsagePage {
   /** 细则的小窗：名字，四项 token、花费，照另一样拆开；本机能打开的会话一个「打开会话」 @param {Row} r */
   detail(r) {
     const u = r.usage;
-    const cost = money(r.amounts);
+    const cost = costText(r);
     const value = r[this.group];
     const parts = [
       h('div.use-pop-head', this.name(r), h('button.icon-button.use-pop-close', { type: 'button', title: this.t('close'), 'aria-label': this.t('close'), onclick: () => this.closePop() }, icon('x'))),
@@ -479,7 +486,7 @@ export class UsagePage {
         h('span.use-split-name', this.subName(sub, x[sub])),
         h('span.num', this.t('times', { n: x.requests.toLocaleString() })),
         h('span.num', short(total(x.usage))),
-        h('span.num', money(x.amounts) || this.noCost(x))))));
+        h('span.num', costText(x) || this.noCost(x))))));
     }
     if (this.group === 'session' && typeof value === 'string' && this.sessions.has(value)) {
       parts.push(h('div.use-detail-actions', h('button.set-btn', {
@@ -491,6 +498,16 @@ export class UsagePage {
       }, this.t('detail.open'))));
     }
     return h('div.use-pop', { role: 'dialog' }, parts);
+  }
+
+  /**
+   * 页底的汇率来源（核心 UC-1：用到兜底源 open.er-api.com 时才有，它的免费条款要署名）：一行小字「汇率来自 ExchangeRate-API」，名字链到它给的地址；
+   * 没有的不画
+   */
+  credit() {
+    if (!this.rates.length) return null;
+    const [before, after = ''] = this.t('rates_from').split('{name}');
+    return h('p.use-rates', before, this.rates.map((r, i) => [i ? ' · ' : null, h('a', { href: r.url, target: '_blank', rel: 'noopener noreferrer' }, rateName(r))]), after);
   }
 
   /** 没有金额的那一格：有没价格的写几次，都没有（用量是 0 的请求）写 `—` @param {Row} r */

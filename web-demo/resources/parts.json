@@ -6929,5 +6929,17 @@
     "select": [
       ".set-repo-link"
     ]
+  },
+  "usage.rates": {
+    "zh": "用量页：页底一行小字「汇率来自 …」（用到兜底汇率源时）",
+    "select": [
+      ".use-rates"
+    ]
+  },
+  "usage.rates-link": {
+    "zh": "用量页：页底来源那一行里的链接",
+    "select": [
+      ".use-rates a"
+    ]
   }
 }
