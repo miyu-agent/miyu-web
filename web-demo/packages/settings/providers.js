@@ -12,7 +12,7 @@ import { secretTag } from './rows.js';
 import { confirmIn } from './confirm.js';
 import { openAdd } from './add-provider.js';
 import { drawer } from './model-detail.js';
-import { SYSTEM_COPY } from '../../src/lib/provider-copy.js';
+import { SYSTEM_COPY, baseOf } from '../../src/lib/provider-copy.js';
 
 /** 「共用」那一块开着没有：记在这台设备上（蓝图「设置页」第 14 条「供应商分两块」） */
 const SHARED_OPEN = 'settings.shared_open';
@@ -24,7 +24,16 @@ export function drawProviders(dialog, list) {
   // 两块（2026-10-24 项目主人定）：自用在上、共用在下，两边都有的两块里各一格
   const { mine, shared, both, layered } = providerSides(all, dialog.got ?? {});
   // 记的是原编号、要看共用那一格的（管理员模式里刚存好、两份都有的一家）：共用那一格是 `<编号>@system`（核心 PL-1）
-  const inSide = (/** @type {string} */ s) => (s === 'shared' ? shared : mine).find((x) => x.id === dialog.provider || (s === 'shared' && x.id === `${dialog.provider}${SYSTEM_COPY}`));
+  const find = (/** @type {string} */ s, /** @type {string} */ id) => (s === 'shared' ? shared : mine).find((x) => x.id === id || (s === 'shared' && x.id === `${id}${SYSTEM_COPY}`));
+  // 刚存好的那一家（`add-provider.js` 记的）：模型列表读回来、它在该在的那一块里了才选中它，之前照旧
+  const want = dialog.wantProvider;
+  const hit = want ? find(want.side, want.id) : null;
+  if (want && hit) {
+    dialog.provider = hit.id;
+    dialog.providerSide = want.side;
+    dialog.wantProvider = null;
+  }
+  const inSide = (/** @type {string} */ s) => find(s, dialog.provider);
   // 记着的那一格（编号、哪一块）；刚建好、模型列表还没读回来的不在表里时先看第一格，不改记着的
   let side = dialog.providerSide === 'shared' ? 'shared' : 'mine';
   let p = inSide(side);
@@ -63,7 +72,7 @@ export function drawProviders(dialog, list) {
   const sharedKey = !layered && side === 'shared' && both.has(p.id) ? keyIn(p.id, dialog.got ?? {}, 'system') : undefined;
   const readonly = side === 'shared' && (!!ctx.host?.member || !ctx.admin?.on);
   // 「优先用这一份」只有旧核心写（两份合成一份、自用盖过共用）；PL-1 起两份各用各的，照选的模型引用
-  const view = { readonly, prefer: !layered && side === 'mine' && both.has(p.id), sharedKey };
+  const view = { readonly, prefer: !layered && side === 'mine' && both.has(p.id), sharedKey, copyable: side === 'shared' && !both.has(baseOf(p.id)) };
   const main = h('div.set-prov-main', head(dialog, p, logos, view), keyBlock(dialog, p, view), models(dialog, p, view));
   // 详情盖着右边整栏（挂在 `.set-main` 上，滚正文时它不跟着走）
   const detail = dialog.modelDetail ? drawer(dialog, p, (p.models ?? []).find((m) => m.model === dialog.modelDetail)) : null;
@@ -89,14 +98,14 @@ function providerItem(dialog, x, side, on, logos, same, merged = false) {
   const sub = [where ? h('small', where) : null, reason];
   return h(`button.set-prov${on ? '.is-on' : ''}`, {
     type: 'button',
-    onclick: () => { dialog.provider = x.id; dialog.providerSide = side; dialog.modelDetail = null; dialog.keyEdit = null; dialog.tested = null; if (dialog.modelQuery) dialog.modelQuery.providers = ''; dialog.drawBody(); },
+    onclick: () => { dialog.provider = x.id; dialog.providerSide = side; dialog.wantProvider = null; dialog.modelDetail = null; dialog.keyEdit = null; dialog.tested = null; if (dialog.modelQuery) dialog.modelQuery.providers = ''; dialog.drawBody(); },
   }, logos ? logoEl(x.logo ?? null, providerName(x)) : null, h('span.set-prov-text', h('span', providerName(x)), sub));
 }
 
 /**
  * 头上：图标、名称、地址，「测试连接」「编辑」；接口是猜的写一行；测试的结果写在下面。看「共用」的平时（`readonly`）没有按钮，写一行「仅管理员可以修改」；
  * 两块里都有的「自用」那一格名称下面一行「优先用这一份」（核心照自用盖过共用，`prefer`）。
- * @param {any} dialog @param {any} p @param {boolean} logos @param {{readonly?: boolean, prefer?: boolean}} [view]
+ * @param {any} dialog @param {any} p @param {boolean} logos @param {{readonly?: boolean, prefer?: boolean, copyable?: boolean}} [view]
  */
 function head(dialog, p, logos, view = {}) {
   const ctx = dialog.ctx;
@@ -123,6 +132,8 @@ function head(dialog, p, logos, view = {}) {
     }
     test.disabled = false;
   } }, ctx.text('models.test'));
+  // 只有共用、还没有自用那份的：「另配一份自用的」（蓝图「设置页」第 14 条，2026-10-26 项目主人），成员、管理员平时和管理员模式里都有
+  const copy = view.copyable ? h('button.set-btn', { type: 'button', onclick: () => openAdd(dialog, { copy: baseOf(p.id) }) }, ctx.text('models.copy_mine')) : null;
   const logo = logos ? logoEl(p.logo ?? null, providerName(p)) : null;
   logo?.classList.add('is-big');
   // 别的「用不了」（没有密钥的在密钥那一块说）在头下面写一次
@@ -130,7 +141,8 @@ function head(dialog, p, logos, view = {}) {
   return h('div.set-prov-head',
     h('div.set-prov-title', logo, h('div', h('strong', providerName(p)), h('span', { title: address }, address),
       view.prefer ? h('small.set-prov-prefer', ctx.text('models.prefer_mine')) : null),
-      view.readonly ? dialog.lockLine() : h('div.set-prov-buttons', test, h('button.set-btn', { type: 'button', onclick: openForm(dialog, p.id) }, ctx.text('models.edit')), removeButton(dialog, p))),
+      view.readonly ? h('div.set-prov-buttons', copy, dialog.lockLine(true))
+        : h('div.set-prov-buttons', copy, test, h('button.set-btn', { type: 'button', onclick: openForm(dialog, p.id) }, ctx.text('models.edit')), removeButton(dialog, p))),
     // 核心推不出接口、先照 openai-chat 用的（`driver_from: default`，核心 8-26）：写明是猜的，猜错了请求会出错
     p.driver_from === 'default' ? h('p.set-prov-note', ctx.text('models.driver_guess_line', { driver: p.driver ?? '' })) : null,
     shared && shared !== 'no_key' ? h('p.set-prov-warn', ctx.text(`models.states.${shared}`)) : null,

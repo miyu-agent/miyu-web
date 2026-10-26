@@ -368,7 +368,8 @@
         "unset": "未设置",
         "remove": "删除",
         "remove_confirm": "确认删除「{name}」吗？",
-        "remove_confirm_in_use": "默认模型在用「{name}」，删了要另选。确认删除吗？"
+        "remove_confirm_in_use": "默认模型在用「{name}」，删了要另选。确认删除吗？",
+        "copy_mine": "另配一份自用的"
       },
       "changed": "已修改",
       "packages_web": "网页",
@@ -507,7 +508,9 @@
         "name_hint": "留空则使用 ID 作为显示名称",
         "edit": "修改",
         "mine": "已配好",
-        "common": "常用"
+        "common": "常用",
+        "copy_title": "{name} · 自用",
+        "copy_sub": "地址、接口照共用那份，填上你自己的密钥"
       },
       "main_color": "主色",
       "main_color_auto": "自动",
@@ -1010,7 +1013,8 @@
         "unset": "Not set",
         "remove": "Delete",
         "remove_confirm": "Delete \"{name}\"?",
-        "remove_confirm_in_use": "The default model uses \"{name}\"; you'll need to pick another. Delete it?"
+        "remove_confirm_in_use": "The default model uses \"{name}\"; you'll need to pick another. Delete it?",
+        "copy_mine": "Add my own copy"
       },
       "changed": "Modified",
       "packages_web": "Web",
@@ -1149,7 +1153,9 @@
         "name_hint": "Leave empty to use the ID as the display name",
         "edit": "Edit",
         "mine": "Configured",
-        "common": "Popular"
+        "common": "Popular",
+        "copy_title": "{name} · Mine",
+        "copy_sub": "Address and API follow the shared one; add your own key"
       },
       "main_color": "Main color",
       "main_color_auto": "Auto",
@@ -1652,7 +1658,8 @@
         "unset": "未設定",
         "remove": "削除",
         "remove_confirm": "「{name}」を削除しますか？",
-        "remove_confirm_in_use": "既定のモデルが「{name}」を使っています。削除後に選び直す必要があります。削除しますか？"
+        "remove_confirm_in_use": "既定のモデルが「{name}」を使っています。削除後に選び直す必要があります。削除しますか？",
+        "copy_mine": "自分用をもう一つ設定"
       },
       "changed": "変更済み",
       "packages_web": "ウェブ",
@@ -1791,7 +1798,9 @@
         "name_hint": "空欄なら ID を表示名にします",
         "edit": "変更",
         "mine": "設定済み",
-        "common": "よく使う"
+        "common": "よく使う",
+        "copy_title": "{name} · 自分用",
+        "copy_sub": "アドレスと API は共用のものと同じです。自分の API キーを入力してください"
       },
       "main_color": "メインカラー",
       "main_color_auto": "自動",

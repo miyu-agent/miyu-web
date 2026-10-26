@@ -78,6 +78,19 @@ test('配好了的一家「重新设置」贴了新的密钥：照它的接口�
   assert.deepEqual(setupChanges(zen, null, { chat: null, taken: new Set() }).changes, [], '跳过、没贴新的：什么都不写');
 });
 
+test('另配一份自用的（2026-10-26 项目主人）：照填的接口、地址、密钥当候选测；存同一个编号的密钥，地址、接口改了的才写', () => {
+  const from = { driver: 'openai-chat', base_url: 'http://127.0.0.1:18792/v1' };
+  const same = { kind: /** @type {const} */ ('copy'), id: 'relay', driver: 'openai-chat', base_url: 'http://127.0.0.1:18792/v1', from };
+  assert.deepEqual(testParams(same, { value: 'sk-1' }, null), { candidate: { driver: 'openai-chat', base_url: 'http://127.0.0.1:18792/v1', key: { value: 'sk-1' } } });
+  assert.deepEqual(setupChanges(same, { secret: 'relay-1' }, { taken: new Set() }), { id: 'relay', changes: [{ key: 'providers.relay.key', value: { secret: 'relay-1' } }] }, '地址、接口没改的照共用那份');
+  const moved = { ...same, driver: 'anthropic', base_url: 'https://other.example.com/v1' };
+  assert.deepEqual(setupChanges(moved, { secret: 'relay-1' }, { taken: new Set() }).changes, [
+    { key: 'providers.relay.key', value: { secret: 'relay-1' } },
+    { key: 'providers.relay.base_url', input: 'https://other.example.com/v1' },
+    { key: 'providers.relay.driver', value: 'anthropic' },
+  ]);
+});
+
 test('存：目录里的一家写密钥，改过写法的另写 catalog，本机的写 local，自定义写接口和地址，没池的建三个', () => {
   const taken = new Set(['example']);
   assert.deepEqual(setupChanges({ kind: 'catalog', catalog: 'deepseek', env: null }, { secret: 'deepseek-abc' }, { chat: 'deepseek-v4', taken }), {

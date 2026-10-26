@@ -223,7 +223,7 @@
 .set-prov-title span { overflow: hidden; color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
 .prov-logo.is-big { width: 28px; height: 28px; }
 .prov-logo.is-big.is-initial { font-size: calc(14px * var(--text-scale)); border-radius: var(--r-8); }
-.set-prov-buttons { display: flex; flex: none; gap: calc(6px * var(--space)); }
+.set-prov-buttons { display: flex; flex: none; align-items: center; gap: calc(6px * var(--space)); }
 .set-prov-note { margin: calc(8px * var(--space)) 0 0; color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
 .set-test { margin: calc(8px * var(--space)) 0 0; font: calc(12px * var(--text-scale)) var(--font-mono); color: var(--text-soft); }
 .set-test.is-good { color: var(--online); }
