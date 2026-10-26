@@ -7,9 +7,9 @@
     "ja": "右サイドバー"
   },
   "summary": {
-    "zh": "右侧边栏：会话信息、待办、后台任务、文件修改、展示文件",
-    "en": "Right sidebar: session info, to-dos, background tasks, file changes and shown files",
-    "ja": "右サイドバー：セッション情報、ToDo、バックグラウンドタスク、ファイルの変更、表示したファイル"
+    "zh": "右侧边栏：待办、后台任务、文件修改、展示文件",
+    "en": "Right sidebar: to-dos, background tasks, file changes and shown files",
+    "ja": "右サイドバー：ToDo、バックグラウンドタスク、ファイルの変更、表示したファイル"
   },
   "kind": "optional",
   "description": {
