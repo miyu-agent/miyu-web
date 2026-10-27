@@ -11,7 +11,7 @@
 import { confirmIn } from './confirm.js';
 import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField, findBox } from './rows.js';
-import { splitKey, itemFor, plainItem, pkgSwitch, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy } from './model.js';
+import { splitKey, itemFor, plainItem, pkgSwitch, pkgGroupsOf, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy } from './model.js';
 import { openPage, probeSites } from './backstage.js';
 import { serverRow } from './mcp-servers.js';
 import { stateText } from './extensions.js';
@@ -66,7 +66,9 @@ export function drawCorePackages(dialog, page, web) {
     const mine = ++round;
     const core = view.filter !== 'web';
     const rows = core ? packages.filter((p) => (view.filter === 'all' || pkgKinds(p, carried).includes(view.filter)) && pkgMatch(view.query, p.name, p.summary, p.package)) : [];
-    replace(list, rows.map((p) => packageRow(dialog, p)));
+    // 组里的包（基础系统）没在搜的时候收成一行，排在最前（2026-10-27 项目主人）
+    const split = pkgGroupsOf(rows, dialog.pkgGroups, view.query);
+    replace(list, [...split.groups.map((g) => groupRow(dialog, g.group, g.members.length)), ...split.rows.map((p) => packageRow(dialog, p))]);
     coreGroup.hidden = !rows.length;
     const plain = view.filter === 'all' && !view.query.trim();
     for (const g of rest) g.hidden = !plain;
@@ -106,8 +108,8 @@ export function followExtension(dialog, entry) {
   return true;
 }
 
-/** 列表上的一行。 @param {any} dialog @param {any} p */
-function packageRow(dialog, p) {
+/** 列表上的一行；`child` 的在组那一层里，点了叠一层进信息页。 @param {any} dialog @param {any} p @param {boolean} [child] */
+function packageRow(dialog, p, child = false) {
   const t = (/** @type {string} */ key) => dialog.ctx.text(key);
   const id = p.package;
   const missing = p.status === 'program_missing';
@@ -124,7 +126,7 @@ function packageRow(dialog, p) {
   return h('div.set-row.set-pkg.is-expandable', {
     onclick: (/** @type {MouseEvent} */ e) => {
       if (/** @type {Element} */ (e.target).closest('.set-switch')) return;
-      openInfo(dialog, id);
+      openInfo(dialog, id, child);
     },
   },
   faceOf(p),
@@ -133,10 +135,56 @@ function packageRow(dialog, p) {
   h('span.set-pkg-arrow', icon('chevron-right')));
 }
 
-/** 进一个包的信息页（设置页的搜索点了软件包也走它）。 @param {any} dialog @param {string} id */
-export function openInfo(dialog, id) {
+/** 进一个包的信息页（设置页的搜索点了软件包也走它）；从组那一层点进来的叠在它上面（`child`）。 @param {any} dialog @param {string} id @param {boolean} [child] */
+export function openInfo(dialog, id, child = false) {
   const p = (dialog.packages ?? []).find((x) => x.package === id);
-  dialog.openSub(p?.name ?? id, () => infoPage(dialog, id), { bare: true });
+  dialog.openSub(p?.name ?? id, () => infoPage(dialog, id), { bare: true, child });
+}
+
+/** 列表上组的一行：图标、组名、一句说明，右边暗字几个、箭头，没有开关；点了进组那一层。 @param {any} dialog @param {any} g `groups` 的一项 @param {number} count */
+function groupRow(dialog, g, count) {
+  const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
+  return h('div.set-row.set-pkg.set-pkg-group.is-expandable', { onclick: () => dialog.openSub(g.name ?? g.id, () => groupPage(dialog, g.id), { bare: true }) },
+    h('span.set-pkg-face', icon('package')),
+    h('div.set-text', h('div.set-name', h('span', g.name ?? g.id)), g.summary ? h('p.set-desc', g.summary) : null),
+    h('span.set-pkg-status', t('pkg.group_count', { n: count })),
+    h('span.set-pkg-arrow', icon('chevron-right')));
+}
+
+/**
+ * 组那一层：顶上卡片写组名、说明、几个软件包，管理员模式里多「全部卸载」「全部装回」（核心 BS-1 下中：`package.remove`、`package.install` 写组名）；
+ * 下面组里的包一个一行（同列表），点了叠一层进信息页。每次画都照现在的列表重取（卸了、装回了跟着变）。
+ * @param {any} dialog @param {string} id 组的编号
+ */
+function groupPage(dialog, id) {
+  const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
+  const g = (dialog.pkgGroups ?? []).find((/** @type {any} */ x) => x.id === id) ?? { id };
+  const all = (dialog.packages ?? []).filter((/** @type {any} */ p) => Array.isArray(p.groups) && p.groups.includes(id));
+  const installed = all.filter((/** @type {any} */ p) => p.status && !p.removed);
+  const removed = all.filter((/** @type {any} */ p) => p.removed);
+  const name = g.name ?? id;
+  const act = async (/** @type {'package.remove'|'package.install'} */ method, /** @type {HTMLElement} */ button) => {
+    if (dialog.adminGuard()) return;
+    if (method === 'package.remove' && !await confirmIn(button, { text: t('pkg.group_remove_ask', { name, n: installed.length }), yes: t('ask_yes'), no: t('ask_no') })) return;
+    try {
+      await dialog.ctx.core.request(method, { package: id });
+      await dialog.reload();
+    } catch (err) {
+      dialog.toast(refusal(dialog, err));
+    }
+  };
+  const actions = dialog.ctx.admin?.on ? [
+    installed.length ? h('button.set-btn.is-danger', { type: 'button', onclick: (/** @type {MouseEvent} */ e) => act('package.remove', /** @type {HTMLElement} */ (e.currentTarget)) }, t('pkg.group_remove')) : null,
+    removed.length ? h('button.set-btn', { type: 'button', onclick: (/** @type {MouseEvent} */ e) => act('package.install', /** @type {HTMLElement} */ (e.currentTarget)) }, t('pkg.group_install')) : null,
+  ].filter(Boolean) : [];
+  const card = h('div.set-pkg-info', h('div.set-pkg-card',
+    h('span.set-pkg-face', icon('package')),
+    h('div.set-pkg-card-text',
+      h('div.set-pkg-card-name', name),
+      g.summary ? h('p.set-pkg-card-desc', g.summary) : null,
+      h('p.set-pkg-card-meta', t('pkg.group_packages', { n: installed.length })),
+      actions.length ? h('div.set-pkg-card-actions', actions) : null)));
+  return [card, installed.length ? h('section.set-group', h('div.set-rows', installed.map((/** @type {any} */ p) => packageRow(dialog, p, true)))) : null].filter(Boolean);
 }
 
 /** 个人设置里把包 `id` 对自己关掉的那一项（核心 U23 末上：`config.schema` 给每个能关的包现拼一项）；核心没给的是 `null`。 @param {any} dialog @param {string} id */

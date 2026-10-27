@@ -15,21 +15,32 @@ export class Subpage {
      * @type {{title: string, render: () => any, scroll: number, keep: boolean, shown: boolean, leave: (() => void)|null, bare: boolean}|null}
      */
     this.page = null;
+    /** 叠在下面的几层（`child` 打开的） @type {NonNullable<Subpage['page']>[]} */
+    this.below = [];
   }
 
-  /** 进去：记下列表滚到哪。 @param {string} title @param {() => any} render @param {number} scroll @param {{keep?: boolean, leave?: () => void, bare?: boolean}} [opts] */
+  /**
+   * 进去：记下列表滚到哪。`child` 的叠在开着的那一层上面（基础系统那一组里再点一个包），返回先回到下面那一层；别的换掉开着的。
+   * @param {string} title @param {() => any} render @param {number} scroll @param {{keep?: boolean, leave?: () => void, bare?: boolean, child?: boolean}} [opts]
+   */
   open(title, render, scroll, opts = {}) {
-    this.close();
+    if (opts.child && this.page) this.below.push(this.page);
+    else this.closeAll();
     this.page = { title, render, scroll, keep: !!opts.keep, shown: false, leave: opts.leave ?? null, bare: !!opts.bare };
   }
 
-  /** 回来：交回进去前列表滚到哪。 */
+  /** 回来一层：交回进去前滚到哪（下面还有一层的回到那一层）。 */
   close() {
     const scroll = this.page?.scroll ?? 0;
     const leave = this.page?.leave;
-    this.page = null;
+    this.page = this.below.pop() ?? null;
     leave?.();
     return scroll;
+  }
+
+  /** 全收掉（换分页、搜索、关设置页）。 */
+  closeAll() {
+    while (this.page) this.close();
   }
 }
 

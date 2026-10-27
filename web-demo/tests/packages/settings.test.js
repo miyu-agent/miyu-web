@@ -459,3 +459,36 @@ test('软件包的开关跟着管理员模式换：平时是自己的「把这�
   assert.deepEqual(pkgSwitch({ package: 'x' }, { admin: false, off: null }), null, '没有总闸那一格');
   assert.deepEqual(pkgSwitch({ ...p, required: true }, { admin: false, off: off() }), { kind: 'required' });
 });
+
+test('软件包页的组：没在搜时组里的包拿出来收成一组（照 groups 的先后，空的不交）；搜着、旧核心没有 groups 的照旧单列（2026-10-27 项目主人）', async () => {
+  const { pkgGroupsOf } = await import('../../packages/settings/model.js');
+  const rows = [{ package: 'read', groups: ['basesystem'] }, { package: 'net' }, { package: 'shell', groups: ['basesystem'] }, { package: 'x', groups: ['other'] }];
+  const groups = [{ id: 'basesystem', name: '基础系统' }, { id: 'empty', name: '空的' }];
+  const got = pkgGroupsOf(rows, groups, '');
+  assert.deepEqual(got.rows.map((p) => p.package), ['net', 'x'], '不认得的组照单列');
+  assert.deepEqual(got.groups.map((g) => [g.group.id, g.members.map((p) => p.package)]), [['basesystem', ['read', 'shell']]]);
+  assert.deepEqual(pkgGroupsOf(rows, groups, '读').rows.length, 4, '在搜：全单列');
+  assert.deepEqual(pkgGroupsOf(rows, [], '').rows.length, 4, '旧核心');
+  assert.deepEqual(pkgGroupsOf(rows, undefined, '').groups, []);
+});
+
+test('点进去的一层能叠：child 的叠在上面，返回一层一层退；换页、搜索全收掉', async () => {
+  const { Subpage } = await import('../../packages/settings/subpage.js');
+  const sub = new Subpage();
+  const left = [];
+  sub.open('基础系统', () => null, 120, { leave: () => left.push('group') });
+  sub.open('读文件', () => null, 30, { child: true, leave: () => left.push('read') });
+  assert.equal(sub.page?.title, '读文件');
+  assert.equal(sub.close(), 30);
+  assert.equal(sub.page?.title, '基础系统', '回到组那一层');
+  assert.equal(sub.close(), 120);
+  assert.equal(sub.page, null);
+  assert.deepEqual(left, ['read', 'group']);
+  sub.open('a', () => null, 0);
+  sub.open('b', () => null, 0, { child: true });
+  sub.open('c', () => null, 0);
+  assert.equal(sub.below.length, 0, '不是 child 的换掉整叠');
+  sub.open('d', () => null, 0, { child: true });
+  sub.closeAll();
+  assert.equal(sub.page, null);
+});

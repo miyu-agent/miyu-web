@@ -585,3 +585,19 @@ export function pkgSwitch(p, { admin, off, system }) {
   if (!admin && off) return { kind: 'own', on: open && off.entry?.value !== true, disabled: !open };
   return system !== undefined || 'enabled' in p ? { kind: 'system' } : null;
 }
+
+/**
+ * 软件包页的组（核心 BS-1 下上的 `groups`，2026-10-27 项目主人：基础系统收成一行，点进去看）：`rows` 里属于某个组的包拿出来，
+ * 交回还单列的包和一组一组的（照 `groups` 的先后，组里一个都没有的不交）；`query` 不是空的（在搜）全单列，没有 `groups` 的（旧核心）照旧。
+ * @param {any[]} rows 这一刻筛完的包 @param {{id: string, name?: string, summary?: string}[]|null|undefined} groups @param {string} query
+ * @returns {{rows: any[], groups: {group: {id: string, name?: string, summary?: string}, members: any[]}[]}}
+ */
+export function pkgGroupsOf(rows, groups, query) {
+  if (query.trim() || !groups?.length) return { rows, groups: [] };
+  const ids = new Set(groups.map((g) => g.id));
+  const inGroup = (/** @type {any} */ p) => (Array.isArray(p.groups) ? p.groups.find((/** @type {string} */ g) => ids.has(g)) : undefined);
+  return {
+    rows: rows.filter((p) => !inGroup(p)),
+    groups: groups.map((group) => ({ group, members: rows.filter((p) => inGroup(p) === group.id) })).filter((g) => g.members.length),
+  };
+}

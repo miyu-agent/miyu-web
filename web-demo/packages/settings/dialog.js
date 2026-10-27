@@ -110,7 +110,7 @@ export class SettingsDialog {
     this.offAdmin = null;
     this.extensions.stop();
     this.feed.stop();
-    this.sub.close();
+    this.sub.closeAll();
     // 记着的 MCP 登录「等待」只在弹窗开着时算（蓝图第 20 条）
     this.mcpLogin = null;
     this.pvOff = null;
@@ -128,7 +128,7 @@ export class SettingsDialog {
       configless ? { pages: [], groups: [], items: [] } : core.request('config.schema', {}),
       configless ? { items: {} } : core.request('config.get', { all: true }),
       // 核心的软件包（9-1）：「默认界面」的选项照它列（读不到的旧核心是空的）
-      core.request('package.list', {}).then((r) => r?.packages ?? [], () => []),
+      core.request('package.list', {}).then((r) => { this.pkgGroups = Array.isArray(r?.groups) ? r.groups : []; return r?.packages ?? []; }, () => []),
       // 技能、脚本两页（核心 X-26、X-27；没有推送，打开、改了配置时重读）：旧核心没有的是 `null`，不出那一页
       core.request('skill.list', {}).then((r) => (Array.isArray(r?.skills) ? r : null), () => null),
       core.request('script.list', {}).then((r) => (Array.isArray(r?.scripts) ? r : null), () => null),
@@ -242,7 +242,7 @@ export class SettingsDialog {
     if (!this.entries().some((e) => e.id === id)) id = 'general';
     this.current = id;
     lastPage = id;
-    this.sub.close();
+    this.sub.closeAll();
     this.query = '';
     this.search.value = '';
     this.root.classList.add('is-inside');
@@ -305,7 +305,8 @@ export class SettingsDialog {
 
   /**
    * 点进一层（软件包的设置、软件后台页）：滑进去，页头写它的名字、左边返回箭头；`bare` 的（里面的卡片已经写了名字）页头只写「返回」。
-   * @param {string} title @param {() => any} render @param {{keep?: boolean, leave?: () => void, bare?: boolean}} [opts]
+   * `child` 的叠在开着的那一层上面，返回一层一层退。
+   * @param {string} title @param {() => any} render @param {{keep?: boolean, leave?: () => void, bare?: boolean, child?: boolean}} [opts]
    */
   openSub(title, render, opts) {
     this.sub.open(title, render, this.body.scrollTop, opts);
@@ -324,7 +325,7 @@ export class SettingsDialog {
    */
   drawBody(dir = null, restore = null) {
     const scroll = this.body.scrollTop;
-    if (this.query.trim()) this.sub.close();
+    if (this.query.trim()) this.sub.closeAll();
     this.root.classList.toggle('has-sub', !!this.sub.page);
     this.root.classList.toggle('is-bare-sub', !!this.sub.page?.bare);
     // 模型的详情挂在右边整栏上：换页、搜索时收掉，模型页自己再挂
