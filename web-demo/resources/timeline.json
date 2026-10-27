@@ -40,7 +40,11 @@
     "kb_save": "library",
     "kb_edit": "library",
     "kb_delete": "library",
-    "web_fetch": "globe"
+    "web_fetch": "globe",
+    "schedule_wakeup": "clock",
+    "cron_create": "clock",
+    "cron_delete": "clock",
+    "cron_list": "clock"
   },
   "icon_default": "wrench",
   "icon_fork": "git-fork",
