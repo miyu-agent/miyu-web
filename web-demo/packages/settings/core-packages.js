@@ -10,7 +10,7 @@
 
 import { confirmIn } from './confirm.js';
 import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
-import { coreRow, groupBlock, toggle, textField, findBox } from './rows.js';
+import { coreRow, groupBlock, toggle, textField, findBox, shell } from './rows.js';
 import { splitKey, itemFor, plainItem, pkgSwitch, pkgGroupsOf, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy } from './model.js';
 import { openPage, probeSites } from './backstage.js';
 import { serverRow } from './mcp-servers.js';
@@ -277,6 +277,7 @@ function infoPage(dialog, id) {
     : infoCard(dialog, p, null);
   return [
     head,
+    typeof p.members === 'boolean' ? membersRow(dialog, p) : null,
     missing ? null : mcpGroup(dialog, p),
     ...groups.map((/** @type {any} */ x) => groupBlock(x.g.id === id ? t('pkg.settings') : x.g.name, x.rows)),
     // 平台接入的（没有自己网页的）：终端管理员在这个平台上的号，接在它的设置项后面
@@ -302,7 +303,9 @@ function infoCard(dialog, p, e) {
   const alarm = bad || (e && e.on && e.state === 'stopped');
   const from = typeof p.from === 'string' ? t(`pkg.from.${p.from}`) : null;
   const author = typeof p.author === 'string' && p.author.trim() ? p.author.trim() : null;
-  const meta = [p.version ? t('pkg.version', { version: p.version }) : null, from && !from.startsWith('pkg.') ? from : null, author].filter(Boolean).join(' · ');
+  // 每人一份的扩展（核心 IM-1 上：`process.scope` 是 `account`）暗字里接「每人一份」
+  const perAccount = p.process?.scope === 'account' ? t('pkg.per_account') : null;
+  const meta = [p.version ? t('pkg.version', { version: p.version }) : null, from && !from.startsWith('pkg.') ? from : null, author, perAccount].filter(Boolean).join(' · ');
   const upstream = typeof p.upstream === 'string' && /^https:\/\/[^\s]+$/.test(p.upstream) ? p.upstream : null;
   const control = controlFor(dialog, p, e);
   const stderr = e ? (Array.isArray(e.stderr) ? e.stderr.join('\n') : e.stderr ?? '') : '';
@@ -330,6 +333,32 @@ function infoCard(dialog, p, e) {
       control ? h('div.set-control', control) : null),
     showing && stderr ? h('pre.set-ext-output', stderr) : null,
     ask);
+}
+
+/**
+ * 「成员也能用」（核心 IM-1 上：带进程的包默认只给管理员组，`members` 只给管理员）：一行开关，发 `package.members`，回应是那一项、换进列表；
+ * 改的是系统那一层，平时锁着（同总闸）。
+ * @param {any} dialog @param {any} p
+ */
+function membersRow(dialog, p) {
+  const t = (/** @type {string} */ key) => dialog.ctx.text(key);
+  /** @type {ReturnType<typeof shell>} */
+  let row;
+  const el = lockedIf(dialog, toggle(p.members, async (on) => {
+    if (dialog.adminGuard()) return false;
+    row.busy();
+    try {
+      const got = await dialog.ctx.core.request('package.members', { package: p.package, on });
+      dialog.packages = dialog.packages.map((/** @type {any} */ x) => (x.package === p.package ? got : x));
+      row.done();
+      return true;
+    } catch (err) {
+      row.fail(refusal(dialog, err));
+      return false;
+    }
+  }));
+  row = shell({ name: t('pkg.members'), description: t('pkg.members_desc'), source: dialog.adminLocked ? dialog.lockLine(true) : null, control: el });
+  return groupBlock(null, [row.el]);
 }
 
 /**
