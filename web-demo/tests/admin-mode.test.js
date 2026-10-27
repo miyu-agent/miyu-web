@@ -7,7 +7,7 @@ import { systemWrite } from '../src/model/admin-mode.js';
 import { AdminMode } from '../src/kernel/admin.js';
 
 test('改系统那一层的请求：名单里的方法、写系统那一层的 config.set、不写或写 system 的 secret.set/delete；别的不带', () => {
-  for (const m of ['account.invite', 'account.list', 'account.set_admin', 'package.install', 'package.restart', 'extension.enable', 'mcp.set', 'mcp.login_finish', 'provider.rename']) assert.equal(systemWrite(m, {}), true, m);
+  for (const m of ['account.invite', 'account.list', 'account.set_admin', 'package.install', 'package.restart', 'package.members', 'extension.enable', 'mcp.set', 'mcp.login_finish', 'provider.rename']) assert.equal(systemWrite(m, {}), true, m);
   assert.equal(systemWrite('config.set', { layer: 'system', changes: [] }), true);
   assert.equal(systemWrite('config.set', { layer: 'personal', changes: [] }), false);
   assert.equal(systemWrite('secret.set', { name: 'a', value: 'b' }), true, '不写 layer 的：管理员模式里存共用那一份');

@@ -4,7 +4,7 @@
 /** 改系统那一层的方法（核心 `docs/reference/connection.md`「管理员模式」）：`config.set` 照 `layer`，`secret.*` 另算 */
 const SYSTEM = new Set([
   'account.invite', 'account.invites', 'account.invite_revoke', 'account.list', 'account.disable', 'account.enable', 'account.set_admin',
-  'package.install', 'package.remove', 'package.upgrade', 'package.enable', 'package.disable', 'package.clean', 'package.sync', 'package.restart',
+  'package.install', 'package.remove', 'package.upgrade', 'package.enable', 'package.disable', 'package.clean', 'package.sync', 'package.restart', 'package.members',
   'extension.enable', 'extension.disable', 'extension.restart',
   'mcp.set', 'mcp.remove', 'mcp.login', 'mcp.login_finish', 'mcp.logout', 'mcp.restart',
   'provider.rename',
