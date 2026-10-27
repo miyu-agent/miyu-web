@@ -6,7 +6,7 @@
 .sch-prompt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sch-tag { flex: none; padding: 1px calc(6px * var(--space)); border-radius: var(--r-6); background: var(--surface-3); color: var(--text-soft); font-size: calc(11px * var(--text-scale)); font-weight: 500; }
 .sch-row.is-paused .sch-prompt { color: var(--text-soft); }
-.sch-skip { color: var(--t-warn, var(--gold)); }
+.set-desc.sch-skip { color: var(--t-warn, var(--gold)); }
 .sch-control { display: flex; align-items: center; gap: calc(6px * var(--space)); }
 .sch-remove .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); }
 .sch-remove:hover { color: var(--danger); }
