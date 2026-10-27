@@ -79,13 +79,17 @@ export function dayText(iso, now, t) {
 
 /**
  * 什么时候：循环的「循环 · 每 10 分钟」「循环 · 由 AI 定」，cron 认得的写人话、认不得的「cron <原样>」，`every`、`at` 照写。
- * @param {Schedule} s @param {Date} now @param {Text} t
+ * cron 记下的时区（`when.zone`，核心 J-3 上）和这里（`here`，浏览器的）不一样的后面接「（Asia/Tokyo）」。
+ * @param {Schedule} s @param {Date} now @param {Text} t @param {string|null} [here]
  */
-export function whenText(s, now, t) {
+export function whenText(s, now, t, here = localZone()) {
   const w = s.when ?? {};
   let text;
   if (s.loop === 'dynamic') text = t('when.dynamic');
-  else if (typeof w.cron === 'string') text = cronText(w.cron, t) ?? t('when.cron', { cron: w.cron.trim() });
+  else if (typeof w.cron === 'string') {
+    text = cronText(w.cron, t) ?? t('when.cron', { cron: w.cron.trim() });
+    if (typeof w.zone === 'string' && w.zone && w.zone !== here) text += t('when.zone', { zone: w.zone });
+  }
   else if (typeof w.every === 'number') text = everyText(w.every, t);
   else if (typeof w.at === 'string') text = t('when.once', { at: dayText(w.at, now, t) });
   else text = '';
@@ -138,14 +142,16 @@ const UNIT = { minutes: 60, hours: 3600, days: 86400 };
 /**
  * 表上的「什么时候」交给核心什么：每天 → cron「分 时 * * *」；每隔 → 秒（少于 60 秒不收）；一次 → 本地的日期时刻换成 ISO（已经过了的不收）；
  * 自定义 → cron 原样（五段）。写得不对的交回 `{problem}`（同核心 `bad_params` 的 `data.problem`：`when`、`cron`、`short`、`past`）。
- * @param {WhenForm} f @param {Date} now
+ * cron 的（每天、自定义）带上 `zone`（浏览器的时区，核心 J-3 上：照建时记下的时区走；不传的记核心那台机器的）。
+ * @param {WhenForm} f @param {Date} now @param {string|null} [zone]
  * @returns {{when: any}|{problem: string}}
  */
-export function whenOf(f, now) {
+export function whenOf(f, now, zone = null) {
+  const tz = zone ? { zone } : {};
   if (f.kind === 'daily') {
     const m = /^(\d{1,2}):(\d{2})$/.exec(String(f.time).trim());
     if (!m || Number(m[1]) > 23 || Number(m[2]) > 59) return { problem: 'when' };
-    return { when: { cron: `${Number(m[2])} ${Number(m[1])} * * *`, recurring: true } };
+    return { when: { cron: `${Number(m[2])} ${Number(m[1])} * * *`, recurring: true, ...tz } };
   }
   if (f.kind === 'every') {
     const n = Number(String(f.n).trim());
@@ -162,7 +168,7 @@ export function whenOf(f, now) {
   }
   const cron = String(f.cron ?? '').trim().split(/\s+/).join(' ');
   if (cron.split(' ').length !== 5) return { problem: 'cron' };
-  return { when: { cron, recurring: true } };
+  return { when: { cron, recurring: true, ...tz } };
 }
 
 /**
@@ -178,7 +184,7 @@ export function fieldOf(err) {
   if (reason !== 'bad_params' || typeof p !== 'string') return { field: null, key: null };
   if (p === 'prompt') return { field: 'prompt', key: 'bad.prompt' };
   if (['when', 'cron', 'past', 'short'].includes(p)) return { field: 'when', key: `bad.${p}` };
-  if (p === 'session' || p === 'target') return { field: 'target', key: `bad.${p}` };
+  if (p === 'session' || p === 'target' || p === 'cwd') return { field: 'target', key: `bad.${p}` };
   return { field: null, key: null };
 }
 
@@ -193,4 +199,13 @@ export function applyChange(list, p) {
 /** 跑在某个会话上的（右侧栏卡片列的） @param {Schedule[]} list @param {string|null} session */
 export function onSession(list, session) {
   return session ? list.filter((s) => s.target?.session === session) : [];
+}
+
+/** 浏览器的时区（IANA 名）；拿不到的是 `null`。 */
+export function localZone() {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch {
+    return null;
+  }
 }

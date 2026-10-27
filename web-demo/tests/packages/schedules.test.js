@@ -121,3 +121,15 @@ test('三种语言的字一样多', () => {
   assert.deepEqual(keys(manifest.text.en), keys(manifest.text.zh));
   assert.deepEqual(keys(manifest.text.ja), keys(manifest.text.zh));
 });
+
+test('时区（核心 J-3 上）：cron 的带上浏览器的 zone，别的不带；记下的时区和这里不一样的后面接上；目录不在的写在「在哪跑」下面', () => {
+  assert.deepEqual(whenOf({ kind: 'daily', time: '08:00' }, now, 'Asia/Tokyo'), { when: { cron: '0 8 * * *', recurring: true, zone: 'Asia/Tokyo' } });
+  assert.deepEqual(whenOf({ kind: 'cron', cron: '0 */2 * * *' }, now, 'Asia/Tokyo'), { when: { cron: '0 */2 * * *', recurring: true, zone: 'Asia/Tokyo' } });
+  assert.deepEqual(whenOf({ kind: 'every', n: '2', unit: 'hours' }, now, 'Asia/Tokyo'), { when: { every: 7200 } });
+  assert.deepEqual(whenOf({ kind: 'daily', time: '08:00' }, now), { when: { cron: '0 8 * * *', recurring: true } }, '拿不到时区的不写');
+  const s = /** @type {any} */ ({ id: 't1', when: { cron: '0 8 * * *', zone: 'America/New_York' } });
+  assert.equal(whenText(s, now, t, 'Asia/Tokyo'), '每天 08:00（America/New_York）');
+  assert.equal(whenText({ ...s, when: { cron: '0 8 * * *', zone: 'Asia/Tokyo' } }, now, t, 'Asia/Tokyo'), '每天 08:00', '同一个时区不写');
+  assert.deepEqual(fieldOf({ reason: 'bad_params', data: { problem: 'cwd' } }), { field: 'target', key: 'bad.cwd' });
+  assert.deepEqual(fieldOf({ reason: 'too_many_schedules' }), { field: null, key: null }, '满 200 个的照核心的话写在底下');
+});

@@ -42,6 +42,7 @@
         "cron": "cron {cron}",
         "once": "一次 · {at}",
         "dynamic": "由 AI 定",
+        "zone": "（{zone}）",
         "loop": "循环 · {when}"
       },
       "weekday": {
@@ -137,7 +138,8 @@
         "session": "这个会话不在了",
         "target": "在哪跑没写对",
         "unknown_persona": "没有这个人格",
-        "unknown_preset": "没有这个预设"
+        "unknown_preset": "没有这个预设",
+        "cwd": "这个工作目录不存在"
       }
     },
     "en": {
@@ -155,6 +157,7 @@
         "cron": "cron {cron}",
         "once": "Once · {at}",
         "dynamic": "Paced by AI",
+        "zone": " ({zone})",
         "loop": "Loop · {when}"
       },
       "weekday": {
@@ -250,7 +253,8 @@
         "session": "That session is gone",
         "target": "Where to run isn't right",
         "unknown_persona": "No such persona",
-        "unknown_preset": "No such preset"
+        "unknown_preset": "No such preset",
+        "cwd": "This folder doesn't exist"
       }
     },
     "ja": {
@@ -268,6 +272,7 @@
         "cron": "cron {cron}",
         "once": "1 回 · {at}",
         "dynamic": "AI が決める",
+        "zone": "（{zone}）",
         "loop": "ループ · {when}"
       },
       "weekday": {
@@ -363,7 +368,8 @@
         "session": "そのセッションはもうありません",
         "target": "実行先が正しくありません",
         "unknown_persona": "そのペルソナはありません",
-        "unknown_preset": "そのプリセットはありません"
+        "unknown_preset": "そのプリセットはありません",
+        "cwd": "この作業フォルダはありません"
       }
     }
   }

@@ -5,7 +5,7 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
-import { whenOf, fieldOf } from './model.js';
+import { whenOf, fieldOf, localZone } from './model.js';
 
 /**
  * 开浮窗。`session` 是从右侧栏卡片点进来的那个会话（「跑在会话」默认选它），别的是 `null`。
@@ -104,7 +104,7 @@ export function openForm(ctx, kit, store, opts) {
       return;
     }
     const form = kind === 'daily' ? { kind, time: time.value } : kind === 'every' ? { kind, n: n.value, unit } : kind === 'once' ? { kind, at: at.value } : { kind, cron: cron.value };
-    const got = whenOf(/** @type {any} */ (form), new Date());
+    const got = whenOf(/** @type {any} */ (form), new Date(), localZone());
     if ('problem' in got) {
       say(errs.when, t(`bad.${got.problem}`));
       return;
