@@ -7,6 +7,7 @@
     "offline": "オフライン"
   },
   "sidebar": {
+    "waiting": "確認待ち",
     "edit_persona": "人格を編集",
     "new_session": "新しいセッション",
     "collapse": "サイドバーを閉じる",

@@ -232,3 +232,17 @@ test('旧核心没有项目的流：当没有项目，左栏不画那一栏', as
   assert.equal(store.projects.supported, false);
   assert.deepEqual(store.projects.list, []);
 });
+
+test('在等人确认、回答的会话（核心 SL-1）：没读进来的照会话表的 waiting，读进来了的照会话状态的 state（2026-10-27 项目主人：左栏标橙色问号）', async () => {
+  const { store } = withIndex([
+    { session: 'w', oneshot: false, parent: null, waiting: true, last_active: '2026-10-01T01:00:00.000Z' },
+    { session: 'n', oneshot: false, parent: null, last_active: '2026-10-01T00:00:00.000Z' },
+  ]);
+  await store.boot();
+  await tick();
+  assert.equal(store.summary('w').waiting, true);
+  assert.equal(store.summary('n').waiting, false);
+  store.sessions.set('n', /** @type {any} */ ({ view: { status: { state: 'waiting' } } }));
+  assert.equal(store.summary('n').waiting, true, '读进来了的照会话状态');
+  assert.equal(store.summary('n').running, true, '等人也算在跑（照旧）');
+});

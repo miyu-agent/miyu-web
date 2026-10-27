@@ -29,10 +29,10 @@ import { projectBlock } from './sidebar-projects.js';
 import { projectRows, colorOf } from '../model/project.js';
 
 /**
- * @typedef {{session: string, title: string|null, running: boolean, unread: boolean}} Item
+ * @typedef {{session: string, title: string|null, running: boolean, unread: boolean, waiting?: boolean}} Item
  * @typedef {{newSession: () => void, open: (id: string) => void, close: () => void,
  *   rename: (id: string, title: string) => Promise<void>, pin: (id: string, on: boolean) => Promise<void>, removeMany: (ids: string[]) => Promise<string[]>, dropped: (id: string) => void,
- *   kids: (id: string) => {session: string, title: string|null, running: boolean, paused?: boolean}[], viewAll: () => void,
+ *   kids: (id: string) => {session: string, title: string|null, running: boolean, paused?: boolean, waiting?: boolean}[], viewAll: () => void,
  *   shown: (ids: string[]) => void, place: (id: string, patch: {pinned?: boolean, project?: string|null}) => Promise<void>,
  *   projects: () => {supported: boolean, list: import('../core/projects.js').Project[]}, viewProjects: () => void, editProject: (id: string|null) => void,
  *   openProject: (id: string) => void, newIn: (id: string) => void, deleteProject: (id: string) => void, parentOf?: (id: string) => string|null,
@@ -684,13 +684,18 @@ function collapsing(el) {
 
 /** 记号那一格：在跑的转圈，没看过的一个圆点，别的空着（在跑的优先）。 */
 function lead(it) {
+  if (it.waiting) return waitingLead();
   if (it.running) return h('span.session-lead.session-run-spinner', frameNow());
   if (it.unread) return h('span.session-lead', h('i.session-unread-dot'));
   return h('span.session-lead');
 }
 
+/** 在等你确认、回答（核心 SL-1，2026-10-27 项目主人选橙色问号）：不转圈，先于转圈和没看过的圆点。 */
+const waitingLead = () => h('span.session-lead.session-waiting', { title: t('sidebar.waiting') }, icon('circle-help'));
+
 /** 子代理的记号：在跑的转圈，停在半路的暂停；别的第一层是机器人（分叉出来的是分叉），再往下是空心的圆（正在看的实心）。 */
 function childLead(it, depth, active) {
+  if (it.waiting) return waitingLead();
   if (it.running) return h('span.session-lead.session-run-spinner', frameNow());
   if (it.paused) return h('span.session-lead.session-paused', { title: t('sidebar.paused') }, icon('circle-pause'));
   if (depth > 1) return h('span.session-lead.session-node', h(`i${active ? '.is-on' : ''}`));

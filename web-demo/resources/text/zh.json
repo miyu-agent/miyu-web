@@ -7,6 +7,7 @@
     "offline": "离线"
   },
   "sidebar": {
+    "waiting": "等你确认",
     "edit_persona": "编辑人格",
     "new_session": "新会话",
     "collapse": "收起侧栏",

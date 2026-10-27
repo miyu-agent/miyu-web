@@ -245,6 +245,7 @@
   background: var(--tree-line); content: ""; pointer-events: none;
 }
 .session-bot .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); color: var(--text-faint); }
+.session-waiting .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); color: var(--t-warn); }
 .session-paused .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); color: var(--t-warn); }
 .session-run-spinner.is-kids { color: var(--text-soft); }
 .session-item.is-child .session-copy strong { color: var(--text-soft); font-size: calc(12px * var(--text-scale)); }

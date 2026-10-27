@@ -221,7 +221,9 @@ export class Store {
     const e = this.index.get(id);
     const listed = Date.parse(e?.last_active ?? '');
     const state = s?.view.status?.state;
-    return { session: id, title: e?.title ?? e?.preview ?? null, running: state ? state !== 'idle' : !!e?.busy, created: null, pinned: !!e?.pinned, active: Number.isNaN(listed) ? null : listed, unread: this.unread.has(id), project: e?.project ?? null,
+    return { session: id, title: e?.title ?? e?.preview ?? null, running: state ? state !== 'idle' : !!e?.busy,
+      // 在等人确认、回答（核心 SL-1：会话表的 `waiting`；读进来了的照会话状态）
+      waiting: state ? state === 'waiting' : e?.waiting === true, created: null, pinned: !!e?.pinned, active: Number.isNaN(listed) ? null : listed, unread: this.unread.has(id), project: e?.project ?? null,
       // 哪儿开的（核心 8-33 四补：终端集成开的是 `terminal`，左栏单开一栏）
       origin: e?.origin ?? null,
       // 分叉出来的子代理（核心照 A-F 给会话表那一行加 `forked: true`；没有这一格的照普通子代理）

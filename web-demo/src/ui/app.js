@@ -850,7 +850,7 @@ export class App {
    */
   kids(id) {
     const own = this.store.sessions.get(id);
-    return childrenFromStatus(own?.view.status?.jobs).map((k) => ({ ...k, title: this.store.index.get(k.session)?.title ?? k.title }));
+    return childrenFromStatus(own?.view.status?.jobs).map((k) => ({ ...k, title: this.store.index.get(k.session)?.title ?? k.title, waiting: this.store.summary(k.session).waiting }));
   }
 
   /**

@@ -7,6 +7,7 @@
     "offline": "Offline"
   },
   "sidebar": {
+    "waiting": "Waiting for you",
     "edit_persona": "Edit persona",
     "new_session": "New session",
     "collapse": "Collapse sidebar",
