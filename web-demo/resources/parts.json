@@ -7055,5 +7055,11 @@
     "select": [
       ".sch-none"
     ]
+  },
+  "sch.card-text": {
+    "zh": "定时任务：card text",
+    "select": [
+      ".sch-card-text"
+    ]
   }
 }

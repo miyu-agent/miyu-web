@@ -26,3 +26,9 @@
 .sch-err-row { padding-left: calc(72px * var(--space) + 12px * var(--space)); }
 /* 浮窗里的下拉：菜单挂在设置框上，要浮在浮窗上面 */
 .set-panel:has(.sch-modal) > .set-menu { z-index: 31; }
+
+/* 右侧栏卡片：一行同展示文件；停着的暗一些；停/续、删除悬停才露（触屏一直露） */
+.sch-card-row.is-paused .sch-card-text { color: var(--text-faint); }
+.sch-card-row .sch-card-text { max-width: none; flex: 1 1 auto; min-width: 0; }
+.sch-card-row:hover .sch-card-act, .sch-card-row:focus-within .sch-card-act { display: inline-grid; }
+@media (hover: none) { .sch-card-act { display: inline-grid; } }
