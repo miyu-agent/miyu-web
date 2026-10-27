@@ -147,3 +147,31 @@ test('时刻那一格认字、月历的格子、日期按钮上的字（2026-10-
   assert.equal(dateLabel('2026-10-28', now, t), '明天');
   assert.equal(dateLabel('2026-10-30', now, t), '10月30日 周五');
 });
+
+test('右侧栏卡片右边的下次（2026-10-27 项目主人选「话在左、下次时刻靠右」）：今天写时刻、明天、再往后月/日、停着已暂停', async () => {
+  const { nextShort } = await import('../../packages/schedules/model.js');
+  const at = (/** @type {number[]} */ p) => local(p).toISOString();
+  assert.equal(nextShort(/** @type {any} */ ({ next: at([2026, 10, 27, 10, 31]) }), now, t), '10:31');
+  assert.equal(nextShort(/** @type {any} */ ({ next: at([2026, 10, 28, 8, 0]) }), now, t), '明天');
+  assert.equal(nextShort(/** @type {any} */ ({ next: at([2026, 10, 30, 8, 0]) }), now, t), '10/30');
+  assert.equal(nextShort(/** @type {any} */ ({ next: at([2026, 10, 27, 10, 31]), paused: true }), now, t), '已暂停');
+  assert.equal(nextShort(/** @type {any} */ ({}), now, t), '');
+});
+
+test('停、续当场换样子，核心拒了换回去（2026-10-27 项目主人：开启和停止延迟很高）', async () => {
+  const { ScheduleStore } = await import('../../packages/schedules/store.js');
+  /** @type {(v: any) => void} */ let answer = () => {};
+  /** @type {(e: any) => void} */ let refuse = () => {};
+  const core = { request: () => new Promise((res, rej) => { answer = res; refuse = rej; }), pushes: new Set() };
+  const store = new ScheduleStore(/** @type {any} */ (core));
+  store.list = /** @type {any} */ ([{ id: 't1', paused: false }]);
+  const p = store.act('schedule.pause', { id: 't1' });
+  assert.equal(store.list[0].paused, true, '没等核心回就换了');
+  refuse(Object.assign(new Error('no'), { reason: 'bad_params' }));
+  await assert.rejects(p);
+  assert.equal(store.list[0].paused, false, '拒了换回去');
+  const q = store.act('schedule.pause', { id: 't1' });
+  answer({ schedule: { id: 't1', paused: true } });
+  await q;
+  assert.equal(store.list[0].paused, true);
+});

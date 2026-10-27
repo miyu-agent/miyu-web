@@ -65,3 +65,7 @@
 .sch-work small { min-width: 0; overflow: hidden; color: var(--text-faint); font-family: var(--font-mono); font-size: calc(11.5px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
 .sch-work-row { width: 100%; }
 .sch-work-reset { flex: none; width: 26px; height: 26px; }
+.sch-card-next { display: inline-flex; flex: none; align-items: center; gap: 3px; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sch-card-next .icon { width: 11px; height: 11px; }
+.sch-card-row:hover .sch-card-next, .sch-card-row:focus-within .sch-card-next { display: none; }
+@media (hover: none) { .sch-card-next { display: none; } }

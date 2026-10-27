@@ -103,7 +103,19 @@ export class ScheduleStore {
    * @param {'schedule.pause'|'schedule.resume'|'schedule.cancel'|'schedule.add'} method @param {any} params
    */
   async act(method, params) {
-    const got = await this.core.request(method, params);
+    // 停、续当场换样子（2026-10-27 项目主人：开启和停止延迟很高——盘忙时核心等落盘才回），核心回了照它的换，拒了换回去
+    const was = this.list;
+    if (method === 'schedule.pause' || method === 'schedule.resume') {
+      this.list = this.list.map((s) => (s.id === params.id ? { ...s, paused: method === 'schedule.pause' } : s));
+      this.emit();
+    }
+    let got;
+    try {
+      got = await this.core.request(method, params);
+    } catch (err) {
+      if (this.list !== was) { this.list = was; this.emit(); }
+      throw err;
+    }
     if (method === 'schedule.cancel') this.list = applyChange(this.list, { id: params.id, removed: true });
     else if (got?.schedule?.id) this.list = applyChange(this.list, { id: got.schedule.id, entry: got.schedule });
     this.emit();

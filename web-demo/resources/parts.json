@@ -7103,5 +7103,11 @@
     "select": [
       ".sch-work small"
     ]
+  },
+  "sch.card-next": {
+    "zh": "定时任务：右侧栏卡片一行右边的下次时刻",
+    "select": [
+      ".sch-card-next"
+    ]
   }
 }

@@ -133,6 +133,22 @@ export function cardText(s, now, t) {
 }
 
 /**
+ * 右侧栏卡片一行右边的下次（2026-10-27 项目主人选「话在左、下次时刻靠右」）：今天的只写时刻「10:31」，明天的「明天」，再往后「10/30」；
+ * 停着的「已暂停」，没定下一次的空。纯的。
+ * @param {Schedule} s @param {Date} now @param {Text} t
+ */
+export function nextShort(s, now, t) {
+  if (s.paused) return t('paused');
+  if (!s.next) return '';
+  const d = new Date(s.next);
+  if (Number.isNaN(d.getTime())) return '';
+  const day = ymd(d);
+  if (day === ymd(now)) return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  if (day === ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1))) return t('pick.tomorrow');
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+/**
  * 新建那张表：「什么时候」的四种。
  * @typedef {{kind: 'daily', time: string} | {kind: 'every', n: string, unit: 'minutes'|'hours'|'days'} | {kind: 'once', at: string} | {kind: 'cron', cron: string}} WhenForm
  */
