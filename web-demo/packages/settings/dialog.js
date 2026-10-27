@@ -196,9 +196,11 @@ export class SettingsDialog {
       const i = order.indexOf(id);
       return i >= 0 ? i : order.indexOf('advanced') - 0.5;
     };
-    // 成员：下载软件、软件后台、MCP 是整台机器的，不露；没有核心的配置页的（老核心上的成员），主题单开一页「通用」
+    // 成员：下载软件、MCP 是整台机器的，不露；软件后台只在有他打得开的时候露（核心 IM-1 中下：只给他打得开的带 `page`，2026-10-27 项目主人）；
+    // 没有核心的配置页的（老核心上的成员），主题单开一页「通用」
     const member = !!this.ctx.host?.member;
-    const kept = member ? all.filter((e) => !['market', 'backstage', 'mcp'].includes(e.id)) : all;
+    const pages = (this.packages ?? []).some((/** @type {any} */ p) => p.page);
+    const kept = member ? all.filter((e) => !['market', 'mcp'].includes(e.id) && (e.id !== 'backstage' || pages)) : all;
     const mine = member && !kept.some((e) => e.id === 'general') ? [{ id: 'general', name: named('general') }, ...kept] : kept;
     return mine.sort((a, b) => rank(a.id) - rank(b.id));
   }

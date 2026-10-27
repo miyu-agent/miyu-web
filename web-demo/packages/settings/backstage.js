@@ -13,7 +13,9 @@ export function drawBackstage(dialog) {
   const t = (/** @type {string} */ key) => dialog.ctx.text(key);
   probeSites(dialog, dialog.packages ?? []);
   // 一页一行：后台页一个软件一行，界面块的整页一块一行（接在它的软件后面）；有自己网页的只一行
-  const rows = (dialog.packages ?? []).flatMap((p) => [
+  // 成员：只列带 `page` 的包（核心只给他打得开的带，IM-1 中下），界面块的整页也只列这些包的
+  const member = !!dialog.ctx.host?.member;
+  const rows = (dialog.packages ?? []).filter((p) => !member || p.page).flatMap((p) => [
     ...(p.page ? [{ p, widget: null, name: p.name ?? p.package, summary: p.summary }] : []),
     ...(dialog.sites?.get(p.package) ? [] : (p.widgets ?? []).filter((w) => w.place === 'page').map((w) => ({ p, widget: w.id, name: `${p.name ?? p.package} · ${w.title ?? w.id}`, summary: null }))),
   ]);

@@ -314,7 +314,8 @@ function infoCard(dialog, p, e) {
   const stderr = e ? (Array.isArray(e.stderr) ? e.stderr.join('\n') : e.stderr ?? '') : '';
   const showing = !!e && dialog.extensions.showing.has(id);
   const actions = [
-    p.page && !bad && dialog.ctx.backstage && !member ? openButton(dialog, id) : null,
+    // 成员拿到的只有他打得开的带 `page`（核心 IM-1 中下），照样给按钮
+    p.page && !bad && dialog.ctx.backstage ? openButton(dialog, id) : null,
     e && e.state === 'running' ? h('button.set-btn', { type: 'button', onclick: () => dialog.extensions.act('extension.restart', { package: id }) }, t('ext.restart')) : null,
     e && e.on && e.state === 'stopped' && stderr
       ? h('button.set-btn', { type: 'button', onclick: () => { dialog.extensions.toggleSet(dialog.extensions.showing, id); dialog.extensions.redraw(id); } }, t(showing ? 'ext.hide_output' : 'ext.show_output')) : null,
