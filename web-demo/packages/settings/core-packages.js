@@ -319,7 +319,7 @@ function infoCard(dialog, p, e) {
     e && e.state === 'running' ? h('button.set-btn', { type: 'button', onclick: () => dialog.extensions.act('extension.restart', { package: id }) }, t('ext.restart')) : null,
     e && e.on && e.state === 'stopped' && stderr
       ? h('button.set-btn', { type: 'button', onclick: () => { dialog.extensions.toggleSet(dialog.extensions.showing, id); dialog.extensions.redraw(id); } }, t(showing ? 'ext.hide_output' : 'ext.show_output')) : null,
-    member ? null : removeButton(dialog, p),
+    removeButton(dialog, p),
   ].filter(Boolean);
   const caps = e?.capabilities ?? [];
   const unapproved = new Set(e?.unapproved ?? []);
@@ -414,9 +414,12 @@ function openButton(dialog, id) {
  */
 function removeButton(dialog, p) {
   if (p.required || p.layer === 'shipped') return null;
+  // 自己那一层装的（核心 U23下上 `layer: user`）：卸的是自己那一份，不用管理员模式，成员也有
+  const own = p.layer === 'user';
+  if (!own && dialog.ctx.host?.member) return null;
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const button = h('button.set-btn.is-danger', { type: 'button', onclick: async () => {
-    if (dialog.adminGuard()) return;
+    if (!own && dialog.adminGuard()) return;
     if (!await confirmIn(button, { text: t('pkg.uninstall_ask', { name: p.name ?? p.package }), yes: t('ask_yes'), no: t('ask_no') })) return;
     try {
       await dialog.ctx.core.request('package.remove', { package: p.package });

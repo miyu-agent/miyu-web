@@ -196,11 +196,12 @@ export class SettingsDialog {
       const i = order.indexOf(id);
       return i >= 0 ? i : order.indexOf('advanced') - 0.5;
     };
-    // 成员：下载软件、MCP 是整台机器的，不露；软件后台只在有他打得开的时候露（核心 IM-1 中下：只给他打得开的带 `page`，2026-10-27 项目主人）；
+    // 成员：MCP 是整台机器的，不露；软件后台只在有他打得开的时候露（核心 IM-1 中下：只给他打得开的带 `page`，2026-10-27 项目主人）；
     // 没有核心的配置页的（老核心上的成员），主题单开一页「通用」
     const member = !!this.ctx.host?.member;
     const pages = (this.packages ?? []).some((/** @type {any} */ p) => p.page);
-    const kept = member ? all.filter((e) => !['market', 'mcp'].includes(e.id) && (e.id !== 'backstage' || pages)) : all;
+    // 下载软件成员也有（核心 U23下上：装得了不带程序的，只对他自己；2026-10-28 项目主人）
+    const kept = member ? all.filter((e) => e.id !== 'mcp' && (e.id !== 'backstage' || pages)) : all;
     const mine = member && !kept.some((e) => e.id === 'general') ? [{ id: 'general', name: named('general') }, ...kept] : kept;
     return mine.sort((a, b) => rank(a.id) - rank(b.id));
   }
@@ -386,10 +387,12 @@ export class SettingsDialog {
           h('a.set-repo-link', { href: SOURCE_URL, target: '_blank', rel: 'noopener noreferrer' }, this.ctx.text('source_link'))) : null,
       ];
     }
-    // 整页都是系统那一层的（下载软件、MCP）：平时页顶一行「仅管理员可以修改」，整页的按钮灰着；软件包页核心那一段锁着、网页自己的组件不锁：
+    // 整页都是系统那一层的（MCP）：平时页顶一行「仅管理员可以修改」，整页的按钮灰着；软件包页核心那一段锁着、网页自己的组件不锁：
     // 页顶写「部分软件包仅管理员可以修改」，成员也写（没有按钮）（蓝图「管理员模式」第 4 条）
-    const systemPage = this.current === 'market' || this.current === 'mcp';
+    const systemPage = this.current === 'mcp';
     if (this.adminLocked && systemPage && Array.isArray(kids)) kids = [this.lockLine(), ...kids];
+    // 下载软件：平时装给自己（核心 U23下上），页顶一句说清，管理员的后面「进入管理员模式」；整页不灰（第 12a 条第 8 款）
+    if ((this.adminLocked || this.ctx.host?.member) && this.current === 'market' && Array.isArray(kids)) kids = [this.lockLine(false, 'market.mine'), ...kids];
     if ((this.adminLocked || this.ctx.host?.member) && this.current === 'packages' && Array.isArray(kids)) kids = [this.lockLine(false, 'admin_mode.locked_packages'), ...kids];
     this.body.classList.toggle('is-admin-page', this.adminLocked && systemPage);
     swap(this.body, kids, dir, restore ?? scroll);

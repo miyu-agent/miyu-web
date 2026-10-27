@@ -91,6 +91,18 @@ export function actionOf(p, upgradable, busy) {
   return 'install';
 }
 
+/** 带程序的种类（核心 U23下上：自己那一层只收不带程序的包） */
+const PROGRAM_KINDS = new Set(['process', 'worker', 'ui', 'builtin']);
+
+/**
+ * 带不带程序（蓝图第 12a 条第 8 款）：种类是插件、界面、内置，或者带了子命令、MCP 服务的；平时只装得进自己那一层的人装不了它。
+ * @param {any} p `package.search` 的一项
+ */
+export function hasProgram(p) {
+  const has = (/** @type {string} */ k) => { const v = p?.provides?.[k]; return Array.isArray(v) ? v.length > 0 : !!v; };
+  return PROGRAM_KINDS.has(p?.kind) || has('command') || has('mcp');
+}
+
 /**
  * 卡片上点「安装」要不要先开详情给人看：要权限的、要一起装依赖的先看（`package.install {source, preview: true}` 的回应）。
  * @param {any} preview

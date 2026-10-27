@@ -6,7 +6,7 @@
 import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { bytes } from '../../src/lib/format.js';
-import { STATUS_FILTERS, shownOf, actionOf, faceOf, needsLook, providesLine, percentOf } from './market-model.js';
+import { STATUS_FILTERS, shownOf, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf } from './market-model.js';
 import { confirmIn } from './confirm.js';
 
 /** 搜索框停多久再筛（边打边筛；输入法选字时不筛） */
@@ -222,6 +222,10 @@ function actionButton(dialog, p, upgradable, big) {
   const kind = actionOf(p, upgradable, m.busy);
   const cls = big ? '.mk-action.is-big' : '.mk-action';
   if (kind === 'blocked') return null;
+  // 平时只装得进自己那一层的成员：带程序的装不了，灰着写「需要管理员安装」（管理员的照旧「安装」，点了提示进管理员模式）
+  if (kind === 'install' && dialog.ctx.host?.member && hasProgram(p)) {
+    return h(`button.set-btn${cls}`, { type: 'button', disabled: true }, t('market.needs_admin'));
+  }
   if (kind === 'busy') {
     const bar = h(`div${cls}.mk-bar`, { 'data-market-busy': p.package }, h('span.mk-bar-label'));
     fillBar(dialog, bar);
@@ -252,8 +256,11 @@ function actionButton(dialog, p, upgradable, big) {
 /** 看一眼（只照索引说，不下载）：同一个编号只问一次，刷新了重问 @param {any} dialog @param {string} id */
 function previewOf(dialog, id) {
   const m = stateOf(dialog);
-  // 预览也算系统那一层（核心 Y-12下上）：平时锁着的不问，照「仅管理员可以修改」说
-  if (dialog.adminLocked) return Promise.reject(Object.assign(new Error(dialog.ctx.text('admin_mode.locked')), { reason: 'admin_locked' }));
+  // 平时（成员、不在管理员模式的管理员）装进自己那一层（核心 U23下上），预览照问；带程序的自己那一层装不了，不问：成员写「需要管理员安装」，管理员写「仅管理员可以修改」
+  if ((dialog.adminLocked || dialog.ctx.host?.member) && hasProgram(m.list.find((/** @type {any} */ x) => x.package === id))) {
+    const say = dialog.ctx.host?.member ? 'market.needs_admin' : 'admin_mode.locked';
+    return Promise.reject(Object.assign(new Error(dialog.ctx.text(say)), { reason: 'admin_locked' }));
+  }
   if (!m.previews.has(id)) m.previews.set(id, dialog.ctx.core.request('package.install', { source: id, preview: true }));
   return /** @type {Promise<any>} */ (m.previews.get(id));
 }
@@ -265,6 +272,8 @@ function previewOf(dialog, id) {
 async function install(dialog, p, fromDetail) {
   const m = stateOf(dialog);
   if (m.busy) return;
+  // 带程序的只能装给所有人：平时的管理员提示进管理员模式，不发请求
+  if (hasProgram(p) && dialog.adminGuard()) return;
   delete m.problems[p.package];
   if (!fromDetail) {
     try {
@@ -296,7 +305,7 @@ async function upgrade(dialog, ids) {
  * @param {any} dialog @param {string} id @param {() => Promise<any>} call @param {(got: any) => void} done
  */
 async function run(dialog, id, call, done) {
-  if (dialog.adminGuard()) return;
+  // 平时也照发：装、卸、升级的是自己那一层（核心 U23下上）；系统那一层的核心拒了照原因写在卡片下面（`admin_mode_required` 另在设置页提示、能一键进入）
   const m = stateOf(dialog);
   m.busy = id;
   m.progress = null;
@@ -325,6 +334,8 @@ function problemText(dialog, err) {
     case 'depends_missing': return t('market.bad.depends', { names: (err.data?.missing ?? []).join('、') });
     case 'wrong_target': return t('market.bad.target');
     case 'download_failed': return `${t('market.bad.download')}：${err.data?.why ?? ''}`;
+    case 'admin_mode_required': return t('admin_mode.locked');
+    case 'not_permitted': return t('market.needs_admin');
     default: return err?.message ?? String(err);
   }
 }

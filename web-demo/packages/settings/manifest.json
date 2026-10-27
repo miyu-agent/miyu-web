@@ -714,6 +714,8 @@
         "uninstall": "卸载",
         "uninstall_ask": "确认卸载「{name}」吗？",
         "uninstalled": "已卸载：{name}",
+        "needs_admin": "需要管理员安装",
+        "mine": "你装的只对你自己生效；带程序的软件（插件、MCP 服务）要管理员在管理员模式里装给所有人",
         "kinds_none": "还没有分了种类的软件"
       },
       "admin": {
@@ -1377,6 +1379,8 @@
         "uninstall": "Uninstall",
         "uninstall_ask": "Uninstall \"{name}\"?",
         "uninstalled": "Uninstalled {name}",
+        "needs_admin": "Needs an admin to install",
+        "mine": "What you install is for you only; software with programs (plugins, MCP servers) is installed for everyone by an admin in admin mode",
         "kinds_none": "No packages have kinds yet"
       },
       "admin": {
@@ -2040,6 +2044,8 @@
         "uninstall": "アンインストール",
         "uninstall_ask": "「{name}」をアンインストールしますか？",
         "uninstalled": "アンインストールしました：{name}",
+        "needs_admin": "管理者のインストールが必要",
+        "mine": "インストールしたものはあなただけに有効です。プログラムを含むソフト（プラグイン・MCP サーバー）は管理者が管理者モードで全員向けにインストールします",
         "kinds_none": "種類のあるソフトはまだありません"
       },
       "admin": {

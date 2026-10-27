@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { shownOf, actionOf, kindsOf, faceOf, needsLook, providesLine, percentOf, found } from '../../packages/settings/market-model.js';
+import { shownOf, actionOf, kindsOf, faceOf, needsLook, hasProgram, providesLine, percentOf, found } from '../../packages/settings/market-model.js';
 
 const embed = { package: 'embed', version: '1.0.0', name: '语义模型', summary: '本机的语义检索模型', official: true, installed: '1.0.0', blocked: null, provides: { features: ['embed'] }, depends: [] };
 const memes = { package: 'memes', version: '0.2.0', name: '表情包', summary: '发表情包的技能', official: true, installed: null, blocked: null, provides: { skills: ['memes'], content: ['stickers'] }, depends: [] };
@@ -72,4 +72,17 @@ test('核心 G-11 的种类原样：process、worker 都算插件、并成一种
   const got = shownOf([ext, wk, pack, old], { query: '', filter: 'all', kind: null }, new Set());
   assert.deepEqual(got.kinds, ['extension', 'skills']);
   assert.equal(got.counts.extension, 2);
+});
+
+test('带不带程序（核心 U23下上：自己那一层只收不带程序的；2026-10-28 项目主人：成员那张卡灰着「需要管理员安装」）：插件、界面、内置，带子命令、MCP 服务的算', () => {
+  assert.equal(hasProgram({ kind: 'process' }), true);
+  assert.equal(hasProgram({ kind: 'worker' }), true);
+  assert.equal(hasProgram({ kind: 'ui' }), true);
+  assert.equal(hasProgram({ kind: 'bundle', provides: { mcp: ['github'] } }), true);
+  assert.equal(hasProgram({ kind: 'bundle', provides: { command: ['dice'] } }), true);
+  assert.equal(hasProgram({ kind: 'bundle', provides: { scripts: ['dice'], skills: ['x'] } }), false);
+  assert.equal(hasProgram({ kind: 'theme', provides: {} }), false);
+  assert.equal(hasProgram({ kind: 'mascot' }), false);
+  assert.equal(hasProgram({ provides: { mcp: [] } }), false, '空的不算');
+  assert.equal(hasProgram(undefined), false);
 });
