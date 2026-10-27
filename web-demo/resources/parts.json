@@ -7127,5 +7127,35 @@
     "select": [
       ".setup-fold-arrow"
     ]
+  },
+  "acc.pick-btn": {
+    "zh": "管理员后台：组头上的「选择」",
+    "select": [
+      ".acc-pick-btn"
+    ]
+  },
+  "acc.check": {
+    "zh": "管理员后台：多选时每行前面的勾选框",
+    "select": [
+      ".acc-check"
+    ]
+  },
+  "acc.pick-bar": {
+    "zh": "管理员后台：多选时组底下钉着的「已选 N 个」那一条",
+    "select": [
+      ".acc-pick-bar"
+    ]
+  },
+  "acc.pick-count": {
+    "zh": "管理员后台：「已选 N 个」的字",
+    "select": [
+      ".acc-pick-count"
+    ]
+  },
+  "acc.open-only": {
+    "zh": "管理员后台：邀请组头上「只看还能用的」开关",
+    "select": [
+      ".acc-open-only"
+    ]
   }
 }

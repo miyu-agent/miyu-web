@@ -6,6 +6,7 @@
 import { h, icon } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { confirmIn } from './confirm.js';
+import { toggle as switchOf } from './rows.js';
 
 /** 邀请的有效期能选几天（核心 1 到 30，默认 7） */
 export const DAYS = [1, 3, 7, 14, 30];
@@ -30,6 +31,64 @@ export function sortAccounts(accounts) {
   return [...accounts].sort((a, b) => rank(a.kind) - rank(b.kind) || String(a.created ?? '').localeCompare(String(b.created ?? '')) || a.account.localeCompare(b.account));
 }
 
+/** 「只看还能用的」记在浏览器里的名字 */
+const OPEN_ONLY = 'admin_invites_open_only';
+
+/** 能勾的邀请：还能用的（已注册、已过期的不能勾）。 @param {any} invite @param {number} now */
+export const pickableInvite = (invite, now) => inviteState(invite, now) === 'open';
+
+/** 能勾的账号：成员（机主、系统账号不能勾），不是自己。 @param {{account: string, kind: string}} a @param {string|null} self */
+export const pickableAccount = (a, self) => a.kind === 'member' && a.account !== self;
+
+/** 列哪些邀请：开着「只看还能用的」的只列还能用的。 @param {any[]} list @param {number} now @param {boolean} openOnly */
+export const shownInvites = (list, now, openOnly) => (openOnly ? list.filter((i) => inviteState(i, now) === 'open') : list);
+
+/**
+ * 勾的成员里能做什么：开着的能停用、停着的能启用（照先后）。
+ * @param {{account: string, disabled?: boolean}[]} accounts @param {Set<string>} picked
+ * @returns {{disable: string[], enable: string[]}}
+ */
+export function accountMoves(accounts, picked) {
+  const sel = accounts.filter((a) => picked.has(a.account));
+  return { disable: sel.filter((a) => !a.disabled).map((a) => a.account), enable: sel.filter((a) => a.disabled).map((a) => a.account) };
+}
+
+/**
+ * 点一行：勾上、去掉；`Shift` 点把上一次点的和这一行之间（照列表的先后、只算能勾的）都勾上。纯的，交回新的一份。
+ * @param {Set<string>} picked @param {string[]} order 能勾的，照列表的先后 @param {string|null} anchor @param {string} id @param {boolean} shift
+ */
+export function pickOne(picked, order, anchor, id, shift) {
+  const next = new Set(picked);
+  const a = anchor == null ? -1 : order.indexOf(anchor);
+  const b = order.indexOf(id);
+  if (shift && a >= 0 && b >= 0) {
+    for (const x of order.slice(Math.min(a, b), Math.max(a, b) + 1)) next.add(x);
+    return next;
+  }
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  return next;
+}
+
+/**
+ * 一个个做（照先后，一个没成不停）：交回成了的、没成的和原因。
+ * @param {string[]} ids @param {(id: string) => Promise<unknown>} run
+ * @returns {Promise<{done: string[], failed: {id: string, why: string}[]}>}
+ */
+export async function runEach(ids, run) {
+  const done = [];
+  const failed = [];
+  for (const id of ids) {
+    try {
+      await run(id);
+      done.push(id);
+    } catch (err) {
+      failed.push({ id, why: /** @type {any} */ (err)?.message ?? String(err) });
+    }
+  }
+  return { done, failed };
+}
+
 /** 时刻：本地的「10月22日 15:30」 @param {string|undefined} at */
 function when(at) {
   const d = new Date(at ?? '');
@@ -42,7 +101,75 @@ function when(at) {
  */
 
 /** 这一处记的东西 @param {View} view */
-export const stateOf = (view) => (view.state.accounts ??= { loading: false, loaded: false, admin: false, locked: false, invites: [], accounts: [], error: null, days: 7 });
+export const stateOf = (view) => (view.state.accounts ??= { loading: false, loaded: false, admin: false, locked: false, invites: [], accounts: [], error: null, days: 7,
+  /** 多选（2026-10-27 项目主人）：在选的那一组勾了哪些，没在选的是 `null`；`anchor` 是上一次点的 */
+  pick: { invites: null, accounts: null, anchor: null } });
+
+/** 退出多选（`Esc`、取消、做完）。交回原来在不在选。 @param {View} view */
+export function stopPicking(view) {
+  const p = stateOf(view).pick;
+  const was = !!(p.invites || p.accounts);
+  Object.assign(p, { invites: null, accounts: null, anchor: null });
+  return was;
+}
+
+/**
+ * 组头上的「选择」（同左栏的多选按钮）。 @param {View} view @param {'invites'|'accounts'} which
+ */
+function pickButton(view, which) {
+  const t = (/** @type {string} */ k) => view.ctx.text(k);
+  return h('button.icon-button.acc-pick-btn', { type: 'button', title: t('account.select'), 'aria-label': t('account.select'), onclick: () => {
+    const p = stateOf(view).pick;
+    const on = !p[which];
+    Object.assign(p, { invites: null, accounts: null, anchor: null });
+    if (on) p[which] = new Set();
+    view.redraw();
+  } }, icon('list-checks'));
+}
+
+/**
+ * 勾选框那一格，点了勾上、去掉（`Shift` 连着勾）。 @param {View} view @param {'invites'|'accounts'} which @param {string} id @param {string[]} order
+ */
+function checkBox(view, which, id, order) {
+  const on = !!stateOf(view).pick[which]?.has(id);
+  return h('button.acc-check', { type: 'button', 'aria-pressed': String(on), onclick: (/** @type {MouseEvent} */ e) => { e.stopPropagation(); flipPick(view, which, id, order, e.shiftKey); } },
+    icon(on ? 'square-check' : 'square'));
+}
+
+/** 勾上、去掉一行（点勾选框、点这一行都是它）。 @param {View} view @param {'invites'|'accounts'} which @param {string} id @param {string[]} order @param {boolean} shift */
+function flipPick(view, which, id, order, shift) {
+  const p = stateOf(view).pick;
+  p[which] = pickOne(p[which] ?? new Set(), order, p.anchor, id, shift);
+  p.anchor = id;
+  view.redraw();
+}
+
+/** 在选的时候点一行（按钮以外）：勾上、去掉 @param {View} view @param {'invites'|'accounts'} which @param {string} id @param {string[]} order */
+const rowPick = (view, which, id, order) => (/** @type {MouseEvent} */ e) => {
+  if (/** @type {Element} */ (e.target).closest('button, a, input')) return;
+  flipPick(view, which, id, order, e.shiftKey);
+};
+
+/**
+ * 组底下钉着的一条：「已选 N 个」、取消、动作（每个动作先问一句，确认了一个个做，做完退出选择、重读，没成的提示）。
+ * @param {View} view @param {number} n @param {{label: string, ask: string, ids: string[], run: (id: string) => Promise<unknown>, danger?: boolean}[]} moves
+ */
+function pickBar(view, n, moves) {
+  const t = (/** @type {string} */ k, /** @type {any} */ f) => view.ctx.text(k, f);
+  const st = stateOf(view);
+  return h('div.acc-pick-bar',
+    h('span.acc-pick-count', t('account.selected', { n })),
+    h('span.acc-pick-gap'),
+    h('button.set-btn.is-small', { type: 'button', onclick: () => { stopPicking(view); view.redraw(); } }, t('account.cancel')),
+    ...moves.filter((m) => m.ids.length).map((m) => h(`button.set-btn.is-small${m.danger ? '.is-danger' : '.is-primary'}`, { type: 'button', onclick: async (/** @type {Event} */ e) => {
+      if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: m.ask, yes: m.label, no: t('account.cancel') }))) return;
+      const got = await runEach(m.ids, m.run);
+      stopPicking(view);
+      if (got.failed.length) view.toast(t('account.some_failed', { n: got.failed.length, why: got.failed[0].why }));
+      st.loaded = false;
+      load(view);
+    } }, m.label)));
+}
 
 /** 读邀请、账号表；不是管理员的（`not_permitted`）不算出错。读完重画。 @param {View} view */
 export async function load(view) {
@@ -144,13 +271,17 @@ export function inviteGroup(view) {
     }
   } }, icon('plus'), t('account.invite')));
   const now = Date.now();
-  const list = [...st.invites].sort((a, b) => String(b.created ?? '').localeCompare(String(a.created ?? '')));
+  const openOnly = !!view.ctx.storage?.get?.(OPEN_ONLY, false);
+  const list = shownInvites([...st.invites].sort((a, b) => String(b.created ?? '').localeCompare(String(a.created ?? ''))), now, openOnly);
+  const picked = st.pick.invites;
+  const order = list.filter((inv) => pickableInvite(inv, now)).map((inv) => inv.id);
   const rows = list.map((inv) => {
     const state = inviteState(inv, now);
+    const check = picked ? (pickableInvite(inv, now) ? checkBox(view, 'invites', inv.id, order) : h('span.acc-check.is-blank')) : null;
     const status = state === 'used' ? h('span.acc-invite-state', t('account.invite_used', { account: inv.used.account, at: when(inv.used.at) }))
       : state === 'expired' ? h('span.acc-invite-state.is-faint', t('account.invite_expired'))
         : h('span.acc-invite-state', t('account.invite_open', { at: when(inv.expires) }));
-    const revoke = state === 'open' ? h('button.set-btn.is-small.acc-revoke', { type: 'button', onclick: async (/** @type {Event} */ e) => {
+    const revoke = state === 'open' && !picked ? h('button.set-btn.is-small.acc-revoke', { type: 'button', onclick: async (/** @type {Event} */ e) => {
       if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('account.revoke_ask'), yes: t('account.revoke'), no: t('account.cancel') }))) return;
       try {
         await view.ctx.core.request('account.invite_revoke', { id: inv.id });
@@ -160,13 +291,19 @@ export function inviteGroup(view) {
       st.loaded = false;
       load(view);
     } }, t('account.revoke')) : null;
-    return h(`div.set-row.acc-invite${state === 'open' ? '' : '.is-done'}`,
+    return h(`div.set-row.acc-invite${state === 'open' ? '' : '.is-done'}${picked ? '.is-picking' : ''}${picked?.has(inv.id) ? '.is-picked' : ''}`,
+      { onclick: picked && pickableInvite(inv, now) ? rowPick(view, 'invites', inv.id, order) : null },
+      check,
       h('div.set-text', h('div.set-name', h('code.acc-id', String(inv.id).slice(0, 8))), h('p.set-desc', t('account.invite_created', { at: when(inv.created) }))),
       status, revoke);
   });
-  return h('section.set-group',
-    h('div.set-group-head', h('h3.set-group-name', t('account.invites')), h('div.acc-make', days, make)),
-    rows.length ? h('div.set-rows', rows) : h('p.set-empty', t('account.no_invites')));
+  // 「只看还能用的」（收起已注册、已过期的），记在浏览器里
+  const only = h('label.acc-open-only', switchOf(openOnly, (on) => { view.ctx.storage?.set?.(OPEN_ONLY, on); view.redraw(); return true; }), h('span', t('account.open_only')));
+  const bar = picked ? pickBar(view, picked.size, [{ label: t('account.revoke_picked'), ask: t('account.revoke_picked_ask', { n: picked.size }), ids: order.filter((id) => picked.has(id)), danger: true,
+    run: (id) => view.ctx.core.request('account.invite_revoke', { id }) }]) : null;
+  return h(`section.set-group${picked ? '.is-picking' : ''}`,
+    h('div.set-group-head', h('h3.set-group-name', t('account.invites')), h('div.acc-make', only, pickButton(view, 'invites'), days, make)),
+    rows.length ? h('div.set-rows', rows) : h('p.set-empty', t('account.no_invites')), bar);
 }
 
 /**
@@ -213,9 +350,14 @@ export function memberGroup(view) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => view.ctx.text(k, f);
   const st = stateOf(view);
   if (st.locked) return lockedGroup(view, t('account.members'));
-  const rows = sortAccounts(st.accounts).map((a) => {
+  const self = view.ctx.host?.account ?? null;
+  const picked = st.pick.accounts;
+  const sorted = sortAccounts(st.accounts);
+  const order = sorted.filter((a) => pickableAccount(a, self)).map((a) => a.account);
+  const rows = sorted.map((a) => {
     const name = a.username ?? a.account;
-    const toggle = a.kind === 'member' ? h(`button.set-btn.is-small${a.disabled ? '' : '.acc-disable'}`, { type: 'button', onclick: async (/** @type {Event} */ e) => {
+    const check = picked ? (pickableAccount(a, self) ? checkBox(view, 'accounts', a.account, order) : h('span.acc-check.is-blank')) : null;
+    const toggle = a.kind === 'member' && !picked ? h(`button.set-btn.is-small${a.disabled ? '' : '.acc-disable'}`, { type: 'button', onclick: async (/** @type {Event} */ e) => {
       if (!a.disabled && !(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('account.disable_ask', { name }), yes: t('account.disable'), no: t('account.cancel') }))) return;
       try {
         await view.ctx.core.request(a.disabled ? 'account.enable' : 'account.disable', { account: a.account });
@@ -226,7 +368,7 @@ export function memberGroup(view) {
       load(view);
     } }, t(a.disabled ? 'account.enable' : 'account.disable')) : null;
     // 设成、撤掉管理员（核心 Y-12中下）：只有成员那几行有，机主恒是管理员；设之前问一句，撤掉不问；停用了的照核心原话（`member_disabled`）
-    const role = a.kind === 'member' ? h('button.set-btn.is-small.acc-role', { type: 'button', onclick: async (/** @type {Event} */ e) => {
+    const role = a.kind === 'member' && !picked ? h('button.set-btn.is-small.acc-role', { type: 'button', onclick: async (/** @type {Event} */ e) => {
       if (!a.admin && !(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('account.make_admin_ask', { name }), yes: t('account.make_admin'), no: t('account.cancel') }))) return;
       try {
         await view.ctx.core.request('account.set_admin', { account: a.account, admin: !a.admin });
@@ -237,7 +379,9 @@ export function memberGroup(view) {
       st.loaded = false;
       load(view);
     } }, t(a.admin ? 'account.drop_admin' : 'account.make_admin')) : null;
-    return h(`div.set-row.acc-member${a.disabled ? '.is-disabled' : ''}`,
+    return h(`div.set-row.acc-member${a.disabled ? '.is-disabled' : ''}${picked ? '.is-picking' : ''}${picked?.has(a.account) ? '.is-picked' : ''}`,
+      { onclick: picked && pickableAccount(a, self) ? rowPick(view, 'accounts', a.account, order) : null },
+      check,
       h('div.set-text', h('div.set-name', h('span.acc-name', name),
         h(`span.acc-kind.is-${a.kind}`, t(`account.kind.${a.kind}`)),
         a.kind === 'member' && a.admin ? h('span.acc-kind.is-admin', t('account.role_admin')) : null,
@@ -245,5 +389,12 @@ export function memberGroup(view) {
       a.created ? h('p.set-desc', t('account.created', { at: when(a.created) })) : null),
       role || toggle ? h('div.acc-actions', role, toggle) : null);
   });
-  return h('section.set-group', h('h3.set-group-name', t('account.members')), h('div.set-rows', rows));
+  const moves = picked ? accountMoves(sorted, picked) : null;
+  const bar = picked && moves ? pickBar(view, picked.size, [
+    { label: t('account.disable_picked'), ask: t('account.disable_picked_ask', { n: moves.disable.length }), ids: moves.disable, danger: true, run: (account) => view.ctx.core.request('account.disable', { account }) },
+    { label: t('account.enable_picked'), ask: t('account.enable_picked_ask', { n: moves.enable.length }), ids: moves.enable, run: (account) => view.ctx.core.request('account.enable', { account }) },
+  ]) : null;
+  return h(`section.set-group${picked ? '.is-picking' : ''}`,
+    h('div.set-group-head', h('h3.set-group-name', t('account.members')), order.length ? pickButton(view, 'accounts') : null),
+    h('div.set-rows', rows), bar);
 }

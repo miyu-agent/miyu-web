@@ -794,7 +794,17 @@
         "make_admin_ask": "把 {name} 设成管理员？管理员能在管理员模式里改大家共用的设置、软件和账号。",
         "role_admin": "管理员",
         "enable": "启用",
-        "disable_ask": "停用 {name} 吗？这个账号的登录会全部作废，连着的会断开，数据留着。"
+        "disable_ask": "停用 {name} 吗？这个账号的登录会全部作废，连着的会断开，数据留着。",
+        "select": "选择",
+        "selected": "已选 {n} 个",
+        "open_only": "只看还能用的",
+        "revoke_picked": "撤销选中的",
+        "revoke_picked_ask": "撤销选中的 {n} 个邀请吗？对方就不能用它们注册了",
+        "disable_picked": "停用选中的",
+        "disable_picked_ask": "停用选中的 {n} 个成员吗？这些账号的登录会全部作废，连着的会断开，数据留着。",
+        "enable_picked": "启用选中的",
+        "enable_picked_ask": "启用选中的 {n} 个成员吗？",
+        "some_failed": "{n} 个没成：{why}"
       },
       "privacy": {
         "shipped": "出厂预设",
@@ -1451,7 +1461,17 @@
         "make_admin_ask": "Make {name} an admin? Admins can change shared settings, software and accounts in admin mode.",
         "role_admin": "Admin",
         "enable": "Enable",
-        "disable_ask": "Disable {name}? All of this account’s sign-ins end and open connections drop; the data stays."
+        "disable_ask": "Disable {name}? All of this account’s sign-ins end and open connections drop; the data stays.",
+        "select": "Select",
+        "selected": "{n} selected",
+        "open_only": "Only usable ones",
+        "revoke_picked": "Revoke selected",
+        "revoke_picked_ask": "Revoke the {n} selected invites? They can no longer be used to sign up.",
+        "disable_picked": "Disable selected",
+        "disable_picked_ask": "Disable the {n} selected members? All their sign-ins end and connections drop; their data stays.",
+        "enable_picked": "Enable selected",
+        "enable_picked_ask": "Enable the {n} selected members?",
+        "some_failed": "{n} didn't go through: {why}"
       },
       "privacy": {
         "shipped": "Preset",
@@ -2108,7 +2128,17 @@
         "make_admin_ask": "{name} を管理者にしますか？管理者は管理者モードで共用の設定・ソフト・アカウントを変更できます。",
         "role_admin": "管理者",
         "enable": "再開",
-        "disable_ask": "{name} を停止しますか？このアカウントのログインはすべて無効になり、接続も切れます。データは残ります。"
+        "disable_ask": "{name} を停止しますか？このアカウントのログインはすべて無効になり、接続も切れます。データは残ります。",
+        "select": "選択",
+        "selected": "{n} 件選択中",
+        "open_only": "使えるものだけ",
+        "revoke_picked": "選んだものを取り消す",
+        "revoke_picked_ask": "選んだ {n} 件の招待を取り消しますか？相手はそれで登録できなくなります",
+        "disable_picked": "選んだものを停止",
+        "disable_picked_ask": "選んだ {n} 人のメンバーを停止しますか？ログインはすべて無効になり、接続は切れます。データは残ります。",
+        "enable_picked": "選んだものを再開",
+        "enable_picked_ask": "選んだ {n} 人のメンバーを再開しますか？",
+        "some_failed": "{n} 件はできませんでした：{why}"
       },
       "privacy": {
         "shipped": "既定",

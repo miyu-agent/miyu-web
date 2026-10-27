@@ -41,3 +41,26 @@ test('总览的「最近」：注册、生成邀请照时刻倒着排，停用�
     [{ account: 'carol', disabled: true }, { account: 'bob' }]);
   assert.deepEqual(got.map((e) => `${e.kind}:${e.who}`), ['joined:bob', 'invited:bbbbbbbb', 'invited:aaaaaaaa', 'disabled:carol']);
 });
+
+test('管理员后台的多选（2026-10-27 项目主人）：能勾的邀请、账号；只看还能用的；勾的成员能做什么；点一行、Shift 连着勾；一个个做不停', async () => {
+  const { pickableInvite, pickableAccount, shownInvites, accountMoves, pickOne, runEach } = await import('../../packages/settings/account.js');
+  const now = Date.parse('2026-10-27T00:00:00.000Z');
+  const open = { id: 'a', expires: '2026-10-29T00:00:00.000Z' };
+  const used = { id: 'b', expires: '2026-10-29T00:00:00.000Z', used: { account: 'bob', at: '2026-10-22T00:00:00.000Z' } };
+  const gone = { id: 'c', expires: '2026-10-20T00:00:00.000Z' };
+  assert.deepEqual([open, used, gone].map((i) => pickableInvite(i, now)), [true, false, false], '已注册、已过期的不能勾');
+  assert.deepEqual(shownInvites([open, used, gone], now, true).map((i) => i.id), ['a']);
+  assert.deepEqual(shownInvites([open, used, gone], now, false).map((i) => i.id), ['a', 'b', 'c']);
+  const accounts = [{ account: 'owner1', kind: 'admin' }, { account: 'bob', kind: 'member' }, { account: 'eve', kind: 'member', disabled: true }, { account: 'me', kind: 'member' }, { account: 'bridge', kind: 'system' }];
+  assert.deepEqual(accounts.filter((a) => pickableAccount(a, 'me')).map((a) => a.account), ['bob', 'eve'], '机主、系统账号、自己不能勾');
+  assert.deepEqual(accountMoves(accounts, new Set(['bob', 'eve'])), { disable: ['bob'], enable: ['eve'] });
+  assert.deepEqual(accountMoves(accounts, new Set(['bob'])), { disable: ['bob'], enable: [] }, '只有开着的：只出停用');
+  const order = ['a', 'b', 'c', 'd'];
+  let picked = pickOne(new Set(), order, null, 'b', false);
+  assert.deepEqual([...picked], ['b']);
+  picked = pickOne(picked, order, 'b', 'd', true);
+  assert.deepEqual([...picked].sort(), ['b', 'c', 'd'], 'Shift 连着勾');
+  assert.deepEqual([...pickOne(picked, order, 'd', 'c', false)].sort(), ['b', 'd'], '再点去掉');
+  const got = await runEach(['x', 'y', 'z'], async (id) => { if (id === 'y') throw new Error('不行'); });
+  assert.deepEqual(got, { done: ['x', 'z'], failed: [{ id: 'y', why: '不行' }] }, '一个没成不停');
+});

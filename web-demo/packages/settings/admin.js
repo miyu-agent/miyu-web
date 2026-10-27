@@ -5,7 +5,7 @@
 //! （「邀请」「成员」两组和 `account.js` 共用）；用量、模型与密钥、系统软件这些等核心给了再加。不是管理员的正中一张卡。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { stateOf, load, inviteGroup, memberGroup, inviteState, lockedGroup } from './account.js';
+import { stateOf, load, inviteGroup, memberGroup, inviteState, lockedGroup, stopPicking } from './account.js';
 
 /** 有哪几页（先后照左栏） */
 export const PAGES = /** @type {const} */ (['overview', 'accounts']);
@@ -72,6 +72,11 @@ export class AdminPage {
     this.onKey = (/** @type {KeyboardEvent} */ e) => {
       if (e.key !== 'Escape' || document.querySelector('.set-tool-modal, body > .set-ask')) return;
       e.preventDefault();
+      // 在多选的：先退出多选，不收后台（2026-10-27 项目主人）
+      if (this.el && stopPicking(this.view())) {
+        this.draw();
+        return;
+      }
       this.back();
     };
   }
