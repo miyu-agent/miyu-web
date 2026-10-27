@@ -15,7 +15,7 @@ const TYPE_MS = 120;
 /**
  * @typedef {{list: any[], generated: string|null, stale: string|null, up: any|null, error: string|null, loading: boolean,
  *   busy: string|null, progress: {package: string, done: number, total: number}|null, problems: Record<string, string>,
- *   previews: Map<string, Promise<any>>, refreshing: boolean, seen: Set<string>, just?: string|null}} Market
+ *   previews: Map<string, Promise<any>>, refreshing: boolean, refused?: boolean, seen: Set<string>, just?: string|null}} Market
  */
 
 /** @param {any} dialog @returns {Market} */
@@ -32,8 +32,15 @@ export async function loadMarket(dialog, force = false, draw = true) {
   const m = stateOf(dialog);
   m.loading = true;
   try {
-    // 同步软件源是系统那一层：平时锁着的只读本机记着的索引
-    if (force && !dialog.adminLocked) await dialog.ctx.core.request('package.sync', { force: true });
+    // 刷新照发（2026-10-27 项目主人：锁着时点了什么都不做像坏了）：核心要先进管理员模式的，设置页照常提示一句、能一键进入
+    // （`admin_mode_required` 走 `adminPrompt`），这里接着读本机记着的索引，不当出错、不写「已更新」
+    m.refused = false;
+    if (force) {
+      await dialog.ctx.core.request('package.sync', { force: true }).catch((/** @type {any} */ err) => {
+        if (err?.data?.reason !== 'admin_mode_required') throw err;
+        m.refused = true;
+      });
+    }
     const got = await dialog.ctx.core.request('package.search', {});
     m.list = Array.isArray(got?.packages) ? got.packages : [];
     m.generated = got?.generated ?? null;
@@ -164,7 +171,7 @@ export function drawMarket(dialog) {
       refresh.classList.add('is-spin');
       await loadMarket(dialog, true);
       m.refreshing = false;
-      if (!m.error) dialog.toast(t('market.refreshed', { n: m.list.length }));
+      if (!m.error && !m.refused) dialog.toast(t('market.refreshed', { n: m.list.length }));
       redraw(dialog);
     },
   }, icon('rotate-cw')));
