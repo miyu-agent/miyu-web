@@ -21,6 +21,25 @@ const ACCOUNTS = 'miyu.web.accounts';
 const OLD_LOGIN = 'miyu.web.login';
 /** 这个标签页的：没勾「自动登录」的那份令牌（`{account, token, expires}`）、重新载入以后要做什么（左下角菜单点的，读一次就拿掉） */
 const SESSION = 'miyu.web.session';
+/** 记着的头像（核心 AV-1；蓝图「选择账号」）：`{<账号>: {v, img}}`，`v` 是核心给的版本，`img` 是缩成 96 像素见方的 data URL；和账号表分开放 */
+const AVATARS = 'miyu.web.avatars';
+/** 小图的边长 */
+const THUMB = 96;
+
+/** 把一张图缩成头像小图（居中裁成正方形，WebP，存不了的浏览器给 PNG） @param {Blob} blob @returns {Promise<string>} */
+async function thumbnail(blob) {
+  const bitmap = await createImageBitmap(blob);
+  const side = Math.min(bitmap.width, bitmap.height);
+  const canvas = document.createElement('canvas');
+  canvas.width = THUMB;
+  canvas.height = THUMB;
+  canvas.getContext('2d')?.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, THUMB, THUMB);
+  bitmap.close();
+  return canvas.toDataURL('image/webp', 0.85);
+}
+
+/** base64 换回 Blob @param {string} data @param {string} type */
+const fromBase64 = (data, type) => new Blob([Uint8Array.from(atob(data), (c) => c.charCodeAt(0))], { type });
 const INTENT = 'miyu.web.intent';
 
 /**
@@ -75,6 +94,23 @@ export function servedHost() {
   /** 改表：现读、改、写回；写进去了才删旧的那一份 @param {(l: import('../model/accounts.js').List) => import('../model/accounts.js').List} change */
   const update = (change) => {
     if (disk.set(ACCOUNTS, JSON.stringify(change(load())))) disk.remove(OLD_LOGIN);
+  };
+  /** 记着的头像（坏的当没有） @returns {Record<string, {v: string, img: string}>} */
+  const readAvatars = () => {
+    try {
+      const got = JSON.parse(disk.get(AVATARS) ?? 'null');
+      return got && typeof got === 'object' ? got : {};
+    } catch { return {}; }
+  };
+  /** @type {Set<() => void>} */
+  const avatarWatchers = new Set();
+  /** 记下、扔掉一个账号的头像，叫一声 @param {string} account @param {{v: string, img: string}|null} one */
+  const putAvatar = (account, one) => {
+    const all = readAvatars();
+    if (one) all[account] = one;
+    else delete all[account];
+    disk.set(AVATARS, JSON.stringify(all));
+    for (const fn of avatarWatchers) fn();
   };
   if (disk.get(OLD_LOGIN) != null) update((l) => l);
   const intent = readIntent(tab.get(INTENT));
@@ -202,7 +238,37 @@ export function servedHost() {
     /** 「选择账号」那一排（照上次用的先后，`saved` 是存着能用的令牌）、上次用的那个 */
     accounts: () => {
       const l = load();
-      return { current: l.current, list: shownAccounts(l, Date.now()) };
+      const pics = readAvatars();
+      return { current: l.current, list: shownAccounts(l, Date.now()).map((a) => (pics[a.account]?.img ? { ...a, avatar: pics[a.account].img } : a)) };
+    },
+    /**
+     * 头像（核心 AV-1）：`sync` 握手以后对一下版本（不一样的照 `fetch` 取一次、缩成小图记下，握手没带的扔掉）；`put` 自己改了以后记下（`null` 是移除）；
+     * `get` 读记着的；`watch` 记着的换了叫一声（左下角、「账号」页照它重画）。
+     */
+    avatars: {
+      /** @param {string} account @returns {{v: string, img: string}|null} */
+      get: (account) => readAvatars()[account] ?? null,
+      /** @param {string} account @param {string|null} version @param {() => Promise<any>} fetch */
+      sync: async (account, version, fetch) => {
+        const had = readAvatars()[account] ?? null;
+        if (!version) {
+          if (had) putAvatar(account, null);
+          return;
+        }
+        if (had?.v === version) return;
+        const got = await fetch().catch(() => null);
+        if (typeof got?.data !== 'string' || typeof got?.avatar !== 'string') return;
+        const img = await thumbnail(fromBase64(got.data, got.media_type ?? 'image/png')).catch(() => null);
+        if (img) putAvatar(account, { v: got.avatar, img });
+      },
+      /** @param {string} account @param {string|null} version @param {Blob|null} image */
+      put: async (account, version, image) => {
+        if (!version || !image) return putAvatar(account, null);
+        const img = await thumbnail(image).catch(() => null);
+        if (img) putAvatar(account, { v: version, img });
+      },
+      /** @param {() => void} fn */
+      watch: (fn) => { avatarWatchers.add(fn); return () => avatarWatchers.delete(fn); },
     },
     /** 重新载入前点的（左下角菜单）：`add` 出登录框、`manage` 出账号管理、`pick` 换到的那个账号 */
     intent: () => intent,
@@ -224,6 +290,7 @@ export function servedHost() {
       const saved = l.accounts.find((a) => a.account === account);
       const tokens = new Set([saved && live(saved, now) ? saved.token : null, session?.account === account && live(session, now) ? session.token : null]);
       update((x) => removeAccount(x, account));
+      if (readAvatars()[account]) putAvatar(account, null);
       if (session?.account === account) {
         session = null;
         tab.remove(SESSION);

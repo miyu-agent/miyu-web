@@ -335,6 +335,47 @@ test('带票过来（#ticket=&as=，im 设计 07 第 3.6 节、网页-乙）：�
   }
 });
 
+test('头像（核心 AV-1）：握手的版本和记着的一样不取；不一样的取一次、缩成小图记下；握手没带的扔掉；账号去掉时一起去掉', async () => {
+  const disk = new Map([['miyu.web.accounts', JSON.stringify({ v: 1, current: 'bob', accounts: [{ account: 'bob', used: '2026-10-28T00:00:00Z' }] })]]);
+  const keep = Object.fromEntries(['location', 'history', 'localStorage', 'sessionStorage', 'createImageBitmap', 'document'].map((k) => [k, Object.getOwnPropertyDescriptor(globalThis, k)]));
+  globalThis.location = /** @type {any} */ ({ hash: '', pathname: '/', search: '', protocol: 'http:', host: 'x', hostname: '127.0.0.1', reload: () => {} });
+  globalThis.history = /** @type {any} */ ({ replaceState: () => {} });
+  const fake = (/** @type {Map<string, string>} */ m) => ({ getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v), removeItem: (k) => m.delete(k) });
+  globalThis.localStorage = /** @type {any} */ (fake(disk));
+  Object.defineProperty(globalThis, 'sessionStorage', { configurable: true, value: fake(new Map()) });
+  let drawn = 0;
+  Object.defineProperty(globalThis, 'createImageBitmap', { configurable: true, value: async () => ({ width: 200, height: 100, close() {} }) });
+  Object.defineProperty(globalThis, 'document', { configurable: true, value: { createElement: () => ({ getContext: () => ({ drawImage: () => { drawn += 1; } }), toDataURL: () => `data:image/webp;base64,T${drawn}` }) } });
+  try {
+    const { servedHost } = await import('../src/host/served.js');
+    const host = servedHost();
+    let asked = 0;
+    const fetch = async () => { asked += 1; return { avatar: 'v2', media_type: 'image/png', data: btoa('png') }; };
+    await host.avatars.sync('bob', 'v2', fetch);
+    assert.equal(asked, 1, '没记着的取一次');
+    assert.deepEqual(host.avatars.get('bob'), { v: 'v2', img: 'data:image/webp;base64,T1' });
+    assert.equal(host.accounts().list[0].avatar, 'data:image/webp;base64,T1', '「选择账号」那一排带上');
+    let changed = 0;
+    host.avatars.watch(() => { changed += 1; });
+    await host.avatars.sync('bob', 'v2', fetch);
+    assert.equal(asked, 1, '版本一样的不取');
+    await host.avatars.put('bob', 'v3', new Blob(['x']));
+    assert.equal(host.avatars.get('bob')?.v, 'v3', '自己换了记下新的版本');
+    await host.avatars.sync('bob', null, fetch);
+    assert.equal(host.avatars.get('bob'), null, '握手没带的扔掉');
+    assert.equal('avatar' in host.accounts().list[0], false);
+    await host.avatars.sync('bob', 'v4', fetch);
+    host.dropAccount('bob');
+    assert.equal(JSON.parse(disk.get('miyu.web.avatars') ?? '{}').bob, undefined, '去掉账号一起去掉');
+    assert.ok(changed >= 3, '换了叫一声');
+  } finally {
+    for (const [k, d] of Object.entries(keep)) {
+      if (d) Object.defineProperty(globalThis, k, d);
+      else delete globalThis[k];
+    }
+  }
+});
+
 test('一行超过 1 MiB 的请求不发：当场拒 too_large，连接照旧能用（核心一行最长 1 MiB，超了会断掉整条连接）', async () => {
   const ch = /** @type {any} */ (fakeChannel());
   const conn = new Connection(() => ch);

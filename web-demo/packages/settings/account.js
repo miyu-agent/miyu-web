@@ -7,6 +7,7 @@ import { h, icon } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { confirmIn } from './confirm.js';
 import { toggle as switchOf } from './rows.js';
+import { sectionKit } from './kit.js';
 
 /** 邀请的有效期能选几天（核心 1 到 30，默认 7） */
 export const DAYS = [1, 3, 7, 14, 30];
@@ -224,7 +225,7 @@ function mine(dialog) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
   const host = dialog.ctx.host;
   const account = host?.account ?? 'admin';
-  const rows = [h('div.set-row', h('div.set-text', h('div.set-name', h('span', t('account.username')))),
+  const rows = [avatarRow(dialog, account), h('div.set-row', h('div.set-text', h('div.set-name', h('span', t('account.username')))),
     h('span.acc-value', account === 'admin' && host?.kind !== 'served' ? t('account.local_admin') : account))];
   if (host?.signOut) {
     const out = async (/** @type {boolean} */ all, /** @type {Event} */ e) => {
@@ -238,6 +239,65 @@ function mine(dialog) {
         h('button.set-btn', { type: 'button', onclick: (/** @type {Event} */ e) => out(false, e) }, t('account.logout')))));
   }
   return h('section.set-group', h('h3.set-group-name', t('account.mine')), h('div.set-rows', rows));
+}
+
+/**
+ * 「头像」一行（核心 AV-1；蓝图第 12c 条第 2 款）：左边圆的头像（有图的画图，没有的画首字），右边「更换头像」（选图、不是正方形的先裁、缩小、传上去、
+ * `account.set_avatar`）、有头像的「移除」。走桥的（没有登录的账号）、人格那一套不在的不出「更换头像」。
+ * @param {any} dialog @param {string} account
+ */
+function avatarRow(dialog, account) {
+  const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
+  const me = dialog.ctx.host?.avatar ?? null;
+  if (!me) return null;
+  const face = () => {
+    const img = me.get();
+    return img ? h('span.acc-avatar.is-pic', h('img', { src: img, alt: '' })) : h('span.acc-avatar', ([...account.trim()][0] ?? '?').toUpperCase());
+  };
+  const holder = h('span.acc-avatar-slot', face());
+  const say = (/** @type {any} */ err) => {
+    const why = err?.reason === 'avatar_not_image' ? t('account.avatar_not_image') : err?.reason === 'avatar_too_big' ? t('account.avatar_too_big')
+      : err?.reason === 'avatar_conflict' ? t('account.avatar_conflict') : err?.message ?? String(err);
+    dialog.toast(why);
+  };
+  /** 设成这张（`null` 是移除）：成了记下、当场换；别处刚改过的照新的取一次 @param {{blob: string, image: Blob}|null} got */
+  const apply = async (got) => {
+    try {
+      const done = await dialog.ctx.core.request('account.set_avatar', { ...(got ? { blob: got.blob } : { unset: true }), expect: me.version() });
+      await me.set(done?.avatar ?? null, got?.image ?? null);
+    } catch (err) {
+      if (/** @type {any} */ (err)?.reason === 'avatar_conflict') {
+        const now = await dialog.ctx.core.request('account.avatar', {}).catch(() => null);
+        await me.set(now?.avatar ?? null, now?.data ? new Blob([Uint8Array.from(atob(now.data), (c) => c.charCodeAt(0))], { type: now.media_type ?? 'image/png' }) : null);
+      }
+      say(err);
+    }
+  };
+  const picker = /** @type {HTMLInputElement} */ (h('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp', hidden: true, onchange: async () => {
+    const file = picker.files?.[0];
+    picker.value = '';
+    if (!file) return;
+    try {
+      const got = await dialog.ctx.personas.avatarUpload(sectionKit(dialog), holder, file);
+      if (got) await apply(got);
+    } catch (err) {
+      say(err);
+    }
+  } }));
+  const canPick = typeof dialog.ctx.personas?.avatarUpload === 'function';
+  const actions = h('div.acc-actions');
+  const drawActions = () => actions.replaceChildren(...[
+    canPick ? h('button.set-btn', { type: 'button', onclick: () => picker.click() }, t('account.avatar_change')) : null,
+    me.get() ? h('button.set-btn', { type: 'button', onclick: () => apply(null) }, t('account.avatar_remove')) : null,
+    picker,
+  ].filter((x) => x !== null));
+  drawActions();
+  const stop = me.watch(() => {
+    if (!holder.isConnected) return stop();
+    holder.replaceChildren(face());
+    drawActions();
+  });
+  return h('div.set-row.acc-avatar-row', h('div.set-text', h('div.set-name', h('span', t('account.avatar')))), h('div.acc-avatar-control', holder, actions));
 }
 
 /** 「邀请」：有效期、生成邀请；一个邀请一行。 @param {View} view */

@@ -18,6 +18,9 @@ import { t } from '../util/res.js';
 import { Connection, Refusal } from '../core/connection.js';
 import { initialOf } from '../model/accounts.js';
 
+/** 头像里画什么（核心 AV-1）：这台浏览器记着头像图的画图，没有的画账号名的首字 @param {string} account @param {string|null|undefined} img */
+const faceIn = (account, img) => (img ? h('img.si-face-img', { src: img, alt: '' }) : initialOf(account));
+
 /** 「账号」那一屏的步骤条：后面几段照引导（`packages/welcome` 的 `NUMBERED`） */
 const STEPS = ['account', 'language', 'model', 'persona', 'theme', 'profile', 'preset', 'sandbox'];
 /** 注册的用户名就是账号编号：小写字母开头，只用小写字母、数字、`-`，最多 32 个，不能叫 `users`（核心 Y-1 上） */
@@ -159,7 +162,7 @@ function keepBox(on) {
  * 画一屏，等人点主按钮：`submit` 交回出错的字（留在这一屏再来）或者 `null`（走了）。`links` 是主按钮下面几个暗色链接（登录框的
  * 「用邀请码注册」、「返回」），点了这一屏也走、交回那一个的 `key`；`note` 是字段上面的一段暗字；`face` 是标题上面画头像的账号（只要密码的登录）。
  * @param {HTMLElement} root
- * @param {{login: boolean, title: string, sub: string, note?: string, face?: string, fields: HTMLElement[], button: string, error?: string, links?: {label: string, key: string}[], submit: () => Promise<string|null>}} spec
+ * @param {{login: boolean, title: string, sub: string, note?: string, face?: string, faceImg?: string|null, fields: HTMLElement[], button: string, error?: string, links?: {label: string, key: string}[], submit: () => Promise<string|null>}} spec
  * @returns {Promise<string>} `'done'` 或者点了的链接
  */
 function screen(root, spec) {
@@ -172,7 +175,7 @@ function screen(root, spec) {
       h('p.si-where', `STAGE 0/${STEPS.length - 1}`));
     const links = (spec.links ?? []).map((l) => h('button.si-link', { type: 'button', onclick: () => resolve(l.key) }, l.label));
     const form = /** @type {HTMLFormElement} */ (h('form.si-col', mascot(),
-      head, spec.face != null ? h('span.si-face.is-big', { 'aria-hidden': 'true' }, initialOf(spec.face)) : null, h('h1.si-title', spec.title), spec.sub ? h('p.si-sub', spec.sub) : null,
+      head, spec.face != null ? h('span.si-face.is-big', { 'aria-hidden': 'true' }, faceIn(spec.face, spec.faceImg)) : null, h('h1.si-title', spec.title), spec.sub ? h('p.si-sub', spec.sub) : null,
       h('div.si-body', spec.fields), error, h('div.si-foot', btn, links.length > 1 ? h('div.si-links', links) : links), spec.note ? h('p.si-note', spec.note) : null));
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -239,17 +242,17 @@ async function loginBox(root, error, last, back = false) {
 /**
  * 只要密码的登录（点了没存令牌的头像、令牌作废了、左下角换过去的）：用户名就是这个账号、不能改；交回密码和勾没勾「自动登录」，
  * 点了「返回」交 `'back'`（回「选择账号」）。
- * @param {HTMLElement} root @param {string} account @param {string} error
+ * @param {HTMLElement} root @param {string} account @param {string} error @param {string|null} [img] 记着的头像图
  * @returns {Promise<{user: string, password: string, keep: boolean}|'back'>}
  */
-async function passwordBox(root, account, error) {
+async function passwordBox(root, account, error, img = null) {
   // 用户名放一个藏着的框里，浏览器记的密码照它填
   const user = h('input', { type: 'text', autocomplete: 'username', value: account, hidden: true, readonly: true, tabindex: '-1' });
   const password = input('password', '', 'current-password');
   const keep = keepBox(false);
   let got = { user: account, password: '', keep: false };
   const went = await screen(root, {
-    login: true, face: account, title: account, sub: '', button: t('signin.login'), error, links: [{ label: t('signin.back'), key: 'back' }],
+    login: true, face: account, faceImg: img, title: account, sub: '', button: t('signin.login'), error, links: [{ label: t('signin.back'), key: 'back' }],
     fields: [user, field(t('signin.password'), password), keep.row],
     submit: async () => {
       if (!password.value) return t('signin.empty_password');
@@ -262,7 +265,7 @@ async function passwordBox(root, account, error) {
 
 /**
  * 「选择账号」：一排头像（账号名的首字，下面写名字）和最后一个「+」（用别的账号登录）；底下「账号管理」「有邀请码？注册」。
- * @param {HTMLElement} root @param {{account: string, saved: boolean}[]} shown @param {string} error
+ * @param {HTMLElement} root @param {{account: string, saved: boolean, avatar?: string|null}[]} shown @param {string} error
  * @returns {Promise<{account: string}|'add'|'manage'|'invite'>}
  */
 function chooser(root, shown, error) {
@@ -270,7 +273,7 @@ function chooser(root, shown, error) {
     const tile = (/** @type {any} */ face, /** @type {string} */ name, /** @type {() => void} */ run, cls = '') =>
       h(`button.si-account${cls}`, { type: 'button', title: name, onclick: run }, h('span.si-face', { 'aria-hidden': 'true' }, face), h('span.si-account-name', name));
     const col = h('div.si-col', mascot(), h('h1.si-title', t('signin.pick_title')),
-      h('div.si-accounts', shown.map((a) => tile(initialOf(a.account), a.account, () => resolve({ account: a.account }))),
+      h('div.si-accounts', shown.map((a) => tile(faceIn(a.account, a.avatar), a.account, () => resolve({ account: a.account }))),
         tile(icon('plus'), t('signin.add_account'), () => resolve('add'), '.is-add')),
       h('p.si-error', { hidden: !error }, error),
       h('div.si-foot', h('div.si-links',
@@ -311,14 +314,14 @@ function manageScreen(root, host, greeting) {
     const rows = h('div.si-manage');
     const draw = () => {
       const shown = host.accounts().list;
-      replace(rows, shown.length ? shown.map((/** @type {{account: string, saved: boolean}} */ a) => {
+      replace(rows, shown.length ? shown.map((/** @type {{account: string, saved: boolean, avatar?: string|null}} */ a) => {
         const out = /** @type {HTMLButtonElement} */ (h('button.si-remove', { type: 'button', onclick: async () => {
           out.disabled = true;
           const tokens = host.dropAccount(a.account);
           await Promise.all(tokens.map((/** @type {{login: string}} */ c) => logoutWith(host, greeting, c)));
           draw();
         } }, t('signin.remove')));
-        return h('div.si-manage-row', h('span.si-face', { 'aria-hidden': 'true' }, initialOf(a.account)),
+        return h('div.si-manage-row', h('span.si-face', { 'aria-hidden': 'true' }, faceIn(a.account, a.avatar)),
           h('div.si-manage-text', h('span.si-account-name', a.account), a.saved ? h('span.si-manage-note', t('signin.saved')) : null), out);
       }) : h('p.si-sub', t('signin.no_accounts')));
     };
@@ -346,7 +349,7 @@ async function askFor(root, host, greeting, s) {
       continue;
     }
     if (s.ask != null) {
-      const got = await passwordBox(root, s.ask, s.error);
+      const got = await passwordBox(root, s.ask, s.error, shown.find((/** @type {any} */ a) => a.account === s.ask)?.avatar ?? null);
       if (got !== 'back') return got;
       s.ask = null;
       s.error = '';

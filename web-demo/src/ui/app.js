@@ -265,7 +265,7 @@ export class App {
     ctx.effect(() => ctx.slots.watch('composer.payload', () => this.composer.syncButton()));
     // 左栏底下一行靠右、换主题按钮左边的按钮（设置页这类软件包画，蓝图「左栏」的「底下一行」）
     // 左栏底下最左边当前账号的头像：直接连网页软件、知道是哪个账号的才画（蓝图「连核心」第 1 条「选择账号」）
-    if (info.accounts && info.account) this.sidebar.setAccount(info.account, info.accounts);
+    if (info.accounts && info.account) this.sidebar.setAccount(info.account, info.accounts, info.avatar ?? null);
     ctx.slots.declare('sidebar.actions', 'list');
     ctx.effect(() => mountList(this.sidebar.actions, ctx.slots, 'sidebar.actions', failedSlot));
     // 框上面的一叠：挂进 `composer.above` 的（待办这类软件包）在流里、占着地方，下面是运行状态行，再下面是框

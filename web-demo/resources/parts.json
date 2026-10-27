@@ -7183,9 +7183,15 @@
     ]
   },
   "si.face": {
-    "zh": "登录：账号的头像（账号名的首字）",
+    "zh": "登录：账号的头像（头像图，没有的画账号名的首字）",
     "select": [
       ".si-face"
+    ]
+  },
+  "si.face-img": {
+    "zh": "登录：头像里的那张图",
+    "select": [
+      ".si-face-img"
     ]
   },
   "si.account-name": {
@@ -7255,7 +7261,7 @@
     ]
   },
   "sidebar.account-face": {
-    "zh": "左栏：账号的头像（账号名的首字）",
+    "zh": "左栏：账号的头像（头像图，没有的画账号名的首字）",
     "select": [
       ".sidebar-account-face"
     ]
@@ -7264,6 +7270,18 @@
     "zh": "左栏：切换账号的小菜单",
     "select": [
       ".sidebar-account-menu"
+    ]
+  },
+  "acc.avatar-control": {
+    "zh": "设置「账号」：头像那一行右边（头像和按钮）",
+    "select": [
+      ".acc-avatar-control"
+    ]
+  },
+  "acc.avatar": {
+    "zh": "设置「账号」：自己的头像（圆的）",
+    "select": [
+      ".acc-avatar"
     ]
   }
 }

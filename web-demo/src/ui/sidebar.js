@@ -666,9 +666,11 @@ export class Sidebar {
    * 左下角当前账号的头像（蓝图「连核心」第 1 条「选择账号」；只有一个账号也画）：账号名的首字，点了往上开一个小菜单，列表里别的账号一个一行
    * （点了换成它，整页重新载入）、「添加账号」、「账号管理」。
    * @param {string} name 现在登录的账号
-   * @param {{list: () => {account: string, saved: boolean}[], switchTo: (account: string) => void, add: () => void, manage: () => void}} accounts
+   * 有头像的画头像图（核心 AV-1，这台浏览器记着的小图），换了头像当场换上（`watch`）。
+   * @param {{list: () => {account: string, saved: boolean, avatar?: string|null}[], switchTo: (account: string) => void, add: () => void, manage: () => void}} accounts
+   * @param {{get: () => string|null, watch: (fn: () => void) => () => void}|null} [avatar] 自己的头像
    */
-  setAccount(name, accounts) {
+  setAccount(name, accounts, avatar = null) {
     /** @type {HTMLElement|null} */
     let open = null;
     const close = () => {
@@ -686,14 +688,15 @@ export class Sidebar {
         if (open) return close();
         const others = accounts.list().filter((a) => a.account !== name);
         open = h('div.session-menu.open-up.sidebar-account-menu', { role: 'menu' },
-          others.map((a) => row(h('span.sidebar-account-face', { 'aria-hidden': 'true' }, initialOf(a.account)), a.account, () => accounts.switchTo(a.account))),
+          others.map((a) => row(faceOf(a.account, a.avatar ?? null), a.account, () => accounts.switchTo(a.account))),
           row(icon('plus'), t('sidebar.add_account'), () => accounts.add()),
           row(icon('settings'), t('sidebar.manage_accounts'), () => accounts.manage()));
         this.account.append(open);
         btn.setAttribute('aria-expanded', 'true');
       },
-    }, h('span.sidebar-account-face', { 'aria-hidden': 'true' }, initialOf(name)));
+    }, faceOf(name, avatar?.get() ?? null));
     replace(this.account, btn);
+    avatar?.watch(() => { const face = btn.querySelector('.sidebar-account-face'); if (face) face.replaceWith(faceOf(name, avatar.get())); });
     // 点外面、按 Esc 关上
     document.addEventListener('click', (e) => { if (open && !this.account.contains(/** @type {Node} */ (e.target))) close(); });
     document.addEventListener('keydown', (e) => { if (open && e.key === 'Escape') close(); });
@@ -799,4 +802,11 @@ function foldAnim(host, body, open, cls, clsMeansFolded, list) {
   const anim = body.animate(open ? [{ height: '0px' }, { height: `${visible}px` }] : [{ height: `${visible}px` }, { height: '0px' }],
     { duration: ms, easing: 'cubic-bezier(0.33, 0, 0.2, 1)' });
   anim.onfinish = anim.oncancel = () => host.classList.remove('is-folding');
+}
+
+/** 左下角、菜单里的一个头像：有图的画图，没有的画账号名的首字 @param {string} account @param {string|null} img */
+function faceOf(account, img) {
+  return img
+    ? h('span.sidebar-account-face.is-pic', { 'aria-hidden': 'true' }, h('img', { src: img, alt: '' }))
+    : h('span.sidebar-account-face', { 'aria-hidden': 'true' }, initialOf(account));
 }

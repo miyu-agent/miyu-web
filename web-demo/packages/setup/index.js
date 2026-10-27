@@ -17,6 +17,8 @@ import { PersonaStep, PresetStep } from './welcome.js';
 import { ThemeStep } from './theme-step.js';
 import { editPersona, editPreset } from './quick-edit.js';
 import { editProject } from './project-dialog.js';
+import { cropAvatar } from './crop.js';
+import { shrink, store } from './avatars.js';
 
 const RECENT = 'setup.recent';
 
@@ -117,6 +119,19 @@ export function apply(ctx) {
      * 整页照新的样子画。
      * @param {string} id @param {string|null} seed
      */
+    /**
+     * 账号头像（设置「账号」页，核心 AV-1；蓝图第 12c 条第 2 款）：同人格头像——不是正方形的先弹裁剪窗、缩到存的大小、`blob.put` 传上去。
+     * 交回 `{blob, image}`（核心的 blob 编号、传上去的那张图）；取消了交 `null`。
+     * @param {import('./form.js').Kit} kit @param {HTMLElement} from 从哪弹 @param {Blob} file
+     */
+    avatarUpload: async (kit, from, file) => {
+      const cfg = ctx.config;
+      const source = await cropAvatar({ text: (/** @type {string} */ k) => ctx.text(k), kit, from }, file);
+      if (!source) return null;
+      const image = await shrink(source, cfg.avatar_side, { maxBytes: 1024 * 1024 });
+      const blob = await store(ctx.core, image, { chunk: cfg.avatar_chunk_bytes, tries: cfg.avatar_tries }, 'avatar');
+      return { blob, image };
+    },
     setSeed: async (id, seed) => {
       await ctx.core.request('persona.set', { persona: id, seed: seed ?? { unset: true } });
       // 重读完叫一声，对话区照新的列表发 `look.changed`

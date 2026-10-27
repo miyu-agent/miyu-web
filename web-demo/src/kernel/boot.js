@@ -86,6 +86,9 @@ export async function boot(root) {
   }
   // 这个页面登录成哪个账号：这台设备上存的按它分开（「多用户、多终端」第 5 条）
   const account = hello?.account ?? 'admin';
+  // 账号头像（核心 AV-1）：版本和这台浏览器记着的不一样的取一次、缩成小图记下（「选择账号」那一排照它画），不等它
+  const avatars = /** @type {any} */ (host).avatars ?? null;
+  if (avatars && typeof hello?.account === 'string') avatars.sync(hello.account, typeof hello?.avatar === 'string' ? hello.avatar : null, () => conn.request('account.avatar', {})).catch(() => {});
   const storage = accountStorage(host.store, account, LEGACY);
   // 知道账号了：照个人那一层再定一次界面语言；界面的字、收起那一行的写法有一样变了重装字（重连时的握手照新的写）。
   // 核心有配置的：个人设置的 `ui.language` 说了算（蓝图「界面语言」第 5 条，规矩 A，和终端界面一样）；旧核心照这台设备上记的
@@ -242,6 +245,16 @@ export async function boot(root) {
         inviteLink: host.inviteLink,
         /** 这台浏览器记着的几个账号（左下角的头像、菜单，蓝图「连核心」第 1 条「选择账号」）：直接连网页软件的才有，走桥的是 `null` */
         accounts: host.accounts ? { list: () => host.accounts().list, switchTo: host.switchTo, add: host.addAccount, manage: host.manageAccounts } : null,
+        /**
+         * 自己的头像（核心 AV-1，设置「账号」页、左下角）：`get` 记着的小图、`version` 现在的版本（握手、上一次设的），`set` 设好了以后记下（`null` 移除），
+         * `watch` 换了叫一声。走桥的是 `null`。
+         */
+        avatar: avatars && typeof hello?.account === 'string' ? {
+          get: () => avatars.get(hello.account)?.img ?? null,
+          version: () => avatars.get(hello.account)?.v ?? (typeof hello?.avatar === 'string' ? hello.avatar : null),
+          set: (/** @type {string|null} */ version, /** @type {Blob|null} */ image) => avatars.put(hello.account, version, image),
+          watch: (/** @type {() => void} */ fn) => avatars.watch(fn),
+        } : null,
         /** 这次起页面时设了账号（一次性码连上的）：引导第一段「账号」算走过，不再出欢迎页 */
         signedUp: setup,
         cwd: info.cwd,
