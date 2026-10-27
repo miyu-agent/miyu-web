@@ -159,3 +159,12 @@ export function dreamOutcome(e) {
   const n = (/** @type {any} */ v) => (Number.isInteger(v) && v > 0 ? v : 0);
   return { kind: 'done', revised: n(r.revised), retired: n(r.retired), stopped: r.stopped === true };
 }
+
+/**
+ * 跑完的那一趟写成一句：是 0 的那一截不写（2026-10-27 项目主人：0 的就不必要显示出来了），叫停的前面接「已叫停」；什么都没有的是空串。
+ * @param {{revised: number, retired: number, stopped: boolean}} o `dreamOutcome` 交的 `done` @param {(key: string, fields?: any) => string} t 这个包的字
+ */
+export function dreamResultText(o, t) {
+  const parts = [o.stopped ? t('dream.view.stopped') : '', o.revised ? t('dream.view.revised', { n: o.revised }) : '', o.retired ? t('dream.view.retired', { n: o.retired }) : ''];
+  return parts.filter(Boolean).join(t('dream.view.sep'));
+}

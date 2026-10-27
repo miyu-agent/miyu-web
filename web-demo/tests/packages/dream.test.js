@@ -116,3 +116,15 @@ test('整理记录一行右边（核心 DR-1、记忆 D-2 补的 dream.result）
   assert.deepEqual(dreamOutcome({ dream: { persona: 'cat' } }), { kind: 'unfinished' }, '没有 result：没跑完');
   assert.deepEqual(dreamOutcome({ dream: { result: { revised: 'x' } } }), { kind: 'done', revised: 0, retired: 0, stopped: false }, '认不得的数当 0');
 });
+
+test('整理记录的那一句：0 的那一截不写，都是 0 的是空的；叫停的前面接「已叫停」（2026-10-27 项目主人：0 的就不必要显示出来了）', async () => {
+  const { dreamResultText } = await import('../../packages/memory/dream-model.js');
+  const { readFileSync } = await import('node:fs');
+  const zh = JSON.parse(readFileSync(new URL('../../packages/memory/manifest.json', import.meta.url), 'utf8')).text.zh;
+  const t = (path, fields = {}) => String(path.split('.').reduce((o, k) => o?.[k], zh) ?? path).replace(/\{(\w+)\}/g, (_, k) => String(fields[k]));
+  assert.equal(dreamResultText({ revised: 0, retired: 2, stopped: false }, t), '删 2');
+  assert.equal(dreamResultText({ revised: 3, retired: 1, stopped: false }, t), '改 3 · 删 1');
+  assert.equal(dreamResultText({ revised: 0, retired: 0, stopped: false }, t), '');
+  assert.equal(dreamResultText({ revised: 0, retired: 0, stopped: true }, t), '已叫停');
+  assert.equal(dreamResultText({ revised: 1, retired: 0, stopped: true }, t), '已叫停 · 改 1');
+});

@@ -94,8 +94,10 @@
           "manual": "手动",
           "auto": "自动",
           "running": "整理中",
-          "result": "改 {revised} · 删 {retired}",
-          "stopped": "已叫停 · ",
+          "revised": "改 {n}",
+          "retired": "删 {n}",
+          "sep": " · ",
+          "stopped": "已叫停",
           "unfinished": "没跑完",
           "tokens": "累计 {n}"
         }
@@ -269,8 +271,10 @@
           "manual": "Manual",
           "auto": "Automatic",
           "running": "Tidying",
-          "result": "Revised {revised} · retired {retired}",
-          "stopped": "Stopped · ",
+          "revised": "Revised {n}",
+          "retired": "retired {n}",
+          "sep": " · ",
+          "stopped": "Stopped",
           "unfinished": "Didn't finish",
           "tokens": "{n} total"
         }
@@ -444,8 +448,10 @@
           "manual": "手動",
           "auto": "自動",
           "running": "整理中",
-          "result": "書き直し {revised} · 削除 {retired}",
-          "stopped": "中止 · ",
+          "revised": "書き直し {n}",
+          "retired": "削除 {n}",
+          "sep": " · ",
+          "stopped": "中止",
           "unfinished": "未完了",
           "tokens": "累計 {n}"
         }
