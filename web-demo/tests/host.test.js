@@ -286,6 +286,55 @@ test('直接连网页软件的那一份记几个账号：旧的令牌迁进表�
   }
 });
 
+test('带票过来（#ticket=&as=，im 设计 07 第 3.6 节、网页-乙）：存着 as 的令牌先用它、作废了再用票；没存的直接用票；换到的照原来勾没勾自动登录记；票从地址栏抹掉、别的留着', async () => {
+  const later = '2999-01-01T00:00:00Z';
+  const disk = new Map([['miyu.web.accounts', JSON.stringify({ v: 1, current: 'bob', accounts: [{ account: 'bob', used: '2026-10-27T00:00:00Z' }, { account: 'owner1', token: 'o1', expires: later, used: '2026-10-26T00:00:00Z' }] })]]);
+  const tab = new Map();
+  const keep = Object.fromEntries(['location', 'history', 'localStorage', 'sessionStorage'].map((k) => [k, Object.getOwnPropertyDescriptor(globalThis, k)]));
+  globalThis.location = /** @type {any} */ ({ hash: '', pathname: '/', search: '', protocol: 'http:', host: 'x', hostname: '127.0.0.1', reload: () => {} });
+  globalThis.history = /** @type {any} */ ({ replaceState: (_s, _t, url) => { globalThis.location.hash = String(url).includes('#') ? String(url).slice(String(url).indexOf('#')) : ''; } });
+  const fake = (/** @type {Map<string, string>} */ m) => ({ getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v), removeItem: (k) => m.delete(k) });
+  globalThis.localStorage = /** @type {any} */ (fake(disk));
+  Object.defineProperty(globalThis, 'sessionStorage', { configurable: true, value: fake(tab) });
+  const saved = () => JSON.parse(disk.get('miyu.web.accounts') ?? '{}').accounts.map((a) => [a.account, !!a.token]);
+  try {
+    const { servedHost } = await import('../src/host/served.js');
+    // owner1 存着令牌：先用它；作废了（bad_login）再用票，换到的照旧存（原来勾过自动登录）
+    globalThis.location.hash = '#ticket=' + 'a'.repeat(64) + '&as=owner1&package=im';
+    const a = servedHost();
+    assert.equal(location.hash, '#package=im', '票、账号抹掉，别的留着');
+    assert.deepEqual(a.credential(), { login: 'o1' }, '先用存着的');
+    assert.equal(a.forget(), 'owner1');
+    assert.deepEqual(a.credential(), { ticket: 'a'.repeat(64) }, '作废了再用票');
+    a.remember({ token: 'o2', expires: later }, 'owner1', false);
+    assert.deepEqual(saved(), [['owner1', true], ['bob', false]], '原来勾过自动登录的照旧存');
+    assert.equal(a.credential().login, 'o2', '之后（重连）照换到的');
+
+    // bob 没存令牌：直接用票，换到的只放这个标签页
+    globalThis.location.hash = '#ticket=' + 'b'.repeat(64) + '&as=bob';
+    const b = servedHost();
+    assert.deepEqual(b.credential(), { ticket: 'b'.repeat(64) });
+    b.remember({ token: 'b1', expires: later }, 'bob', false);
+    assert.deepEqual(saved(), [['bob', false], ['owner1', true]], 'bob 当成上次用的，不存令牌');
+    assert.equal(JSON.parse(tab.get('miyu.web.session') ?? '{}').token, 'b1');
+
+    // 没见过的账号：用票，进列表；票只用一次
+    globalThis.location.hash = '#ticket=' + 'c'.repeat(64) + '&as=amy';
+    const c = servedHost();
+    assert.deepEqual(c.credential(), { ticket: 'c'.repeat(64) });
+    assert.equal(c.credential()?.ticket, undefined, '票只用一次');
+    // 写法不对的票当没有（照存着的）
+    globalThis.location.hash = '#ticket=xyz&as=owner1';
+    assert.deepEqual(servedHost().credential(), { login: 'b1' }, '照这个标签页的 bob');
+    assert.equal(location.hash, '');
+  } finally {
+    for (const [k, d] of Object.entries(keep)) {
+      if (d) Object.defineProperty(globalThis, k, d);
+      else delete globalThis[k];
+    }
+  }
+});
+
 test('一行超过 1 MiB 的请求不发：当场拒 too_large，连接照旧能用（核心一行最长 1 MiB，超了会断掉整条连接）', async () => {
   const ch = /** @type {any} */ (fakeChannel());
   const conn = new Connection(() => ch);

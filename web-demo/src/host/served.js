@@ -43,6 +43,20 @@ function setupCode() {
   return m[1];
 }
 
+/**
+ * 地址里的交接票（`#ticket=<票>&as=<账号>`，im 设计 07 第 3.6 节、网页-乙：`miyu web`、im 网页的「打开主网页」开的）：读下来、从地址栏抹掉
+ * 这两项（别的几项留着）；票不对的、没写账号的当没有。
+ * @returns {{ticket: string, as: string}|null}
+ */
+function handoff() {
+  const q = new URLSearchParams(location.hash.replace(/^#/, ''));
+  if (!q.has('ticket') && !q.has('as')) return null;
+  dropFromHash(['ticket', 'as']);
+  const ticket = q.get('ticket') ?? '';
+  const as = q.get('as') ?? '';
+  return /^[0-9a-f]{16,128}$/.test(ticket) && as ? { ticket, as } : null;
+}
+
 /** 地址里的邀请码（核心 Y-1 上，管理员给的注册链接 `#invite=<码>`）：读下来、从地址栏抹掉；握手带它、只能注册。 */
 function inviteCode() {
   const m = location.hash.match(/(?:^#|&)invite=([A-Za-z0-9_-]+)/);
@@ -66,8 +80,17 @@ export function servedHost() {
   const intent = readIntent(tab.get(INTENT));
   tab.remove(INTENT);
   let session = readSession(tab.get(SESSION));
+  // 带票过来的：存着 `as` 那个账号的令牌先用它，`bad_login` 了再用票（`forget`）；没存的直接用票。换到的令牌：这个账号原来勾过
+  // 「自动登录」（表里存过令牌）的照旧存进表，别的只放这个标签页
+  const handed = code || invite ? null : handoff();
+  /** 还没用的票 @type {string|null} */
+  let ticket = handed?.ticket ?? null;
+  const ticketKeep = !!handed && !!load().accounts.find((a) => a.account === handed.as)?.token;
+  /** 这一次握手交的是票 */
+  let usedTicket = false;
   // 「添加账号」「账号管理」过来的不拿记着的令牌（出登录框、账号管理）；左下角换过去的照那个账号
-  const picked = intent && !('pick' in intent) ? null : pickLogin(load(), session, Date.now(), intent && 'pick' in intent ? intent.pick : null);
+  const picked = handed ? pickLogin(load(), session, Date.now(), handed.as)
+    : intent && !('pick' in intent) ? null : pickLogin(load(), session, Date.now(), intent && 'pick' in intent ? intent.pick : null);
   let token = picked?.token ?? null;
   /** 这份令牌是哪个账号的（`UNKNOWN` 是旧的那一份迁过来、还不知道名字） @type {string|null} */
   let who = picked?.account ?? null;
@@ -125,8 +148,8 @@ export function servedHost() {
     channel: () => /** @type {Channel} */ (/** @type {unknown} */ (new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`))),
     urls,
     /**
-     * 握手带的凭据：一次性码、邀请码（都只用一次）、记着的登录令牌；都没有的是 `null`（内核出登录框）。
-     * @returns {{code: string}|{invite: string}|{login: string}|null}
+     * 握手带的凭据：一次性码、邀请码（都只用一次）、记着的登录令牌、交接票（只用一次）；都没有的是 `null`（内核出登录框）。
+     * @returns {{code: string}|{invite: string}|{login: string}|{ticket: string}|null}
      */
     credential: () => {
       if (code) {
@@ -139,7 +162,16 @@ export function servedHost() {
         invite = null;
         return { invite: i };
       }
-      return token ? { login: token } : null;
+      usedTicket = false;
+      if (token) return { login: token };
+      // 交接票（只用一次）：存着的令牌没有、作废了才用它
+      if (ticket) {
+        const one = ticket;
+        ticket = null;
+        usedTicket = true;
+        return { ticket: one };
+      }
+      return null;
     },
     /**
      * 握手、设密码、注册拿到的登录令牌（`{token, expires}`）：记下，以后握手、换票据都用它。这个账号进表、当成上次用的；`keep`（勾了「自动登录」）
@@ -147,6 +179,9 @@ export function servedHost() {
      * @param {{token: string, expires?: string|null}} login @param {string} account @param {boolean} keep
      */
     remember: (login, account, keep) => {
+      // 拿票换到的：原来勾过「自动登录」的照旧存（上面 `ticketKeep`）
+      if (usedTicket) keep = keep || ticketKeep;
+      usedTicket = false;
       token = login.token;
       who = account;
       tickets.clear();
