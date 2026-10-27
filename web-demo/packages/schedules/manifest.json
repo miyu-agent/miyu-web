@@ -21,7 +21,8 @@
     "chat~",
     "sessions",
     "settings~",
-    "composer~"
+    "composer~",
+    "host"
   ],
   "styles": [
     "style.css"
@@ -119,7 +120,6 @@
         "persona": "人格",
         "preset": "预设",
         "cwd": "工作目录",
-        "cwd_hint": "空着是家目录",
         "default": "默认",
         "no_persona": "无人格",
         "session": "会话",
@@ -127,7 +127,10 @@
         "cancel": "取消",
         "create": "新建",
         "creating": "正在新建…",
-        "close": "关闭"
+        "close": "关闭",
+        "cwd_default": "默认工作区",
+        "cwd_path": "工作目录的路径",
+        "cwd_pick": "选工作目录"
       },
       "bad": {
         "prompt": "写上要说的话",
@@ -140,6 +143,36 @@
         "unknown_persona": "没有这个人格",
         "unknown_preset": "没有这个预设",
         "cwd": "这个工作目录不存在"
+      },
+      "pick": {
+        "time": "时刻",
+        "hour": "时",
+        "minute": "分",
+        "date_label": "日期",
+        "today": "今天",
+        "tomorrow": "明天",
+        "prev": "上个月",
+        "next": "下个月",
+        "month": "{year}年{month}月",
+        "date": "{month}月{day}日 {weekday}",
+        "weekdays": {
+          "0": "周日",
+          "1": "周一",
+          "2": "周二",
+          "3": "周三",
+          "4": "周四",
+          "5": "周五",
+          "6": "周六"
+        },
+        "weekdays_short": {
+          "0": "日",
+          "1": "一",
+          "2": "二",
+          "3": "三",
+          "4": "四",
+          "5": "五",
+          "6": "六"
+        }
       }
     },
     "en": {
@@ -234,7 +267,6 @@
         "persona": "Persona",
         "preset": "Preset",
         "cwd": "Folder",
-        "cwd_hint": "Empty means home",
         "default": "Default",
         "no_persona": "No persona",
         "session": "Session",
@@ -242,7 +274,10 @@
         "cancel": "Cancel",
         "create": "Create",
         "creating": "Creating…",
-        "close": "Close"
+        "close": "Close",
+        "cwd_default": "Default workspace",
+        "cwd_path": "Path of the working folder",
+        "cwd_pick": "Choose a working folder"
       },
       "bad": {
         "prompt": "Write what to say",
@@ -255,6 +290,36 @@
         "unknown_persona": "No such persona",
         "unknown_preset": "No such preset",
         "cwd": "This folder doesn't exist"
+      },
+      "pick": {
+        "time": "Time",
+        "hour": "Hour",
+        "minute": "Min",
+        "date_label": "Date",
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "prev": "Previous month",
+        "next": "Next month",
+        "month": "{month}/{year}",
+        "date": "{weekday}, {month}/{day}",
+        "weekdays": {
+          "0": "Sun",
+          "1": "Mon",
+          "2": "Tue",
+          "3": "Wed",
+          "4": "Thu",
+          "5": "Fri",
+          "6": "Sat"
+        },
+        "weekdays_short": {
+          "0": "Su",
+          "1": "Mo",
+          "2": "Tu",
+          "3": "We",
+          "4": "Th",
+          "5": "Fr",
+          "6": "Sa"
+        }
       }
     },
     "ja": {
@@ -349,7 +414,6 @@
         "persona": "ペルソナ",
         "preset": "プリセット",
         "cwd": "作業フォルダ",
-        "cwd_hint": "空ならホーム",
         "default": "既定",
         "no_persona": "ペルソナなし",
         "session": "セッション",
@@ -357,7 +421,10 @@
         "cancel": "キャンセル",
         "create": "作成",
         "creating": "作成中…",
-        "close": "閉じる"
+        "close": "閉じる",
+        "cwd_default": "既定のワークスペース",
+        "cwd_path": "作業フォルダのパス",
+        "cwd_pick": "作業フォルダを選ぶ"
       },
       "bad": {
         "prompt": "送る内容を入力してください",
@@ -370,6 +437,36 @@
         "unknown_persona": "そのペルソナはありません",
         "unknown_preset": "そのプリセットはありません",
         "cwd": "この作業フォルダはありません"
+      },
+      "pick": {
+        "time": "時刻",
+        "hour": "時",
+        "minute": "分",
+        "date_label": "日付",
+        "today": "今日",
+        "tomorrow": "明日",
+        "prev": "前の月",
+        "next": "次の月",
+        "month": "{year}年{month}月",
+        "date": "{month}月{day}日（{weekday}）",
+        "weekdays": {
+          "0": "日",
+          "1": "月",
+          "2": "火",
+          "3": "水",
+          "4": "木",
+          "5": "金",
+          "6": "土"
+        },
+        "weekdays_short": {
+          "0": "日",
+          "1": "月",
+          "2": "火",
+          "3": "水",
+          "4": "木",
+          "5": "金",
+          "6": "土"
+        }
       }
     }
   }

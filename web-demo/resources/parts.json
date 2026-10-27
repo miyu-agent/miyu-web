@@ -7061,5 +7061,47 @@
     "select": [
       ".sch-card-text"
     ]
+  },
+  "sch.clock": {
+    "zh": "定时任务：时刻那一格",
+    "select": [
+      ".sch-clock"
+    ]
+  },
+  "sch.clock-head": {
+    "zh": "定时任务：时刻浮层「时」「分」两个列头",
+    "select": [
+      ".sch-clock-head"
+    ]
+  },
+  "sch.clock-item": {
+    "zh": "定时任务：时刻浮层里的一个数",
+    "select": [
+      ".sch-clock-item"
+    ]
+  },
+  "sch.cal-day": {
+    "zh": "定时任务：月历的一天",
+    "select": [
+      ".sch-cal-day"
+    ]
+  },
+  "sch.cal-title": {
+    "zh": "定时任务：月历顶上的年月",
+    "select": [
+      ".sch-cal-title"
+    ]
+  },
+  "sch.cal-wd": {
+    "zh": "定时任务：月历的星期",
+    "select": [
+      ".sch-cal-wd"
+    ]
+  },
+  "sch.work-path": {
+    "zh": "定时任务：工作目录按钮里的路径暗字",
+    "select": [
+      ".sch-work small"
+    ]
   }
 }

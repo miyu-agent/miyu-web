@@ -209,3 +209,58 @@ export function localZone() {
     return null;
   }
 }
+
+/**
+ * 时刻那一格打的字认成 `HH:MM`：`8`、`08`、`8:5`、`8:05`、`0805`、`805`、全角冒号都认；认不得的、越界的交 `null`。纯的。
+ * @param {string} text @returns {string|null}
+ */
+export function parseClock(text) {
+  const s = String(text ?? '').trim().replace(/[：.]/g, ':');
+  let m = /^(\d{1,2})(?::(\d{1,2}))?$/.exec(s);
+  if (!m) {
+    const d = /^(\d{3,4})$/.exec(s);
+    if (!d) return null;
+    m = /** @type {any} */ ([s, d[1].slice(0, -2), d[1].slice(-2)]);
+  }
+  const hh = Number(m[1]);
+  const mm = m[2] === undefined ? 0 : Number(m[2]);
+  if (!(hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59)) return null;
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+/** 本地日期写成 `YYYY-MM-DD` @param {Date} d */
+export function ymd(d) {
+  const two = (/** @type {number} */ x) => String(x).padStart(2, '0');
+  return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`;
+}
+
+/**
+ * 月历的格子：`year` 年 `month` 月（0 起）那一页，周一开头、整周排满（前后补别的月的日子），一格 `{date, day, inMonth, past, today}`。纯的。
+ * @param {number} year @param {number} month @param {Date} now
+ */
+export function monthCells(year, month, now) {
+  const first = new Date(year, month, 1);
+  const lead = (first.getDay() + 6) % 7;
+  const today = ymd(now);
+  const last = new Date(year, month + 1, 0).getDate();
+  const count = Math.ceil((lead + last) / 7) * 7;
+  return Array.from({ length: count }, (_, i) => {
+    const d = new Date(year, month, 1 - lead + i);
+    const date = ymd(d);
+    return { date, day: d.getDate(), inMonth: d.getMonth() === month, past: date < today, today: date === today };
+  });
+}
+
+/**
+ * 日期按钮上的字：今天、明天写「今天」「明天」，别的「10月28日 周二」。纯的。
+ * @param {string} date `YYYY-MM-DD` @param {Date} now @param {Text} t
+ */
+export function dateLabel(date, now, t) {
+  const today = ymd(now);
+  const tomorrow = ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+  if (date === today) return t('pick.today');
+  if (date === tomorrow) return t('pick.tomorrow');
+  const [y, m, d] = date.split('-').map(Number);
+  const day = new Date(y, m - 1, d).getDay();
+  return t('pick.date', { month: m, day: d, weekday: t(`pick.weekdays.${day}`) });
+}

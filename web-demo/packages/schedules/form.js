@@ -5,7 +5,9 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
-import { whenOf, fieldOf, localZone } from './model.js';
+import { whenOf, fieldOf, localZone, ymd } from './model.js';
+import { clockField, dateField } from './pickers.js';
+import { tilde } from '../../src/lib/format.js';
 
 /**
  * 开浮窗。`session` 是从右侧栏卡片点进来的那个会话（「跑在会话」默认选它），别的是 `null`。
@@ -32,12 +34,40 @@ export function openForm(ctx, kit, store, opts) {
   const input = (/** @type {string} */ type, /** @type {string} */ value, /** @type {string} */ hint, /** @type {string} */ extra = '') => /** @type {HTMLInputElement} */ (h(`input.set-input.set-tool-input${extra}`,
     { type, value, placeholder: hint || null, spellcheck: 'false', autocomplete: 'off' }));
   const prompt = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.set-tool-area', { rows: 3, placeholder: t('form.prompt_hint'), spellcheck: 'false' }));
-  const time = input('time', '08:00', '');
+  const time = clockField(t, '08:00');
   const n = input('text', '1', '');
   n.inputMode = 'numeric';
-  const at = input('datetime-local', localNow(new Date(Date.now() + 3600_000)), '');
+  // 一次：默认一个小时以后的整点（过了今天的落到明天）
+  const soon = new Date(Date.now() + 3600_000);
+  const onceDate = dateField(t, ymd(soon));
+  const onceTime = clockField(t, `${String(soon.getHours()).padStart(2, '0')}:00`);
   const cron = input('text', '', '0 8 * * 1-5', '.is-mono');
-  const cwd = input('text', '', t('form.cwd_hint'), '.is-mono');
+  // 工作目录（2026-10-27 项目主人：空着是家目录不对；同项目设置，不让手写路径）：默认「默认工作区」，点了开系统的选目录对话框，
+  // 开不了的（页面开在别的机器上）退回能写路径的框；建的时候默认工作区也照它的路径写（核心不写 `cwd` 是家目录）
+  const home = () => ctx.chat?.home?.() ?? null;
+  const defaultDir = String(ctx.chat?.defaultWorkdir?.() ?? '');
+  /** 选了的目录；空的是默认工作区 */
+  let dir = '';
+  const cwd = input('text', '', t('form.cwd_path'), '.is-mono');
+  const workBtn = h('button.set-input.sch-work', { type: 'button' });
+  const workReset = h('button.icon-button.sch-work-reset', { type: 'button', title: t('form.cwd_default'), 'aria-label': t('form.cwd_default'), onclick: () => { dir = ''; drawWork(); } }, icon('x'));
+  const drawWork = () => {
+    workBtn.replaceChildren(icon('folder'), h('span', dir ? dir.split('/').filter(Boolean).pop() ?? dir : t('form.cwd_default')), h('small', tilde(dir || defaultDir, home())));
+    workBtn.title = dir || defaultDir;
+    workReset.hidden = !dir;
+  };
+  drawWork();
+  const workBox = h('div.sch-inline.sch-work-row', workBtn, workReset);
+  workBtn.addEventListener('click', async () => {
+    const picked = await ctx.host?.files?.pickDir?.({ title: t('form.cwd_pick'), start: dir || defaultDir }).catch(() => null);
+    if (typeof picked === 'string') { dir = picked; drawWork(); return; }
+    if (picked === false) return;
+    // 开不了对话框：换成能写路径的框
+    cwd.value = dir || defaultDir;
+    workBox.replaceWith(cwd);
+    cwd.focus();
+  });
+  const cwdValue = () => (cwd.isConnected ? cwd.value.trim() : dir || defaultDir);
 
   /** 每一格下面的错（照 `fieldOf` 的格） */
   const errs = {
@@ -78,12 +108,12 @@ export function openForm(ctx, kit, store, opts) {
 
   const row = (/** @type {string} */ label, /** @type {any[]} */ ...kids) => h('div.set-tool-field', h('span.set-tool-label', label), h('div.sch-cell', ...kids));
   const whenRows = {
-    daily: row(t('form.daily'), time),
+    daily: row(t('form.daily'), time.el),
     every: row(t('form.every'), h('div.sch-inline', n, units)),
-    once: row(t('form.once'), at),
+    once: row(t('form.once'), h('div.sch-inline.sch-once', onceDate.el, onceTime.el)),
     cron: row(t('form.cron'), cron, h('p.set-desc.sch-hint', t('form.cron_hint'))),
   };
-  const newRows = h('div.set-tool-group', row(t('form.persona'), personaBox, errs.persona), row(t('form.preset'), presetBox, errs.preset), row(t('form.cwd'), cwd));
+  const newRows = h('div.set-tool-group', row(t('form.persona'), personaBox, errs.persona), row(t('form.preset'), presetBox, errs.preset), ctx.host?.member ? null : row(t('form.cwd'), workBox));
   const sessionRows = h('div.set-tool-group', row(t('form.session'), sessionBox));
   const drawKind = () => {
     for (const [k, el] of Object.entries(whenRows)) el.hidden = k !== kind;
@@ -103,7 +133,7 @@ export function openForm(ctx, kit, store, opts) {
       prompt.focus();
       return;
     }
-    const form = kind === 'daily' ? { kind, time: time.value } : kind === 'every' ? { kind, n: n.value, unit } : kind === 'once' ? { kind, at: at.value } : { kind, cron: cron.value };
+    const form = kind === 'daily' ? { kind, time: time.value() } : kind === 'every' ? { kind, n: n.value, unit } : kind === 'once' ? { kind, at: `${onceDate.value()}T${onceTime.value()}` } : { kind, cron: cron.value };
     const got = whenOf(/** @type {any} */ (form), new Date(), localZone());
     if ('problem' in got) {
       say(errs.when, t(`bad.${got.problem}`));
@@ -113,7 +143,7 @@ export function openForm(ctx, kit, store, opts) {
       say(errs.target, t('bad.session'));
       return;
     }
-    const fresh = { ...(persona !== undefined ? { persona } : {}), ...(preset ? { preset } : {}), ...(cwd.value.trim() ? { cwd: cwd.value.trim() } : {}) };
+    const fresh = { ...(persona !== undefined ? { persona } : {}), ...(preset ? { preset } : {}), ...(!ctx.host?.member && cwdValue() ? { cwd: cwdValue() } : {}) };
     const target = where === 'session' ? { session } : { new: fresh };
     create.disabled = true;
     create.textContent = t('form.creating');
@@ -162,10 +192,4 @@ function choose(kit, options, value, pick) {
   const draw = (/** @type {any} */ now) => box.replaceChildren(kit.select(options, now, (/** @type {any} */ v) => { pick(v); draw(v); }));
   draw(value);
   return box;
-}
-
-/** `datetime-local` 那一格的值：本地时间 `YYYY-MM-DDTHH:MM` @param {Date} d */
-function localNow(d) {
-  const two = (/** @type {number} */ x) => String(x).padStart(2, '0');
-  return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}T${two(d.getHours())}:00`;
 }

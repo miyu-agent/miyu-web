@@ -133,3 +133,17 @@ test('时区（核心 J-3 上）：cron 的带上浏览器的 zone，别的不�
   assert.deepEqual(fieldOf({ reason: 'bad_params', data: { problem: 'cwd' } }), { field: 'target', key: 'bad.cwd' });
   assert.deepEqual(fieldOf({ reason: 'too_many_schedules' }), { field: null, key: null }, '满 200 个的照核心的话写在底下');
 });
+
+test('时刻那一格认字、月历的格子、日期按钮上的字（2026-10-27 项目主人：选时间用软件自己画的浮层）', async () => {
+  const { parseClock, monthCells, dateLabel } = await import('../../packages/schedules/model.js');
+  assert.deepEqual(['8', '08', '8:5', '8:05', '0805', '805', '23：59', '24', '8:60', 'x', ''].map(parseClock), ['08:00', '08:00', '08:05', '08:05', '08:05', '08:05', '23:59', null, null, null, null]);
+  const cells = monthCells(2026, 9, now);
+  assert.equal(cells.length % 7, 0);
+  assert.equal(cells[0].date, '2026-09-28', '周一开头，前面补上个月的');
+  assert.deepEqual(cells.find((c) => c.date === '2026-10-27'), { date: '2026-10-27', day: 27, inMonth: true, past: false, today: true });
+  assert.equal(cells.find((c) => c.date === '2026-10-26')?.past, true);
+  assert.equal(cells.at(-1)?.inMonth, false);
+  assert.equal(dateLabel('2026-10-27', now, t), '今天');
+  assert.equal(dateLabel('2026-10-28', now, t), '明天');
+  assert.equal(dateLabel('2026-10-30', now, t), '10月30日 周五');
+});

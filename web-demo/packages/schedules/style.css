@@ -32,3 +32,36 @@
 .sch-card-row .sch-card-text { max-width: none; flex: 1 1 auto; min-width: 0; }
 .sch-card-row:hover .sch-card-act, .sch-card-row:focus-within .sch-card-act { display: inline-grid; }
 @media (hover: none) { .sch-card-act { display: inline-grid; } }
+
+/* 时刻、日期的浮层（软件自己画的，2026-10-27 项目主人）：样子照设置页的下拉菜单（`.set-menu`），挂在设置框上 */
+.sch-cell .set-input.sch-clock { width: 96px; flex: none; font-family: var(--font-mono); }
+.sch-once { flex-wrap: wrap; }
+.sch-date { display: inline-flex; align-items: center; gap: calc(6px * var(--space)); width: auto; min-width: 150px; cursor: pointer; text-align: left; }
+.sch-date span { flex: 1; }
+.sch-date .icon { width: 14px; height: 14px; color: var(--text-faint); }
+.sch-float { min-width: 0; max-height: none; overflow: visible; }
+.sch-clock-pop { padding: calc(6px * var(--space)); }
+.sch-clock-head { display: grid; grid-template-columns: 1fr 1fr; gap: calc(4px * var(--space)); padding: 0 calc(4px * var(--space)) calc(4px * var(--space)); color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); text-align: center; }
+.sch-clock-cols { display: grid; grid-template-columns: 56px 56px; gap: calc(4px * var(--space)); }
+.sch-clock-col { max-height: 196px; overflow-y: auto; scrollbar-width: none; }
+.sch-clock-col::-webkit-scrollbar { display: none; }
+.sch-clock-item { justify-content: center; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.sch-clock-item.is-on, .sch-cal-day.is-on { background: var(--accent); color: var(--on-accent, #fff); }
+.sch-cal { width: 260px; padding: calc(8px * var(--space)); }
+.sch-cal-head { display: flex; align-items: center; gap: calc(4px * var(--space)); margin-bottom: calc(6px * var(--space)); }
+.sch-cal-gap { flex: 1; }
+.sch-cal-title { min-width: 76px; font-size: calc(13px * var(--text-scale)); font-weight: 600; text-align: center; }
+.sch-cal-turn { width: 26px; height: 26px; }
+.sch-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.sch-cal-wd { padding: calc(4px * var(--space)) 0; color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); text-align: center; }
+.sch-cal-day { height: 30px; border: 0; border-radius: var(--r-6); background: transparent; color: var(--text); font: calc(13px * var(--text-scale)) var(--font-ui); font-variant-numeric: tabular-nums; cursor: pointer; }
+.sch-cal-day:hover:not(:disabled):not(.is-on) { background: var(--surface-2); }
+.sch-cal-day.is-other { color: var(--text-faint); }
+.sch-cal-day.is-today:not(.is-on) { box-shadow: inset 0 0 0 1.5px var(--accent); }
+.sch-cal-day:disabled { opacity: .35; cursor: default; }
+.sch-work { display: inline-flex; align-items: center; gap: calc(6px * var(--space)); min-width: 0; flex: 1; cursor: pointer; text-align: left; }
+.sch-work .icon { width: 14px; height: 14px; flex: none; color: var(--text-faint); }
+.sch-work span { flex: none; }
+.sch-work small { min-width: 0; overflow: hidden; color: var(--text-faint); font-family: var(--font-mono); font-size: calc(11.5px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
+.sch-work-row { width: 100%; }
+.sch-work-reset { flex: none; width: 26px; height: 26px; }
