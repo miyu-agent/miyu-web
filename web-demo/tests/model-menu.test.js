@@ -153,7 +153,7 @@ test('同一家自用、共用两份（核心 PL-1）：两组挨着，供应商
     ['zen/big', 'Big', 'Zen', false],
   ]);
   assert.deepEqual(footerLabel({ model: 'm-1', endpoint: 'relay@system' }, list), { model: 'M One', endpoint: 'Relay · 共用', full: 'relay/m-1 · 共用' });
-  assert.deepEqual(footerLabel({ model: 'm-1', endpoint: 'relay' }, list), { model: 'M One', endpoint: 'Relay · 自用', full: 'relay/m-1' });
+  assert.deepEqual(footerLabel({ model: 'm-1', endpoint: 'relay' }, list), { model: 'M One', endpoint: 'Relay', full: 'relay/m-1' }, '框下面自己那份不接「自用」（2026-10-27 项目主人）');
   assert.deepEqual(footerLabel({ model: 'big', endpoint: 'zen' }, list).endpoint, 'Zen', '只有一份的不标');
   assert.deepEqual(footerLabel({ model: 'm-1', endpoint: 'relay@system' }, null), { model: 'm-1', endpoint: 'relay · 共用', full: 'relay/m-1 · 共用' }, '还没有列表也不露 @system');
   assert.equal(shownRef('relay@system/m-1'), 'relay/m-1 · 共用', '时间线上那一行也不露 @system');

@@ -115,7 +115,9 @@ export function footerLabel(left, list) {
   const p = list ? (list.providers ?? []).find((x) => x.id === left.endpoint) : null;
   if (!p) return shared ? { ...left, endpoint: withCopy(baseOf(left.endpoint), 'system'), full } : left;
   const m = p.models?.find((x) => x.model === left.model);
-  return { model: m?.facts?.name?.value || left.model, endpoint: providerLabel(p, twinsOf(list.providers)), full };
+  // 两份都有的：框下面只标共用那一份，自己那份不接「 · 自用」（2026-10-27 项目主人：写着自用感觉有点怪）；菜单里照旧两份都标
+  const copy = copyOf(p.id, twinsOf(list.providers));
+  return { model: m?.facts?.name?.value || left.model, endpoint: withCopy(providerName(p), copy === 'system' ? 'system' : null), full };
 }
 
 /**
