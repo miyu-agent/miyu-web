@@ -721,13 +721,13 @@
         "kinds_none": "还没有分了种类的软件"
       },
       "admin": {
-        "title": "Miyu 管理员后台",
+        "title": "管理员后台",
         "short": "管理员后台",
         "leads": {
           "overview": "账号和邀请的概况、最近的动静",
           "accounts": "发邀请码给别人注册，停用、启用成员"
         },
-        "tab_title": "管理员后台 · Miyu",
+        "tab_title": "管理员后台",
         "exit": "回到 Miyu",
         "loading": "正在读…",
         "denied": "只有管理员能打开这一页",
@@ -1378,13 +1378,13 @@
         "kinds_none": "No packages have kinds yet"
       },
       "admin": {
-        "title": "Miyu admin console",
+        "title": "Admin console",
         "short": "Admin console",
         "leads": {
           "overview": "Accounts and invites at a glance, and what happened lately",
           "accounts": "Send invite codes so people can sign up; disable or enable members"
         },
-        "tab_title": "Admin console · Miyu",
+        "tab_title": "Admin console",
         "exit": "Back to Miyu",
         "loading": "Loading…",
         "denied": "Only admins can open this page",
@@ -2035,13 +2035,13 @@
         "kinds_none": "種類のあるソフトはまだありません"
       },
       "admin": {
-        "title": "Miyu 管理コンソール",
+        "title": "管理コンソール",
         "short": "管理コンソール",
         "leads": {
           "overview": "アカウントと招待の概要、最近の動き",
           "accounts": "招待コードを送って登録してもらい、メンバーを停止・再開します"
         },
-        "tab_title": "管理コンソール · Miyu",
+        "tab_title": "管理コンソール",
         "exit": "Miyu に戻る",
         "loading": "読み込み中…",
         "denied": "このページは管理者だけが開けます",
