@@ -298,7 +298,7 @@ function endItem(e, status) {
   const head = e.model || e.endpoint
     ? t('done', { time: hhmm(e.at), ...doneRef(e.endpoint ?? '', e.model ?? ''), elapsed: seconds(e.took_ms ?? 0) })
     : t('done_bare', { time: hhmm(e.at), elapsed: seconds(e.took_ms ?? 0) });
-  return { ...base, text: icon(level) + head + speedText(e.speed) + usageText(e.usage) };
+  return { ...base, text: icon(level) + head + usageText(e.usage) + speedText(e.speed) };
 }
 
 /**

@@ -250,7 +250,7 @@ test('收尾那一行接这一轮的出字速度（核心 SP-1 的 speed：输�
   const { speedText } = await import('../src/model/entries.js');
   const end = turn3.find((e) => e.kind === 'end');
   const done = (speed) => itemsOf(turn3.map((e) => (e === end ? { ...e, speed } : e)), { state: 'idle', permission: { level: 'workspace' } }, { account: 'admin' }).items.at(-1).text.replace(/\d\d:\d\d/, 'HH:MM');
-  assert.equal(done({ output: 1410, ms: 10000 }), '▣  HH:MM · dev/m1 · 2.2s · 141 tok/s · 4.2k(C25%)');
+  assert.equal(done({ output: 1410, ms: 10000 }), '▣  HH:MM · dev/m1 · 2.2s · 4.2k(C25%) · 141 tok/s');
   assert.equal(done(undefined), '▣  HH:MM · dev/m1 · 2.2s · 4.2k(C25%)');
   assert.equal(speedText({ output: 50, ms: 0 }), '');
   assert.equal(speedText({ output: 0, ms: 1000 }), '');
