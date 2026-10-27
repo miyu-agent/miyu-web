@@ -44,6 +44,13 @@ test('出错那一句：402、404 加人话；内核自己查出来的写分类�
   assert.equal(failureText({ class: 'cooling', message: 'all candidates cooling: dev/m key 1 rate_limited until 10:05' }), '模型都在冷却：all candidates cooling: dev/m key 1 rate_limited until 10:05', '模型都在冷却（8-9）没发出去，也是内核查出来的');
 });
 
+test('额度用完（核心 Q-4 中的 quota）：不管状态码照 402 写，回 429 的也不写成请求受限；说了要等多久的接上', () => {
+  assert.equal(failureText({ class: 'quota', message: 'insufficient_quota', status: 429 }), '额度已用完：insufficient_quota');
+  assert.equal(failureText({ class: 'quota', message: '' }), '额度已用完');
+  assert.equal(failureText({ class: 'quota', message: 'x', retry_after_ms: 3 * 3600_000 }), '额度已用完，约 3 小时后恢复：x');
+  assert.equal(failureText({ class: 'rate_limited', message: 'slow', status: 429 }), '请求受限或额度不足，请稍后重试：slow', '别的分类照旧');
+});
+
 test('换了工作区那一行：换回会话自己的默认工作区写「默认工作区」，别的写路径（家目录写 ~），旧核心没给默认的照路径', () => {
   const def = '/home/a/.miyu/home/admin/workspace/0199a000-0000-7000-8000-000000000002';
   assert.equal(workspaceText(def, def, '/home/a'), '工作区切换：默认工作区');

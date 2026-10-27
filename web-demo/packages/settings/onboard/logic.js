@@ -241,6 +241,6 @@ export function failureOf(result) {
   const status = typeof error.status === 'number' ? error.status : null;
   if (result?.need_model) return { key: 'onboard.no_list', status: null, needsModel: true, message };
   if (result?.stage === 'config') return { key: 'onboard.config_error', status: null, needsModel: false, message };
-  const KNOWN = ['retryable', 'rate_limited', 'context_too_long', 'auth', 'no_model', 'cooling', 'content_policy', 'bad_stream', 'empty_reply'];
+  const KNOWN = ['retryable', 'rate_limited', 'context_too_long', 'auth', 'quota', 'no_model', 'cooling', 'content_policy', 'bad_stream', 'empty_reply'];
   return { key: `onboard.classes.${KNOWN.includes(error.class) ? error.class : 'other'}`, status, needsModel: false, message };
 }

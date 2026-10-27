@@ -91,6 +91,7 @@
     "rate_limited": "レート制限",
     "context_too_long": "コンテキストが長すぎます",
     "auth": "認証エラー",
+    "quota": "利用枠を使い切りました",
     "content_policy": "コンテンツポリシーによりブロックされました",
     "bad_stream": "応答ストリームの形式が不正です",
     "empty_reply": "空の応答",

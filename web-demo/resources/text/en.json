@@ -91,6 +91,7 @@
     "rate_limited": "Rate limited",
     "context_too_long": "Context too long",
     "auth": "Authentication failed",
+    "quota": "Quota used up",
     "content_policy": "Blocked by the content policy",
     "bad_stream": "Malformed reply stream",
     "empty_reply": "Empty reply",

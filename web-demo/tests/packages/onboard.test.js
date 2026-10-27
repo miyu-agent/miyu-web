@@ -128,6 +128,7 @@ test('模型的先后：试的那一个排第一，去重；搜索不分大小�
 test('没测成：核心说要模型名的要填模型名，列模型时认证错的照分类，配置错的、别的照分类，带状态码（核心 8-11 五补）', () => {
   assert.deepEqual(failureOf({ ok: false, stage: 'list', need_model: true, error: { class: 'other', message: 'no models listed' } }), { key: 'onboard.no_list', status: null, needsModel: true, message: 'no models listed' });
   assert.deepEqual(failureOf({ ok: false, stage: 'list', error: { class: 'auth', status: 401, message: 'bad key' } }), { key: 'onboard.classes.auth', status: 401, needsModel: false, message: 'bad key' });
+  assert.equal(failureOf({ ok: false, stage: 'chat', error: { class: 'quota', status: 402, message: 'no balance' } }).key, 'onboard.classes.quota', '额度用完（核心 Q-4 中）单独一类');
   assert.deepEqual(failureOf({ ok: false, stage: 'config', error: { class: 'no_model', message: 'needs base_url' } }).key, 'onboard.config_error');
   assert.deepEqual(failureOf({ ok: false, stage: 'request', error: { class: 'auth', status: 401, message: 'bad key' } }), { key: 'onboard.classes.auth', status: 401, needsModel: false, message: 'bad key' });
   assert.equal(failureOf({ ok: false, stage: 'request', error: { class: 'weird' } }).key, 'onboard.classes.other');

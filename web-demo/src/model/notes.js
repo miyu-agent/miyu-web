@@ -169,7 +169,7 @@ export function waitSpan(ms) {
 }
 
 /**
- * 出错那一句（收尾那一行的「出错了：…」）：供应商的原话照写；429、402、404 前面加一句人话（以前的日志没有状态码，限速的当 429）；
+ * 出错那一句（收尾那一行的「出错了：…」）：供应商的原话照写；429、402、404 前面加一句人话（以前的日志没有状态码，限速的当 429，额度用完的当 402）；
  * 内核自己查出来的写分类的人话，有原话的接后面；什么都没有的写分类。说了还要等多久的（`retry_after_ms`）：429 的「请稍后重试」换成
  * 「约 N 小时后恢复」，别的人话后面接「，约 N 分钟后恢复」（2026-10-22 项目主人）。
  * @param {{class?: string, message?: string, status?: number, retry_after_ms?: number}} f `model.called` 的 `error`
@@ -185,7 +185,8 @@ export function failureText(f) {
     // 模型都在冷却、说了要等多久的不接原话（同终端：那句是内核自己的英文）
     return message && !(wait && cls === 'cooling') ? t('reason_with', { head, message }) : head;
   }
-  const status = f.status ?? (cls === 'rate_limited' ? 429 : null);
+  // 额度用完（核心 Q-4 中的 `quota`）不管状态码照 402 写：免费档用完回 429 的不写成「请求受限」
+  const status = cls === 'quota' ? 402 : f.status ?? (cls === 'rate_limited' ? 429 : null);
   const base = status != null ? res.text.status_hints[String(status)] : null;
   const hint = base && wait ? (status === 429 ? t('retry_after.limited', { wait }) : t('retry_after.join', { head: base, wait })) : base;
   if (hint) return message ? t('reason_with', { head: hint, message }) : hint;
