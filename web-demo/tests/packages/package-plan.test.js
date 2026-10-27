@@ -64,3 +64,8 @@ test('写组名的（核心 BS-1 中下修：{group, packages}）：恢复、卸
   assert.deepEqual(flat(packagePlan({ tool: 'package', install: 'basesystem', preview: { group: 'basesystem', packages: [] } }, null, t)), ['「基础系统」里没有要恢复的软件包', null]);
   assert.equal(packagePlan({ tool: 'package', install: 'later', preview: { group: 'later', packages: ['x'] } }, null, t)?.title, '恢复「later」里的 1 个软件包');
 });
+
+test('装回出厂的（restores）：install 是编号不是文件夹，不写那一行', () => {
+  const plan = packagePlan({ tool: 'package', install: 'mermaid', preview: { package: 'mermaid', restores: true, program: 'builtin' } }, '/home/me', t);
+  assert.deepEqual(flat(plan), ['恢复软件包 mermaid', null, '包含：内置功能']);
+});

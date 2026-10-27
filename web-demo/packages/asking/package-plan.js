@@ -28,7 +28,8 @@ export function packagePlan(detail, home, text) {
   let title = text(`plan.${doing}`, { id });
   if (typeof p.version === 'string' && p.version) title += ` ${p.version}`;
   if (p.replaces && typeof p.replaces === 'object') title += typeof p.replaces.version === 'string' ? text('plan.replaces', { version: p.replaces.version }) : text('plan.replaces_unknown');
-  const path = typeof detail.install === 'string' ? tilde(detail.install, home) : null;
+  // 包文件夹：装回出厂的（`restores`）`install` 是编号不是文件夹，不写（不然名字写两遍）
+  const path = typeof detail.install === 'string' && doing !== 'restore' ? tilde(detail.install, home) : null;
   /** @type {{label: string, items: string[]}[]} */
   const rows = [];
   const row = (/** @type {string} */ key, /** @type {string[]} */ items) => {
