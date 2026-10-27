@@ -336,7 +336,34 @@ function infoCard(dialog, p, e) {
         actions.length ? h('div.set-pkg-card-actions', actions) : null),
       control ? h('div.set-control', control) : null),
     showing && stderr ? h('pre.set-ext-output', stderr) : null,
-    ask);
+    ask,
+    member ? null : copiesGroup(dialog, e));
+}
+
+/**
+ * 每人一份的扩展各账号那一份（核心 IM-1 中下四：管理员拿到的 `copies`，拉起过的每一份，照账号排）：一份一行，账号名、右边状态，停了有标准错误的
+ * 能「查看输出」；没有的不出。
+ * @param {any} dialog @param {any} e
+ */
+function copiesGroup(dialog, e) {
+  const copies = Array.isArray(e?.copies) ? e.copies.filter((/** @type {any} */ c) => typeof c?.account === 'string') : [];
+  if (!copies.length) return null;
+  const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
+  const ext = dialog.extensions;
+  const rows = copies.map((/** @type {any} */ c) => {
+    const key = `${e.package}:${c.account}`;
+    const stderr = Array.isArray(c.stderr) ? c.stderr.join('\n') : c.stderr ?? '';
+    const stopped = e.on && c.state === 'stopped';
+    const peek = stopped && stderr
+      ? h('button.set-link', { type: 'button', onclick: () => { ext.toggleSet(ext.showing, key); ext.redraw(e.package); } }, t(ext.showing.has(key) ? 'ext.hide_output' : 'ext.show_output')) : null;
+    return [
+      h('div.set-row',
+        h('div.set-text', h('div.set-name', h('span', c.account)), peek),
+        h('div.set-control', h(`span.set-pkg-status${c.state === 'running' ? '.is-on' : stopped ? '.is-bad' : ''}`, stateText(t, { ...c, on: e.on, scope: 'account' })))),
+      ext.showing.has(key) && stderr ? h('pre.set-ext-output', stderr) : null,
+    ];
+  }).flat().filter(Boolean);
+  return groupBlock(t('ext.copies'), rows);
 }
 
 /**

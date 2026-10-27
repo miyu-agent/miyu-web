@@ -224,6 +224,7 @@
       "from_env": "来自环境变量 {name}",
       "ext": {
         "run": "运行",
+        "copies": "各账号的那一份",
         "perms": "权限",
         "restart": "重启",
         "show_output": "查看输出",
@@ -234,6 +235,7 @@
         "cancel": "取消",
         "state": {
           "off": "已停用",
+          "on_demand": "用到时启动",
           "starting": "启动中",
           "running": "运行中",
           "waiting": "{seconds} 秒后重试（已连续失败 {failures} 次）",
@@ -885,6 +887,7 @@
       "from_env": "From environment variable {name}",
       "ext": {
         "run": "Run",
+        "copies": "Each account's copy",
         "perms": "Permissions",
         "restart": "Restart",
         "show_output": "Show output",
@@ -895,6 +898,7 @@
         "cancel": "Cancel",
         "state": {
           "off": "Disabled",
+          "on_demand": "Starts when used",
           "starting": "Starting",
           "running": "Running",
           "waiting": "Retrying in {seconds} s ({failures} failures in a row)",
@@ -1546,6 +1550,7 @@
       "from_env": "環境変数 {name} から",
       "ext": {
         "run": "実行",
+        "copies": "アカウントごとのコピー",
         "perms": "権限",
         "restart": "再起動",
         "show_output": "出力を見る",
@@ -1556,6 +1561,7 @@
         "cancel": "キャンセル",
         "state": {
           "off": "オフ",
+          "on_demand": "使うときに起動",
           "starting": "起動中",
           "running": "実行中",
           "waiting": "{seconds} 秒後に再試行（連続 {failures} 回失敗）",

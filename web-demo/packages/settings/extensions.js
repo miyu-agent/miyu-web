@@ -186,6 +186,8 @@ export class Extensions {
 /** 「运行」那一行的说明：现在怎样。关着的只写「关着」（核心关了以后还留着上一次停下的原因，人关的不用再说为什么）。 @param {(key: string, fields?: any) => string} t @param {Entry} e */
 export function stateText(t, e) {
   if (!e.on) return t('ext.state.off');
+  // 每人一份的（核心 IM-1 中下四）：看的人那一份还没起过，用到时才拉起，不是关着
+  if (e.scope === 'account' && e.state === 'off') return t('ext.state.on_demand');
   if (e.state === 'running') return t('ext.state.running');
   if (e.state === 'starting') return t('ext.state.starting');
   if (e.state === 'waiting') return t('ext.state.waiting', { seconds: Math.max(1, Math.ceil((e.retry_in ?? 0) / 1000)), failures: e.failures ?? 0 });
