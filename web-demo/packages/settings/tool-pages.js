@@ -5,14 +5,14 @@
 //! （`dialog.js` 的 `load`）；MCP 服务另跟 `mcp.changed`、`package.changed`。添加、编辑服务的小窗在 `mcp-form.js`。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { groupBlock, toggle, select, findBox } from './rows.js';
+import { groupBlock, toggle, findBox } from './rows.js';
 import { stateText } from './extensions.js';
 import { loginState, loginText, loginButton, loginErrorNode, logoutButton } from './mcp-login.js';
 import { openInfo } from './core-packages.js';
 import { openServerForm } from './mcp-form.js';
 import { confirmIn } from './confirm.js';
 import {
-  skillItem, scriptItem, mcpItems, switchValue, featureId, loadingParams, SOURCES, inSource, sourceOf, toolMatch, homeDir, shortTool,
+  skillItem, scriptItem, mcpItems, switchValue, featureId, SOURCES, inSource, sourceOf, toolMatch, homeDir, shortTool,
   editable, commandLine, flip, range, maskedValue, maskedPairs, skippedOf,
 } from './tool-model.js';
 
@@ -208,17 +208,16 @@ function toolRow(dialog, item, view) {
   const picked = selecting && view.selected.has(item.id);
   const login = item.kind === 'mcp' ? serverState(dialog, item).login : null;
   const controls = selecting ? [] : [
-    // 要浏览器登录的（核心 X-42 上）：加载方式下拉前面一个「登录」
+    // 要浏览器登录的（核心 X-42 上）：开关前面一个「登录」
     login?.needs ? loginButton(dialog, item.name, login, { small: true }) : null,
-    // 开关、加载方式写的是配置，老核心上的成员写不了（Y-2下下上）：不露
-    item.load && !configlessOf(dialog) ? loadSelect(dialog, item) : null,
+    // 开关写的是配置，老核心上的成员写不了（Y-2下下上）：不露
     item.on !== null && !configlessOf(dialog) ? switchFor(dialog, item) : null,
     can ? askFirst(dialog, iconBtn('trash-2', t('tools.delete'), () => {}, '.is-danger.set-tool-del'), t('tools.delete_ask', { name: item.name }), () => removeItems(dialog, item.kind, [item])) : null,
   ].filter(Boolean);
   const tag = item.kind === 'mcp' && item.own ? null : h('span.set-pkg-tag', sourceText(dialog, item));
   return h(`div.set-row.set-pkg${selecting ? (can ? '.is-expandable.is-picking' : '.is-unpickable') : '.is-expandable'}${picked ? '.is-picked' : ''}`, {
     onclick: (/** @type {MouseEvent} */ e) => {
-      if (/** @type {Element} */ (e.target).closest('.set-switch, .set-select, .set-tool-del, .mcp-login')) return;
+      if (/** @type {Element} */ (e.target).closest('.set-switch, .set-tool-del, .mcp-login')) return;
       if (!selecting) return openTool(dialog, item);
       if (!can) return;
       view.selected = e.shiftKey ? range(view.selected, view.order ?? [], view.last, item.id) : flip(view.selected, item.id);
@@ -266,13 +265,6 @@ function serverState(dialog, item) {
  */
 const stateNode = (text, bad, running, warn = false) => h(`span.set-tool-state${bad ? '.is-error' : ''}${running ? '.is-on' : ''}${warn ? '.is-warn' : ''}`, text);
 
-/** 加载方式的下拉：懒加载（`need_load` 是真的）、完整。 @param {any} dialog @param {ToolItem} item */
-function loadSelect(dialog, item) {
-  const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
-  const options = [{ value: true, name: t('tools.lazy') }, { value: false, name: t('tools.full') }];
-  return select(dialog, options, item.load?.value ?? true, (v) => setLoading(dialog, item, v));
-}
-
 /** 是成员（整台机器的事调不了） @param {any} dialog */
 const memberOf = (dialog) => !!dialog.ctx.host?.member;
 /** 老核心（Y-2下下上）上的成员：配置也写不了 @param {any} dialog */
@@ -290,16 +282,6 @@ function switchFor(dialog, item) {
     await refresh(dialog, item.kind);
     return true;
   });
-}
-
-/** 改加载方式（`null` 是恢复成来处写的）。 @param {any} dialog @param {ToolItem} item @param {boolean|null} needLoad */
-async function setLoading(dialog, item, needLoad) {
-  try {
-    await dialog.ctx.core.request('tool.set_loading', loadingParams(item, needLoad));
-  } catch (err) {
-    dialog.toast(err?.message ?? String(err));
-  }
-  await refresh(dialog, item.kind);
 }
 
 /**
@@ -398,10 +380,6 @@ function toolDetail(dialog, kind, id) {
           skipped.kinds === 'both' && x.prompt ? h('span.set-tool-tag', t('tools.skipped_prompt')) : null,
           h('span', skippedWhy(t, x)))))));
     }
-  }
-  if (item.load && !configlessOf(dialog)) {
-    const reset = item.load.by === 'setting' ? h('button.set-link', { type: 'button', onclick: () => setLoading(dialog, item, null) }, t('tools.load_reset')) : null;
-    rows.push(line(t('tools.field.load'), loadSelect(dialog, item), item.load.by === 'setting' ? [t('tools.load_set'), ' · ', reset] : null));
   }
   return [
     card,

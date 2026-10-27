@@ -6,23 +6,20 @@
 
 /**
  * 一页上的一项，三种合成一个样子。`own` 是自己放的（技能、脚本 `from` 是 `home`；MCP 是个人设置里写的），`package` 是随哪个包来的（出厂又没有编号的是 `null`）。
- * `load` 是加载方式（技能没有：`null`），`on` 是全局开关（没有这一格的：`null`，不画开关）。`raw` 是核心给的那一项。
+ * `on` 是全局开关（没有这一格的：`null`，不画开关）。`raw` 是核心给的那一项。
  * @typedef {{kind: ToolKind, id: string, name: string, title: string|null, desc: string|null, own: boolean, package: string|null,
- *   load: {value: boolean, by: string}|null, on: boolean|null, covered: boolean, raw: any}} ToolItem
+ *   on: boolean|null, covered: boolean, raw: any}} ToolItem
  */
 
 /** 功能编号的前缀（`feature.set` 的 `feature`、预设的 `features.<编号>`） */
 const PREFIX = { skills: 'skill-', scripts: 'script-', mcp: 'mcp-' };
-
-/** `need_load` 那一格认得的样子：`{value: 布尔, by}` @param {any} x */
-const loadOf = (x) => (x && typeof x.value === 'boolean' ? { value: x.value, by: typeof x.by === 'string' ? x.by : 'source' } : null);
 
 /** `skill.list` 的一项。 @param {any} s @returns {ToolItem} */
 export function skillItem(s) {
   return {
     kind: 'skills', id: s.name, name: s.name, title: s.display_name ?? null, desc: s.summary ?? null,
     own: s.from === 'home', package: typeof s.package === 'string' ? s.package : null,
-    load: null, on: typeof s.on === 'boolean' ? s.on : null, covered: false, raw: s,
+    on: typeof s.on === 'boolean' ? s.on : null, covered: false, raw: s,
   };
 }
 
@@ -31,13 +28,13 @@ export function scriptItem(s) {
   return {
     kind: 'scripts', id: s.tool, name: s.tool, title: s.display_name ?? null, desc: s.description ?? null,
     own: s.from === 'home', package: typeof s.package === 'string' ? s.package : null,
-    load: loadOf(s.need_load), on: typeof s.on === 'boolean' ? s.on : null, covered: false, raw: s,
+    on: typeof s.on === 'boolean' ? s.on : null, covered: false, raw: s,
   };
 }
 
 /**
  * MCP 服务两处合成一份：个人设置里写的（`mcp.list`，自制）在前，照写的先后；再是包里带的（`package.list` 每个包的 `mcp`），照包、照包里的先后。
- * 包里带的服务现在没有 `need_load`、`on` 的（2026-10-20 已请核心补）不画加载方式和开关；被个人设置里同名的替代了的（`covered`）也不画。
+ * 包里带的服务没有 `on` 的（之前的核心）不画开关；被个人设置里同名的替代了的（`covered`）也不画。
  * @param {any[]|null|undefined} home `mcp.list` 的 `servers` @param {any[]|null|undefined} packages `package.list` 的 `packages`
  * @returns {ToolItem[]}
  */
@@ -45,7 +42,7 @@ export function mcpItems(home, packages) {
   /** @type {ToolItem[]} */
   const out = (home ?? []).map((s) => ({
     kind: 'mcp', id: `~home/${s.name}`, name: s.name, title: null, desc: null, own: true, package: null,
-    load: loadOf(s.need_load), on: typeof s.on === 'boolean' ? s.on : null, covered: false, raw: s,
+    on: typeof s.on === 'boolean' ? s.on : null, covered: false, raw: s,
   }));
   for (const p of packages ?? []) {
     if (!p?.status) continue;
@@ -53,7 +50,7 @@ export function mcpItems(home, packages) {
       const covered = !!s.covered;
       out.push({
         kind: 'mcp', id: `${p.package}/${s.name}`, name: s.name, title: null, desc: null, own: false, package: p.package,
-        load: covered ? null : loadOf(s.need_load), on: !covered && typeof s.on === 'boolean' ? s.on : null, covered, raw: { ...s, enabled: p.enabled !== false },
+        on: !covered && typeof s.on === 'boolean' ? s.on : null, covered, raw: { ...s, enabled: p.enabled !== false },
       });
     }
   }
@@ -65,9 +62,6 @@ export const switchValue = (on) => (on ? null : false);
 
 /** 一项的功能编号（`feature.set` 的 `feature`）。 @param {ToolItem} item */
 export const featureId = (item) => `${PREFIX[item.kind]}${item.name}`;
-
-/** `tool.set_loading` 的参数：脚本照工具名，MCP 照服务名。 @param {ToolItem} item @param {boolean|null} needLoad */
-export const loadingParams = (item, needLoad) => (item.kind === 'mcp' ? { server: item.name, need_load: needLoad } : { tool: item.name, need_load: needLoad });
 
 /** 筛选：全部、自制、随软件包来的 */
 export const SOURCES = /** @type {const} */ (['all', 'own', 'package']);
@@ -206,7 +200,6 @@ export function serverParams(form, before = {}) {
     if (!Number.isFinite(sec) || sec < 1 || sec > 3600) return { problem: 'timeout', field: 'timeout' };
     if (Math.round(sec * 1000) !== TIMEOUT_DEFAULT_S * 1000) params.timeout_ms = Math.round(sec * 1000);
   }
-  // 加载方式不经这里（`tool.set_loading` 管；带了会把默认值写死进文件，核心 X-27 补）
   return { params };
 }
 

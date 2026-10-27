@@ -550,8 +550,6 @@
         },
         "own": "自制",
         "shipped": "内置",
-        "lazy": "懒加载",
-        "full": "完整",
         "no_match": "没有对得上的",
         "none": {
           "skills": "还没有技能",
@@ -561,15 +559,13 @@
         "gone": "已不存在",
         "tools_n": "{count} 件工具",
         "note": {
-          "skills": "技能需要加载才能使用",
-          "load": "懒加载：只给 AI 名字和一句说明，用到时再拿完整的参数；完整：每一轮都给全。"
+          "skills": "技能需要加载才能使用"
         },
         "field": {
           "source": "来源",
           "name": "名字",
           "path": "位置",
           "timeout": "时限",
-          "load": "加载方式",
           "command": "命令",
           "tools": "工具",
           "url": "地址",
@@ -581,8 +577,6 @@
           "skipped_both": "没登记的工具和提示词"
         },
         "timeout_s": "{seconds} 秒",
-        "load_set": "个人设置里改过",
-        "load_reset": "恢复",
         "from_package": "随软件包安装，命令在包里改。",
         "restart": "重启",
         "edit": "编辑",
@@ -1217,8 +1211,6 @@
         },
         "own": "Your own",
         "shipped": "Built-in",
-        "lazy": "Lazy",
-        "full": "Full",
         "no_match": "Nothing matches",
         "none": {
           "skills": "No skills yet",
@@ -1228,15 +1220,13 @@
         "gone": "No longer exists",
         "tools_n": "{count} tools",
         "note": {
-          "skills": "Skills need to be loaded before use",
-          "load": "Lazy: the AI gets only the name and a one-line description, and fetches the full parameters when it uses it. Full: everything is sent every turn."
+          "skills": "Skills need to be loaded before use"
         },
         "field": {
           "source": "Source",
           "name": "Name",
           "path": "Location",
           "timeout": "Time limit",
-          "load": "Loading",
           "command": "Command",
           "tools": "Tools",
           "url": "URL",
@@ -1248,8 +1238,6 @@
           "skipped_both": "Skipped tools and prompts"
         },
         "timeout_s": "{seconds} s",
-        "load_set": "Changed in personal settings",
-        "load_reset": "Reset",
         "from_package": "Installed with a package; change its command in the package.",
         "restart": "Restart",
         "edit": "Edit",
@@ -1884,8 +1872,6 @@
         },
         "own": "自作",
         "shipped": "内蔵",
-        "lazy": "遅延読み込み",
-        "full": "完全",
         "no_match": "一致するものがありません",
         "none": {
           "skills": "スキルはまだありません",
@@ -1895,15 +1881,13 @@
         "gone": "存在しません",
         "tools_n": "ツール {count} 個",
         "note": {
-          "skills": "スキルは読み込んでから使います",
-          "load": "遅延読み込み：AI には名前と一行の説明だけを渡し、使うときに詳しいパラメーターを取得します。完全：毎ターンすべて渡します。"
+          "skills": "スキルは読み込んでから使います"
         },
         "field": {
           "source": "提供元",
           "name": "名前",
           "path": "場所",
           "timeout": "制限時間",
-          "load": "読み込み方法",
           "command": "コマンド",
           "tools": "ツール",
           "url": "アドレス",
@@ -1915,8 +1899,6 @@
           "skipped_both": "登録されなかったツールとプロンプト"
         },
         "timeout_s": "{seconds} 秒",
-        "load_set": "個人設定で変更済み",
-        "load_reset": "元に戻す",
         "from_package": "パッケージと一緒にインストールされています。コマンドはパッケージ側で変更します。",
         "restart": "再起動",
         "edit": "編集",

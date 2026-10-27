@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  skillItem, scriptItem, mcpItems, switchValue, featureId, loadingParams, inSource, sourceOf, toolMatch, homeDir, shortTool,
+  skillItem, scriptItem, mcpItems, switchValue, featureId, inSource, sourceOf, toolMatch, homeDir, shortTool,
   serverParams, formOf, envShown, editable, commandLine, splitCommand, joinCommand, flip, range,
 } from '../../packages/settings/tool-model.js';
 import { pkgKinds, carriedBy, PKG_FILTERS } from '../../packages/settings/model.js';
@@ -11,47 +11,43 @@ import { pkgKinds, carriedBy, PKG_FILTERS } from '../../packages/settings/model.
 const PACKAGES = [
   { package: 'authoring', name: '写技能和包', status: 'ready', kind: 'bundle' },
   { package: 'gh', name: 'GitHub', status: 'ready', kind: 'bundle', enabled: true, mcp: [
-    { name: 'github', state: 'running', need_load: { value: true, by: 'source' }, on: true, tools: ['mcp__github__search'] },
-    { name: 'fs', state: 'off', covered: true, need_load: { value: true, by: 'source' }, on: true },
+    { name: 'github', state: 'running', on: true, tools: ['mcp__github__search'] },
+    { name: 'fs', state: 'off', covered: true, on: true },
   ] },
   // 没装上的（没有状态）不算
   { package: 'ghost', mcp: [{ name: 'x' }] },
 ];
 
-test('技能、脚本的一项：自制照 from，加载方式只有脚本有，开关照 on', () => {
+test('技能、脚本的一项：自制照 from，开关照 on（2026-10-27 起没有加载方式，核心 FL-1 下）', () => {
   const own = skillItem({ name: 'weekly', display_name: '写周报', summary: '照格式写', from: 'home', path: '~/.miyu/home/admin/skills/weekly/SKILL.md', on: false });
   assert.equal(own.own, true);
-  assert.equal(own.load, null);
   assert.equal(own.on, false);
   assert.equal(own.title, '写周报');
   const pkg = skillItem({ name: 'skill-creator', from: 'package', package: 'authoring', on: true });
   assert.equal(pkg.own, false);
   assert.equal(pkg.package, 'authoring');
   assert.equal(pkg.title, null);
-  const script = scriptItem({ tool: 'bili_frames', from: 'home', timeout: 120, need_load: { value: false, by: 'setting' }, on: true });
-  assert.deepEqual(script.load, { value: false, by: 'setting' });
+  const script = scriptItem({ tool: 'bili_frames', from: 'home', timeout: 120, on: true });
+  assert.equal('load' in script, false, '不再有加载方式');
   assert.equal(script.id, 'bili_frames');
   // 旧核心没有 on 的：不画开关
   assert.equal(scriptItem({ tool: 'x', from: 'home' }).on, null);
 });
 
-test('MCP 服务两处合成一份：自制在前，包里的照包；被替代的不画开关和加载方式', () => {
-  const items = mcpItems([{ name: 'playwright', command: ['npx', '@playwright/mcp'], state: 'running', need_load: { value: true, by: 'source' }, on: true }], PACKAGES);
+test('MCP 服务两处合成一份：自制在前，包里的照包；被替代的不画开关', () => {
+  const items = mcpItems([{ name: 'playwright', command: ['npx', '@playwright/mcp'], state: 'running', on: true }], PACKAGES);
   assert.deepEqual(items.map((x) => x.id), ['~home/playwright', 'gh/github', 'gh/fs']);
   assert.equal(items[0].own, true);
   assert.equal(items[1].package, 'gh');
-  assert.deepEqual(items[1].load, { value: true, by: 'source' });
   assert.equal(items[1].raw.enabled, true);
   assert.equal(items[2].covered, true);
   assert.equal(items[2].on, null);
-  assert.equal(items[2].load, null);
-  // 之前的核心：包里的服务没有 need_load、on，只写状态
+  // 之前的核心：包里的服务没有 on，只写状态
   const old = mcpItems(null, [{ package: 'gh', status: 'ready', mcp: [{ name: 'github', state: 'running' }] }]);
   assert.equal(old[0].on, null);
-  assert.equal(old[0].load, null);
 });
 
-test('开关、加载方式写什么', () => {
+test('开关写什么', () => {
   assert.equal(switchValue(true), null);
   assert.equal(switchValue(false), false);
   const [skill] = [skillItem({ name: 'weekly', from: 'home' })];
@@ -59,8 +55,6 @@ test('开关、加载方式写什么', () => {
   assert.equal(featureId(scriptItem({ tool: 'hotel_deals', from: 'home' })), 'script-hotel_deals');
   const [server] = mcpItems([{ name: 'github' }], []);
   assert.equal(featureId(server), 'mcp-github');
-  assert.deepEqual(loadingParams(server, false), { server: 'github', need_load: false });
-  assert.deepEqual(loadingParams(scriptItem({ tool: 'hotel_deals' }), null), { tool: 'hotel_deals', need_load: null });
 });
 
 test('来源：自制、包名（没装的照编号）、出厂；筛选和搜索照它', () => {
