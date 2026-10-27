@@ -423,6 +423,8 @@
     "compaction_started": "コンテキストの圧縮を開始しました",
     "compacting_count": "{count} 字",
     "session_speaker": "セッション {id} からのメッセージ",
+    "schedule_speaker": "定期タスク {id}",
+    "loop_speaker": "ループ",
     "peer": {
       "idle": "セッション {id} が返信しました",
       "idle_status": "セッション {id} の返信：{status}",

@@ -423,6 +423,8 @@
     "compaction_started": "Context compaction started",
     "compacting_count": "{count} characters",
     "session_speaker": "Message from session {id}",
+    "schedule_speaker": "Scheduled task {id}",
+    "loop_speaker": "Loop",
     "peer": {
       "idle": "Session {id} replied",
       "idle_status": "Session {id} replied: {status}",

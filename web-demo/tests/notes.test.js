@@ -24,6 +24,14 @@ test('谁说的：你的、别的账号的、子代理发给她的（标题照�
   assert.deepEqual(of({ kind: 'external', platform: 'qq' }), { kind: 'external', account: null, name: '外部' });
 });
 
+test('定时任务、循环交进来的（核心 J-1 上、J-2）：写「定时任务 编号」，带 loop 的写「循环」', () => {
+  const of = (by) => speakerOf(by, new Map());
+  assert.deepEqual(of({ kind: 'schedule', schedule: 't3', account: 'alice' }), { kind: 'schedule', account: null, name: '定时任务 t3' });
+  assert.equal(of({ kind: 'schedule', schedule: 't4', account: 'alice', loop: 'fixed' }).name, '循环');
+  assert.equal(of({ kind: 'schedule', schedule: 't5', account: 'alice', loop: 'dynamic' }).name, '循环');
+  assert.equal(of({ kind: 'schedule', account: 'alice' }).name, '定时任务', '没写编号的不留空格');
+});
+
 test('出错那一句：402、404 加人话；内核自己查出来的写分类，有原话的接后面；没原话的写分类', () => {
   assert.equal(failureText({ class: 'other', message: 'no money', status: 402 }), '额度已用完：no money');
   // 一轮里连着写到输出上限（核心 3-10）：内核的分类，写人话

@@ -20,7 +20,7 @@ import { shownRef } from './model-menu.js';
 const KERNEL_CLASSES = ['bad_stream', 'empty_reply', 'bad_summary', 'compaction_paused', 'no_model', 'cooling', 'output_limit'];
 
 /**
- * 一句话是谁说的：人照账号；子代理照派它的那次的标题；父会话写「派它的会话」，别的会话写「从会话 短编号 收到消息」；别的 harness 照它报的名字、注明是别的 agent；平台上的人写「外部」。
+ * 一句话是谁说的：人照账号；子代理照派它的那次的标题；父会话写「派它的会话」，别的会话写「从会话 短编号 收到消息」；别的 harness 照它报的名字、注明是别的 agent；平台上的人写「外部」；定时任务写「定时任务 编号」、循环写「循环」。
  * @param {any} by 事件的 `by`
  * @param {Map<string, Job>} jobs
  * @param {string|null} [parent] 这个会话是子会话的：派它的那个会话（`session.created` 的 `parent`）
@@ -38,6 +38,8 @@ export function speakerOf(by, jobs, parent = null) {
   }
   if (by?.kind === 'harness') return { kind: 'harness', account: null, name: t('notes.harness_speaker', { name: by.name ?? '' }) };
   if (by?.kind === 'external') return { kind: 'external', account: null, name: n.external };
+  // 到点的定时任务、循环交进来的（核心 J-1 上、J-2）：「定时任务 t3」，循环的写「循环」
+  if (by?.kind === 'schedule') return { kind: 'schedule', account: null, name: by.loop ? n.loop_speaker : t('notes.schedule_speaker', { id: String(by.schedule ?? '') }).trim() };
   return { kind: by?.kind ?? 'unknown', account: null, name: by?.kind ?? '' };
 }
 
