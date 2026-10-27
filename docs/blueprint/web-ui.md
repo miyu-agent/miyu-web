@@ -52,10 +52,10 @@
 
 1. 主程序的 `miyu web` 照清单找网页软件（施工 9-3：两层清单里子命令是 `web` 的那一份的程序，出厂是 `miyu-web`；清单里找不到的照 `miyu-web`），只找主程序真实位置旁边的（Windows 上加 `.exe`），把 `web` 后面的参数原样交给 `miyu-web open`，等它退出，退出码照它的。没有：印「没装网页界面」和每种装法怎么装，退出码 1。
 2. `miyu-web open`：`run/web` 在、锁有人拿着，网页软件就在跑，照 `run/web` 的地址。不然拉起 `miyu-web serve`：和头拉起核心一样（`ipc.md`「连不上就拉起」第 4、5 条），跟终端脱开，工作目录是数据根，等那一行最多 10 秒。
-3. 照终端的样子连核心（`connect_or_start`，出示本机令牌）。写了 `--reset` 的，或者还没设过密码的（问一次 `account.setup_code`，`first` 是真的）：网址是 `<地址>/#setup=<一次性码>`，码在 `#` 后面，不发给服务器、不进 Referer，页面拿到以后从地址栏抹掉（设计 21 X6）。别的：网址就是 `<地址>/`，页面用存着的登录令牌，没有、过期了的问用户名和密码；这时不要一次性码（要了不用，5 分钟后自己作废）。
-4. 用系统的办法打开网址：Linux 是 `xdg-open`，macOS 是 `open`，Windows 是 `cmd /C start "" "<网址>"`。一次性码会出现在进程列表里：它只用一次、5 分钟，用过就作废（第 3 题），不另开跳转页。
-5. 交给了浏览器：印网页的地址（不带码）；带了码的再印一句「浏览器没打开的话，用 miyu web --print」（第 3 题说的 snap 装的 Firefox），退出码 0。浏览器开没开、设没设好，`miyu web` 看不到。交不出去（没有 `xdg-open`、没有图形界面）：照 `--print` 办。
-6. `--print`：不开浏览器，印整个网址；带了码的，下一行提醒「5 分钟内有效，只能用一次，别发给别人」。
+3. 照终端的样子连核心（`connect_or_start`，出示本机令牌）。写了 `--reset` 的，或者还没设过密码的（问一次 `account.setup_code`，`first` 是真的）：网址是 `<地址>/#setup=<一次性码>`，码在 `#` 后面，不发给服务器、不进 Referer，页面拿到以后从地址栏抹掉（设计 21 X6）。别的：要一张交接票（`login.ticket`，核心 LT-1：60 秒、一次性，回应带票绑的 `account`），网址是 `<地址>/#ticket=<票>&as=<账号>`（im 设计 07 第 3.6 节、网页-乙）：浏览器里存着这个账号的登录令牌的照它进，没有、作废了的拿票一步连上，不用再输密码；这时不要一次性码（要了不用，5 分钟后自己作废）。旧核心要不到票的（没有 `login.ticket`、回应没有 `account`）网址就是 `<地址>/`，页面照存着的登录令牌，没有的问用户名和密码。
+4. 用系统的办法打开（Linux 是 `xdg-open`，macOS 是 `open`，Windows 是 `cmd /C start "" "<网址>"`）。网址带着一次性码、交接票的不直接交（交出去的参数进进程列表，同一台机器上的别人看得到；im 设计 07 第 3.6 节）：写一个跳转页 `run/open/<16 个随机字节的十六进制>.html`（目录只给本人：Unix 上目录 0700、文件 0600；Windows 上在本人用户目录下的数据根里，同本机令牌 `run/token` 的办法），里面一行 `location.replace("<网址>")`（不留历史）、`<meta name="referrer" content="no-referrer">`，交出去的是这个文件的 `file://` 地址；交了以后拉起自己 `miyu-web forget <跳转页>`（跟终端脱开、不等它），它 30 秒后删掉这一页；每次 `open` 先删掉 `run/open/` 里放了 2 分钟以上的（`forget` 没跑完的兜底）。不带凭据的网址照旧直接交。
+5. 交给了浏览器：印网页的地址（不带码、票）；带了码的再印一句「浏览器没打开的话，用 miyu web --print」（第 3 题说的 snap 装的 Firefox），退出码 0。浏览器开没开、设没设好，`miyu web` 看不到。交不出去（没有 `xdg-open`、没有图形界面）：照 `--print` 办。
+6. `--print`：不开浏览器，印整个网址（不写跳转页）；带了码的，下一行提醒「5 分钟内有效，只能用一次，别发给别人」；带了票的提醒「60 秒内有效，只能用一次，别发给别人」。
 7. `--logout`：照终端的样子连核心，`account.logout`，`all: true`，印作废了几个。不碰网页软件，不改密码。
 8. `--package <编号>`（施工 F-6 下，`package-pages.md`「终端」第 2 条）：网址 `#` 后面多一个 `package=<编号>`，和一次性码一起的写成 `#setup=<码>&package=<编号>`；页面起来就开着这个软件的独立整页（2026-10-15 项目主人定，网页的蓝图「软件的页面」：网页自己的路由，宿主读完一次性码只抹它，`package=` 留在地址栏里，能收藏）。编号只认字母、数字、`-`、`_`、`.`，1 到 64 个，别的照用法不对（退出码 2）。
 
@@ -111,7 +111,7 @@
 | `crates/miyu-web/tests/backstage.rs` | 核心用替身（多答 `package.list`、`package.file`）：换票据要登录令牌（没带、带错、不是 Bearer 401）；正文不对 400；没有后台页、没有这个包 404；同一个令牌、同一个包交回同一张；页面文件和响应头（类型、`backstage_csp`、`nosniff`、`no-referrer`、`no-cache`、`Access-Control-Allow-Origin: *`、不设 cookie）；以 `/` 结尾补 `index.html`；没有的 404、核心拒 `bad_params` 400；票据只开它的包、不认识的 404；大文件一块块问、拼起来一个字节不差；令牌作废了 401、票据一起作废；方法 405 |
 | `crates/miyu-web/src/backstage/tests.rs` | 地址拆成票据、包、文件（`%xx`、补 `index.html`、NUL、不是 UTF-8、包编号写法）；包编号的写法；核心拒的换成状态码；类型照扩展名 |
 | `crates/miyu-web/src/media/tests.rs` | `Range` 每种写法（大小写、超出、好几段、写法不对、空的资源）；下载的名字只留最后一段、`attr-char` 以外都转义 |
-| `crates/miyu-web/tests/open.rs` | 拉起真的 `miyu-web serve`；没设过密码、`--reset` 的带 `#setup=`，别的不带；`--package` 的带 `package=`，和一次性码一起是 `#setup=…&package=…`；`--print`、交不给浏览器的印网址和提醒；`--logout`；端口被占照人的语言说 |
+| `crates/miyu-web/tests/open.rs` | 拉起真的 `miyu-web serve`；没设过密码、`--reset` 的带 `#setup=`，别的带 `#ticket=…&as=…`、核心不给票的什么都不带；带凭据的交给浏览器的是只给本人的跳转页、里面才是网址，过期的跳转页下一次 `open` 删掉；`--package` 的带 `package=`，和一次性码一起是 `#setup=…&package=…`；`--print`、交不给浏览器的印网址和提醒；`--logout`；端口被占照人的语言说 |
 | `crates/miyu-cli/src/web/tests.rs` | 参数照原样交给 `miyu-web open`；没装时说怎么装、退出码 1；装了的照它的退出码 |
 
 ### 施工时定的（施工 W-9，2026-10-04）
