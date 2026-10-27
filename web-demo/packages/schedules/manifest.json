@@ -1,0 +1,370 @@
+{
+  "id": "schedules",
+  "version": "0.1.0",
+  "name": {
+    "zh": "定时任务",
+    "en": "Scheduled tasks",
+    "ja": "定期タスク"
+  },
+  "summary": {
+    "zh": "在设置里看、建、停、删定时任务；右侧栏列这个会话上的",
+    "en": "View, create, pause and delete scheduled tasks in Settings; the sidebar lists this session's",
+    "ja": "設定で定期タスクを表示・作成・停止・削除。右サイドバーにこのセッションの分を表示"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "设置页多一页「定时任务」：一个任务一行（那句话、什么时候、在哪、下次），开关停续、删除；「新建」开一个浮窗：说什么、每天/每隔/一次/自定义、每次新开会话或跑在一个会话上。右侧栏多一张卡「定时任务」，列跑在这个会话上的（连 /loop）。旧核心没有定时任务的两处都不出。"
+  },
+  "inject": [
+    "slots",
+    "core",
+    "chat~",
+    "sessions",
+    "settings~",
+    "composer~"
+  ],
+  "styles": [
+    "style.css"
+  ],
+  "text": {
+    "zh": {
+      "title": "定时任务",
+      "new": "新建",
+      "empty": "还没有定时任务",
+      "ai_made": "AI 建的",
+      "paused": "已暂停",
+      "next": "下次 {at}",
+      "when": {
+        "daily": "每天 {time}",
+        "weekdays": "工作日 {time}",
+        "weekly": "每{day} {time}",
+        "monthly": "每月 {date} 日 {time}",
+        "cron": "cron {cron}",
+        "once": "一次 · {at}",
+        "dynamic": "由 AI 定",
+        "loop": "循环 · {when}"
+      },
+      "weekday": {
+        "0": "周日",
+        "1": "周一",
+        "2": "周二",
+        "3": "周三",
+        "4": "周四",
+        "5": "周五",
+        "6": "周六"
+      },
+      "every": {
+        "minutes": "每 {n} 分钟",
+        "hours": "每 {n} 小时",
+        "days": "每 {n} 天",
+        "seconds": "每 {n} 秒"
+      },
+      "day": {
+        "today": "今天 {time}",
+        "tomorrow": "明天 {time}",
+        "dated": "{mon}{d}日 {time}",
+        "dated_year": "{y}年{mon}{d}日 {time}"
+      },
+      "month": {
+        "1": "1月",
+        "2": "2月",
+        "3": "3月",
+        "4": "4月",
+        "5": "5月",
+        "6": "6月",
+        "7": "7月",
+        "8": "8月",
+        "9": "9月",
+        "10": "10月",
+        "11": "11月",
+        "12": "12月"
+      },
+      "where": {
+        "new": "每次新开会话",
+        "session": "会话「{title}」"
+      },
+      "skipped": {
+        "session_gone": "会话已不在，任务停了",
+        "preset_off": "会话的预设关了这个功能，这次没跑",
+        "not_opened": "新会话开不成，这次没跑",
+        "other": "上一次跳过了：{why}"
+      },
+      "running": "在跑（关了就暂停）",
+      "delete": "删除",
+      "delete_ask": "确认删除这个定时任务吗？",
+      "past": "这个时刻已经过了",
+      "count": "{n} 个",
+      "pause": "暂停",
+      "resume": "继续",
+      "remove": "删除",
+      "form": {
+        "title": "新建定时任务",
+        "prompt": "说什么",
+        "prompt_hint": "到点交给 AI 的那句话",
+        "when": "什么时候",
+        "daily": "每天",
+        "every": "每隔",
+        "once": "一次",
+        "cron": "自定义",
+        "unit": {
+          "minutes": "分钟",
+          "hours": "小时",
+          "days": "天"
+        },
+        "cron_hint": "分 时 日 月 星期",
+        "where": "在哪跑",
+        "where_new": "每次新开会话",
+        "where_session": "跑在会话",
+        "persona": "人格",
+        "preset": "预设",
+        "cwd": "工作目录",
+        "cwd_hint": "空着是家目录",
+        "default": "默认",
+        "no_persona": "无人格",
+        "session": "会话",
+        "no_sessions": "还没有会话",
+        "cancel": "取消",
+        "create": "新建",
+        "creating": "正在新建…",
+        "close": "关闭"
+      },
+      "bad": {
+        "prompt": "写上要说的话",
+        "when": "看不懂这个时间",
+        "cron": "看不懂这个时间",
+        "past": "这个时刻已经过了",
+        "short": "至少隔 1 分钟",
+        "session": "这个会话不在了",
+        "target": "在哪跑没写对",
+        "unknown_persona": "没有这个人格",
+        "unknown_preset": "没有这个预设"
+      }
+    },
+    "en": {
+      "title": "Scheduled tasks",
+      "new": "New",
+      "empty": "No scheduled tasks yet",
+      "ai_made": "By AI",
+      "paused": "Paused",
+      "next": "next {at}",
+      "when": {
+        "daily": "Every day at {time}",
+        "weekdays": "Weekdays at {time}",
+        "weekly": "Every {day} at {time}",
+        "monthly": "Day {date} of every month at {time}",
+        "cron": "cron {cron}",
+        "once": "Once · {at}",
+        "dynamic": "Paced by AI",
+        "loop": "Loop · {when}"
+      },
+      "weekday": {
+        "0": "Sunday",
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday"
+      },
+      "every": {
+        "minutes": "Every {n} min",
+        "hours": "Every {n} h",
+        "days": "Every {n} days",
+        "seconds": "Every {n} s"
+      },
+      "day": {
+        "today": "today {time}",
+        "tomorrow": "tomorrow {time}",
+        "dated": "{mon} {d} {time}",
+        "dated_year": "{mon} {d}, {y} {time}"
+      },
+      "month": {
+        "1": "Jan",
+        "2": "Feb",
+        "3": "Mar",
+        "4": "Apr",
+        "5": "May",
+        "6": "Jun",
+        "7": "Jul",
+        "8": "Aug",
+        "9": "Sep",
+        "10": "Oct",
+        "11": "Nov",
+        "12": "Dec"
+      },
+      "where": {
+        "new": "New session each time",
+        "session": "Session \"{title}\""
+      },
+      "skipped": {
+        "session_gone": "The session is gone; the task stopped",
+        "preset_off": "The session's preset turned this off; skipped",
+        "not_opened": "Couldn't open a new session; skipped",
+        "other": "Last run skipped: {why}"
+      },
+      "running": "Running (turn off to pause)",
+      "delete": "Delete",
+      "delete_ask": "Delete this scheduled task?",
+      "past": "That time has passed",
+      "count": "{n}",
+      "pause": "Pause",
+      "resume": "Resume",
+      "remove": "Delete",
+      "form": {
+        "title": "New scheduled task",
+        "prompt": "Say",
+        "prompt_hint": "What to send to the AI when it's time",
+        "when": "When",
+        "daily": "Daily",
+        "every": "Every",
+        "once": "Once",
+        "cron": "Custom",
+        "unit": {
+          "minutes": "minutes",
+          "hours": "hours",
+          "days": "days"
+        },
+        "cron_hint": "min hour day month weekday",
+        "where": "Run in",
+        "where_new": "New session each time",
+        "where_session": "A session",
+        "persona": "Persona",
+        "preset": "Preset",
+        "cwd": "Folder",
+        "cwd_hint": "Empty means home",
+        "default": "Default",
+        "no_persona": "No persona",
+        "session": "Session",
+        "no_sessions": "No sessions yet",
+        "cancel": "Cancel",
+        "create": "Create",
+        "creating": "Creating…",
+        "close": "Close"
+      },
+      "bad": {
+        "prompt": "Write what to say",
+        "when": "Can't read this time",
+        "cron": "Can't read this time",
+        "past": "That time has passed",
+        "short": "At least 1 minute apart",
+        "session": "That session is gone",
+        "target": "Where to run isn't right",
+        "unknown_persona": "No such persona",
+        "unknown_preset": "No such preset"
+      }
+    },
+    "ja": {
+      "title": "定期タスク",
+      "new": "新規",
+      "empty": "定期タスクはまだありません",
+      "ai_made": "AI が作成",
+      "paused": "一時停止中",
+      "next": "次回 {at}",
+      "when": {
+        "daily": "毎日 {time}",
+        "weekdays": "平日 {time}",
+        "weekly": "毎週{day} {time}",
+        "monthly": "毎月 {date} 日 {time}",
+        "cron": "cron {cron}",
+        "once": "1 回 · {at}",
+        "dynamic": "AI が決める",
+        "loop": "ループ · {when}"
+      },
+      "weekday": {
+        "0": "日曜",
+        "1": "月曜",
+        "2": "火曜",
+        "3": "水曜",
+        "4": "木曜",
+        "5": "金曜",
+        "6": "土曜"
+      },
+      "every": {
+        "minutes": "{n} 分ごと",
+        "hours": "{n} 時間ごと",
+        "days": "{n} 日ごと",
+        "seconds": "{n} 秒ごと"
+      },
+      "day": {
+        "today": "今日 {time}",
+        "tomorrow": "明日 {time}",
+        "dated": "{mon}{d}日 {time}",
+        "dated_year": "{y}年{mon}{d}日 {time}"
+      },
+      "month": {
+        "1": "1月",
+        "2": "2月",
+        "3": "3月",
+        "4": "4月",
+        "5": "5月",
+        "6": "6月",
+        "7": "7月",
+        "8": "8月",
+        "9": "9月",
+        "10": "10月",
+        "11": "11月",
+        "12": "12月"
+      },
+      "where": {
+        "new": "毎回新しいセッション",
+        "session": "セッション「{title}」"
+      },
+      "skipped": {
+        "session_gone": "セッションがなくなったため停止しました",
+        "preset_off": "セッションのプリセットでオフのため今回は実行されませんでした",
+        "not_opened": "新しいセッションを開けず今回は実行されませんでした",
+        "other": "前回はスキップ：{why}"
+      },
+      "running": "実行中（オフで一時停止）",
+      "delete": "削除",
+      "delete_ask": "この定期タスクを削除しますか？",
+      "past": "その時刻はもう過ぎています",
+      "count": "{n} 件",
+      "pause": "一時停止",
+      "resume": "再開",
+      "remove": "削除",
+      "form": {
+        "title": "定期タスクを新規作成",
+        "prompt": "送る内容",
+        "prompt_hint": "時間になったら AI に送る文",
+        "when": "いつ",
+        "daily": "毎日",
+        "every": "間隔",
+        "once": "1 回",
+        "cron": "カスタム",
+        "unit": {
+          "minutes": "分",
+          "hours": "時間",
+          "days": "日"
+        },
+        "cron_hint": "分 時 日 月 曜日",
+        "where": "実行先",
+        "where_new": "毎回新しいセッション",
+        "where_session": "セッションで",
+        "persona": "ペルソナ",
+        "preset": "プリセット",
+        "cwd": "作業フォルダ",
+        "cwd_hint": "空ならホーム",
+        "default": "既定",
+        "no_persona": "ペルソナなし",
+        "session": "セッション",
+        "no_sessions": "セッションがまだありません",
+        "cancel": "キャンセル",
+        "create": "作成",
+        "creating": "作成中…",
+        "close": "閉じる"
+      },
+      "bad": {
+        "prompt": "送る内容を入力してください",
+        "when": "この時間は読めません",
+        "cron": "この時間は読めません",
+        "past": "その時刻はもう過ぎています",
+        "short": "1 分以上あけてください",
+        "session": "そのセッションはもうありません",
+        "target": "実行先が正しくありません",
+        "unknown_persona": "そのペルソナはありません",
+        "unknown_preset": "そのプリセットはありません"
+      }
+    }
+  }
+}

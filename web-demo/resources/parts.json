@@ -7025,5 +7025,35 @@
     "select": [
       ".ctx-pop-rates a"
     ]
+  },
+  "sch.tag": {
+    "zh": "定时任务：tag",
+    "select": [
+      ".sch-tag"
+    ]
+  },
+  "sch.prompt": {
+    "zh": "定时任务：prompt",
+    "select": [
+      ".sch-prompt"
+    ]
+  },
+  "sch.skip": {
+    "zh": "定时任务：skip",
+    "select": [
+      ".sch-skip"
+    ]
+  },
+  "sch.remove": {
+    "zh": "定时任务：remove",
+    "select": [
+      ".sch-remove"
+    ]
+  },
+  "sch.none": {
+    "zh": "定时任务：none",
+    "select": [
+      ".sch-none"
+    ]
   }
 }

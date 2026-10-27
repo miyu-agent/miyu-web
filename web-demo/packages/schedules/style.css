@@ -1,0 +1,28 @@
+/* 定时任务（软件包 `schedules`，蓝图 `web.md`「定时任务」）：设置页那一页、新建的浮窗、右侧栏卡片。外壳、一行、开关、浮窗照设置页和右侧栏的，这里只补自己的几样。 */
+
+.sch-top { display: flex; justify-content: flex-end; margin-bottom: calc(10px * var(--space)); }
+.sch-row .set-text { min-width: 0; }
+.sch-row .set-name { display: flex; align-items: center; gap: calc(8px * var(--space)); min-width: 0; }
+.sch-prompt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sch-tag { flex: none; padding: 1px calc(6px * var(--space)); border-radius: var(--r-6); background: var(--surface-3); color: var(--text-soft); font-size: calc(11px * var(--text-scale)); font-weight: 500; }
+.sch-row.is-paused .sch-prompt { color: var(--text-soft); }
+.sch-skip { color: var(--t-warn, var(--gold)); }
+.sch-control { display: flex; align-items: center; gap: calc(6px * var(--space)); }
+.sch-remove .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); }
+.sch-remove:hover { color: var(--danger); }
+/* 刚建好的那一行淡淡亮一下（同知识库新建的卡片） */
+.sch-row.is-fresh { animation: sch-fresh calc(1.2s * var(--motion-scale)) var(--ease-out) both; }
+@keyframes sch-fresh { from { background: var(--accent-soft, color-mix(in srgb, var(--accent) 14%, transparent)); } to { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .sch-row.is-fresh { animation: none; } }
+
+/* 浮窗：每一格右边可能接错字、提示字 */
+.sch-pop { width: min(520px, 100%); }
+.sch-cell { display: grid; gap: calc(6px * var(--space)); min-width: 0; }
+.sch-inline { display: flex; align-items: center; gap: calc(8px * var(--space)); }
+.sch-inline .set-input { width: 96px; }
+.sch-hint { margin: 0; }
+.sch-none { color: var(--text-faint); font-size: calc(13px * var(--text-scale)); }
+.sch-err-row:empty, .sch-err-row:has(> [hidden]:only-child) { display: none; }
+.sch-err-row { padding-left: calc(72px * var(--space) + 12px * var(--space)); }
+/* 浮窗里的下拉：菜单挂在设置框上，要浮在浮窗上面 */
+.set-panel:has(.sch-modal) > .set-menu { z-index: 31; }
