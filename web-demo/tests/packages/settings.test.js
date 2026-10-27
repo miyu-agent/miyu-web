@@ -500,3 +500,11 @@ test('池的调用方式照清单的 options 列（核心 Q-4 上多了 ordered 
   assert.deepEqual(strategiesOf({}), ['pin', 'rotate']);
   assert.deepEqual(strategiesOf(null), ['pin', 'rotate']);
 });
+
+test('成员拿到的列表（核心 U23-R修三）：没对他开放的（available: false）自己的开关灰着关着；带 mcp 的标成 MCP', async () => {
+  const { pkgSwitch, pkgTag } = await import('../../packages/settings/model.js');
+  const off = { entry: null };
+  assert.deepEqual(pkgSwitch({ enabled: true, available: false }, { admin: false, off }), { kind: 'own', on: false, disabled: true });
+  assert.deepEqual(pkgSwitch({ enabled: true }, { admin: false, off }), { kind: 'own', on: true, disabled: false }, '开放的照旧');
+  assert.equal(pkgTag({ kind: 'bundle', mcp: [{ name: 'echo', state: 'running' }] }), 'mcp');
+});

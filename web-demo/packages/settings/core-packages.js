@@ -117,7 +117,9 @@ function packageRow(dialog, p, child = false) {
   const bad = BAD.has(p.status);
   // 包开着、带的 MCP 服务有停下的：写「服务已停止」（核心的状态是好好的也照这个写）
   // 服务全被个人设置里同名的替代了（F-9 补的 `covered`，`status` 照旧 `off`）：写「被个人设置替代」，不当关着
-  const state = p.covered && !bad ? h('span.set-pkg-status', t('pkg.covered'))
+  // 没对这个成员开放的（核心 U23-R修三 的 `available: false`）：写暗字「管理员没开放」，开关灰着（`pkgSwitch`）
+  const state = p.available === false ? h('span.set-pkg-status', t('pkg.not_open'))
+    : p.covered && !bad ? h('span.set-pkg-status', t('pkg.covered'))
     : mcpStopped(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_stopped'))
     : mcpNeedsLogin(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_login'))
     : QUIET.has(p.status) ? null : h(`span.set-pkg-status${bad ? '.is-bad' : p.status === 'running' ? '.is-on' : ''}`, t(`pkg.status.${p.status}`));
@@ -298,6 +300,7 @@ function infoCard(dialog, p, e) {
   // 状态：扩展照它跑得怎样（停下的写为什么）；别的只写要留意的（好好的「已启用」、关着的「已停用」开关已经说了）
   const status = e ? stateText(t, e)
     : p.status === 'depends_missing' && p.missing?.length ? t('pkg.depends_missing', { names: packageNames(dialog.packages, p.missing).join(t('pkg.sep')) })
+    : p.available === false ? t('pkg.not_open')
     : p.covered && !bad ? t('pkg.covered')
     : QUIET.has(p.status) ? null : t(`pkg.status.${p.status}`);
   const alarm = bad || (e && e.on && e.state === 'stopped');
