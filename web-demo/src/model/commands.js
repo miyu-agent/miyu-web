@@ -38,7 +38,7 @@ export function mergeSpecs(local, core) {
   return [...local, ...core.filter((s) => ![s.name, ...(s.aliases ?? [])].some((n) => taken.has(n)))];
 }
 /**
- * @typedef {{kind: 'command', spec: Spec, words: string|null}|{kind: 'unlisted', name: string, words: string|null}|{kind: 'unknown'}|{kind: 'later'}|{kind: 'needs_words', spec: Spec}|{kind: 'empty_fixed', spec: Spec}|{kind: 'talk'}} Line
+ * @typedef {{kind: 'command', spec: Spec, words: string|null}|{kind: 'unlisted', name: string, words: string|null, opens?: boolean}|{kind: 'unknown'}|{kind: 'later'}|{kind: 'needs_words', spec: Spec}|{kind: 'empty_fixed', spec: Spec}|{kind: 'talk'}} Line
  *   回车时框里那一行是什么（`later`：空会话里打了核心的命令；`unlisted`：列表里没有的名字，`words` 是后面的字，没写的是 `null`；
  *   `needs_words`：空会话里打了开会话的命令（`/goal`）没写字；`empty_fixed`：空会话里打了它的一种固定写法（`/goal pause`））
  */
@@ -104,12 +104,12 @@ export function read(list, value, later = new Set(), opens = new Set(), nones = 
     const fixed = words && (spec.usage ?? []).some((u) => u.form === `/${spec.name} ${words}`);
     if (opening && !words) return { kind: 'needs_words', spec };
     if (nones.has(spec.name.toLowerCase()) && (!words || fixed)) return { kind: 'empty_fixed', spec };
-    return words && opening ? { kind: 'unlisted', name: spec.name, words } : { kind: 'later' };
+    return words && opening ? { kind: 'unlisted', name: spec.name, words, opens: true } : { kind: 'later' };
   }
   if (spec && !words) return { kind: 'command', spec, words: null };
   if (spec?.args) return { kind: 'command', spec, words };
   // 核心认、要造好的会话才能用的（空会话里不列）：不当话发出去（2026-10-10：空会话里打 `/remember 内容` 被当成一句话发给了她）
-  if (!spec && name && later.has(name.toLowerCase())) return words && opens.has(name.toLowerCase()) ? { kind: 'unlisted', name, words } : { kind: 'later' };
+  if (!spec && name && later.has(name.toLowerCase())) return words && opens.has(name.toLowerCase()) ? { kind: 'unlisted', name, words, opens: true } : { kind: 'later' };
   // 列表里没有的名字：交给外面（开着的会话里问核心，2026-10-12：没开记忆的会话里打 `/remember 内容` 被当成一句话发给了她）
   if (!spec && name) return { kind: 'unlisted', name, words: words || null };
   if (!spec && !words) return { kind: 'unknown' };

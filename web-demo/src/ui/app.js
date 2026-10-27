@@ -197,7 +197,7 @@ export class App {
       cycleLevel: () => this.cycleLevel(),
       command: (spec, words) => runCommand(this, spec, words),
       // 列表里没有的命令：开着的会话里交核心认，核心不认、带着字的交回 'talk' 照话发
-      unlisted: (name, words) => runUnlisted(this, name, words),
+      unlisted: (name, words, opens) => runUnlisted(this, name, words, opens),
       // 命令列表开了：照正在看的会话重问核心认哪些（预设、记忆开关换了，下一次打开就是新的）
       commandsOpened: () => this.refreshCommands(),
       // 空会话里核心认、要等会话的命令名（打了不当话发）

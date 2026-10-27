@@ -152,7 +152,7 @@ test('空会话里打 /goal <目标>（opens_session）：交外面先开会话�
   const later = new Set(['goal', 'remember']);
   const opens = new Set(res.commands.opens_session);
   assert.deepEqual([...opens], ['goal', 'loop']);
-  assert.deepEqual(read(list, '/goal 把测试修绿', later, opens), { kind: 'unlisted', name: 'goal', words: '把测试修绿' });
+  assert.deepEqual(read(list, '/goal 把测试修绿', later, opens), { kind: 'unlisted', name: 'goal', words: '把测试修绿', opens: true });
   assert.equal(read(list, '/Goal 把测试修绿', later, opens).kind, 'unlisted', '不分大小写');
   assert.equal(read(list, '/goal', later, opens).kind, 'later', '不带字的看不了，照旧');
   assert.equal(read(list, '/remember 喜欢猫', later, opens).kind, 'later');
@@ -202,7 +202,7 @@ test('空会话里列着的核心的命令（later）：带着字、开会话的
     { name: 'dream', summary: '整理记忆' },
   ]).map((s) => ({ ...s, later: true }));
   const opens = new Set(['goal']);
-  assert.deepEqual(read(list, '/goal 写完文档', new Set(), opens), { kind: 'unlisted', name: 'goal', words: '写完文档' });
+  assert.deepEqual(read(list, '/goal 写完文档', new Set(), opens), { kind: 'unlisted', name: 'goal', words: '写完文档', opens: true });
   assert.equal(read(list, '/goal', new Set(), opens).kind, 'needs_words', '只打 /goal：提示写上内容，不开会话');
   assert.equal(read(list, '/goal pause', new Set(), opens, new Set(['goal'])).kind, 'empty_fixed', '固定写法照核心「没有」的那一句，不为它白开一个会话');
   assert.deepEqual(read(list, '/goal 暂停一下这个思路', new Set(), opens).kind, 'unlisted', '目标里有「暂停」两个字的照目标');
@@ -233,10 +233,18 @@ test('空会话里打 /loop（核心 J-2）：带着话的和 /goal 一样先开
   ]).map((s) => ({ ...s, later: true }));
   const opens = new Set(res.commands.opens_session);
   const nones = new Set(res.commands.empty_none);
-  assert.deepEqual(read(list, '/loop 5m 看一下邮件', new Set(), opens, nones), { kind: 'unlisted', name: 'loop', words: '5m 看一下邮件' });
+  assert.deepEqual(read(list, '/loop 5m 看一下邮件', new Set(), opens, nones), { kind: 'unlisted', name: 'loop', words: '5m 看一下邮件', opens: true });
   assert.equal(read(list, '/loop 看一下邮件', new Set(), opens, nones).kind, 'unlisted');
   assert.equal(read(list, '/loop', new Set(), opens, nones).kind, 'needs_words');
   assert.equal(read(list, '/loop off', new Set(), opens, nones).kind, 'empty_fixed');
+});
+
+test('包没装、核心目录里没有的（BS-1 下下：没装长期目标就没有 /goal）：照列表里没有的名字交外面，不带 opens，空会话里不为它先开会话', () => {
+  const opens = new Set(res.commands.opens_session);
+  const nones = new Set(res.commands.empty_none);
+  const got = read([], '/goal 把测试修绿', new Set(), opens, nones);
+  assert.deepEqual(got, { kind: 'unlisted', name: 'goal', words: '把测试修绿' });
+  assert.equal(read([], '/loop 5m 看邮件', new Set(), opens, nones).opens, undefined);
 });
 
 test('空会话里照「没有」说的（/goal 的固定写法、/todo）：网页照抄的那一份和核心资源的一字不差', async () => {

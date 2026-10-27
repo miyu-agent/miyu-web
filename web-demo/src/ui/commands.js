@@ -203,12 +203,12 @@ export async function runCommand(app, spec, words) {
  * 照拒绝的 `data.why` 说为什么）。核心也不认（`unknown_command`）、后面带着字的交回 `'talk'`，照普通的话发（`/etc 目录是干什么的`）；
  * 不带字的写「命令不存在」、交回 `'keep'`（字留在框里，蓝图「斜杠命令」第 4 条）；别的写回执或拒绝的那一句，交回 `'done'`。
  * 空会话里不问：带字的是一句话，不带的「命令不存在」；只有 `opens_session` 里的（`/goal <目标>`）先开会话再问。
- * @param {App} app @param {string} name @param {string|null} words @returns {Promise<'talk'|'done'|'keep'>}
+ * @param {App} app @param {string} name @param {string|null} words @param {boolean} [opens] 核心目录里列着、开会话的（`read` 交的 `opens`） @returns {Promise<'talk'|'done'|'keep'>}
  */
-export async function runUnlisted(app, name, words) {
+export async function runUnlisted(app, name, words, opens = false) {
   if (!app.current) {
-    // 空会话里打 `/goal <目标>`（`commands.json` 的 `opens_session`）：照说第一句话一样先开会话，再交核心
-    const opens = (res.commands.opens_session ?? []).includes(name.toLowerCase());
+    // 空会话里打 `/goal <目标>`（`commands.json` 的 `opens_session`，核心目录里列着的才算：BS-1 下下起包没装就没有它带的命令）：
+    // 照说第一句话一样先开会话，再交核心
     if (opens && words) {
       try {
         await app.ensureSession();

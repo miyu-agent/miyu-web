@@ -57,7 +57,7 @@ const emptyNone = () => new Set((res.commands.empty_none ?? []).map((/** @type {
 export class Composer {
   /**
    * @param {{send: (text: string, extra: Record<string, any>) => Promise<boolean>, interrupt: () => void, cycleLevel: () => void,
-   *   unlisted: (name: string, words: string|null) => Promise<'talk'|'done'|'keep'>,
+   *   unlisted: (name: string, words: string|null, opens: boolean) => Promise<'talk'|'done'|'keep'>,
    *   command: (spec: import('../model/commands.js').Spec, words: string|null) => void,
    *   history: {load: () => import('../model/history.js').Item[], save: (items: import('../model/history.js').Item[]) => void},
    *   commandsOpened?: () => void, allCommands?: () => Promise<import('../model/commands.js').Spec[]>,
@@ -364,7 +364,7 @@ export class Composer {
       this.asking = true;
       let kind;
       try {
-        kind = await this.on.unlisted(line.name, line.words);
+        kind = await this.on.unlisted(line.name, line.words, !!line.opens);
       } finally {
         this.asking = false;
       }
