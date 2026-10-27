@@ -240,6 +240,8 @@ export async function boot(root) {
         signOut: host.signOut ?? null,
         /** 注册链接（账号页的「邀请」）：直接连网页软件的才有，走桥的交 `null` */
         inviteLink: host.inviteLink,
+        /** 这台浏览器记着的几个账号（左下角的头像、菜单，蓝图「连核心」第 1 条「选择账号」）：直接连网页软件的才有，走桥的是 `null` */
+        accounts: host.accounts ? { list: () => host.accounts().list, switchTo: host.switchTo, add: host.addAccount, manage: host.manageAccounts } : null,
         /** 这次起页面时设了账号（一次性码连上的）：引导第一段「账号」算走过，不再出欢迎页 */
         signedUp: setup,
         cwd: info.cwd,

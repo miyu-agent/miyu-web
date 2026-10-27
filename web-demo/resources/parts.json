@@ -7229,5 +7229,29 @@
     "select": [
       ".si-remove"
     ]
+  },
+  "sidebar.account": {
+    "zh": "左栏：底下最左边当前账号那一块",
+    "select": [
+      ".sidebar-account"
+    ]
+  },
+  "sidebar.account-button": {
+    "zh": "左栏：当前账号的头像按钮",
+    "select": [
+      ".sidebar-account-button"
+    ]
+  },
+  "sidebar.account-face": {
+    "zh": "左栏：账号的头像（账号名的首字）",
+    "select": [
+      ".sidebar-account-face"
+    ]
+  },
+  "sidebar.account-menu": {
+    "zh": "左栏：切换账号的小菜单",
+    "select": [
+      ".sidebar-account-menu"
+    ]
   }
 }

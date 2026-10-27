@@ -60,7 +60,10 @@
     "new_session_nav": "New session",
     "cancel": "Cancel",
     "project_delete_ask": "Delete project “{name}”?",
-    "project_delete_yes": "Delete"
+    "project_delete_yes": "Delete",
+    "account_menu": "Switch account",
+    "add_account": "Add account",
+    "manage_accounts": "Manage accounts"
   },
   "crumbs": {
     "label": "Subagent session path",

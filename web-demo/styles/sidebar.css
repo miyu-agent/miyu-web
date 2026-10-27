@@ -160,6 +160,19 @@
 .sidebar-footer { padding: calc(11px * var(--space)) calc(12px * var(--space)) max(calc(12px * var(--space)), env(safe-area-inset-bottom)); }
 .sidebar-actions { display: flex; align-items: center; justify-content: flex-end; margin-top: calc(11px * var(--space)); gap: calc(2px * var(--space)); }
 .sidebar-slot { display: contents; }
+/* 最左边当前账号的头像（直接连网页软件的；蓝图「连核心」第 1 条「选择账号」）：账号名的首字，点了往上开切换账号的小菜单 */
+.sidebar-account { position: relative; display: flex; margin-right: auto; }
+.sidebar-account:empty { display: none; }
+.sidebar-account-button {
+  display: grid; width: calc(32px * var(--space)); height: calc(32px * var(--space)); padding: 0; place-items: center; border: 0; border-radius: var(--r-7); background: none; cursor: pointer;
+}
+.sidebar-account-button:hover, .sidebar-account-button[aria-expanded="true"] { background: var(--ghost-hover, color-mix(in srgb, var(--text) 9%, transparent)); }
+.sidebar-account-face {
+  display: grid; width: 24px; height: 24px; flex: none; place-items: center; border-radius: var(--r-round); background: color-mix(in srgb, var(--accent) 22%, var(--surface-2));
+  color: var(--text); font-size: 12px; font-weight: 600; line-height: 1;
+}
+.session-menu.sidebar-account-menu { left: 0; right: auto; min-width: 180px; }
+.sidebar-account-menu .sidebar-account-face { width: 18px; height: 18px; font-size: 10px; }
 
 /* 对话区左上角：收起以后的展开按钮，窄屏上的菜单按钮 */
 .stage-float { position: absolute; top: 10px; left: 12px; z-index: 15; display: flex; gap: calc(4px * var(--space)); }

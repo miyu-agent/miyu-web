@@ -60,7 +60,10 @@
     "new_session_nav": "新しいセッション",
     "cancel": "キャンセル",
     "project_delete_ask": "プロジェクト「{name}」を削除しますか？",
-    "project_delete_yes": "削除する"
+    "project_delete_yes": "削除する",
+    "account_menu": "アカウントを切り替え",
+    "add_account": "アカウントを追加",
+    "manage_accounts": "アカウント管理"
   },
   "crumbs": {
     "label": "サブエージェントのセッションの位置",

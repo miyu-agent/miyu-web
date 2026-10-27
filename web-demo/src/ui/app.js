@@ -50,7 +50,7 @@ export class App {
   /**
    * @param {import('../core/store.js').Store} store
    * @param {import('../core/connection.js').Connection} conn
-   * @param {{cwd: string|null, home: string|null, account?: string}} info 服务 `host`：新会话在哪个目录里干活（账号的工作区，握手回应的 `host.workspace`）、家目录、登录成的账号
+   * @param {{cwd: string|null, home: string|null, account?: string, accounts?: any}} info 服务 `host`：新会话在哪个目录里干活（账号的工作区，握手回应的 `host.workspace`）、家目录、登录成的账号
    * @param {any} ctx 软件包 `app` 的上下文：声明挂载位、画挂进来的东西（蓝图 `web/architecture.md`）
    * @param {() => any} lightbox 交回现在的灯箱（软件包 lightbox；没装是 `undefined`）
    */
@@ -264,6 +264,8 @@ export class App {
     ctx.effect(() => mountList(this.composer.takeoverEl, ctx.slots, 'composer.takeover', failedSlot));
     ctx.effect(() => ctx.slots.watch('composer.payload', () => this.composer.syncButton()));
     // 左栏底下一行靠右、换主题按钮左边的按钮（设置页这类软件包画，蓝图「左栏」的「底下一行」）
+    // 左栏底下最左边当前账号的头像：直接连网页软件、知道是哪个账号的才画（蓝图「连核心」第 1 条「选择账号」）
+    if (info.accounts && info.account) this.sidebar.setAccount(info.account, info.accounts);
     ctx.slots.declare('sidebar.actions', 'list');
     ctx.effect(() => mountList(this.sidebar.actions, ctx.slots, 'sidebar.actions', failedSlot));
     // 框上面的一叠：挂进 `composer.above` 的（待办这类软件包）在流里、占着地方，下面是运行状态行，再下面是框
