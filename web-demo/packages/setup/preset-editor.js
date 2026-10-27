@@ -8,7 +8,7 @@
 import { h, icon, replace, hasIcon, iconNames } from '../../src/lib/dom.js';
 import { field, askFirst } from './form.js';
 import { refusalText } from './persona-editor.js';
-import { featureGroups, presetSections, summaryChange } from './model.js';
+import { featureGroups, presetSections, filterSections, summaryChange, HOME_PACKAGE } from './model.js';
 
 /** 预设页展开着的块记在浏览器里的名字 */
 const OPEN_KEY = 'preset_open';
@@ -35,6 +35,9 @@ export class PresetEditor {
     this.packageInfo = {};
     /** 展开着的块（包编号、单个功能的 `f:<编号>`），记在这个浏览器里（2026-10-27 项目主人：默认收起，记住展开过的） @type {Set<string>} */
     this.open = new Set(/** @type {string[]} */ (ctx.storage?.get?.(OPEN_KEY, []) ?? []));
+    /** 功能那一格搜的字（存了一项重画时留着） */
+    this.query = '';
+    this.findFocused = false;
   }
 
   async load() {
@@ -82,11 +85,29 @@ export class PresetEditor {
     // 段的先后、块的先后照 `presetSections`（内置的在前，别的按安装先后）；一段里排两列。旧核心分五段，包的功能那一段不写段名
     const titleOf = (/** @type {string|null} */ kind, /** @type {string|null} */ title) => (kind === 'group' ? title
       : kind === 'package' || kind === 'feature' || kind === 'home' ? null : t(`edit.feature_groups.${kind}`));
-    const features = h('div.setup-features', presetSections(featureGroups(list), this.packageInfo).map((sec) => {
-      const title = titleOf(sec.kind, sec.title);
-      return h('section.setup-feature-section', title ? h('div.setup-feature-group', title) : null,
-        h('div.setup-feature-cols', sec.blocks.map((b) => this.featureBlock(b, sec.kind === 'home' ? t('edit.feature_groups.home') : b.name))));
-    }));
+    const sections = presetSections(featureGroups(list), this.packageInfo);
+    // 「我的」那一块（种类那几段里也有）写「我的」
+    const nameOf = (/** @type {{package: string|null, name: string|null}} */ b) => (b.package === HOME_PACKAGE ? t('edit.feature_groups.home') : b.name);
+    const drawFeatures = () => {
+      const shown = filterSections(sections, this.query, nameOf);
+      if (!shown.length) return h('p.setup-empty', t('edit.no_match'));
+      return h('div.setup-features', shown.map((sec) => {
+        const title = titleOf(sec.kind, sec.title);
+        return h('section.setup-feature-section', title ? h('div.setup-feature-group', title) : null,
+          h('div.setup-feature-cols', sec.blocks.map((b) => this.featureBlock(b, nameOf(b)))));
+      }));
+    };
+    // 搜索功能（2026-10-27 项目主人：预设列表没法搜）：边打边筛，输入法选字时不筛；存了一项重画时照旧留着搜的字和焦点
+    const box = h('div', drawFeatures());
+    const input = /** @type {HTMLInputElement} */ (h('input.setup-find-input', { type: 'search', value: this.query, placeholder: t('edit.find'), 'aria-label': t('edit.find'), spellcheck: 'false', autocomplete: 'off' }));
+    const refilter = () => { this.query = input.value; replace(box, drawFeatures()); };
+    input.addEventListener('input', (e) => { if (!(/** @type {InputEvent} */ (e)).isComposing) refilter(); });
+    input.addEventListener('compositionend', refilter);
+    const focused = this.findFocused;
+    input.addEventListener('focus', () => { this.findFocused = true; });
+    input.addEventListener('blur', () => { this.findFocused = false; });
+    const features = h('div', h('label.setup-find', icon('search'), input), box);
+    if (focused) queueMicrotask(() => { input.focus(); input.setSelectionRange(input.value.length, input.value.length); });
     this.note = h('p.setup-error', { hidden: true });
     const remove = got.remove ? askFirst(this.kit, t(`edit.${got.remove}`), () => t(`edit.${got.remove}_ask`, { name: this.title.textContent || this.id }), () => this.drop()) : null;
     replace(this.body,
@@ -101,17 +122,19 @@ export class PresetEditor {
   /**
    * 一块：一个包（或「我的」）。有名字、不是只有一个同名功能的，头一行名字和总开关（有一个开着就开着；拨了一次写这几个功能全开、全关），
    * 下面功能缩进、暗字；只有一个同名功能的就是那一行；没有名字的（不归包的那几段）只列功能。
-   * @param {{items: any[], single: boolean}} b @param {string|null} name
+   * @param {{items: any[], shown?: any[], single: boolean}} b @param {string|null} name
    */
   featureBlock(b, name) {
     const live = b.items.filter((f) => f.installed !== false);
-    if (b.single || !name || !live.length) return h('div.setup-feature-block', b.items.map((f) => this.featureRow(f, false)));
+    // 筛着的时候只画对得上的那几行（`shown`），总开关照旧管整块
+    const shown = b.shown ?? b.items;
+    if (b.single || !name || !live.length) return h('div.setup-feature-block', shown.map((f) => this.featureRow(f, false)));
     const on = live.some((f) => f.on);
     const all = this.kit.toggle(on, (next) => {
       const changes = live.filter((f) => !!f.on !== next).map((f) => ({ key: `features.${f.id}`, value: next }));
       return changes.length ? this.set(changes) : true;
     });
-    const kids = h('div.setup-feature-kids', b.items.map((f) => this.featureRow(f, true)));
+    const kids = h('div.setup-feature-kids', shown.map((f) => this.featureRow(f, true)));
     const count = live.filter((f) => f.on).length;
     return this.fold(`p:${b.items[0]?.package ?? name}`, h('span.setup-feature-name', name), `${count}/${live.length}`, all, kids, 'div.setup-feature-block');
   }
@@ -122,14 +145,19 @@ export class PresetEditor {
    * @param {string} key 记展开的键 @param {Node} name @param {string} count @param {HTMLElement} toggle @param {HTMLElement} body @param {string} tag 外面那一层
    */
   fold(key, name, count, toggle, body, tag) {
-    const opened = () => this.open.has(key);
+    // 筛着的时候都展开、点了只在这一次收起，不记进展开过的
+    let forced = this.query.trim() ? true : null;
+    const opened = () => forced ?? this.open.has(key);
     const arrow = h('span.setup-fold-arrow', icon(opened() ? 'chevron-down' : 'chevron-right'));
     const head = h('div.setup-feature.is-head', { role: 'button', tabindex: '0', 'aria-expanded': String(opened()) }, name, h('span.setup-fold-count', count), arrow, toggle);
     const el = h(`${tag}.is-fold${opened() ? '.is-open' : ''}`, head, body);
     body.hidden = !opened();
     const flip = () => {
-      if (opened()) this.open.delete(key); else this.open.add(key);
-      this.ctx.storage?.set?.(OPEN_KEY, [...this.open]);
+      if (forced !== null) forced = !forced;
+      else {
+        if (opened()) this.open.delete(key); else this.open.add(key);
+        this.ctx.storage?.set?.(OPEN_KEY, [...this.open]);
+      }
       body.hidden = !opened();
       el.classList.toggle('is-open', opened());
       head.setAttribute('aria-expanded', String(opened()));

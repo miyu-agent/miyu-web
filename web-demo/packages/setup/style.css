@@ -253,6 +253,12 @@
 .setup-add:hover { background: var(--btn-hover, var(--surface-3)); color: var(--btn-fg-hover, var(--text)); }
 .setup-add svg { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
 .setup-features { display: grid; gap: 0; padding-top: calc(2px * var(--space)); }
+.setup-find { display: flex; align-items: center; gap: calc(6px * var(--space)); height: 32px; margin-bottom: calc(6px * var(--space)); padding: 0 calc(10px * var(--space)); border-radius: var(--field-radius, var(--r-8)); background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text-faint)); transition: background-color calc(0.15s * var(--motion-scale)) ease, box-shadow calc(0.15s * var(--motion-scale)) ease; }
+.setup-find:hover { background: var(--field-hover, var(--surface-3)); }
+.setup-find:focus-within { background: var(--field-bg-focus, var(--surface-1)); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
+.setup-find .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); flex: none; }
+.setup-find-input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: calc(13px * var(--text-scale)) var(--font-ui); }
+.setup-find-input::-webkit-search-cancel-button { display: none; }
 /* 分段的小标题（功能、MCP 服务、脚本、技能）：淡的小字，和上一段隔开一点；第一段不隔 */
 .setup-feature-group { padding: calc(12px * var(--space)) 0 calc(2px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
 .setup-feature-group:first-child { padding-top: 0; }

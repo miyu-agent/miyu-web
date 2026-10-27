@@ -240,6 +240,8 @@
         "restored": "已恢复出厂设置",
         "features": "功能",
         "no_features": "暂无可用功能",
+        "find": "搜索功能",
+        "no_match": "没有符合条件的功能",
         "not_installed": "未安装",
         "feature_groups": {
           "feature": "功能",
@@ -450,6 +452,8 @@
         "restored": "Defaults restored",
         "features": "Features",
         "no_features": "No features available",
+        "find": "Search features",
+        "no_match": "No matching features",
         "not_installed": "Not installed",
         "feature_groups": {
           "feature": "Features",
@@ -660,6 +664,8 @@
         "restored": "出荷時の状態に戻しました",
         "features": "機能",
         "no_features": "切り替えられる機能がありません",
+        "find": "機能を検索",
+        "no_match": "条件に合う機能がありません",
         "not_installed": "未インストール",
         "feature_groups": {
           "feature": "機能",

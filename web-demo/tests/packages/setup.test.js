@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave, featureGroups, presetSections } from '../../packages/setup/model.js';
+import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave, featureGroups, presetSections, filterSections } from '../../packages/setup/model.js';
 
 const list = [{ persona: 'engineer', name: null }, { persona: 'miyu', name: 'Miyu' }, { persona: 'bad', problem: 'persona.toml:2: …' }];
 
@@ -165,7 +165,7 @@ test('核心 ENV-1 起功能照包分组：包照第一次出现的先后、一�
     ['package(env):env-time,env-profile', 'package(read):read', 'package(kit):skill-notes', 'home:script-mine,mcp-x', 'other:gone', 'skill:skill-loose']);
 });
 
-test('预设的段和块（2026-10-27 项目主人：包一个总开关，内置的在前、别的按安装先后）：组一段、组内照 PG-1 的先后；别的出厂包；装的照安装先后；我的、不归包的接后面', () => {
+test('预设的段和块（2026-10-27 项目主人：包一个总开关，内置的在前、别的按安装先后；MCP、脚本、技能按种类分段）：组一段、组内照 PG-1 的先后；别的出厂包；装的照安装先后；种类各一段，我的、不归包的在段尾', () => {
   const info = {
     groups: [{ id: 'basesystem', name: '基础系统', packages: ['read', 'write', 'edit'] }],
     packages: [
@@ -180,14 +180,31 @@ test('预设的段和块（2026-10-27 项目主人：包一个总开关，内置
     { id: 'late', name: '后装的', package: 'late' }, { id: 'write', name: '写文件', package: 'write' }, { id: 'web', name: '搜网页', package: 'web' },
     { id: 'early', name: '先装的', package: 'early' }, { id: 'read', name: '读文件', package: 'read' },
     { id: 'script-mine', package: '~home' }, { id: 'skill-loose', name: '散的' },
+    { id: 'skill-env', name: '环境技能', package: 'env' }, { id: 'mcp-web', name: '联网搜索', package: 'web' }, { id: 'script-only', name: '只带脚本', package: 'only' },
   ];
   const shape = presetSections(featureGroups(list), info).map((sec) => `${sec.kind}${sec.title ? `[${sec.title}]` : ''}=${sec.blocks.map((b) => `${b.single ? '·' : ''}${b.package ?? '-'}:${b.items.map((f) => f.id).join(',')}`).join(' ')}`);
   assert.deepEqual(shape, [
     'group[基础系统]=·read:read ·write:write ·edit:edit',
     'package=env:env-time,env-cwd web:web ·early:early ·late:late',
-    'home[home]=~home:script-mine',
-    'skill[skill]=-:skill-loose',
-  ], '名字不一样的（联网搜索 / 搜网页）不算只有一行；装的照装的先后');
+    'mcp[mcp]=·web:mcp-web',
+    'script[script]=only:script-only ~home:script-mine',
+    'skill[skill]=env:skill-env -:skill-loose',
+  ], '名字不一样的（联网搜索 / 搜网页）不算只有一行；装的照装的先后；MCP、脚本、技能拆出来各一段（2026-10-27 项目主人），只带脚本的包不在包那一段');
   assert.deepEqual(presetSections(featureGroups([{ id: 'web' }]), {}).map((s) => s.kind), ['feature'], '旧核心照五段');
   assert.deepEqual(presetSections(featureGroups([{ id: 'b', package: 'b' }, { id: 'a', package: 'a' }]), {}).map((s) => s.blocks.map((b) => b.package).join()), ['b,a'], '没有 package.list 的照原来的先后');
+});
+
+test('预设功能的搜索（2026-10-27 项目主人）：块名对得上整块留着，功能名、编号对得上留那几行，总开关照旧管整块；没剩的块、段不要；空的原样', () => {
+  const sections = [
+    { title: '基础系统', kind: 'group', blocks: [{ package: 'read', name: '读文件', items: [{ id: 'read', name: '读文件' }], single: true }, { package: 'env', name: '注入环境信息', items: [{ id: 'env-time', name: '时间' }, { id: 'env-cwd', name: '工作目录' }], single: false }] },
+    { title: 'script', kind: 'script', blocks: [{ package: '~home', name: null, items: [{ id: 'script-weather', name: '天气' }], single: false }] },
+  ];
+  const nameOf = (b) => (b.package === '~home' ? '我的' : b.name);
+  const shape = (q) => filterSections(sections, q, nameOf).map((sec) => `${sec.kind}=${sec.blocks.map((b) => `${b.package}:${(b.shown ?? b.items).map((f) => f.id).join(',')}/${b.items.length}`).join(' ')}`);
+  assert.deepEqual(shape('目录'), ['group=env:env-cwd/2'], '功能对得上：留那一行，整块还是两个');
+  assert.deepEqual(shape('环境'), ['group=env:env-time,env-cwd/2'], '包名对得上：整块');
+  assert.deepEqual(shape('我的'), ['script=~home:script-weather/1'], '「我的」照界面的字');
+  assert.deepEqual(shape('SCRIPT-W'), ['script=~home:script-weather/1'], '编号、不分大小写');
+  assert.deepEqual(shape('没有'), []);
+  assert.equal(filterSections(sections, '  ', nameOf), sections);
 });

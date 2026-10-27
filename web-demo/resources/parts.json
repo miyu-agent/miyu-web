@@ -1840,6 +1840,18 @@
       ".setup-feature-name"
     ]
   },
+  "setup.find": {
+    "zh": "预设的功能：搜索框",
+    "select": [
+      ".setup-find"
+    ]
+  },
+  "setup.find-input": {
+    "zh": "预设的功能：搜索框里打字的那一格",
+    "select": [
+      ".setup-find-input"
+    ]
+  },
   "setup.tools": {
     "zh": "功能下面平铺的工具",
     "select": [
