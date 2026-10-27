@@ -83,12 +83,14 @@
       },
       "where": {
         "new": "每次新开会话",
-        "session": "会话「{title}」"
+        "session": "会话「{title}」",
+        "package": "推给包 {id}"
       },
       "skipped": {
         "session_gone": "会话已不在，任务停了",
         "preset_off": "会话的预设关了这个功能，这次没跑",
         "not_opened": "新会话开不成，这次没跑",
+        "package_unavailable": "包没在跑，这次没送到",
         "other": "上一次跳过了：{why}"
       },
       "running": "在跑（关了就暂停）",
@@ -230,12 +232,14 @@
       },
       "where": {
         "new": "New session each time",
-        "session": "Session \"{title}\""
+        "session": "Session \"{title}\"",
+        "package": "Sent to package {id}"
       },
       "skipped": {
         "session_gone": "The session is gone; the task stopped",
         "preset_off": "The session's preset turned this off; skipped",
         "not_opened": "Couldn't open a new session; skipped",
+        "package_unavailable": "The package isn't running; not delivered",
         "other": "Last run skipped: {why}"
       },
       "running": "Running (turn off to pause)",
@@ -377,12 +381,14 @@
       },
       "where": {
         "new": "毎回新しいセッション",
-        "session": "セッション「{title}」"
+        "session": "セッション「{title}」",
+        "package": "パッケージ {id} へ送る"
       },
       "skipped": {
         "session_gone": "セッションがなくなったため停止しました",
         "preset_off": "セッションのプリセットでオフのため今回は実行されませんでした",
         "not_opened": "新しいセッションを開けず今回は実行されませんでした",
+        "package_unavailable": "パッケージが動いていないため、今回は届いていません",
         "other": "前回はスキップ：{why}"
       },
       "running": "実行中（オフで一時停止）",

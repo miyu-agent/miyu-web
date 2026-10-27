@@ -4,7 +4,7 @@
 /**
  * 核心的一项（`schedule.list` 的）：有的才写。
  * @typedef {{id: string, when: {cron?: string, recurring?: boolean, at?: string, every?: number}, prompt: string,
- *   target?: {session?: string, new?: {persona?: string|null, preset?: string, cwd?: string}}, by?: {kind: string, session?: string},
+ *   target?: {session?: string, package?: {}, new?: {persona?: string|null, preset?: string, cwd?: string}}, by?: {kind: string, session?: string, package?: string},
  *   recurring?: boolean, paused?: boolean, loop?: 'fixed'|'dynamic', next?: string, last?: {at: string, result: string, session?: string}, created?: string}} Schedule
  */
 
@@ -97,12 +97,13 @@ export function whenText(s, now, t, here = localZone()) {
 }
 
 /**
- * 在哪跑：每次新开会话；跑在会话上的照标题写（会话表里没有的写编号）。
+ * 在哪跑：每次新开会话；跑在会话上的照标题写（会话表里没有的写编号）；推给软件包的写包的编号。
  * @param {Schedule} s @param {(id: string) => string|null} title @param {Text} t
  */
 export function whereText(s, title, t) {
   const id = s.target?.session;
   if (typeof id === 'string') return t('where.session', { title: title(id) ?? id });
+  if (s.target?.package) return t('where.package', { id: s.by?.package ?? '' });
   return t('where.new');
 }
 
