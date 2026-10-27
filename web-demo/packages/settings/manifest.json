@@ -295,7 +295,8 @@
         "new_pool": "新建模型池",
         "strategies": {
           "pin": "固定",
-          "rotate": "轮换"
+          "rotate": "轮换",
+          "ordered": "照先后"
         },
         "states": {
           "no_key": "未设置密钥，此供应商的模型均不可用",
@@ -947,7 +948,8 @@
         "new_pool": "New model pool",
         "strategies": {
           "pin": "Pin",
-          "rotate": "Rotate"
+          "rotate": "Rotate",
+          "ordered": "In order"
         },
         "states": {
           "no_key": "No API key, this provider's models are unavailable",
@@ -1599,7 +1601,8 @@
         "new_pool": "モデルプールを作成",
         "strategies": {
           "pin": "固定",
-          "rotate": "ローテーション"
+          "rotate": "ローテーション",
+          "ordered": "順番どおり"
         },
         "states": {
           "no_key": "キーがありません：このプロバイダーのモデルは使えません",

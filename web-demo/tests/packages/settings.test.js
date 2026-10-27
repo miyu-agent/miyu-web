@@ -492,3 +492,11 @@ test('点进去的一层能叠：child 的叠在上面，返回一层一层退�
   sub.closeAll();
   assert.equal(sub.page, null);
 });
+
+test('池的调用方式照清单的 options 列（核心 Q-4 上多了 ordered 照先后），认不得的不列，旧核心照旧两段', async () => {
+  const { strategiesOf } = await import('../../packages/settings/model.js');
+  assert.deepEqual(strategiesOf({ options: [{ value: 'pin' }, { value: 'rotate' }, { value: 'ordered' }] }), ['pin', 'rotate', 'ordered']);
+  assert.deepEqual(strategiesOf({ options: [{ value: 'pin' }, { value: 'later' }] }), ['pin']);
+  assert.deepEqual(strategiesOf({}), ['pin', 'rotate']);
+  assert.deepEqual(strategiesOf(null), ['pin', 'rotate']);
+});

@@ -601,3 +601,13 @@ export function pkgGroupsOf(rows, groups, query) {
     groups: groups.map((group) => ({ group, members: rows.filter((p) => inGroup(p) === group.id) })).filter((g) => g.members.length),
   };
 }
+
+/**
+ * 池的调用方式有哪几段：照清单这一项的 `options`（核心 Q-4 上多了 `ordered` 照先后），网页认得字的才列；旧核心没给的照旧固定、轮换两段。
+ * @param {{options?: {value: string}[]}|null} item `pools.<id>.strategy`
+ */
+export function strategiesOf(item) {
+  const known = ['pin', 'rotate', 'ordered'];
+  const listed = (item?.options ?? []).map((o) => o.value).filter((v) => known.includes(v));
+  return listed.length ? listed : ['pin', 'rotate'];
+}

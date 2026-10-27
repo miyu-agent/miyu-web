@@ -7,7 +7,7 @@
 import { h, icon } from '../../src/lib/dom.js';
 import { pickModels } from './picker.js';
 import { toggle } from './rows.js';
-import { itemFor, layerOf, validId, keySegment, moveMember, poolRemoval, duplicates, providerName, poolOrder } from './model.js';
+import { itemFor, layerOf, validId, keySegment, moveMember, poolRemoval, duplicates, providerName, poolOrder, strategiesOf } from './model.js';
 import { twinsOf, copyOf } from '../../src/lib/provider-copy.js';
 import { isFixedPool } from '../../src/lib/fixed-pools.js';
 
@@ -70,7 +70,7 @@ export function drawPools(dialog, list) {
     const now = /** @type {string[]} */ (members?.entry?.value ?? pool.models ?? []);
     const setMembers = async (next) => members && report(await dialog.save(members, { value: next }));
     const removal = poolRemoval(pool.name, dialog.got, layer);
-    const seg = h('div.set-seg', ['pin', 'rotate'].map((s) => h(`button.set-seg-item${pool.strategy === s ? '.is-on' : ''}`, {
+    const seg = h('div.set-seg', strategiesOf(strategy).map((s) => h(`button.set-seg-item${pool.strategy === s ? '.is-on' : ''}`, {
       type: 'button',
       onclick: async () => { if (strategy && pool.strategy !== s) report(await dialog.save(strategy, { value: s })); },
     }, t(`strategies.${s}`))));
