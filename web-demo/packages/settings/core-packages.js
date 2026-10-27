@@ -160,7 +160,9 @@ function groupPage(dialog, id) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const g = (dialog.pkgGroups ?? []).find((/** @type {any} */ x) => x.id === id) ?? { id };
   const all = (dialog.packages ?? []).filter((/** @type {any} */ p) => Array.isArray(p.groups) && p.groups.includes(id));
-  const installed = all.filter((/** @type {any} */ p) => p.status && !p.removed);
+  // 列的同列表：卸掉的出厂包照旧一行（开关关着），个数也照它；卸、装回照装着的、卸掉的有没有
+  const shown = all.filter((/** @type {any} */ p) => p.status);
+  const installed = shown.filter((/** @type {any} */ p) => !p.removed);
   const removed = all.filter((/** @type {any} */ p) => p.removed);
   const name = g.name ?? id;
   const act = async (/** @type {'package.remove'|'package.install'} */ method, /** @type {HTMLElement} */ button) => {
@@ -182,9 +184,9 @@ function groupPage(dialog, id) {
     h('div.set-pkg-card-text',
       h('div.set-pkg-card-name', name),
       g.summary ? h('p.set-pkg-card-desc', g.summary) : null,
-      h('p.set-pkg-card-meta', t('pkg.group_packages', { n: installed.length })),
+      h('p.set-pkg-card-meta', t('pkg.group_packages', { n: shown.length })),
       actions.length ? h('div.set-pkg-card-actions', actions) : null)));
-  return [card, installed.length ? h('section.set-group', h('div.set-rows', installed.map((/** @type {any} */ p) => packageRow(dialog, p, true)))) : null].filter(Boolean);
+  return [card, shown.length ? h('section.set-group', h('div.set-rows', shown.map((/** @type {any} */ p) => packageRow(dialog, p, true)))) : null].filter(Boolean);
 }
 
 /** 个人设置里把包 `id` 对自己关掉的那一项（核心 U23 末上：`config.schema` 给每个能关的包现拼一项）；核心没给的是 `null`。 @param {any} dialog @param {string} id */
