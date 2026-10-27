@@ -55,3 +55,12 @@ test('不是装卸包的、没有预览的不管', () => {
   assert.equal(packagePlan({ tool: 'package', install: '/x' }, null, t), null);
   assert.equal(packagePlan(undefined, null, t), null);
 });
+
+test('写组名的（核心 BS-1 中下修：{group, packages}）：恢复、卸载「基础系统」里的几个，下面一行列编号；一个都不动的写没有要动的；认不得的组写编号', () => {
+  const restore = { tool: 'package', install: 'basesystem', preview: { group: 'basesystem', packages: ['read', 'shell'] } };
+  assert.deepEqual(flat(packagePlan(restore, '/home/me', t)), ['恢复「基础系统」里的 2 个软件包', null, '软件包：read、shell']);
+  const remove = { tool: 'package', remove: 'basesystem', preview: { group: 'basesystem', packages: ['read'] } };
+  assert.deepEqual(flat(packagePlan(remove, '/home/me', t)), ['卸载「基础系统」里的 1 个软件包', null, '软件包：read']);
+  assert.deepEqual(flat(packagePlan({ tool: 'package', install: 'basesystem', preview: { group: 'basesystem', packages: [] } }, null, t)), ['「基础系统」里没有要恢复的软件包', null]);
+  assert.equal(packagePlan({ tool: 'package', install: 'later', preview: { group: 'later', packages: ['x'] } }, null, t)?.title, '恢复「later」里的 1 个软件包');
+});

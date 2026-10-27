@@ -22,6 +22,8 @@ export function packagePlan(detail, home, text) {
   const p = detail?.preview;
   if (detail?.tool !== 'package' || !p || typeof p !== 'object') return null;
   const doing = typeof detail.remove === 'string' ? 'remove' : typeof detail.enable === 'string' ? 'enable' : p.restores === true ? 'restore' : 'install';
+  // 写组名的（核心 BS-1 中下修：`{group, packages}`）：卸的照卸，装的是装回卸掉的出厂包
+  if (typeof p.group === 'string') return groupPlan(p, doing === 'remove' ? 'remove' : 'restore', text);
   const id = String(p.package ?? detail.remove ?? detail.enable ?? '');
   let title = text(`plan.${doing}`, { id });
   if (typeof p.version === 'string' && p.version) title += ` ${p.version}`;
@@ -41,6 +43,18 @@ export function packagePlan(detail, home, text) {
   }
   if (Number.isInteger(p.size) && Number.isInteger(p.files)) row('size', [text('plan.size', { size: bytes(p.size), files: p.files })]);
   return { title, path, rows };
+}
+
+/**
+ * 写组名的卡片：问题行「恢复「基础系统」里的 20 个软件包」（组名照编号认，认不得的写编号），下面一行「软件包」照编号连；一个都不动的写没有要动的。
+ * @param {any} p @param {'remove'|'restore'} doing @param {(key: string, fields?: Record<string, any>) => string} text @returns {Plan}
+ */
+function groupPlan(p, doing, text) {
+  const ids = strings(p.packages);
+  const known = text(`plan.groups.${p.group}`);
+  const name = known === `plan.groups.${p.group}` ? p.group : known;
+  const title = ids.length ? text(`plan.group_${doing}`, { name, n: ids.length }) : text(`plan.group_${doing}_none`, { name });
+  return { title, path: null, rows: ids.length ? [{ label: text('plan.labels.packages'), items: [ids.join(text('plan.separator'))] }] : [] };
 }
 
 /** 「包含」那几样，照命令行的先后：程序、命令、后台页、吉祥物、接入、系统账号、MCP 服务、技能、脚本、斜杠命令、人格、预设（核心 P-11 下）、几项设置（卸的不算设置）。 */
