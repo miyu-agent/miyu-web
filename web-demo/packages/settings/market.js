@@ -314,7 +314,7 @@ async function run(dialog, id, call, done) {
   try {
     const got = await call();
     // 进度条至少留一会儿、列表重读完了再换成「已安装」：太快的一闪而过、中间闪回「安装」都像在闪（2026-10-21 项目主人）
-    await Promise.all([loadMarket(dialog, false, false), new Promise((r) => setTimeout(r, Math.max(0, BAR_MIN_MS - (performance.now() - started))))]);
+    await Promise.all([loadMarket(dialog, false, false), relist(dialog), new Promise((r) => setTimeout(r, Math.max(0, BAR_MIN_MS - (performance.now() - started))))]);
     m.busy = null;
     m.just = id;
     done(got);
@@ -324,6 +324,13 @@ async function run(dialog, id, call, done) {
     m.problems[id] = problemText(dialog, err);
     redraw(dialog);
   }
+}
+
+/** 没订着软件包推送的（成员订不了 `packages` 流，核心 U23下上）：装、卸完重读一次列表，软件包页照它 @param {any} dialog */
+async function relist(dialog) {
+  if (dialog.feed?.live) return;
+  const got = await dialog.ctx.core.request('package.list', {}).catch(() => null);
+  if (Array.isArray(got?.packages)) dialog.packages = got.packages;
 }
 
 /** 核心拒的话（蓝图第 12a 条第 8 条） @param {any} dialog @param {any} err */
