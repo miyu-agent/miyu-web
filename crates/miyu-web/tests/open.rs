@@ -1,6 +1,7 @@
 //! `miyu-web open`（施工 W-9，`web-module.md`「怎么走」第十一条）：网页软件没在跑先拉起来（真的 `miyu-web serve`）；
-//! 没设过密码、`--reset` 的网址带 `#setup=<一次性码>`，别的不带；`--package` 的再带 `package=<编号>`（施工 F-6 下）；`--print` 印网址和提醒；交不给浏览器的照 `--print` 办；
-//! `--logout` 说作废了几个。核心是替身：照方法名答。
+//! 没设过密码、`--reset` 的网址带 `#setup=<一次性码>`，别的带交接票 `#ticket=<票>&as=<账号>`（网页-乙）、旧核心要不到票的什么都不带；
+//! `--package` 的再带 `package=<编号>`（施工 F-6 下）；带凭据的交给浏览器的是只给本人的跳转页；`--print` 印网址和提醒；交不给浏览器的照
+//! `--print` 办；`--logout` 说作废了几个。核心是替身：照方法名答。
 
 use std::path::Path;
 use std::process::Command;
@@ -14,9 +15,15 @@ use miyu_ipc::Listener;
 use miyu_web::open::{Browser, Launch, Open, open};
 
 const CODE: &str = "9f03b21c9f03b21c9f03b21c9f03b21c9f03b21c9f03b21c9f03b21c9f03b21c";
+const TICKET: &str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
-/// 核心的替身：一条条连接接着，`hello` 回中文，`account.setup_code` 照 `first` 回，`account.logout` 写了 `all` 的回作废了 3 个。
-fn answer(mut core: Listener, first: bool) {
+/// 核心的替身：一条条连接接着，`hello` 回中文，`account.setup_code` 照 `first` 回，`login.ticket` 照 `ticket` 回（旧核心没有这个
+/// 方法的回空的），`account.logout` 写了 `all` 的回作废了 3 个。
+fn answer(core: Listener, first: bool) {
+    answer_with(core, first, true);
+}
+
+fn answer_with(mut core: Listener, first: bool, ticket: bool) {
     tokio::spawn(async move {
         while let Ok(connection) = core.accept().await {
             tokio::spawn(async move {
@@ -31,6 +38,9 @@ fn answer(mut core: Listener, first: bool) {
                         }
                         Some("account.setup_code") => {
                             json!({"code": CODE, "expires": "2026-10-04T00:05:00.000Z", "first": first})
+                        }
+                        Some("login.ticket") if ticket => {
+                            json!({"ticket": TICKET, "expires": "2026-10-28T00:01:00.000Z", "account": "小 明"})
                         }
                         // 只有 `all` 的作废全部；本机令牌的连接不写 `all` 真核心会拒。
                         Some("account.logout") if request["params"]["all"] == json!(true) => {
@@ -67,6 +77,37 @@ impl Browser for FakeBrowser {
     }
 }
 
+/// 交出去的是跳转页的：读出它要跳去的网址（`location.replace("…")` 里那一段）；不是的照原样。
+fn followed(url: &str) -> String {
+    let Some(path) = url.strip_prefix("file://") else {
+        return url.to_string();
+    };
+    let path = path.replace("%20", " ");
+    let path = if cfg!(windows) {
+        path.trim_start_matches('/').to_string()
+    } else {
+        path
+    };
+    let page = std::fs::read_to_string(&path).expect("跳转页在");
+    let inside = page
+        .split("location.replace(")
+        .nth(1)
+        .and_then(|rest| rest.split(");").next())
+        .expect("有跳转");
+    serde_json::from_str::<String>(&inside.replace("<\\/", "</")).expect("是一段字")
+}
+
+/// 交给浏览器的几个，照跳到哪儿写。
+fn went(browser: &FakeBrowser) -> Vec<String> {
+    browser
+        .opened
+        .lock()
+        .expect("没坏")
+        .iter()
+        .map(|url| followed(url))
+        .collect()
+}
+
 /// 拉起的是真的 `miyu-web serve`：数据根、资源目录照这个临时目录，空闲 1 秒就走。
 fn launch(home: &Home) -> Launch {
     let resources = home.dir.join("resources");
@@ -85,6 +126,7 @@ fn launch(home: &Home) -> Launch {
     assert_ne!(quick, manifest, "清单里有空闲的默认值");
     std::fs::write(resources.join("packages/web/package.toml"), quick).expect("写得进");
     let data = home.root.path().to_path_buf();
+    let data_forget = data.clone();
     let pages = home.pages.clone();
     Launch {
         serve: Box::new(move |port| {
@@ -100,6 +142,15 @@ fn launch(home: &Home) -> Launch {
             serve
         }),
         core: no_core(),
+        forget: Box::new(move |page| {
+            let mut forget = Command::new(env!("CARGO_BIN_EXE_miyu-web"));
+            forget
+                .arg("forget")
+                .arg(page)
+                .env("MIYU_HOME", &data_forget)
+                .env("MIYU_WEB_FORGET_MS", "300");
+            forget
+        }),
     }
 }
 
@@ -146,9 +197,10 @@ async fn the_first_time_opens_with_a_code_after_starting_the_web_ui() {
     assert_eq!(code, 0, "{err}");
     let site = miyu_web::serve::address(&home.root).expect("拉起来了、写了地址");
     assert!(miyu_web::serve::running(&home.root));
-    assert_eq!(
-        *browser.opened.lock().expect("没坏"),
-        [format!("{site}/#setup={CODE}")]
+    assert_eq!(went(&browser), [format!("{site}/#setup={CODE}")]);
+    assert!(
+        browser.opened.lock().expect("没坏")[0].starts_with("file://"),
+        "带码的交跳转页，码不进进程列表"
     );
     assert_eq!(out, "", "网址交给了浏览器，不印");
     assert!(err.contains("还没设过网页的登录密码"), "{err}");
@@ -167,11 +219,11 @@ async fn browser_again(home: &Home, args: Open, works: bool) -> Vec<String> {
     let browser = browser(works);
     let (code, _, _) = run_open(home, args, &browser).await;
     assert_eq!(code, 0);
-    browser.opened.into_inner().expect("没坏")
+    went(&browser)
 }
 
 #[tokio::test]
-async fn later_opens_carry_no_code_unless_reset() {
+async fn later_opens_carry_a_ticket_unless_reset() {
     let home = Home::new();
     answer(fake_core(&home), false);
     let browser = browser(true);
@@ -186,11 +238,12 @@ async fn later_opens_carry_no_code_unless_reset() {
     .await;
     assert_eq!(code, 0, "{err}");
     let site = miyu_web::serve::address(&home.root).expect("有地址");
-    assert_eq!(*browser.opened.lock().expect("没坏"), [format!("{site}/")]);
-    assert!(
-        !err.contains("还没设过") && !err.contains("--print"),
-        "{err}"
+    assert_eq!(
+        went(&browser),
+        [format!("{site}/#ticket={TICKET}&as=%E5%B0%8F%20%E6%98%8E")],
+        "带票、账号照网址的写法编码"
     );
+    assert!(!err.contains("还没设过") && !err.contains(TICKET), "{err}");
     let reset = browser_again(
         &home,
         Open {
@@ -221,8 +274,10 @@ async fn a_named_package_rides_after_the_hash() {
     assert_eq!(code, 0, "{err}");
     let site = miyu_web::serve::address(&home.root).expect("有地址");
     assert_eq!(
-        *browser.opened.lock().expect("没坏"),
-        [format!("{site}/#package=onebot")]
+        went(&browser),
+        [format!(
+            "{site}/#ticket={TICKET}&as=%E5%B0%8F%20%E6%98%8E&package=onebot"
+        )]
     );
     let reset = browser_again(
         &home,
@@ -276,6 +331,144 @@ async fn print_and_a_missing_browser_print_the_address() {
         format!("{site}/#setup={CODE}\n"),
         "交不出去照 --print 办"
     );
+}
+
+#[tokio::test]
+async fn an_old_core_without_tickets_opens_the_bare_address() {
+    let home = Home::new();
+    answer_with(fake_core(&home), false, false);
+    let browser = browser(true);
+    let (code, _, err) = run_open(
+        &home,
+        Open {
+            port: Some(0),
+            ..Open::default()
+        },
+        &browser,
+    )
+    .await;
+    assert_eq!(code, 0, "{err}");
+    let site = miyu_web::serve::address(&home.root).expect("有地址");
+    assert_eq!(
+        *browser.opened.lock().expect("没坏"),
+        [format!("{site}/")],
+        "不带凭据的直接交"
+    );
+    assert!(!err.contains("--print"), "{err}");
+}
+
+#[tokio::test]
+async fn print_with_a_ticket_warns_about_sixty_seconds() {
+    let home = Home::new();
+    answer(fake_core(&home), false);
+    let (code, out, err) = run_open(
+        &home,
+        Open {
+            port: Some(0),
+            print: true,
+            ..Open::default()
+        },
+        &browser(true),
+    )
+    .await;
+    assert_eq!(code, 0, "{err}");
+    let site = miyu_web::serve::address(&home.root).expect("有地址");
+    assert_eq!(
+        out,
+        format!("{site}/#ticket={TICKET}&as=%E5%B0%8F%20%E6%98%8E\n")
+    );
+    assert!(err.contains("60 秒内有效，只能用一次"), "{err}");
+    let jumps = home.root.run().join(miyu_web::open::JUMPS);
+    assert!(
+        std::fs::read_dir(&jumps).map_or(true, |mut dir| dir.next().is_none()),
+        "--print 不写跳转页"
+    );
+}
+
+#[tokio::test]
+async fn the_jump_page_is_private_and_forgotten() {
+    let home = Home::new();
+    answer(fake_core(&home), false);
+    let browser = browser(true);
+    let (code, _, err) = run_open(
+        &home,
+        Open {
+            port: Some(0),
+            ..Open::default()
+        },
+        &browser,
+    )
+    .await;
+    assert_eq!(code, 0, "{err}");
+    let url = browser.opened.lock().expect("没坏")[0].clone();
+    let jumps = home.root.run().join(miyu_web::open::JUMPS);
+    let pages: Vec<_> = std::fs::read_dir(&jumps)
+        .expect("有目录")
+        .flatten()
+        .map(|e| e.path())
+        .collect();
+    assert_eq!(pages.len(), 1, "{pages:?}");
+    assert!(miyu_web::open::is_jump(&pages[0]));
+    assert!(
+        url.ends_with(&*pages[0].file_name().expect("有名字").to_string_lossy()),
+        "{url}"
+    );
+    let page = std::fs::read_to_string(&pages[0]).expect("读得到");
+    assert!(
+        page.contains("location.replace(") && page.contains("no-referrer"),
+        "{page}"
+    );
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mode = |p: &Path| std::fs::metadata(p).expect("在").permissions().mode() & 0o777;
+        assert_eq!(mode(&pages[0]), 0o600, "只给本人读");
+        assert_eq!(mode(&jumps), 0o700);
+    }
+    // `forget` 过一会儿删掉（测试里等 300 毫秒）
+    for _ in 0..100 {
+        if !pages[0].exists() {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+    }
+    assert!(!pages[0].exists(), "forget 删掉了");
+}
+
+#[tokio::test]
+async fn forget_only_touches_jump_pages_and_open_sweeps_stale_ones() {
+    let home = Home::new();
+    let jumps = home.root.run().join(miyu_web::open::JUMPS);
+    std::fs::create_dir_all(&jumps).expect("建得了");
+    // 不是跳转页的、不在 run/open 里的：forget 不碰
+    let other = jumps.join("notes.html");
+    std::fs::write(&other, "x").expect("写得进");
+    let outside = home
+        .root
+        .run()
+        .join("0123456789abcdef0123456789abcdef.html");
+    std::fs::write(&outside, "x").expect("写得进");
+    miyu_web::open::forget(&home.root, &other, std::time::Duration::ZERO);
+    miyu_web::open::forget(&home.root, &outside, std::time::Duration::ZERO);
+    assert!(other.exists() && outside.exists());
+    // 放久了的跳转页：下一次写跳转页时删掉
+    let stale = jumps.join("ffffffffffffffffffffffffffffffff.html");
+    std::fs::write(&stale, "x").expect("写得进");
+    let old = std::time::SystemTime::now() - std::time::Duration::from_secs(600);
+    std::fs::File::options()
+        .write(true)
+        .open(&stale)
+        .expect("开得了")
+        .set_modified(old)
+        .expect("改得了时刻");
+    let fresh =
+        miyu_web::open::jump(&home.root, "http://127.0.0.1:1/#ticket=ab</script>").expect("写得了");
+    assert!(!stale.exists(), "放久了的删掉了");
+    assert!(other.exists(), "不是跳转页的不删");
+    let page = std::fs::read_to_string(&fresh).expect("读得到");
+    assert!(!page.contains("ab</script>"), "</ 拆开了：{page}");
+    miyu_web::open::forget(&home.root, &fresh, std::time::Duration::ZERO);
+    assert!(!fresh.exists());
 }
 
 #[tokio::test]

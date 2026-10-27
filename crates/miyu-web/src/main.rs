@@ -1,5 +1,5 @@
-//! 程序 `miyu-web`（`web-module.md`「怎么走」第九条、第十一条，施工 W-9）：`open` 是 `miyu web` 交来的，`serve` 是 `open`
-//! 拉起来的，不写进帮助。
+//! 程序 `miyu-web`（`web-module.md`「怎么走」第九条、第十一条，施工 W-9）：`open` 是 `miyu web` 交来的，`serve`、`forget` 是 `open`
+//! 拉起来的，不写进帮助（`forget <跳转页>`：过 30 秒删掉 `open` 写的跳转页，`web-ui.md`「怎么走」第二条第 4 款）。
 //!
 //! - `miyu-web serve [--port <端口>]`
 //! - `miyu-web open [--port <端口>] [--print] [--reset] [--logout] [--package <编号>]`
@@ -7,6 +7,7 @@
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 use std::sync::Arc;
+use std::time::Duration;
 
 use miyu_client::places::DataRoot;
 use miyu_client::places::Env;
@@ -23,6 +24,9 @@ fn main() -> ExitCode {
     let Some((command, rest)) = args.split_first() else {
         return usage();
     };
+    if command == "forget" {
+        return forget(rest);
+    }
     let Some(parsed) = parse(rest) else {
         return usage();
     };
@@ -57,6 +61,11 @@ fn main() -> ExitCode {
                     serve
                 }),
                 core: Arc::new(core),
+                forget: Box::new(|page| {
+                    let mut forget = Command::new(myself());
+                    forget.arg("forget").arg(page);
+                    forget
+                }),
             };
             let code = runtime.block_on(open(
                 &root,
@@ -138,6 +147,22 @@ fn parse(args: &[String]) -> Option<Open> {
         }
     }
     Some(open)
+}
+
+/// `forget <跳转页>`：过一会儿删掉 `open` 写的跳转页（只删 `run/open/` 里的）。等多久照 `MIYU_WEB_FORGET_MS`（测试用），不写是 30 秒。
+fn forget(rest: &[String]) -> ExitCode {
+    let [page] = rest else {
+        return usage();
+    };
+    let Ok(root) = DataRoot::locate(&Env::current()) else {
+        return ExitCode::from(1);
+    };
+    let after = std::env::var("MIYU_WEB_FORGET_MS")
+        .ok()
+        .and_then(|ms| ms.parse().ok())
+        .map_or(Duration::from_secs(30), Duration::from_millis);
+    miyu_web::open::forget(&root, Path::new(page), after);
+    ExitCode::SUCCESS
 }
 
 /// 用法不对。

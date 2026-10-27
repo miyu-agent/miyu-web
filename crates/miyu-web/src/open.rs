@@ -3,15 +3,18 @@
 //! 1. 照终端的样子连核心（出示本机令牌，没在跑就拉起来），握手拿到人的语言。
 //! 2. `--logout`：`account.logout`、`all: true`，说作废了几个，不碰网页软件。
 //! 3. 网页软件没在跑（`run/web.lock` 没人拿着、没有 `run/web`）就拉起 `serve`，等那一行最多 10 秒。
-//! 4. 问一次 `account.setup_code`：写了 `--reset` 的、还没设过密码的（`first`），网址带 `#setup=<一次性码>`；别的网址就是
-//!    地址本身，页面用存着的登录令牌，没有的问用户名和密码（要了没用的码 5 分钟后自己作废）。
-//! 5. `--print`、交不给浏览器的：印网址（带了码的另印一句提醒）。别的交给浏览器打开。
+//! 4. 问一次 `account.setup_code`：写了 `--reset` 的、还没设过密码的（`first`），网址带 `#setup=<一次性码>`；别的要一张交接票
+//!    （`login.ticket`，核心 LT-1），网址带 `#ticket=<票>&as=<账号>`（im 设计 07 第 3.6 节、网页-乙），页面存着这个账号的令牌的照它、
+//!    没有的拿票连上；旧核心要不到票的网址就是地址本身（要了没用的码 5 分钟后自己作废）。
+//! 5. `--print`、交不给浏览器的：印网址（带了码、票的另印一句提醒）。别的交给浏览器打开：带凭据的不直接交（交出去的参数进进程
+//!    列表），写一个只给本人的跳转页（[`jump`]），交它的 `file://` 地址，再拉起 `miyu-web forget` 过一会儿删掉它。
 //!
 //! 网址印在标准输出上（脚本能拿）；别的话印在标准错误上。照终端的样子连核心、开浏览器这两样在 `miyu-webserve`（施工
 //! O-16，`webserve.md`「搬家表」）。
 
 use std::io::Write;
-use std::process::Command;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 use std::time::Duration;
 
 use serde_json::json;
@@ -45,7 +48,15 @@ pub struct Launch {
     pub serve: Box<dyn Fn(Option<u16>) -> Command + Send + Sync>,
     /// 拉起核心：主程序加 `core`。
     pub core: CoreCommand,
+    /// 过一会儿删掉一个跳转页：自己加 `forget <跳转页>`（跟终端脱开、不等它）。
+    pub forget: Box<dyn Fn(&Path) -> Command + Send + Sync>,
 }
+
+/// 跳转页放在 `run/` 下的哪个目录（`web-ui.md`「怎么走」第二条第 4 款）。
+pub const JUMPS: &str = "open";
+
+/// 放了多久的跳转页下一次 `open` 顺手删掉（`forget` 没跑完的兜底）。
+const STALE: Duration = Duration::from_secs(120);
 
 /// 照 `open` 走一遍，交回退出码。
 pub async fn open(
@@ -103,13 +114,33 @@ pub async fn open(
         .as_str()
         .filter(|_| open.reset || first)
         .map(str::to_string);
-    let url = address_of(&site, code.as_deref(), open.package.as_deref());
-    if !open.print && browser.open(&url) {
+    // 不带码的要一张交接票（网页-乙）：旧核心没有 `login.ticket`、回应没有 `account` 的不带
+    let ticket = match code {
+        Some(_) => None,
+        None => core
+            .call("ticket", "login.ticket", json!({}))
+            .await
+            .ok()
+            .and_then(|got| {
+                let ticket = got["ticket"].as_str().filter(|t| hex(t))?.to_string();
+                let account = got["account"]
+                    .as_str()
+                    .filter(|a| !a.is_empty())?
+                    .to_string();
+                Some((ticket, account))
+            }),
+    };
+    let handed = ticket
+        .as_ref()
+        .map(|(ticket, account)| (ticket.as_str(), account.as_str()));
+    let url = address_of(&site, code.as_deref(), handed, open.package.as_deref());
+    let secret = code.is_some() || ticket.is_some();
+    if !open.print && hand(root, &url, secret, launch, browser) {
         if first && !open.reset {
             say(err, &language.first());
         }
         say(err, &language.opened(&site));
-        if code.is_some() {
+        if secret {
             say(err, &language.print_hint());
         }
         return 0;
@@ -118,15 +149,170 @@ pub async fn open(
     say(out, &url);
     if code.is_some() {
         say(err, &language.code_warning());
+    } else if ticket.is_some() {
+        say(err, &language.ticket_warning());
     }
     0
 }
 
-/// 印一行；印不出来也没有别处可说了。
-/// 交给浏览器的网址：`#` 后面是一次性码（`setup=`）、点名的软件后台页（`package=`），都没有的不带 `#`。
-fn address_of(site: &str, code: Option<&str>, package: Option<&str>) -> String {
+/// 交给浏览器：带凭据的（`secret`）写跳转页、交它的地址、拉起 `forget`；写不了跳转页的不交（照 `--print` 办）。交回交没交出去。
+fn hand(root: &DataRoot, url: &str, secret: bool, launch: &Launch, browser: &dyn Browser) -> bool {
+    if !secret {
+        return browser.open(url);
+    }
+    let Ok(page) = jump(root, url) else {
+        return false;
+    };
+    let opened = browser.open(&file_url(&page));
+    let mut forget = (launch.forget)(&page);
+    forget
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        // 跟终端脱开：关了终端也照样删
+        forget.process_group(0);
+    }
+    if forget.spawn().is_err() {
+        // 拉不起来：下一次 `open` 顺手删（[`STALE`]）。
+    }
+    opened
+}
+
+/// 写一个跳转页（im 设计 07 第 3.6 节）：`run/open/<16 个随机字节的十六进制>.html`，只给本人（Unix 上目录 0700、文件 0600；Windows 上
+/// 数据根在本人的用户目录下，同本机令牌），里面用 `location.replace` 跳到 `url`，不留历史、不带 Referer。先删掉放久了的。
+///
+/// # Errors
+///
+/// 建不了目录、写不了文件、拿不到随机数。
+pub fn jump(root: &DataRoot, url: &str) -> std::io::Result<PathBuf> {
+    let dir = root.run().join(JUMPS);
+    private_dir(&dir)?;
+    sweep(&dir);
+    let mut bytes = [0u8; 16];
+    getrandom::fill(&mut bytes).map_err(std::io::Error::other)?;
+    let name: String = bytes.iter().map(|b| format!("{b:02x}")).collect();
+    let path = dir.join(format!("{name}.html"));
+    let mut options = std::fs::OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut file = options.open(&path)?;
+    // 网址写成 JS 的字符串；`</` 拆开，不会提前收掉 `<script>`
+    let quoted = serde_json::to_string(url)
+        .map_err(std::io::Error::other)?
+        .replace("</", "<\\/");
+    file.write_all(
+        format!(
+            "<!doctype html><meta charset=\"utf-8\"><meta name=\"referrer\" content=\"no-referrer\"><title>Miyu</title><script>location.replace({quoted});</script>\n"
+        )
+        .as_bytes(),
+    )?;
+    Ok(path)
+}
+
+/// 删掉 `dir` 里放了 [`STALE`] 以上的跳转页。
+fn sweep(dir: &Path) {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let old = entry
+            .metadata()
+            .and_then(|meta| meta.modified())
+            .ok()
+            .and_then(|at| at.elapsed().ok())
+            .is_some_and(|age| age > STALE);
+        if old && is_jump(&entry.path()) && std::fs::remove_file(entry.path()).is_err() {
+            // 删不掉：下一次再删。
+        }
+    }
+}
+
+/// 只给本人的目录：没有的建，有的把权限收回到只给本人（Unix）。
+fn private_dir(dir: &Path) -> std::io::Result<()> {
+    let mut builder = std::fs::DirBuilder::new();
+    builder.recursive(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        builder.mode(0o700);
+    }
+    builder.create(dir)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(dir, std::fs::Permissions::from_mode(0o700))?;
+    }
+    Ok(())
+}
+
+/// 是不是一个跳转页（`forget` 只删这种）：名字是 32 位十六进制加 `.html`。
+pub fn is_jump(path: &Path) -> bool {
+    path.file_name()
+        .and_then(|name| name.to_str())
+        .and_then(|name| name.strip_suffix(".html"))
+        .is_some_and(|stem| stem.len() == 32 && hex(stem))
+}
+
+/// `miyu-web forget <跳转页>`：过 `after` 删掉它；只删 `run/open/` 里的跳转页，别的不碰。
+pub fn forget(root: &DataRoot, page: &Path, after: Duration) {
+    let inside = page
+        .parent()
+        .zip(std::fs::canonicalize(root.run().join(JUMPS)).ok())
+        .is_some_and(|(parent, dir)| {
+            std::fs::canonicalize(parent).is_ok_and(|parent| parent == dir)
+        });
+    if !inside || !is_jump(page) {
+        return;
+    }
+    std::thread::sleep(after);
+    if std::fs::remove_file(page).is_err() {
+        // 已经没了、删不掉：下一次 `open` 顺手删。
+    }
+}
+
+/// 文件的 `file://` 地址：路径里字母、数字和 `-._~/` 以外的照 UTF-8 写成 `%XX`；Windows 的 `\` 换成 `/`、盘符前面多一个 `/`。
+fn file_url(path: &Path) -> String {
+    let text = path.to_string_lossy().replace('\\', "/");
+    let text = if text.starts_with('/') {
+        text
+    } else {
+        format!("/{text}")
+    };
+    let mut url = String::from("file://");
+    for byte in text.bytes() {
+        match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' | b'/' | b':' => {
+                url.push(char::from(byte))
+            }
+            _ => url.push_str(&format!("%{byte:02X}")),
+        }
+    }
+    url
+}
+
+/// 是不是十六进制（票、跳转页的名字）。
+fn hex(text: &str) -> bool {
+    !text.is_empty() && text.bytes().all(|b| b.is_ascii_hexdigit())
+}
+
+/// 交给浏览器的网址：`#` 后面是一次性码（`setup=`）或者交接票（`ticket=<票>&as=<账号>`，账号照网址的写法编码）、点名的软件后台页
+/// （`package=`），都没有的不带 `#`。
+fn address_of(
+    site: &str,
+    code: Option<&str>,
+    ticket: Option<(&str, &str)>,
+    package: Option<&str>,
+) -> String {
     let parts: Vec<String> = [
         code.map(|code| format!("setup={code}")),
+        ticket.map(|(ticket, account)| format!("ticket={ticket}&as={}", component(account))),
         package.map(|package| format!("package={package}")),
     ]
     .into_iter()
@@ -138,6 +324,19 @@ fn address_of(site: &str, code: Option<&str>, package: Option<&str>) -> String {
     }
 }
 
+/// 网址片段里的一格：字母、数字和 `-._~` 以外的照 UTF-8 写成 `%XX`。
+fn component(text: &str) -> String {
+    text.bytes()
+        .map(|byte| match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => {
+                char::from(byte).to_string()
+            }
+            _ => format!("%{byte:02X}"),
+        })
+        .collect()
+}
+
+/// 印一行；印不出来也没有别处可说了。
 fn say(to: &mut dyn Write, line: &str) {
     if writeln!(to, "{line}").is_err() {
         // 标准输出、标准错误关了：没有别处可说。

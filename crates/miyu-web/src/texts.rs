@@ -66,6 +66,14 @@ impl Language {
         )
     }
 
+    /// `--print` 带了交接票的提醒（网页-乙）。
+    pub(crate) fn ticket_warning(self) -> String {
+        self.pick(
+            "这个链接 60 秒内有效，只能用一次，别发给别人。",
+            "This link works once within 60 seconds. Do not share it.",
+        )
+    }
+
     /// 端口被占。
     pub(crate) fn port_in_use(self, port: &str) -> String {
         self.pick(
