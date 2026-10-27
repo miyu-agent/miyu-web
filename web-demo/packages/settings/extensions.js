@@ -122,7 +122,7 @@ export class Extensions {
       ? h('button.set-link', { type: 'button', onclick: () => { this.toggleSet(this.showing, id); this.redraw(id); } }, t(this.showing.has(id) ? 'ext.hide_output' : 'ext.show_output')) : null;
     const run = h('div.set-row',
       h('div.set-text', h('div.set-name', h('span', t('ext.run'))),
-        h(`p.set-desc${e.on && e.state === 'stopped' ? '.is-error' : ''}`, stateText(t, e)), peek),
+        h(`p.set-desc${failed(e) ? '.is-error' : ''}`, stateText(t, e)), peek),
       h('div.set-control', restart, toggle(e.on, (on) => (on ? this.turnOn(e) : this.act('extension.disable', { package: id })))));
     const output = this.showing.has(id) && stderr ? h('pre.set-ext-output', stderr) : null;
     const perms = caps.length ? h('div.set-row',
@@ -184,6 +184,9 @@ export class Extensions {
 }
 
 /** 「运行」那一行的说明：现在怎样。关着的只写「关着」（核心关了以后还留着上一次停下的原因，人关的不用再说为什么）。 @param {(key: string, fields?: any) => string} t @param {Entry} e */
+/** 停了、算故障的（开着、`stopped`，不是空闲了自己退的 `retired`，核心 8d6fdbbfb） @param {any} e */
+export const failed = (e) => !!e?.on && e.state === 'stopped' && e.reason !== 'retired';
+
 export function stateText(t, e) {
   if (!e.on) return t('ext.state.off');
   // 每人一份的（核心 IM-1 中下四）：看的人那一份还没起过，用到时才拉起，不是关着

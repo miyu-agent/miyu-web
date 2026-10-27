@@ -14,7 +14,7 @@ import { coreRow, groupBlock, toggle, textField, findBox, shell } from './rows.j
 import { splitKey, itemFor, plainItem, pkgSwitch, pkgGroupsOf, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy } from './model.js';
 import { openPage, probeSites } from './backstage.js';
 import { serverRow } from './mcp-servers.js';
-import { stateText } from './extensions.js';
+import { stateText, failed } from './extensions.js';
 
 /** 列表上不写的状态：开关已经说了 */
 const QUIET = new Set(['ready', 'off']);
@@ -303,7 +303,7 @@ function infoCard(dialog, p, e) {
     : p.available === false ? t('pkg.not_open')
     : p.covered && !bad ? t('pkg.covered')
     : QUIET.has(p.status) ? null : t(`pkg.status.${p.status}`);
-  const alarm = bad || (e && e.on && e.state === 'stopped');
+  const alarm = bad || failed(e);
   const from = typeof p.from === 'string' ? t(`pkg.from.${p.from}`) : null;
   const author = typeof p.author === 'string' && p.author.trim() ? p.author.trim() : null;
   // 每人一份的扩展（核心 IM-1 上：`process.scope` 是 `account`）暗字里接「每人一份」
@@ -353,7 +353,7 @@ function copiesGroup(dialog, e) {
   const rows = copies.map((/** @type {any} */ c) => {
     const key = `${e.package}:${c.account}`;
     const stderr = Array.isArray(c.stderr) ? c.stderr.join('\n') : c.stderr ?? '';
-    const stopped = e.on && c.state === 'stopped';
+    const stopped = failed({ ...c, on: e.on });
     const peek = stopped && stderr
       ? h('button.set-link', { type: 'button', onclick: () => { ext.toggleSet(ext.showing, key); ext.redraw(e.package); } }, t(ext.showing.has(key) ? 'ext.hide_output' : 'ext.show_output')) : null;
     return [
