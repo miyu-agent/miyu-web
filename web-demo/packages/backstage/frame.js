@@ -2,7 +2,8 @@
 //! 框和网页之间（软件包 `backstage`，蓝图 `web.md`「软件的页面」；核心 `package-pages.md`「框和网页之间怎么说」）：框第一次载入完，网页造一个
 //! `MessageChannel`，把一头交给框（只交这一次，后台页做成单页）；以后照 JSON-RPC 的写法说话，网页认的一律照它给框的那个包，框说自己是谁
 //! 不算数。方法只有 `context`、`settings.get`、`settings.set`（键要是它自己的，密钥类型给一段字的先存成密钥再写引用）、`call`（转
-//! `package.call`）；推送 `settings.changed`（核心推来 `config.changed`、有它的项）、`theme.changed`（网页换了主题、系统换了深浅）。
+//! `package.call`）；推送 `settings.changed`（核心推来 `config.changed`、有它的项）、`theme.changed`（网页换了主题、系统换了深浅）、
+//! `package.event`（它的程序经 `package.emit` 推的，照核心的原样）、`resync`（那些推送掉了队，页面重拉）。
 //! 2026-10-15 从设置页搬出来（原来借设置弹窗读着的配置，现在自己问核心）。
 
 /** 带给框的几个颜色：网页的样式变量 → 交出去的名字 */
@@ -27,6 +28,8 @@ export class FrameHost {
     /** @type {MessagePort|null} */
     this.port = null;
     this.handed = false;
+    /** 订着 `package` 流没有 */
+    this.following = false;
     // 只在第一次载入完交通道：框后来再载入（跳到别的地址）不再交，网页分不出载入的是谁
     frame.addEventListener('load', () => {
       if (this.handed || !frame.src) return;
@@ -35,6 +38,7 @@ export class FrameHost {
       this.port = channel.port1;
       this.port.onmessage = (e) => { this.handle(e.data); };
       frame.contentWindow?.postMessage({ miyu: 'port' }, '*', [channel.port2]);
+      this.follow();
     });
     // 网页换了主题、系统换了深浅：推 `theme.changed`
     this.watch = new MutationObserver(() => this.themeMaybeChanged());
@@ -46,6 +50,13 @@ export class FrameHost {
     this.lookSig = JSON.stringify(this.look());
     // 别处改了配置（设置页、命令行、别的终端）：有它的项的推 `settings.changed`
     this.onPush = (/** @type {string} */ method, /** @type {any} */ params) => {
+      // 包推给页面（核心 IM-1 中下二）：它自己的照原样转进框；掉了队重订，再转一条 `resync` 让页面重拉
+      if (method === 'package.event' && params?.package === this.id) return this.push('package.event', params);
+      if (method === 'resync' && params?.stream === 'package' && params?.package === this.id) {
+        this.following = false;
+        this.follow().then(() => this.push('resync', params));
+        return;
+      }
       if (method !== 'config.changed') return;
       const mine = Object.keys(params?.keys ?? {}).filter((k) => k.startsWith(`${this.id}.`));
       if (mine.length) this.push('settings.changed', { keys: mine });
@@ -53,8 +64,17 @@ export class FrameHost {
     core.onPush?.(this.onPush);
   }
 
-  /** 收掉：通道关了、不再看主题和配置。 */
+  /** 订这个包推给页面的（`package` 流，核心 IM-1 中下二）：旧核心没有的不报错，框照旧能用。 */
+  async follow() {
+    if (this.following || !this.port) return;
+    this.following = true;
+    await this.core.request('subscribe', { stream: 'package', package: this.id }).catch(() => { this.following = false; });
+  }
+
+  /** 收掉：通道关了、不再看主题和配置，退订这个包的推送。 */
   close() {
+    if (this.following) this.core.request('unsubscribe', { stream: 'package', package: this.id }).catch(() => {});
+    this.following = false;
     this.port?.close();
     this.port = null;
     this.watch.disconnect();
