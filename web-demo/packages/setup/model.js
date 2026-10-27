@@ -212,21 +212,47 @@ export function featureGroups(list) {
 }
 
 /**
- * 不写组名的包：只有一个功能、功能名和包名一样（基础系统拆出来的提问、改文件这类，组名和那一行写两遍）。连着的几个并成一块、
- * 照原来的先后（`bare`，画的时候不写组名，和有组名的组之间留同样的间距）；名字不一样的、两个以上功能的照旧。
- * @template {{group: string, package?: string, items: {name?: string, id: string}[]}} G
- * @param {G[]} groups `featureGroups` 分好的 @param {Map<string, string>} names 包编号 → 包名（`package.list`），查不到的照编号
- * @returns {(G & {bare?: false} | {group: 'package', bare: true, items: G['items']})[]}
+ * 预设的功能排成几段、一段几块（蓝图「设置页」预设详情第 8 条；2026-10-27 项目主人：包一个总开关、功能是暗字子项，内置的在前、别的按安装先后）：
+ * 在组里的包（`package.list` 的 `groups`）一组一段、段名是组名，组里照组内先后（核心 PG-1 的 `groups[].packages`，没给的照原来的先后）；
+ * 再是别的出厂包（`layer: shipped`）一段，照原来的先后；再是装的包，照安装先后（`installed_at`，早的在前，没给的接在后面照名字）；
+ * 再「我的」（`~home`）；没有 `package` 的几段（`other`、MCP 服务……）接在最后。一块是一个包：`single` 的只有一个功能、名字和包名一样，只画一行。纯的。
+ * @template {{id: string, name?: string, package?: string}} F
+ * @param {ReturnType<typeof featureGroups<F>>} groups `featureGroups` 分好的
+ * @param {{packages?: any[], groups?: {id: string, name?: string, packages?: string[]}[]}} info `package.list` 的回应
+ * @returns {{title: string|null, kind: 'group'|'package'|'home'|string, blocks: {package: string|null, name: string|null, items: F[], single: boolean}[]}[]}
  */
-export function featureBlocks(groups, names) {
-  /** @type {any[]} */
-  const out = [];
-  for (const g of groups) {
+export function presetSections(groups, info) {
+  const pkgs = new Map((info.packages ?? []).filter((p) => p?.package).map((p) => [p.package, p]));
+  const nameOf = (/** @type {string} */ id) => pkgs.get(id)?.name ?? id;
+  const blockOf = (/** @type {{package?: string, items: F[]}} */ g) => {
+    const id = g.package ?? null;
+    const name = id ? nameOf(id) : null;
     const only = g.items.length === 1 ? g.items[0] : null;
-    const bare = g.group === 'package' && only && (only.name ?? only.id) === (names.get(/** @type {string} */ (g.package)) ?? g.package);
-    if (!bare) out.push(g);
-    else if (out.at(-1)?.bare) out.at(-1).items.push(only);
-    else out.push({ group: 'package', bare: true, items: [only] });
+    return { package: id, name, items: g.items, single: !!only && !!id && (only.name ?? only.id) === name };
+  };
+  const pkgGroups = groups.filter((g) => g.group === 'package');
+  const used = new Set();
+  /** @type {ReturnType<typeof presetSections<F>>} */
+  const out = [];
+  for (const group of info.groups ?? []) {
+    const members = pkgGroups.filter((g) => !used.has(g) && Array.isArray(pkgs.get(/** @type {string} */ (g.package))?.groups) && pkgs.get(/** @type {string} */ (g.package)).groups.includes(group.id));
+    if (!members.length) continue;
+    const order = Array.isArray(group.packages) ? group.packages : [];
+    const rank = (/** @type {any} */ g) => { const i = order.indexOf(g.package); return i < 0 ? order.length : i; };
+    const sorted = members.map((g, i) => ({ g, i })).sort((a, b) => rank(a.g) - rank(b.g) || a.i - b.i).map((x) => x.g);
+    for (const g of sorted) used.add(g);
+    out.push({ title: group.name ?? group.id, kind: 'group', blocks: sorted.map(blockOf) });
+  }
+  const rest = pkgGroups.filter((g) => !used.has(g));
+  const shipped = rest.filter((g) => pkgs.get(/** @type {string} */ (g.package))?.layer !== 'home');
+  const installed = rest.filter((g) => pkgs.get(/** @type {string} */ (g.package))?.layer === 'home')
+    .map((g) => ({ g, at: Date.parse(pkgs.get(/** @type {string} */ (g.package))?.installed_at ?? '') }))
+    .sort((a, b) => (Number.isNaN(a.at) ? 1 : 0) - (Number.isNaN(b.at) ? 1 : 0) || (a.at - b.at) || nameOf(/** @type {string} */ (a.g.package)).localeCompare(nameOf(/** @type {string} */ (b.g.package))))
+    .map((x) => x.g);
+  if (shipped.length || installed.length) out.push({ title: null, kind: 'package', blocks: [...shipped, ...installed].map(blockOf) });
+  for (const g of groups) {
+    if (g.group === 'package') continue;
+    out.push({ title: g.group, kind: g.group, blocks: [{ package: g.group === 'home' ? HOME_PACKAGE : null, name: null, items: g.items, single: false }] });
   }
   return out;
 }

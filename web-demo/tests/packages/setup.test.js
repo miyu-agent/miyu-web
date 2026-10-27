@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave, featureGroups, featureBlocks } from '../../packages/setup/model.js';
+import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave, featureGroups, presetSections } from '../../packages/setup/model.js';
 
 const list = [{ persona: 'engineer', name: null }, { persona: 'miyu', name: 'Miyu' }, { persona: 'bad', problem: 'persona.toml:2: …' }];
 
@@ -165,16 +165,29 @@ test('核心 ENV-1 起功能照包分组：包照第一次出现的先后、一�
     ['package(env):env-time,env-profile', 'package(read):read', 'package(kit):skill-notes', 'home:script-mine,mcp-x', 'other:gone', 'skill:skill-loose']);
 });
 
-test('一个功能、名字和包名一样的包不写组名，连着的并成一块；名字不一样的、两个以上的照旧写组名（2026-10-26 主会话）', () => {
-  const names = new Map([['ask_user', '提问'], ['edit', '改文件'], ['env', '注入环境信息'], ['read', '读文件'], ['web', '联网搜索']]);
+test('预设的段和块（2026-10-27 项目主人：包一个总开关，内置的在前、别的按安装先后）：组一段、组内照 PG-1 的先后；别的出厂包；装的照安装先后；我的、不归包的接后面', () => {
+  const info = {
+    groups: [{ id: 'basesystem', name: '基础系统', packages: ['read', 'write', 'edit'] }],
+    packages: [
+      { package: 'read', name: '读文件', layer: 'shipped', groups: ['basesystem'] }, { package: 'write', name: '写文件', layer: 'shipped', groups: ['basesystem'] },
+      { package: 'edit', name: '改文件', layer: 'shipped', groups: ['basesystem'] }, { package: 'env', name: '注入环境信息', layer: 'shipped' },
+      { package: 'late', name: '后装的', layer: 'home', installed_at: '2026-10-27T02:00:00.000Z' }, { package: 'early', name: '先装的', layer: 'home', installed_at: '2026-10-20T02:00:00.000Z' },
+      { package: 'web', name: '联网搜索', layer: 'shipped' },
+    ],
+  };
   const list = [
-    { id: 'ask_user', name: '提问', package: 'ask_user' }, { id: 'edit', name: '改文件', package: 'edit' },
-    { id: 'env-time', name: '时间', package: 'env' }, { id: 'env-cwd', name: '工作目录', package: 'env' },
-    { id: 'read', name: '读文件', package: 'read' }, { id: 'web', name: '搜网页', package: 'web' }, { id: 'odd', name: 'odd', package: 'odd' },
-    { id: 'skill-loose', name: '散的' },
+    { id: 'edit', name: '改文件', package: 'edit' }, { id: 'env-time', name: '时间', package: 'env' }, { id: 'env-cwd', name: '工作目录', package: 'env' },
+    { id: 'late', name: '后装的', package: 'late' }, { id: 'write', name: '写文件', package: 'write' }, { id: 'web', name: '搜网页', package: 'web' },
+    { id: 'early', name: '先装的', package: 'early' }, { id: 'read', name: '读文件', package: 'read' },
+    { id: 'script-mine', package: '~home' }, { id: 'skill-loose', name: '散的' },
   ];
-  const shape = featureBlocks(featureGroups(list), names).map((g) => `${g.bare ? '·' : g.package ?? g.group}:${g.items.map((f) => f.id).join(',')}`);
-  assert.deepEqual(shape, ['·:ask_user,edit', 'env:env-time,env-cwd', '·:read', 'web:web', '·:odd', 'skill:skill-loose'],
-    '名字不一样的（联网搜索 / 搜网页）照旧；查不到包名的照编号比');
-  assert.deepEqual(featureBlocks(featureGroups([{ id: 'web' }]), new Map()).map((g) => g.group), ['feature'], '旧核心照五段');
+  const shape = presetSections(featureGroups(list), info).map((sec) => `${sec.kind}${sec.title ? `[${sec.title}]` : ''}=${sec.blocks.map((b) => `${b.single ? '·' : ''}${b.package ?? '-'}:${b.items.map((f) => f.id).join(',')}`).join(' ')}`);
+  assert.deepEqual(shape, [
+    'group[基础系统]=·read:read ·write:write ·edit:edit',
+    'package=env:env-time,env-cwd web:web ·early:early ·late:late',
+    'home[home]=~home:script-mine',
+    'skill[skill]=-:skill-loose',
+  ], '名字不一样的（联网搜索 / 搜网页）不算只有一行；装的照装的先后');
+  assert.deepEqual(presetSections(featureGroups([{ id: 'web' }]), {}).map((s) => s.kind), ['feature'], '旧核心照五段');
+  assert.deepEqual(presetSections(featureGroups([{ id: 'b', package: 'b' }, { id: 'a', package: 'a' }]), {}).map((s) => s.blocks.map((b) => b.package).join()), ['b,a'], '没有 package.list 的照原来的先后');
 });

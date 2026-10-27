@@ -8,7 +8,7 @@
 import { h, icon, replace, hasIcon, iconNames } from '../../src/lib/dom.js';
 import { field, askFirst } from './form.js';
 import { refusalText } from './persona-editor.js';
-import { featureGroups, featureBlocks, summaryChange } from './model.js';
+import { featureGroups, presetSections, summaryChange } from './model.js';
 
 /** @typedef {{saved: () => void, removed: (remains: boolean) => void, close: () => void}} Hooks */
 
@@ -28,8 +28,8 @@ export class PresetEditor {
     this.body = h('div.setup-editor', h('p.setup-empty', this.t('page.loading')));
     /** 选图标的那一排开着 */
     this.picking = false;
-    /** 包编号 → 包名（`package.list`） @type {Map<string, string>} */
-    this.packageNames = new Map();
+    /** `package.list` 的回应（包名、出厂还是装的、装的时刻、组和组内先后） @type {{packages?: any[], groups?: any[]}} */
+    this.packageInfo = {};
   }
 
   async load() {
@@ -37,9 +37,9 @@ export class PresetEditor {
       // 包名（功能照包分组的组名，核心 ENV-1）：读不到的写编号
       const [got, packages] = await Promise.all([
         this.ctx.core.request('preset.get', { preset: this.id }),
-        this.ctx.core.request('package.list', {}).then((/** @type {any} */ r) => r?.packages ?? [], () => []),
+        this.ctx.core.request('package.list', {}).then((/** @type {any} */ r) => r ?? {}, () => ({})),
       ]);
-      this.packageNames = new Map(packages.filter((/** @type {any} */ p) => p?.package && p.name).map((/** @type {any} */ p) => [p.package, p.name]));
+      this.packageInfo = packages;
       this.draw(got);
     } catch (err) {
       replace(this.body, h('p.setup-error', refusalText(err)));
@@ -73,13 +73,14 @@ export class PresetEditor {
     const list = Array.isArray(got.features) ? got.features : [];
     /** 没列出来的功能默认开不开：`on` 的预设才照全局开关（核心 X-27） */
     this.unlisted = got.unlisted;
-    // 照包分组、组名是包名（核心 ENV-1，`featureGroups`）；一个功能、名字和包名一样的不写组名，连着的并成一块，前面留同样的组间距
-    // （`featureBlocks`）。旧核心分五段，包的功能那一段不写小标题（左边这一格就叫「功能」，写了上下两个「功能」挨着），别的各一个
-    const groupName = (/** @type {{group: string, package?: string}} */ g) => (g.group === 'feature' ? null
-      : g.group === 'package' ? this.packageNames.get(/** @type {string} */ (g.package)) ?? g.package : t(`edit.feature_groups.${g.group}`));
-    const features = h('div.setup-features', featureBlocks(featureGroups(list), this.packageNames).map((g, i) => {
-      const head = g.bare ? (i ? h('div.setup-feature-gap') : null) : groupName(g);
-      return [typeof head === 'string' ? h('div.setup-feature-group', head) : head, g.items.map((f) => this.featureRow(f))];
+    // 一个包一块：包名是总开关，功能缩进暗字各有开关；只有一个同名功能的只有一行（2026-10-27 项目主人）。组（基础系统）只当段名；
+    // 段的先后、块的先后照 `presetSections`（内置的在前，别的按安装先后）；一段里排两列。旧核心分五段，包的功能那一段不写段名
+    const titleOf = (/** @type {string|null} */ kind, /** @type {string|null} */ title) => (kind === 'group' ? title
+      : kind === 'package' || kind === 'feature' || kind === 'home' ? null : t(`edit.feature_groups.${kind}`));
+    const features = h('div.setup-features', presetSections(featureGroups(list), this.packageInfo).map((sec) => {
+      const title = titleOf(sec.kind, sec.title);
+      return h('section.setup-feature-section', title ? h('div.setup-feature-group', title) : null,
+        h('div.setup-feature-cols', sec.blocks.map((b) => this.featureBlock(b, sec.kind === 'home' ? t('edit.feature_groups.home') : b.name))));
     }));
     this.note = h('p.setup-error', { hidden: true });
     const remove = got.remove ? askFirst(this.kit, t(`edit.${got.remove}`), () => t(`edit.${got.remove}_ask`, { name: this.title.textContent || this.id }), () => this.drop()) : null;
@@ -93,13 +94,30 @@ export class PresetEditor {
   }
 
   /**
-   * 一个功能一行：名字（悬停看说明）、开关；没装的写「没安装」。有不止一件工具的，工具平铺在下面、缩进一格，一件一个开关（设计 30 第四节：
-   * `[tools]` 能在开着的功能里关掉单件）；功能关着时工具暗着、点不了。开关写 `features.<编号>`，单件写 `tools.<工具名>`，编号、工具名不往界面上露。
-   * @param {any} f
+   * 一块：一个包（或「我的」）。有名字、不是只有一个同名功能的，头一行名字和总开关（有一个开着就开着；拨了一次写这几个功能全开、全关），
+   * 下面功能缩进、暗字；只有一个同名功能的就是那一行；没有名字的（不归包的那几段）只列功能。
+   * @param {{items: any[], single: boolean}} b @param {string|null} name
    */
-  featureRow(f) {
-    if (f.installed === false) return h('div.setup-feature.is-missing', h('span.setup-feature-name', f.name ?? f.id), h('span.setup-missing', this.t('edit.not_installed')));
-    const row = h('div.setup-feature', h('span.setup-feature-name', { title: f.summary ?? null }, f.name ?? f.id),
+  featureBlock(b, name) {
+    const live = b.items.filter((f) => f.installed !== false);
+    if (b.single || !name || !live.length) return h('div.setup-feature-block', b.items.map((f) => this.featureRow(f, false)));
+    const on = live.some((f) => f.on);
+    const all = this.kit.toggle(on, (next) => {
+      const changes = live.filter((f) => !!f.on !== next).map((f) => ({ key: `features.${f.id}`, value: next }));
+      return changes.length ? this.set(changes) : true;
+    });
+    return h('div.setup-feature-block', h('div.setup-feature.is-head', h('span.setup-feature-name', name), all),
+      h('div.setup-feature-kids', b.items.map((f) => this.featureRow(f, true))));
+  }
+
+  /**
+   * 一个功能一行：名字（悬停看说明）、开关；没装的写「没安装」。`kid` 的是包下面的子项（暗字）。有不止一件工具的，工具平铺在下面、缩进一格，一件一个开关（设计 30 第四节：
+   * `[tools]` 能在开着的功能里关掉单件）；功能关着时工具暗着、点不了。开关写 `features.<编号>`，单件写 `tools.<工具名>`，编号、工具名不往界面上露。
+   * @param {any} f @param {boolean} [kid]
+   */
+  featureRow(f, kid = false) {
+    if (f.installed === false) return h(`div.setup-feature.is-missing${kid ? '.is-kid' : ''}`, h('span.setup-feature-name', f.name ?? f.id), h('span.setup-missing', this.t('edit.not_installed')));
+    const row = h(`div.setup-feature${kid ? '.is-kid' : ''}`, h('span.setup-feature-name', { title: f.summary ?? null }, f.name ?? f.id),
       ...this.byMarks(f),
       this.kit.toggle(!!f.on, (on) => this.set([{ key: `features.${f.id}`, value: on }])));
     const tools = f.tools ?? [];

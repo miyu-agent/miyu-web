@@ -7109,5 +7109,11 @@
     "select": [
       ".sch-card-next"
     ]
+  },
+  "setup.feature-kids": {
+    "zh": "预设详情：包下面那几个功能（缩进、左边一道线）",
+    "select": [
+      ".setup-feature-kids"
+    ]
   }
 }

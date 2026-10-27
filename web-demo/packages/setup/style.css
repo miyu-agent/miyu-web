@@ -256,8 +256,15 @@
 /* 分段的小标题（功能、MCP 服务、脚本、技能）：淡的小字，和上一段隔开一点；第一段不隔 */
 .setup-feature-group { padding: calc(12px * var(--space)) 0 calc(2px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
 .setup-feature-group:first-child { padding-top: 0; }
-/* 不写组名的那一块（一个功能、名字和包名一样的包）：前面留和组名一样的间距 */
-.setup-feature-gap { height: calc(12px * var(--space)); }
+/* 一段（组、包、我的、不归包的几段）：段和段之间隔开；一段里的块排两列，一块不拆开，一列放不下 260px 的退回一列（2026-10-27 项目主人） */
+.setup-feature-section + .setup-feature-section { margin-top: calc(10px * var(--space)); }
+.setup-feature-section .setup-feature-group { padding-top: 0; }
+.setup-feature-cols { columns: 2 260px; column-gap: calc(28px * var(--space)); }
+.setup-feature-block { break-inside: avoid; padding-bottom: calc(4px * var(--space)); }
+/* 包名那一行（总开关）、下面的功能（缩进、暗字，2026-10-27 项目主人） */
+.setup-feature.is-head .setup-feature-name { font-weight: 500; }
+.setup-feature-kids { margin-left: calc(14px * var(--space)); padding-left: calc(10px * var(--space)); box-shadow: inset 2px 0 0 var(--surface-3); }
+.setup-feature.is-kid { min-height: 28px; color: var(--text-soft); font-size: calc(13px * var(--text-scale)); }
 .setup-feature { display: flex; align-items: center; gap: calc(10px * var(--space)); min-height: 32px; color: var(--text); font-size: calc(13.5px * var(--text-scale)); }
 .setup-feature-name { flex: 1; min-width: 0; }
 .setup-feature.is-missing .setup-feature-name { color: var(--text-faint); }
