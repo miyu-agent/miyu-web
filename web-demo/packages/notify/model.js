@@ -17,3 +17,22 @@ export function noteOf(what, entry, look, miyu, t) {
   const title = (entry?.title || entry?.preview || '').trim() || 'Miyu';
   return { title, body: t(what), icon: look?.avatar || miyu };
 }
+
+/**
+ * 账号级的提醒（核心 J-3 中的 `notices` 流）写成什么：`schedule.ran` 是一条系统通知（标题照会话的标题，会话表里还没有的照定时任务那句话 `prompt`，
+ * 再没有「Miyu」；`tag` 同那个会话的「回答完了」，互相换掉）；`schedules.reset` 另有页面里的提示（`say`），系统通知标题「Miyu」。认不得的是 `null`。纯的。
+ * @param {any} notice `notice` 推来的那一条
+ * @param {any} entry 会话表里那个会话（`schedule.ran` 的） @param {{avatar?: string|null}|null|undefined} look @param {string|null} prompt 定时任务那句话
+ * @param {string} miyu @param {(path: string) => string} t
+ * @returns {{title: string, body: string, icon: string, tag: string, session: string|null, say: string|null}|null}
+ */
+export function noticeNote(notice, entry, look, prompt, miyu, t) {
+  if (notice?.kind === 'schedule.ran' && typeof notice.session === 'string') {
+    const title = (entry?.title || entry?.preview || prompt || '').trim() || 'Miyu';
+    return { title, body: t(notice.ok === false ? 'schedule_failed' : 'schedule_ran'), icon: look?.avatar || miyu, tag: `${notice.session}:done`, session: notice.session, say: null };
+  }
+  if (notice?.kind === 'schedules.reset') {
+    return { title: 'Miyu', body: t('schedules_reset'), icon: miyu, tag: 'schedules.reset', session: null, say: t('schedules_reset') };
+  }
+  return null;
+}

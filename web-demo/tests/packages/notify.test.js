@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { noteOf } from '../../packages/notify/model.js';
+import { noteOf, noticeNote } from '../../packages/notify/model.js';
 
 const manifest = JSON.parse(readFileSync(new URL('../../packages/notify/manifest.json', import.meta.url), 'utf8'));
 const t = (path) => String(manifest.text.zh[path] ?? path);
@@ -26,4 +26,17 @@ test('标题照会话的标题，没有的照第一句，再没有写 Miyu；图
 test('子会话、一次性的会话不弹', () => {
   assert.equal(noteOf('done', { title: 'a', parent: 's1' }, null, MIYU, t), null);
   assert.equal(noteOf('done', { title: 'a', oneshot: true }, null, MIYU, t), null);
+});
+
+test('账号级的提醒（核心 J-3 中）：定时跑完照会话的标题、tag 同「回答完了」；没跑完另一句；唤醒表坏了页面里也说；认不得的不弹', () => {
+  const ran = noticeNote({ kind: 'schedule.ran', schedule: 't3', session: 's1', ok: true }, { title: '早报' }, { avatar: 'blob:a' }, null, MIYU, t);
+  assert.deepEqual(ran, { title: '早报', body: '定时任务跑完了', icon: 'blob:a', tag: 's1:done', session: 's1', say: null });
+  assert.equal(noticeNote({ kind: 'schedule.ran', schedule: 't3', session: 's1', ok: false }, null, null, '整理今天的新闻', MIYU, t)?.title, '整理今天的新闻', '会话表里还没有的照那句话');
+  assert.equal(noticeNote({ kind: 'schedule.ran', schedule: 't3', session: 's1', ok: false }, null, null, null, MIYU, t)?.body, '定时任务没跑完');
+  assert.equal(noticeNote({ kind: 'schedule.ran', session: 's1' }, null, null, null, MIYU, t)?.title, 'Miyu');
+  const reset = noticeNote({ kind: 'schedules.reset' }, null, null, null, MIYU, t);
+  assert.equal(reset?.say, reset?.body);
+  assert.equal(reset?.session, null);
+  assert.equal(noticeNote({ kind: 'later' }, null, null, null, MIYU, t), null);
+  for (const lang of ['zh', 'en', 'ja']) for (const k of ['schedule_ran', 'schedule_failed', 'schedules_reset']) assert.ok(manifest.text[lang][k], `${lang} ${k}`);
 });

@@ -13,30 +13,41 @@
   },
   "kind": "optional",
   "description": {
-    "zh": "浏览器的系统通知：一轮做完了、有问题等回答、要人确认时，这个标签页不在前台才弹，点了回到那个会话；第一次在输入框里发话时问一次权限。标签页关了以后的推送不做。"
+    "zh": "浏览器的系统通知：一轮做完了、有问题等回答、要人确认时，这个标签页不在前台才弹，点了回到那个会话；第一次在输入框里发话时问一次权限。标签页关了以后的推送不做。每次新开会话的定时任务跑完了照同样的规矩弹；定时任务的记录坏了、换成新的一份时在页面里提示一句，后台时也弹。"
   },
   "inject": [
     "sessions",
     "host",
     "chat",
-    "storage"
+    "storage",
+    "core",
+    "composer~"
   ],
   "settings": {},
   "text": {
     "zh": {
       "done": "回答完了",
       "ask": "等你回答",
-      "approve": "等你确认"
+      "approve": "等你确认",
+      "schedule_ran": "定时任务跑完了",
+      "schedule_failed": "定时任务没跑完",
+      "schedules_reset": "定时任务的记录坏了，已换成新的一份，原来的定时任务都没了"
     },
     "en": {
       "done": "Done",
       "ask": "Waiting for your answer",
-      "approve": "Waiting for your approval"
+      "approve": "Waiting for your approval",
+      "schedule_ran": "Scheduled task finished",
+      "schedule_failed": "Scheduled task didn't finish",
+      "schedules_reset": "The scheduled task records were damaged and replaced with a new set; the old scheduled tasks are gone"
     },
     "ja": {
       "done": "回答しました",
       "ask": "回答待ち",
-      "approve": "確認待ち"
+      "approve": "確認待ち",
+      "schedule_ran": "定期タスクが完了しました",
+      "schedule_failed": "定期タスクが完了しませんでした",
+      "schedules_reset": "定期タスクの記録が壊れたため新しくしました。以前の定期タスクはなくなりました"
     }
   }
 }

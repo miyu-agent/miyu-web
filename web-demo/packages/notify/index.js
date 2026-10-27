@@ -3,8 +3,10 @@
 //! 终端），这个标签页不在前台时弹一条浏览器的通知，点了回到那个会话。要人留意的照会话仓库的 `onAttention`（读进来了的会话推来的
 //! 会话状态）；子会话、一次性的会话不弹。权限：第一次在输入框里发话（回车、点发送）的那一下问（Firefox 只认人点了、按了键那一下里
 //! 问的），问过的这个浏览器记着不再问；人拒了的不再问。标签页关了以后的推送先不做。停用了什么都不弹。
+//! 账号级的提醒（核心 J-3 中的 `notices` 流，蓝图第 6 条）：每次新开会话的定时跑完了照同样的规矩弹（tag 同「回答完了」，互相换掉）；
+//! 定时任务的记录坏了（`schedules.reset`）不管前台后台都在输入框上面提示一句，后台再弹。
 
-import { noteOf } from './model.js';
+import { noteOf, noticeNote } from './model.js';
 
 /** 问过权限，记在这个浏览器里的名字 */
 const ASKED = 'notify_asked';
@@ -41,4 +43,27 @@ export function apply(ctx) {
     if (!note) return;
     host.show({ ...note, tag: `${id}:${what}`, onclick: () => ctx.chat.open(id) });
   }));
+
+  // 账号级的提醒：订 `notices`（掉队、断了又连上重订；旧核心没有这个流的不报错）
+  const subscribe = () => { ctx.core?.request('subscribe', { stream: 'notices' }).catch(() => {}); };
+  /** 定时任务那句话（会话表里还没有那个会话时当标题）：照 `schedule.list` 找 @param {string} id */
+  const promptOf = (id) => ctx.core.request('schedule.list', {}).then((/** @type {any} */ r) => (r?.schedules ?? []).find((/** @type {any} */ s) => s.id === id)?.prompt ?? null, () => null);
+  const onPush = async (/** @type {string} */ method, /** @type {any} */ params) => {
+    if (method === 'resync' && params?.stream === 'notices') return subscribe();
+    if (method !== 'notice') return;
+    const entry = typeof params?.session === 'string' ? ctx.sessions.index.get(params.session) : null;
+    const prompt = params?.kind === 'schedule.ran' && !entry?.title && !entry?.preview && typeof params.schedule === 'string' ? await promptOf(params.schedule) : null;
+    const note = noticeNote(params, entry, params?.session ? ctx.chat.lookOf?.(params.session) : null, prompt, MIYU, t);
+    if (!note) return;
+    if (note.say) ctx.composer?.say?.(note.say, false);
+    if (host.permission() !== 'granted' || !host.away()) return;
+    const session = note.session;
+    host.show({ title: note.title, body: note.body, icon: note.icon, tag: note.tag, onclick: () => (session ? ctx.chat.open(session) : window.focus()) });
+  };
+  if (ctx.core) {
+    ctx.core.onPush(onPush);
+    ctx.effect(() => () => { ctx.core.pushes?.delete(onPush); ctx.core.request('unsubscribe', { stream: 'notices' }).catch(() => {}); });
+    ctx.effect(() => ctx.core.onRejoin?.(subscribe) ?? (() => {}));
+    subscribe();
+  }
 }
