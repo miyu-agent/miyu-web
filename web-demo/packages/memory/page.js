@@ -7,6 +7,7 @@ import { leave } from '../../src/lib/motion.js';
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { keywordBox } from './keywords.js';
 import { DreamCard } from './dream.js';
+import { dreamOutcome } from './dream-model.js';
 import { tabsRow, peoplePage, cardPop } from './people.js';
 import { filterButton, filterChips, filterMenu } from './filter.js';
 import { CLASSES, TEXT_MAX, KEYWORDS_MAX, chars, counts, visible, hasKeywords, updateOf, canSave, saveNote, shortId, agoText, isRetired, tidying } from './model.js';
@@ -333,7 +334,7 @@ export class MemoryPage {
 
   /**
    * 「整理记录」的小窗：这一份最近的整理会话（会话表里另放的那一份，`dream.persona` 是这一份的），新的在前；一趟一行，点了打开那个会话。
-   * 核心给了结果的（`dream.result`）写「改 N · 删 N」。
+   * 核心给了结果的（`dream.result`）写「改 N · 删 N」，叫停的接「已叫停 · 」，没跑完的写「没跑完」（`dreamOutcome`）。
    */
   historyPop() {
     const t = this.t;
@@ -345,12 +346,12 @@ export class MemoryPage {
       return d && !Number.isNaN(d.getTime()) ? d.toLocaleString(document.documentElement.lang || undefined, { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
     };
     const rows = mine.length ? mine.map((/** @type {any} */ e) => {
-      const r = e.dream?.result;
-      const result = r && typeof r === 'object' ? t('dream.view.result', { revised: r.revised ?? 0, retired: r.retired ?? 0 }) : null;
+      const o = dreamOutcome(e);
+      const result = o.kind === 'done' ? `${o.stopped ? t('dream.view.stopped') : ''}${t('dream.view.result', { revised: o.revised, retired: o.retired })}` : null;
       return h('button.mem-history-row', { type: 'button', onclick: () => this.openSession(e.session) },
         h('span.mem-history-when', when(e.last_active)),
         h('span.mem-history-how', t(e.dream?.manual ? 'dream.view.manual' : 'dream.view.auto')),
-        e.busy ? h('span.mem-history-busy', icon('loader-circle'), t('dream.view.running')) : result ? h('span.mem-history-result', result) : null,
+        o.kind === 'running' ? h('span.mem-history-busy', icon('loader-circle'), t('dream.view.running')) : result ? h('span.mem-history-result', result) : h('span.mem-history-result', t('dream.view.unfinished')),
         icon('chevron-right'));
     }) : h('p.mem-empty', t('dream.view.history_empty'));
     return h('div.mem-modal', { onclick: (/** @type {Event} */ e) => { if (e.target === e.currentTarget) this.closeHistory(); } },

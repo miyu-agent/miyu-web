@@ -145,3 +145,17 @@ export class DreamTrack {
 
 /** @param {any} v */
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : 0);
+
+/**
+ * 「整理记录」一行右边写什么（核心 DR-1、记忆 D-2 补的 `dream.result`）：在跑的交 `running`；跑完的「改 N · 删 N」，叫停的前面接「已叫停」；
+ * 不在跑又没有结果的（出错、没跑完、核心崩了没记上）是 `unfinished`。纯的。
+ * @param {{busy?: boolean, dream?: {result?: any}}} e 会话表那一项
+ * @returns {{kind: 'running'}|{kind: 'unfinished'}|{kind: 'done', revised: number, retired: number, stopped: boolean}}
+ */
+export function dreamOutcome(e) {
+  if (e?.busy) return { kind: 'running' };
+  const r = e?.dream?.result;
+  if (!r || typeof r !== 'object') return { kind: 'unfinished' };
+  const n = (/** @type {any} */ v) => (Number.isInteger(v) && v > 0 ? v : 0);
+  return { kind: 'done', revised: n(r.revised), retired: n(r.retired), stopped: r.stopped === true };
+}

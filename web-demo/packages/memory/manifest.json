@@ -95,6 +95,8 @@
           "auto": "自动",
           "running": "整理中",
           "result": "改 {revised} · 删 {retired}",
+          "stopped": "已叫停 · ",
+          "unfinished": "没跑完",
           "tokens": "累计 {n}"
         }
       },
@@ -268,6 +270,8 @@
           "auto": "Automatic",
           "running": "Tidying",
           "result": "Revised {revised} · retired {retired}",
+          "stopped": "Stopped · ",
+          "unfinished": "Didn't finish",
           "tokens": "{n} total"
         }
       },
@@ -441,6 +445,8 @@
           "auto": "自動",
           "running": "整理中",
           "result": "書き直し {revised} · 削除 {retired}",
+          "stopped": "中止 · ",
+          "unfinished": "未完了",
           "tokens": "累計 {n}"
         }
       },

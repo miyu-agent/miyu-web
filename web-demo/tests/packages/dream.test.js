@@ -107,3 +107,12 @@ test('结果点开列的：合着的时候日志里真正存下的（改、作�
     { kind: 'summary', text: '第二版' },
   ]);
 });
+
+test('整理记录一行右边（核心 DR-1、记忆 D-2 补的 dream.result）：在跑的、跑完的、叫停的、没跑完的', async () => {
+  const { dreamOutcome } = await import('../../packages/memory/dream-model.js');
+  assert.deepEqual(dreamOutcome({ busy: true, dream: {} }), { kind: 'running' });
+  assert.deepEqual(dreamOutcome({ dream: { result: { given: 2, revised: 3, retired: 1, summary: true } } }), { kind: 'done', revised: 3, retired: 1, stopped: false });
+  assert.deepEqual(dreamOutcome({ dream: { result: { given: 0, revised: 1, retired: 0, summary: false, stopped: true } } }), { kind: 'done', revised: 1, retired: 0, stopped: true });
+  assert.deepEqual(dreamOutcome({ dream: { persona: 'cat' } }), { kind: 'unfinished' }, '没有 result：没跑完');
+  assert.deepEqual(dreamOutcome({ dream: { result: { revised: 'x' } } }), { kind: 'done', revised: 0, retired: 0, stopped: false }, '认不得的数当 0');
+});
