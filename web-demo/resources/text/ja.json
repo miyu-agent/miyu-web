@@ -161,7 +161,17 @@
     "show_password": "パスワードを表示",
     "hide_password": "パスワードを隠す",
     "to_light": "ライトに切り替え",
-    "to_dark": "ダークに切り替え"
+    "to_dark": "ダークに切り替え",
+    "keep": "自動ログイン",
+    "back": "戻る",
+    "empty_password": "パスワードを入力してください",
+    "pick_title": "アカウントを選択",
+    "add_account": "アカウントを追加",
+    "manage": "アカウント管理",
+    "remove": "このブラウザから削除",
+    "saved": "ログイン情報を保存済み",
+    "no_accounts": "このブラウザに記憶されたアカウントはありません",
+    "expired": "ログインの有効期限が切れました。パスワードを再入力してください"
   },
   "boot": {
     "connecting_web": "接続中…",

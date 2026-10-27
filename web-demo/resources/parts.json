@@ -7157,5 +7157,77 @@
     "select": [
       ".acc-open-only"
     ]
+  },
+  "si.accounts": {
+    "zh": "登录：「选择账号」那一排头像",
+    "select": [
+      ".si-accounts"
+    ]
+  },
+  "si.account": {
+    "zh": "登录：一个账号（头像和名字，最后一个「+」）",
+    "select": [
+      ".si-account"
+    ]
+  },
+  "si.face": {
+    "zh": "登录：账号的头像（账号名的首字）",
+    "select": [
+      ".si-face"
+    ]
+  },
+  "si.account-name": {
+    "zh": "登录：头像下面的账号名",
+    "select": [
+      ".si-account-name"
+    ]
+  },
+  "si.links": {
+    "zh": "登录：主按钮下面并排的几个链接",
+    "select": [
+      ".si-links"
+    ]
+  },
+  "si.keep": {
+    "zh": "登录：「自动登录」那一行",
+    "select": [
+      ".si-keep"
+    ]
+  },
+  "si.check": {
+    "zh": "登录：「自动登录」的方块勾选框",
+    "select": [
+      ".si-check"
+    ]
+  },
+  "si.manage": {
+    "zh": "登录：账号管理的列表",
+    "select": [
+      ".si-manage"
+    ]
+  },
+  "si.manage-row": {
+    "zh": "登录：账号管理的一行",
+    "select": [
+      ".si-manage-row"
+    ]
+  },
+  "si.manage-text": {
+    "zh": "登录：账号管理一行里的名字那一块",
+    "select": [
+      ".si-manage-text"
+    ]
+  },
+  "si.manage-note": {
+    "zh": "登录：账号管理里的「已保存登录」",
+    "select": [
+      ".si-manage-note"
+    ]
+  },
+  "si.remove": {
+    "zh": "登录：账号管理的「从这台浏览器去掉」",
+    "select": [
+      ".si-remove"
+    ]
   }
 }

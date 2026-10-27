@@ -161,7 +161,17 @@
     "show_password": "Show password",
     "hide_password": "Hide password",
     "to_light": "Switch to light",
-    "to_dark": "Switch to dark"
+    "to_dark": "Switch to dark",
+    "keep": "Stay signed in",
+    "back": "Back",
+    "empty_password": "Enter your password",
+    "pick_title": "Choose an account",
+    "add_account": "Add account",
+    "manage": "Manage accounts",
+    "remove": "Remove from this browser",
+    "saved": "Signed in automatically",
+    "no_accounts": "No accounts remembered in this browser",
+    "expired": "Your sign-in expired. Enter your password again"
   },
   "boot": {
     "connecting_web": "Connecting…",

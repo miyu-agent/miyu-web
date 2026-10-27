@@ -1,8 +1,9 @@
 // @ts-check
 //! 浏览器的第二份宿主：页面由网页软件 `miyu-web` 给（`miyu web` 打开的；蓝图 `web/architecture.md`「浏览器的第二份宿主」、`web.md`「连核心」
 //! 第 1 条下面几款、`web-module.md` 第一条）。和走桥的那一份只差连法：
-//! - 线是 `/ws`，身份在握手里：地址带 `#setup=<一次性码>` 的读下来、从地址栏抹掉，握手带 `code`；没有的用这台设备上记着的登录令牌
-//!   （`login`，30 天）；都没有的交 `null`，内核出登录框，握手带用户名、密码。登录令牌不出这个文件（内核只拿到「记下」「忘掉」两个口子）。
+//! - 线是 `/ws`，身份在握手里：地址带 `#setup=<一次性码>` 的读下来、从地址栏抹掉，握手带 `code`；没有的用这台浏览器记着的登录令牌
+//!   （`login`）；都没有的交 `null`，内核出「选择账号」、登录框，握手带用户名、密码。记着几个账号（`model/accounts.js`，蓝图「连核心」第 1 条
+//!   「选择账号」）：勾了「自动登录」的令牌存 `localStorage` 的表里（30 天），没勾的只放这个标签页（`sessionStorage`）；读写都兜着。
 //! - 本机文件、blob 的地址带登录令牌 `POST /media` 换票据（`web-ui.md`「怎么走」第三条）；同一样东西换过的记着，不再换。软件后台页 `POST /page`。
 //! - 选目录、桌面壁纸网页软件不给：交 `null`，用的地方照旧退回。
 
@@ -13,9 +14,26 @@
 
 import { notify } from './notify.js';
 import { fileTools, store, dropFromHash, hashRoute } from './files.js';
+import { readList, readSession, readIntent, pickLogin, signedIn, usedLogin, dropToken, removeAccount, chooseAccount, shownAccounts, live, UNKNOWN } from '../model/accounts.js';
 
-/** 这台设备上记登录令牌的名字（`{token, expires}`） */
-const LOGIN = 'miyu.web.login';
+/** 这台浏览器记着的账号（`model/accounts.js` 的表）；原来那一份（`{token, expires}`）读到时迁进表、删掉 */
+const ACCOUNTS = 'miyu.web.accounts';
+const OLD_LOGIN = 'miyu.web.login';
+/** 这个标签页的：没勾「自动登录」的那份令牌（`{account, token, expires}`）、重新载入以后要做什么（左下角菜单点的，读一次就拿掉） */
+const SESSION = 'miyu.web.session';
+const INTENT = 'miyu.web.intent';
+
+/**
+ * 读写都兜着：隐私窗口、清过数据、禁了存储的会抛，抛了的当没有、写不进的只管这一次。
+ * @param {() => {getItem: (k: string) => string|null, setItem: (k: string, v: string) => void, removeItem: (k: string) => void}} which
+ */
+const safe = (which) => ({
+  get: (/** @type {string} */ k) => { try { return which().getItem(k); } catch { return null; } },
+  set: (/** @type {string} */ k, /** @type {string} */ v) => { try { which().setItem(k, v); return true; } catch { return false; } },
+  remove: (/** @type {string} */ k) => { try { which().removeItem(k); } catch { /* 同上 */ } },
+});
+const disk = safe(() => store);
+const tab = safe(() => sessionStorage);
 
 /** 地址里的一次性码：读下来、从地址栏抹掉（刷新以后就没了：码只能用一次）；`#` 后面别的几项（软件页面的 `package=`）留着。 */
 function setupCode() {
@@ -33,21 +51,46 @@ function inviteCode() {
   return m[1];
 }
 
-/** 记着的登录令牌：没有、过期了的是 `null`。 */
-function savedLogin() {
-  try {
-    const got = JSON.parse(store.getItem(LOGIN) ?? 'null');
-    if (typeof got?.token !== 'string') return null;
-    if (got.expires && Date.parse(got.expires) <= Date.now()) return null;
-    return got.token;
-  } catch { return null; }
-}
-
 /** 起直接连网页软件的宿主（地址里没有桥的口令时用它）。 */
 export function servedHost() {
   let code = setupCode();
   let invite = inviteCode();
-  let token = savedLogin();
+  const stamp = () => new Date().toISOString();
+  /** 读表（别的标签页可能改过，每次现读）；有旧的那一份的迁进来 */
+  const load = () => readList(disk.get(ACCOUNTS), disk.get(OLD_LOGIN), stamp());
+  /** 改表：现读、改、写回；写进去了才删旧的那一份 @param {(l: import('../model/accounts.js').List) => import('../model/accounts.js').List} change */
+  const update = (change) => {
+    if (disk.set(ACCOUNTS, JSON.stringify(change(load())))) disk.remove(OLD_LOGIN);
+  };
+  if (disk.get(OLD_LOGIN) != null) update((l) => l);
+  const intent = readIntent(tab.get(INTENT));
+  tab.remove(INTENT);
+  let session = readSession(tab.get(SESSION));
+  // 「添加账号」「账号管理」过来的不拿记着的令牌（出登录框、账号管理）；左下角换过去的照那个账号
+  const picked = intent && !('pick' in intent) ? null : pickLogin(load(), session, Date.now(), intent && 'pick' in intent ? intent.pick : null);
+  let token = picked?.token ?? null;
+  /** 这份令牌是哪个账号的（`UNKNOWN` 是旧的那一份迁过来、还不知道名字） @type {string|null} */
+  let who = picked?.account ?? null;
+  /** 重新载入（换账号、添加、管理）：先记下要做什么 @param {import('../model/accounts.js').Intent} next */
+  const reloadFor = (next) => {
+    tab.set(INTENT, JSON.stringify(next));
+    location.reload();
+  };
+  /** 扔掉现在这一份令牌（作废了、退出登录）：表上那个账号留着；交回是哪个账号的（不知道名字的交 `null`） */
+  const dropCurrent = () => {
+    const was = who;
+    if (token) {
+      const gone = token;
+      update((l) => dropToken(l, was, gone));
+      if (session?.token === gone) {
+        session = null;
+        tab.remove(SESSION);
+      }
+    }
+    token = null;
+    tickets.clear();
+    return was === UNKNOWN ? null : was;
+  };
   /** 换过的票据：同一样东西不再换 @type {Map<string, Promise<string>>} */
   const tickets = new Map();
   /** 带着登录令牌 `POST` 一下，交回回应里的 `url`；换不到的交空的。 @param {string} path @param {any} body */
@@ -98,24 +141,79 @@ export function servedHost() {
       }
       return token ? { login: token } : null;
     },
-    /** 握手、设密码拿到的登录令牌（`{token, expires}`）：记下，以后握手、换票据都用它。 @param {{token: string, expires?: string}} login */
-    remember: (login) => {
+    /**
+     * 握手、设密码、注册拿到的登录令牌（`{token, expires}`）：记下，以后握手、换票据都用它。这个账号进表、当成上次用的；`keep`（勾了「自动登录」）
+     * 的令牌存进表，没勾的放这个标签页。
+     * @param {{token: string, expires?: string|null}} login @param {string} account @param {boolean} keep
+     */
+    remember: (login, account, keep) => {
       token = login.token;
+      who = account;
       tickets.clear();
-      try { store.setItem(LOGIN, JSON.stringify({ token: login.token, expires: login.expires ?? null })); } catch { /* 记不住就只管这一次 */ }
+      update((l) => signedIn(l, account, login, keep, stamp()));
+      session = keep ? null : { account, token: login.token, expires: login.expires ?? null };
+      if (session) tab.set(SESSION, JSON.stringify(session));
+      else tab.remove(SESSION);
     },
-    /** 登录令牌用不了了（`bad_login`）：忘掉，下次出登录框。 */
-    forget: () => {
-      token = null;
+    /** 拿记着的令牌连上了：握手回应的账号名填上（旧的那一份迁过来的）、记一下这次用的 @param {string} account */
+    signedIn: (account) => {
+      if (!token || typeof account !== 'string' || !account) return;
+      const used = token;
+      who = account;
+      update((l) => usedLogin(l, account, used, stamp()));
+    },
+    /** 登录令牌用不了了（`bad_login`）：扔掉这一份、账号留着；交回是哪个账号的（内核出只要密码的登录） */
+    forget: () => dropCurrent(),
+    /** 「选择账号」那一排（照上次用的先后，`saved` 是存着能用的令牌）、上次用的那个 */
+    accounts: () => {
+      const l = load();
+      return { current: l.current, list: shownAccounts(l, Date.now()) };
+    },
+    /** 重新载入前点的（左下角菜单）：`add` 出登录框、`manage` 出账号管理、`pick` 换到的那个账号 */
+    intent: () => intent,
+    /** 点了一个头像：拿它存着的令牌（有的交 `true`，下一次 `credential` 就是它；没有的交 `false`，内核出只要密码的登录） @param {string} account */
+    choose: (account) => {
+      const got = pickLogin(load(), session, Date.now(), account);
+      token = got?.token ?? null;
+      who = got ? account : null;
       tickets.clear();
-      try { store.removeItem(LOGIN); } catch { /* 同上 */ }
+      return !!got;
     },
+    /**
+     * 从这台浏览器去掉一个账号（账号管理）：从表上、这个标签页拿掉，交回它存着的几份令牌的握手凭据（内核拿它们开线 `account.logout`，成不成都算去掉了）。
+     * @param {string} account @returns {{login: string}[]}
+     */
+    dropAccount: (account) => {
+      const now = Date.now();
+      const l = load();
+      const saved = l.accounts.find((a) => a.account === account);
+      const tokens = new Set([saved && live(saved, now) ? saved.token : null, session?.account === account && live(session, now) ? session.token : null]);
+      update((x) => removeAccount(x, account));
+      if (session?.account === account) {
+        session = null;
+        tab.remove(SESSION);
+      }
+      if (who === account) {
+        token = null;
+        who = null;
+        tickets.clear();
+      }
+      return [...tokens].filter((x) => typeof x === 'string').map((x) => ({ login: /** @type {string} */ (x) }));
+    },
+    /** 换到另一个账号（左下角的菜单）：当成上次用的，重新载入（存着令牌的直接进，没存的出只要密码的登录） @param {string} account */
+    switchTo: (account) => {
+      update((l) => chooseAccount(l, account));
+      reloadFor({ pick: account });
+    },
+    /** 添加账号：重新载入直接出登录框（这一个标签页的令牌留着，回来还能点它） */
+    addAccount: () => reloadFor({ add: true }),
+    /** 账号管理：重新载入出账号管理 */
+    manageAccounts: () => reloadFor({ manage: true }),
     /** 问口令还对不对：直接连的没有桥的口令，连不上就是网页软件没在跑 */
     check: async () => /** @type {'ok'|'bad'|'down'} */ ('down'),
-    /** 能退出登录（拿登录令牌连的）：忘掉这台设备上的登录令牌，重新载入出登录框 */
+    /** 能退出登录（拿登录令牌连的）：扔掉这个账号的令牌（账号留在表上），重新载入出「选择账号」 */
     signOut: () => {
-      token = null;
-      try { store.removeItem(LOGIN); } catch { /* 记不住的本来就没记 */ }
+      dropCurrent();
       location.reload();
     },
     /** 注册链接：这个网页的地址加 `#invite=<邀请码>`（账号页的「邀请」，核心 Y-1 上） @param {string} code */

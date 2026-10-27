@@ -194,7 +194,7 @@ test('直接连网页软件的那一份：一次性码只交一次，接着用�
     assert.deepEqual(host.credential(), { code: 'abc123' });
     assert.equal(host.credential(), null, '码只用一次，没令牌的出登录框');
     assert.equal(await host.urls.blob('sha256:ab', 'image/png'), '', '没登录换不到票据');
-    host.remember({ token: 'tok', expires: '2999-01-01T00:00:00Z' });
+    host.remember({ token: 'tok', expires: '2999-01-01T00:00:00Z' }, 'owner1', true);
     assert.deepEqual(host.credential(), { login: 'tok' });
     assert.equal(await host.urls.blob('sha256:ab', 'image/png'), '/media/t1');
     assert.equal(await host.urls.blob('sha256:ab', 'image/png'), '/media/t1', '同一样东西不再换');
@@ -202,8 +202,9 @@ test('直接连网页软件的那一份：一次性码只交一次，接着用�
     assert.deepEqual([calls[0][0], calls[0][1], JSON.parse(calls[0][2])], ['/media', 'Bearer tok', { blob: 'sha256:ab', type: 'image/png' }]);
     assert.deepEqual(JSON.parse((await host.urls.file('/a', true), calls[1][2])), { path: '/a', download: true });
     assert.equal(servedHost().credential().login, 'tok', '刷新以后照记着的令牌');
-    host.forget();
+    assert.equal(host.forget(), 'owner1', '交回是哪个账号的');
     assert.equal(servedHost().credential(), null, '忘掉了的出登录框');
+    assert.deepEqual(servedHost().accounts().list, [{ account: 'owner1', saved: false }], '账号留着');
     // 管理员给的注册链接（核心 Y-1 上）：邀请码读下来、从地址栏抹掉，握手带它、只交一次；账号页的注册链接照这个网页的地址
     globalThis.location.hash = '#invite=Ab3_x-9';
     globalThis.location.origin = 'http://x';
@@ -212,6 +213,71 @@ test('直接连网页软件的那一份：一次性码只交一次，接着用�
     assert.deepEqual(invited.credential(), { invite: 'Ab3_x-9' });
     assert.equal(invited.credential(), null);
     assert.equal(invited.inviteLink('a b'), 'http://x/#invite=a%20b');
+  } finally {
+    for (const [k, d] of Object.entries(keep)) {
+      if (d) Object.defineProperty(globalThis, k, d);
+      else delete globalThis[k];
+    }
+  }
+});
+
+test('直接连网页软件的那一份记几个账号：旧的令牌迁进表；没勾自动登录的只在这个标签页；点头像拿它的令牌；去掉一个交回要作废的令牌；存不了的不抛', async () => {
+  const disk = new Map([['miyu.web.login', JSON.stringify({ token: 'old', expires: '2999-01-01T00:00:00Z' })]]);
+  const tab = new Map();
+  const keep = Object.fromEntries(['location', 'history', 'localStorage', 'sessionStorage'].map((k) => [k, Object.getOwnPropertyDescriptor(globalThis, k)]));
+  let reloads = 0;
+  globalThis.location = /** @type {any} */ ({ hash: '', pathname: '/', search: '', protocol: 'http:', host: 'x', hostname: '127.0.0.1', reload: () => { reloads += 1; } });
+  globalThis.history = /** @type {any} */ ({ replaceState: () => {} });
+  const fake = (/** @type {Map<string, string>} */ m) => ({ getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v), removeItem: (k) => m.delete(k) });
+  globalThis.localStorage = /** @type {any} */ (fake(disk));
+  Object.defineProperty(globalThis, 'sessionStorage', { configurable: true, value: fake(tab) });
+  try {
+    const { servedHost } = await import('../src/host/served.js');
+    const first = servedHost();
+    assert.equal(disk.has('miyu.web.login'), false, '迁完删掉旧的');
+    assert.deepEqual(first.credential(), { login: 'old' }, '照迁过来的令牌握手');
+    first.signedIn('owner1');
+    assert.deepEqual(first.accounts(), { current: 'owner1', list: [{ account: 'owner1', saved: true }] }, '握手回应的账号名填上');
+
+    // 「添加账号」：重新载入出登录框，登录 bob 不勾自动登录：令牌只在这个标签页
+    first.addAccount();
+    assert.equal(reloads, 1);
+    const add = servedHost();
+    assert.deepEqual(add.intent(), { add: true });
+    assert.equal(add.credential(), null, '添加账号的不拿记着的令牌');
+    add.remember({ token: 'b1', expires: '2999-01-01T00:00:00Z' }, 'bob', false);
+    assert.equal(JSON.parse(disk.get('miyu.web.accounts') ?? '{}').accounts.find((a) => a.account === 'bob').token, undefined, '表上不存没勾的令牌');
+    assert.deepEqual(servedHost().credential(), { login: 'b1' }, '同一个标签页刷新照它');
+    assert.deepEqual(servedHost().accounts().list.map((a) => [a.account, a.saved]), [['bob', false], ['owner1', true]]);
+
+    // 换到 owner1（存着令牌的直接进），再换回 bob（这个标签页那份还在）
+    servedHost().switchTo('owner1');
+    const back = servedHost();
+    assert.deepEqual(back.intent(), { pick: 'owner1' });
+    assert.deepEqual(back.credential(), { login: 'old' });
+    back.switchTo('bob');
+    assert.deepEqual(servedHost().credential(), { login: 'b1' });
+    tab.clear();
+    const fresh = servedHost();
+    assert.equal(fresh.credential(), null, '关了标签页（新开一个）bob 要密码');
+    assert.equal(fresh.choose('bob'), false, '点 bob：没存令牌');
+    assert.equal(fresh.choose('owner1'), true, '点 owner1：存着');
+    assert.deepEqual(fresh.credential(), { login: 'old' });
+
+    // 账号管理去掉 owner1：交回要作废的令牌，表上没了
+    assert.deepEqual(fresh.dropAccount('owner1'), [{ login: 'old' }]);
+    assert.deepEqual(servedHost().accounts().list, [{ account: 'bob', saved: false }]);
+    assert.deepEqual(servedHost().dropAccount('bob'), []);
+
+    // 存储整个用不了（隐私窗口、禁了的）：读写都不抛，只管这一次
+    const broken = { getItem: () => { throw new Error('no'); }, setItem: () => { throw new Error('no'); }, removeItem: () => { throw new Error('no'); } };
+    globalThis.localStorage = /** @type {any} */ (broken);
+    Object.defineProperty(globalThis, 'sessionStorage', { configurable: true, get: () => { throw new Error('no'); } });
+    const none = servedHost();
+    assert.equal(none.credential(), null);
+    none.remember({ token: 't9' }, 'amy', true);
+    assert.deepEqual(none.credential(), { login: 't9' });
+    assert.deepEqual(none.accounts().list, []);
   } finally {
     for (const [k, d] of Object.entries(keep)) {
       if (d) Object.defineProperty(globalThis, k, d);

@@ -161,7 +161,17 @@
     "show_password": "显示密码",
     "hide_password": "隐藏密码",
     "to_light": "切换到浅色",
-    "to_dark": "切换到深色"
+    "to_dark": "切换到深色",
+    "keep": "自动登录",
+    "back": "返回",
+    "empty_password": "请填写密码",
+    "pick_title": "选择账号",
+    "add_account": "添加账号",
+    "manage": "账号管理",
+    "remove": "从这台浏览器去掉",
+    "saved": "已保存登录",
+    "no_accounts": "这台浏览器没有记着的账号",
+    "expired": "登录已失效，请重新输入密码"
   },
   "boot": {
     "connecting_web": "正在连接…",

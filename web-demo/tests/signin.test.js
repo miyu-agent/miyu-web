@@ -128,3 +128,25 @@ test('是谁：握手带 admin 的照它（核心 Y-2下下中上）；没带的
   assert.equal(bridgeGot.member, false);
   assert.equal(bridgeGot.configless, false);
 });
+
+test('选择账号：拿记着的令牌连上的告诉宿主是哪个账号（迁过来的填名字）；握手回应给了新令牌的连同账号、勾没勾自动登录一起记下', async () => {
+  const told = [];
+  const served = {
+    kind: 'served', check: async () => 'down',
+    channel: fakeLine(() => ({ view: 1, account: 'owner1', admin: true }), []),
+    credential: () => ({ login: 'tok' }), remember: () => { throw new Error('不该记'); }, forget: () => null,
+    signedIn: (/** @type {string} */ a) => told.push(a),
+  };
+  await signIn(served, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
+  assert.deepEqual(told, ['owner1']);
+
+  const kept = [];
+  const fresh = {
+    ...served,
+    channel: fakeLine(() => ({ view: 1, account: 'bob', admin: false, login: { token: 'new', expires: 'x' } }), []),
+    credential: () => ({ code: 'c1' }),
+    remember: (/** @type {any} */ l, /** @type {string} */ a, /** @type {boolean} */ k) => kept.push([l.token, a, k]),
+  };
+  await signIn(fresh, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
+  assert.deepEqual(kept, [['new', 'bob', false]]);
+});
