@@ -256,10 +256,10 @@
 /* 分段的小标题（功能、MCP 服务、脚本、技能）：淡的小字，和上一段隔开一点；第一段不隔 */
 .setup-feature-group { padding: calc(12px * var(--space)) 0 calc(2px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
 .setup-feature-group:first-child { padding-top: 0; }
-/* 一段（组、包、我的、不归包的几段）：段和段之间隔开；一段里的块排两列，一块不拆开，一列放不下 260px 的退回一列（2026-10-27 项目主人） */
+/* 一段（组、包、我的、不归包的几段）：段和段之间隔开；一段里的块排两列，一块不拆开，一列放不下 200px 的退回一列（2026-10-27 项目主人） */
 .setup-feature-section + .setup-feature-section { margin-top: calc(10px * var(--space)); }
 .setup-feature-section .setup-feature-group { padding-top: 0; }
-.setup-feature-cols { columns: 2 260px; column-gap: calc(28px * var(--space)); }
+.setup-feature-cols { columns: 2 200px; column-gap: calc(28px * var(--space)); }
 .setup-feature-block { break-inside: avoid; padding-bottom: calc(4px * var(--space)); }
 /* 包名那一行（总开关）、下面的功能（缩进、暗字，2026-10-27 项目主人） */
 .setup-feature.is-head .setup-feature-name { font-weight: 500; }
