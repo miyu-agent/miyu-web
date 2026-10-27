@@ -10,6 +10,9 @@ import { field, askFirst } from './form.js';
 import { refusalText } from './persona-editor.js';
 import { featureGroups, presetSections, summaryChange } from './model.js';
 
+/** 预设页展开着的块记在浏览器里的名字 */
+const OPEN_KEY = 'preset_open';
+
 /** @typedef {{saved: () => void, removed: (remains: boolean) => void, close: () => void}} Hooks */
 
 export class PresetEditor {
@@ -30,6 +33,8 @@ export class PresetEditor {
     this.picking = false;
     /** `package.list` 的回应（包名、出厂还是装的、装的时刻、组和组内先后） @type {{packages?: any[], groups?: any[]}} */
     this.packageInfo = {};
+    /** 展开着的块（包编号、单个功能的 `f:<编号>`），记在这个浏览器里（2026-10-27 项目主人：默认收起，记住展开过的） @type {Set<string>} */
+    this.open = new Set(/** @type {string[]} */ (ctx.storage?.get?.(OPEN_KEY, []) ?? []));
   }
 
   async load() {
@@ -106,8 +111,33 @@ export class PresetEditor {
       const changes = live.filter((f) => !!f.on !== next).map((f) => ({ key: `features.${f.id}`, value: next }));
       return changes.length ? this.set(changes) : true;
     });
-    return h('div.setup-feature-block', h('div.setup-feature.is-head', h('span.setup-feature-name', name), all),
-      h('div.setup-feature-kids', b.items.map((f) => this.featureRow(f, true))));
+    const kids = h('div.setup-feature-kids', b.items.map((f) => this.featureRow(f, true)));
+    const count = live.filter((f) => f.on).length;
+    return this.fold(`p:${b.items[0]?.package ?? name}`, h('span.setup-feature-name', name), `${count}/${live.length}`, all, kids, 'div.setup-feature-block');
+  }
+
+  /**
+   * 能展开收起的一块（2026-10-27 项目主人：默认收起、记住展开过的；箭头在右边、悬停才露）：头一行名字、暗字「开了几项」、箭头、开关，
+   * 下面是收着的那几行；点头一行（开关以外）展开、收起。
+   * @param {string} key 记展开的键 @param {Node} name @param {string} count @param {HTMLElement} toggle @param {HTMLElement} body @param {string} tag 外面那一层
+   */
+  fold(key, name, count, toggle, body, tag) {
+    const opened = () => this.open.has(key);
+    const arrow = h('span.setup-fold-arrow', icon(opened() ? 'chevron-down' : 'chevron-right'));
+    const head = h('div.setup-feature.is-head', { role: 'button', tabindex: '0', 'aria-expanded': String(opened()) }, name, h('span.setup-fold-count', count), arrow, toggle);
+    const el = h(`${tag}.is-fold${opened() ? '.is-open' : ''}`, head, body);
+    body.hidden = !opened();
+    const flip = () => {
+      if (opened()) this.open.delete(key); else this.open.add(key);
+      this.ctx.storage?.set?.(OPEN_KEY, [...this.open]);
+      body.hidden = !opened();
+      el.classList.toggle('is-open', opened());
+      head.setAttribute('aria-expanded', String(opened()));
+      replace(arrow, icon(opened() ? 'chevron-down' : 'chevron-right'));
+    };
+    head.addEventListener('click', (e) => { if (!/** @type {Element} */ (e.target).closest('.set-switch, button')) flip(); });
+    head.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === head) { e.preventDefault(); flip(); } });
+    return el;
   }
 
   /**
@@ -117,16 +147,20 @@ export class PresetEditor {
    */
   featureRow(f, kid = false) {
     if (f.installed === false) return h(`div.setup-feature.is-missing${kid ? '.is-kid' : ''}`, h('span.setup-feature-name', f.name ?? f.id), h('span.setup-missing', this.t('edit.not_installed')));
-    const row = h(`div.setup-feature${kid ? '.is-kid' : ''}`, h('span.setup-feature-name', { title: f.summary ?? null }, f.name ?? f.id),
-      ...this.byMarks(f),
-      this.kit.toggle(!!f.on, (on) => this.set([{ key: `features.${f.id}`, value: on }])));
+    const name = h('span.setup-feature-name', { title: f.summary ?? null }, f.name ?? f.id);
+    const toggle = this.kit.toggle(!!f.on, (on) => this.set([{ key: `features.${f.id}`, value: on }]));
     const tools = f.tools ?? [];
-    if (tools.length < 2) return row;
-    return [row, h(`div.setup-tools${f.on ? '' : '.is-off'}`, tools.map((tool) => {
-      const toggle = this.kit.toggle(!!tool.on, (on) => this.set([{ key: `tools.${tool.name}`, value: on }]));
-      if (!f.on) toggle.setAttribute('disabled', '');
-      return h('div.setup-tool', h('span', tool.label ?? tool.name), toggle);
-    }))];
+    if (tools.length < 2) return h(`div.setup-feature${kid ? '.is-kid' : ''}`, name, ...this.byMarks(f), toggle);
+    const list = h(`div.setup-tools${f.on ? '' : '.is-off'}`, tools.map((tool) => {
+      const one = this.kit.toggle(!!tool.on, (on) => this.set([{ key: `tools.${tool.name}`, value: on }]));
+      if (!f.on) one.setAttribute('disabled', '');
+      return h('div.setup-tool', h('span', tool.label ?? tool.name), one);
+    }));
+    // 一个功能下面几件工具：同包那一块，能展开收起（功能关着的，工具算没开）
+    const on = f.on ? tools.filter((tool) => tool.on).length : 0;
+    const el = this.fold(`f:${f.id}`, h('span.setup-feature-name', { title: f.summary ?? null }, f.name ?? f.id, ...this.byMarks(f)), `${on}/${tools.length}`, toggle, list, 'div.setup-feature-fold');
+    if (kid) el.firstElementChild?.classList.add('is-kid');
+    return el;
   }
 
   /**

@@ -396,3 +396,11 @@
 .setup-menu-back { display: grid; flex: none; place-items: center; width: 24px; height: 24px; margin: calc(-3px * var(--space)) calc(2px * var(--space)) calc(-3px * var(--space)) calc(-6px * var(--space)); padding: 0; border: 0; border-radius: var(--r-7); background: transparent; color: var(--text-soft); cursor: pointer; }
 .setup-menu-back:hover { background: var(--surface-2); color: var(--text); }
 .setup-menu-back .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); }
+/* 能展开收起的块（2026-10-27 项目主人）：头一行点了展开；暗字开了几项；箭头在开关左边，悬停、键盘停着时才露 */
+.setup-feature.is-head { cursor: pointer; }
+.setup-fold-count { flex: none; color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); font-variant-numeric: tabular-nums; }
+.setup-fold-arrow { display: inline-grid; flex: none; place-items: center; width: 14px; height: 14px; color: var(--text-faint); opacity: 0; transition: opacity var(--motion-in) var(--ease-out); }
+.setup-fold-arrow .icon { width: 14px; height: 14px; }
+.setup-feature.is-head:hover .setup-fold-arrow, .setup-feature.is-head:focus-visible .setup-fold-arrow { opacity: 1; }
+@media (hover: none) { .setup-fold-arrow { opacity: 1; } }
+.setup-feature-fold > .setup-tools { margin-top: 0; }
