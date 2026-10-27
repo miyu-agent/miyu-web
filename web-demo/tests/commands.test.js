@@ -151,7 +151,7 @@ test('空会话里打了核心认的命令（要造好的会话才能用）：�
 test('空会话里打 /goal <目标>（opens_session）：交外面先开会话；不带字的、别的核心命令照旧要等会话（2026-10-12）', () => {
   const later = new Set(['goal', 'remember']);
   const opens = new Set(res.commands.opens_session);
-  assert.deepEqual([...opens], ['goal']);
+  assert.deepEqual([...opens], ['goal', 'loop']);
   assert.deepEqual(read(list, '/goal 把测试修绿', later, opens), { kind: 'unlisted', name: 'goal', words: '把测试修绿' });
   assert.equal(read(list, '/Goal 把测试修绿', later, opens).kind, 'unlisted', '不分大小写');
   assert.equal(read(list, '/goal', later, opens).kind, 'later', '不带字的看不了，照旧');
@@ -226,6 +226,19 @@ test('空会话里打 /todo、/todo clear（核心 D-3 再补，empty_none）：
   assert.equal(read(list, '/goal 写完文档', new Set(), opens, nones).kind, 'unlisted');
 });
 
+test('空会话里打 /loop（核心 J-2）：带着话的和 /goal 一样先开会话；只打 /loop 提示写上要说的话；/loop off 照核心「此会话没有循环。」，不开会话（2026-10-27 项目主人）', async () => {
+  const { coreSpecs } = await import('../src/model/commands.js');
+  const list = coreSpecs([
+    { name: 'loop', summary: '循环执行', argument: '[<间隔>] <要说的话> | off', usage: [{ form: '/loop <间隔> <要说的话>', summary: '每隔一段时间' }, { form: '/loop <要说的话>', summary: '由 AI 定' }, { form: '/loop off', summary: '停' }] },
+  ]).map((s) => ({ ...s, later: true }));
+  const opens = new Set(res.commands.opens_session);
+  const nones = new Set(res.commands.empty_none);
+  assert.deepEqual(read(list, '/loop 5m 看一下邮件', new Set(), opens, nones), { kind: 'unlisted', name: 'loop', words: '5m 看一下邮件' });
+  assert.equal(read(list, '/loop 看一下邮件', new Set(), opens, nones).kind, 'unlisted');
+  assert.equal(read(list, '/loop', new Set(), opens, nones).kind, 'needs_words');
+  assert.equal(read(list, '/loop off', new Set(), opens, nones).kind, 'empty_fixed');
+});
+
 test('空会话里照「没有」说的（/goal 的固定写法、/todo）：网页照抄的那一份和核心资源的一字不差', async () => {
   const { readFileSync } = await import('node:fs');
   const { join } = await import('node:path');
@@ -236,6 +249,8 @@ test('空会话里照「没有」说的（/goal 的固定写法、/todo）：网
     const web = JSON.parse(readFileSync(new URL(`../resources/text/${lang}.json`, import.meta.url), 'utf8')).commands.empty_fixed;
     assert.equal(web.goal, core['commands/goal-none'], lang);
     assert.equal(web.todo, core['commands/todo-none'], lang);
+    // /loop（核心 J-2）比 CI 钉的核心新：钉的那份核心还没有这一句的不比
+    if (core['commands/loop-none'] !== undefined) assert.equal(web.loop, core['commands/loop-none'], lang);
     assert.deepEqual(Object.keys(web).sort(), [...res.commands.empty_none].sort(), 'empty_none 里的每一条都有一句');
   }
 });

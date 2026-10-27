@@ -305,11 +305,13 @@
     "needs_session": "Start a session first",
     "running": "Running {name}…",
     "needs_words": {
-      "goal": "Enter a goal"
+      "goal": "Enter a goal",
+      "loop": "Type what to say on each loop"
     },
     "empty_fixed": {
       "goal": "No goal.",
-      "todo": "No todos."
+      "todo": "No todos.",
+      "loop": "This session has no loop."
     }
   },
   "language": {

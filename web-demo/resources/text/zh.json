@@ -305,11 +305,13 @@
     "needs_session": "需要先开始会话",
     "running": "正在执行 {name}…",
     "needs_words": {
-      "goal": "请输入目标内容"
+      "goal": "请输入目标内容",
+      "loop": "请输入要循环说的话"
     },
     "empty_fixed": {
       "goal": "无长期目标。",
-      "todo": "无待办。"
+      "todo": "无待办。",
+      "loop": "此会话没有循环。"
     }
   },
   "language": {
