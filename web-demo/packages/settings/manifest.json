@@ -215,7 +215,6 @@
       "from_env": "来自环境变量 {name}",
       "ext": {
         "run": "运行",
-        "copies": "各账号的那一份",
         "perms": "权限",
         "restart": "重启",
         "show_output": "查看输出",
@@ -226,7 +225,6 @@
         "cancel": "取消",
         "state": {
           "off": "已停用",
-          "on_demand": "用到时启动",
           "starting": "启动中",
           "running": "运行中",
           "waiting": "{seconds} 秒后重试（已连续失败 {failures} 次）",
@@ -236,7 +234,6 @@
           "needs_approval": "需要批准权限",
           "config_error": "配置错误",
           "failed_repeatedly": "连续失败 5 次，已停止",
-          "retired": "空闲退出，用到时再启动",
           "not_installed": "程序未安装",
           "cannot_start": "无法启动",
           "protocol_mismatch": "版本不兼容",
@@ -443,7 +440,6 @@
           "bundle": "技能包"
         },
         "uninstall_ask": "确认卸载「{name}」吗？",
-        "per_account": "每人一份",
         "group_count": "{n} 个",
         "group_packages": "{n} 个软件包",
         "group_remove": "全部卸载",
@@ -808,7 +804,6 @@
       "from_env": "From environment variable {name}",
       "ext": {
         "run": "Run",
-        "copies": "Each account's copy",
         "perms": "Permissions",
         "restart": "Restart",
         "show_output": "Show output",
@@ -819,7 +814,6 @@
         "cancel": "Cancel",
         "state": {
           "off": "Disabled",
-          "on_demand": "Starts when used",
           "starting": "Starting",
           "running": "Running",
           "waiting": "Retrying in {seconds} s ({failures} failures in a row)",
@@ -829,7 +823,6 @@
           "needs_approval": "Needs permission approval",
           "config_error": "Configuration error",
           "failed_repeatedly": "Failed 5 times in a row, stopped",
-          "retired": "Idle, exited; starts again when used",
           "not_installed": "Program not installed",
           "cannot_start": "Can't start",
           "protocol_mismatch": "Incompatible version",
@@ -1036,7 +1029,6 @@
           "bundle": "Skill pack"
         },
         "uninstall_ask": "Uninstall \"{name}\"?",
-        "per_account": "One per person",
         "group_count": "{n}",
         "group_packages": "{n} packages",
         "group_remove": "Uninstall all",
@@ -1401,7 +1393,6 @@
       "from_env": "環境変数 {name} から",
       "ext": {
         "run": "実行",
-        "copies": "アカウントごとのコピー",
         "perms": "権限",
         "restart": "再起動",
         "show_output": "出力を見る",
@@ -1412,7 +1403,6 @@
         "cancel": "キャンセル",
         "state": {
           "off": "オフ",
-          "on_demand": "使うときに起動",
           "starting": "起動中",
           "running": "実行中",
           "waiting": "{seconds} 秒後に再試行（連続 {failures} 回失敗）",
@@ -1422,7 +1412,6 @@
           "needs_approval": "権限を承認しないと起動できません",
           "config_error": "設定に問題があり終了しました",
           "failed_repeatedly": "5 回続けて失敗したため停止しました",
-          "retired": "アイドルのため終了。使うときに再起動します",
           "not_installed": "プログラムがインストールされていません",
           "cannot_start": "起動できません",
           "protocol_mismatch": "バージョンが合わないため起動しません",
@@ -1629,7 +1618,6 @@
           "bundle": "スキルパック"
         },
         "uninstall_ask": "「{name}」をアンインストールしますか？",
-        "per_account": "一人ずつ",
         "group_count": "{n} 個",
         "group_packages": "{n} 個のパッケージ",
         "group_remove": "すべてアンインストール",

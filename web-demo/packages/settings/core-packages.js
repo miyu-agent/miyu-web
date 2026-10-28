@@ -282,15 +282,12 @@ function infoCard(dialog, p, e) {
   const alarm = bad || failed(e);
   const from = typeof p.from === 'string' ? t(`pkg.from.${p.from}`) : null;
   const author = typeof p.author === 'string' && p.author.trim() ? p.author.trim() : null;
-  // 每人一份的扩展（核心 IM-1 上：`process.scope` 是 `account`）暗字里接「每人一份」
-  const perAccount = p.process?.scope === 'account' ? t('pkg.per_account') : null;
-  const meta = [p.version ? t('pkg.version', { version: p.version }) : null, from && !from.startsWith('pkg.') ? from : null, author, perAccount].filter(Boolean).join(' · ');
+  const meta = [p.version ? t('pkg.version', { version: p.version }) : null, from && !from.startsWith('pkg.') ? from : null, author].filter(Boolean).join(' · ');
   const upstream = typeof p.upstream === 'string' && /^https:\/\/[^\s]+$/.test(p.upstream) ? p.upstream : null;
   const control = controlFor(dialog, p, e);
   const stderr = e ? (Array.isArray(e.stderr) ? e.stderr.join('\n') : e.stderr ?? '') : '';
   const showing = !!e && dialog.extensions.showing.has(id);
   const actions = [
-    // 成员拿到的只有他打得开的带 `page`（核心 IM-1 中下），照样给按钮
     p.page && !bad && dialog.ctx.backstage ? openButton(dialog, id) : null,
     e && e.state === 'running' ? h('button.set-btn', { type: 'button', onclick: () => dialog.extensions.act('extension.restart', { package: id }) }, t('ext.restart')) : null,
     e && e.on && e.state === 'stopped' && stderr
@@ -312,34 +309,7 @@ function infoCard(dialog, p, e) {
         actions.length ? h('div.set-pkg-card-actions', actions) : null),
       control ? h('div.set-control', control) : null),
     showing && stderr ? h('pre.set-ext-output', stderr) : null,
-    ask,
-    copiesGroup(dialog, e));
-}
-
-/**
- * 每人一份的扩展各账号那一份（核心 IM-1 中下四：管理员拿到的 `copies`，拉起过的每一份，照账号排）：一份一行，账号名、右边状态，停了有标准错误的
- * 能「查看输出」；没有的不出。
- * @param {any} dialog @param {any} e
- */
-function copiesGroup(dialog, e) {
-  const copies = Array.isArray(e?.copies) ? e.copies.filter((/** @type {any} */ c) => typeof c?.account === 'string') : [];
-  if (!copies.length) return null;
-  const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
-  const ext = dialog.extensions;
-  const rows = copies.map((/** @type {any} */ c) => {
-    const key = `${e.package}:${c.account}`;
-    const stderr = Array.isArray(c.stderr) ? c.stderr.join('\n') : c.stderr ?? '';
-    const stopped = failed({ ...c, on: e.on });
-    const peek = stopped && stderr
-      ? h('button.set-link', { type: 'button', onclick: () => { ext.toggleSet(ext.showing, key); ext.redraw(e.package); } }, t(ext.showing.has(key) ? 'ext.hide_output' : 'ext.show_output')) : null;
-    return [
-      h('div.set-row',
-        h('div.set-text', h('div.set-name', h('span', c.account)), peek),
-        h('div.set-control', h(`span.set-pkg-status${c.state === 'running' ? '.is-on' : stopped ? '.is-bad' : ''}`, stateText(t, { ...c, on: e.on, scope: 'account' })))),
-      ext.showing.has(key) && stderr ? h('pre.set-ext-output', stderr) : null,
-    ];
-  }).flat().filter(Boolean);
-  return groupBlock(t('ext.copies'), rows);
+    ask);
 }
 
 /**

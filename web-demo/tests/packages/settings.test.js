@@ -204,14 +204,9 @@ test('扩展「运行」那一行：关着的只写关着（不管上一次为�
   assert.equal(stateText(t, { package: 'x', name: 'x', on: true, state: 'running' }), '<ext.state.running>');
   assert.equal(stateText(t, { package: 'x', name: 'x', on: true, state: 'stopped', reason: 'needs_approval' }), '<ext.reason.needs_approval>');
   assert.equal(stateText(t, { package: 'x', name: 'x', on: true, state: 'stopped', reason: 'weird' }), '<ext.state.stopped>');
-  // 每人一份的（核心 IM-1 中下四）：看的人那一份没起过，用到时才起，不写已停用；开关关着的照旧
-  assert.equal(stateText(t, { package: 'x', on: true, state: 'off', scope: 'account' }), '<ext.state.on_demand>');
-  assert.equal(stateText(t, { package: 'x', on: false, state: 'off', scope: 'account' }), '<ext.state.off>');
   assert.equal(stateText(t, { package: 'x', on: true, state: 'off' }), '<ext.state.off>');
-  // 空闲了自己退的（核心 8d6fdbbfb `retired`）：写原因、不算故障
+  // 开着、停了的算故障（核心 SU-2下 起没有空闲退出的 retired 了）
   const { failed } = await import('../../packages/settings/extensions.js');
-  assert.equal(stateText(t, { package: 'x', on: true, state: 'stopped', reason: 'retired' }), '<ext.reason.retired>');
-  assert.equal(failed({ on: true, state: 'stopped', reason: 'retired' }), false);
   assert.equal(failed({ on: true, state: 'stopped', reason: 'failed_repeatedly' }), true);
   assert.equal(failed({ on: false, state: 'stopped' }), false);
   assert.equal(stateText(t, { package: 'x', name: 'x', on: true, state: 'waiting', retry_in: 2500, failures: 2 }), '<ext.state.waiting{"seconds":3,"failures":2}>');
