@@ -6317,7 +6317,7 @@
     ]
   },
   "settings.acc-actions": {
-    "zh": "管理员后台：成员一行右边那几个按钮（设成、撤掉管理员，停用、启用）",
+    "zh": "设置「访问」：一行右边那几个按钮（更换头像、移除，设置、修改访问密码，退出登录）",
     "select": [
       ".acc-actions"
     ]
@@ -7060,14 +7060,20 @@
       ".si-remove"
     ]
   },
+  "acc.password-form": {
+    "zh": "设置「访问」：「访问密码」那一行下面展开的几格和「确定」「取消」",
+    "select": [
+      ".acc-password-form"
+    ]
+  },
   "acc.avatar-control": {
-    "zh": "设置「账号」：头像那一行右边（头像和按钮）",
+    "zh": "设置「访问」：头像那一行右边（头像和按钮）",
     "select": [
       ".acc-avatar-control"
     ]
   },
   "acc.avatar": {
-    "zh": "设置「账号」：自己的头像（圆的）",
+    "zh": "设置「访问」：自己的头像（圆的）",
     "select": [
       ".acc-avatar"
     ]

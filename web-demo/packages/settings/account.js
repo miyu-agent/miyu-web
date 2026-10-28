@@ -5,12 +5,14 @@
 import { h, icon } from '../../src/lib/dom.js';
 import { confirmIn } from './confirm.js';
 import { sectionKit } from './kit.js';
+import { toggle } from './rows.js';
+import { plainItem } from './model.js';
 
 /** 「访问」页的几组。 @param {any} dialog */
 export function drawAccount(dialog) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
   const host = dialog.ctx.host;
-  const rows = [avatarRow(dialog)];
+  const rows = [avatarRow(dialog), ...passwordRows(dialog), lanRow(dialog)];
   if (host?.signOut) {
     const out = async (/** @type {boolean} */ all, /** @type {Event} */ e) => {
       if (all && !(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('account.logout_all_ask'), yes: t('account.logout_all'), no: t('account.cancel') }))) return;
@@ -85,3 +87,78 @@ function avatarRow(dialog) {
   return h('div.set-row.acc-avatar-row', h('div.set-text', h('div.set-name', h('span', t('account.avatar')))), h('div.acc-avatar-control', holder, actions));
 }
 
+
+/**
+ * 「访问密码」一行（核心 SU-1 补；蓝图第 12c 条第 2 款）：设没设、右边「设置」或「修改」；点了下面展开几格（改的、拿设备令牌连的多「当前访问密码」）、
+ * 「确定」「取消」。成了收起、写「已设置」、局域网那一行跟着能开。旧核心握手不说设没设的不出。
+ * @param {any} dialog @returns {HTMLElement[]}
+ */
+function passwordRows(dialog) {
+  const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
+  const access = dialog.ctx.host?.access;
+  if (!access || access.set() === null) return [];
+  const form = h('div.set-form.acc-password-form', { hidden: true });
+  const desc = h('p.set-desc');
+  const button = h('button.set-btn', { type: 'button', onclick: () => open() });
+  const label = () => {
+    desc.textContent = t(access.set() ? 'account.password_is_set' : 'account.password_unset');
+    button.textContent = t(access.set() ? 'account.password_change' : 'account.password_set');
+  };
+  label();
+  const close = () => { form.hidden = true; form.replaceChildren(); button.hidden = false; };
+  const open = () => {
+    const field = (/** @type {string} */ name, /** @type {string} */ auto) => /** @type {HTMLInputElement} */ (h('input.set-input', { type: 'password', placeholder: t(name), 'aria-label': t(name), autocomplete: auto, spellcheck: 'false' }));
+    const old = access.needsOld() ? field('account.password_old', 'current-password') : null;
+    const fresh = field('account.password_new', 'new-password');
+    const again = field('account.password_again', 'new-password');
+    const error = h('p.set-error', { hidden: true });
+    const ok = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'button', onclick: () => submit() }, t('account.ok')));
+    const fail = (/** @type {string} */ why) => { error.textContent = why; error.hidden = false; };
+    const submit = async () => {
+      const why = access.problem(fresh.value, again.value);
+      if (why) return fail(why);
+      ok.disabled = true;
+      const refused = await access.change(fresh.value, old ? old.value : null);
+      ok.disabled = false;
+      if (refused) return fail(refused);
+      close();
+      label();
+      dialog.toast(t('account.password_done'));
+      // 局域网那一行照「设没设」灰着：重画这一页
+      dialog.drawBody?.();
+    };
+    for (const input of [old, fresh, again]) input?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) submit(); });
+    form.replaceChildren(h('div.set-form-keyrow', old, fresh, again), error,
+      h('div.set-form-buttons', h('button.set-btn', { type: 'button', onclick: close }, t('account.cancel')), ok));
+    form.hidden = false;
+    button.hidden = true;
+    (old ?? fresh).focus();
+  };
+  return [h('div.set-row', h('div.set-text', h('div.set-name', h('span', t('account.password'))), desc), h('div.acc-actions', button)), form];
+}
+
+/** 写的地址是不是只有这台电脑（回环）：`127.*`、`::1`、`localhost`；别的（`0.0.0.0`、这台电脑的某一个地址）算听局域网。 @param {unknown} value */
+export const loopbackOnly = (value) => {
+  const v = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return v === '' || v === 'localhost' || v === '::1' || v === '[::1]' || /^127\./.test(v);
+};
+
+/**
+ * 「允许局域网访问」一行（网页软件的 `web.listen`，蓝图第 12c 条第 3 款）：开是 `0.0.0.0`、关是 `127.0.0.1`，改了重启网页软件生效。没设访问密码、
+ * 现在关着的灰着，暗字换成「先设访问密码」。清单里没有这一项的（网页软件没装）不出。
+ * @param {any} dialog
+ */
+function lanRow(dialog) {
+  const t = (/** @type {string} */ k) => dialog.ctx.text(k);
+  const item = dialog.schema ? plainItem(dialog.schema, dialog.got ?? {}, 'web.listen') : null;
+  if (!item) return null;
+  const on = !loopbackOnly(item.entry?.value ?? item.default);
+  const locked = !on && dialog.ctx.host?.access?.set() === false;
+  const sw = toggle(on, async (/** @type {boolean} */ next) => {
+    const why = await dialog.save(item, { value: next ? '0.0.0.0' : '127.0.0.1' });
+    if (why) dialog.toast(why);
+    return !why;
+  });
+  if (locked) sw.setAttribute('disabled', '');
+  return h('div.set-row', h('div.set-text', h('div.set-name', h('span', t('account.lan'))), h('p.set-desc', t(locked ? 'account.lan_needs_password' : 'account.lan_desc'))), sw);
+}

@@ -120,6 +120,7 @@
     "password": "Access password",
     "again": "Confirm access password",
     "bad_password": "Wrong access password",
+    "wrong_old": "The current access password is wrong",
     "throttled": "Too many attempts. Try again in {seconds} s",
     "bad_code": "This link was already used or has expired: run miyu web in the terminal again",
     "setup_title": "Set an access password",

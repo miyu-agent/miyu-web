@@ -28,7 +28,7 @@ import { useHost } from '../core/host.js';
 import { browserHost } from '../host/browser.js';
 import { askPrefix } from '../ui/prefix-ask.js';
 import { servedHost } from '../host/served.js';
-import { SIGNIN_SCHEME, signIn } from './signin.js';
+import { SIGNIN_SCHEME, signIn, passwordProblem, changePassword } from './signin.js';
 import { ownerStorage } from './storage.js';
 import { useIcons } from '../lib/dom.js';
 import { KERNEL_SERVICES } from './services.js';
@@ -108,6 +108,8 @@ export async function boot(root) {
   useLanguage(language);
   // 新会话在哪个目录里干活、家目录：握手回应的 `host`（核心施工 W-3；新会话默认在账号的工作区）
   const info = placeOf(hello);
+  // 访问密码设没设（核心 SU-1 补：握手回应总带；旧核心没有的是 `null`）
+  let passwordSet = typeof hello?.password_set === 'boolean' ? hello.password_set : null;
   // 给人看的字（工具的显示名、结果那一句）：问核心的 `human.get`；拿不到的照工具名写
   res.human = await loadHuman(conn, language.code).catch((err) => {
     console.error(`拿不到给人看的字：${err.message}`);
@@ -224,6 +226,20 @@ export async function boot(root) {
         secretLayers: false,
         /** 退出登录（拿设备令牌连的才有）：忘掉设备令牌、重新载入；走桥的是 `null` */
         signOut: host.signOut ?? null,
+        /**
+         * 访问密码（核心 SU-1 补，设置「访问」页）：`set()` 设没设（握手的 `password_set`；旧核心没给的是 `null`，不出那一行），`needsOld()` 改的时候要不要
+         * 旧密码（设过了、拿设备令牌连的；走桥的是本机令牌，不要），`problem` 照「设置访问密码」那一屏查，`change` 设、改（成了交 `null`，拒了交一句）。
+         */
+        access: {
+          set: () => passwordSet,
+          needsOld: () => passwordSet === true && host.kind !== 'browser',
+          problem: (/** @type {string} */ password, /** @type {string} */ again) => passwordProblem(password, again),
+          change: async (/** @type {string} */ password, /** @type {string|null} */ old) => {
+            const why = await changePassword(conn, host, password, old);
+            if (!why) passwordSet = true;
+            return why;
+          },
+        },
         /**
          * 你的头像（核心 AV-1，设置「访问」页、「输入访问密码」那一屏）：`get` 记着的小图、`version` 现在的版本（握手、上一次设的），`set` 设好了以后记下
          * （`null` 移除），`watch` 换了叫一声。走桥的是 `null`。

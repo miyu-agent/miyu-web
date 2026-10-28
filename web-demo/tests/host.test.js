@@ -226,6 +226,10 @@ test('直接连网页软件的那一份（核心 SU-1）：一次性码只交一
     assert.equal(await host.urls.blob('sha256:ab', 'image/png'), '/media/t1', '同一样东西不再换');
     assert.deepEqual([calls[0][0], calls[0][1], JSON.parse(calls[0][2])], ['/media', 'Bearer tok', { blob: 'sha256:ab', type: 'image/png' }]);
     assert.equal(servedHost().credential().login, 'tok', '刷新以后照记着的令牌');
+    host.renew({ token: 'tok2', expires: LATER });
+    assert.equal(JSON.parse(disk.get('miyu.web.login') ?? '{}').token, 'tok2', '改了访问密码换来的新令牌：存这台浏览器的照旧存');
+    assert.deepEqual(host.credential(), { login: 'tok2' });
+    assert.equal(tab.has('miyu.web.session'), false);
     host.forget();
     assert.equal(disk.has('miyu.web.login'), false);
     assert.equal(servedHost().credential(), null, '忘掉了的出「输入访问密码」');
@@ -234,6 +238,9 @@ test('直接连网页软件的那一份（核心 SU-1）：一次性码只交一
     assert.equal(disk.has('miyu.web.login'), false, '没勾的不存这台浏览器');
     assert.equal(JSON.parse(tab.get('miyu.web.session') ?? '{}').token, 't2');
     assert.deepEqual(servedHost().credential(), { login: 't2' }, '同一个标签页刷新照它');
+    tabOnly.renew({ token: 't3', expires: LATER });
+    assert.equal(disk.has('miyu.web.login'), false, '只放标签页的新令牌照旧只放标签页');
+    assert.equal(JSON.parse(tab.get('miyu.web.session') ?? '{}').token, 't3');
     tab.clear();
     assert.equal(servedHost().credential(), null, '关了标签页（新开一个）要再输');
     // 邀请码不认了（核心 SU-1）

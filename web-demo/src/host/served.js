@@ -236,6 +236,18 @@ export function servedHost() {
         disk.remove(LOGIN);
       }
     },
+    /**
+     * 「访问」页改了访问密码，核心回了新的设备令牌（核心 SU-1 补：这条连接当场换成它，别的设备全作废）：换掉记着的那一份，
+     * 原来存这台浏览器的照旧存、只放这个标签页的照旧放。
+     * @param {{token: string, expires?: string|null}} login
+     */
+    renew: (login) => {
+      token = login.token;
+      tickets.clear();
+      const one = JSON.stringify({ token: login.token, expires: login.expires ?? null });
+      if (readLogin(disk.get(LOGIN), now()) != null) disk.set(LOGIN, one);
+      else tab.set(SESSION, one);
+    },
     /** 设备令牌用不了了（`bad_login`）：扔掉这一份 */
     forget: () => dropCurrent(),
     /**

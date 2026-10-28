@@ -177,6 +177,7 @@ export function browserHost() {
     credential: () => null,
     /** 记下登录令牌：走桥的用不着 */
     remember: (/** @type {any} */ login) => {},
+    renew: (/** @type {any} */ login) => {},
     forget: () => {},
     /** 走桥的是本机口令，没有登录可退 */
     signOut: null,

@@ -497,3 +497,9 @@ test('带 mcp 的包标成 MCP', async () => {
   const { pkgTag } = await import('../../packages/settings/model.js');
   assert.equal(pkgTag({ kind: 'bundle', mcp: [{ name: 'echo', state: 'running' }] }), 'mcp');
 });
+
+test('「允许局域网访问」照 web.listen 认开没开：回环（127.*、::1、localhost、空的）是关，0.0.0.0、这台电脑的某一个地址是开', async () => {
+  const { loopbackOnly } = await import('../../packages/settings/account.js');
+  for (const v of ['127.0.0.1', '127.0.1.1', '::1', '[::1]', 'localhost', ' LOCALHOST ', '', undefined, null]) assert.equal(loopbackOnly(v), true, String(v));
+  for (const v of ['0.0.0.0', '192.168.1.5', '::']) assert.equal(loopbackOnly(v), false, v);
+});

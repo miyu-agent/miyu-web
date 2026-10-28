@@ -120,6 +120,7 @@
     "password": "访问密码",
     "again": "确认访问密码",
     "bad_password": "访问密码错误",
+    "wrong_old": "当前访问密码不对",
     "throttled": "尝试次数过多，{seconds} 秒后再试",
     "bad_code": "这个链接已用过或已过期：在终端里再运行一次 miyu web",
     "setup_title": "设置访问密码",

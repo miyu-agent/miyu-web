@@ -52,6 +52,24 @@ export function passwordProblem(password, again) {
   return null;
 }
 
+/**
+ * 「访问」页设、改访问密码（核心 SU-1 补；蓝图「设置页」第 12c 条第 2 款）：`account.setup {password, old?}`，回了新的设备令牌的交给宿主换掉记着的那一份
+ * （这条连接核心当场换成它）。成了交 `null`，拒了交给人看的一句：旧密码不对、试太多次、别的照核心的话。
+ * @param {{request: (method: string, params: any) => Promise<any>}} conn @param {{renew?: (login: any) => void}} host
+ * @param {string} password @param {string|null} old 设过、要带旧密码的（拿设备令牌连的）；不带的是 `null`
+ * @returns {Promise<string|null>}
+ */
+export async function changePassword(conn, host, password, old) {
+  try {
+    const got = await conn.request('account.setup', old === null ? { password } : { password, old });
+    if (got?.login?.token) host.renew?.(got.login);
+    return null;
+  } catch (err) {
+    if (/** @type {any} */ (err)?.reason === 'bad_password') return t('signin.wrong_old');
+    return refusedText(err) || /** @type {any} */ (err)?.message || String(err);
+  }
+}
+
 /** 这几屏自己记的明暗（主题还没起来，2026-10-23 项目主人：创建账号界面无法切换明暗）；引导起来以后照它换成主题的设置（`welcome`） */
 export const SIGNIN_SCHEME = 'miyu.signin.scheme';
 

@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { refusedText, passwordProblem, signIn } from '../src/kernel/signin.js';
+import { refusedText, passwordProblem, signIn, changePassword } from '../src/kernel/signin.js';
 import { Refusal } from '../src/core/connection.js';
 
 loadRes();
@@ -91,4 +91,21 @@ test('握手回应给了新令牌的（票、密码换的）连同勾没勾自�
   const got = await signIn(fresh, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
   assert.deepEqual(kept, [['new', false]]);
   assert.equal('member' in got, false, '没有成员这一说了');
+});
+
+test('「访问」页设、改访问密码（核心 SU-1 补）：带不带旧密码照交进来的；回了新令牌的交宿主换掉；旧密码不对、试太多次照原因写', async () => {
+  const sent = [];
+  const renewed = [];
+  const host = { renew: (/** @type {any} */ l) => renewed.push(l.token) };
+  const conn = (/** @type {(p: any) => any} */ answer) => ({ request: async (/** @type {string} */ m, /** @type {any} */ p) => { sent.push([m, p]); return answer(p); } });
+  assert.equal(await changePassword(conn(() => ({ login: { token: 'n1', expires: 'x' } })), host, 'password1', 'old-pass1'), null);
+  assert.deepEqual(sent.at(-1), ['account.setup', { password: 'password1', old: 'old-pass1' }]);
+  assert.deepEqual(renewed, ['n1'], '新令牌交给宿主');
+  assert.equal(await changePassword(conn(() => ({})), host, 'password2', null), null, '走桥的本机令牌：不回令牌');
+  assert.deepEqual(sent.at(-1), ['account.setup', { password: 'password2' }], '不带 old');
+  assert.deepEqual(renewed, ['n1']);
+  const refuse = (/** @type {string} */ reason, data = {}) => conn(() => { throw new Refusal('x', -32010, reason, data); });
+  assert.equal(await changePassword(refuse('bad_password'), host, 'password3', 'wrong'), '当前访问密码不对');
+  assert.equal(await changePassword(refuse('login_throttled', { retry_after_ms: 3000 }), host, 'password3', 'wrong'), '尝试次数过多，3 秒后再试');
+  assert.equal(await changePassword(conn(() => { throw new Refusal('核心的话', -32602, 'bad_params'); }), host, 'password3', null), '核心的话');
 });
