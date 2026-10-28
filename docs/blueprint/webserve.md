@@ -32,13 +32,13 @@
 
 | 名字 | 是什么 |
 |---|---|
-| `trait Site` | `type Busy`；`root()`、`port()`（实际听的端口）、`core()`、`busy(self: &Arc<Self>)`；默认方法 `hosts()`（`127.0.0.1:<端口>`、`localhost:<端口>`、`[::1]:<端口>`）、`host_allowed(host)`（只认这三种，`localhost` 不分大小写） |
+| `trait Site` | `type Busy`；`root()`、`port()`（实际听的端口）、`core()`、`busy(self: &Arc<Self>)`；默认方法 `listen()`（听的地址，不实现的是 `127.0.0.1`，SU-1）、`hosts()`（`127.0.0.1:<端口>`、`localhost:<端口>`、`[::1]:<端口>`）、`origin_allowed(origin, host)`（本机三种，或 Host 认得、和请求的 Host 一样）、`host_allowed(host)`（这三种，`localhost` 不分大小写；`listen` 不是回环的另认「IP 字面量:端口」，听某一个地址的只认它）；另有 `remote(peer)`：对端不是回环的交回它的地址 |
 | `CoreCommand` | `Arc<dyn Fn() -> Command + Send + Sync>`：拉起核心的命令 |
 | `respond::{Body, full, empty, secure, value}` | 见「在哪」 |
 | `pages::serve(request, pages, csp, types)` | `GET`、`HEAD` 以外 405；`find` 不到、读不了 404；类型照 `type_of`，带 `Cache-Control: no-cache`、`Content-Security-Policy: <csp>`、`nosniff`、`no-referrer`；`HEAD` 只给头 |
 | `pages::type_of(types, path)` | 扩展名（小写）在表里的媒体类型；没有的 `application/octet-stream` |
 | `pages::find(pages, path)` | 请求的路径对应页面目录里哪份文件；带 `..`、`.`、空段、反斜杠的，`%xx` 解不开、不是 UTF-8、有 NUL 的，换成真实位置跑出去的，不是普通文件的，都是空的 |
-| `ws::accept(request, site)` | Origin 不是 `http://` 加上 `hosts()` 之一的 403；不是 WebSocket 升级的 400；对的回 101，升级好以后在别的任务里转，连着时拿着 `site.busy()` |
+| `ws::accept(request, site, remote)` | Origin 不是 `http://` 加上 `origin_allowed` 认的的 403；不是 WebSocket 升级的 400；对的回 101，升级好以后在别的任务里转，连着时拿着 `site.busy()`；`remote`（远程连接的对端地址，`remote(peer)` 算的）有的，接上核心以后先写一行 `connection.remote {from}` 再转（SU-1） |
 | `open::Core::connect(root, core, kind)` | 照终端的样子连核心（没在跑就拉起），出示本机令牌握手，`head.kind` 报 `kind`；`language()` 是握手回的语言 |
 | `open::Core::connect_running(root, kind)` | 同上，只连已经在跑的核心，不拉起（施工 9-1 下，网页软件的 `serve` 起来时问配置用） |
 | `open::Core::call(id, method, params)` | 一问一答，30 秒没回算没回；拒绝的交回核心的原话 |
