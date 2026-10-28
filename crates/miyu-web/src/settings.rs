@@ -4,6 +4,7 @@
 //! 文件夹里的 `web.json`（仓库拆开以后从核心的 `resources/web/` 挪进这个仓库的 `web/`，装好在 `packages/web/web.json`）。
 
 use std::collections::BTreeMap;
+use std::net::IpAddr;
 use std::path::Path;
 use std::time::Duration;
 
@@ -22,8 +23,9 @@ pub const FILE: &str = "packages/web/web.json";
 pub const MANIFEST: &str = "packages/web/package.toml";
 
 /// 几项配置的键：`web.<名字>`。
-pub const KEYS: [&str; 4] = [
+pub const KEYS: [&str; 5] = [
     "web.port",
+    "web.listen",
     "web.idle_seconds",
     "web.ticket_idle_seconds",
     "web.most_tickets",
@@ -34,6 +36,8 @@ pub const KEYS: [&str; 4] = [
 pub struct Settings {
     /// 端口（`--port` 能换）。
     pub port: u16,
+    /// 听哪个地址（`web.listen`，SU-1）：`127.0.0.1` 只有这台电脑；`0.0.0.0` 局域网也能开；也能是这台电脑的某一个地址。
+    pub listen: IpAddr,
     /// 没有 WebSocket 连着、没有媒体在给，连续多少秒就退出。
     pub idle_seconds: u64,
     /// 页面的 `Content-Security-Policy`。
@@ -85,8 +89,18 @@ impl Settings {
                 })
                 .ok_or_else(|| format!("{}: settings.{name} has no default", path.display()))
         };
+        let listen = manifest
+            .settings
+            .iter()
+            .find(|setting| setting.name == "listen")
+            .and_then(|setting| match &setting.default {
+                Some(miyu_client::manifest::Value::Text(text)) => text.parse::<IpAddr>().ok(),
+                _ => None,
+            })
+            .ok_or_else(|| format!("{}: settings.listen has no address default", path.display()))?;
         Ok(Settings {
             port: number(default("port")?, &path)?,
+            listen,
             idle_seconds: number(default("idle_seconds")?, &path)?,
             csp: constants.csp,
             backstage_csp: constants.backstage_csp,
@@ -125,6 +139,12 @@ impl Settings {
         let value = |key: &str| items[key]["value"].as_i64();
         if let Some(port) = value("web.port").and_then(|port| u16::try_from(port).ok()) {
             self.port = port;
+        }
+        if let Some(listen) = items["web.listen"]["value"]
+            .as_str()
+            .and_then(|text| text.trim().parse::<IpAddr>().ok())
+        {
+            self.listen = listen;
         }
         if let Some(seconds) = value("web.idle_seconds").and_then(|value| u64::try_from(value).ok())
         {

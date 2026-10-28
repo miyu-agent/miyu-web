@@ -1,4 +1,4 @@
-//! 共用的几样单独测（施工 O-16，`webserve.md`「守着它的」）：Host 的三种写法；类型照扩展名；页面路径解不开、带 `..` 的
+//! 共用的几样单独测（施工 O-16，`webserve.md`「守着它的」）：Host 的三种写法、听局域网时的 IP 写法（SU-1）、Origin；远程的连接；类型照扩展名；页面路径解不开、带 `..` 的
 //! 不要。整套的规矩由网页软件、桥的测试经 HTTP 测。
 
 use std::collections::BTreeMap;
@@ -10,8 +10,8 @@ use miyu_store::root::DataRoot;
 use crate::pages::{find, type_of};
 use crate::{CoreCommand, Site};
 
-/// 只交出端口的一个：别的用不上。
-struct Port(u16, DataRoot, CoreCommand);
+/// 只交出端口、听的地址的一个：别的用不上。
+struct Port(u16, DataRoot, CoreCommand, std::net::IpAddr);
 
 impl Site for Port {
     type Busy = ();
@@ -24,6 +24,10 @@ impl Site for Port {
         self.0
     }
 
+    fn listen(&self) -> std::net::IpAddr {
+        self.3
+    }
+
     fn core(&self) -> &CoreCommand {
         &self.2
     }
@@ -32,6 +36,10 @@ impl Site for Port {
 }
 
 fn site(port: u16) -> Port {
+    listening(port, "127.0.0.1")
+}
+
+fn listening(port: u16, listen: &str) -> Port {
     let env = miyu_store::env::Env {
         platform: miyu_store::env::Platform::current(),
         miyu_home: Some(
@@ -46,7 +54,12 @@ fn site(port: u16) -> Port {
         exe: None,
     };
     let root = DataRoot::locate(&env).expect("绝对路径");
-    Port(port, root, Arc::new(|| std::process::Command::new("miyu")))
+    Port(
+        port,
+        root,
+        Arc::new(|| std::process::Command::new("miyu")),
+        listen.parse().expect("是地址"),
+    )
 }
 
 #[test]
@@ -75,6 +88,69 @@ fn only_the_three_loopback_spellings_with_this_port_are_hosts() {
     ] {
         assert!(!site.host_allowed(bad), "{bad:?}");
     }
+}
+
+#[test]
+fn listening_on_the_lan_also_takes_ip_hosts_with_this_port_but_never_names() {
+    let any = listening(8300, "0.0.0.0");
+    for good in [
+        "192.168.1.20:8300",
+        "10.0.0.5:8300",
+        "127.0.0.1:8300",
+        "localhost:8300",
+        "[fe80::1]:8300",
+    ] {
+        assert!(any.host_allowed(Some(good)), "{good}");
+    }
+    for bad in [
+        Some("192.168.1.20:8301"),
+        Some("192.168.1.20"),
+        Some("my-laptop:8300"),
+        Some("evil.example:8300"),
+        Some("192.168.1.20:8300.evil.example"),
+        None,
+    ] {
+        assert!(!any.host_allowed(bad), "{bad:?}");
+    }
+    // 听某一个地址的只认它（和本机的三种写法）
+    let one = listening(8300, "192.168.1.20");
+    assert!(one.host_allowed(Some("192.168.1.20:8300")));
+    assert!(!one.host_allowed(Some("10.0.0.5:8300")));
+    // 只听本机的：照旧只有三种写法
+    assert!(!site(8300).host_allowed(Some("192.168.1.20:8300")));
+}
+
+#[test]
+fn the_origin_must_be_a_known_host_and_on_the_lan_the_same_as_the_host() {
+    let any = listening(8300, "0.0.0.0");
+    assert!(any.origin_allowed("127.0.0.1:8300", Some("127.0.0.1:8300")));
+    assert!(any.origin_allowed("192.168.1.20:8300", Some("192.168.1.20:8300")));
+    assert!(
+        !any.origin_allowed("192.168.1.20:8300", Some("10.0.0.5:8300")),
+        "和 Host 不一样"
+    );
+    assert!(!any.origin_allowed("evil.example:8300", Some("evil.example:8300")));
+    assert!(!site(8300).origin_allowed("192.168.1.20:8300", Some("192.168.1.20:8300")));
+}
+
+#[test]
+fn only_connections_from_other_machines_are_remote() {
+    let at = |text: &str| text.parse::<std::net::SocketAddr>().expect("是地址");
+    assert_eq!(crate::remote(at("127.0.0.1:5000")), None);
+    assert_eq!(crate::remote(at("[::1]:5000")), None);
+    assert_eq!(
+        crate::remote(at("[::ffff:127.0.0.1]:5000")),
+        None,
+        "映射进 IPv6 的回环也是本机"
+    );
+    assert_eq!(
+        crate::remote(at("192.168.1.30:5000")),
+        Some("192.168.1.30".parse().unwrap())
+    );
+    assert_eq!(
+        crate::remote(at("[::ffff:192.168.1.30]:5000")),
+        Some("192.168.1.30".parse().unwrap())
+    );
 }
 
 #[test]

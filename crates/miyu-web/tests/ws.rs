@@ -1,5 +1,6 @@
 //! `/ws`（施工 W-9，`web-module.md`「怎么走」第九条第 7 到 9 款）：Origin 对上了才接；两头一帧一行照转，一个字节都不改；
-//! 二进制 1003、超过 1 MiB 1009、核心断了 1012；连不上核心发 `web.error` 再关；网页软件的代码里不读本机令牌。
+//! 二进制 1003、超过 1 MiB 1009、核心断了 1012；连不上核心发 `web.error` 再关；网页软件的代码里不读本机令牌；听局域网时别的机器来的
+//! 先说一声 `connection.remote`，本机来的不说（SU-1）。
 
 use std::time::Duration;
 
@@ -72,7 +73,11 @@ async fn frames_and_lines_pass_through_untouched() {
     within("核心读到", lines.read_line(&mut line))
         .await
         .expect("读得到");
-    assert_eq!(line, format!("{hello}\n"), "凭据原样到核心，一个字节不改");
+    assert_eq!(
+        line,
+        format!("{hello}\n"),
+        "凭据原样到核心，一个字节不改；本机来的不先说 connection.remote"
+    );
     let chinese = r#"{"text":"你好，Miyu  \t空白照留"}"#;
     ws.send(Message::text(chinese)).await.expect("发得出");
     line.clear();
@@ -93,6 +98,84 @@ async fn frames_and_lines_pass_through_untouched() {
     drop(write);
     drop(lines);
     assert_eq!(close_code(next(&mut ws).await), Some(CloseCode::Restart));
+}
+
+/// 这台机器一个不是回环的地址（照往外的路由挑，不真发东西）；没有的是空的。
+fn lan_address() -> Option<std::net::IpAddr> {
+    let socket = std::net::UdpSocket::bind("0.0.0.0:0").ok()?;
+    socket.connect("192.0.2.1:9").ok()?;
+    let ip = socket.local_addr().ok()?.ip();
+    (!ip.is_loopback() && !ip.is_unspecified()).then_some(ip)
+}
+
+#[tokio::test]
+async fn on_the_lan_a_connection_from_another_address_is_told_to_the_core_first() {
+    let Some(lan) = lan_address() else {
+        eprintln!("这台机器没有局域网地址，跳过");
+        return;
+    };
+    let home = Home::new();
+    let mut core = fake_core(&home);
+    let mut settings = settings(600);
+    // 听这一个局域网地址（不开 0.0.0.0：测试只露这一个口子；0.0.0.0 的 Host 规则在 miyu-webserve 的单测里）
+    settings.listen = lan;
+    let (_, port, _serving) = start_with(&home, 0, settings).await;
+    // 从局域网地址连进来：Host、Origin 都写这个地址
+    let mut request = format!("ws://{lan}:{port}/ws")
+        .into_client_request()
+        .expect("合写法");
+    request.headers_mut().insert(
+        "Origin",
+        format!("http://{lan}:{port}").parse().expect("合写法"),
+    );
+    let socket = tokio::net::TcpSocket::new_v4().expect("建得了");
+    socket.bind((lan, 0).into()).expect("绑得上");
+    let stream = socket.connect((lan, port).into()).await.expect("连得上");
+    let (mut ws, _) = client_async(request, stream).await.expect("接了");
+    let connection = within("核心接到连接", core.accept()).await.expect("接得到");
+    let (read, _write) = tokio::io::split(connection);
+    let mut lines = BufReader::new(read);
+    let hello =
+        r#"{"id":"h","jsonrpc":"2.0","method":"hello","params":{"password":"x","protocol":[1,1]}}"#;
+    ws.send(Message::text(hello)).await.expect("发得出");
+    let mut first = String::new();
+    within("核心读到", lines.read_line(&mut first))
+        .await
+        .expect("读得到");
+    let told: serde_json::Value = serde_json::from_str(&first).expect("是 JSON");
+    assert_eq!(
+        told,
+        serde_json::json!({"jsonrpc": "2.0", "method": "connection.remote", "params": {"from": lan.to_string()}}),
+        "握手以前先说是哪个地址来的"
+    );
+    let mut second = String::new();
+    within("核心读到", lines.read_line(&mut second))
+        .await
+        .expect("读得到");
+    assert_eq!(second, format!("{hello}\n"), "再原样转握手");
+    // Host 是名字的不认（DNS rebinding）
+    let named = request_with_host(lan, port, &format!("evil.example:{port}")).await;
+    assert_eq!(named, 403);
+}
+
+/// 照给的 Host 要一下首页，交回状态码。
+async fn request_with_host(at: std::net::IpAddr, port: u16, host: &str) -> u16 {
+    let mut stream = TcpStream::connect((at, port)).await.expect("连得上");
+    stream
+        .write_all(
+            format!("GET / HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n").as_bytes(),
+        )
+        .await
+        .expect("写得进");
+    let mut answer = String::new();
+    within("读回应", stream.read_to_string(&mut answer))
+        .await
+        .expect("读得到");
+    answer
+        .split_whitespace()
+        .nth(1)
+        .and_then(|code| code.parse().ok())
+        .unwrap_or(0)
 }
 
 #[tokio::test]

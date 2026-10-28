@@ -79,5 +79,25 @@ fn every_key_asked_for_is_declared_in_the_manifest() {
         .iter()
         .map(|setting| setting.hidden)
         .collect();
-    assert_eq!(hidden, [false, true, true, true], "端口露，别的不露");
+    assert_eq!(
+        hidden,
+        [false, false, true, true, true],
+        "端口、听的地址露，别的不露"
+    );
+}
+
+#[test]
+fn the_listen_address_defaults_to_this_computer_and_takes_a_configured_address() {
+    let localhost: std::net::IpAddr = "127.0.0.1".parse().unwrap();
+    assert_eq!(shipped().listen, localhost, "默认只有这台电脑");
+    let lan = shipped().configured(&json!({"web.listen": {"value": "0.0.0.0"}}));
+    assert_eq!(lan.listen, "0.0.0.0".parse::<std::net::IpAddr>().unwrap());
+    let one = shipped().configured(&json!({"web.listen": {"value": " 192.168.1.20 "}}));
+    assert_eq!(
+        one.listen,
+        "192.168.1.20".parse::<std::net::IpAddr>().unwrap(),
+        "前后的空白不算"
+    );
+    let odd = shipped().configured(&json!({"web.listen": {"value": "my-laptop"}}));
+    assert_eq!(odd.listen, localhost, "不是地址的照旧");
 }

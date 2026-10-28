@@ -1,5 +1,5 @@
 //! `miyu-web open`（施工 W-9，`web-module.md`「怎么走」第十一条）：网页软件没在跑先拉起来（真的 `miyu-web serve`）；
-//! 没设过密码、`--reset` 的网址带 `#setup=<一次性码>`，别的带交接票 `#ticket=<票>&as=<账号>`（网页-乙）、旧核心要不到票的什么都不带；
+//! 没设过密码、`--reset` 的网址带 `#setup=<一次性码>`，别的带交接票 `#ticket=<票>`（网页-乙；SU-1 起不带账号，回应里带了也不用）、旧核心要不到票的什么都不带；
 //! `--package` 的再带 `package=<编号>`（施工 F-6 下）；带凭据的交给浏览器的是只给本人的跳转页；`--print` 印网址和提醒；交不给浏览器的照
 //! `--print` 办；`--logout` 说作废了几个。核心是替身：照方法名答。
 
@@ -40,6 +40,7 @@ fn answer_with(mut core: Listener, first: bool, ticket: bool) {
                             json!({"code": CODE, "expires": "2026-10-04T00:05:00.000Z", "first": first})
                         }
                         Some("login.ticket") if ticket => {
+                            // 回应里带的账号（SU-1 以前的核心）不用
                             json!({"ticket": TICKET, "expires": "2026-10-28T00:01:00.000Z", "account": "小 明"})
                         }
                         // 只有 `all` 的作废全部；本机令牌的连接不写 `all` 真核心会拒。
@@ -240,8 +241,8 @@ async fn later_opens_carry_a_ticket_unless_reset() {
     let site = miyu_web::serve::address(&home.root).expect("有地址");
     assert_eq!(
         went(&browser),
-        [format!("{site}/#ticket={TICKET}&as=%E5%B0%8F%20%E6%98%8E")],
-        "带票、账号照网址的写法编码"
+        [format!("{site}/#ticket={TICKET}")],
+        "带票，不带账号"
     );
     assert!(!err.contains("还没设过") && !err.contains(TICKET), "{err}");
     let reset = browser_again(
@@ -275,9 +276,7 @@ async fn a_named_package_rides_after_the_hash() {
     let site = miyu_web::serve::address(&home.root).expect("有地址");
     assert_eq!(
         went(&browser),
-        [format!(
-            "{site}/#ticket={TICKET}&as=%E5%B0%8F%20%E6%98%8E&package=onebot"
-        )]
+        [format!("{site}/#ticket={TICKET}&package=onebot")]
     );
     let reset = browser_again(
         &home,
@@ -373,10 +372,7 @@ async fn print_with_a_ticket_warns_about_sixty_seconds() {
     .await;
     assert_eq!(code, 0, "{err}");
     let site = miyu_web::serve::address(&home.root).expect("有地址");
-    assert_eq!(
-        out,
-        format!("{site}/#ticket={TICKET}&as=%E5%B0%8F%20%E6%98%8E\n")
-    );
+    assert_eq!(out, format!("{site}/#ticket={TICKET}\n"));
     assert!(err.contains("60 秒内有效，只能用一次"), "{err}");
     let jumps = home.root.run().join(miyu_web::open::JUMPS);
     assert!(

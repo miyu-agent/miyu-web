@@ -15,6 +15,7 @@ pub mod respond;
 mod tests;
 pub mod ws;
 
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
 
 use miyu_client::places::DataRoot;
@@ -53,12 +54,51 @@ pub trait Site: Send + Sync + 'static {
         ]
     }
 
-    /// Host 对不对：只认三种写法，`localhost` 不分大小写。别的网站把自己的域名解析到回环地址也进不来（DNS rebinding）。
+    /// 听的地址（网页软件的 `web.listen`，SU-1）：回环的只有这台电脑能连；不是回环的局域网也能连。不实现的是 `127.0.0.1`。
+    fn listen(&self) -> IpAddr {
+        IpAddr::V4(Ipv4Addr::LOCALHOST)
+    }
+
+    /// Host 对不对：本机的三种写法，`localhost` 不分大小写；听局域网的（[`Site::listen`] 不是回环）另认「IP 字面量:端口」：端口要对，
+    /// 听的是某一个地址的只认它，`0.0.0.0`、`::` 的认这台电脑的哪个地址都行（连得进来就是这台电脑的地址）。不认名字：别的网站把自己的
+    /// 域名解析到这台电脑也进不来（DNS rebinding）。
     fn host_allowed(&self, host: Option<&str>) -> bool {
-        host.is_some_and(|host| {
-            self.hosts()
-                .iter()
-                .any(|allowed| allowed.eq_ignore_ascii_case(host))
+        let Some(host) = host else {
+            return false;
+        };
+        if self
+            .hosts()
+            .iter()
+            .any(|allowed| allowed.eq_ignore_ascii_case(host))
+        {
+            return true;
+        }
+        let listen = self.listen();
+        if listen.is_loopback() {
+            return false;
+        }
+        host.parse::<SocketAddr>().is_ok_and(|at| {
+            at.port() == self.port() && (listen.is_unspecified() || at.ip() == listen)
         })
     }
+
+    /// `/ws` 的 Origin 对不对（`origin` 是 `http://` 后面那一段）：本机的三种写法照旧；局域网的要 Host 认得、和这个请求的 Host 一样。
+    fn origin_allowed(&self, origin: &str, host: Option<&str>) -> bool {
+        if self
+            .hosts()
+            .iter()
+            .any(|allowed| allowed.eq_ignore_ascii_case(origin))
+        {
+            return true;
+        }
+        self.host_allowed(Some(origin))
+            && host.is_some_and(|host| host.eq_ignore_ascii_case(origin))
+    }
+}
+
+/// 一个连接是不是从别的机器来的：对端的地址不是回环的（IPv4 映射进 IPv6 的照 IPv4 算）。远程的交回它的地址，本机的是空的。
+#[must_use]
+pub fn remote(peer: SocketAddr) -> Option<IpAddr> {
+    let ip = peer.ip().to_canonical();
+    (!ip.is_loopback()).then_some(ip)
 }

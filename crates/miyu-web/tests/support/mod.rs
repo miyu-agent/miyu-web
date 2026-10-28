@@ -81,6 +81,7 @@ pub fn settings(idle_seconds: u64) -> Settings {
     types.insert("mp4".to_string(), "video/mp4".to_string());
     Settings {
         port: 0,
+        listen: std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST),
         idle_seconds,
         csp: "default-src 'self'; connect-src 'self'; frame-ancestors 'none'".to_string(),
         backstage_csp:

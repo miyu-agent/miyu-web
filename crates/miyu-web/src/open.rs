@@ -4,7 +4,7 @@
 //! 2. `--logout`：`account.logout`、`all: true`，说作废了几个，不碰网页软件。
 //! 3. 网页软件没在跑（`run/web.lock` 没人拿着、没有 `run/web`）就拉起 `serve`，等那一行最多 10 秒。
 //! 4. 问一次 `account.setup_code`：写了 `--reset` 的、还没设过密码的（`first`），网址带 `#setup=<一次性码>`；别的要一张交接票
-//!    （`login.ticket`，核心 LT-1），网址带 `#ticket=<票>&as=<账号>`（im 设计 07 第 3.6 节、网页-乙），页面存着这个账号的令牌的照它、
+//!    （`login.ticket`，核心 LT-1），网址带 `#ticket=<票>`（im 设计 07 第 3.6 节、网页-乙；SU-1 起不带账号），页面存着设备令牌的照它、
 //!    没有的拿票连上；旧核心要不到票的网址就是地址本身（要了没用的码 5 分钟后自己作废）。
 //! 5. `--print`、交不给浏览器的：印网址（带了码、票的另印一句提醒）。别的交给浏览器打开：带凭据的不直接交（交出去的参数进进程
 //!    列表），写一个只给本人的跳转页（[`jump`]），交它的 `file://` 地址，再拉起 `miyu-web forget` 过一会儿删掉它。
@@ -122,18 +122,18 @@ pub async fn open(
             .await
             .ok()
             .and_then(|got| {
-                let ticket = got["ticket"].as_str().filter(|t| hex(t))?.to_string();
-                let account = got["account"]
+                got["ticket"]
                     .as_str()
-                    .filter(|a| !a.is_empty())?
-                    .to_string();
-                Some((ticket, account))
+                    .filter(|t| hex(t))
+                    .map(str::to_string)
             }),
     };
-    let handed = ticket
-        .as_ref()
-        .map(|(ticket, account)| (ticket.as_str(), account.as_str()));
-    let url = address_of(&site, code.as_deref(), handed, open.package.as_deref());
+    let url = address_of(
+        &site,
+        code.as_deref(),
+        ticket.as_deref(),
+        open.package.as_deref(),
+    );
     let secret = code.is_some() || ticket.is_some();
     if !open.print && hand(root, &url, secret, launch, browser) {
         if first && !open.reset {
@@ -302,17 +302,17 @@ fn hex(text: &str) -> bool {
     !text.is_empty() && text.bytes().all(|b| b.is_ascii_hexdigit())
 }
 
-/// 交给浏览器的网址：`#` 后面是一次性码（`setup=`）或者交接票（`ticket=<票>&as=<账号>`，账号照网址的写法编码）、点名的软件后台页
-/// （`package=`），都没有的不带 `#`。
+/// 交给浏览器的网址：`#` 后面是一次性码（`setup=`）或者交接票（`ticket=<票>`；SU-1 起不带账号）、点名的软件后台页（`package=`），
+/// 都没有的不带 `#`。
 fn address_of(
     site: &str,
     code: Option<&str>,
-    ticket: Option<(&str, &str)>,
+    ticket: Option<&str>,
     package: Option<&str>,
 ) -> String {
     let parts: Vec<String> = [
         code.map(|code| format!("setup={code}")),
-        ticket.map(|(ticket, account)| format!("ticket={ticket}&as={}", component(account))),
+        ticket.map(|ticket| format!("ticket={ticket}")),
         package.map(|package| format!("package={package}")),
     ]
     .into_iter()
@@ -322,18 +322,6 @@ fn address_of(
         true => format!("{site}/"),
         false => format!("{site}/#{}", parts.join("&")),
     }
-}
-
-/// 网址片段里的一格：字母、数字和 `-._~` 以外的照 UTF-8 写成 `%XX`。
-fn component(text: &str) -> String {
-    text.bytes()
-        .map(|byte| match byte {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => {
-                char::from(byte).to_string()
-            }
-            _ => format!("%{byte:02X}"),
-        })
-        .collect()
 }
 
 /// 印一行；印不出来也没有别处可说了。

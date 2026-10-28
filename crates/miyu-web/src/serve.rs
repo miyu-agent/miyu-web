@@ -1,11 +1,11 @@
-//! `miyu-web serve`（`web-ui.md`「怎么走」第一条）：单实例、只听 `127.0.0.1`、写 `run/web` 和那一行、空闲退出；每个
+//! `miyu-web serve`（`web-ui.md`「怎么走」第一条）：单实例、听 `web.listen`（默认 `127.0.0.1`，SU-1 起能听局域网）、写 `run/web` 和那一行、空闲退出；每个
 //! 请求先核对 Host，`/ws` 交给 `miyu_webserve::ws`，`/media` 交给 `media`（施工 W-10），`/page`、`/p/` 交给
 //! `backstage`（软件后台页，施工 F-6 下），别的当页面文件
 //! （`miyu_webserve::pages`）。核对 Host、给页面、`/ws` 照转、回应的几样在共用的 `miyu-webserve`（施工 O-16，
 //! `webserve.md`「搬家表」）。
 //!
 //! 1. 先拿 `run/web.lock`，拿不到写 `running` 走。
-//! 2. 听端口：被占了写 `error port <端口> in use`（`open` 认这个前缀，照人的语言说），别的起不来写 `error <原因>`。
+//! 2. 听 `web.listen` 的那个地址的端口（`run/web` 里照旧写 `http://127.0.0.1:<端口>`：本机开浏览器走回环）：被占了写 `error port <端口> in use`（`open` 认这个前缀，照人的语言说），别的起不来写 `error <原因>`。
 //! 3. 地址写进 `run/web`（先写临时文件再改名），写一行 `ready`。
 //! 4. 没有 WebSocket 连着、没有 `/media`、后台页在给，连续空闲到点就退出；收到停的信号也退出。退出时先删 `run/web`、再放锁。
 
@@ -124,6 +124,10 @@ impl miyu_webserve::Site for Site {
         self.port
     }
 
+    fn listen(&self) -> std::net::IpAddr {
+        self.settings.listen
+    }
+
     fn core(&self) -> &CoreCommand {
         &self.core
     }
@@ -151,7 +155,8 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
             return Err(error);
         }
     };
-    let listener = match TcpListener::bind(("127.0.0.1", serve.port)).await {
+    let listen = serve.settings.listen;
+    let listener = match TcpListener::bind((listen, serve.port)).await {
         Ok(listener) => listener,
         Err(error) => {
             let reason = match error.kind() {
@@ -172,7 +177,7 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
         return Err(error);
     }
     said(Ready::Ready);
-    tracing::info!(target: TARGET, url = %url, "listening");
+    tracing::info!(target: TARGET, url = %url, listen = %listen, "listening");
     let media = Media::new(&serve.settings);
     let backstage = Backstage::new(&serve.settings);
     let site = Arc::new(Site {
@@ -209,11 +214,13 @@ async fn accept(listener: &TcpListener, site: &Arc<Site>) -> &'static str {
         let next = quiet.into_iter().chain(links).min();
         tokio::select! {
             accepted = listener.accept() => {
-                if let Ok((stream, _)) = accepted {
+                if let Ok((stream, peer)) = accepted {
                     let site = Arc::clone(site);
+                    // 从别的机器来的（对端不是回环）：转给核心以前要说一声（`connection.remote`，SU-1）
+                    let remote = miyu_webserve::remote(peer);
                     tokio::spawn(async move {
                         let service = hyper::service::service_fn(move |request| {
-                            handle(request, Arc::clone(&site))
+                            handle(request, Arc::clone(&site), remote)
                         });
                         let served = hyper::server::conn::http1::Builder::new()
                             .serve_connection(TokioIo::new(stream), service)
@@ -241,7 +248,11 @@ async fn until(at: Option<Instant>) {
 }
 
 /// 一个请求：先核对 Host；`/ws` 交给 WebSocket；`/media` 换票据、照票据给；`GET`、`HEAD` 当页面文件；别的方法 405。
-async fn handle(request: Request<Incoming>, site: Arc<Site>) -> Result<Response<Body>, Infallible> {
+async fn handle(
+    request: Request<Incoming>,
+    site: Arc<Site>,
+    remote: Option<std::net::IpAddr>,
+) -> Result<Response<Body>, Infallible> {
     let host = request
         .headers()
         .get(header::HOST)
@@ -257,7 +268,7 @@ async fn handle(request: Request<Incoming>, site: Arc<Site>) -> Result<Response<
     }
     let path = request.uri().path();
     if path == "/ws" {
-        return Ok(miyu_webserve::ws::accept(request, site));
+        return Ok(miyu_webserve::ws::accept(request, site, remote));
     }
     if path == "/media" {
         return Ok(media::post(request, site).await);

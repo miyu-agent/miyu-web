@@ -22,6 +22,14 @@ layers = ["system"]
 name = { en = "Web port", zh = "网页的端口", ja = "ウェブのポート" }
 description = { en = "Which local port the web interface listens on.", zh = "网页界面听本机的哪个端口。", ja = "ウェブ画面が待ち受けるローカルのポート。" }
 
+[settings.listen]
+type = "text"
+max = 64
+default = "127.0.0.1"
+layers = ["system"]
+name = { en = "Listen address", zh = "网页听哪个地址", ja = "待ち受けるアドレス" }
+description = { en = "127.0.0.1 is this computer only; 0.0.0.0 lets other devices on the local network open it (set an access password first); or one of this computer's addresses.", zh = "127.0.0.1 只有这台电脑能开；0.0.0.0 让局域网里别的设备也能开（先设访问密码）；也能写这台电脑的某一个地址。", ja = "127.0.0.1 はこのコンピューターだけ。0.0.0.0 はローカルネットワークのほかの機器からも開けます（先にアクセスパスワードを設定）。このコンピューターのアドレスを一つ書くこともできます。" }
+
 [settings.idle_seconds]
 type = "int"
 min = 0

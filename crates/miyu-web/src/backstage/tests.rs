@@ -69,6 +69,7 @@ fn refusals_become_statuses() {
 fn types_follow_the_extension() {
     let settings = Settings {
         port: 0,
+        listen: std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST),
         idle_seconds: 1,
         csp: String::new(),
         backstage_csp: String::new(),

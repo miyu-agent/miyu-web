@@ -35,22 +35,28 @@ const LIMIT: usize = 1 << 20;
 /// 关了以后最多等多久把浏览器还在发的读掉。
 const LINGER: std::time::Duration = std::time::Duration::from_secs(2);
 
-/// 接一个 WebSocket：Origin 不对 403，不是升级请求 400；对的回 101，升级好以后在别的任务里转。
-pub fn accept<S: Site>(request: Request<Incoming>, site: Arc<S>) -> Response<Body> {
+/// 接一个 WebSocket：Origin 不对 403，不是升级请求 400；对的回 101，升级好以后在别的任务里转。`remote` 是从别的机器来的连接的对端地址
+/// （[`crate::remote`]）：转给核心以前先说一声它是远程的（`connection.remote`，SU-1），本机来的是空的。
+pub fn accept<S: Site>(
+    request: Request<Incoming>,
+    site: Arc<S>,
+    remote: Option<std::net::IpAddr>,
+) -> Response<Body> {
     let headers = request.headers();
     let origin = headers
         .get(header::ORIGIN)
         .and_then(|value| value.to_str().ok());
+    let host = headers
+        .get(header::HOST)
+        .and_then(|value| value.to_str().ok());
     let allowed = origin.is_some_and(|origin| {
-        site.hosts()
-            .iter()
-            .any(|host| origin.eq_ignore_ascii_case(&format!("http://{host}")))
+        origin
+            .get(..7)
+            .is_some_and(|scheme| scheme.eq_ignore_ascii_case("http://"))
+            && site.origin_allowed(&origin[7..], host)
     });
     if !allowed {
-        let host = headers
-            .get(header::HOST)
-            .and_then(|value| value.to_str().ok())
-            .unwrap_or_default();
+        let host = host.unwrap_or_default();
         tracing::warn!(target: TARGET, host, origin = origin.unwrap_or_default(), "rejected");
         return empty(StatusCode::FORBIDDEN);
     }
@@ -70,7 +76,7 @@ pub fn accept<S: Site>(request: Request<Incoming>, site: Arc<S>) -> Response<Bod
     let accept = derive_accept_key(key.as_bytes());
     tokio::spawn(async move {
         match hyper::upgrade::on(request).await {
-            Ok(upgraded) => bridge(TokioIo::new(upgraded), site).await,
+            Ok(upgraded) => bridge(TokioIo::new(upgraded), site, remote).await,
             Err(error) => tracing::debug!(target: TARGET, error = %error, "not upgraded"),
         }
     });
@@ -92,8 +98,8 @@ fn close(code: CloseCode) -> Message {
     }))
 }
 
-/// 两头照转，直到一头断了。
-async fn bridge<I, S: Site>(io: I, site: Arc<S>)
+/// 两头照转，直到一头断了。远程的（`remote`）在转浏览器的第一行以前先写一行 `connection.remote`（核心 `connection.md`「网页」）。
+async fn bridge<I, S: Site>(io: I, site: Arc<S>, remote: Option<std::net::IpAddr>)
 where
     I: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + Send + 'static,
 {
@@ -136,6 +142,24 @@ where
         };
     tracing::debug!(target: TARGET, "websocket connected");
     let (read, mut write) = tokio::io::split(core);
+    if let Some(from) = remote {
+        let notice = serde_json::json!({
+            "jsonrpc": "2.0",
+            "method": "connection.remote",
+            "params": {"from": from.to_string()},
+        });
+        let told = async {
+            write.write_all(format!("{notice}\n").as_bytes()).await?;
+            write.flush().await
+        };
+        if told.await.is_err() {
+            tracing::warn!(target: TARGET, "remote not told to the core");
+            send(&out, close(CloseCode::Restart)).await;
+            drop(out);
+            finish(writer, frames).await;
+            return;
+        }
+    }
     // 核心 → 浏览器：一行一个文字帧；核心断了关 1012，叫浏览器那头的循环停下。
     let (gone, core_gone) = oneshot::channel::<()>();
     let to_browser = out.clone();
