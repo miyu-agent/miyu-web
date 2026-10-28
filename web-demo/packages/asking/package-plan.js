@@ -58,7 +58,7 @@ function groupPlan(p, doing, text) {
   return { title, path: null, rows: ids.length ? [{ label: text('plan.labels.packages'), items: [ids.join(text('plan.separator'))] }] : [] };
 }
 
-/** 「包含」那几样，照命令行的先后：程序、命令、后台页、吉祥物、接入、系统账号、MCP 服务、技能、脚本、斜杠命令、人格、预设（核心 P-11 下）、几项设置（卸的不算设置）。 */
+/** 「包含」那几样，照命令行的先后：程序、命令、后台页、吉祥物、接入、MCP 服务、技能、脚本、斜杠命令、人格、预设（核心 P-11 下）、几项设置（卸的不算设置）。 */
 function included(p, doing, text) {
   const items = [];
   if (typeof p.program === 'string') {
@@ -69,7 +69,6 @@ function included(p, doing, text) {
   if (p.page === true) items.push(text('plan.carried.page'));
   if (p.mascot === true) items.push(text('plan.carried.mascot'));
   if (typeof p.connection === 'string') items.push(text('plan.carried.connection', { platform: p.connection }));
-  if (p.system_account === true) items.push(text('plan.carried.system_account'));
   for (const name of strings(p.mcp)) items.push(text('plan.carried.mcp', { name }));
   for (const name of strings(p.skills)) items.push(text('plan.carried.skill', { name }));
   for (const name of strings(p.scripts)) items.push(text('plan.carried.script', { name }));
