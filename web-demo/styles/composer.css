@@ -319,3 +319,18 @@
 .ctx-bar.is-split { gap: 2px; background: none; }
 .ctx-bar-group { display: flex; min-width: 3px; height: 100%; }
 .ctx-bar-group > .ctx-bar-seg { min-width: 1px; }
+
+/* 文件改了、前缀要变时发送前问一声（蓝图「连核心」第 6a 条，核心 OV-1 下）：页面正中一张卡、后面淡遮罩 */
+.prefix-ask { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: calc(16px * var(--space)); background: color-mix(in srgb, var(--text) 18%, transparent); animation: prefix-ask-in calc(0.16s * var(--motion-scale)) ease-out; }
+.prefix-ask-card { width: min(460px, 100%); max-height: 80vh; overflow: auto; padding: calc(20px * var(--space)) calc(22px * var(--space)) calc(16px * var(--space)); border-radius: var(--r-12, 12px); background: var(--surface-1, var(--surface)); box-shadow: var(--card-shadow); color: var(--text); }
+.prefix-ask-title { margin: 0 0 calc(8px * var(--space)); font-size: calc(15px * var(--text-scale)); font-weight: 600; }
+.prefix-ask-files { margin: 0 0 calc(10px * var(--space)); padding: calc(8px * var(--space)) calc(10px * var(--space)); list-style: none; border-radius: var(--r-8, 8px); background: var(--surface-2); color: var(--text-soft); font: calc(12px * var(--text-scale))/1.6 var(--font-mono); overflow-wrap: anywhere; }
+.prefix-ask-files .is-more { color: var(--text-faint); font-family: var(--font-ui); }
+.prefix-ask-text { margin: 0 0 calc(14px * var(--space)); color: var(--text-soft); font-size: calc(13px * var(--text-scale)); line-height: 1.55; }
+.prefix-ask-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: calc(8px * var(--space)); }
+.prefix-ask-btn { padding: calc(6px * var(--space)) calc(14px * var(--space)); border: 0; border-radius: var(--r-8, 8px); background: var(--surface-2); color: var(--text); font: 500 calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer; }
+.prefix-ask-btn:hover { background: var(--surface-3); }
+.prefix-ask-btn.is-primary { background: var(--accent); color: var(--on-primary); }
+.prefix-ask-btn.is-primary:hover { background: color-mix(in srgb, var(--accent) 88%, var(--text)); }
+.prefix-ask-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@keyframes prefix-ask-in { from { opacity: 0; } to { opacity: 1; } }

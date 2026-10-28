@@ -26,6 +26,7 @@ import { loadHuman } from '../core/human.js';
 import { placeOf } from '../model/paths.js';
 import { useHost } from '../core/host.js';
 import { browserHost } from '../host/browser.js';
+import { askPrefix } from '../ui/prefix-ask.js';
 import { servedHost } from '../host/served.js';
 import { SIGNIN_SCHEME, signIn } from './signin.js';
 import { accountStorage } from './storage.js';
@@ -67,7 +68,7 @@ export async function boot(root) {
   useHost(host);
   // 能当场确认、回答（确认和提问的抽屉，核心 D-1、D-2）：核心照造会话的那个连接的 `caps.input` 定这个会话有没有人能确认、回答
   // 认识管理员模式（`scope`，核心 Y-12下上；蓝图「管理员模式」第 1 条）：核心只对声明了的连接要求改系统那一层带 `scope`
-  const greeting = { protocol: [1, 1], head: { kind: 'web', version: '0.0.0' }, locale: language.tag, caps: { input: true, scope: true } };
+  const greeting = { protocol: [1, 1], head: { kind: 'web', version: '0.0.0' }, locale: language.tag, caps: { input: true, scope: true, prefix_ask: true } };
   // 开线、握手（凭据、登录框、「账号」那一屏在 `signin.js`）。断了自己重连（蓝图 `web.md`「连核心」第 1 条）：连上以后重新握手、补上漏掉的，
   // 见下面 `onReopen`。连不上：走桥的问口令还对不对，照它写为什么（口令用不了、桥没在跑、桥连不上核心）；直接连的就是网页软件没在跑
   const { conn, hello, setup, member, configless } = await signIn(host, greeting, root, async (err) => {
@@ -127,6 +128,8 @@ export async function boot(root) {
   const admin = new AdminMode(hello?.admin === true);
   conn.scopeFor = (method, params) => (admin.on && systemWrite(method, params) ? 'system' : null);
   conn.onAdminRequired = () => admin.required();
+  // 文件改了、前缀要变（核心 OV-1 下）：发送前问一声（蓝图「连核心」第 6a 条）
+  conn.onPrefixAsk = (data) => askPrefix(data);
   const store = new Store(conn);
   await store.boot();
   // 断了又连上了（核心重启过）：重新握手，读进来了的会话重新订阅、补上漏掉的，断着时别处开的会话接上

@@ -394,3 +394,45 @@ test('一行超过 1 MiB 的请求不发：当场拒 too_large，连接照旧能
   assert.equal(tooLong('a'.repeat(LINE_MAX)), false);
   assert.equal(tooLong('a'.repeat(LINE_MAX + 1)), true);
 });
+
+test('前缀要变（核心 OV-1 下 prefix_changing）：开轮的那几样问一声，选的带上 prefix 重发同一个请求；取消的拒 prefix_cancelled；别的方法、带了 prefix 的不问', async () => {
+  const ch = /** @type {any} */ (fakeChannel());
+  const conn = new Connection(() => ch);
+  const up = conn.connect();
+  ch.readyState = 1;
+  ch.onopen();
+  await up;
+  const asked = [];
+  let answer = /** @type {'keep'|'compact'|null} */ ('keep');
+  conn.onPrefixAsk = async (data) => { asked.push(data); return answer; };
+  const refuse = (/** @type {any} */ req) => ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', id: req.id, error: { code: -32010, message: 'x', data: { reason: 'prefix_changing', files: ['home/bob/prompts/a.txt'] } } }) });
+  const ok = (/** @type {any} */ req) => ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', id: req.id, result: { ok: req.params.prefix } }) });
+  const tick = () => new Promise((r) => setTimeout(r, 0));
+  // 直接发送：带 prefix: keep 重发同一句
+  const sent = conn.request('session.send', { session: 's1', text: '你好' });
+  refuse(ch.sent[0]);
+  await tick();
+  assert.deepEqual(ch.sent[1].params, { session: 's1', text: '你好', prefix: 'keep' });
+  ok(ch.sent[1]);
+  assert.deepEqual(await sent, { ok: 'keep' });
+  assert.deepEqual(asked, [{ reason: 'prefix_changing', files: ['home/bob/prompts/a.txt'] }]);
+  // 压缩：带 compact
+  answer = 'compact';
+  const redo = conn.request('session.redo', { session: 's1' });
+  refuse(ch.sent[2]);
+  await tick();
+  assert.equal(ch.sent[3].params.prefix, 'compact');
+  ok(ch.sent[3]);
+  assert.deepEqual(await redo, { ok: 'compact' });
+  // 取消：不重发
+  answer = null;
+  const cmd = conn.request('command.run', { session: 's1', text: '/review' });
+  refuse(ch.sent[4]);
+  await assert.rejects(cmd, (e) => e instanceof Refusal && e.reason === 'prefix_cancelled');
+  assert.equal(ch.sent.length, 5);
+  // 别的方法照原样拒
+  const other = conn.request('session.list', {});
+  refuse(ch.sent[5]);
+  await assert.rejects(other, (e) => e instanceof Refusal && e.reason === 'prefix_changing');
+  assert.equal(asked.length, 3);
+});

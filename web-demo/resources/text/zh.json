@@ -114,6 +114,7 @@
   "context": "{used}/{window}({percent}%)",
   "total": "Σ{tokens}(C{percent}%)",
   "refused": "已拒绝：{message}",
+  "prefix_ask": {"title": "检测到文件变动：", "text": "继续对话会因缓存失效支付额外输入费用，是否继续。", "compact": "压缩上下文并发送", "keep": "直接发送", "cancel": "取消", "more": "另 {n} 个"},
   "payload_busy": "附件上传中，请稍后发送",
   "no_bridge": "连不上桥：打开桥打出来的那个带 #k= 的链接",
   "signin": {

@@ -193,6 +193,8 @@ export async function runCommand(app, spec, words) {
     if (!run) throw new Error(`commands.json 里 /${spec.name} 的 run 没有对应的做法：${spec.run}`);
     await run(app, spec, words);
   } catch (err) {
+    // 前缀要变、问了以后取消的（核心 OV-1 下）：不发、不说
+    if (err instanceof Refusal && err.reason === 'prefix_cancelled') return;
     if (!(err instanceof Refusal)) console.error(err);
     app.composer.say(refusalText(err));
   }
@@ -227,6 +229,8 @@ export async function runUnlisted(app, name, words, opens = false) {
     openPage(app, got);
     if (got?.said && !quietReceipt(got.command ?? name.toLowerCase(), words)) app.composer.say(got.said, true);
   } catch (err) {
+    // 前缀要变、问了以后取消的：字留在框里
+    if (err instanceof Refusal && err.reason === 'prefix_cancelled') return 'keep';
     if (err instanceof Refusal && talkAfterRefusal(err.reason, words)) return 'talk';
     if (!(err instanceof Refusal)) console.error(err);
     app.composer.say(refusalText(err));
@@ -454,6 +458,8 @@ export async function redo(app, text) {
     if (!(err instanceof Refusal)) console.error(err);
     app.chat.scroll.forget();
     if (text != null && app.current === session) app.composer.putBack(text);
+    // 前缀要变、问了以后取消的（核心 OV-1 下）：改过的字放回去，不另说
+    if (err instanceof Refusal && err.reason === 'prefix_cancelled') return;
     app.composer.say(refusalText(err));
   }
 }

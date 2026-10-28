@@ -114,6 +114,7 @@
   "context": "{used}/{window}({percent}%)",
   "total": "Σ{tokens}(C{percent}%)",
   "refused": "拒否されました：{message}",
+  "prefix_ask": {"title": "ファイルの変更を検出しました：", "text": "続けるとキャッシュが無効になり、追加の入力料金がかかります。続けますか？", "compact": "コンテキストを圧縮して送信", "keep": "そのまま送信", "cancel": "キャンセル", "more": "ほか {n} 件"},
   "payload_busy": "添付ファイルをアップロード中です。終わってから送信してください",
   "no_bridge": "ブリッジに接続できません：ブリッジが表示した #k= 付きのリンクを開いてください",
   "signin": {

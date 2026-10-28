@@ -7283,5 +7283,47 @@
     "select": [
       ".acc-avatar"
     ]
+  },
+  "prefix-ask.layer": {
+    "zh": "发送前问前缀：遮罩",
+    "select": [
+      ".prefix-ask"
+    ]
+  },
+  "prefix-ask.card": {
+    "zh": "发送前问前缀：卡片",
+    "select": [
+      ".prefix-ask-card"
+    ]
+  },
+  "prefix-ask.title": {
+    "zh": "发送前问前缀：标题「检测到文件变动」",
+    "select": [
+      ".prefix-ask-title"
+    ]
+  },
+  "prefix-ask.files": {
+    "zh": "发送前问前缀：改了的文件",
+    "select": [
+      ".prefix-ask-files"
+    ]
+  },
+  "prefix-ask.text": {
+    "zh": "发送前问前缀：说明那一句",
+    "select": [
+      ".prefix-ask-text"
+    ]
+  },
+  "prefix-ask.foot": {
+    "zh": "发送前问前缀：按钮那一行",
+    "select": [
+      ".prefix-ask-foot"
+    ]
+  },
+  "prefix-ask.button": {
+    "zh": "发送前问前缀：按钮",
+    "select": [
+      ".prefix-ask-btn"
+    ]
   }
 }

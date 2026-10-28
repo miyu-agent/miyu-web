@@ -47,6 +47,8 @@ export function apply(ctx) {
         if (got?.said) ctx.composer.say(got.said, true);
         return null;
       } catch (err) {
+        // 前缀要变、问了以后取消的（核心 OV-1 下）：不发、不说
+        if (err?.reason === 'prefix_cancelled') return null;
         return typeof err?.data?.why === 'string' && err.data.why ? err.data.why : err?.message ?? String(err);
       }
     },

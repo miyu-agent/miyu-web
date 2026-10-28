@@ -21,6 +21,9 @@ const OPEN = 1;
 /** 核心一行最长 1 MiB（`protocol.md`「一行一条」，照 UTF-8 算，不算最后的换行）：超了核心断掉整条连接，所以发之前自己量。 */
 export const LINE_MAX = 1_048_576;
 
+/** 会开新一轮、核心可能回 `prefix_changing` 的几个方法（核心 OV-1 下） */
+const PREFIX_METHODS = new Set(['session.send', 'session.redo', 'command.run']);
+
 export class Connection {
   /**
    * @param {() => import('../host/browser.js').Channel} open 开一条线（宿主给的）
@@ -35,6 +38,11 @@ export class Connection {
     this.scopeFor = null;
     /** 核心回了 `admin_mode_required`（内核交进来） @type {(() => void)|null} */
     this.onAdminRequired = null;
+    /**
+     * 文件改了、前缀要变（核心 OV-1 下 `prefix_changing`）：问人怎么办，交回 `keep`、`compact`，取消的 `null`（内核交进来，蓝图「连核心」第 6a 条）
+     * @type {((data: any) => Promise<'keep'|'compact'|null>)|null}
+     */
+    this.onPrefixAsk = null;
     /** 口令用不了了：不再重连 */
     this.gaveUp = false;
     /** @type {Set<() => void>} */
@@ -125,6 +133,19 @@ export class Connection {
    * @param {string} method @param {any} [params] @param {{scope?: string}} [opts]
    */
   request(method, params = {}, opts = {}) {
+    const first = this.raw(method, params, opts);
+    if (!PREFIX_METHODS.has(method) || params?.prefix) return first;
+    // 前缀要变（核心 OV-1 下）：问一声，带上选的重发同一个请求；取消的当没发（`prefix_cancelled`，发的那一处不另说、话留在框里）
+    return first.catch(async (err) => {
+      if (!(err instanceof Refusal) || err.reason !== 'prefix_changing' || !this.onPrefixAsk) throw err;
+      const choice = await this.onPrefixAsk(err.data ?? {});
+      if (choice !== 'keep' && choice !== 'compact') throw new Refusal('', err.code, 'prefix_cancelled', null);
+      return this.raw(method, { ...params, prefix: choice }, opts);
+    });
+  }
+
+  /** 发一条请求、等回应（不问前缀）。 @param {string} method @param {any} [params] @param {{scope?: string}} [opts] */
+  raw(method, params = {}, opts = {}) {
     const id = `web-${this.prefix}-${++this.n}`;
     return new Promise((resolve, reject) => {
       if (!this.ws || this.ws.readyState !== OPEN) {

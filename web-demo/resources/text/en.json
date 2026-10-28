@@ -114,6 +114,7 @@
   "context": "{used}/{window}({percent}%)",
   "total": "Σ{tokens}(C{percent}%)",
   "refused": "Refused: {message}",
+  "prefix_ask": {"title": "Files changed:", "text": "Continuing will invalidate the cache and cost extra input tokens. Continue?", "compact": "Compact and send", "keep": "Send anyway", "cancel": "Cancel", "more": "{n} more"},
   "payload_busy": "Attachments are uploading",
   "no_bridge": "Can't reach the bridge: open the link with #k= that the bridge printed",
   "signin": {

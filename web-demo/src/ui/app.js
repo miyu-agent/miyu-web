@@ -784,6 +784,8 @@ export class App {
       this.ctx.emit('message.sent', { session: this.current });
       return true;
     } catch (err) {
+      // 前缀要变、问了以后取消的（核心 OV-1 下）：不发，话留在框里（同被拒），不另说
+      if (/** @type {any} */ (err)?.reason === 'prefix_cancelled') return false;
       const why = refusalText(err);
       this.composer.say(why === err.message ? t('refused', { message: why }) : why);
       return false;
