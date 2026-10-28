@@ -8,7 +8,6 @@
 import { h, icon, replace } from '../../../src/lib/dom.js';
 import { logoEl } from '../../../src/lib/logo.js';
 import { secretName, providerName } from '../model.js';
-import { SYSTEM_COPY } from '../../../src/lib/provider-copy.js';
 import { select } from '../rows.js';
 import { providerRows, mineRows, usableIds, testParams, setupChanges, noPools, modelOrder, filterNames, failureOf, validUrl, cleanUrl, customId, customIdProblem } from './logic.js';
 
@@ -61,8 +60,6 @@ export class ProviderFlow {
     this.chat = /** @type {string|null} */ (null);
     /** 配置里有的几家（`model.list` 的 `providers`）：常用、本机里没有的另列一组 @type {any[]} */
     this.providers = [];
-    /** 只有共用、还没有自用那份的几家（核心 PL-1 的 `layer` 是 `system`）：设置页里点了是「另配一份自用的」 @type {Set<string>} */
-    this.sharedOnly = new Set();
     this.fixedPools = false;
     this.failed = /** @type {string|null} */ (null);
     /** 自定义的接口有哪几种（配置清单 `providers.<id>.driver` 的选项） */
@@ -78,23 +75,6 @@ export class ProviderFlow {
     this.host.show(this.list(), 1);
   }
 
-  /**
-   * 直接开「另配一份自用的」那一屏（设置页共用那一格的按钮）：前面没有选一家那一屏，不出「上一步」，左下角是「取消」（2026-10-26）。
-   * @param {string} id 原编号
-   */
-  async startCopy(id) {
-    this.host.show(this.waiting(), 1);
-    await this.load();
-    if (!this.sharedOnly.has(id)) return this.host.show(this.list(), 1);
-    const screen = this.copy(id);
-    this.host.show({ ...screen, back: undefined }, 1);
-  }
-
-  /** 设置页里点了一家只有共用的：不当已配好，另配一份自用的（蓝图「设置页」第 14 条）。 @param {string|null} id */
-  copyable(id) {
-    return this.mode === 'settings' && !!id && this.sharedOnly.has(id);
-  }
-
   async load() {
     const core = this.ctx.core;
     const quiet = (/** @type {Promise<any>} */ p) => p.catch(() => null);
@@ -106,12 +86,10 @@ export class ProviderFlow {
       ]);
       this.featured = featured?.providers ?? [];
       this.detect = detect;
-      // 同一家的共用那份（`<编号>@system`，核心 PL-1）不另列：接一家只照编号，两份都有的已经配好了
-      const providers = (models?.providers ?? []).filter((/** @type {any} */ p) => !p.id.endsWith(SYSTEM_COPY));
+      const providers = models?.providers ?? [];
       this.configured = new Set(providers.map((/** @type {any} */ p) => p.id));
       this.usable = usableIds(providers);
       this.providers = providers;
-      this.sharedOnly = new Set(providers.filter((/** @type {any} */ p) => p.layer === 'system').map((/** @type {any} */ p) => p.id));
       this.chat = models?.uses?.chat ?? null;
       /** 核心有三个固定池（Q-1：池带 `fixed`）：引导里不再预写池 */
       this.fixedPools = (models?.pools ?? []).some((/** @type {any} */ p) => p && typeof p === 'object' && 'fixed' in p);
@@ -154,7 +132,7 @@ export class ProviderFlow {
   /** 选一家的一行：名字、暗色的地址，右边标记、箭头；用不了的灰着。 @param {Row} r */
   rowButton(r) {
     const t = this.t;
-    const tag = this.copyable(r.configured) ? ['', t('secret_scope.system')] : r.configured ? ['is-good', t('onboard.tag.configured')] : r.kind === 'catalog' && !r.supported ? ['is-off', t('onboard.tag.unsupported')] : r.kind === 'catalog' && r.env ? ['', t('onboard.tag.found')] : null;
+    const tag = r.configured ? ['is-good', t('onboard.tag.configured')] : r.kind === 'catalog' && !r.supported ? ['is-off', t('onboard.tag.unsupported')] : r.kind === 'catalog' && r.env ? ['', t('onboard.tag.found')] : null;
     const off = r.kind === 'catalog' && !r.supported;
     return h(`button.ob-row${off ? '.is-off' : ''}`, { type: 'button', disabled: off, onclick: () => this.host.show(this.provider(r), 1) },
       'logo' in r ? logoEl(r.logo, r.name) : null, h('span.ob-row-name', r.name), r.kind === 'local' ? h('span.ob-row-hint', r.host) : null,
@@ -194,7 +172,6 @@ export class ProviderFlow {
    * @param {Row} r
    */
   provider(r) {
-    if (this.copyable(r.configured)) return this.copy(/** @type {string} */ (r.configured));
     /** @type {Target} */
     const known = r.configured ? this.providers.find((p) => p.id === r.configured) : null;
     const target = r.configured ? { kind: 'configured', id: r.configured, driver: known?.driver ?? null, base_url: known?.base_url ?? null } : r.kind === 'local' ? { kind: 'local', catalog: r.id } : { kind: 'catalog', catalog: r.id, env: r.env };
@@ -226,32 +203,6 @@ export class ProviderFlow {
       return keyInput;
     };
     return this.testing(target, r.name, keyRow ? [keyRow] : [], key, canTest, keyInput, { auto: canTest() && !keyInput?.value, pasted: () => !!keyInput?.value.trim(), rekey });
-  }
-
-  /**
-   * 另配一份自用的（蓝图「设置页」第 14 条，2026-10-26 项目主人）：一家只有共用的，密钥在最上面，地址、接口照共用那份带过来、能改；
-   * 照填的当候选测，存进个人设置的同一个编号（只写密钥和改了的）。
-   * @param {string} id 原编号
-   */
-  copy(id) {
-    const t = this.t;
-    const p = this.providers.find((x) => x.id === id) ?? { id };
-    const name = providerName(p);
-    const from = { driver: typeof p.driver === 'string' ? p.driver : null, base_url: typeof p.base_url === 'string' ? p.base_url : null };
-    const keyInput = this.keyField(t('onboard.key_paste'));
-    const url = /** @type {HTMLInputElement} */ (h('input.set-input.ob-input', { type: 'text', value: from.base_url ?? '', placeholder: 'https://…', spellcheck: 'false', autocomplete: 'off' }));
-    url.addEventListener('input', () => this.stale?.());
-    const drivers = this.drivers.length ? this.drivers : ['openai-chat', 'anthropic', 'openai-responses'].map((v) => ({ value: v, name: v }));
-    let driver = from.driver ?? drivers[0].value;
-    const seg = h('div.ob-select');
-    const drawSeg = () => replace(seg, select({ panel: this.host.panel, ctx: this.ctx }, drivers, driver, (/** @type {string} */ v) => { driver = v; drawSeg(); this.stale?.(); }));
-    drawSeg();
-    const rows = [this.fieldRow(t('onboard.key'), keyInput), this.fieldRow(t('onboard.url'), url), this.fieldRow(t('onboard.driver'), seg)];
-    const target = () => /** @type {Target} */ ({ kind: 'copy', id, driver, base_url: cleanUrl(url.value), from });
-    const key = () => (keyInput.value.trim() ? { value: keyInput.value.trim() } : null);
-    const screen = this.testing(target, name, rows, key, () => !!key() && validUrl(cleanUrl(url.value)), keyInput,
-      { auto: false, pasted: () => !!keyInput.value.trim(), title: t('onboard.copy_title', { name }), rekey: () => keyInput });
-    return { ...screen, sub: t('onboard.copy_sub') };
   }
 
   /** 自定义（第 7 条）：地址、接口、密钥。 */
@@ -478,7 +429,7 @@ export class ProviderFlow {
   }
 
   /**
-   * 存（第 6 条）：贴了密钥的先存成新名字的密钥，再一条 `config.set` 写进个人设置（同设置页）；交回出错的字，成了叫宿主 `done`。
+   * 存（第 6 条）：贴了密钥的先存成新名字的密钥，再一条 `config.set` 写进系统配置（同设置页）；交回出错的字，成了叫宿主 `done`。
    * @param {Target} target @param {any} key 这一次用的密钥 @param {boolean} pasted @param {string|null} model @param {string} name
    */
   async save(target, key, pasted, model, name) {
@@ -496,15 +447,14 @@ export class ProviderFlow {
         ref = { secret };
       }
       const { changes } = setupChanges(target, ref, { chat: welcome ? model : null, pools: welcome && !this.fixedPools && noPools(items), taken });
-      // 写个人设置，同设置页（2026-10-10 项目主人：引导里选了 DeepSeek，会话照旧是原来的 magpie——原来写系统配置，被个人设置里写着的盖住了）
-      const layer = 'personal';
-      if (changes.length) await core.request('config.set', { layer, changes });
+      // 写系统配置，同设置页（核心 SU-3上起只有这一份）
+      if (changes.length) await core.request('config.set', { layer: 'system', changes });
       this.configured.add(id);
       this.usable.add(id);
       // 存好的这一家记进「已配好」那一组（点了返回再回来，列表里看得到它）
       if (!this.providers.some((p) => p.id === id)) this.providers.push({ id, name: target.kind === 'custom' ? target.name || id : name || id });
       this.stale = null;
-      this.host.done({ id, model, name: name || id, side: layer === 'personal' ? 'mine' : 'shared' });
+      this.host.done({ id, model, name: name || id });
       return null;
     } catch (err) {
       const e = /** @type {any} */ (err);

@@ -4,16 +4,14 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { coreRow, textField } from './rows.js';
-import { itemFor, inputText, layerOf, writtenIn, expectFor } from './model.js';
+import { itemFor, inputText, writtenIn, expectFor, LAYER } from './model.js';
 import { modelName } from './model-bits.js';
-import { baseOf } from '../../src/lib/provider-copy.js';
 
 /** 一个模型的详情：从右边滑进来，只有名字和控件；`Esc`、✕ 收回。 */
 export function drawer(dialog, p, m) {
   if (!m) return null;
   const ctx = dialog.ctx;
-  // 共用那份（`relay@system`，核心 PL-1）的配置写在原编号底下
-  const names = { id: baseOf(p.id), model: m.model };
+  const names = { id: p.id, model: m.model };
   const f = m.facts ?? {};
   const item = (field, factOf) => itemFor(dialog.schema, dialog.got, `providers.<id>.models.<model>.${field}`, names, factOf ? { value: factOf.value } : undefined);
   const row = (field, factOf, label) => {
@@ -51,7 +49,7 @@ function prices(dialog, item) {
   const inputs = new Map();
   // 照显示的整份写：有字的都写（没改的也写，五项一起成一套），空着的这一层写过才删
   const saveAll = async () => {
-    const layer = layerOf(parts[0].it);
+    const layer = LAYER;
     const changes = parts.flatMap(({ name, it }) => {
       const text = inputs.get(name)?.value.trim() ?? '';
       const expect = expectFor(it.entry, layer);
@@ -63,7 +61,7 @@ function prices(dialog, item) {
   };
   let changed = false;
   const cells = parts.map(({ name, it }) => {
-    changed ||= writtenIn(it.entry, layerOf(it));
+    changed ||= writtenIn(it.entry, LAYER);
     const field = /** @type {HTMLInputElement} */ (textField(inputText(it.entry?.value ?? ''), name === 'currency' ? 'text' : 'number', '', saveAll));
     inputs.set(name, field);
     return h(`label.set-price${name === 'currency' ? '.is-currency' : ''}`, h('span', ctx.text(`models.price_${name}`)), field);

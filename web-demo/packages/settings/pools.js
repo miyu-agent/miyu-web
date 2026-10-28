@@ -2,13 +2,12 @@
 //! 模型池（蓝图 `web.md`「设置页」第 14 条）：一个池一张卡片：头上 `@名字`、调用方式（固定、轮换）、「＋ 添加」（从还没进来的模型里
 //! 勾）、删除；下面成员一行一个（序号、名字、哪一家，悬停露出往上、往下、✕），最下面一行「子代理能选」开关。卡片下面一行
 //! 「＋ 新建模型池」（同「＋ 添加供应商」，2026-10-11：原来是一整块淡底的大卡），点了原地变成一张白卡写名字，回车建好。改了当场存，
-//! 写进个人设置。三个固定池（核心 Q-1：`fixed`）排最前、没有删除。
+//! 写进系统配置。三个固定池（核心 Q-1：`fixed`）排最前、没有删除。
 
 import { h, icon } from '../../src/lib/dom.js';
 import { pickModels } from './picker.js';
 import { toggle } from './rows.js';
-import { itemFor, layerOf, validId, keySegment, moveMember, poolRemoval, duplicates, providerName, poolOrder, strategiesOf } from './model.js';
-import { twinsOf, copyOf } from '../../src/lib/provider-copy.js';
+import { itemFor, LAYER, validId, keySegment, moveMember, poolRemoval, duplicates, providerName, poolOrder, strategiesOf } from './model.js';
 import { isFixedPool } from '../../src/lib/fixed-pools.js';
 
 /** 卡片头上的池名：固定池写显示名、后面暗字接 `@flagship`。 @param {any} ctx @param {string} name */
@@ -23,13 +22,10 @@ const poolHead = (ctx, name) => (isFixedPool(name)
 export function drawPools(dialog, list) {
   const ctx = dialog.ctx;
   const t = (k, f) => ctx.text(`models.${k}`, f);
-  // 同一家自用、共用两份都有的（核心 PL-1）：供应商后面接「 · 自用」「 · 共用」
-  const twins = twinsOf(list.providers);
-  const named = (/** @type {any} */ p) => { const copy = copyOf(p.id, twins); return copy ? `${providerName(p)} · ${ctx.text(`secret_scope.${copy}`)}` : providerName(p); };
-  const all = (list.providers ?? []).flatMap((p) => (p.models ?? []).map((m) => ({ ref: m.ref, model: m.model, name: m.facts?.name?.value ?? m.model, provider: named(p) })));
+  const all = (list.providers ?? []).flatMap((p) => (p.models ?? []).map((m) => ({ ref: m.ref, model: m.model, name: m.facts?.name?.value ?? m.model, provider: providerName(p) })));
   const byRef = new Map(all.map((r) => [r.ref, r]));
   const field = (id, name) => itemFor(dialog.schema, dialog.got, `pools.<id>.${name}`, { id });
-  const layer = layerOf(dialog.schema.items.find((i) => i.key === 'pools.<id>.models') ?? { layers: ['personal'] });
+  const layer = LAYER;
   const report = (why) => { if (why) dialog.toast(why); };
   // 成员那一块最高 `pool_rows` 行，多了自己滚；每个池滚到哪记在弹窗上，挪、删以后重画回到原处
   dialog.poolScroll ??= new Map();
@@ -75,7 +71,7 @@ export function drawPools(dialog, list) {
     }, t(`strategies.${s}`))));
     // 成员一行一个：序号、名字（池里重了的写模型名分开）、哪一家；悬停露出往上、往下、✕。配置里写着、认不出的照原样写
     const known = now.map((ref) => byRef.get(ref) ?? { ref, name: ref, model: ref, provider: '' });
-    // 同一个模型在自用、共用两份里（核心 PL-1）不算重名：哪一份写在「哪一家」那一格
+    // 名字、模型名都一样的（同一个模型）不算重名
     const dup = duplicates([...new Map(known.map((r) => [`${r.name}\n${r.model}`, r.name])).values()]);
     // 第一行的往上、最后一行的往下留着位置不露（一列一列对齐）
     const tool = (label, name, onclick, off) => h(`button.set-member-tool${off ? '.is-off' : ''}`, { type: 'button', title: label, 'aria-label': label, disabled: off ? true : null, onclick }, icon(name));

@@ -247,7 +247,7 @@ function descLine(dialog, item) {
 }
 
 /**
- * 服务现在怎样（同软件包信息页「MCP 服务」那一行）：被个人设置里同名的替代了的写那一句；包关着的、服务关着的「已停用」；停了的照原因，红字；
+ * 服务现在怎样（同软件包信息页「MCP 服务」那一行）：被自制的同名服务替代了的写那一句；包关着的、服务关着的「已停用」；停了的照原因，红字；
  * 要浏览器登录的（核心 X-42 上）不算出错：「需要登录」「等待在浏览器中完成登录…」，warn 色。
  * @param {any} dialog @param {ToolItem} item
  */
@@ -282,7 +282,7 @@ function switchFor(dialog, item) {
 }
 
 /**
- * 重读一页的列表再重画（改的是个人设置，核心另推 `config.changed`，那边整个重读；这里先读这一份，改完马上看得到）。
+ * 重读一页的列表再重画（改的是配置，核心另推 `config.changed`，那边整个重读；这里先读这一份，改完马上看得到）。
  * @param {any} dialog @param {ToolKind} kind
  */
 export async function refresh(dialog, kind) {
@@ -389,7 +389,7 @@ function toolDetail(dialog, kind, id) {
 }
 
 /**
- * MCP 详情的动作：重启（个人设置里的 `mcp.restart`，包里的 `package.restart`，包关着的、被替代了的不出）；自制的多编辑（核心照写的交了
+ * MCP 详情的动作：重启（自己写的 `mcp.restart`，包里的 `package.restart`，包关着的、被替代了的不出）；自制的多编辑（核心照写的交了
  * 环境变量、时限才有，`editable`）、删除（点两下）。
  * @param {any} dialog @param {ToolItem} item
  */

@@ -5,7 +5,7 @@
 /** 三页的编号（设置页的分页编号，也是 `kind`） @typedef {'skills'|'scripts'|'mcp'} ToolKind */
 
 /**
- * 一页上的一项，三种合成一个样子。`own` 是自己放的（技能、脚本 `from` 是 `home`；MCP 是个人设置里写的），`package` 是随哪个包来的（出厂又没有编号的是 `null`）。
+ * 一页上的一项，三种合成一个样子。`own` 是自己放的（技能、脚本 `from` 是 `home`；MCP 是配置里自己写的），`package` 是随哪个包来的（出厂又没有编号的是 `null`）。
  * `on` 是全局开关（没有这一格的：`null`，不画开关）。`raw` 是核心给的那一项。
  * @typedef {{kind: ToolKind, id: string, name: string, title: string|null, desc: string|null, own: boolean, package: string|null,
  *   on: boolean|null, covered: boolean, raw: any}} ToolItem
@@ -44,8 +44,8 @@ export function scriptItem(s) {
 }
 
 /**
- * MCP 服务两处合成一份：个人设置里写的（`mcp.list`，自制）在前，照写的先后；再是包里带的（`package.list` 每个包的 `mcp`），照包、照包里的先后。
- * 包里带的服务没有 `on` 的（之前的核心）不画开关；被个人设置里同名的替代了的（`covered`）也不画。
+ * MCP 服务两处合成一份：配置里自己写的（`mcp.list`，自制）在前，照写的先后；再是包里带的（`package.list` 每个包的 `mcp`），照包、照包里的先后。
+ * 包里带的服务没有 `on` 的（之前的核心）不画开关；被自制的同名服务替代了的（`covered`）也不画。
  * @param {any[]|null|undefined} home `mcp.list` 的 `servers` @param {any[]|null|undefined} packages `package.list` 的 `packages`
  * @returns {ToolItem[]}
  */

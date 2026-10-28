@@ -195,10 +195,6 @@
       "no_match": "未找到「{query}」",
       "loading": "正在加载配置…",
       "load_failed": "无法加载配置：{reason}",
-      "secret_scope": {
-        "system": "共用",
-        "personal": "自用"
-      },
       "pages": {
         "general": "通用",
         "packages": "软件包",
@@ -353,8 +349,6 @@
         },
         "driver_guess_line": "未识别接口，正在使用 {driver}",
         "key_saved": "已设置",
-        "shared_folded": "共用（{count}）",
-        "prefer_mine": "优先用这一份",
         "key_change": "更换",
         "key_save": "保存",
         "key_use_env": "改用环境变量",
@@ -363,8 +357,7 @@
         "unset": "未设置",
         "remove": "删除",
         "remove_confirm": "确认删除「{name}」吗？",
-        "remove_confirm_in_use": "默认模型在用「{name}」，删了要另选。确认删除吗？",
-        "copy_mine": "另配一份自用的"
+        "remove_confirm_in_use": "默认模型在用「{name}」，删了要另选。确认删除吗？"
       },
       "changed": "已修改",
       "packages_web": "网页",
@@ -404,8 +397,8 @@
         "mcp_restart": "重启",
         "mcp_stopped": "服务已停止",
         "mcp_login": "服务需要登录",
-        "mcp_covered": "被个人设置中的同名服务替代",
-        "covered": "被个人设置替代",
+        "mcp_covered": "被自制的同名服务替代",
+        "covered": "被自制的服务替代",
         "depends_missing": "缺少依赖：{names}",
         "depended": "{names} 依赖它，无法卸载",
         "sep": "、",
@@ -509,9 +502,7 @@
         "name_hint": "留空则使用 ID 作为显示名称",
         "edit": "修改",
         "mine": "已配好",
-        "common": "常用",
-        "copy_title": "{name} · 自用",
-        "copy_sub": "地址、接口照共用那份，填上你自己的密钥"
+        "common": "常用"
       },
       "main_color": "主色",
       "main_color_auto": "自动",
@@ -785,10 +776,6 @@
       "no_match": "No results for “{query}”",
       "loading": "Loading settings…",
       "load_failed": "Couldn't load settings: {reason}",
-      "secret_scope": {
-        "system": "Shared",
-        "personal": "Mine"
-      },
       "pages": {
         "general": "General",
         "packages": "Packages",
@@ -943,8 +930,6 @@
         },
         "driver_guess_line": "API not recognized, using {driver}",
         "key_saved": "Set",
-        "shared_folded": "Shared ({count})",
-        "prefer_mine": "Used first",
         "key_change": "Change",
         "key_save": "Save",
         "key_use_env": "Use an environment variable",
@@ -953,8 +938,7 @@
         "unset": "Not set",
         "remove": "Delete",
         "remove_confirm": "Delete \"{name}\"?",
-        "remove_confirm_in_use": "The default model uses \"{name}\"; you'll need to pick another. Delete it?",
-        "copy_mine": "Add my own copy"
+        "remove_confirm_in_use": "The default model uses \"{name}\"; you'll need to pick another. Delete it?"
       },
       "changed": "Modified",
       "packages_web": "Web",
@@ -994,8 +978,8 @@
         "mcp_restart": "Restart",
         "mcp_stopped": "Server stopped",
         "mcp_login": "Service needs sign-in",
-        "mcp_covered": "Replaced by the server of the same name in personal settings",
-        "covered": "Replaced by personal settings",
+        "mcp_covered": "Replaced by your own server of the same name",
+        "covered": "Replaced by your own servers",
         "depends_missing": "Missing dependencies: {names}",
         "depended": "Can't uninstall: required by {names}",
         "sep": ", ",
@@ -1099,9 +1083,7 @@
         "name_hint": "Leave empty to use the ID as the display name",
         "edit": "Edit",
         "mine": "Configured",
-        "common": "Popular",
-        "copy_title": "{name} · Mine",
-        "copy_sub": "Address and API follow the shared one; add your own key"
+        "common": "Popular"
       },
       "main_color": "Main color",
       "main_color_auto": "Auto",
@@ -1375,10 +1357,6 @@
       "no_match": "「{query}」は見つかりません",
       "loading": "設定を読み込み中…",
       "load_failed": "設定を読み込めません：{reason}",
-      "secret_scope": {
-        "system": "共用",
-        "personal": "自分用"
-      },
       "pages": {
         "general": "一般",
         "packages": "パッケージ",
@@ -1533,8 +1511,6 @@
         },
         "driver_guess_line": "API を認識できないため {driver} を使用中",
         "key_saved": "設定済み",
-        "shared_folded": "共用（{count}）",
-        "prefer_mine": "こちらを優先",
         "key_change": "変更",
         "key_save": "保存",
         "key_use_env": "環境変数を使う",
@@ -1543,8 +1519,7 @@
         "unset": "未設定",
         "remove": "削除",
         "remove_confirm": "「{name}」を削除しますか？",
-        "remove_confirm_in_use": "既定のモデルが「{name}」を使っています。削除後に選び直す必要があります。削除しますか？",
-        "copy_mine": "自分用をもう一つ設定"
+        "remove_confirm_in_use": "既定のモデルが「{name}」を使っています。削除後に選び直す必要があります。削除しますか？"
       },
       "changed": "変更済み",
       "packages_web": "ウェブ",
@@ -1584,8 +1559,8 @@
         "mcp_restart": "再起動",
         "mcp_stopped": "サーバーが停止",
         "mcp_login": "サービスのログインが必要",
-        "mcp_covered": "個人設定の同名サーバーに置き換えられています",
-        "covered": "個人設定に置き換え済み",
+        "mcp_covered": "自作の同名サーバーに置き換えられています",
+        "covered": "自作のサーバーに置き換え済み",
         "depends_missing": "依存パッケージ不足：{names}",
         "depended": "{names} が依存しているため、アンインストールできません",
         "sep": "、",
@@ -1689,9 +1664,7 @@
         "name_hint": "空欄なら ID を表示名にします",
         "edit": "変更",
         "mine": "設定済み",
-        "common": "よく使う",
-        "copy_title": "{name} · 自分用",
-        "copy_sub": "アドレスと API は共用のものと同じです。自分の API キーを入力してください"
+        "common": "よく使う"
       },
       "main_color": "メインカラー",
       "main_color_auto": "自動",

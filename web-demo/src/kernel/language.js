@@ -48,7 +48,7 @@ export function pick(setting, browser, table) {
   const matched = (tag) => table.languages.find((l) => l.locales.some((p) => tag.toLowerCase().startsWith(p.toLowerCase())));
   const chosen = setting !== AUTO ? byCode(setting) : null;
   const entry = chosen || browser.map(matched).find(Boolean) || byCode(table.fallback) || table.languages[0];
-  // 表里没有的（个人设置写了 `en`，英文界面还没写）：界面照浏览器认，收起那一行照它写——只有它有那一套字（`auto_summary`）时
+  // 表里没有的（配置写了 `en`，英文界面还没写）：界面照浏览器认，收起那一行照它写——只有它有那一套字（`auto_summary`）时
   const summary = setting === AUTO ? table.auto_summary ?? entry.code : chosen ? entry.code : setting === table.auto_summary ? setting : entry.code;
   return { ...entry, fallback: table.fallback, summary };
 }
@@ -70,7 +70,7 @@ export function options(setting, browser, table) {
 }
 
 /**
- * 从核心读到的个人设置的界面语言（蓝图 `web.md`「界面语言」第 5 条）：`config.get` 回应的 `items["ui.language"].value`，
+ * 从核心读到的配置的界面语言（蓝图 `web.md`「界面语言」第 5 条）：`config.get` 回应的 `items["ui.language"].value`，
  * `config.changed` 推送的 `keys["ui.language"].effective`（删掉了那一项的照它回到的默认）；没有这一项的是 `null`。
  * @param {any} got
  * @returns {string|null}

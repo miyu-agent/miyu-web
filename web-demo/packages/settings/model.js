@@ -2,8 +2,6 @@
 //! 设置页的纯逻辑（蓝图 `web.md`「设置页」）：核心的配置清单（`config.schema`）和最终值（`config.get`）合成一页页、一组组的项；
 //! 每一项来自哪一层、写在哪一层、`expect` 写什么、搜索对不对得上。不碰 DOM、不发请求。
 
-import { baseOf, hasLayers, twinsOf } from '../../src/lib/provider-copy.js';
-
 /**
  * @typedef {{key: string, type: string, control: string, name: string, description: string, page: string, group: string,
  *   common?: boolean, layers: string[], applies: string, default?: any, options?: {value: any, name: string}[],
@@ -27,12 +25,11 @@ export const isTemplate = (key) => key.includes('<');
  * 对不上哪一项的问题挂在 `fallback` 那一页顶上。
  * @param {{pages: {id: string, name: string}[], groups: {id: string, name: string, page: string}[], items: SchemaItem[]}} schema
  * @param {{items: Record<string, Entry>, problems?: Problem[]}} got
- * @param {{fallback?: string, merge?: Record<string, string>, moveGroups?: Record<string, string>, hide?: string[], personal?: boolean}} [opts]
+ * @param {{fallback?: string, merge?: Record<string, string>, moveGroups?: Record<string, string>, hide?: string[]}} [opts]
  * @returns {Page[]}
  */
 export function buildPages(schema, got, opts = {}) {
-  // `personal`：只留能写在个人那一层的项（成员只写得了个人设置，核心 Y-2下下中中；蓝图「连核心」第 1 条「成员」那一款）
-  const { fallback = 'advanced', merge = {}, moveGroups = {}, hide = [], personal = false } = opts;
+  const { fallback = 'advanced', merge = {}, moveGroups = {}, hide = [] } = opts;
   const foreign = (key) => hide.some((prefix) => key.startsWith(prefix));
   const known = new Set(schema.items.map((i) => i.key));
   const problems = got.problems ?? [];
@@ -41,7 +38,7 @@ export function buildPages(schema, got, opts = {}) {
   for (const g of schema.groups) {
     const items = schema.items
       // 界面提示 `hidden` 的（核心 9-1 下：网页服务的空闲秒数这类）不画，照样能写、能查
-      .filter((i) => i.group === g.id && !i.hidden && !isTemplate(i.key) && !foreign(i.key) && (!personal || (i.layers ?? []).includes('personal')))
+      .filter((i) => i.group === g.id && !i.hidden && !isTemplate(i.key) && !foreign(i.key))
       .map((i) => ({ ...i, entry: got.items?.[i.key] ?? null, problems: problems.filter((x) => x.key === i.key) }))
       .sort((a, b) => Number(!!b.common) - Number(!!a.common));
     const home = moveGroups[g.id] ?? g.page;
@@ -53,11 +50,6 @@ export function buildPages(schema, got, opts = {}) {
   (byPage.get(fallback) ?? pages.at(-1))?.problems.push(...loose);
   return pages.filter((p) => p.groups.length || p.problems.length);
 }
-
-/**
- * 成员的「新会话的权限级别」能选哪几项（蓝图「连核心」第 1 条「成员」那一款，2026-10-24 项目主人定）：成员到不了开放权限，去掉 `full`。
- * @param {{value: any, name: string}[]} options 清单里的选项 @returns {{value: any, name: string}[]}
- */
 
 /** 一个真键对得上哪一项带占位的（`providers.dev.base_url` → `providers.<id>.base_url`）。 */
 export function templateOf(key, items) {
@@ -85,29 +77,8 @@ export function splitKey(key) {
   return out;
 }
 
-/**
- * 写在哪一层：能写个人设置的写个人设置，只能写系统配置的写系统配置（M8 只有管理员一个人）。
- * @param {SchemaItem} item
- */
-export const layerFor = (item) => (item.layers.includes('personal') ? 'personal' : 'system');
-
-/**
- * 这一项写在哪一层：照 `layerFor`（能写个人的写个人，只能写系统的写系统）。
- * @param {{layers: string[]}} item
- */
-export const layerOf = (item) => layerFor(item);
-
-/**
- * 一项在某几层里最上面写着的值（从上往下找第一个写了的）；都没写的交 `undefined`。管理员模式里带个人那一层的项照系统那一层（没写的照出厂）画。
- * @param {Entry|null|undefined} entry @param {string[]} layers
- */
-export function valueIn(entry, layers) {
-  for (const layer of layers) {
-    const got = entry?.layers?.find((l) => l.origin.layer === layer);
-    if (got) return got.value;
-  }
-  return undefined;
-}
+/** 设置写在哪一层：只有系统配置一份（核心 SU-3上，1481b2115；蓝图「设置页」第 6 条）。 */
+export const LAYER = 'system';
 
 /**
  * `config.set` 的 `expect`：这一层里这一项现在写着什么，`{value}` 或者没写 `{}`（数照数值比：`1` 对得上文件里的 `1.0`，核心 8-3 再补）。
@@ -227,7 +198,7 @@ export function duplicates(names) {
 export const validId = (id) => /^[a-z][a-z0-9_-]{0,31}$/.test(id);
 
 /** 粘贴的密钥存成的新名字：`<编号>-<时刻>`（不覆盖原来的，照终端第 7 条）；名字最长 64。 @param {string} id @param {number} now */
-export const secretName = (id, now) => `${baseOf(id)}-${now.toString(36)}`.slice(0, 64);
+export const secretName = (id, now) => `${id}-${now.toString(36)}`.slice(0, 64);
 
 /**
  * 存一家供应商的表要发的 `config.set` 的 `changes`（蓝图「设置页」第 14 条）：显示名、地址、接口、密钥，每项带这一层读到的
@@ -239,7 +210,6 @@ export const secretName = (id, now) => `${baseOf(id)}-${now.toString(36)}`.slice
  * @param {string|null} secret 粘贴的密钥存成的名字（`kind` 是 `secret` 时）
  */
 export function providerChanges(id, form, got, layer, secret) {
-  id = baseOf(id);
   const key = (field) => `providers.${keySegment(id)}.${field}`;
   const changes = [];
   const put = (field, change) => {
@@ -262,7 +232,6 @@ export function providerChanges(id, form, got, layer, secret) {
  * @param {string} id @param {{secret: string}|{env: string}} ref @param {{items?: Record<string, Entry>}} got @param {string} layer
  */
 export function keyChange(id, ref, got, layer) {
-  id = baseOf(id);
   const key = `providers.${keySegment(id)}.key`;
   return [{ key, value: ref, expect: expectFor(got.items?.[key] ?? null, layer) }];
 }
@@ -293,12 +262,8 @@ export function whereOf(url) {
  * @param {any[]} providers
  */
 export function sameNamed(providers) {
-  // 同一家的自用、共用两份（核心 PL-1）不算同名：只照一份数，共用那份跟着自用那份
-  const twins = twinsOf(providers);
-  const counted = providers.filter((p) => !(p.id !== baseOf(p.id) && twins.has(baseOf(p.id))));
-  const names = duplicates(counted.map(providerName));
-  const same = new Set(counted.filter((p) => names.has(providerName(p))).map((p) => p.id));
-  return new Set(providers.filter((p) => same.has(baseOf(p.id))).map((p) => p.id));
+  const names = duplicates(providers.map(providerName));
+  return new Set(providers.filter((p) => names.has(providerName(p))).map((p) => p.id));
 }
 
 /**
@@ -327,78 +292,9 @@ export function moveMember(list, i, dir) {
 
 /** 删一家供应商：它在这一层写着的几项（`providers.<id>.*`）各一条 `unset`（2026-10-19 项目主人：设置页原来少了删除）。 @param {string} id @param {{items: Record<string, Entry>}} got @param {string} layer */
 export function providerRemoval(id, got, layer) {
-  // 共用那份（`relay@system`，核心 PL-1）写在原编号底下
-  id = baseOf(id);
   const prefix = `providers.${keySegment(id)}.`;
   return Object.keys(got.items ?? {}).filter((k) => k.startsWith(prefix) && writtenIn(got.items[k], layer)).map((k) => ({ key: k, unset: true, expect: expectFor(got.items[k], layer) }));
 }
-
-/**
- * 一家供应商写在哪几层（`config.get {all: true}` 里 `providers.<编号>.*` 每一格的 `layers`）：`personal` 自用、`system` 共用
- * （蓝图「设置页」第 14 条「供应商分两块」）。
- * @param {string} id @param {{items?: Record<string, Entry>}} got @returns {Set<'personal'|'system'>}
- */
-export function providerLayers(id, got) {
-  id = baseOf(id);
-  const prefix = `providers.${keySegment(id)}.`;
-  /** @type {Set<'personal'|'system'>} */
-  const out = new Set();
-  for (const [k, entry] of Object.entries(got?.items ?? {})) {
-    if (!k.startsWith(prefix)) continue;
-    if (writtenIn(entry, 'personal')) out.add('personal');
-    if (writtenIn(entry, 'system')) out.add('system');
-  }
-  return out;
-}
-
-/**
- * 供应商分两块：自用在上，共用在下。核心给 `layer` 的（PL-1）照它分，两层都写了的核心已经列成两家（`relay`、`relay@system`），
- * 各进一块、各是各的（`both` 是两份都有的原编号，`layered` 真）。旧核心照 `config.get` 推：个人设置里有这一家的进自用，系统配置里有的
- * （连哪一层都没写的）进共用，两边都有的两块里各一格、是同一份合出来的值。
- * @template {{id: string, layer?: string}} P
- * @param {P[]} providers `model.list` 的 `providers` @param {{items?: Record<string, Entry>}} got
- * @returns {{mine: P[], shared: P[], both: Set<string>, layered: boolean}}
- */
-export function providerSides(providers, got) {
-  if (hasLayers(providers)) {
-    return { mine: providers.filter((p) => p.layer === 'personal'), shared: providers.filter((p) => p.layer !== 'personal'), both: twinsOf(providers), layered: true };
-  }
-  /** @type {P[]} */
-  const mine = [];
-  /** @type {P[]} */
-  const shared = [];
-  const both = new Set();
-  for (const p of providers) {
-    const layers = providerLayers(p.id, got);
-    if (layers.has('personal')) mine.push(p);
-    if (layers.has('system') || !layers.has('personal')) shared.push(p);
-    if (layers.has('personal') && layers.has('system')) both.add(p.id);
-  }
-  return { mine, shared, both, layered: false };
-}
-
-/**
- * 选中的那一格写在哪一层：「共用」那一块的（`side` 是 `shared`）写系统配置，「自用」的照清单（个人设置）。
- * @param {string|null|undefined} side @param {any} template 清单里的一项
- */
-export const providerLayer = (side, template) => (side === 'shared' ? 'system' : layerFor(template ?? { layers: ['personal'] }));
-
-/**
- * 一家供应商在某一层写的密钥（`providers.<编号>.key` 那一格这一层的值）：`secret:<名字>`、`env:<变量>`，这一层没写的是 `null`。两块里都有的
- * 一家，核心合出来的是自用盖过共用的那一份，「共用」那一格的密钥照系统那一层写的算。
- * @param {string} id @param {{items?: Record<string, Entry>}} got @param {string} layer
- */
-export function keyIn(id, got, layer) {
-  id = baseOf(id);
-  const entry = got?.items?.[`providers.${keySegment(id)}.key`];
-  const value = entry?.layers?.find((l) => l.origin.layer === layer)?.value;
-  if (value && typeof value === 'object' && typeof value.secret === 'string') return `secret:${value.secret}`;
-  if (value && typeof value === 'object' && typeof value.env === 'string') return `env:${value.env}`;
-  return null;
-}
-
-/** 「共用」那一块开着没有：人点过的照点过的（这台设备上记的，`null` 是没点过），没点过的多于 3 家收着。 @param {number} count @param {boolean|null} stored */
-export const sharedOpen = (count, stored) => (typeof stored === 'boolean' ? stored : count <= 3);
 
 /** 模型池那一页的先后（蓝图「设置页」第 14 条）：同换模型的菜单，固定池照旗舰、日常、轻量排最前 */
 export { poolOrder } from '../../src/lib/fixed-pools.js';
@@ -445,7 +341,7 @@ export function referenceOptions(list) {
   return [...models, ...pools];
 }
 
-export const providerName = (p) => (typeof p.name === 'object' ? p.name?.value : p.name) || baseOf(p.id);
+export const providerName = (p) => (typeof p.name === 'object' ? p.name?.value : p.name) || p.id;
 
 /** 网页包的设置项里有控件能改的类型；结构复杂的（`json`、`map`、`list`）在设置页改不了，不列（蓝图「设置页」第 11 条）。 */
 const EDITABLE = new Set(['boolean', 'choice', 'number', 'duration', 'color', 'text', 'key']);
@@ -464,7 +360,7 @@ export function applyPackageChange(list, id, entry) {
   return list.map((p) => (p.package === id ? entry : p));
 }
 
-/** 包开着、它带的 MCP 服务有停下的（核心 X-4：`mcp` 每一格的 `state`；被个人设置里同名的替代了的不算，F-9 补的 `covered`；要浏览器登录的另算，X-42 上）。 @param {any} p */
+/** 包开着、它带的 MCP 服务有停下的（核心 X-4：`mcp` 每一格的 `state`；被自制的同名服务替代了的不算，F-9 补的 `covered`；要浏览器登录的另算，X-42 上）。 @param {any} p */
 export const mcpStopped = (p) => p.enabled !== false && (p.mcp ?? []).some((s) => s.state === 'stopped' && !s.covered && s.reason !== 'needs_login');
 
 /** 包开着、带的网址服务有要浏览器登录的（核心 X-42 上；不算「服务已停止」）。 @param {any} p */
@@ -477,7 +373,7 @@ export const mcpNeedsLogin = (p) => p.enabled !== false && (p.mcp ?? []).some((s
 export const packageNames = (packages, ids) => ids.map((id) => (packages ?? []).find((p) => p.package === id)?.name ?? id);
 
 /**
- * 个人设置里的 MCP 服务推来一项（`mcp.changed {name, server}`，核心 F-9 补）：换掉同名的；新的接在后面（照个人设置里写的先后，新写的在最后）；
+ * 自己写的 MCP 服务推来一项（`mcp.changed {name, server}`，核心 F-9 补）：换掉同名的；新的接在后面（照配置里自己写的先后，新写的在最后）；
  * `server` 是 `null` 的拿掉。
  * @param {any[]} list @param {string} name @param {any|null} server
  */

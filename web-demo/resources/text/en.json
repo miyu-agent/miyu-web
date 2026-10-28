@@ -532,11 +532,7 @@
     },
     "no_pools": "No model pools configured",
     "search": "Search models",
-    "no_match": "No matches",
-    "copy": {
-      "personal": "Mine",
-      "system": "Shared"
-    }
+    "no_match": "No matches"
   },
   "help": {
     "title": "Help",

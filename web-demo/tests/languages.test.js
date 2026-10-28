@@ -150,7 +150,7 @@ test('个人设置写了网页的表里没有的语言：界面照浏览器认�
 });
 
 test('从核心读个人设置的界面语言：config.get 的 items、config.changed 的 keys（取 effective）；没有的是 null', () => {
-  assert.equal(fromConfig({ items: { 'ui.language': { value: 'ja', origin: { layer: 'personal' } } } }), 'ja');
+  assert.equal(fromConfig({ items: { 'ui.language': { value: 'ja', origin: { layer: 'system' } } } }), 'ja');
   assert.equal(fromConfig({ keys: { 'ui.language': { effective: 'zh', value: 'zh', applies: 'now' } } }), 'zh');
   assert.equal(fromConfig({ keys: { 'ui.language': { effective: 'auto', applies: 'now' } } }), 'auto', '删掉了的那一项照 effective（回到默认）');
   assert.equal(fromConfig({ keys: { 'log.level': { effective: 'info' } } }), null);

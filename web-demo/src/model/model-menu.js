@@ -4,7 +4,6 @@
 
 import { res, t } from '../util/res.js';
 import { hhmm } from './format.js';
-import { baseOf, twinsOf, copyOf, SYSTEM_COPY } from '../lib/provider-copy.js';
 import { poolOrder, isFixedPool } from '../lib/fixed-pools.js';
 
 /**
@@ -20,15 +19,13 @@ import { poolOrder, isFixedPool } from '../lib/fixed-pools.js';
  */
 export function menuOf(list, current) {
   if (!list) return { models: [], pools: [] };
-  // 上面写显示名（目录里没有的写模型名），下面写供应商的显示名；显示名重了的（同一个模型的几条线路）下面接模型名分开它们。
-  // 同一家自用、共用两份都有的（核心 PL-1）供应商后面接「自用」「共用」；两份里同一个模型不算重名
-  const twins = twinsOf(list.providers);
-  const all = (list.providers ?? []).flatMap((p) => (p.models ?? []).map((m) => ({ p, m, name: m.facts?.name?.value || m.model, provider: providerLabel(p, twins) })));
+  // 上面写显示名（目录里没有的写模型名），下面写供应商的显示名；显示名重了的（同一个模型的几条线路）下面接模型名分开它们
+  const all = (list.providers ?? []).flatMap((p) => (p.models ?? []).map((m) => ({ p, m, name: m.facts?.name?.value || m.model, provider: providerName(p) })));
   // 供应商的图标：核心给 `logo` 的每一行都带（没有的 `null`，画名称的第一个字），老核心的不带
   const logos = (list.providers ?? []).some((p) => p && typeof p === 'object' && 'logo' in p);
-  /** 每个显示名出现在哪几处（原编号 + 模型名：两份里同一个模型算一处） @type {Map<string, Set<string>>} */
+  /** 每个显示名出现在哪几处（编号 + 模型名） @type {Map<string, Set<string>>} */
   const seen = new Map();
-  for (const x of all) seen.set(x.name, (seen.get(x.name) ?? new Set()).add(`${baseOf(x.p.id)}/${x.m.model}`));
+  for (const x of all) seen.set(x.name, (seen.get(x.name) ?? new Set()).add(`${x.p.id}/${x.m.model}`));
   const models = all.map(({ p, m, name, provider }) => {
     const usable = m.state === 'ok';
     const desc = (seen.get(name)?.size ?? 0) > 1 && name !== m.model ? `${provider} · ${m.model}` : provider;
@@ -54,13 +51,7 @@ export function menuOf(list, current) {
 export const poolName = (name) => (isFixedPool(name) ? t(`model_menu.fixed_pools.${name}`) : null);
 
 /** 供应商的显示名（核心 8-21：`name.value`，已经照配置、目录、编号退好；旧核心是字或没有）。 */
-const providerName = (p) => (typeof p.name === 'object' ? p.name?.value : p.name) || baseOf(p.id);
-
-/** 两份都有的接「 · 自用」「 · 共用」（蓝图「换模型的菜单」第 1、2 条）。 @param {string} name @param {'personal'|'system'|null} copy */
-const withCopy = (name, copy) => (copy ? `${name} · ${t(`model_menu.copy.${copy}`)}` : name);
-
-/** 一家写给人看的：显示名，两份都有的接是哪一份。 @param {any} p @param {Set<string>} twins */
-const providerLabel = (p, twins) => withCopy(providerName(p), copyOf(p.id, twins));
+const providerName = (p) => (typeof p.name === 'object' ? p.name?.value : p.name) || p.id;
 
 /**
  * 搜索框：照 `find`（显示名、模型名、供应商）找，空格分开的几段都要有，不分大小写；空的全给。
@@ -75,16 +66,6 @@ export function filterRows(rows, query) {
 function why(m) {
   if (m.state === 'cooling') return t('model_menu.cooling', { time: m.until ? hhmm(m.until) : '' });
   return t('model_menu.no_key');
-}
-
-/**
- * 写给人看的 `供应商/模型`（时间线上一轮末尾那一行、换了模型的那一行）：共用那份（`relay@system/m`，核心 PL-1）不露 `@system`，
- * 写 `relay/m · 共用`；别的照原样（蓝图「换模型的菜单」第 1 条）。
- * @param {string} ref
- */
-export function shownRef(ref) {
-  const { model, endpoint } = footerOf(ref);
-  return endpoint?.endsWith(SYSTEM_COPY) ? withCopy(`${baseOf(endpoint)}/${model}`, 'system') : ref;
 }
 
 /**
@@ -109,15 +90,11 @@ export function footerLabel(left, list) {
   const fixed = left.model?.startsWith('@') ? poolName(left.model.slice(1)) : null;
   if (fixed && left.model) return { model: fixed, endpoint: left.model, full: left.model };
   if (!left.model || !left.endpoint || left.model.startsWith('@')) return left;
-  // 共用那份（`relay@system`）不露 `@system`：找不到的写原编号接「 · 共用」，悬停的完整写法同样（蓝图「换模型的菜单」第 1 条）
-  const shared = left.endpoint.endsWith(SYSTEM_COPY);
-  const full = shared ? withCopy(`${baseOf(left.endpoint)}/${left.model}`, 'system') : `${left.endpoint}/${left.model}`;
+  const full = `${left.endpoint}/${left.model}`;
   const p = list ? (list.providers ?? []).find((x) => x.id === left.endpoint) : null;
-  if (!p) return shared ? { ...left, endpoint: withCopy(baseOf(left.endpoint), 'system'), full } : left;
+  if (!p) return left;
   const m = p.models?.find((x) => x.model === left.model);
-  // 两份都有的：框下面只标共用那一份，自己那份不接「 · 自用」（2026-10-27 项目主人：写着自用感觉有点怪）；菜单里照旧两份都标
-  const copy = copyOf(p.id, twinsOf(list.providers));
-  return { model: m?.facts?.name?.value || left.model, endpoint: withCopy(providerName(p), copy === 'system' ? 'system' : null), full };
+  return { model: m?.facts?.name?.value || left.model, endpoint: providerName(p), full };
 }
 
 /**
@@ -137,8 +114,8 @@ export function effortLevels(list, ref) {
 }
 
 /**
- * 这个模型现在那一档和它在配置里的键名（`model.list` 里它的 `facts.effort` `{value, from, layer, key}`，核心施工 8-18 补）：个人设置里写了的
- * （`from` 是 `config`、`layer` 是 `personal`）照写；系统配置的、没写的就是默认（`null`，框下面不写、菜单里勾默认）。池、列表里没有的、核心没给键名的
+ * 这个模型现在那一档和它在配置里的键名（`model.list` 里它的 `facts.effort` `{value, from, layer, key}`，核心施工 8-18 补）：人在配置里写了的
+ * （`from` 是 `config`、`layer` 是 `system`，核心 SU-3上起只剩这一层）照写；项目配置的、没写的就是默认（`null`，框下面不写、菜单里勾默认）。池、列表里没有的、核心没给键名的
  * `key` 是 `null`：选不了。
  * @param {any} list
  * @param {string|null} ref
@@ -148,27 +125,27 @@ export function effortOf(list, ref) {
   if (!list || !ref || ref.startsWith('@')) return { level: null, key: null };
   for (const p of list.providers ?? []) {
     const e = (p.models ?? []).find((x) => x.ref === ref)?.facts?.effort;
-    if (e) return { level: e.from === 'config' && e.layer === 'personal' ? e.value ?? null : null, key: typeof e.key === 'string' ? e.key : null };
+    if (e) return { level: e.from === 'config' && e.layer === 'system' ? e.value ?? null : null, key: typeof e.key === 'string' ? e.key : null };
   }
   return { level: null, key: null };
 }
 
 /**
- * 选了一档写进个人设置的 `config.set` 参数（蓝图「换模型的菜单」第 2 条）：选默认（`null`）的删掉个人这一项。
+ * 选了一档写进配置的 `config.set` 参数（蓝图「换模型的菜单」第 2 条）：选默认（`null`）的删掉这一项。
  * @param {string} key 完整键名，照抄核心给的
  * @param {string|null} level
  */
 export function effortChange(key, level) {
-  return { layer: 'personal', changes: [level === null ? { key, unset: true } : { key, value: level }] };
+  return { layer: 'system', changes: [level === null ? { key, unset: true } : { key, value: level }] };
 }
 
 /**
  * 手动选的模型记成新会话的默认（蓝图「换模型的菜单」第 5 条，2026-10-02 项目主人定，照 `models.md`「头的约定」）：
- * 写个人设置的 `models.chat` 的 `config.set` 参数。
+ * 写 `models.chat` 的 `config.set` 参数。
  * @param {string} ref 模型或 `@池`
  */
 export function defaultModelChange(ref) {
-  return { layer: 'personal', changes: [{ key: 'models.chat', value: ref }] };
+  return { layer: 'system', changes: [{ key: 'models.chat', value: ref }] };
 }
 
 /** 一档怎么写：`null` 是默认；表里没有的照原样。 @param {string|null} level */

@@ -6286,18 +6286,6 @@
       ".markdown-body .md-html"
     ]
   },
-  "settings.prov-group": {
-    "zh": "设置：供应商分块的组名（自用、共用；共用那一行能整块收起）",
-    "select": [
-      ".set-prov-group"
-    ]
-  },
-  "settings.prov-prefer": {
-    "zh": "设置：两块里都有的自用那一格「优先用这一份」",
-    "select": [
-      ".set-prov-prefer"
-    ]
-  },
   "settings.pool-ref": {
     "zh": "设置：固定池卡片头上显示名后面暗字的 @flagship",
     "select": [

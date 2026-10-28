@@ -14,8 +14,6 @@ import { res, t } from '../util/res.js';
 import { short, hitRate, seconds, hhmm } from './format.js';
 import { shownOf } from './artifacts.js';
 import { nestedTail } from '../lib/nested.js';
-import { shownRef } from './model-menu.js';
-import { SYSTEM_COPY } from '../lib/provider-copy.js';
 import { speakerOf, moduleNote, peerNote, changeNote, modelNote, compactedNote, failureText, recapNote, compactFailedNote, workspaceNote } from './notes.js';
 
 /** 权限级别：只读的写 `read_only`，别的照 `level`（`tui.md`「正文」第 4 条）。 @param {any} p */
@@ -296,7 +294,7 @@ function endItem(e, status) {
   }
   // 没带模型的（整理会话这类，核心没给）不写「供应商/模型」那一截
   const head = e.model || e.endpoint
-    ? t('done', { time: hhmm(e.at), ...doneRef(e.endpoint ?? '', e.model ?? ''), elapsed: seconds(e.took_ms ?? 0) })
+    ? t('done', { time: hhmm(e.at), endpoint: e.endpoint ?? '', model: e.model ?? '', elapsed: seconds(e.took_ms ?? 0) })
     : t('done_bare', { time: hhmm(e.at), elapsed: seconds(e.took_ms ?? 0) });
   return { ...base, text: icon(level) + head + usageText(e.usage) + speedText(e.speed) };
 }
@@ -341,8 +339,8 @@ function noticeItem(e, jobs) {
     case 'model':
       if (e.why === 'failover') return keyed(changeNote({ ...event('model.changed', { endpoint: e.endpoint, model: e.model }), local: 0 }));
       if (e.why === 'replaced') {
-        const from = shownRef([e.from?.endpoint, e.from?.model].filter(Boolean).join('/'));
-        const to = shownRef([e.endpoint, e.model].filter(Boolean).join('/'));
+        const from = [e.from?.endpoint, e.from?.model].filter(Boolean).join('/');
+        const to = [e.endpoint, e.model].filter(Boolean).join('/');
         return keyed(modelNote(event('session.policy_changed', { replaced: from, model: to })));
       }
       return null;
@@ -423,13 +421,3 @@ function answeredNote(e) {
   return { type: 'note', key: e.id, seq, turn: e.turn ?? null, slot: 'asking', event, asked };
 }
 
-/**
- * 一轮末尾那一行的 `供应商/模型`：共用那份（`relay@system`，核心 PL-1）的供应商写原编号、模型后面接「 · 共用」。
- * @param {string} endpoint @param {string} model
- */
-function doneRef(endpoint, model) {
-  if (!endpoint.endsWith(SYSTEM_COPY)) return { endpoint, model };
-  const shown = shownRef(`${endpoint}/${model}`);
-  const cut = shown.indexOf('/');
-  return { endpoint: shown.slice(0, cut), model: shown.slice(cut + 1) };
-}

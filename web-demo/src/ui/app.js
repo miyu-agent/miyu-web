@@ -1032,7 +1032,7 @@ export class App {
     await this.rememberModel(ref);
   }
 
-  /** 手动选的模型记成新会话的默认（个人设置的 `models.chat`），写好了重问 `model.list`；记不下的写一句，这个会话照样换了。 */
+  /** 手动选的模型记成新会话的默认（配置的 `models.chat`），写好了重问 `model.list`；记不下的写一句，这个会话照样换了。 */
   async rememberModel(ref) {
     try {
       await this.store.conn.request('config.set', defaultModelChange(ref));
@@ -1043,7 +1043,7 @@ export class App {
   }
 
   /**
-   * 现在这个模型的思考强度（`null` 是默认）：选了还没写好的照选的；别的照 `model.list` 的 `facts.effort`（个人设置里写了的照写，
+   * 现在这个模型的思考强度（`null` 是默认）：选了还没写好的照选的；别的照 `model.list` 的 `facts.effort`（配置里写了的照写，
    * 系统配置的、没写的是默认）。强度是配置（核心施工 8-18 补），不分会话。
    */
   effortLevel() {
@@ -1054,7 +1054,7 @@ export class App {
   }
 
   /**
-   * 换思考强度（蓝图「换模型的菜单」第 2 条，2026-10-02 项目主人改定）：写进个人设置（`config.set`，键名照抄 `facts.effort.key`），
+   * 换思考强度（蓝图「换模型的菜单」第 2 条，2026-10-02 项目主人改定）：写进配置（`config.set`，键名照抄 `facts.effort.key`），
    * 所有会话下一轮都照它；选默认的删掉个人这一项。框下面当场照选的写，写好了重问 `model.list`；拒了的放回去、写一句。
    * @param {string|null} level `null` 是默认
    */

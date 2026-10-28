@@ -1,6 +1,6 @@
 // @ts-check
 //! 软件包列表的推送（蓝图 `web.md`「设置页」第 13 条；核心 F-8 三补，`subscribe {"stream": "packages"}`）：设置弹窗开着时订、关了退订；
-//! 回应就是整份列表，之后 `package.changed` 整项换（MCP 服务起了、停了也推，核心 X-4），掉了队（`resync`）重订。个人设置里写的
+//! 回应就是整份列表，之后 `package.changed` 整项换（MCP 服务起了、停了也推，核心 X-4），掉了队（`resync`）重订。配置里自己写的
 //! MCP 服务（核心 F-9 补）订上以后读一次 `mcp.list`，之后跟 `mcp.changed`。换了在「软件包」「MCP」页的重画（正在改一项的不打断）。
 
 import { applyPackageChange, applyServerChange } from './model.js';
@@ -31,7 +31,7 @@ export class PackageFeed {
     await this.readHome();
   }
 
-  /** 个人设置里的 MCP 服务：旧核心没有这个方法的是 `null`（不出「MCP」页）。 */
+  /** 自己写的 MCP 服务：旧核心没有这个方法的是 `null`（不出「MCP」页）。 */
   async readHome() {
     this.dialog.homeMcp = await this.dialog.ctx.core.request('mcp.list', {}).then((r) => (Array.isArray(r?.servers) ? r.servers : null), () => null);
   }

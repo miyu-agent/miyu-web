@@ -6,7 +6,7 @@
 //! 左上角箭头返回；2026-10-10 项目主人）：版本和状态、启用、它加的功能、权限（扩展的「运行」「权限」两行，`extensions.js`）、
 //! 设置项（`config.schema` 里 `package` 是它的）、卸载（管理员自己装的才有）。程序不在的只有状态（界面包核心照旧给设置项，照画）。
 //! 带 MCP 服务的（扩展包、`bundle`，核心 X-4）多一组「MCP 服务」：一个服务一行写现在怎样（`mcp-servers.js`），组头「重启」（`package.restart`）；
-//! 个人设置里写的服务（F-9 补）2026-10-20 起在「MCP」页（`tool-pages.js`）。
+//! 配置里自己写的服务（F-9 补）2026-10-20 起在「MCP」页（`tool-pages.js`）。
 
 import { confirmIn } from './confirm.js';
 import { h, icon, replace } from '../../src/lib/dom.js';
@@ -117,7 +117,7 @@ function packageRow(dialog, p, child = false) {
   // 程序不在、依赖缺了的先写这个（核心不拉起，服务自然停着，不另写「服务已停止」）
   const bad = BAD.has(p.status);
   // 包开着、带的 MCP 服务有停下的：写「服务已停止」（核心的状态是好好的也照这个写）
-  // 服务全被个人设置里同名的替代了（F-9 补的 `covered`，`status` 照旧 `off`）：写「被个人设置替代」，不当关着
+  // 服务全被自制的同名服务替代了（F-9 补的 `covered`，`status` 照旧 `off`）：写「被自制的服务替代」，不当关着
   const state = p.covered && !bad ? h('span.set-pkg-status', t('pkg.covered'))
     : mcpStopped(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_stopped'))
     : mcpNeedsLogin(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_login'))
@@ -189,7 +189,7 @@ function groupPage(dialog, id) {
   return [card, shown.length ? h('section.set-group', h('div.set-rows', shown.map((/** @type {any} */ p) => packageRow(dialog, p, true)))) : null].filter(Boolean);
 }
 
-/** 个人设置里把包 `id` 对自己关掉的那一项（核心 U23 末上：`config.schema` 给每个能关的包现拼一项）；核心没给的是 `null`。 @param {any} dialog @param {string} id */
+/** 配置里把包 `id` 对自己关掉的那一项（核心 U23 末上：`config.schema` 给每个能关的包现拼一项）；核心没给的是 `null`。 @param {any} dialog @param {string} id */
 /**
  * 一个包右边的开关（列表那一行、信息页卡片同一个）：总闸（`model.js` 的 `pkgSwitch`），扩展照 `e`，别的照 `enabled`。
  * @param {any} dialog @param {any} p @param {any} e 扩展的状态（不是扩展的是 `null`）
@@ -421,7 +421,7 @@ function mcpGroup(dialog, p) {
   if (!list.length) return null;
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const on = p.enabled !== false;
-  // 都被个人设置里同名的替代了的不给「重启」：重启的是这个包的服务，它们不起
+  // 都被自制的同名服务替代了的不给「重启」：重启的是这个包的服务，它们不起
   const restart = on && !list.every((s) => s.covered) ? h('button.set-btn.is-small', { type: 'button', onclick: async () => {
     try {
       const got = await dialog.ctx.core.request('package.restart', { package: p.package });

@@ -20,7 +20,7 @@ test('先后：置顶的在最前，别的照最近活动从近到远；不知�
 });
 
 test('打开页面时进哪个会话：ui.startup 是 recent 的进最近的那个，new、读不出来的（核心旧、没有这一项）是新会话', () => {
-  const recent = { items: { 'ui.startup': { value: 'recent', origin: { layer: 'personal' } } } };
+  const recent = { items: { 'ui.startup': { value: 'recent', origin: { layer: 'system' } } } };
   assert.equal(startupSession(recent, ['b', 'a']), 'b');
   assert.equal(startupSession(recent, []), null, '一个会话都没有的是新会话');
   assert.equal(startupSession({ items: { 'ui.startup': { value: 'new' } } }, ['b']), null);

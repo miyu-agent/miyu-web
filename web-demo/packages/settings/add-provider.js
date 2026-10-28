@@ -10,10 +10,10 @@ import { leave } from '../../src/lib/motion.js';
 import { ProviderFlow } from './onboard/flow.js';
 
 /**
- * 开始添加：开浮窗，先画选一家；`copy` 是共用那一格的「另配一份自用的」，直接开那一家的一屏。
- * @param {any} dialog @param {{copy?: string}} [opts]
+ * 开始添加：开浮窗，先画选一家。
+ * @param {any} dialog
  */
-export function openAdd(dialog, opts = {}) {
+export function openAdd(dialog) {
   dialog.panel.querySelector('.set-add-modal')?.remove();
   dialog.modelDetail = null;
   dialog.providerForm = null;
@@ -40,8 +40,8 @@ export function openAdd(dialog, opts = {}) {
     ready: () => node?.dispatchEvent(new CustomEvent('ob-ready')),
     done: (got) => {
       close();
-      // 写在哪一层就选哪一块：管理员模式里加的在系统配置（「共用」），平时的、另配的自用那份在「自用」；模型列表读回来以后才选得上（`providers.js`）
-      dialog.wantProvider = { id: got.id, side: got.side ?? 'mine' };
+      // 模型列表读回来以后才选得上（`providers.js`）
+      dialog.wantProvider = { id: got.id };
       Promise.resolve(dialog.modelsPromise).then(() => dialog.drawBody());
     },
     manual: () => {
@@ -52,8 +52,7 @@ export function openAdd(dialog, opts = {}) {
   }, 'settings');
   replace(pop, h('p.set-empty', dialog.ctx.text('loading')));
   dialog.panel.append(modal);
-  if (opts.copy) flow.startCopy(opts.copy);
-  else flow.start();
+  flow.start();
 }
 
 /**

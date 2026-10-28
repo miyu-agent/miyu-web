@@ -5,18 +5,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildPages, listElement, duplicates, layerFor, expectFor, writtenIn, envRef, inputText, search, pagesWithErrors, splitKey, templateOf, realKey, itemFor, shortCount, comboState, COMBO_OTHER } from '../../packages/settings/model.js';
+import { buildPages, listElement, duplicates, LAYER, expectFor, writtenIn, envRef, inputText, search, pagesWithErrors, splitKey, templateOf, realKey, itemFor, shortCount, comboState, COMBO_OTHER } from '../../packages/settings/model.js';
 import { problems } from '../../src/kernel/config.js';
 
 const schema = {
   pages: [{ id: 'general', name: '通用' }, { id: 'models', name: '模型' }, { id: 'advanced', name: '高级' }],
   groups: [{ id: 'display', name: '显示', page: 'general' }, { id: 'uses', name: '用途', page: 'models' }, { id: 'providers', name: '供应商', page: 'models' }, { id: 'log', name: '运行日志', page: 'advanced' }],
   items: [
-    { key: 'ui.language', type: 'option', control: 'select', name: '界面语言', description: '给你看的字用哪种话', page: 'general', group: 'display', common: true, layers: ['system', 'personal'], applies: 'now', default: 'auto' },
-    { key: 'models.vision', type: 'reference', control: 'text', name: '看图的模型', description: '', page: 'models', group: 'uses', layers: ['system', 'personal'], applies: 'next_turn' },
-    { key: 'models.chat', type: 'reference', control: 'text', name: '主对话的模型', description: '新会话默认用的模型', page: 'models', group: 'uses', common: true, layers: ['system', 'personal'], applies: 'new_session' },
-    { key: 'providers.<id>.base_url', type: 'url', control: 'text', name: '地址', description: '', page: 'models', group: 'providers', layers: ['system', 'personal'], applies: 'next_turn' },
-    { key: 'providers.<id>.models.<model>.window', type: 'int', control: 'number', name: '窗口', description: '', page: 'models', group: 'providers', layers: ['system', 'personal'], applies: 'next_turn', min: 1, max: 100000000 },
+    { key: 'ui.language', type: 'option', control: 'select', name: '界面语言', description: '给你看的字用哪种话', page: 'general', group: 'display', common: true, layers: ['system'], applies: 'now', default: 'auto' },
+    { key: 'models.vision', type: 'reference', control: 'text', name: '看图的模型', description: '', page: 'models', group: 'uses', layers: ['system'], applies: 'next_turn' },
+    { key: 'models.chat', type: 'reference', control: 'text', name: '主对话的模型', description: '新会话默认用的模型', page: 'models', group: 'uses', common: true, layers: ['system'], applies: 'new_session' },
+    { key: 'providers.<id>.base_url', type: 'url', control: 'text', name: '地址', description: '', page: 'models', group: 'providers', layers: ['system'], applies: 'next_turn' },
+    { key: 'providers.<id>.models.<model>.window', type: 'int', control: 'number', name: '窗口', description: '', page: 'models', group: 'providers', layers: ['system'], applies: 'next_turn', min: 1, max: 100000000 },
     { key: 'log.level', type: 'option', control: 'select', name: '运行日志的级别', description: '', page: 'advanced', group: 'log', layers: ['system'], applies: 'now', default: 'info' },
   ],
 };
@@ -26,10 +26,10 @@ const got = {
     'ui.language': { layers: [{ origin: { layer: 'default' }, used: true, value: 'auto' }], origin: { layer: 'default' }, value: 'auto' },
     'models.chat': {
       layers: [
-        { origin: { file: 'home/admin/settings.toml', layer: 'personal', line: 7 }, used: true, value: 'dev/deepseek-v4.1-flash' },
+        { origin: { file: 'system/settings.toml', layer: 'system', line: 7 }, used: true, value: 'dev/deepseek-v4.1-flash' },
         { origin: { file: 'system/config.toml', layer: 'system', line: 14 }, used: false, value: 'dev/cline-pass/deepseek-v4.1-flash' },
       ],
-      origin: { file: 'home/admin/settings.toml', layer: 'personal', line: 7 },
+      origin: { file: 'system/settings.toml', layer: 'system', line: 7 },
       value: 'dev/deepseek-v4.1-flash',
     },
     'providers.dev.base_url': { layers: [{ origin: { file: 'system/config.toml', layer: 'system', line: 6 }, used: true, value: { env: 'MIYU_DEV_BASE_URL' } }], origin: { file: 'system/config.toml', layer: 'system', line: 6 }, value: { env: 'MIYU_DEV_BASE_URL' } },
@@ -56,17 +56,14 @@ test('合成一页页：照 pages、groups 的先后；组里常用的排前面�
   assert.deepEqual([...pagesWithErrors(pages)], ['advanced']);
 });
 
-test('写在哪一层：能写个人设置的写个人设置，只能写系统配置的写系统配置；expect 照这一层写着的，没写的是 {}', () => {
-  const chat = schema.items[2];
-  const log = schema.items[5];
-  assert.equal(layerFor(chat), 'personal');
-  assert.equal(layerFor(log), 'system');
-  assert.deepEqual(expectFor(got.items['models.chat'], 'personal'), { value: 'dev/deepseek-v4.1-flash' });
-  assert.deepEqual(expectFor(got.items['ui.language'], 'personal'), {});
-  assert.deepEqual(expectFor(null, 'personal'), {});
-  assert.deepEqual(expectFor({ layers: [{ origin: { layer: 'personal' }, used: true, value: 1 }] }, 'personal'), { value: 1 }, '小数项写着整数值的照样带（核心照数值比，8-3 再补）');
-  assert.equal(writtenIn(got.items['models.chat'], 'personal'), true, '写过的能恢复默认');
-  assert.equal(writtenIn(got.items['ui.language'], 'personal'), false);
+test('写在哪一层：只有系统配置一份（核心 SU-3上）；expect 照这一层写着的，没写的是 {}', () => {
+  assert.equal(LAYER, 'system');
+  assert.deepEqual(expectFor(got.items['models.chat'], 'system'), { value: 'dev/deepseek-v4.1-flash' });
+  assert.deepEqual(expectFor(got.items['ui.language'], 'system'), {});
+  assert.deepEqual(expectFor(null, 'system'), {});
+  assert.deepEqual(expectFor({ layers: [{ origin: { layer: 'system' }, used: true, value: 1 }] }, 'system'), { value: 1 }, '小数项写着整数值的照样带（核心照数值比，8-3 再补）');
+  assert.equal(writtenIn(got.items['models.chat'], 'system'), true, '写过的能恢复默认');
+  assert.equal(writtenIn(got.items['ui.language'], 'system'), false);
 });
 
 test('环境变量引用、控件里的字', () => {
@@ -126,7 +123,7 @@ test('别的头的项不列：键名以 hide 里的开头的（tui.），连它�
   const extra = {
     ...schema,
     groups: [...schema.groups, { id: 'tui', name: '终端界面', page: 'general' }],
-    items: [...schema.items, { key: 'tui.startup', type: 'option', control: 'select', name: '启动时打开', description: '', page: 'general', group: 'tui', layers: ['system', 'personal'], applies: 'head_start' }],
+    items: [...schema.items, { key: 'tui.startup', type: 'option', control: 'select', name: '启动时打开', description: '', page: 'general', group: 'tui', layers: ['system'], applies: 'head_start' }],
   };
   const withBad = { items: got.items, problems: [{ key: 'tui.startup', level: 'error', message: '写错了' }, { key: 'tui.gone', code: 'unknown_key', level: 'warning', message: '没有 tui.gone 这一项' }] };
   const shown = buildPages(extra, withBad, { hide: ['tui.'] });
@@ -139,40 +136,40 @@ test('供应商的表：编号的写法、密钥存成的新名字、要发的�
   const { validId, secretName, providerChanges, moveMember, poolRemoval } = await import('../../packages/settings/model.js');
   assert.deepEqual(['dev', 'my-api_2', 'Dev', '2x', '', 'a'.repeat(33)].map(validId), [true, true, false, false, false, false]);
   assert.equal(secretName('dev', 1700000000000), 'dev-loyw3v28');
-  const got = { items: { 'providers.dev.name': { layers: [{ origin: { layer: 'personal' }, used: true, value: '开发' }], value: '开发' } } };
-  const edit = providerChanges('dev', { name: '', base_url: 'https://x/v1', driver: 'openai-chat', key: { kind: 'keep', value: '' } }, got, 'personal', null);
+  const got = { items: { 'providers.dev.name': { layers: [{ origin: { layer: 'system' }, used: true, value: '开发' }], value: '开发' } } };
+  const edit = providerChanges('dev', { name: '', base_url: 'https://x/v1', driver: 'openai-chat', key: { kind: 'keep', value: '' } }, got, 'system', null);
   assert.deepEqual(edit, [
     { key: 'providers.dev.name', unset: true, expect: { value: '开发' } },
     { key: 'providers.dev.base_url', input: 'https://x/v1', expect: {} },
     { key: 'providers.dev.driver', value: 'openai-chat', expect: {} },
   ]);
-  const fresh = providerChanges('new-one', { name: '', base_url: '', driver: 'anthropic', key: { kind: 'secret', value: 'sk-…' } }, { items: {} }, 'personal', 'new-one-x');
+  const fresh = providerChanges('new-one', { name: '', base_url: '', driver: 'anthropic', key: { kind: 'secret', value: 'sk-…' } }, { items: {} }, 'system', 'new-one-x');
   assert.deepEqual(fresh.map((c) => c.key), ['providers.new-one.driver', 'providers.new-one.key'], '新建的空着的不写');
   assert.deepEqual(fresh[1].value, { secret: 'new-one-x' }, '明文不进配置，只写密钥的名字；一家一个 key（核心 8-25）');
-  const env = providerChanges('dev', { name: '', base_url: '', driver: '', key: { kind: 'env', value: ' KEY ' } }, { items: {} }, 'personal', null);
+  const env = providerChanges('dev', { name: '', base_url: '', driver: '', key: { kind: 'env', value: ' KEY ' } }, { items: {} }, 'system', null);
   assert.deepEqual(env, [{ key: 'providers.dev.key', value: { env: 'KEY' }, expect: {} }]);
-  const urlKept = providerChanges('dev', { name: '', base_url: null, driver: '', key: { kind: 'keep', value: '' } }, { items: { 'providers.dev.base_url': { layers: [{ origin: { layer: 'personal' }, used: true, value: { env: 'U' } }] } } }, 'personal', null);
+  const urlKept = providerChanges('dev', { name: '', base_url: null, driver: '', key: { kind: 'keep', value: '' } }, { items: { 'providers.dev.base_url': { layers: [{ origin: { layer: 'system' }, used: true, value: { env: 'U' } }] } } }, 'system', null);
   assert.deepEqual(urlKept, [], '地址是 null（原来是环境变量、框空着）的不动');
   assert.deepEqual(moveMember(['a', 'b', 'c'], 0, 1), ['b', 'a', 'c']);
   assert.deepEqual(moveMember(['a', 'b'], 0, -1), ['a', 'b'], '到头了不动');
   const pools = { items: {
-    'pools.fast.models': { layers: [{ origin: { layer: 'personal' }, used: true, value: [] }] },
-    'pools.fast.strategy': { layers: [{ origin: { layer: 'system' }, used: true, value: 'pin' }] },
-    'pools.faster.models': { layers: [{ origin: { layer: 'personal' }, used: true, value: [] }] },
+    'pools.fast.models': { layers: [{ origin: { layer: 'system' }, used: true, value: [] }] },
+    'pools.fast.strategy': { layers: [{ origin: { layer: 'project' }, used: true, value: 'pin' }] },
+    'pools.faster.models': { layers: [{ origin: { layer: 'system' }, used: true, value: [] }] },
   } };
-  assert.deepEqual(poolRemoval('fast', pools, 'personal'), [{ key: 'pools.fast.models', unset: true, expect: { value: [] } }], '只删这一层写着的，不碰同前缀的别的池');
+  assert.deepEqual(poolRemoval('fast', pools, 'system'), [{ key: 'pools.fast.models', unset: true, expect: { value: [] } }], '只删这一层写着的，不碰同前缀的别的池');
 });
 
 test('删一家供应商：这一层写着的 providers.<id>.* 各一条 unset，不碰同前缀的别家、别的层（2026-10-19）', async () => {
   const { providerRemoval } = await import('../../packages/settings/model.js');
   const at = (layer, value) => ({ layers: [{ origin: { layer }, used: true, value }], value });
   const got = { items: {
-    'providers.dev.base_url': at('personal', 'https://x/v1'), 'providers.dev.key': at('personal', { env: 'K' }),
-    'providers.dev2.base_url': at('personal', 'https://y/v1'), 'providers.sys.base_url': at('system', 'https://z/v1'),
+    'providers.dev.base_url': at('system', 'https://x/v1'), 'providers.dev.key': at('system', { env: 'K' }),
+    'providers.dev2.base_url': at('system', 'https://y/v1'), 'providers.proj.base_url': at('project', 'https://z/v1'),
   } };
-  assert.deepEqual(providerRemoval('dev', got, 'personal').map((c) => c.key), ['providers.dev.base_url', 'providers.dev.key']);
-  assert.ok(providerRemoval('dev', got, 'personal').every((c) => c.unset === true));
-  assert.deepEqual(providerRemoval('sys', got, 'personal'), [], '别的层写的不删');
+  assert.deepEqual(providerRemoval('dev', got, 'system').map((c) => c.key), ['providers.dev.base_url', 'providers.dev.key']);
+  assert.ok(providerRemoval('dev', got, 'system').every((c) => c.unset === true));
+  assert.deepEqual(providerRemoval('proj', got, 'system'), [], '别的层写的不删');
 });
 
 test('找模型：显示名、模型名、供应商名都算，空格分开的几段都要有，不分大小写；空的全给', async () => {
@@ -253,12 +250,12 @@ test('供应商页（2026-10-11 改版）：地址的主机名、只换密钥的
   assert.equal(hostOf('http://192.0.2.10:3425/v1'), '192.0.2.10:3425');
   assert.equal(hostOf({ env: 'MIYU_URL' }), null, '写成环境变量的不写主机名');
   assert.equal(hostOf('不是地址'), null);
-  const got = { items: { 'providers.ds.key': { layers: [{ origin: { layer: 'personal' }, used: true, value: { env: 'A' } }], origin: { layer: 'personal' }, value: { env: 'A' } } } };
-  const [change] = keyChange('ds', { secret: 'ds-1' }, got, 'personal');
+  const got = { items: { 'providers.ds.key': { layers: [{ origin: { layer: 'system' }, used: true, value: { env: 'A' } }], origin: { layer: 'system' }, value: { env: 'A' } } } };
+  const [change] = keyChange('ds', { secret: 'ds-1' }, got, 'system');
   assert.equal(change.key, 'providers.ds.key');
   assert.deepEqual(change.value, { secret: 'ds-1' });
   assert.ok(change.expect, '带着这一层读到的 expect');
-  assert.equal(keyChange('a.b', { env: 'X' }, { items: {} }, 'personal')[0].key, 'providers."a.b".key', '编号里有点的加引号');
+  assert.equal(keyChange('a.b', { env: 'X' }, { items: {} }, 'system')[0].key, 'providers."a.b".key', '编号里有点的加引号');
   const providers = [
     { id: 'a', models: [{ model: 'x', name: 'X', vision: true }, { model: 'x2', name: 'X', vision: false }] },
     { id: 'b', models: [{ model: 'y', name: 'Y', vision: false }] },
@@ -350,92 +347,11 @@ test('列表加的一个元素：int、float 的照数交，读不成数的、�
   assert.equal(listElement(undefined, '123'), '123');
 });
 
-test('成员只写得了个人设置（核心 Y-2下下中中）：personal 的只留能写在个人那一层的项，组、页空了的不列', () => {
-  const pages = buildPages(schema, got, { personal: true });
-  const keys = pages.flatMap((p) => p.groups.flatMap((g) => g.items.map((i) => i.key)));
-  assert.ok(!keys.includes('log.level'), '只能写在系统那一层的不列');
-  assert.ok(keys.every((k) => schema.items.find((i) => i.key === k)?.layers.includes('personal')));
-  const advanced = pages.find((p) => p.id === 'advanced');
-  assert.ok(!advanced || advanced.groups.every((g) => g.id !== 'log'), '整组都是系统那一层的：那一组不列');
-  // 不写的照旧全列
-  assert.ok(buildPages(schema, got).flatMap((p) => p.groups.flatMap((g) => g.items.map((i) => i.key))).includes('log.level'));
-});
-
-test('供应商分两块（2026-10-24 项目主人定）：自用照个人设置里有没有这一家，共用照系统配置里有的、哪一层都没写的；两边都有的两块里各一格', async () => {
-  const { providerLayers, providerSides, sharedOpen } = await import('../../packages/settings/model.js');
-  const at = (layer) => ({ layers: [{ origin: { layer }, used: true, value: 'x' }], origin: { layer }, value: 'x' });
-  const got = { items: {
-    'providers.mine.driver': at('personal'),
-    'providers.team.driver': at('system'),
-    'providers.dual.base_url': at('system'),
-    'providers.dual.key': at('personal'),
-    'providers.dualx.driver': at('personal'),
-  } };
-  assert.deepEqual([...providerLayers('dual', got)].sort(), ['personal', 'system']);
-  assert.deepEqual([...providerLayers('dualx', got)], ['personal'], '前缀撞了的（dual 和 dualx）不算到一起');
-  assert.deepEqual([...providerLayers('builtin', got)], []);
-  const sides = providerSides(['mine', 'team', 'dual', 'builtin'].map((id) => ({ id })), got);
-  assert.deepEqual(sides.mine.map((p) => p.id), ['mine', 'dual']);
-  assert.deepEqual(sides.shared.map((p) => p.id), ['team', 'dual', 'builtin'], '哪一层都没写的（出厂带的）算共用');
-  assert.deepEqual([...sides.both], ['dual']);
-  assert.equal(sharedOpen(3, null), true);
-  assert.equal(sharedOpen(4, null), false, '多于 3 家一开始收着');
-  assert.equal(sharedOpen(9, true), true, '人点过的照点过的');
-  assert.equal(sharedOpen(1, false), false);
-});
-
-test('核心给 layer 的（PL-1）：照 layer 分两块，两份各是一家；改共用那份写原编号；同一家两份不算同名', async () => {
-  const { providerSides, providerRemoval, keyChange, sameNamed, secretName, providerName } = await import('../../packages/settings/model.js');
-  const list = [
-    { id: 'relay', layer: 'personal', name: { value: 'Relay' } },
-    { id: 'relay@system', layer: 'system', name: { value: 'Relay' } },
-    { id: 'zen', layer: 'system', name: { value: 'Zen' } },
-    { id: 'mine', layer: 'personal', name: { value: 'Zen' } },
-  ];
-  const sides = providerSides(list, { items: {} });
-  assert.deepEqual(sides.mine.map((p) => p.id), ['relay', 'mine']);
-  assert.deepEqual(sides.shared.map((p) => p.id), ['relay@system', 'zen']);
-  assert.deepEqual([...sides.both], ['relay']);
-  assert.equal(sides.layered, true);
-  assert.equal(providerSides([{ id: 'a' }], { items: {} }).layered, false, '旧核心照原来的推法');
-  const at = (layer) => ({ layers: [{ origin: { layer }, used: true, value: 'x' }], origin: { layer }, value: 'x' });
-  const got = { items: { 'providers.relay.driver': at('system'), 'providers.relay.key': at('personal') } };
-  assert.deepEqual(providerRemoval('relay@system', got, 'system').map((c) => c.key), ['providers.relay.driver']);
-  assert.equal(keyChange('relay@system', { secret: 's' }, got, 'system')[0].key, 'providers.relay.key');
-  assert.match(secretName('relay@system', 1), /^relay-/);
-  assert.equal(providerName({ id: 'relay@system' }), 'relay', '没有显示名的不露 @system');
-  assert.deepEqual([...sameNamed(list)].sort(), ['mine', 'zen'], '两份同名不算，真同名的照算');
-});
-
 test('模型池的先后（核心 Q-1）：三个固定池排最前、照旗舰、日常、轻量（2026-10-26 项目主人）；人建的照原来的先后在后面', async () => {
   const { poolOrder } = await import('../../packages/settings/model.js');
   const got = poolOrder([{ name: 'duo' }, { name: 'flagship', fixed: true }, { name: 'aaa' }, { name: 'lite', fixed: true }, { name: 'normal', fixed: true }]);
   assert.deepEqual(got.map((p) => p.name), ['flagship', 'normal', 'lite', 'duo', 'aaa']);
   assert.deepEqual(poolOrder([{ name: 'b' }, { name: 'a' }]).map((p) => p.name), ['b', 'a'], '旧核心（没有 fixed）照原样');
-});
-
-test('两块里都有的一家：共用那一格的密钥照系统那一层写的那一格', async () => {
-  const { keyIn } = await import('../../packages/settings/model.js');
-  const got = { items: { 'providers.deepseek.key': { layers: [
-    { origin: { layer: 'personal' }, used: true, value: { secret: 'mine-1' } },
-    { origin: { layer: 'system' }, used: false, value: { secret: 'team-1' } },
-  ] }, 'providers.envy.key': { layers: [{ origin: { layer: 'system' }, used: true, value: { env: 'X_KEY' } }] } } };
-  assert.equal(keyIn('deepseek', got, 'system'), 'secret:team-1');
-  assert.equal(keyIn('deepseek', got, 'personal'), 'secret:mine-1');
-  assert.equal(keyIn('envy', got, 'system'), 'env:X_KEY');
-  assert.equal(keyIn('envy', got, 'personal'), null);
-  assert.equal(keyIn('none', got, 'system'), null);
-});
-
-test('写哪一层：能写个人的写个人、只能写系统的写系统；照哪几层取值', async () => {
-  const { layerOf, valueIn } = await import('../../packages/settings/model.js');
-  assert.equal(layerOf({ layers: ['system', 'personal'] }), 'personal');
-  assert.equal(layerOf({ layers: ['system'] }), 'system');
-  assert.equal(layerOf({ layers: ['personal'] }), 'personal');
-  const entry = { layers: [{ origin: { layer: 'personal' }, value: 'p' }, { origin: { layer: 'system' }, value: 's' }, { origin: { layer: 'default' }, value: 'd' }] };
-  assert.equal(valueIn(entry, ['system', 'default']), 's');
-  assert.equal(valueIn({ layers: [{ origin: { layer: 'default' }, value: 'd' }] }, ['system', 'default']), 'd');
-  assert.equal(valueIn(null, ['system']), undefined);
 });
 
 test('软件包的开关：必需的写「必需」，有总闸那一格的是总闸，没有的没有开关（核心 SU-1 起没有成员自己的开关）', async () => {

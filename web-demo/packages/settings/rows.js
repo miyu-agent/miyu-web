@@ -4,7 +4,7 @@
 //! （`look.js`）共用 `shell`。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { envRef, inputText, listElement, layerFor, layerOf, writtenIn, secretName, referenceOptions, comboState, COMBO_OTHER } from './model.js';
+import { envRef, inputText, listElement, LAYER, writtenIn, secretName, referenceOptions, comboState, COMBO_OTHER } from './model.js';
 
 /**
  * 一组：组名，下面一行行。
@@ -95,7 +95,7 @@ export function coreRow(dialog, item, opts = {}) {
     if (why) row.fail(why);
     else row.done();
   };
-  const written = writtenIn(item.entry, layerOf(item));
+  const written = writtenIn(item.entry, LAYER);
   const made = editor?.options ? control(dialog, { ...item, control: 'select', options: editor.options() }, value, save) : control(dialog, item, value, save, saveSecret);
   row = shell({
     name: item.name,
@@ -139,10 +139,9 @@ function control(dialog, item, value, save, saveSecret) {
   }
   if (item.type === 'secret' && saveSecret) {
     // 密钥：密码框，空着是不改（设了的占位写「已设置」），粘贴了 `Enter`、离开时存
-    // 设了的占位接上是哪一份（「 · 共用」「 · 自用」）
     const kept = value && typeof value === 'object' && !env;
     const field = /** @type {HTMLInputElement} */ (h('input.set-input.is-text', { type: 'password', autocomplete: 'off', spellcheck: 'false',
-      placeholder: kept ? ctx.text('secret_paste_keep') + secretTag(dialog, value?.secret) : ctx.text('secret_paste') }));
+      placeholder: kept ? ctx.text('secret_paste_keep') : ctx.text('secret_paste') }));
     const done = () => {
       const text = field.value.trim();
       field.value = '';
@@ -257,17 +256,6 @@ export function areaField(text, commit) {
     if (area.value !== text) commit(area.value.trim());
   });
   return area;
-}
-
-/**
- * 设了的密钥是哪一份（`secret.list` 每一行的 `layer`，设置页读进来的 `dialog.secretLayers`）：「 · 共用」「 · 自用」，两份里都没有的、
- * 老核心没有这一格的交空字。
- * @param {any} dialog @param {string|null|undefined} ref 密钥的名字，或者 `secret:<名字>`
- */
-export function secretTag(dialog, ref) {
-  const name = typeof ref === 'string' ? ref.replace(/^secret:/, '') : null;
-  const layer = name ? dialog.secretLayers?.get(name) : null;
-  return layer === 'system' || layer === 'personal' ? ` · ${dialog.ctx.text(`secret_scope.${layer}`)}` : '';
 }
 
 /**

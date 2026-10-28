@@ -508,7 +508,7 @@ export class Guide {
    */
   async finish() {
     // 老核心上的成员写不了配置（Y-2下下上）：走没走过只记在这台设备上（`welcome.done`，照账号分开）
-    await this.ctx.core.request('config.set', { layer: 'personal', changes: [{ key: 'ui.welcomed', value: true }] });
+    await this.ctx.core.request('config.set', { layer: 'system', changes: [{ key: 'ui.welcomed', value: true }] });
     this.ctx.storage.set(STEP_KEY, null);
     this.ctx.storage.set(DONE_KEY, true);
     this.ctx.chat.open(null);

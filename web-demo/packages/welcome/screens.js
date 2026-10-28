@@ -75,7 +75,7 @@ const LANGUAGE_KEY = 'profile.preferred_reply_language';
 /**
  * 关于你（第 8 条下面一款；核心 P-9，2026-10-13 项目主人定两部分）：「AI 怎么称呼你」（必填）、「更多描述（可选）」，先填现在写着的；
  * 核心 P-9 补起回复语言一行，排第一（2026-10-17 项目主人定，和设置页「用户」同序）：名字照 `config.schema` 那一项的 `name` 加「（可选）」，
- * 下拉加「其他」手写（设置页的 `combo`），建议值照它的 `suggestions`；旧核心没有这一项的不画这一行。「下一步」和现在的不一样的写个人设置：写了的写，清空了的删掉。新会话生效。
+ * 下拉加「其他」手写（设置页的 `combo`），建议值照它的 `suggestions`；旧核心没有这一项的不画这一行。「下一步」和现在的不一样的写配置：写了的写，清空了的删掉。新会话生效。
  * @param {import('./guide.js').Guide} g
  */
 export function profileScreen(g) {
@@ -134,7 +134,7 @@ export function profileScreen(g) {
           changes.push(value ? { key, value } : { key, unset: true });
         }
         if (changes.length) {
-          await core.request('config.set', { layer: 'personal', changes });
+          await core.request('config.set', { layer: 'system', changes });
           now.name = name.value.trim();
           now.about = about.value.trim();
           now.language = (language ?? '').trim();
@@ -146,7 +146,7 @@ export function profileScreen(g) {
   };
 }
 
-/** 内置语义模型那一项（个人设置）：`local` 开、`off` 只用关键词 */
+/** 内置语义模型那一项（配置）：`local` 开、`off` 只用关键词 */
 export const EMBED_KEY = 'models.embedding';
 
 /**
@@ -191,7 +191,7 @@ export function installWhy(err) {
 
 /**
  * 内置语义模型（第 9 条下面最后一款；2026-10-18 项目主人要的，下载那一半照核心 G-8）：`guide.js` 照 `embedState` 决定出不出这一屏。两行「是」
- * 「否」。装了的：先选中现在的（写着 `off` 的是否，别的、没写的是是：核心不写就是 `local`），「下一步」和现在的不一样的写个人设置。没装的：
+ * 「否」。装了的：先选中现在的（写着 `off` 的是否，别的、没写的是是：核心不写就是 `local`），「下一步」和现在的不一样的写配置。没装的：
  * 「是」暗字「推荐 · 需下载 57 MB」，先选中「是」；选「是」点「下一步」从软件源装，这一块换成进度条（`package.progress`），装好往下走；
  * 装不上的照原话说一句，按钮换成「继续」，再点往下走（以后在软件包页里装）。没装的选「否」什么都不写（设置页那一行照旧说「未安装」）。
  * @param {import('./guide.js').Guide} g
@@ -267,7 +267,7 @@ export function embedScreen(g, state) {
           return null;
         }
         if (chosen !== now) {
-          await core.request('config.set', { layer: 'personal', changes: [{ key: EMBED_KEY, value: chosen }] });
+          await core.request('config.set', { layer: 'system', changes: [{ key: EMBED_KEY, value: chosen }] });
           now = chosen;
         }
         g.go('done', 1);

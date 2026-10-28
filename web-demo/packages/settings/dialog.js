@@ -7,7 +7,7 @@ import { drawMarket, marketPush } from './market.js';
 import { drawAccount } from './account.js';
 import { hasPrivate, privateGroup } from './privacy.js';
 import { leave } from '../../src/lib/motion.js';
-import { buildPages, search, pagesWithErrors, layerOf, expectFor, navGroups, pkgMatch, ownerOf } from './model.js';
+import { buildPages, search, pagesWithErrors, LAYER, expectFor, navGroups, pkgMatch, ownerOf } from './model.js';
 import { coreRow, groupBlock, banner, toggle } from './rows.js';
 import { drawLook } from './look.js';
 import { drawPackages } from './packages.js';
@@ -131,11 +131,6 @@ export class SettingsDialog {
     const cfg = this.ctx.config;
     this.pages = buildPages(schema, got, { merge: cfg.merge, moveGroups: cfg.move_groups, hide: cfg.hide_prefixes });
     this.modelsPromise = this.loadModels();
-    // 设了的密钥是哪一份（`secret.list` 的 `layer`，核心 Y-2下下中中）：「已设置」后面标出来
-    /** @type {Map<string, string|null>} */
-    this.secretLayers = new Map();
-    await core.request('secret.list', {})
-      .then((r) => { this.secretLayers = new Map((r?.secrets ?? []).map((/** @type {any} */ s) => [s.name, s.layer ?? null])); }, () => {});
     // 扩展、软件包的订阅（连 MCP 的列表）
     await Promise.all([this.extensions.start(), this.feed.start()]);
   }
@@ -326,13 +321,13 @@ export class SettingsDialog {
   }
 
   /**
-   * 存一项核心的配置（第 6 条）：写在哪一层照 `layerOf`（管理员模式里能写系统的写系统），带上这一层读到的 `expect`。
+   * 存一项核心的配置（第 6 条）：写在系统配置（`LAYER`，核心 SU-3上起只有这一份），带上这一层读到的 `expect`。
    * @param {import('./model.js').Item} item
    * @param {{value?: any, input?: string, unset?: true}} change
    * @returns {Promise<string|null>} 拒了的原因（给人看的一句）；成了是 `null`
    */
   save(item, change) {
-    const layer = layerOf(item);
+    const layer = LAYER;
     return this.saveMany(layer, [{ key: item.key, ...change, expect: expectFor(item.entry, layer) }]);
   }
 

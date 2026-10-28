@@ -5,73 +5,33 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { hasLogos, logoEl } from '../../src/lib/logo.js';
-import { duplicates, inputText, providerName, hostOf, whereOf, sameNamed, secretName, keyChange, providerRemoval, providerSides, sharedOpen, providerLayer, keyIn } from './model.js';
+import { duplicates, inputText, providerName, hostOf, whereOf, sameNamed, secretName, keyChange, providerRemoval, LAYER } from './model.js';
 import { modelName, metaOf, sharedState, loadingRow, searchable, refreshProvider, testLine } from './model-bits.js';
 import { openForm } from './provider-form.js';
-import { secretTag } from './rows.js';
 import { confirmIn } from './confirm.js';
 import { openAdd } from './add-provider.js';
 import { drawer } from './model-detail.js';
-import { SYSTEM_COPY, baseOf } from '../../src/lib/provider-copy.js';
-
-/** 「共用」那一块开着没有：记在这台设备上（蓝图「设置页」第 14 条「供应商分两块」） */
-const SHARED_OPEN = 'settings.shared_open';
 
 /** @param {any} dialog @param {{providers?: any[]}} list `model.list` */
 export function drawProviders(dialog, list) {
   const ctx = dialog.ctx;
   const all = list.providers ?? [];
-  // 两块（2026-10-24 项目主人定）：自用在上、共用在下，两边都有的两块里各一格
-  const { mine, shared, both, layered } = providerSides(all, dialog.got ?? {});
-  // 记的是原编号、要看共用那一格的（管理员模式里刚存好、两份都有的一家）：共用那一格是 `<编号>@system`（核心 PL-1）
-  const find = (/** @type {string} */ s, /** @type {string} */ id) => (s === 'shared' ? shared : mine).find((x) => x.id === id || (s === 'shared' && x.id === `${id}${SYSTEM_COPY}`));
-  // 刚存好的那一家（`add-provider.js` 记的）：模型列表读回来、它在该在的那一块里了才选中它，之前照旧
+  // 一列（核心 SU-3上：配置只剩一份，没有自用、共用两块）
+  // 刚存好的那一家（`add-provider.js` 记的）：模型列表读回来、它在表里了才选中它，之前照旧
   const want = dialog.wantProvider;
-  const hit = want ? find(want.side, want.id) : null;
-  if (want && hit) {
-    dialog.provider = hit.id;
-    dialog.providerSide = want.side;
+  if (want && all.some((x) => x.id === want.id)) {
+    dialog.provider = want.id;
     dialog.wantProvider = null;
   }
-  const inSide = (/** @type {string} */ s) => find(s, dialog.provider);
-  // 记着的那一格（编号、哪一块）；刚建好、模型列表还没读回来的不在表里时先看第一格，不改记着的
-  let side = dialog.providerSide === 'shared' ? 'shared' : 'mine';
-  let p = inSide(side);
-  if (!p && inSide(side === 'mine' ? 'shared' : 'mine')) {
-    side = side === 'mine' ? 'shared' : 'mine';
-    p = inSide(side);
-  }
-  // 照记着的找到了的记成它的编号（原编号找到的共用那一格换成 `@system` 的）
-  if (p) dialog.provider = p.id;
-  if (!p) {
-    side = mine.length ? 'mine' : 'shared';
-    p = mine[0] ?? shared[0];
-  }
-  dialog.providerSide = side;
+  // 记着的那一家；刚建好、模型列表还没读回来的不在表里时先看第一家，不改记着的
+  const p = all.find((x) => x.id === dialog.provider) ?? all[0];
   const logos = hasLogos(all);
   const same = sameNamed(all);
-  const stored = ctx.storage?.get(SHARED_OPEN, null);
-  const open = sharedOpen(shared.length, typeof stored === 'boolean' ? stored : null);
-  // 两块里都有的一家，「共用」那一格不写用不了的原因：核心合出来的状态是自用那一份的
-  const item = (/** @type {any} */ x, /** @type {string} */ s) => providerItem(dialog, x, s, x.id === p?.id && s === side, logos, same.has(x.id), !layered && s === 'shared' && both.has(x.id));
   const list_ = h('div.set-prov-list',
-    mine.length ? [h('div.set-prov-group', ctx.text('secret_scope.personal')), ...mine.map((x) => item(x, 'mine'))] : null,
-    shared.length ? [
-      h('button.set-prov-group.is-toggle', {
-        type: 'button', 'aria-expanded': String(open),
-        onclick: () => { ctx.storage?.set(SHARED_OPEN, !open); dialog.drawBody(); },
-      }, icon(open ? 'chevron-down' : 'chevron-right'), h('span', open ? ctx.text('secret_scope.system') : ctx.text('models.shared_folded', { count: shared.length }))),
-      ...(open ? shared.map((x) => item(x, 'shared')) : []),
-    ] : null,
+    all.map((x) => providerItem(dialog, x, x.id === p?.id, logos, same.has(x.id))),
     h('button.set-prov.is-add', { type: 'button', onclick: () => openAdd(dialog) }, icon('plus'), h('span', ctx.text('models.add_provider'))));
   if (!p) return h('div.set-prov-wrap', list_);
-  // 两块里都有的一家：「共用」那一格的密钥照系统那一层写的那一格（核心合出来的是自用盖过的那一份）
-  // 核心给 `layer` 的（PL-1）：共用那一格是 `relay@system` 那一份，状态、密钥、模型都是它自己的，不用另找
-  const sharedKey = !layered && side === 'shared' && both.has(p.id) ? keyIn(p.id, dialog.got ?? {}, 'system') : undefined;
-  // 「优先用这一份」只有旧核心写（两份合成一份、自用盖过共用）；PL-1 起两份各用各的，照选的模型引用
-  // 只有主人一个人（核心 SU-1）：「共用」的照样能改（两份到 SU-3 合成一份）
-  const view = { prefer: !layered && side === 'mine' && both.has(p.id), sharedKey, copyable: side === 'shared' && !both.has(baseOf(p.id)) };
-  const main = h('div.set-prov-main', head(dialog, p, logos, view), keyBlock(dialog, p, view), models(dialog, p, view));
+  const main = h('div.set-prov-main', head(dialog, p, logos), keyBlock(dialog, p), models(dialog, p));
   // 详情盖着右边整栏（挂在 `.set-main` 上，滚正文时它不跟着走）
   const detail = dialog.modelDetail ? drawer(dialog, p, (p.models ?? []).find((m) => m.model === dialog.modelDetail)) : null;
   if (detail) {
@@ -87,25 +47,24 @@ export function drawProviders(dialog, list) {
  * 左边一格：图标、名称，下面暗色小字：用不了的原因（warn 色），能用的写地址的主机名；和别家同名的多一行地址从哪来（主机名、
  * `$环境变量`），好分开。
  */
-function providerItem(dialog, x, side, on, logos, same, merged = false) {
+function providerItem(dialog, x, on, logos, same) {
   const ctx = dialog.ctx;
-  const shared = merged ? null : sharedState(x.models ?? []);
+  const shared = sharedState(x.models ?? []);
   const reason = shared ? h('small.is-warn', ctx.text(`models.short_states.${shared}`)) : null;
   const where = same ? whereOf(x.base_url) : reason ? null : hostOf(x.base_url);
   // 两样都有的各占一行（一行放不下，原因会被截掉）
   const sub = [where ? h('small', where) : null, reason];
   return h(`button.set-prov${on ? '.is-on' : ''}`, {
     type: 'button',
-    onclick: () => { dialog.provider = x.id; dialog.providerSide = side; dialog.wantProvider = null; dialog.modelDetail = null; dialog.keyEdit = null; dialog.tested = null; if (dialog.modelQuery) dialog.modelQuery.providers = ''; dialog.drawBody(); },
+    onclick: () => { dialog.provider = x.id; dialog.wantProvider = null; dialog.modelDetail = null; dialog.keyEdit = null; dialog.tested = null; if (dialog.modelQuery) dialog.modelQuery.providers = ''; dialog.drawBody(); },
   }, logos ? logoEl(x.logo ?? null, providerName(x)) : null, h('span.set-prov-text', h('span', providerName(x)), sub));
 }
 
 /**
- * 头上：图标、名称、地址，「测试连接」「编辑」；接口是猜的写一行；测试的结果写在下面；
- * 两块里都有的「自用」那一格名称下面一行「优先用这一份」（核心照自用盖过共用，`prefer`）。
- * @param {any} dialog @param {any} p @param {boolean} logos @param {{prefer?: boolean, copyable?: boolean}} [view]
+ * 头上：图标、名称、地址，「测试连接」「编辑」「删除」；接口是猜的写一行；测试的结果写在下面。
+ * @param {any} dialog @param {any} p @param {boolean} logos
  */
-function head(dialog, p, logos, view = {}) {
+function head(dialog, p, logos) {
   const ctx = dialog.ctx;
   const address = typeof p.base_url === 'object' && p.base_url?.env ? ctx.text('from_env', { name: p.base_url.env }) : inputText(p.base_url);
   // 测的结果记在弹窗上（`dialog.tested`）：测成了会重读这一家的模型、整块重画，结果照它画回来（原来写在这一次画的元素上，重画就没了）
@@ -130,16 +89,13 @@ function head(dialog, p, logos, view = {}) {
     }
     test.disabled = false;
   } }, ctx.text('models.test'));
-  // 只有共用、还没有自用那份的：「另配一份自用的」（蓝图「设置页」第 14 条，2026-10-26 项目主人），成员、管理员平时和管理员模式里都有
-  const copy = view.copyable ? h('button.set-btn', { type: 'button', onclick: () => openAdd(dialog, { copy: baseOf(p.id) }) }, ctx.text('models.copy_mine')) : null;
   const logo = logos ? logoEl(p.logo ?? null, providerName(p)) : null;
   logo?.classList.add('is-big');
   // 别的「用不了」（没有密钥的在密钥那一块说）在头下面写一次
   const shared = sharedState(p.models ?? []);
   return h('div.set-prov-head',
-    h('div.set-prov-title', logo, h('div', h('strong', providerName(p)), h('span', { title: address }, address),
-      view.prefer ? h('small.set-prov-prefer', ctx.text('models.prefer_mine')) : null),
-      h('div.set-prov-buttons', copy, test, h('button.set-btn', { type: 'button', onclick: openForm(dialog, p.id) }, ctx.text('models.edit')), removeButton(dialog, p))),
+    h('div.set-prov-title', logo, h('div', h('strong', providerName(p)), h('span', { title: address }, address)),
+      h('div.set-prov-buttons', test, h('button.set-btn', { type: 'button', onclick: openForm(dialog, p.id) }, ctx.text('models.edit')), removeButton(dialog, p))),
     // 核心推不出接口、先照 openai-chat 用的（`driver_from: default`，核心 8-26）：写明是猜的，猜错了请求会出错
     p.driver_from === 'default' ? h('p.set-prov-note', ctx.text('models.driver_guess_line', { driver: p.driver ?? '' })) : null,
     shared && shared !== 'no_key' ? h('p.set-prov-warn', ctx.text(`models.states.${shared}`)) : null,
@@ -148,13 +104,12 @@ function head(dialog, p, logos, view = {}) {
 
 /**
  * 「删除」（2026-10-19 项目主人：原来少了删除）：弹窗问一句（2026-10-20 项目主人：不要点一下变「确认删除」），默认模型用的是它的问的话里写上；
- * 确认了照写着这一家的那一层把 `providers.<id>.*` 各 `unset`。这一层没写它的（别的层写的、核心自带的）不出这个按钮。
+ * 确认了把系统配置里的 `providers.<id>.*` 各 `unset`。系统配置里没写它的（项目配置写的、核心自带的）不出这个按钮。
  * @param {any} dialog @param {any} p
  */
 function removeButton(dialog, p) {
   const ctx = dialog.ctx;
-  const template = dialog.schema.items.find((/** @type {any} */ i) => i.key === 'providers.<id>.driver');
-  const layer = providerLayer(dialog.providerSide, template);
+  const layer = LAYER;
   const removal = providerRemoval(p.id, dialog.got, layer);
   if (!removal.length) return null;
   const chat = dialog.got?.items?.['models.chat']?.value;
@@ -183,19 +138,14 @@ function removeButton(dialog, p) {
  * 配置里没写密钥的（没有 `key` 这一格：核心照不带认证头用，本机的服务这类）同样一个框能补，不写「不可用」（2026-10-13 验收 W-139）。
  * 存的先后同编辑表：粘贴的先 `secret.set` 存成新名字，再一条 `config.set` 写引用。明文只在框里，存完就扔。
  */
-function keyBlock(dialog, p, view = {}) {
+function keyBlock(dialog, p) {
   const ctx = dialog.ctx;
   const t = (k, f) => ctx.text(`models.${k}`, f);
-  // 照系统那一层写的（两块里都有的「共用」那一格）：设没设照 `secret.list`（环境变量的照合出来的）
-  const key = view.sharedKey !== undefined
-    ? { set: view.sharedKey?.startsWith('secret:') ? dialog.secretLayers?.get(view.sharedKey.slice(7)) != null : !!view.sharedKey && !!p.key?.set, ref: view.sharedKey }
-    : p.key ?? { set: false, ref: null };
+  const key = p.key ?? { set: false, ref: null };
   const unwritten = !p.key;
   const changing = dialog.keyEdit === p.id;
-  // 只读的「共用」那一格：只一行「已设置」（管理员看得到是哪一份；没设的写没有密钥），换不了
   if (key.set && !changing) {
-    // 存在哪一份照 `secret.list`（「已设置 · 共用」「已设置 · 自用」，蓝图「连核心」第 1 条「存密钥存到哪一份」）
-    const state = key.ref?.startsWith('env:') ? ctx.text('from_env', { name: key.ref.slice(4) }) : t('key_saved') + secretTag(dialog, key.ref);
+    const state = key.ref?.startsWith('env:') ? ctx.text('from_env', { name: key.ref.slice(4) }) : t('key_saved');
     return h('div.set-key-line', h('span', t('key')), h('span.set-key-state', state),
       h('button.set-btn.is-small', { type: 'button', onclick: () => { dialog.keyEdit = p.id; dialog.drawBody(); } }, t('key_change')));
   }
@@ -210,8 +160,7 @@ function keyBlock(dialog, p, view = {}) {
     if (!text) return field.focus();
     save.disabled = true;
     error.hidden = true;
-    const template = dialog.schema.items.find((i) => i.key === 'providers.<id>.key') ?? dialog.schema.items.find((i) => i.key === 'providers.<id>.driver');
-    const layer = providerLayer(dialog.providerSide, template);
+    const layer = LAYER;
     let ref;
     if (kind === 'secret') {
       const name = secretName(p.id, Date.now());
@@ -253,7 +202,7 @@ function keyBlock(dialog, p, view = {}) {
 }
 
 /** 模型：一行「模型 N」和搜索框，下面一个一行；点一行滑进详情。 */
-function models(dialog, p, view = {}) {
+function models(dialog, p) {
   const ctx = dialog.ctx;
   const all = p.models ?? [];
   // 还没有模型的一家：请核心去拉一次（这个弹窗里每家一次），拉的时候写「正在读模型列表」

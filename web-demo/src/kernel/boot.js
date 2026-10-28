@@ -84,7 +84,7 @@ export async function boot(root) {
   const storage = ownerStorage(host.store, LEGACY, [.../** @type {any} */ (host).formerAccount ? [/** @type {any} */ (host).formerAccount] : [], 'admin']);
   /** @type {any} */ (host).formerMoved?.();
   // 知道账号了：照个人那一层再定一次界面语言；界面的字、收起那一行的写法有一样变了重装字（重连时的握手照新的写）。
-  // 核心有配置的：个人设置的 `ui.language` 说了算（蓝图「界面语言」第 5 条，规矩 A，和终端界面一样）；旧核心照这台设备上记的
+  // 核心有配置的：配置的 `ui.language` 说了算（蓝图「界面语言」第 5 条，规矩 A，和终端界面一样）；旧核心照这台设备上记的
   let setting = settingOf(res.languages, distro.kernel ?? {}, storage.get(USER_LAYER, {})[KERNEL]?.config ?? {});
   /** 核心有没有配置的接口（`config.get`）：没有的，`/language` 只记在这台设备上 */
   let viaCore = false;
@@ -92,7 +92,7 @@ export async function boot(root) {
     viaCore = true;
     return fromConfig(got);
   }, (err) => {
-    if (err?.code !== NO_METHOD) console.error(`读不到个人设置的界面语言：${err.message}`);
+    if (err?.code !== NO_METHOD) console.error(`读不到配置的界面语言：${err.message}`);
     return null;
   });
   const fromCore = await readCore();
@@ -222,8 +222,6 @@ export async function boot(root) {
         kind: host.kind,
         /** 「账号」那几屏右上角点过的明暗（主题还没起来时记的，`signin.js`）：引导照它换成主题的设置；读一次就拿掉 */
         signinScheme: takeSigninScheme(host.store),
-        /** 核心认 `secret.set` 的 `layer`（握手带 `admin` 的，Y-2下下中 起；核心 SU-1 起握手不带，SU-3 起只有一份）：存密钥能选存到哪一份 */
-        secretLayers: false,
         /** 退出登录（拿设备令牌连的才有）：忘掉设备令牌、重新载入；走桥的是 `null` */
         signOut: host.signOut ?? null,
         /**
@@ -284,8 +282,8 @@ export async function boot(root) {
          * 重不重载。
          */
         set: async (value) => {
-          // 核心有配置的写回个人设置（成了才换；拒了的抛出去，由命令那边提示原因）；旧核心只记在这台设备上
-          if (viaCore) await conn.request('config.set', { layer: 'personal', changes: [{ key: 'ui.language', value }] });
+          // 核心有配置的写回配置（成了才换；拒了的抛出去，由命令那边提示原因）；旧核心只记在这台设备上
+          if (viaCore) await conn.request('config.set', { layer: 'system', changes: [{ key: 'ui.language', value }] });
           return applyLanguage(value);
         },
       });

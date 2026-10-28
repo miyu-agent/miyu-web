@@ -4,9 +4,8 @@
 //! 明文只在框里，存完、取消就扔。
 
 import { h, replace } from '../../src/lib/dom.js';
-import { validId, secretName, providerChanges, layerOf, envRef, inputText, providerLayer } from './model.js';
+import { validId, secretName, providerChanges, envRef, inputText, LAYER } from './model.js';
 import { select } from './rows.js';
-import { baseOf } from '../../src/lib/provider-copy.js';
 
 /**
  * 画这张表。`dialog.providerForm` 是 `{id}`（编辑）或 `{id: null}`（新建）。
@@ -19,17 +18,14 @@ export function providerForm(dialog, providers) {
   const editing = dialog.providerForm.id;
   const p = providers.find((x) => x.id === editing) ?? null;
   const template = (field) => dialog.schema.items.find((i) => i.key === `providers.<id>.${field}`);
-  // 改的是「共用」那一块里的一家：写系统配置；新建的照清单（个人设置）
-  // 新建的：管理员模式里整条写系统配置（进「共用」），平时写个人设置
-  const layer = editing ? providerLayer(dialog.providerSide, template('driver')) : layerOf(template('driver') ?? { layers: ['personal'] });
+  const layer = LAYER;
   const close = () => { dialog.providerForm = null; dialog.drawBody(); };
 
   const input = (attrs) => /** @type {HTMLInputElement} */ (h('input.set-input', { type: 'text', spellcheck: 'false', autocomplete: 'off', ...attrs }));
-  // 共用那份（`relay@system`，核心 PL-1）写原编号的系统配置，编号也只写原编号
-  const idField = editing ? h('strong.set-form-fixed', baseOf(editing)) : input({ placeholder: t('id_hint') });
+  const idField = editing ? h('strong.set-form-fixed', editing) : input({ placeholder: t('id_hint') });
   const nameWritten = p?.name && typeof p.name === 'object' && p.name.from === 'config' ? p.name.value : '';
   // 占位写空着时显示什么：编辑的照现在退到的名字（目录的、编号），新建的是编号
-  const fallback = p && typeof p.name === 'object' && p.name.from !== 'config' ? p.name.value : editing && baseOf(editing);
+  const fallback = p && typeof p.name === 'object' && p.name.from !== 'config' ? p.name.value : editing;
   const nameField = input({ value: nameWritten, placeholder: fallback ? t('name_empty', { name: fallback }) : t('name_empty_new') });
   // 地址是环境变量引用的：框空着就是不改（照写「来自环境变量 X」当占位）
   const urlEnv = envRef(p?.base_url);
@@ -57,7 +53,7 @@ export function providerForm(dialog, providers) {
   const fail = (why) => { error.textContent = why; error.hidden = false; saveButton.disabled = false; };
   const saveButton = h('button.set-btn.is-primary', { type: 'button', onclick: async () => {
     error.hidden = true;
-    const id = editing ? baseOf(editing) : /** @type {HTMLInputElement} */ (idField).value.trim();
+    const id = editing ? editing : /** @type {HTMLInputElement} */ (idField).value.trim();
     if (!editing && !validId(id)) return fail(t('bad_id'));
     if (!editing && providers.some((x) => x.id === id)) return fail(t('taken_id', { id }));
     saveButton.disabled = true;
@@ -86,7 +82,7 @@ export function providerForm(dialog, providers) {
     dialog.drawBody();
   } }, t('save'));
   const el = h('section.set-form',
-    h('h3.set-form-title', editing ? t('edit_title', { name: (typeof p?.name === 'object' ? p.name.value : p?.name) || baseOf(editing) }) : t('new_title')),
+    h('h3.set-form-title', editing ? t('edit_title', { name: (typeof p?.name === 'object' ? p.name.value : p?.name) || editing }) : t('new_title')),
     row(t('id'), idField),
     row(t('name'), nameField),
     row(t('url'), urlField),

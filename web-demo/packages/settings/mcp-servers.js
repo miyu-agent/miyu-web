@@ -1,6 +1,6 @@
 // @ts-check
 //! 包的信息页里「MCP 服务」那一组的一行（蓝图 `web.md`「设置页」第 13 条；核心 X-4、F-9 补）：名字、现在怎样（停下的红字、能展开看输出）；
-//! 被个人设置里同名的替代了的写「被个人设置中的同名服务替代」，不写已停用（`covered`）。个人设置里写的服务 2026-10-20 起在「MCP」页
+//! 被自制的同名服务替代了的写「被自制的同名服务替代」，不写已停用（`covered`）。配置里自己写的服务 2026-10-20 起在「MCP」页
 //! （`tool-pages.js`，第 20 条）。
 
 import { h } from '../../src/lib/dom.js';
@@ -9,9 +9,9 @@ import { loginState, loginText, loginButton, loginErrorNode } from './mcp-login.
 
 /**
  * 一个服务一行（连展开的输出）。
- * @param {any} dialog @param {string} key 记着展开了哪个的键（包编号/服务名，个人设置里的 `~home/服务名`）
+ * @param {any} dialog @param {string} key 记着展开了哪个的键（包编号/服务名，自己写的 `~home/服务名`）
  * @param {any} s 服务那一格（X-4：`name`、`state`、`failures`、`retry_in`、`reason`、`stderr`；F-9 补的 `covered`）
- * @param {{on: boolean, action?: Node|null}} opts `on` 这个服务所在的包开着（个人设置里的总是开着）；`action` 右边的按钮
+ * @param {{on: boolean, action?: Node|null}} opts `on` 这个服务所在的包开着（自己写的总是开着）；`action` 右边的按钮
  */
 export function serverRow(dialog, key, s, opts) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);

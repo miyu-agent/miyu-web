@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { menuOf, filterRows, footerOf, footerLabel, shownRef, effortLevels, effortRows, effortLabel, effortOf, effortChange, defaultModelChange } from '../src/model/model-menu.js';
+import { menuOf, filterRows, footerOf, footerLabel, effortLevels, effortRows, effortLabel, effortOf, effortChange, defaultModelChange } from '../src/model/model-menu.js';
 
 loadRes();
 
@@ -74,10 +74,10 @@ test('思考强度的子菜单：默认一直有，别的只列这个模型有�
   assert.equal(effortLabel(null), '默认');
 });
 
-test('现在那一档照 model.list 的 facts.effort：个人设置里写了的（来源是配置的 personal 那一层）照写；系统配置的、没写的就是默认；键名照抄核心给的', () => {
+test('现在那一档照 model.list 的 facts.effort：配置里写了的（来源是配置的 system 那一层，核心 SU-3上）照写；项目配置的、没写的就是默认；键名照抄核心给的', () => {
   const list = { providers: [{ id: 'dev', models: [
-    model('dev', 'mine', { facts: { effort: { value: 'high', from: 'config', layer: 'personal', file: 'home/admin/settings.toml', line: 4, key: 'providers.dev.models.mine.effort' } } }),
-    model('dev', 'sys', { facts: { effort: { value: 'low', from: 'config', layer: 'system', file: 'system/config.toml', line: 9, key: 'providers.dev.models.sys.effort' } } }),
+    model('dev', 'mine', { facts: { effort: { value: 'high', from: 'config', layer: 'system', file: 'system/settings.toml', line: 4, key: 'providers.dev.models.mine.effort' } } }),
+    model('dev', 'sys', { facts: { effort: { value: 'low', from: 'config', layer: 'project', file: '.miyu/settings.toml', line: 9, key: 'providers.dev.models.sys.effort' } } }),
     model('dev', 'none', { facts: { effort: { value: null, from: 'default', key: 'providers.dev.models."v4.1".effort' } } }),
     model('dev', 'old'),
   ] }] };
@@ -89,11 +89,11 @@ test('现在那一档照 model.list 的 facts.effort：个人设置里写了的�
   assert.deepEqual(effortOf(null, 'dev/mine'), { level: null, key: null });
 });
 
-test('选了一档写进个人设置（config.set）；选默认的删掉个人这一项', () => {
+test('选了一档写进配置（config.set，系统那一层）；选默认的删掉这一项', () => {
   assert.deepEqual(effortChange('providers.dev.models.mine.effort', 'off'),
-    { layer: 'personal', changes: [{ key: 'providers.dev.models.mine.effort', value: 'off' }] });
+    { layer: 'system', changes: [{ key: 'providers.dev.models.mine.effort', value: 'off' }] });
   assert.deepEqual(effortChange('providers.dev.models.mine.effort', null),
-    { layer: 'personal', changes: [{ key: 'providers.dev.models.mine.effort', unset: true }] });
+    { layer: 'system', changes: [{ key: 'providers.dev.models.mine.effort', unset: true }] });
 });
 
 test('开发端点那个 DeepSeek 的档位（off、low、high、max）；目录里叫 default 的那一档照原样写', () => {
@@ -102,9 +102,9 @@ test('开发端点那个 DeepSeek 的档位（off、low、high、max）；目录
     [[null, '默认', false], ['low', '低', false], ['default', 'default', true]]);
 });
 
-test('手动选的模型记成新会话的默认（2026-10-02 项目主人定）：写个人设置的 models.chat，模型、池照原样', () => {
-  assert.deepEqual(defaultModelChange('dev/deepseek-v4-pro'), { layer: 'personal', changes: [{ key: 'models.chat', value: 'dev/deepseek-v4-pro' }] });
-  assert.deepEqual(defaultModelChange('@duo'), { layer: 'personal', changes: [{ key: 'models.chat', value: '@duo' }] });
+test('手动选的模型记成新会话的默认（2026-10-02 项目主人定）：写 models.chat（系统那一层），模型、池照原样', () => {
+  assert.deepEqual(defaultModelChange('dev/deepseek-v4-pro'), { layer: 'system', changes: [{ key: 'models.chat', value: 'dev/deepseek-v4-pro' }] });
+  assert.deepEqual(defaultModelChange('@duo'), { layer: 'system', changes: [{ key: 'models.chat', value: '@duo' }] });
 });
 
 test('模型那一行写显示名（目录给的），下面写供应商的显示名；显示名重了的下面接模型名；搜索照显示名、模型名、供应商找', () => {
@@ -137,31 +137,6 @@ test('框下面那一截写显示名和供应商的显示名（重名的也写�
   assert.deepEqual(footerLabel({ model: 'gone', endpoint: 'magpie' }, list), { model: 'gone', endpoint: 'Magpie', full: 'magpie/gone' }, '列表里找不到这个模型');
   assert.deepEqual(footerLabel({ model: '@duo', endpoint: null }, list), { model: '@duo', endpoint: null });
   assert.deepEqual(footerLabel({ model: 'x', endpoint: 'nope' }, null), { model: 'x', endpoint: 'nope' }, '还没有列表');
-});
-
-test('同一家自用、共用两份（核心 PL-1）：两组挨着，供应商后面接「自用」「共用」，同一个模型不算重名；选了照 ref 发回；只有一份的不标', () => {
-  const named = (provider, name, display) => ({ model: name, ref: `${provider}/${name}`, facts: { name: { value: display } }, state: 'ok' });
-  const list = { providers: [
-    { id: 'relay', layer: 'personal', name: { value: 'Relay' }, models: [named('relay', 'm-1', 'M One')] },
-    { id: 'relay@system', layer: 'system', name: { value: 'Relay' }, models: [named('relay@system', 'm-1', 'M One')] },
-    { id: 'zen', layer: 'system', name: { value: 'Zen' }, models: [named('zen', 'big', 'Big')] },
-  ], pools: [] };
-  const { models } = menuOf(list, 'relay@system/m-1');
-  assert.deepEqual(models.map((r) => [r.ref, r.title, r.desc, r.current]), [
-    ['relay/m-1', 'M One', 'Relay · 自用', false],
-    ['relay@system/m-1', 'M One', 'Relay · 共用', true],
-    ['zen/big', 'Big', 'Zen', false],
-  ]);
-  assert.deepEqual(footerLabel({ model: 'm-1', endpoint: 'relay@system' }, list), { model: 'M One', endpoint: 'Relay · 共用', full: 'relay/m-1 · 共用' });
-  assert.deepEqual(footerLabel({ model: 'm-1', endpoint: 'relay' }, list), { model: 'M One', endpoint: 'Relay', full: 'relay/m-1' }, '框下面自己那份不接「自用」（2026-10-27 项目主人）');
-  assert.deepEqual(footerLabel({ model: 'big', endpoint: 'zen' }, list).endpoint, 'Zen', '只有一份的不标');
-  assert.deepEqual(footerLabel({ model: 'm-1', endpoint: 'relay@system' }, null), { model: 'm-1', endpoint: 'relay · 共用', full: 'relay/m-1 · 共用' }, '还没有列表也不露 @system');
-  assert.equal(shownRef('relay@system/m-1'), 'relay/m-1 · 共用', '时间线上那一行也不露 @system');
-  assert.equal(shownRef('relay/m-1'), 'relay/m-1');
-  assert.equal(shownRef('@duo'), '@duo');
-  // 成员只有共用那一份（只有系统配置写了）：编号照原样、不标
-  const member = { providers: [{ id: 'relay', layer: 'system', name: { value: 'Relay' }, models: [named('relay', 'm-1', 'M One')] }], pools: [] };
-  assert.deepEqual(menuOf(member, null).models.map((r) => r.desc), ['Relay']);
 });
 
 test('模型池那一页：三个固定池（核心 Q-1）排最前、照旗舰、日常、轻量，上面写显示名、下面暗字接 @flagship；空的暗着选不了（2026-10-26 项目主人）', () => {

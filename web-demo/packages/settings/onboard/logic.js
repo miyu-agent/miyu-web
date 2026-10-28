@@ -126,9 +126,7 @@ export function mineRows(providers, shown) {
  * @typedef {{kind: 'configured', id: string, driver?: string|null, base_url?: string|null}
  *   | {kind: 'catalog', catalog: string, env: string|null}
  *   | {kind: 'local', catalog: string}
- *   | {kind: 'custom', driver: string, base_url: string, id?: string, name?: string|null}
- *   | {kind: 'copy', id: string, driver: string, base_url: string, from: {driver: string|null, base_url: string|null}}} Target 要接的那一家：配好了的、目录里的、本机的服务、自定义的（`id` 人起的编号，空着照主机名起；`name` 显示名称，空着照 ID）、
- *   只有共用的一家另配一份自用的（`from` 是共用那份的接口、地址）
+ *   | {kind: 'custom', driver: string, base_url: string, id?: string, name?: string|null}} Target 要接的那一家：配好了的、目录里的、本机的服务、自定义的（`id` 人起的编号，空着照主机名起；`name` 显示名称，空着照 ID）
  * @typedef {{value: string}|{env: string}|null} Key 这一次用的密钥：贴的、环境变量、不要
  */
 
@@ -140,8 +138,6 @@ export function testParams(target, key, model) {
   /** @type {Record<string, any>} */
   const params = {};
   // 配好了的一家「重新设置」贴了新的密钥：照它的接口、地址当候选测（`provider` 只认配置里那一份密钥）
-  // 另配一份自用的：照填的接口、地址、密钥当候选测
-  if (target.kind === 'copy') return { candidate: { driver: target.driver, base_url: target.base_url, ...(key ? { key } : {}) }, ...(model ? { model } : {}) };
   if (target.kind === 'configured' && !(key && target.driver && target.base_url)) params.provider = target.id;
   else if (target.kind === 'configured') params.candidate = { driver: target.driver, base_url: target.base_url, key };
   else {
@@ -168,13 +164,7 @@ export function setupChanges(target, key, opts) {
   /** @type {{key: string, value?: any, input?: string}[]} */
   const changes = [];
   let id;
-  if (target.kind === 'copy') {
-    // 另配一份自用的：同一个编号写密钥；地址、接口改了的才写（没改的照共用那份）
-    id = target.id;
-    if (key) changes.push({ key: `providers.${id}.key`, value: key });
-    if (target.base_url !== (target.from.base_url ?? '').replace(/\/+$/, '')) changes.push({ key: `providers.${id}.base_url`, input: target.base_url });
-    if (target.driver !== target.from.driver) changes.push({ key: `providers.${id}.driver`, value: target.driver });
-  } else if (target.kind === 'configured') {
+  if (target.kind === 'configured') {
     id = target.id;
     // 「重新设置」贴了新的密钥：照同一个编号写新的 `key`
     if (key) changes.push({ key: `providers.${id}.key`, value: key });
