@@ -60,10 +60,7 @@
     "new_session_nav": "新建会话",
     "cancel": "取消",
     "project_delete_ask": "确认删除项目「{name}」？",
-    "project_delete_yes": "确认删除",
-    "account_menu": "切换账号",
-    "add_account": "添加账号",
-    "manage_accounts": "账号管理"
+    "project_delete_yes": "确认删除"
   },
   "crumbs": {
     "label": "子代理会话路径",
@@ -508,7 +505,6 @@
   },
   "model_menu": {
     "fixed_pools": { "flagship": "旗舰", "normal": "日常", "lite": "轻量" },
-    "member": "模型由管理员设置",
     "tip": "换模型",
     "models": "模型",
     "pools": "模型池",

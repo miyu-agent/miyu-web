@@ -60,10 +60,7 @@
     "new_session_nav": "新しいセッション",
     "cancel": "キャンセル",
     "project_delete_ask": "プロジェクト「{name}」を削除しますか？",
-    "project_delete_yes": "削除する",
-    "account_menu": "アカウントを切り替え",
-    "add_account": "アカウントを追加",
-    "manage_accounts": "アカウント管理"
+    "project_delete_yes": "削除する"
   },
   "crumbs": {
     "label": "サブエージェントのセッションの位置",
@@ -508,7 +505,6 @@
   },
   "model_menu": {
     "fixed_pools": { "flagship": "フラッグシップ", "normal": "日常", "lite": "ライト" },
-    "member": "モデルは管理者が設定します",
     "tip": "モデルを変更",
     "models": "モデル",
     "pools": "モデルプール",

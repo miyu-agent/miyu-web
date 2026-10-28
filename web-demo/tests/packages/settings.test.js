@@ -432,16 +432,11 @@ test('两块里都有的一家：共用那一格的密钥照系统那一层写�
   assert.equal(keyIn('none', got, 'system'), null);
 });
 
-test('管理员模式里写哪一层（蓝图「管理员模式」第 5 条）：能写系统的写系统；平时能写个人的写个人、只能写系统的写系统；照哪几层取值', async () => {
+test('写哪一层：能写个人的写个人、只能写系统的写系统；照哪几层取值', async () => {
   const { layerOf, valueIn } = await import('../../packages/settings/model.js');
-  const both = { layers: ['system', 'personal'] };
-  const sys = { layers: ['system'] };
-  const mine = { layers: ['personal'] };
-  assert.equal(layerOf(both, false), 'personal');
-  assert.equal(layerOf(both, true), 'system', '改的是大家的默认');
-  assert.equal(layerOf(sys, false), 'system', '平时锁着，真要写也是系统那一层');
-  assert.equal(layerOf(sys, true), 'system');
-  assert.equal(layerOf(mine, true), 'personal', '只能写个人的照旧');
+  assert.equal(layerOf({ layers: ['system', 'personal'] }), 'personal');
+  assert.equal(layerOf({ layers: ['system'] }), 'system');
+  assert.equal(layerOf({ layers: ['personal'] }), 'personal');
   const entry = { layers: [{ origin: { layer: 'personal' }, value: 'p' }, { origin: { layer: 'system' }, value: 's' }, { origin: { layer: 'default' }, value: 'd' }] };
   assert.equal(valueIn(entry, ['system', 'default']), 's');
   assert.equal(valueIn({ layers: [{ origin: { layer: 'default' }, value: 'd' }] }, ['system', 'default']), 'd');

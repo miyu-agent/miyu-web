@@ -58,8 +58,6 @@
 /* 管理员模式（蓝图「管理员模式」第 2、4 条）：页名旁边一颗淡橙色小标签；左栏最下面一行开关；锁着的地方一行暗字，管理员隔开一点后面「进入管理员模式」；
    齿轮右上角一个橙色小点。页名不撑满，关闭按钮靠右 */
 .set-head .set-close { margin-left: auto; }
-.set-locked { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(16px * var(--space)); margin: calc(4px * var(--space)) 0; color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
-.set-source .set-locked { display: inline-flex; margin: 0; }
 .set-toast.is-action { display: flex; align-items: baseline; gap: calc(10px * var(--space)); }
 .set-gear { position: relative; }
 .set-gear-dot { position: absolute; top: 4px; right: 4px; display: none; width: 7px; height: 7px; border-radius: var(--r-round); background: var(--t-warn); box-shadow: 0 0 0 2px var(--side-bg, var(--sidebar-bg)); pointer-events: none; }

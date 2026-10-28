@@ -60,10 +60,7 @@
     "new_session_nav": "New session",
     "cancel": "Cancel",
     "project_delete_ask": "Delete project “{name}”?",
-    "project_delete_yes": "Delete",
-    "account_menu": "Switch account",
-    "add_account": "Add account",
-    "manage_accounts": "Manage accounts"
+    "project_delete_yes": "Delete"
   },
   "crumbs": {
     "label": "Subagent session path",
@@ -508,7 +505,6 @@
   },
   "model_menu": {
     "fixed_pools": { "flagship": "Flagship", "normal": "Everyday", "lite": "Lite" },
-    "member": "Models are set by the administrator",
     "tip": "Switch model",
     "models": "Models",
     "pools": "Model pools",

@@ -6286,12 +6286,6 @@
       ".set-prov-prefer"
     ]
   },
-  "settings.locked": {
-    "zh": "设置：锁着的地方那一行「仅管理员可以修改」（管理员后面隔开一个「进入管理员模式」）",
-    "select": [
-      ".set-locked"
-    ]
-  },
   "settings.pool-ref": {
     "zh": "设置：固定池卡片头上显示名后面暗字的 @flagship",
     "select": [
