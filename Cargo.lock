@@ -883,7 +883,7 @@ dependencies = [
 [[package]]
 name = "miyu-assemble"
 version = "0.0.0"
-source = "git+https://github.com/miyu-agent/miyu?rev=880ce2cb1b967f2ca81822ff6fce1d73165375bc#880ce2cb1b967f2ca81822ff6fce1d73165375bc"
+source = "git+https://github.com/miyu-agent/miyu?rev=12add1469dc1a033f13da194a158384983e9566f#12add1469dc1a033f13da194a158384983e9566f"
 dependencies = [
  "miyu-kernel",
 ]
@@ -891,7 +891,7 @@ dependencies = [
 [[package]]
 name = "miyu-client"
 version = "0.0.0"
-source = "git+https://github.com/miyu-agent/miyu?rev=880ce2cb1b967f2ca81822ff6fce1d73165375bc#880ce2cb1b967f2ca81822ff6fce1d73165375bc"
+source = "git+https://github.com/miyu-agent/miyu?rev=12add1469dc1a033f13da194a158384983e9566f#12add1469dc1a033f13da194a158384983e9566f"
 dependencies = [
  "miyu-config",
  "miyu-heap",
@@ -907,7 +907,7 @@ dependencies = [
 [[package]]
 name = "miyu-config"
 version = "0.0.0"
-source = "git+https://github.com/miyu-agent/miyu?rev=880ce2cb1b967f2ca81822ff6fce1d73165375bc#880ce2cb1b967f2ca81822ff6fce1d73165375bc"
+source = "git+https://github.com/miyu-agent/miyu?rev=12add1469dc1a033f13da194a158384983e9566f#12add1469dc1a033f13da194a158384983e9566f"
 dependencies = [
  "serde",
  "serde_json",
@@ -918,7 +918,7 @@ dependencies = [
 [[package]]
 name = "miyu-drivers"
 version = "0.0.0"
-source = "git+https://github.com/miyu-agent/miyu?rev=880ce2cb1b967f2ca81822ff6fce1d73165375bc#880ce2cb1b967f2ca81822ff6fce1d73165375bc"
+source = "git+https://github.com/miyu-agent/miyu?rev=12add1469dc1a033f13da194a158384983e9566f#12add1469dc1a033f13da194a158384983e9566f"
 dependencies = [
  "miyu-kernel",
  "serde",
@@ -928,7 +928,7 @@ dependencies = [
 [[package]]
 name = "miyu-fs"
 version = "0.0.0"
-source = "git+https://github.com/miyu-agent/miyu?rev=880ce2cb1b967f2ca81822ff6fce1d73165375bc#880ce2cb1b967f2ca81822ff6fce1d73165375bc"
+source = "git+https://github.com/miyu-agent/miyu?rev=12add1469dc1a033f13da194a158384983e9566f#12add1469dc1a033f13da194a158384983e9566f"
 dependencies = [
  "ignore",
  "jiff",
@@ -943,7 +943,7 @@ dependencies = [
 [[package]]
 name = "miyu-heap"
 version = "0.0.0"
-source = "git+https://github.com/miyu-agent/miyu?rev=880ce2cb1b967f2ca81822ff6fce1d73165375bc#880ce2cb1b967f2ca81822ff6fce1d73165375bc"
+source = "git+https://github.com/miyu-agent/miyu?rev=12add1469dc1a033f13da194a158384983e9566f#12add1469dc1a033f13da194a158384983e9566f"
 dependencies = [
  "libc",
 ]
@@ -951,7 +951,7 @@ dependencies = [
 [[package]]
 name = "miyu-ipc"
 version = "0.0.0"
-source = "git+https://github.com/miyu-agent/miyu?rev=880ce2cb1b967f2ca81822ff6fce1d73165375bc#880ce2cb1b967f2ca81822ff6fce1d73165375bc"
+source = "git+https://github.com/miyu-agent/miyu?rev=12add1469dc1a033f13da194a158384983e9566f#12add1469dc1a033f13da194a158384983e9566f"
 dependencies = [
  "getrandom 0.4.3",
  "miyu-pipe",
@@ -966,7 +966,7 @@ dependencies = [
 [[package]]
 name = "miyu-kernel"
 version = "0.0.0"
-source = "git+https://github.com/miyu-agent/miyu?rev=880ce2cb1b967f2ca81822ff6fce1d73165375bc#880ce2cb1b967f2ca81822ff6fce1d73165375bc"
+source = "git+https://github.com/miyu-agent/miyu?rev=12add1469dc1a033f13da194a158384983e9566f#12add1469dc1a033f13da194a158384983e9566f"
 dependencies = [
  "serde",
  "serde_json",
@@ -976,7 +976,7 @@ dependencies = [
 [[package]]
 name = "miyu-log"
 version = "0.0.0"
-source = "git+https://github.com/miyu-agent/miyu?rev=880ce2cb1b967f2ca81822ff6fce1d73165375bc#880ce2cb1b967f2ca81822ff6fce1d73165375bc"
+source = "git+https://github.com/miyu-agent/miyu?rev=12add1469dc1a033f13da194a158384983e9566f#12add1469dc1a033f13da194a158384983e9566f"
 dependencies = [
  "jiff",
  "miyu-config",
@@ -987,7 +987,7 @@ dependencies = [
 [[package]]
 name = "miyu-pipe"
 version = "0.0.0"
-source = "git+https://github.com/miyu-agent/miyu?rev=880ce2cb1b967f2ca81822ff6fce1d73165375bc#880ce2cb1b967f2ca81822ff6fce1d73165375bc"
+source = "git+https://github.com/miyu-agent/miyu?rev=12add1469dc1a033f13da194a158384983e9566f#12add1469dc1a033f13da194a158384983e9566f"
 dependencies = [
  "tokio",
  "windows-sys 0.61.2",
@@ -996,7 +996,7 @@ dependencies = [
 [[package]]
 name = "miyu-policy"
 version = "0.0.0"
-source = "git+https://github.com/miyu-agent/miyu?rev=880ce2cb1b967f2ca81822ff6fce1d73165375bc#880ce2cb1b967f2ca81822ff6fce1d73165375bc"
+source = "git+https://github.com/miyu-agent/miyu?rev=12add1469dc1a033f13da194a158384983e9566f#12add1469dc1a033f13da194a158384983e9566f"
 dependencies = [
  "miyu-assemble",
  "miyu-config",
@@ -1011,7 +1011,7 @@ dependencies = [
 [[package]]
 name = "miyu-recall"
 version = "0.0.0"
-source = "git+https://github.com/miyu-agent/miyu?rev=880ce2cb1b967f2ca81822ff6fce1d73165375bc#880ce2cb1b967f2ca81822ff6fce1d73165375bc"
+source = "git+https://github.com/miyu-agent/miyu?rev=12add1469dc1a033f13da194a158384983e9566f#12add1469dc1a033f13da194a158384983e9566f"
 dependencies = [
  "miyu-kernel",
  "serde",
@@ -1022,7 +1022,7 @@ dependencies = [
 [[package]]
 name = "miyu-seeds"
 version = "0.0.0"
-source = "git+https://github.com/miyu-agent/miyu?rev=880ce2cb1b967f2ca81822ff6fce1d73165375bc#880ce2cb1b967f2ca81822ff6fce1d73165375bc"
+source = "git+https://github.com/miyu-agent/miyu?rev=12add1469dc1a033f13da194a158384983e9566f#12add1469dc1a033f13da194a158384983e9566f"
 dependencies = [
  "image",
  "material-colors",
@@ -1031,7 +1031,7 @@ dependencies = [
 [[package]]
 name = "miyu-store"
 version = "0.0.0"
-source = "git+https://github.com/miyu-agent/miyu?rev=880ce2cb1b967f2ca81822ff6fce1d73165375bc#880ce2cb1b967f2ca81822ff6fce1d73165375bc"
+source = "git+https://github.com/miyu-agent/miyu?rev=12add1469dc1a033f13da194a158384983e9566f#12add1469dc1a033f13da194a158384983e9566f"
 dependencies = [
  "argon2",
  "getrandom 0.4.3",
@@ -1650,6 +1650,7 @@ dependencies = [
  "serde_spanned",
  "toml_datetime",
  "toml_parser",
+ "toml_writer",
  "winnow",
 ]
 
@@ -1661,6 +1662,12 @@ checksum = "baa693a8032d7e1cada7d0041e96126df243179ff061456783ac7f12bda4744c"
 dependencies = [
  "winnow",
 ]
+
+[[package]]
+name = "toml_writer"
+version = "1.1.3+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "06bdbd8cfc056b8d2e2e85f29b56a3bdbecb527cef81eb39e3e7b98af4652770"
 
 [[package]]
 name = "tracing"
