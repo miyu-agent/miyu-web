@@ -521,6 +521,7 @@
       "ask_yes": "确认",
       "ask_no": "取消",
       "tools": {
+        "warnings": "提示",
         "search": {
           "skills": "搜索技能",
           "scripts": "搜索脚本",
@@ -1110,6 +1111,7 @@
       "ask_yes": "Confirm",
       "ask_no": "Cancel",
       "tools": {
+        "warnings": "Warnings",
         "search": {
           "skills": "Search skills",
           "scripts": "Search scripts",
@@ -1699,6 +1701,7 @@
       "ask_yes": "確認",
       "ask_no": "キャンセル",
       "tools": {
+        "warnings": "注意",
         "search": {
           "skills": "スキルを検索",
           "scripts": "スクリプトを検索",

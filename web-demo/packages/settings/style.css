@@ -528,6 +528,9 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .set-tool-head .set-btn { display: inline-flex; flex: none; align-items: center; gap: calc(6px * var(--space)); }
 .set-tool-head .set-btn .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
 .set-tool-id { overflow: hidden; color: var(--text-faint); font: calc(11.5px * var(--text-scale)) var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
+.set-tool-warn { display: inline-flex; flex: none; align-items: center; color: var(--t-warn, var(--gold)); cursor: help; }
+.set-tool-warn .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
+.set-tool-warning { margin: 0; white-space: pre-wrap; }
 .set-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .set-tool-controls { gap: calc(10px * var(--space)); }
 .set-desc .is-error { color: var(--danger); }

@@ -199,3 +199,12 @@ test('没登记的（mcp.list 的 skipped）：工具 {tool, why}（核心 X-37�
     rows: [{ name: '', prompt: false, why: 'name' }, { name: 'p', prompt: true, why: 'name_taken' }],
   });
 });
+
+test('技能写得有小毛病的（核心 PT-2上 warnings）：照 message 写，没有 message 的照 code；没有 warnings、写坏了的是空的', async () => {
+  const { warningsOf } = await import('../../packages/settings/tool-model.js');
+  assert.deepEqual(warningsOf({ warnings: [{ code: 'skill_name_mismatch', message: '名字和文件夹不同名' }, { code: 'skill_metadata' }, { message: '  ' , code: 'skill_yaml_lenient' }, null, 3] }),
+    ['名字和文件夹不同名', 'skill_metadata', 'skill_yaml_lenient']);
+  assert.deepEqual(warningsOf({ name: 'x' }), []);
+  assert.deepEqual(warningsOf({ warnings: 'bad' }), []);
+  assert.deepEqual(warningsOf(null), []);
+});

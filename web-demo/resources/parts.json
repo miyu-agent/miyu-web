@@ -5488,6 +5488,18 @@
       ".set-pinned"
     ]
   },
+  "set.tool-warn": {
+    "zh": "设置「技能」：写得有小毛病的技能名字后面那个警告小图标（悬停看几句）",
+    "select": [
+      ".set-tool-warn"
+    ]
+  },
+  "set.tool-warning": {
+    "zh": "设置「技能」详情：「提示」那一组的一句",
+    "select": [
+      ".set-tool-warning"
+    ]
+  },
   "set.tool-id": {
     "zh": "设置页：tool id",
     "select": [

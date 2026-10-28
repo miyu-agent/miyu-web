@@ -12,7 +12,7 @@ import { openInfo } from './core-packages.js';
 import { openServerForm } from './mcp-form.js';
 import { confirmIn } from './confirm.js';
 import {
-  skillItem, scriptItem, mcpItems, switchValue, featureId, SOURCES, inSource, sourceOf, toolMatch, homeDir, shortTool,
+  skillItem, scriptItem, mcpItems, warningsOf, switchValue, featureId, SOURCES, inSource, sourceOf, toolMatch, homeDir, shortTool,
   editable, commandLine, flip, range, maskedValue, maskedPairs, skippedOf,
 } from './tool-model.js';
 
@@ -226,12 +226,16 @@ function toolRow(dialog, item, view) {
   selecting ? h('span.set-tool-check', icon(picked ? 'square-check' : 'square')) : null,
   h('span.set-pkg-face', icon(FACE[item.kind])),
   h('div.set-text',
-    h('div.set-name', h('span', item.title ?? item.name), item.title ? h('code.set-tool-id', item.name) : null),
+    h('div.set-name', h('span', item.title ?? item.name), item.title ? h('code.set-tool-id', item.name) : null, warnMark(warningsOf(item.raw))),
     descLine(dialog, item)),
   tag,
   controls.length ? h('div.set-control.set-tool-controls', controls) : null,
   selecting ? null : h('span.set-pkg-arrow', icon('chevron-right')));
 }
+
+/** 技能写得有小毛病的（核心 PT-2上）：名字后面一个 warn 色的警告小图标，悬停看那几句（一条一行）；没有的不画。 @param {string[]} warnings */
+const warnMark = (warnings) => (warnings.length
+  ? h('span.set-tool-warn', { title: warnings.join('\n'), 'aria-label': warnings.join('\n') }, icon('triangle-alert')) : null);
 
 /** 名字下面那一行：技能、脚本是一句说明；MCP 是状态和有几件工具。 @param {any} dialog @param {ToolItem} item */
 function descLine(dialog, item) {
@@ -374,8 +378,11 @@ function toolDetail(dialog, kind, id) {
           h('span', skippedWhy(t, x)))))));
     }
   }
+  // 技能写得有小毛病的（核心 PT-2上）：卡片下面一组「提示」，一条一行
+  const warnings = warningsOf(s);
   return [
     card,
+    warnings.length ? groupBlock(t('tools.warnings'), warnings.map((w) => h('div.set-row', h('div.set-text', h('p.set-desc.is-warn.set-tool-warning', w))))) : null,
     groupBlock('', rows),
     kind === 'mcp' && !item.own ? h('p.set-tool-note', t('tools.from_package')) : null,
   ].filter(Boolean);

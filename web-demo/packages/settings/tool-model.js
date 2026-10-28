@@ -23,6 +23,17 @@ export function skillItem(s) {
   };
 }
 
+/**
+ * 技能写得有小毛病的那几句（核心 PT-2上：`skill.list` 那一项的 `warnings: [{code, message}]`，`message` 已照连接的语言挑好）：交回要写的字，
+ * 没有 `message` 的照 `code` 写；没有 `warnings` 的是空的。
+ * @param {any} raw @returns {string[]}
+ */
+export function warningsOf(raw) {
+  if (!Array.isArray(raw?.warnings)) return [];
+  return raw.warnings.map((/** @type {any} */ w) => (typeof w?.message === 'string' && w.message.trim() ? w.message : typeof w?.code === 'string' ? w.code : null))
+    .filter((/** @type {string|null} */ x) => x !== null);
+}
+
 /** `script.list` 的一项。 @param {any} s @returns {ToolItem} */
 export function scriptItem(s) {
   return {
