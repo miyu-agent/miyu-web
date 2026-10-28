@@ -58,19 +58,12 @@
 /* 管理员模式（蓝图「管理员模式」第 2、4 条）：页名旁边一颗淡橙色小标签；左栏最下面一行开关；锁着的地方一行暗字，管理员隔开一点后面「进入管理员模式」；
    齿轮右上角一个橙色小点。页名不撑满，关闭按钮靠右 */
 .set-head .set-close { margin-left: auto; }
-.set-admin-tag { flex: none; padding: calc(2px * var(--space)) calc(8px * var(--space)); border-radius: var(--r-round);
-  background: color-mix(in srgb, var(--t-warn) 14%, var(--surface-1)); color: color-mix(in srgb, var(--t-warn) 70%, var(--text)); font-size: calc(11.5px * var(--text-scale)); font-weight: 600; }
-.set-admin-tag[hidden] { display: none; }
-.set-admin-row { display: flex; align-items: center; justify-content: space-between; gap: calc(8px * var(--space)); min-height: 34px; padding: 0 calc(10px * var(--space)); color: var(--text-soft); font-size: calc(13px * var(--text-scale)); }
 .set-locked { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(16px * var(--space)); margin: calc(4px * var(--space)) 0; color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
 .set-source .set-locked { display: inline-flex; margin: 0; }
 .set-toast.is-action { display: flex; align-items: baseline; gap: calc(10px * var(--space)); }
 .set-gear { position: relative; }
 .set-gear-dot { position: absolute; top: 4px; right: 4px; display: none; width: 7px; height: 7px; border-radius: var(--r-round); background: var(--t-warn); box-shadow: 0 0 0 2px var(--side-bg, var(--sidebar-bg)); pointer-events: none; }
-.set-gear.is-admin .set-gear-dot { display: block; }
 /* 锁着的控件：灰着、点不了 */
-.is-admin-locked { opacity: 0.5; pointer-events: none; }
-.set-body.is-admin-page .set-btn, .set-body.is-admin-page .set-switch { opacity: 0.5; pointer-events: none; }
 .set-empty { padding: calc(24px * var(--space)) 0; color: var(--text-faint); font-size: calc(13px * var(--text-scale)); }
 .set-empty.is-bad { color: var(--danger); }
 .set-group { margin-top: calc(12px * var(--space)); }
@@ -718,76 +711,20 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .mk-link .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); }
 
 /* 账号页（第 12c 条，核心 Y-1 上） */
-.acc-value { color: var(--text-soft); font-size: calc(13px * var(--text-scale)); }
 .acc-avatar-control { display: flex; align-items: center; gap: calc(12px * var(--space)); flex: none; }
 .acc-avatar { display: grid; width: 48px; height: 48px; place-items: center; border-radius: var(--r-round); overflow: hidden; background: color-mix(in srgb, var(--accent) 22%, var(--surface-2)); color: var(--text); font-size: 20px; font-weight: 600; }
 .acc-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.acc-actions, .acc-make { display: flex; align-items: center; gap: calc(8px * var(--space)); flex: none; }
-.acc-days { height: 28px; }
-.acc-id { color: var(--text-soft); font: calc(12.5px * var(--text-scale)) var(--font-mono); }
-.acc-invite-state { flex: none; color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); }
-.acc-invite-state.is-faint, .acc-invite.is-done .acc-id { color: var(--text-faint); }
+.acc-avatar .icon { width: calc(22px * var(--space)); height: calc(22px * var(--space)); color: var(--text-soft); }
 /* 邀请一行三列：编号和生成时刻、状态（靠右）、操作（固定宽，悬停才露的「撤销」不挤动状态） */
-.set-row.acc-invite { display: grid; grid-template-columns: minmax(0, 1fr) auto 64px; align-items: center; gap: calc(12px * var(--space)); }
-.acc-invite .acc-invite-state { grid-column: 2; text-align: right; }
-.acc-invite .acc-revoke { grid-column: 3; justify-self: end; }
-.acc-revoke { opacity: 0; transition: opacity calc(0.15s * var(--motion-scale)) ease; }
-.acc-invite:hover .acc-revoke, .acc-revoke:focus-visible { opacity: 1; }
-.acc-kind { flex: none; padding: calc(1px * var(--space)) calc(6px * var(--space)); border-radius: var(--r-5); background: var(--surface-2); color: var(--text-faint); font-size: calc(11px * var(--text-scale)); font-weight: 400; }
-.acc-kind.is-admin { color: var(--accent); }
-.acc-kind.is-off { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
-.acc-member.is-disabled .acc-name { color: var(--text-faint); }
-.acc-disable:hover { color: var(--danger); }
 /* 成员一行右边：设成、撤掉管理员，停用、启用 */
 .acc-actions { display: flex; flex: none; align-items: center; gap: calc(6px * var(--space)); }
-.acc-pop { width: min(520px, 100%); }
-.acc-make .is-busy [data-icon="loader-circle"] { animation: set-spin calc(0.9s * var(--motion-scale)) linear infinite; }
-.acc-copy { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: calc(10px * var(--space)); margin-top: calc(10px * var(--space)); }
-.acc-copy-label { color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); }
-.acc-copy-value { overflow-wrap: anywhere; padding: calc(6px * var(--space)) calc(8px * var(--space)); border-radius: var(--r-6); background: var(--surface-2); color: var(--text); font: calc(12.5px * var(--text-scale)) var(--font-mono); user-select: all; }
 
 /* 账号页最上面「管理员后台」的入口卡片（第 12c 条） */
-.acc-enter { display: flex; align-items: center; gap: calc(14px * var(--space)); padding: calc(14px * var(--space)) calc(16px * var(--space)); border-radius: var(--r-12); background: var(--surface-1); box-shadow: var(--card-shadow); }
-.acc-enter-btn { flex: none; }
 
 /* 管理员后台（第 12d 条）：盖满窗口的独立整页；左边一栏照主题（同主界面的左栏，2026-10-22 项目主人：要跟着主题设置） */
-.adm-page {
-  /* 整页底色掺一点强调色，左栏浓一些（2026-10-22 项目主人选的样板三 B3：靠颜色认出是后台，不要顶栏） */
-  --adm-tint: color-mix(in srgb, var(--accent) 4%, var(--surface)); --adm-nav: color-mix(in srgb, var(--accent) 12%, var(--surface));
-  position: fixed; inset: 0; z-index: 85; display: grid; grid-template-columns: 228px minmax(0, 1fr); background: var(--adm-tint); color: var(--text); animation: fade-in var(--motion-in) var(--ease-out) both;
-}
-.adm-nav { display: flex; flex-direction: column; gap: 3px; padding: calc(18px * var(--space)) calc(14px * var(--space)) calc(14px * var(--space)); background: var(--adm-nav); box-shadow: inset -1px 0 0 color-mix(in srgb, var(--accent) 18%, var(--surface)); overflow: auto; }
-.adm-brand { display: flex; align-items: center; gap: 8px; margin: 2px 6px 18px; color: var(--accent); font-size: calc(14.5px * var(--text-scale)); font-weight: 700; letter-spacing: 0.02em; }
-.adm-brand .icon { width: calc(17px * var(--space)); height: calc(17px * var(--space)); flex: none; }
-.adm-nav-item { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 12px; border: 0; border-radius: var(--r-12); background: none; color: var(--text); font: calc(14px * var(--text-scale)) var(--font-ui); text-align: left; text-decoration: none; cursor: pointer; transition: background-color calc(0.15s * var(--motion-scale)) ease; }
-.adm-nav-item .icon { width: calc(16px * var(--space)); height: calc(16px * var(--space)); flex: none; color: var(--text-soft); }
-.adm-nav-item:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
-.adm-nav-item.is-on { background: var(--accent); color: var(--on-primary); box-shadow: 0 6px 14px -8px color-mix(in srgb, var(--accent) 80%, transparent); }
-.adm-nav-item.is-on .icon { color: var(--on-primary); }
-.adm-exit { margin-top: auto; color: var(--text-soft); }
-.adm-body { overflow: auto; }
 /* 内容贴着左栏铺开，不在窗口正中浮着 */
-.adm-inner { max-width: 1080px; box-sizing: border-box; padding: calc(28px * var(--space)) calc(32px * var(--space)) calc(48px * var(--space)); }
-.adm-title { margin: 0 0 calc(4px * var(--space)); font-size: calc(22px * var(--text-scale)); font-weight: 600; }
-.adm-lead { margin: 0 0 calc(18px * var(--space)); color: var(--text-soft); font-size: calc(13px * var(--text-scale)); }
 /* 每一组一张卡片：组名在卡片的头一行，组的按钮在头一行右边 */
-.adm-inner .set-group { margin: 0 0 calc(16px * var(--space)); padding: calc(14px * var(--space)) calc(20px * var(--space)) calc(8px * var(--space)); border-radius: var(--r-12); background: var(--surface-1); box-shadow: var(--card-shadow); }
-.adm-inner .set-group-name { margin-bottom: calc(6px * var(--space)); color: var(--text); font-size: calc(13.5px * var(--text-scale)); }
-.adm-inner .set-group-head { margin-bottom: calc(6px * var(--space)); }
-.adm-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: calc(12px * var(--space)); margin-bottom: calc(16px * var(--space)); }
-.adm-stat { display: flex; align-items: center; gap: calc(14px * var(--space)); padding: calc(16px * var(--space)) calc(18px * var(--space)); border-radius: var(--r-12); background: var(--surface-1); box-shadow: var(--card-shadow); }
-.adm-stat-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: var(--r-10); background: var(--accent-soft, color-mix(in srgb, var(--accent) 12%, transparent)); color: var(--accent); }
-.adm-stat-icon .icon { width: calc(18px * var(--space)); height: calc(18px * var(--space)); }
-.adm-stat b { display: block; font-size: calc(22px * var(--text-scale)); font-weight: 600; line-height: 1.2; }
-.adm-stat span { color: var(--text-soft); font-size: calc(12px * var(--text-scale)); }
-.adm-denied { display: grid; justify-items: center; gap: calc(10px * var(--space)); margin-top: 18vh; color: var(--text-soft); }
-.adm-toast { position: fixed; }
 @media (max-width: 640px) {
-  .adm-page { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
-  .adm-nav { flex-direction: row; flex-wrap: wrap; }
-  .adm-brand { display: none; }
-  .adm-exit { margin-top: 0; }
-  .adm-inner { padding: 16px; }
 }
 
 /* 通用页最底下的源码链接（蓝图「设置」第 12a 条，AGPL 第 13 条） */
@@ -795,17 +732,5 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .set-repo-link { color: inherit; text-decoration: none; }
 .set-repo-link:hover, .set-repo-link:focus-visible { color: var(--text-soft); text-decoration: underline; outline: none; }
 /* 管理员后台的多选（2026-10-27 项目主人：不能批量操作是个问题；照左栏多选会话）：组头「选择」、每行前面勾选框、勾上的铺 accent 淡底、组底下钉着一条 */
-.acc-pick-btn .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); }
-.set-group.is-picking .acc-pick-btn { color: var(--accent); }
-.acc-check { display: inline-grid; flex: none; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; background: none; color: var(--text-faint); cursor: pointer; }
-.acc-check .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); }
-.acc-check.is-blank { cursor: default; }
 .set-row.is-picking { cursor: pointer; }
 .set-row.is-picked { background: color-mix(in srgb, var(--accent) 10%, transparent); }
-.set-row.is-picked .acc-check { color: var(--accent); }
-.set-row.acc-invite.is-picking { grid-template-columns: 22px minmax(0, 1fr) auto 64px; }
-.acc-invite.is-picking .acc-invite-state { grid-column: 3; }
-.acc-pick-bar { position: sticky; bottom: 0; display: flex; align-items: center; gap: calc(8px * var(--space)); margin-top: calc(8px * var(--space)); padding: calc(8px * var(--space)) calc(10px * var(--space)); border-radius: var(--r-10); background: var(--float-bg, color-mix(in srgb, var(--surface-1) 92%, transparent)); box-shadow: var(--float-elev, var(--float-shadow)); animation: menu-grow var(--motion-in) var(--ease-out) both; }
-.acc-pick-count { color: var(--text-soft); font-size: calc(13px * var(--text-scale)); }
-.acc-pick-gap { flex: 1; }
-.acc-open-only { display: inline-flex; align-items: center; gap: calc(6px * var(--space)); color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); white-space: nowrap; }

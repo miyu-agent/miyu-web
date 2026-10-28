@@ -58,7 +58,6 @@ export function buildPages(schema, got, opts = {}) {
  * 成员的「新会话的权限级别」能选哪几项（蓝图「连核心」第 1 条「成员」那一款，2026-10-24 项目主人定）：成员到不了开放权限，去掉 `full`。
  * @param {{value: any, name: string}[]} options 清单里的选项 @returns {{value: any, name: string}[]}
  */
-export const memberLevels = (options) => options.filter((o) => o.value !== 'full');
 
 /** 一个真键对得上哪一项带占位的（`providers.dev.base_url` → `providers.<id>.base_url`）。 */
 export function templateOf(key, items) {

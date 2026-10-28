@@ -12,12 +12,6 @@ test('附件的那一条照软件包挂没挂上', () => {
   assert.deepEqual(tipsFor({ attachments: true }), [...TIPS, 'attach']);
 });
 
-test('成员（核心 Y-2下下上）不提 `@` 选文件：读本机文件调不了', () => {
-  assert.deepEqual(tipsFor({ member: true }), TIPS.filter((x) => x !== 'mention'));
-  assert.ok(!tipsFor({ member: true, attachments: true }).includes('mention'));
-  assert.ok(tipsFor({ member: true, attachments: true }).includes('attach'));
-});
-
 test('换一条不和上一条一样，照随机数挑', () => {
   const list = ['a', 'b', 'c'];
   assert.equal(pickTip(list, null, 0), 'a');

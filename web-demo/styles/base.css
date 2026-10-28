@@ -124,7 +124,6 @@ button, textarea { font: inherit; color: inherit; }
 .boot-wait { display: grid; height: 100%; min-height: 60vh; place-items: center; color: var(--text-faint, #9a948c); font-size: calc(14px * var(--text-scale)); }
 #app.offline { display: grid; min-height: 100vh; place-items: center; padding: calc(16px * var(--space)); }
 /* 带着管理员后台的网址刷新进来：后台画出来以前不露主界面（内核加、设置包的后台去掉） */
-.is-admin-route #app, .is-admin-route .mascot-layer { visibility: hidden; }
 .boot-card {
   max-width: 460px; padding: calc(22px * var(--space)) calc(26px * var(--space)); border-radius: var(--modal-radius, var(--r-14)); background: var(--modal-bg, var(--surface-1, #fff)); box-shadow: var(--modal-elev, var(--float-shadow, 0 10px 30px -12px rgba(0, 0, 0, 0.25)));
   color: var(--text, #2b2724);

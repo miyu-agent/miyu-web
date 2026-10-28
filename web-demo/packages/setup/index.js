@@ -27,7 +27,7 @@ export function apply(ctx) {
   const t = (key, fields) => ctx.text(key, fields);
   const chat = ctx.chat;
   /** 有哪些人格、预设，默认是哪个；读不到（旧核心）的那一样的按钮不出 */
-  const catalog = new Catalog(ctx.core, () => ctx.icons.more(), { member: !!ctx.host?.member, configless: !!ctx.host?.configless });
+  const catalog = new Catalog(ctx.core, () => ctx.icons.more());
 
   const menu = new Menu();
   const personaBtn = h('button.setup-btn', { type: 'button', onclick: () => openPersonas() });
@@ -272,8 +272,7 @@ export function apply(ctx) {
         { label: t('info.preset'), title: preset != null ? presetNameOf(preset) : t('info.preset_default'), more: !!catalog.presets, keep: true, pick: () => { if (catalog.presets) switchPreset(anchor, session, preset, back); } },
         {
           label: t('info.workspace'), title: path, still: true, wrap: true, pick: () => {},
-          // 选文件夹读本机文件，成员调不了（核心 Y-2下下上）：不露
-          ...(ctx.host?.member ? {} : { action: { icon: 'folder-open', title: ctx.text('folders.open_short'), run: () => browse(ctx, infoMenu, anchor, true, chat.workdir(), pickDir, (p) => tilde(p, home())) } }),
+          action: { icon: 'folder-open', title: ctx.text('folders.open_short'), run: () => browse(ctx, infoMenu, anchor, true, chat.workdir(), pickDir, (p) => tilde(p, home())) },
         },
       ],
     });
@@ -490,8 +489,8 @@ export function apply(ctx) {
     const which = below ? infoMenu : menu;
     which.show(anchor, {
       title: t('set_workspace'),
-      // 选文件夹：标题右边一个图标（2026-10-09 项目主人：做成右上角的一个图标，不占一行）；读本机文件，成员调不了（核心 Y-2下下上）不露
-      action: ctx.host?.member ? undefined : { icon: 'folder-open', title: t('folders.open_short'), run: () => browse(ctx, which, anchor, below, now, pickDir, (p) => tilde(p, home())) },
+      // 选文件夹：标题右边一个图标（2026-10-09 项目主人：做成右上角的一个图标，不占一行）
+      action: { icon: 'folder-open', title: t('folders.open_short'), run: () => browse(ctx, which, anchor, below, now, pickDir, (p) => tilde(p, home())) },
       below,
       rows: [
         { title: t('default_workspace'), desc: tilde(own ?? def, home()), current: now === def || (!!own && now === own), pick: () => pickDir(def) },

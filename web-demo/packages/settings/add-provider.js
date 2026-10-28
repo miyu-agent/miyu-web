@@ -41,7 +41,7 @@ export function openAdd(dialog, opts = {}) {
     done: (got) => {
       close();
       // 写在哪一层就选哪一块：管理员模式里加的在系统配置（「共用」），平时的、另配的自用那份在「自用」；模型列表读回来以后才选得上（`providers.js`）
-      dialog.wantProvider = { id: got.id, side: got.side ?? (dialog.ctx.admin?.on ? 'shared' : 'mine') };
+      dialog.wantProvider = { id: got.id, side: got.side ?? 'mine' };
       Promise.resolve(dialog.modelsPromise).then(() => dialog.drawBody());
     },
     manual: () => {

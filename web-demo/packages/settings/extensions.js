@@ -147,11 +147,6 @@ export class Extensions {
 
   /** 开：还有没批的先展开要批准的那一块，不发；都批过的直接开。 @param {Entry} e */
   turnOn(e) {
-    // 开扩展是系统那一层：平时锁着的不发，提示进管理员模式（蓝图「管理员模式」第 4 条）
-    if (this.ctx.admin?.locked) {
-      this.ctx.admin.required();
-      return false;
-    }
     if ((e.unapproved ?? []).length) {
       this.asking.add(e.package);
       this.redraw(e.package);
@@ -162,10 +157,6 @@ export class Extensions {
 
   /** 开、关、重启：回应是那一个，整项换；拒了的照原话提示（核心拒「要先批」的展开那一块）。 @param {string} method @param {any} params */
   async act(method, params) {
-    if (this.ctx.admin?.locked) {
-      this.ctx.admin.required();
-      return false;
-    }
     try {
       const got = await this.ctx.core.request(method, params);
       if (got?.package) this.entries.set(got.package, got);

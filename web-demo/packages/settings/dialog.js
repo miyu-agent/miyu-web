@@ -62,14 +62,12 @@ export class SettingsDialog {
     this.nav = h('nav.set-nav');
     this.title = h('strong.set-title');
     this.body = h('div.set-body');
-    /** 管理员模式开着：页名旁边一颗淡橙色的小标签（蓝图「管理员模式」第 2 条） */
-    this.adminTag = h('span.set-admin-tag', { role: 'status', hidden: !this.ctx.admin?.on }, this.ctx.text('admin_mode.label'));
     /** 点进去的一层（软件包的设置，`subpage.js`） */
     this.sub = new Subpage();
     this.panel = h('section.set-panel', { role: 'dialog', 'aria-modal': 'true', 'aria-label': this.ctx.text('title'), style: `--set-w: ${cfg.width}px; --set-h: ${cfg.height}px` },
       h('aside.set-side', h('label.set-search-box', icon('search'), this.search), this.nav),
       h('div.set-main',
-        h('header.set-head', h('button.set-back', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), h('span.set-back-text', this.ctx.text('back')), h('span.set-back-sub', this.ctx.text('back_sub'))), this.title, this.adminTag,
+        h('header.set-head', h('button.set-back', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), h('span.set-back-text', this.ctx.text('back')), h('span.set-back-sub', this.ctx.text('back_sub'))), this.title,
           h('button.icon-button.set-close', { type: 'button', title: this.ctx.text('close'), 'aria-label': this.ctx.text('close'), onclick: () => this.close() }, icon('x'))),
         this.body));
     // 设置框挡着拖放：拖文件到框上不弹输入框的「拖到这里」（框里自己收文件的那一块照收，`src/host/files.js` 的 `watchDrop`）
@@ -79,13 +77,6 @@ export class SettingsDialog {
     this.narrow = matchMedia(`(max-width: ${cfg.narrow}px)`);
     document.addEventListener('keydown', this.onKey, true);
     this.ctx.core.onPush(this.onPush);
-    // 管理员模式开、关：页名旁边的标签、左栏的开关、锁着的地方跟着重画
-    this.offAdmin = this.ctx.admin?.onChange((/** @type {boolean} */ on) => {
-      if (!this.isOpen) return;
-      this.adminTag.hidden = !on;
-      this.drawNav();
-      this.drawBody();
-    }) ?? null;
     this.current = page ?? lastPage;
     this.body.replaceChildren(h('p.set-empty', this.ctx.text('loading')));
     this.search.focus();
@@ -106,8 +97,6 @@ export class SettingsDialog {
     this.isOpen = false;
     document.removeEventListener('keydown', this.onKey, true);
     this.ctx.core.pushes?.delete(this.onPush);
-    this.offAdmin?.();
-    this.offAdmin = null;
     this.extensions.stop();
     this.feed.stop();
     this.sub.closeAll();
@@ -121,12 +110,9 @@ export class SettingsDialog {
   /** 读核心的配置清单、最终值；模型列表另读（可能慢：核心要去供应商那边拉），读完了模型页跟着重画。 */
   async load() {
     const core = this.ctx.core;
-    // 成员读得到软件包的列表（核心 U23-R，只读；旧核心拒了照空的）；老核心上的成员（Y-2下下上）配置清单、模型列表也调不了，不问；左栏只留成员用得上的几页（`entries`，蓝图「连核心」第 1 条「成员」那一款）
-    const member = !!this.ctx.host?.member;
-    const configless = !!this.ctx.host?.configless;
     const [schema, got, packages, skills, scripts] = await Promise.all([
-      configless ? { pages: [], groups: [], items: [] } : core.request('config.schema', {}),
-      configless ? { items: {} } : core.request('config.get', { all: true }),
+      core.request('config.schema', {}),
+      core.request('config.get', { all: true }),
       // 核心的软件包（9-1）：「默认界面」的选项照它列（读不到的旧核心是空的）
       core.request('package.list', {}).then((r) => { this.pkgGroups = Array.isArray(r?.groups) ? r.groups : []; return r?.packages ?? []; }, () => []),
       // 技能、脚本两页（核心 X-26、X-27；没有推送，打开、改了配置时重读）：旧核心没有的是 `null`，不出那一页
@@ -143,20 +129,15 @@ export class SettingsDialog {
     this.schema = schema;
     this.got = got;
     const cfg = this.ctx.config;
-    // 成员只写得了个人设置：只能写在系统那一层的项不露
-    this.pages = buildPages(schema, got, { merge: cfg.merge, moveGroups: cfg.move_groups, hide: cfg.hide_prefixes, personal: member });
-    // 成员的「隐私与安全」只有一句话（`drawBody`）：那一页的项不列、搜不到，页照核心有没有这一页留着
-    if (member) this.pages = this.pages.filter((p) => p.id !== 'privacy');
-    /** 成员那一页「隐私与安全」：核心的清单里有这一页才有 */
-    this.memberPrivacy = member ? schema.pages.find((/** @type {any} */ p) => p.id === 'privacy') ?? null : null;
-    if (!configless) this.modelsPromise = this.loadModels();
-    // 设了的密钥是哪一份（`secret.list` 的 `layer`，核心 Y-2下下中中）：「已设置」后面标出来；老核心上的成员调不了
+    this.pages = buildPages(schema, got, { merge: cfg.merge, moveGroups: cfg.move_groups, hide: cfg.hide_prefixes });
+    this.modelsPromise = this.loadModels();
+    // 设了的密钥是哪一份（`secret.list` 的 `layer`，核心 Y-2下下中中）：「已设置」后面标出来
     /** @type {Map<string, string|null>} */
     this.secretLayers = new Map();
-    if (!configless) await core.request('secret.list', {})
+    await core.request('secret.list', {})
       .then((r) => { this.secretLayers = new Map((r?.secrets ?? []).map((/** @type {any} */ s) => [s.name, s.layer ?? null])); }, () => {});
-    // 扩展、软件包的订阅（连 MCP 的列表）成员调不了
-    if (!member) await Promise.all([this.extensions.start(), this.feed.start()]);
+    // 扩展、软件包的订阅（连 MCP 的列表）
+    await Promise.all([this.extensions.start(), this.feed.start()]);
   }
 
   /** 读模型列表：读着的时候 `modelsLoading`，读完了在模型页的重画一次（正在改一项的不打断）。 */
@@ -179,11 +160,10 @@ export class SettingsDialog {
     const named = (id) => this.ctx.text(`pages.${id}`);
     const all = [
       ...this.pages.map((p) => ({ id: p.id, name: p.name })),
-      ...(this.memberPrivacy ? [{ id: 'privacy', name: this.memberPrivacy.name }] : []),
       // 核心也有一页「软件包」（9-1 下，一个包一组）：和网页自己的组件合成一页，上面核心、下面网页（2026-10-07 项目主人定）
       ...(this.pages.some((p) => p.id === 'packages') ? [] : [{ id: 'packages', name: named('packages') }]),
-      // 账号（核心 Y-1 上，第 12c 条）：「用户身份」上面一项（2026-10-22 项目主人）；核心有成员这一套才有
-      ...(this.ctx.host?.account ? [{ id: 'account', name: named('account') }] : []),
+      // 访问（第 12c 条；核心 SU-1：访问密码、退出登录、你的头像）：「用户身份」上面一项（2026-10-22 项目主人）
+      { id: 'account', name: named('account') },
       // 下载软件（软件市场，核心 G-3 到 G-5）：「软件包」上面一项（2026-10-21 项目主人）
       { id: 'market', name: named('market') },
       // 软件后台（核心 F-6 中）：带自己页面的软件，点进去是它的页面
@@ -196,14 +176,7 @@ export class SettingsDialog {
       const i = order.indexOf(id);
       return i >= 0 ? i : order.indexOf('advanced') - 0.5;
     };
-    // 成员：MCP 是整台机器的，不露；软件后台只在有他打得开的时候露（核心 IM-1 中下：只给他打得开的带 `page`，2026-10-27 项目主人）；
-    // 没有核心的配置页的（老核心上的成员），主题单开一页「通用」
-    const member = !!this.ctx.host?.member;
-    const pages = (this.packages ?? []).some((/** @type {any} */ p) => p.page);
-    // 下载软件成员也有（核心 U23下上：装得了不带程序的，只对他自己；2026-10-28 项目主人）
-    const kept = member ? all.filter((e) => e.id !== 'mcp' && (e.id !== 'backstage' || pages)) : all;
-    const mine = member && !kept.some((e) => e.id === 'general') ? [{ id: 'general', name: named('general') }, ...kept] : kept;
-    return mine.sort((a, b) => rank(a.id) - rank(b.id));
+    return all.sort((a, b) => rank(a.id) - rank(b.id));
   }
 
   /**
@@ -267,43 +240,7 @@ export class SettingsDialog {
       items.push(h(`button.set-tab${e.id === this.current && !this.query ? '.is-on' : ''}`, { type: 'button', onclick: () => this.show(e.id) },
         icon(icons[e.id] ?? 'sliders-horizontal'), h('span', e.name), bad.has(e.id) ? h('i.set-dot') : null));
     }
-    // 最下面一行「管理员模式」的开关：只有握手 `admin: true` 的人有（蓝图「管理员模式」第 2 条）
-    if (this.ctx.admin?.available) {
-      items.push(h('hr.set-nav-rule'), h('div.set-admin-row', h('span', this.ctx.text('admin_mode.label')),
-        toggle(!!this.ctx.admin.on, async (/** @type {boolean} */ on) => { this.ctx.admin.set(on); return true; })));
-    }
     replace(this.nav, items);
-  }
-
-  /** 平时锁着系统那一层（管理员、没开管理员模式）：锁着的地方照它灰着、写「仅管理员可以修改」 */
-  get adminLocked() {
-    return !!this.ctx.admin?.locked;
-  }
-
-  /**
-   * 锁着的那一处写的一行：暗字「仅管理员可以修改」，隔开一点后面一个文字按钮「进入管理员模式」——按钮只给管理员组的人，成员只有那一句
-   * （蓝图「管理员模式」第 4 条）；`inline` 的放进别的一行字里，`say` 换那一句（软件包页顶上「部分软件包仅管理员可以修改」）。
-   * @param {boolean} [inline] @param {string} [say]
-   */
-  lockLine(inline = false, say = 'admin_mode.locked') {
-    return h(inline ? 'span.set-locked' : 'p.set-locked', h('span', this.ctx.text(say)),
-      this.ctx.admin?.available ? h('button.set-link', { type: 'button', onclick: () => this.ctx.admin?.set(true) }, this.ctx.text('admin_mode.enter')) : null);
-  }
-
-  /** 改系统那一层的动作先问一句：平时锁着的不发请求，提示「这一项仅管理员可以修改」、能一键进入；交回拦下了没有 */
-  adminGuard() {
-    if (!this.adminLocked) return false;
-    this.adminPrompt();
-    return true;
-  }
-
-  /** 核心说要先进管理员模式（没锁住的地方）：提示一句，后面「进入管理员模式」，多停一会儿 */
-  adminPrompt() {
-    this.panel.querySelector('.set-toast')?.remove();
-    const el = h('div.set-toast.is-action', { role: 'status' }, h('span', this.ctx.text('admin_mode.required')),
-      h('button.set-link', { type: 'button', onclick: () => { this.ctx.admin?.set(true); leave(el, () => el.remove()); } }, this.ctx.text('admin_mode.enter')));
-    this.panel.append(el);
-    setTimeout(() => { if (el.isConnected) leave(el, () => el.remove()); }, 6000);
   }
 
   /**
@@ -358,9 +295,7 @@ export class SettingsDialog {
     // 高级：一组一行，点进去看（`advanced.js`，2026-10-19 项目主人：不平铺）
     else if (this.current === 'advanced' && page) kids = drawAdvanced(this, page);
     // 老核心上的成员：通用页只有主题，下面一句暗字（配置每人一份在核心 Y-2下下中）；成员的软件包页照下面那一条，核心的软件包没读、是空的，只列网页自己的组件
-    else if (this.current === 'general' && !page && this.ctx.host?.member) kids = [drawLook(this), h('p.set-empty', this.ctx.text('member_note'))];
     // 成员的「隐私与安全」整页一句话：关不掉沙盒，私密目录也用不上（本来就访问不到沙盒外面）（2026-10-24 项目主人）
-    else if (this.current === 'privacy' && this.ctx.host?.member) kids = [h('p.set-empty', this.ctx.text('admin_mode.member_privacy'))];
     else if (this.current === 'packages') {
       // 顶上搜索、筛选，核心的软件包一个一行、点进去是它的信息页，最后一段网页自己的组件（`core-packages.js`）
       kids = [
@@ -387,14 +322,6 @@ export class SettingsDialog {
           h('a.set-repo-link', { href: SOURCE_URL, target: '_blank', rel: 'noopener noreferrer' }, this.ctx.text('source_link'))) : null,
       ];
     }
-    // 整页都是系统那一层的（MCP）：平时页顶一行「仅管理员可以修改」，整页的按钮灰着；软件包页核心那一段锁着、网页自己的组件不锁：
-    // 页顶写「部分软件包仅管理员可以修改」，成员也写（没有按钮）（蓝图「管理员模式」第 4 条）
-    const systemPage = this.current === 'mcp';
-    if (this.adminLocked && systemPage && Array.isArray(kids)) kids = [this.lockLine(), ...kids];
-    // 下载软件：平时装给自己（核心 U23下上），页顶一句说清，管理员的后面「进入管理员模式」；整页不灰（第 12a 条第 8 款）
-    if ((this.adminLocked || this.ctx.host?.member) && this.current === 'market' && Array.isArray(kids)) kids = [this.lockLine(false, 'market.mine'), ...kids];
-    if ((this.adminLocked || this.ctx.host?.member) && this.current === 'packages' && Array.isArray(kids)) kids = [this.lockLine(false, 'admin_mode.locked_packages'), ...kids];
-    this.body.classList.toggle('is-admin-page', this.adminLocked && systemPage);
     swap(this.body, kids, dir, restore ?? scroll);
   }
 
@@ -405,7 +332,7 @@ export class SettingsDialog {
    * @returns {Promise<string|null>} 拒了的原因（给人看的一句）；成了是 `null`
    */
   save(item, change) {
-    const layer = layerOf(item, !!this.ctx.admin?.on);
+    const layer = layerOf(item);
     return this.saveMany(layer, [{ key: item.key, ...change, expect: expectFor(item.entry, layer) }]);
   }
 

@@ -29,7 +29,7 @@ export function drawPools(dialog, list) {
   const all = (list.providers ?? []).flatMap((p) => (p.models ?? []).map((m) => ({ ref: m.ref, model: m.model, name: m.facts?.name?.value ?? m.model, provider: named(p) })));
   const byRef = new Map(all.map((r) => [r.ref, r]));
   const field = (id, name) => itemFor(dialog.schema, dialog.got, `pools.<id>.${name}`, { id });
-  const layer = layerOf(dialog.schema.items.find((i) => i.key === 'pools.<id>.models') ?? { layers: ['personal'] }, !!ctx.admin?.on);
+  const layer = layerOf(dialog.schema.items.find((i) => i.key === 'pools.<id>.models') ?? { layers: ['personal'] });
   const report = (why) => { if (why) dialog.toast(why); };
   // 成员那一块最高 `pool_rows` 行，多了自己滚；每个池滚到哪记在弹窗上，挪、删以后重画回到原处
   dialog.poolScroll ??= new Map();
@@ -59,9 +59,8 @@ export function drawPools(dialog, list) {
     const item = itemFor(dialog.schema, dialog.got, `pools.${keySegment(pool.name)}.subagent`, {}) ?? field(pool.name, 'subagent');
     if (!item) return null;
     const on = typeof item.entry?.value === 'boolean' ? item.entry.value : !!pool.subagent;
-    const locked = !item.layers.includes('personal') && !!dialog.adminLocked;
     const sw = toggle(on, async (/** @type {boolean} */ next) => { const why = await dialog.save(item, { value: next }); report(why); return !why; });
-    return h('div.set-pool-foot', h('span', item.name), locked ? h('span.is-admin-locked', { inert: '' }, sw) : sw);
+    return h('div.set-pool-foot', h('span', item.name), sw);
   };
 
   const card = (pool) => {

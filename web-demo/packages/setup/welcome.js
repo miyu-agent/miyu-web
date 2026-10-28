@@ -221,7 +221,7 @@ export class PersonaStep {
       }
       if (!id) return t('welcome.save_failed');
       // 老核心上的成员写不了配置（Y-2下下上）：不设成默认，引导走完新会话照它开
-      if (!this.ctx.host?.configless && this.catalog.personaDefault !== id) await this.ctx.core.request('config.set', { layer: 'personal', changes: [{ key: 'persona.default', value: id }] });
+      if (this.catalog.personaDefault !== id) await this.ctx.core.request('config.set', { layer: 'personal', changes: [{ key: 'persona.default', value: id }] });
       this.id = id;
       this.before = now;
       this.avatar = null;

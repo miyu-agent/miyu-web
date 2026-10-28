@@ -34,10 +34,6 @@ export class Connection {
     this.open = open;
     this.retry = retry;
     this.check = check;
-    /** 这一个请求带不带 `scope`（管理员模式，内核交进来）；`null` 是不带 @type {((method: string, params: any) => string|null)|null} */
-    this.scopeFor = null;
-    /** 核心回了 `admin_mode_required`（内核交进来） @type {(() => void)|null} */
-    this.onAdminRequired = null;
     /**
      * 文件改了、前缀要变（核心 OV-1 下 `prefix_changing`）：问人怎么办，交回 `keep`、`compact`，取消的 `null`（内核交进来，蓝图「连核心」第 6a 条）
      * @type {((data: any) => Promise<'keep'|'compact'|null>)|null}
@@ -114,8 +110,6 @@ export class Connection {
       this.waiting.delete(m.id);
       if (m.error) {
         const reason = m.error.data?.reason ?? null;
-        // 要先进管理员模式（蓝图「管理员模式」第 4 条）：告诉内核，设置页那边提示一句、能一键进入
-        if (reason === 'admin_mode_required') this.onAdminRequired?.();
         waiter.reject(new Refusal(m.error.message, m.error.code, reason, m.error.data ?? null));
       }
       else waiter.resolve(m.result);
@@ -129,32 +123,29 @@ export class Connection {
    *
    * # Errors
    * 核心拒绝的抛 `Refusal`；连接断了抛原因码是 `disconnected` 的 `Refusal`。
-   * `opts.scope` 指定这一个请求带的 `scope`（管理员的引导里装内置语义模型这种本来就是整台机器的事）；不写的照 `scopeFor`。
-   * @param {string} method @param {any} [params] @param {{scope?: string}} [opts]
+   * @param {string} method @param {any} [params]
    */
-  request(method, params = {}, opts = {}) {
-    const first = this.raw(method, params, opts);
+  request(method, params = {}) {
+    const first = this.raw(method, params);
     if (!PREFIX_METHODS.has(method) || params?.prefix) return first;
     // 前缀要变（核心 OV-1 下）：问一声，带上选的重发同一个请求；取消的当没发（`prefix_cancelled`，发的那一处不另说、话留在框里）
     return first.catch(async (err) => {
       if (!(err instanceof Refusal) || err.reason !== 'prefix_changing' || !this.onPrefixAsk) throw err;
       const choice = await this.onPrefixAsk(err.data ?? {});
       if (choice !== 'keep' && choice !== 'compact') throw new Refusal('', err.code, 'prefix_cancelled', null);
-      return this.raw(method, { ...params, prefix: choice }, opts);
+      return this.raw(method, { ...params, prefix: choice });
     });
   }
 
-  /** 发一条请求、等回应（不问前缀）。 @param {string} method @param {any} [params] @param {{scope?: string}} [opts] */
-  raw(method, params = {}, opts = {}) {
+  /** 发一条请求、等回应（不问前缀）。 @param {string} method @param {any} [params] */
+  raw(method, params = {}) {
     const id = `web-${this.prefix}-${++this.n}`;
     return new Promise((resolve, reject) => {
       if (!this.ws || this.ws.readyState !== OPEN) {
         reject(new Refusal('核心断开了', -32000, 'disconnected'));
         return;
       }
-      // 管理员模式开着、改的是系统那一层的：外壳里带 `scope`（和 `method` 同级，蓝图「管理员模式」第 1 条）
-      const scope = opts.scope ?? this.scopeFor?.(method, params) ?? null;
-      const line = JSON.stringify(scope ? { jsonrpc: '2.0', id, method, params, scope } : { jsonrpc: '2.0', id, method, params });
+      const line = JSON.stringify({ jsonrpc: '2.0', id, method, params });
       if (tooLong(line)) {
         reject(new Refusal('请求太大，超过 1 MiB', -32602, 'too_large'));
         return;

@@ -13,12 +13,9 @@ export const NONE = 'none';
 export class Catalog {
   /**
    * @param {{request: (method: string, params: any) => Promise<any>}} core @param {() => Promise<void>} [moreIcons] 读整套图标（内核的 `icons`）
-   * @param {{member?: boolean, configless?: boolean}} [who] 成员调不了 `check`；老核心上的成员（Y-2下下上）默认人格、预设（配置）也读不了，不问
    */
-  constructor(core, moreIcons = () => Promise.resolve(), who = {}) {
+  constructor(core, moreIcons = () => Promise.resolve()) {
     this.core = core;
-    this.member = !!who.member;
-    this.configless = !!who.configless;
     this.moreIcons = moreIcons;
     /** @type {import('./model.js').Persona[]|null} */
     this.personas = null;
@@ -45,7 +42,7 @@ export class Catalog {
     const [personas, presets, got] = await Promise.all([
       this.core.request('persona.list', {}).then((r) => r?.personas ?? [], () => null),
       this.core.request('preset.list', {}).then((r) => r?.presets ?? [], () => null),
-      this.configless ? null : this.core.request('config.get', { keys: ['persona.default', 'preset.default'] }).catch(() => null),
+      this.core.request('config.get', { keys: ['persona.default', 'preset.default'] }).catch(() => null),
       this.moreIcons(),
     ]);
     this.personas = personas;
@@ -56,7 +53,7 @@ export class Catalog {
     this.personaDefault = got?.items?.['persona.default']?.value ?? null;
     this.presetDefault = got?.items?.['preset.default']?.value ?? null;
     const bad = [...(personas ?? []), ...(presets ?? [])].some((x) => x.problem);
-    this.problems = bad && !this.member ? await this.core.request('check', {}).then((r) => r?.problems ?? [], () => []) : [];
+    this.problems = bad ? await this.core.request('check', {}).then((r) => r?.problems ?? [], () => []) : [];
     // 重读完叫一声：左上角、对话区的头像、主题色、背景图照新的列表重画（编辑卡片里改了主题色、换了背景图，不等别的事来再画）
     this.changed();
   }

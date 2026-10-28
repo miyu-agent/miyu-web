@@ -156,8 +156,6 @@ export class Composer {
     this.jumpButton = h('button.composer-jump', { type: 'button', hidden: true, title: t('jump_bottom'), 'aria-label': t('jump_bottom'), onclick: () => this.onJump?.() }, icon('arrow-down'));
     /** Ctrl+S 暂存着的（`model/stash.js`）：只在这个页面里；存着时框下面那一排左边一个保存图标，悬停看那句，点了取回 */
     this.stashed = /** @type {import('../model/stash.js').Draft|null} */ (null);
-    /** 是成员（`setMember`，整页交进来） */
-    this.member = false;
     this.stashChip = h('button.composer-stash', { type: 'button', hidden: true, onclick: () => { this.toggleStash(); this.input.focus(); } }, icon('save'));
     this.field = h('div.composer-field', this.backdrop, this.input);
     this.box = h('div.composer', this.notice, this.jumpButton, this.takeoverEl, this.head, this.field, this.bar = h('div.composer-bar', h('div.composer-left', this.tools, this.stashChip), this.sendButton), this.menu.el, this.picker.el, this.help.el, this.historyList.el, this.sessionList.el, this.mention.el, this.float);
@@ -321,20 +319,9 @@ export class Composer {
     return this.tip ? t(`tips.${this.tip}`) : '';
   }
 
-  /** 现在有的几条：附件照软件包挂没挂上（挂载位 `composer.payload` 的 `attachments`）；成员的少 `@` 那一条（`member`，整页交进来） */
+  /** 现在有的几条：附件照软件包挂没挂上（挂载位 `composer.payload` 的 `attachments`） */
   tipList() {
-    return tipsFor({ attachments: this.payload().some((p) => p.id === 'attachments'), member: this.member });
-  }
-
-  /** 是成员（核心 Y-2下下上）：小提示少 `@` 那一条，权限级别只在工作区、只读之间换（悬停提示跟着换） @param {boolean} on */
-  setMember(on) {
-    this.member = on;
-    this.levelButton.title = t(on ? 'level_tip_member' : 'level_tip');
-    // 起来时已经挑了 `@` 那一条的换一条
-    if (on && this.tip === 'mention') {
-      this.tip = null;
-      if (!this.locked) this.input.placeholder = this.placeholder();
-    }
+    return tipsFor({ attachments: this.payload().some((p) => p.id === 'attachments') });
   }
 
   /** 换一条小提示（换会话、发完一句框又空了）：不和上一条一样；锁着的照旧写锁的字。 */

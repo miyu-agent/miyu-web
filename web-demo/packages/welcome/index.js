@@ -32,19 +32,6 @@ export function apply(ctx) {
     setTimeout(() => cover.remove(), 220);
   };
   const start = async () => {
-    // 老核心上的成员（Y-2下下上）：读不到、写不了 `ui.welcomed`，照这台设备上记的；这台设备没记着、但已经有会话的（别的设备上走过、聊过）
-    // 也算走过，记下来；都没有的从欢迎页走成员那几步。Y-2下下中 起成员照他自己那一份配置，同机主
-    if (ctx.host?.configless) {
-      if (done) return uncover();
-      const had = await ctx.core.request('session.list', {}).then((/** @type {any} */ r) => (r?.sessions ?? []).length > 0, () => false);
-      if (had) {
-        ctx.storage.set(DONE_KEY, true);
-        return uncover();
-      }
-      guide = new Guide(ctx, () => uncover(true), release);
-      guide.open('hello');
-      return;
-    }
     let got;
     try {
       got = await ctx.core.request('config.get', { keys: ['ui.welcomed'] });

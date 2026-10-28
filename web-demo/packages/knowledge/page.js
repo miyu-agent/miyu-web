@@ -150,8 +150,8 @@ export class KnowledgePage {
       const [got, pkgs, cfg] = await Promise.all([
         this.reading('kb.list', {}),
         // 成员调不了软件包；老核心上的成员（Y-2下下上）配置也读不了：不问，语义模型那一格当不知道
-        this.packages.size || this.ctx.host?.member ? null : this.ctx.core.request('package.list', {}).catch(() => null),
-        this.ctx.host?.configless ? null : this.ctx.core.request('config.get', { keys: ['models.embedding'] }).catch(() => null),
+        this.packages.size ? null : this.ctx.core.request('package.list', {}).catch(() => null),
+        this.ctx.core.request('config.get', { keys: ['models.embedding'] }).catch(() => null),
       ]);
       const emb = cfg?.items?.['models.embedding']?.value;
       this.embedding = typeof emb === 'string' && emb && emb !== 'off' ? emb : null;

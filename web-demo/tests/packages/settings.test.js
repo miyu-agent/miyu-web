@@ -366,13 +366,6 @@ test('成员只写得了个人设置（核心 Y-2下下中中）：personal 的�
   assert.ok(buildPages(schema, got).flatMap((p) => p.groups.flatMap((g) => g.items.map((i) => i.key))).includes('log.level'));
 });
 
-test('成员的「新会话的权限级别」不列开放权限（2026-10-24 项目主人定）', async () => {
-  const { memberLevels } = await import('../../packages/settings/model.js');
-  const options = [{ value: 'workspace', name: '工作区' }, { value: 'full', name: '开放权限' }, { value: 'read_only', name: '只读' }];
-  assert.deepEqual(memberLevels(options).map((o) => o.value), ['workspace', 'read_only']);
-  assert.deepEqual(memberLevels([]), []);
-});
-
 test('供应商分两块（2026-10-24 项目主人定）：自用照个人设置里有没有这一家，共用照系统配置里有的、哪一层都没写的；两边都有的两块里各一格', async () => {
   const { providerLayers, providerSides, sharedOpen } = await import('../../packages/settings/model.js');
   const at = (layer) => ({ layers: [{ origin: { layer }, used: true, value: 'x' }], origin: { layer }, value: 'x' });

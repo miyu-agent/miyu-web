@@ -150,11 +150,11 @@ export class ModelMenu {
     document.addEventListener('keydown', this.onKey, true);
     document.addEventListener('pointerdown', this.onDown, true);
     const seq = ++this.seq;
-    const got = await this.on.load().catch((err) => ({ error: err?.message ?? String(err), member: !!err?.member }));
+    const got = await this.on.load().catch((err) => ({ error: err?.message ?? String(err) }));
     if (seq !== this.seq || !this.isOpen) return;
     if (got?.error) {
       // 成员（核心 Y-2下下上）：模型由管理员设置，不写「无法获取」
-      if (!this.data) replace(this.list, h('div.model-menu-note', got.member ? got.error : t('model_menu.failed', { message: got.error })));
+      if (!this.data) replace(this.list, h('div.model-menu-note', t('model_menu.failed', { message: got.error })));
       return;
     }
     // 新问到的和画着的一样就不动；不一样的照新的画（在哪一页、选中第几行照旧）

@@ -16,7 +16,7 @@ const TYPE_MS = 120;
 /**
  * @typedef {{list: any[], generated: string|null, stale: string|null, up: any|null, error: string|null, loading: boolean,
  *   busy: string|null, progress: {package: string, done: number, total: number}|null, problems: Record<string, string>,
- *   previews: Map<string, Promise<any>>, refreshing: boolean, refused?: boolean, seen: Set<string>, just?: string|null}} Market
+ *   previews: Map<string, Promise<any>>, refreshing: boolean, seen: Set<string>, just?: string|null}} Market
  */
 
 /** @param {any} dialog @returns {Market} */
@@ -33,15 +33,7 @@ export async function loadMarket(dialog, force = false, draw = true) {
   const m = stateOf(dialog);
   m.loading = true;
   try {
-    // 刷新照发（2026-10-27 项目主人：锁着时点了什么都不做像坏了）：核心要先进管理员模式的，设置页照常提示一句、能一键进入
-    // （`admin_mode_required` 走 `adminPrompt`），这里接着读本机记着的索引，不当出错、不写「已更新」
-    m.refused = false;
-    if (force) {
-      await dialog.ctx.core.request('package.sync', { force: true }).catch((/** @type {any} */ err) => {
-        if (err?.data?.reason !== 'admin_mode_required') throw err;
-        m.refused = true;
-      });
-    }
+    if (force) await dialog.ctx.core.request('package.sync', { force: true });
     const got = await dialog.ctx.core.request('package.search', {});
     m.list = Array.isArray(got?.packages) ? got.packages : [];
     m.generated = got?.generated ?? null;
@@ -172,7 +164,7 @@ export function drawMarket(dialog) {
       refresh.classList.add('is-spin');
       await loadMarket(dialog, true);
       m.refreshing = false;
-      if (!m.error && !m.refused) dialog.toast(t('market.refreshed', { n: m.list.length }));
+      if (!m.error) dialog.toast(t('market.refreshed', { n: m.list.length }));
       redraw(dialog);
     },
   }, icon('rotate-cw')));
@@ -223,10 +215,6 @@ function actionButton(dialog, p, upgradable, big) {
   const kind = actionOf(p, upgradable, m.busy);
   const cls = big ? '.mk-action.is-big' : '.mk-action';
   if (kind === 'blocked') return null;
-  // 平时只装得进自己那一层的成员：带程序的装不了，灰着写「需要管理员安装」（管理员的照旧「安装」，点了提示进管理员模式）
-  if (kind === 'install' && dialog.ctx.host?.member && hasProgram(p)) {
-    return h(`button.set-btn${cls}`, { type: 'button', disabled: true }, t('market.needs_admin'));
-  }
   if (kind === 'busy') {
     const bar = h(`div${cls}.mk-bar`, { 'data-market-busy': p.package }, h('span.mk-bar-label'));
     fillBar(dialog, bar);
@@ -257,11 +245,6 @@ function actionButton(dialog, p, upgradable, big) {
 /** 看一眼（只照索引说，不下载）：同一个编号只问一次，刷新了重问 @param {any} dialog @param {string} id */
 function previewOf(dialog, id) {
   const m = stateOf(dialog);
-  // 平时（成员、不在管理员模式的管理员）装进自己那一层（核心 U23下上），预览照问；带程序的自己那一层装不了，不问：成员写「需要管理员安装」，管理员写「仅管理员可以修改」
-  if ((dialog.adminLocked || dialog.ctx.host?.member) && hasProgram(m.list.find((/** @type {any} */ x) => x.package === id))) {
-    const say = dialog.ctx.host?.member ? 'market.needs_admin' : 'admin_mode.locked';
-    return Promise.reject(Object.assign(new Error(dialog.ctx.text(say)), { reason: 'admin_locked' }));
-  }
   if (!m.previews.has(id)) m.previews.set(id, dialog.ctx.core.request('package.install', { source: id, preview: true }));
   return /** @type {Promise<any>} */ (m.previews.get(id));
 }
@@ -274,7 +257,6 @@ async function install(dialog, p, fromDetail) {
   const m = stateOf(dialog);
   if (m.busy) return;
   // 带程序的只能装给所有人：平时的管理员提示进管理员模式，不发请求
-  if (hasProgram(p) && dialog.adminGuard()) return;
   delete m.problems[p.package];
   if (!fromDetail) {
     try {
@@ -306,7 +288,6 @@ async function upgrade(dialog, ids) {
  * @param {any} dialog @param {string} id @param {() => Promise<any>} call @param {(got: any) => void} done
  */
 async function run(dialog, id, call, done) {
-  // 平时也照发：装、卸、升级的是自己那一层（核心 U23下上）；系统那一层的核心拒了照原因写在卡片下面（`admin_mode_required` 另在设置页提示、能一键进入）
   const m = stateOf(dialog);
   m.busy = id;
   m.progress = null;
@@ -342,8 +323,6 @@ function problemText(dialog, err) {
     case 'depends_missing': return t('market.bad.depends', { names: (err.data?.missing ?? []).join('、') });
     case 'wrong_target': return t('market.bad.target');
     case 'download_failed': return `${t('market.bad.download')}：${err.data?.why ?? ''}`;
-    case 'admin_mode_required': return t('admin_mode.locked');
-    case 'not_permitted': return t('market.needs_admin');
     default: return err?.message ?? String(err);
   }
 }
@@ -373,7 +352,6 @@ async function confirmAll(dialog) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
   const m = stateOf(dialog);
   let got;
-  if (dialog.adminGuard()) return;
   try {
     got = await dialog.ctx.core.request('package.upgrade', { preview: true });
   } catch (err) {

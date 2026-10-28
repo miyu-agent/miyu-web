@@ -17,7 +17,6 @@ export function logoutButton(dialog, service, name) {
     type: 'button',
     onclick: async (/** @type {Event} */ e) => {
       e.stopPropagation();
-      if (dialog.adminGuard()) return;
       if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('mcp_login.logout_ask', { name }), yes: t('mcp_login.logout'), no: t('mcp_login.cancel') }))) return;
       try {
         await dialog.ctx.core.request('mcp.logout', { service });
@@ -83,7 +82,6 @@ export function loginButton(dialog, service, st, opts = {}) {
     type: 'button',
     onclick: async (/** @type {MouseEvent} */ e) => {
       e.stopPropagation();
-      if (dialog.adminGuard()) return;
       const button = /** @type {HTMLButtonElement} */ (e.currentTarget);
       button.disabled = true;
       try {

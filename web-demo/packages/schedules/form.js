@@ -113,7 +113,7 @@ export function openForm(ctx, kit, store, opts) {
     once: row(t('form.once'), h('div.sch-inline.sch-once', onceDate.el, onceTime.el)),
     cron: row(t('form.cron'), cron, h('p.set-desc.sch-hint', t('form.cron_hint'))),
   };
-  const newRows = h('div.set-tool-group', row(t('form.persona'), personaBox, errs.persona), row(t('form.preset'), presetBox, errs.preset), ctx.host?.member ? null : row(t('form.cwd'), workBox));
+  const newRows = h('div.set-tool-group', row(t('form.persona'), personaBox, errs.persona), row(t('form.preset'), presetBox, errs.preset), row(t('form.cwd'), workBox));
   const sessionRows = h('div.set-tool-group', row(t('form.session'), sessionBox));
   const drawKind = () => {
     for (const [k, el] of Object.entries(whenRows)) el.hidden = k !== kind;
@@ -143,7 +143,7 @@ export function openForm(ctx, kit, store, opts) {
       say(errs.target, t('bad.session'));
       return;
     }
-    const fresh = { ...(persona !== undefined ? { persona } : {}), ...(preset ? { preset } : {}), ...(!ctx.host?.member && cwdValue() ? { cwd: cwdValue() } : {}) };
+    const fresh = { ...(persona !== undefined ? { persona } : {}), ...(preset ? { preset } : {}), ...(cwdValue() ? { cwd: cwdValue() } : {}) };
     const target = where === 'session' ? { session } : { new: fresh };
     create.disabled = true;
     create.textContent = t('form.creating');

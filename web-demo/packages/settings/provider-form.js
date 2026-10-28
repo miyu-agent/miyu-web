@@ -21,7 +21,7 @@ export function providerForm(dialog, providers) {
   const template = (field) => dialog.schema.items.find((i) => i.key === `providers.<id>.${field}`);
   // 改的是「共用」那一块里的一家：写系统配置；新建的照清单（个人设置）
   // 新建的：管理员模式里整条写系统配置（进「共用」），平时写个人设置
-  const layer = editing ? providerLayer(dialog.providerSide, template('driver')) : layerOf(template('driver') ?? { layers: ['personal'] }, !!ctx.admin?.on);
+  const layer = editing ? providerLayer(dialog.providerSide, template('driver')) : layerOf(template('driver') ?? { layers: ['personal'] });
   const close = () => { dialog.providerForm = null; dialog.drawBody(); };
 
   const input = (attrs) => /** @type {HTMLInputElement} */ (h('input.set-input', { type: 'text', spellcheck: 'false', autocomplete: 'off', ...attrs }));

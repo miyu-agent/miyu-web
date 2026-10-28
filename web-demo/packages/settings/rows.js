@@ -4,7 +4,7 @@
 //! （`look.js`）共用 `shell`。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { envRef, inputText, listElement, layerFor, layerOf, valueIn, writtenIn, secretName, referenceOptions, comboState, COMBO_OTHER } from './model.js';
+import { envRef, inputText, listElement, layerFor, layerOf, writtenIn, secretName, referenceOptions, comboState, COMBO_OTHER } from './model.js';
 
 /**
  * 一组：组名，下面一行行。
@@ -70,12 +70,7 @@ export function coreRow(dialog, item, opts = {}) {
   // 专门的编辑器（挂载位 `settings.editor`，照键）：别的包给这一项的选项（默认人格照人格列表），也可以把这一行藏了（没得选的）
   const editor = ctx.slots.pick('settings.editor', item.key);
   if (editor?.hidden?.()) return null;
-  // 照清单的 `layers` 画（蓝图「管理员模式」第 5 条）：只能写系统那一层的平时锁着；带个人那一层的，管理员模式里改的是大家的默认（照系统那一层画）
-  const admin = !!ctx.admin?.on;
-  const systemOnly = !item.layers.includes('personal');
-  const locked = systemOnly && !!dialog.adminLocked;
-  const forAll = admin && !systemOnly && item.layers.includes('system');
-  const value = forAll ? valueIn(item.entry, ['system', 'default']) ?? item.default ?? null : item.entry?.value ?? item.fact?.value;
+  const value = item.entry?.value ?? item.fact?.value;
   /** @type {ReturnType<typeof shell>} */
   let row;
   const save = async (change) => {
@@ -87,7 +82,6 @@ export function coreRow(dialog, item, opts = {}) {
   };
   // 密钥（`type: secret`）：粘贴的先存成一个新名字的密钥（`secret.set`，不覆盖原来的），再把引用写进配置——人不用知道
   // `{ secret = … }` 怎么写（2026-10-10 当用户试「接入QQ的令牌」：写纯文字会被核心拒）
-  // 存到哪一份跟着管理员模式走：不写 `layer`，管理员模式里（带 scope）存共用、平时存自用（蓝图「存密钥存到哪一份」）
   const saveSecret = async (text) => {
     row.busy();
     const name = secretName(item.key.toLowerCase().replace(/[^a-z0-9]+/g, '-'), Date.now());
@@ -101,15 +95,15 @@ export function coreRow(dialog, item, opts = {}) {
     if (why) row.fail(why);
     else row.done();
   };
-  const written = writtenIn(item.entry, layerOf(item, admin));
+  const written = writtenIn(item.entry, layerOf(item));
   const made = editor?.options ? control(dialog, { ...item, control: 'select', options: editor.options() }, value, save) : control(dialog, item, value, save, saveSecret);
   row = shell({
     name: item.name,
     description: opts.compact ? '' : item.description,
-    // 名字下面只有锁着的那一句；什么时候生效、谁的默认、盖过了谁都不写（2026-10-24 项目主人）
-    source: locked ? dialog.lockLine(true) : null,
+    // 名字下面什么时候生效、谁的默认、盖过了谁都不写（2026-10-24 项目主人）
+    source: null,
     problems: item.problems,
-    control: locked ? h('span.is-admin-locked', { inert: '' }, made) : made,
+    control: made,
     reset: written && !locked ? () => save({ unset: true }) : null,
     resetTitle: ctx.text('reset'),
   });

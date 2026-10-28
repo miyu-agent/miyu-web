@@ -6,12 +6,11 @@
 export const TIPS = ['slash', 'mention', 'newline', 'history', 'history_list', 'stash', 'level'];
 
 /**
- * 现在有的几条：靠软件包的照它在不在；成员（核心 Y-2下下上）`@` 选文件读本机文件调不了，不提那一条。
- * @param {{attachments?: boolean, member?: boolean}} has @returns {string[]}
+ * 现在有的几条：靠软件包的照它在不在。
+ * @param {{attachments?: boolean}} has @returns {string[]}
  */
 export function tipsFor(has) {
-  const base = has.member ? TIPS.filter((x) => x !== 'mention') : TIPS;
-  return has.attachments ? [...base, 'attach'] : [...base];
+  return has.attachments ? [...TIPS, 'attach'] : [...TIPS];
 }
 
 /**

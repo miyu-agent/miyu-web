@@ -169,7 +169,6 @@ function groupPage(dialog, id) {
   const removed = all.filter((/** @type {any} */ p) => p.removed);
   const name = g.name ?? id;
   const act = async (/** @type {'package.remove'|'package.install'} */ method, /** @type {HTMLElement} */ button) => {
-    if (dialog.adminGuard()) return;
     if (method === 'package.remove' && !await confirmIn(button, { text: t('pkg.group_remove_ask', { name, n: installed.length }), yes: t('ask_yes'), no: t('ask_no') })) return;
     try {
       await dialog.ctx.core.request(method, { package: id });
@@ -178,10 +177,10 @@ function groupPage(dialog, id) {
       dialog.toast(refusal(dialog, err));
     }
   };
-  const actions = dialog.ctx.admin?.on ? [
+  const actions = [
     installed.length ? h('button.set-btn.is-danger', { type: 'button', onclick: (/** @type {MouseEvent} */ e) => act('package.remove', /** @type {HTMLElement} */ (e.currentTarget)) }, t('pkg.group_remove')) : null,
     removed.length ? h('button.set-btn', { type: 'button', onclick: (/** @type {MouseEvent} */ e) => act('package.install', /** @type {HTMLElement} */ (e.currentTarget)) }, t('pkg.group_install')) : null,
-  ].filter(Boolean) : [];
+  ].filter(Boolean);
   const card = h('div.set-pkg-info', h('div.set-pkg-card',
     h('span.set-pkg-face', icon('package')),
     h('div.set-pkg-card-text',
@@ -203,7 +202,7 @@ const offItem = (dialog, id) => (dialog.schema ? plainItem(dialog.schema, dialog
 function controlFor(dialog, p, e) {
   const id = p.package;
   const off = offItem(dialog, id);
-  const how = pkgSwitch(p, { admin: !!dialog.ctx.admin?.on, off, ...(e ? { system: !!e.on } : {}) });
+  const how = pkgSwitch(p, { admin: true, off, ...(e ? { system: !!e.on } : {}) });
   if (!how) return null;
   if (how.kind === 'required') return h('span.set-pkg-status', dialog.ctx.text('pkg.required'));
   if (how.kind === 'own') {
@@ -212,15 +211,9 @@ function controlFor(dialog, p, e) {
     if (how.disabled) el.setAttribute('disabled', '');
     return el;
   }
-  if (e) return lockedIf(dialog, toggle(e.on, (on) => (on ? dialog.extensions.turnOn(e) : dialog.extensions.act('extension.disable', { package: id }))));
+  if (e) return toggle(e.on, (on) => (on ? dialog.extensions.turnOn(e) : dialog.extensions.act('extension.disable', { package: id })));
   return switchFor(dialog, p);
 }
-
-/** 平时锁着系统那一层的控件灰着、点不了 @param {any} dialog @param {HTMLElement} el */
-const lockedIf = (dialog, el) => {
-  if (dialog.adminLocked) el.classList.add('is-admin-locked');
-  return el;
-};
 
 /**
  * 总闸：`package.enable`、`package.disable`，回应是那一项，换进列表重画。扩展还有没批的能力（`needs_approval`）的进它的信息页、
@@ -245,8 +238,6 @@ function switchFor(dialog, p) {
     }
   });
   if (p.status === 'program_missing') el.setAttribute('disabled', '');
-  // 开关软件包是系统那一层：平时锁着灰着（蓝图「管理员模式」第 4 条）
-  if (dialog.adminLocked) el.classList.add('is-admin-locked');
   return el;
 }
 
@@ -280,11 +271,10 @@ function infoPage(dialog, id) {
     : infoCard(dialog, p, null);
   return [
     head,
-    typeof p.members === 'boolean' ? membersRow(dialog, p) : null,
     missing ? null : mcpGroup(dialog, p),
     ...groups.map((/** @type {any} */ x) => groupBlock(x.g.id === id ? t('pkg.settings') : x.g.name, x.rows)),
     // 平台接入的（没有自己网页的）：终端管理员在这个平台上的号，接在它的设置项后面
-    !site && !missing && !dialog.ctx.host?.member && p.connection?.platform ? ownerAccounts(dialog, p.connection.platform) : null,
+    !site && !missing && p.connection?.platform ? ownerAccounts(dialog, p.connection.platform) : null,
   ].filter(Boolean);
 }
 
@@ -296,12 +286,9 @@ function infoCard(dialog, p, e) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const id = p.package;
   const bad = BAD.has(p.status);
-  // 成员（U23-R 起读得到列表）：管理员才有的动作不出
-  const member = !!dialog.ctx.host?.member;
   // 状态：扩展照它跑得怎样（停下的写为什么）；别的只写要留意的（好好的「已启用」、关着的「已停用」开关已经说了）
   const status = e ? stateText(t, e)
     : p.status === 'depends_missing' && p.missing?.length ? t('pkg.depends_missing', { names: packageNames(dialog.packages, p.missing).join(t('pkg.sep')) })
-    : p.available === false ? t('pkg.not_open')
     : p.covered && !bad ? t('pkg.covered')
     : QUIET.has(p.status) ? null : t(`pkg.status.${p.status}`);
   const alarm = bad || failed(e);
@@ -338,7 +325,7 @@ function infoCard(dialog, p, e) {
       control ? h('div.set-control', control) : null),
     showing && stderr ? h('pre.set-ext-output', stderr) : null,
     ask,
-    member ? null : copiesGroup(dialog, e));
+    copiesGroup(dialog, e));
 }
 
 /**
@@ -368,32 +355,6 @@ function copiesGroup(dialog, e) {
 }
 
 /**
- * 「成员也能用」（核心 IM-1 上：带进程的包默认只给管理员组，`members` 只给管理员）：一行开关，发 `package.members`，回应是那一项、换进列表；
- * 改的是系统那一层，平时锁着（同总闸）。
- * @param {any} dialog @param {any} p
- */
-function membersRow(dialog, p) {
-  const t = (/** @type {string} */ key) => dialog.ctx.text(key);
-  /** @type {ReturnType<typeof shell>} */
-  let row;
-  const el = lockedIf(dialog, toggle(p.members, async (on) => {
-    if (dialog.adminGuard()) return false;
-    row.busy();
-    try {
-      const got = await dialog.ctx.core.request('package.members', { package: p.package, on });
-      dialog.packages = dialog.packages.map((/** @type {any} */ x) => (x.package === p.package ? got : x));
-      row.done();
-      return true;
-    } catch (err) {
-      row.fail(refusal(dialog, err));
-      return false;
-    }
-  }));
-  row = shell({ name: t('pkg.members'), description: t('pkg.members_desc'), source: dialog.adminLocked ? dialog.lockLine(true) : null, control: el });
-  return groupBlock(null, [row.el]);
-}
-
-/**
  * 「打开页面」：有自己网页的（接入通讯平台的页面服务，`status` 问得到端口；`dialog.sites` 记着）点了在新标签页打开那个网页（2026-10-19 项目主人：只留一个
  * 「打开页面」，新标签页打开就够了）；别的照旧跳到后台页的独立整页。
  * @param {any} dialog @param {string} id
@@ -417,10 +378,8 @@ function removeButton(dialog, p) {
   if (p.required || p.layer === 'shipped') return null;
   // 自己那一层装的（核心 U23下上 `layer: user`）：卸的是自己那一份，不用管理员模式，成员也有
   const own = p.layer === 'user';
-  if (!own && dialog.ctx.host?.member) return null;
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const button = h('button.set-btn.is-danger', { type: 'button', onclick: async () => {
-    if (!own && dialog.adminGuard()) return;
     if (!await confirmIn(button, { text: t('pkg.uninstall_ask', { name: p.name ?? p.package }), yes: t('ask_yes'), no: t('ask_no') })) return;
     try {
       await dialog.ctx.core.request('package.remove', { package: p.package });
@@ -507,8 +466,7 @@ function mcpGroup(dialog, p) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const on = p.enabled !== false;
   // 都被个人设置里同名的替代了的不给「重启」：重启的是这个包的服务，它们不起
-  const restart = on && !dialog.ctx.host?.member && !list.every((s) => s.covered) ? h('button.set-btn.is-small', { type: 'button', onclick: async () => {
-    if (dialog.adminGuard()) return;
+  const restart = on && !list.every((s) => s.covered) ? h('button.set-btn.is-small', { type: 'button', onclick: async () => {
     try {
       const got = await dialog.ctx.core.request('package.restart', { package: p.package });
       if (got?.package) dialog.packages = dialog.packages.map((x) => (x.package === got.package ? got : x));

@@ -49,15 +49,12 @@ export function previewPart(preview) {
 export const levelLabel = (level) => `${res.layout.level_icons[level]}${res.text.levels[level]}`;
 
 /**
- * 点一下换到下一级：照 `layout.json` 的 `level_cycle`，工作区 → 开放权限 → 只读 → 工作区（照 TUI 的 Tab）；成员（核心 Y-2下下上）
- * 不到开放权限，只在工作区、只读之间换（开放权限上的照旧往下走）。
- * @param {string} level @param {boolean} [member]
+ * 点一下换到下一级：照 `layout.json` 的 `level_cycle`，工作区 → 开放权限 → 只读 → 工作区（照 TUI 的 Tab）。
+ * @param {string} level
  */
-export function nextLevel(level, member = false) {
+export function nextLevel(level) {
   const cycle = res.layout.level_cycle;
-  let i = (cycle.indexOf(level) + 1) % cycle.length;
-  if (member === true && cycle[i] === 'full') i = (i + 1) % cycle.length;
-  return cycle[i];
+  return cycle[(cycle.indexOf(level) + 1) % cycle.length];
 }
 
 /**

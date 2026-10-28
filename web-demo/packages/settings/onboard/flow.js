@@ -102,7 +102,7 @@ export class ProviderFlow {
       const [featured, detect, models, schema] = await Promise.all([
         core.request('provider.catalog', { featured: true }),
         // 探本机的环境变量、端口：成员调不了（核心 Y-2下下中中），不问
-        this.ctx.host?.member ? null : quiet(core.request('provider.detect', {})), quiet(core.request('model.list', {})), quiet(core.request('config.schema', {})),
+        quiet(core.request('provider.detect', {})), quiet(core.request('model.list', {})), quiet(core.request('config.schema', {})),
       ]);
       this.featured = featured?.providers ?? [];
       this.detect = detect;
@@ -497,9 +497,7 @@ export class ProviderFlow {
       }
       const { changes } = setupChanges(target, ref, { chat: welcome ? model : null, pools: welcome && !this.fixedPools && noPools(items), taken });
       // 写个人设置，同设置页（2026-10-10 项目主人：引导里选了 DeepSeek，会话照旧是原来的 magpie——原来写系统配置，被个人设置里写着的盖住了）
-      // 设置页里、管理员模式开着：整条写系统配置（这一家进「共用」，蓝图「设置页」第 14 条）；别的写个人设置
-      // 另配一份自用的：不管开没开管理员模式都写个人设置
-      const layer = target.kind !== 'copy' && this.mode === 'settings' && this.ctx.admin?.on ? 'system' : 'personal';
+      const layer = 'personal';
       if (changes.length) await core.request('config.set', { layer, changes });
       this.configured.add(id);
       this.usable.add(id);

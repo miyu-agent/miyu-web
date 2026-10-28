@@ -65,14 +65,12 @@ export function drawProviders(dialog, list) {
     ] : null,
     h('button.set-prov.is-add', { type: 'button', onclick: () => openAdd(dialog) }, icon('plus'), h('span', ctx.text('models.add_provider'))));
   if (!p) return h('div.set-prov-wrap', list_);
-  // 「共用」的只有管理员模式里能改（写系统配置）；平时（成员、没开管理员模式的管理员）只读：名称、地址、密钥那一行「已设置」，
-  // 没有测试、编辑、删除、更换，模型点不进详情；那几个按钮的地方写「仅管理员可以修改」（管理员后面隔开一个「进入管理员模式」，成员只有那一句）（蓝图「设置页」第 14 条、「管理员模式」第 4 条）
   // 两块里都有的一家：「共用」那一格的密钥照系统那一层写的那一格（核心合出来的是自用盖过的那一份）
   // 核心给 `layer` 的（PL-1）：共用那一格是 `relay@system` 那一份，状态、密钥、模型都是它自己的，不用另找
   const sharedKey = !layered && side === 'shared' && both.has(p.id) ? keyIn(p.id, dialog.got ?? {}, 'system') : undefined;
-  const readonly = side === 'shared' && (!!ctx.host?.member || !ctx.admin?.on);
   // 「优先用这一份」只有旧核心写（两份合成一份、自用盖过共用）；PL-1 起两份各用各的，照选的模型引用
-  const view = { readonly, prefer: !layered && side === 'mine' && both.has(p.id), sharedKey, copyable: side === 'shared' && !both.has(baseOf(p.id)) };
+  // 只有主人一个人（核心 SU-1）：「共用」的照样能改（两份到 SU-3 合成一份）
+  const view = { prefer: !layered && side === 'mine' && both.has(p.id), sharedKey, copyable: side === 'shared' && !both.has(baseOf(p.id)) };
   const main = h('div.set-prov-main', head(dialog, p, logos, view), keyBlock(dialog, p, view), models(dialog, p, view));
   // 详情盖着右边整栏（挂在 `.set-main` 上，滚正文时它不跟着走）
   const detail = dialog.modelDetail ? drawer(dialog, p, (p.models ?? []).find((m) => m.model === dialog.modelDetail)) : null;
@@ -103,9 +101,9 @@ function providerItem(dialog, x, side, on, logos, same, merged = false) {
 }
 
 /**
- * 头上：图标、名称、地址，「测试连接」「编辑」；接口是猜的写一行；测试的结果写在下面。看「共用」的平时（`readonly`）没有按钮，写一行「仅管理员可以修改」；
+ * 头上：图标、名称、地址，「测试连接」「编辑」；接口是猜的写一行；测试的结果写在下面；
  * 两块里都有的「自用」那一格名称下面一行「优先用这一份」（核心照自用盖过共用，`prefer`）。
- * @param {any} dialog @param {any} p @param {boolean} logos @param {{readonly?: boolean, prefer?: boolean, copyable?: boolean}} [view]
+ * @param {any} dialog @param {any} p @param {boolean} logos @param {{prefer?: boolean, copyable?: boolean}} [view]
  */
 function head(dialog, p, logos, view = {}) {
   const ctx = dialog.ctx;
@@ -141,8 +139,7 @@ function head(dialog, p, logos, view = {}) {
   return h('div.set-prov-head',
     h('div.set-prov-title', logo, h('div', h('strong', providerName(p)), h('span', { title: address }, address),
       view.prefer ? h('small.set-prov-prefer', ctx.text('models.prefer_mine')) : null),
-      view.readonly ? h('div.set-prov-buttons', copy, dialog.lockLine(true))
-        : h('div.set-prov-buttons', copy, test, h('button.set-btn', { type: 'button', onclick: openForm(dialog, p.id) }, ctx.text('models.edit')), removeButton(dialog, p))),
+      h('div.set-prov-buttons', copy, test, h('button.set-btn', { type: 'button', onclick: openForm(dialog, p.id) }, ctx.text('models.edit')), removeButton(dialog, p))),
     // 核心推不出接口、先照 openai-chat 用的（`driver_from: default`，核心 8-26）：写明是猜的，猜错了请求会出错
     p.driver_from === 'default' ? h('p.set-prov-note', ctx.text('models.driver_guess_line', { driver: p.driver ?? '' })) : null,
     shared && shared !== 'no_key' ? h('p.set-prov-warn', ctx.text(`models.states.${shared}`)) : null,
@@ -196,7 +193,6 @@ function keyBlock(dialog, p, view = {}) {
   const unwritten = !p.key;
   const changing = dialog.keyEdit === p.id;
   // 只读的「共用」那一格：只一行「已设置」（管理员看得到是哪一份；没设的写没有密钥），换不了
-  if (view.readonly) return h('div.set-key-line', h('span', t('key')), h('span.set-key-state', key.set ? t('key_saved') + (ctx.host?.member ? '' : secretTag(dialog, key.ref)) : t('states.no_key')));
   if (key.set && !changing) {
     // 存在哪一份照 `secret.list`（「已设置 · 共用」「已设置 · 自用」，蓝图「连核心」第 1 条「存密钥存到哪一份」）
     const state = key.ref?.startsWith('env:') ? ctx.text('from_env', { name: key.ref.slice(4) }) : t('key_saved') + secretTag(dialog, key.ref);
@@ -256,7 +252,7 @@ function keyBlock(dialog, p, view = {}) {
     error);
 }
 
-/** 模型：一行「模型 N」和搜索框，下面一个一行；点一行滑进详情（成员看「共用」的点不进，`readonly`）。 */
+/** 模型：一行「模型 N」和搜索框，下面一个一行；点一行滑进详情。 */
 function models(dialog, p, view = {}) {
   const ctx = dialog.ctx;
   const all = p.models ?? [];
@@ -267,7 +263,7 @@ function models(dialog, p, view = {}) {
   const dup = duplicates(all.map(modelName));
   const rows = all.map((m) => ({
     name: modelName(m), model: m.model,
-    node: h(view.readonly ? 'div.set-model.is-static' : `button.set-model${dialog.modelDetail === m.model ? '.is-on' : ''}`, view.readonly ? {} : { type: 'button', onclick: () => { dialog.modelDetail = m.model; dialog.drawBody(); } },
+    node: h(`button.set-model${dialog.modelDetail === m.model ? '.is-on' : ''}`, { type: 'button', onclick: () => { dialog.modelDetail = m.model; dialog.drawBody(); } },
       h('span.set-model-name', modelName(m), dup.has(modelName(m)) ? h('code.set-model-id', m.model) : null),
       !shared && m.state && m.state !== 'ok' ? h('em.set-model-state', ctx.text(`models.states.${m.state}`)) : null,
       h('span.set-model-meta', metaOf(ctx, m, true))),

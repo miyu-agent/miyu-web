@@ -119,7 +119,7 @@ function askFirst(dialog, el, text, run) {
 function headButtons(dialog, kind, view, items) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   // 「打开目录」在这台机器上开文件管理器，成员的不露（核心 Y-2下下上：整台机器的事只给管理员）
-  const dir = kind === 'mcp' || memberOf(dialog) ? null : homeDir(kind, kind === 'skills' ? dialog.skills : dialog.scripts);
+  const dir = kind === 'mcp' ? null : homeDir(kind, kind === 'skills' ? dialog.skills : dialog.scripts);
   const main = kind === 'mcp'
     ? h('button.set-btn.is-primary', { type: 'button', onclick: () => openServerForm(dialog, null) }, icon('plus'), h('span', t('tools.add_server')))
     : dir ? h('button.set-btn', { type: 'button', title: dir, onclick: () => reveal(dialog, dir) }, icon('folder-open'), h('span', t('tools.open_dir'))) : null;
@@ -156,7 +156,6 @@ async function removeItems(dialog, kind, list) {
       dialog.toast(err?.message ?? String(err));
     }
   } else {
-    if (dialog.adminGuard()) return;
     for (const item of list) {
       try {
         await dialog.ctx.core.request('mcp.remove', { name: item.name });
@@ -210,8 +209,7 @@ function toolRow(dialog, item, view) {
   const controls = selecting ? [] : [
     // 要浏览器登录的（核心 X-42 上）：开关前面一个「登录」
     login?.needs ? loginButton(dialog, item.name, login, { small: true }) : null,
-    // 开关写的是配置，老核心上的成员写不了（Y-2下下上）：不露
-    item.on !== null && !configlessOf(dialog) ? switchFor(dialog, item) : null,
+    item.on !== null ? switchFor(dialog, item) : null,
     can ? askFirst(dialog, iconBtn('trash-2', t('tools.delete'), () => {}, '.is-danger.set-tool-del'), t('tools.delete_ask', { name: item.name }), () => removeItems(dialog, item.kind, [item])) : null,
   ].filter(Boolean);
   const tag = item.kind === 'mcp' && item.own ? null : h('span.set-pkg-tag', sourceText(dialog, item));
@@ -264,11 +262,6 @@ function serverState(dialog, item) {
  * @param {string} text @param {boolean} bad @param {boolean} running @param {boolean} [warn]
  */
 const stateNode = (text, bad, running, warn = false) => h(`span.set-tool-state${bad ? '.is-error' : ''}${running ? '.is-on' : ''}${warn ? '.is-warn' : ''}`, text);
-
-/** 是成员（整台机器的事调不了） @param {any} dialog */
-const memberOf = (dialog) => !!dialog.ctx.host?.member;
-/** 老核心（Y-2下下上）上的成员：配置也写不了 @param {any} dialog */
-const configlessOf = (dialog) => !!dialog.ctx.host?.configless;
 
 /** 全局开关。 @param {any} dialog @param {ToolItem} item */
 function switchFor(dialog, item) {
@@ -351,7 +344,7 @@ function toolDetail(dialog, kind, id) {
         meta,
         actions.length ? h('div.set-pkg-card-actions', actions) : null,
         state ? loginErrorNode(state.login) : null),
-      item.on !== null && !configlessOf(dialog) ? h('div.set-control', switchFor(dialog, item)) : null),
+      item.on !== null ? h('div.set-control', switchFor(dialog, item)) : null),
     showing ? h('pre.set-ext-output', stderr) : null);
   const line = (/** @type {string} */ name, /** @type {any} */ value, /** @type {any} */ note = null) => h('div.set-row',
     h('div.set-text', h('div.set-name', h('span', name)), note ? h('p.set-desc', note) : null), h('div.set-control.set-tool-value', value));
@@ -399,7 +392,6 @@ function serverActions(dialog, item) {
   const out = [];
   if (!item.covered && s.enabled !== false) {
     out.push(h('button.set-btn', { type: 'button', onclick: async () => {
-      if (dialog.adminGuard()) return;
       try {
         if (item.own) await dialog.ctx.core.request('mcp.restart', { name: item.name });
         else await dialog.ctx.core.request('package.restart', { package: item.package });
@@ -413,7 +405,6 @@ function serverActions(dialog, item) {
   // 网址的服务也能编辑（核心 X-32 下：`mcp.set` 收 `url`、`bearer`、`headers`）
   if (editable(dialog.skills)) out.push(h('button.set-btn', { type: 'button', onclick: () => openServerForm(dialog, s) }, t('tools.edit')));
   const remove = h('button.set-btn.is-danger', { type: 'button', onclick: async () => {
-    if (dialog.adminGuard()) return;
     if (!await confirmIn(remove, { text: t('tools.delete_ask', { name: item.name }), yes: t('ask_yes'), no: t('ask_no') })) return;
     try {
       await dialog.ctx.core.request('mcp.remove', { name: item.name });

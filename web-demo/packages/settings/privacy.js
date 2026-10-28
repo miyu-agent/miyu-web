@@ -51,7 +51,7 @@ export function privateGroup(dialog, name, items) {
    */
   const store = async (changes, quiet = false) => {
     if (!changes.length) return null;
-    const layer = layerOf(add, !!dialog.ctx.admin?.on);
+    const layer = layerOf(add);
     const why = await dialog.saveMany(layer, changes.map((c) => {
       const item = c.key === pair.add ? add : remove;
       return { ...c, expect: expectFor(item.entry, layer) };
