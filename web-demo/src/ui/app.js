@@ -190,7 +190,7 @@ export class App {
     ctx.slots.declare('chat.item', 'keyed');
     ctx.slots.watch('chat.item', () => this.chat.redraw());
     /** 斜杠命令：出厂的一份加软件包登记的（服务 `commands`）；成员改不了界面语言，不列 `/language`（蓝图「连核心」第 1 条「成员」那一款） */
-    this.commands = new Commands(res.commands.commands.filter((/** @type {any} */ c) => !(info.configless && c.name === 'language')));
+    this.commands = new Commands(res.commands.commands);
     this.composer = new Composer({
       send: (text, extra) => this.send(text, extra),
       interrupt: () => this.interrupt(),
@@ -245,10 +245,6 @@ export class App {
       files: (plan, fresh, onUpdate, stale) => listFiles(this.store.conn, this.workdir(), plan, fresh, onUpdate, stale),
       where: () => ({ cwd: this.workdir(), home: this.home }),
     }, () => this.commands.list(), () => ctx.slots.list('composer.payload'));
-    /** 是成员：权限级别不到开放权限；老核心上的（`configless`）模型列表、配置也调不了（蓝图「连核心」第 1 条「成员」那一款） */
-    this.member = !!info.member;
-    this.configless = !!info.configless;
-    this.composer.setMember(this.member);
     // 框里：下面一排左边的按钮、写字的地方上面一排（附件这类软件包画）；跟着话一起发的不画，发的时候交出来
     const failedSlot = (owner, reason) => h('div.slot-failed', t('slot_failed', { owner, reason }));
     ctx.slots.declare('composer.bar', 'list');
@@ -265,7 +261,6 @@ export class App {
     ctx.effect(() => ctx.slots.watch('composer.payload', () => this.composer.syncButton()));
     // 左栏底下一行靠右、换主题按钮左边的按钮（设置页这类软件包画，蓝图「左栏」的「底下一行」）
     // 左栏底下最左边当前账号的头像：直接连网页软件、知道是哪个账号的才画（蓝图「连核心」第 1 条「选择账号」）
-    if (info.accounts && info.account) this.sidebar.setAccount(info.account, info.accounts, info.avatar ?? null);
     ctx.slots.declare('sidebar.actions', 'list');
     ctx.effect(() => mountList(this.sidebar.actions, ctx.slots, 'sidebar.actions', failedSlot));
     // 框上面的一叠：挂进 `composer.above` 的（待办这类软件包）在流里、占着地方，下面是运行状态行，再下面是框
@@ -450,7 +445,7 @@ export class App {
     // 这一会儿人已经动了（开了别的会话、打了字）的不换
     this.open(null);
     // 老核心上的成员读不了配置（Y-2下下上）：照新会话
-    if (!this.configless) this.store.conn.request('config.get', { keys: ['ui.startup'] }).catch(() => null).then((reply) => {
+    this.store.conn.request('config.get', { keys: ['ui.startup'] }).catch(() => null).then((reply) => {
       const id = startupSession(reply, this.ranked());
       if (id && this.current === null && !this.composer.input.value) this.open(id);
     });
@@ -988,8 +983,6 @@ export class App {
 
   /** 问一次 `model.list`，记下来（新会话框下面照它写默认的那一个）。 */
   async loadModels() {
-    // 老核心上的成员调不了模型列表（Y-2下下上）：不问，菜单里写「模型由管理员设置」
-    if (this.configless) throw Object.assign(new Error(t('model_menu.member')), { member: true });
     this.models = await this.store.conn.request('model.list', {});
     // 框下面那一截照列表写显示名：列表来了重画一次
     this.schedule();
@@ -1086,11 +1079,11 @@ export class App {
     if (this.switching) return;
     const session = this.current;
     if (!session) {
-      this.pendingLevel = nextLevel(this.pendingLevel ?? statusFooter(null).left.level, this.member);
+      this.pendingLevel = nextLevel(this.pendingLevel ?? statusFooter(null).left.level);
       this.render();
       return;
     }
-    await this.setLevel(session, nextLevel(this.levelNow(session), this.member));
+    await this.setLevel(session, nextLevel(this.levelNow(session)));
   }
 
   /** 新会话刚开：点过的级别和核心开出来的不一样的，说第一句话之前发给核心。 */

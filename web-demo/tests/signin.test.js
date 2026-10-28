@@ -1,11 +1,11 @@
 // @ts-check
-//! 起页面时握手（`src/kernel/signin.js`，蓝图 `web.md`「连核心」第 1 条下面几款）：被拒的几种写什么，「账号」那一屏查什么，
-//! 走桥的不带凭据一次就成，登录令牌作废了的忘掉、重开一条线。
+//! 起页面时握手（`src/kernel/signin.js`，蓝图 `web.md`「连核心」第 1 条下面几款；核心 SU-1 起只有主人一个人）：被拒的几种写什么，
+//! 「设置访问密码」那一屏查什么，走桥的不带凭据一次就成，设备令牌作废了的忘掉、重开一条线。
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { refusedText, accountProblem, registerProblem, signIn, accessOf } from '../src/kernel/signin.js';
+import { refusedText, passwordProblem, signIn } from '../src/kernel/signin.js';
 import { Refusal } from '../src/core/connection.js';
 
 loadRes();
@@ -33,23 +33,26 @@ function fakeLine(answer, sent, methods = []) {
   };
 }
 
-test('被拒的几种：令牌作废的不写字（出登录框），密码不对、试太多次、链接用过了照原因写；别的交 null（照原来的出错走）', () => {
+test('被拒的几种：令牌作废、没带凭据、票作废、还没设访问密码的不写字（出对应的那一屏），密码不对、试太多次、链接用过了照原因写；别的交 null', () => {
   assert.equal(refusedText(new Refusal('x', -32010, 'bad_login')), '');
-  assert.equal(refusedText(new Refusal('x', -32010, 'bad_password')), '用户名或密码不对');
+  assert.equal(refusedText(new Refusal('x', -32010, 'bad_token')), '');
+  assert.equal(refusedText(new Refusal('x', -32010, 'bad_ticket')), '');
+  assert.equal(refusedText(new Refusal('x', -32010, 'password_not_set')), '');
+  assert.equal(refusedText(new Refusal('x', -32010, 'bad_password')), '访问密码错误');
   assert.equal(refusedText(new Refusal('x', -32010, 'login_throttled', { retry_after_ms: 41200 })), '尝试次数过多，42 秒后再试');
   assert.match(refusedText(new Refusal('x', -32010, 'bad_code')) ?? '', /miyu web/);
+  assert.equal(refusedText(new Refusal('x', -32010, 'bad_invite')), null, '没有邀请了（核心 SU-1）');
   assert.equal(refusedText(new Refusal('x', -32010, 'bad_params')), null);
   assert.equal(refusedText(new Error('x')), null);
 });
 
-test('「账号」那一屏：用户名照账号编号的写法（核心 Y-12 中上：注册的是机主），密码至少 8 个字节、不能全是空白，两次要一样', () => {
-  assert.equal(accountProblem('shorin', 'password1', 'password1'), null);
-  assert.match(accountProblem('my_name', 'password1', 'password1') ?? '', /小写字母开头/, '账号编号不收下划线');
-  assert.match(accountProblem('Admin', 'password1', 'password1') ?? '', /小写字母开头/);
-  assert.match(accountProblem('admin', 'short', 'short') ?? '', /至少 8/);
-  assert.match(accountProblem('admin', '        ', '        ') ?? '', /至少 8/);
-  assert.equal(accountProblem('admin', '密码密码密码', '密码密码密码'), null, '照字节数：六个汉字 18 个字节');
-  assert.match(accountProblem('admin', 'password1', 'password2') ?? '', /不一样/);
+test('「设置访问密码」那一屏：至少 8 个字节、不能全是空白、最多 1024 个字节，两次要一样（核心 SU-1）', () => {
+  assert.equal(passwordProblem('password1', 'password1'), null);
+  assert.match(passwordProblem('short', 'short') ?? '', /至少 8/);
+  assert.match(passwordProblem('        ', '        ') ?? '', /至少 8/);
+  assert.equal(passwordProblem('密码密码密码', '密码密码密码'), null, '照字节数：六个汉字 18 个字节');
+  assert.match(passwordProblem('a'.repeat(1025), 'a'.repeat(1025)) ?? '', /最多 1024/);
+  assert.match(passwordProblem('password1', 'password2') ?? '', /不一样/);
 });
 
 test('走桥的不带凭据一次就成；直接连的带记着的令牌，作废了的忘掉、重开一条线，回应里新给的令牌记下', async () => {
@@ -76,77 +79,16 @@ test('走桥的不带凭据一次就成；直接连的带记着的令牌，作�
   assert.deepEqual(calls.map((p) => p.login ?? p.code), ['old', 'c1'], '作废了的忘掉，下一次换别的凭据、新开一条线');
 });
 
-test('凭邀请码注册（核心 Y-1 上）：邀请码不对的照原因写；用户名照账号编号的写法（没有 _、不能叫 users），密码同「账号」那一屏', () => {
-  assert.equal(refusedText(new Refusal('x', -32010, 'bad_invite')), '邀请码不对、过期了或已经用过');
-  assert.equal(registerProblem('bob-2', 'password1', 'password1'), null);
-  assert.match(registerProblem('bob_2', 'password1', 'password1') ?? '', /小写字母开头/);
-  assert.match(registerProblem('users', 'password1', 'password1') ?? '', /小写字母开头/);
-  assert.match(registerProblem('bob', 'short', 'short') ?? '', /至少 8/);
-  assert.match(registerProblem('bob', 'password1', 'password2') ?? '', /不一样/);
-});
-
-test('是谁：握手带 admin 的照它（核心 Y-2下下中上）；没带的先试 persona.list（被拒是 Y-2 以前的成员）、再试 config.get（被拒是 Y-2下下上 的成员）；走桥的、admin 不试', async () => {
-  const no = () => { throw new Refusal('没有权限。', -32010, 'not_permitted'); };
-  /** 假核心：`refuse` 里的方法回 not_permitted，别的回空对象；记下问了哪几个 @param {string[]} refuse */
-  const core = (refuse) => {
-    const asked = /** @type {string[]} */ ([]);
-    return { asked, request: async (/** @type {string} */ m) => { asked.push(m); if (refuse.includes(m)) no(); return {}; } };
-  };
-  const c1 = core([]);
-  assert.equal(await accessOf(c1, { account: 'bob', admin: false }), 'member', 'hello 带 admin 的不试');
-  assert.equal(await accessOf(c1, { account: 'bob', admin: true }), 'owner');
-  assert.equal(await accessOf(c1, { view: 1 }), 'owner', '走桥的、没带账号的是机主');
-  assert.equal(await accessOf(c1, { account: 'admin' }), 'owner');
-  assert.deepEqual(c1.asked, []);
-  const member = core(['config.get']);
-  assert.equal(await accessOf(member, { account: 'bob' }), 'member-old', '老核心：配置调不了');
-  assert.deepEqual(member.asked, ['persona.list', 'config.get']);
-  const old = core(['persona.list', 'config.get']);
-  assert.equal(await accessOf(old, { account: 'bob' }), 'blocked', 'Y-2 以前：人格都调不了');
-  assert.deepEqual(old.asked, ['persona.list'], '被挡的不再试第二样');
-  assert.equal(await accessOf(core([]), { account: 'shorin' }), 'owner', '起了名字的机主照样认出来');
-  // 别的错（旧核心没有这个方法）不算被拒
-  const odd = { request: async () => { throw new Refusal('x', -32601, null); } };
-  assert.equal(await accessOf(odd, { account: 'bob' }), 'owner');
-
-  // 连起来：成员照常起页面，交回 member
-  const sent = [];
-  const methods = [];
-  const served = {
-    kind: 'served', check: async () => 'down',
-    channel: fakeLine((p, m) => (m === 'config.get' ? no() : m === 'hello' ? { view: 1, account: 'bob' } : {}), sent, methods),
-    credential: () => ({ login: 'tok' }), remember: () => {}, forget: () => {},
-  };
-  const got = await signIn(served, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
-  assert.equal(got.hello.account, 'bob');
-  assert.equal(got.member, true);
-  assert.equal(got.configless, true, '试探出来的是老核心上的成员');
-  assert.deepEqual(methods, ['hello', 'persona.list', 'config.get']);
-  const admin = [];
-  const bridgeGot = await signIn({ ...served, channel: fakeLine(() => ({ view: 1, account: 'admin' }), admin) }, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
-  assert.equal(admin.length, 1, '管理员只握手');
-  assert.equal(bridgeGot.member, false);
-  assert.equal(bridgeGot.configless, false);
-});
-
-test('选择账号：拿记着的令牌连上的告诉宿主是哪个账号（迁过来的填名字）；握手回应给了新令牌的连同账号、勾没勾自动登录一起记下', async () => {
-  const told = [];
-  const served = {
-    kind: 'served', check: async () => 'down',
-    channel: fakeLine(() => ({ view: 1, account: 'owner1', admin: true }), []),
-    credential: () => ({ login: 'tok' }), remember: () => { throw new Error('不该记'); }, forget: () => null,
-    signedIn: (/** @type {string} */ a) => told.push(a),
-  };
-  await signIn(served, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
-  assert.deepEqual(told, ['owner1']);
-
+test('握手回应给了新令牌的（票、密码换的）连同勾没勾自动登录一起记下；回应没有 account（核心 SU-1）', async () => {
   const kept = [];
   const fresh = {
-    ...served,
-    channel: fakeLine(() => ({ view: 1, account: 'bob', admin: false, login: { token: 'new', expires: 'x' } }), []),
-    credential: () => ({ code: 'c1' }),
-    remember: (/** @type {any} */ l, /** @type {string} */ a, /** @type {boolean} */ k) => kept.push([l.token, a, k]),
+    kind: 'served', check: async () => 'down',
+    channel: fakeLine(() => ({ view: 1, login: { token: 'new', expires: 'x' } }), []),
+    credential: () => ({ ticket: 'a'.repeat(64) }),
+    remember: (/** @type {any} */ l, /** @type {boolean} */ k) => kept.push([l.token, k]),
+    forget: () => {},
   };
-  await signIn(fresh, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
-  assert.deepEqual(kept, [['new', 'bob', false]]);
+  const got = await signIn(fresh, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
+  assert.deepEqual(kept, [['new', false]]);
+  assert.equal('member' in got, false, '没有成员这一说了');
 });

@@ -27,7 +27,6 @@ import { TIME_GROUPS, byTime } from '../model/session.js';
 import { SessionDrag } from './sidebar-drag.js';
 import { projectBlock } from './sidebar-projects.js';
 import { projectRows, colorOf } from '../model/project.js';
-import { initialOf } from '../model/accounts.js';
 
 /**
  * @typedef {{session: string, title: string|null, running: boolean, unread: boolean, waiting?: boolean}} Item
@@ -88,8 +87,6 @@ export class Sidebar {
     this.themeButton = h('button.icon-button', { type: 'button', onclick: on.theme });
     /** 底下一行换主题左边：挂载位 `sidebar.actions` 里挂的按钮（设置这类，`ui/app.js` 画进来） */
     this.actions = h('span.sidebar-slot');
-    /** 底下一行最左边：当前账号的头像（直接连网页软件的才有，`setAccount`） */
-    this.account = h('span.sidebar-account');
     this.groupTitle = h('span', t('sidebar.sessions'));
     this.groupTools = h('span.session-group-tools');
     /** 收起了的几栏（置顶、项目、会话；这台设备上记着，2026-10-19 项目主人：三栏都能收起） @type {Set<string>} */
@@ -126,7 +123,7 @@ export class Sidebar {
         h('button.icon-button.sidebar-close', { type: 'button', title: t('sidebar.collapse'), onclick: on.close }, icon('x'))),
       this.nav,
       h('nav.session-list', h('div.session-track', this.pill, this.items)),
-      h('footer.sidebar-footer', h('div.sidebar-actions', this.account, this.actions, this.themeButton)));
+      h('footer.sidebar-footer', h('div.sidebar-actions', this.actions, this.themeButton)));
     this.timer = 0;
     /** 开着菜单的那个会话；没开是 `null`。 */
     this.menuFor = /** @type {string|null} */ (null);
@@ -662,45 +659,6 @@ export class Sidebar {
     for (const el of this.items.querySelectorAll('.session-run-spinner')) el.textContent = frame;
   }
 
-  /**
-   * 左下角当前账号的头像（蓝图「连核心」第 1 条「选择账号」；只有一个账号也画）：账号名的首字，点了往上开一个小菜单，列表里别的账号一个一行
-   * （点了换成它，整页重新载入）、「添加账号」、「账号管理」。
-   * @param {string} name 现在登录的账号
-   * 有头像的画头像图（核心 AV-1，这台浏览器记着的小图），换了头像当场换上（`watch`）。
-   * @param {{list: () => {account: string, saved: boolean, avatar?: string|null}[], switchTo: (account: string) => void, add: () => void, manage: () => void}} accounts
-   * @param {{get: () => string|null, watch: (fn: () => void) => () => void}|null} [avatar] 自己的头像
-   */
-  setAccount(name, accounts, avatar = null) {
-    /** @type {HTMLElement|null} */
-    let open = null;
-    const close = () => {
-      open?.remove();
-      open = null;
-      btn.setAttribute('aria-expanded', 'false');
-    };
-    const row = (/** @type {Node} */ face, /** @type {string} */ label, /** @type {() => void} */ run) =>
-      h('button', { type: 'button', role: 'menuitem', onclick: () => { close(); run(); } }, face, h('span', label));
-    const label = `${name} · ${t('sidebar.account_menu')}`;
-    const btn = h('button.sidebar-account-button', {
-      type: 'button', title: label, 'aria-label': label, 'aria-haspopup': 'menu', 'aria-expanded': 'false',
-      onclick: (/** @type {MouseEvent} */ e) => {
-        e.stopPropagation();
-        if (open) return close();
-        const others = accounts.list().filter((a) => a.account !== name);
-        open = h('div.session-menu.open-up.sidebar-account-menu', { role: 'menu' },
-          others.map((a) => row(faceOf(a.account, a.avatar ?? null), a.account, () => accounts.switchTo(a.account))),
-          row(icon('plus'), t('sidebar.add_account'), () => accounts.add()),
-          row(icon('settings'), t('sidebar.manage_accounts'), () => accounts.manage()));
-        this.account.append(open);
-        btn.setAttribute('aria-expanded', 'true');
-      },
-    }, faceOf(name, avatar?.get() ?? null));
-    replace(this.account, btn);
-    avatar?.watch(() => { const face = btn.querySelector('.sidebar-account-face'); if (face) face.replaceWith(faceOf(name, avatar.get())); });
-    // 点外面、按 Esc 关上
-    document.addEventListener('click', (e) => { if (open && !this.account.contains(/** @type {Node} */ (e.target))) close(); });
-    document.addEventListener('keydown', (e) => { if (open && e.key === 'Escape') close(); });
-  }
 }
 
 /** 这一刻该是哪一帧：照墙上的钟算，所有转圈同一帧。 */
@@ -802,11 +760,4 @@ function foldAnim(host, body, open, cls, clsMeansFolded, list) {
   const anim = body.animate(open ? [{ height: '0px' }, { height: `${visible}px` }] : [{ height: `${visible}px` }, { height: '0px' }],
     { duration: ms, easing: 'cubic-bezier(0.33, 0, 0.2, 1)' });
   anim.onfinish = anim.oncancel = () => host.classList.remove('is-folding');
-}
-
-/** 左下角、菜单里的一个头像：有图的画图，没有的画账号名的首字 @param {string} account @param {string|null} img */
-function faceOf(account, img) {
-  return img
-    ? h('span.sidebar-account-face.is-pic', { 'aria-hidden': 'true' }, h('img', { src: img, alt: '' }))
-    : h('span.sidebar-account-face', { 'aria-hidden': 'true' }, initialOf(account));
 }

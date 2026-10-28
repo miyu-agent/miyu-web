@@ -29,11 +29,9 @@ import { browserHost } from '../host/browser.js';
 import { askPrefix } from '../ui/prefix-ask.js';
 import { servedHost } from '../host/served.js';
 import { SIGNIN_SCHEME, signIn } from './signin.js';
-import { accountStorage } from './storage.js';
+import { ownerStorage } from './storage.js';
 import { useIcons } from '../lib/dom.js';
 import { KERNEL_SERVICES } from './services.js';
-import { AdminMode } from './admin.js';
-import { systemWrite } from '../model/admin-mode.js';
 
 /** 个人那一层（停用、启用、改配置）存在这台设备上的名字（带上账号）；核心有了个人设置以后搬进账号的家目录。 */
 /** JSON-RPC 的「没有这个方法」：连的核心还没有配置的接口 */
@@ -71,39 +69,31 @@ export async function boot(root) {
   const greeting = { protocol: [1, 1], head: { kind: 'web', version: '0.0.0' }, locale: language.tag, caps: { input: true, scope: true, prefix_ask: true } };
   // 开线、握手（凭据、登录框、「账号」那一屏在 `signin.js`）。断了自己重连（蓝图 `web.md`「连核心」第 1 条）：连上以后重新握手、补上漏掉的，
   // 见下面 `onReopen`。连不上：走桥的问口令还对不对，照它写为什么（口令用不了、桥没在跑、桥连不上核心）；直接连的就是网页软件没在跑
-  const { conn, hello, setup, member, configless } = await signIn(host, greeting, root, async (err) => {
+  const { conn, hello, setup } = await signIn(host, greeting, root, async (err) => {
     if (err.message !== 'bridge') throw new Offline('core', err.message);
     if (served) throw new Offline('web');
     const key = await host.check();
     throw new Offline(key === 'ok' ? 'core' : key, key === 'ok' ? t('no_bridge') : '');
   }, res.layout.reconnect_ms);
-  // 刚在「账号」一屏注册的：那一屏留着，等页面起好换掉（2026-10-23 项目主人：从创建账号到引导像刷新了一下，原来先清成一片空白）
+  // 刚在「设置访问密码」一屏设好的：那一屏留着，等页面起好换掉（2026-10-23 项目主人：原来先清成一片空白，像刷新了一下）
   if (!setup) root.replaceChildren();
-  // 带着管理员后台的网址打开、刷新（`#admin=`，设置包的整页）：后台画出来以前不露主界面，后台起来了自己去掉这一层（2026-10-22 项目主人：F5 先看到
-  // 主界面再进后台）；设置包没起来的过一会儿照样露出来
-  if (/(?:^#|&)admin(?:=|&|$)/.test(host.route.current())) {
-    document.documentElement.classList.add('is-admin-route');
-    setTimeout(() => document.documentElement.classList.remove('is-admin-route'), 8000);
-  }
-  // 这个页面登录成哪个账号：这台设备上存的按它分开（「多用户、多终端」第 5 条）
-  const account = hello?.account ?? 'admin';
-  // 账号头像（核心 AV-1）：版本和这台浏览器记着的不一样的取一次、缩成小图记下（「选择账号」那一排照它画），不等它
-  const avatars = /** @type {any} */ (host).avatars ?? null;
-  if (avatars && typeof hello?.account === 'string') avatars.sync(hello.account, typeof hello?.avatar === 'string' ? hello.avatar : null, () => conn.request('account.avatar', {})).catch(() => {});
-  const storage = accountStorage(host.store, account, LEGACY);
+  // 头像（核心 AV-1，只有主人那一张）：版本和这台浏览器记着的不一样的取一次、缩成小图记下（「输入访问密码」那一屏、「访问」页照它画），不等它
+  const avatar = /** @type {any} */ (host).avatar ?? null;
+  if (avatar) avatar.sync(typeof hello?.avatar === 'string' ? hello.avatar : null, () => conn.request('account.avatar', {})).catch(() => {});
+  // 这台设备上存的（原来按账号分的照上次用的那个账号、走桥时的 admin 搬过来）
+  const storage = ownerStorage(host.store, LEGACY, [.../** @type {any} */ (host).formerAccount ? [/** @type {any} */ (host).formerAccount] : [], 'admin']);
   // 知道账号了：照个人那一层再定一次界面语言；界面的字、收起那一行的写法有一样变了重装字（重连时的握手照新的写）。
   // 核心有配置的：个人设置的 `ui.language` 说了算（蓝图「界面语言」第 5 条，规矩 A，和终端界面一样）；旧核心照这台设备上记的
   let setting = settingOf(res.languages, distro.kernel ?? {}, storage.get(USER_LAYER, {})[KERNEL]?.config ?? {});
   /** 核心有没有配置的接口（`config.get`）：没有的，`/language` 只记在这台设备上 */
   let viaCore = false;
-  // 老核心上的成员（Y-2下下上）：配置读的是机主那一份、也订不了，不读，照浏览器（蓝图「界面语言」第 5 条成员那一款）；Y-2下下中 起照他自己那一份
-  const readCore = () => (configless ? Promise.resolve(null) : conn.request('config.get', { keys: ['ui.language'] }).then((got) => {
+  const readCore = () => conn.request('config.get', { keys: ['ui.language'] }).then((got) => {
     viaCore = true;
     return fromConfig(got);
   }, (err) => {
     if (err?.code !== NO_METHOD) console.error(`读不到个人设置的界面语言：${err.message}`);
     return null;
-  }));
+  });
   const fromCore = await readCore();
   if (fromCore) setting = fromCore;
   const chosen = pick(setting, browser, res.languages);
@@ -118,23 +108,18 @@ export async function boot(root) {
   // 新会话在哪个目录里干活、家目录：握手回应的 `host`（核心施工 W-3；新会话默认在账号的工作区）
   const info = placeOf(hello);
   // 给人看的字（工具的显示名、结果那一句）：问核心的 `human.get`；拿不到的照工具名写
-  res.human = await loadHuman(conn, language.code, !member).catch((err) => {
+  res.human = await loadHuman(conn, language.code).catch((err) => {
     console.error(`拿不到给人看的字：${err.message}`);
     return { tools: {}, said: {}, packages: {}, icons: {} };
   });
   // 正文、状态照条目画（蓝图 `web.md`「照条目画」）：握手的 `view` 要 1 起（核心 9-8），旧核心不画，写「核心版本过旧」
   if ((hello?.view ?? 0) < 1) throw new Offline('old');
-  // 管理员模式（蓝图「管理员模式」）：握手 `admin: true` 的人有这个开关；开着时系统那一层的写请求带 `scope`，重连回到平常
-  const admin = new AdminMode(hello?.admin === true);
-  conn.scopeFor = (method, params) => (admin.on && systemWrite(method, params) ? 'system' : null);
-  conn.onAdminRequired = () => admin.required();
   // 文件改了、前缀要变（核心 OV-1 下）：发送前问一声（蓝图「连核心」第 6a 条）
   conn.onPrefixAsk = (data) => askPrefix(data);
   const store = new Store(conn);
   await store.boot();
   // 断了又连上了（核心重启过）：重新握手，读进来了的会话重新订阅、补上漏掉的，断着时别处开的会话接上
   conn.onReopen(() => {
-    admin.set(false);
     conn.request('hello', { ...greeting, ...(host.credential() ?? {}) })
       .then(() => store.resume())
       // 配置的订阅也要等重新握手以后（蓝图「界面语言」第 5 条）
@@ -229,36 +214,26 @@ export async function boot(root) {
     manifest: { id: 'kernel' },
     apply: (ctx) => {
       ctx.provide('core', conn);
-      ctx.provide('admin', admin);
       ctx.provide('sessions', store);
       ctx.provide('host', {
         kind: host.kind,
         /** 「账号」那几屏右上角点过的明暗（主题还没起来时记的，`signin.js`）：引导照它换成主题的设置；读一次就拿掉 */
         signinScheme: takeSigninScheme(host.store),
-        account,
-        /** 是成员：软件包、MCP、读本机文件、链接预览、装包扩展这些调不了，各处照它不露（蓝图「连核心」第 1 条「成员」那一款） */
-        member: !!member,
-        /** 老核心（Y-2下下上）上的成员：还没有自己那一份配置，配置、模型列表、开关也调不了 */
-        configless: !!configless,
-        /** 核心认 `secret.set` 的 `layer`（握手带 `admin` 的，Y-2下下中 起）：存密钥能选存到哪一份 */
-        secretLayers: typeof hello?.admin === 'boolean',
-        /** 退出登录（拿登录令牌连的才有）：忘掉登录令牌、重新载入；走桥的是 `null` */
+        /** 核心认 `secret.set` 的 `layer`（握手带 `admin` 的，Y-2下下中 起；核心 SU-1 起握手不带，SU-3 起只有一份）：存密钥能选存到哪一份 */
+        secretLayers: false,
+        /** 退出登录（拿设备令牌连的才有）：忘掉设备令牌、重新载入；走桥的是 `null` */
         signOut: host.signOut ?? null,
-        /** 注册链接（账号页的「邀请」）：直接连网页软件的才有，走桥的交 `null` */
-        inviteLink: host.inviteLink,
-        /** 这台浏览器记着的几个账号（左下角的头像、菜单，蓝图「连核心」第 1 条「选择账号」）：直接连网页软件的才有，走桥的是 `null` */
-        accounts: host.accounts ? { list: () => host.accounts().list, switchTo: host.switchTo, add: host.addAccount, manage: host.manageAccounts } : null,
         /**
-         * 自己的头像（核心 AV-1，设置「账号」页、左下角）：`get` 记着的小图、`version` 现在的版本（握手、上一次设的），`set` 设好了以后记下（`null` 移除），
-         * `watch` 换了叫一声。走桥的是 `null`。
+         * 你的头像（核心 AV-1，设置「访问」页、「输入访问密码」那一屏）：`get` 记着的小图、`version` 现在的版本（握手、上一次设的），`set` 设好了以后记下
+         * （`null` 移除），`watch` 换了叫一声。走桥的是 `null`。
          */
-        avatar: avatars && typeof hello?.account === 'string' ? {
-          get: () => avatars.get(hello.account)?.img ?? null,
-          version: () => avatars.get(hello.account)?.v ?? (typeof hello?.avatar === 'string' ? hello.avatar : null),
-          set: (/** @type {string|null} */ version, /** @type {Blob|null} */ image) => avatars.put(hello.account, version, image),
-          watch: (/** @type {() => void} */ fn) => avatars.watch(fn),
+        avatar: avatar ? {
+          get: () => avatar.get(),
+          version: () => avatar.version() ?? (typeof hello?.avatar === 'string' ? hello.avatar : null),
+          set: (/** @type {string|null} */ version, /** @type {Blob|null} */ image) => avatar.put(version, image),
+          watch: (/** @type {() => void} */ fn) => avatar.watch(fn),
         } : null,
-        /** 这次起页面时设了账号（一次性码连上的）：引导第一段「账号」算走过，不再出欢迎页 */
+        /** 这次起页面时设了访问密码（一次性码连上的）：引导第一段算走过，不再出欢迎页 */
         signedUp: setup,
         cwd: info.cwd,
         home: info.home,
@@ -283,8 +258,6 @@ export async function boot(root) {
       // 界面的字、收起那一行的写法有一样变了重新载入页面（界面的字在内核起来时装，包的字在加载时取）
       ctx.provide('language', {
         current: language,
-        /** 老核心上的成员改不了界面语言（照浏览器）：`/language`、设置页那一行照它不露 */
-        locked: !!configless,
         get setting() { return setting; },
         choices: /** @type {string[]} */ (languageSpec(res.languages).choices),
         /** `/language` 浮层里的几行 */

@@ -5962,60 +5962,6 @@
       ".dream-open"
     ]
   },
-  "acc.value": {
-    "zh": "账号页：用户名的值",
-    "select": [
-      ".acc-value"
-    ]
-  },
-  "acc.id": {
-    "zh": "账号页：邀请的编号",
-    "select": [
-      ".acc-id"
-    ]
-  },
-  "acc.invite-state": {
-    "zh": "账号页：邀请的状态",
-    "select": [
-      ".acc-invite-state"
-    ]
-  },
-  "acc.revoke": {
-    "zh": "账号页：撤销邀请",
-    "select": [
-      ".acc-revoke"
-    ]
-  },
-  "acc.kind": {
-    "zh": "账号页：账号的种类标签（管理员、成员、系统、已停用）",
-    "select": [
-      ".acc-kind"
-    ]
-  },
-  "acc.name": {
-    "zh": "账号页：账号的名字",
-    "select": [
-      ".acc-name"
-    ]
-  },
-  "acc.disable": {
-    "zh": "账号页：停用按钮",
-    "select": [
-      ".acc-disable"
-    ]
-  },
-  "acc.copy-label": {
-    "zh": "账号页：生成的邀请里「注册链接」「邀请码」",
-    "select": [
-      ".acc-copy-label"
-    ]
-  },
-  "acc.copy-value": {
-    "zh": "账号页：生成的注册链接、邀请码",
-    "select": [
-      ".acc-copy-value"
-    ]
-  },
   "setup.back": {
     "zh": "整理会话左上角标题左边的「<」",
     "select": [
@@ -6026,74 +5972,6 @@
     "zh": "私密目录、受保护的路径：搜索框右边的「+」「↺」",
     "select": [
       ".pv-tool"
-    ]
-  },
-  "acc.enter": {
-    "zh": "账号页：管理员后台的入口卡片",
-    "select": [
-      ".acc-enter"
-    ]
-  },
-  "acc.enter-btn": {
-    "zh": "账号页：「进入后台」按钮",
-    "select": [
-      ".acc-enter-btn"
-    ]
-  },
-  "adm.page": {
-    "zh": "管理员后台：整页",
-    "select": [
-      ".adm-page"
-    ]
-  },
-  "adm.nav": {
-    "zh": "管理员后台：左边深色的一栏",
-    "select": [
-      ".adm-nav"
-    ]
-  },
-  "adm.brand": {
-    "zh": "管理员后台：左栏顶上「管理员后台」",
-    "select": [
-      ".adm-brand"
-    ]
-  },
-  "adm.nav-item": {
-    "zh": "管理员后台：左栏一页一行",
-    "select": [
-      ".adm-nav-item"
-    ]
-  },
-  "adm.exit": {
-    "zh": "管理员后台：「回到 Miyu」",
-    "select": [
-      ".adm-exit"
-    ]
-  },
-  "adm.card": {
-    "zh": "管理员后台：一组一张卡片",
-    "select": [
-      ".adm-inner .set-group"
-    ]
-  },
-  "adm.stat-icon": {
-    "zh": "管理员后台：总览的数前面的图标",
-    "select": [
-      ".adm-stat-icon"
-    ]
-  },
-  "adm.stat": {
-    "zh": "管理员后台：总览的数",
-    "select": [
-      ".adm-stat",
-      ".adm-stat b",
-      ".adm-stat span"
-    ]
-  },
-  "adm.denied": {
-    "zh": "管理员后台：不是管理员时那一句",
-    "select": [
-      ".adm-denied"
     ]
   },
   "pulse.withdraw": {
@@ -6166,18 +6044,6 @@
     "zh": "筛选菜单里「显示作废的」那一行",
     "select": [
       ".mem-filter-toggle"
-    ]
-  },
-  "adm.title": {
-    "zh": "管理员后台：页名",
-    "select": [
-      ".adm-title"
-    ]
-  },
-  "adm.lead": {
-    "zh": "管理员后台：页名下面那一句说明",
-    "select": [
-      ".adm-lead"
     ]
   },
   "tl.fallback": {
@@ -6420,18 +6286,6 @@
       ".set-prov-prefer"
     ]
   },
-  "settings.admin-tag": {
-    "zh": "设置：管理员模式开着时页名旁边那颗淡橙色小标签",
-    "select": [
-      ".set-admin-tag"
-    ]
-  },
-  "settings.admin-row": {
-    "zh": "设置：左栏最下面「管理员模式」那一行开关",
-    "select": [
-      ".set-admin-row"
-    ]
-  },
   "settings.locked": {
     "zh": "设置：锁着的地方那一行「仅管理员可以修改」（管理员后面隔开一个「进入管理员模式」）",
     "select": [
@@ -6466,12 +6320,6 @@
     "zh": "设置齿轮右上角管理员模式开着的橙色小点",
     "select": [
       ".set-gear-dot"
-    ]
-  },
-  "settings.admin-locked": {
-    "zh": "设置：平时锁着的控件（灰着、点不了）",
-    "select": [
-      ".is-admin-locked"
     ]
   },
   "settings.acc-actions": {
@@ -7140,36 +6988,6 @@
       ".setup-fold-arrow"
     ]
   },
-  "acc.pick-btn": {
-    "zh": "管理员后台：组头上的「选择」",
-    "select": [
-      ".acc-pick-btn"
-    ]
-  },
-  "acc.check": {
-    "zh": "管理员后台：多选时每行前面的勾选框",
-    "select": [
-      ".acc-check"
-    ]
-  },
-  "acc.pick-bar": {
-    "zh": "管理员后台：多选时组底下钉着的「已选 N 个」那一条",
-    "select": [
-      ".acc-pick-bar"
-    ]
-  },
-  "acc.pick-count": {
-    "zh": "管理员后台：「已选 N 个」的字",
-    "select": [
-      ".acc-pick-count"
-    ]
-  },
-  "acc.open-only": {
-    "zh": "管理员后台：邀请组头上「只看还能用的」开关",
-    "select": [
-      ".acc-open-only"
-    ]
-  },
   "si.accounts": {
     "zh": "登录：「选择账号」那一排头像",
     "select": [
@@ -7246,30 +7064,6 @@
     "zh": "登录：账号管理的「从这台浏览器去掉」",
     "select": [
       ".si-remove"
-    ]
-  },
-  "sidebar.account": {
-    "zh": "左栏：底下最左边当前账号那一块",
-    "select": [
-      ".sidebar-account"
-    ]
-  },
-  "sidebar.account-button": {
-    "zh": "左栏：当前账号的头像按钮",
-    "select": [
-      ".sidebar-account-button"
-    ]
-  },
-  "sidebar.account-face": {
-    "zh": "左栏：账号的头像（头像图，没有的画账号名的首字）",
-    "select": [
-      ".sidebar-account-face"
-    ]
-  },
-  "sidebar.account-menu": {
-    "zh": "左栏：切换账号的小菜单",
-    "select": [
-      ".sidebar-account-menu"
     ]
   },
   "acc.avatar-control": {
