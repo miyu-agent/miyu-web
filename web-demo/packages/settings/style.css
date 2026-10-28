@@ -327,6 +327,8 @@
 .set-pkg-tag { flex: none; padding: 0 calc(6px * var(--space)); border-radius: var(--chip-radius, var(--r-5)); background: var(--chip-bg, var(--surface-2)); color: var(--chip-fg, var(--text-faint)); font-size: calc(11px * var(--text-scale)); line-height: calc(18px * var(--text-scale)); white-space: nowrap; }
 .set-pkg-face { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--r-9); background: var(--surface-2); color: var(--text-soft); }
 .set-pkg-face .icon { width: calc(17px * var(--space)); height: calc(17px * var(--space)); }
+.set-pkg-face.is-logo { overflow: hidden; background: none; }
+.set-pkg-face.is-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .set-pkg-status { flex: none; display: inline-flex; align-items: center; gap: calc(6px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
 .set-pkg-status.is-on::before { content: ''; width: 6px; height: 6px; border-radius: var(--r-round); background: var(--online); }
 .set-pkg-status.is-bad { color: var(--danger); }

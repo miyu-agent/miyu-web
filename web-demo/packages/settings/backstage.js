@@ -6,7 +6,8 @@
 //! `widgets.md`）也列在这里，一页一行，写「软件名 · 标题」，链接另带 `widget`。有自己网页的软件（接入通讯平台的页面服务，`status` 问得到端口）只列一行，点了
 //! 在新标签页开它的网页，它的界面块整页不另列（2026-10-19 项目主人：这一页只是汇在一起，点了跳到对应软件的后台，同软件包页、`/im`）。
 
-import { h, icon, hasIcon } from '../../src/lib/dom.js';
+import { h, icon } from '../../src/lib/dom.js';
+import { pkgFace } from './logos.js';
 
 /** 「软件后台」页：带后台页的软件一个一行；一个都没有的写一句。 @param {any} dialog */
 export function drawBackstage(dialog) {
@@ -25,7 +26,7 @@ export function drawBackstage(dialog) {
     const state = p.status === 'running' || p.status === 'stopped' || bad ? h(`span.set-pkg-status${p.status === 'running' ? '.is-on' : bad ? '.is-bad' : ''}`, t(`pkg.status.${p.status}`)) : null;
     const href = dialog.ctx.backstage?.href(p.package, widget);
     const parts = [
-      h('span.set-pkg-face', icon(p.icon && hasIcon(p.icon) ? p.icon : 'package')),
+      pkgFace(dialog.ctx.core, p),
       h('div.set-text', h('div.set-name', h('span', name)), summary ? h('p.set-desc', summary) : null),
       state, href ? h('span.set-pkg-arrow', icon('arrow-up-right')) : null,
     ];

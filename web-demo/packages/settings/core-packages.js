@@ -9,12 +9,13 @@
 //! 个人设置里写的服务（F-9 补）2026-10-20 起在「MCP」页（`tool-pages.js`）。
 
 import { confirmIn } from './confirm.js';
-import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
+import { h, icon, replace } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField, findBox, shell } from './rows.js';
 import { splitKey, itemFor, plainItem, pkgSwitch, pkgGroupsOf, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy } from './model.js';
 import { openPage, probeSites } from './backstage.js';
 import { serverRow } from './mcp-servers.js';
 import { stateText, failed } from './extensions.js';
+import { pkgFace } from './logos.js';
 
 /** 列表上不写的状态：开关已经说了 */
 const QUIET = new Set(['ready', 'off']);
@@ -23,7 +24,7 @@ const BAD = new Set(['program_missing', 'depends_missing']);
 
 
 /** 包的图标：清单写了、网页认得的照它，不然画一个通用的。 @param {any} p */
-const faceOf = (p) => h('span.set-pkg-face', icon(p.icon && hasIcon(p.icon) ? p.icon : 'package'));
+
 
 /**
  * 整页：搜索、筛选、核心的软件包、对不上哪个包的组，最后网页自己的组件（`web`：`packages.js` 的 `drawPackages`）。
@@ -131,7 +132,7 @@ function packageRow(dialog, p, child = false) {
       openInfo(dialog, id, child);
     },
   },
-  faceOf(p),
+  pkgFace(dialog.ctx.core, p),
   h('div.set-text', h('div.set-name', h('span', p.name ?? id)), p.summary ? h('p.set-desc', p.summary) : null),
   state, h('span.set-pkg-tag', t(`pkg.kind.${pkgTag(p)}`)), control ? h('div.set-control', control) : null,
   h('span.set-pkg-arrow', icon('chevron-right')));
@@ -326,7 +327,7 @@ function infoCard(dialog, p, e) {
   const ask = e && (dialog.extensions.asking.has(id) || (e.on && e.reason === 'needs_approval')) ? dialog.extensions.approval(e, caps, unapproved) : null;
   return h('div.set-pkg-info',
     h('div.set-pkg-card',
-      faceOf(p),
+      pkgFace(dialog.ctx.core, p),
       h('div.set-pkg-card-text',
         h('div.set-pkg-card-name', p.name ?? id),
         p.summary ? h('p.set-pkg-card-desc', p.summary) : null,
