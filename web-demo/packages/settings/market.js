@@ -6,6 +6,7 @@
 import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { bytes } from '../../src/lib/format.js';
+import { pkgFace } from './logos.js';
 import { STATUS_FILTERS, shownOf, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf } from './market-model.js';
 import { confirmIn } from './confirm.js';
 
@@ -204,7 +205,7 @@ function card(dialog, p, upgradable) {
   m.seen.add(p.package);
   return h(`div.mk-card${fresh ? '.is-new' : ''}`, { role: 'button', tabindex: '0', 'data-mk-card': p.package, onclick: (/** @type {Event} */ e) => { if (!(/** @type {HTMLElement} */ (e.target)).closest('button')) openDetail(dialog, p.package); },
     onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' && e.target === e.currentTarget) openDetail(dialog, p.package); } },
-    h('div.mk-card-head', h('span.set-pkg-face.mk-face', icon(hasIcon(face) ? face : 'package')),
+    h('div.mk-card-head', pkgFace(dialog.ctx.core, p, hasIcon(face) ? face : 'package', '.mk-face', typeof p.source === 'string' ? p.source : null),
       h('div.mk-card-title', h('strong', p.name ?? p.package), h('span.mk-version', p.version ?? ''))),
     h('p.mk-summary', p.summary ?? ''),
     h('div.mk-card-foot', tag, actionButton(dialog, p, upgradable, false)),
@@ -409,7 +410,7 @@ function detailPage(dialog, id) {
   const p = m.list.find((x) => x.package === id);
   if (!p) return [h('p.set-empty', t('market.bad.unknown'))];
   const face = faceOf(p);
-  const head = h('div.mk-detail-head', h('span.set-pkg-face.mk-face.is-big', icon(hasIcon(face) ? face : 'package')),
+  const head = h('div.mk-detail-head', pkgFace(dialog.ctx.core, p, hasIcon(face) ? face : 'package', '.mk-face.is-big', typeof p.source === 'string' ? p.source : null),
     h('div.mk-detail-text', h('strong', p.name ?? p.package), h('p', p.summary ?? ''),
       h('p.mk-version', [t('market.version', { version: p.version ?? '' }), t(p.official ? 'market.official' : 'market.community')].join(' · ')),
       p.official ? null : h('p.mk-warn', t('market.community_warn')),

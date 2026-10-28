@@ -4,22 +4,24 @@
 
 import { h, icon, hasIcon } from '../../src/lib/dom.js';
 
-/** 取到了的：包编号 → `{v, src}`（`src` 是 data URL） @type {Map<string, {v: string, src: string}>} */
+/** 取到了的：`<源>:<包编号>`（装着的那一份源写 `@`）→ `{v, src}`（`src` 是 data URL） @type {Map<string, {v: string, src: string}>} */
 const cache = new Map();
 /** 在取的：`<编号>@<版本>` @type {Set<string>} */
 const pending = new Set();
 
 /**
- * 一个软件包的图标（`span.set-pkg-face`）。
- * @param {any} core 连核心的 @param {any} p `package.list` 的一项 @param {string} [fallback] 都没有时画的 Lucide 图标 @param {string} [cls] 多加的类
+ * 一个软件包的图标（`span.set-pkg-face`）。`from` 是软件源的名字（「下载软件」里没装的那一份，核心 F-18 下：`package.logo` 带 `from`）；装着的不写。
+ * @param {any} core 连核心的 @param {any} p `package.list`、`package.search` 的一项 @param {string} [fallback] 都没有时画的 Lucide 图标
+ * @param {string} [cls] 多加的类 @param {string|null} [from]
  */
-export function pkgFace(core, p, fallback = 'package', cls = '') {
-  const el = h(`span.set-pkg-face${cls}`, { 'data-pkg-logo': String(p?.package ?? '') }, icon(p?.icon && hasIcon(p.icon) ? p.icon : fallback));
+export function pkgFace(core, p, fallback = 'package', cls = '', from = null) {
+  const key = `${from ?? '@'}:${String(p?.package ?? '')}`;
+  const el = h(`span.set-pkg-face${cls}`, { 'data-pkg-logo': key }, icon(p?.icon && hasIcon(p.icon) ? p.icon : fallback));
   const v = typeof p?.logo === 'string' && p.logo ? p.logo : null;
   if (!v || typeof p.package !== 'string') return el;
-  const got = cache.get(p.package);
+  const got = cache.get(key);
   if (got?.v === v) show(el, got.src);
-  else fetchLogo(core, p.package, v);
+  else fetchLogo(core, key, p.package, v, from);
   return el;
 }
 
@@ -29,20 +31,23 @@ function show(el, src) {
   el.replaceChildren(h('img', { src, alt: '' }));
 }
 
-/** 取一次，取到了换掉页面上这个包的图标 @param {any} core @param {string} id @param {string} v */
-async function fetchLogo(core, id, v) {
-  const key = `${id}@${v}`;
-  if (pending.has(key)) return;
-  pending.add(key);
+/**
+ * 取一次，取到了换掉页面上这个包的图标。
+ * @param {any} core @param {string} key 缓存的键 @param {string} id 包编号 @param {string} v 版本 @param {string|null} from 软件源
+ */
+async function fetchLogo(core, key, id, v, from) {
+  const asking = `${key}@${v}`;
+  if (pending.has(asking)) return;
+  pending.add(asking);
   try {
-    const got = await core.request('package.logo', { package: id });
+    const got = await core.request('package.logo', from ? { package: id, from } : { package: id });
     if (typeof got?.data !== 'string' || typeof got?.media_type !== 'string') return;
     const src = `data:${got.media_type};base64,${got.data}`;
-    cache.set(id, { v: typeof got.logo === 'string' ? got.logo : v, src });
-    for (const el of document.querySelectorAll(`[data-pkg-logo="${CSS.escape(id)}"]`)) show(el, src);
+    cache.set(key, { v: typeof got.logo === 'string' ? got.logo : v, src });
+    for (const el of document.querySelectorAll(`[data-pkg-logo="${CSS.escape(key)}"]`)) show(el, src);
   } catch {
-    // 旧核心没有这个方法、取不到：照旧画 Lucide 图标
+    // 旧核心没有这个方法、源里没有、下不成：照旧画 Lucide 图标
   } finally {
-    pending.delete(key);
+    pending.delete(asking);
   }
 }
