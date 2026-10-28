@@ -10,11 +10,11 @@
  */
 export function ownerStorage(store, legacy = {}, former = []) {
   const full = (/** @type {string} */ key) => `miyu.me.${key}`;
-  // 原来按账号分的：能列出全部键的存法（`localStorage`）一次搬完（还没读到的键也不落下）；新键已经有的不覆盖
+  // 原来按账号分的：能列出全部键的存法（宿主的 `store.keys`）一次搬完（还没读到的键也不落下）；新键已经有的不覆盖
   try {
     const all = /** @type {any} */ (store);
-    if (typeof all.length === 'number' && typeof all.key === 'function') {
-      const keys = Array.from({ length: all.length }, (_, i) => all.key(i)).filter((k) => typeof k === 'string');
+    if (typeof all.keys === 'function') {
+      const keys = /** @type {string[]} */ (all.keys()).filter((k) => typeof k === 'string');
       for (const a of former) {
         const prefix = `miyu.${a}.`;
         for (const k of keys.filter((x) => x.startsWith(prefix))) {

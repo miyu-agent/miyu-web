@@ -104,7 +104,7 @@ export function coreRow(dialog, item, opts = {}) {
     source: null,
     problems: item.problems,
     control: made,
-    reset: written && !locked ? () => save({ unset: true }) : null,
+    reset: written ? () => save({ unset: true }) : null,
     resetTitle: ctx.text('reset'),
   });
   // 刚存成的：存完整页重读重画了，对勾画在新的这一行上

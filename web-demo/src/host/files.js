@@ -8,7 +8,7 @@
  *   一个要当附件的文件：浏览器给的只有内容（`file`），桌面端给的有路径（`path`）；拖进来、选进来的文件夹里的带它在文件夹里的路径（`relative`，`笔记/日语/语法.md`）
  * @typedef {{readyState: number, send: (text: string) => void, onopen: any, onmessage: any, onclose: any, onerror: any}} Channel
  *   连核心的一条线，样子照 WebSocket：`readyState` 是 1 时通着，一帧一条 JSON-RPC 消息
- * @typedef {{getItem: (k: string) => string|null, setItem: (k: string, v: string) => void, removeItem: (k: string) => void}} Store
+ * @typedef {{getItem: (k: string) => string|null, setItem: (k: string, v: string) => void, removeItem: (k: string) => void, keys?: () => string[]}} Store
  *   这台设备上存东西的存法
  */
 
@@ -205,6 +205,8 @@ export const store = /** @type {Store} */ ({
   getItem: (k) => localStorage.getItem(k),
   setItem: (k, v) => localStorage.setItem(k, v),
   removeItem: (k) => localStorage.removeItem(k),
+  /** 全部的键（原来按账号分存的一次搬完，`kernel/storage.js`） */
+  keys: () => Object.keys(localStorage),
 });
 
 /** 页面和网页软件（桥）在同一台机器上（地址是本机）。 */

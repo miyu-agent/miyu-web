@@ -24,6 +24,8 @@ const SESSION = 'miyu.web.session';
 const OLD_ACCOUNTS = 'miyu.web.accounts';
 /** 记着的头像（核心 AV-1，只有主人那一张）：`{v, img}`，`v` 是核心给的版本，`img` 是缩成 96 像素见方的 data URL */
 const AVATAR = 'miyu.web.avatar';
+/** 原来多账号时上次用的那个账号（本地存储照它搬完才删，`kernel/storage.js`；页面起到一半出错的下次照样搬） */
+const FORMER = 'miyu.web.former';
 /** 原来按账号记的头像（迁一次就删） */
 const OLD_AVATARS = 'miyu.web.avatars';
 /** 小图的边长 */
@@ -111,10 +113,11 @@ export function servedHost() {
   // 原来多账号的那张表：上次用的那个账号的令牌迁成一份，表删掉（核心 SU-1）
   const old = disk.get(OLD_ACCOUNTS);
   /** 原来上次用的那个账号（这台设备上按账号分存的东西照它搬，`kernel/storage.js`） @type {string|null} */
-  let former = null;
+  let former = disk.get(FORMER);
   if (old != null) {
     const moved = migrateAccounts(old, now());
     former = moved?.account ?? (() => { try { return JSON.parse(old)?.current ?? null; } catch { return null; } })();
+    if (former) disk.set(FORMER, former);
     if (moved && !readLogin(disk.get(LOGIN), now())) disk.set(LOGIN, JSON.stringify({ token: moved.token, expires: moved.expires }));
     try {
       const pics = JSON.parse(disk.get(OLD_AVATARS) ?? 'null');
@@ -189,6 +192,8 @@ export function servedHost() {
     kind: 'served',
     /** 原来多账号时上次用的那个账号：这台设备上按账号分存的东西照它搬一次 */
     formerAccount: former,
+    /** 本地存储搬完了：不再记那个账号 */
+    formerMoved: () => disk.remove(FORMER),
     /** 开一条到核心的线（网页软件照转）。 */
     channel: () => /** @type {Channel} */ (/** @type {unknown} */ (new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`))),
     urls,

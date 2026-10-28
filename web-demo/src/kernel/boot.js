@@ -82,6 +82,7 @@ export async function boot(root) {
   if (avatar) avatar.sync(typeof hello?.avatar === 'string' ? hello.avatar : null, () => conn.request('account.avatar', {})).catch(() => {});
   // 这台设备上存的（原来按账号分的照上次用的那个账号、走桥时的 admin 搬过来）
   const storage = ownerStorage(host.store, LEGACY, [.../** @type {any} */ (host).formerAccount ? [/** @type {any} */ (host).formerAccount] : [], 'admin']);
+  /** @type {any} */ (host).formerMoved?.();
   // 知道账号了：照个人那一层再定一次界面语言；界面的字、收起那一行的写法有一样变了重装字（重连时的握手照新的写）。
   // 核心有配置的：个人设置的 `ui.language` 说了算（蓝图「界面语言」第 5 条，规矩 A，和终端界面一样）；旧核心照这台设备上记的
   let setting = settingOf(res.languages, distro.kernel ?? {}, storage.get(USER_LAYER, {})[KERNEL]?.config ?? {});

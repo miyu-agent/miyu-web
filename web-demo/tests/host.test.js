@@ -62,6 +62,7 @@ function fakeStore(broken = false) {
     getItem: (k) => { if (broken) throw new Error('no'); return table.get(k) ?? null; },
     setItem: (k, v) => { if (broken) throw new Error('no'); table.set(k, v); },
     removeItem: (k) => { table.delete(k); },
+    keys: () => [...table.keys()],
   };
 }
 
@@ -83,6 +84,12 @@ test('这台设备上存的（核心 SU-1 起只有主人一份）：键是 miyu
   assert.deepEqual(moved.get('packages', {}), { todo: { disabled: true } }, '更早不分账号的旧键');
   assert.equal(old.table.has('miyu.shorin.cards'), false);
   assert.equal(old.table.has('miyu.packages'), false);
+  // 能列出全部键的：还没读到的键也一次搬完
+  const all = fakeStore();
+  all.table.set('miyu.shorin.later', '5');
+  ownerStorage(all, {}, ['shorin']);
+  assert.equal(all.table.get('miyu.me.later'), '5');
+  assert.equal(all.table.has('miyu.shorin.later'), false);
 });
 
 test('存法读写抛错、存的不是 JSON 的，照没有算，不让页面起不来', () => {
@@ -248,7 +255,9 @@ test('原来多账号的表（核心 SU-1 以前）：上次用的那个账号�
     assert.equal(disk.has('miyu.web.accounts'), false);
     assert.equal(disk.has('miyu.web.avatars'), false);
     assert.equal(host.avatar.get(), 'data:x', '那个账号的头像留着');
-    assert.equal(servedHost().formerAccount, null, '迁过一次就没有了');
+    assert.equal(servedHost().formerAccount, 'owner1', '本地存储搬完以前一直记着（页面起到一半出错的下次照样搬）');
+    host.formerMoved();
+    assert.equal(servedHost().formerAccount, null, '搬完了就没有了');
   });
   // 存储整个用不了（隐私窗口、禁了的）：读写都不抛
   const broken = { getItem: () => { throw new Error('no'); }, setItem: () => { throw new Error('no'); }, removeItem: () => { throw new Error('no'); } };
