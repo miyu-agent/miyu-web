@@ -448,19 +448,13 @@ test('管理员模式里写哪一层（蓝图「管理员模式」第 5 条）�
   assert.equal(valueIn(null, ['system']), undefined);
 });
 
-test('软件包的开关跟着管理员模式换：平时是自己的「把这个包关掉」，管理员模式里、核心没给那一项的是总闸（2026-10-26 项目主人）', async () => {
+test('软件包的开关：必需的写「必需」，有总闸那一格的是总闸，没有的没有开关（核心 SU-1 起没有成员自己的开关）', async () => {
   const { pkgSwitch } = await import('../../packages/settings/model.js');
-  const off = (value) => ({ entry: value === undefined ? null : { value } });
   const p = { package: 'kit', enabled: true };
-  assert.deepEqual(pkgSwitch(p, { admin: false, off: off() }), { kind: 'own', on: true, disabled: false });
-  assert.deepEqual(pkgSwitch(p, { admin: false, off: off(true) }), { kind: 'own', on: false, disabled: false });
-  assert.deepEqual(pkgSwitch(p, { admin: false, off: off(false) }), { kind: 'own', on: true, disabled: false });
-  assert.deepEqual(pkgSwitch({ ...p, enabled: false }, { admin: false, off: off() }), { kind: 'own', on: false, disabled: true }, '总闸关着：灰着关着');
-  assert.deepEqual(pkgSwitch(p, { admin: false, off: off(), system: false }), { kind: 'own', on: false, disabled: true }, '扩展照它的 on');
-  assert.deepEqual(pkgSwitch(p, { admin: true, off: off(true) }), { kind: 'system' }, '管理员模式里是总闸');
-  assert.deepEqual(pkgSwitch(p, { admin: false, off: null }), { kind: 'system' }, '旧核心没给那一项：照旧总闸');
-  assert.deepEqual(pkgSwitch({ package: 'x' }, { admin: false, off: null }), null, '没有总闸那一格');
-  assert.deepEqual(pkgSwitch({ ...p, required: true }, { admin: false, off: off() }), { kind: 'required' });
+  assert.deepEqual(pkgSwitch(p, {}), { kind: 'system' });
+  assert.deepEqual(pkgSwitch({ package: 'x' }, { system: false }), { kind: 'system' }, '扩展照它的 on');
+  assert.deepEqual(pkgSwitch({ package: 'x' }, {}), null, '没有总闸那一格');
+  assert.deepEqual(pkgSwitch({ ...p, required: true }, {}), { kind: 'required' });
 });
 
 test('软件包页的组：没在搜时组里的包拿出来收成一组（照 groups 的先后，空的不交）；搜着、旧核心没有 groups 的照旧单列（2026-10-27 项目主人）', async () => {
@@ -504,10 +498,7 @@ test('池的调用方式照清单的 options 列（核心 Q-4 上多了 ordered 
   assert.deepEqual(strategiesOf(null), ['pin', 'rotate']);
 });
 
-test('成员拿到的列表（核心 U23-R修三）：没对他开放的（available: false）自己的开关灰着关着；带 mcp 的标成 MCP', async () => {
-  const { pkgSwitch, pkgTag } = await import('../../packages/settings/model.js');
-  const off = { entry: null };
-  assert.deepEqual(pkgSwitch({ enabled: true, available: false }, { admin: false, off }), { kind: 'own', on: false, disabled: true });
-  assert.deepEqual(pkgSwitch({ enabled: true }, { admin: false, off }), { kind: 'own', on: true, disabled: false }, '开放的照旧');
+test('带 mcp 的包标成 MCP', async () => {
+  const { pkgTag } = await import('../../packages/settings/model.js');
   assert.equal(pkgTag({ kind: 'bundle', mcp: [{ name: 'echo', state: 'running' }] }), 'mcp');
 });

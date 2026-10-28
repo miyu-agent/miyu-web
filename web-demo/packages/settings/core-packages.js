@@ -11,7 +11,7 @@
 import { confirmIn } from './confirm.js';
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField, findBox, shell } from './rows.js';
-import { splitKey, itemFor, plainItem, pkgSwitch, pkgGroupsOf, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy } from './model.js';
+import { splitKey, itemFor, pkgSwitch, pkgGroupsOf, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy } from './model.js';
 import { openPage, probeSites } from './backstage.js';
 import { serverRow } from './mcp-servers.js';
 import { stateText, failed } from './extensions.js';
@@ -118,9 +118,7 @@ function packageRow(dialog, p, child = false) {
   const bad = BAD.has(p.status);
   // 包开着、带的 MCP 服务有停下的：写「服务已停止」（核心的状态是好好的也照这个写）
   // 服务全被个人设置里同名的替代了（F-9 补的 `covered`，`status` 照旧 `off`）：写「被个人设置替代」，不当关着
-  // 没对这个成员开放的（核心 U23-R修三 的 `available: false`）：写暗字「管理员没开放」，开关灰着（`pkgSwitch`）
-  const state = p.available === false ? h('span.set-pkg-status', t('pkg.not_open'))
-    : p.covered && !bad ? h('span.set-pkg-status', t('pkg.covered'))
+  const state = p.covered && !bad ? h('span.set-pkg-status', t('pkg.covered'))
     : mcpStopped(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_stopped'))
     : mcpNeedsLogin(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_login'))
     : QUIET.has(p.status) ? null : h(`span.set-pkg-status${bad ? '.is-bad' : p.status === 'running' ? '.is-on' : ''}`, t(`pkg.status.${p.status}`));
@@ -192,25 +190,15 @@ function groupPage(dialog, id) {
 }
 
 /** 个人设置里把包 `id` 对自己关掉的那一项（核心 U23 末上：`config.schema` 给每个能关的包现拼一项）；核心没给的是 `null`。 @param {any} dialog @param {string} id */
-const offItem = (dialog, id) => (dialog.schema ? plainItem(dialog.schema, dialog.got ?? {}, `packages.${id}.off`) : null);
-
 /**
- * 一个包右边的开关（列表那一行、信息页卡片同一个）：跟着管理员模式换（2026-10-26 项目主人：管理员不是用户，管理员模式里的开关就是总闸）。
- * 平时是自己的「把这个包关掉」（`model.js` 的 `pkgSwitch`）；核心没给那一项的（旧核心、必需的）、管理员模式里是总闸：扩展照 `e`，别的照 `enabled`。
+ * 一个包右边的开关（列表那一行、信息页卡片同一个）：总闸（`model.js` 的 `pkgSwitch`），扩展照 `e`，别的照 `enabled`。
  * @param {any} dialog @param {any} p @param {any} e 扩展的状态（不是扩展的是 `null`）
  */
 function controlFor(dialog, p, e) {
   const id = p.package;
-  const off = offItem(dialog, id);
-  const how = pkgSwitch(p, { admin: true, off, ...(e ? { system: !!e.on } : {}) });
+  const how = pkgSwitch(p, e ? { system: !!e.on } : {});
   if (!how) return null;
   if (how.kind === 'required') return h('span.set-pkg-status', dialog.ctx.text('pkg.required'));
-  if (how.kind === 'own') {
-    // 自己的：关了写 `true`（只写个人层），开回来去掉这一项；存完设置页整页重读重画
-    const el = toggle(how.on, async (on) => !await dialog.save(off, on ? { unset: true } : { value: true }));
-    if (how.disabled) el.setAttribute('disabled', '');
-    return el;
-  }
   if (e) return toggle(e.on, (on) => (on ? dialog.extensions.turnOn(e) : dialog.extensions.act('extension.disable', { package: id })));
   return switchFor(dialog, p);
 }
@@ -371,13 +359,11 @@ function openButton(dialog, id) {
 }
 
 /**
- * 卸载：只有管理员自己装的、不是必需的才有（出厂的卸掉和关掉是一回事，照列表的开关）。先弹窗问一句（2026-10-20 项目主人：不要点两下）。
+ * 卸载：只有自己装的、不是必需的才有（出厂的卸掉和关掉是一回事，照列表的开关）。先弹窗问一句（2026-10-20 项目主人：不要点两下）。
  * @param {any} dialog @param {any} p
  */
 function removeButton(dialog, p) {
   if (p.required || p.layer === 'shipped') return null;
-  // 自己那一层装的（核心 U23下上 `layer: user`）：卸的是自己那一份，不用管理员模式，成员也有
-  const own = p.layer === 'user';
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const button = h('button.set-btn.is-danger', { type: 'button', onclick: async () => {
     if (!await confirmIn(button, { text: t('pkg.uninstall_ask', { name: p.name ?? p.package }), yes: t('ask_yes'), no: t('ask_no') })) return;

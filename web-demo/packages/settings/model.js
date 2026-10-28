@@ -572,17 +572,13 @@ export function carriedBy(skills, scripts) {
 }
 
 /**
- * 一个包右边的开关画成哪一种（蓝图「设置页」第 13 条，2026-10-26 项目主人：开关跟着管理员模式换）：必需的写「必需」（`required`，旧核心）；
- * 平时、核心给了「把这个包关掉」那一项（`off`，U23 末上）的是自己的（`own`：开着是没写或不是 `true`，总闸关着的灰着关着）；
- * 别的、管理员模式里是总闸（`system`），没有总闸那一格的没有开关（`null`）。`system` 是总闸现在开没开（扩展照它的 `on`，别的照 `enabled`）。
- * @param {{required?: boolean, enabled?: boolean, available?: boolean}} p @param {{admin: boolean, off: {entry?: {value?: any}|null}|null, system?: boolean}} o
- * @returns {{kind: 'required'}|{kind: 'own', on: boolean, disabled: boolean}|{kind: 'system'}|null}
+ * 一个包右边的开关画成哪一种（蓝图「设置页」第 13 条）：必需的写「必需」（`required`，旧核心）；有总闸那一格的是总闸（`system`），
+ * 没有的没有开关（`null`）。`system` 是总闸现在开没开（扩展照它的 `on`，别的照 `enabled`）。
+ * @param {{required?: boolean, enabled?: boolean}} p @param {{system?: boolean}} o
+ * @returns {{kind: 'required'}|{kind: 'system'}|null}
  */
-export function pkgSwitch(p, { admin, off, system }) {
+export function pkgSwitch(p, { system }) {
   if (p.required) return { kind: 'required' };
-  // 管理员没对这个成员开放的（U23-R修三 `available: false`）当总闸关着：自己的开关灰着关着
-  const open = (system ?? p.enabled !== false) && p.available !== false;
-  if (!admin && off) return { kind: 'own', on: open && off.entry?.value !== true, disabled: !open };
   return system !== undefined || 'enabled' in p ? { kind: 'system' } : null;
 }
 
