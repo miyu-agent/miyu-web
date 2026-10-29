@@ -34,6 +34,8 @@ pub struct Open {
     pub port: Option<u16>,
     /// 不开浏览器，印网址。
     pub print: bool,
+    /// `--format json`：给程序读（桌面端的外壳），标准输出只印一行 `{"url", "first"}`，人看的字不印；带了它就当 [`Open::print`]。
+    pub json: bool,
     /// 忘了密码：要一个一次性码重设。
     pub reset: bool,
     /// 作废全部浏览器的登录。
@@ -142,6 +144,10 @@ pub async fn open(
         open.package.as_deref(),
     );
     let secret = code.is_some() || ticket.is_some();
+    if open.json {
+        say(out, &json!({"url": url, "first": first}).to_string());
+        return 0;
+    }
     if !open.print && hand(root, &url, secret, launch, browser) {
         if first && !open.reset {
             say(err, &language.first());

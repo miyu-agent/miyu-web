@@ -56,6 +56,7 @@
 4. 用系统的办法打开（Linux 是 `xdg-open`，macOS 是 `open`，Windows 是 `cmd /C start "" "<网址>"`）。网址带着一次性码、交接票的不直接交（交出去的参数进进程列表，同一台机器上的别人看得到；im 设计 07 第 3.6 节）：写一个跳转页 `run/open/<16 个随机字节的十六进制>.html`（目录只给本人：Unix 上目录 0700、文件 0600；Windows 上在本人用户目录下的数据根里，同本机令牌 `run/token` 的办法），里面一行 `location.replace("<网址>")`（不留历史）、`<meta name="referrer" content="no-referrer">`，交出去的是这个文件的 `file://` 地址；交了以后拉起自己 `miyu-web forget <跳转页>`（跟终端脱开、不等它），它 30 秒后删掉这一页；每次 `open` 先删掉 `run/open/` 里放了 2 分钟以上的（`forget` 没跑完的兜底）。不带凭据的网址照旧直接交。
 5. 交给了浏览器：印网页的地址（不带码、票）；带了码的再印一句「浏览器没打开的话，用 miyu web --print」（第 3 题说的 snap 装的 Firefox），退出码 0。浏览器开没开、设没设好，`miyu web` 看不到。交不出去（没有 `xdg-open`、没有图形界面）：照 `--print` 办。
 6. `--print`：不开浏览器，印整个网址（不写跳转页）；带了码的，下一行提醒「5 分钟内有效，只能用一次，别发给别人」；带了票的提醒「60 秒内有效，只能用一次，别发给别人」。
+   - `--format json`（2026-10-29，桌面端的外壳要读，和 `miyu pkg pack --format json` 同一个写法；带了它就当 `--print`）：标准输出只印一行 `{"url": <整个网址>, "first": <还没设过访问密码>}`，提醒和别的人看的字都不印；出错照旧在标准错误上照语言说、退出码非 0。`--format text` 同不写。别的值、`--format` 后面没东西照用法不对。
 7. `--logout`：照终端的样子连核心，`account.logout`，`all: true`，印作废了几个。不碰网页软件，不改密码。
 8. `--package <编号>`（施工 F-6 下，`package-pages.md`「终端」第 2 条）：网址 `#` 后面多一个 `package=<编号>`，和一次性码一起的写成 `#setup=<码>&package=<编号>`；页面起来就开着这个软件的独立整页（2026-10-15 项目主人定，网页的蓝图「软件的页面」：网页自己的路由，宿主读完一次性码只抹它，`package=` 留在地址栏里，能收藏）。编号只认字母、数字、`-`、`_`、`.`，1 到 64 个，别的照用法不对（退出码 2）。
 
@@ -111,7 +112,7 @@
 | `crates/miyu-web/tests/backstage.rs` | 核心用替身（多答 `package.list`、`package.file`）：换票据要登录令牌（没带、带错、不是 Bearer 401）；正文不对 400；没有后台页、没有这个包 404；同一个令牌、同一个包交回同一张；页面文件和响应头（类型、`backstage_csp`、`nosniff`、`no-referrer`、`no-cache`、`Access-Control-Allow-Origin: *`、不设 cookie）；以 `/` 结尾补 `index.html`；没有的 404、核心拒 `bad_params` 400；票据只开它的包、不认识的 404；大文件一块块问、拼起来一个字节不差；令牌作废了 401、票据一起作废；方法 405 |
 | `crates/miyu-web/src/backstage/tests.rs` | 地址拆成票据、包、文件（`%xx`、补 `index.html`、NUL、不是 UTF-8、包编号写法）；包编号的写法；核心拒的换成状态码；类型照扩展名 |
 | `crates/miyu-web/src/media/tests.rs` | `Range` 每种写法（大小写、超出、好几段、写法不对、空的资源）；下载的名字只留最后一段、`attr-char` 以外都转义 |
-| `crates/miyu-web/tests/open.rs` | 拉起真的 `miyu-web serve`；没设过密码、`--reset` 的带 `#setup=`，别的带 `#ticket=…`（不带账号）、核心不给票的什么都不带；带凭据的交给浏览器的是只给本人的跳转页、里面才是网址，过期的跳转页下一次 `open` 删掉；`--package` 的带 `package=`，和一次性码一起是 `#setup=…&package=…`；`--print`、交不给浏览器的印网址和提醒；`--logout`；端口被占照人的语言说 |
+| `crates/miyu-web/tests/open.rs` | 拉起真的 `miyu-web serve`；没设过密码、`--reset` 的带 `#setup=`，别的带 `#ticket=…`（不带账号）、核心不给票的什么都不带；带凭据的交给浏览器的是只给本人的跳转页、里面才是网址，过期的跳转页下一次 `open` 删掉；`--package` 的带 `package=`，和一次性码一起是 `#setup=…&package=…`；`--print`、交不给浏览器的印网址和提醒；`--format json` 只印一行 `{url, first}`、不开浏览器不印提醒；`--logout`；端口被占照人的语言说 |
 | `crates/miyu-cli/src/web/tests.rs` | 参数照原样交给 `miyu-web open`；没装时说怎么装、退出码 1；装了的照它的退出码 |
 
 ### 施工时定的（施工 W-9，2026-10-04）

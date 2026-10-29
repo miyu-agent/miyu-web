@@ -319,6 +319,21 @@ async fn print_and_a_missing_browser_print_the_address() {
     assert_eq!(out, format!("{site}/#setup={CODE}\n"));
     assert!(err.contains("在浏览器里打开："), "{err}");
     assert!(err.contains("5 分钟内有效，只能用一次"), "{err}");
+    // `--format json`（桌面端的外壳读）：只一行 JSON，不开浏览器、不印提醒
+    let json = Open {
+        json: true,
+        ..Open::default()
+    };
+    let (code, out, err) = run_open(&home, json, &browser).await;
+    assert_eq!(code, 0, "{err}");
+    let got: Value = serde_json::from_str(out.trim_end()).expect("一行 JSON");
+    assert_eq!(
+        got,
+        json!({"url": format!("{site}/#setup={CODE}"), "first": true})
+    );
+    assert_eq!(out.lines().count(), 1);
+    assert!(err.is_empty(), "{err}");
+    assert!(browser.opened.lock().expect("没坏").is_empty());
     let nothing = FakeBrowser {
         works: false,
         opened: Mutex::new(Vec::new()),
