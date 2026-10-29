@@ -22,11 +22,11 @@ const turn3 = [
 ];
 
 test('一轮：你的话（开轮那一句）、时间线的一段、她的回答、收尾那一行；收起那一行照核心给的（界面语言是自动的照英文那份）', () => {
-  const got = itemsOf(turn3, { state: 'idle', permission: { level: 'workspace' } }, { account: 'admin' });
+  const got = itemsOf(turn3, { state: 'idle', permission: { level: 'workspace' } });
   assert.deepEqual(brief(got.items), ['user: 你好', 'steps: thought,tool', 'reply: 汪！', 'done: ▣  12:02 · dev/m1 · 2.2s · 4.2k(C25%)'.replace('12:02', got.items[3].text.match(/\d\d:\d\d/)[0])]);
   const user = got.items[0];
   assert.equal(user.opens, true);
-  assert.deepEqual(user.speaker, { kind: 'person', account: 'admin', name: 'admin' });
+  assert.deepEqual(user.speaker, { kind: 'person', name: '' });
   const seg = got.items[1];
   assert.equal(seg.finished, true);
   assert.deepEqual(seg.summary, { failed: false, spans: [{ text: 'Thought for 1s', tone: 'base' }, { text: ' · ', tone: 'base' }, { text: '+3', tone: 'added' }] });
@@ -249,7 +249,7 @@ test('她 show 过的（核心 D-5）：接在那一段后面画在正文里，�
 test('收尾那一行接这一轮的出字速度（核心 SP-1 的 speed：输出 ÷ 首字到结束），没有这一格、ms 是 0 的不写（2026-10-26 项目主人：从框下面那一行挪过来）', async () => {
   const { speedText } = await import('../src/model/entries.js');
   const end = turn3.find((e) => e.kind === 'end');
-  const done = (speed) => itemsOf(turn3.map((e) => (e === end ? { ...e, speed } : e)), { state: 'idle', permission: { level: 'workspace' } }, { account: 'admin' }).items.at(-1).text.replace(/\d\d:\d\d/, 'HH:MM');
+  const done = (speed) => itemsOf(turn3.map((e) => (e === end ? { ...e, speed } : e)), { state: 'idle', permission: { level: 'workspace' } }).items.at(-1).text.replace(/\d\d:\d\d/, 'HH:MM');
   assert.equal(done({ output: 1410, ms: 10000 }), '▣  HH:MM · dev/m1 · 2.2s · 4.2k(C25%) · 141 tok/s');
   assert.equal(done(undefined), '▣  HH:MM · dev/m1 · 2.2s · 4.2k(C25%)');
   assert.equal(speedText({ output: 50, ms: 0 }), '');

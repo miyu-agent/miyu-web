@@ -57,7 +57,7 @@ export class App {
   constructor(store, conn, info, ctx, lightbox) {
     this.ctx = ctx;
     /** 软件包接进来的：挂载位、现在的灯箱（`rich.js` 的 `Ext`） */
-    this.ext = { slots: ctx.slots, lightbox, storage: ctx.storage, account: info.account ?? null, titleOf: (id) => this.titleOf(id), detail: (session, call) => this.callDetail(session, call), nested: (session, which, after) => this.nestedDetail(session, which, after), summary: (session, upto) => this.compactionSummary(session, upto) };
+    this.ext = { slots: ctx.slots, lightbox, storage: ctx.storage, titleOf: (id) => this.titleOf(id), detail: (session, call) => this.callDetail(session, call), nested: (session, which, after) => this.nestedDetail(session, which, after), summary: (session, upto) => this.compactionSummary(session, upto) };
     /** 一次调用改了什么（`view.detail`）：同一次调用的结果不会变，照「会话 调用」记着只问一次 @type {Map<string, Promise<any>>} */
     this.details = new Map();
     this.store = store;
@@ -1128,7 +1128,7 @@ export class App {
     const parent = this.current ? this.store.index.get(this.current)?.parent ?? null : null;
     const again = this.recapsAgain.get(this.current ?? '') ?? [];
     // 条目、会话状态换成正文（核心 9-8，蓝图「照条目画」）
-    const view = withLocalRecaps(itemsOf(s?.view.list ?? [], s?.view.status ?? null, { account: this.ext.account, parent, dream: !!this.dreamOf(this.current) }), again);
+    const view = withLocalRecaps(itemsOf(s?.view.list ?? [], s?.view.status ?? null, { parent, dream: !!this.dreamOf(this.current) }), again);
     this.chat.setCompacting(s ? compactingOf(s.view.list, s.view.status) : null, this.current);
     // 先照空不空摆好输入框（居中时对话区没有高度），再画对话：不然第一句话照 0 高算停在哪，被顶到视口上面
     this.centerIfEmpty(!this.current);

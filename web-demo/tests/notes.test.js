@@ -15,21 +15,21 @@ const PARENT = '0199a000-0000-7000-8000-0000000000ff';
 test('谁说的：你的、别的账号的、子代理发给她的（标题照派它的那次）、派它的会话、别的会话、别的 harness、平台上的人', () => {
   const jobs = new Map([['j2', { what: 'agent', title: '查文档', session: CHILD, command: null }]]);
   const of = (by) => speakerOf(by, jobs, PARENT);
-  assert.deepEqual(of({ kind: 'person', account: 'admin' }), { kind: 'person', account: 'admin', name: 'admin' });
-  assert.deepEqual(of({ kind: 'person', account: 'alice' }), { kind: 'person', account: 'alice', name: 'alice' });
-  assert.deepEqual(of({ kind: 'session', id: CHILD }), { kind: 'agent', account: null, name: '子代理 · 查文档' });
+  assert.deepEqual(of({ kind: 'person' }), { kind: 'person', name: '' });
+  assert.deepEqual(of({ kind: 'person', via: 'qq' }), { kind: 'person', name: '' }, '私聊认出的带 via，照样是你');
+  assert.deepEqual(of({ kind: 'session', id: CHILD }), { kind: 'agent', name: '子代理 · 查文档' });
   assert.equal(of({ kind: 'session', id: PARENT }).kind, 'parent');
   assert.match(of({ kind: 'session', id: '0199a000-0000-7000-8000-00000000abcd' }).name, /0000abcd/);
-  assert.deepEqual(of({ kind: 'harness', name: 'claude-code' }), { kind: 'harness', account: null, name: 'claude-code · 外部 agent' });
-  assert.deepEqual(of({ kind: 'external', platform: 'qq' }), { kind: 'external', account: null, name: '外部' });
+  assert.deepEqual(of({ kind: 'harness', name: 'claude-code' }), { kind: 'harness', name: 'claude-code · 外部 agent' });
+  assert.deepEqual(of({ kind: 'external', platform: 'qq' }), { kind: 'external', name: '外部' });
 });
 
 test('定时任务、循环交进来的（核心 J-1 上、J-2）：写「定时任务 编号」，带 loop 的写「循环」', () => {
   const of = (by) => speakerOf(by, new Map());
-  assert.deepEqual(of({ kind: 'schedule', schedule: 't3', account: 'alice' }), { kind: 'schedule', account: null, name: '定时任务 t3' });
-  assert.equal(of({ kind: 'schedule', schedule: 't4', account: 'alice', loop: 'fixed' }).name, '循环');
-  assert.equal(of({ kind: 'schedule', schedule: 't5', account: 'alice', loop: 'dynamic' }).name, '循环');
-  assert.equal(of({ kind: 'schedule', account: 'alice' }).name, '定时任务', '没写编号的不留空格');
+  assert.deepEqual(of({ kind: 'schedule', schedule: 't3' }), { kind: 'schedule', name: '定时任务 t3' });
+  assert.equal(of({ kind: 'schedule', schedule: 't4', loop: 'fixed' }).name, '循环');
+  assert.equal(of({ kind: 'schedule', schedule: 't5', loop: 'dynamic' }).name, '循环');
+  assert.equal(of({ kind: 'schedule' }).name, '定时任务', '没写编号的不留空格');
 });
 
 test('出错那一句：402、404 加人话；内核自己查出来的写分类，有原话的接后面；没原话的写分类', () => {

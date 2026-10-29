@@ -26,7 +26,7 @@ export const seqOf = (id) => Number.parseInt(String(id).replace(/^[a-z]+/, ''), 
 const RUNNING = new Set(['preparing', 'running']);
 
 /**
- * @typedef {{account?: string|null, parent?: string|null, dream?: boolean}} Options 这个页面登录的账号（自己说的话不写是谁）；这个会话是子会话的，派它的会话；
+ * @typedef {{parent?: string|null, dream?: boolean}} Options 这个会话是子会话的，派它的会话；
  *   是整理会话的（核心 D-2 上）：记忆模块交来的那一句、她的回答交给记忆包画（挂载位 `chat.item` 的 `dream.batch`、`dream.answer`）
  */
 
@@ -172,7 +172,7 @@ function jobsOf(entries, status) {
 
 /** @param {any} e @param {Map<string, any>} jobs @param {Options} opts */
 function userItem(e, jobs, opts) {
-  const speaker = e.from ? speakerOf(e.from, jobs, opts.parent ?? null) : { kind: 'person', account: opts.account ?? null, name: opts.account ?? '' };
+  const speaker = e.from ? speakerOf(e.from, jobs, opts.parent ?? null) : { kind: 'person', name: '' };
   return {
     type: 'user',
     key: e.id,

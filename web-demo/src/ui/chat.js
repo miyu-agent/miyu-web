@@ -326,10 +326,10 @@ export class Chat {
     this.settled = true;
   }
 
-  /** 这一句是不是你（这个页面登录成的账号）说的；不知道账号的，人说的都算你的。 */
+  /** 这一句是不是你说的：只有主人一个人（核心 SU-6上），人说的都是你。 */
   mine(item) {
     const s = item.speaker;
-    return !s || (s.kind === 'person' && (this.ext.account == null || s.account === this.ext.account));
+    return !s || s.kind === 'person';
   }
 
   /** 一块：你的（别人的）一句话、她的一轮，或者不挂在她头下的一行（`bare`：前面那一块她的回复没有头，这一行不缩进）。没变的直接用记着的节点。 */

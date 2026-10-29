@@ -10,7 +10,7 @@ import { shortSession } from './words.js';
 /**
  * @typedef {{what: string, title: string, session: string|null, command: string|null}} Job 派出去的一个任务（会话状态的任务表、
  *   后台任务的旁白；`model/entries.js` 的 `jobsOf`）
- * @typedef {{kind: string, account: string|null, name: string}} Speaker 一句话是谁说的
+ * @typedef {{kind: string, name: string}} Speaker 一句话是谁说的
  * @typedef {{kind: 'output', command: string|null, hash: string|null, chars: number|null, job?: string|null, nested?: boolean}|{kind: 'text', text: string, truncated: boolean}} Detail
  *   点开一行看什么：后台命令的命令和整份输出（blob），子代理交回的正文（Markdown）
  */
@@ -19,7 +19,7 @@ import { shortSession } from './words.js';
 const KERNEL_CLASSES = ['bad_stream', 'empty_reply', 'bad_summary', 'compaction_paused', 'no_model', 'cooling', 'output_limit'];
 
 /**
- * 一句话是谁说的：人照账号；子代理照派它的那次的标题；父会话写「派它的会话」，别的会话写「从会话 短编号 收到消息」；别的 harness 照它报的名字、注明是别的 agent；平台上的人写「外部」；定时任务写「定时任务 编号」、循环写「循环」。
+ * 一句话是谁说的：人是你（核心 SU-6上 起 `by` 不带账号）；子代理照派它的那次的标题；父会话写「派它的会话」，别的会话写「从会话 短编号 收到消息」；别的 harness 照它报的名字、注明是别的 agent；平台上的人写「外部」；定时任务写「定时任务 编号」、循环写「循环」。
  * @param {any} by 事件的 `by`
  * @param {Map<string, Job>} jobs
  * @param {string|null} [parent] 这个会话是子会话的：派它的那个会话（`session.created` 的 `parent`）
@@ -27,19 +27,19 @@ const KERNEL_CLASSES = ['bad_stream', 'empty_reply', 'bad_summary', 'compaction_
  */
 export function speakerOf(by, jobs, parent = null) {
   const n = res.text.notes;
-  if (by?.kind === 'person') return { kind: 'person', account: by.account ?? null, name: by.account ?? '' };
+  if (by?.kind === 'person') return { kind: 'person', name: '' };
   if (by?.kind === 'session') {
     const job = [...jobs.values()].find((j) => j.session === by.id);
-    if (job) return { kind: 'agent', account: null, name: t('notes.agent_speaker', { title: job.title }) };
-    if (by.id === parent) return { kind: 'parent', account: null, name: n.parent_speaker, id: by.id };
+    if (job) return { kind: 'agent', name: t('notes.agent_speaker', { title: job.title }) };
+    if (by.id === parent) return { kind: 'parent', name: n.parent_speaker, id: by.id };
     // 别的会话发来的（施工 C-5）：「从会话 短编号 收到消息」，标题界面那边照会话表接（2026-10-01 项目主人定，照终端）
-    return { kind: 'session', account: null, name: t('notes.session_speaker', { id: shortSession(String(by.id ?? '')) }), id: by.id };
+    return { kind: 'session', name: t('notes.session_speaker', { id: shortSession(String(by.id ?? '')) }), id: by.id };
   }
-  if (by?.kind === 'harness') return { kind: 'harness', account: null, name: t('notes.harness_speaker', { name: by.name ?? '' }) };
-  if (by?.kind === 'external') return { kind: 'external', account: null, name: n.external };
+  if (by?.kind === 'harness') return { kind: 'harness', name: t('notes.harness_speaker', { name: by.name ?? '' }) };
+  if (by?.kind === 'external') return { kind: 'external', name: n.external };
   // 到点的定时任务、循环交进来的（核心 J-1 上、J-2）：「定时任务 t3」，循环的写「循环」
-  if (by?.kind === 'schedule') return { kind: 'schedule', account: null, name: by.loop ? n.loop_speaker : t('notes.schedule_speaker', { id: String(by.schedule ?? '') }).trim() };
-  return { kind: by?.kind ?? 'unknown', account: null, name: by?.kind ?? '' };
+  if (by?.kind === 'schedule') return { kind: 'schedule', name: by.loop ? n.loop_speaker : t('notes.schedule_speaker', { id: String(by.schedule ?? '') }).trim() };
+  return { kind: by?.kind ?? 'unknown', name: by?.kind ?? '' };
 }
 
 /**
