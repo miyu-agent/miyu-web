@@ -8,12 +8,12 @@ use serde_json::json;
 
 use super::*;
 
-/// 出厂的资源目录照装好的样子拼一份（仓库拆开以后）：这个仓库的 `package/`（清单、`web.json`）放进 `packages/web/`。一个进程拼一次。
+/// 网页包的文件夹照装好的样子拼一份（仓库拆开以后）：这个仓库的 `web/` 里的清单、`web.json`。一个进程拼一次。
 fn shipped_root() -> &'static Path {
     static ROOT: OnceLock<PathBuf> = OnceLock::new();
     ROOT.get_or_init(|| {
         let root = std::env::temp_dir().join(format!("miyu-web-shipped-{}", std::process::id()));
-        std::fs::create_dir_all(root.join(DIR)).unwrap();
+        std::fs::create_dir_all(&root).unwrap();
         let ours = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../web");
         std::fs::copy(ours.join("package.toml"), root.join(MANIFEST)).unwrap();
         std::fs::copy(ours.join("web.json"), root.join(FILE)).unwrap();
@@ -23,6 +23,38 @@ fn shipped_root() -> &'static Path {
 
 fn shipped() -> Settings {
     Settings::load(shipped_root()).unwrap()
+}
+
+#[test]
+fn the_package_folder_is_what_the_core_gave_then_the_one_holding_the_program_in_bin() {
+    let scratch = std::env::temp_dir().join(format!("miyu-web-package-dir-{}", std::process::id()));
+    let given = scratch.join("given");
+    let installed = scratch.join("installed");
+    std::fs::create_dir_all(installed.join("bin")).unwrap();
+    std::fs::create_dir_all(&given).unwrap();
+    std::fs::write(installed.join(FILE), "{}").unwrap();
+    let exe = installed.join("bin").join("miyu-web");
+    // 核心给的那个里面没有 web.json：照程序带着装的那个
+    assert_eq!(
+        package_dir(Some(&given), Some(&exe)),
+        Some(installed.clone())
+    );
+    std::fs::write(given.join(FILE), "{}").unwrap();
+    assert_eq!(
+        package_dir(Some(&given), Some(&exe)),
+        Some(given.clone()),
+        "核心给的在前"
+    );
+    assert_eq!(
+        package_dir(Some(Path::new("given")), Some(&exe)),
+        Some(installed.clone()),
+        "相对的不认"
+    );
+    // 程序不在 bin/ 里（随 Miyu 装在主程序旁边、开发时在 target/ 里）：交 None，照资源目录找
+    let loose = scratch.join("deploy").join("miyu-web");
+    assert_eq!(package_dir(None, Some(&loose)), None);
+    assert_eq!(package_dir(None, None), None);
+    std::fs::remove_dir_all(&scratch).unwrap();
 }
 
 #[test]

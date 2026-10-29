@@ -87,20 +87,22 @@ async fn serve(root: DataRoot, env: &Env, port: Option<u16>) -> u8 {
         print!("{}", miyu_client::connect::Ready::Failed(reason).line());
         1
     };
-    let resources = match ResourceRoot::locate(env) {
-        Ok(resources) => resources,
-        Err(error) => return failed(error.to_string()),
+    // 网页包的文件夹：核心挑的、程序带着装的，都不是的照资源目录（`web-ui.md`「怎么走」第一条第 6 款）
+    let given = std::env::var_os("MIYU_PACKAGE_DIR").map(PathBuf::from);
+    let web = match miyu_web::settings::package_dir(given.as_deref(), env.exe.as_deref()) {
+        Some(dir) => dir,
+        None => match ResourceRoot::locate(env) {
+            Ok(resources) => resources.path().join(miyu_web::settings::DIR),
+            Err(error) => return failed(error.to_string()),
+        },
     };
-    let settings = match Settings::load(resources.path()) {
+    let settings = match Settings::load(&web) {
         Ok(settings) => settings,
         Err(error) => return failed(error),
     };
     let pages = std::env::var_os("MIYU_WEB_PAGES")
         .filter(|pages| !pages.is_empty())
-        .map_or_else(
-            || resources.path().join(miyu_web::settings::DIR).join("pages"),
-            PathBuf::from,
-        );
+        .map_or_else(|| web.join("pages"), PathBuf::from);
     let _log = miyu_client::log::install(
         &root.state().join("logs"),
         "web",

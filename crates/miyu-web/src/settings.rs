@@ -5,7 +5,7 @@
 
 use std::collections::BTreeMap;
 use std::net::IpAddr;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use serde::Deserialize;
@@ -13,14 +13,28 @@ use serde_json::{Value, json};
 
 use miyu_client::places::DataRoot;
 
-/// 网页包装好以后在资源目录里的文件夹（这个仓库的 `web/` 照原样放进去）：清单、常量、页面都在这里。
+/// 随 Miyu 一起装的网页包在资源目录里的文件夹（这个仓库的 `web/` 照原样放进去）：清单、常量、页面都在这里。
 pub const DIR: &str = "packages/web";
 
-/// 常量在资源目录里的位置。
-pub const FILE: &str = "packages/web/web.json";
+/// 常量在网页包文件夹里的位置。
+pub const FILE: &str = "web.json";
 
-/// 网页自己的清单在资源目录里的位置。
-pub const MANIFEST: &str = "packages/web/package.toml";
+/// 网页自己的清单在网页包文件夹里的位置。
+pub const MANIFEST: &str = "package.toml";
+
+/// 网页包的文件夹（`web-ui.md`「怎么走」第一条第 6 款）：核心转交时设的 `MIYU_PACKAGE_DIR`；程序在某个文件夹的 `bin/` 里的
+/// （包带着程序装进数据根的样子），那个文件夹；头一个里面有 `web.json` 的就是。都不是的交 `None`，照资源目录的 [`DIR`] 找。
+pub fn package_dir(given: Option<&Path>, exe: Option<&Path>) -> Option<PathBuf> {
+    let beside = exe
+        .and_then(Path::parent)
+        .filter(|bin| bin.file_name().is_some_and(|name| name == "bin"))
+        .and_then(Path::parent);
+    [given.filter(|dir| dir.is_absolute()), beside]
+        .into_iter()
+        .flatten()
+        .find(|dir| dir.join(FILE).is_file())
+        .map(Path::to_path_buf)
+}
 
 /// 几项配置的键：`web.<名字>`。
 pub const KEYS: [&str; 5] = [
@@ -62,18 +76,18 @@ struct Constants {
 }
 
 impl Settings {
-    /// 读资源目录 `resources` 里网页包的 `web.json` 和清单里几项配置的默认值。
+    /// 读网页包文件夹 `dir` 里的 `web.json` 和清单里几项配置的默认值。
     ///
     /// # Errors
     ///
     /// 读不了、不是这个形状、清单里缺了某一项的默认值：原话里说是哪个文件。
-    pub fn load(resources: &Path) -> Result<Settings, String> {
-        let path = resources.join(FILE);
+    pub fn load(dir: &Path) -> Result<Settings, String> {
+        let path = dir.join(FILE);
         let text = std::fs::read_to_string(&path)
             .map_err(|error| format!("{} not readable: {error}", path.display()))?;
         let constants: Constants = serde_json::from_str(&text)
             .map_err(|error| format!("{} not readable: {error}", path.display()))?;
-        let path = resources.join(MANIFEST);
+        let path = dir.join(MANIFEST);
         let text = std::fs::read_to_string(&path)
             .map_err(|error| format!("{} not readable: {error}", path.display()))?;
         let manifest = miyu_client::manifest::read(&text)

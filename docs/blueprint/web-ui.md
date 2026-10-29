@@ -23,8 +23,8 @@
 | `crates/miyu-web/src/media/range.rs` | `Range` 要哪一段；下载的名字照 RFC 5987 转义 |
 | `crates/miyu-web/src/backstage.rs` | 软件后台页：`/page` 换票据、`/p/<票据>/<包>/<路径>` 照 `package.file` 一块块给、响应头（施工 F-6 下）；票据和连着的核心同 `/media` 那一套（`media/tickets.rs` 的 `Tickets` 两边各一份，`media/link.rs` 的 `Cores` 共用） |
 | `crates/miyu-web/src/open.rs`、`texts.rs` | `open`：确保 `serve` 在跑；要一次性码；开浏览器；给人看的字。照终端的样子连核心一问一答（`open` 要一次性码、`serve` 起来时问配置）、开浏览器的那两样在 `crates/miyu-webserve/src/open.rs`（施工 9-1 下从 `open.rs` 挪进 `client.rs`，施工 O-16 搬过去） |
-| `crates/miyu-web/src/settings.rs`、`package/web.json`、`package/package.toml`（装好在资源目录的 `packages/web/`；`web.json` 2026-10-11 仓库拆开以后从核心的 `resources/web/` 挪进来） | 端口（出厂 8300）、空闲多久、票据多久不用作废、最多几张是配置项（`web.port`、`web.idle_seconds`、`web.ticket_idle_seconds`、`web.most_tickets`），声明在网页自己的清单里，默认值照清单读，起来时问核心拿最终值（施工 9-1 下）；内容安全策略（页面的、软件后台页的 `backstage_csp`）、页面的媒体类型是常量，在 `web.json` |
-| 资源目录的 `packages/web/pages/` | 页面文件，和网页包放在一起（原来在 `resources/web/pages/`，2026-10-11 跟着挪）。发版时照网页的前端放进去；开发时设 `MIYU_WEB_PAGES` 指到 `web-demo/` |
+| `crates/miyu-web/src/settings.rs`、`package/web.json`、`package/package.toml`（装好在网页包的文件夹：资源目录的 `packages/web/`，或者打成包文件装进数据根的 `packages/web/`，找法见「怎么走」第一条第 6 款；`web.json` 2026-10-11 仓库拆开以后从核心的 `resources/web/` 挪进来） | 端口（出厂 8300）、空闲多久、票据多久不用作废、最多几张是配置项（`web.port`、`web.idle_seconds`、`web.ticket_idle_seconds`、`web.most_tickets`），声明在网页自己的清单里，默认值照清单读，起来时问核心拿最终值（施工 9-1 下）；内容安全策略（页面的、软件后台页的 `backstage_csp`）、页面的媒体类型是常量，在 `web.json` |
+| 网页包文件夹的 `pages/` | 页面文件，和网页包放在一起（原来在 `resources/web/pages/`，2026-10-11 跟着挪）。发版时照网页的前端放进去；开发时设 `MIYU_WEB_PAGES` 指到 `web-demo/` |
 | `crates/miyu-cli/src/web.rs`、`help/{zh,en}/web.txt` | 主程序的 `miyu web` 和它的帮助页 |
 | `crates/miyu-ipc/src/start.rs` 的 `spawn_detached` | 拉起、跟终端脱开、等那一行：核心和 `serve` 共用 |
 
@@ -42,7 +42,7 @@
    - 不定时醒（2026-10-15 设计 00「避免轮询」）：睡到下一件到点的事（空闲到点、核心连接 60 秒到点该关），没有到点的事就只等连接来、连着的走；过期的票据在换、找、有连接走时丢。
 4. 每个请求先核对 Host：认 `127.0.0.1:<端口>`、`localhost:<端口>`、`[::1]:<端口>`；听局域网的（`web.listen` 不是回环）另认「IP 字面量:<端口>」——听的是某一个地址的只认它，`0.0.0.0` 的认这台电脑的哪个地址都行（连得进来就是这台电脑的）。不认名字，别的回 403：别的网站把自己的域名解析到这台电脑也进不来（DNS rebinding）。
 5. 页面文件：`GET /` 给 `index.html`，别的照路径在页面目录里找。带 `..` 的、换成真实位置以后跑到页面目录外的、不是普通文件的，404。类型照扩展名（`web.json` 的表）。响应头一律带：`X-Content-Type-Options: nosniff`、`Referrer-Policy: no-referrer`、`Cache-Control: no-cache`、`Content-Security-Policy`（照 `web.json`，至少有 `connect-src 'self'`、`frame-ancestors 'none'`）。从来不设 cookie（「起草时定的」第 13 条）。
-6. 页面目录：`MIYU_WEB_PAGES` 设了照它，不然是资源目录下的 `packages/web/pages/`（网页包的文件夹）。资源目录照 `store/resources.md` 第 1 条找，和核心同一个办法。
+6. 网页包的文件夹（清单 `package.toml`、常量 `web.json`、页面 `pages/` 都在里面；2026-10-29 网页打成包文件、装进数据根的 `packages/web/` 以后补）：照这个先后找，头一个里面有 `web.json` 的就是：核心转交时设的 `MIYU_PACKAGE_DIR`（核心 S-6 上：包文件夹由核心挑是哪一层）；程序在某个文件夹的 `bin/` 里的，那个文件夹（包带着程序装的样子）；资源目录下的 `packages/web/`（随 Miyu 一起装、开发时；资源目录照 `store/resources.md` 第 1 条找，和核心同一个办法）。页面目录：`MIYU_WEB_PAGES` 设了照它，不然是网页包文件夹里的 `pages/`。
 7. `GET /ws`：Origin 要是 `http://` 加上第 4 款本机的三种之一（带端口），或者第 4 款认的 IP 写法、而且和这个请求的 Host 一样，不然 403。对端（TCP 连进来的地址，不看 `X-Forwarded-For` 这类头）不是回环地址的，接上核心以后、转浏览器的第一行以前，先写一行通知 `{"jsonrpc":"2.0","method":"connection.remote","params":{"from":<对端 IP>}}`（核心 `connection.md`「网页」：这条连接就是远程的，限流照 `from` 分，没设访问密码的远程登录回 `password_not_set`）；IPv4 映射进 IPv6 的照 IPv4 算；本机来的不写。接了以后连核心：`connect_or_start_bare`，核心没在跑就拉起来（命令是主程序 `miyu` 加 `core`，主程序在 `miyu-web` 的真实位置旁边）。连不上：往 WebSocket 发一条通知 `{"jsonrpc":"2.0","method":"web.error","params":{"message":<原因>}}`，再关。
 8. 一个标签页一条核心连接，不合并（proto/web-demo 分支 `docs/blueprint/web/architecture.md`「多用户、多终端」第 7 条）。两头照转：文字帧加一个 `\n` 是一行，一行去掉 `\n` 是一个文字帧。不读、不改、不加：握手的凭据、命令、推送原样过去。二进制帧：关，1003。一帧超过 1 MiB：关，1009（核心那头一行也就这么长）。
 9. 一头断了另一头跟着关。核心那头断了（重启、退出）：WebSocket 关，1012，页面照自己的规矩重连（proto/web-demo 分支 `docs/blueprint/web.md`「连核心」第 1 条）。网页软件这头关的（1003、1009、1012、连不上核心）：发完关闭帧先关写的一半，把浏览器还在发的读掉、扔掉，读到头或者满 2 秒再放套接字（「施工时定的」第 10 条）。
