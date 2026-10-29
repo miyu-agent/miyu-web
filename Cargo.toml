@@ -30,6 +30,6 @@ missing_panics_doc = "warn"
 # 核心照 git 依赖钉住一个提交（设计 32 第三节）：升级就是改这三行的 rev、过三台 CI。代码只经门面 miyu-client 用；
 # miyu-ipc、miyu-store 只给测试用（在测试里假扮核心听本机套接字、造数据根，设计 32 第四节第 2 条）。
 [workspace.dependencies]
-miyu-client = { git = "https://github.com/miyu-agent/miyu", rev = "357fb639cf31539e950c1910c0dba1a43d660a49" }
-miyu-ipc = { git = "https://github.com/miyu-agent/miyu", rev = "357fb639cf31539e950c1910c0dba1a43d660a49" }
-miyu-store = { git = "https://github.com/miyu-agent/miyu", rev = "357fb639cf31539e950c1910c0dba1a43d660a49" }
+miyu-client = { git = "https://github.com/miyu-agent/miyu", rev = "d906079dbc2b2112443c7b007854cb60ad33ace2" }
+miyu-ipc = { git = "https://github.com/miyu-agent/miyu", rev = "d906079dbc2b2112443c7b007854cb60ad33ace2" }
+miyu-store = { git = "https://github.com/miyu-agent/miyu", rev = "d906079dbc2b2112443c7b007854cb60ad33ace2" }
