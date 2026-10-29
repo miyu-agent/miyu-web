@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes, ms } from './support.js';
 import { res } from '../src/util/res.js';
-import { row, peek, messagePeek, thinkingTail, commandLines, details, quiet, keepsHead } from '../src/model/words.js';
+import { row, peek, messagePeek, thinkingTail, plainMarkdown, rollStart, commandLines, details, quiet, keepsHead } from '../src/model/words.js';
 
 loadRes();
 
@@ -84,6 +84,28 @@ test('思考收着时的那一小段：最后 160 个字，空白压成一个空
   const lines = Array.from({ length: 14 }, (_, i) => `第${i + 1}行`).join('\n');
   assert.deepEqual(thinkingTail(`\n${lines}\n`).split('\n'), Array.from({ length: 10 }, (_, i) => `第${i + 5}行`));
   assert.deepEqual(thinkingTail(lines, 3).split('\n'), ['第12行', '第13行', '第14行'], '要几行给几行');
+});
+
+test('思考那一行的一小段去掉 Markdown 记号（2026-10-29 思考照 Markdown 画）：加粗、反引号、标题、列表、引用拿掉，链接只留字', () => {
+  assert.equal(plainMarkdown('## 先看结构\n**关键**是 `fs.list` 的 __path__'), '先看结构\n关键是 fs.list 的 path');
+  assert.equal(plainMarkdown('- 第一步\n2. 第二步\n> 引用一句\n看 [文档](https://x.y/z) 和 ![图](a.png)'), '第一步\n第二步\n引用一句\n看 文档 和 图');
+  assert.equal(plainMarkdown('a * b - c'), 'a * b - c', '行中间的星号、减号不动');
+  assert.equal(peek({ kind: 'thought', text: '**结论**：用 `rollStart`' }), '结论：用 rollStart');
+});
+
+test('滚着的那几行从哪画起（2026-10-29）：末尾往回数几行，开头不切进代码块、表格、缩进的接续行；不早于上一次的开头', () => {
+  const plain = Array.from({ length: 30 }, (_, i) => `第${i}行`).join('\n');
+  assert.equal(plain.slice(rollStart(plain, 3)), '第27行\n第28行\n第29行');
+  assert.equal(rollStart('只有两行\n第二行', 5), 0, '不够数的从头画');
+  const fenced = ['开头', '```js', 'a()', 'b()', 'c()', '```', '收尾'].join('\n');
+  assert.equal(fenced.slice(rollStart(fenced, 3)), '```js\na()\nb()\nc()\n```\n收尾', '切点在代码块里的退到围栏那一行');
+  const table = ['前面', '| a | b |', '| - | - |', '| 1 | 2 |', '| 3 | 4 |'].join('\n');
+  assert.equal(table.slice(rollStart(table, 2)), table, '表格行不做开头，退到表格前面那一行');
+  const nested = ['一', '- 项', '  接着写', '  再接着'].join('\n');
+  assert.equal(nested.slice(rollStart(nested, 1)), '- 项\n  接着写\n  再接着', '缩进的接续行不做开头');
+  const from = rollStart(plain, 10);
+  assert.equal(rollStart(plain, 20, from), from, '往回数到上一次开头前面的：照旧上一次的');
+  assert.ok(rollStart(plain, 3, from) > from, '能往后挪的往后挪');
 });
 
 test('命令写在下面的几行：最多 8 行，放不下时让出最后一行写 ⋮；还没有命令的没有', () => {

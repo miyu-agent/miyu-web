@@ -139,7 +139,7 @@ export function peek(step) {
   // 只看末尾那一截（够写满还富余）：想得长的，不必每来一段字就把全文扫一遍（蓝图「性能」）
   const room0 = res.timeline.peek_chars;
   const raw = step.kind === 'thought' ? step.text : '';
-  const text = (raw.length > room0 * 4 ? raw.slice(-room0 * 4) : raw).replace(/\s+/g, ' ').trim();
+  const text = plainMarkdown(raw.length > room0 * 4 ? raw.slice(-room0 * 4) : raw).replace(/\s+/g, ' ').trim();
   const room = res.timeline.peek_chars;
   if (text.length <= room) return text;
   const from = text.length - room + 1;
@@ -177,6 +177,43 @@ export function messagePeek(step) {
   const text = (arg(step, 'message') ?? '').replace(/\s+/g, ' ').trim();
   const room = res.timeline.peek_chars;
   return text.length <= room ? text : `${text.slice(0, room - 1)}…`;
+}
+
+/**
+ * 思考那一行的一小段去掉 Markdown 的记号（蓝图「思考一行」，2026-10-29）：那一行太窄不画样式，照字写。
+ * `[字](地址)` 只留字；行首的标题 `#`、引用 `>`、列表记号拿掉；`**`、`__`、反引号拿掉。
+ * @param {string} text
+ */
+export function plainMarkdown(text) {
+  return text
+    .replace(/!?\[([^\]\n]*)\]\([^)\n]*\)/g, '$1')
+    .replace(/^[ \t]{0,3}(?:#{1,6}[ \t]+|>[ \t]?|(?:[-*+]|\d+[.)])[ \t]+)/gm, '')
+    .replace(/\*\*|__|`+/g, '');
+}
+
+/**
+ * 在想时滚着的那几行从哪里画起（蓝图「思考的预览」，2026-10-29 起照 Markdown 画）：从末尾往回数 `rows` 行，再往前找到最近的
+ * 能做开头的一行——不在代码块里、不是表格行（`|`）、不是缩进的接续行、不是 Setext 的下划线——切在那一行的开头，切下来
+ * 单独画不会把代码当成正文、把表格画成竖线。不早于 `min`（上一次的开头，本身就是能做开头的）；找不到往后挪的照旧 `min`。
+ * @param {string} text @param {number} rows @param {number} [min]
+ */
+export function rollStart(text, rows, min = 0) {
+  let at = text.length;
+  for (let n = 0; n < rows && at > 0; n++) at = text.lastIndexOf('\n', at - 1);
+  if (at <= min) return min;
+  let safe = min;
+  /** @type {string|null} */
+  let fence = null;
+  for (let i = min; i <= at + 1;) {
+    const end = text.indexOf('\n', i);
+    const line = text.slice(i, end < 0 ? text.length : end);
+    if (fence === null && i > min && line.trim() && !/^[ \t|]/.test(line) && !/^[=-]+[ \t]*$/.test(line)) safe = i;
+    const m = /^ {0,3}(`{3,}|~{3,})/.exec(line);
+    if (m) fence = fence === null ? m[1][0] : (m[1][0] === fence ? null : fence);
+    if (end < 0) break;
+    i = end + 1;
+  }
+  return safe;
 }
 
 /**

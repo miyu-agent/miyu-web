@@ -104,8 +104,27 @@
   margin: 0 calc(8px * var(--space)) calc(6px * var(--space)) var(--tl-indent); color: var(--tl-think); font-size: calc(12px * var(--text-scale)); font-weight: 400; line-height: 1.75;
   white-space: pre-wrap; overflow-wrap: anywhere; cursor: pointer; transition: color calc(0.15s * var(--motion-scale)) ease;
 }
-/* 点开的思考全文一行一块（只往最后一行接字，前面的不重排）：空行也占一行高 */
-.tl-think-line { min-height: 1.75em; }
+/* 思考照 Markdown 画（steps.js 的 roll、thinkText；2026-10-29 项目主人选「收敛版：同字号、暗色」）：字号、颜色跟着思考，
+   标题不放大只加粗，段落、列表的空隙收小，代码块不要工具栏、字小一点、不浮起来 */
+.tl-think-md { white-space: normal; color: inherit; }
+.markdown-body.tl-think-md p, .markdown-body.tl-think-md ul, .markdown-body.tl-think-md ol, .markdown-body.tl-think-md .markdown-table-scroll { margin: 0 0 calc(6px * var(--space)); }
+.markdown-body.tl-think-md ul, .markdown-body.tl-think-md ol { padding-left: calc(16px * var(--space)); gap: calc(1px * var(--space)); }
+.markdown-body.tl-think-md li::marker { color: currentColor; }
+.markdown-body.tl-think-md h2, .markdown-body.tl-think-md h3, .markdown-body.tl-think-md h4, .markdown-body.tl-think-md h5, .markdown-body.tl-think-md h6 {
+  margin: calc(8px * var(--space)) 0 calc(3px * var(--space)); padding-bottom: 0; border-bottom: 0; color: inherit; font-size: 1em; font-weight: 650; line-height: inherit;
+}
+.markdown-body.tl-think-md strong { color: inherit; font-weight: 650; }
+.markdown-body.tl-think-md blockquote { margin: 0 0 calc(6px * var(--space)); padding: calc(2px * var(--space)) calc(10px * var(--space)); color: inherit; font-size: 1em; }
+.markdown-body.tl-think-md hr { margin: calc(8px * var(--space)) 0; }
+.markdown-body.tl-think-md table { font-size: 1em; }
+.markdown-body.tl-think-md th { font-size: 1em; letter-spacing: 0; }
+.markdown-body.tl-think-md th, .markdown-body.tl-think-md td { padding: calc(4px * var(--space)) calc(10px * var(--space)); }
+.markdown-body.tl-think-md code:not(pre code) { color: inherit; }
+.markdown-body.tl-think-md .code-block { margin: calc(2px * var(--space)) 0 calc(6px * var(--space)); box-shadow: none; }
+.markdown-body.tl-think-md .code-toolbar { display: none; }
+.markdown-body.tl-think-md .code-block pre { max-height: 240px; padding: calc(7px * var(--space)) calc(12px * var(--space)); font-size: calc(11px * var(--text-scale)); line-height: 1.6; }
+/* 滚着的那几行里代码块不另外滚：跟着外面一起往上走，不出第二根滚动条 */
+.tl-window .markdown-body.tl-think-md .code-block pre { max-height: none; overflow: hidden; }
 .tl-window { transition: color calc(0.15s * var(--motion-scale)) ease; }
 .tl-window:hover, .tl-thought-body:hover { color: var(--tl-think-hi); }
 

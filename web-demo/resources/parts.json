@@ -4330,6 +4330,23 @@
       ".tl-thought-body"
     ]
   },
+  "tl.think-md": {
+    "zh": "时间线：思考里的 Markdown",
+    "select": [
+      ".tl-think-md",
+      ".tl-think-md strong",
+      ".tl-think-md blockquote",
+      ".tl-think-md th",
+      ".tl-think-md li",
+      ".tl-think-md h2",
+      ".tl-think-md h3",
+      ".tl-think-md h4",
+      ".tl-think-md h5",
+      ".tl-think-md h6",
+      ".tl-think-md table",
+      ".tl-think-md code"
+    ]
+  },
   "tl.head": {
     "zh": "工具",
     "select": [

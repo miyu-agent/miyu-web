@@ -9,7 +9,7 @@ import { fromUnified, samePath } from '../model/diff.js';
 import { h, icon, replace, hasIcon } from './dom.js';
 import { spring } from '../lib/motion.js';
 import { res, t, moreIcons } from '../util/res.js';
-import { row, peek, messagePeek, thinkingTail, commandLines, details, kindOf, quiet } from '../model/words.js';
+import { row, peek, messagePeek, rollStart, commandLines, details, kindOf, quiet } from '../model/words.js';
 import { imageCard } from './media.js';
 import { drawMarkdown } from './render.js';
 import { blobUrl } from '../core/host.js';
@@ -142,43 +142,49 @@ export class StepView {
     const rolling = this.live && !open && !!step.text.trim();
     this.window.hidden = !rolling;
     this.el.classList.toggle('is-rolling', rolling);
-    if (rolling) this.roll(step.text.trim());
+    if (rolling) this.roll(step.text.trim(), step.state === 'thinking');
     else this.rollText = '';
     // 收起时字留着，收的动画里还看得到；点开时照最新的字接上
-    if (open) this.thinkText(step.text.trim());
+    if (open) this.thinkText(step.text.trim(), step.state === 'thinking');
   }
 
   /**
-   * 在想时滚着的那几行（蓝图「时间线」思考的预览）：一行一块，只往后接，前面的只留两屏。来了新字，每一帧自己往底下追一截
-   * （临界阻尼的弹簧 `spring`，时间常数 `roll_ms`），起步不猛、字一阵阵来也是连着滑，不一下跳上去（2026-10-01、10-02 项目主人指出：原来每来一段重开一次
-   * 浏览器的平滑滚动，Firefox 里接不上）。滚出去的行删掉时自己把位置补回来（CSS 关了滚动锚定）。刚露出来的那一下直接到底。
-   * @param {string} text
+   * 在想时滚着的那几行（蓝图「思考的预览」）：照 Markdown 流式画末尾那一截（2026-10-29 项目主人），开头切在能单独画的一行
+   * （`rollStart`）。来了新字，每一帧自己往底下追一截（临界阻尼的弹簧 `spring`，时间常数 `roll_ms`），起步不猛、字一阵阵来也是
+   * 连着滑，不一下跳上去（2026-10-01、10-02 项目主人指出：原来每来一段重开一次浏览器的平滑滚动，Firefox 里接不上）。画出来超过
+   * 四屏高时开头往后挪，挪掉的高度自己把位置补回来（CSS 关了滚动锚定）。刚露出来的那一下直接到底。这一步想完了（段还没完、
+   * 这几行还留着）照收全的再画一次。
+   * @param {string} text @param {boolean} streaming 这一步还在想
    */
-  roll(text) {
+  roll(text, streaming) {
     const box = this.window;
-    const keep = res.timeline.thinking_rows * 2;
-    if (!this.rollText || !text.startsWith(this.rollText)) {
-      // 刚露出来、字不是接着原来的：只排最后两屏，直接到底
+    const rows = res.timeline.thinking_rows;
+    if (!this.rollMd || !this.rollText || !text.startsWith(this.rollText)) {
+      // 刚露出来、字不是接着原来的：从末尾两屏画起，直接到底
+      this.rollMd = h('div.markdown-body.tl-think-md');
+      replace(box, this.rollMd);
       this.rollText = text;
-      box.replaceChildren(...thinkingTail(text, keep).split('\n').map((line) => h('div.tl-think-line', line)));
+      this.rollStreaming = streaming;
+      this.rollFrom = rollStart(text, rows * 2);
+      drawMarkdown(this.rollMd, text.slice(this.rollFrom), { streaming });
       box.scrollTop = box.scrollHeight;
       this.rollAt = { pos: box.scrollTop, vel: 0 };
       return;
     }
-    const added = text.slice(this.rollText.length);
-    if (!added) return;
+    if (text === this.rollText && streaming === this.rollStreaming) return;
     this.rollText = text;
-    const parts = added.split('\n');
-    const tail = /** @type {HTMLElement} */ (box.lastElementChild);
-    if (tail.firstChild) /** @type {Text} */ (tail.firstChild).appendData(parts[0]);
-    else tail.append(parts[0]);
-    for (const part of parts.slice(1)) box.append(h('div.tl-think-line', part));
-    if (box.childElementCount > keep) {
-      const before = box.scrollHeight;
-      while (box.childElementCount > keep) box.firstElementChild?.remove();
-      const at = this.rollAt ?? { pos: box.scrollTop, vel: 0 };
-      this.rollAt = { pos: Math.max(0, at.pos - (before - box.scrollHeight)), vel: at.vel };
-      box.scrollTop = this.rollAt.pos;
+    this.rollStreaming = streaming;
+    drawMarkdown(this.rollMd, text.slice(this.rollFrom), { streaming });
+    if (box.scrollHeight > box.clientHeight * 4) {
+      const from = rollStart(text, rows * 2, this.rollFrom);
+      if (from > this.rollFrom) {
+        const before = box.scrollHeight;
+        this.rollFrom = from;
+        drawMarkdown(this.rollMd, text.slice(from), { streaming });
+        const at = this.rollAt ?? { pos: box.scrollTop, vel: 0 };
+        this.rollAt = { pos: Math.max(0, at.pos - (before - box.scrollHeight)), vel: at.vel };
+        box.scrollTop = this.rollAt.pos;
+      }
     }
     this.follow();
   }
@@ -203,24 +209,19 @@ export class StepView {
   }
 
   /**
-   * 点开的思考全文：一行一块，来了新字只往最后一行里接、有换行往后添新行，前面的行不动（蓝图「性能」：原来每来一段字把
-   * 全文整块换掉，浏览器每一帧从头排，想得越长越卡）。字不是接着原来的（撤销、重来）才整个重画。
-   * @param {string} text
+   * 点开的思考全文：照 Markdown 画（蓝图「点开思考」，2026-10-29 项目主人），用回答的同一套画法、收敛的样子（`.tl-think-md`）。
+   * 这一步还在想的照 `streaming` 画（半截的写法先补齐），想完了照收全的再画一次；字和状态都没变的不重画。不接链接卡片、mermaid 这些。
+   * @param {string} text @param {boolean} streaming 这一步还在想（`state: thinking`）
    */
-  thinkText(text) {
-    if (!this.lines || !text.startsWith(this.linesText)) {
-      this.lines = h('div.tl-think-lines');
-      this.linesText = '';
-      replace(this.body, this.lines);
+  thinkText(text, streaming) {
+    if (!this.md) {
+      this.md = h('div.markdown-body.tl-think-md');
+      replace(this.body, this.md);
     }
-    const added = text.slice(this.linesText.length);
-    if (!added) return;
-    this.linesText = text;
-    const parts = added.split('\n');
-    const tail = /** @type {HTMLElement|null} */ (this.lines.lastElementChild);
-    if (tail) tail.firstChild ? /** @type {Text} */ (tail.firstChild).appendData(parts[0]) : tail.append(parts[0]);
-    else this.lines.append(h('div.tl-think-line', parts[0]));
-    for (const part of parts.slice(1)) this.lines.append(h('div.tl-think-line', part));
+    const sig = `${streaming ? '~' : '='}${text}`;
+    if (this.mdSig === sig) return;
+    this.mdSig = sig;
+    drawMarkdown(this.md, text, { streaming });
   }
 
   /** 工具：状态、命令本身、点开的细节。 */
