@@ -13,5 +13,6 @@ mod backstage;
 mod jump;
 mod media;
 mod open;
+mod open_flags;
 mod serve;
 mod ws;

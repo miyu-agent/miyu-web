@@ -14,12 +14,12 @@ use crate::support::*;
 use miyu_ipc::Listener;
 use miyu_web::open::{Browser, Launch, Open, open};
 
-const CODE: &str = "9f03b21c9f03b21c9f03b21c9f03b21c9f03b21c9f03b21c9f03b21c9f03b21c";
-const TICKET: &str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+pub(crate) const CODE: &str = "9f03b21c9f03b21c9f03b21c9f03b21c9f03b21c9f03b21c9f03b21c9f03b21c";
+pub(crate) const TICKET: &str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
 /// 核心的替身：一条条连接接着，`hello` 回中文，`account.setup_code` 照 `first` 回，`login.ticket` 照 `ticket` 回（旧核心没有这个
 /// 方法的回空的），`account.logout` 写了 `all` 的回作废了 3 个。
-fn answer(core: Listener, first: bool) {
+pub(crate) fn answer(core: Listener, first: bool) {
     answer_with(core, first, true);
 }
 
@@ -66,9 +66,9 @@ fn answer_with(mut core: Listener, first: bool, ticket: bool) {
 }
 
 /// 记下交给它的网址；`works` 是假的就当交不出去。
-struct FakeBrowser {
+pub(crate) struct FakeBrowser {
     works: bool,
-    opened: Mutex<Vec<String>>,
+    pub(crate) opened: Mutex<Vec<String>>,
 }
 
 impl Browser for FakeBrowser {
@@ -156,7 +156,11 @@ fn launch(home: &Home) -> Launch {
 }
 
 /// 走一遍 `open`：交回退出码、标准输出、标准错误。
-async fn run_open(home: &Home, args: Open, browser: &FakeBrowser) -> (u8, String, String) {
+pub(crate) async fn run_open(
+    home: &Home,
+    args: Open,
+    browser: &FakeBrowser,
+) -> (u8, String, String) {
     let (mut out, mut err) = (Vec::new(), Vec::new());
     let code = open(
         &home.root,
@@ -174,7 +178,7 @@ async fn run_open(home: &Home, args: Open, browser: &FakeBrowser) -> (u8, String
     )
 }
 
-fn browser(works: bool) -> FakeBrowser {
+pub(crate) fn browser(works: bool) -> FakeBrowser {
     FakeBrowser {
         works,
         opened: Mutex::new(Vec::new()),
@@ -319,21 +323,6 @@ async fn print_and_a_missing_browser_print_the_address() {
     assert_eq!(out, format!("{site}/#setup={CODE}\n"));
     assert!(err.contains("在浏览器里打开："), "{err}");
     assert!(err.contains("5 分钟内有效，只能用一次"), "{err}");
-    // `--format json`（桌面端的外壳读）：只一行 JSON，不开浏览器、不印提醒
-    let json = Open {
-        json: true,
-        ..Open::default()
-    };
-    let (code, out, err) = run_open(&home, json, &browser).await;
-    assert_eq!(code, 0, "{err}");
-    let got: Value = serde_json::from_str(out.trim_end()).expect("一行 JSON");
-    assert_eq!(
-        got,
-        json!({"url": format!("{site}/#setup={CODE}"), "first": true})
-    );
-    assert_eq!(out.lines().count(), 1);
-    assert!(err.is_empty(), "{err}");
-    assert!(browser.opened.lock().expect("没坏").is_empty());
     let nothing = FakeBrowser {
         works: false,
         opened: Mutex::new(Vec::new()),

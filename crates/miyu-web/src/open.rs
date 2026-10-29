@@ -36,6 +36,8 @@ pub struct Open {
     pub print: bool,
     /// `--format json`：给程序读（桌面端的外壳），标准输出只印一行 `{"url", "first"}`，人看的字不印；带了它就当 [`Open::print`]。
     pub json: bool,
+    /// `--ticket`：没设过访问密码也要交接票（桌面端免密，2026-10-29）；和 [`Open::reset`] 不一起写。
+    pub ticket: bool,
     /// 忘了密码：要一个一次性码重设。
     pub reset: bool,
     /// 作废全部浏览器的登录。
@@ -121,7 +123,7 @@ pub async fn open(
     let first = issued["first"].as_bool().unwrap_or(false);
     let code = issued["code"]
         .as_str()
-        .filter(|_| open.reset || first)
+        .filter(|_| open.reset || (first && !open.ticket))
         .map(str::to_string);
     // 不带码的要一张交接票（网页-乙）：旧核心没有 `login.ticket`、回应没有 `account` 的不带
     let ticket = match code {
