@@ -20,6 +20,7 @@ import { drawBackstage } from './backstage.js';
 import { Subpage, swap } from './subpage.js';
 import { drawAdvanced } from './advanced.js';
 import { drawToolPage, hasToolPage } from './tool-pages.js';
+import { EXTERNAL_PREFIX } from './tool-model.js';
 
 /** 刚存成的那一项重画出来还画对勾的时限（毫秒） */
 const SAVED_MS = 1000;
@@ -129,7 +130,8 @@ export class SettingsDialog {
     this.schema = schema;
     this.got = got;
     const cfg = this.ctx.config;
-    this.pages = buildPages(schema, got, { merge: cfg.merge, moveGroups: cfg.move_groups, hide: cfg.hide_prefixes });
+    // 「读取其他目录的 Skills」两项画在技能页顶上（`tool-pages.js`），通用的页不列
+    this.pages = buildPages(schema, got, { merge: cfg.merge, moveGroups: cfg.move_groups, hide: [...(cfg.hide_prefixes ?? []), EXTERNAL_PREFIX] });
     this.modelsPromise = this.loadModels();
     // 扩展、软件包的订阅（连 MCP 的列表）
     await Promise.all([this.extensions.start(), this.feed.start()]);

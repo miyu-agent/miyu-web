@@ -1,19 +1,22 @@
 // @ts-check
 //! 「技能」「脚本」「MCP」三页（蓝图 `web.md`「设置页」第 20 条；2026-10-20 项目主人：放在软件包上面统一管理，看过样板定；核心 X-26、X-27）：
-//! 三页一个样子——顶上搜索框和一个按钮（技能、脚本「打开目录」，MCP「添加服务」），一排来源筛选（全部、自制、随软件包来的），一项一行：
+//! 三页一个样子——顶上搜索框和一个按钮（技能、脚本「打开目录」，MCP「添加服务」），一排来源筛选（全部、自制、随软件包来的、共用），一项一行：
 //! 名字、一句说明，右边来源、加载方式（脚本、MCP）、全局开关、箭头；点一行滑进详情（`subpage.js`）。列表在设置框打开、改了配置时重读
 //! （`dialog.js` 的 `load`）；MCP 服务另跟 `mcp.changed`、`package.changed`。添加、编辑服务的小窗在 `mcp-form.js`。
+//! 技能页最上面多一块「读取其他目录的 Skills」（核心 PT-2外；2026-10-29 项目主人定）：总开关，开着时下面一张目录表（同私密目录的表，`privacy.js`）。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { tilde } from '../../src/lib/format.js';
 import { groupBlock, toggle, findBox } from './rows.js';
 import { stateText } from './extensions.js';
 import { loginState, loginText, loginButton, loginErrorNode, logoutButton } from './mcp-login.js';
 import { openInfo } from './core-packages.js';
 import { openServerForm } from './mcp-form.js';
 import { confirmIn } from './confirm.js';
+import { pathList } from './privacy.js';
 import {
   skillItem, scriptItem, mcpItems, warningsOf, switchValue, featureId, SOURCES, inSource, sourceOf, toolMatch, homeDir, shortTool,
-  editable, commandLine, flip, range, maskedValue, maskedPairs, skippedOf,
+  editable, commandLine, flip, range, maskedValue, maskedPairs, skippedOf, externalItems,
 } from './tool-model.js';
 
 /** 三页的图标 */
@@ -82,11 +85,32 @@ export function drawToolPage(dialog, kind) {
   drawChips();
   update();
   return [
+    kind === 'skills' ? externalBlock(dialog) : null,
     h('div.set-pkg-tools', h('div.set-tool-head', find, ...headButtons(dialog, kind, view, items)), chips),
     empty, group,
     // 页底只给技能写一句；脚本、MCP 那句「懒加载：…；完整：…」不要了（2026-10-21 项目主人）
     kind === 'skills' ? h('p.set-tool-note', t('tools.note.skills')) : null,
   ];
+}
+
+/**
+ * 「读取其他目录的 Skills」（核心 PT-2外：系统配置 `skills.external.enabled`、`skills.external.dirs`；2026-10-29 项目主人定：一个总开关加一张
+ * 目录表，默认关，放技能页列表顶上）：开关照通用的行画、字照网页的；开着时下面一张目录表，加、删、重置同私密目录的表。旧核心没有这两项的不出。
+ * 改了核心推 `config.changed`，设置框照它重读（连 `skill.list`）。
+ * @param {any} dialog
+ */
+function externalBlock(dialog) {
+  const got = externalItems(dialog.schema, dialog.got);
+  if (!got) return null;
+  const t = (/** @type {string} */ key) => dialog.ctx.text(key);
+  const on = { ...got.on, name: t('tools.external.title'), description: t('tools.external.desc') };
+  const el = pathList(dialog, {
+    name: null, restoreName: t('tools.external.list'), words: 'skills_dirs',
+    // 目录表那一项的说明不写：开关下面已经说了
+    add: { ...got.dirs, description: null }, remove: null, toggle: on, others: [on],
+  });
+  el.classList.add('set-ext-skills');
+  return el;
 }
 
 /**
@@ -385,7 +409,16 @@ function toolDetail(dialog, kind, id) {
     warnings.length ? groupBlock(t('tools.warnings'), warnings.map((w) => h('div.set-row', h('div.set-text', h('p.set-desc.is-warn.set-tool-warning', w))))) : null,
     groupBlock('', rows),
     kind === 'mcp' && !item.own ? h('p.set-tool-note', t('tools.from_package')) : null,
+    // 共用目录里的技能：网页不删，说一句去哪儿删（核心删也拒：`skill_shared`）
+    item.shared ? h('p.set-tool-note', t('tools.shared_note', { dir: sharedDir(dialog, s) })) : null,
   ].filter(Boolean);
+}
+
+/** 共用的技能在哪个目录：核心给的 `dir`（配置原文），没有的照文件的位置；家目录写成 `~`（同「位置」那一行）。 @param {any} dialog @param {any} raw */
+function sharedDir(dialog, raw) {
+  const dir = typeof raw.dir === 'string' ? raw.dir : raw.path ?? '';
+  const home = dialog.ctx.host?.home ?? null;
+  return home ? tilde(dir, home) : dir;
 }
 
 /**

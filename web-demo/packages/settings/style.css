@@ -664,6 +664,8 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 /* 私密目录的总开关关着：表灰掉、不能改 */
 /* 关着的收起：高度收到 0、淡出（2026-10-22 项目主人） */
 .pv-fold { overflow: hidden; }
+/* 技能页顶上的目录表：展开时和下面的搜索框隔开（收起时跟着收掉） */
+.set-ext-skills .pv-body { padding-bottom: calc(14px * var(--space)); }
 .pv-fold.is-off { height: 0; }
 .pv-fold.is-off > .pv-body { opacity: 0; }
 .pv-box { display: grid; grid-template-rows: auto minmax(0, 1fr); max-height: 300px; overflow: hidden; border-radius: var(--r-10); background: color-mix(in srgb, var(--surface-2) 55%, transparent); }

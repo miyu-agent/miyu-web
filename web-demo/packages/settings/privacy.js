@@ -19,26 +19,41 @@ export const hasPrivate = (items) => !!pairIn(items);
  * @param {any} dialog @param {string} name @param {any[]} items 这一组的项（只用那两项）
  */
 export function privateGroup(dialog, name, items) {
-  const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
   const pair = /** @type {NonNullable<ReturnType<typeof pairIn>>} */ (pairIn(items));
+  return pathList(dialog, {
+    name, words: pair.words,
+    add: items.find((i) => i.key === pair.add),
+    remove: items.find((i) => i.key === pair.remove),
+    // 总开关（私密目录有，核心 5-17）
+    toggle: pair.enabled ? items.find((i) => i.key === pair.enabled) ?? null : null,
+    // 这一组别的项（总开关、这一对以外的）照通用的行画在表上面
+    others: items.filter((i) => i.key !== pair.add && i.key !== pair.remove),
+  });
+}
+
+/**
+ * 一张路径表（私密目录、只禁写、技能页「读取其他目录的 Skills」的目录表）：`others` 照通用的行画在表上面（总开关是其中一项，拨了表跟着收起、展开），
+ * 下面能滚的框、顶上搜索。`remove` 是 `null` 的只有一张表（没有出厂项可去掉；技能目录表），表的默认值就是出厂的样子。
+ * `name` 是组名（`null` 的不画组名），`restoreName` 是重置时问的那一句里的名字（没有的照组名）；`words` 是这张表自己的说法（`privacy.<words>.*`）。
+ * @param {any} dialog
+ * @param {{name: string|null, restoreName?: string, words: string|null, add: any, remove: any, toggle: any, others: any[]}} opts
+ */
+export function pathList(dialog, { name, restoreName = name ?? '', words, add, remove, toggle, others: otherItems }) {
+  const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
   // 这一组自己的说法（受保护的路径说「路径」），没有的照私密目录的
-  const w = (/** @type {string} */ k, /** @type {any} */ f) => t(pair.words ? `privacy.${pair.words}.${k}` : `privacy.${k}`, f);
-  const add = items.find((i) => i.key === pair.add);
-  const remove = items.find((i) => i.key === pair.remove);
-  // 总开关（私密目录有，核心 5-17）：在表上面，照通用的行画；关着的表灰掉、不能改
-  const toggle = pair.enabled ? items.find((i) => i.key === pair.enabled) : null;
+  const w = (/** @type {string} */ k, /** @type {any} */ f) => t(words ? `privacy.${words}.${k}` : `privacy.${k}`, f);
+  // 总开关：在表上面，照通用的行画；关着的表收起
   const off = toggle ? (toggle.entry?.value ?? toggle.default) === false : false;
-  // 这一组别的项（总开关、这一对以外的）照通用的行画在表上面
-  const others = items.filter((i) => i.key !== pair.add && i.key !== pair.remove).map((i) => {
+  const others = otherItems.map((i) => {
     const row = coreRow(dialog, i);
     // 总开关一拨就收起、展开，不等存完（开关自己先滑完圆点再存，要两三百毫秒）
     if (row && i === toggle) row.addEventListener('click', (e) => {
       const sw = /** @type {Element} */ (e.target).closest('.set-switch');
-      if (sw && !(/** @type {HTMLButtonElement} */ (sw)).disabled && body.isConnected) queueMicrotask(() => fold.go(dialog, pair.add, !sw.classList.contains('is-on'), body));
+      if (sw && !(/** @type {HTMLButtonElement} */ (sw)).disabled && body.isConnected) queueMicrotask(() => fold.go(dialog, add.key, !sw.classList.contains('is-on'), body));
     });
     return row;
   }).filter(Boolean);
-  const queryKey = `privateQuery:${pair.add}`;
+  const queryKey = `privateQuery:${add.key}`;
   const home = dialog.ctx.host?.home ?? null;
   const error = h('p.set-error', { hidden: true });
   const say = (/** @type {string|null} */ why) => {
@@ -53,7 +68,7 @@ export function privateGroup(dialog, name, items) {
     if (!changes.length) return null;
     const layer = LAYER;
     const why = await dialog.saveMany(layer, changes.map((c) => {
-      const item = c.key === pair.add ? add : remove;
+      const item = c.key === add.key ? add : remove;
       return { ...c, expect: expectFor(item.entry, layer) };
     }));
     if (!quiet) say(why);
@@ -100,16 +115,16 @@ export function privateGroup(dialog, name, items) {
     type: 'button', title: t('privacy.restore'), 'aria-label': t('privacy.restore'), disabled: !canRestore(add, remove),
     // 先弹窗问（2026-10-21 项目主人）：「确认重置私密目录列表至出厂状态吗？」，名字照组名
     onclick: async (/** @type {Event} */ e) => {
-      if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('privacy.restore_ask', { name }), yes: t('privacy.restore'), no: t('privacy.cancel') }))) return;
+      if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('privacy.restore_ask', { name: restoreName }), yes: t('privacy.restore'), no: t('privacy.cancel') }))) return;
       store(restoreChange(add, remove));
     },
   }, icon('rotate-ccw'));
-  const body = fold(dialog, pair.add, off,
+  const body = fold(dialog, add.key, off,
     add.description ? h('p.set-desc.pv-desc', add.description) : null,
     h('div.pv-box', h('div.pv-find', icon('search'), find, plus, restore), list),
     error);
   return h('section.set-group',
-    h('h3.set-group-name', name),
+    name ? h('h3.set-group-name', name) : null,
     others.length ? h('div.set-rows', others) : null,
     body);
 }

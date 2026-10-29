@@ -5,9 +5,10 @@
 /** 三页的编号（设置页的分页编号，也是 `kind`） @typedef {'skills'|'scripts'|'mcp'} ToolKind */
 
 /**
- * 一页上的一项，三种合成一个样子。`own` 是自己放的（技能、脚本 `from` 是 `home`；MCP 是配置里自己写的），`package` 是随哪个包来的（出厂又没有编号的是 `null`）。
+ * 一页上的一项，三种合成一个样子。`own` 是自己放的（技能、脚本 `from` 是 `home`；MCP 是配置里自己写的），`package` 是随哪个包来的（出厂又没有编号的是 `null`），
+ * `shared` 是从别的应用共用的目录读来的技能（`from` 是 `agents`：从外部目录读到的，核心 PT-2外；「读取其他目录的 Skills」）。
  * `on` 是全局开关（没有这一格的：`null`，不画开关）。`raw` 是核心给的那一项。
- * @typedef {{kind: ToolKind, id: string, name: string, title: string|null, desc: string|null, own: boolean, package: string|null,
+ * @typedef {{kind: ToolKind, id: string, name: string, title: string|null, desc: string|null, own: boolean, shared: boolean, package: string|null,
  *   on: boolean|null, covered: boolean, raw: any}} ToolItem
  */
 
@@ -18,7 +19,7 @@ const PREFIX = { skills: 'skill-', scripts: 'script-', mcp: 'mcp-' };
 export function skillItem(s) {
   return {
     kind: 'skills', id: s.name, name: s.name, title: s.display_name ?? null, desc: s.summary ?? null,
-    own: s.from === 'home', package: typeof s.package === 'string' ? s.package : null,
+    own: s.from === 'home', shared: s.from === 'agents', package: typeof s.package === 'string' ? s.package : null,
     on: typeof s.on === 'boolean' ? s.on : null, covered: false, raw: s,
   };
 }
@@ -38,7 +39,7 @@ export function warningsOf(raw) {
 export function scriptItem(s) {
   return {
     kind: 'scripts', id: s.tool, name: s.tool, title: s.display_name ?? null, desc: s.description ?? null,
-    own: s.from === 'home', package: typeof s.package === 'string' ? s.package : null,
+    own: s.from === 'home', shared: false, package: typeof s.package === 'string' ? s.package : null,
     on: typeof s.on === 'boolean' ? s.on : null, covered: false, raw: s,
   };
 }
@@ -52,7 +53,7 @@ export function scriptItem(s) {
 export function mcpItems(home, packages) {
   /** @type {ToolItem[]} */
   const out = (home ?? []).map((s) => ({
-    kind: 'mcp', id: `~home/${s.name}`, name: s.name, title: null, desc: null, own: true, package: null,
+    kind: 'mcp', id: `~home/${s.name}`, name: s.name, title: null, desc: null, own: true, shared: false, package: null,
     on: typeof s.on === 'boolean' ? s.on : null, covered: false, raw: s,
   }));
   for (const p of packages ?? []) {
@@ -60,7 +61,7 @@ export function mcpItems(home, packages) {
     for (const s of Array.isArray(p.mcp) ? p.mcp : []) {
       const covered = !!s.covered;
       out.push({
-        kind: 'mcp', id: `${p.package}/${s.name}`, name: s.name, title: null, desc: null, own: false, package: p.package,
+        kind: 'mcp', id: `${p.package}/${s.name}`, name: s.name, title: null, desc: null, own: false, shared: false, package: p.package,
         on: !covered && typeof s.on === 'boolean' ? s.on : null, covered, raw: { ...s, enabled: p.enabled !== false },
       });
     }
@@ -74,19 +75,21 @@ export const switchValue = (on) => (on ? null : false);
 /** 一项的功能编号（`feature.set` 的 `feature`）。 @param {ToolItem} item */
 export const featureId = (item) => `${PREFIX[item.kind]}${item.name}`;
 
-/** 筛选：全部、自制、随软件包来的 */
-export const SOURCES = /** @type {const} */ (['all', 'own', 'package']);
+/** 筛选：全部、自制、随软件包来的、共用（技能页才有，一个都没有的不出） */
+export const SOURCES = /** @type {const} */ (['all', 'own', 'package', 'shared']);
 
 /** 一项落不落在这个筛选里。 @param {ToolItem} item @param {string} filter */
-export const inSource = (item, filter) => filter === 'all' || (filter === 'own' ? item.own : !item.own);
+export const inSource = (item, filter) => filter === 'all' || (filter === 'own' ? item.own : filter === 'shared' ? item.shared : !item.own && !item.shared);
 
 /**
- * 来源写什么：自己放的「自制」；随包来的写包名（`package.list` 里的名字，没装的照编号）；出厂又没有包编号的「出厂」。交回文字表的键或者名字。
+ * 来源写什么：自己放的「自制」；共用目录里的「共用」；随包来的写包名（`package.list` 里的名字，没装的照编号）；出厂又没有包编号的「内置」。
+ * 交回文字表的键或者名字。
  * @param {ToolItem} item @param {any[]|null|undefined} packages
- * @returns {{key: 'own'|'shipped'}|{name: string}}
+ * @returns {{key: 'own'|'shipped'|'shared'}|{name: string}}
  */
 export function sourceOf(item, packages) {
   if (item.own) return { key: 'own' };
+  if (item.shared) return { key: 'shared' };
   if (!item.package) return { key: 'shipped' };
   const p = (packages ?? []).find((x) => x.package === item.package);
   return { name: p?.name ?? item.package };
@@ -334,4 +337,26 @@ export function skippedOf(skipped) {
   const prompts = rows.some((r) => r.prompt);
   const tools = rows.some((r) => !r.prompt);
   return { kinds: prompts && tools ? 'both' : prompts ? 'prompts' : tools ? 'tools' : null, rows };
+}
+
+/** 「读取其他目录的 Skills」的两项（核心 PT-2外，系统配置）：总开关、目录表 */
+export const EXTERNAL_ON = 'skills.external.enabled';
+export const EXTERNAL_DIRS = 'skills.external.dirs';
+/** 这两项键名的开头（通用的设置页不列，`dialog.js`） */
+export const EXTERNAL_PREFIX = 'skills.external.';
+
+/**
+ * 技能页顶上那一块要的两项：照 `config.schema` 找（不管它填在哪一页、哪一组，带不带 `hidden`）、带上 `config.get` 的值（同 `buildPages` 给每一项的样子）；
+ * 旧核心没有这两项的是 `null`，不出那一块。
+ * @param {any} schema `config.schema` 的回应 @param {any} got `config.get {all: true}` 的回应
+ * @returns {{on: any, dirs: any}|null}
+ */
+export function externalItems(schema, got) {
+  const find = (/** @type {string} */ key) => {
+    const item = (schema?.items ?? []).find((/** @type {any} */ i) => i.key === key);
+    return item ? { ...item, entry: got?.items?.[key] ?? null, problems: (got?.problems ?? []).filter((/** @type {any} */ x) => x.key === key) } : null;
+  };
+  const on = find(EXTERNAL_ON);
+  const dirs = find(EXTERNAL_DIRS);
+  return on && dirs ? { on, dirs } : null;
 }

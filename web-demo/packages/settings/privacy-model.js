@@ -66,9 +66,12 @@ export function addChange(text, add, remove) {
 
 /**
  * 跟出厂不一样的（去掉过出厂项、或者加过）才能「重置」：`remove`、`add` 都去掉，回到出厂的清单（2026-10-22 项目主人：加了几项以后点不了重置）。
+ * 只有一张表的（`remove` 是 `null`：技能目录表，默认值就是出厂的样子）：系统配置里写过这一项的才能重置。
  * @param {any} add @param {any} remove
  */
-export const canRestore = (add, remove) => listOf(remove).length > 0 || listOf(add).length > 0;
+export const canRestore = (add, remove) => (remove
+  ? listOf(remove).length > 0 || listOf(add).length > 0
+  : !!add?.entry?.layers?.some((/** @type {any} */ l) => l?.origin?.layer === 'system'));
 
 /**
  * 重置要存的：写过的那几项（个人这一层有值的）去掉。

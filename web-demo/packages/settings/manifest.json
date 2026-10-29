@@ -525,7 +525,15 @@
         "source": {
           "all": "全部",
           "own": "自制",
-          "package": "随软件包来的"
+          "package": "随软件包来的",
+          "shared": "共用"
+        },
+        "shared": "共用",
+        "shared_note": "这个技能在 {dir} 里，别的应用也在用，要删请到那里删除。",
+        "external": {
+          "title": "读取其他目录的 Skills",
+          "desc": "读 Codex、opencode 等应用共用的技能文件夹",
+          "list": "技能目录"
         },
         "own": "自制",
         "shipped": "内置",
@@ -736,6 +744,14 @@
         "no_match": "没有对得上的目录",
         "in_workspace": "每个工作区",
         "add_title": "添加私密目录",
+        "skills_dirs": {
+          "drop_ask": "是否确认从列表中删除此目录？",
+          "add_title": "添加技能目录",
+          "add_hint": "一行一个，例如 ~/.agents/skills 或 /srv/skills（Shift+回车换行）",
+          "empty": "没有技能目录",
+          "search": "搜索目录",
+          "no_match": "没有对得上的目录"
+        },
         "readonly": {
           "drop_ask": "是否确认从列表中删除此路径？",
           "add_title": "添加受保护的路径",
@@ -1106,7 +1122,15 @@
         "source": {
           "all": "All",
           "own": "Your own",
-          "package": "From packages"
+          "package": "From packages",
+          "shared": "Shared"
+        },
+        "shared": "Shared",
+        "shared_note": "This skill lives in {dir} and other apps use it too. Delete it there.",
+        "external": {
+          "title": "Read Skills from other folders",
+          "desc": "Use the skill folders shared with apps like Codex and opencode",
+          "list": "skill folders"
         },
         "own": "Your own",
         "shipped": "Built-in",
@@ -1317,6 +1341,14 @@
         "no_match": "No matching folders",
         "in_workspace": "Every workspace",
         "add_title": "Add a private folder",
+        "skills_dirs": {
+          "drop_ask": "Remove this folder from the list?",
+          "add_title": "Add skill folders",
+          "add_hint": "One per line, e.g. ~/.agents/skills or /srv/skills (Shift+Enter for a new line)",
+          "empty": "No skill folders",
+          "search": "Search folders",
+          "no_match": "No matching folders"
+        },
         "readonly": {
           "drop_ask": "Remove this path from the list?",
           "add_title": "Add a protected path",
@@ -1687,7 +1719,15 @@
         "source": {
           "all": "すべて",
           "own": "自作",
-          "package": "パッケージ付属"
+          "package": "パッケージ付属",
+          "shared": "共用"
+        },
+        "shared": "共用",
+        "shared_note": "このスキルは {dir} にあり、ほかのアプリも使っています。削除はそちらで行ってください。",
+        "external": {
+          "title": "他のフォルダの Skills を読み込む",
+          "desc": "Codex や opencode などのアプリと共用のスキルフォルダを読み込みます",
+          "list": "スキルフォルダ"
         },
         "own": "自作",
         "shipped": "内蔵",
@@ -1898,6 +1938,14 @@
         "no_match": "一致するフォルダはありません",
         "in_workspace": "各ワークスペース",
         "add_title": "プライベートフォルダを追加",
+        "skills_dirs": {
+          "drop_ask": "このフォルダをリストから削除しますか？",
+          "add_title": "スキルフォルダを追加",
+          "add_hint": "1 行に 1 つ。例：~/.agents/skills や /srv/skills（Shift+Enter で改行）",
+          "empty": "スキルフォルダはありません",
+          "search": "フォルダを検索",
+          "no_match": "一致するフォルダはありません"
+        },
         "readonly": {
           "drop_ask": "このパスを一覧から削除しますか？",
           "add_title": "保護するパスを追加",

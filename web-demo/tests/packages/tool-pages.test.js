@@ -4,8 +4,9 @@ import assert from 'node:assert/strict';
 
 import {
   skillItem, scriptItem, mcpItems, switchValue, featureId, inSource, sourceOf, toolMatch, homeDir, shortTool,
-  serverParams, formOf, envShown, editable, commandLine, splitCommand, joinCommand, flip, range,
+  serverParams, formOf, envShown, editable, commandLine, splitCommand, joinCommand, flip, range, externalItems, EXTERNAL_ON, EXTERNAL_DIRS,
 } from '../../packages/settings/tool-model.js';
+import { privateRows, dropChange, batchChange, canRestore, restoreChange } from '../../packages/settings/privacy-model.js';
 import { pkgKinds, carriedBy, PKG_FILTERS } from '../../packages/settings/model.js';
 
 const PACKAGES = [
@@ -207,4 +208,47 @@ test('技能写得有小毛病的（核心 PT-2上 warnings）：照 message 写
   assert.deepEqual(warningsOf({ name: 'x' }), []);
   assert.deepEqual(warningsOf({ warnings: 'bad' }), []);
   assert.deepEqual(warningsOf(null), []);
+});
+
+test('共用目录里的技能（核心 PT-2外 from: agents）：来源「共用」、单独一格筛选，不算自制也不算随包来的', () => {
+  const shared = skillItem({ name: 'pdf', from: 'agents', dir: '~/.agents/skills', path: '/home/u/.agents/skills/pdf/SKILL.md', on: true });
+  assert.equal(shared.shared, true);
+  assert.equal(shared.own, false);
+  assert.deepEqual(sourceOf(shared, PACKAGES), { key: 'shared' });
+  assert.equal(inSource(shared, 'shared'), true);
+  assert.equal(inSource(shared, 'own'), false);
+  assert.equal(inSource(shared, 'package'), false);
+  assert.equal(inSource(shared, 'all'), true);
+  const pkg = skillItem({ name: 'b', from: 'package', package: 'authoring' });
+  assert.equal(pkg.shared, false);
+  assert.equal(inSource(pkg, 'shared'), false);
+  assert.equal(inSource(pkg, 'package'), true);
+  assert.equal(scriptItem({ tool: 'x', from: 'home' }).shared, false);
+  assert.equal(mcpItems([{ name: 'a' }], []).every((x) => x.shared === false), true);
+});
+
+test('「读取其他目录的 Skills」两项照 config.schema 找、带上值；旧核心没有的是 null', () => {
+  const schema = { items: [
+    { key: EXTERNAL_ON, type: 'bool', default: false, layers: ['system'] },
+    { key: EXTERNAL_DIRS, type: 'list', default: ['~/.agents/skills'], layers: ['system'] },
+  ] };
+  const got = { items: { [EXTERNAL_ON]: { value: true, layers: [{ value: true, origin: { layer: 'system' } }] } }, problems: [{ key: EXTERNAL_DIRS, message: 'x' }] };
+  const both = externalItems(schema, got);
+  assert.equal(both?.on.entry.value, true);
+  assert.equal(both?.dirs.entry, null);
+  assert.deepEqual(both?.dirs.problems, [{ key: EXTERNAL_DIRS, message: 'x' }]);
+  assert.equal(externalItems({ items: [schema.items[0]] }, got), null);
+  assert.equal(externalItems(null, null), null);
+});
+
+test('技能目录表只有一张（没有去掉出厂项那一项）：默认值就是表，加、删整张交，系统配置里写过的才能重置', () => {
+  const fresh = { key: EXTERNAL_DIRS, default: ['~/.agents/skills'], entry: null };
+  assert.deepEqual(privateRows(fresh, null), [{ path: '~/.agents/skills', shipped: false }]);
+  assert.equal(canRestore(fresh, null), false);
+  assert.deepEqual(batchChange('~/.agents/skills\n/srv/skills\n', fresh, null), { changes: [{ key: EXTERNAL_DIRS, value: ['~/.agents/skills', '/srv/skills'] }], skipped: ['~/.agents/skills'] });
+  assert.deepEqual(dropChange({ path: '~/.agents/skills', shipped: false }, fresh, null), { key: EXTERNAL_DIRS, value: [] });
+  const written = { key: EXTERNAL_DIRS, default: ['~/.agents/skills'], entry: { value: [], layers: [{ value: [], origin: { layer: 'system' } }] } };
+  assert.deepEqual(privateRows(written, null), []);
+  assert.equal(canRestore(written, null), true);
+  assert.deepEqual(restoreChange(written, null), [{ key: EXTERNAL_DIRS, unset: true }]);
 });

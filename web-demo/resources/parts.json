@@ -5740,6 +5740,12 @@
       ".pv-body"
     ]
   },
+  "settings.ext-skills": {
+    "zh": "技能页顶上「读取其他目录的 Skills」那一块",
+    "select": [
+      ".set-ext-skills"
+    ]
+  },
   "pv.box": {
     "zh": "pv-box",
     "select": [
