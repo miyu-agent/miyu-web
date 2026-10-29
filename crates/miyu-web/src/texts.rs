@@ -16,6 +16,14 @@ impl Language {
         }
     }
 
+    /// 问不到核心时照这台机器的语言（`LC_ALL`、`LC_MESSAGES`、`LANG` 的头一个）：`zh` 打头的中文，别的英文。
+    pub(crate) fn of_locale(locale: &str) -> Language {
+        match locale.starts_with("zh") {
+            true => Language::Zh,
+            false => Language::En,
+        }
+    }
+
     fn pick(self, zh: &str, en: &str) -> String {
         match self {
             Language::Zh => zh.to_string(),
@@ -95,6 +103,16 @@ impl Language {
         self.pick(
             &format!("连不上核心：{reason}"),
             &format!("Could not reach the core: {reason}"),
+        )
+    }
+
+    /// 核心没在跑、要拉起它，主程序不在那里（打成包装进数据根的、核心没给 `MIYU_PROGRAM` 的）。
+    pub(crate) fn no_program(self, path: &str) -> String {
+        self.pick(
+            &format!("找不到主程序 miyu（{path}）：用 miyu web 打开网页，或者把 miyu-web 放在 miyu 旁边。"),
+            &format!(
+                "Could not find the main program miyu ({path}): open the web UI with miyu web, or put miyu-web next to miyu."
+            ),
         )
     }
 

@@ -180,9 +180,13 @@ fn myself() -> PathBuf {
     std::env::current_exe().unwrap_or_else(|_| PathBuf::from("miyu-web"))
 }
 
-/// 拉起核心：自己真实位置旁边的主程序 `miyu` 加 `core`（施工 W-9「施工时定的」第 3 条）。
+/// 拉起核心的命令（施工 W-9「施工时定的」第 3 条）：主程序照核心给的 `MIYU_PROGRAM`（主程序的真实位置，核心 G-15；打成包装进数据根的旁边没有主程序），没设、
+/// 不是绝对路径、那里没有文件的照自己真实位置旁边的（`web-ui.md`「怎么走」第一条第 7 款）。
 fn core() -> Command {
-    let mut core = Command::new(sibling(&myself(), "miyu"));
+    let given = std::env::var_os("MIYU_PROGRAM")
+        .map(PathBuf::from)
+        .filter(|program| program.is_absolute() && program.is_file());
+    let mut core = Command::new(given.unwrap_or_else(|| sibling(&myself(), "miyu")));
     core.arg("core");
     core
 }

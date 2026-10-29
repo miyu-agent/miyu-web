@@ -70,7 +70,14 @@ pub async fn open(
     let mut core = match Core::connect(root, &launch.core, "miyu-web").await {
         Ok(core) => core,
         Err(reason) => {
-            say(err, &Language::En.no_core(&reason.to_string()));
+            // 问不到核心的语言：照这台机器的；主程序不在那里的说清楚是哪个，不接底下的原话
+            let language = Language::of_locale(&miyu_client::open::locale());
+            let program = PathBuf::from((launch.core)().get_program());
+            let said = match program.is_absolute() && !program.exists() {
+                true => language.no_program(&program.display().to_string()),
+                false => language.no_core(&reason.to_string()),
+            };
+            say(err, &said);
             return 1;
         }
     };

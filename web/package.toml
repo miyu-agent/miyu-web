@@ -11,7 +11,7 @@ program = "miyu-web"
 about = { en = "Start the web interface", zh = "打开网页界面", ja = "ウェブ画面を開く" }
 
 [ui]
-pages_dir = "web/pages"
+pages_dir = "pages"
 
 [settings.port]
 type = "int"

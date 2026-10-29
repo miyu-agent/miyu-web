@@ -445,7 +445,7 @@ http://127.0.0.1:<端口>/#setup=9f03b21c…
 | `upload_incomplete` | 上传未完成。 | Upload incomplete. |
 | `unknown_blob` | 内容不存在。 | Content not found. |
 
-`miyu web` 和网页软件印的（照 `ui.language`，和 `miyu ask` 一样）：
+`miyu web` 和网页软件印的（照 `ui.language`，和 `miyu ask` 一样；连不上核心、问不到语言的照这台机器的 `LC_ALL`、`LC_MESSAGES`、`LANG`，`zh` 打头的中文，2026-10-29 原来写死英文、后面却接核心那边的中文原话）：
 
 | 什么时候 | 中文 | 英文 |
 |---|---|---|
@@ -454,6 +454,7 @@ http://127.0.0.1:<端口>/#setup=9f03b21c…
 | 第一次 | 还没设过网页的登录密码：带着一次性码打开网页，在网页上设用户名和密码。 | No web password yet: opening the web UI with a one-time code to set a username and password. |
 | `--print --reset` | 在浏览器里打开，重设用户名和密码： | Open this in a browser to reset the username and password: |
 | 起不来、连不上核心 | 网页软件起不来：{原因}；连不上核心：{原因} | The web UI could not start: {reason}; Could not reach the core: {reason} |
+| 找不到主程序（核心没在跑、要拉起它，2026-10-29） | 找不到主程序 miyu（{路径}）：用 miyu web 打开网页，或者把 miyu-web 放在 miyu 旁边。 | Could not find the main program miyu ({path}): open the web UI with miyu web, or put miyu-web next to miyu. |
 | `--print` | 在浏览器里打开： | Open this in a browser: |
 | `--print` 的提醒 | 这个链接 5 分钟内有效，只能用一次，别发给别人。 | This link works once within 5 minutes. Do not share it. |
 | 没装 | 没装网页界面。装法：装和 miyu 同一个版本的 miyu-web 包（各发行版怎么装），它装在 miyu 旁边。 | The web UI is not installed. Install the miyu-web package of the same version as miyu (…); it goes next to miyu. |
