@@ -25,7 +25,7 @@ pub use miyu_client::open::{Browser, SystemBrowser};
 use miyu_client::places::DataRoot;
 
 use crate::serve::{CoreCommand, address, running};
-use crate::texts::Language;
+use crate::texts::{Carried, Language};
 
 /// `open` 的参数。
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -93,7 +93,8 @@ pub async fn open(
         {
             Ok(result) => {
                 let count = result["revoked"].as_u64().unwrap_or(0);
-                say(err, &language.logged_out(count));
+                say(out, &language.logged_out(count));
+                say(err, &language.logout_hint());
                 0
             }
             Err(reason) => {
@@ -146,26 +147,27 @@ pub async fn open(
         open.package.as_deref(),
     );
     let secret = code.is_some() || ticket.is_some();
+    let carried = match (&code, &ticket) {
+        (Some(_), _) if open.reset => Some(Carried::Reset),
+        (Some(_), _) => Some(Carried::First),
+        (None, Some(_)) => Some(Carried::Ticket),
+        (None, None) => None,
+    };
     if open.json {
         say(out, &json!({"url": url, "first": first}).to_string());
         return 0;
     }
+    // 交给了浏览器的印结果行（带着整个网址）；交不出去、`--print` 的只印网址。提示都在标准错误上（核心设计 47）
     if !open.print && hand(root, &url, secret, launch, browser) {
-        if first && !open.reset {
-            say(err, &language.first());
+        say(out, &language.opened(&url));
+    } else {
+        say(out, &url);
+        if !open.print {
+            say(err, &language.no_browser());
         }
-        say(err, &language.opened(&site));
-        if secret {
-            say(err, &language.print_hint());
-        }
-        return 0;
     }
-    say(err, &language.open_this(open.reset));
-    say(out, &url);
-    if code.is_some() {
-        say(err, &language.code_warning());
-    } else if ticket.is_some() {
-        say(err, &language.ticket_warning());
+    if let Some(carried) = carried {
+        say(err, &language.hint(carried));
     }
     0
 }

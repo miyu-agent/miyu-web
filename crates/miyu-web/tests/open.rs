@@ -207,14 +207,12 @@ async fn the_first_time_opens_with_a_code_after_starting_the_web_ui() {
         browser.opened.lock().expect("没坏")[0].starts_with("file://"),
         "带码的交跳转页，码不进进程列表"
     );
-    assert_eq!(out, "", "网址交给了浏览器，不印");
-    assert!(err.contains("还没设过网页的登录密码"), "{err}");
-    assert!(
-        err.contains(&format!("网页开在 {site}，已经交给浏览器打开。")),
-        "{err}"
+    // 结果行带着整个网址（2026-10-29 项目主人：原来要再 --print 才看得到），提示在标准错误上（核心设计 47）
+    assert_eq!(out, format!("已在浏览器中打开：{site}/#setup={CODE}\n"));
+    assert_eq!(
+        err,
+        "提示：首次打开需要设置访问密码；链接 5 分钟内有效，只能用一次\n"
     );
-    assert!(err.contains("miyu web --print"), "{err}");
-    assert!(!err.contains(CODE), "码只在网址里：{err}");
     // 已经在跑的照它的地址，不再拉起。
     let again = browser_again(&home, Open::default(), true).await;
     assert_eq!(again, [format!("{site}/#setup={CODE}")]);
@@ -248,7 +246,7 @@ async fn later_opens_carry_a_ticket_unless_reset() {
         [format!("{site}/#ticket={TICKET}")],
         "带票，不带账号"
     );
-    assert!(!err.contains("还没设过") && !err.contains(TICKET), "{err}");
+    assert_eq!(err, "提示：链接 60 秒内有效，只能用一次\n");
     let reset = browser_again(
         &home,
         Open {
@@ -320,14 +318,20 @@ async fn print_and_a_missing_browser_print_the_address() {
         browser.opened.lock().expect("没坏").is_empty(),
         "--print 不开浏览器"
     );
-    assert_eq!(out, format!("{site}/#setup={CODE}\n"));
-    assert!(err.contains("在浏览器里打开："), "{err}");
-    assert!(err.contains("5 分钟内有效，只能用一次"), "{err}");
+    assert_eq!(out, format!("{site}/#setup={CODE}\n"), "--print 只印网址");
+    assert!(
+        err.contains("首次打开需要设置访问密码；链接 5 分钟内有效"),
+        "{err}"
+    );
     let nothing = FakeBrowser {
         works: false,
         opened: Mutex::new(Vec::new()),
     };
-    let (code, out, _) = run_open(&home, Open::default(), &nothing).await;
+    let (code, out, err) = run_open(&home, Open::default(), &nothing).await;
+    assert!(
+        err.starts_with("miyu: 无法打开浏览器，请手动打开上面的地址\n"),
+        "{err}"
+    );
     assert_eq!(code, 0);
     assert_eq!(
         out,
@@ -357,7 +361,7 @@ async fn an_old_core_without_tickets_opens_the_bare_address() {
         [format!("{site}/")],
         "不带凭据的直接交"
     );
-    assert!(!err.contains("--print"), "{err}");
+    assert!(!err.contains("提示"), "什么凭据都不带的不提示：{err}");
 }
 
 #[tokio::test]
@@ -450,8 +454,8 @@ async fn logout_says_how_many_and_leaves_the_web_ui_alone() {
     )
     .await;
     assert_eq!(code, 0, "{err}");
-    assert_eq!(out, "");
-    assert!(err.contains("作废了 3 个登录"), "{err}");
+    assert_eq!(out, "已退出 3 个登录\n");
+    assert_eq!(err, "提示：浏览器需要重新输入访问密码\n");
     assert!(browser.opened.lock().expect("没坏").is_empty());
     assert!(!miyu_web::serve::running(&home.root), "没拉起网页软件");
 }
@@ -472,11 +476,9 @@ async fn a_taken_port_is_said_in_the_persons_language() {
     )
     .await;
     assert_eq!(code, 1);
-    assert!(
-        err.contains(&format!(
-            "端口 {port} 被占了。换一个：miyu web --port <端口>"
-        )),
-        "{err}"
+    assert_eq!(
+        err,
+        format!("miyu: 端口 {port} 已被占用\n提示：用 'miyu web --port <端口>' 换一个\n")
     );
     let _ = Arc::new(());
 }

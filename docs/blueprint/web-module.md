@@ -445,21 +445,20 @@ http://127.0.0.1:<端口>/#setup=9f03b21c…
 | `upload_incomplete` | 上传未完成。 | Upload incomplete. |
 | `unknown_blob` | 内容不存在。 | Content not found. |
 
-`miyu web` 和网页软件印的（照 `ui.language`，和 `miyu ask` 一样；连不上核心、问不到语言的照这台机器的 `LC_ALL`、`LC_MESSAGES`、`LANG`，`zh` 打头的中文，2026-10-29 原来写死英文、后面却接核心那边的中文原话）：
+`miyu web` 和网页软件印的（2026-10-29 照核心设计 47「命令行文案」改：报错 `miyu: ` 打头、不带句号，建议另起一行「提示：」，结果行短、动词打头，不再说「用户名」；照 `ui.language`，和 `miyu ask` 一样；连不上核心、问不到语言的照这台机器的 `LC_ALL`、`LC_MESSAGES`、`LANG`，`zh` 打头的中文，2026-10-29 原来写死英文、后面却接核心那边的中文原话）：
 
 | 什么时候 | 中文 | 英文 |
 |---|---|---|
-| 交给了浏览器 | 网页开在 {url}，已经交给浏览器打开。 | The web UI is at {url} and has been opened in your browser. |
-| 带了码的提示 | 浏览器没打开的话，用 miyu web --print。 | If the browser did not open, use miyu web --print. |
-| 第一次 | 还没设过网页的登录密码：带着一次性码打开网页，在网页上设用户名和密码。 | No web password yet: opening the web UI with a one-time code to set a username and password. |
-| `--print --reset` | 在浏览器里打开，重设用户名和密码： | Open this in a browser to reset the username and password: |
-| 起不来、连不上核心 | 网页软件起不来：{原因}；连不上核心：{原因} | The web UI could not start: {reason}; Could not reach the core: {reason} |
-| 找不到主程序（核心没在跑、要拉起它，2026-10-29） | 找不到主程序 miyu（{路径}）：用 miyu web 打开网页，或者把 miyu-web 放在 miyu 旁边。 | Could not find the main program miyu ({path}): open the web UI with miyu web, or put miyu-web next to miyu. |
-| `--print` | 在浏览器里打开： | Open this in a browser: |
-| `--print` 的提醒 | 这个链接 5 分钟内有效，只能用一次，别发给别人。 | This link works once within 5 minutes. Do not share it. |
-| 没装 | 没装网页界面。装法：装和 miyu 同一个版本的 miyu-web 包（各发行版怎么装），它装在 miyu 旁边。 | The web UI is not installed. Install the miyu-web package of the same version as miyu (…); it goes next to miyu. |
-| 端口被占 | 端口 {port} 被占了。换一个：miyu web --port <端口> | Port {port} is in use. Pick another: miyu web --port <port> |
-| `--logout` | 作废了 {count} 个登录，浏览器要用密码再登一次。 | Signed out {count} logins; browsers need to sign in with the password again. |
+| 交给了浏览器（标准输出） | 已在浏览器中打开：{url} | opened in browser: {url} |
+| 第一次的码（提示） | 提示：首次打开需要设置访问密码；链接 5 分钟内有效，只能用一次 | hint: set an access password on first open; the link works once within 5 minutes |
+| `--reset` 的码（提示） | 提示：打开后重设访问密码；链接 5 分钟内有效，只能用一次 | hint: reset the access password after opening; the link works once within 5 minutes |
+| 票（提示） | 提示：链接 60 秒内有效，只能用一次 | hint: the link works once within 60 seconds |
+| 交不给浏览器 | miyu: 无法打开浏览器，请手动打开上面的地址 | miyu: cannot open a browser; open the address above |
+| 起不来、连不上核心 | miyu: 无法启动网页界面：{原因}；miyu: 无法连接核心：{原因} | miyu: cannot start the web interface: {reason}; miyu: cannot reach the core: {reason} |
+| 找不到主程序（核心没在跑、要拉起它） | miyu: 找不到主程序：{路径}<br>提示：用 'miyu web' 打开 | miyu: main program not found: {path}<br>hint: open it with 'miyu web' |
+| 没装 | 没装网页界面。装法：装和 miyu 同一个版本的 miyu-web 包（各发行版怎么装），它装在 miyu 旁边。（核心印的） | The web UI is not installed. … |
+| 端口被占 | miyu: 端口 {port} 已被占用<br>提示：用 'miyu web --port <端口>' 换一个 | miyu: port {port} is in use<br>hint: pick another with 'miyu web --port <port>' |
+| `--logout` | 已退出 {count} 个登录<br>提示：浏览器需要重新输入访问密码 | signed out {count} logins<br>hint: browsers must enter the access password again |
 
 ### 守着它的
 
