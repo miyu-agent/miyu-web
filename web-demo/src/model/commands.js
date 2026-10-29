@@ -18,13 +18,14 @@
 
 /**
  * 核心认的斜杠命令（`command.catalog`，核心 O-6 补）写成网页的命令：做法是交给核心（`command.run`），带参数的照它的提示。
- * @param {{name: string, aliases?: string[], summary?: string, argument?: string}[]} catalog @returns {Spec[]}
+ * 能点名用的技能（核心 PT-2下：`skill: true`）名字后面都能接字，交给技能当参数。
+ * @param {{name: string, aliases?: string[], summary?: string, argument?: string, skill?: boolean}[]} catalog @returns {Spec[]}
  */
 export function coreSpecs(catalog) {
   return (catalog ?? []).map((c) => {
     const usage = (Array.isArray(c.usage) ? c.usage : []).filter((u) => u && typeof u.form === 'string' && u.form.startsWith(`/${c.name}`))
       .map((u) => ({ form: u.form, summary: typeof u.summary === 'string' ? u.summary : '' }));
-    return { name: c.name, aliases: c.aliases ?? [], summary: c.summary ?? '', run: 'core', args: !!c.argument || usage.length > 1, ...(c.argument ? { argument: c.argument } : {}), ...(usage.length ? { usage } : {}) };
+    return { name: c.name, aliases: c.aliases ?? [], summary: c.summary ?? '', run: 'core', args: !!c.argument || usage.length > 1 || c.skill === true, ...(c.argument ? { argument: c.argument } : {}), ...(usage.length ? { usage } : {}) };
   });
 }
 

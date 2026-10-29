@@ -275,3 +275,14 @@ test('MCP 服务的提示词做成的命令（核心 X-39）：名字中间可�
   const spec = { name: 'github:review-pr', summary: '', args: true };
   assert.deepEqual(read([spec], '/github:review-pr 123'), { kind: 'command', spec, words: '123' });
 });
+
+test('能点名用的技能（核心 PT-2下 command.catalog 的 skill: true）：名字后面接的字交给技能当参数，不当话发', async () => {
+  const { coreSpecs } = await import('../src/model/commands.js');
+  const list = coreSpecs([{ name: 'pdf', aliases: [], summary: '读 PDF', skill: true }, { name: 'dream', summary: '整理记忆' }]);
+  assert.equal(list[0].args, true);
+  assert.deepEqual(read(list, '/pdf 把这份合同摘要一下'), { kind: 'command', spec: list[0], words: '把这份合同摘要一下' });
+  assert.deepEqual(read(list, '/pdf'), { kind: 'command', spec: list[0], words: null });
+  // 不是技能、没写参数的照旧：带了字的当话
+  assert.equal(list[1].args, false);
+  assert.equal(read(list, '/dream 随便').kind, 'talk');
+});
