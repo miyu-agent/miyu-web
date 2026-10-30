@@ -126,7 +126,6 @@
     "setup_title": "设置访问密码",
     "setup_sub": "从别的设备打开网页时要输入它；在这台电脑上用 miyu web 打开不用。忘了可在终端运行 miyu web --reset 重设",
     "next": "下一步",
-    "short_password": "访问密码至少 {min} 个字符",
     "long_password": "访问密码最多 {max} 个字节",
     "mismatch": "两次输入的访问密码不一样",
     "failed": "没拿到登录令牌",

@@ -14,8 +14,7 @@ import { Connection, Refusal } from '../core/connection.js';
 
 /** 「账号」那一屏的步骤条：后面几段照引导（`packages/welcome` 的 `NUMBERED`） */
 const STEPS = ['account', 'language', 'model', 'persona', 'theme', 'profile', 'preset', 'sandbox'];
-/** 访问密码最短、最长几个字节（核心 SU-1：8 到 1024） */
-const PASSWORD_MIN = 8;
+/** 访问密码最长几个字节（核心 SU-1；只挡拿超长的串耗 argon2）。没有最短：2026-10-30 项目主人去掉了「至少 8 位」，只要不是空的、不全是空白 */
 const PASSWORD_MAX = 1024;
 
 /**
@@ -41,12 +40,12 @@ export function refusedText(err) {
 }
 
 /**
- * 「设置访问密码」那一屏填的哪里不对：太短、太长、两次不一样；对的交 `null`。
+ * 「设置访问密码」那一屏填的哪里不对：空的（全是空白也算）、太长、两次不一样；对的交 `null`。
  * @param {string} password @param {string} again
  */
 export function passwordProblem(password, again) {
   const n = new TextEncoder().encode(password).length;
-  if (n < PASSWORD_MIN || !password.trim()) return t('signin.short_password', { min: PASSWORD_MIN });
+  if (!password.trim()) return t('signin.empty_password');
   if (n > PASSWORD_MAX) return t('signin.long_password', { max: PASSWORD_MAX });
   if (password !== again) return t('signin.mismatch');
   return null;

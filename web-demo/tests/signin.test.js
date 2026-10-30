@@ -46,11 +46,12 @@ test('被拒的几种：令牌作废、没带凭据、票作废、还没设访�
   assert.equal(refusedText(new Error('x')), null);
 });
 
-test('「设置访问密码」那一屏：至少 8 个字节、不能全是空白、最多 1024 个字节，两次要一样（核心 SU-1）', () => {
+test('「设置访问密码」那一屏：不能是空的、不能全是空白、最多 1024 个字节，两次要一样（核心 SU-1；没有最短）', () => {
   assert.equal(passwordProblem('password1', 'password1'), null);
-  assert.match(passwordProblem('short', 'short') ?? '', /至少 8/);
-  assert.match(passwordProblem('        ', '        ') ?? '', /至少 8/);
-  assert.equal(passwordProblem('密码密码密码', '密码密码密码'), null, '照字节数：六个汉字 18 个字节');
+  assert.equal(passwordProblem('a', 'a'), null, '没有最短（2026-10-30 项目主人去掉了至少 8 位）');
+  assert.equal(passwordProblem('1234', '1234'), null);
+  assert.match(passwordProblem('', '') ?? '', /请填写访问密码/);
+  assert.match(passwordProblem('   ', '   ') ?? '', /请填写访问密码/, '全是空白的也不行');
   assert.match(passwordProblem('a'.repeat(1025), 'a'.repeat(1025)) ?? '', /最多 1024/);
   assert.match(passwordProblem('password1', 'password2') ?? '', /不一样/);
 });

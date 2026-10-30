@@ -126,7 +126,6 @@
     "setup_title": "Set an access password",
     "setup_sub": "You'll enter it when opening the web UI from another device; opening it with miyu web on this computer doesn't need it. Forgot it? Run miyu web --reset in the terminal",
     "next": "Next",
-    "short_password": "The access password needs at least {min} characters",
     "long_password": "The access password can be at most {max} bytes",
     "mismatch": "The two access passwords don't match",
     "failed": "No login token came back",
