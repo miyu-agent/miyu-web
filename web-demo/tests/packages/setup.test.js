@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave } from '../../packages/setup/model.js';
+import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave, plainPath } from '../../packages/setup/model.js';
 import { rowsOf, split, filterTree, withChanges, fallbackSections } from '../../packages/setup/feature-tree.js';
 
 const list = [{ persona: 'engineer', name: null }, { persona: 'miyu', name: 'Miyu' }, { persona: 'bad', problem: 'persona.toml:2: …' }];
@@ -186,4 +186,12 @@ test('引导「自定义」改的是还没存的那一份：照改动换开关�
   assert.equal(sections[0].items[0].on, true, '原来那一份不动');
   const old = fallbackSections([{ id: 'a', on: true }, { id: 'b', on: false }, { id: 'c', installed: false }], '功能');
   assert.deepEqual(old.map((s) => `${s.name}:${s.on}/${s.total}:${s.items.map((f) => f.id).join(',')}`), ['功能:1/2:a,b'], '没装的不列');
+});
+
+test('Windows 的原样路径换成平常的写法（2026-10-30 桌面端：\\\\?\\ 开头的让选目录、文件夹浏览器都卡住）；别的照原样', () => {
+  assert.equal(plainPath('\\\\?\\C:\\Users\\me\\.miyu\\workspace'), 'C:\\Users\\me\\.miyu\\workspace');
+  assert.equal(plainPath('\\\\?\\UNC\\srv\\share\\x'), '\\\\srv\\share\\x');
+  assert.equal(plainPath('C:\\work'), 'C:\\work');
+  assert.equal(plainPath('\\\\srv\\share'), '\\\\srv\\share');
+  assert.equal(plainPath('/home/me'), '/home/me');
 });

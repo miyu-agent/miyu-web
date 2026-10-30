@@ -83,6 +83,16 @@ export function lastChoice(sessions, personas, presets, noTools = false) {
   return out;
 }
 
+/**
+ * Windows 上照「原样路径」写的（`\\?\C:\…`、`\\?\UNC\服务器\…`，`canonicalize` 出来的）换成平常的写法：选目录对话框、文件夹浏览器、
+ * 给人看的都认不了它（2026-10-30 桌面端在 Win11 上撞见：标题写 `\\?\C:\Users\…\workspace`、「Directory not found」）。别的照原样。
+ * @param {string} path
+ */
+export function plainPath(path) {
+  if (path.startsWith('\\\\?\\UNC\\')) return `\\\\${path.slice(8)}`;
+  return path.startsWith('\\\\?\\') ? path.slice(4) : path;
+}
+
 /** 目录名（按钮上写的）：路径最后一段，`~` 照写。 @param {string} path */
 export function dirName(path) {
   const parts = path.replace(/[\\/]+$/, '').split(/[\\/]/);

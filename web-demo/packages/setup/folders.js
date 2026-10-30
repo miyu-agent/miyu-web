@@ -6,6 +6,7 @@
 //! 文件夹不收起菜单。以点开头的隐藏目录不列（要用的直接写路径）。
 
 import { h } from '../../src/lib/dom.js';
+import { plainPath } from './model.js';
 
 /**
  * 在菜单里浏览文件夹，从 `start` 开始。
@@ -13,12 +14,14 @@ import { h } from '../../src/lib/dom.js';
  * @param {import('./menu.js').Menu} menu
  * @param {HTMLElement} anchor
  * @param {boolean} below
- * @param {string} start 从哪个目录开始
+ * @param {string} from 从哪个目录开始
  * @param {(path: string) => void} done 选定了
  * @param {(path: string) => string} show 路径写给人看的样子（家目录写 `~`）
  */
-export async function browse(ctx, menu, anchor, below, start, done, show) {
+export async function browse(ctx, menu, anchor, below, from, done, show) {
   const t = (key, fields) => ctx.text(key, fields);
+  // Windows 的原样路径（`\\?\C:\…`）先换成平常的写法：对话框、浏览器都认不了它
+  const start = plainPath(from);
   const button = (label, primary, onclick, off = false) => h(`button.setup-menu-btn${primary ? '.is-primary' : ''}`, { type: 'button', onclick, disabled: off }, label);
   const go = async (dir) => {
     let items = [];
@@ -49,7 +52,7 @@ export async function browse(ctx, menu, anchor, below, start, done, show) {
   };
   // 系统的选目录对话框：选了交出去，取消了（`false`）就算了，开不了（`null`）才画浏览器
   const picked = await ctx.host?.files?.pickDir?.({ title: t('folders.title'), start }).catch(() => null);
-  if (typeof picked === 'string') return done(picked);
+  if (typeof picked === 'string') return done(plainPath(picked));
   if (picked === false) return;
   await go(start);
 }
