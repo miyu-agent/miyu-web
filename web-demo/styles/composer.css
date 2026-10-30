@@ -12,6 +12,8 @@
 }
 .composer:focus-within { box-shadow: var(--composer-elev-focus, var(--composer-focus-shadow)); }
 .composer-input {
+  /* 不要横向滚动条、不要系统控件的样子：WebKitGTK 上一行高的框底下会画出一条横的滚动条，像一道线（2026-10-30 桌面端；字本来就折行） */
+  -webkit-appearance: none; appearance: none; overflow-x: hidden;
   display: block; width: 100%; padding: var(--composer-pad-top, calc(14px * var(--space))) var(--composer-pad-x, calc(18px * var(--space))) 0; border: 0; outline: 0; resize: none;
   background: transparent; color: var(--text); font: var(--composer-font, calc(14px * var(--text-scale))/1.6 var(--font-read));
   /* 变高变矮缓过去（蓝图 web.md「动效」；高度由 composer.js 量好了写上） */
