@@ -7258,5 +7258,11 @@
       ".dash-command-full",
       ".dash-prompt"
     ]
+  },
+  "set.password-eye": {
+    "zh": "设置「访问密码」框右边的眼睛",
+    "select": [
+      ".acc-eye"
+    ]
   }
 }

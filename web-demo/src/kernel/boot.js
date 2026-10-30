@@ -35,6 +35,8 @@ import { useIcons } from '../lib/dom.js';
 import { KERNEL_SERVICES } from './services.js';
 
 /** 个人那一层（停用、启用、改配置）存在这台设备上的名字（带上账号）；核心有了个人设置以后搬进账号的家目录。 */
+/** 页面开在这台机器上的地址（改访问密码不要当前密码）：同核心认本机的一样，127.x 整段、localhost、::1 */
+const onLoopback = (/** @type {string} */ host) => host === 'localhost' || host === '[::1]' || host === '::1' || /^127\.\d+\.\d+\.\d+$/.test(host);
 /** JSON-RPC 的「没有这个方法」：连的核心还没有配置的接口 */
 const NO_METHOD = -32601;
 const USER_LAYER = 'packages';
@@ -238,7 +240,8 @@ export async function boot(root) {
          */
         access: {
           set: () => passwordSet,
-          needsOld: () => passwordSet === true && host.kind !== 'browser',
+          // 本机连上的（桌面端的窗口、本机的浏览器，页面地址是本机回环）不要当前密码；局域网别的设备连进来的要（2026-10-31 项目主人，核心同一天放开）
+          needsOld: () => passwordSet === true && host.kind !== 'browser' && !onLoopback(location.hostname),
           problem: (/** @type {string} */ password, /** @type {string} */ again) => passwordProblem(password, again),
           change: async (/** @type {string} */ password, /** @type {string|null} */ old) => {
             const why = await changePassword(conn, host, password, old);

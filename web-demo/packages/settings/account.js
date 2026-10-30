@@ -205,7 +205,28 @@ function avatarRow(dialog) {
 }
 
 /**
- * 「访问密码」一行（核心 SU-1 补；蓝图第 12c 条第 2 款）：设没设、右边「设置」或「修改」；点了下面展开几格（改的、拿设备令牌连的多「当前访问密码」）、
+ * 密码框右边一个眼睛：点了看得见写的字，再点藏起来（同登录那一屏的）；不进 Tab 的先后，按 Tab 到下一个框。
+ * @param {HTMLInputElement} input @param {(k: string) => string} t
+ */
+function withEye(input, t) {
+  const eye = h('button.acc-eye', {
+    type: 'button', tabindex: '-1', title: t('account.password_show'), 'aria-label': t('account.password_show'), 'aria-pressed': 'false',
+    onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(),
+    onclick: () => {
+      const shown = input.type === 'password';
+      input.type = shown ? 'text' : 'password';
+      const label = t(shown ? 'account.password_hide' : 'account.password_show');
+      eye.setAttribute('aria-pressed', String(shown));
+      eye.title = label;
+      eye.setAttribute('aria-label', label);
+    },
+  }, icon('eye'));
+  return h('span.acc-secret', input, eye);
+}
+
+/**
+ * 「访问密码」一行（核心 SU-1 补；蓝图第 12c 条第 2 款）：设没设、右边「设置」或「修改」；点了下面展开一格新的密码，右边一个眼睛（2026-10-31
+ * 项目主人：一个框加眼睛直接设，不再输两遍、本机的不要当前密码），从局域网别的设备连进来的改的时候多「当前访问密码」）、
  * 「确定」「取消」。旧核心握手不说设没设的不出。`open` 的（打开局域网时还没设密码）格子直接打开，设好了叫 `done`、取消了叫 `cancel`。
  * @param {any} dialog @param {{open?: boolean, done?: () => void, cancel?: () => void}} [how] @returns {HTMLElement[]}
  */
@@ -226,12 +247,11 @@ function passwordRows(dialog, how = {}) {
     const field = (/** @type {string} */ name, /** @type {string} */ auto) => /** @type {HTMLInputElement} */ (h('input.set-input', { type: 'password', placeholder: t(name), 'aria-label': t(name), autocomplete: auto, spellcheck: 'false' }));
     const old = access.needsOld() ? field('account.password_old', 'current-password') : null;
     const fresh = field('account.password_new', 'new-password');
-    const again = field('account.password_again', 'new-password');
     const error = h('p.set-error', { hidden: true });
     const ok = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'button', onclick: () => submit() }, t('account.ok')));
     const fail = (/** @type {string} */ why) => { error.textContent = why; error.hidden = false; };
     const submit = async () => {
-      const why = access.problem(fresh.value, again.value);
+      const why = access.problem(fresh.value, fresh.value);
       if (why) return fail(why);
       ok.disabled = true;
       const refused = await access.change(fresh.value, old ? old.value : null);
@@ -247,10 +267,10 @@ function passwordRows(dialog, how = {}) {
       close();
       how.cancel?.();
     };
-    for (const input of [old, fresh, again]) input?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) submit(); });
+    for (const input of [old, fresh]) input?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) submit(); });
     // 浏览器记密码照这一格（没有用户名，给一个固定的藏着，同登录那一屏；不然会把上面的「端口」当成用户名）
     const user = h('input', { type: 'text', autocomplete: 'username', value: 'Miyu', hidden: true, readonly: true, tabindex: '-1' });
-    form.replaceChildren(user, h('div.set-form-keyrow', old, fresh, again), error,
+    form.replaceChildren(user, h('div.set-form-keyrow', old ? withEye(old, t) : null, withEye(fresh, t)), error,
       h('div.set-form-buttons', h('button.set-btn', { type: 'button', onclick: cancel }, t('account.cancel')), ok));
     form.hidden = false;
     button.hidden = true;
