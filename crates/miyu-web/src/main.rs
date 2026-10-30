@@ -2,7 +2,8 @@
 //! 拉起来的，不写进帮助（`forget <跳转页>`：过 30 秒删掉 `open` 写的跳转页，`web-ui.md`「怎么走」第二条第 4 款）。
 //!
 //! - `miyu-web serve [--port <端口>]`
-//! - `miyu-web open [--port <端口>] [--print] [--format text|json] [--ticket] [--reset] [--logout] [--package <编号>]`
+//! - `miyu-web open [--port <端口>] [--print] [--format text|json] [--ticket] [--reset] [--logout] [--package <编号>] [-h|--help]`：核心 CL-7 起
+//!   `miyu web` 是网页包的命令，清单 `args = ["open"]`，转交过来就是它；`-h` 印帮助页，写错的照命令行文案说（[`miyu_web::help`]）
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
@@ -12,7 +13,8 @@ use std::time::Duration;
 use miyu_client::places::DataRoot;
 use miyu_client::places::Env;
 use miyu_client::places::ResourceRoot;
-use miyu_web::open::{Launch, Open, SystemBrowser, open};
+use miyu_web::help::Parsed;
+use miyu_web::open::{Launch, SystemBrowser, open};
 use miyu_web::serve::Serve;
 use miyu_web::settings::Settings;
 
@@ -27,8 +29,18 @@ fn main() -> ExitCode {
     if command == "forget" {
         return forget(rest);
     }
-    let Some(parsed) = parse(rest) else {
-        return usage();
+    let locale = miyu_client::open::locale();
+    let parsed = match (miyu_web::help::parse(rest), command.as_str()) {
+        (Ok(Parsed::Open(open)), _) => open,
+        (Ok(Parsed::Help), "open") => {
+            print!("{}", miyu_web::help::page(&locale));
+            return ExitCode::SUCCESS;
+        }
+        (Err(bad), "open") => {
+            eprintln!("{}", miyu_web::help::bad(&locale, &bad));
+            return ExitCode::from(USAGE);
+        }
+        _ => return usage(),
     };
     let Ok(runtime) = tokio::runtime::Runtime::new() else {
         eprintln!("miyu-web: no runtime");
@@ -132,35 +144,6 @@ async fn serve(root: DataRoot, env: &Env, port: Option<u16>) -> u8 {
     })
     .await;
     u8::from(ran.is_err())
-}
-
-/// 读参数：`--port <端口>`、`--print`、`--format text|json`（`json` 当 `--print`）、`--ticket`（和 `--reset` 不一起写）、`--reset`、`--logout`、`--package <编号>`（编号的写法不对的不认），别的不认。
-fn parse(args: &[String]) -> Option<Open> {
-    let mut open = Open::default();
-    let mut args = args.iter();
-    while let Some(arg) = args.next() {
-        match arg.as_str() {
-            "--port" => open.port = Some(args.next()?.parse().ok()?),
-            "--print" => open.print = true,
-            "--format" => match args.next()?.as_str() {
-                "json" => open.json = true,
-                "text" => open.json = false,
-                _ => return None,
-            },
-            "--reset" => open.reset = true,
-            "--ticket" => open.ticket = true,
-            "--logout" => open.logout = true,
-            "--package" => {
-                open.package = Some(
-                    args.next()
-                        .filter(|id| miyu_web::backstage::valid_package(id))?
-                        .clone(),
-                );
-            }
-            _ => return None,
-        }
-    }
-    (!(open.ticket && open.reset)).then_some(open)
 }
 
 /// `forget <跳转页>`：过一会儿删掉 `open` 写的跳转页（只删 `run/open/` 里的）。等多久照 `MIYU_WEB_FORGET_MS`（测试用），不写是 30 秒。

@@ -10,7 +10,9 @@ summary = { en = "Chat with the AI and change settings in the browser", zh = "�
 [command]
 name = "web"
 program = "miyu-web"
-about = { en = "Start the web interface", zh = "打开网页界面", ja = "ウェブ画面を開く" }
+# 核心转交时放在人敲的参数前面：miyu web --print 就是 miyu-web open --print（核心 CL-7 起 miyu web 是这个包的命令）
+args = ["open"]
+about = { en = "Open the web interface", zh = "打开网页界面", ja = "ウェブ画面を開く" }
 
 [ui]
 pages_dir = "pages"

@@ -25,7 +25,8 @@
 | `crates/miyu-web/src/open.rs`、`texts.rs` | `open`：确保 `serve` 在跑；要一次性码；开浏览器；给人看的字。照终端的样子连核心一问一答（`open` 要一次性码、`serve` 起来时问配置）、开浏览器的那两样在 `crates/miyu-webserve/src/open.rs`（施工 9-1 下从 `open.rs` 挪进 `client.rs`，施工 O-16 搬过去） |
 | `crates/miyu-web/src/settings.rs`、`miyu-webui/web.json`、`miyu-webui/package.toml`（装好在网页包的文件夹：资源目录的 `packages/miyu-webui/`，或者打成包文件装进数据根的 `packages/miyu-webui/`，找法见「怎么走」第一条第 6 款；`web.json` 2026-10-11 仓库拆开以后从核心的 `resources/web/` 挪进来） | 端口（出厂 8300）、空闲多久、票据多久不用作废、最多几张是配置项（`web.port`、`web.idle_seconds`、`web.ticket_idle_seconds`、`web.most_tickets`），声明在网页自己的清单里，默认值照清单读，起来时问核心拿最终值（施工 9-1 下）；内容安全策略（页面的、软件后台页的 `backstage_csp`）、页面的媒体类型是常量，在 `web.json` |
 | 网页包文件夹的 `pages/` | 页面文件，和网页包放在一起（原来在 `resources/web/pages/`，2026-10-11 跟着挪）。发版时照网页的前端放进去；开发时设 `MIYU_WEB_PAGES` 指到 `web-demo/` |
-| `crates/miyu-cli/src/web.rs`、`help/{zh,en}/web.txt` | 主程序的 `miyu web` 和它的帮助页 |
+| `miyu-webui/package.toml` 的 `[command]` | `miyu web` 这个命令：`name = "web"`、`program = "miyu-web"`、`args = ["open"]`（核心 CL-7 起不是主程序内置的，网页包装了才有，列在 `miyu -h` 的「软件包加的命令」里；原来是核心的 `crates/miyu-cli/src/web.rs`、`help/{zh,en}/web.txt`） |
+| `crates/miyu-web/src/help.rs` | `miyu web -h` 的帮助页（中文、英文） |
 | `crates/miyu-ipc/src/start.rs` 的 `spawn_detached` | 拉起、跟终端脱开、等那一行：核心和 `serve` 共用 |
 
 ### 对外的样子
@@ -50,7 +51,8 @@
 
 **二、`miyu web`**（W-9，原来是 `web-module.md` 第十一条，2026-10-04 随 W-8 改过）
 
-1. 主程序的 `miyu web` 照清单找网页软件（施工 9-3：两层清单里子命令是 `web` 的那一份的程序，出厂是 `miyu-web`；清单里找不到的照 `miyu-web`），只找主程序真实位置旁边的（Windows 上加 `.exe`），把 `web` 后面的参数原样交给 `miyu-web open`，等它退出，退出码照它的。没有：印「没装网页界面」和每种装法怎么装，退出码 1。
+1. `miyu web` 是网页包自己带的命令（2026-10-30 项目主人定，核心 CL-7；原来是主程序内置的，照清单找网页软件再交给它）：清单 `[command]` 写 `name = "web"`、`program = "miyu-web"`、`args = ["open"]`，核心照「转交」（核心 `packages.md` 第 5 条）找程序（包文件夹的 `bin/` 先，再 `miyu` 旁边），把 `args` 放在人敲的参数前面：`miyu web --print` 就是 `miyu-web open --print`；环境里带 `MIYU_PROGRAM`（主程序的真实位置，核心 G-15）、`MIYU_PACKAGE_DIR`，退出码照它的。网页包没装就没有这个命令（`miyu web` 照核心说不认识的命令），`miyu -h` 把它列在「软件包加的命令」里，说明照清单的 `about`。
+   - `miyu web -h`、`--help`（核心不再有这一页，转交过来是 `miyu-web open --help`）：`open` 后面有 `-h`、`--help` 的不管别的参数，印帮助页、退出码 0，照核心设计 47「命令行文案」写：用法、一句说明、选项（`--port`、`--print`、`--format <text|json>`、`--reset`、`--logout`、`--package <编号>`、`-h`），`--ticket` 不写（桌面端的外壳用的）。语言照这台机器的（`LC_ALL`、`LC_MESSAGES`、`LANG`，同核心的帮助页：印帮助不连核心），`zh` 打头的中文，别的英文。
 2. `miyu-web open`：`run/web` 在、锁有人拿着，网页软件就在跑，照 `run/web` 的地址。不然拉起 `miyu-web serve`：和头拉起核心一样（`ipc.md`「连不上就拉起」第 4、5 条），跟终端脱开，工作目录是数据根，等那一行最多 10 秒。
 3. 照终端的样子连核心（`connect_or_start`，出示本机令牌）。写了 `--reset` 的，或者还没设过密码的（问一次 `account.setup_code`，`first` 是真的）：网址是 `<地址>/#setup=<一次性码>`，码在 `#` 后面，不发给服务器、不进 Referer，页面拿到以后从地址栏抹掉（设计 21 X6）。别的：要一张交接票（`login.ticket`，核心 LT-1：60 秒、一次性），网址是 `<地址>/#ticket=<票>`（im 设计 07 第 3.6 节、网页-乙；SU-1 起不带账号，旧核心回应里带了也不用）：浏览器里存着设备令牌的照它进，没有、作废了的拿票一步连上，不用再输密码；这时不要一次性码（要了不用，5 分钟后自己作废）。旧核心要不到票的（没有 `login.ticket`）网址就是 `<地址>/`，页面照存着的登录令牌，没有的问用户名和密码。
 4. 用系统的办法打开（Linux 是 `xdg-open`，macOS 是 `open`，Windows 是 `cmd /C start "" "<网址>"`）。网址带着一次性码、交接票的不直接交（交出去的参数进进程列表，同一台机器上的别人看得到；im 设计 07 第 3.6 节）：写一个跳转页 `run/open/<16 个随机字节的十六进制>.html`（目录只给本人：Unix 上目录 0700、文件 0600；Windows 上在本人用户目录下的数据根里，同本机令牌 `run/token` 的办法），里面一行 `location.replace("<网址>")`（不留历史）、`<meta name="referrer" content="no-referrer">`，交出去的是这个文件的 `file://` 地址；交了以后拉起自己 `miyu-web forget <跳转页>`（跟终端脱开、不等它），它 30 秒后删掉这一页；每次 `open` 先删掉 `run/open/` 里放了 2 分钟以上的（`forget` 没跑完的兜底）。不带凭据的网址照旧直接交。
