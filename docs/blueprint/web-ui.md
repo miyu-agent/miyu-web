@@ -12,7 +12,8 @@
 |---|---|
 | `crates/miyu-web/`（第 5 层，头） | 程序 `miyu-web`：只依赖 `miyu-ipc`、`miyu-store`、`miyu-log`、`miyu-webserve`，不依赖核心 |
 | `crates/miyu-web/src/main.rs` | 子命令 `open`、`serve`；找自己旁边的主程序拉起核心 |
-| `crates/miyu-web/src/serve.rs` | 单实例、听端口、写 `run/web` 和那一行、空闲退出；每个请求分给谁：Host 不对的记一行、回 403，`/ws`、`/media`、页面文件。网页软件的 `Site` 实现 `miyu_webserve::Site`（数忙照空闲退出） |
+| `crates/miyu-web/src/serve.rs` | 单实例、听端口、写 `run/web` 和那一行、空闲退出（听局域网时不退）；每个请求分给谁：Host 不对的记一行、回 403，`/ws`、`/media`、`/listen`、页面文件。网页软件的 `Site` 实现 `miyu_webserve::Site`（数忙照空闲退出；在听的地址、端口换了照新的核对 Host） |
+| `crates/miyu-web/src/listen.rs` | `/listen`（「怎么走」第一条第 11 款）：回在听的地址、端口、别的设备打开用的网址；`POST` 照核心的配置换地址、端口，接连接的那一圈照它换监听 |
 | `crates/miyu-webserve/src/lib.rs`（施工 O-16 搬过去，`webserve.md`「搬家表」） | 核对 Host、Origin 的三种写法和听局域网时的 IP 写法（`Site::hosts`、`listen`、`host_allowed`、`origin_allowed`）；连接是不是远程的（`remote`） |
 | `crates/miyu-webserve/src/pages.rs`（同上，原来是 `crates/miyu-web/src/pages.rs` 和 `serve.rs` 的一段） | 页面文件：`/` 是 `index.html`，不出页面目录；类型照 `web.json` 的表、四个响应头 |
 | `crates/miyu-webserve/src/ws.rs`（同上，原来是 `crates/miyu-web/src/ws.rs`） | 核对 Origin；远程的先写 `connection.remote`；WebSocket 和核心连接两头照转 |
@@ -22,8 +23,8 @@
 | `crates/miyu-web/src/media/link.rs` | 照登录令牌连核心：一个令牌一条，同时问、照编号分回去，60 秒没人用就关 |
 | `crates/miyu-web/src/media/range.rs` | `Range` 要哪一段；下载的名字照 RFC 5987 转义 |
 | `crates/miyu-web/src/backstage.rs` | 软件后台页：`/page` 换票据、`/p/<票据>/<包>/<路径>` 照 `package.file` 一块块给、响应头（施工 F-6 下）；票据和连着的核心同 `/media` 那一套（`media/tickets.rs` 的 `Tickets` 两边各一份，`media/link.rs` 的 `Cores` 共用） |
-| `crates/miyu-web/src/open.rs`、`texts.rs` | `open`：确保 `serve` 在跑；要一次性码；开浏览器；给人看的字。照终端的样子连核心一问一答（`open` 要一次性码、`serve` 起来时问配置）、开浏览器的那两样在 `crates/miyu-webserve/src/open.rs`（施工 9-1 下从 `open.rs` 挪进 `client.rs`，施工 O-16 搬过去） |
-| `crates/miyu-web/src/settings.rs`、`miyu-webui/web.json`、`miyu-webui/package.toml`（装好在网页包的文件夹：资源目录的 `packages/miyu-webui/`，或者打成包文件装进数据根的 `packages/miyu-webui/`，找法见「怎么走」第一条第 6 款；`web.json` 2026-10-11 仓库拆开以后从核心的 `resources/web/` 挪进来） | 端口（出厂 8300）、空闲多久、票据多久不用作废、最多几张是配置项（`web.port`、`web.idle_seconds`、`web.ticket_idle_seconds`、`web.most_tickets`），声明在网页自己的清单里，默认值照清单读，起来时问核心拿最终值（施工 9-1 下）；内容安全策略（页面的、软件后台页的 `backstage_csp`）、页面的媒体类型是常量，在 `web.json` |
+| `crates/miyu-web/src/open.rs`、`texts.rs` | `open`：确保 `serve` 在跑；要交接票（`--reset` 要一次性码）；开浏览器；给人看的字。照终端的样子连核心一问一答（`open` 要一次性码、`serve` 起来时问配置）、开浏览器的那两样在 `crates/miyu-webserve/src/open.rs`（施工 9-1 下从 `open.rs` 挪进 `client.rs`，施工 O-16 搬过去） |
+| `crates/miyu-web/src/settings.rs`、`miyu-webui/web.json`、`miyu-webui/package.toml`（装好在网页包的文件夹：资源目录的 `packages/miyu-webui/`，或者打成包文件装进数据根的 `packages/miyu-webui/`，找法见「怎么走」第一条第 6 款；`web.json` 2026-10-11 仓库拆开以后从核心的 `resources/web/` 挪进来） | 端口（出厂 8300）、听哪个地址、空闲多久、票据多久不用作废、最多几张是配置项（`web.port`、`web.listen`、`web.idle_seconds`、`web.ticket_idle_seconds`、`web.most_tickets`），声明在网页自己的清单里，默认值照清单读，起来时问核心拿最终值（施工 9-1 下）；内容安全策略（页面的、软件后台页的 `backstage_csp`）、页面的媒体类型是常量，在 `web.json` |
 | 网页包文件夹的 `pages/` | 页面文件，和网页包放在一起（原来在 `resources/web/pages/`，2026-10-11 跟着挪）。发版时照网页的前端放进去；开发时设 `MIYU_WEB_PAGES` 指到 `web-demo/` |
 | `miyu-webui/package.toml` 的 `[command]` | `miyu web` 这个命令：`name = "web"`、`program = "miyu-web"`、`args = ["open"]`（核心 CL-7 起不是主程序内置的，网页包装了才有，列在 `miyu -h` 的「软件包加的命令」里；原来是核心的 `crates/miyu-cli/src/web.rs`、`help/{zh,en}/web.txt`） |
 | `crates/miyu-web/src/help.rs` | `miyu web -h` 的帮助页（中文、英文） |
@@ -39,8 +40,8 @@
 
 1. 单实例：`miyu-web serve` 先拿 `run/web.lock`，拿不到写 `running` 走。拿到了听端口，把地址写进 `run/web`（先写临时文件再改名），往标准输出写一行 `ready`，和核心那一行同一个写法（`ipc.md`「那一行」，复用 `miyu-ipc` 的 `Ready`）。端口被占了写 `error port <端口> in use`（`open` 认这个写法，照人的语言说，「施工时定的」第 5 条），别的起不来写 `error <原因>`。
    - 端口回退（2026-10-30，桌面端 DT-3 在一台 8300 被别的程序占着的机器上撞见：桌面窗口的人敲不了 `--port`；项目主人定「固定端口配端口回退」）：端口是出厂的（命令行没写 `--port`、配置里的 `web.port` 出处是 `default`）而且被占了的，照先后试后面九个（8301 到 8309），用头一个空的，`run/web` 照实写；九个都被占的照旧报那一个出厂端口被占。回退是固定的一串，不随便挑：浏览器里存的登录、设置按地址加端口分开，同一台机器上每次落到同一个端口才不丢。人自己定的端口（`--port`、配置里写了的 `web.port`）被占照旧报错，不替人换。
-2. 端口：照 `--port`，没写照配置 `web.port`（施工 9-1 下：只能写在系统配置，设置页「软件包」那一页露；改了下次起网页界面时生效）。`serve` 起来时核心在跑的就问它 `config.get` 拿 `web.*` 五项的最终值，不为这个拉起核心：`miyu web` 先经 `open` 连上核心才拉起 `serve`；核心没在跑的照清单的默认值起，记一行 `INFO web config from defaults`，连上了却被拒的记 `WARN web config not read`（固定端口，第 2 题）；`0` 是系统挑一个空的。听哪个地址照配置 `web.listen`（SU-1，2026-10-28 项目主人定「局域网能用」）：出厂 `127.0.0.1` 只有这台电脑能开；`0.0.0.0` 局域网里别的设备也能开（先设访问密码，网页设置页的「允许局域网访问」照它，没设密码时灰着）；也能写这台电脑的某一个地址；不是地址的照默认。`run/web` 里、交给浏览器的网址照旧写 `http://127.0.0.1:<端口>`：本机开浏览器走回环。端口被占了：`miyu web` 照人的语言说哪个端口被占了、怎么换。出厂端口 8300（「施工时定的」第 1 条）。
-3. 空闲退出：没有 WebSocket 连着、没有 `/media`、软件后台页在给，连续 10 分钟就退出（配置 `web.idle_seconds`，出厂 600，设置页不露；`0` 是不退：服务器上由服务管理器起的那一份写 0，空闲退出码是 0、`Restart=on-failure` 不会再起它，2026-10-23 Z-1 查出；`miyu web` 拉起的照旧 600，用的时候才起），先删 `run/web`、再放锁。收到停的信号照样先删再放。
+2. 端口：照 `--port`，没写照配置 `web.port`（施工 9-1 下：只能写在系统配置，设置页「通用」的「访问」一组、「软件包」那一页露；改了当场换，第 11 款）。`serve` 起来时核心在跑的就问它 `config.get` 拿 `web.*` 五项的最终值，不为这个拉起核心：`miyu web` 先经 `open` 连上核心才拉起 `serve`；核心没在跑的照清单的默认值起，记一行 `INFO web config from defaults`，连上了却被拒的记 `WARN web config not read`（固定端口，第 2 题）；`0` 是系统挑一个空的。听哪个地址照配置 `web.listen`（SU-1，2026-10-28 项目主人定「局域网能用」）：出厂 `127.0.0.1` 只有这台电脑能开；`0.0.0.0` 局域网里别的设备也能开（凭访问密码登录；网页设置页「通用」的「访问」一组的「允许局域网访问」照它，打开时没设密码的先设）；也能写这台电脑的某一个地址；不是地址的照默认。改了当场换（第 11 款）。`run/web` 里、交给浏览器的网址照旧写 `http://127.0.0.1:<端口>`：本机开浏览器走回环。端口被占了：`miyu web` 照人的语言说哪个端口被占了、怎么换。出厂端口 8300（「施工时定的」第 1 条）。
+3. 空闲退出：没有 WebSocket 连着、没有 `/media`、软件后台页在给，连续 10 分钟就退出（配置 `web.idle_seconds`，出厂 600，设置页不露；`0` 是不退：服务器上由服务管理器起的那一份写 0，空闲退出码是 0、`Restart=on-failure` 不会再起它，2026-10-23 Z-1 查出；`miyu web` 拉起的照旧 600，用的时候才起），先删 `run/web`、再放锁。听局域网的（在听的地址不是回环）不空闲退出（2026-10-30 项目主人定局域网访问是一个开关：开着就得一直能从别的设备打开，没人连着就退了，别的设备打不开、也起不了它），换回回环的照旧算空闲。收到停的信号照样先删再放。
    - 不定时醒（2026-10-15 设计 00「避免轮询」）：睡到下一件到点的事（空闲到点、核心连接 60 秒到点该关），没有到点的事就只等连接来、连着的走；过期的票据在换、找、有连接走时丢。
 4. 每个请求先核对 Host：认 `127.0.0.1:<端口>`、`localhost:<端口>`、`[::1]:<端口>`；听局域网的（`web.listen` 不是回环）另认「IP 字面量:<端口>」——听的是某一个地址的只认它，`0.0.0.0` 的认这台电脑的哪个地址都行（连得进来就是这台电脑的）。不认名字，别的回 403：别的网站把自己的域名解析到这台电脑也进不来（DNS rebinding）。
 5. 页面文件：`GET /` 给 `index.html`，别的照路径在页面目录里找。带 `..` 的、换成真实位置以后跑到页面目录外的、不是普通文件的，404。类型照扩展名（`web.json` 的表）。响应头一律带：`X-Content-Type-Options: nosniff`、`Referrer-Policy: no-referrer`、`Cache-Control: no-cache`、`Content-Security-Policy`（照 `web.json`，至少有 `connect-src 'self'`、`frame-ancestors 'none'`）。从来不设 cookie（「起草时定的」第 13 条）。
@@ -49,18 +50,22 @@
 8. 一个标签页一条核心连接，不合并（proto/web-demo 分支 `docs/blueprint/web/architecture.md`「多用户、多终端」第 7 条）。两头照转：文字帧加一个 `\n` 是一行，一行去掉 `\n` 是一个文字帧。不读、不改、不加：握手的凭据、命令、推送原样过去。二进制帧：关，1003。一帧超过 1 MiB：关，1009（核心那头一行也就这么长）。
 9. 一头断了另一头跟着关。核心那头断了（重启、退出）：WebSocket 关，1012，页面照自己的规矩重连（proto/web-demo 分支 `docs/blueprint/web.md`「连核心」第 1 条）。网页软件这头关的（1003、1009、1012、连不上核心）：发完关闭帧先关写的一半，把浏览器还在发的读掉、扔掉，读到头或者满 2 秒再放套接字（「施工时定的」第 10 条）。
 10. 运行日志 `state/logs/web.log`，满了照核心的换法（`log.md`）。只记连上、断开、出错，不记一行的内容、一次性码、密码、登录令牌、票据。
+11. 换地址、端口（2026-10-30 项目主人：网页默认只给本机，设置页「通用」的「访问」一组一个开关放开到局域网，能填监听地址、端口；开着就不空闲退出，等它重启才生效等于不生效）：
+   - `GET /listen` 回 `{"listen": <在听的地址>, "port": <在听的端口>, "lan": <别的设备打开用的网址或 null>}`。`lan`：听 `0.0.0.0` 的写这台电脑往外的那个地址（UDP 套接字 `connect` 文档地址 `192.0.2.1`，不发包，读本地地址；拿不到的、是回环的 `null`），听某一个地址的就是它，回环的 `null`；写成 `http://<地址>:<端口>`（IPv6 加方括号）。
+   - `POST /listen`（Origin 照第 7 款核对，不对 403）：照核心 `config.get` 重读 `web.listen`、`web.port`（同第 2 款，连本机令牌、不拉起核心），和在听的不一样就换：端口没变、只换地址的先放掉旧的再听新的（同一个端口两个地址会冲突），新的听不上再听回旧的；端口变了的先听新的、听上了再放掉旧的，`run/web` 照新端口写。`web.port` 和起来时读到的一样的不动端口（回退过的留着现在这个）；`--port` 起的端口不随配置换。已经连着的（WebSocket、`/media`、后台页）不断。回应同 `GET`；换不了的（听不上、端口被占、核心连不上）多一个 `"error": <原因>`，状态码照旧 200，接着听原来的。谁都能 `POST`（局域网里来的也行，Origin 对得上就行）：它只是照核心里已经存着的配置换，换不出配置以外的样子。
+   - 设置页存完 `web.listen`、`web.port` 再 `POST`（核心不知道网页软件在不在跑，不另推）；走桥的、旧网页软件没有 `/listen` 的，设置页照「重启网页软件后生效」写。
 
 **二、`miyu web`**（W-9，原来是 `web-module.md` 第十一条，2026-10-04 随 W-8 改过）
 
 1. `miyu web` 是网页包自己带的命令（2026-10-30 项目主人定，核心 CL-7；原来是主程序内置的，照清单找网页软件再交给它）：清单 `[command]` 写 `name = "web"`、`program = "miyu-web"`、`args = ["open"]`，核心照「转交」（核心 `packages.md` 第 5 条）找程序（包文件夹的 `bin/` 先，再 `miyu` 旁边），把 `args` 放在人敲的参数前面：`miyu web --print` 就是 `miyu-web open --print`；环境里带 `MIYU_PROGRAM`（主程序的真实位置，核心 G-15）、`MIYU_PACKAGE_DIR`，退出码照它的。网页包没装就没有这个命令（`miyu web` 照核心说不认识的命令），`miyu -h` 把它列在「软件包加的命令」里，说明照清单的 `about`。
    - `miyu web -h`、`--help`（核心不再有这一页，转交过来是 `miyu-web open --help`）：`open` 后面有 `-h`、`--help` 的不管别的参数，印帮助页、退出码 0，照核心设计 47「命令行文案」写：用法、一句说明、选项（`--port`、`--print`、`--format <text|json>`、`--reset`、`--logout`、`--package <编号>`、`-h`），`--ticket` 不写（桌面端的外壳用的）。语言照这台机器的（`LC_ALL`、`LC_MESSAGES`、`LANG`，同核心的帮助页：印帮助不连核心），`zh` 打头的中文，别的英文。
 2. `miyu-web open`：`run/web` 在、锁有人拿着，网页软件就在跑，照 `run/web` 的地址。不然拉起 `miyu-web serve`：和头拉起核心一样（`ipc.md`「连不上就拉起」第 4、5 条），跟终端脱开，工作目录是数据根，等那一行最多 10 秒。
-3. 照终端的样子连核心（`connect_or_start`，出示本机令牌）。写了 `--reset` 的，或者还没设过密码的（问一次 `account.setup_code`，`first` 是真的）：网址是 `<地址>/#setup=<一次性码>`，码在 `#` 后面，不发给服务器、不进 Referer，页面拿到以后从地址栏抹掉（设计 21 X6）。别的：要一张交接票（`login.ticket`，核心 LT-1：60 秒、一次性），网址是 `<地址>/#ticket=<票>`（im 设计 07 第 3.6 节、网页-乙；SU-1 起不带账号，旧核心回应里带了也不用）：浏览器里存着设备令牌的照它进，没有、作废了的拿票一步连上，不用再输密码；这时不要一次性码（要了不用，5 分钟后自己作废）。旧核心要不到票的（没有 `login.ticket`）网址就是 `<地址>/`，页面照存着的登录令牌，没有的问用户名和密码。
+3. 照终端的样子连核心（`connect_or_start`，出示本机令牌）。写了 `--reset` 的（问一次 `account.setup_code`）：网址是 `<地址>/#setup=<一次性码>`，码在 `#` 后面，不发给服务器、不进 Referer，页面拿到以后从地址栏抹掉（设计 21 X6）。别的（2026-10-30 项目主人：访问密码只给局域网用，本机打开不逼着设；原来还没设过密码的也带一次性码、先出「设置访问密码」一屏）：要一张交接票（`login.ticket`，核心 LT-1：60 秒、一次性；核心只看是不是本机令牌连上的，没设过密码也给），网址是 `<地址>/#ticket=<票>`（im 设计 07 第 3.6 节、网页-乙；SU-1 起不带账号，旧核心回应里带了也不用）：浏览器里存着设备令牌的照它进，没有、作废了的拿票一步连上，不用再输密码；页面在本机地址（回环）上拿票换到的设备令牌存进这台浏览器（`web.md`「连核心」：同勾了「自动登录」，本机终端开的是主人自己），收藏的地址下回直接进。`first` 照旧问 `account.setup_code` 拿（`--format json` 照实给），要了的码不用（5 分钟后自己作废）。旧核心要不到票的（没有 `login.ticket`）网址就是 `<地址>/`，页面照存着的登录令牌，没有的问用户名和密码。
 4. 用系统的办法打开（Linux 是 `xdg-open`，macOS 是 `open`，Windows 是 `cmd /C start "" "<网址>"`）。网址带着一次性码、交接票的不直接交（交出去的参数进进程列表，同一台机器上的别人看得到；im 设计 07 第 3.6 节）：写一个跳转页 `run/open/<16 个随机字节的十六进制>.html`（目录只给本人：Unix 上目录 0700、文件 0600；Windows 上在本人用户目录下的数据根里，同本机令牌 `run/token` 的办法），里面一行 `location.replace("<网址>")`（不留历史）、`<meta name="referrer" content="no-referrer">`，交出去的是这个文件的 `file://` 地址；交了以后拉起自己 `miyu-web forget <跳转页>`（跟终端脱开、不等它），它 30 秒后删掉这一页；每次 `open` 先删掉 `run/open/` 里放了 2 分钟以上的（`forget` 没跑完的兜底）。不带凭据的网址照旧直接交。
 5. 交给了浏览器：标准输出印一行「已在浏览器中打开：<整个网址>」（带着码、票：2026-10-29 项目主人在虚拟机里试新用户，嫌原来要再 `--print` 才看得到带码的链接；交给浏览器的照旧是跳转页），标准错误上照凭据接提示（第 6 款），退出码 0。浏览器开没开、设没设好，`miyu web` 看不到。交不出去（没有 `xdg-open`、没有图形界面）：标准输出印整个网址，标准错误上「miyu: 无法打开浏览器，请手动打开上面的地址」，再接提示。字照核心设计 47「命令行文案」：报错 `miyu: ` 打头、不带句号，建议另起一行「提示：」，结果行短、动词打头；单人以后不再说「用户名」。
-6. `--print`：不开浏览器，标准输出只印整个网址（不写跳转页）。提示在标准错误上，一种凭据一行：第一次的码「提示：首次打开需要设置访问密码；链接 5 分钟内有效，只能用一次」，`--reset` 的码「提示：打开后重设访问密码；链接 5 分钟内有效，只能用一次」，票「提示：链接 60 秒内有效，只能用一次」；什么都不带的不提示。
+6. `--print`：不开浏览器，标准输出只印整个网址（不写跳转页）。提示在标准错误上，一种凭据一行（2026-10-30 起没有「第一次的码」那一句）：`--reset` 的码「提示：打开后重设访问密码；链接 5 分钟内有效，只能用一次」，票「提示：链接 60 秒内有效，只能用一次」；什么都不带的不提示。
    - `--format json`（2026-10-29，桌面端的外壳要读，和 `miyu pkg pack --format json` 同一个写法；带了它就当 `--print`）：标准输出只印一行 `{"url": <整个网址>, "first": <还没设过访问密码>}`，提醒和别的人看的字都不印；出错照旧在标准错误上照语言说、退出码非 0。`--format text` 同不写。别的值、`--format` 后面没东西照用法不对。
-   - `--ticket`（2026-10-29，桌面端免密：项目主人定访问密码只给局域网用，桌面窗口第一次打开不逼人设密码）：不管设没设过访问密码都要一张交接票（核心的 `login.ticket` 只看是不是本机令牌连上的），网址带 `#ticket=`；`first` 照实给；核心不给票的什么凭据都不带。和 `--reset` 一起写是用法不对。用票进来的页面不出「设置访问密码」那一屏（那一屏只跟着一次性码出），第一次引导从下一屏起。桌面端的外壳经 `miyu web --print --format json --ticket` 调（核心 CL-5 照原样交过来）。
+   - `--ticket`（2026-10-29，桌面端免密：项目主人定访问密码只给局域网用，桌面窗口第一次打开不逼人设密码；2026-10-30 起不写也一样，留着给桌面端的外壳、不报错）：不管设没设过访问密码都要一张交接票（核心的 `login.ticket` 只看是不是本机令牌连上的），网址带 `#ticket=`；`first` 照实给；核心不给票的什么凭据都不带。和 `--reset` 一起写是用法不对。用票进来的页面不出「设置访问密码」那一屏（那一屏只跟着一次性码出），第一次引导从下一屏起。桌面端的外壳经 `miyu web --print --format json --ticket` 调（核心 CL-5 照原样交过来）。
 7. `--logout`：照终端的样子连核心，`account.logout`，`all: true`，印作废了几个。不碰网页软件，不改密码。
 8. `--package <编号>`（施工 F-6 下，`package-pages.md`「终端」第 2 条）：网址 `#` 后面多一个 `package=<编号>`，和一次性码一起的写成 `#setup=<码>&package=<编号>`；页面起来就开着这个软件的独立整页（2026-10-15 项目主人定，网页的蓝图「软件的页面」：网页自己的路由，宿主读完一次性码只抹它，`package=` 留在地址栏里，能收藏）。编号只认字母、数字、`-`、`_`、`.`，1 到 64 个，别的照用法不对（退出码 2）。
 
@@ -111,13 +116,14 @@
 | 测试 | 守着什么 |
 |---|---|
 | `xtask/src/licenses.rs`（`cargo xtask licenses`，CI 在 Linux 上跑；2026-10-30 发布前的许可证审查第 9 条，照 miyu-im 的门禁搬的） | 发布的四个平台上用得到的第三方 Rust 依赖，许可证都能和 AGPL-3.0-or-later 合在一起发：照每个包 `license` 的 SPDX 表达式算（`OR` 有一个能用就行、`AND` 每个都要、`WITH` 只认 `LLVM-exception`），没写 `license` 的、合不到一起的一包一行报出来；照 git 钉住的核心的 crate 也算。页面里收的第三方资源（字体、图标、拷来的库）不归它管，照 README「许可证」那张表 |
-| `crates/miyu-web/tests/serve.rs` | 单实例、`run/web`、那一行；端口被占说清楚；Host 只认三种写法；页面文件不出页面目录（`..`、`%2e%2e`、链接、目录）；响应头一个不少、从不设 cookie；`HEAD`、别的方法 405；空闲到点退出、删 `run/web`、放锁 |
+| `crates/miyu-web/tests/serve.rs` | 单实例、`run/web`、那一行；端口被占说清楚；Host 只认三种写法；页面文件不出页面目录（`..`、`%2e%2e`、链接、目录）；响应头一个不少、从不设 cookie；`HEAD`、别的方法 405；空闲到点退出、删 `run/web`、放锁；听局域网时到点不退 |
+| `crates/miyu-web/tests/listen.rs` | `GET /listen` 回在听的；`POST` Origin 不对 403；核心没在跑的回 `error`、接着听原来的；换地址（同一个端口）、换端口（`run/web` 跟着换、旧端口不再接、连着的 WebSocket 不断）、配置没变不动；`lan` 的写法 |
 | `crates/miyu-web/tests/ws.rs` | 一帧一行两头照转，一个字节不改（凭据、中文、空白、很长的一行）；Origin 不对 403；二进制 1003、超过 1 MiB 1009，照原始字节发的超长帧读得到 1009、读到头不是被重置；核心断了 1012；连不上核心发 `web.error` 再关；转发的代码里不读本机令牌（照源码查，施工 O-16 起连同搬进 `miyu-webserve` 的那几份）；听局域网时别的地址来的先写 `connection.remote`、再转握手，本机来的不写，Host 是名字的 403 |
 | `crates/miyu-web/tests/media.rs` | 核心用替身（照登录令牌握手、答 `blob.get`、`fs.read`，同一条连接上乱序答）：换票据要登录令牌（没带、带错 401）；正文 `blob`、`path` 正好一个，不对 400；没有的 404、数据根里的 403、连不上核心 502；同一个令牌、资源、三格交回同一张，连接复用；全部、`Range` 206 和 `Content-Range`、超出 416、好几段和写法不对的照没写；一块不超过 512 KiB、拼起来一个字节不差；同一条连接上同时几问各拿各的；类型照表、表里没有的不认、`sandbox`、`nosniff`、`private, no-cache`；下载的名字；令牌作废了 401、票据一起作废；在给不算空闲；票据过期、满了丢最久没用的 |
 | `crates/miyu-web/tests/backstage.rs` | 核心用替身（多答 `package.list`、`package.file`）：换票据要登录令牌（没带、带错、不是 Bearer 401）；正文不对 400；没有后台页、没有这个包 404；同一个令牌、同一个包交回同一张；页面文件和响应头（类型、`backstage_csp`、`nosniff`、`no-referrer`、`no-cache`、`Access-Control-Allow-Origin: *`、不设 cookie）；以 `/` 结尾补 `index.html`；没有的 404、核心拒 `bad_params` 400；票据只开它的包、不认识的 404；大文件一块块问、拼起来一个字节不差；令牌作废了 401、票据一起作废；方法 405 |
 | `crates/miyu-web/src/backstage/tests.rs` | 地址拆成票据、包、文件（`%xx`、补 `index.html`、NUL、不是 UTF-8、包编号写法）；包编号的写法；核心拒的换成状态码；类型照扩展名 |
 | `crates/miyu-web/src/media/tests.rs` | `Range` 每种写法（大小写、超出、好几段、写法不对、空的资源）；下载的名字只留最后一段、`attr-char` 以外都转义 |
-| `crates/miyu-web/tests/open.rs` | 拉起真的 `miyu-web serve`；没设过密码、`--reset` 的带 `#setup=`，别的带 `#ticket=…`（不带账号）、核心不给票的什么都不带；带凭据的交给浏览器的是只给本人的跳转页、里面才是网址，过期的跳转页下一次 `open` 删掉；`--package` 的带 `package=`，和一次性码一起是 `#setup=…&package=…`；`--print`、交不给浏览器的印网址和提醒；`--format json` 只印一行 `{url, first}`、不开浏览器不印提醒；`--logout`；端口被占照人的语言说 |
+| `crates/miyu-web/tests/open.rs` | 拉起真的 `miyu-web serve`；`--reset` 的带 `#setup=`，别的（没设过密码的也是）带 `#ticket=…`（不带账号）、核心不给票的什么都不带；带凭据的交给浏览器的是只给本人的跳转页、里面才是网址，过期的跳转页下一次 `open` 删掉；`--package` 的带 `package=`，和一次性码一起是 `#setup=…&package=…`；`--print`、交不给浏览器的印网址和提醒；`--format json` 只印一行 `{url, first}`、不开浏览器不印提醒；`--logout`；端口被占照人的语言说 |
 | `crates/miyu-cli/src/web/tests.rs` | 参数照原样交给 `miyu-web open`；没装时说怎么装、退出码 1；装了的照它的退出码 |
 
 ### 施工时定的（施工 W-9，2026-10-04）

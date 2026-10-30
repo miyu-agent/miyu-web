@@ -193,9 +193,9 @@
 
 | 命令 | 做什么 |
 |---|---|
-| `miyu web` | 打开网页：确保网页软件在跑，开浏览器。还没设过密码的，先要一个一次性码，带着它开 |
+| `miyu web` | 打开网页：确保网页软件在跑，开浏览器，带一张交接票直接进（2026-10-30 起没设过访问密码也一样，访问密码只给局域网用） |
 | `miyu web --reset` | 忘了访问密码：要一个一次性码带着它开浏览器，重设访问密码；设好了以前的浏览器登录全部作废 |
-| `miyu web --print` | 不开浏览器，印出网址（要一次性码的连码一起），人自己开 |
+| `miyu web --print` | 不开浏览器，印出网址（连票、`--reset` 的码一起），人自己开 |
 | `miyu web --port <端口>` | 网页软件这一次在哪个端口上听；`0` 是随便挑一个空的 |
 | `miyu web --logout` | 作废全部的登录令牌：所有浏览器都要用访问密码再登一次 |
 | `miyu web -h` | 帮助页（网页包自己印，核心 CL-7 起；`web-ui.md`「怎么走」第二条第 1 款） |
@@ -325,7 +325,7 @@ sequenceDiagram
 3. 打开网址：`xdg-open`、`open` 收一个参数，不经 shell；Windows 照 `cmd` 的规矩加引号。
 4. `fs.list`、`fs.find` 的 `path` 一律用 `/`，`full` 照平台；`dir` 在 Windows 上 `\` 和 `/` 都认。点开头的算藏起来，三个平台一样，不看 Windows 的隐藏属性。
 5. 测试里的临时目录先换成真实的位置再比（macOS 的 `/var` 是链接）。
-6. 端口默认只听 `127.0.0.1`；SU-1 起照 `web.listen` 也能听局域网（`web-ui.md`「怎么走」第一条第 2、4、7 款：Host 认 IP 写法、远程的先写 `connection.remote`）。浏览器把 `localhost` 解析成 `::1` 的连不上，所以本机的网址一律写 `127.0.0.1`；Host 认 `localhost`、`[::1]` 只为人自己敲地址的时候。
+6. 端口默认只听 `127.0.0.1`；SU-1 起照 `web.listen` 也能听局域网（`web-ui.md`「怎么走」第一条第 2、4、7 款：Host 认 IP 写法、远程的先写 `connection.remote`；2026-10-30 起设置页改了当场换、听局域网时不空闲退出，第 3、11 款）。浏览器把 `localhost` 解析成 `::1` 的连不上，所以本机的网址一律写 `127.0.0.1`；Host 认 `localhost`、`[::1]` 只为人自己敲地址的时候。
 
 ### 样子
 
@@ -451,7 +451,6 @@ http://127.0.0.1:<端口>/#setup=9f03b21c…
 | 什么时候 | 中文 | 英文 |
 |---|---|---|
 | 交给了浏览器（标准输出） | 已在浏览器中打开：{url} | opened in browser: {url} |
-| 第一次的码（提示） | 提示：首次打开需要设置访问密码；链接 5 分钟内有效，只能用一次 | hint: set an access password on first open; the link works once within 5 minutes |
 | `--reset` 的码（提示） | 提示：打开后重设访问密码；链接 5 分钟内有效，只能用一次 | hint: reset the access password after opening; the link works once within 5 minutes |
 | 票（提示） | 提示：链接 60 秒内有效，只能用一次 | hint: the link works once within 60 seconds |
 | 交不给浏览器 | miyu: 无法打开浏览器，请手动打开上面的地址 | miyu: cannot open a browser; open the address above |
