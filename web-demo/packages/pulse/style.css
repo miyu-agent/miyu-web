@@ -21,10 +21,10 @@
 /* 词和点一格：底下垫一个看不见的最宽的词加满的点，后面的用时不左右跳 */
 .pulse-lead { display: inline-grid; flex: none; }
 .pulse-lead > * { grid-area: 1 / 1; }
-.pulse-sizer { visibility: hidden; font-weight: 600; }
+.pulse-sizer { visibility: hidden; font-weight: 500; }
 /* 一道亮光从左往右扫：渐变比字宽 2.5 倍，亮带两头都扫出字外（照 TUI 多走两个带宽） */
 .pulse-shine {
-  justify-self: start; color: var(--pulse-base); font-weight: 600;
+  justify-self: start; color: var(--pulse-base); font-weight: 500;
   background: linear-gradient(90deg, var(--pulse-base) 40%, var(--pulse-peak) 50%, var(--pulse-base) 60%) 100% 0 / 250% 100% no-repeat;
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
   animation: pulse-sweep var(--pulse-sweep) linear infinite;
