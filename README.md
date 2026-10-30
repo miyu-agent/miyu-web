@@ -1,11 +1,17 @@
 ## Miyu 网页
 
-在浏览器里用 Miyu：网页软件 `miyu-web` 只听本机的端口，给页面文件，把浏览器的 WebSocket 转成核心协议。核心在 [miyu-agent/miyu](https://github.com/miyu-agent/miyu)，这里照 `Cargo.toml` 的 git 依赖钉住核心的一个提交，只经门面 `miyu-client` 用核心的东西（核心仓库的设计 `32-仓库拆分.md`）。
+在浏览器里用 Miyu：网页软件 `miyu-web` 默认只听本机的端口（设置「通用」→「访问」能放开到局域网），给页面文件，把浏览器的 WebSocket 转成核心协议。核心在 [miyu-agent/miyu](https://github.com/miyu-agent/miyu)，这里照 `Cargo.toml` 的 git 依赖钉住核心的一个提交，只经门面 `miyu-client` 用核心的东西（核心仓库的设计 `32-仓库拆分.md`）。
 
 - `crates/miyu-web`：网页软件（`miyu-web serve`、`miyu-web open`），图纸 `docs/blueprint/web-module.md`。
 - `crates/miyu-webserve`：只听本机的网页端口的底子：给页面文件、核对 Host 和 Origin、`/ws` 原样转给核心，图纸 `docs/blueprint/webserve.md`。
 - `web-demo/`：页面（原生 JavaScript，按 ES 模块组织，不用框架、不用构建），图纸 `docs/blueprint/web.md`、`web-ui.md`；怎么跑见 `web-demo/README.md`。
 - `miyu-webui/`：网页的软件包（包编号 `miyu-webui`，配置键前缀 `web`）：清单、常量 `web.json`、matugen 模板；发版时随核心一起装进资源目录的 `packages/miyu-webui/`，或经 `tools/pack-web.py` 打成包文件 `miyu-webui-<版本>-<系统>.miyu` 从软件源装。
+
+### 在别的设备上用
+
+设置「通用」→「访问」打开「允许局域网访问」、设好访问密码，同一个局域网里的手机、电脑就能用这台电脑的地址和端口打开网页（设置页上写着网址）。
+
+局域网访问是明文 HTTP，不加密：同一个网络里的人能看到访问密码、登录令牌和对话内容。只在信得过的网络（自己家里）打开。在外面、在不信任的网络上用，经 [Tailscale](https://tailscale.com/) 或 [WireGuard](https://www.wireguard.com/) 连回家里再打开：流量在隧道里是加密的；Tailscale 还能给这台电脑一个 HTTPS 地址（`tailscale serve`），浏览器只在 HTTPS 下开放的麦克风、剪贴板、通知也就能用了。
 
 ### 测试
 

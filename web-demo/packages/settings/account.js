@@ -81,6 +81,8 @@ function lanRow(dialog, item, on, pending) {
   };
   return h('div.set-row', h('div.set-text', h('div.set-name', h('span', t('account.lan'))),
     h('p.set-desc', t('account.lan_desc')),
+    // 明文 HTTP（2026-10-30 项目主人定不配证书，第二轮审查 W2-3）
+    h('p.set-desc.acc-lan-warn', t('account.lan_risk')),
     pending ? h('p.set-desc.acc-lan-warn', t('account.lan_needs_password')) : null,
     url ? h('p.set-desc', t('account.lan_open'), ' ', h('button.acc-lan-url', { type: 'button', title: t('account.copy'), onclick: copy }, url)) : null), sw);
 }
