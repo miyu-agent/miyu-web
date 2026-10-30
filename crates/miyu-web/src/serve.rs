@@ -47,6 +47,8 @@ pub struct Serve {
     pub root: DataRoot,
     /// 听哪个端口：`0` 是系统挑一个空的。
     pub port: u16,
+    /// 被占了能不能往后挪：端口是出厂的才能（`web-ui.md`「怎么走」第一条第 1 款），照先后试后面 [`FALLBACK_PORTS`] 个。
+    pub fallback: bool,
     /// 页面目录。
     pub pages: PathBuf,
     /// `web.json`。
@@ -137,6 +139,37 @@ impl miyu_webserve::Site for Site {
     }
 }
 
+/// 出厂端口被占时往后试几个（2026-10-30 项目主人：固定端口配端口回退）：8300 被占试 8301 到 8309。
+pub const FALLBACK_PORTS: u16 = 9;
+
+/// 照先后要试的端口：`port` 本身；能回退的（`fallback`，`0` 不算）再接后面 [`FALLBACK_PORTS`] 个，到 65535 为止。
+pub fn candidates(port: u16, fallback: bool) -> Vec<u16> {
+    let more = match fallback && port != 0 {
+        true => FALLBACK_PORTS,
+        false => 0,
+    };
+    (0..=more)
+        .filter_map(|step| port.checked_add(step))
+        .collect()
+}
+
+/// 听端口：照 [`candidates`] 的先后，头一个绑得上的；都被占的说第一个被占（人认得的那个），别的错照原话。
+async fn bind(listen: std::net::IpAddr, port: u16, fallback: bool) -> Result<TcpListener, String> {
+    for one in candidates(port, fallback) {
+        match TcpListener::bind((listen, one)).await {
+            Ok(listener) => {
+                if one != port {
+                    tracing::info!(target: crate::TARGET, wanted = port, port = one, "port in use, fell back");
+                }
+                return Ok(listener);
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::AddrInUse => {}
+            Err(error) => return Err(error.to_string()),
+        }
+    }
+    Err(format!("port {port} in use"))
+}
+
 /// 跑起来，直到空闲到点、收到停的信号。`said` 交那一行：起来了、已经有一个在跑、起不来。
 ///
 /// # Errors
@@ -156,13 +189,9 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
         }
     };
     let listen = serve.settings.listen;
-    let listener = match TcpListener::bind((listen, serve.port)).await {
+    let listener = match bind(listen, serve.port, serve.fallback).await {
         Ok(listener) => listener,
-        Err(error) => {
-            let reason = match error.kind() {
-                std::io::ErrorKind::AddrInUse => format!("port {} in use", serve.port),
-                _ => error.to_string(),
-            };
+        Err(reason) => {
             said(Ready::Failed(reason.clone()));
             return Err(reason);
         }

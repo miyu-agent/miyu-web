@@ -128,9 +128,12 @@ async fn serve(root: DataRoot, env: &Env, port: Option<u16>) -> u8 {
         env.home.as_deref(),
     );
     let settings = settings.from_core(&root).await;
+    // 命令行没写、配置里也没人写的才是出厂端口，被占了能往后挪
+    let fallback = port.is_none() && !settings.port_chosen;
     let serve = Serve {
         root,
         port: port.unwrap_or(settings.port),
+        fallback,
         pages,
         settings,
         core: Arc::new(core),

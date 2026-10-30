@@ -81,6 +81,7 @@ pub fn settings(idle_seconds: u64) -> Settings {
     types.insert("mp4".to_string(), "video/mp4".to_string());
     Settings {
         port: 0,
+        port_chosen: false,
         listen: std::net::IpAddr::V4(std::net::Ipv4Addr::LOCALHOST),
         idle_seconds,
         csp: "default-src 'self'; connect-src 'self'; frame-ancestors 'none'".to_string(),
@@ -113,10 +114,21 @@ pub async fn start_with(
     port: u16,
     settings: Settings,
 ) -> (Ready, u16, JoinHandle<Result<(), String>>) {
+    start_falling_back(home, port, settings, false).await
+}
+
+/// 同 [`start_with`]，`fallback` 照给的（端口被占了能不能往后挪）。
+pub async fn start_falling_back(
+    home: &Home,
+    port: u16,
+    settings: Settings,
+    fallback: bool,
+) -> (Ready, u16, JoinHandle<Result<(), String>>) {
     let (said, heard) = oneshot::channel();
     let serve = Serve {
         root: home.root.clone(),
         port,
+        fallback,
         pages: home.pages.clone(),
         settings,
         core: no_core(),

@@ -33,6 +33,33 @@ async fn a_taken_port_is_said_plainly() {
 }
 
 #[tokio::test]
+async fn a_taken_shipped_port_falls_back_to_the_next_free_one() {
+    let home = Home::new();
+    let taken = std::net::TcpListener::bind("127.0.0.1:0").expect("占得了");
+    let port = taken.local_addr().expect("有地址").port();
+    let (ready, got, _running) = start_falling_back(&home, port, settings(600), true).await;
+    assert_eq!(ready, Ready::Ready);
+    assert!(
+        (port + 1..=port + miyu_web::serve::FALLBACK_PORTS).contains(&got),
+        "照先后往后挪：{port} → {got}"
+    );
+    assert_eq!(
+        address(&home.root),
+        Some(format!("http://127.0.0.1:{got}")),
+        "run/web 照实写"
+    );
+}
+
+#[test]
+fn fallback_tries_a_fixed_run_of_ports() {
+    use miyu_web::serve::candidates;
+    assert_eq!(candidates(8300, false), vec![8300]);
+    assert_eq!(candidates(8300, true), (8300..=8309).collect::<Vec<u16>>());
+    assert_eq!(candidates(0, true), vec![0], "系统挑的不回退");
+    assert_eq!(candidates(65_534, true), vec![65_534, 65_535]);
+}
+
+#[tokio::test]
 async fn pages_stay_inside_and_carry_the_headers() {
     let home = Home::new();
     home.page("index.html", "<h1>miyu</h1>");

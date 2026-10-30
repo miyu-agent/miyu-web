@@ -50,6 +50,8 @@ pub const KEYS: [&str; 5] = [
 pub struct Settings {
     /// 端口（`--port` 能换）。
     pub port: u16,
+    /// `web.port` 是人在配置里写了的（出处不是 `default`）：被占了照旧报错，不回退（`web-ui.md`「怎么走」第一条第 1 款）。
+    pub port_chosen: bool,
     /// 听哪个地址（`web.listen`，SU-1）：`127.0.0.1` 只有这台电脑；`0.0.0.0` 局域网也能开；也能是这台电脑的某一个地址。
     pub listen: IpAddr,
     /// 没有 WebSocket 连着、没有媒体在给，连续多少秒就退出。
@@ -114,6 +116,7 @@ impl Settings {
             .ok_or_else(|| format!("{}: settings.listen has no address default", path.display()))?;
         Ok(Settings {
             port: number(default("port")?, &path)?,
+            port_chosen: false,
             listen,
             idle_seconds: number(default("idle_seconds")?, &path)?,
             csp: constants.csp,
@@ -153,6 +156,9 @@ impl Settings {
         let value = |key: &str| items[key]["value"].as_i64();
         if let Some(port) = value("web.port").and_then(|port| u16::try_from(port).ok()) {
             self.port = port;
+            self.port_chosen = items["web.port"]["origin"]["layer"]
+                .as_str()
+                .is_some_and(|layer| layer != "default");
         }
         if let Some(listen) = items["web.listen"]["value"]
             .as_str()

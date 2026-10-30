@@ -85,6 +85,10 @@ fn final_values_from_the_core_win_and_odd_ones_are_ignored() {
     });
     let settings = shipped().configured(&items);
     assert_eq!(settings.port, 9000);
+    assert!(settings.port_chosen, "配置里写了的端口是人定的，被占不回退");
+    let default = json!({"web.port": {"value": 8300, "origin": {"layer": "default"}}});
+    assert!(!shipped().configured(&default).port_chosen, "出厂的能回退");
+    assert!(!shipped().port_chosen);
     assert_eq!(settings.idle_seconds, 30);
     assert_eq!(settings.ticket_idle_seconds, 43_200, "没交的照旧");
     assert_eq!(settings.most_tickets, 4096, "不合范围的照旧");
