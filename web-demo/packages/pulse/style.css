@@ -35,5 +35,7 @@
 .pulse-retry { min-width: 0; overflow: hidden; color: var(--t-warn); text-overflow: ellipsis; white-space: pre; }
 
 @keyframes pulse-sweep { from { background-position: 100% 0; } to { background-position: 0 0; } }
+/* 收着的不扫（收起来以后看不见，扫着整页也一直按帧重画；蓝图 web.md「动效」第 4 条）：停在当时那一下，收到一半的字不跳 */
+.dock-pulse:not(.is-on) .pulse-shine { animation-play-state: paused; }
 /* 在等你确认、回答：静止的字，不扫流光（蓝图「运行状态行」） */
 .pulse-shine.is-waiting { animation: none; background: none; color: var(--text-soft); -webkit-text-fill-color: currentColor; }

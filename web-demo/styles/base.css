@@ -100,15 +100,17 @@ button, textarea { font: inherit; color: inherit; }
 .icon-button:hover { background: var(--ghost-hover, color-mix(in srgb, var(--text) 6%, transparent)); color: var(--ghost-fg-hover, var(--text)); }
 .icon-button:focus-visible, button:focus-visible { outline: var(--focus-ring, 2px solid color-mix(in srgb, var(--accent) 55%, transparent)); outline-offset: 1px; }
 
-/* 在线的圆点：2.4 秒往外呼一圈；连着绿，连接中金，断了红（旧版 .status-dot） */
+/* 在线的圆点：连着绿，连接中金，断了红（旧版 .status-dot）；只在连接中 2.4 秒往外呼一圈（蓝图 web.md「左栏」状态、「动效」第 4 条） */
 .status-dot {
   position: relative; display: inline-block; width: 6px; height: 6px; flex: 0 0 6px; border-radius: var(--r-round);
   color: var(--online); background: currentColor;
 }
-/* 呼吸的那一圈：垫在后面的一个圆，只动 transform、opacity（交给合成层，不用每一帧重画；原来动 box-shadow，在线时整页
-   一直在重画，蓝图「性能」） */
+/* 呼吸的那一圈：垫在后面的一个圆，只动 transform、opacity（原来动 box-shadow，整页一直在重画）。无限循环的动画在 WebKitGTK 里
+   哪怕只动合成层也让整页一直按帧刷新，所以只在有事的时候呼吸：连接中、没看过的回答（打开就没了）；在线、离线是不动的点 */
 .status-dot::after, .session-unread-dot::after {
   position: absolute; inset: 0; border-radius: var(--r-round); background: currentColor; content: ""; opacity: 0;
+}
+.status-dot.is-connecting::after, .session-unread-dot::after {
   animation: status-pulse calc(2.4s * var(--motion-scale)) ease-in-out infinite; will-change: transform, opacity;
 }
 .status-dot.is-connecting { color: var(--gold); }

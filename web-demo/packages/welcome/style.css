@@ -48,7 +48,9 @@
 .wl-steps { display: flex; gap: calc(4px * var(--space)); margin: 0; padding: 0; list-style: none; }
 .wl-steps li { width: 12px; height: 12px; background: var(--px-edge); box-shadow: inset -2px -2px 0 var(--px-ground); }
 .wl-steps li.is-done, .wl-steps li.is-now { background: var(--px-yel); box-shadow: inset -2px -2px 0 var(--px-yel-dark); }
-.wl-steps li.is-now { animation: wl-blink calc(1s * var(--motion-scale)) steps(2) infinite; }
+/* 一闪一闪的几样（步骤条现在那一格、「PRESS ENTER」、选中那一项前面的 ▶）：亮度照 `--wl-blink`，由 twinkle.js 的计时器一格一格换
+   （原来是 steps(2) 的无限动画：WebKitGTK 里整页一直按帧重画，蓝图 web.md「动效」第 4 条） */
+.wl-steps li.is-now { opacity: var(--wl-blink, 1); }
 
 /* 一屏：整块平滑地挪进来、淡入，不糊开、不弹（2026-10-19 项目主人：原来 steps(4) 一格一格挪，看着像掉帧） */
 .wl-screen { display: grid; gap: 0; animation: wl-in-fwd calc(0.24s * var(--motion-scale)) var(--ease-out) both; }
@@ -89,7 +91,7 @@
 .wl-layer.is-hello .wl-title { font-size: calc(44px * var(--text-scale)); }
 /* 欢迎页：主按钮「开始」，下面一闪一闪的「PRESS ENTER」（2026-10-19 项目主人：上面还要有个开始） */
 .wl-hint { margin: 0; color: var(--px-yel); font: calc(10px * var(--text-scale)) var(--px-font); }
-.wl-layer.is-hello .wl-hint { animation: wl-blink calc(1s * var(--motion-scale)) steps(2) infinite; }
+.wl-layer.is-hello .wl-hint { opacity: var(--wl-blink, 1); }
 .wl-layer.is-hello .wl-btn.is-primary { min-width: 168px; height: 48px; font-size: calc(20px * var(--text-scale)); }
 .wl-layer.is-hello .wl-foot + .wl-body, .wl-layer.is-hello .wl-body { margin-top: calc(16px * var(--space)); }
 /* 完成：像拿到道具（2026-10-19 项目主人：原来掉彩色方块的礼花不适合）：CLEAR! 落下来顿一下，「获得 …」隔 0.3 秒一行弹上来，最后出按钮；
@@ -113,7 +115,6 @@
 @keyframes wl-drop { from { opacity: 0; transform: translateY(-36px); } }
 @keyframes wl-pop { from { opacity: 0; transform: translateY(14px); } }
 @keyframes wl-rise { from { opacity: 0; transform: translateY(8px); } }
-@keyframes wl-blink { 50% { opacity: 0.25; } }
 
 /* 选项：一块格子、直角，四边垫 3px 的阴影成像素的阶梯角，不描边；选中的整块换成黄色、左边一个闪着的 ▶ */
 .wl-langs { display: grid; gap: calc(12px * var(--space)); }
@@ -131,7 +132,7 @@
   box-shadow: 0 -3px 0 0 var(--px-yel), 0 3px 0 0 var(--px-yel), -3px 0 0 0 var(--px-yel), 3px 0 0 0 var(--px-yel), inset 0 0 0 3px var(--px-c);
 }
 .wl-lang::before, .wl-layer .setup-choice::before, .wl-layer .ob-model::before { content: "▶"; position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: transparent; font: calc(9px * var(--text-scale)) var(--px-font); }
-.wl-lang.is-on::before, .wl-layer .setup-choice.is-on::before, .wl-layer .ob-model.is-on::before { color: var(--px-yel-ink); animation: wl-blink calc(1s * var(--motion-scale)) steps(2) infinite; }
+.wl-lang.is-on::before, .wl-layer .setup-choice.is-on::before, .wl-layer .ob-model.is-on::before { color: var(--px-yel-ink); opacity: var(--wl-blink, 1); }
 .wl-layer .setup-choice.is-on::before { color: var(--px-yel); }
 .wl-lang.is-on .wl-lang-note, .wl-layer .ob-model.is-on .ob-model-note { color: #5c4a14; }
 .wl-check, .wl-layer .setup-choice-check, .wl-layer .ob-model-check { display: none; }
@@ -188,14 +189,12 @@
 .wl-profile .wl-profile-slot { min-height: 56px; }
 .wl-profile .wl-area { box-sizing: border-box; width: 100%; height: auto; min-height: 112px; padding: calc(7px * var(--space)) calc(9px * var(--space)); line-height: 1.6; resize: vertical; }
 
-/* 星点：稀稀的白点慢慢闪（原来那两团糊开的光去掉了） */
+/* 星点：稀稀的白点慢慢闪（原来那两团糊开的光去掉了）；亮度由 twinkle.js 一颗一颗换（`--o`），同上面闪的几样 */
 .wl-sky { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .wl-glow { display: none; }
-.wl-star { position: absolute; width: 2px; height: 2px; background: var(--px-star); animation: wl-twinkle calc(6s * var(--motion-scale)) steps(3) infinite; }
-@keyframes wl-twinkle { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.7; } }
+.wl-star { position: absolute; width: 2px; height: 2px; background: var(--px-star); opacity: var(--o, 0.4); }
 @media (prefers-reduced-motion: reduce) {
-  .wl-star, .wl-screen, .wl-layer, .wl-pill, .wl-layer.is-done .wl-title, .wl-layer.is-done .wl-foot, .wl-steps li.is-now, .wl-lang.is-on::before, .wl-layer .setup-choice.is-on::before,
-  .wl-layer .ob-model.is-on::before, .wl-layer.is-hello .wl-hint { animation: none; }
+  .wl-screen, .wl-layer, .wl-pill, .wl-layer.is-done .wl-title, .wl-layer.is-done .wl-foot { animation: none; }
 }
 
 /* 主题那一屏的小窗口：缩小的对话页，照真的主题画（--keep-*），和整页一起变；主色铺得开一点（2026-10-19 项目主人：原来只有发送键一小块看得出） */

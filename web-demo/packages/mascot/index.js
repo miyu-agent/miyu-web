@@ -30,6 +30,8 @@ const TEXTY = new Set(['text', 'search', 'url', 'email', 'password', 'number', '
  */
 /** 吉祥物碰了一下的那一块动多久（毫秒；样子在 `style.css`） */
 const TOUCH_MS = 320;
+/** Zz 冒多久就收：设置项 `sleep` 里没写 `zz_ms` 的（改过这一项的旧设置）照出厂的 */
+const ZZ_MS = 30000;
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -40,6 +42,8 @@ export function apply(ctx) {
   const zz = h('span.mascot-zz', { hidden: true, 'aria-hidden': 'true' });
   zz.innerHTML = [3, 4].map((n) => pixelZ(n, c.pixel)).join('');
   const body = h('div.mascot-body', sprite.canvas, props.el, zz);
+  // Zz 冒 `sleep.zz_ms` 就收（2026-10-30 项目主人：一直冒空闲时整页一直按帧重画，蓝图 web.md「吉祥物」第 9 条），之后只闭着眼
+  let zzTimer = 0;
   // 放大（舞台的 `scale`）套在外面一层，绕着脚缩放、慢慢变过去；挪位置的在最外层，不跟着缓
   const scaler = h('div.mascot-scale', body);
   // 放到第一个位置之前藏着：不然刷新时先在左上角露一帧
@@ -99,7 +103,12 @@ export function apply(ctx) {
   let placed = '';
   const behavior = new Behavior(c, {
     draw: (pose) => sprite.draw(pose),
-    sleeping: (on) => { zz.hidden = !on; },
+    sleeping: (on) => {
+      clearTimeout(zzTimer);
+      zz.hidden = !on;
+      const ms = Number(c.sleep?.zz_ms ?? ZZ_MS);
+      if (on && ms > 0) zzTimer = window.setTimeout(() => { zz.hidden = true; }, ms);
+    },
     place: ({ x, y, rot, clip }) => {
       // 脚底是画布里最下面一行有东西的底边：照它对到台子上，歪绕着脚（蹲、抻在模型里画，不拉伸图片）
       const foot = (sprite.bottom + 1) * c.pixel;
@@ -328,6 +337,7 @@ export function apply(ctx) {
     resized.disconnect();
     shifted.disconnect();
     if (followFrame) cancelAnimationFrame(followFrame);
+    clearTimeout(zzTimer);
     behavior.destroy();
     layer.remove();
   });

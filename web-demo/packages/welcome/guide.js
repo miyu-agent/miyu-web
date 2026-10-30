@@ -4,7 +4,9 @@
 //! （步骤条）、上一步、下一步，管 `Enter`、`↑` `↓`、换屏的动画和吉祥物站哪。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { reduced } from '../../src/lib/motion.js';
 import { helloScreen, languageScreen, profileScreen, embedScreen, embedState, doneScreen, STEP_KEY, DONE_KEY } from './screens.js';
+import { twinkle } from './twinkle.js';
 
 /** 步子的先后；`back` 是上一步回到哪 */
 const BACK = /** @type {Record<string, string|null>} */ ({ hello: null, language: 'hello', model: 'language', persona: 'model', theme: 'persona', profile: 'theme', preset: 'profile', embed: 'preset', done: 'embed' });
@@ -69,7 +71,11 @@ export class Guide {
     // 右上角整个引导一直在的几个按钮（2026-10-23 项目主人：例如切换明暗，不然太难受）：明暗，同左栏底下那一个（深色时太阳、浅色时月亮）
     this.schemeBtn = /** @type {HTMLButtonElement} */ (h('button.wl-corner-btn', { type: 'button', onclick: () => { ctx.theme?.toggle(); requestAnimationFrame(() => this.drawCorner()); } }));
     this.corner = h('div.wl-corner', { hidden: !ctx.theme }, this.schemeBtn);
-    this.layer = h('div.wl-layer', { role: 'dialog', 'aria-modal': 'true' }, sky(ctx.config.stars), this.ground, this.page, this.corner);
+    const night = sky(ctx.config.stars);
+    /** 星点，闪的几样照计时器换（`twinkle.js`）；停掉的函数 */
+    this.stars = night.stars;
+    this.stopTwinkle = () => {};
+    this.layer = h('div.wl-layer', { role: 'dialog', 'aria-modal': 'true' }, night.node, this.ground, this.page, this.corner);
     this.takeScheme();
     this.drawCorner();
     /** @type {HTMLButtonElement|null} */
@@ -130,6 +136,7 @@ export class Guide {
   /** 盖上，从 `step` 开始。 @param {string} step */
   open(step) {
     document.body.append(this.layer);
+    this.stopTwinkle = twinkle(this.layer, this.stars, { reduced: reduced() });
     this.layer.addEventListener('keydown', this.onKey);
     document.addEventListener('focusin', this.onFocus);
     this.page.addEventListener('scroll', this.onScroll, { passive: true });
@@ -151,6 +158,7 @@ export class Guide {
 
   /** 收起：淡出，吉祥物跳回输入框上。 */
   close() {
+    this.stopTwinkle();
     this.onResize.disconnect();
     this.layer.removeEventListener('keydown', this.onKey);
     document.removeEventListener('focusin', this.onFocus);
@@ -522,10 +530,10 @@ export class Guide {
   }
 }
 
-/** 欢迎页后面那一层：两团慢慢飘的光、一些慢慢闪的星点（随机散着）。 @param {number} stars */
+/** 欢迎页后面那一层：两团慢慢飘的光、一些慢慢闪的星点（随机散着；怎么闪见 `twinkle.js`）。 @param {number} stars */
 function sky(stars) {
-  const dots = Array.from({ length: stars }, () => h('i.wl-star', {
-    style: `left: ${(Math.random() * 100).toFixed(1)}%; top: ${(Math.random() * 100).toFixed(1)}%; animation-delay: ${(-Math.random() * 6).toFixed(2)}s; --size: ${Math.random() < 0.3 ? 2 : 1}px`,
-  }));
-  return h('div.wl-sky', { 'aria-hidden': 'true' }, h('i.wl-glow.is-a'), h('i.wl-glow.is-b'), dots);
+  const dots = Array.from({ length: stars }, () => /** @type {HTMLElement} */ (h('i.wl-star', {
+    style: `left: ${(Math.random() * 100).toFixed(1)}%; top: ${(Math.random() * 100).toFixed(1)}%; --size: ${Math.random() < 0.3 ? 2 : 1}px`,
+  })));
+  return { node: h('div.wl-sky', { 'aria-hidden': 'true' }, h('i.wl-glow.is-a'), h('i.wl-glow.is-b'), dots), stars: dots };
 }
