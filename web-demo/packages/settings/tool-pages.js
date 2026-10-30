@@ -199,7 +199,8 @@ async function removeItems(dialog, kind, list) {
 }
 
 /**
- * 「打开目录」：经桥在这台机器上用文件管理器打开（`host.files.reveal`，桥的 `/reveal`）；不在的提示；开不了的（不经桥、桥那边没有文件管理器）复制路径。
+ * 「打开目录」：请宿主在这台电脑上用文件管理器打开（`host.files.reveal`：桥、网页软件的 `/reveal`）；不在的提示；开不了的（页面开在局域网地址上、
+ * 那边没有文件管理器）复制路径。
  * @param {any} dialog @param {string} dir
  */
 export async function reveal(dialog, dir) {

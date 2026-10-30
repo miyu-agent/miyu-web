@@ -6,7 +6,8 @@
 //!   （`login`）；再没有的交 `null`，内核出「输入访问密码」，握手带 `password`。勾了「自动登录」的令牌存 `localStorage` 的 `miyu.web.login`（30 天），
 //!   没勾的只放这个标签页（`sessionStorage` 的 `miyu.web.session`）；读写都兜着。原来多账号时的 `miyu.web.accounts` 读到时照上次用的那个账号的令牌迁成一份。
 //! - 本机文件、blob 的地址带设备令牌 `POST /media` 换票据（`web-ui.md`「怎么走」第三条）；同一样东西换过的记着，不再换。软件后台页 `POST /page`。
-//! - 选目录、桌面壁纸网页软件不给：交 `null`，用的地方照旧退回。
+//! - 打开目录、选目录、桌面壁纸（`web-ui.md`「怎么走」第五条，2026-10-30 起）：带设备令牌请网页软件（`/reveal`、`/pick-dir`、`/wallpaper`、
+//!   `/wallpaper/events`）；页面开在局域网地址上的不请，交 `null`，用的地方照旧退回（复制路径、自己画的文件夹浏览器、没有「跟随壁纸」）。
 
 /**
  * @typedef {import('./files.js').FileRef} FileRef
@@ -172,6 +173,14 @@ export function servedHost() {
       return typeof reply?.url === 'string' ? reply.url : '';
     } catch { return ''; }
   };
+  /**
+   * 这台电脑上的几样（`/reveal`、`/pick-dir`、`/wallpaper`）：带登录令牌 `GET`，交回回应；页面开在局域网地址上的、没令牌的交 `null`。
+   * @param {string} path @param {Record<string, string>} params
+   */
+  const desk = async (path, params) => {
+    if (!onThisComputer() || !token) return null;
+    return fetch(`${path}?${new URLSearchParams(params)}`, { cache: 'no-store', headers: { Authorization: `Bearer ${token}` } });
+  };
   /** 问、请换监听（`/listen`）：`POST` 带登录令牌；回的不是 JSON、不成的交 `null` @param {'GET'|'POST'} method */
   const listenCall = async (method) => {
     if (method === 'POST' && !token) return null;
@@ -299,8 +308,24 @@ export function servedHost() {
     },
     files: {
       ...fileTools(urls),
-      /** 选目录：网页软件不给，用的地方退回自己画的文件夹浏览器 */
-      pickDir: async (/** @type {{title?: string, start?: string}} */ opts) => null,
+      /**
+       * 选目录：请网页软件开系统的对话框（`/pick-dir`）。交回选的绝对路径；点了取消的交 `false`；开不了的（页面开在局域网地址上、这台电脑
+       * 上没有对话框程序、问不到）交 `null`，用的地方退回自己画的文件夹浏览器。
+       */
+      pickDir: async (/** @type {{title?: string, start?: string}} */ opts = {}) => {
+        const got = await desk('/pick-dir', { title: opts.title ?? '', start: opts.start ?? '' }).then((r) => r?.json(), () => null).catch(() => null);
+        if (typeof got?.path === 'string') return got.path;
+        return got?.cancelled ? false : null;
+      },
+      /**
+       * 打开目录：请网页软件在这台电脑上用文件管理器打开（`/reveal`）。开了交 `{ok: true}`；不在的交 `{missing: true}`；开不了的交 `null`，
+       * 用的地方退回复制路径。
+       */
+      reveal: async (/** @type {string} */ path) => {
+        const got = await desk('/reveal', { path }).then((r) => r?.json(), () => null).catch(() => null);
+        if (got?.ok) return { ok: true };
+        return got?.missing ? { missing: true } : null;
+      },
     },
     /**
      * 网页软件在听的地址、端口（`/listen`，`web-ui.md`「怎么走」第一条第 11 款）：`get` 问一次；`relisten` 带设备令牌请它照核心的配置当场换。
@@ -314,9 +339,31 @@ export function servedHost() {
     pages: { open: async (/** @type {string} */ id) => (await post('/page', { package: id })) || null },
     /** 网页自己的路由（`#` 后面那一段） */
     route: hashRoute(),
-    /** 桌面壁纸：网页软件不给 */
-    wallpaper: async (/** @type {boolean} */ dark) => null,
-    wallpaperChanges: (/** @type {() => void} */ changed) => () => {},
+    /**
+     * 桌面壁纸（主题「跟随壁纸」）：问网页软件（`/wallpaper`），同桥的那一份——matugen 的交 `{sig, kind: 'matugen', colors}`，图的交
+     * `{sig, kind: 'image', seeds}`；页面开在局域网地址上的、两样都没有的交 `null`；一时问不到的抛错，页面留着原来那一套。
+     */
+    wallpaper: async (/** @type {boolean} */ dark) => {
+      const ask = async (/** @type {Record<string, string>} */ params) => {
+        const got = await desk('/wallpaper', params);
+        if (!got || got.status === 404) return null;
+        if (!got.ok) throw new Error(`/wallpaper ${got.status}`);
+        return got.json();
+      };
+      const found = await ask({ dark: dark ? '1' : '0' });
+      const { sig, kind, seeds } = found ?? {};
+      if (typeof sig !== 'string') return null;
+      if (kind !== 'matugen') return { sig, kind: 'image', seeds: Array.isArray(seeds) ? seeds.filter((c) => typeof c === 'string') : [] };
+      const colors = await ask({ dark: dark ? '1' : '0', data: '1' });
+      return colors ? { sig, kind: 'matugen', colors } : null;
+    },
+    /** 盯着桌面壁纸换没换：开一条 `/wallpaper/events`（不要令牌，只说变了），变了叫 `changed`；页面开在局域网地址上的不开。交回关掉的函数。 */
+    wallpaperChanges: (/** @type {() => void} */ changed) => {
+      if (!onThisComputer() || typeof EventSource !== 'function') return () => {};
+      const source = new EventSource('/wallpaper/events');
+      source.onmessage = () => changed();
+      return () => source.close();
+    },
     open: (/** @type {string} */ url) => {
       // 不写 noopener：写了的 window.open 一律回 null，看不出被浏览器拦了没有；开了马上断掉 opener，同 noopener
       const tab = window.open(url, '_blank');
