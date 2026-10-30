@@ -697,6 +697,8 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .mk-kinds-n { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); font-variant-numeric: tabular-nums; }
 .mk-kinds-menu .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); color: var(--accent); }
 .mk-kind-on { display: inline-flex; align-items: center; gap: calc(4px * var(--space)); }
+/* 第一排和后面几块常用种类之间的细竖线 */
+.mk-chips-sep { width: 1px; height: 16px; align-self: center; margin: 0 calc(3px * var(--space)); background: var(--line); }
 .mk-kind-on .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); }
 .mk-link { display: inline-flex; align-items: center; gap: calc(4px * var(--space)); color: var(--accent); text-decoration: none; }
 .mk-link:hover code { text-decoration: underline; text-underline-offset: 3px; }

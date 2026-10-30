@@ -3,6 +3,8 @@
 
 /** 第一排筛选（照这个先后） */
 export const STATUS_FILTERS = /** @type {const} */ (['all', 'installed', 'upgradable', 'official', 'community']);
+/** 接在第一排后面的几种常用种类（2026-10-30 项目主人：MCP、脚本、技能当快速筛选，先后照他写的）：就是按种类筛的那几种，和第一排叠着用 */
+export const QUICK_KINDS = /** @type {const} */ (['mcp', 'scripts', 'skills']);
 /**
  * 按种类筛（2026-10-21 项目主人：筛选图标，照包的种类筛；以后加了种类不用改网页）：一个包的种类是它清单里的种类（`kind`，核心 G-11：
  * 主题、通讯平台、语言、插件……）加上它带了的几样（`provides` 里有名字的那几格，核心 G-10：技能、脚本、MCP……）。都照核心给的编号，
@@ -74,7 +76,7 @@ export function shownOf(all, view, upgradable) {
   /** @type {Record<string, number>} */
   const counts = {};
   const kinds = [...new Set(all.flatMap(kindsOf))].sort(byKind);
-  for (const f of [...STATUS_FILTERS, ...kinds]) counts[f] = hit.filter((p) => matches(p, f, upgradable)).length;
+  for (const f of new Set([...STATUS_FILTERS, ...QUICK_KINDS, ...kinds])) counts[f] = hit.filter((p) => matches(p, f, upgradable)).length;
   return { list, counts, kinds };
 }
 

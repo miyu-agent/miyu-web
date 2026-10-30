@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { shownOf, actionOf, kindsOf, faceOf, needsLook, hasProgram, providesLine, percentOf, found, capabilityRows } from '../../packages/settings/market-model.js';
+import { QUICK_KINDS, shownOf, actionOf, kindsOf, faceOf, needsLook, hasProgram, providesLine, percentOf, found, capabilityRows } from '../../packages/settings/market-model.js';
 
 const embed = { package: 'embed', version: '1.0.0', name: '语义模型', summary: '本机的语义检索模型', official: true, installed: '1.0.0', blocked: null, provides: { features: ['embed'] }, depends: [] };
 const memes = { package: 'memes', version: '0.2.0', name: '表情包', summary: '发表情包的技能', official: true, installed: null, blocked: null, provides: { skills: ['memes'], content: ['stickers'] }, depends: [] };
@@ -92,4 +92,16 @@ test('所需权限：核心 IN-3 起写人话的名字、带说明；旧核心�
     [{ name: '联网', summary: '访问网络上的服务' }, { name: 'files', summary: null }]);
   assert.deepEqual(capabilityRows(['network', { name: 'exec' }, null, 3, '']), [{ name: 'network', summary: null }, { name: 'exec', summary: null }]);
   assert.deepEqual(capabilityRows(undefined), []);
+});
+
+test('快速筛选的几种（MCP、脚本、技能）一个都没有也有个数，选着的和第一排叠着用', () => {
+  assert.deepEqual([...QUICK_KINDS], ['mcp', 'scripts', 'skills']);
+  const got = shownOf(all, { query: '', filter: 'all', kind: null }, new Set());
+  assert.equal(got.counts.mcp, 0);
+  assert.equal(got.counts.scripts, 0);
+  assert.equal(got.counts.skills, 1);
+  const both = shownOf(all, { query: '', filter: 'installed', kind: 'skills' }, new Set());
+  assert.deepEqual(both.list.map((p) => p.package), [], '表情包带技能但没装');
+  const one = shownOf(all, { query: '', filter: 'community', kind: null }, new Set());
+  assert.ok(one.list.every((p) => !p.official));
 });

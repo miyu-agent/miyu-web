@@ -7,7 +7,7 @@ import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { bytes } from '../../src/lib/format.js';
 import { pkgFace } from './logos.js';
-import { STATUS_FILTERS, shownOf, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf, capabilityRows } from './market-model.js';
+import { STATUS_FILTERS, QUICK_KINDS, shownOf, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf, capabilityRows } from './market-model.js';
 import { confirmIn } from './confirm.js';
 
 /** 搜索框停多久再筛（边打边筛；输入法选字时不筛） */
@@ -121,11 +121,16 @@ export function drawMarket(dialog) {
   }, t(`market.filter.${f}`), h('span', String(n)));
   const update = () => {
     const got = shownOf(m.list, view, upgradable);
-    if (view.kind && !got.kinds.includes(/** @type {any} */ (view.kind))) view.kind = null;
+    const quick = /** @type {readonly string[]} */ (QUICK_KINDS);
+    // 快速筛选的那几种一个都没有时照样留着（灰着），别的种类没了的回到不筛
+    if (view.kind && !quick.includes(view.kind) && !got.kinds.includes(/** @type {any} */ (view.kind))) view.kind = null;
     replace(statusChips, [
       ...STATUS_FILTERS.map((f) => chip(f, view.filter === f, got.counts[f], () => { view.filter = f; update(); })),
-      // 选着的种类接在后面，点了去掉
-      view.kind ? h('button.set-pkg-chip.is-on.mk-kind-on', { type: 'button', title: t('market.kind_clear'), onclick: () => { view.kind = null; update(); } },
+      // 一道细竖线隔开，后面是常用的几种：点了筛、再点去掉
+      h('i.mk-chips-sep', { 'aria-hidden': 'true' }),
+      ...quick.map((k) => chip(k, view.kind === k, got.counts[k] ?? 0, () => { view.kind = view.kind === k ? null : k; update(); })),
+      // 菜单里选的别的种类接在后面，点了去掉
+      view.kind && !quick.includes(view.kind) ? h('button.set-pkg-chip.is-on.mk-kind-on', { type: 'button', title: t('market.kind_clear'), onclick: () => { view.kind = null; update(); } },
         kindName(dialog, view.kind), icon('x')) : null,
     ]);
     filterBtn.classList.toggle('is-on', !!view.kind);

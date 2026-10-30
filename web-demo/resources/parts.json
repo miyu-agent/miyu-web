@@ -5631,6 +5631,12 @@
       ".set-tool-check"
     ]
   },
+  "mk.chips-sep": {
+    "zh": "下载软件：筛选那一排的细竖线",
+    "select": [
+      ".mk-chips-sep"
+    ]
+  },
   "mk.ups": {
     "zh": "mk-ups",
     "select": [
