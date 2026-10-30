@@ -1043,13 +1043,15 @@ export class App {
   }
 
   /**
-   * 现在这个模型的思考强度（`null` 是默认）：选了还没写好的照选的；别的照 `model.list` 的 `facts.effort`（配置里写了的照写，
-   * 系统配置的、没写的是默认）。强度是配置（核心施工 8-18 补），不分会话。
+   * 现在这个模型的思考强度（`null` 是默认）：选了还没写好的照选的；会话自己记了一档的（核心 SM-1：终端里 `/effort` 过，`model.effort.from`
+   * 是 `session`）照会话的，配置那一档对它不起作用；别的照 `model.list` 的 `facts.effort`（配置里写了的照写，系统配置的、没写的是默认）。
    */
   effortLevel() {
     const ref = this.modelRef();
     if (!ref || ref.startsWith('@')) return null;
     if (this.pickedEffort.has(ref)) return this.pickedEffort.get(ref) ?? null;
+    const live = this.current ? this.store.sessions.get(this.current)?.model : null;
+    if (live?.ref === ref && live.effort?.from === 'session') return live.effort.level ?? null;
     return effortOf(this.models, ref).level;
   }
 
