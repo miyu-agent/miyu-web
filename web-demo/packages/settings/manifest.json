@@ -736,6 +736,7 @@
         "drop_yes": "删除",
         "cancel": "取消",
         "add_hint": "一行一个，例如 ~/.ssh 或 /srv/keys（Shift+回车换行）",
+        "add_hint_windows": "一行一个，例如 %USERPROFILE%\\.ssh 或 D:\\keys（Shift+回车换行）",
         "add": "添加",
         "already": "已经在列表里了：{paths}",
         "restore": "重置",
@@ -748,6 +749,7 @@
           "drop_ask": "是否确认从列表中删除此目录？",
           "add_title": "添加技能目录",
           "add_hint": "一行一个，例如 ~/.agents/skills 或 /srv/skills（Shift+回车换行）",
+          "add_hint_windows": "一行一个，例如 %USERPROFILE%\\.agents\\skills 或 D:\\skills（Shift+回车换行）",
           "empty": "没有技能目录",
           "search": "搜索目录",
           "no_match": "没有对得上的目录"
@@ -756,6 +758,7 @@
           "drop_ask": "是否确认从列表中删除此路径？",
           "add_title": "添加受保护的路径",
           "add_hint": "一行一个，例如 ~/.bashrc、/etc/hosts 或工作区里的 Makefile（Shift+回车换行）",
+          "add_hint_windows": "一行一个，例如 %USERPROFILE%\\.gitconfig、C:\\Windows\\System32\\drivers\\etc\\hosts 或工作区里的 Makefile（Shift+回车换行）",
           "empty": "没有受保护的路径",
           "search": "搜索路径",
           "no_match": "没有对得上的路径"
@@ -1335,6 +1338,7 @@
         "drop_yes": "Remove",
         "cancel": "Cancel",
         "add_hint": "One per line, e.g. ~/.ssh or /srv/keys (Shift+Enter for a new line)",
+        "add_hint_windows": "One per line, e.g. %USERPROFILE%\\.ssh or D:\\keys (Shift+Enter for a new line)",
         "add": "Add",
         "already": "Already in the list: {paths}",
         "restore": "Reset",
@@ -1347,6 +1351,7 @@
           "drop_ask": "Remove this folder from the list?",
           "add_title": "Add skill folders",
           "add_hint": "One per line, e.g. ~/.agents/skills or /srv/skills (Shift+Enter for a new line)",
+          "add_hint_windows": "One per line, e.g. %USERPROFILE%\\.agents\\skills or D:\\skills (Shift+Enter for a new line)",
           "empty": "No skill folders",
           "search": "Search folders",
           "no_match": "No matching folders"
@@ -1355,6 +1360,7 @@
           "drop_ask": "Remove this path from the list?",
           "add_title": "Add a protected path",
           "add_hint": "One per line, e.g. ~/.bashrc, /etc/hosts or Makefile in the workspace (Shift+Enter for a new line)",
+          "add_hint_windows": "One per line, e.g. %USERPROFILE%\\.gitconfig, C:\\Windows\\System32\\drivers\\etc\\hosts or Makefile in the workspace (Shift+Enter for a new line)",
           "empty": "No protected paths",
           "search": "Search paths",
           "no_match": "No matching paths"
@@ -1934,6 +1940,7 @@
         "drop_yes": "削除",
         "cancel": "キャンセル",
         "add_hint": "1 行に 1 つ。例：~/.ssh や /srv/keys（Shift+Enter で改行）",
+        "add_hint_windows": "1 行に 1 つ。例：%USERPROFILE%\\.ssh や D:\\keys（Shift+Enter で改行）",
         "add": "追加",
         "already": "すでに一覧にあります：{paths}",
         "restore": "リセット",
@@ -1946,6 +1953,7 @@
           "drop_ask": "このフォルダをリストから削除しますか？",
           "add_title": "スキルフォルダを追加",
           "add_hint": "1 行に 1 つ。例：~/.agents/skills や /srv/skills（Shift+Enter で改行）",
+          "add_hint_windows": "1 行に 1 つ。例：%USERPROFILE%\\.agents\\skills や D:\\skills（Shift+Enter で改行）",
           "empty": "スキルフォルダはありません",
           "search": "フォルダを検索",
           "no_match": "一致するフォルダはありません"
@@ -1954,6 +1962,7 @@
           "drop_ask": "このパスを一覧から削除しますか？",
           "add_title": "保護するパスを追加",
           "add_hint": "1 行に 1 つ。例：~/.bashrc、/etc/hosts、ワークスペースの Makefile（Shift+Enter で改行）",
+          "add_hint_windows": "1 行に 1 つ。例：%USERPROFILE%\\.gitconfig、C:\\Windows\\System32\\drivers\\etc\\hosts、ワークスペースの Makefile（Shift+Enter で改行）",
           "empty": "保護するパスはありません",
           "search": "パスを検索",
           "no_match": "一致するパスはありません"

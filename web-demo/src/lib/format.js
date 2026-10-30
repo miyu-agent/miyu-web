@@ -61,6 +61,39 @@ export function tilde(path, home) {
   return path.startsWith(`${home}/`) ? `~${path.slice(home.length)}` : path;
 }
 
+/**
+ * 核心配置里写的路径照核心那台机器的写法给人看（蓝图 `web.md`「设置页」私密目录、受保护的路径）：Windows 上家目录写 `%USERPROFILE%`、
+ * 分隔用 `\`（`~/AppData/Local` 写成 `%USERPROFILE%\AppData\Local`），别的系统同 [`tilde`]。
+ * @param {string} path @param {string|null} home @param {string|null} platform 核心握手的 `host.platform`
+ */
+export function shownPath(path, home, platform) {
+  if (platform !== 'windows') return home ? tilde(path, home) : path;
+  const p = path.replace(/^~(?=\/|$)/, '%USERPROFILE%');
+  return p.replace(/\//g, '\\');
+}
+
+/**
+ * 悬停看的完整路径：Windows 上 `~` 换成真的家目录、分隔用 `\`；别的照原样。
+ * @param {string} path @param {string|null} home @param {string|null} platform
+ */
+export function fullPath(path, home, platform) {
+  if (platform !== 'windows') return path;
+  const p = home ? path.replace(/^~(?=\/|$)/, home.replace(/[\\/]+$/, '')) : path;
+  return p.replace(/\//g, '\\');
+}
+
+/**
+ * 人照 Windows 的写法写的路径换回核心认的（核心只认 `~`、`~/…` 和绝对路径）：`%USERPROFILE%\…`、`~\…` 换成 `~/…`，相对路径的 `\` 换成 `/`；
+ * 盘符开头、`\\` 开头的绝对路径照原样。别的系统照原样。
+ * @param {string} text @param {string|null} platform
+ */
+export function corePath(text, platform) {
+  if (platform !== 'windows') return text;
+  const t = text.replace(/^%userprofile%(?=[\\/]|$)/i, '~');
+  if (/^[a-z]:[\\/]/i.test(t) || t.startsWith('\\\\')) return t;
+  return t.replace(/\\/g, '/');
+}
+
 /** 一次工具调用用了多久（照旧版 `app.js:8389`）：不到一秒 `23 ms`，十秒以内 `1.2 s`，再长 `12 s`。 */
 export function toolDuration(ms) {
   if (!Number.isFinite(ms) || ms < 0) return '';

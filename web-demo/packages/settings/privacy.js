@@ -5,7 +5,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
-import { tilde } from '../../src/lib/format.js';
+import { shownPath, fullPath, corePath } from '../../src/lib/format.js';
 import { LAYER, expectFor } from './model.js';
 import { confirmIn } from './confirm.js';
 import { privateRows, dropChange, batchChange, canRestore, restoreChange, findRows, pairIn, inWorkspace } from './privacy-model.js';
@@ -55,6 +55,9 @@ export function pathList(dialog, { name, restoreName = name ?? '', words, add, r
   }).filter(Boolean);
   const queryKey = `privateQuery:${add.key}`;
   const home = dialog.ctx.host?.home ?? null;
+  // 核心在 Windows 上的：路径照 Windows 的写法给人看，写的换回核心认的（`%USERPROFILE%` → `~`）
+  const platform = dialog.ctx.host?.platform ?? null;
+  const show = (/** @type {string} */ p) => shownPath(p, home, platform);
   const error = h('p.set-error', { hidden: true });
   const say = (/** @type {string|null} */ why) => {
     error.hidden = !why;
@@ -77,9 +80,9 @@ export function pathList(dialog, { name, restoreName = name ?? '', words, add, r
   const all = privateRows(add, remove);
   const list = h('div.pv-list');
   const drawList = () => {
-    const rows = findRows(all, dialog[queryKey] ?? '');
+    const rows = findRows(all, corePath(dialog[queryKey] ?? '', platform));
     replace(list, rows.length ? rows.map((row) => h('div.pv-row',
-      h('code.pv-path', { title: row.path }, home ? tilde(row.path, home) : row.path),
+      h('code.pv-path', { title: fullPath(row.path, home, platform) }, show(row.path)),
       // 相对路径（只禁写的 `.git/hooks` 这类）：每个工作区里的那一处
       inWorkspace(row.path) ? h('span.pv-tag', t('privacy.in_workspace')) : null,
       row.shipped ? h('span.pv-tag', t('privacy.shipped')) : null,
@@ -101,13 +104,13 @@ export function pathList(dialog, { name, restoreName = name ?? '', words, add, r
   // 搜索框右边两个图标按钮：「+」点了弹一个写路径的小框，「↺」重置（2026-10-22 项目主人：去掉表下面写路径的框）；一直都在，跟出厂一样的「重置」灰着
   const plus = /** @type {HTMLButtonElement} */ (h('button.icon-button.pv-tool', {
     type: 'button', title: t('privacy.add'), 'aria-label': t('privacy.add'),
-    onclick: () => openAdd(dialog, w('add_title'), w('add_hint'), async (text) => {
-      const got = batchChange(text, add, remove);
-      if (!got.changes.length) return got.skipped.length ? t('privacy.already', { paths: got.skipped.join('、') }) : '';
+    onclick: () => openAdd(dialog, w('add_title'), w(platform === 'windows' ? 'add_hint_windows' : 'add_hint'), async (text) => {
+      const got = batchChange(text.split('\n').map((line) => corePath(line.trim(), platform)).join('\n'), add, remove);
+      if (!got.changes.length) return got.skipped.length ? t('privacy.already', { paths: got.skipped.map(show).join('、') }) : '';
       const why = await store(got.changes, true);
       if (why) return why;
       // 加了别的、跳过了已经在的：也说一句
-      if (got.skipped.length) dialog.toast(t('privacy.already', { paths: got.skipped.join('、') }));
+      if (got.skipped.length) dialog.toast(t('privacy.already', { paths: got.skipped.map(show).join('、') }));
       return null;
     }),
   }, icon('plus')));

@@ -260,6 +260,8 @@ export async function boot(root) {
         signedUp: setup,
         cwd: info.cwd,
         home: info.home,
+        /** 核心在哪个系统上（握手 `host.platform`）：Windows 上路径照 Windows 的写法给人看（`shownPath`） */
+        platform: info.platform,
         files: host.files,
         pages: host.pages,
         route: host.route,

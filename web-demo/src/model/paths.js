@@ -32,11 +32,13 @@ function normalize(path) {
 
 /**
  * 握手回应里的路径信息（`host`，核心施工 W-3）：新会话默认的工作目录是这个账号的工作区（设计 11 第四节，网页上开的会话默认在
- * 账号的工作区），家目录拿来把路径写成 `~/…`。没有的是 `null`。
+ * 账号的工作区），家目录拿来把路径写成 `~/…`；核心在哪个系统上（`platform`：`linux`、`macos`、`windows`），Windows 上路径照 Windows 的写法
+ * 给人看。没有的是 `null`。
  * @param {any} hello `hello` 的回应
- * @returns {{cwd: string|null, home: string|null}}
+ * @returns {{cwd: string|null, home: string|null, platform: string|null}}
  */
 export function placeOf(hello) {
   const host = hello?.host;
-  return { cwd: typeof host?.workspace === 'string' ? host.workspace : null, home: typeof host?.home === 'string' ? host.home : null };
+  const platform = ['linux', 'macos', 'windows'].includes(host?.platform) ? host.platform : null;
+  return { cwd: typeof host?.workspace === 'string' ? host.workspace : null, home: typeof host?.home === 'string' ? host.home : null, platform };
 }
