@@ -7264,5 +7264,29 @@
     "select": [
       ".acc-eye"
     ]
+  },
+  "set.menu-item-small": {
+    "zh": "选项带说明的下拉：菜单里名字下面那一行暗字",
+    "select": [
+      ".set-menu-text small"
+    ]
+  },
+  "set.slider": {
+    "zh": "设置页：滑块",
+    "select": [
+      ".set-slider"
+    ]
+  },
+  "set.slider-value": {
+    "zh": "设置页：滑块右边写的数",
+    "select": [
+      ".set-slider-value"
+    ]
+  },
+  "set.slider-box": {
+    "zh": "设置页：滑块那一格（没写过的淡一档）",
+    "select": [
+      ".set-slider-box"
+    ]
   }
 }

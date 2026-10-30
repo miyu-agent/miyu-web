@@ -5,6 +5,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { envRef, inputText, listElement, LAYER, writtenIn, secretName, referenceOptions, comboState, COMBO_OTHER } from './model.js';
+import { slider } from './slider.js';
 
 /**
  * 一组：组名，下面一行行。
@@ -124,10 +125,13 @@ function control(dialog, item, value, save, saveSecret) {
   const ctx = dialog.ctx;
   if (item.control === 'toggle') return toggle(!!value, (on) => save({ value: on }));
   if (item.control === 'select') {
-    const options = (item.options ?? []).map((o) => ({ value: o.value, name: o.name }));
+    // 选项带说明的（核心设计 53 第一节）：菜单里那一项名字下面暗色写一行
+    const options = (item.options ?? []).map((o) => ({ value: o.value, name: o.name, desc: o.description }));
     // 选了值是 `null` 的那一项（「默认」）：从这一层删掉
     return select(dialog, options, value ?? null, (v) => save(v === null ? { unset: true } : { value: v }));
   }
+  // 滑块（核心设计 53 第三节）：松手存数
+  if (item.control === 'slider') return slider(item, value, (n) => save({ value: n }));
   if (item.control === 'list') return list(dialog, item, Array.isArray(value) ? value : [], (next) => save({ value: next }));
   if (item.control === 'combo') return combo(dialog, Array.isArray(item.suggestions) ? item.suggestions : [], value, (next) => save(next === null ? { unset: true } : { value: next }));
   const env = envRef(value);
@@ -260,7 +264,7 @@ export function areaField(text, commit) {
 
 /**
  * 下拉：按钮写选中那一项，点开一个菜单（照「菜单」的浮层），默认那一项后面暗色写「默认」。
- * @param {any} dialog @param {{value: any, name: string, note?: string}[]} options @param {any} value @param {(v: any) => void} pick
+ * @param {any} dialog @param {{value: any, name: string, note?: string, desc?: string, off?: boolean}[]} options @param {any} value @param {(v: any) => void} pick
  */
 export function select(dialog, options, value, pick) {
   const chosen = options.find((o) => JSON.stringify(o.value) === JSON.stringify(value));
@@ -305,12 +309,12 @@ export function combo(dialog, suggestions, value, change) {
 export function menu(dialog, anchor, options, value, pick) {
   dialog.panel.querySelector('.set-menu')?.dispatchEvent(new CustomEvent('set-dismiss'));
   // `off` 的（用不了：没装的这类）暗着、点不了，暗字写为什么
-  const items = options.map((o) => h(`button.set-menu-item${JSON.stringify(o.value) === JSON.stringify(value) ? '.is-on' : ''}${o.off ? '.is-off' : ''}`, {
+  const items = options.map((o) => h(`button.set-menu-item${JSON.stringify(o.value) === JSON.stringify(value) ? '.is-on' : ''}${o.off ? '.is-off' : ''}${o.desc ? '.has-desc' : ''}`, {
     type: 'button',
     role: 'option',
     disabled: o.off ? true : null,
     onclick: () => { close(); if (JSON.stringify(o.value) !== JSON.stringify(value)) pick(o.value); },
-  }, h('span', o.name), o.note ? h('em', o.note) : null, JSON.stringify(o.value) === JSON.stringify(value) ? icon('check') : null));
+  }, o.desc ? h('span.set-menu-text', h('span', o.name), h('small', o.desc)) : h('span', o.name), o.note ? h('em', o.note) : null, JSON.stringify(o.value) === JSON.stringify(value) ? icon('check') : null));
   // 选项多的（选模型的那种，上百个）顶上一个搜索框：照名字、暗字找，不分大小写；回车选第一个对得上的
   const many = options.length > (dialog.ctx.config.menu_search_after ?? Infinity);
   const find = many ? /** @type {HTMLInputElement} */ (h('input.set-input.set-menu-search', { type: 'search', placeholder: dialog.ctx.text('menu_search'), spellcheck: 'false', autocomplete: 'off' })) : null;

@@ -105,6 +105,16 @@
 .set-switch { position: relative; width: 36px; height: 20px; padding: 0; border: var(--switch-border, 0); border-radius: var(--switch-radius, var(--r-pill)); background: var(--switch-bg, color-mix(in srgb, var(--text) 16%, transparent)); cursor: pointer; transition: background-color calc(0.16s * var(--motion-scale)) ease; }
 .set-switch i { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: var(--knob-radius, var(--r-round)); background: var(--knob-bg, var(--surface-1)); box-shadow: var(--knob-elev, var(--bubble-shadow)); transition: transform calc(0.16s * var(--motion-scale)) var(--ease-out); }
 .set-switch.is-on { background: var(--switch-active, var(--accent)); }
+/* 滑块（核心设计 53 第三节）：一根 4px 的条，现在的值那一截铺 accent，圆钮同开关的；右边等宽字写数 */
+.set-slider-box { display: inline-flex; align-items: center; gap: calc(10px * var(--space)); }
+.set-slider {
+  -webkit-appearance: none; appearance: none; width: 240px; height: 4px; margin: 0; border-radius: var(--r-pill); cursor: pointer;
+  background: linear-gradient(to right, var(--switch-active, var(--accent)) var(--fill, 0%), var(--switch-bg, color-mix(in srgb, var(--text) 16%, transparent)) var(--fill, 0%));
+}
+.set-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border: 0; border-radius: var(--knob-radius, var(--r-round)); background: var(--knob-bg, var(--surface-1)); box-shadow: var(--knob-elev, var(--bubble-shadow)); }
+.set-slider::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: var(--knob-radius, var(--r-round)); background: var(--knob-bg, var(--surface-1)); box-shadow: var(--knob-elev, var(--bubble-shadow)); }
+.set-slider:focus-visible { outline: var(--focus-ring, 2px solid var(--accent)); outline-offset: 4px; }
+.set-slider-value { min-width: 3.5em; color: var(--text-soft); font: calc(12.5px * var(--text-scale)) var(--font-mono); text-align: right; }
 .set-switch.is-on i { transform: translateX(16px); }
 .set-switch:disabled { opacity: 0.4; cursor: default; }
 .set-select, .set-btn, .set-env {
@@ -152,6 +162,10 @@
 /* 选项多的下拉顶上的搜索框：贴着菜单顶，滚动时不跟着走 */
 .set-menu-search { position: sticky; top: -4px; z-index: 1; width: 100%; margin: calc(-4px * var(--space)) 0 calc(4px * var(--space)); height: 30px; box-shadow: 0 4px 6px -6px var(--line); }
 .set-menu-item em { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); font-style: normal; }
+/* 选项带说明的（核心设计 53 第一节）：名字下面暗色一行，这一项跟着长高 */
+.set-menu-item.has-desc { height: auto; min-height: 30px; padding-top: calc(5px * var(--space)); padding-bottom: calc(5px * var(--space)); text-align: left; }
+.set-menu-text { display: grid; gap: calc(1px * var(--space)); }
+.set-menu-text small { color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); line-height: 1.4; }
 .set-menu-item:hover { background: var(--item-hover, var(--surface-2)); }
 .set-toast { position: absolute; bottom: 16px; left: 50%; z-index: 6; padding: calc(7px * var(--space)) calc(12px * var(--space)); border: var(--float-border, 1px solid var(--line)); border-radius: var(--float-radius, var(--r-8)); background: var(--float-bg, var(--surface-1)); box-shadow: var(--float-elev, var(--float-shadow)); font-size: calc(12.5px * var(--text-scale)); transform: translateX(-50%); animation: rise-in var(--motion-in) var(--ease-out) both; }
 .set-toast.is-leaving { animation: sink-out var(--motion-out) var(--ease-in) both; }
