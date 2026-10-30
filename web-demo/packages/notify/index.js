@@ -11,7 +11,7 @@ import { noteOf, noticeNote } from './model.js';
 /** 问过权限，记在这个浏览器里的名字 */
 const ASKED = 'notify_asked';
 /** 没有人格头像的会话用 Miyu 的图标（同页面的图标） */
-const MIYU = new URL('resources/assets/miyu-avatar.png', location.href).href;
+const MIYU = new URL('resources/assets/logo.png', location.href).href;
 
 /** @param {any} ctx */
 export function apply(ctx) {
