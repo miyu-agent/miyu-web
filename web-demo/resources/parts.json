@@ -7288,5 +7288,49 @@
     "select": [
       ".set-slider-box"
     ]
+  },
+  "set.records": {
+    "zh": "设置页：一组字段的列表（一项一张卡片）",
+    "select": [
+      ".set-record"
+    ]
+  },
+  "set.record-head": {
+    "zh": "设置页：卡片列表里一张卡片的头一行",
+    "select": [
+      ".set-record-toggle",
+      ".set-record-title"
+    ]
+  },
+  "set.record-tool": {
+    "zh": "设置页：卡片头上的上移、下移、删掉",
+    "select": [
+      ".set-record-tool"
+    ]
+  },
+  "set.record-field": {
+    "zh": "设置页：卡片展开后的一格（字段名、说明）",
+    "select": [
+      ".set-record-name span",
+      ".set-record-name small"
+    ]
+  },
+  "set.record-error": {
+    "zh": "设置页：卡片里拒了的那一格下面的红字",
+    "select": [
+      ".set-record-error"
+    ]
+  },
+  "set.records-add": {
+    "zh": "设置页：卡片列表最下面「加一项」",
+    "select": [
+      ".set-records-add"
+    ]
+  },
+  "set.record-input": {
+    "zh": "设置页：卡片里的写字的框",
+    "select": [
+      ".set-record-control .set-input"
+    ]
   }
 }

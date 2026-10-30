@@ -6,6 +6,7 @@
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { envRef, inputText, listElement, LAYER, writtenIn, secretName, referenceOptions, comboState, COMBO_OTHER } from './model.js';
 import { slider } from './slider.js';
+import { records } from './records.js';
 
 /**
  * 一组：组名，下面一行行。
@@ -55,6 +56,8 @@ export function shell(o) {
     },
     /** 成了：对勾，1 秒淡出 */
     done: () => { clearTimeout(spin); replace(status, icon('check')); status.className = 'set-status is-done'; },
+    /** 拒了、原因已经写在控件里面了（一组字段的列表写在那张卡片的那一格下面）：只停转圈，这一行下面不再写一遍 */
+    idle: () => { clearTimeout(spin); replace(status); status.className = 'set-status'; },
     /** 拒了：原因写在这一项下面 */
     fail: (why) => { clearTimeout(spin); replace(status); status.className = 'set-status'; error.textContent = why; error.hidden = false; },
   };
@@ -74,10 +77,12 @@ export function coreRow(dialog, item, opts = {}) {
   const value = item.entry?.value ?? item.fact?.value;
   /** @type {ReturnType<typeof shell>} */
   let row;
-  const save = async (change) => {
+  // `placed`：控件自己把拒的原因写在里面了的（一组字段的列表照问题的键写到卡片的那一格），这一行下面不再写一遍
+  const save = async (/** @type {any} */ change, /** @type {((problems: any[]) => boolean)|undefined} */ placed) => {
     row.busy();
     const why = await dialog.save(item, change);
-    if (why) row.fail(why);
+    if (why && placed?.(dialog.lastProblems ?? [])) row.idle();
+    else if (why) row.fail(why);
     else row.done();
     return !why;
   };
@@ -132,6 +137,12 @@ function control(dialog, item, value, save, saveSecret) {
   }
   // 滑块（核心设计 53 第三节）：松手存数
   if (item.control === 'slider') return slider(item, value, (n) => save({ value: n }));
+  // 一组字段的列表（核心设计 53 第二节）：一项一张卡片，整条一起存
+  if (item.element === 'record') {
+    // 问题都落在某一项上的（键是 `<项>[n]…`）卡片里写，别的（超过 100 项这类）照旧写在这一行下面
+    const placed = (/** @type {any[]} */ problems) => problems.length > 0 && problems.every((p) => typeof p.key === 'string' && p.key.startsWith(`${item.key}[`));
+    return records(dialog, item, value, (change) => save(change, placed), control);
+  }
   if (item.control === 'list') return list(dialog, item, Array.isArray(value) ? value : [], (next) => save({ value: next }));
   if (item.control === 'combo') return combo(dialog, Array.isArray(item.suggestions) ? item.suggestions : [], value, (next) => save(next === null ? { unset: true } : { value: next }));
   const env = envRef(value);

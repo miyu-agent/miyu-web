@@ -507,6 +507,7 @@
       "advanced_more": "{names}等",
       "search_pages": "页面",
       "search_packages": "软件包",
+      "record": { "nth": "第 {n} 项", "add": "加一项", "up": "上移", "down": "下移", "remove": "删掉这一项", "remove_ask": "确认删除「{name}」吗？", "full": "最多 {n} 项" },
       "ask_yes": "确认",
       "ask_no": "取消",
       "tools": {
@@ -1110,6 +1111,7 @@
       "advanced_more": "{names} and more",
       "search_pages": "Pages",
       "search_packages": "Packages",
+      "record": { "nth": "Item {n}", "add": "Add item", "up": "Move up", "down": "Move down", "remove": "Delete this item", "remove_ask": "Delete “{name}”?", "full": "At most {n} items" },
       "ask_yes": "Confirm",
       "ask_no": "Cancel",
       "tools": {
@@ -1713,6 +1715,7 @@
       "advanced_more": "{names} など",
       "search_pages": "ページ",
       "search_packages": "パッケージ",
+      "record": { "nth": "{n} 件目", "add": "項目を追加", "up": "上へ", "down": "下へ", "remove": "この項目を削除", "remove_ask": "「{name}」を削除しますか？", "full": "最大 {n} 件" },
       "ask_yes": "確認",
       "ask_no": "キャンセル",
       "tools": {

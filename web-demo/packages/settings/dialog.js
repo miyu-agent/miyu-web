@@ -343,6 +343,7 @@ export class SettingsDialog {
    */
   async saveMany(layer, changes) {
     if (!changes.length) return null;
+    this.lastProblems = [];
     try {
       await this.ctx.core.request('config.set', { layer, changes });
     } catch (err) {
@@ -352,6 +353,8 @@ export class SettingsDialog {
         return this.ctx.text('conflict', { value: now });
       }
       const problems = err.data?.problems ?? [];
+      // 一组字段的列表照问题的键把红字写到那张卡片的那一格（`records.js`）
+      this.lastProblems = problems;
       return problems.length ? problems.map((p) => p.message).join('\n') : err.message;
     }
     // 记下刚存成的几项：重画出来的那几行照它画对勾（`rows.js`）

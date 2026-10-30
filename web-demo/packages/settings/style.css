@@ -757,3 +757,32 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 /* 管理员后台的多选（2026-10-27 项目主人：不能批量操作是个问题；照左栏多选会话）：组头「选择」、每行前面勾选框、勾上的铺 accent 淡底、组底下钉着一条 */
 .set-row.is-picking { cursor: pointer; }
 .set-row.is-picked { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+
+/* 一组字段的列表（核心设计 53 第二节，`records.js`）：放到名字、说明下面占满这一行；一项一张卡片（surface_2 底、不画描边），头一行标题和
+   上移、下移、删掉；展开了是字段的表单，字段名在左、控件在右；拒了的那一格下面红字 */
+.set-row:has(.set-records) { flex-wrap: wrap; }
+.set-row:has(.set-records) .set-text { flex-basis: 100%; }
+.set-row:has(.set-records) .set-control { flex: 1; }
+.set-records { display: grid; flex: 1; gap: calc(6px * var(--space)); }
+.set-record { border-radius: var(--r-10); background: var(--item-bg, var(--surface-2)); }
+.set-record-head { display: flex; align-items: center; gap: calc(2px * var(--space)); padding: calc(4px * var(--space)) calc(6px * var(--space)); }
+.set-record-toggle { display: flex; flex: 1; min-width: 0; align-items: center; gap: calc(6px * var(--space)); padding: calc(4px * var(--space)); border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.set-record-toggle .icon { flex: none; width: 14px; height: 14px; color: var(--text-faint); }
+.set-record-title { overflow: hidden; font-size: calc(13px * var(--text-scale)); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.set-record-tool { display: grid; width: 26px; height: 26px; padding: 0; place-items: center; border: 0; border-radius: var(--r-7); background: none; color: var(--text-faint); cursor: pointer; }
+.set-record-tool:hover:not(:disabled) { background: var(--item-hover, var(--surface-3)); color: var(--text); }
+.set-record-tool:disabled { opacity: 0.35; cursor: default; }
+.set-record-tool .icon { width: 14px; height: 14px; }
+.set-record-body { display: grid; gap: calc(10px * var(--space)); padding: calc(4px * var(--space)) calc(12px * var(--space)) calc(12px * var(--space)) calc(30px * var(--space)); }
+.set-record-field { display: flex; align-items: flex-start; gap: calc(12px * var(--space)); }
+.set-record-name { display: grid; flex: 0 0 120px; gap: calc(2px * var(--space)); padding-top: calc(6px * var(--space)); }
+.set-record-name span { color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); }
+.set-record-name small { color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); line-height: 1.4; }
+.set-record-control { display: grid; flex: 1; min-width: 0; justify-items: start; gap: calc(4px * var(--space)); }
+.set-record-control .set-input { background: var(--surface-1); }
+.set-record-error { margin: 0; padding: 0 calc(12px * var(--space)) calc(4px * var(--space)); color: var(--danger); font-size: calc(12px * var(--text-scale)); white-space: pre-wrap; }
+.set-record-control .set-record-error { padding: 0; }
+.set-records-add { display: inline-flex; justify-self: start; align-items: center; gap: calc(6px * var(--space)); height: 30px; padding: 0 calc(12px * var(--space)); border: 0; border-radius: var(--r-pill); background: var(--item-bg, var(--surface-2)); color: var(--text-soft); font: inherit; font-size: calc(12.5px * var(--text-scale)); cursor: pointer; }
+.set-records-add:hover:not(:disabled) { background: var(--item-hover, var(--surface-3)); color: var(--text); }
+.set-records-add:disabled { opacity: 0.45; cursor: default; }
+.set-records-add .icon { width: 14px; height: 14px; }
