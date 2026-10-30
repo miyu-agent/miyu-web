@@ -47,4 +47,4 @@ cargo test --manifest-path web-demo/bridge/Cargo.toml
 | 库 | 版本 | 许可证 | 拷了什么 | 怎么用 |
 |---|---|---|---|---|
 | [Prism](https://prismjs.com) | 1.29.0 | MIT | `prism/prism.min.js`：旧版挑的几种语言拼成一个文件，文件头写着怎么重拼 | `data-manual` 载进来，只调 `Prism.tokenize`（`src/markdown/highlight.js`） |
-| [KaTeX](https://katex.org) | 0.18.4 | MIT | `katex/katex.min.js`、`katex/katex.min.css`、`katex/fonts/*.woff2` | `katex.render`（`src/markdown/math.js`） |
+| [KaTeX](https://katex.org) | 0.18.4 | 代码 MIT（`katex/LICENSE`），字体 SIL OFL 1.1（`katex/fonts/OFL.txt`） | `katex/katex.min.js`、`katex/katex.min.css`、`katex/fonts/*.woff2` | `katex.render`（`src/markdown/math.js`） |

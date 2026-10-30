@@ -24,12 +24,16 @@ AGPL-3.0-or-later（2026-10-26 项目主人定：核心和第一方程序用 AGP
 | 资源 | 许可证 | 原文 |
 |---|---|---|
 | Lucide 图标（lucide-static 1.55.0，`web-demo/resources/lucide.json`、`lucide-all.json`；像素皮肤的图标 `web-demo/packages/skin-pixel/icons.json` 是照它画到格子上的） | ISC（其中从 Feather 来的那些另带 MIT） | `web-demo/resources/LICENSE-lucide.txt` |
-| Press Start 2P 字体（`web-demo/resources/fonts/press-start.ttf`） | SIL OFL 1.1 | `web-demo/resources/fonts/OFL-press-start.txt` |
+| Press Start 2P 字体（`web-demo/resources/fonts/press-start.ttf`，上游原版 v3.000 原样带着，没有子集化、没改名） | SIL OFL 1.1 | `web-demo/resources/fonts/OFL-press-start.txt` |
 | 站酷庆科黄油体（`web-demo/resources/fonts/zcool-qingke.woff2`） | SIL OFL 1.1 | `web-demo/resources/fonts/OFL-zcool-qingke.txt` |
 | 缝合像素字体 Fusion Pixel（`web-demo/packages/skin-pixel/fonts/fusion-pixel-12px.woff2`，含方舟像素、Cubic 11、Galmuri） | SIL OFL 1.1 | `web-demo/packages/skin-pixel/fonts/OFL-fusion-pixel.txt`、`LICENSES/` |
 | Prism 1.29.0（`web-demo/vendor/prism/`） | MIT | `web-demo/vendor/prism/LICENSE` |
-| KaTeX 0.18.4（`web-demo/vendor/katex/`，连它的字体） | MIT | `web-demo/vendor/katex/LICENSE` |
+| KaTeX 0.18.4 的代码（`web-demo/vendor/katex/katex.min.js`、`katex.min.css`） | MIT | `web-demo/vendor/katex/LICENSE` |
+| KaTeX 0.18.4 的字体（`web-demo/vendor/katex/fonts/*.woff2`，原样带着，保留名 KaTeX_Main 等） | SIL OFL 1.1 | `web-demo/vendor/katex/fonts/OFL.txt` |
+| material-color-utilities 0.4.0（`web-demo/src/lib/md3/vendor/mcu.min.js`，挑了取色要用的几样打成一个文件） | Apache-2.0 | `web-demo/src/lib/md3/vendor/LICENSE` |
 
 吉祥物和默认头像（`web-demo/resources/assets/mascot.png`、`miyu-avatar.png`）是项目自己做的，和代码一样照 AGPL-3.0-or-later。
+
+模型供应商的名称和图标是各自所有者的商标。网页里显示的供应商图标不随网页包发，由核心在运行时从 models.dev、lobe-icons 拉来缓存（核心 `licenses.md`）。
 
 拷来的库怎么用见 `web-demo/README.md`「拷进来的库」。
