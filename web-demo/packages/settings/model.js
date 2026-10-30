@@ -341,6 +341,12 @@ export function referenceOptions(list) {
   return [...models, ...pools];
 }
 
+/**
+ * 除了网页界面没有别的界面的（只装了桌面端、没装终端界面）：「默认界面」没得选、「终端会话」那一组用不上，都不列（蓝图「设置页」第 18 条）。
+ * @param {{package: string}[]|undefined} heads @returns {string[]}
+ */
+export const headless = (heads) => ((heads ?? []).some((p) => p.package !== 'miyu-webui') ? [] : ['ui.head', 'terminal.']);
+
 export const providerName = (p) => (typeof p.name === 'object' ? p.name?.value : p.name) || p.id;
 
 /** 网页包的设置项里有控件能改的类型；结构复杂的（`json`、`map`、`list`）在设置页改不了，不列（蓝图「设置页」第 11 条）。 */

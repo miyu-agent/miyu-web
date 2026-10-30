@@ -7,7 +7,7 @@ import { drawMarket, marketPush } from './market.js';
 import { accessGroup, avatarGroup, relisten, LISTEN_KEYS } from './account.js';
 import { hasPrivate, privateGroup } from './privacy.js';
 import { leave } from '../../src/lib/motion.js';
-import { buildPages, search, pagesWithErrors, LAYER, expectFor, navGroups, pkgMatch, ownerOf } from './model.js';
+import { buildPages, search, pagesWithErrors, LAYER, expectFor, navGroups, pkgMatch, ownerOf, headless } from './model.js';
 import { coreRow, groupBlock, banner, toggle } from './rows.js';
 import { drawLook } from './look.js';
 import { drawPackages } from './packages.js';
@@ -30,6 +30,7 @@ const SAVED_MS = 1000;
 let lastPage = 'general';
 /** 网页的源码在哪（AGPL 第 13 条）：改了的版本照自己的源码地址换掉这一行 */
 const SOURCE_URL = 'https://github.com/miyu-agent/miyu-web';
+
 
 export class SettingsDialog {
   /** @param {any} ctx */
@@ -131,7 +132,7 @@ export class SettingsDialog {
     this.got = got;
     const cfg = this.ctx.config;
     // 「读取其他目录的 Skills」两项画在技能页顶上（`tool-pages.js`），通用的页不列
-    this.pages = buildPages(schema, got, { merge: cfg.merge, moveGroups: cfg.move_groups, hide: [...(cfg.hide_prefixes ?? []), EXTERNAL_PREFIX] });
+    this.pages = buildPages(schema, got, { merge: cfg.merge, moveGroups: cfg.move_groups, hide: [...(cfg.hide_prefixes ?? []), EXTERNAL_PREFIX, ...headless(this.heads)] });
     this.modelsPromise = this.loadModels();
     // 扩展、软件包的订阅（连 MCP 的列表）
     await Promise.all([this.extensions.start(), this.feed.start()]);

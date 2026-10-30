@@ -52,3 +52,10 @@ test('一项配置归哪个包：package 对得上照它，对不上照键的头
   assert.equal(ownerOf({ key: 'packages.source', package: 'source' }, ids), null);
   assert.equal(ownerOf({ key: 'whatever' }, ids), null);
 });
+
+test('只有网页界面的（只装了桌面端）不列「默认界面」和「终端会话」那一组', async () => {
+  const { headless } = await import('../../packages/settings/model.js');
+  assert.deepEqual(headless([{ package: 'miyu-webui' }]), ['ui.head', 'terminal.']);
+  assert.deepEqual(headless([]), ['ui.head', 'terminal.']);
+  assert.deepEqual(headless([{ package: 'miyu-webui' }, { package: 'miyu-tui' }]), []);
+});
