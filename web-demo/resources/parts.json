@@ -2218,6 +2218,102 @@
       ".use-problem"
     ]
   },
+  "wl.brand": {
+    "zh": "第一次引导（黑白剪影）：左上角的剪影标志和「miyu」",
+    "select": [
+      ".wl-brand"
+    ]
+  },
+  "wl.mark": {
+    "zh": "第一次引导（黑白剪影）：剪影标志",
+    "select": [
+      ".wl-mark"
+    ]
+  },
+  "wl.glyphs": {
+    "zh": "第一次引导（黑白剪影）：欢迎页字符拼的吉祥物剪影",
+    "select": [
+      ".wl-glyphs"
+    ]
+  },
+  "si.mark": {
+    "zh": "登录那几屏（黑白剪影）：卡片上沿的剪影标志",
+    "select": [
+      ".si-mark"
+    ]
+  },
+  "ob.row-hint": {
+    "zh": "接入模型：一家供应商那一行右边的暗字（推荐、已找到密钥）",
+    "select": [
+      ".ob-row-hint"
+    ]
+  },
+  "ob.row-arrow": {
+    "zh": "接入模型：「搜索更多」「自定义」那一行右边的箭头",
+    "select": [
+      ".ob-row-arrow"
+    ]
+  },
+  "ob.note": {
+    "zh": "接入模型：列表上面、下面一行说明（出错的红字）",
+    "select": [
+      ".ob-note"
+    ]
+  },
+  "ob.summary": {
+    "zh": "接入模型：测过以后收起成一行的摘要",
+    "select": [
+      ".ob-summary"
+    ]
+  },
+  "ob.summary-edit": {
+    "zh": "接入模型：摘要那一行右边的「修改」",
+    "select": [
+      ".ob-summary-edit"
+    ]
+  },
+  "ob.field-error": {
+    "zh": "接入模型：格子下面一行红字",
+    "select": [
+      ".ob-field-error"
+    ]
+  },
+  "ob.fixed": {
+    "zh": "接入模型：不能改的那一格（已配好的密钥）",
+    "select": [
+      ".ob-fixed"
+    ]
+  },
+  "ob.result": {
+    "zh": "接入模型：测试连接的结果",
+    "select": [
+      ".ob-result"
+    ]
+  },
+  "ob.result-raw": {
+    "zh": "接入模型：测试连接失败时服务方的原话",
+    "select": [
+      ".ob-result-raw"
+    ]
+  },
+  "ob.fail-btn": {
+    "zh": "接入模型：测试失败下面的「重试」这类小按钮",
+    "select": [
+      ".ob-fail-btn"
+    ]
+  },
+  "ob.model-check": {
+    "zh": "接入模型：选中的模型右边的对勾",
+    "select": [
+      ".ob-model-check"
+    ]
+  },
+  "wl.done-mark": {
+    "zh": "第一次引导（黑白剪影）：完成页大字的反白块",
+    "select": [
+      ".wl-done-mark"
+    ]
+  },
   "wl.ground": {
     "zh": "盖在内容上面一层",
     "select": [

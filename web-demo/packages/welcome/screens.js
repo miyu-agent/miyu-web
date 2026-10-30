@@ -4,22 +4,28 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { bytes } from '../../src/lib/format.js';
+import { glyphArt } from './glyphs.js';
 
 /** 这台设备上记一笔走到哪一步（换了界面语言要重载页面，重载完接着走） */
 export const STEP_KEY = 'welcome.step';
 /** 这台设备上记着这个账号走过了引导：一打开不再先盖底色 */
 export const DONE_KEY = 'welcome.done';
 
+/** 现在是不是「像素关卡」那一套（开了像素风皮肤；蓝图「第一次引导」第 2 条）：默认是黑白剪影 */
+export const pixel = () => document.documentElement.dataset.skin === 'skin-pixel';
+
 /**
- * 欢迎（第 3 条）：吉祥物站在标题上面（放大，舞台在 `guide.js`），标题、「开始」，下面一闪一闪的「PRESS ENTER」。
+ * 欢迎（第 3 条）：像素关卡里吉祥物站在标题上面（放大，舞台在 `guide.js`），标题、「开始」，下面一闪一闪的「PRESS ENTER」；黑白剪影里右边
+ * 是字符拼的剪影（`glyphs.js`，第 2a 条）。
  * @param {import('./guide.js').Guide} g
  */
 export function helloScreen(g) {
   const t = g.t;
+  const hint = h('p.wl-hint', t('hello.hint'));
   return {
     title: t('hello.title'),
     center: true,
-    body: h('p.wl-hint', t('hello.hint')),
+    body: pixel() ? hint : [hint, glyphArt()],
     next: { label: t('hello.start'), ready: () => true, run: async () => { g.go('language', 1); return null; } },
   };
 }
@@ -291,7 +297,8 @@ export function doneScreen(g) {
     parts.forEach((_, i) => setTimeout(() => { if (g.step === 'done' && g.layer.isConnected) g.ctx.mascot?.hop?.(); }, 450 + i * 300 + 120));
   }
   return {
-    title: t('done.title'),
+    // 黑白剪影：一句大字，整个是墨底纸字的反白块（第 2a 条）；像素关卡照旧「CLEAR!」
+    title: pixel() ? t('done.title') : h('mark.wl-done-mark', t('done.title_plain')),
     center: true,
     kind: 'done',
     body: h('div.wl-done', parts.length ? h('div.wl-pills', parts.map((p, i) => h('span.wl-pill', { style: `--i: ${i}` }, t('done.got'), ' ', h('b', p)))) : null),

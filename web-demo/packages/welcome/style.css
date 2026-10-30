@@ -1,229 +1,185 @@
-/* 第一次引导（软件包 welcome；蓝图 web.md「第一次引导」第 2、3、10 条）：「像素关卡」（2026-10-19 项目主人从四套样板里挑的）。
-   盖着整页的一层（在吉祥物那一层下面）。颜色照主题（2026-10-19 项目主人：主题那一屏换了整个引导跟着当场变）：像素的那几格
-   （--px-*）从主题的几格掺出来，再在这一层下面把主题的几格换成它们，别的包画的控件（设置包的框、开关，人格包的表）跟着换；再给它们
-   换成直角、像素的阶梯角。字在 resources/fonts/（SIL OFL 1.1，登录那几屏也用） */
-@font-face { font-family: "Miyu Pixel CJK"; src: url("../../resources/fonts/zcool-qingke.woff2") format("woff2"); font-display: swap; }
-@font-face { font-family: "Miyu Pixel"; src: url("../../resources/fonts/press-start.ttf") format("truetype"); font-display: swap; }
+/* 第一次引导的「黑白剪影」（软件包 welcome；蓝图 web.md「第一次引导」第 2a 条：默认这一套，2026-10-30 项目主人照官网样板改——原来的像素关卡
+   和默认主题不搭，挪进 pixel.css、开了像素风皮肤才用）。每条规则都挂在 :root:not([data-skin="skin-pixel"]) 下面，和像素那一套互不漏。
+   颜色只用主题的几格、不掺主色：纸是 surface、墨是 text；直角、没有投影；标题无衬线 900，小标签等宽暗字；底上一层淡点阵，不闪。 */
 
-.wl-layer {
-  --px-bg: var(--surface);
-  /* 深色的格子、边不掺那么多主色，只比底亮一点（2026-10-23 项目主人：暗色模式有点瞎眼） */
-  --px-cell: light-dark(color-mix(in srgb, var(--accent) 10%, var(--surface-2)), color-mix(in srgb, var(--surface-2) 55%, var(--surface)));
-  --px-cell-hi: light-dark(color-mix(in srgb, var(--accent) 16%, var(--surface-2)), color-mix(in srgb, var(--surface-2) 85%, var(--surface)));
-  --px-cell-on: light-dark(color-mix(in srgb, var(--accent) 26%, var(--surface-2)), color-mix(in srgb, var(--accent) 14%, var(--surface-2)));
-  --px-edge: light-dark(color-mix(in srgb, var(--accent) 45%, var(--surface-3)), color-mix(in srgb, var(--accent) 22%, var(--surface-3)));
-  --px-ground: color-mix(in srgb, var(--accent) 24%, var(--surface-3)); --px-ground-2: color-mix(in srgb, var(--accent) 16%, var(--surface-3));
-  --px-tx: var(--text); --px-soft: var(--text-soft); --px-dim: color-mix(in srgb, var(--text-soft) 78%, var(--surface));
-  /* 黄照明暗各一份：浅底上原来那个黄看不清 */
-  --px-yel: light-dark(#e0a300, #ffd75e); --px-yel-dark: light-dark(#9c6f00, #c99a1e); --px-yel-ink: #241c05;
-  --px-blu: var(--accent); --px-blu-dark: color-mix(in srgb, var(--accent) 55%, #000); --px-ink: var(--on-primary);
-  --px-star: light-dark(color-mix(in srgb, var(--text) 30%, transparent), color-mix(in srgb, #ffffff 55%, transparent));
-  --px-head: "Miyu Pixel CJK", var(--font-ui); --px-font: "Miyu Pixel", ui-monospace, monospace;
-  /* 真的主题记一份：主题那一屏的小窗口照它画（下面一层换成像素的那一套） */
-  --keep-surface: var(--surface); --keep-sidebar: var(--sidebar-bg); --keep-surface-1: var(--surface-1); --keep-surface-2: var(--surface-2);
-  --keep-text: var(--text); --keep-text-soft: var(--text-soft); --keep-accent: var(--accent); --keep-accent-soft: var(--accent-soft);
-  position: fixed; z-index: 38; inset: 0; overflow: hidden; background: var(--px-bg); color: var(--px-tx); font-family: var(--font-ui);
+:root:not([data-skin="skin-pixel"]) .wl-layer {
+  position: fixed; z-index: 38; inset: 0; overflow: hidden; color: var(--text); font-family: var(--font-ui);
+  background-color: var(--surface);
+  background-image: radial-gradient(color-mix(in srgb, var(--text) 12%, transparent) 1px, transparent 1px);
+  background-size: 16px 16px;
   animation: fade-in var(--motion-in) var(--ease-out) both;
 }
-/* 主题的几格换成像素的那一套：别的包的控件（浮层也挂在这一层下面）照它们画 */
-.wl-layer > * {
-  --surface: var(--px-bg); --surface-1: var(--px-cell); --surface-2: var(--px-cell-hi); --surface-3: var(--px-cell-on);
-  --text: var(--px-tx); --text-soft: var(--px-soft); --text-faint: var(--px-dim); --line: var(--px-edge); --line-strong: var(--px-edge);
-  --accent-soft: var(--px-cell-on); --card-shadow: none; --float-shadow: none;
-}
-.wl-layer.is-leaving { animation: wl-out calc(0.28s * var(--motion-scale)) var(--ease-in) both; pointer-events: none; will-change: opacity; }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-leaving { animation: wl-out calc(0.28s * var(--motion-scale)) var(--ease-in) both; pointer-events: none; will-change: opacity; }
 @keyframes wl-out { to { opacity: 0; } }
-.wl-page { position: relative; z-index: 1; height: 100%; overflow-y: auto; }
-/* 一列 560px，整体上下、左右都居中；最底下给地面留出地方 */
-.wl-col { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; width: min(560px, 100% - 32px); min-height: 100%; margin: 0 auto; padding: calc(56px * var(--space)) 0 calc(104px * var(--space)); }
-.wl-layer.is-center .wl-col { padding: 0 0 calc(56px * var(--space)); }
-/* 地面：两种深蓝 16px 一格相间，上沿一道亮一点的边；吉祥物站在它上面 */
-/* 盖在内容上面一层（不接指针）：窗口矮、内容比窗口高的时候，滚上去的内容从地面后面过，不画在地面上（2026-10-19 项目主人：窗口高度不够时列表压在地面上、「下一步」被挤到地面底下） */
-.wl-ground { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; height: 56px; background: repeating-linear-gradient(90deg, var(--px-ground) 0 16px, var(--px-ground-2) 16px 32px); box-shadow: inset 0 4px 0 var(--px-edge); pointer-events: none; }
+/* 像素那一套的星点、地面不露 */
+:root:not([data-skin="skin-pixel"]) .wl-sky, :root:not([data-skin="skin-pixel"]) .wl-ground { display: none; }
+:root:not([data-skin="skin-pixel"]) .wl-page { position: relative; z-index: 1; height: 100%; overflow-y: auto; }
+:root:not([data-skin="skin-pixel"]) .wl-col { box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; width: min(560px, 100% - 32px); min-height: 100%; margin: 0 auto; padding: calc(76px * var(--space)) 0 calc(48px * var(--space)); }
 
-/* 顶上关卡：「STAGE 3/7」，下面一排小方格 */
-.wl-head { display: grid; justify-items: center; gap: calc(8px * var(--space)); margin-bottom: calc(26px * var(--space)); }
-.wl-head[hidden] { display: none; }
-.wl-where { margin: 0; color: var(--px-dim); font: calc(9px * var(--text-scale))/1 var(--px-font); letter-spacing: 0.04em; text-align: center; }
-.wl-steps { display: flex; gap: calc(4px * var(--space)); margin: 0; padding: 0; list-style: none; }
-.wl-steps li { width: 12px; height: 12px; background: var(--px-edge); box-shadow: inset -2px -2px 0 var(--px-ground); }
-.wl-steps li.is-done, .wl-steps li.is-now { background: var(--px-yel); box-shadow: inset -2px -2px 0 var(--px-yel-dark); }
-/* 一闪一闪的几样（步骤条现在那一格、「PRESS ENTER」、选中那一项前面的 ▶）：亮度照 `--wl-blink`，由 twinkle.js 的计时器一格一格换
-   （原来是 steps(2) 的无限动画：WebKitGTK 里整页一直按帧重画，蓝图 web.md「动效」第 4 条） */
-.wl-steps li.is-now { opacity: var(--wl-blink, 1); }
+/* 左上角：小的矢量剪影标志加等宽的「miyu」；欢迎页不出（右边有大的） */
+:root:not([data-skin="skin-pixel"]) .wl-brand { position: absolute; z-index: 5; top: 18px; left: 20px; display: flex; align-items: center; gap: 10px; color: var(--text); font: 700 calc(14px * var(--text-scale)) var(--font-mono); letter-spacing: -0.02em; pointer-events: none; }
+:root:not([data-skin="skin-pixel"]) .wl-mark { width: 26px; height: 26px; background: currentColor; -webkit-mask: url("../../resources/assets/mark.svg") center / contain no-repeat; mask: url("../../resources/assets/mark.svg") center / contain no-repeat; }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-hello .wl-brand { display: none; }
 
-/* 一屏：整块平滑地挪进来、淡入，不糊开、不弹（2026-10-19 项目主人：原来 steps(4) 一格一格挪，看着像掉帧） */
-.wl-screen { display: grid; gap: 0; animation: wl-in-fwd calc(0.24s * var(--motion-scale)) var(--ease-out) both; }
-.wl-screen.is-back { animation-name: wl-in-back; }
+/* 顶上一条分段的细线：走过的、现在这一步是墨色，没到的是 line；悬停一段写那一步的名字 */
+:root:not([data-skin="skin-pixel"]) .wl-head { display: block; margin-bottom: calc(22px * var(--space)); }
+:root:not([data-skin="skin-pixel"]) .wl-head[hidden] { display: none; }
+:root:not([data-skin="skin-pixel"]) .wl-steps { display: flex; gap: 4px; margin: 0; padding: 0; list-style: none; }
+:root:not([data-skin="skin-pixel"]) .wl-steps li { flex: 1; height: 2px; background: var(--line); }
+:root:not([data-skin="skin-pixel"]) .wl-steps li.is-done, :root:not([data-skin="skin-pixel"]) .wl-steps li.is-now { background: var(--text); }
+/* 「02 / 06」 */
+:root:not([data-skin="skin-pixel"]) .wl-where { margin: 0 0 calc(10px * var(--space)); color: var(--text-soft); font: calc(11px * var(--text-scale))/1 var(--font-mono); letter-spacing: 0.06em; }
+
+:root:not([data-skin="skin-pixel"]) .wl-screen { display: grid; gap: 0; animation: wl-in-fwd calc(0.24s * var(--motion-scale)) var(--ease-out) both; }
+:root:not([data-skin="skin-pixel"]) .wl-screen.is-back { animation-name: wl-in-back; }
 @keyframes wl-in-fwd { from { opacity: 0; transform: translateX(16px); } }
 @keyframes wl-in-back { from { opacity: 0; transform: translateX(-16px); } }
-.wl-title { margin: 0; color: var(--px-tx); font: 400 calc(28px * var(--text-scale))/1.3 var(--px-head); letter-spacing: 0.02em; text-align: center; text-shadow: 3px 3px 0 var(--px-edge); }
-.wl-sub { justify-self: center; max-width: 460px; margin: calc(10px * var(--space)) 0 0; color: var(--px-dim); font-size: calc(14px * var(--text-scale)); line-height: 1.6; text-align: center; }
-.wl-body { margin-top: calc(26px * var(--space)); }
-.wl-wait { display: flex; justify-content: center; margin: calc(40px * var(--space)) 0; color: var(--px-dim); }
-.wl-wait svg { width: calc(20px * var(--space)); height: calc(20px * var(--space)); animation: set-spin calc(0.9s * var(--motion-scale)) steps(8) infinite; }
-.wl-error { margin: calc(14px * var(--space)) 0 0; color: var(--danger); font-size: calc(13px * var(--text-scale)); text-align: center; white-space: pre-wrap; }
-/* 按钮：主按钮是蓝色的像素块，底下一道深的边当影子，按下去往下沉；「上一步」是暗字 */
-.wl-foot { display: flex; align-items: center; justify-content: center; gap: calc(22px * var(--space)); margin-top: calc(30px * var(--space)); }
-/* 窗口矮的时候「上一步」「下一步」钉在地面正上方，一直露着：底下垫一截页面的底色，往上淡出，滚过去的内容从它后面过；放得下的照常排在内容下面 */
-.wl-foot { position: sticky; bottom: 56px; z-index: 1; padding: calc(16px * var(--space)) calc(8px * var(--space)) calc(14px * var(--space)); margin: calc(30px * var(--space)) calc(-8px * var(--space)) calc(-14px * var(--space)); background: linear-gradient(transparent, var(--px-bg) 14px); }
-.wl-foot > span:empty { display: none; }
-.wl-link { display: inline-flex; align-items: center; gap: calc(6px * var(--space)); height: 36px; padding: 0 calc(8px * var(--space)); border: 0; background: transparent; color: var(--px-dim); font: calc(14px * var(--text-scale)) var(--px-head); cursor: pointer; }
-/* 「上一步」原来 9px 的像素英文字，中文落到别的字体里又小又糊（2026-10-23 项目主人：太小）：照标题的方块中文字 14px */
-.wl-link:hover, .wl-link:focus-visible { outline: 0; color: var(--px-tx); }
-.wl-link svg { display: none; }
-.wl-link::before { content: "◀"; font-size: calc(9px * var(--text-scale)); }
-.wl-btn {
-  min-width: 128px; height: 38px; padding: 0 calc(18px * var(--space)); border: 0; border-radius: 0; background: var(--px-cell-on); color: var(--px-tx);
-  font: calc(10px * var(--text-scale)) var(--px-head); font-size: calc(15px * var(--text-scale)); cursor: pointer; box-shadow: 0 4px 0 var(--px-ground); transform: translateY(0);
-}
-.wl-btn.is-primary { background: var(--px-blu); color: var(--px-ink); box-shadow: 0 4px 0 var(--px-blu-dark); }
-.wl-btn.is-primary:hover { filter: brightness(1.08); }
-.wl-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 var(--px-blu-dark); }
-.wl-btn.is-primary:focus-visible { outline: 3px solid var(--px-yel); outline-offset: 3px; }
-.wl-btn:disabled, .wl-btn.is-primary:disabled { background: var(--px-cell); color: var(--px-dim); box-shadow: 0 4px 0 var(--px-ground); filter: none; cursor: default; }
+:root:not([data-skin="skin-pixel"]) .wl-title { margin: 0; color: var(--text); font: 900 calc(32px * var(--text-scale))/1.2 var(--font-ui); letter-spacing: 0.01em; }
+:root:not([data-skin="skin-pixel"]) .wl-sub { max-width: 32em; margin: calc(10px * var(--space)) 0 0; color: var(--text-soft); font-size: calc(15px * var(--text-scale)); line-height: 1.6; }
+:root:not([data-skin="skin-pixel"]) .wl-body { margin-top: calc(26px * var(--space)); }
+:root:not([data-skin="skin-pixel"]) .wl-wait { display: flex; justify-content: center; margin: calc(40px * var(--space)) 0; color: var(--text-soft); }
+:root:not([data-skin="skin-pixel"]) .wl-wait svg { width: calc(20px * var(--space)); height: calc(20px * var(--space)); animation: set-spin calc(0.9s * var(--motion-scale)) steps(8) infinite; }
+:root:not([data-skin="skin-pixel"]) .wl-error { margin: calc(14px * var(--space)) 0 0; color: var(--danger); font-size: calc(13px * var(--text-scale)); white-space: pre-wrap; }
 
-/* 欢迎、完成：居中 */
-.wl-screen.is-center { justify-items: center; padding: 0 calc(24px * var(--space)); text-align: center; }
-.wl-layer.is-hello .wl-screen.is-center { padding-top: calc(130px * var(--space)); }
-.wl-screen.is-center .wl-body { order: 3; margin-top: calc(14px * var(--space)); }
-.wl-screen.is-center .wl-foot { order: 2; margin-top: calc(24px * var(--space)); }
-.wl-layer.is-hello .wl-title { font-size: calc(44px * var(--text-scale)); }
-/* 欢迎页：主按钮「开始」，下面一闪一闪的「PRESS ENTER」（2026-10-19 项目主人：上面还要有个开始） */
-.wl-hint { margin: 0; color: var(--px-yel); font: calc(10px * var(--text-scale)) var(--px-font); }
-.wl-layer.is-hello .wl-hint { opacity: var(--wl-blink, 1); }
-.wl-layer.is-hello .wl-btn.is-primary { min-width: 168px; height: 48px; font-size: calc(20px * var(--text-scale)); }
-.wl-layer.is-hello .wl-foot + .wl-body, .wl-layer.is-hello .wl-body { margin-top: calc(16px * var(--space)); }
-/* 完成：像拿到道具（2026-10-19 项目主人：原来掉彩色方块的礼花不适合）：CLEAR! 落下来顿一下，「获得 …」隔 0.3 秒一行弹上来，最后出按钮；
-   只动透明度和位移 */
-.wl-layer.is-done .wl-screen.is-center { padding-top: calc(70px * var(--space)); }
-.wl-layer.is-done .wl-title { color: var(--px-yel); font: calc(34px * var(--text-scale))/1.4 var(--px-font); text-shadow: 4px 4px 0 #b5410f; }
-.wl-layer.is-done .wl-screen.is-center .wl-body { order: 1; margin-top: calc(20px * var(--space)); }
-.wl-done { display: grid; justify-items: center; gap: calc(8px * var(--space)); }
-.wl-pills { display: grid; justify-items: center; gap: calc(8px * var(--space)); }
-.wl-pill { color: var(--px-dim); font-size: calc(17px * var(--text-scale)); }
-/* 完成那一屏（2026-10-23 项目主人：字太小）：「获得 …」17px，按钮大一号 */
-.wl-layer.is-done .wl-btn { min-width: 168px; height: 46px; font-size: calc(18px * var(--text-scale)); }
-.wl-pill b { color: var(--px-tx); font-weight: 500; }
-.wl-layer.is-done .wl-screen { animation: none; }
-.wl-layer.is-done .wl-title { animation: wl-drop calc(0.42s * var(--motion-scale)) cubic-bezier(0.3, 1.5, 0.6, 1) both; }
-.wl-pill { animation: wl-pop calc(0.32s * var(--motion-scale)) calc(0.45s + var(--i) * calc(0.3s * var(--motion-scale))) cubic-bezier(0.3, 1.6, 0.6, 1) both; }
-.wl-layer.is-done .wl-foot { animation: wl-rise calc(0.3s * var(--motion-scale)) calc(0.45s * var(--motion-scale)) var(--ease-out) both; }
-.wl-layer.is-done .wl-screen:has(.wl-pill:nth-child(1)) .wl-foot { animation-delay: calc(0.75s * var(--motion-scale)); }
-.wl-layer.is-done .wl-screen:has(.wl-pill:nth-child(2)) .wl-foot { animation-delay: calc(1.05s * var(--motion-scale)); }
-.wl-layer.is-done .wl-screen:has(.wl-pill:nth-child(3)) .wl-foot { animation-delay: calc(1.35s * var(--motion-scale)); }
-@keyframes wl-drop { from { opacity: 0; transform: translateY(-36px); } }
-@keyframes wl-pop { from { opacity: 0; transform: translateY(14px); } }
+/* 底下一行：左边「← 上一步」（等宽暗字），右边主按钮；窗口矮的时候钉在底下一直露着 */
+:root:not([data-skin="skin-pixel"]) .wl-foot { position: sticky; bottom: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: calc(22px * var(--space)); margin-top: calc(30px * var(--space)); padding: calc(14px * var(--space)) 0; background: linear-gradient(transparent, var(--surface) 14px); }
+:root:not([data-skin="skin-pixel"]) .wl-link { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0; border: 0; background: transparent; color: var(--text-soft); font: calc(12.5px * var(--text-scale)) var(--font-mono); cursor: pointer; }
+:root:not([data-skin="skin-pixel"]) .wl-link:hover, :root:not([data-skin="skin-pixel"]) .wl-link:focus-visible { outline: 0; color: var(--text); }
+:root:not([data-skin="skin-pixel"]) .wl-link svg { display: none; }
+:root:not([data-skin="skin-pixel"]) .wl-link::before { content: "←"; }
+/* 按钮：主按钮墨底纸字，悬停反过来；灰着的是虚线框 */
+:root:not([data-skin="skin-pixel"]) .wl-btn {
+  min-width: 128px; height: 42px; padding: 0 calc(20px * var(--space)); border: 1px solid var(--text); border-radius: 0; background: transparent; color: var(--text);
+  font: 600 calc(14px * var(--text-scale)) var(--font-ui); cursor: pointer; transition: background-color calc(0.15s * var(--motion-scale)) ease, color calc(0.15s * var(--motion-scale)) ease;
+}
+:root:not([data-skin="skin-pixel"]) .wl-btn.is-primary { background: var(--text); color: var(--surface); }
+:root:not([data-skin="skin-pixel"]) .wl-btn:hover:not(:disabled) { background: transparent; color: var(--text); }
+:root:not([data-skin="skin-pixel"]) .wl-btn:not(.is-primary):hover:not(:disabled) { background: var(--text); color: var(--surface); }
+:root:not([data-skin="skin-pixel"]) .wl-btn:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+:root:not([data-skin="skin-pixel"]) .wl-btn:disabled { border-style: dashed; border-color: var(--text-faint); background: transparent; color: var(--text-faint); cursor: default; }
+
+/* 欢迎：左边「$ miyu」、大字、开始、press enter；右边字符拼的剪影（glyphs.js）；窄屏剪影挪到上面 */
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-hello .wl-col { width: min(1080px, 100% - 48px); padding: calc(48px * var(--space)) 0; }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-hello .wl-screen { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); grid-template-rows: 1fr auto auto auto 1fr; column-gap: calc(56px * var(--space)); align-items: start; }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-hello .wl-title { grid-column: 1; grid-row: 2; font-size: calc(84px * var(--text-scale)); line-height: 1; letter-spacing: -0.01em; }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-hello .wl-title::before { content: "$ miyu"; display: block; margin-bottom: calc(20px * var(--space)); color: var(--text-soft); font: 500 calc(14px * var(--text-scale)) var(--font-mono); letter-spacing: 0; }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-hello .wl-foot { grid-column: 1; grid-row: 3; position: static; justify-content: flex-start; margin-top: calc(34px * var(--space)); padding: 0; background: none; }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-hello .wl-foot > span:empty { display: none; }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-hello .wl-btn.is-primary { min-width: 168px; height: 48px; font-size: calc(16px * var(--text-scale)); }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-hello .wl-body { display: contents; }
+:root:not([data-skin="skin-pixel"]) .wl-hint { grid-column: 1; grid-row: 4; margin: calc(14px * var(--space)) 0 0; color: var(--text-faint); font: calc(11px * var(--text-scale)) var(--font-mono); letter-spacing: 0.06em; text-transform: lowercase; }
+:root:not([data-skin="skin-pixel"]) .wl-glyphs { grid-column: 2; grid-row: 1 / -1; align-self: center; justify-self: end; position: relative; width: 100%; max-width: 520px; aspect-ratio: 1; }
+:root:not([data-skin="skin-pixel"]) .wl-glyphs canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+@media (max-width: 760px) {
+  :root:not([data-skin="skin-pixel"]) .wl-layer.is-hello .wl-screen { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
+  :root:not([data-skin="skin-pixel"]) .wl-layer.is-hello .wl-title, :root:not([data-skin="skin-pixel"]) .wl-layer.is-hello .wl-foot, :root:not([data-skin="skin-pixel"]) .wl-hint { grid-row: auto; }
+  :root:not([data-skin="skin-pixel"]) .wl-glyphs { grid-column: 1; grid-row: 1; justify-self: center; max-width: 280px; margin-bottom: calc(12px * var(--space)); }
+  :root:not([data-skin="skin-pixel"]) .wl-layer.is-hello .wl-title { font-size: calc(56px * var(--text-scale)); }
+}
+
+/* 完成：大字里那个词是墨底纸字的反白块（照样板的 mark），「获得 …」几行等宽小字依次出来，再出按钮；只动透明度和位移 */
+:root:not([data-skin="skin-pixel"]) .wl-screen.is-center { justify-items: start; }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-done .wl-title { font-size: calc(48px * var(--text-scale)); line-height: 1.2; }
+:root:not([data-skin="skin-pixel"]) .wl-done-mark { display: inline-block; padding: 0.02em 0.16em 0.06em; background: var(--text); color: var(--surface); line-height: 1.04; }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-done .wl-screen.is-center .wl-body { order: 1; margin-top: calc(22px * var(--space)); }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-done .wl-foot { order: 2; justify-content: flex-start; }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-done .wl-foot > span:empty { display: none; }
+:root:not([data-skin="skin-pixel"]) .wl-done { display: grid; gap: calc(8px * var(--space)); }
+:root:not([data-skin="skin-pixel"]) .wl-pills { display: grid; gap: calc(6px * var(--space)); }
+:root:not([data-skin="skin-pixel"]) .wl-pill { color: var(--text-soft); font: calc(13px * var(--text-scale)) var(--font-mono); }
+:root:not([data-skin="skin-pixel"]) .wl-pill b { color: var(--text); font-weight: 600; }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-done .wl-screen { animation: none; }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-done .wl-title { animation: wl-rise calc(0.36s * var(--motion-scale)) var(--ease-out) both; }
+:root:not([data-skin="skin-pixel"]) .wl-pill { animation: wl-rise calc(0.3s * var(--motion-scale)) calc(0.3s + var(--i) * calc(0.22s * var(--motion-scale))) var(--ease-out) both; }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-done .wl-foot { animation: wl-rise calc(0.3s * var(--motion-scale)) calc(0.45s * var(--motion-scale)) var(--ease-out) both; }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-done .wl-screen:has(.wl-pill:nth-child(2)) .wl-foot { animation-delay: calc(0.75s * var(--motion-scale)); }
+:root:not([data-skin="skin-pixel"]) .wl-layer.is-done .wl-screen:has(.wl-pill:nth-child(3)) .wl-foot { animation-delay: calc(0.97s * var(--motion-scale)); }
 @keyframes wl-rise { from { opacity: 0; transform: translateY(8px); } }
 
-/* 选项：一块格子、直角，四边垫 3px 的阴影成像素的阶梯角，不描边；选中的整块换成黄色、左边一个闪着的 ▶ */
-.wl-langs { display: grid; gap: calc(12px * var(--space)); }
-.wl-lang, .wl-layer .ob-row, .wl-layer .setup-choice, .wl-layer .ob-model {
-  --px-c: var(--px-cell);
-  position: relative; border: 0; border-radius: 0; background: var(--px-c); color: var(--px-tx);
-  box-shadow: 0 -3px 0 0 var(--px-c), 0 3px 0 0 var(--px-c), -3px 0 0 0 var(--px-c), 3px 0 0 0 var(--px-c); transform: none; transition: none;
+/* 选项（语言、供应商、模型、预设卡片）：1px 的边、surface-1 底，悬停边变墨色，选中的整块反白（墨底纸字）；不画 ▶ */
+:root:not([data-skin="skin-pixel"]) .wl-langs { display: grid; gap: calc(8px * var(--space)); }
+:root:not([data-skin="skin-pixel"]) .wl-lang, :root:not([data-skin="skin-pixel"]) .wl-layer .ob-row, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-choice, :root:not([data-skin="skin-pixel"]) .wl-layer .ob-model {
+  border: 1px solid var(--line); border-radius: 0; background: var(--surface-1); color: var(--text); box-shadow: none; transform: none;
+  transition: border-color calc(0.15s * var(--motion-scale)) ease, background-color calc(0.15s * var(--motion-scale)) ease, color calc(0.15s * var(--motion-scale)) ease;
 }
-.wl-lang { display: flex; align-items: center; gap: calc(10px * var(--space)); min-height: 46px; margin: calc(3px * var(--space)); padding: 0 calc(14px * var(--space)) 0 calc(30px * var(--space)); font: calc(14.5px * var(--text-scale)) var(--font-ui); text-align: left; cursor: pointer; }
-.wl-lang:hover, .wl-lang:focus-visible, .wl-layer .ob-row:hover, .wl-layer .ob-row:focus-visible, .wl-layer .setup-choice:hover, .wl-layer .ob-model:hover { outline: 0; --px-c: var(--px-cell-hi); background: var(--px-c); }
-.wl-lang.is-on, .wl-layer .ob-model.is-on { --px-c: var(--px-yel); background: var(--px-c); color: var(--px-yel-ink); }
-/* 大块的预设卡片选中的不整块涂黄（2026-10-19 项目主人：配色太重）：底亮一档，四边一圈 3px 的黄色像素阶梯框，名字变黄 */
-.wl-layer .setup-choice.is-on {
-  --px-c: var(--px-cell-hi); background: var(--px-c); color: var(--px-tx);
-  box-shadow: 0 -3px 0 0 var(--px-yel), 0 3px 0 0 var(--px-yel), -3px 0 0 0 var(--px-yel), 3px 0 0 0 var(--px-yel), inset 0 0 0 3px var(--px-c);
-}
-.wl-lang::before, .wl-layer .setup-choice::before, .wl-layer .ob-model::before { content: "▶"; position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: transparent; font: calc(9px * var(--text-scale)) var(--px-font); }
-.wl-lang.is-on::before, .wl-layer .setup-choice.is-on::before, .wl-layer .ob-model.is-on::before { color: var(--px-yel-ink); opacity: var(--wl-blink, 1); }
-.wl-layer .setup-choice.is-on::before { color: var(--px-yel); }
-.wl-lang.is-on .wl-lang-note, .wl-layer .ob-model.is-on .ob-model-note { color: #5c4a14; }
-.wl-check, .wl-layer .setup-choice-check, .wl-layer .ob-model-check { display: none; }
-.wl-tag { padding: calc(2px * var(--space)) calc(6px * var(--space)); background: var(--px-cell-on); color: var(--px-soft); font-size: calc(11.5px * var(--text-scale)); }
-.wl-lang.is-on .wl-tag { background: rgb(0 0 0 / 0.12); color: var(--px-yel-ink); }
-.wl-lang-note { color: var(--px-dim); font-size: calc(12.5px * var(--text-scale)); }
-
-/* 内置语义模型从软件源下载的进度（G-8）：一条像素格子的槽（四边垫 3px 阴影，同选项），黄色一格格往前填；下面一行暗字 */
-.wl-dl { display: grid; align-content: center; gap: calc(14px * var(--space)); min-height: 116px; margin: calc(3px * var(--space)); }
-.wl-dl-bar { --px-c: var(--px-cell); position: relative; height: 18px; background: var(--px-c); box-shadow: 0 -3px 0 0 var(--px-c), 0 3px 0 0 var(--px-c), -3px 0 0 0 var(--px-c), 3px 0 0 0 var(--px-c); }
-.wl-dl-bar i { display: block; width: 0; height: 100%; background: repeating-linear-gradient(90deg, var(--px-yel) 0 9px, transparent 9px 12px); transition: width calc(0.2s * var(--motion-scale)) linear; }
-.wl-dl-words { color: var(--px-dim); font-size: calc(13px * var(--text-scale)); text-align: center; font-variant-numeric: tabular-nums; }
-
-/* 别的包画的选项：一家供应商一行、模型一行、预设卡片 */
-.wl-layer .ob-rows { gap: calc(12px * var(--space)); }
-.wl-layer .ob-row { height: 46px; margin: calc(3px * var(--space)); padding: 0 calc(14px * var(--space)); }
-.wl-layer .ob-row.is-off { --px-c: transparent; background: transparent; box-shadow: none; color: var(--px-dim); }
-.wl-layer .ob-group-name { color: var(--px-dim); font: calc(9px * var(--text-scale)) var(--px-font); }
-.wl-layer .ob-tag { border-radius: 0; background: var(--px-cell-on); color: var(--px-soft); }
-.wl-layer .ob-model-list { gap: calc(10px * var(--space)); padding: calc(3px * var(--space)) calc(3px * var(--space)) calc(24px * var(--space)); }
-.wl-layer .ob-model { min-height: 38px; margin: calc(3px * var(--space)); padding-left: calc(30px * var(--space)); }
-.wl-layer .setup-choices { gap: calc(14px * var(--space)); }
-.wl-layer .setup-choice { margin: calc(3px * var(--space)); padding-left: calc(30px * var(--space)); }
-.wl-layer .setup-choice-open { padding: calc(10px * var(--space)) calc(14px * var(--space)) calc(12px * var(--space)); margin: calc(6px * var(--space)) calc(3px * var(--space)) 0; background: var(--px-cell); }
+:root:not([data-skin="skin-pixel"]) .wl-lang { display: flex; align-items: center; gap: calc(10px * var(--space)); width: 100%; min-height: 46px; padding: 0 calc(14px * var(--space)); font: calc(14.5px * var(--text-scale)) var(--font-ui); text-align: left; cursor: pointer; }
+:root:not([data-skin="skin-pixel"]) .wl-lang:hover, :root:not([data-skin="skin-pixel"]) .wl-lang:focus-visible, :root:not([data-skin="skin-pixel"]) .wl-layer .ob-row:hover, :root:not([data-skin="skin-pixel"]) .wl-layer .ob-row:focus-visible, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-choice:hover, :root:not([data-skin="skin-pixel"]) .wl-layer .ob-model:hover { outline: 0; border-color: var(--text); background: var(--surface-1); }
+:root:not([data-skin="skin-pixel"]) .wl-lang.is-on, :root:not([data-skin="skin-pixel"]) .wl-layer .ob-model.is-on, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-choice.is-on { border-color: var(--text); background: var(--text); color: var(--surface); }
+:root:not([data-skin="skin-pixel"]) .wl-lang.is-on .wl-lang-note, :root:not([data-skin="skin-pixel"]) .wl-layer .ob-model.is-on .ob-model-note, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-choice.is-on .setup-choice-hint, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-choice.is-on .setup-choice-more { color: color-mix(in srgb, var(--surface) 72%, var(--text)); }
+:root:not([data-skin="skin-pixel"]) .wl-check, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-choice-check, :root:not([data-skin="skin-pixel"]) .wl-layer .ob-model-check { display: none; }
+:root:not([data-skin="skin-pixel"]) .wl-tag { padding: 1px 6px; border: 1px solid currentColor; color: var(--text-soft); font: calc(10.5px * var(--text-scale)) var(--font-mono); }
+:root:not([data-skin="skin-pixel"]) .wl-lang.is-on .wl-tag { color: var(--surface); }
+:root:not([data-skin="skin-pixel"]) .wl-lang-note { color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); }
+:root:not([data-skin="skin-pixel"]) .wl-layer .ob-rows { gap: calc(8px * var(--space)); }
+:root:not([data-skin="skin-pixel"]) .wl-layer .ob-row { height: 46px; padding: 0 calc(14px * var(--space)); }
+:root:not([data-skin="skin-pixel"]) .wl-layer .ob-row.is-off { border-style: dashed; background: transparent; color: var(--text-faint); }
+:root:not([data-skin="skin-pixel"]) .wl-layer .ob-group-name { color: var(--text-soft); font: calc(11px * var(--text-scale)) var(--font-mono); letter-spacing: 0.04em; }
+:root:not([data-skin="skin-pixel"]) .wl-layer .ob-tag { border: 1px solid currentColor; border-radius: 0; background: transparent; color: var(--text-soft); font-family: var(--font-mono); }
+:root:not([data-skin="skin-pixel"]) .wl-layer .ob-model-list { gap: calc(8px * var(--space)); padding: 0 0 calc(24px * var(--space)); }
+:root:not([data-skin="skin-pixel"]) .wl-layer .ob-model { min-height: 38px; }
+:root:not([data-skin="skin-pixel"]) .wl-layer .setup-choices { gap: calc(10px * var(--space)); }
+:root:not([data-skin="skin-pixel"]) .wl-layer .setup-choice-open { padding: calc(10px * var(--space)) calc(14px * var(--space)) calc(12px * var(--space)); margin-top: calc(6px * var(--space)); border: 1px solid var(--line); background: var(--surface-1); }
+:root:not([data-skin="skin-pixel"]) .wl-layer .setup-choice-more { color: var(--text-soft); text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); text-underline-offset: 3px; }
+:root:not([data-skin="skin-pixel"]) .wl-layer .setup-choice-more:hover, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-choice-more:focus-visible { color: var(--text); }
 /* 长的列表在自己的框里滚，底下留出一截、淡出 */
-.wl-layer .ob-list > .ob-rows:first-child, .wl-layer .ob-scroll {
-  max-height: min(40vh, 400px); overflow-y: auto; margin: calc(-6px * var(--space)) calc(-10px * var(--space)); padding: calc(8px * var(--space)) calc(10px * var(--space)) calc(26px * var(--space));
-  -webkit-mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(transparent, #000 10px, #000 calc(100% - 22px), transparent);
+:root:not([data-skin="skin-pixel"]) .wl-layer .ob-list > .ob-rows:first-child, :root:not([data-skin="skin-pixel"]) .wl-layer .ob-scroll {
+  max-height: min(40vh, 400px); overflow-y: auto; margin: 0 calc(-4px * var(--space)); padding: calc(2px * var(--space)) calc(4px * var(--space)) calc(26px * var(--space));
+  -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), transparent);
 }
-.wl-layer .ob-model-list { -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), transparent); }
+:root:not([data-skin="skin-pixel"]) .wl-layer .ob-model-list { -webkit-mask-image: linear-gradient(#000 calc(100% - 22px), transparent); mask-image: linear-gradient(#000 calc(100% - 22px), transparent); }
 
-/* 输入框、下拉、开关：深色格子、直角、像素阶梯角，聚焦的四边换成蓝色 */
-.wl-layer .set-input:not(.set-menu-search), .wl-layer .ob-input, .wl-layer .setup-area, .wl-layer .set-select, .wl-layer .wl-area, .wl-layer .ob-search {
-  --px-c: var(--px-cell); border: 0; border-radius: 0; background: var(--px-c); color: var(--px-tx);
-  box-shadow: 0 -3px 0 0 var(--px-c), 0 3px 0 0 var(--px-c), -3px 0 0 0 var(--px-c), 3px 0 0 0 var(--px-c);
+/* 输入框、下拉：1px 的边，聚焦边变墨色 */
+:root:not([data-skin="skin-pixel"]) .wl-layer .set-input:not(.set-menu-search), :root:not([data-skin="skin-pixel"]) .wl-layer .ob-input, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-area, :root:not([data-skin="skin-pixel"]) .wl-layer .set-select, :root:not([data-skin="skin-pixel"]) .wl-layer .wl-area, :root:not([data-skin="skin-pixel"]) .wl-layer .ob-search {
+  border: 1px solid var(--line); border-radius: 0; background: var(--surface-1); color: var(--text); box-shadow: none;
 }
-.wl-layer .set-input:not(.set-menu-search):focus, .wl-layer .ob-input:focus, .wl-layer .setup-area:focus, .wl-layer .wl-area:focus, .wl-layer .ob-search:focus, .wl-layer .set-select:focus-visible {
-  outline: 0; box-shadow: 0 -3px 0 0 var(--px-blu), 0 3px 0 0 var(--px-blu), -3px 0 0 0 var(--px-blu), 3px 0 0 0 var(--px-blu);
+:root:not([data-skin="skin-pixel"]) .wl-layer .set-input:not(.set-menu-search):focus, :root:not([data-skin="skin-pixel"]) .wl-layer .ob-input:focus, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-area:focus, :root:not([data-skin="skin-pixel"]) .wl-layer .wl-area:focus, :root:not([data-skin="skin-pixel"]) .wl-layer .ob-search:focus, :root:not([data-skin="skin-pixel"]) .wl-layer .set-select:focus-visible {
+  outline: 0; border-color: var(--text); box-shadow: none;
 }
-.wl-layer .setup-area, .wl-layer .wl-area { max-height: 40vh; overflow-y: auto; }
-.wl-layer .set-switch { border-radius: 0; }
-.wl-layer .set-switch::after, .wl-layer .set-switch > * { border-radius: 0; }
-.wl-layer .set-btn, .wl-layer .setup-btn, .wl-layer .setup-add { border-radius: 0; }
-.wl-layer .setup-swatch, .wl-layer .setup-palette, .wl-layer .setup-palette-sample, .wl-layer .setup-pic, .wl-layer .setup-pic-main, .wl-layer .setup-pic-main img, .wl-layer .setup-face, .wl-layer .setup-face img { border-radius: 0; }
-.wl-layer .setup-palette.is-on { box-shadow: 0 0 0 3px var(--px-yel); }
-.wl-layer .setup-palette { box-shadow: none; }
-.wl-layer .setup-field-name, .wl-layer .ob-field-name { color: var(--px-soft); }
+:root:not([data-skin="skin-pixel"]) .wl-layer .setup-area, :root:not([data-skin="skin-pixel"]) .wl-layer .wl-area { max-height: 40vh; overflow-y: auto; }
+:root:not([data-skin="skin-pixel"]) .wl-layer .set-btn, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-btn, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-add { border-radius: 0; }
+:root:not([data-skin="skin-pixel"]) .wl-layer .setup-palette.is-on { box-shadow: 0 0 0 2px var(--text); }
+:root:not([data-skin="skin-pixel"]) .wl-layer .setup-field-name, :root:not([data-skin="skin-pixel"]) .wl-layer .ob-field-name { color: var(--text-soft); }
+/* 别的包里用主色的小链接（「修改」「重试」）在这一套里是墨色加下划线；背景图、头像那几块去圆角 */
+:root:not([data-skin="skin-pixel"]) .wl-layer .ob-summary-edit, :root:not([data-skin="skin-pixel"]) .wl-layer .ob-fail-btn { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+:root:not([data-skin="skin-pixel"]) .wl-layer .setup-pic, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-pic-main, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-pic-main img, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-swatch, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-palette, :root:not([data-skin="skin-pixel"]) .wl-layer .setup-palette-sample { border-radius: 0; }
+:root:not([data-skin="skin-pixel"]) .wl-layer .setup-float { border: 1px solid var(--line); border-radius: 0; box-shadow: 0 30px 80px -30px rgb(0 0 0 / 0.35); }
 
-/* 关于你：三行，名字在框上面（「AI 用什么语言回复（可选）」放在左边一栏要折两三行，2026-10-17 项目主人定） */
-.wl-profile { display: grid; gap: calc(16px * var(--space)); }
-.wl-profile .wl-profile-row { grid-template-columns: minmax(0, 1fr); gap: calc(6px * var(--space)); min-height: 0; }
-.wl-profile .wl-profile-row .ob-field-name { line-height: calc(20px * var(--text-scale)); }
-/* 回复语言那一行没到以前占着它的高（名字 20px、间隔 6px、一个下拉 30px） */
-.wl-profile .wl-profile-slot { min-height: 56px; }
-.wl-profile .wl-area { box-sizing: border-box; width: 100%; height: auto; min-height: 112px; padding: calc(7px * var(--space)) calc(9px * var(--space)); line-height: 1.6; resize: vertical; }
+/* 内置语义模型的下载进度：一条 1px 的框，里面墨色填；下面一行等宽暗字 */
+:root:not([data-skin="skin-pixel"]) .wl-dl { display: grid; align-content: center; gap: calc(14px * var(--space)); min-height: 116px; }
+:root:not([data-skin="skin-pixel"]) .wl-dl-bar { height: 10px; border: 1px solid var(--text); }
+:root:not([data-skin="skin-pixel"]) .wl-dl-bar i { display: block; width: 0; height: 100%; background: var(--text); transition: width calc(0.2s * var(--motion-scale)) linear; }
+:root:not([data-skin="skin-pixel"]) .wl-dl-words { color: var(--text-soft); font: calc(12px * var(--text-scale)) var(--font-mono); font-variant-numeric: tabular-nums; }
 
-/* 星点：稀稀的白点慢慢闪（原来那两团糊开的光去掉了）；亮度由 twinkle.js 一颗一颗换（`--o`），同上面闪的几样 */
-.wl-sky { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-.wl-glow { display: none; }
-.wl-star { position: absolute; width: 2px; height: 2px; background: var(--px-star); opacity: var(--o, 0.4); }
+/* 关于你：三行，名字在框上面 */
+:root:not([data-skin="skin-pixel"]) .wl-profile { display: grid; gap: calc(16px * var(--space)); }
+:root:not([data-skin="skin-pixel"]) .wl-profile .wl-profile-row { grid-template-columns: minmax(0, 1fr); gap: calc(6px * var(--space)); min-height: 0; }
+:root:not([data-skin="skin-pixel"]) .wl-profile .wl-profile-row .ob-field-name { line-height: calc(20px * var(--text-scale)); }
+:root:not([data-skin="skin-pixel"]) .wl-profile .wl-profile-slot { min-height: 56px; }
+:root:not([data-skin="skin-pixel"]) .wl-profile .wl-area { box-sizing: border-box; width: 100%; height: auto; min-height: 112px; padding: calc(7px * var(--space)) calc(9px * var(--space)); line-height: 1.6; resize: vertical; }
+
+/* 主题那一屏的小窗口：缩小的对话页，照真的主题画（这一套没换主题的几格，直接用） */
+:root:not([data-skin="skin-pixel"]) .wl-preview { display: grid; grid-template-columns: 64px 1fr; height: 132px; margin: 0 0 calc(22px * var(--space)); overflow: hidden; border: 1px solid var(--line); background: var(--surface); }
+:root:not([data-skin="skin-pixel"]) .wl-preview-side { display: grid; align-content: start; gap: calc(6px * var(--space)); padding: calc(12px * var(--space)) calc(8px * var(--space)); background: var(--sidebar-bg); }
+:root:not([data-skin="skin-pixel"]) .wl-preview-side i { height: 7px; background: var(--surface-2); }
+:root:not([data-skin="skin-pixel"]) .wl-preview-side i:first-child { background: var(--accent-soft); }
+:root:not([data-skin="skin-pixel"]) .wl-preview-side i:first-child::after { content: ""; display: block; width: 40%; height: 100%; background: var(--accent); opacity: 0.7; }
+:root:not([data-skin="skin-pixel"]) .wl-preview-chat { position: relative; display: grid; align-content: start; gap: calc(8px * var(--space)); padding: calc(14px * var(--space)) calc(14px * var(--space)) 0; }
+:root:not([data-skin="skin-pixel"]) .wl-preview-chat .me { justify-self: end; width: 120px; height: 18px; background: var(--accent-soft); }
+:root:not([data-skin="skin-pixel"]) .wl-preview-chat .ai { width: 70%; height: 7px; background: var(--text-soft); opacity: 0.55; }
+:root:not([data-skin="skin-pixel"]) .wl-preview-chat .ai.short { width: 46%; }
+:root:not([data-skin="skin-pixel"]) .wl-preview-chat .box { position: absolute; left: 14px; right: 14px; bottom: 12px; height: 26px; background: var(--surface-1); }
+:root:not([data-skin="skin-pixel"]) .wl-preview-chat .send { position: absolute; right: 20px; bottom: 17px; width: 16px; height: 16px; background: var(--accent); }
+
+/* 右上角的明暗按钮：1px 边的方块 */
+:root:not([data-skin="skin-pixel"]) .wl-corner { position: absolute; z-index: 5; top: 16px; right: 16px; display: flex; gap: 8px; }
+:root:not([data-skin="skin-pixel"]) .wl-corner-btn { display: grid; width: 34px; height: 34px; padding: 0; place-items: center; border: 1px solid var(--line); border-radius: 0; background: var(--surface-1); color: var(--text-soft); cursor: pointer; }
+:root:not([data-skin="skin-pixel"]) .wl-corner-btn:hover, :root:not([data-skin="skin-pixel"]) .wl-corner-btn:focus-visible { outline: 0; border-color: var(--text); color: var(--text); }
+:root:not([data-skin="skin-pixel"]) .wl-corner-btn .icon { width: 16px; height: 16px; }
+
 @media (prefers-reduced-motion: reduce) {
-  .wl-screen, .wl-layer, .wl-pill, .wl-layer.is-done .wl-title, .wl-layer.is-done .wl-foot { animation: none; }
+  :root:not([data-skin="skin-pixel"]) .wl-screen, :root:not([data-skin="skin-pixel"]) .wl-layer, :root:not([data-skin="skin-pixel"]) .wl-pill, :root:not([data-skin="skin-pixel"]) .wl-layer.is-done .wl-title, :root:not([data-skin="skin-pixel"]) .wl-layer.is-done .wl-foot { animation: none; }
 }
 
-/* 主题那一屏的小窗口：缩小的对话页，照真的主题画（--keep-*），和整页一起变；主色铺得开一点（2026-10-19 项目主人：原来只有发送键一小块看得出） */
-.wl-preview {
-  --surface: var(--keep-surface); --sidebar-bg: var(--keep-sidebar); --surface-1: var(--keep-surface-1); --surface-2: var(--keep-surface-2);
-  --text: var(--keep-text); --text-soft: var(--keep-text-soft); --accent: var(--keep-accent); --accent-soft: var(--keep-accent-soft);
-  display: grid; grid-template-columns: 64px 1fr; height: 132px; margin: 0 calc(3px * var(--space)) calc(22px * var(--space)); overflow: hidden; background: var(--surface);
-  box-shadow: 0 -3px 0 0 var(--px-cell-on), 0 3px 0 0 var(--px-cell-on), -3px 0 0 0 var(--px-cell-on), 3px 0 0 0 var(--px-cell-on);
-}
-.wl-preview-side { display: grid; align-content: start; gap: calc(6px * var(--space)); padding: calc(12px * var(--space)) calc(8px * var(--space)); background: var(--sidebar-bg); }
-.wl-preview-side i { height: 7px; background: var(--surface-2); }
-.wl-preview-side i:first-child { background: var(--accent-soft); }
-.wl-preview-side i:first-child::after { content: ""; display: block; width: 40%; height: 100%; background: var(--accent); opacity: 0.7; }
-.wl-preview-chat { position: relative; display: grid; align-content: start; gap: calc(8px * var(--space)); padding: calc(14px * var(--space)) calc(14px * var(--space)) 0; }
-.wl-preview-chat .me { justify-self: end; width: 120px; height: 18px; background: var(--accent-soft); }
-.wl-preview-chat .ai { width: 70%; height: 7px; background: var(--text-soft); opacity: 0.55; }
-.wl-preview-chat .ai.short { width: 46%; }
-.wl-preview-chat .box { position: absolute; left: 14px; right: 14px; bottom: 12px; height: 26px; background: var(--surface-1); }
-.wl-preview-chat .send { position: absolute; right: 20px; bottom: 17px; width: 16px; height: 16px; background: var(--accent); }
+/* 两套都要的：引导开着（连同一起来盖着的那一层底色）：左上角的左栏开关、左边沿划出左栏的那一条不露（2026-10-23 项目主人） */
 
-/* 右上角一直在的按钮（明暗）：像素块，悬停亮一档 */
-.wl-corner { position: absolute; z-index: 5; top: 16px; right: 16px; display: flex; gap: 8px; }
-.wl-corner-btn { --px-c: var(--px-cell); display: grid; width: 34px; height: 34px; padding: 0; place-items: center; border: 0; border-radius: 0; background: var(--px-c); color: var(--px-soft); cursor: pointer;
-  box-shadow: 0 -3px 0 0 var(--px-c), 0 3px 0 0 var(--px-c), -3px 0 0 0 var(--px-c), 3px 0 0 0 var(--px-c); }
-.wl-corner-btn:hover, .wl-corner-btn:focus-visible { outline: 0; --px-c: var(--px-cell-hi); color: var(--px-tx); }
-.wl-corner-btn .icon { width: 16px; height: 16px; }
-.wl-layer .setup-choice-more { color: var(--px-soft); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--px-soft) 45%, transparent); text-underline-offset: 3px; }
-.wl-layer .setup-choice-more:hover, .wl-layer .setup-choice-more:focus-visible { color: var(--px-tx); }
-.wl-layer .setup-float { --px-c: var(--px-cell); border-radius: 0; background: var(--px-c); box-shadow: 0 -3px 0 0 var(--px-c), 0 3px 0 0 var(--px-c), -3px 0 0 0 var(--px-c), 3px 0 0 0 var(--px-c), 0 12px 32px rgb(0 0 0 / 0.35); }
-
-/* 引导开着（连同一起来盖着的那一层底色）：左上角的左栏开关、左边沿划出左栏的那一条不露（2026-10-23 项目主人：引导里左上角有个左栏的小按钮，悬停还会划出左栏） */
 :root:has(.wl-layer, .wl-cover) .sidebar-toggle, :root:has(.wl-layer, .wl-cover) .sidebar-peek-zone { display: none; }

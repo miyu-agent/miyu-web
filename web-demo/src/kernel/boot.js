@@ -28,6 +28,7 @@ import { useHost } from '../core/host.js';
 import { browserHost } from '../host/browser.js';
 import { askPrefix } from '../ui/prefix-ask.js';
 import { servedHost } from '../host/served.js';
+import { skinMark } from '../host/files.js';
 import { SIGNIN_SCHEME, signIn, passwordProblem, changePassword } from './signin.js';
 import { ownerStorage } from './storage.js';
 import { useIcons } from '../lib/dom.js';
@@ -47,6 +48,9 @@ const LEGACY = { [USER_LAYER]: 'miyu.packages' };
  * @param {HTMLElement} root 页面的根
  */
 export async function boot(root) {
+  // 皮肤包还没加载：照这台浏览器记着的先在根上写 `data-skin`，登录那几屏、引导一开始就是对的那一套（「第一次引导」第 2 条；皮肤包换皮肤时记）
+  const skin = skinMark.get();
+  if (skin && !document.documentElement.dataset.skin) document.documentElement.dataset.skin = skin;
   const base = new URL('../../', import.meta.url);
   const resources = new URL('resources/', base);
   await loadResources(resources);
@@ -224,6 +228,8 @@ export async function boot(root) {
         signinScheme: takeSigninScheme(host.store),
         /** 退出登录（拿设备令牌连的才有）：忘掉设备令牌、重新载入；走桥的是 `null` */
         signOut: host.signOut ?? null,
+        /** 记下现在的皮肤（皮肤包换皮肤时；下次页面一开始照它先写 `data-skin`，`host/files.js` 的 `skinMark`） */
+        rememberSkin: (/** @type {string|null} */ id) => skinMark.set(id),
         /** 网页软件在听的地址、端口，请它照配置当场换（设置「通用」的「访问」一组；`served.js` 的 `listen`）；走桥的是 `null` */
         listen: /** @type {any} */ (host).listen ?? null,
         /**

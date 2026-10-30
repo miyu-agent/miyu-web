@@ -139,8 +139,8 @@ const field = (name, input) => {
 /** @param {string} type @param {string} value @param {string} auto */
 const input = (type, value, auto) => /** @type {HTMLInputElement} */ (h('input.si-input', { type, value, autocomplete: auto, spellcheck: 'false' }));
 
-/** 蹲在卡片上沿的吉祥物 */
-const mascot = () => h('img.si-mascot', { src: 'resources/assets/mascot.png', alt: '', 'aria-hidden': 'true' });
+/** 卡片上沿：像素关卡蹲着的吉祥物、黑白剪影的剪影标志（两套各露各的） */
+const mascot = () => [h('img.si-mascot', { src: 'resources/assets/mascot.png', alt: '', 'aria-hidden': 'true' }), h('i.si-mark', { 'aria-hidden': 'true' })];
 
 /**
  * 「自动登录」那一格（方块勾选框）：勾了的令牌存在这台浏览器（30 天），没勾的只在这个标签页（关了要再输密码）。

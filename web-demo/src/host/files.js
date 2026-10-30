@@ -270,3 +270,24 @@ export const loopbackHost = (host) => {
 
 /** 页面是不是开在本机地址上 */
 export const onThisComputer = () => loopbackHost(globalThis.location?.hostname ?? '');
+
+/** 这台浏览器记着的皮肤（登录那几屏、引导起来时皮肤包还没加载，页面一开始照它在根上写 `data-skin`；蓝图「第一次引导」第 2 条） */
+const SKIN_MARK = 'miyu.web.skin';
+
+/** 记着的皮肤：`get` 读（没有、读不了的是 `null`），`set` 记（`null` 是出厂，删掉）；存不了的不记。 */
+export const skinMark = {
+  get: () => {
+    try {
+      return globalThis.localStorage?.getItem(SKIN_MARK) ?? null;
+    } catch {
+      return null;
+    }
+  },
+  /** @param {string|null} id */
+  set: (id) => {
+    try {
+      if (id) globalThis.localStorage?.setItem(SKIN_MARK, id);
+      else globalThis.localStorage?.removeItem(SKIN_MARK);
+    } catch { /* 存不了的照出厂 */ }
+  },
+};

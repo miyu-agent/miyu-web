@@ -12,10 +12,16 @@ const read = (/** @type {string} */ p) => readFileSync(at(p), 'utf8');
 const tokensCss = read('styles/tokens.css');
 const known = vocabulary(tokensCss);
 const parts = JSON.parse(read('resources/parts.json'));
-/** 页面的样式：styles/ 和每个包的 style.css（变量表自己不算） */
+/** 包清单里列的样式（没列的照 style.css；2026-10-30 引导多了一份 pixel.css） @param {string} d */
+const styleFiles = (d) => {
+  const manifest = at(`packages/${d}/manifest.json`);
+  const listed = existsSync(manifest) ? JSON.parse(readFileSync(manifest, 'utf8')).styles : null;
+  return Array.isArray(listed) ? listed : ['style.css'];
+};
+/** 页面的样式：styles/ 和每个包清单里列的样式（变量表自己不算） */
 const sheets = [
   ...readdirSync(at('styles')).filter((f) => f.endsWith('.css') && f !== 'tokens.css').map((f) => `styles/${f}`),
-  ...readdirSync(at('packages')).map((d) => `packages/${d}/style.css`).filter((p) => existsSync(at(p))),
+  ...readdirSync(at('packages')).flatMap((d) => styleFiles(d).map((f) => `packages/${d}/${f}`)).filter((p) => existsSync(at(p))),
 ];
 const strip = (/** @type {string} */ s) => s.replace(/\/\*[\s\S]*?\*\//g, '');
 

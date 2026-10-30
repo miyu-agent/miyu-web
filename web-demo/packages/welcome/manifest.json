@@ -51,7 +51,8 @@
     }
   },
   "styles": [
-    "style.css"
+    "style.css",
+    "pixel.css"
   ],
   "text": {
     "zh": {
@@ -88,6 +89,7 @@
       },
       "done": {
         "title": "CLEAR!",
+        "title_plain": "准备好了",
         "model": "模型 {name}",
         "persona": "人格 {name}",
         "preset": "预设 {name}",
@@ -147,6 +149,7 @@
       },
       "done": {
         "title": "CLEAR!",
+        "title_plain": "All set",
         "model": "Model {name}",
         "persona": "Persona {name}",
         "preset": "Preset {name}",
@@ -206,6 +209,7 @@
       },
       "done": {
         "title": "CLEAR!",
+        "title_plain": "準備完了",
         "model": "モデル {name}",
         "persona": "人格 {name}",
         "preset": "プリセット {name}",

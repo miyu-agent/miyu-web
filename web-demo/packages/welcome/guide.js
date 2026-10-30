@@ -5,7 +5,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { reduced } from '../../src/lib/motion.js';
-import { helloScreen, languageScreen, profileScreen, embedScreen, embedState, doneScreen, STEP_KEY, DONE_KEY } from './screens.js';
+import { helloScreen, languageScreen, profileScreen, embedScreen, embedState, doneScreen, STEP_KEY, DONE_KEY, pixel } from './screens.js';
 import { twinkle } from './twinkle.js';
 
 /** 步子的先后；`back` 是上一步回到哪 */
@@ -75,7 +75,9 @@ export class Guide {
     /** 星点，闪的几样照计时器换（`twinkle.js`）；停掉的函数 */
     this.stars = night.stars;
     this.stopTwinkle = () => {};
-    this.layer = h('div.wl-layer', { role: 'dialog', 'aria-modal': 'true' }, night.node, this.ground, this.page, this.corner);
+    // 黑白剪影：左上角小的剪影标志加「miyu」（欢迎页不出；像素关卡不出，第 2a 条）
+    const brand = h('div.wl-brand', { 'aria-hidden': 'true' }, h('i.wl-mark'), h('span', 'miyu'));
+    this.layer = h('div.wl-layer', { role: 'dialog', 'aria-modal': 'true' }, night.node, this.ground, brand, this.page, this.corner);
     this.takeScheme();
     this.drawCorner();
     /** @type {HTMLButtonElement|null} */
@@ -136,7 +138,8 @@ export class Guide {
   /** 盖上，从 `step` 开始。 @param {string} step */
   open(step) {
     document.body.append(this.layer);
-    this.stopTwinkle = twinkle(this.layer, this.stars, { reduced: reduced() });
+    // 一闪一闪的计时器只给像素关卡：黑白剪影不闪（第 2a 条）
+    if (pixel()) this.stopTwinkle = twinkle(this.layer, this.stars, { reduced: reduced() });
     this.layer.addEventListener('keydown', this.onKey);
     document.addEventListener('focusin', this.onFocus);
     this.page.addEventListener('scroll', this.onScroll, { passive: true });
@@ -330,7 +333,10 @@ export class Guide {
   whereText() {
     const list = this.stepList();
     const at = list.indexOf(this.step);
-    return at < 0 ? '' : this.t('where', { at: at + 1, total: list.length, name: this.t(`steps.${this.step}`) });
+    if (at < 0) return '';
+    // 黑白剪影写「02 / 06」（第 2a 条），像素关卡照旧「STAGE 2/6」
+    if (!pixel()) return `${String(at + 1).padStart(2, '0')} / ${String(list.length).padStart(2, '0')}`;
+    return this.t('where', { at: at + 1, total: list.length, name: this.t(`steps.${this.step}`) });
   }
 
   /** 主按钮能不能点、写什么（测试连接那一屏的跟着测的结果变）。 */

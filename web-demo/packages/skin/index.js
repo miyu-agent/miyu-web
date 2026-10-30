@@ -11,6 +11,7 @@ import { retheme } from '../../src/lib/retheme.js';
 import { useIconPack } from '../../src/lib/dom.js';
 import { cleanIcons, packProblem, scopeProblems, translate, valuesOf, vocabulary } from './model.js';
 
+
 /** @param {any} ctx */
 export function apply(ctx) {
   ctx.slots.declare('skin.packs', 'list');
@@ -28,7 +29,8 @@ export function apply(ctx) {
   let written = [];
   /** @type {HTMLStyleElement|null} */
   let style = null;
-  let shown = '';
+  /** 上一次画的（`null` 是还没画过：页面一开始照记着的先写了 `data-skin`，出厂的第一次也要照实写一遍） @type {string|null} */
+  let shown = null;
   let painted = false;
   let gone = false;
   /** 不认的说过一遍就不再说 */
@@ -112,6 +114,8 @@ export function apply(ctx) {
         style.dataset.skinOf = p.id;
         style.textContent = css;
       }
+      // 记一份：登录那几屏起来时这个包还没加载，页面一开始照它先写 `data-skin`（蓝图「第一次引导」第 2 条）
+      ctx.host?.rememberSkin?.(p?.id ?? null);
       ctx.emit('skin.changed', p?.id ?? null);
     }, { animate: painted });
     painted = true;

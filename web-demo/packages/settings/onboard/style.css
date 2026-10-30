@@ -3,8 +3,8 @@
 .ob-list, .ob-provider { display: grid; gap: 8px; }
 .ob-rows { display: grid; gap: 6px; }
 .ob-row {
-  display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px 0 14px; border: 0; border-radius: 10px;
-  background: transparent; color: var(--text); font: 14px var(--sans); text-align: left; cursor: pointer;
+  display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px 0 14px; border: 0; border-radius: var(--r-10);
+  background: transparent; color: var(--text); font: 14px var(--font-ui); text-align: left; cursor: pointer;
   transition: background-color 0.15s ease;
 }
 /* 一行一个照「深度」：平常不铺底，悬停、键盘停着深一档（蓝图 web.md「深度」） */
@@ -17,7 +17,7 @@
 .ob-row-arrow svg { width: 15px; height: 15px; }
 .ob-tag + .ob-row-arrow { margin-left: 0; }
 .ob-tag {
-  flex: none; margin-left: auto; padding: 2px 8px; border-radius: 6px; font-size: 12px;
+  flex: none; margin-left: auto; padding: 2px 8px; border-radius: var(--r-6); font-size: 12px;
   background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent);
 }
 .ob-tag.is-good { background: color-mix(in srgb, var(--online) 14%, transparent); color: var(--online); }
@@ -54,18 +54,18 @@
 }
 /* 没测成：原话下面两个小字按钮「重新设置」「跳过」，和设置页的 `.set-link` 一个样子，中间隔开 */
 .ob-fail-actions { display: flex; gap: 16px; margin: 4px 0 0 21px; }
-.ob-fail-btn { padding: 0; border: 0; background: none; color: var(--accent); font: 12px var(--sans); cursor: pointer; }
+.ob-fail-btn { padding: 0; border: 0; background: none; color: var(--accent); font: 12px var(--font-ui); cursor: pointer; }
 .ob-fail-btn:hover { text-decoration: underline; }
 .ob-models { display: grid; gap: 8px; }
 .ob-model-list { display: grid; max-height: min(320px, 42vh); overflow-y: auto; gap: 2px; }
 .ob-model {
-  display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 10px; border: 0; border-radius: 8px;
-  background: transparent; color: var(--text); font: 13px var(--mono); text-align: left; cursor: pointer;
+  display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 10px; border: 0; border-radius: var(--r-8);
+  background: transparent; color: var(--text); font: 13px var(--font-mono); text-align: left; cursor: pointer;
 }
 .ob-model:hover { background: var(--surface-2); }
 .ob-model.is-on { background: var(--surface-3); }
 .ob-model-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ob-model-note { color: var(--text-faint); font: 12px var(--sans); }
+.ob-model-note { color: var(--text-faint); font: 12px var(--font-ui); }
 .ob-model-check { display: inline-flex; margin-left: auto; color: var(--accent); }
 .ob-model-check svg { width: 15px; height: 15px; }
 
