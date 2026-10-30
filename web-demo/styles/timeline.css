@@ -58,7 +58,9 @@
 .tl-node { display: grid; flex: 0 0 var(--tl-col); width: var(--tl-col); height: var(--tl-col); place-items: center; color: var(--tl-soft); transition: color calc(0.15s * var(--motion-scale)) ease; }
 .tl-node .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); }
 .tl-name { flex: 0 0 auto; color: var(--text); white-space: nowrap; }
-.tl-time { flex: none; color: var(--tl-soft); font: 400 calc(10.5px * var(--text-scale)) var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tl-time, .tl-count { flex: none; color: var(--tl-soft); font: 400 calc(10.5px * var(--text-scale)) var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* 思考用时后面估的 token 数（「正在思考 · 24s · 12k」）：同用时的样子 */
+.tl-count[hidden] { display: none; }
 
 /* 思考：标题 1px 4px 的小块；在想时流光、图标呼吸；收着时后面接最后一小段，放不下左边淡出 */
 .tl-step.is-thought .tl-name { max-width: 24em; padding: calc(1px * var(--space)) calc(4px * var(--space)); overflow: hidden; border-radius: var(--r-5); text-overflow: ellipsis; }
@@ -150,7 +152,8 @@
 /* 一行里几段之间用 · 隔开（名字、用时、对象、结果那一句、加减；思考的名字、用时、那一小段），颜色和对象一样（2026-10-01 项目主人：
    原来只靠空隙分，看着乱）。字是页面变量 --tl-sep（text 的 timeline.peek_sep）；藏着的那一段不画 */
 .tl-head > * + *:not([hidden])::before,
-.tl-step.is-thought > .tl-row > .tl-time:not([hidden])::before {
+.tl-step.is-thought > .tl-row > .tl-time:not([hidden])::before,
+.tl-step.is-thought > .tl-row > .tl-count:not([hidden])::before {
   content: var(--tl-sep); margin-right: calc(5px * var(--space)); color: var(--tl-soft); font: 400 calc(11px * var(--text-scale)) var(--font-ui);
 }
 /* 思考那一小段前面的点：和那一小段一起出现、一起藏 */

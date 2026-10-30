@@ -14,6 +14,7 @@ import { imageCard } from './media.js';
 import { drawMarkdown } from './render.js';
 import { blobUrl } from '../core/host.js';
 import { NestedList } from './nested.js';
+import { estimateTokens, short } from '../lib/format.js';
 
 export class StepView {
   /**
@@ -56,8 +57,11 @@ export class StepView {
     if (this.thought) {
       this.peek = h('span.tl-peek', h('span'));
       // 那一小段前面的 `·` 单独一个：放不下时那一小段左边淡出，点不跟着淡没
+      // 用时后面估的 token 数（2026-10-31 项目主人：「正在思考 · 24s · 12k」）：照字估，同终端；字没变的不重算
+      this.count = h('span.tl-count', { hidden: true });
+      this.counted = -1;
       this.row = h('button.tl-row', { type: 'button', onclick: toggle },
-        this.node, this.name, this.time, h('span.tl-peek-dot', t('timeline.peek_sep')), this.peek, h('span.tl-chevron', icon('chevron-right')));
+        this.node, this.name, this.time, this.count, h('span.tl-peek-dot', t('timeline.peek_sep')), this.peek, h('span.tl-chevron', icon('chevron-right')));
       // 在想时滚着的那几行：和那一行一样能点（2026-09-30 项目主人：原来只能点那一行）
       this.window = h('div.tl-window', { onclick: toggle });
       // 点开的全文也整块能点：点了收起（选着字的时候不收，`guard`），悬停亮一档（2026-09-30 项目主人定）
@@ -135,6 +139,12 @@ export class StepView {
    * 就缩成一行，一条思考缩一次，正文跟着上下跳）；点开是全部的字。
    */
   updateThought(step, open) {
+    if (this.count && step.text.length !== this.counted) {
+      this.counted = step.text.length;
+      const n = estimateTokens(step.text);
+      this.count.textContent = n ? short(n) : '';
+      this.count.hidden = !n;
+    }
     const tail = /** @type {HTMLElement} */ (this.peek?.firstChild);
     tail.textContent = peek(step);
     // 放不下时从右往左推、左边淡出（照旧版 setReasoningPeek）

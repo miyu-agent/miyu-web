@@ -13,6 +13,32 @@ export function short(n) {
 }
 
 /**
+ * 一段字大约多少 token（思考那一行用：供应商一轮结束才报用量，这时只能估；照终端 `meter.rs` 的 `estimate_tokens`，两边估的一样）：
+ * 不带分词表，照字分几类数：汉字 0.7 个，数字、别的非 ASCII 字各 1 个，英文词每 7 个字母 1 个，ASCII 符号半个，空白不算。
+ * @param {string} text @returns {number}
+ */
+export function estimateTokens(text) {
+  // 以十分之一个 token 为单位累加
+  const word = (/** @type {number} */ letters) => Math.ceil(letters / 7) * 10;
+  let tenths = 0;
+  let letters = 0;
+  for (const c of text) {
+    const code = /** @type {number} */ (c.codePointAt(0));
+    if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
+      letters += 1;
+      continue;
+    }
+    tenths += word(letters);
+    letters = 0;
+    // 空白照 Rust 的 is_ascii_whitespace：空格、\t、\n、\f、\r
+    if (code < 128) tenths += [32, 9, 10, 12, 13].includes(code) ? 0 : code >= 48 && code <= 57 ? 10 : 5;
+    else if ((code >= 0x2e80 && code <= 0x9fff) || (code >= 0xf900 && code <= 0xffef)) tenths += 7;
+    else tenths += 10;
+  }
+  return Math.ceil((tenths + word(letters)) / 10);
+}
+
+/**
  * 命中率（命中 ÷ 输入，不算输出）：99 以下写整数；99 以上带一位小数，正好 99.0 的写 `99`；
  * 四舍五入到 100.0 的写 `100`。分母是 0 的是 `0`。
  */

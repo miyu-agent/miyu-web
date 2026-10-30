@@ -87,3 +87,15 @@ test('核心在 Windows 上的路径照 Windows 的写法给人看（家目录�
   assert.equal(corePath('\\\\server\\share', home, 'windows'), '\\\\server\\share');
   assert.equal(corePath('~/x\\y', home, 'linux'), '~/x\\y', '别的系统照原样');
 });
+
+test('思考的 token 数照字估，同终端 meter.rs 的 estimate_tokens（同一组例子）', async () => {
+  const { estimateTokens } = await import('../src/lib/format.js');
+  assert.equal(estimateTokens(''), 0);
+  assert.equal(estimateTokens('  \n'), 0, '空白不算');
+  assert.equal(estimateTokens('think'), 1, '英文词每 7 个字母一个');
+  assert.equal(estimateTokens('tokenizers'), 2);
+  assert.equal(estimateTokens('the cat sat'), 3);
+  assert.equal(estimateTokens('1+2=3'), 4, '数字各一个，符号各半个');
+  assert.equal(estimateTokens('思考一下'), 3, '汉字各 0.7 个，零头进一');
+  assert.equal(estimateTokens('é'), 1, '别的非 ASCII 字各一个');
+});

@@ -4393,7 +4393,8 @@
   "tl.time": {
     "zh": "时间线：时间",
     "select": [
-      ".tl-time"
+      ".tl-time",
+      ".tl-count"
     ]
   },
   "tl.peek": {
