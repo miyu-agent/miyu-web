@@ -1,5 +1,5 @@
 //! `miyu-web open` 给程序读的两个开关（`web-ui.md`「怎么走」第二条第 6 款，2026-10-29 桌面端的外壳要的）：`--format json` 只印一行
-//! `{url, first}`、不开浏览器不印提醒；`--ticket` 没设过访问密码也要交接票（桌面端免密）。核心是替身，替身和走一遍的办法借 `open`。
+//! `{url, first}`、不开浏览器不印提醒；没设过访问密码也给交接票（`--ticket` 写不写一样，2026-10-30），`--reset` 的带一次性码。核心是替身，替身和走一遍的办法借 `open`。
 
 use serde_json::{Value, json};
 
@@ -35,6 +35,17 @@ async fn format_json_prints_one_line_with_the_address_and_whether_it_is_the_firs
         ..Open::default()
     };
     let (got, site) = one_line(&home, json).await;
+    assert_eq!(
+        got,
+        json!({"url": format!("{site}/#ticket={TICKET}"), "first": true}),
+        "没设过密码也给票，first 照实"
+    );
+    let reset = Open {
+        json: true,
+        reset: true,
+        ..Open::default()
+    };
+    let (got, site) = one_line(&home, reset).await;
     assert_eq!(
         got,
         json!({"url": format!("{site}/#setup={CODE}"), "first": true})

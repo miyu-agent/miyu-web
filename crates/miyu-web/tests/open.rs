@@ -1,5 +1,5 @@
 //! `miyu-web open`（施工 W-9，`web-module.md`「怎么走」第十一条）：网页软件没在跑先拉起来（真的 `miyu-web serve`）；
-//! 没设过密码、`--reset` 的网址带 `#setup=<一次性码>`，别的带交接票 `#ticket=<票>`（网页-乙；SU-1 起不带账号，回应里带了也不用）、旧核心要不到票的什么都不带；
+//! `--reset` 的网址带 `#setup=<一次性码>`，别的（没设过密码的也是，2026-10-30）带交接票 `#ticket=<票>`（网页-乙；SU-1 起不带账号，回应里带了也不用）、旧核心要不到票的什么都不带；
 //! `--package` 的再带 `package=<编号>`（施工 F-6 下）；带凭据的交给浏览器的是只给本人的跳转页；`--print` 印网址和提醒；交不给浏览器的照
 //! `--print` 办；`--logout` 说作废了几个。核心是替身：照方法名答。
 
@@ -186,7 +186,7 @@ pub(crate) fn browser(works: bool) -> FakeBrowser {
 }
 
 #[tokio::test]
-async fn the_first_time_opens_with_a_code_after_starting_the_web_ui() {
+async fn the_first_time_opens_with_a_ticket_after_starting_the_web_ui() {
     let home = Home::new();
     answer(fake_core(&home), true);
     let browser = browser(true);
@@ -202,20 +202,18 @@ async fn the_first_time_opens_with_a_code_after_starting_the_web_ui() {
     assert_eq!(code, 0, "{err}");
     let site = miyu_web::serve::address(&home.root).expect("拉起来了、写了地址");
     assert!(miyu_web::serve::running(&home.root));
-    assert_eq!(went(&browser), [format!("{site}/#setup={CODE}")]);
+    // 没设过访问密码也拿票（2026-10-30 项目主人：访问密码只给局域网用，本机打开不逼着设）
+    assert_eq!(went(&browser), [format!("{site}/#ticket={TICKET}")]);
     assert!(
         browser.opened.lock().expect("没坏")[0].starts_with("file://"),
-        "带码的交跳转页，码不进进程列表"
+        "带票的交跳转页，票不进进程列表"
     );
     // 结果行带着整个网址（2026-10-29 项目主人：原来要再 --print 才看得到），提示在标准错误上（核心设计 47）
-    assert_eq!(out, format!("已在浏览器中打开：{site}/#setup={CODE}\n"));
-    assert_eq!(
-        err,
-        "提示：首次打开需要设置访问密码；链接 5 分钟内有效，只能用一次\n"
-    );
+    assert_eq!(out, format!("已在浏览器中打开：{site}/#ticket={TICKET}\n"));
+    assert_eq!(err, "提示：链接 60 秒内有效，只能用一次\n");
     // 已经在跑的照它的地址，不再拉起。
     let again = browser_again(&home, Open::default(), true).await;
-    assert_eq!(again, [format!("{site}/#setup={CODE}")]);
+    assert_eq!(again, [format!("{site}/#ticket={TICKET}")]);
 }
 
 async fn browser_again(home: &Home, args: Open, works: bool) -> Vec<String> {
@@ -318,11 +316,12 @@ async fn print_and_a_missing_browser_print_the_address() {
         browser.opened.lock().expect("没坏").is_empty(),
         "--print 不开浏览器"
     );
-    assert_eq!(out, format!("{site}/#setup={CODE}\n"), "--print 只印网址");
-    assert!(
-        err.contains("首次打开需要设置访问密码；链接 5 分钟内有效"),
-        "{err}"
+    assert_eq!(
+        out,
+        format!("{site}/#ticket={TICKET}\n"),
+        "--print 只印网址"
     );
+    assert!(err.contains("链接 60 秒内有效"), "{err}");
     let nothing = FakeBrowser {
         works: false,
         opened: Mutex::new(Vec::new()),
@@ -335,7 +334,7 @@ async fn print_and_a_missing_browser_print_the_address() {
     assert_eq!(code, 0);
     assert_eq!(
         out,
-        format!("{site}/#setup={CODE}\n"),
+        format!("{site}/#ticket={TICKET}\n"),
         "交不出去照 --print 办"
     );
 }

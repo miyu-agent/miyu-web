@@ -261,3 +261,12 @@ export function fileTools(urls) {
     read,
   };
 }
+
+/** 地址里的主机名是不是本机（回环）：`127.*`、`localhost`、`[::1]` @param {string} host */
+export const loopbackHost = (host) => {
+  const v = host.toLowerCase();
+  return v === 'localhost' || v === '[::1]' || v === '::1' || /^127\./.test(v);
+};
+
+/** 页面是不是开在本机地址上 */
+export const onThisComputer = () => loopbackHost(globalThis.location?.hostname ?? '');

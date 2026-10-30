@@ -3,8 +3,6 @@
 /// 网址带着哪种凭据（提示照它说）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Carried {
-    /// 还没设过访问密码的一次性码。
-    First,
     /// `--reset` 的一次性码。
     Reset,
     /// 交接票。
@@ -58,13 +56,9 @@ impl Language {
         )
     }
 
-    /// 网址带着的凭据怎么用：第一次的一次性码、`--reset` 的一次性码、交接票。
+    /// 网址带着的凭据怎么用：`--reset` 的一次性码、交接票。
     pub(crate) fn hint(self, carried: Carried) -> String {
         match carried {
-            Carried::First => self.pick(
-                "提示：首次打开需要设置访问密码；链接 5 分钟内有效，只能用一次",
-                "hint: set an access password on first open; the link works once within 5 minutes",
-            ),
             Carried::Reset => self.pick(
                 "提示：打开后重设访问密码；链接 5 分钟内有效，只能用一次",
                 "hint: reset the access password after opening; the link works once within 5 minutes",

@@ -3,8 +3,8 @@
 //! 1. 照终端的样子连核心（出示本机令牌，没在跑就拉起来），握手拿到人的语言。
 //! 2. `--logout`：`account.logout`、`all: true`，说作废了几个，不碰网页软件。
 //! 3. 网页软件没在跑（`run/web.lock` 没人拿着、没有 `run/web`）就拉起 `serve`，等那一行最多 10 秒。
-//! 4. 问一次 `account.setup_code`：写了 `--reset` 的、还没设过密码的（`first`），网址带 `#setup=<一次性码>`；别的要一张交接票
-//!    （`login.ticket`，核心 LT-1），网址带 `#ticket=<票>`（im 设计 07 第 3.6 节、网页-乙；SU-1 起不带账号），页面存着设备令牌的照它、
+//! 4. 问一次 `account.setup_code`（`first` 照实交给 `--format json`）：写了 `--reset` 的网址带 `#setup=<一次性码>`；别的（2026-10-30 起没设过密码的
+//!    也是：访问密码只给局域网用）要一张交接票（`login.ticket`，核心 LT-1），网址带 `#ticket=<票>`（im 设计 07 第 3.6 节、网页-乙；SU-1 起不带账号），页面存着设备令牌的照它、
 //!    没有的拿票连上；旧核心要不到票的网址就是地址本身（要了没用的码 5 分钟后自己作废）。
 //! 5. `--print`、交不给浏览器的：印网址（带了码、票的另印一句提醒）。别的交给浏览器打开：带凭据的不直接交（交出去的参数进进程
 //!    列表），写一个只给本人的跳转页（[`jump`]），交它的 `file://` 地址，再拉起 `miyu-web forget` 过一会儿删掉它。
@@ -36,7 +36,7 @@ pub struct Open {
     pub print: bool,
     /// `--format json`：给程序读（桌面端的外壳），标准输出只印一行 `{"url", "first"}`，人看的字不印；带了它就当 [`Open::print`]。
     pub json: bool,
-    /// `--ticket`：没设过访问密码也要交接票（桌面端免密，2026-10-29）；和 [`Open::reset`] 不一起写。
+    /// `--ticket`：没设过访问密码也要交接票（桌面端免密，2026-10-29）；2026-10-30 起不写也一样，留着给桌面端的外壳；和 [`Open::reset`] 不一起写。
     pub ticket: bool,
     /// 忘了密码：要一个一次性码重设。
     pub reset: bool,
@@ -124,7 +124,7 @@ pub async fn open(
     let first = issued["first"].as_bool().unwrap_or(false);
     let code = issued["code"]
         .as_str()
-        .filter(|_| open.reset || (first && !open.ticket))
+        .filter(|_| open.reset)
         .map(str::to_string);
     // 不带码的要一张交接票（网页-乙）：旧核心没有 `login.ticket`、回应没有 `account` 的不带
     let ticket = match code {
@@ -148,8 +148,7 @@ pub async fn open(
     );
     let secret = code.is_some() || ticket.is_some();
     let carried = match (&code, &ticket) {
-        (Some(_), _) if open.reset => Some(Carried::Reset),
-        (Some(_), _) => Some(Carried::First),
+        (Some(_), _) => Some(Carried::Reset),
         (None, Some(_)) => Some(Carried::Ticket),
         (None, None) => None,
     };

@@ -199,7 +199,7 @@ async function withGlobals(with_, run) {
   }
 }
 const fakeStorage = (/** @type {Map<string, string>} */ m) => ({ getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v), removeItem: (k) => m.delete(k) });
-const at = (/** @type {string} */ hash) => ({ hash, pathname: '/', search: '', protocol: 'http:', host: 'x', hostname: '127.0.0.1', reload: () => {} });
+const at = (/** @type {string} */ hash, hostname = '127.0.0.1') => ({ hash, pathname: '/', search: '', protocol: 'http:', host: 'x', hostname, reload: () => {} });
 const LATER = '2999-01-01T00:00:00Z';
 
 test('直接连网页软件的那一份（核心 SU-1）：一次性码只交一次；勾了自动登录的令牌存这台浏览器、没勾的只在这个标签页；作废了忘掉；地址带令牌换票据，同一样东西只换一次', async () => {
@@ -299,11 +299,32 @@ test('带票过来（#ticket=，miyu web 开的）：记着的令牌先用、作
     const b = servedHost();
     assert.deepEqual(b.credential(), { ticket: 'b'.repeat(64) });
     assert.equal(b.credential(), null, '票只用一次');
-    b.remember({ token: 'b1', expires: LATER }, false);
-    assert.equal(disk.has('miyu.web.login'), false, '原来没存的只放这个标签页');
+    globalThis.location.hash = '#ticket=' + 'd'.repeat(64);
+    const d = servedHost();
+    assert.deepEqual(d.credential(), { ticket: 'd'.repeat(64) });
+    d.remember({ token: 'b1', expires: LATER }, false);
+    assert.equal(JSON.parse(disk.get('miyu.web.login') ?? '{}').token, 'b1', '开在本机地址上的存进浏览器（2026-10-30：miyu web 不逼着设密码，收藏的地址下回直接进）');
     globalThis.location.hash = '#ticket=xyz';
     assert.deepEqual(servedHost().credential(), { login: 'b1' }, '写法不对的票当没有');
   });
+  // 从局域网开的：原来没存的只放这个标签页
+  const lanDisk = new Map();
+  await withGlobals({
+    location: at('#ticket=' + 'c'.repeat(64), '192.168.1.5'), history: { replaceState: () => {} },
+    localStorage: fakeStorage(lanDisk), sessionStorage: fakeStorage(new Map()),
+  }, async () => {
+    const { servedHost } = await import('../src/host/served.js');
+    const c = servedHost();
+    assert.deepEqual(c.credential(), { ticket: 'c'.repeat(64) });
+    c.remember({ token: 'c1', expires: LATER }, false);
+    assert.equal(lanDisk.has('miyu.web.login'), false, '局域网上原来没存的只放这个标签页');
+  });
+});
+
+test('本机地址：127.*、localhost、[::1] 算，局域网地址、名字不算', async () => {
+  const { loopbackHost } = await import('../src/host/files.js');
+  for (const yes of ['127.0.0.1', '127.1.2.3', 'localhost', 'LOCALHOST', '[::1]', '::1']) assert.equal(loopbackHost(yes), true, yes);
+  for (const no of ['192.168.1.5', '0.0.0.0', 'miyu.local', '10.0.0.1', '']) assert.equal(loopbackHost(no), false, no);
 });
 
 test('头像（核心 AV-1，只有主人那一张）：版本和记着的一样不取；不一样的取一次、缩成小图记下；握手没带的扔掉；换了叫一声', async () => {

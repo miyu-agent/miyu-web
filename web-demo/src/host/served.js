@@ -14,7 +14,7 @@
  */
 
 import { notify } from './notify.js';
-import { fileTools, store, dropFromHash, hashRoute } from './files.js';
+import { fileTools, store, dropFromHash, hashRoute, onThisComputer } from './files.js';
 
 /** 这台浏览器记着的设备令牌（勾了「自动登录」的）：`{token, expires}` */
 const LOGIN = 'miyu.web.login';
@@ -219,11 +219,12 @@ export function servedHost() {
     },
     /**
      * 握手、设密码拿到的设备令牌（`{token, expires}`）：记下，以后握手、换票据都用它。`keep`（勾了「自动登录」）的存进这台浏览器，没勾的放这个标签页；
-     * 拿票换到的：原来存在浏览器里的照旧存。
+     * 拿票换到的：原来存在浏览器里的照旧存，页面开在本机地址上的也存（2026-10-30：`miyu web` 不再逼着设访问密码，本机终端开的是主人自己，
+     * 收藏的地址下回直接进）。
      * @param {{token: string, expires?: string|null}} login @param {boolean} keep
      */
     remember: (login, keep) => {
-      if (usedTicket) keep = keep || wasKept;
+      if (usedTicket) keep = keep || wasKept || onThisComputer();
       usedTicket = false;
       token = login.token;
       tickets.clear();

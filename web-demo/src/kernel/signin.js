@@ -11,6 +11,7 @@
 import { h, icon, replace } from '../lib/dom.js';
 import { t } from '../util/res.js';
 import { Connection, Refusal } from '../core/connection.js';
+import { onThisComputer } from '../host/files.js';
 
 /** 「账号」那一屏的步骤条：后面几段照引导（`packages/welcome` 的 `NUMBERED`） */
 const STEPS = ['account', 'language', 'model', 'persona', 'theme', 'profile', 'preset', 'sandbox'];
@@ -197,7 +198,8 @@ async function passwordBox(root, error, img) {
   const keep = keepBox(false);
   let got = { password: '', keep: false };
   await screen(root, {
-    login: true, faceImg: img, title: t('signin.login_title'), sub: '', button: t('signin.login'), error,
+    // 页面在本机地址上的：提示用 `miyu web` 开不用密码（2026-10-30 起本机打开不逼着设访问密码，没设的人到这一屏没有密码可输）
+    login: true, faceImg: img, title: t('signin.login_title'), sub: '', button: t('signin.login'), error, note: onThisComputer() ? t('signin.local_hint') : '',
     fields: [user, field(t('signin.password'), password), keep.row],
     submit: async () => {
       if (!password.value) return t('signin.empty_password');
