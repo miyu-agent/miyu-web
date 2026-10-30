@@ -289,7 +289,9 @@ export class Composer {
     // 记下变之前框有多高：紧接着被抽屉占了的，从这个高度长过去，不先缩一下（`takeover`）
     this.settledBox = { height: this.box.offsetHeight, at: performance.now() };
     el.style.height = 'auto';
-    const to = Math.min(el.scrollHeight, max);
+    // 取整到像素：最多那几行的高带小数（行高 1.6），量回来的 offsetHeight 是整数，不取整的话到了最高以后每打一个字两头差一点，
+    // 框的底边上下抖一个像素（2026-10-31 项目主人）
+    const to = Math.ceil(Math.min(el.scrollHeight, max));
     el.style.overflowY = el.scrollHeight > max ? 'auto' : 'hidden';
     if (from && from !== to) {
       el.style.height = `${from}px`;
