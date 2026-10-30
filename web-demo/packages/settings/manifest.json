@@ -681,7 +681,7 @@
           "download": "下载失败"
         },
         "version": "版本 {version}",
-        "community_warn": "社区软件没人审过，装之前看清楚要什么权限",
+        "community_warn": "社区软件可能存在风险，避免随意安装",
         "about": "详情",
         "origin": "来源",
         "includes": "包含",
@@ -1278,7 +1278,7 @@
           "download": "Download failed"
         },
         "version": "Version {version}",
-        "community_warn": "Community packages are not reviewed; check the permissions before installing",
+        "community_warn": "Community packages may be risky; avoid installing them casually",
         "about": "Details",
         "origin": "Source",
         "includes": "Includes",
@@ -1875,7 +1875,7 @@
           "download": "ダウンロードに失敗しました"
         },
         "version": "バージョン {version}",
-        "community_warn": "コミュニティのソフトは審査されていません。必要な権限を確認してからインストールしてください",
+        "community_warn": "コミュニティのソフトには危険が含まれる可能性があります。むやみにインストールしないでください",
         "about": "詳細",
         "origin": "提供元",
         "includes": "含むもの",

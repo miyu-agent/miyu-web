@@ -379,7 +379,7 @@ function openDetail(dialog, id) {
 }
 
 /**
- * 详情：图标、名字、说明、版本、官方还是社区（社区的接一句没人审过），下面照看一眼的回应一行一项，底下右边一个大按钮。
+ * 详情：图标、名字、说明、版本、官方还是社区（社区的接一句可能有风险），下面照看一眼的回应一行一项，底下右边一个大按钮。
  * @param {any} dialog @param {string} id
  */
 function detailPage(dialog, id) {
