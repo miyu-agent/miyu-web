@@ -1,6 +1,7 @@
 //! 页面文件（`web-ui.md`「怎么走」第一条第 5 款）：`GET /` 给 `index.html`，别的照路径在页面目录里找。带 `..` 的、换成真实
 //! 位置以后跑到页面目录外的、不是普通文件的，404。不要登录也给（`web-module.md`「起草时定的」第 27 条）：里面没有秘密。
-//! 类型照扩展名查各家给的表；响应头一律带 `nosniff`、`no-referrer`、`no-cache` 和各家给的内容安全策略。
+//! 类型照扩展名查各家给的表；响应头一律带 `nosniff`、`no-referrer`、`no-cache` 和各家给的内容安全策略。带 `ETag`（大小加修改时间），
+//! `If-None-Match` 对上的回 304（2026-10-30：桌面端每次开窗口都整套重下）。
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -12,7 +13,7 @@ use hyper::{Method, Request, Response, StatusCode};
 use crate::respond::{Body, empty, full, secure, value};
 
 /// 给一个页面文件：页面目录 `pages`，内容安全策略 `csp`，扩展名（小写）到媒体类型的表 `types`。`GET`、`HEAD` 以外 405；
-/// 找不到的、读不了的 404；`HEAD` 只给头。
+/// 找不到的、读不了的 404；`HEAD` 只给头；`If-None-Match` 对上 [`etag`] 的 304、不读文件。
 pub async fn serve<B>(
     request: &Request<B>,
     pages: &Path,
@@ -25,6 +26,20 @@ pub async fn serve<B>(
     let Some(file) = find(pages, request.uri().path()) else {
         return empty(StatusCode::NOT_FOUND);
     };
+    let tag = tokio::fs::metadata(&file)
+        .await
+        .ok()
+        .as_ref()
+        .and_then(etag);
+    if let Some(tag) = &tag
+        && unchanged(request.headers().get(header::IF_NONE_MATCH), tag)
+    {
+        let mut response = empty(StatusCode::NOT_MODIFIED);
+        let headers = response.headers_mut();
+        headers.insert(header::ETAG, value(tag));
+        headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-cache"));
+        return response;
+    }
     let Ok(bytes) = tokio::fs::read(&file).await else {
         return empty(StatusCode::NOT_FOUND);
     };
@@ -37,8 +52,31 @@ pub async fn serve<B>(
     headers.insert(header::CONTENT_TYPE, value(type_of(types, &file)));
     headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-cache"));
     headers.insert(header::CONTENT_SECURITY_POLICY, value(csp));
+    if let Some(tag) = &tag {
+        headers.insert(header::ETAG, value(tag));
+    }
     secure(headers);
     response
+}
+
+/// 文件的版本标记：`"<大小>-<修改时间纳秒>"`，都是十六进制；读不到修改时间的没有。
+pub fn etag(meta: &std::fs::Metadata) -> Option<String> {
+    let modified = meta.modified().ok()?;
+    let nanos = modified
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()?
+        .as_nanos();
+    Some(format!("\"{:x}-{nanos:x}\"", meta.len()))
+}
+
+/// 浏览器手里的那一份还是这个版本：`If-None-Match` 里有 `tag`（弱比较，`W/` 前缀不管），或者是 `*`。
+pub fn unchanged(if_none_match: Option<&HeaderValue>, tag: &str) -> bool {
+    let Some(text) = if_none_match.and_then(|value| value.to_str().ok()) else {
+        return false;
+    };
+    text.split(',')
+        .map(str::trim)
+        .any(|one| one == "*" || one.trim_start_matches("W/") == tag)
 }
 
 /// 路径 `path` 照扩展名在表 `types` 里的媒体类型；表里没有的是 `application/octet-stream`。

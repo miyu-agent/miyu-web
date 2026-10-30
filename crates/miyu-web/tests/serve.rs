@@ -170,6 +170,37 @@ async fn pages_stay_inside_and_carry_the_headers() {
 }
 
 #[tokio::test]
+async fn a_page_the_browser_already_has_comes_back_as_304() {
+    let home = Home::new();
+    home.page("app.js", "let x = 1;");
+    let (_, port, _serving) = start(&home, 0, 600).await;
+    let host = format!("127.0.0.1:{port}");
+    let first = request(port, "GET", "/app.js", &host, &[]).await;
+    let tag = first.header("etag").expect("带 ETag").to_string();
+    assert!(tag.starts_with('"') && tag.ends_with('"'), "{tag}");
+    let again = request(port, "GET", "/app.js", &host, &[("If-None-Match", &tag)]).await;
+    assert_eq!(again.status, 304, "没变：问一声就够");
+    assert!(again.body.is_empty());
+    assert_eq!(again.header("etag"), Some(tag.as_str()));
+    assert_eq!(again.header("cache-control"), Some("no-cache"));
+    let weak = format!("W/{tag}");
+    let listed = format!("\"x\", {weak}");
+    assert_eq!(
+        request(port, "GET", "/app.js", &host, &[("If-None-Match", &listed)])
+            .await
+            .status,
+        304,
+        "一串里有它、弱比较"
+    );
+    // 改了：大小变了，标记跟着变，照常给
+    home.page("app.js", "let x = 2; // 长一点");
+    let changed = request(port, "GET", "/app.js", &host, &[("If-None-Match", &tag)]).await;
+    assert_eq!(changed.status, 200);
+    assert_eq!(changed.body, "let x = 2; // 长一点".as_bytes());
+    assert_ne!(changed.header("etag"), Some(tag.as_str()));
+}
+
+#[tokio::test]
 async fn idle_zero_never_leaves() {
     // 服务器上由服务管理器起的那一份写 0（2026-10-23 Z-1）：空着也不退，三秒后照样在给页面
     let home = Home::new();
