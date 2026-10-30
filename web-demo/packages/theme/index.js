@@ -48,6 +48,8 @@ export function apply(ctx) {
       for (const [k, v] of Object.entries(colors.page)) set(`--${k.replaceAll('_', '-')}`, v);
       for (const [k, v] of Object.entries(colors.tui)) set(`--t-${k.replaceAll('_', '-')}`, v);
       root.style.colorScheme = s;
+      // 根上写明暗，样式表照它挑（引导、登录的剪影标志暗色时画反面）
+      root.dataset.scheme = s;
       root.dataset.theme = p.id;
       ctx.emit('theme.changed', p.id);
     }, { animate: painted });
@@ -63,6 +65,7 @@ export function apply(ctx) {
   ctx.effect(() => () => {
     for (const name of written) root.style.removeProperty(name);
     root.style.colorScheme = '';
+    delete root.dataset.scheme;
     delete root.dataset.theme;
   });
   paint();

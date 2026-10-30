@@ -19,6 +19,11 @@
 /* 左上角：小的矢量剪影标志加等宽的「miyu」；欢迎页不出（右边有大的） */
 :root:not([data-skin="skin-pixel"]) .wl-brand { position: absolute; z-index: 5; top: 18px; left: 20px; display: flex; align-items: center; gap: 10px; color: var(--text); font: 700 calc(14px * var(--text-scale)) var(--font-mono); letter-spacing: -0.02em; pointer-events: none; }
 :root:not([data-skin="skin-pixel"]) .wl-mark { width: 26px; height: 26px; background: currentColor; -webkit-mask: url("../../resources/assets/mark.svg") center / contain no-repeat; mask: url("../../resources/assets/mark.svg") center / contain no-repeat; }
+/* 暗色照原图在暗底上的样子：画女孩那一块（mark-figure.svg），圆盘就是底色（2026-10-30 项目主人：logo 本来就是白色的，原来整个剪影照字色画，暗色下成了反色） */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-skin="skin-pixel"]):not([data-scheme="light"]) .wl-mark { -webkit-mask-image: url("../../resources/assets/mark-figure.svg"); mask-image: url("../../resources/assets/mark-figure.svg"); }
+}
+:root:not([data-skin="skin-pixel"])[data-scheme="dark"] .wl-mark { -webkit-mask-image: url("../../resources/assets/mark-figure.svg"); mask-image: url("../../resources/assets/mark-figure.svg"); }
 :root:not([data-skin="skin-pixel"]) .wl-layer.is-hello .wl-brand { display: none; }
 
 /* 顶上一条分段的细线：走过的、现在这一步是墨色，没到的是 line；悬停一段写那一步的名字 */

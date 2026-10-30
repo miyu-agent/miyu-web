@@ -6,24 +6,38 @@
 //! 一帧一帧画，都停了就不再请下一帧（WebKitGTK 里一直画整页都按帧重画，蓝图「动效」第 4 条）。系统要求减少动效的不乱跳、不画波纹。
 
 import { h } from '../../src/lib/dom.js';
-import { MASK, SIZE } from './glyph-mask.js';
+import { FIGURE, MASK, SIZE } from './glyph-mask.js';
 
 /** 乱码用的字符 */
 const SYMS = '!<>-_\\/[]{}=+*^?#~;:%$@&01';
 
-/** 点阵（解一次） @type {Uint8Array|null} */
-let bits = null;
-const mask = () => {
-  if (bits) return bits;
-  const raw = atob(MASK);
-  bits = new Uint8Array(SIZE * SIZE);
+/** 解开的点阵：亮色照剪影（黑的圆盘），暗色照反面（女孩），同原图在暗底上的样子（2026-10-30 项目主人：logo 本来就是白色的） @type {Map<string, Uint8Array>} */
+const decoded = new Map();
+/** @param {boolean} dark */
+const mask = (dark) => {
+  const key = dark ? 'figure' : 'mask';
+  const hit = decoded.get(key);
+  if (hit) return hit;
+  const raw = atob(dark ? FIGURE : MASK);
+  const bits = new Uint8Array(SIZE * SIZE);
   for (let i = 0; i < SIZE * SIZE; i++) bits[i] = (raw.charCodeAt(i >> 3) >> (7 - (i & 7))) & 1;
+  decoded.set(key, bits);
   return bits;
 };
 
-/** 这一格被剪影盖住了几成（3×3 取样） @param {number} x @param {number} y @param {number} cols @param {number} rows */
-function cover(x, y, cols, rows) {
-  const b = mask();
+/** 字色是亮的（暗色主题）：照字色的亮度认，不管是哪个主题、哪种写法 @param {string} color */
+function light(color) {
+  const c = document.createElement('canvas').getContext('2d');
+  if (!c) return false;
+  c.fillStyle = color;
+  c.fillRect(0, 0, 1, 1);
+  const [r, g, b] = c.getImageData(0, 0, 1, 1).data;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 128;
+}
+
+/** 这一格被剪影盖住了几成（3×3 取样） @param {number} x @param {number} y @param {number} cols @param {number} rows @param {boolean} dark */
+function cover(x, y, cols, rows, dark) {
+  const b = mask(dark);
   let s = 0;
   for (let j = 0; j < 3; j++) {
     for (let i = 0; i < 3; i++) {
@@ -62,11 +76,14 @@ export function glyphArt() {
   let frame = 0;
   /** 颜色照主题的几格（换了明暗、配色重读） */
   const colors = { ink: '', mute: '', faint: '' };
+  /** 字色是亮的：字符填女孩那一块（换了要重排格子） */
+  let dark = false;
   const readColors = () => {
     const cs = getComputedStyle(node);
     colors.ink = cs.getPropertyValue('--text').trim() || '#000';
     colors.mute = cs.getPropertyValue('--text-soft').trim() || colors.ink;
     colors.faint = cs.getPropertyValue('--text-faint').trim() || colors.mute;
+    dark = light(colors.ink);
   };
 
   const layout = () => {
@@ -76,6 +93,7 @@ export function glyphArt() {
     width = r.width;
     const height = r.height;
     if (!width) return;
+    readColors();
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(height * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -87,7 +105,7 @@ export function glyphArt() {
     cells = [];
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
-        const cov = cover(x, (oy / ch) + y, cols, height / ch);
+        const cov = cover(x, (oy / ch) + y, cols, height / ch, dark);
         const px = (x + 0.5) * cw;
         const py = oy + (y + 0.5) * ch;
         const kind = cov >= 0.5 ? 2 : cov > 0.12 ? 1 : 0;
@@ -102,7 +120,6 @@ export function glyphArt() {
     ctx.font = `500 ${(cw * 1.32).toFixed(2)}px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    readColors();
     wake();
   };
 
@@ -187,11 +204,13 @@ export function glyphArt() {
     layout();
   });
   sized.observe(canvas);
-  // 换了明暗、配色（根上的属性、样式变了）：重读颜色、画一帧
+  // 换了明暗、配色（根上的属性、样式变了）：重读颜色、画一帧；明暗换了照另一面重排格子
   const themed = new MutationObserver(() => {
     if (!node.isConnected) return stop();
+    const was = dark;
     readColors();
-    wake();
+    if (dark !== was) layout();
+    else wake();
   });
   themed.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style', 'data-scheme', 'data-theme', 'data-skin'] });
   const stop = () => {

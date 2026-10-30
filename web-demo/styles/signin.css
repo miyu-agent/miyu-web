@@ -22,6 +22,14 @@
 /* 卡片上沿左边的剪影标志；像素那一套的吉祥物图不露 */
 :root:not([data-skin="skin-pixel"]) .si-mascot { display: none; }
 :root:not([data-skin="skin-pixel"]) .si-mark { display: block; width: 30px; height: 30px; margin-bottom: calc(18px * var(--space)); background: var(--si-ink); -webkit-mask: url("../resources/assets/mark.svg") center / contain no-repeat; mask: url("../resources/assets/mark.svg") center / contain no-repeat; }
+/* 暗色照原图在暗底上的样子：画女孩那一块（mark-figure.svg），圆盘就是底色（同第一次引导；2026-10-30 项目主人）。明暗照字色的那一套认：主题写了的照主题（根上 data-scheme），
+   没有的照右上角点过的、再照系统 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-skin="skin-pixel"]):not([data-scheme="light"]):not([data-si-scheme="light"]) .si-mark { -webkit-mask-image: url("../resources/assets/mark-figure.svg"); mask-image: url("../resources/assets/mark-figure.svg"); }
+}
+:root:not([data-skin="skin-pixel"])[data-si-scheme="dark"]:not([data-scheme="light"]) .si-mark, :root:not([data-skin="skin-pixel"])[data-scheme="dark"] .si-mark {
+  -webkit-mask-image: url("../resources/assets/mark-figure.svg"); mask-image: url("../resources/assets/mark-figure.svg");
+}
 :root:not([data-skin="skin-pixel"]) .si-head { display: grid; gap: calc(8px * var(--space)); margin-bottom: calc(14px * var(--space)); }
 :root:not([data-skin="skin-pixel"]) .si-steps { display: flex; gap: 4px; margin: 0; padding: 0; list-style: none; }
 :root:not([data-skin="skin-pixel"]) .si-steps li { flex: 1; height: 2px; background: var(--si-line); }
