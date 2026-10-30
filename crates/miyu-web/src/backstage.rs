@@ -5,6 +5,7 @@
 #[cfg(test)]
 mod tests;
 
+use std::net::IpAddr;
 use std::path::Path;
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Duration;
@@ -32,6 +33,8 @@ pub(crate) struct Page {
     login: String,
     /// 包的编号。
     package: String,
+    /// 换票据的请求从别的机器来（对端地址）：读文件的时候也照远程问核心（第二轮审查 W2-1）。
+    remote: Option<IpAddr>,
 }
 
 impl Owned for Page {
@@ -66,7 +69,11 @@ impl Backstage {
 }
 
 /// `POST /page`：这个包有后台页的，换一张票据。
-pub(crate) async fn post(request: Request<Incoming>, site: Arc<Site>) -> Response<Body> {
+pub(crate) async fn post(
+    request: Request<Incoming>,
+    site: Arc<Site>,
+    remote: Option<IpAddr>,
+) -> Response<Body> {
     if request.method() != Method::POST {
         return empty(StatusCode::METHOD_NOT_ALLOWED);
     }
@@ -77,7 +84,7 @@ pub(crate) async fn post(request: Request<Incoming>, site: Arc<Site>) -> Respons
         return empty(StatusCode::BAD_REQUEST);
     };
     // 先问核心这个包有没有后台页：`package.list` 的那一项 `page` 是真的。
-    let listed = match ask(&site, &login, "package.list", json!({})).await {
+    let listed = match ask(&site, &login, remote, "package.list", json!({})).await {
         Ok(listed) => listed,
         Err(failed) => return refused(&site, &login, &failed),
     };
@@ -93,6 +100,7 @@ pub(crate) async fn post(request: Request<Incoming>, site: Arc<Site>) -> Respons
         Page {
             login,
             package: package.clone(),
+            remote,
         },
         || fresh.take().unwrap_or_default(),
     );
@@ -114,7 +122,11 @@ pub(crate) async fn post(request: Request<Incoming>, site: Arc<Site>) -> Respons
 }
 
 /// `GET /p/<票据>/<包>/<路径>`：照票据给这个包后台页里的一份文件。
-pub(crate) async fn get(request: Request<Incoming>, site: Arc<Site>) -> Response<Body> {
+pub(crate) async fn get(
+    request: Request<Incoming>,
+    site: Arc<Site>,
+    remote: Option<IpAddr>,
+) -> Response<Body> {
     let busy = site.busy();
     if request.method() != Method::GET {
         return empty(StatusCode::METHOD_NOT_ALLOWED);
@@ -128,8 +140,10 @@ pub(crate) async fn get(request: Request<Incoming>, site: Arc<Site>) -> Response
     if page.package != package {
         return empty(StatusCode::NOT_FOUND);
     }
+    // 这一次的对端、换票据时的对端有一个是别的机器的，照远程问核心
+    let remote = remote.or(page.remote);
     // 先读第一块：知道一共多大、有没有这份文件，再写响应头。
-    let first = match read(&site, &page, &path, 0).await {
+    let first = match read(&site, &page, remote, &path, 0).await {
         Ok(first) => first,
         Err(failed) => return refused(&site, &page.login, &failed),
     };
@@ -157,7 +171,7 @@ pub(crate) async fn get(request: Request<Incoming>, site: Arc<Site>) -> Response
         HeaderValue::from_static("*"),
     );
     crate::serve::secure(headers);
-    tokio::spawn(pour(site, page, path, first, out, busy));
+    tokio::spawn(pour(site, page, remote, path, first, out, busy));
     response
 }
 
@@ -173,6 +187,7 @@ struct Chunk {
 async fn pour(
     site: Arc<Site>,
     page: Page,
+    remote: Option<IpAddr>,
     path: String,
     first: Chunk,
     out: mpsc::Sender<Result<Frame<Bytes>, std::io::Error>>,
@@ -192,7 +207,7 @@ async fn pour(
             tracing::warn!(target: TARGET, offset, error = "shorter than said", "page cut short");
             return cut(&out).await;
         }
-        let bytes = match read(&site, &page, &path, offset).await {
+        let bytes = match read(&site, &page, remote, &path, offset).await {
             Ok(chunk) if !chunk.bytes.is_empty() => {
                 eof = chunk.eof;
                 chunk.bytes
@@ -226,10 +241,17 @@ async fn cut(out: &mpsc::Sender<Result<Frame<Bytes>, std::io::Error>>) {
 }
 
 /// 问一块。
-async fn read(site: &Site, page: &Page, path: &str, offset: u64) -> Result<Chunk, Failed> {
+async fn read(
+    site: &Site,
+    page: &Page,
+    remote: Option<IpAddr>,
+    path: &str,
+    offset: u64,
+) -> Result<Chunk, Failed> {
     let answer = ask(
         site,
         &page.login,
+        remote,
         "package.file",
         json!({"package": page.package, "path": path, "offset": offset}),
     )
@@ -247,11 +269,17 @@ async fn read(site: &Site, page: &Page, path: &str, offset: u64) -> Result<Chunk
     })
 }
 
-/// 照登录令牌问核心一次（和 `/media` 共用连着的核心）。
-async fn ask(site: &Site, login: &str, method: &str, params: Value) -> Result<Value, Failed> {
+/// 照登录令牌问核心一次（和 `/media` 共用连着的核心；远程来的走说过 `connection.remote` 的那条）。
+async fn ask(
+    site: &Site,
+    login: &str,
+    remote: Option<IpAddr>,
+    method: &str,
+    params: Value,
+) -> Result<Value, Failed> {
     site.media
         .cores
-        .call(&site.root, &site.core, login, method, params)
+        .call(&site.root, &site.core, login, remote, method, params)
         .await
 }
 

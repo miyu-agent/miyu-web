@@ -84,6 +84,8 @@ pub(crate) struct Site {
     pub(crate) backstage: Backstage,
     /// 盯着桌面壁纸（`/wallpaper/events`）。
     pub(crate) wallpaper: crate::desk::wallpaper::Follow,
+    /// 同时连着的 WebSocket（[`MOST_WEBSOCKETS`]、[`MOST_REMOTE_WEBSOCKETS`]）。
+    slots: miyu_webserve::ws::Slots,
     /// 连着几个 WebSocket、几个 `/media`、后台页在给。
     active: AtomicUsize,
     /// 最后一个走的时候。
@@ -179,7 +181,23 @@ impl miyu_webserve::Site for Site {
     fn busy(self: &Arc<Self>) -> Busy {
         Site::busy(self)
     }
+
+    fn slots(&self) -> Option<&miyu_webserve::ws::Slots> {
+        Some(&self.slots)
+    }
 }
+
+/// 同时连着的 WebSocket 最多几条、别的机器来的最多几条（2026-10-30 第二轮审查 W2-2，项目主人定：一个人用远远够；开了局域网以后同网段的
+/// 人不用凭据就能开空连接，不限会把网页软件和核心的连接占满）。
+pub const MOST_WEBSOCKETS: usize = 256;
+/// 见 [`MOST_WEBSOCKETS`]。
+pub const MOST_REMOTE_WEBSOCKETS: usize = 32;
+
+/// 请求头最多读多久（hyper 的默认，要装了计时器才生效；第二轮审查 W2-2：原来没装，发半截请求头的连接一直挂着）。
+const HEADER_READ: Duration = Duration::from_secs(30);
+
+/// `accept` 出错（文件描述符用完这类）以后歇多久再接：不歇的话下一圈马上又错，一直空转。
+const ACCEPT_PAUSE: Duration = Duration::from_secs(1);
 
 /// 出厂端口被占时往后试几个（2026-10-30 项目主人：固定端口配端口回退）：8300 被占试 8301 到 8309。
 pub const FALLBACK_PORTS: u16 = 9;
@@ -262,6 +280,7 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
         media,
         backstage,
         wallpaper: crate::desk::wallpaper::Follow::default(),
+        slots: miyu_webserve::ws::Slots::new(MOST_WEBSOCKETS, MOST_REMOTE_WEBSOCKETS),
         active: AtomicUsize::new(0),
         quiet_since: Mutex::new(Instant::now()),
         wake: Notify::new(),
@@ -299,8 +318,12 @@ async fn accept(
         let next = quiet.into_iter().chain(links).min();
         let swap = tokio::select! {
             accepted = listener.accept() => {
-                if let Ok((stream, peer)) = accepted {
-                    serve_one(stream, peer, site);
+                match accepted {
+                    Ok((stream, peer)) => serve_one(stream, peer, site),
+                    Err(error) => {
+                        tracing::warn!(target: TARGET, error = %error, "accept failed");
+                        tokio::time::sleep(ACCEPT_PAUSE).await;
+                    }
                 }
                 continue;
             }
@@ -337,6 +360,8 @@ fn serve_one(stream: tokio::net::TcpStream, peer: SocketAddr, site: &Arc<Site>) 
         let service =
             hyper::service::service_fn(move |request| handle(request, Arc::clone(&site), remote));
         let served = hyper::server::conn::http1::Builder::new()
+            .timer(hyper_util::rt::TokioTimer::new())
+            .header_read_timeout(HEADER_READ)
             .serve_connection(TokioIo::new(stream), service)
             .with_upgrades()
             .await;
@@ -381,19 +406,20 @@ async fn handle(
         return Ok(crate::desk::handle(request, site, remote).await);
     }
     if path == "/listen" {
-        return Ok(listen::handle(request, site).await);
+        return Ok(listen::handle(request, site, remote).await);
     }
     if path == "/media" {
-        return Ok(media::post(request, site).await);
+        // 从别的机器来的：替它连核心时先说是远程的（第二轮审查 W2-1）
+        return Ok(media::post(request, site, remote).await);
     }
     if path.starts_with("/media/") {
-        return Ok(media::get(request, site).await);
+        return Ok(media::get(request, site, remote).await);
     }
     if path == "/page" {
-        return Ok(backstage::post(request, site).await);
+        return Ok(backstage::post(request, site, remote).await);
     }
     if path.starts_with("/p/") {
-        return Ok(backstage::get(request, site).await);
+        return Ok(backstage::get(request, site, remote).await);
     }
     let settings = &site.settings;
     Ok(miyu_webserve::pages::serve(&request, &site.pages, &settings.csp, &settings.types).await)

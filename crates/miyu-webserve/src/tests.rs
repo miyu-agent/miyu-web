@@ -210,3 +210,19 @@ fn paths_that_leave_or_cannot_be_read_find_nothing() {
         // 删不掉就留在临时目录里，不影响测试。
     }
 }
+
+#[test]
+fn websocket_slots_have_a_total_and_a_remote_limit() {
+    let slots = crate::ws::Slots::new(3, 1);
+    let near = slots.take(false).expect("有空");
+    let far = slots.take(true).expect("远程的第一条");
+    assert!(slots.take(true).is_none(), "远程的满了");
+    let third = slots.take(false).expect("本机的还有一格");
+    assert!(slots.take(false).is_none(), "一共满了");
+    assert_eq!(slots.used(), (3, 1));
+    drop(far);
+    assert_eq!(slots.used(), (2, 0), "放下了还回去");
+    let again = slots.take(true).expect("远程的空出来了");
+    drop((near, third, again));
+    assert_eq!(slots.used(), (0, 0));
+}

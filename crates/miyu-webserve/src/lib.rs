@@ -44,6 +44,11 @@ pub trait Site: Send + Sync + 'static {
     /// 数上一个连着的 WebSocket。
     fn busy(self: &Arc<Self>) -> Self::Busy;
 
+    /// 同时连着的 WebSocket 的上限（[`ws::Slots`]，第二轮审查 W2-2）：满了的新连接回 503。不限的是空的。
+    fn slots(&self) -> Option<&ws::Slots> {
+        None
+    }
+
     /// Host、Origin 认的三种写法（不带协议）。
     fn hosts(&self) -> [String; 3] {
         let port = self.port();

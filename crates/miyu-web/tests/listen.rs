@@ -159,39 +159,44 @@ async fn a_new_address_is_listened_on_at_once_and_the_idle_exit_waits() {
     };
     let home = Home::new();
     // 空闲 1 秒就退：听了局域网就不退
-    let (_, port, serving) = start_configured(&home, 0, settings(1), false, Some(0), false).await;
     let wanted = Arc::new(Mutex::new(config(&lan.to_string(), 0)));
-    core_with(&home, Arc::clone(&wanted));
-    let (status, body) = post(port, Some("good")).await;
+    let push = core_with(&home, Arc::clone(&wanted));
+    let (_, port, serving) = start_configured(&home, 0, settings(1), false, Some(0), true).await;
+    // 网页软件起来就跟着配置换到局域网地址；这时本机还连得上就等它换完
+    within("换到局域网地址", async {
+        while tokio::net::TcpStream::connect((lan, port)).await.is_err() {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+    })
+    .await;
+    let host = format!("{lan}:{port}");
+    let (status, body) = send_to(lan, port, &host, "GET").await;
     assert_eq!(status, 200);
     assert_eq!(
         body,
         json!({"listen": lan.to_string(), "port": port, "lan": format!("http://{lan}:{port}")}),
         "端口不变，换了地址"
     );
-    let from_lan = tokio::net::TcpStream::connect((lan, port)).await;
-    assert!(from_lan.is_ok(), "局域网地址连得上");
-    drop(from_lan);
+    // 局域网来的 POST /listen 不认（第二轮审查 W2-1：它替请求连核心不说远程）
+    assert_eq!(send_to(lan, port, &host, "POST").await.0, 403);
     tokio::time::sleep(Duration::from_millis(2500)).await;
     assert!(!serving.is_finished(), "听局域网的空闲到点不退");
-    // 换回回环：照旧空闲退出
+    // 换回回环（推来改动）：照旧空闲退出
     *wanted.lock().expect("没坏") = config("127.0.0.1", 0);
-    let host = format!("{lan}:{port}");
-    let back = send_to(lan, port, &host).await;
-    assert_eq!(back["listen"], json!("127.0.0.1"), "{back}");
+    push.notify_one();
     within("空闲退出", serving)
         .await
         .expect("没崩")
         .expect("正常退");
 }
 
-/// 从 `ip` 连进来 `POST /listen`（Host 写 `host`），带好的登录令牌：交回回应的 JSON。
-async fn send_to(ip: std::net::IpAddr, port: u16, host: &str) -> Value {
+/// 从 `ip` 连进来 `<method> /listen`（Host 写 `host`），带好的登录令牌：交回状态码和回应的 JSON（不是 JSON 的是 `null`）。
+async fn send_to(ip: std::net::IpAddr, port: u16, host: &str, method: &str) -> (u16, Value) {
     let mut stream = tokio::net::TcpStream::connect((ip, port))
         .await
         .expect("连得上");
     let text = format!(
-        "POST /listen HTTP/1.1\r\nHost: {host}\r\nAuthorization: Bearer good\r\nConnection: close\r\n\r\n"
+        "{method} /listen HTTP/1.1\r\nHost: {host}\r\nAuthorization: Bearer good\r\nConnection: close\r\n\r\n"
     );
     stream.write_all(text.as_bytes()).await.expect("写得进");
     let mut bytes = Vec::new();
@@ -202,7 +207,15 @@ async fn send_to(ip: std::net::IpAddr, port: u16, host: &str) -> Value {
         .windows(4)
         .position(|window| window == b"\r\n\r\n")
         .expect("有头");
-    serde_json::from_slice(&bytes[split + 4..]).expect("是 JSON")
+    let status = String::from_utf8_lossy(&bytes[..split])
+        .split(' ')
+        .nth(1)
+        .and_then(|code| code.parse().ok())
+        .expect("有状态码");
+    (
+        status,
+        serde_json::from_slice(&bytes[split + 4..]).unwrap_or(Value::Null),
+    )
 }
 
 #[tokio::test]

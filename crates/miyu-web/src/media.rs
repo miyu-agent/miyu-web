@@ -8,6 +8,7 @@ mod range;
 mod tests;
 pub(crate) mod tickets;
 
+use std::net::IpAddr;
 use std::path::Path;
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
@@ -74,7 +75,11 @@ impl Media {
 }
 
 /// `POST /media`：换一张票据。
-pub(crate) async fn post(request: Request<Incoming>, site: Arc<Site>) -> Response<Body> {
+pub(crate) async fn post(
+    request: Request<Incoming>,
+    site: Arc<Site>,
+    remote: Option<IpAddr>,
+) -> Response<Body> {
     if request.method() != Method::POST {
         return empty(StatusCode::METHOD_NOT_ALLOWED);
     }
@@ -85,7 +90,7 @@ pub(crate) async fn post(request: Request<Incoming>, site: Arc<Site>) -> Respons
         return empty(StatusCode::BAD_REQUEST);
     };
     // 先问核心有没有、能不能读。
-    if let Err(failed) = size(&site, &login, &source).await {
+    if let Err(failed) = size(&site, &login, remote, &source).await {
         return refused(&site, &login, &failed);
     }
     let wanted = Wanted {
@@ -94,6 +99,7 @@ pub(crate) async fn post(request: Request<Incoming>, site: Arc<Site>) -> Respons
         kind,
         name,
         download,
+        remote,
     };
     let mut fresh = tickets::fresh();
     let ticket = site
@@ -115,8 +121,12 @@ pub(crate) async fn post(request: Request<Incoming>, site: Arc<Site>) -> Respons
     response
 }
 
-/// `GET /media/<票据>`：照票据给，能带 `Range`。
-pub(crate) async fn get(request: Request<Incoming>, site: Arc<Site>) -> Response<Body> {
+/// `GET /media/<票据>`：照票据给，能带 `Range`。这一次的对端、换票据时的对端有一个是别的机器的，照远程问核心。
+pub(crate) async fn get(
+    request: Request<Incoming>,
+    site: Arc<Site>,
+    remote: Option<IpAddr>,
+) -> Response<Body> {
     let busy = site.busy();
     if request.method() != Method::GET {
         return empty(StatusCode::METHOD_NOT_ALLOWED);
@@ -126,7 +136,8 @@ pub(crate) async fn get(request: Request<Incoming>, site: Arc<Site>) -> Response
         return empty(StatusCode::NOT_FOUND);
     };
     // 文件可能变了：照这时的大小算（`web-ui.md`「施工时定的」第 14 条）。
-    let size = match size(&site, &wanted.login, &wanted.source).await {
+    let remote = remote.or(wanted.remote);
+    let size = match size(&site, &wanted.login, remote, &wanted.source).await {
         Ok(size) => size,
         Err(failed) => return refused(&site, &wanted.login, &failed),
     };
@@ -185,7 +196,7 @@ pub(crate) async fn get(request: Request<Incoming>, site: Arc<Site>) -> Response
         );
     }
     crate::serve::secure(headers);
-    tokio::spawn(pour(site, wanted, start, end, out, busy));
+    tokio::spawn(pour(site, wanted, remote, start, end, out, busy));
     response
 }
 
@@ -194,6 +205,7 @@ pub(crate) async fn get(request: Request<Incoming>, site: Arc<Site>) -> Response
 async fn pour(
     site: Arc<Site>,
     wanted: Wanted,
+    remote: Option<IpAddr>,
     start: u64,
     end: u64,
     out: mpsc::Sender<Result<Frame<Bytes>, std::io::Error>>,
@@ -202,7 +214,7 @@ async fn pour(
     let mut offset = start;
     while offset < end {
         let length = CHUNK.min(end - offset);
-        let bytes = match read(&site, &wanted, offset, length).await {
+        let bytes = match read(&site, &wanted, remote, offset, length).await {
             Ok(bytes) if !bytes.is_empty() => bytes,
             Ok(_) => {
                 tracing::warn!(target: TARGET, offset, error = "shorter than said", "media cut short");
@@ -234,25 +246,37 @@ async fn cut(out: &mpsc::Sender<Result<Frame<Bytes>, std::io::Error>>) {
 }
 
 /// 问一块：交回这一段的字节。
-async fn read(site: &Site, wanted: &Wanted, offset: u64, length: u64) -> Result<Vec<u8>, Failed> {
-    let answer = ask(site, &wanted.login, &wanted.source, offset, length).await?;
+async fn read(
+    site: &Site,
+    wanted: &Wanted,
+    remote: Option<IpAddr>,
+    offset: u64,
+    length: u64,
+) -> Result<Vec<u8>, Failed> {
+    let answer = ask(site, &wanted.login, remote, &wanted.source, offset, length).await?;
     STANDARD
         .decode(answer["data"].as_str().unwrap_or_default())
         .map_err(|error| Failed::Unreachable(format!("bad data: {error}")))
 }
 
 /// 问大小（`length` 写 0）。
-async fn size(site: &Site, login: &str, source: &Source) -> Result<u64, Failed> {
-    let answer = ask(site, login, source, 0, 0).await?;
+async fn size(
+    site: &Site,
+    login: &str,
+    remote: Option<IpAddr>,
+    source: &Source,
+) -> Result<u64, Failed> {
+    let answer = ask(site, login, remote, source, 0, 0).await?;
     answer["size"]
         .as_u64()
         .ok_or_else(|| Failed::Unreachable("no size".into()))
 }
 
-/// 照来源问 `blob.get` 或者 `fs.read`。
+/// 照来源问 `blob.get` 或者 `fs.read`；远程来的（`remote`）走说过 `connection.remote` 的那条连接。
 async fn ask(
     site: &Site,
     login: &str,
+    remote: Option<IpAddr>,
     source: &Source,
     offset: u64,
     length: u64,
@@ -269,7 +293,7 @@ async fn ask(
     };
     site.media
         .cores
-        .call(&site.root, &site.core, login, method, params)
+        .call(&site.root, &site.core, login, remote, method, params)
         .await
 }
 

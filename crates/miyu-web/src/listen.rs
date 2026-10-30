@@ -28,10 +28,16 @@ pub(crate) struct Swap {
 /// 往接连接的那一圈递 [`Swap`] 的口子。
 pub(crate) type Swaps = mpsc::Sender<Swap>;
 
-/// 一个 `/listen` 请求。
-pub(crate) async fn handle(request: Request<Incoming>, site: Arc<Site>) -> Response<Body> {
+/// 一个 `/listen` 请求。`POST` 只给这台电脑上来的（`remote` 是空的）：它替请求连核心用的是另一条连法，不说远程（第二轮审查 W2-1）；
+/// 局域网上的页面照样改配置，网页软件自己跟着配置换（`follow`），用不着它。
+pub(crate) async fn handle(
+    request: Request<Incoming>,
+    site: Arc<Site>,
+    remote: Option<std::net::IpAddr>,
+) -> Response<Body> {
     match *request.method() {
         Method::GET | Method::HEAD => answer(&site, None),
+        Method::POST if remote.is_some() => empty(StatusCode::FORBIDDEN),
         Method::POST => {
             let Some(login) = crate::media::bearer(&request) else {
                 return empty(StatusCode::UNAUTHORIZED);

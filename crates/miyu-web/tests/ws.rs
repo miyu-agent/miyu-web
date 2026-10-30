@@ -63,12 +63,13 @@ async fn frames_and_lines_pass_through_untouched() {
     let mut ws = browser(port, Some(&format!("http://127.0.0.1:{port}")))
         .await
         .expect("接了");
-    let connection = within("核心接到连接", core.accept()).await.expect("接得到");
-    let (read, mut write) = tokio::io::split(connection);
-    let mut lines = BufReader::new(read);
+    // 浏览器先说话（握手），网页软件才连核心（第二轮审查 W2-2）
     let hello =
         r#"{"id":"h","jsonrpc":"2.0","method":"hello","params":{"code":"9f03","protocol":[1,1]}}"#;
     ws.send(Message::text(hello)).await.expect("发得出");
+    let connection = within("核心接到连接", core.accept()).await.expect("接得到");
+    let (read, mut write) = tokio::io::split(connection);
+    let mut lines = BufReader::new(read);
     let mut line = String::new();
     within("核心读到", lines.read_line(&mut line))
         .await
@@ -132,12 +133,12 @@ async fn on_the_lan_a_connection_from_another_address_is_told_to_the_core_first(
     socket.bind((lan, 0).into()).expect("绑得上");
     let stream = socket.connect((lan, port).into()).await.expect("连得上");
     let (mut ws, _) = client_async(request, stream).await.expect("接了");
-    let connection = within("核心接到连接", core.accept()).await.expect("接得到");
-    let (read, _write) = tokio::io::split(connection);
-    let mut lines = BufReader::new(read);
     let hello =
         r#"{"id":"h","jsonrpc":"2.0","method":"hello","params":{"password":"x","protocol":[1,1]}}"#;
     ws.send(Message::text(hello)).await.expect("发得出");
+    let connection = within("核心接到连接", core.accept()).await.expect("接得到");
+    let (read, _write) = tokio::io::split(connection);
+    let mut lines = BufReader::new(read);
     let mut first = String::new();
     within("核心读到", lines.read_line(&mut first))
         .await
@@ -207,6 +208,7 @@ async fn binary_and_oversized_frames_close_the_socket() {
     let (_, port, _serving) = start(&home, 0, 600).await;
     let origin = format!("http://127.0.0.1:{port}");
     let mut ws = browser(port, Some(&origin)).await.expect("接了");
+    ws.send(Message::text("{}")).await.expect("发得出");
     let _first = within("核心接到", core.accept()).await;
     ws.send(Message::Binary(Bytes::from_static(b"\x00\x01")))
         .await
@@ -216,11 +218,21 @@ async fn binary_and_oversized_frames_close_the_socket() {
         Some(CloseCode::Unsupported)
     );
     let mut ws = browser(port, Some(&origin)).await.expect("接了");
+    ws.send(Message::text("{}")).await.expect("发得出");
     let _second = within("核心接到", core.accept()).await;
     ws.send(Message::text("x".repeat((1 << 20) + 1)))
         .await
         .expect("发得出");
     assert_eq!(close_code(next(&mut ws).await), Some(CloseCode::Size));
+    // 第一帧就是二进制的：照样 1003，不连核心
+    let mut ws = browser(port, Some(&origin)).await.expect("接了");
+    ws.send(Message::Binary(Bytes::from_static(b"\x00")))
+        .await
+        .expect("发得出");
+    assert_eq!(
+        close_code(next(&mut ws).await),
+        Some(CloseCode::Unsupported)
+    );
 }
 
 /// 关的时候不带着没读的数据关：照原始的字节发一帧超过 1 MiB 的，等服务端关了再读，读到关闭帧 1009、再读到头，不是连接被重置。
@@ -253,7 +265,8 @@ async fn an_oversized_frame_is_closed_without_a_reset() {
         "{}",
         String::from_utf8_lossy(&head)
     );
-    let _connection = within("核心接到", core.accept()).await;
+    // 超长的就是第一帧：不连核心，照样 1009、不带着没读的数据关
+    let _core = &mut core;
     let size = (1usize << 20) + 1;
     let mask = [1u8, 2, 3, 4];
     let mut frame = vec![0x81, 0x80 | 127];
@@ -280,6 +293,8 @@ async fn an_unreachable_core_is_reported_then_closed() {
     let mut ws = browser(port, Some(&format!("http://127.0.0.1:{port}")))
         .await
         .expect("接了");
+    // 浏览器说了话才去连核心
+    ws.send(Message::text("{}")).await.expect("发得出");
     match next(&mut ws).await {
         Some(Message::Text(text)) => {
             let notice: serde_json::Value = serde_json::from_str(text.as_str()).expect("是 JSON");
@@ -299,6 +314,7 @@ async fn an_open_socket_keeps_it_from_idling() {
     let mut ws = browser(port, Some(&format!("http://127.0.0.1:{port}")))
         .await
         .expect("接了");
+    ws.send(Message::text("{}")).await.expect("发得出");
     let connection = within("核心接到连接", core.accept()).await.expect("接得到");
     // 空闲一秒就退；连着一条 WebSocket，过了两倍多还在。
     tokio::time::sleep(Duration::from_millis(2500)).await;

@@ -7,11 +7,16 @@
 //!
 //! 一个标签页一条核心连接，不合并（`web-module.md`「起草时定的」第 3 条）。往浏览器写的都经一个写的任务：两头都可能要关它。
 //!
+//! 有上限的（[`Slots`]，2026-10-30 第二轮审查 W2-2、项目主人定：总共 256 条、别的机器来的 32 条）满了回 503；升级以后先等浏览器的
+//! 第一帧（[`FIRST_FRAME`] 以内，就是握手），等到了才连核心：开着不说话的空连接不占核心的连接。
+//!
 //! 关了以后不马上放掉套接字：先关写的一半，把浏览器还在发的读掉、扔掉（最多等 `LINGER`），读到头再放。带着没读的数据
 //! 关，系统回的是 RST，刚写出去的关闭帧可能被对面丢掉：一帧超过 1 MiB 时帧的正文没读，Windows 上浏览器只看到连接被重置，
 //! 收不到 1009（W-9 验收时 CI 上查出来的）。
 
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Duration;
 
 use futures_util::{SinkExt, StreamExt};
 use hyper::body::Incoming;
@@ -33,7 +38,70 @@ use crate::{Site, TARGET};
 const LIMIT: usize = 1 << 20;
 
 /// 关了以后最多等多久把浏览器还在发的读掉。
-const LINGER: std::time::Duration = std::time::Duration::from_secs(2);
+const LINGER: Duration = Duration::from_secs(2);
+
+/// 升级以后等浏览器第一帧（握手）最多多久：等不到的关掉，不连核心。
+pub const FIRST_FRAME: Duration = Duration::from_secs(10);
+
+/// 同时连着的 WebSocket 数着：一共几条、别的机器来的几条，各有上限。
+pub struct Slots {
+    counts: Arc<[AtomicUsize; 2]>,
+    most: usize,
+    most_remote: usize,
+}
+
+impl Slots {
+    /// 一共最多 `most` 条，别的机器来的最多 `most_remote` 条。
+    #[must_use]
+    pub fn new(most: usize, most_remote: usize) -> Slots {
+        Slots {
+            counts: Arc::new([AtomicUsize::new(0), AtomicUsize::new(0)]),
+            most,
+            most_remote,
+        }
+    }
+
+    /// 占一格：满了的是空的。`remote` 是别的机器来的。
+    pub fn take(&self, remote: bool) -> Option<Slot> {
+        let [all, far] = &*self.counts;
+        if all.fetch_add(1, Ordering::AcqRel) >= self.most {
+            all.fetch_sub(1, Ordering::AcqRel);
+            return None;
+        }
+        if remote && far.fetch_add(1, Ordering::AcqRel) >= self.most_remote {
+            far.fetch_sub(1, Ordering::AcqRel);
+            all.fetch_sub(1, Ordering::AcqRel);
+            return None;
+        }
+        Some(Slot {
+            counts: Arc::clone(&self.counts),
+            remote,
+        })
+    }
+
+    /// 现在连着几条：一共、别的机器来的。
+    #[must_use]
+    pub fn used(&self) -> (usize, usize) {
+        let [all, far] = &*self.counts;
+        (all.load(Ordering::Acquire), far.load(Ordering::Acquire))
+    }
+}
+
+/// 占着的一格：放下了还回去。
+pub struct Slot {
+    counts: Arc<[AtomicUsize; 2]>,
+    remote: bool,
+}
+
+impl Drop for Slot {
+    fn drop(&mut self) {
+        let [all, far] = &*self.counts;
+        all.fetch_sub(1, Ordering::AcqRel);
+        if self.remote {
+            far.fetch_sub(1, Ordering::AcqRel);
+        }
+    }
+}
 
 /// 接一个 WebSocket：Origin 不对 403，不是升级请求 400；对的回 101，升级好以后在别的任务里转。`remote` 是从别的机器来的连接的对端地址
 /// （[`crate::remote`]）：转给核心以前先说一声它是远程的（`connection.remote`，SU-1），本机来的是空的。
@@ -73,8 +141,18 @@ pub fn accept<S: Site>(
     else {
         return empty(StatusCode::BAD_REQUEST);
     };
+    // 满了的不接（第二轮审查 W2-2）
+    let slot = match site.slots().map(|slots| slots.take(remote.is_some())) {
+        Some(None) => {
+            tracing::warn!(target: TARGET, remote = remote.is_some(), "too many websockets");
+            return empty(StatusCode::SERVICE_UNAVAILABLE);
+        }
+        Some(Some(slot)) => Some(slot),
+        None => None,
+    };
     let accept = derive_accept_key(key.as_bytes());
     tokio::spawn(async move {
+        let _slot = slot;
         match hyper::upgrade::on(request).await {
             Ok(upgraded) => bridge(TokioIo::new(upgraded), site, remote).await,
             Err(error) => tracing::debug!(target: TARGET, error = %error, "not upgraded"),
@@ -123,6 +201,29 @@ where
         }
         sink
     });
+    // 先等浏览器的第一帧（握手）：等不到的关掉，不连核心（第二轮审查 W2-2）
+    let first = match tokio::time::timeout(FIRST_FRAME, frames.next()).await {
+        Ok(Some(Ok(Message::Text(text)))) => text,
+        Ok(Some(Ok(Message::Binary(_)))) => {
+            send(&out, close(CloseCode::Unsupported)).await;
+            drop(out);
+            finish(writer, frames).await;
+            return;
+        }
+        Ok(Some(Err(Error::Capacity(_)))) => {
+            send(&out, close(CloseCode::Size)).await;
+            drop(out);
+            finish(writer, frames).await;
+            return;
+        }
+        _ => {
+            tracing::debug!(target: TARGET, "websocket said nothing");
+            send(&out, close(CloseCode::Policy)).await;
+            drop(out);
+            finish(writer, frames).await;
+            return;
+        }
+    };
     let core =
         match miyu_client::connect::connect_or_start_bare(site.root(), || (site.core())()).await {
             Ok(core) => core,
@@ -159,6 +260,18 @@ where
             finish(writer, frames).await;
             return;
         }
+    }
+    // 等到的第一帧照常转过去
+    let written = async {
+        write.write_all(first.as_bytes()).await?;
+        write.write_all(b"\n").await?;
+        write.flush().await
+    };
+    if written.await.is_err() {
+        send(&out, close(CloseCode::Restart)).await;
+        drop(out);
+        finish(writer, frames).await;
+        return;
     }
     // 核心 → 浏览器：一行一个文字帧；核心断了关 1012，叫浏览器那头的循环停下。
     let (gone, core_gone) = oneshot::channel::<()>();

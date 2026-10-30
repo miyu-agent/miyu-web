@@ -32,6 +32,8 @@ pub(crate) struct Wanted {
     pub(crate) name: Option<String>,
     /// 叫浏览器存下来。
     pub(crate) download: bool,
+    /// 换票据的请求从别的机器来（对端地址）：拿票读的时候也照远程问核心（第二轮审查 W2-1）。
+    pub(crate) remote: Option<std::net::IpAddr>,
 }
 
 impl Owned for Wanted {

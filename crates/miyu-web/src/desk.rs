@@ -71,6 +71,7 @@ async fn check(site: &Site, login: &str) -> Result<(), StatusCode> {
             &site.root,
             &site.core,
             login,
+            None,
             "config.get",
             json!({"keys": ["web.port"]}),
         )

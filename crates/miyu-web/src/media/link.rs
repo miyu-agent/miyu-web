@@ -2,6 +2,7 @@
 //! 60 秒没人用就关（`web-ui.md`「施工时定的」第 12 条）。核心断了、握手被拒的，下一问重连。
 
 use std::collections::HashMap;
+use std::net::IpAddr;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
@@ -119,48 +120,56 @@ impl Link {
     }
 }
 
-/// 连着的几条：登录令牌 → 连接。
+/// 连着的几条：（登录令牌, 远程的对端地址）→ 连接。同一个令牌本机来的、局域网来的各一条，不共用：远程的那条握手前说过
+/// `connection.remote`，核心照远程的规矩挡（`fs.read` 这类只给本机，核心 `connection/reach.rs`；2026-10-30 第二轮审查 W2-1）。
 #[derive(Default)]
 pub(crate) struct Cores {
-    links: tokio::sync::Mutex<HashMap<String, Arc<Link>>>,
+    links: tokio::sync::Mutex<HashMap<Key, Arc<Link>>>,
 }
 
+/// 一条连接认的：登录令牌、远程的对端地址（本机的是空的）。
+type Key = (String, Option<IpAddr>);
+
 impl Cores {
-    /// 照登录令牌 `login` 问一次。用着的连接断了的（核心重启、令牌作废了核心断开），重连再问一次。
+    /// 照登录令牌 `login` 问一次；`remote` 是请求从别的机器来的对端地址（本机的是空的）。用着的连接断了的（核心重启、令牌作废了核心
+    /// 断开），重连再问一次。
     pub(crate) async fn call(
         &self,
         root: &DataRoot,
         core: &CoreCommand,
         login: &str,
+        remote: Option<IpAddr>,
         method: &str,
         params: Value,
     ) -> Answer {
-        let (link, reused) = self.link(root, core, login).await?;
+        let (link, reused) = self.link(root, core, login, remote).await?;
         match link.call(method, params.clone()).await {
             Err(Failed::Unreachable(_)) if reused => {
-                let (link, _) = self.link(root, core, login).await?;
+                let (link, _) = self.link(root, core, login, remote).await?;
                 link.call(method, params).await
             }
             answer => answer,
         }
     }
 
-    /// 这个令牌的连接：通着的照用（交回真），没有的、断了的新连一条。
+    /// 这个令牌（本机的、远程的分开）的连接：通着的照用（交回真），没有的、断了的新连一条。
     async fn link(
         &self,
         root: &DataRoot,
         core: &CoreCommand,
         login: &str,
+        remote: Option<IpAddr>,
     ) -> Result<(Arc<Link>, bool), Failed> {
+        let key = (login.to_string(), remote);
         let mut links = self.links.lock().await;
-        if let Some(link) = links.get(login)
+        if let Some(link) = links.get(&key)
             && link.alive()
         {
             return Ok((Arc::clone(link), true));
         }
-        links.remove(login);
-        let link = Arc::new(connect(root, core, login).await?);
-        links.insert(login.to_string(), Arc::clone(&link));
+        links.remove(&key);
+        let link = Arc::new(connect(root, core, login, remote).await?);
+        links.insert(key, Arc::clone(&link));
         Ok((link, false))
     }
 
@@ -180,8 +189,14 @@ impl Cores {
     }
 }
 
-/// 连核心（没在跑就拉起来），照登录令牌握手。
-async fn connect(root: &DataRoot, core: &CoreCommand, login: &str) -> Result<Link, Failed> {
+/// 连核心（没在跑就拉起来），照登录令牌握手。远程的（`remote`）握手以前先写一行 `connection.remote`，同 `/ws`
+/// （`miyu-webserve` 的 `ws.rs`，核心 `connection.md`「网页」）。
+async fn connect(
+    root: &DataRoot,
+    core: &CoreCommand,
+    login: &str,
+    remote: Option<IpAddr>,
+) -> Result<Link, Failed> {
     let connection = miyu_client::connect::connect_or_start_bare(root, || core())
         .await
         .map_err(|error| {
@@ -200,7 +215,13 @@ async fn connect(root: &DataRoot, core: &CoreCommand, login: &str) -> Result<Lin
             "login": login,
         },
     });
+    let notice = remote.map(|from| {
+        json!({"jsonrpc": "2.0", "method": "connection.remote", "params": {"from": from.to_string()}})
+    });
     let shaken = async {
+        if let Some(notice) = &notice {
+            write.write_all(format!("{notice}\n").as_bytes()).await?;
+        }
         write.write_all(format!("{hello}\n").as_bytes()).await?;
         write.flush().await?;
         let mut line = String::new();
