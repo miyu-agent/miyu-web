@@ -10,6 +10,7 @@ import { floatCard } from './float.js';
 import { field, area } from './form.js';
 import { Pairs } from './pairs.js';
 import { personaSave, halfPair, personaName, presetName } from './model.js';
+import { featureTree, withChanges, fallbackSections } from './feature-tree.js';
 import { shrink, store } from './avatars.js';
 import { refusalText } from './persona-editor.js';
 
@@ -252,14 +253,12 @@ export class PresetStep {
     this.catalog = catalog;
     this.host = host;
     this.t = (/** @type {string} */ key, /** @type {any} */ fields) => ctx.text(key, fields);
-    /** 每个预设开了哪些功能（`preset.get` 的 `features`，没装的不列） @type {Map<string, any[]>} */
+    /** 每个预设的功能树（`preset.get` 的 `sections`，核心设计 52；旧核心照 `features` 拼一组） @type {Map<string, import('./feature-tree.js').Section[]>} */
     this.features = new Map();
     /** 选了哪一张：预设的编号，或者 `custom` */
     this.chosen = 'full';
-    /** 自定义：名字、每个功能开不开 */
-    this.customOn = /** @type {Map<string, boolean>} */ (new Map());
-    /** 装了的全部功能（自定义那一块列的） @type {any[]} */
-    this.all = [];
+    /** 自定义：还没存的那一份功能树（照功能最多的那个预设，一开始全开），改了照 `withChanges` 换 @type {import('./feature-tree.js').Section[]} */
+    this.custom = [];
     this.id = /** @type {string|null} */ (null);
   }
 
@@ -267,13 +266,19 @@ export class PresetStep {
     await this.catalog.load();
     const list = (this.catalog.presets ?? []).filter((p) => !p.problem);
     const got = await Promise.all(list.map((p) => this.ctx.core.request('preset.get', { preset: p.preset }).catch(() => null)));
-    list.forEach((p, i) => this.features.set(p.preset, (got[i]?.features ?? []).filter((/** @type {any} */ f) => f.installed !== false)));
+    list.forEach((p, i) => { if (got[i]) this.features.set(p.preset, this.tree(got[i])); });
     const def = this.catalog.presetDefault;
     this.chosen = def && this.features.has(def) ? def : this.features.has('full') ? 'full' : list[0]?.preset ?? 'custom';
-    // 自定义先照全部开着
-    const all = [...this.features.values()].reduce((a, f) => (f.length > a.length ? f : a), /** @type {any[]} */ ([]));
-    this.customOn = new Map(all.map((f) => [f.id, true]));
-    this.all = all;
+    // 自定义照功能最多的那个预设的树，先全开着
+    const size = (/** @type {import('./feature-tree.js').Section[]} */ secs) => secs.reduce((n, sec) => n + sec.items.length, 0);
+    const base = [...this.features.values()].reduce((a, b) => (size(b) > size(a) ? b : a), /** @type {import('./feature-tree.js').Section[]} */ ([]));
+    const all = base.flatMap((sec) => sec.items.flatMap((f) => [{ key: `features.${f.id}`, value: true }, ...(f.tools ?? []).map((tool) => ({ key: `tools.${tool.id}`, value: true }))]));
+    this.custom = withChanges(base, all);
+  }
+
+  /** 一个预设回应里的功能树：核心给的 `sections`，旧核心照 `features` 拼一组。 @param {any} got */
+  tree(got) {
+    return Array.isArray(got?.sections) ? got.sections : fallbackSections(got?.features ?? [], this.t('edit.features'));
   }
 
   /**
@@ -300,7 +305,7 @@ export class PresetStep {
       });
       const custom = this.chosen === 'custom';
       const named = this.customName?.value.trim() ?? '';
-      const onCount = [...this.customOn.values()].filter(Boolean).length;
+      const onCount = this.custom.reduce((n, sec) => n + sec.items.filter((f) => f.on).length, 0);
       const head = h(`button.setup-choice${custom ? '.is-on' : ''}`, { type: 'button', onclick: () => this.editCustom(box, draw) },
         h('span.setup-choice-name', custom && named ? `${t('welcome.custom')} · ${named}` : t('welcome.custom')),
         h('span.setup-choice-hint', custom ? t('welcome.custom_on', { n: onCount }) : t('welcome.custom_hint')),
@@ -318,30 +323,35 @@ export class PresetStep {
     };
   }
 
-  /** 一个预设开了哪些功能：浮出来一张卡片，一项一行，开着的 ✓、关着的 — 暗着；只看不改。 @param {HTMLElement} from @param {string} name @param {any[]} list */
-  showFeatures(from, name, list) {
+  /**
+   * 一个预设开了哪些功能：浮出来一张卡片，功能树只看的样子（开着的 ✓、关着的 — 暗着；蓝图「人格、预设、工作区」第 8 条）。
+   * @param {HTMLElement} from @param {string} name @param {import('./feature-tree.js').Section[]} sections
+   */
+  showFeatures(from, name, sections) {
     const t = this.t;
-    const rows = h('div.setup-feature-list', (this.all ?? []).map((f) => {
-      const on = list.find((x) => x.id === f.id)?.on ?? false;
-      return h(`div.setup-feature-item${on ? '' : '.is-off'}`, { title: f.summary ?? null }, h('span.setup-feature-mark', on ? '✓' : '—'), h('span', f.name ?? f.id));
-    }));
+    const rows = featureTree({ sections, t });
     const card = floatCard({ title: name, body: rows, close: t('welcome.close'), onDismiss: () => { off(); card.close(); } });
     const off = this.escCloses(() => { off(); card.close(); });
     card.mount(from);
   }
 
-  /** 自定义：浮出来改名字、一项一项开关，「完成」收起、选上它；名字空着的「完成」灰着。 @param {HTMLElement} from @param {() => void} draw */
+  /** 自定义：浮出来改名字、功能树（能改的样子，改的是还没存的那一份），「完成」收起、选上它；名字空着的「完成」灰着。 @param {HTMLElement} from @param {() => void} draw */
   editCustom(from, draw) {
     const t = this.t;
     const name = /** @type {HTMLInputElement} */ (this.customName);
     const done = /** @type {HTMLButtonElement} */ (h('button.setup-float-done.wl-btn.is-primary', { type: 'button', disabled: !name.value.trim(), onclick: () => finish() }, t('welcome.custom_done')));
     const sync = () => { done.disabled = !name.value.trim(); };
     name.addEventListener('input', sync);
-    const body = h('div.setup-choice-open',
-      field(t('edit.name'), name),
-      h('div.setup-features', (this.all ?? []).map((f) => h('div.setup-feature', h('span.setup-feature-name', { title: f.summary ?? null }, f.name ?? f.id),
-        this.kit.toggle(this.customOn.get(f.id) !== false, (v) => { this.customOn.set(f.id, v); return true; })))),
-      h('div.setup-float-foot', done));
+    const tree = h('div');
+    const drawTree = () => replace(tree, featureTree({
+      sections: this.custom,
+      t,
+      toggle: (on, change) => this.kit.toggle(on, change),
+      // 开关当场换了样子；总开关、功能开关会连带别的几行（工具灰不灰、组头几项），重画一遍
+      set: (changes) => { this.custom = withChanges(this.custom, changes); queueMicrotask(drawTree); return true; },
+    }));
+    drawTree();
+    const body = h('div.setup-choice-open', field(t('edit.name'), name), tree, h('div.setup-float-foot', done));
     const close = () => { off(); name.removeEventListener('input', sync); card.close(); };
     const finish = () => {
       if (!name.value.trim()) return;
@@ -374,12 +384,17 @@ export class PresetStep {
       let id = this.chosen;
       if (id === 'custom') {
         const changes = [{ key: 'preset.name', value: this.customName?.value.trim() }];
-        for (const [f, on] of this.customOn) if (!on) changes.push({ key: `features.${f}`, value: false });
+        for (const sec of this.custom) {
+          for (const f of sec.items) {
+            if (!f.on) changes.push({ key: `features.${f.id}`, value: false });
+            for (const tool of f.tools ?? []) if (f.on && !tool.on) changes.push({ key: `tools.${tool.id}`, value: false });
+          }
+        }
         const got = await this.ctx.core.request('preset.set', { changes });
         id = got?.preset;
         if (!id) return this.t('welcome.save_failed');
         // 建好了：回到这一屏时它是一张卡片，不再建一个
-        this.features.set(id, (got.features ?? []).filter((/** @type {any} */ f) => f.installed !== false));
+        this.features.set(id, this.tree(got));
         this.chosen = id;
       }
       if (this.catalog.presetDefault !== id) await this.ctx.core.request('config.set', { layer: 'system', changes: [{ key: 'preset.default', value: id }] });

@@ -243,14 +243,10 @@
         "find": "搜索功能",
         "no_match": "没有符合条件的功能",
         "not_installed": "未安装",
-        "feature_groups": {
-          "feature": "功能",
-          "mcp": "MCP 服务",
-          "script": "脚本",
-          "skill": "技能",
-          "command": "斜杠命令",
-          "home": "我的",
-          "other": "其他"
+        "tree_empty": {
+          "skills": "还没有技能",
+          "scripts": "还没有脚本",
+          "mcp": "还没有 MCP 服务"
         },
         "memory": "记忆",
         "memory_open": "查看",
@@ -455,14 +451,10 @@
         "find": "Search features",
         "no_match": "No matching features",
         "not_installed": "Not installed",
-        "feature_groups": {
-          "feature": "Features",
-          "mcp": "MCP servers",
-          "script": "Scripts",
-          "skill": "Skills",
-          "command": "Slash commands",
-          "home": "Mine",
-          "other": "Other"
+        "tree_empty": {
+          "skills": "No skills yet",
+          "scripts": "No scripts yet",
+          "mcp": "No MCP servers yet"
         },
         "memory": "Memory",
         "memory_open": "View",
@@ -667,14 +659,10 @@
         "find": "機能を検索",
         "no_match": "条件に合う機能がありません",
         "not_installed": "未インストール",
-        "feature_groups": {
-          "feature": "機能",
-          "mcp": "MCP サーバー",
-          "script": "スクリプト",
-          "skill": "スキル",
-          "command": "スラッシュコマンド",
-          "home": "自分の",
-          "other": "その他"
+        "tree_empty": {
+          "skills": "スキルはまだありません",
+          "scripts": "スクリプトはまだありません",
+          "mcp": "MCP サーバーはまだありません"
         },
         "memory": "記憶",
         "memory_open": "表示",

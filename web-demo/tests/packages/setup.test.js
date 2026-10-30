@@ -3,7 +3,8 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave, featureGroups, presetSections, filterSections } from '../../packages/setup/model.js';
+import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave } from '../../packages/setup/model.js';
+import { rowsOf, split, filterTree, withChanges, fallbackSections } from '../../packages/setup/feature-tree.js';
 
 const list = [{ persona: 'engineer', name: null }, { persona: 'miyu', name: 'Miyu' }, { persona: 'bad', problem: 'persona.toml:2: …' }];
 
@@ -148,63 +149,41 @@ test('无工具的老会话算在哪个预设上：旧核心单拿的那一项�
   assert.equal(neither.noToolsAs(), null);
 });
 
-test('预设的功能分五段：功能、MCP 服务、脚本、技能、斜杠命令，段里照核心的先后，空的段不要（2026-10-12、10-15）', () => {
-  const list = [{ id: 'command-review' }, { id: 'web' }, { id: 'mcp-github' }, { id: 'knowledge' }, { id: 'skill-notes' }, { id: 'script-weather' }, { id: 'skill-writer' }];
-  assert.deepEqual(featureGroups(list).map((g) => `${g.group}:${g.items.map((f) => f.id).join(',')}`),
-    ['feature:web,knowledge', 'mcp:mcp-github', 'script:script-weather', 'skill:skill-notes,skill-writer', 'command:command-review']);
-  assert.deepEqual(featureGroups([{ id: 'web' }]).map((g) => g.group), ['feature'], '只有包的功能：只一段');
-  assert.deepEqual(featureGroups([]), []);
+test('功能树两列（设计 52：照行数摊匀、先后不变）：一组不拆开，找让高的那一列最矮的分点', () => {
+  const sec = (/** @type {string} */ id, /** @type {number} */ n, tools = 0) => ({ id, kind: 'group', items: Array.from({ length: n }, (_, i) => ({ id: `${id}${i}`, tools: i === 0 ? Array.from({ length: tools }, (_, j) => ({ id: `t${j}` })) : undefined })) });
+  assert.equal(rowsOf(sec('a', 3)), 4, '头一行加功能');
+  assert.equal(rowsOf(sec('a', 2, 3)), 6, '工具各算一行');
+  assert.equal(rowsOf({ id: 'skills', kind: 'skills', items: [] }), 2, '空的组多一行「还没有…」');
+  const ids = (/** @type {any[][]} */ cols) => cols.map((c) => c.map((s) => s.id).join(''));
+  assert.deepEqual(ids(split([sec('a', 9), sec('b', 3), sec('c', 3), sec('d', 2)])), ['a', 'bcd'], '大的一组一列');
+  assert.deepEqual(ids(split([sec('a', 3), sec('b', 3), sec('c', 3), sec('d', 3)])), ['ab', 'cd']);
+  assert.deepEqual(ids(split([sec('a', 3)])), ['', 'a'], '只有一组：一列（空的那一列不画）');
+  assert.deepEqual(ids(split([])), ['', '']);
 });
 
-test('核心 ENV-1 起功能照包分组：包照第一次出现的先后、一个功能也一组；~home 排在包后面；没归包的接在最后照五段，「功能」那段叫 other', () => {
-  const list = [
-    { id: 'env-time', package: 'env' }, { id: 'read', package: 'read' }, { id: 'skill-notes', package: 'kit' }, { id: 'env-profile', package: 'env' },
-    { id: 'script-mine', package: '~home' }, { id: 'skill-loose' }, { id: 'gone', installed: false }, { id: 'mcp-x', package: '~home' },
-  ];
-  assert.deepEqual(featureGroups(list).map((g) => `${g.group}${g.package ? `(${g.package})` : ''}:${g.items.map((f) => f.id).join(',')}`),
-    ['package(env):env-time,env-profile', 'package(read):read', 'package(kit):skill-notes', 'home:script-mine,mcp-x', 'other:gone', 'skill:skill-loose']);
-});
-
-test('预设的段和块（2026-10-27 项目主人：包一个总开关，内置的在前、别的按安装先后；MCP、脚本、技能按种类分段）：组一段、组内照 PG-1 的先后；别的出厂包；装的照安装先后；种类各一段，我的、不归包的在段尾', () => {
-  const info = {
-    groups: [{ id: 'basesystem', name: '基础系统', packages: ['read', 'write', 'edit'] }],
-    packages: [
-      { package: 'read', name: '读文件', layer: 'shipped', groups: ['basesystem'] }, { package: 'write', name: '写文件', layer: 'shipped', groups: ['basesystem'] },
-      { package: 'edit', name: '改文件', layer: 'shipped', groups: ['basesystem'] }, { package: 'env', name: '注入环境信息', layer: 'shipped' },
-      { package: 'late', name: '后装的', layer: 'home', installed_at: '2026-10-27T02:00:00.000Z' }, { package: 'early', name: '先装的', layer: 'home', installed_at: '2026-10-20T02:00:00.000Z' },
-      { package: 'web', name: '联网搜索', layer: 'shipped' },
-    ],
-  };
-  const list = [
-    { id: 'edit', name: '改文件', package: 'edit' }, { id: 'env-time', name: '时间', package: 'env' }, { id: 'env-cwd', name: '工作目录', package: 'env' },
-    { id: 'late', name: '后装的', package: 'late' }, { id: 'write', name: '写文件', package: 'write' }, { id: 'web', name: '搜网页', package: 'web' },
-    { id: 'early', name: '先装的', package: 'early' }, { id: 'read', name: '读文件', package: 'read' },
-    { id: 'script-mine', package: '~home' }, { id: 'skill-loose', name: '散的' },
-    { id: 'skill-env', name: '环境技能', package: 'env' }, { id: 'mcp-web', name: '联网搜索', package: 'web' }, { id: 'script-only', name: '只带脚本', package: 'only' },
-  ];
-  const shape = presetSections(featureGroups(list), info).map((sec) => `${sec.kind}${sec.title ? `[${sec.title}]` : ''}=${sec.blocks.map((b) => `${b.single ? '·' : ''}${b.package ?? '-'}:${b.items.map((f) => f.id).join(',')}`).join(' ')}`);
-  assert.deepEqual(shape, [
-    'group[基础系统]=·read:read ·write:write ·edit:edit',
-    'package=env:env-time,env-cwd web:web ·early:early ·late:late',
-    'mcp[mcp]=·web:mcp-web',
-    'script[script]=only:script-only ~home:script-mine',
-    'skill[skill]=env:skill-env -:skill-loose',
-  ], '名字不一样的（联网搜索 / 搜网页）不算只有一行；装的照装的先后；MCP、脚本、技能拆出来各一段（2026-10-27 项目主人），只带脚本的包不在包那一段');
-  assert.deepEqual(presetSections(featureGroups([{ id: 'web' }]), {}).map((s) => s.kind), ['feature'], '旧核心照五段');
-  assert.deepEqual(presetSections(featureGroups([{ id: 'b', package: 'b' }, { id: 'a', package: 'a' }]), {}).map((s) => s.blocks.map((b) => b.package).join()), ['b,a'], '没有 package.list 的照原来的先后');
-});
-
-test('预设功能的搜索（2026-10-27 项目主人）：块名对得上整块留着，功能名、编号对得上留那几行，总开关照旧管整块；没剩的块、段不要；空的原样', () => {
+test('功能树的搜索：组名对得上整组留着；功能名、编号对得上留它（连工具）；只有工具对得上的留那几件；没剩的组不要；空的原样', () => {
   const sections = [
-    { title: '基础系统', kind: 'group', blocks: [{ package: 'read', name: '读文件', items: [{ id: 'read', name: '读文件' }], single: true }, { package: 'env', name: '注入环境信息', items: [{ id: 'env-time', name: '时间' }, { id: 'env-cwd', name: '工作目录' }], single: false }] },
-    { title: 'script', kind: 'script', blocks: [{ package: '~home', name: null, items: [{ id: 'script-weather', name: '天气' }], single: false }] },
+    { id: 'basesystem', kind: 'group', name: '基础系统', items: [{ id: 'read', name: '读文件' }, { id: 'sessions', name: '跨会话消息', tools: [{ id: 'sessions', name: '列出会话' }, { id: 'send_message', name: '发消息' }] }] },
+    { id: 'research', kind: 'group', name: '查资料', items: [{ id: 'web', name: '网络搜索' }] },
   ];
-  const nameOf = (b) => (b.package === '~home' ? '我的' : b.name);
-  const shape = (q) => filterSections(sections, q, nameOf).map((sec) => `${sec.kind}=${sec.blocks.map((b) => `${b.package}:${(b.shown ?? b.items).map((f) => f.id).join(',')}/${b.items.length}`).join(' ')}`);
-  assert.deepEqual(shape('目录'), ['group=env:env-cwd/2'], '功能对得上：留那一行，整块还是两个');
-  assert.deepEqual(shape('环境'), ['group=env:env-time,env-cwd/2'], '包名对得上：整块');
-  assert.deepEqual(shape('我的'), ['script=~home:script-weather/1'], '「我的」照界面的字');
-  assert.deepEqual(shape('SCRIPT-W'), ['script=~home:script-weather/1'], '编号、不分大小写');
-  assert.deepEqual(shape('没有'), []);
-  assert.equal(filterSections(sections, '  ', nameOf), sections);
+  const shape = (/** @type {string} */ q) => filterTree(sections, q).map((s) => `${s.id}:${s.items.map((f) => `${f.id}${f.tools ? `(${f.tools.map((t) => t.id).join(',')})` : ''}`).join(',')}`);
+  assert.deepEqual(shape('查资料'), ['research:web']);
+  assert.deepEqual(shape('文件'), ['basesystem:read']);
+  assert.deepEqual(shape('发消息'), ['basesystem:sessions(send_message)'], '只有工具对得上');
+  assert.deepEqual(shape('跨会话'), ['basesystem:sessions(sessions,send_message)']);
+  assert.deepEqual(shape('WEB'), ['research:web'], '编号、不分大小写');
+  assert.deepEqual(shape('没有这个'), []);
+  assert.equal(filterTree(sections, '  '), sections);
+});
+
+test('引导「自定义」改的是还没存的那一份：照改动换开关，组头重算开了几项；旧核心照 features 拼一组', () => {
+  const sections = [{ id: 'g', kind: 'group', name: 'G', on: 2, total: 2, items: [{ id: 'a', on: true }, { id: 'b', on: true, tools: [{ id: 'x', on: true }] }] }];
+  const got = withChanges(sections, [{ key: 'features.a', value: false }, { key: 'tools.x', value: false }]);
+  assert.equal(got[0].on, 1);
+  assert.equal(got[0].total, 2);
+  assert.equal(got[0].items[0].on, false);
+  assert.equal(got[0].items[1].tools?.[0].on, false);
+  assert.equal(sections[0].items[0].on, true, '原来那一份不动');
+  const old = fallbackSections([{ id: 'a', on: true }, { id: 'b', on: false }, { id: 'c', installed: false }], '功能');
+  assert.deepEqual(old.map((s) => `${s.name}:${s.on}/${s.total}:${s.items.map((f) => f.id).join(',')}`), ['功能:1/2:a,b'], '没装的不列');
 });

@@ -1822,12 +1822,6 @@
       ".setup-drop"
     ]
   },
-  "setup.feature-group": {
-    "zh": "分段的小标题",
-    "select": [
-      ".setup-feature-group"
-    ]
-  },
   "setup.feature": {
     "zh": "人格、预设、工作区：功能",
     "select": [
@@ -6195,20 +6189,26 @@
       ".wl-corner-btn"
     ]
   },
-  "setup.feature-list": {
-    "zh": "预设开了哪些功能：几列",
+  "setup.tree": {
+    "zh": "功能树（预设编辑、引导自定义、查看功能三处共用）：两列",
     "select": [
-      ".setup-feature-list"
+      ".setup-tree"
     ]
   },
-  "setup.feature-item": {
-    "zh": "预设开了哪些功能：一项",
+  "setup.tree-col": {
+    "zh": "功能树的一列",
     "select": [
-      ".setup-feature-item"
+      ".setup-tree-col"
+    ]
+  },
+  "setup.tree-empty": {
+    "zh": "功能树：技能、脚本、MCP 空的那一行「还没有…」",
+    "select": [
+      ".setup-tree-empty"
     ]
   },
   "setup.feature-mark": {
-    "zh": "预设开了哪些功能：打勾",
+    "zh": "功能树只看的样子：开着的打勾、关着的一道杠",
     "select": [
       ".setup-feature-mark"
     ]
