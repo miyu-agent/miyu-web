@@ -111,12 +111,17 @@ mod tests {
 
     #[test]
     fn home_relative_paths_are_joined_and_relative_ones_refused() {
-        let home = Path::new("/home/me");
+        // 家目录照这个系统的绝对路径写（Windows 上 `/home/me` 不算绝对；原来这个测试在桥里只在 Linux 上跑）
+        let home = if cfg!(windows) {
+            Path::new(r"C:\Users\me")
+        } else {
+            Path::new("/home/me")
+        };
         assert_eq!(
             expand("~/.miyu/home/admin/skills", Some(home)),
-            Some(PathBuf::from("/home/me/.miyu/home/admin/skills"))
+            Some(home.join(".miyu/home/admin/skills"))
         );
-        assert_eq!(expand("~", Some(home)), Some(PathBuf::from("/home/me")));
+        assert_eq!(expand("~", Some(home)), Some(home.to_path_buf()));
         assert_eq!(expand("~/x", None), None);
         assert_eq!(expand("skills", Some(home)), None);
         #[cfg(unix)]
