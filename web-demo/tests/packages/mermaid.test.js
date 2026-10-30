@@ -80,3 +80,11 @@ test('核心没带 mermaid、源码空的太长的、画不出、字体读不到
   const odd = drawer(async () => ({ svg: 42 }), () => COLORS, () => {});
   assert.equal(await odd('x'), null, '回应不像样的也当画不出');
 });
+
+test('mermaid 图里的链接只留 http(s) 和锚点（第二轮审查 W2-4）：data:、blob:、javascript:、带空白的写法都不留', async () => {
+  const { safeHref } = await import('../../packages/mermaid/mermaid.js');
+  for (const ok of ['https://example.com', 'HTTP://x', '#node-1', '  https://x']) assert.equal(safeHref(ok), true, ok);
+  for (const bad of ['javascript:alert(1)', 'java\tscript:alert(1)', ' JavaScript:x', 'data:text/html,<b>x</b>', 'blob:http://x/1', 'file:///etc/passwd', 'vbscript:x', '']) {
+    assert.equal(safeHref(bad), false, bad);
+  }
+});

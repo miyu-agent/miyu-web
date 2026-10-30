@@ -75,19 +75,40 @@ export function mermaidBlock(source, say, deps) {
   return block;
 }
 
-/** 核心给的 SVG 文字 → 一个能插进页面的 `<svg>`：去掉脚本、`on…` 属性、`javascript:` 链接；读不懂的是 `null`。 */
+/** 不留的元素：脚本、嵌别的页面的、能用动画改属性（`href`）的（2026-10-30 第二轮审查 W2-4，纵深防御） */
+const DROP = new Set(['script', 'foreignobject', 'iframe', 'object', 'embed', 'animate', 'set', 'animatemotion', 'animatetransform', 'discard']);
+
+/**
+ * 链接留不留（第二轮审查 W2-4：原来只挡 `javascript:`，`data:`、`blob:` 这些照样能点；`java\tscript:` 这种带空白的也过）：白名单，
+ * 只留 `http:`、`https:` 和页面里的 `#锚点`（图里自己引用自己的）。先去掉空白、控制字符再认。
+ * @param {string} value
+ */
+export function safeHref(value) {
+  const plain = value.replace(/[\u0000-\u0020\u007f-\u009f]/g, '');
+  return plain.startsWith('#') || /^https?:/i.test(plain);
+}
+
+/**
+ * 核心给的 SVG 文字 → 一个能插进页面的 `<svg>`：去掉脚本、嵌页面的、动画（[`DROP`]）、`on…` 属性，链接只留 http(s) 和锚点（[`safeHref`]），留下的
+ * 外链一律新标签页开；读不懂的是 `null`。
+ * @param {string} text
+ */
 function clean(text) {
   const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
   const svg = doc.documentElement;
   if (svg.nodeName !== 'svg' || doc.querySelector('parsererror')) return null;
   for (const el of [svg, ...svg.querySelectorAll('*')]) {
-    if (el.nodeName.toLowerCase() === 'script') {
+    if (DROP.has(el.nodeName.toLowerCase())) {
       el.remove();
       continue;
     }
     for (const attr of [...el.attributes]) {
-      const bad = attr.name.toLowerCase().startsWith('on') || (/href$/i.test(attr.name) && /^\s*javascript:/i.test(attr.value));
+      const bad = attr.name.toLowerCase().startsWith('on') || (/href$/i.test(attr.name) && !safeHref(attr.value));
       if (bad) el.removeAttribute(attr.name);
+    }
+    if (el.nodeName.toLowerCase() === 'a' && [...el.attributes].some((attr) => /href$/i.test(attr.name) && !attr.value.trim().startsWith('#'))) {
+      el.setAttribute('target', '_blank');
+      el.setAttribute('rel', 'noopener noreferrer');
     }
   }
   svg.style.maxWidth = '100%';
