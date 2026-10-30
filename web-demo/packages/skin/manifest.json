@@ -16,6 +16,7 @@
     "zh": "配色方案管颜色，主题管形状和材质（软件包编号还叫 skin）。主题包挂进 skin.packs：一份变量（只能写 styles/tokens.css 里有的名字，浅深可以各一份），可以再带一份 CSS（只挑 resources/parts.json 里的部件名）。选了的在页面根上写 data-skin、写上它的变量、接上它的 CSS；出厂什么都不写（蓝图 web.md「皮肤」）。"
   },
   "inject": [
+    "host",
     "slots",
     "theme~"
   ],
