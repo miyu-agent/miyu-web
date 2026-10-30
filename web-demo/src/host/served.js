@@ -172,6 +172,16 @@ export function servedHost() {
       return typeof reply?.url === 'string' ? reply.url : '';
     } catch { return ''; }
   };
+  /** 问、请换监听（`/listen`）：`POST` 带登录令牌；回的不是 JSON、不成的交 `null` @param {'GET'|'POST'} method */
+  const listenCall = async (method) => {
+    if (method === 'POST' && !token) return null;
+    try {
+      const got = await fetch('/listen', { method, cache: 'no-store', headers: method === 'POST' ? { Authorization: `Bearer ${token}` } : {} });
+      if (!got.ok) return null;
+      const reply = await got.json();
+      return reply && typeof reply.port === 'number' ? reply : null;
+    } catch { return null; }
+  };
   /** 换一张 `/media` 的票据（换不到的不记，下次再换） @param {any} body */
   const media = (body) => {
     const sig = JSON.stringify(body);
@@ -291,6 +301,14 @@ export function servedHost() {
       ...fileTools(urls),
       /** 选目录：网页软件不给，用的地方退回自己画的文件夹浏览器 */
       pickDir: async (/** @type {{title?: string, start?: string}} */ opts) => null,
+    },
+    /**
+     * 网页软件在听的地址、端口（`/listen`，`web-ui.md`「怎么走」第一条第 11 款）：`get` 问一次；`relisten` 带设备令牌请它照核心的配置当场换。
+     * 交回 `{listen, port, lan, error?}`，问不到的（旧网页软件没有 `/listen`、没令牌、被拒）交 `null`。
+     */
+    listen: {
+      get: () => listenCall('GET'),
+      relisten: () => listenCall('POST'),
     },
     /** 软件的页面：带着登录令牌换票据，交回框的地址；换不到的交 `null` */
     pages: { open: async (/** @type {string} */ id) => (await post('/page', { package: id })) || null },

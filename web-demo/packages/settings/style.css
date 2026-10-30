@@ -717,6 +717,10 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 /* 邀请一行三列：编号和生成时刻、状态（靠右）、操作（固定宽，悬停才露的「撤销」不挤动状态） */
 /* 成员一行右边：设成、撤掉管理员，停用、启用 */
 .acc-actions { display: flex; flex: none; align-items: center; gap: calc(6px * var(--space)); }
+/* 「允许局域网访问」（第 12c 条）：没设密码时打开的那一句 warn 色；别的设备打开用的网址等宽、点了复制 */
+.acc-lan-warn { color: var(--t-warn, var(--gold)); }
+.acc-lan-url { padding: 0; border: 0; background: transparent; color: var(--text); font: inherit; font-family: var(--font-mono); cursor: pointer; }
+.acc-lan-url:hover { color: var(--accent); text-decoration: underline; }
 
 /* 账号页最上面「管理员后台」的入口卡片（第 12c 条） */
 

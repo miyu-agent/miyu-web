@@ -224,6 +224,8 @@ export async function boot(root) {
         signinScheme: takeSigninScheme(host.store),
         /** 退出登录（拿设备令牌连的才有）：忘掉设备令牌、重新载入；走桥的是 `null` */
         signOut: host.signOut ?? null,
+        /** 网页软件在听的地址、端口，请它照配置当场换（设置「通用」的「访问」一组；`served.js` 的 `listen`）；走桥的是 `null` */
+        listen: /** @type {any} */ (host).listen ?? null,
         /**
          * 访问密码（核心 SU-1 补，设置「访问」页）：`set()` 设没设（握手的 `password_set`；旧核心没给的是 `null`，不出那一行），`needsOld()` 改的时候要不要
          * 旧密码（设过了、拿设备令牌连的；走桥的是本机令牌，不要），`problem` 照「设置访问密码」那一屏查，`change` 设、改（成了交 `null`，拒了交一句）。

@@ -7084,19 +7084,31 @@
     ]
   },
   "acc.password-form": {
-    "zh": "设置「访问」：「访问密码」那一行下面展开的几格和「确定」「取消」",
+    "zh": "设置「通用」的「访问」：「访问密码」那一行下面展开的几格和「确定」「取消」",
     "select": [
       ".acc-password-form"
     ]
   },
   "acc.avatar-control": {
-    "zh": "设置「访问」：头像那一行右边（头像和按钮）",
+    "zh": "设置「用户身份」：头像那一行右边（头像和按钮）",
     "select": [
       ".acc-avatar-control"
     ]
   },
+  "acc.lan-warn": {
+    "zh": "设置「通用」的「访问」：没设访问密码时打开局域网的那一句提醒",
+    "select": [
+      ".acc-lan-warn"
+    ]
+  },
+  "acc.lan-url": {
+    "zh": "设置「通用」的「访问」：别的设备打开用的网址（点了复制）",
+    "select": [
+      ".acc-lan-url"
+    ]
+  },
   "acc.avatar": {
-    "zh": "设置「访问」：自己的头像（圆的）",
+    "zh": "设置「用户身份」：自己的头像（圆的）",
     "select": [
       ".acc-avatar"
     ]

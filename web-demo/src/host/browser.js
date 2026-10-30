@@ -181,6 +181,8 @@ export function browserHost() {
     forget: () => {},
     /** 走桥的是本机口令，没有登录可退 */
     signOut: null,
+    /** 网页软件的 `/listen`：走桥的没有（设置页照「重启网页软件后生效」写） */
+    listen: null,
     /** 问桥口令还对不对（蓝图 `web.md`「连核心」第 9 条）：`ok`、`bad`（用不了了，桥重启过）、`down`（问不到，桥没在跑） */
     check: () => checkKey(key),
     files: {

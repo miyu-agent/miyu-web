@@ -192,7 +192,7 @@ const FOLD_MS = 240;
  * 头一次画的直接是现在的样子。
  * @param {any} dialog @param {string} key 记上一次样子用的 @param {boolean} off @param {...any} kids
  */
-function fold(dialog, key, off, ...kids) {
+export function fold(dialog, key, off, ...kids) {
   const el = h('div.pv-fold', h('div.pv-body', ...kids));
   const was = (dialog.pvOff ??= {})[key];
   if (!was) dialog.pvOff[key] = { off, at: -Infinity };

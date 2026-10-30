@@ -4,7 +4,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { drawMarket, marketPush } from './market.js';
-import { drawAccount } from './account.js';
+import { accessGroup, avatarGroup, relisten, LISTEN_KEYS } from './account.js';
 import { hasPrivate, privateGroup } from './privacy.js';
 import { leave } from '../../src/lib/motion.js';
 import { buildPages, search, pagesWithErrors, LAYER, expectFor, navGroups, pkgMatch, ownerOf } from './model.js';
@@ -159,8 +159,6 @@ export class SettingsDialog {
       ...this.pages.map((p) => ({ id: p.id, name: p.name })),
       // 核心也有一页「软件包」（9-1 下，一个包一组）：和网页自己的组件合成一页，上面核心、下面网页（2026-10-07 项目主人定）
       ...(this.pages.some((p) => p.id === 'packages') ? [] : [{ id: 'packages', name: named('packages') }]),
-      // 访问（第 12c 条；核心 SU-1：访问密码、退出登录、你的头像）：「用户身份」上面一项（2026-10-22 项目主人）
-      { id: 'account', name: named('account') },
       // 下载软件（软件市场，核心 G-3 到 G-5）：「软件包」上面一项（2026-10-21 项目主人）
       { id: 'market', name: named('market') },
       // 软件后台（核心 F-6 中）：带自己页面的软件，点进去是它的页面
@@ -288,7 +286,6 @@ export class SettingsDialog {
     if (this.current === 'models') kids = drawModels(this);
     else if (this.current === 'backstage') kids = drawBackstage(this);
     else if (this.current === 'market') kids = drawMarket(this);
-    else if (this.current === 'account') kids = drawAccount(this);
     // 高级：一组一行，点进去看（`advanced.js`，2026-10-19 项目主人：不平铺）
     else if (this.current === 'advanced' && page) kids = drawAdvanced(this, page);
     // 老核心上的成员：通用页只有主题，下面一句暗字（配置每人一份在核心 Y-2下下中）；成员的软件包页照下面那一条，核心的软件包没读、是空的，只列网页自己的组件
@@ -308,12 +305,16 @@ export class SettingsDialog {
       kids = [
         ...page.problems.map((p) => banner(p)),
         this.current === 'general' ? drawLook(this) : null,
+        // 用户身份页最上面是头像（第 12d 条，2026-10-30 随「访问」并进通用挪过来）
+        this.current === 'user' ? avatarGroup(this) : null,
         ...page.groups.flatMap((g) => (hasPrivate(g.items)
           // 私密目录（隐私与安全页，核心 5-15 下）：两项并成一张表；这一组别的项照通用的行
           ? privateGroup(this, g.name, g.items)
           : this.extensions.entries.has(g.id)
           ? h('section.set-group', h('h3.set-group-name', g.name), this.extensions.body(g.id, g.items.map((item) => coreRow(this, item)).filter(Boolean)))
           : groupBlock(g.name, g.items.map((item) => coreRow(this, item))))),
+        // 「访问」一组（第 12c 条，2026-10-30 项目主人：原来单独一页，放进通用）：核心没有「用户身份」页的头像也放这里
+        this.current === 'general' ? accessGroup(this, !this.pages.some((p) => p.id === 'user')) : null,
         // 最底下一行源码链接（蓝图「设置」第 12a 条，2026-10-26 许可证换成 AGPL-3.0-or-later：第 13 条要让用网页的人拿得到源码）
         this.current === 'general' ? h('p.set-repo', this.ctx.text('source_line'),
           h('a.set-repo-link', { href: SOURCE_URL, target: '_blank', rel: 'noopener noreferrer' }, this.ctx.text('source_link'))) : null,
@@ -355,6 +356,8 @@ export class SettingsDialog {
     // 记下刚存成的几项：重画出来的那几行照它画对勾（`rows.js`）
     this.saved = { keys: new Set(changes.map((c) => c.key)), at: performance.now() };
     await this.reload();
+    // 监听地址、端口：请网页软件当场换（第 12c 条第 1 款；这一组、「软件包」页都算）
+    if (changes.some((c) => LISTEN_KEYS.includes(c.key))) void relisten(this, changes.map((c) => c.key));
     return null;
   }
 
