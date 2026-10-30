@@ -93,6 +93,14 @@
 7. 页面把它放在 `<iframe sandbox="allow-scripts allow-forms">` 里，不给 `allow-same-origin`：页面在一个空的来源里跑，读不到网页的存储、登录令牌。空来源的框取 ES 模块脚本、字体是按跨源取的，所以要第 6 款的 `Access-Control-Allow-Origin`；票据就是凭据，不多开口子。`'self'` 在空来源的框里照文件的地址算，对得上网页软件自己（网页演示的桥 2026-10-10 在 Chromium 里实测）。框和网页之间的通道由页面做（网页的蓝图「软件后台」）。
 8. 有后台页在给，网页软件不算空闲。方法只认 `POST /page`、`GET /p/…`，别的 405。
 
+**五、这台电脑上的几样**（2026-10-30 项目主人：网页的多平台适配，「打开目录」都是假的，只是复制 `~` 开头的路径。演示的桥早就有 `/reveal`、`/pick-dir`、`/wallpaper`，网页软件没有，页面只好退回）
+
+1. 只给这台电脑上来的：对端不是回环地址的（局域网里别的设备，第一条第 7 款的 `remote`）一律 403——在装 Miyu 的那台电脑上开文件管理器、弹选目录框，对别的设备没意义；页面开在局域网地址上的也不请（照旧退回）。
+2. `GET /reveal?path=<路径>`（「打开目录」）、`GET /pick-dir?title=<标题>&start=<从哪开始>`（选工作区的「选择文件夹…」）、`GET /wallpaper?dark=0|1[&data=1]`（主题「跟随壁纸」）要 `Authorization: Bearer <设备令牌>`，照这个令牌连核心握手（同 `/media`，核心不认的 401）：别的网站能往 `127.0.0.1` 发不带头的请求（`<img>`、表单），带了这个头就要先问一句（CORS 预检），网页软件不答，浏览器就不发。
+3. 开目录、选目录照桥的做法，放在共用的 crate `miyu-desk`（桥和网页软件一份代码）：只开目录不开文件，`~`、`~/…` 照家目录接，还没建的、上一层在的建出来再开；Linux `xdg-open`、macOS `open`、Windows `explorer`；选目录 Linux 依次试 `zenity`、`kdialog`，macOS `osascript`，Windows PowerShell 的 `FolderBrowserDialog`，标题和起点经环境变量交给对话框程序。回 `{"ok":true}`、`{"missing":true}`、`{"unavailable":true}`；`{"path"}`、`{"cancelled":true}`、`{"unavailable":true}`。选目录要等人点完，不限时；等着的时候不算空闲。
+4. 壁纸照桥的 `/wallpaper`（crate `miyu-wallpaper` 找、认图、盯文件；候选色照 `miyu_client::seeds`，一张图算一次）：回 `{sig, kind, seeds?}`，带 `data=1` 回那一份本身（matugen 的 JSON 或者图），都没有的 404。`GET /wallpaper/events` 一条 `text/event-stream`，壁纸来处的文件变了发一条 `changed`（不带内容，不要令牌：`EventSource` 带不了头；只说变了，取还是走 `/wallpaper`）；开着的不算空闲。
+5. 方法只认 `GET`，别的 405。
+
 ### 出错、运行日志
 
 | 级别 | 这件事 | 什么时候 |
