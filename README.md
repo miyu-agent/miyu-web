@@ -35,6 +35,8 @@ AGPL-3.0-or-later（2026-10-26 项目主人定：核心和第一方程序用 AGP
 | KaTeX 0.18.4 的字体（`web-demo/vendor/katex/fonts/*.woff2`，原样带着，保留名 KaTeX_Main 等） | SIL OFL 1.1 | `web-demo/vendor/katex/fonts/OFL.txt` |
 | material-color-utilities 0.4.0（`web-demo/src/lib/md3/vendor/mcu.min.js`，挑了取色要用的几样打成一个文件） | Apache-2.0 | `web-demo/src/lib/md3/vendor/LICENSE` |
 
+上面这些和网页软件编进去的第三方 Rust 包，版权和许可证原文合在 `miyu-webui/THIRD-PARTY-LICENSES.txt`（`cargo xtask notices` 生成，随网页包发；加了、升了依赖或资源要重新生成，CI 查它是不是最新的）。
+
 吉祥物和默认头像（`web-demo/resources/assets/mascot.png`、`miyu-avatar.png`）是项目自己做的，和代码一样照 AGPL-3.0-or-later。
 
 模型供应商的名称和图标是各自所有者的商标。网页里显示的供应商图标不随网页包发，由核心在运行时从 models.dev、lobe-icons 拉来缓存（核心 `licenses.md`）。

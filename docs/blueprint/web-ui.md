@@ -125,7 +125,8 @@
 
 | 测试 | 守着什么 |
 |---|---|
-| `xtask/src/licenses.rs`（`cargo xtask licenses`，CI 在 Linux 上跑；2026-10-30 发布前的许可证审查第 9 条，照 miyu-im 的门禁搬的） | 发布的四个平台上用得到的第三方 Rust 依赖，许可证都能和 AGPL-3.0-or-later 合在一起发：照每个包 `license` 的 SPDX 表达式算（`OR` 有一个能用就行、`AND` 每个都要、`WITH` 只认 `LLVM-exception`），没写 `license` 的、合不到一起的一包一行报出来；照 git 钉住的核心的 crate 也算。页面里收的第三方资源（字体、图标、拷来的库）不归它管，照 README「许可证」那张表 |
+| `xtask/src/licenses.rs`（`cargo xtask licenses`，CI 在 Linux 上跑；2026-10-30 发布前的许可证审查第 9 条，照 miyu-im 的门禁搬的） | 发布的四个平台上用得到的第三方 Rust 依赖，许可证都能和 AGPL-3.0-or-later 合在一起发：照每个包 `license` 的 SPDX 表达式算（`OR` 有一个能用就行、`AND` 每个都要、`WITH` 只认 `LLVM-exception`），没写 `license` 的、合不到一起的一包一行报出来；照 git 钉住的核心的 crate 也算。页面里收的第三方资源（字体、图标、拷来的库）不归它管，照 README「许可证」那张表；同一个命令还查第三方许可证清单是不是最新的（下一行） |
+| `xtask/src/notices.rs`、`xtask/src/notices/`，`miyu-webui/THIRD-PARTY-LICENSES.txt`（`cargo xtask notices` 生成；2026-10-30 照核心施工 AU-2 搬的，核心蓝图 `licenses.md`「第三方许可证清单」第 7 条：头另有自己编进去的第三方包，各自出一份、随头发） | 网页软件编进了的第三方 Rust 包（四个平台正常依赖的并集；照 git 钉住的核心自己的 crate 是同一个项目，不算）和网页包里带的第三方前端资源（README「许可证」那张表，`notices.rs` 的 `DATA`），每个的版权和许可证原文合成一份；包没带许可证文件的用 `notices/` 下的 MIT、Apache-2.0、BSD-3-Clause 标准原文。放在网页包的文件夹里：`tools/pack-web.py` 打的包（连仓库根的 `LICENSE`）、核心照 `heads.toml` 搬 `miyu-webui/` 进安装包，都带着它。升了、加了依赖或前端资源的那一步跟着重新生成，和代码进同一个提交；`cargo xtask licenses` 重算一遍，不一样就算没过 |
 | `crates/miyu-web/tests/serve.rs` | 单实例、`run/web`、那一行；端口被占说清楚；Host 只认三种写法；页面文件不出页面目录（`..`、`%2e%2e`、链接、目录）；响应头一个不少、从不设 cookie；`HEAD`、别的方法 405；空闲到点退出、删 `run/web`、放锁；听局域网时到点不退；页面文件带 `ETag`，`If-None-Match` 对上（一串里有、弱比较）回 304，改了照常给 |
 | `crates/miyu-web/tests/desk.rs` | `/reveal`、`/pick-dir`、`/wallpaper` 不带令牌、核心不认的 401，只认 `GET`；认的令牌开不在的目录回 `{"missing":true}`（测试里不真开文件管理器、选目录框）；`/wallpaper/events` 不要令牌、是 `text/event-stream` |
 | `crates/miyu-web/tests/listen.rs` | `GET /listen` 回在听的、Host 照旧核对；`POST` 不带设备令牌、核心不认的 401；核心没在跑的回 `error`、接着听原来的；换地址（同一个端口）、换端口（`run/web` 跟着换、旧端口不再接、连着的 WebSocket 不断）、配置没变不动、`--port` 起的端口不随配置换；听局域网时空闲到点不退、换回回环照旧退；不用页面请，起来先照核心的配置换、推来改动当场换回 |
