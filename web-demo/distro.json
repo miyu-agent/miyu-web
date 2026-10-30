@@ -32,7 +32,7 @@
     { "id": "settings" },
     { "id": "backstage" },
     { "id": "widgets" },
-    { "id": "mascot" }
+    { "id": "mascot", "disabled": true }
   ],
   "seams": { "render.timeline": "default", "render.markdown": "default" }
 }
