@@ -199,36 +199,8 @@ const HEADER_READ: Duration = Duration::from_secs(30);
 /// `accept` 出错（文件描述符用完这类）以后歇多久再接：不歇的话下一圈马上又错，一直空转。
 const ACCEPT_PAUSE: Duration = Duration::from_secs(1);
 
-/// 出厂端口被占时往后试几个（2026-10-30 项目主人：固定端口配端口回退）：8300 被占试 8301 到 8309。
-pub const FALLBACK_PORTS: u16 = 9;
-
-/// 照先后要试的端口：`port` 本身；能回退的（`fallback`，`0` 不算）再接后面 [`FALLBACK_PORTS`] 个，到 65535 为止。
-pub fn candidates(port: u16, fallback: bool) -> Vec<u16> {
-    let more = match fallback && port != 0 {
-        true => FALLBACK_PORTS,
-        false => 0,
-    };
-    (0..=more)
-        .filter_map(|step| port.checked_add(step))
-        .collect()
-}
-
-/// 听端口：照 [`candidates`] 的先后，头一个绑得上的；都被占的说第一个被占（人认得的那个），别的错照原话。
-pub(crate) async fn bind(listen: IpAddr, port: u16, fallback: bool) -> Result<TcpListener, String> {
-    for one in candidates(port, fallback) {
-        match TcpListener::bind((listen, one)).await {
-            Ok(listener) => {
-                if one != port {
-                    tracing::info!(target: crate::TARGET, wanted = port, port = one, "port in use, fell back");
-                }
-                return Ok(listener);
-            }
-            Err(error) if error.kind() == std::io::ErrorKind::AddrInUse => {}
-            Err(error) => return Err(error.to_string()),
-        }
-    }
-    Err(format!("port {port} in use"))
-}
+pub(crate) use crate::port::bind;
+pub use crate::port::{FALLBACK_PORTS, candidates};
 
 /// 跑起来，直到空闲到点、收到停的信号。`said` 交那一行：起来了、已经有一个在跑、起不来。
 ///
