@@ -10,6 +10,8 @@ import { noteOf, noticeNote } from './model.js';
 
 /** 问过权限，记在这个浏览器里的名字 */
 const ASKED = 'notify_asked';
+/** 没有标题的会话等核心起的标题最多多久（毫秒） */
+const TITLE_WAIT_MS = 5000;
 /** 没有人格头像的会话用 Miyu 的图标（同页面的图标） */
 const MIYU = new URL('resources/assets/logo.png', location.href).href;
 
@@ -37,11 +39,25 @@ export function apply(ctx) {
       document.removeEventListener('click', ask, true);
     };
   });
+  /** 还没有标题、在等核心起的标题的：`会话:哪一种` → 发出去的那一下（等到了标题、或者到点了） @type {Map<string, {id: string, send: () => void}>} */
+  const waiting = new Map();
+  // 会话表里一项变了：这个会话等着的有了标题就发
+  ctx.sessions.index.on?.((/** @type {string} */ id, /** @type {any} */ _before, /** @type {any} */ after) => {
+    if (!after?.title) return;
+    for (const w of [...waiting.values()]) if (w.id === id) w.send();
+  });
   ctx.effect(() => ctx.sessions.onAttention((/** @type {string} */ id, /** @type {'done'|'ask'|'approve'} */ what) => {
     if (host.permission() !== 'granted' || !host.away()) return;
-    const note = noteOf(what, ctx.sessions.index.get(id), ctx.chat.lookOf?.(id), MIYU, t);
-    if (!note) return;
-    host.show({ ...note, tag: `${id}:${what}`, onclick: () => ctx.chat.open(id) });
+    const tag = `${id}:${what}`;
+    const show = () => {
+      const note = noteOf(what, ctx.sessions.index.get(id), ctx.chat.lookOf?.(id), MIYU, t);
+      if (note) host.show({ ...note, tag, onclick: () => ctx.chat.open(id) });
+    };
+    // 新会话第一轮做完时核心起的标题多半还没到（2026-10-31 项目主人：通知写的是第一句话）：等它最多 TITLE_WAIT_MS，到了照标题写
+    if (ctx.sessions.index.get(id)?.title) return show();
+    if (waiting.has(tag)) return;
+    const timer = setTimeout(() => waiting.get(tag)?.send(), TITLE_WAIT_MS);
+    waiting.set(tag, { id, send: () => { clearTimeout(timer); waiting.delete(tag); show(); } });
   }));
 
   // 账号级的提醒：订 `notices`（掉队、断了又连上重订；旧核心没有这个流的不报错）
