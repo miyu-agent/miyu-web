@@ -45,8 +45,12 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          over=$(find crates web-demo/bridge/src -name '*.rs' -print0 | xargs -0 wc -l | awk '$2 != "total" && $1 > 500 {print}')
+          over=$(find crates xtask web-demo/bridge/src -name '*.rs' -print0 | xargs -0 wc -l | awk '$2 != "total" && $1 > 500 {print}')
           if [ -n "$over" ]; then echo "超过 500 行：" && echo "$over" && exit 1; fi
+      # 许可证（2026-10-30 发布前的审查第 9 条，照 miyu-im 的门禁搬的）：四个平台上用得到的第三方依赖都能和 AGPL-3.0-or-later 合在一起发。
+      - name: 许可证
+        if: runner.os == 'Linux'
+        run: cargo xtask licenses
       # 网页的纯逻辑测试读核心的出厂资源（给人看的字）：照钉住的那份核心检出找（cargo 取 git 依赖时检出的整个仓库）。
       - name: 网页的纯逻辑测试
         if: runner.os == 'Linux'

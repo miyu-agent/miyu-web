@@ -110,6 +110,7 @@
 
 | 测试 | 守着什么 |
 |---|---|
+| `xtask/src/licenses.rs`（`cargo xtask licenses`，CI 在 Linux 上跑；2026-10-30 发布前的许可证审查第 9 条，照 miyu-im 的门禁搬的） | 发布的四个平台上用得到的第三方 Rust 依赖，许可证都能和 AGPL-3.0-or-later 合在一起发：照每个包 `license` 的 SPDX 表达式算（`OR` 有一个能用就行、`AND` 每个都要、`WITH` 只认 `LLVM-exception`），没写 `license` 的、合不到一起的一包一行报出来；照 git 钉住的核心的 crate 也算。页面里收的第三方资源（字体、图标、拷来的库）不归它管，照 README「许可证」那张表 |
 | `crates/miyu-web/tests/serve.rs` | 单实例、`run/web`、那一行；端口被占说清楚；Host 只认三种写法；页面文件不出页面目录（`..`、`%2e%2e`、链接、目录）；响应头一个不少、从不设 cookie；`HEAD`、别的方法 405；空闲到点退出、删 `run/web`、放锁 |
 | `crates/miyu-web/tests/ws.rs` | 一帧一行两头照转，一个字节不改（凭据、中文、空白、很长的一行）；Origin 不对 403；二进制 1003、超过 1 MiB 1009，照原始字节发的超长帧读得到 1009、读到头不是被重置；核心断了 1012；连不上核心发 `web.error` 再关；转发的代码里不读本机令牌（照源码查，施工 O-16 起连同搬进 `miyu-webserve` 的那几份）；听局域网时别的地址来的先写 `connection.remote`、再转握手，本机来的不写，Host 是名字的 403 |
 | `crates/miyu-web/tests/media.rs` | 核心用替身（照登录令牌握手、答 `blob.get`、`fs.read`，同一条连接上乱序答）：换票据要登录令牌（没带、带错 401）；正文 `blob`、`path` 正好一个，不对 400；没有的 404、数据根里的 403、连不上核心 502；同一个令牌、资源、三格交回同一张，连接复用；全部、`Range` 206 和 `Content-Range`、超出 416、好几段和写法不对的照没写；一块不超过 512 KiB、拼起来一个字节不差；同一条连接上同时几问各拿各的；类型照表、表里没有的不认、`sandbox`、`nosniff`、`private, no-cache`；下载的名字；令牌作废了 401、票据一起作废；在给不算空闲；票据过期、满了丢最久没用的 |

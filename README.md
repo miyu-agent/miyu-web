@@ -13,7 +13,10 @@
 cargo test
 MIYU_RESOURCES=<核心检出>/resources node --test 'web-demo/tests/**/*.test.js'
 cargo test --manifest-path web-demo/bridge/Cargo.toml
+cargo xtask licenses
 ```
+
+`cargo xtask licenses` 查发布的四个平台上用得到的第三方依赖，许可证都能和 AGPL-3.0-or-later 合在一起发（`xtask/`）。
 
 网页的纯逻辑测试要核心的出厂资源（给人看的字）：`<核心检出>` 是核心仓库的检出，提交和 `Cargo.toml` 里钉的一样。
 
