@@ -5,11 +5,16 @@
 
 import { applyPackageChange, applyServerChange } from './model.js';
 
+/** 装卸包推来的 `package.changed` 一阵一阵的：停这么久再重读技能、脚本 */
+const TOOLS_SETTLE_MS = 300;
+
 export class PackageFeed {
   /** @param {any} dialog 设置页的弹窗（`dialog.js`） */
   constructor(dialog) {
     this.dialog = dialog;
     this.live = false;
+    /** 装卸包以后重读技能、脚本的那一下（`rereadTools`） @type {any} */
+    this.toolsTimer = 0;
   }
 
   /** 订阅：回应是整份列表，换上。 */
@@ -38,6 +43,7 @@ export class PackageFeed {
 
   /** 弹窗关了：退订。 */
   stop() {
+    clearTimeout(this.toolsTimer);
     if (!this.live) return;
     this.live = false;
     this.dialog.ctx.core.request('unsubscribe', { stream: 'packages' }).catch(() => {});
@@ -48,6 +54,7 @@ export class PackageFeed {
     if (method === 'package.changed' && typeof params?.package === 'string') {
       this.dialog.packages = applyPackageChange(this.dialog.packages ?? [], params.package, params.entry ?? null);
       this.redraw();
+      this.rereadTools();
       return true;
     }
     if (method === 'mcp.changed' && typeof params?.name === 'string') {
@@ -61,6 +68,26 @@ export class PackageFeed {
       return true;
     }
     return false;
+  }
+
+  /**
+   * 装、卸、升级了包：随包来的技能、脚本跟着变，重读那两份（一阵推来的并成一回），开着那两页的重画（2026-10-31 项目主人：装了带技能的包，
+   * 要关了设置再开才出来）。旧核心没有这两个方法的照旧是 `null`。
+   */
+  rereadTools() {
+    clearTimeout(this.toolsTimer);
+    this.toolsTimer = setTimeout(async () => {
+      const d = this.dialog;
+      const core = d.ctx.core;
+      const [skills, scripts] = await Promise.all([
+        core.request('skill.list', {}).then((/** @type {any} */ r) => (Array.isArray(r?.skills) ? r : null), () => d.skills),
+        core.request('script.list', {}).then((/** @type {any} */ r) => (Array.isArray(r?.scripts) ? r : null), () => d.scripts),
+      ]);
+      if (!this.live) return;
+      d.skills = skills;
+      d.scripts = scripts;
+      if (d.isOpen && (d.current === 'skills' || d.current === 'scripts') && !d.editing()) d.drawBody();
+    }, TOOLS_SETTLE_MS);
   }
 
   redraw() {
