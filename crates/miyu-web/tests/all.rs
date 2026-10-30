@@ -10,6 +10,7 @@ mod support;
 mod fake;
 
 mod backstage;
+mod desk;
 mod jump;
 mod listen;
 mod media;

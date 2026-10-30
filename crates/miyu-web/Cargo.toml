@@ -22,6 +22,10 @@ miyu-webserve = { path = "../miyu-webserve" }
 hyper = { version = "1", features = ["server", "http1"] }
 hyper-util = { version = "0.1", default-features = false, features = ["tokio"] }
 http-body-util = "0.1"
+# 「打开目录」「选择文件夹…」（`desk`，2026-10-30）：这个仓库的 crate，和演示的桥共用。
+miyu-desk = { path = "../miyu-desk" }
+# 主题「跟随壁纸」读桌面壁纸、盯着它换没换：这个仓库的 crate，和演示的桥共用。
+miyu-wallpaper = { path = "../miyu-wallpaper" }
 # `/media` 一块块给的正文是一条流。
 futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
 # `/media`（施工 W-10）：票据是 32 个随机字节；核心一块块给的是 base64。两个都本来就在依赖图里，和别的 crate 用的同一份。

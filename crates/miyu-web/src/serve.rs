@@ -82,6 +82,8 @@ pub(crate) struct Site {
     pub(crate) media: Media,
     /// 软件后台页的票据（连着的核心用 `media` 那一份）。
     pub(crate) backstage: Backstage,
+    /// 盯着桌面壁纸（`/wallpaper/events`）。
+    pub(crate) wallpaper: crate::desk::wallpaper::Follow,
     /// 连着几个 WebSocket、几个 `/media`、后台页在给。
     active: AtomicUsize,
     /// 最后一个走的时候。
@@ -259,6 +261,7 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
         core: serve.core,
         media,
         backstage,
+        wallpaper: crate::desk::wallpaper::Follow::default(),
         active: AtomicUsize::new(0),
         quiet_since: Mutex::new(Instant::now()),
         wake: Notify::new(),
@@ -351,7 +354,7 @@ async fn until(at: Option<Instant>) {
     }
 }
 
-/// 一个请求：先核对 Host；`/ws` 交给 WebSocket；`/listen` 在听的、换监听；`/media` 换票据、照票据给；`GET`、`HEAD` 当页面文件；别的方法 405。
+/// 一个请求：先核对 Host；`/ws` 交给 WebSocket；`/listen` 在听的、换监听；这台电脑上的几样交给 `desk`；`/media` 换票据、照票据给；`GET`、`HEAD` 当页面文件；别的方法 405。
 async fn handle(
     request: Request<Incoming>,
     site: Arc<Site>,
@@ -373,6 +376,9 @@ async fn handle(
     let path = request.uri().path();
     if path == "/ws" {
         return Ok(miyu_webserve::ws::accept(request, site, remote));
+    }
+    if crate::desk::PATHS.contains(&path) {
+        return Ok(crate::desk::handle(request, site, remote).await);
     }
     if path == "/listen" {
         return Ok(listen::handle(request, site).await);

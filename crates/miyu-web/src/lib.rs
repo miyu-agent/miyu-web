@@ -3,6 +3,7 @@
 //! - [`serve`]：听 `web.listen` 的一个端口（出厂 `127.0.0.1`），单实例、空闲退出（听局域网时不退）；给页面文件，`/ws` 把浏览器的 WebSocket 一帧一条转成核心
 //!   协议的一行一条，经本机传输连核心，不读本机令牌。给页面、核对 Host 和 Origin、`/ws` 照转这几样在共用的
 //!   `miyu-webserve` 里（施工 O-16，`webserve.md`「搬家表」）。
+//! - `desk`：这台电脑上的几样，只给本机来的、带设备令牌：`/reveal` 开目录、`/pick-dir` 选目录（crate `miyu-desk`）、`/wallpaper` 桌面壁纸（2026-10-30）。
 //! - `follow`：跟着核心的配置推送，`web.listen`、`web.port` 变了当场换监听（2026-10-30）。
 //! - `listen`：`/listen`，在听的地址、端口；带登录令牌 `POST` 照核心的配置当场换（2026-10-30）。
 //! - `media`：`/media`，带登录令牌换票据，照票据一块块给 blob、本机文件，能分段（施工 W-10）。
@@ -15,6 +16,7 @@
 //! 不依赖核心：只用 `miyu-ipc`、`miyu-store`、`miyu-log`、`miyu-webserve`（分层照 `01-架构.md` 第九节第 5 层）。
 
 pub mod backstage;
+mod desk;
 mod follow;
 pub mod help;
 mod listen;
