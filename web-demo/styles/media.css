@@ -18,6 +18,9 @@
 /* 知道宽高的：外框照这一栏定宽，不照图（fit-content 时百分比照图算，图还没取到是 0，图到了外框才撑开、正文往下跳一下） */
 .conversation-media:has(> .has-aspect) { width: min(100%, var(--media-max, 250px)); }
 .conversation-media img { display: block; width: auto; max-width: min(100%, var(--media-max, 250px)); height: auto; max-height: var(--media-max, 250px); object-fit: contain; }
+/* 矢量图：照最宽画，高照它的比例（只写了 viewBox 的 SVG 不给卡片撑宽，卡片照图的宽收拢会收成 0） */
+.conversation-media.is-vector { width: min(100%, var(--media-max, 250px)); }
+.conversation-media.is-vector .conversation-media-visual, .conversation-media.is-vector img { width: 100%; }
 .conversation-media-visual::after {
   position: absolute; border-radius: inherit; background: rgb(0 0 0 / 18%); content: ""; inset: 0; opacity: 0;
   pointer-events: none; transition: opacity calc(120ms * var(--motion-scale)) ease;

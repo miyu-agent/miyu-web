@@ -25,7 +25,9 @@ const withUrl = (el, attr, url) => {
  *   `download` 下载用的地址（blob 的要带名字，没给的照图的地址）；`vector` 是矢量图（没给的照名字的后缀认）
  */
 export function imageCard(what) {
-  const img = /** @type {HTMLImageElement} */ (h('img', { alt: what.alt ?? what.name ?? '', loading: 'lazy', decoding: 'async' }));
+  const vector = what.vector ?? /\.svg$/i.test(what.name ?? '');
+  // 矢量图不懒加载：只写了 viewBox 的 SVG 载入以前是 0 高，Firefox 不去取 0 大小的懒加载的图，就一直不出来
+  const img = /** @type {HTMLImageElement} */ (h('img', { alt: what.alt ?? what.name ?? '', loading: vector ? null : 'lazy', decoding: 'async' }));
   /** 点开时用的地址：要等的等到了才有 */
   let url = typeof what.url === 'string' ? what.url : '';
   setUrl(img, 'src', what.url).then((u) => { url = u; });
@@ -47,7 +49,7 @@ export function imageCard(what) {
     if (!img.isConnected) return;
     const box = what.lightbox?.();
     if (!url) return;
-    if (box) box.open({ url, name: what.name, workspace: what.workspace, download: download || undefined, vector: what.vector ?? /\.svg$/i.test(what.name ?? '') });
+    if (box) box.open({ url, name: what.name, workspace: what.workspace, download: download || undefined, vector });
     else openExternal(url);
   };
   visual.addEventListener('click', open);
@@ -57,7 +59,8 @@ export function imageCard(what) {
       open();
     }
   });
-  return h('figure.conversation-media', visual);
+  // 矢量图照最宽画、高照它的比例：只写了 viewBox 的 SVG 不给卡片撑宽，卡片照图的宽收拢会收成 0（2026-10-31 项目主人：SVG 显示不出来）
+  return h(`figure.conversation-media${vector ? '.is-vector' : ''}`, visual);
 }
 
 /**

@@ -17,6 +17,9 @@ import { h } from './dom.js';
 import { localPath } from '../model/paths.js';
 import { fileUrl } from '../core/host.js';
 
+/** 地址是不是 SVG（照扩展名，不带 `?`、`#` 后面的）：说明里不一定写着 `.svg`，矢量图的卡片照地址认 @param {string} target */
+const isSvg = (target) => /\.svg$/i.test(target.split(/[?#]/)[0]);
+
 /**
  * 看着的这个会话在哪：会话编号（新会话还没开的是 `null`）、家目录、工作目录；时间线里的结果图点开找的灯箱。
  * @typedef {{session: string|null, home: string|null, cwd: string|null, lightbox?: () => any, detail?: (call: string) => Promise<any>,
@@ -89,7 +92,7 @@ function hooksFor(scope, where, say, made, ext) {
       return reuse(`line:${line.trim()}`, () => {
         if (m.kind === 'video') return videoCard({ url: src, name: m.label });
         if (m.kind === 'audio') return audioCard({ url: src, name: m.label, download: url(m.target, true) ?? undefined });
-        return imageCard({ url: src, name: m.label, lightbox: ext?.lightbox, tried: localPath(m.target, where) ?? undefined });
+        return imageCard({ url: src, name: m.label, lightbox: ext?.lightbox, tried: localPath(m.target, where) ?? undefined, vector: isSvg(m.target) });
       });
     },
     // 照扩展名：图片、视频、音频画成卡片；不是图的（网页、文档）照链接写（蓝图「图片」第 1 条）
@@ -103,7 +106,7 @@ function hooksFor(scope, where, say, made, ext) {
       return reuse(`image:${src}\n${alt}\n${title ?? ''}`, () => {
         if (kind === 'video') return videoCard({ url: got, name });
         if (kind === 'audio') return audioCard({ url: got, name, download: url(src, true) ?? undefined });
-        return imageCard({ url: got, name, lightbox: ext?.lightbox, tried: localPath(src, where) ?? undefined });
+        return imageCard({ url: got, name, lightbox: ext?.lightbox, tried: localPath(src, where) ?? undefined, vector: isSvg(src) });
       });
     },
     after: (container) => {
