@@ -1,5 +1,5 @@
-//! 选目录（`/pick-dir`）：在桥这台机器上开系统的选目录对话框，交回选的绝对路径（蓝图 `web.md`「人格、预设、工作区」第 4 条；
-//! 2026-10-08 项目主人：选择文件夹应该打开目录选择器）。浏览器给不了本机路径；桥只听 127.0.0.1，和页面在同一台机器上，由它开。
+//! 选目录（`/pick-dir`）：在这台电脑上开系统的选目录对话框，交回选的绝对路径（蓝图 `web.md`「人格、预设、工作区」第 4 条；
+//! 2026-10-08 项目主人：选择文件夹应该打开目录选择器）。浏览器给不了本机路径；网页软件、桥和页面在同一台电脑上，由它们开。
 //!
 //! - Linux：依次试 `zenity`（GTK）、`kdialog`（KDE），都没有的交「开不了」，页面退回自己画的文件夹浏览器；
 //! - macOS：`osascript` 的 `choose folder`；
@@ -124,7 +124,7 @@ pub async fn pick_dir(title: &str, start: Option<&str>) -> Picked {
             Ok(out) => out,
             Err(e) if e.kind() == ErrorKind::NotFound => continue,
             Err(e) => {
-                eprintln!("开不了选目录的对话框（{}）：{e}", tool.program);
+                tracing::warn!(target: crate::TARGET, program = tool.program, error = %e, "folder picker not started");
                 continue;
             }
         };

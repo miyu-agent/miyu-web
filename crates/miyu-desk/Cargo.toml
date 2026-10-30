@@ -1,0 +1,21 @@
+[package]
+name = "miyu-desk"
+description = "在这台电脑的桌面上做的两样：用文件管理器打开目录、开系统的选目录对话框（网页软件、演示的桥共用；web-ui.md「怎么走」第五条）"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+# 跑系统的程序（xdg-open、open、explorer；zenity、kdialog、osascript、powershell），等它退出。桥（web-demo/bridge）照路径依赖用它。
+[dependencies]
+# 选目录交回的那一句是 JSON。
+serde_json = "1.0"
+tokio = { version = "1", features = ["process", "io-util"] }
+tracing = { version = "0.1", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt", "macros"] }
+
+[lints]
+workspace = true

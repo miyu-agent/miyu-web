@@ -1,4 +1,4 @@
-//! 页面文件：只认 `GET`，路径落在页面目录里才给；别的 404。开发用，不缓存。`/file`、`/blob` 交给 `media.rs`，`/pick-dir` 交给 `dialog.rs`，`/reveal` 交给 `reveal.rs`，
+//! 页面文件：只认 `GET`，路径落在页面目录里才给；别的 404。开发用，不缓存。`/file`、`/blob` 交给 `media.rs`，`/pick-dir`、`/reveal` 交给 crate `miyu-desk`，
 //! `/wallpaper`、`/wallpaper/events` 交给 `wallpaper.rs`，
 //! 软件后台页的 `POST /page`、`/p/…` 交给 `pages.rs`。
 
@@ -58,7 +58,7 @@ pub async fn serve(mut stream: TcpStream, site: &Site) -> io::Result<()> {
         return media::serve(&mut stream, site, path, query, &head).await;
     }
     if path == "/pick-dir" {
-        // 选目录（`dialog.rs`）：带口令才开；`start` 是从哪个目录开始，`title` 是对话框的标题
+        // 选目录（crate `miyu-desk`）：带口令才开；`start` 是从哪个目录开始，`title` 是对话框的标题
         let q = media::params(query);
         if q.get("k") != Some(&site.key) {
             return reply(
@@ -71,7 +71,7 @@ pub async fn serve(mut stream: TcpStream, site: &Site) -> io::Result<()> {
         }
         let start = q.get("start").filter(|s| !s.is_empty()).map(String::as_str);
         let picked =
-            crate::dialog::pick_dir(q.get("title").map_or("", String::as_str), start).await;
+            miyu_desk::pick::pick_dir(q.get("title").map_or("", String::as_str), start).await;
         return reply(
             &mut stream,
             "200 OK",
@@ -81,7 +81,7 @@ pub async fn serve(mut stream: TcpStream, site: &Site) -> io::Result<()> {
         .await;
     }
     if path == "/reveal" {
-        // 打开目录（`reveal.rs`）：带口令才开
+        // 打开目录（crate `miyu-desk`）：带口令才开
         let q = media::params(query);
         if q.get("k") != Some(&site.key) {
             return reply(
@@ -92,7 +92,7 @@ pub async fn serve(mut stream: TcpStream, site: &Site) -> io::Result<()> {
             )
             .await;
         }
-        let got = crate::reveal::reveal(q.get("path").map_or("", String::as_str)).await;
+        let got = miyu_desk::reveal::reveal(q.get("path").map_or("", String::as_str)).await;
         return reply(
             &mut stream,
             "200 OK",

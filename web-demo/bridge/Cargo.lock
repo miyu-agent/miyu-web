@@ -848,6 +848,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "miyu-desk"
+version = "0.0.1"
+dependencies = [
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "miyu-drivers"
 version = "0.0.0"
 source = "git+https://github.com/miyu-agent/miyu?rev=474772b2df473a16ff5827684aa2195d4e8fc69a#474772b2df473a16ff5827684aa2195d4e8fc69a"
@@ -997,6 +1006,7 @@ dependencies = [
  "futures-util",
  "getrandom 0.4.3",
  "miyu-client",
+ "miyu-desk",
  "miyu-wallpaper",
  "serde_json",
  "tokio",

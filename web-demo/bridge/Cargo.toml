@@ -21,6 +21,8 @@ futures-util = { version = "0.3", default-features = false, features = ["sink", 
 getrandom = { version = "0.4", features = ["std"] }
 # 主题「跟随壁纸」读桌面壁纸：这个仓库的 crate，只用标准库。
 miyu-wallpaper = { path = "../../crates/miyu-wallpaper" }
+# 「打开目录」「选择文件夹…」：这个仓库的 crate，和网页软件共用（2026-10-30 从桥搬过去）。
+miyu-desk = { path = "../../crates/miyu-desk" }
 # 核心的 `fs.read`、`blob.get` 回的一段是 base64（`/file`、`/blob` 照它一块块写给浏览器）。和仓库里的同一个版本。MIT 或 Apache-2.0。
 base64 = "0.22"
 

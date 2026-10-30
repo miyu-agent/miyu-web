@@ -1,5 +1,5 @@
-//! 打开目录（`/reveal`）：在桥这台机器上用系统的文件管理器打开一个文件夹（蓝图 `web.md`「设置页」第 20 条：技能、脚本两页的
-//! 「打开目录」）。浏览器开不了本机的文件夹；桥只听 127.0.0.1，和页面在同一台机器上，由它开（同 `/pick-dir`）。
+//! 打开目录（`/reveal`）：在这台电脑上用系统的文件管理器打开一个文件夹（蓝图 `web.md`「设置页」第 20 条：技能、脚本两页的
+//! 「打开目录」）。浏览器开不了本机的文件夹；网页软件、桥和页面在同一台电脑上，由它们开（同 `/pick-dir`）。
 //!
 //! - 只开目录，不开文件（文件交给系统打开就是运行它）；`~`、`~/…` 照家目录接。
 //! - 还没建的：上一层在的建出来再开（核心给的是管理员放技能、脚本的文件夹，还没放过东西的不在）；上一层也不在的交「不在」。
@@ -60,7 +60,7 @@ pub fn ready(dir: &Path) -> Option<PathBuf> {
     match std::fs::create_dir(dir) {
         Ok(()) => Some(dir.to_path_buf()),
         Err(e) => {
-            eprintln!("建不了要打开的目录 {}：{e}", dir.display());
+            tracing::warn!(target: crate::TARGET, dir = %dir.display(), error = %e, "folder not made");
             None
         }
     }
@@ -93,12 +93,12 @@ pub async fn reveal(path: &str) -> Revealed {
         // explorer 开成了也交 1，不看它的退出码
         Ok(status) if status.success() || cfg!(windows) => Revealed::Opened,
         Ok(status) => {
-            eprintln!("打开目录 {} 没成（{status}）", dir.display());
+            tracing::warn!(target: crate::TARGET, dir = %dir.display(), %status, "folder not opened");
             Revealed::Unavailable
         }
         Err(e) => {
             if e.kind() != ErrorKind::NotFound {
-                eprintln!("开不了文件管理器（{}）：{e}", program());
+                tracing::warn!(target: crate::TARGET, program = program(), error = %e, "file manager not started");
             }
             Revealed::Unavailable
         }
