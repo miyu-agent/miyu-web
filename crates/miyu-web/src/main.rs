@@ -136,6 +136,7 @@ async fn serve(root: DataRoot, env: &Env, port: Option<u16>) -> u8 {
         fallback,
         // `--port` 起的端口不随配置换（`/listen`）
         configured: port.is_none().then_some(settings.port),
+        follow: true,
         pages,
         settings,
         core: Arc::new(core),

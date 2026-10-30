@@ -13,7 +13,7 @@
 | `crates/miyu-web/`（第 5 层，头） | 程序 `miyu-web`：只依赖 `miyu-ipc`、`miyu-store`、`miyu-log`、`miyu-webserve`，不依赖核心 |
 | `crates/miyu-web/src/main.rs` | 子命令 `open`、`serve`；找自己旁边的主程序拉起核心 |
 | `crates/miyu-web/src/serve.rs` | 单实例、听端口、写 `run/web` 和那一行、空闲退出（听局域网时不退）；每个请求分给谁：Host 不对的记一行、回 403，`/ws`、`/media`、`/listen`、页面文件。网页软件的 `Site` 实现 `miyu_webserve::Site`（数忙照空闲退出；在听的地址、端口换了照新的核对 Host） |
-| `crates/miyu-web/src/listen.rs` | `/listen`（「怎么走」第一条第 11 款）：回在听的地址、端口、别的设备打开用的网址；`POST` 照核心的配置换地址、端口，接连接的那一圈照它换监听 |
+| `crates/miyu-web/src/listen.rs`、`follow.rs` | `/listen`（「怎么走」第一条第 11 款）：回在听的地址、端口、别的设备打开用的网址；`POST` 照核心的配置换地址、端口，接连接的那一圈照它换监听。`follow`：订核心的配置推送，那两项变了自己换 |
 | `crates/miyu-webserve/src/lib.rs`（施工 O-16 搬过去，`webserve.md`「搬家表」） | 核对 Host、Origin 的三种写法和听局域网时的 IP 写法（`Site::hosts`、`listen`、`host_allowed`、`origin_allowed`）；连接是不是远程的（`remote`） |
 | `crates/miyu-webserve/src/pages.rs`（同上，原来是 `crates/miyu-web/src/pages.rs` 和 `serve.rs` 的一段） | 页面文件：`/` 是 `index.html`，不出页面目录；类型照 `web.json` 的表、四个响应头 |
 | `crates/miyu-webserve/src/ws.rs`（同上，原来是 `crates/miyu-web/src/ws.rs`） | 核对 Origin；远程的先写 `connection.remote`；WebSocket 和核心连接两头照转 |
@@ -53,7 +53,7 @@
 11. 换地址、端口（2026-10-30 项目主人：网页默认只给本机，设置页「通用」的「访问」一组一个开关放开到局域网，能填监听地址、端口；开着就不空闲退出，等它重启才生效等于不生效）：
    - `GET /listen` 回 `{"listen": <在听的地址>, "port": <在听的端口>, "lan": <别的设备打开用的网址或 null>}`。`lan`：听 `0.0.0.0` 的写这台电脑往外的那个地址（UDP 套接字 `connect` 文档地址 `192.0.2.1`，不发包，读本地地址；拿不到的、是回环的 `null`），听某一个地址的就是它，回环的 `null`；写成 `http://<地址>:<端口>`（IPv6 加方括号）。
    - `POST /listen`（带设备令牌 `Authorization: Bearer <令牌>`，同 `/media`；没带的 401）：拿这个令牌连核心（`connect_login`，不拉起核心；不替请求出示本机令牌，局域网来的请求也只能用自己的登录读配置；核心不认的 401），`config.get` 重读 `web.listen`、`web.port`，和在听的不一样就换：端口没变、只换地址的先放掉旧的再听新的（同一个端口两个地址会冲突），新的听不上再听回旧的；端口变了的先听新的、听上了再放掉旧的，`run/web` 照新端口写。`web.port` 和起来时读到的一样的不动端口（回退过的留着现在这个）；`--port` 起的端口不随配置换。已经连着的（WebSocket、`/media`、后台页）不断。回应同 `GET`；换不了的（听不上、端口被占、核心连不上）多一个 `"error": <原因>`（核心的原话），状态码照旧 200，接着听原来的。它只照核心里已经存着的配置换，换不出配置以外的样子。
-   - 设置页存完 `web.listen`、`web.port` 再 `POST`（核心不知道网页软件在不在跑，不另推）；走桥的、旧网页软件没有 `/listen` 的，设置页照「重启网页软件后生效」写。
+   - 跟着核心的配置（2026-10-30 验收时撞见：端口换走以后，开在旧端口上的页面请不到 `/listen`，再关局域网，网页软件却还听着局域网）：`serve` 起来以后自己照终端的样子连核心（出示本机令牌，同第 2 款读配置；不拉起核心），`subscribe {stream: "config"}`，先 `config.get` 读一遍换一遍，以后推来的 `config.changed` 的 `keys` 里有 `web.listen`、`web.port` 的、掉了队（`resync`）的再读再换；没有这一项的（网页包没装、旧核心）不动那一样。核心不在、断了，10 秒后再连（核心重启以后接着跟）。设置页、`miyu config set`、手改配置文件都当场生效；设置页存完再 `POST /listen` 只为拿换完的样子（换不了的原因、新的网址）。
 
 **二、`miyu web`**（W-9，原来是 `web-module.md` 第十一条，2026-10-04 随 W-8 改过）
 
@@ -117,7 +117,7 @@
 |---|---|
 | `xtask/src/licenses.rs`（`cargo xtask licenses`，CI 在 Linux 上跑；2026-10-30 发布前的许可证审查第 9 条，照 miyu-im 的门禁搬的） | 发布的四个平台上用得到的第三方 Rust 依赖，许可证都能和 AGPL-3.0-or-later 合在一起发：照每个包 `license` 的 SPDX 表达式算（`OR` 有一个能用就行、`AND` 每个都要、`WITH` 只认 `LLVM-exception`），没写 `license` 的、合不到一起的一包一行报出来；照 git 钉住的核心的 crate 也算。页面里收的第三方资源（字体、图标、拷来的库）不归它管，照 README「许可证」那张表 |
 | `crates/miyu-web/tests/serve.rs` | 单实例、`run/web`、那一行；端口被占说清楚；Host 只认三种写法；页面文件不出页面目录（`..`、`%2e%2e`、链接、目录）；响应头一个不少、从不设 cookie；`HEAD`、别的方法 405；空闲到点退出、删 `run/web`、放锁；听局域网时到点不退 |
-| `crates/miyu-web/tests/listen.rs` | `GET /listen` 回在听的、Host 照旧核对；`POST` 不带设备令牌、核心不认的 401；核心没在跑的回 `error`、接着听原来的；换地址（同一个端口）、换端口（`run/web` 跟着换、旧端口不再接、连着的 WebSocket 不断）、配置没变不动、`--port` 起的端口不随配置换；听局域网时空闲到点不退、换回回环照旧退 |
+| `crates/miyu-web/tests/listen.rs` | `GET /listen` 回在听的、Host 照旧核对；`POST` 不带设备令牌、核心不认的 401；核心没在跑的回 `error`、接着听原来的；换地址（同一个端口）、换端口（`run/web` 跟着换、旧端口不再接、连着的 WebSocket 不断）、配置没变不动、`--port` 起的端口不随配置换；听局域网时空闲到点不退、换回回环照旧退；不用页面请，起来先照核心的配置换、推来改动当场换回 |
 | `crates/miyu-web/src/listen/tests.rs` | `lan` 的写法（回环没有、某一个地址就是它、IPv6 加方括号）；同一个端口换地址、换端口先听新的、新端口被占留着旧的 |
 | `crates/miyu-web/tests/ws.rs` | 一帧一行两头照转，一个字节不改（凭据、中文、空白、很长的一行）；Origin 不对 403；二进制 1003、超过 1 MiB 1009，照原始字节发的超长帧读得到 1009、读到头不是被重置；核心断了 1012；连不上核心发 `web.error` 再关；转发的代码里不读本机令牌（照源码查，施工 O-16 起连同搬进 `miyu-webserve` 的那几份）；听局域网时别的地址来的先写 `connection.remote`、再转握手，本机来的不写，Host 是名字的 403 |
 | `crates/miyu-web/tests/media.rs` | 核心用替身（照登录令牌握手、答 `blob.get`、`fs.read`，同一条连接上乱序答）：换票据要登录令牌（没带、带错 401）；正文 `blob`、`path` 正好一个，不对 400；没有的 404、数据根里的 403、连不上核心 502；同一个令牌、资源、三格交回同一张，连接复用；全部、`Range` 206 和 `Content-Range`、超出 416、好几段和写法不对的照没写；一块不超过 512 KiB、拼起来一个字节不差；同一条连接上同时几问各拿各的；类型照表、表里没有的不认、`sandbox`、`nosniff`、`private, no-cache`；下载的名字；令牌作废了 401、票据一起作废；在给不算空闲；票据过期、满了丢最久没用的 |

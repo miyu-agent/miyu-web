@@ -9,20 +9,28 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 use crate::support::*;
 
-/// 起核心的替身：`hello` 只认登录令牌 `good`；`config.get` 照 `config`（`web.listen`、`web.port` 两项的 `items`）回。
-fn core_with(home: &Home, config: Arc<Mutex<Value>>) {
+/// 起核心的替身：`hello` 认登录令牌 `good`、本机令牌（`token`，网页软件自己跟配置用的）；`config.get` 照 `config`（`web.listen`、`web.port`
+/// 两项的 `items`）回；订了配置推送的连接，交回的口子每叫一声推一条改了 `web.listen` 的 `config.changed`。
+fn core_with(home: &Home, config: Arc<Mutex<Value>>) -> Arc<tokio::sync::Notify> {
     let mut core = fake_core(home);
+    let pushes = Arc::new(tokio::sync::Notify::new());
+    let pusher = Arc::clone(&pushes);
     tokio::spawn(async move {
         while let Ok(connection) = core.accept().await {
             let config = Arc::clone(&config);
+            let pushes = Arc::clone(&pusher);
             tokio::spawn(async move {
-                let (read, mut write) = tokio::io::split(connection);
+                let (read, write) = tokio::io::split(connection);
+                let write = Arc::new(tokio::sync::Mutex::new(write));
                 let mut lines = BufReader::new(read);
                 let mut line = String::new();
                 while lines.read_line(&mut line).await.is_ok_and(|read| read > 0) {
                     let request: Value = serde_json::from_str(&line).expect("是 JSON");
+                    let params = &request["params"];
                     let reply = match request["method"].as_str() {
-                        Some("hello") if request["params"]["login"] == json!("good") => {
+                        Some("hello")
+                            if params["login"] == json!("good") || params["token"].is_string() =>
+                        {
                             json!({"result": {"account": "admin", "language": "zh", "protocol": 1}})
                         }
                         Some("hello") => {
@@ -32,12 +40,33 @@ fn core_with(home: &Home, config: Arc<Mutex<Value>>) {
                             let items = config.lock().expect("没坏").clone();
                             json!({"result": {"items": items}})
                         }
+                        Some("subscribe") => {
+                            let (write, pushes) = (Arc::clone(&write), Arc::clone(&pushes));
+                            tokio::spawn(async move {
+                                loop {
+                                    pushes.notified().await;
+                                    let push = json!({"jsonrpc": "2.0", "method": "config.changed", "params": {"keys": {"web.listen": {}}, "layer": "system", "via": "set"}});
+                                    if write
+                                        .lock()
+                                        .await
+                                        .write_all(format!("{push}\n").as_bytes())
+                                        .await
+                                        .is_err()
+                                    {
+                                        return;
+                                    }
+                                }
+                            });
+                            json!({"result": {}})
+                        }
                         _ => json!({"result": {}}),
                     };
                     let mut reply = reply;
                     reply["jsonrpc"] = json!("2.0");
                     reply["id"] = request["id"].clone();
                     if write
+                        .lock()
+                        .await
                         .write_all(format!("{reply}\n").as_bytes())
                         .await
                         .is_err()
@@ -49,6 +78,7 @@ fn core_with(home: &Home, config: Arc<Mutex<Value>>) {
             });
         }
     });
+    pushes
 }
 
 /// 配置里的两项：`web.listen` 写 `listen`，`web.port` 写 `port`（出处是系统配置）。
@@ -100,7 +130,8 @@ async fn get_tells_what_is_listened_on() {
 #[tokio::test]
 async fn post_needs_a_login_and_a_core() {
     let home = Home::new();
-    let (_, port, _serving) = start_configured(&home, 0, settings(600), false, Some(0)).await;
+    let (_, port, _serving) =
+        start_configured(&home, 0, settings(600), false, Some(0), false).await;
     assert_eq!(post(port, None).await.0, 401, "不带设备令牌的不认");
     // 核心没在跑：回原因，接着听原来的
     let (status, body) = post(port, Some("good")).await;
@@ -128,7 +159,7 @@ async fn a_new_address_is_listened_on_at_once_and_the_idle_exit_waits() {
     };
     let home = Home::new();
     // 空闲 1 秒就退：听了局域网就不退
-    let (_, port, serving) = start_configured(&home, 0, settings(1), false, Some(0)).await;
+    let (_, port, serving) = start_configured(&home, 0, settings(1), false, Some(0), false).await;
     let wanted = Arc::new(Mutex::new(config(&lan.to_string(), 0)));
     core_with(&home, Arc::clone(&wanted));
     let (status, body) = post(port, Some("good")).await;
@@ -177,7 +208,7 @@ async fn send_to(ip: std::net::IpAddr, port: u16, host: &str) -> Value {
 #[tokio::test]
 async fn a_new_port_moves_the_address_file_and_lets_the_old_one_go() {
     let home = Home::new();
-    let (_, old, _serving) = start_configured(&home, 0, settings(600), false, Some(0)).await;
+    let (_, old, _serving) = start_configured(&home, 0, settings(600), false, Some(0), false).await;
     let fresh = {
         let probe = std::net::TcpListener::bind("127.0.0.1:0").expect("听得上");
         probe.local_addr().expect("有地址").port()
@@ -217,4 +248,41 @@ async fn a_port_given_on_the_command_line_stays() {
     assert_eq!(status, 200);
     assert_eq!(body["port"], json!(port), "{body}");
     assert!(body.get("error").is_none(), "{body}");
+}
+
+#[tokio::test]
+async fn it_follows_the_core_without_any_page_asking() {
+    let Some(lan) = lan_address() else {
+        eprintln!("这台机器没有局域网地址，跳过");
+        return;
+    };
+    let home = Home::new();
+    // 核心先在跑、配置里已经写了局域网地址：起来以后读一遍就换过去
+    let wanted = Arc::new(Mutex::new(config(&lan.to_string(), 0)));
+    let push = core_with(&home, Arc::clone(&wanted));
+    let (_, port, _serving) = start_configured(&home, 0, settings(600), false, Some(0), true).await;
+    // 听的是这一个局域网地址：连得上它、回环连不上
+    let open = |ip: std::net::IpAddr| async move {
+        tokio::net::TcpStream::connect((ip, port)).await.is_ok()
+    };
+    let loopback = std::net::IpAddr::from([127, 0, 0, 1]);
+    within("换到局域网地址", async {
+        while !open(lan).await || open(loopback).await {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+    })
+    .await;
+    // 别处关了（设置页、miyu config set）：推来一条，当场换回回环
+    *wanted.lock().expect("没坏") = config("127.0.0.1", 0);
+    push.notify_one();
+    within("换回回环", async {
+        while !open(loopback).await {
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+    })
+    .await;
+    assert!(
+        tokio::net::TcpStream::connect((lan, port)).await.is_err(),
+        "局域网地址不再听"
+    );
 }

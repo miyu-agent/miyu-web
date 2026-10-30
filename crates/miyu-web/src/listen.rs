@@ -70,11 +70,24 @@ async fn relisten(site: &Arc<Site>, login: &str) -> Result<(), Refusal> {
         )
         .await
         .map_err(|refused| Refusal::Said(refused.message))?;
-    let items = &got["items"];
-    let listen = items["web.listen"]["value"]
-        .as_str()
-        .and_then(|text| text.trim().parse::<IpAddr>().ok())
-        .unwrap_or(IpAddr::V4(Ipv4Addr::LOCALHOST));
+    apply(site, &got["items"]).await.map_err(Refusal::Said)
+}
+
+/// 照核心交回的配置（`config.get` 的 `items`）换监听：`web.listen`、`web.port` 和在听的不一样就递给接连接的那一圈，等它换完。没有这一项的
+/// （网页包没装、旧核心）不动那一样；地址写得不对的当回环。`POST /listen`、跟着推送（[`crate::follow`]）都走这里。
+///
+/// # Errors
+///
+/// 换不了（听不上、端口被占）、网页软件在停：交回原因。
+pub(crate) async fn apply(site: &Arc<Site>, items: &Value) -> Result<(), String> {
+    let now = miyu_webserve::Site::listen(site.as_ref());
+    let listen = match items.get("web.listen") {
+        Some(item) => item["value"]
+            .as_str()
+            .and_then(|text| text.trim().parse::<IpAddr>().ok())
+            .unwrap_or(IpAddr::V4(Ipv4Addr::LOCALHOST)),
+        None => now,
+    };
     let configured = items["web.port"]["value"]
         .as_i64()
         .and_then(|port| u16::try_from(port).ok());
@@ -82,18 +95,15 @@ async fn relisten(site: &Arc<Site>, login: &str) -> Result<(), Refusal> {
         .as_str()
         .is_some_and(|layer| layer != "default");
     let port = site.port_for(configured).map(|port| (port, !chosen));
-    if listen == miyu_webserve::Site::listen(site.as_ref()) && port.is_none() {
+    if listen == now && port.is_none() {
         return Ok(());
     }
     let (done, heard) = oneshot::channel();
     site.swaps
         .send(Swap { listen, port, done })
         .await
-        .map_err(|_| Refusal::Said("stopping".to_string()))?;
-    heard
-        .await
-        .map_err(|_| Refusal::Said("stopping".to_string()))?
-        .map_err(Refusal::Said)?;
+        .map_err(|_| "stopping".to_string())?;
+    heard.await.map_err(|_| "stopping".to_string())??;
     if let Some(port) = configured.filter(|_| port.is_some()) {
         site.wanted(port);
     }

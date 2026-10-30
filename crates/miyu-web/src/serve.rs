@@ -52,6 +52,8 @@ pub struct Serve {
     pub port: u16,
     /// 被占了能不能往后挪：端口是出厂的才能（`web-ui.md`「怎么走」第一条第 1 款），照先后试后面 [`FALLBACK_PORTS`] 个。
     pub fallback: bool,
+    /// 跟着核心的配置推送换监听（`follow`）：正式跑的是真的；测试里别的替身核心不认订阅、会把这条连接当成浏览器的，关着。
+    pub follow: bool,
     /// 配置里的端口（`web.port` 的最终值）：`/listen` 照配置换监听时和它比，一样的不动端口（回退过的留着现在这个）；`--port` 起的是空的，
     /// 端口不随配置换（第一条第 11 款）。
     pub configured: Option<u16>,
@@ -261,7 +263,13 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
         quiet_since: Mutex::new(Instant::now()),
         wake: Notify::new(),
     });
+    let following = serve
+        .follow
+        .then(|| tokio::spawn(crate::follow::follow(Arc::clone(&site))));
     let reason = accept(listener, asked, &site).await;
+    if let Some(following) = following {
+        following.abort();
+    }
     remove_address(&run);
     tracing::info!(target: TARGET, reason, "stopped");
     Ok(())
