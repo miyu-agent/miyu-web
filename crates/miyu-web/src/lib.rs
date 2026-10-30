@@ -1,8 +1,9 @@
 //! 网页软件（`docs/blueprint/web-module.md`「怎么走」第九条、第十一条，施工 W-9）：一个单独的程序，是核心的一个头。
 //!
-//! - [`serve`]：只听 `127.0.0.1` 的一个端口，单实例、空闲退出；给页面文件，`/ws` 把浏览器的 WebSocket 一帧一条转成核心
+//! - [`serve`]：听 `web.listen` 的一个端口（出厂 `127.0.0.1`），单实例、空闲退出（听局域网时不退）；给页面文件，`/ws` 把浏览器的 WebSocket 一帧一条转成核心
 //!   协议的一行一条，经本机传输连核心，不读本机令牌。给页面、核对 Host 和 Origin、`/ws` 照转这几样在共用的
 //!   `miyu-webserve` 里（施工 O-16，`webserve.md`「搬家表」）。
+//! - `listen`：`/listen`，在听的地址、端口；带登录令牌 `POST` 照核心的配置当场换（2026-10-30）。
 //! - `media`：`/media`，带登录令牌换票据，照票据一块块给 blob、本机文件，能分段（施工 W-10）。
 //! - [`backstage`]：软件后台页，带登录令牌 `POST /page` 换票据，`/p/<票据>/<包>/<路径>` 照 `package.file` 给（施工 F-6 下）。
 //! - [`open`]：`miyu web` 交来的参数：确保 `serve` 在跑，第一次、`--reset` 的照终端的样子出示本机令牌要一次性码，开浏览器
@@ -14,6 +15,7 @@
 
 pub mod backstage;
 pub mod help;
+mod listen;
 mod media;
 pub mod open;
 pub mod serve;

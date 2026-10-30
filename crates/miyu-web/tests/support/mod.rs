@@ -124,11 +124,23 @@ pub async fn start_falling_back(
     settings: Settings,
     fallback: bool,
 ) -> (Ready, u16, JoinHandle<Result<(), String>>) {
+    start_configured(home, port, settings, fallback, None).await
+}
+
+/// 同 [`start_falling_back`]，配置里的端口照给的（`/listen` 照配置换端口时和它比；空的是 `--port` 起的）。
+pub async fn start_configured(
+    home: &Home,
+    port: u16,
+    settings: Settings,
+    fallback: bool,
+    configured: Option<u16>,
+) -> (Ready, u16, JoinHandle<Result<(), String>>) {
     let (said, heard) = oneshot::channel();
     let serve = Serve {
         root: home.root.clone(),
         port,
         fallback,
+        configured,
         pages: home.pages.clone(),
         settings,
         core: no_core(),
