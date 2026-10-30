@@ -117,6 +117,7 @@ pub async fn pick_dir(title: &str, start: Option<&str>) -> Picked {
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
             .kill_on_drop(true);
+        crate::no_console(&mut cmd);
         if let Some(dir) = start {
             cmd.env("MIYU_PICK_START", dir);
         }

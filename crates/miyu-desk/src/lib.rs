@@ -11,3 +11,17 @@ pub mod reveal;
 
 /// 日志的目标。
 const TARGET: &str = "miyu::desk";
+
+/// Windows 上拉起的程序不开控制台窗口（`CREATE_NO_WINDOW`）：网页软件是在后台拉起的，自己没有控制台，拉起 PowerShell 这类控制台
+/// 程序不带它，Windows 11 会新开一个终端窗口，人看到一闪的黑框（2026-10-30 桌面端提醒；核心 NW-1 修过同一种）。别的系统什么都不做。
+fn no_console(command: &mut tokio::process::Command) {
+    #[cfg(windows)]
+    {
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = command;
+    }
+}

@@ -89,6 +89,7 @@ pub async fn reveal(path: &str) -> Revealed {
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null());
+    crate::no_console(&mut cmd);
     match cmd.status().await {
         // explorer 开成了也交 1，不看它的退出码
         Ok(status) if status.success() || cfg!(windows) => Revealed::Opened,
