@@ -12,7 +12,7 @@ const input = (u) => u.uncached + u.cache_read + u.cache_write;
 /**
  * 照会话状态写（蓝图 `web.md`「照条目画」第 3 条；核心 9-8 补上的 `view.status`）：级别照 `permission`，模型照 `model`，
  * 速度不写在这里（2026-10-26 项目主人：挪到每轮收尾那一行，`entries.js` 的 `endItem`），上下文照 `context.used`（窗口照 `context.window`，没有的照订阅回应的限额），累计照 `usage`（全部请求，命中率照
- * 主请求），花费照 `usage` 的 `converted`（核心 UC-1，没有的照 `amounts`；同累计只算这个会话自己，不连子代理；没定价的不写）；还是 0 的格子不写。
+ * 主请求），花费照 `usage` 的 `converted`（核心 UC-1，没有的不写；同累计只算这个会话自己，不连子代理；没定价的不写）；还是 0 的格子不写。
  * @param {any} status @param {{window?: number}} [limits] 订阅回应里的限额
  * @returns {{left: {level: string, label: string, model: string|null, endpoint: string|null}, right: {key: string, text: string}[]}}
  */

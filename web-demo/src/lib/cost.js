@@ -1,7 +1,7 @@
 // @ts-check
 //! 花费怎么写（蓝图 `web.md`「用量页」第 6 条，核心 UC-1，2026-10-26 项目主人）：`usage.query` 的一行、会话状态的 `usage` 有 `converted`
 //! （每一笔照那天的汇率换成 `usage.currency` 加起来的一个数）的写它，没换成的（`rest`）照币种接在后面「¥12.30 + $0.40」；一笔都没换成的
-//! （没有 `converted`，旧核心也是）照旧照 `amounts` 各写各的。几行加起来（合计、按用途归到一起）时换算成的加在一起，没换成的并在后面。
+//! （没有 `converted`：缺汇率、旧核心）不写金额，不把几种币种并排列（2026-10-31 项目主人：要的是默认币种、自动换算；「算不准的钱不显示」）。几行加起来（合计、按用途归到一起）时换算成的加在一起，没换成的并在后面。
 //! 用到兜底汇率源的带 `rates`（来源、链接），界面照它注明来源。纯函数：用量页、框下面累计的浮窗共用。
 
 import { money } from './format.js';
@@ -30,16 +30,16 @@ export function uniqueRates(lists) {
 }
 
 /**
- * 一行要写的那几笔：换算成的一笔在前、没换成的照币种接在后面；没有 `converted` 的照 `amounts`。
+ * 一行要写的那几笔：换算成的一笔在前、没换成的照币种接在后面；没有 `converted` 的（一笔都没换成）是空的，不写金额。
  * @param {Priced|null|undefined} row @returns {Amount[]}
  */
 export function costParts(row) {
   const c = row?.converted;
   if (c && typeof c.amount === 'number' && c.currency) return [{ currency: c.currency, amount: c.amount }, ...(c.rest ?? [])];
-  return row?.amounts ?? [];
+  return [];
 }
 
-/** 一行的花费写成字：「¥12.30」「¥12.30 + $0.40」「$1.27 + ¥12.92」；一笔都没有是空的 @param {Priced|null|undefined} row */
+/** 一行的花费写成字：「¥12.30」「¥12.30 + $0.40」；没换算成的、一笔都没有是空的 @param {Priced|null|undefined} row */
 export const costText = (row) => money(costParts(row));
 
 /**

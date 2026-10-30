@@ -41,11 +41,11 @@ test('会话状态不知道窗口多大的照订阅回应的限额；都不知�
   assert.equal(statusFooter(unknown, {}).right[0].text, '2.3k');
 });
 
-test('花费单独一格接在累计后面：有 converted 写它（rest 接在后面），没有的照 amounts，没定价的不写（核心 UC-1，2026-10-26 项目主人）', () => {
+test('花费单独一格接在累计后面：有 converted 写它（rest 接在后面），没有的、没定价的不写（核心 UC-1，2026-10-26、10-31 项目主人）', () => {
   const priced = (cost) => statusFooter({ ...status, usage: { ...status.usage, ...cost } }).right.map((p) => p.text);
   assert.deepEqual(priced({ amounts: [{ currency: 'USD', amount: 0.045 }], converted: { currency: 'CNY', amount: 0.32 } }), ['2.3k/1M(0.2%)', 'Σ12.4k(C88%)', '¥0.32']);
   assert.deepEqual(priced({ amounts: [{ currency: 'USD', amount: 0.4 }, { currency: 'CNY', amount: 0.32 }], converted: { currency: 'CNY', amount: 0.32, rest: [{ currency: 'USD', amount: 0.4 }] } }).at(-1), '¥0.32 + $0.40');
-  assert.deepEqual(priced({ amounts: [{ currency: 'USD', amount: 0.05 }] }).at(-1), '$0.05', '汇率还没有（第一次）：照 amounts');
+  assert.deepEqual(priced({ amounts: [{ currency: 'USD', amount: 0.05 }] }).at(-1), 'Σ12.4k(C88%)', '汇率还没有（第一次）：不写这一格');
   assert.deepEqual(priced({ amounts: [] }).at(-1), 'Σ12.4k(C88%)', '没定价：不写这一格');
   const parts = statusFooter({ ...status, usage: { ...status.usage, amounts: [], converted: { currency: 'CNY', amount: 0.32 } } }).right;
   const width = (ps) => ps.map((p) => p.text).join(' · ').length;

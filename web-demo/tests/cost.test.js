@@ -6,10 +6,10 @@ const usd = (amount) => ({ currency: 'USD', amount });
 const cny = (amount) => ({ currency: 'CNY', amount });
 const eur = (amount) => ({ currency: 'EUR', amount });
 
-test('一行的花费：有 converted 写换算成的一个数，没换成的照币种接在后面；没有的照 amounts（核心 UC-1，2026-10-26 项目主人）', () => {
+test('一行的花费：有 converted 写换算成的一个数，没换成的照币种接在后面；没有的不写金额（核心 UC-1，2026-10-26、10-31 项目主人）', () => {
   assert.equal(costText({ amounts: [usd(1.7), cny(0.1)], converted: { currency: 'CNY', amount: 12.3 } }), '¥12.30', '都换成了：只写一个数，不标 ≈');
   assert.equal(costText({ amounts: [usd(0.4), cny(12.3)], converted: { currency: 'CNY', amount: 12.3, rest: [usd(0.4)] } }), '¥12.30 + $0.40', '没换成的接在后面');
-  assert.equal(costText({ amounts: [usd(1.27), cny(12.92)] }), '$1.27 + ¥12.92', '一笔都没换成（没有 converted）：照旧各写各的');
+  assert.equal(costText({ amounts: [usd(1.27), cny(12.92)] }), '', '一笔都没换成（没有 converted）：不写，不把几种币种并排列');
   assert.equal(costText({ amounts: [] }), '');
   assert.equal(costText(null), '');
   assert.deepEqual(costParts({ amounts: [usd(1)], converted: { currency: 'CNY', amount: 7.1, rest: [eur(2)] } }), [cny(7.1), eur(2)]);
