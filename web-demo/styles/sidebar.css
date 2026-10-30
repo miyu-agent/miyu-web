@@ -5,8 +5,11 @@
    动画照目标那一头的写法走：展开的曲线写在平常的样子上，收起的写在 .is-sidebar-collapsed 上。
    一直是三列，第三列是预览工作区，关着是 0：列数不变，开关预览工作区时那一列也能长出来、收回去（蓝图「动效」） */
 .app-shell {
+  /* 左栏多宽（蓝图「整页」左栏的宽那一条，`sidebar-width.js`）：没拖过的照窗口宽的 22% 收窄，夹在 200px 和主题的出厂之间；拖过的照拖的
+     （`--side-drag`），窗口窄了放不下的不超过窗口宽的 36%。整页放大的照自己的 CSS 像素算（vw 除掉放大的倍数） */
+  --left-w: min(var(--side-drag, clamp(min(200px, var(--side-width, 252px)), 22vw / var(--ui-scale), var(--side-width, 252px))), max(200px, 36vw / var(--ui-scale)));
   display: grid;
-  grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) 0px;
+  grid-template-columns: var(--left-w) minmax(0, 1fr) 0px;
   width: 100%;
   height: calc(100dvh / var(--ui-scale));
   overflow: hidden;
@@ -35,7 +38,7 @@
 }
 
 .sidebar {
-  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; width: var(--side-width, 252px); min-height: 0;
+  position: relative; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; width: var(--left-w); min-height: 0;
   background: var(--side-bg, var(--sidebar-bg)); box-shadow: var(--side-elev, var(--side-edge, inset -1px 0 0 var(--line))); z-index: 20;
 }
 
@@ -167,10 +170,9 @@
 .mobile-menu-button { display: none; }
 .page-scrim { display: none; }
 
-@media (max-width: 1078px) {
-  .app-shell { grid-template-columns: 224px minmax(0, 1fr) 0px; }
-  .sidebar { width: 224px; }
-}
+/* 右边沿拖着改宽的抓手：看不见，指针移上去变成左右箭头（同右栏左边缘那条）；收起着、临时浮出、窄屏的抽屉不出 */
+.sidebar-resize-handle { position: absolute; top: 0; right: -4px; bottom: 0; z-index: 3; width: 8px; cursor: col-resize; touch-action: none; }
+.app-shell.is-sidebar-collapsed .sidebar-resize-handle { display: none; }
 
 
 /* 窄屏：不放大；左栏是从左边滑出来的一层，后面一层遮罩 */
@@ -194,6 +196,7 @@
   .app-shell.is-drawer-open .page-scrim { display: block; }
   /* 窄屏抽屉也盖住吉祥物（同上面浮出来的左栏） */
   .app-shell.is-drawer-open .sidebar { z-index: 41; }
+  .sidebar-resize-handle { display: none; }
   .sidebar-close { display: inline-grid; width: 36px; height: 36px; }
   .sidebar-toggle, .brand-toggle-slot { display: none; }
   .mobile-menu-button { display: inline-grid; width: 36px; height: 36px; }

@@ -3,10 +3,10 @@
 
 .app-shell { --artifact-in: 0.32s; --artifact-out: 0.2s; --artifact-ease-in: cubic-bezier(0.22, 1, 0.36, 1); --artifact-ease-out: ease-in; }
 /* 那一列一下子就是最终的宽（不过渡宽：连续变的话正文一行行跟着重排、字在动画里跳），正文那一列由 `ui/artifacts.js` 淡出、换宽、淡入 */
-.app-shell.has-artifacts { grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale)); }
+.app-shell.has-artifacts { grid-template-columns: var(--left-w) minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale)); }
 .app-shell.has-artifacts.is-sidebar-collapsed { grid-template-columns: 0px minmax(0, 1fr) calc(var(--artifact-ratio) * 100vw / var(--ui-scale)); }
 /* 右边那一栏给软件包用（服务 `side`，蓝图「仪表盘」）：窄栏、宽栏推开正文，和预览工作区互斥；盖在上面的不推（窗口不够宽） */
-.app-shell.has-side { grid-template-columns: var(--side-width, 252px) minmax(0, 1fr) var(--side-w, 252px); }
+.app-shell.has-side { grid-template-columns: var(--left-w) minmax(0, 1fr) var(--side-w, 252px); }
 .app-shell.has-side.is-sidebar-collapsed { grid-template-columns: 0px minmax(0, 1fr) var(--side-w, 252px); }
 .side-column { grid-column: 3; grid-row: 1; min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr); overflow: hidden; animation: artifact-in var(--artifact-in) var(--artifact-ease-in) both; }
 /* 推开正文的：和左栏对称的一整条栏，同左栏的底色，从上铺到底，和对话区之间一道细线（2026-10-24 项目主人：原来像几张浮着的卡片） */

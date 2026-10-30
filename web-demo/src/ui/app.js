@@ -23,6 +23,7 @@ import { coreSpecs } from '../model/commands.js';
 import { rank, startupSession } from '../model/session.js';
 import { ChatWidth } from './chat-width.js';
 import { SideColumn } from './side.js';
+import { SidebarWidth } from './sidebar-width.js';
 import { statusFooter, levelLabel, nextLevel, levelParams, previewPart } from '../model/footer.js';
 import { itemsOf, levelOf } from '../model/entries.js';
 import { compactingOf, lastTurn, turnEnded, untouchedTurnOf } from '../model/view-state.js';
@@ -391,6 +392,8 @@ export class App {
       base: () => (this.sidebar.el.getBoundingClientRect().width / (parseFloat(getComputedStyle(this.root).zoom) || 1)) || 252,
     });
     this.root.append(this.side.el);
+    // 左栏右边沿拖着改宽、记在这台设备上（蓝图「整页」左栏的宽那一条）；拖完右栏照左栏的宽重算、放不放得下重看一次
+    this.sidebarWidth = new SidebarWidth(this.root, this.sidebar.el, { storage: ctx.storage, changed: () => this.fitArtifacts() });
     this.artifacts.onTakeOver = () => this.side.yield();
     this.artifacts.alongside = () => this.side.fadeable();
     // 右栏开着、对话挤得不够时自动收起左栏，关上放回来（`fitArtifacts`）
