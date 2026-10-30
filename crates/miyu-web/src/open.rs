@@ -191,6 +191,13 @@ fn hand(root: &DataRoot, url: &str, secret: bool, launch: &Launch, browser: &dyn
         // 跟终端脱开：关了终端也照样删
         forget.process_group(0);
     }
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        // 不开控制台窗口（同 miyu-desk、miyu-wallpaper：后台拉起的控制台程序 Windows 11 会新开一个终端窗口）
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        forget.creation_flags(CREATE_NO_WINDOW);
+    }
     if forget.spawn().is_err() {
         // 拉不起来：下一次 `open` 顺手删（[`STALE`]）。
     }

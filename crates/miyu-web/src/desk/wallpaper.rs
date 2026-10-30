@@ -6,9 +6,15 @@
 //! - `/wallpaper/events`：一条 `text/event-stream`，壁纸来处的文件变了发一条 `changed`（不轮询）；开着的不算空闲。
 //!
 //! 找、认图、盯文件在 crate `miyu-wallpaper`：找要跑命令，放到阻塞的线程上做。
+//!
+//! 记着上一次的回答（2026-10-30 桌面端在 Win11 上抓到：页面每次拿回焦点都问一次，网页软件每次都拉一个 `reg.exe`）：Windows、macOS 上换
+//! 壁纸一定会改盯着的那几份文件（`TranscodedWallpaper`、`Index.plist`），盯着、文件没变的就交记着的，不再去找。Linux 上有只经 IPC 换、
+//! 不落文件的壁纸程序（hyprpaper、swaybg），照旧每次去找。
 
+use std::collections::HashMap;
 use std::io;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 
 use http_body_util::{BodyExt, StreamBody};
@@ -29,7 +35,14 @@ pub(crate) struct Follow {
     watch: Mutex<Watching>,
     /// 最近一张图的记号和它的候选色（一张图只算一次）。
     seeds: Arc<SeedCache>,
+    /// 盯着的文件变了几回（变一回记着的回答就作废）。
+    generation: Arc<AtomicU64>,
+    /// 记着的回答：深浅 → 问的时候是第几回、找到的（只记 `Sig`）。
+    answers: Mutex<HashMap<bool, (u64, Option<Found>)>>,
 }
+
+/// 这个系统上换壁纸是不是一定会改盯着的文件（是的才能交记着的回答）。
+const FILES_TELL: bool = cfg!(windows) || cfg!(target_os = "macos");
 
 /// 最近一张图的记号和它的候选色。
 type SeedCache = Mutex<Option<(String, Vec<String>)>>;
@@ -47,6 +60,8 @@ impl Default for Follow {
             changed: broadcast::channel(4).0,
             watch: Mutex::new(Watching::NotYet),
             seeds: Arc::default(),
+            generation: Arc::default(),
+            answers: Mutex::default(),
         }
     }
 }
@@ -64,7 +79,9 @@ impl Follow {
             Watching::Failed => {}
             Watching::NotYet => {
                 let changed = self.changed.clone();
+                let generation = Arc::clone(&self.generation);
                 *watch = match Watch::start(targets, move || {
+                    generation.fetch_add(1, Ordering::AcqRel);
                     // 没有开着的 `/wallpaper/events` 时没人收，不算错
                     let _receivers = changed.send(());
                 }) {
@@ -76,6 +93,32 @@ impl Follow {
                 };
             }
         }
+    }
+
+    /// 盯着、文件从上一次问到现在没变：交记着的回答（`Some(None)` 是记着「没有」）；不能交的是空的。
+    fn remembered(&self, dark: bool) -> Option<Option<Found>> {
+        if !FILES_TELL
+            || !matches!(
+                *self.watch.lock().unwrap_or_else(PoisonError::into_inner),
+                Watching::On(_)
+            )
+        {
+            return None;
+        }
+        let now = self.generation.load(Ordering::Acquire);
+        let answers = self.answers.lock().unwrap_or_else(PoisonError::into_inner);
+        answers
+            .get(&dark)
+            .filter(|(at, _)| *at == now)
+            .map(|(_, found)| found.clone())
+    }
+
+    /// 记下这一回的回答（`at` 是问之前读的第几回：问的时候变了的，下一次照新的找）。
+    fn remember(&self, dark: bool, at: u64, found: Option<Found>) {
+        self.answers
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .insert(dark, (at, found));
     }
 
     /// 还没开始盯的照「什么都没找到」那份清单先盯上（页面先开了 `/wallpaper/events`）。
@@ -92,6 +135,10 @@ impl Follow {
 
 /// 回一个 `/wallpaper`。
 pub(crate) async fn serve(site: &Site, dark: bool, data: bool) -> Response<Body> {
+    if !data && let Some(found) = site.wallpaper.remembered(dark) {
+        return reply(found);
+    }
+    let at = site.wallpaper.generation.load(Ordering::Acquire);
     let cache = Arc::clone(&site.wallpaper.seeds);
     let got = tokio::task::spawn_blocking(move || look(&cache, dark, data))
         .await
@@ -106,6 +153,14 @@ pub(crate) async fn serve(site: &Site, dark: bool, data: bool) -> Response<Body>
             None
         }
     };
+    if !data {
+        site.wallpaper.remember(dark, at, found.clone());
+    }
+    reply(found)
+}
+
+/// 照找到的回应。
+fn reply(found: Option<Found>) -> Response<Body> {
     match found {
         Some(Found::Sig(sig, kind, seeds)) => {
             let mut body = serde_json::json!({"sig": sig, "kind": kind});
@@ -190,6 +245,7 @@ fn seeds_of(
 }
 
 /// 找到的：记号、是哪一种、是图的候选色，或者那一份本身。
+#[derive(Clone)]
 enum Found {
     Sig(String, &'static str, Option<Vec<String>>),
     Data(Vec<u8>, &'static str),

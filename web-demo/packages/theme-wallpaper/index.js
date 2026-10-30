@@ -16,6 +16,9 @@
 
 import { themeOf, matugenOf } from '../../src/lib/md3/index.js';
 
+/** 回到前台、拿回焦点隔多久以内只问一次（毫秒） */
+const VISIBLE_GAP_MS = 1000;
+
 /** 排在定的那几套、「跟随人格」后面 */
 const ORDER = 11;
 
@@ -101,8 +104,14 @@ export function apply(ctx) {
     }
   };
 
+  // 回到前台、拿回焦点：一下子常来两三个（可见了、拿到焦点各一个），一秒内的只问一次（2026-10-30 桌面端在 Win11 上抓到：切一次窗口问好几次）
+  let asked = -Infinity;
   const onVisible = () => {
-    if (!document.hidden) check();
+    if (document.hidden) return;
+    const now = performance.now();
+    if (now - asked < VISIBLE_GAP_MS) return;
+    asked = now;
+    check();
   };
   ctx.effect(() => {
     document.addEventListener('visibilitychange', onVisible);

@@ -103,7 +103,7 @@
 1. 只给这台电脑上来的：对端不是回环地址的（局域网里别的设备，第一条第 7 款的 `remote`）一律 403——在装 Miyu 的那台电脑上开文件管理器、弹选目录框，对别的设备没意义；页面开在局域网地址上的也不请（照旧退回）。
 2. `GET /reveal?path=<路径>`（「打开目录」）、`GET /pick-dir?title=<标题>&start=<从哪开始>`（选工作区的「选择文件夹…」）、`GET /wallpaper?dark=0|1[&data=1]`（主题「跟随壁纸」）要 `Authorization: Bearer <设备令牌>`，照这个令牌连核心握手（同 `/media`，核心不认的 401）：别的网站能往 `127.0.0.1` 发不带头的请求（`<img>`、表单），带了这个头就要先问一句（CORS 预检），网页软件不答，浏览器就不发。
 3. 开目录、选目录照桥的做法，放在共用的 crate `miyu-desk`（桥和网页软件一份代码）：只开目录不开文件，`~`、`~/…` 照家目录接，还没建的、上一层在的建出来再开；Linux `xdg-open`、macOS `open`、Windows `explorer`；选目录 Linux 依次试 `zenity`、`kdialog`，macOS `osascript`，Windows PowerShell 的 `FolderBrowserDialog`，标题和起点经环境变量交给对话框程序。回 `{"ok":true}`、`{"missing":true}`、`{"unavailable":true}`；`{"path"}`、`{"cancelled":true}`、`{"unavailable":true}`。选目录要等人点完，不限时；等着的时候不算空闲。
-4. 壁纸照桥的 `/wallpaper`（crate `miyu-wallpaper` 找、认图、盯文件；候选色照 `miyu_client::seeds`，一张图算一次）：回 `{sig, kind, seeds?}`，带 `data=1` 回那一份本身（matugen 的 JSON 或者图），都没有的 404。`GET /wallpaper/events` 一条 `text/event-stream`，壁纸来处的文件变了发一条 `changed`（不带内容，不要令牌：`EventSource` 带不了头；只说变了，取还是走 `/wallpaper`）；开着的不算空闲。
+4. 壁纸照桥的 `/wallpaper`（crate `miyu-wallpaper` 找、认图、盯文件；候选色照 `miyu_client::seeds`，一张图算一次）：回 `{sig, kind, seeds?}`，带 `data=1` 回那一份本身（matugen 的 JSON 或者图），都没有的 404。`GET /wallpaper/events` 一条 `text/event-stream`，壁纸来处的文件变了发一条 `changed`（不带内容，不要令牌：`EventSource` 带不了头；只说变了，取还是走 `/wallpaper`）；开着的不算空闲。记着上一次的回答（2026-10-30 桌面端在 Win11 上抓到：页面每次拿回焦点都问，网页软件每次拉一个 `reg.exe`，没带 `CREATE_NO_WINDOW` 的每次闪一个终端窗口）：Windows、macOS 上换壁纸一定会改盯着的那几份文件，盯着、文件从上次问到现在没变的直接交记着的；Linux 上有只经 IPC 换、不落文件的壁纸程序，照旧每次找。网页软件拉起的程序（`miyu-wallpaper` 找壁纸的命令、`miyu-desk` 的、`open` 起的 `forget`）在 Windows 上一律带 `CREATE_NO_WINDOW`；`serve`、核心经核心的 `spawn_detached`，本来就不开控制台。
 5. 方法只认 `GET`，别的 405。
 
 ### 出错、运行日志
