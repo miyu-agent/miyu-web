@@ -231,7 +231,9 @@
 .setup-field.is-switch .setup-field-name { padding-top: 0; }
 .setup-field-name small { color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); line-height: 1.4; }
 .setup-field-control { min-width: 0; }
-.setup-field-control > .set-input { width: 100%; box-sizing: border-box; }
+.setup-field-control > .set-input, .setup-field-control > .setup-with-note > .set-input { width: 100%; box-sizing: border-box; }
+/* 框下面带一句错的（预设的无人值守步数） */
+.setup-with-note { display: grid; }
 .setup-area {
   display: block; width: 100%; box-sizing: border-box; padding: calc(6px * var(--space)) calc(9px * var(--space)); border: var(--field-border, 0); border-radius: var(--field-radius, var(--r-8)); outline: 0; resize: none; overflow: hidden;
   background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text)); font: calc(13px * var(--text-scale))/1.6 var(--font-ui); transition: background-color calc(0.15s * var(--motion-scale)) ease, box-shadow calc(0.15s * var(--motion-scale)) ease;

@@ -2,7 +2,8 @@
 //! 预设的详情（蓝图 `web.md`「人格、预设、工作区」第 6 条）：浮起来的卡片里（`float.js`）——名字、功能开关（功能树 `feature-tree.js`，照核心
 //! 设计 52 的 `sections` 画，第 8 条）；简单描述一行（2026-10-23 项目主人定预设也要描述，推翻 10-08 的「预设不要说明」）；不带默认人格，人格、预设互不引用）。都是点了当场存（`preset.set` 只带改的那一项，不带 `expect`）：名字回车、离开时存，开关点了就存；功能、工具照核心给的
 //! 名字（照连接的语言），没装的写「没安装」。图标（核心 P-5，`preset.icon`，Lucide 的名字）：点开一排先列设置项 `preset_icons` 那些，能搜整套，
-//! 「不用图标」删掉这一层写的；选了当场存。删除照核心的 `remove`，同人格。
+//! 「不用图标」删掉这一层写的；选了当场存。删除照核心的 `remove`，同人格。无人值守的步数上限（核心 AE-1，`unattended_steps`）一格数字框，
+//! 回车、离开时存，清空回到出厂的 500；旧核心不给这一格的不画。
 
 import { h, icon, replace, hasIcon, iconNames } from '../../src/lib/dom.js';
 import { field, askFirst } from './form.js';
@@ -92,9 +93,39 @@ export class PresetEditor {
       field(t('edit.name'), name),
       field(t('edit.summary'), summary),
       field(t('edit.icon'), this.iconRow(got, label)),
+      'unattended_steps' in got ? this.stepsRow(got.unattended_steps) : null,
       field(t('edit.features'), sections.length ? features : h('p.setup-empty', t('edit.no_features'))),
       this.note,
       remove ? h('div.setup-foot', remove) : null);
+  }
+
+  /**
+   * 无人值守的步数上限（核心 AE-1，2026-10-30 项目主人：画一格数字框）：空着是没写、照出厂的 500；回车、离开框就存，清空发 `unset`；
+   * 不是正整数的不发、框下面写一句、放回原来的数。悬停名字和框写这一格管什么。
+   * @param {number|null} now
+   */
+  stepsRow(now) {
+    const t = this.t;
+    const was = typeof now === 'number' ? String(now) : '';
+    const bad = h('p.setup-error', { hidden: true }, t('edit.unattended_bad'));
+    const input = this.kit.text(was, t('edit.unattended_hint'), (text) => {
+      const typed = text.trim();
+      if (typed === was) return;
+      bad.hidden = true;
+      if (!typed) return void this.set([{ key: 'limits.unattended_steps', unset: true }]);
+      const n = /^\d+$/.test(typed) ? Number(typed) : NaN;
+      if (!Number.isSafeInteger(n) || n < 1) {
+        input.value = was;
+        bad.hidden = false;
+        return;
+      }
+      this.set([{ key: 'limits.unattended_steps', value: n }]);
+    });
+    input.inputMode = 'numeric';
+    input.title = t('edit.unattended_tip');
+    const row = field(t('edit.unattended'), h('div.setup-with-note', input, bad));
+    row.title = t('edit.unattended_tip');
+    return row;
   }
 
   /**
