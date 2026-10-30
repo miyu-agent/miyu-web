@@ -246,7 +246,7 @@ flowchart TB
 | `web-demo/src/kernel/boot.js` | 起内核：编进内核的服务、读发行版、加载、状态页 |
 | `web-demo/src/kernel/storage.js` | 这台设备上存的：键带账号，旧的不分账号的键第一次读时搬过来，读写兜着 |
 | `web-demo/src/kernel/services.js` | 编进内核的服务的名字（实现现在还在 `src/core/`，搬进内核的时候挪过来） |
-| `web-demo/src/host/` | 宿主：`browser.js` 浏览器那一份（连核心的线和口令、地址、上传、选文件、拖放、缩略图、外链、剪贴板） |
+| `web-demo/src/host/` | 宿主：`browser.js` 经桥的那一份（连核心的线和口令、地址、上传、选文件、拖放、缩略图、外链、剪贴板）；`served.js` 经网页软件的那一份（`/ws`、`/media` 的票据、`/page`），桌面窗口也用它；`notify.js` 系统通知（浏览器的 `Notification`）；`files.js` 两份共用的文件处理（选文件、拖放、读附件、存法） |
 | `web-demo/src/lib/` | `dom.js`（造节点、图标、量位置：整页放大以后换回 CSS 像素）、`mount.js`（把一个 list 挂载位画进一个节点）、`text.js`（模板、照路径取一句）、`format.js`（数的写法）、`motion.js`（退场：加 `is-leaving`、等动画走完再收，退到一半又出来的停掉退场；在流里占着地方的一块用 `unfold`，高度从 0 长出来、收回去；见 `web.md`「动效」）、`jobs.js`（一个会话派出去的任务：在跑还是结束了、怎么排、挂在它下面的子代理；后台任务的浮层和左栏的树都照它）；以后搬进来的有 Markdown 解析 |
 | `web-demo/packages/<编号>/` | 软件包 |
 | `web-demo/distro.json` | 发行版 |
