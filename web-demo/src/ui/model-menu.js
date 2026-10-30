@@ -157,7 +157,15 @@ export class ModelMenu {
       if (!this.data) replace(this.list, h('div.model-menu-note', t('model_menu.failed', { message: got.error })));
       return;
     }
-    // 新问到的和画着的一样就不动；不一样的照新的画（在哪一页、选中第几行照旧）
+    this.apply(got);
+  }
+
+  /**
+   * 新问到的列表：和画着的一样就不动；不一样的照新的画（在哪一页、选中第几行照旧）。打开时问回来的、核心推了 `models.changed` 重问回来的
+   * （开着的时候，核心 V-26）都走这里。 @param {any} got
+   */
+  apply(got) {
+    if (!this.isOpen || !got) return;
     if (this.data && JSON.stringify(got) === JSON.stringify(this.data)) return;
     if (this.data) {
       const at = this.at;

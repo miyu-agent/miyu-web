@@ -435,6 +435,11 @@ export class App {
     // 模型、供应商、池的配置变了（设置页、第一次引导、别的头、命令行改的）：重读模型列表，新会话框下面照新的默认写（2026-10-10 项目主人：
     // 引导里选了模型，框下面照旧写原来那个）
     this.store.conn.onPush((method, params) => {
+      // 模型列表自己变了（核心 V-26：后台拉到的列表真变了才推，不带条目）：整份重问，换模型的菜单开着的当场照新的画
+      if (method === 'models.changed') {
+        this.loadModels().then((got) => this.composer.modelMenu.apply(got), () => {});
+        return;
+      }
       if (method !== 'config.changed') return;
       if (Object.keys(params?.keys ?? {}).some((k) => /^(models|providers|pools)\./.test(k))) this.loadModels().catch(() => {});
     });

@@ -416,6 +416,11 @@ export class SettingsDialog {
       if (method === 'extension.changed' && followExtension(this, params.entry) && this.current === 'packages' && !this.editing()) this.drawBody();
       return;
     }
+    // 模型列表自己变了（核心 V-26）：整份重问，读完了没在改字的重画（`loadModels`）
+    if (method === 'models.changed') {
+      this.modelsPromise = this.loadModels();
+      return;
+    }
     if (method !== 'config.changed') return;
     // 一阵改动收齐了再重读
     clearTimeout(this.pushTimer);
