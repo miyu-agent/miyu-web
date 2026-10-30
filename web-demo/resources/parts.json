@@ -7000,15 +7000,9 @@
     ]
   },
   "setup.fold-count": {
-    "zh": "预设详情：能展开的那一行开了几项的暗字",
+    "zh": "预设详情：带子项的那一行开了几项的暗字",
     "select": [
       ".setup-fold-count"
-    ]
-  },
-  "setup.fold-arrow": {
-    "zh": "预设详情：能展开的那一行右边的箭头（悬停才露）",
-    "select": [
-      ".setup-fold-arrow"
     ]
   },
   "si.accounts": {
