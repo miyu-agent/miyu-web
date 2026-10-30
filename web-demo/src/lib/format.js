@@ -62,34 +62,30 @@ export function tilde(path, home) {
 }
 
 /**
- * 核心配置里写的路径照核心那台机器的写法给人看（蓝图 `web.md`「设置页」私密目录、受保护的路径）：Windows 上家目录写 `%USERPROFILE%`、
- * 分隔用 `\`（`~/AppData/Local` 写成 `%USERPROFILE%\AppData\Local`），别的系统同 [`tilde`]。
+ * 核心配置里写的路径照核心那台机器的写法给人看（蓝图 `web.md`「设置页」私密目录、受保护的路径）：Windows 上家目录写成真的路径、
+ * 分隔用 `\`（`~/AppData/Local` 写成 `C:\Users\me\AppData\Local`；2026-10-31 项目主人：写 `%USERPROFILE%` 天知道是哪个目录），
+ * 不知道家目录的留着 `~`；别的系统同 [`tilde`]。
  * @param {string} path @param {string|null} home @param {string|null} platform 核心握手的 `host.platform`
  */
 export function shownPath(path, home, platform) {
   if (platform !== 'windows') return home ? tilde(path, home) : path;
-  const p = path.replace(/^~(?=\/|$)/, '%USERPROFILE%');
-  return p.replace(/\//g, '\\');
-}
-
-/**
- * 悬停看的完整路径：Windows 上 `~` 换成真的家目录、分隔用 `\`；别的照原样。
- * @param {string} path @param {string|null} home @param {string|null} platform
- */
-export function fullPath(path, home, platform) {
-  if (platform !== 'windows') return path;
   const p = home ? path.replace(/^~(?=\/|$)/, home.replace(/[\\/]+$/, '')) : path;
   return p.replace(/\//g, '\\');
 }
 
 /**
- * 人照 Windows 的写法写的路径换回核心认的（核心只认 `~`、`~/…` 和绝对路径）：`%USERPROFILE%\…`、`~\…` 换成 `~/…`，相对路径的 `\` 换成 `/`；
- * 盘符开头、`\\` 开头的绝对路径照原样。别的系统照原样。
- * @param {string} text @param {string|null} platform
+ * 人照 Windows 的写法写的路径换回核心认的（核心只认 `~`、`~/…` 和绝对路径）：家目录下的（真的路径、`%USERPROFILE%\…`、`~\…`）换成 `~/…`，
+ * 相对路径的 `\` 换成 `/`；别的盘符开头、`\\` 开头的绝对路径照原样。别的系统照原样。
+ * @param {string} text @param {string|null} home @param {string|null} platform
  */
-export function corePath(text, platform) {
+export function corePath(text, home, platform) {
   if (platform !== 'windows') return text;
-  const t = text.replace(/^%userprofile%(?=[\\/]|$)/i, '~');
+  let t = text.replace(/^%userprofile%(?=[\\/]|$)/i, '~');
+  const h = home?.replace(/[\\/]+$/, '');
+  if (h && t.toLowerCase().replace(/\//g, '\\').startsWith(h.toLowerCase().replace(/\//g, '\\'))) {
+    const rest = t.slice(h.length);
+    if (rest === '' || /^[\\/]/.test(rest)) t = `~${rest}`;
+  }
   if (/^[a-z]:[\\/]/i.test(t) || t.startsWith('\\\\')) return t;
   return t.replace(/\\/g, '/');
 }

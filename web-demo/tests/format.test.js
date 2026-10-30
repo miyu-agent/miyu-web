@@ -66,23 +66,24 @@ test('上下文占窗口几成：整数百分比，不到 1% 的写 <1%', () => 
   assert.equal(contextPercent(0, 200_000), '0%');
 });
 
-test('核心在 Windows 上的路径照 Windows 的写法给人看，写的换回核心认的（蓝图「设置页」私密目录）', async () => {
-  const { shownPath, fullPath, corePath } = await import('../src/lib/format.js');
+test('核心在 Windows 上的路径照 Windows 的写法给人看（家目录写真的路径），写的换回核心认的（蓝图「设置页」私密目录）', async () => {
+  const { shownPath, corePath } = await import('../src/lib/format.js');
   const home = 'C:\\Users\\shorin';
-  assert.equal(shownPath('~/AppData/Local/Microsoft/Vault', home, 'windows'), '%USERPROFILE%\\AppData\\Local\\Microsoft\\Vault');
-  assert.equal(shownPath('~', home, 'windows'), '%USERPROFILE%');
+  assert.equal(shownPath('~/AppData/Local/Microsoft/Vault', home, 'windows'), 'C:\\Users\\shorin\\AppData\\Local\\Microsoft\\Vault');
+  assert.equal(shownPath('~', home, 'windows'), 'C:\\Users\\shorin');
+  assert.equal(shownPath('~/NTUSER.DAT', null, 'windows'), '~\\NTUSER.DAT', '不知道家目录的留着 ~');
   assert.equal(shownPath('.git/hooks', home, 'windows'), '.git\\hooks', '工作区里的相对路径也用 \\');
   assert.equal(shownPath('C:/Windows/System32', home, 'windows'), 'C:\\Windows\\System32');
   assert.equal(shownPath('~/.ssh', '/home/me', 'linux'), '~/.ssh', '别的系统照原样');
   assert.equal(shownPath('/home/me/.ssh', '/home/me', 'linux'), '~/.ssh');
-  assert.equal(fullPath('~/NTUSER.DAT', home, 'windows'), 'C:\\Users\\shorin\\NTUSER.DAT');
-  assert.equal(fullPath('~/NTUSER.DAT', null, 'windows'), '~\\NTUSER.DAT', '不知道家目录的照写的');
-  assert.equal(fullPath('~/.ssh', '/home/me', 'linux'), '~/.ssh');
-  assert.equal(corePath('%USERPROFILE%\\.ssh', 'windows'), '~/.ssh');
-  assert.equal(corePath('%userprofile%', 'windows'), '~');
-  assert.equal(corePath('~\\.config\\gh', 'windows'), '~/.config/gh');
-  assert.equal(corePath('.git\\hooks', 'windows'), '.git/hooks');
-  assert.equal(corePath('C:\\Windows\\System32\\drivers\\etc\\hosts', 'windows'), 'C:\\Windows\\System32\\drivers\\etc\\hosts', '盘符开头的照原样');
-  assert.equal(corePath('\\\\server\\share', 'windows'), '\\\\server\\share');
-  assert.equal(corePath('~/x\\y', 'linux'), '~/x\\y', '别的系统照原样');
+  assert.equal(corePath('C:\\Users\\shorin\\.ssh', home, 'windows'), '~/.ssh', '家目录下的真路径换成 ~/…');
+  assert.equal(corePath('c:\\users\\SHORIN\\AppData\\Local', home, 'windows'), '~/AppData/Local', '不分大小写');
+  assert.equal(corePath('C:\\Users\\shorinx\\a', home, 'windows'), 'C:\\Users\\shorinx\\a', '只是开头像的不算');
+  assert.equal(corePath('%USERPROFILE%\\.ssh', home, 'windows'), '~/.ssh');
+  assert.equal(corePath('%userprofile%', home, 'windows'), '~');
+  assert.equal(corePath('~\\.config\\gh', home, 'windows'), '~/.config/gh');
+  assert.equal(corePath('.git\\hooks', home, 'windows'), '.git/hooks');
+  assert.equal(corePath('C:\\Windows\\System32\\drivers\\etc\\hosts', home, 'windows'), 'C:\\Windows\\System32\\drivers\\etc\\hosts', '别的盘符开头的照原样');
+  assert.equal(corePath('\\\\server\\share', home, 'windows'), '\\\\server\\share');
+  assert.equal(corePath('~/x\\y', home, 'linux'), '~/x\\y', '别的系统照原样');
 });
