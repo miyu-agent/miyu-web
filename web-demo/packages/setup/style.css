@@ -376,7 +376,18 @@
 /* 菜单里一行「名字　值」（左上角的「会话信息」，2026-10-19 项目主人选的「信息 + 操作」、不要图标）：一样高，左边暗字，能点的末尾一个 ›；细线分开下面的操作 */
 /* 左右两列照基线对齐（2026-10-20 项目主人：右边那列字偏上——中文、英文的字在同样高的行里位置不一样，英文名「Miyu」看着高一截）；末尾的图标照旧居中 */
 .setup-menu-row.is-pair { align-items: baseline; min-height: 35px; padding-top: calc(7px * var(--space)); padding-bottom: calc(7px * var(--space)); }
-.setup-menu-label { flex: none; width: 4.5em; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
+.setup-menu-label { flex: none; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
+/* 几行「名字　值」一张网格排（蓝图 web.md「人格、预设、工作区」第 11 条）：名字那一列照几行里最宽的名字（中、英、日都一样），和值之间固定空 16px；
+   每一行照旧是一整条（选中铺底、圆角），列借外面的（subgrid）；行末的铅笔、文件夹一列，› 一列，没有的空着 */
+.setup-menu-list.is-pairs { display: grid; grid-template-columns: max-content minmax(0, 1fr) auto auto; max-width: 420px; align-content: start; }
+.setup-menu-list.is-pairs > * { grid-column: 1 / -1; }
+.setup-menu-list.is-pairs > .setup-menu-row.is-pair { display: grid; grid-template-columns: subgrid; gap: 0; }
+.setup-menu-row.is-pair > .setup-menu-label { grid-column: 1; margin-right: calc(16px * var(--space)); }
+.setup-menu-row.is-pair > .setup-menu-text { grid-column: 2; }
+.setup-menu-row.is-pair > .setup-menu-action { grid-column: 3; }
+/* 只有图标、没有 › 的（工作区那一行的文件夹）照旧贴最右 */
+.setup-menu-row.is-pair > .setup-menu-action:last-child { grid-column: 3 / -1; justify-self: end; }
+.setup-menu-row.is-pair > .setup-menu-more { grid-column: 4; margin-left: calc(10px * var(--space)); }
 .setup-menu-row.is-pair .setup-menu-desc { margin-top: calc(1px * var(--space)); }
 .setup-menu-more { display: grid; flex: none; align-self: center; place-items: center; color: var(--text-faint); }
 .setup-menu-more .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); }
@@ -389,7 +400,6 @@
 /* 会话编号那一行：等宽暗字，悬停亮一档（点了复制） */
 .setup-menu-row.is-mono .setup-menu-title { color: var(--text-faint); font: calc(11.5px * var(--text-scale)) var(--font-mono); }
 .setup-menu-row.is-mono.is-selected .setup-menu-title { color: var(--text-soft); }
-.setup-menu-row.is-pair { max-width: 420px; }
 .setup-menu-action.is-inline { flex: none; align-self: center; margin: calc(-4px * var(--space)) calc(-4px * var(--space)) calc(-4px * var(--space)) calc(4px * var(--space)); }
 /* 问一句的一屏（会话中途换人格、预设前的确认） */
 .setup-menu.is-ask { max-width: min(360px, calc(100vw - 32px)); }

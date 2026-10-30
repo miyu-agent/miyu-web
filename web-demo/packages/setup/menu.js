@@ -83,7 +83,8 @@ export class Menu {
         view.back ? h('button.setup-menu-back', { type: 'button', title: this.backLabel, 'aria-label': this.backLabel, onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(), onclick: () => view.back?.() }, icon('chevron-left')) : null,
         h('strong.setup-menu-name', view.title),
         view.action ? h('button.setup-menu-action', { type: 'button', title: view.action.title, 'aria-label': view.action.title, onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(), onclick: () => view.action?.run() }, icon(view.action.icon)) : null) : null,
-      h('div.setup-menu-list', nodes, view.note ? h('div.setup-menu-note', view.note) : null),
+      // 有「名字　值」的几行（会话信息）：一张网格排，名字那一列照最宽的名字（2026-10-30 项目主人：英文的 Workspace 和值贴在一起）
+      h(`div.setup-menu-list${view.rows.some((r) => 'label' in r && r.label != null) ? '.is-pairs' : ''}`, nodes, view.note ? h('div.setup-menu-note', view.note) : null),
       view.foot?.length ? h('div.setup-menu-foot', view.foot) : null);
     this.el.classList.toggle('is-below', !!view.below);
     // 只有一句话和按钮的一屏（问一句的：换人格前的确认）：话照正文的颜色、大一点
