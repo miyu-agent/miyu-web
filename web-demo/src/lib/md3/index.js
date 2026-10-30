@@ -69,7 +69,7 @@ export function themeOf(seed, scheme) {
 }
 
 /**
- * 认 matugen 生成的那一份（`web/matugen/miyu-web.json` 模板）：只取 `source`（主色），再照 `themeOf` 那一套算（2026-10-14 两个头一样，
+ * 认 matugen 生成的那一份（`miyu-webui/matugen/miyu-web.json` 模板）：只取 `source`（主色），再照 `themeOf` 那一套算（2026-10-14 两个头一样，
  * 不直接用 matugen 给的角色；旧模板生成的、带了角色的照样认）。`source` 不是 `#rrggbb` 的是 `null`。
  * @param {any} json
  * @returns {{source: string}|null}

@@ -53,7 +53,7 @@ pub struct Site {
     pub types: media::Types,
     /// 软件后台页的票据（`/page`、`/p/`）。
     pub pages: pages::Tickets,
-    /// 软件后台页的文件的媒体类型（这个仓库的 `web/web.json`，编进桥里）。
+    /// 软件后台页的文件的媒体类型（这个仓库的 `miyu-webui/web.json`，编进桥里）。
     pub page_types: pages::PageTypes,
     /// 盯着壁纸来处的文件（`/wallpaper/events`）。
     pub wallpaper: wallpaper::Follow,

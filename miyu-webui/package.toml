@@ -2,6 +2,8 @@
 
 [package]
 protocol = [1, 1]
+# 包编号是文件夹名 miyu-webui（核心设计 48）；配置键照旧 web.*
+prefix = "web"
 name = { en = "Web interface", zh = "网页界面", ja = "ウェブ画面" }
 summary = { en = "Chat with the AI and change settings in the browser", zh = "在浏览器里和 AI 对话、改配置", ja = "ブラウザで会話し、設定を変える" }
 

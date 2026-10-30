@@ -29,10 +29,10 @@ test('装了：local 选项不带 available: false，不看软件源', async () 
   assert.deepEqual(await embedState(core(options([{ value: 'local', available: true }]))), { installed: true });
 });
 
-test('没装、软件源里有：照看一眼的 download 交大小，问的是 source embed、preview', async () => {
-  const c = core(options([{ value: 'local', available: false }, { value: 'off' }]), { package: 'embed', download: 59768832, with: [] });
+test('没装、软件源里有：照看一眼的 download 交大小，问的是 source miyu-embed、preview', async () => {
+  const c = core(options([{ value: 'local', available: false }, { value: 'off' }]), { package: 'miyu-embed', download: 59768832, with: [] });
   assert.deepEqual(await embedState(c), { installed: false, size: 59768832 });
-  assert.deepEqual(c.asked[1], ['package.install', { source: 'embed', preview: true }]);
+  assert.deepEqual(c.asked[1], ['package.install', { source: 'miyu-embed', preview: true }]);
   assert.deepEqual(await embedState(core(options([{ value: 'local', available: false }]), {})), { installed: false, size: null }, '没写大小的不写');
 });
 

@@ -112,12 +112,12 @@ fn went(browser: &FakeBrowser) -> Vec<String> {
 /// 拉起的是真的 `miyu-web serve`：数据根、资源目录照这个临时目录，空闲 1 秒就走。
 fn launch(home: &Home) -> Launch {
     let resources = home.dir.join("resources");
-    std::fs::create_dir_all(resources.join("packages/web")).expect("建得了");
-    // 网页包（这个仓库的 `package/`：清单、`web.json`）照装好的样子放进 `packages/web/`
-    let package = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../web");
+    std::fs::create_dir_all(resources.join("packages/miyu-webui")).expect("建得了");
+    // 网页包（这个仓库的 `miyu-webui/`：清单、`web.json`）照装好的样子放进 `packages/miyu-webui/`
+    let package = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../miyu-webui");
     std::fs::copy(
         package.join("web.json"),
-        resources.join("packages/web/web.json"),
+        resources.join("packages/miyu-webui/web.json"),
     )
     .expect("拷得了");
     // 空闲多久照清单的默认值（施工 9-1 下）：这里改成 1 秒，测完很快就走。核心没在跑，`serve` 照默认起。
@@ -125,7 +125,7 @@ fn launch(home: &Home) -> Launch {
     let manifest = std::fs::read_to_string(ours).expect("出厂的读得到");
     let quick = manifest.replace("default = 600\n", "default = 1\n");
     assert_ne!(quick, manifest, "清单里有空闲的默认值");
-    std::fs::write(resources.join("packages/web/package.toml"), quick).expect("写得进");
+    std::fs::write(resources.join("packages/miyu-webui/package.toml"), quick).expect("写得进");
     let data = home.root.path().to_path_buf();
     let data_forget = data.clone();
     let pages = home.pages.clone();

@@ -1,4 +1,4 @@
-//! 网页软件的数（施工 9-1 下）：默认值照清单 `packages/web/package.toml`，常量照 `packages/web/web.json`；核心交回的最终值盖上去，不合范围的
+//! 网页软件的数（施工 9-1 下）：默认值照清单 `packages/miyu-webui/package.toml`，常量照 `packages/miyu-webui/web.json`；核心交回的最终值盖上去，不合范围的
 //! 照旧。
 
 use std::path::{Path, PathBuf};
@@ -8,13 +8,13 @@ use serde_json::json;
 
 use super::*;
 
-/// 网页包的文件夹照装好的样子拼一份（仓库拆开以后）：这个仓库的 `web/` 里的清单、`web.json`。一个进程拼一次。
+/// 网页包的文件夹照装好的样子拼一份（仓库拆开以后）：这个仓库的 `miyu-webui/` 里的清单、`web.json`。一个进程拼一次。
 fn shipped_root() -> &'static Path {
     static ROOT: OnceLock<PathBuf> = OnceLock::new();
     ROOT.get_or_init(|| {
         let root = std::env::temp_dir().join(format!("miyu-web-shipped-{}", std::process::id()));
         std::fs::create_dir_all(&root).unwrap();
-        let ours = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../web");
+        let ours = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../miyu-webui");
         std::fs::copy(ours.join("package.toml"), root.join(MANIFEST)).unwrap();
         std::fs::copy(ours.join("web.json"), root.join(FILE)).unwrap();
         root

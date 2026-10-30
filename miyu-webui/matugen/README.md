@@ -10,7 +10,7 @@
    cp <网页包目录>/matugen/miyu-web.json ~/.config/matugen/templates/
    ```
 
-   网页包目录：源码里是这个仓库的 `web/`；装好的是资源目录下的 `packages/web/`。
+   网页包目录：源码里是这个仓库的 `miyu-webui/`；装好的是资源目录或数据根下的 `packages/miyu-webui/`。
 
 2. 在 `~/.config/matugen/config.toml` 末尾加一节（`output_path` 照你的系统写，网页只认这个地方）：
 

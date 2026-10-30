@@ -1,7 +1,7 @@
 //! 网页软件的数（`web-module.md`「起草时定的」第 25 条，施工 9-1 下改）：端口、空闲多久、`/media` 的票据记多久、最多几张
-//! 是配置项，声明在网页自己的清单 `packages/web/package.toml` 的 `[settings]` 里（`packages.md`「配置项」），`serve` 起来时先连核心
+//! 是配置项，声明在网页自己的清单 `packages/miyu-webui/package.toml` 的 `[settings]` 里（`packages.md`「配置项」），`serve` 起来时先连核心
 //! 问 `config.get` 拿最终值（[`Settings::configured`]）；默认值照清单读。媒体类型的表、页面的内容安全策略是常量，在网页包自己的
-//! 文件夹里的 `web.json`（仓库拆开以后从核心的 `resources/web/` 挪进这个仓库的 `web/`，装好在 `packages/web/web.json`）。
+//! 文件夹里的 `web.json`（仓库拆开以后从核心的 `resources/web/` 挪进这个仓库的 `miyu-webui/`，装好在 `packages/miyu-webui/web.json`）。
 
 use std::collections::BTreeMap;
 use std::net::IpAddr;
@@ -13,8 +13,8 @@ use serde_json::{Value, json};
 
 use miyu_client::places::DataRoot;
 
-/// 随 Miyu 一起装的网页包在资源目录里的文件夹（这个仓库的 `web/` 照原样放进去）：清单、常量、页面都在这里。
-pub const DIR: &str = "packages/web";
+/// 随 Miyu 一起装的网页包在资源目录里的文件夹（包编号 `miyu-webui`，这个仓库的 `miyu-webui/` 照原样放进去）：清单、常量、页面都在这里。
+pub const DIR: &str = "packages/miyu-webui";
 
 /// 常量在网页包文件夹里的位置。
 pub const FILE: &str = "web.json";

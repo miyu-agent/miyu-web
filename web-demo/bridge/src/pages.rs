@@ -61,10 +61,10 @@ impl Tickets {
     }
 }
 
-/// 网页包的常量（这个仓库的 `web/web.json`，和 `miyu-web serve` 同一份），编进桥里：桥不用再找核心的资源目录。
-const WEB_JSON: &str = include_str!("../../../web/web.json");
+/// 网页包的常量（这个仓库的 `miyu-webui/web.json`，和 `miyu-web serve` 同一份），编进桥里：桥不用再找核心的资源目录。
+const WEB_JSON: &str = include_str!("../../../miyu-webui/web.json");
 
-/// 页面文件的媒体类型（`web/web.json` 的 `types`）。
+/// 页面文件的媒体类型（`miyu-webui/web.json` 的 `types`）。
 pub struct PageTypes(HashMap<String, String>);
 
 impl PageTypes {
@@ -75,10 +75,10 @@ impl PageTypes {
     /// 不是 JSON、没有 `types`：说是哪一样。
     pub fn load() -> Result<PageTypes, String> {
         let v: Value =
-            serde_json::from_str(WEB_JSON).map_err(|e| format!("web/web.json 不是 JSON：{e}"))?;
+            serde_json::from_str(WEB_JSON).map_err(|e| format!("miyu-webui/web.json 不是 JSON：{e}"))?;
         let types = v["types"]
             .as_object()
-            .ok_or_else(|| "web/web.json 少了 types".to_string())?
+            .ok_or_else(|| "miyu-webui/web.json 少了 types".to_string())?
             .iter()
             .filter_map(|(k, t)| Some((k.clone(), t.as_str()?.to_string())))
             .collect();
