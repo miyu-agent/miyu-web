@@ -121,5 +121,18 @@ export function providesLine(provides, names, sep = '、') {
   }).filter(Boolean).join('；');
 }
 
+/**
+ * 「所需权限」一行的一项一项（`package.install {source, preview: true}` 的 `capabilities`）：核心 IN-3 起一项是 `{id, name, summary}`，
+ * 写 `name`（照连接的语言的人话），悬停看 `summary`；旧核心给编号的字、`{name: 编号}` 的写编号。认不出的不写。
+ * @param {any} capabilities @returns {{name: string, summary: string|null}[]}
+ */
+export function capabilityRows(capabilities) {
+  return (Array.isArray(capabilities) ? capabilities : []).map((c) => {
+    if (typeof c === 'string') return c ? { name: c, summary: null } : null;
+    const name = typeof c?.name === 'string' && c.name ? c.name : typeof c?.id === 'string' && c.id ? c.id : null;
+    return name ? { name, summary: typeof c?.summary === 'string' && c.summary ? c.summary : null } : null;
+  }).filter((x) => x !== null);
+}
+
 /** 下载进度：百分数（没有总数的是 `null`） @param {{done?: number, total?: number}|null} p */
 export const percentOf = (p) => (p && typeof p.total === 'number' && p.total > 0 ? Math.min(100, Math.round(((p.done ?? 0) / p.total) * 100)) : null);

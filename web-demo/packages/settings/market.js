@@ -7,7 +7,7 @@ import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { bytes } from '../../src/lib/format.js';
 import { pkgFace } from './logos.js';
-import { STATUS_FILTERS, shownOf, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf } from './market-model.js';
+import { STATUS_FILTERS, shownOf, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf, capabilityRows } from './market-model.js';
 import { confirmIn } from './confirm.js';
 
 /** 搜索框停多久再筛（边打边筛；输入法选字时不筛） */
@@ -400,7 +400,7 @@ function detailPage(dialog, id) {
     const items = [
       got?.origin ? line(t('market.origin'), h('a.mk-link', { href: /^https?:\/\//.test(got.origin) ? got.origin : `https://${got.origin}`, target: '_blank', rel: 'noopener noreferrer' }, h('code', got.origin), icon('external-link'))) : null,
       line(t('market.includes'), providesLine(got?.provides ?? p.provides, names) || t('market.nothing')),
-      line(t('market.capabilities'), (got?.capabilities ?? []).length ? (got.capabilities).join('、') : t('market.none')),
+      line(t('market.capabilities'), capsLine(got?.capabilities) ?? t('market.none')),
       (got?.with ?? []).length ? line(t('market.with'), h('div.mk-with', got.with.map((/** @type {any} */ w) => h('code', `${w.package} ${w.version ?? ''}`)))) : null,
       typeof got?.download === 'number' ? line(t('market.size'), bytes(got.download)) : null,
       // 装着别的版本的才写「替换」（同一个版本重装不写）
@@ -411,6 +411,13 @@ function detailPage(dialog, id) {
   const action = actionButton(dialog, p, upgradableOf(m), true);
   return [head, h('section.set-group', h('h3.set-group-name', t('market.about')), rows),
     h('div.mk-detail-foot', m.problems[id] ? h('p.mk-problem', m.problems[id]) : null, action)];
+}
+
+/** 「所需权限」：名字顿号连成一行，有一句说明的悬停看；一项都没有的交 `null` @param {any} capabilities */
+function capsLine(capabilities) {
+  const rows = capabilityRows(capabilities);
+  if (!rows.length) return null;
+  return h('span', rows.flatMap((c, i) => [i ? '、' : null, h('span', c.summary ? { title: c.summary } : {}, c.name)]).filter((x) => x !== null));
 }
 
 /**

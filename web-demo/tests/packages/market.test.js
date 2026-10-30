@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { shownOf, actionOf, kindsOf, faceOf, needsLook, hasProgram, providesLine, percentOf, found } from '../../packages/settings/market-model.js';
+import { shownOf, actionOf, kindsOf, faceOf, needsLook, hasProgram, providesLine, percentOf, found, capabilityRows } from '../../packages/settings/market-model.js';
 
 const embed = { package: 'embed', version: '1.0.0', name: '语义模型', summary: '本机的语义检索模型', official: true, installed: '1.0.0', blocked: null, provides: { features: ['embed'] }, depends: [] };
 const memes = { package: 'memes', version: '0.2.0', name: '表情包', summary: '发表情包的技能', official: true, installed: null, blocked: null, provides: { skills: ['memes'], content: ['stickers'] }, depends: [] };
@@ -85,4 +85,11 @@ test('带不带程序（核心 U23下上：自己那一层只收不带程序的�
   assert.equal(hasProgram({ kind: 'mascot' }), false);
   assert.equal(hasProgram({ provides: { mcp: [] } }), false, '空的不算');
   assert.equal(hasProgram(undefined), false);
+});
+
+test('所需权限：核心 IN-3 起写人话的名字、带说明；旧核心给编号的写编号，认不出的不写', () => {
+  assert.deepEqual(capabilityRows([{ id: 'network', name: '联网', summary: '访问网络上的服务' }, { id: 'files', name: '', summary: '' }]),
+    [{ name: '联网', summary: '访问网络上的服务' }, { name: 'files', summary: null }]);
+  assert.deepEqual(capabilityRows(['network', { name: 'exec' }, null, 3, '']), [{ name: 'network', summary: null }, { name: 'exec', summary: null }]);
+  assert.deepEqual(capabilityRows(undefined), []);
 });
