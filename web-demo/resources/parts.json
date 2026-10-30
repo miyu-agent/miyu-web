@@ -7250,5 +7250,12 @@
     "select": [
       ".prefix-ask-btn"
     ]
+  },
+  "dash.command-full": {
+    "zh": "右侧边栏看后台命令时，输出上面那一块完整的命令",
+    "select": [
+      ".dash-command-full",
+      ".dash-prompt"
+    ]
   }
 }

@@ -538,7 +538,9 @@ export class Dashboard {
     const t = this.t;
     const out = h('pre.dash-output', t('loading'));
     const follow = h('div.dash-follow', h('i.dash-follow-dot'), t('follow'));
-    replace(box, out, follow);
+    // 完整的命令先写在上面（头一行截掉了，2026-10-31 项目主人）
+    const command = x.command ? h('pre.dash-command-full', h('span.dash-prompt', '$ '), x.command) : null;
+    replace(box, command, out, follow);
     /** @type {string[]} */
     let kept = [];
     const keep = this.config.preview_lines;

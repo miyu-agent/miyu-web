@@ -156,6 +156,14 @@
 /* 点进去的输出、差异（放在预览工作区的框里）：输出等宽贴着底；差异带新旧行号 */
 /* 借预览工作区的框看的（`present`）：输出占满、贴着底，底下一行「跟着最新的」；头一行里的名字截长、文件名加粗 */
 .dash-present { display: grid; grid-template-rows: minmax(0, 1fr) auto; height: 100%; }
+/* 后台命令那一页：输出上面先写完整的命令（长的折行写全，超过 6 行在里面滚），和输出之间一道细线 */
+.dash-present:has(> .dash-command-full) { grid-template-rows: auto minmax(0, 1fr) auto; }
+.dash-command-full {
+  max-height: calc(6 * 1.65em + 2 * 10px * var(--space)); margin: 0; padding: calc(10px * var(--space)) calc(16px * var(--space)); overflow: auto;
+  border-bottom: var(--divider, 1px solid var(--line)); background: color-mix(in srgb, var(--surface-2) 40%, var(--surface-1)); color: var(--text);
+  font: calc(12.5px * var(--text-scale))/1.65 var(--font-mono); white-space: pre-wrap; word-break: break-word; user-select: text;
+}
+.dash-prompt { color: var(--text-faint); user-select: none; }
 .artifact-custom .dash-name { flex: 1 1 auto; font-size: calc(13px * var(--text-scale)); }
 .artifact-custom .dash-file-name { font-weight: 600; font-size: calc(13px * var(--text-scale)); }
 .artifact-custom .dash-kind { color: var(--text-soft); }
