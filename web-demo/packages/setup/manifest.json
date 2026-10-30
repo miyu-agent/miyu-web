@@ -268,7 +268,9 @@
         "empty": "无子文件夹",
         "partial": "仅显示部分",
         "cancel": "取消",
-        "choose": "选择此文件夹"
+        "choose": "选择此文件夹",
+        "opening": "正在打开选择文件夹的窗口…",
+        "busy": "选择文件夹的窗口已经开着"
       },
       "choose_preset": "选择预设",
       "locked_preset": "请选择预设",
@@ -480,7 +482,9 @@
         "empty": "No subfolders",
         "partial": "Partial list",
         "cancel": "Cancel",
-        "choose": "Select this folder"
+        "choose": "Select this folder",
+        "opening": "Opening the folder picker…",
+        "busy": "The folder picker is already open"
       },
       "choose_preset": "Select preset",
       "locked_preset": "Select a preset",
@@ -692,7 +696,9 @@
         "empty": "サブフォルダがありません",
         "partial": "多すぎるため一部だけ表示",
         "cancel": "キャンセル",
-        "choose": "このフォルダにする"
+        "choose": "このフォルダにする",
+        "opening": "フォルダ選択画面を開いています…",
+        "busy": "フォルダ選択画面はすでに開いています"
       },
       "choose_preset": "プリセットを選ぶ",
       "locked_preset": "先にプリセットを選んでください",

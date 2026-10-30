@@ -310,11 +310,12 @@ export function servedHost() {
       ...fileTools(urls),
       /**
        * 选目录：请网页软件开系统的对话框（`/pick-dir`）。交回选的绝对路径；点了取消的交 `false`；开不了的（页面开在局域网地址上、这台电脑
-       * 上没有对话框程序、问不到）交 `null`，用的地方退回自己画的文件夹浏览器。
+       * 上没有对话框程序、问不到）交 `null`，用的地方退回自己画的文件夹浏览器；已经开着一个的交 `{busy: true}`。
        */
       pickDir: async (/** @type {{title?: string, start?: string}} */ opts = {}) => {
         const got = await desk('/pick-dir', { title: opts.title ?? '', start: opts.start ?? '' }).then((r) => r?.json(), () => null).catch(() => null);
         if (typeof got?.path === 'string') return got.path;
+        if (got?.busy) return { busy: true };
         return got?.cancelled ? false : null;
       },
       /**

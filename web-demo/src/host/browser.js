@@ -79,7 +79,7 @@ async function checkKey(key) {
  * 选目录：请桥开系统的对话框（2026-10-08 项目主人：选择文件夹应该打开目录选择器）。交回选的绝对路径；点了取消的交 `false`；
  * 开不了的（页面开在别的机器上、桥那台机器上没有对话框程序、问不到桥）交 `null`，用的地方退回自己画的文件夹浏览器。
  * @param {string} key @param {{title?: string, start?: string}} [opts] `start` 从哪个目录开始
- * @returns {Promise<string|false|null>}
+ * @returns {Promise<string|false|null|{busy: true}>} 已经开着一个的交 `{busy: true}`
  */
 async function pickDir(key, opts = {}) {
   if (!onThisMachine()) return null;
@@ -87,6 +87,7 @@ async function pickDir(key, opts = {}) {
     const q = new URLSearchParams({ k: key, title: opts.title ?? '', start: opts.start ?? '' });
     const got = await (await fetch(`/pick-dir?${q}`, { cache: 'no-store' })).json();
     if (typeof got?.path === 'string') return got.path;
+    if (got?.busy) return { busy: true };
     return got?.cancelled ? false : null;
   } catch {
     return null;
