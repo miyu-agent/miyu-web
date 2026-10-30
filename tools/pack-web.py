@@ -4,6 +4,7 @@
 #   package.toml  这个仓库的 miyu-webui/package.toml，[package] 里补上版本（照 Cargo.toml 的工作区版本）和 targets（照 --target）
 #   web.json、matugen/  这个仓库的 miyu-webui/ 原样
 #   THIRD-PARTY-LICENSES.txt  这个仓库的 miyu-webui/ 原样（cargo xtask notices 生成的第三方许可证清单），LICENSE 照仓库根的
+#   loading.html  这个仓库的 miyu-webui/ 原样（桌面端启动时的等待页，node tools/loading.mjs 生成）
 #   pages/        web-demo 里给浏览器的七样：index.html、distro.json、src、styles、packages、resources、vendor
 #   bin/miyu-web  --binary 给的程序（这一种系统上编好的 release，脚本不编）
 # 仓库里的清单不写 targets：它也是随 Miyu 一起装进资源目录的那一份，写死了别的系统就装不上。
@@ -58,6 +59,8 @@ def main():
         shutil.copytree(ROOT / PACKAGE / 'matugen', pkg / 'matugen')
         # 许可证：自己的（AGPL-3.0-or-later）和第三方的清单，随包发（核心 licenses.md「第三方许可证清单」第 7 条）
         shutil.copy2(ROOT / PACKAGE / 'THIRD-PARTY-LICENSES.txt', pkg / 'THIRD-PARTY-LICENSES.txt')
+        # 桌面端启动时的等待页（tools/loading.mjs 生成，外壳从资源目录读）
+        shutil.copy2(ROOT / PACKAGE / 'loading.html', pkg / 'loading.html')
         shutil.copy2(ROOT / 'LICENSE', pkg / 'LICENSE')
         (pkg / 'pages').mkdir()
         for name in PAGES:
