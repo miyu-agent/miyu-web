@@ -7332,5 +7332,11 @@
     "select": [
       ".set-record-control .set-input"
     ]
+  },
+  "market.downloads": {
+    "zh": "下载软件页卡片上版本后面的下载次数",
+    "select": [
+      ".mk-downloads"
+    ]
   }
 }

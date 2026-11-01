@@ -5,9 +5,10 @@
 
 import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
-import { bytes } from '../../src/lib/format.js';
+import { bytes, short } from '../../src/lib/format.js';
 import { pkgFace } from './logos.js';
-import { STATUS_FILTERS, QUICK_KINDS, shownOf, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf, capabilityRows } from './market-model.js';
+import { STATUS_FILTERS, QUICK_KINDS, SORTS, shownOf, sortedBy, sortsAvailable, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf, capabilityRows } from './market-model.js';
+import { select } from './rows.js';
 import { confirmIn } from './confirm.js';
 
 /** 搜索框停多久再筛（边打边筛；输入法选字时不筛） */
@@ -110,7 +111,8 @@ export function drawMarket(dialog) {
     return [h('div.mk-offline', h('strong', t('market.unreachable')), h('code.mk-why', m.error),
       h('button.set-btn', { type: 'button', onclick: () => { m.error = null; m.generated = null; loadMarket(dialog, true).catch(() => {}); redraw(dialog); } }, t('market.retry')))];
   }
-  const view = (dialog.marketView ??= { query: '', filter: 'all', kind: null });
+  const view = (dialog.marketView ??= { query: '', filter: 'all', kind: null, sort: 'default' });
+  view.sort ??= 'default';
   const upgradable = upgradableOf(m);
   const grid = h('div.mk-grid');
   const empty = h('p.set-empty', { hidden: true }, t('market.no_match'));
@@ -135,7 +137,7 @@ export function drawMarket(dialog) {
     ]);
     filterBtn.classList.toggle('is-on', !!view.kind);
     kindsNow = got;
-    replace(grid, got.list.map((p) => card(dialog, p, upgradable)));
+    replace(grid, sortedBy(got.list, view.sort).map((p) => card(dialog, p, upgradable)));
     empty.hidden = got.list.length > 0;
     replace(extra, view.filter === 'upgradable' ? upgradeExtras(dialog) : []);
     dialog.body.scrollTop = 0;
@@ -158,6 +160,15 @@ export function drawMarket(dialog) {
     type: 'button', title: t('market.kinds'), 'aria-label': t('market.kinds'),
     onclick: () => openKinds(dialog, filterBtn, kindsNow, view, update),
   }, icon(hasIcon('list-filter') ? 'list-filter' : 'sliders-horizontal')));
+  // 排序（核心设计 54）：一个包都没有那一格的那一项灰着
+  const can = sortsAvailable(m.list);
+  if (!can[view.sort]) view.sort = 'default';
+  const sortBox = h('span.mk-sort');
+  const drawSort = () => replace(sortBox, select(dialog, SORTS.map((k) => ({
+    value: k, name: t(`market.sort.${k}`), off: !can[k], note: can[k] ? undefined : t('market.sort_missing'),
+  })), view.sort, (v) => { view.sort = v; drawSort(); update(); }));
+  drawSort();
+  sortBox.title = t('market.sort_label');
   const ups = upgradable.size
     ? h('button.mk-ups', { type: 'button', onclick: () => { view.filter = 'upgradable'; update(); } }, t('market.upgrades', { n: upgradable.size }))
     : null;
@@ -177,7 +188,7 @@ export function drawMarket(dialog) {
   const meta = m.stale ? h('p.mk-meta', t('market.stale', { at: whenOf(m.generated) }))
     : upgradable.size ? h('p.mk-meta', t('market.meta', { at: whenOf(m.generated), n: m.list.length })) : null;
   update();
-  return [h('div.set-pkg-tools.mk-tools', h('label.set-pkg-find', icon('search'), input), filterBtn, ups, refresh), meta, statusChips, extra, empty, grid];
+  return [h('div.set-pkg-tools.mk-tools', h('label.set-pkg-find', icon('search'), input), sortBox, filterBtn, ups, refresh), meta, statusChips, extra, empty, grid];
 }
 
 /** 索引的时刻：本地的「10月21日 09:30」 @param {string|null} at */
@@ -203,7 +214,9 @@ function card(dialog, p, upgradable) {
   return h(`div.mk-card${fresh ? '.is-new' : ''}`, { role: 'button', tabindex: '0', 'data-mk-card': p.package, onclick: (/** @type {Event} */ e) => { if (!(/** @type {HTMLElement} */ (e.target)).closest('button')) openDetail(dialog, p.package); },
     onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' && e.target === e.currentTarget) openDetail(dialog, p.package); } },
     h('div.mk-card-head', pkgFace(dialog.ctx.core, p, hasIcon(face) ? face : 'package', '.mk-face', typeof p.source === 'string' ? p.source : null),
-      h('div.mk-card-title', h('strong', p.name ?? p.package), h('span.mk-version', p.version ?? ''))),
+      h('div.mk-card-title', h('strong', p.name ?? p.package), h('span.mk-version', p.version ?? ''),
+        // 下载次数（核心设计 54；软件源给了才写）
+        typeof p.downloads === 'number' ? h('span.mk-downloads', { title: t('market.downloads_n', { n: p.downloads.toLocaleString() }) }, icon('download'), short(p.downloads)) : null)),
     h('p.mk-summary', p.summary ?? ''),
     h('div.mk-card-foot', tag, actionButton(dialog, p, upgradable, false)),
     m.problems[p.package] ? h('p.mk-problem', m.problems[p.package]) : null);

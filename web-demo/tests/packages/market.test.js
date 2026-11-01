@@ -105,3 +105,21 @@ test('快速筛选的几种（MCP、脚本、技能）一个都没有也有个�
   const one = shownOf(all, { query: '', filter: 'community', kind: null }, new Set());
   assert.ok(one.list.every((p) => !p.official));
 });
+
+test('排序（核心设计 54）：默认照编号；最新、下载量、趋势从大到小，没有那一格的排最后再照编号；一个包都没有那一格的排不了', async () => {
+  const { sortedBy, sortsAvailable } = await import('../../packages/settings/market-model.js');
+  const list = [
+    { package: 'c', downloads: 50, downloads_week: 1, published: '2026-10-01T00:00:00Z' },
+    { package: 'a', downloads: 900, published: '2026-10-20T00:00:00Z' },
+    { package: 'b' },
+    { package: 'd', downloads: 50, downloads_week: 9, published: 'not a date' },
+  ];
+  const ids = (/** @type {any[]} */ l) => l.map((p) => p.package);
+  assert.deepEqual(ids(sortedBy(list, 'default')), ['a', 'b', 'c', 'd']);
+  assert.deepEqual(ids(sortedBy(list, 'downloads')), ['a', 'c', 'd', 'b'], '一样多的照编号，没有的最后');
+  assert.deepEqual(ids(sortedBy(list, 'trending')), ['d', 'c', 'a', 'b']);
+  assert.deepEqual(ids(sortedBy(list, 'latest')), ['a', 'c', 'b', 'd'], '读不成的时刻当没有');
+  assert.deepEqual(ids(list), ['c', 'a', 'b', 'd'], '原来的没动');
+  assert.deepEqual(sortsAvailable(list), { default: true, latest: true, downloads: true, trending: true });
+  assert.deepEqual(sortsAvailable([{ package: 'x' }]), { default: true, latest: false, downloads: false, trending: false }, '旧索引');
+});

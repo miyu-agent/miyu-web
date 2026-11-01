@@ -138,3 +138,45 @@ export function capabilityRows(capabilities) {
 
 /** 下载进度：百分数（没有总数的是 `null`） @param {{done?: number, total?: number}|null} p */
 export const percentOf = (p) => (p && typeof p.total === 'number' && p.total > 0 ? Math.min(100, Math.round(((p.done ?? 0) / p.total) * 100)) : null);
+
+/** 排序（核心设计 54）：默认照索引的先后（编号），别的照 `package.search` 每一项的一格从大到小 */
+export const SORTS = /** @type {const} */ (['default', 'latest', 'downloads', 'trending']);
+
+/** 每一种排序照哪一格 */
+const SORT_FIELD = { latest: 'published', downloads: 'downloads', trending: 'downloads_week' };
+
+/** 一项某一格的数（`published` 是时刻，照毫秒）；没有的、读不成的是 `null` @param {any} p @param {string} field */
+function sortValue(p, field) {
+  const v = p?.[field];
+  if (field === 'published') {
+    const at = typeof v === 'string' ? Date.parse(v) : NaN;
+    return Number.isFinite(at) ? at : null;
+  }
+  return typeof v === 'number' && Number.isFinite(v) ? v : null;
+}
+
+/**
+ * 照排序排一份（不动原来的）：默认照编号；别的从大到小，没有那一格的排最后、再照编号。
+ * @param {any[]} list @param {string} sort @returns {any[]}
+ */
+export function sortedBy(list, sort) {
+  const byId = (/** @type {any} */ a, /** @type {any} */ b) => String(a.package).localeCompare(String(b.package));
+  const field = /** @type {Record<string, string>} */ (SORT_FIELD)[sort];
+  if (!field) return [...list].sort(byId);
+  return [...list].sort((a, b) => {
+    const x = sortValue(a, field);
+    const y = sortValue(b, field);
+    if (x === null && y === null) return byId(a, b);
+    if (x === null) return 1;
+    if (y === null) return -1;
+    return y - x || byId(a, b);
+  });
+}
+
+/** 哪几种排序排得了：一个包都没有那一格的（旧索引、自建的软件源）排不了 @param {any[]} all @returns {Record<string, boolean>} */
+export function sortsAvailable(all) {
+  /** @type {Record<string, boolean>} */
+  const out = { default: true };
+  for (const [sort, field] of Object.entries(SORT_FIELD)) out[sort] = all.some((p) => sortValue(p, field) !== null);
+  return out;
+}
