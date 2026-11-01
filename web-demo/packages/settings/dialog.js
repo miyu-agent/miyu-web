@@ -134,8 +134,25 @@ export class SettingsDialog {
     // 「读取其他目录的 Skills」两项画在技能页顶上（`tool-pages.js`），通用的页不列
     this.pages = buildPages(schema, got, { merge: cfg.merge, moveGroups: cfg.move_groups, hide: [...(cfg.hide_prefixes ?? []), EXTERNAL_PREFIX, ...headless(this.heads)] });
     this.modelsPromise = this.loadModels();
+    // 选人格、知识库的列表每次打开重读（`pickList`）
+    this.picks = new Map();
     // 扩展、软件包的订阅（连 MCP 的列表）
     await Promise.all([this.extensions.start(), this.feed.start()]);
+  }
+
+  /**
+   * 选人格、知识库的项要的列表（核心设计 53 第四节，PC-3）：第一次要的时候去读，读完了没在改字的重画一次；读着、读不到的交 `null`。
+   * @param {'persona'|'knowledge'} kind
+   */
+  pickList(kind) {
+    this.picks ??= new Map();
+    if (this.picks.has(kind)) return this.picks.get(kind);
+    this.picks.set(kind, null);
+    this.ctx.core.request(kind === 'persona' ? 'persona.list' : 'kb.list', {}).then((got) => {
+      this.picks.set(kind, got);
+      if (this.isOpen && !this.query && !this.editing()) this.drawBody();
+    }, () => {});
+    return null;
   }
 
   /** 读模型列表：读着的时候 `modelsLoading`，读完了在模型页的重画一次（正在改一项的不打断）。 */

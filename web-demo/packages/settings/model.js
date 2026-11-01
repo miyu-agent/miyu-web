@@ -347,6 +347,16 @@ export function referenceOptions(list) {
  */
 export const headless = (heads) => ((heads ?? []).some((p) => p.package !== 'miyu-webui') ? [] : ['ui.head', 'terminal.']);
 
+/**
+ * 选人格、知识库的项（核心设计 53 第四节，PC-3）的选项：照 `persona.list`（写错的不列）、`kb.list` 列，名字没有的写编号。
+ * @param {'persona'|'knowledge'} kind @param {any} list 那条请求的回应
+ * @returns {{value: string, name: string}[]}
+ */
+export function pickOptions(kind, list) {
+  if (kind === 'persona') return (list?.personas ?? []).filter((p) => p?.persona && !p.problem).map((p) => ({ value: p.persona, name: p.name || p.persona }));
+  return (list?.bases ?? []).filter((b) => b?.id).map((b) => ({ value: b.id, name: b.name || b.id }));
+}
+
 export const providerName = (p) => (typeof p.name === 'object' ? p.name?.value : p.name) || p.id;
 
 /** 网页包的设置项里有控件能改的类型；结构复杂的（`json`、`map`、`list`）在设置页改不了，不列（蓝图「设置页」第 11 条）。 */

@@ -59,3 +59,11 @@ test('只有网页界面的（只装了桌面端）不列「默认界面」和�
   assert.deepEqual(headless([]), ['ui.head', 'terminal.']);
   assert.deepEqual(headless([{ package: 'miyu-webui' }, { package: 'miyu-tui' }]), []);
 });
+
+test('选人格、知识库的选项（核心设计 53 第四节）：人格写错的不列，名字没有的写编号', async () => {
+  const { pickOptions } = await import('../../packages/settings/model.js');
+  assert.deepEqual(pickOptions('persona', { personas: [{ persona: 'miyu', name: 'Miyu' }, { persona: 'bad', problem: 'x' }, { persona: 'neko' }] }),
+    [{ value: 'miyu', name: 'Miyu' }, { value: 'neko', name: 'neko' }]);
+  assert.deepEqual(pickOptions('knowledge', { bases: [{ id: 'docs', name: '文档' }, { id: 'raw' }] }), [{ value: 'docs', name: '文档' }, { value: 'raw', name: 'raw' }]);
+  assert.deepEqual(pickOptions('knowledge', null), []);
+});
