@@ -118,12 +118,14 @@ function packageRow(dialog, p, child = false) {
   const bad = BAD.has(p.status);
   // 包开着、带的 MCP 服务有停下的：写「服务已停止」（核心的状态是好好的也照这个写）
   // 服务全被自制的同名服务替代了（F-9 补的 `covered`，`status` 照旧 `off`）：写「被自制的服务替代」，不当关着
+  const control = controlFor(dialog, p, null);
   const state = p.covered && !bad ? h('span.set-pkg-status', t('pkg.covered'))
+    // 卸掉了又没有开关的出厂包（核心 PE-1：删人格连带卸掉的）：写「已卸载」，点进去「装回」
+    : p.removed && !control ? h('span.set-pkg-status', t('pkg.removed'))
     : mcpStopped(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_stopped'))
     : mcpNeedsLogin(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_login'))
     : QUIET.has(p.status) ? null : h(`span.set-pkg-status${bad ? '.is-bad' : p.status === 'running' ? '.is-on' : ''}`, t(`pkg.status.${p.status}`));
-  // 列表那一行的总闸照旧走 `package.enable`（核心照种类办），自己的开关照 `enabled`（扩展的跟着 `followExtension`）
-  const control = controlFor(dialog, p, null);
+  // 列表那一行的总闸照旧走 `package.enable`（核心照种类办），自己的开关照 `enabled`（扩展的跟着 `followExtension`）（上面先取好了）
   return h('div.set-row.set-pkg.is-expandable', {
     onclick: (/** @type {MouseEvent} */ e) => {
       if (/** @type {Element} */ (e.target).closest('.set-switch')) return;
@@ -293,6 +295,7 @@ function infoCard(dialog, p, e) {
     e && e.on && e.state === 'stopped' && stderr
       ? h('button.set-btn', { type: 'button', onclick: () => { dialog.extensions.toggleSet(dialog.extensions.showing, id); dialog.extensions.redraw(id); } }, t(showing ? 'ext.hide_output' : 'ext.show_output')) : null,
     removeButton(dialog, p),
+    p.removed && !control ? reinstallButton(dialog, p) : null,
   ].filter(Boolean);
   const caps = e?.capabilities ?? [];
   const unapproved = new Set(e?.unapproved ?? []);
@@ -345,6 +348,21 @@ function removeButton(dialog, p) {
       dialog.toast(refusal(dialog, err));
     }
   } }, t('pkg.uninstall'));
+  return button;
+}
+
+/** 「装回」：卸掉了又没有开关的出厂包（核心 PE-1），`package.install` 写编号；拒了照原因。 @param {any} dialog @param {any} p */
+function reinstallButton(dialog, p) {
+  const button = /** @type {HTMLButtonElement} */ (h('button.set-btn', { type: 'button', onclick: async () => {
+    button.disabled = true;
+    try {
+      await dialog.ctx.core.request('package.install', { package: p.package });
+      await dialog.reload();
+    } catch (err) {
+      button.disabled = false;
+      dialog.toast(refusal(dialog, err));
+    }
+  } }, dialog.ctx.text('pkg.reinstall')));
   return button;
 }
 
