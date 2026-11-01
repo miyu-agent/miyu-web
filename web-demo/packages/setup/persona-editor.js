@@ -8,7 +8,7 @@
 import { h, replace } from '../../src/lib/dom.js';
 import { field, switchField, area, askFirst } from './form.js';
 import { Pairs } from './pairs.js';
-import { personaSave, halfPair } from './model.js';
+import { personaSave, halfPair, newlyRemoved } from './model.js';
 import { Appearance } from './appearance.js';
 
 /**
@@ -204,9 +204,13 @@ export class PersonaEditor {
   }
 
   async drop() {
+    // 出厂自带的人格（核心 PE-1）删了是连包卸掉：删前删后各读一次包表，多卸掉的那个写进提示，告诉人能从软件包装回来
+    const packages = () => this.ctx.core.request('package.list', {}).then((r) => r?.packages ?? null, () => null);
+    const before = this.remove === 'delete' ? await packages() : null;
     try {
       const got = await this.ctx.core.request('persona.delete', { persona: this.id });
-      this.kit.toast(this.t(got?.remains ? 'edit.restored' : 'edit.deleted'));
+      const pkg = !got?.remains && before ? newlyRemoved(before, await packages()) : null;
+      this.kit.toast(pkg ? this.t('edit.deleted_pkg', { name: pkg.name || pkg.package }) : this.t(got?.remains ? 'edit.restored' : 'edit.deleted'));
       this.hooks.removed(!!got?.remains);
     } catch (err) {
       this.say(refusalText(err));

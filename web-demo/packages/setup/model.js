@@ -12,6 +12,17 @@ export const personaName = (p) => p.name || p.persona;
 export const presetName = (p) => p.name || p.preset;
 
 /**
+ * 删人格连带卸掉的出厂包（核心 PE-1）：`package.list` 删前、删后两份里，删后多出来的 `removed` 的那一个；没有、读不到的是 `null`。
+ * @param {any[]|null} before @param {any[]|null} after
+ * @returns {any|null}
+ */
+export function newlyRemoved(before, after) {
+  if (!Array.isArray(before) || !Array.isArray(after)) return null;
+  const was = new Set(before.filter((p) => p?.removed).map((p) => p.package));
+  return after.find((p) => p?.removed && !was.has(p.package)) ?? null;
+}
+
+/**
  * `check` 的问题里属于这个人格、预设的（照文件在 `personas/<编号>/`、`presets/<编号>.toml` 下认，哪一层都算）。
  * `persona.list` 的 `problem` 是给日志的英文原话，人看的那一句（照连接的语言）在 `check` 里（项目主人 2026-10-08 定：写中文）。
  * @param {{kind: string, file?: string, line?: number, message: string}[]} problems @param {'persona'|'preset'} kind @param {string} id
