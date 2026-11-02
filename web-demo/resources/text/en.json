@@ -167,6 +167,9 @@
     "core_how": "Check the errors in the terminal that started the bridge.",
     "lost": "The bridge restarted and the key changed: open the new link it printed."
   },
+  "themes": {
+    "refresh": "Appearance \"{name}\" changed. Reload the page to apply it."
+  },
   "level_tip": "Click to switch permission level: Workspace → Full access → Read-only",
   "level_tip_member": "Click to switch permission level: Workspace → Read-only",
   "copied": "Copied {count} character(s)",

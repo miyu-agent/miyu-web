@@ -1,5 +1,6 @@
 // @ts-check
-//! 软件包列表的推送（蓝图 `web.md`「设置页」第 13 条；核心 F-8 三补，`subscribe {"stream": "packages"}`）：设置弹窗开着时订、关了退订；
+//! 软件包列表的推送（蓝图 `web.md`「设置页」第 13 条；核心 F-8 三补，`subscribe {"stream": "packages"}`）：设置弹窗打开时订（再订换一个新的，
+//! 拿一份这时的列表），关了不退订：一个连接只有一个 `packages` 订阅，内核跟外观包装卸也用它（2026-11-02，`web/architecture.md`「外观包」）；
 //! 回应就是整份列表，之后 `package.changed` 整项换（MCP 服务起了、停了也推，核心 X-4），掉了队（`resync`）重订。配置里自己写的
 //! MCP 服务（核心 F-9 补）订上以后读一次 `mcp.list`，之后跟 `mcp.changed`。换了在「软件包」「MCP」页的重画（正在改一项的不打断）。
 
@@ -41,12 +42,10 @@ export class PackageFeed {
     this.dialog.homeMcp = await this.dialog.ctx.core.request('mcp.list', {}).then((r) => (Array.isArray(r?.servers) ? r.servers : null), () => null);
   }
 
-  /** 弹窗关了：退订。 */
+  /** 弹窗关了：不再听（订阅留着给内核，见上面），下次打开重订、拿一份新的列表。 */
   stop() {
     clearTimeout(this.toolsTimer);
-    if (!this.live) return;
     this.live = false;
-    this.dialog.ctx.core.request('unsubscribe', { stream: 'packages' }).catch(() => {});
   }
 
   /** 推送：交回认不认得这条。 @param {string} method @param {any} params */

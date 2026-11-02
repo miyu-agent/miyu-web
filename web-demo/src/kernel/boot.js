@@ -2,6 +2,8 @@
 //! 起内核（蓝图 `web/architecture.md`「分层」「发行版」）：读资源、连核心、握手，起编进内核的服务，再照发行版和个人那一层
 //! 加载软件包。内核自己站得住：一个包都起不来时，页面上列出哪个包卡在哪，不白屏。
 //!
+//! 发行版的包起完以后，核心装着的外观包里带网页外观的接在后面加载，跟着装卸（`themes.js`，核心 TH-1）。
+//!
 //! 编进内核的服务（宏内核：决定快慢、彼此紧挨着的放在一起，像编进内核的驱动）：
 //! `core` 连核心（线是宿主给的）、`sessions` 会话仓库、`host` 宿主（平台有关的：这个页面登录成的账号、新会话的工作目录（账号的工作区）和家目录、
 //! 附件从哪来、外链、剪贴板、桌面壁纸；蓝图「宿主」）、`page` 页面的根、`slots` 挂载位、`seams` 职能、`packages` 软件包（状态、停用、
@@ -17,6 +19,7 @@ import { Registry, Fiber, useLanguage } from './context.js';
 import { Slots } from './slots.js';
 import { Seams } from './seams.js';
 import { Loader, rows } from './loader.js';
+import { Themes, themeManifest } from './themes.js';
 import { resolve } from './config.js';
 import { loadResources, useTexts, moreIcons, res, t } from '../util/res.js';
 import { pick, settingOf, options, languageSpec, fromConfig } from './language.js';
@@ -181,20 +184,40 @@ export async function boot(root) {
   const registry = new Registry();
   const slots = new Slots();
   const seams = new Seams();
+  // 外观包（核心 TH-1）：网页软件给的页面才有（走桥的没有 `/theme`，宿主的 `themes` 是 `null`，不加载）
+  const opener = /** @type {any} */ (host).themes ?? null;
+  const themes = opener ? new Themes({
+    request: (method, params) => conn.request(method, params),
+    open: (id) => opener.open(id),
+    taken: new Set(distro.packages.map((/** @type {any} */ p) => p.id)),
+    changed: () => sync(),
+    say: (name) => {
+      const text = t('themes.refresh', { name });
+      const composer = registry.get('composer');
+      if (composer) composer.say(text);
+      else console.info(text);
+    },
+  }) : null;
+  /** 一个包的根：外观包是网页软件给的地址，别的是 `packages/<编号>/` @param {string} id */
+  const rootOf = (id) => (themes?.has(id) ? new URL(themes.base(id), base) : new URL(`packages/${id}/`, base));
   /** 清单：读一次记着（停了的包也要列名字、设置项） */
   const manifests = new Map();
   const manifestOf = async (id) => {
     if (!manifests.has(id)) {
-      const got = await fetch(new URL(`packages/${id}/manifest.json`, base));
+      const got = await fetch(new URL('manifest.json', rootOf(id)));
       if (!got.ok) throw new Error(`找不到软件包 ${id}（${got.status}）`);
-      manifests.set(id, await got.json());
+      const manifest = await got.json();
+      manifests.set(id, themes?.has(id) ? themeManifest(manifest, id) : manifest);
     }
     return manifests.get(id);
   };
   const loader = new Loader(registry, {
     load: async (id) => {
       const manifest = await manifestOf(id);
-      const module = await import(new URL(`packages/${id}/index.js`, base).href);
+      // 外观包取过一次（取坏了的也算：同一个地址再取还是那一份），升级了要刷新页面
+      if (themes?.has(id)) themes.loaded(id);
+      const module = await import(new URL('index.js', rootOf(id)).href);
+      if (typeof module.apply !== 'function') throw new Error(`软件包 ${id} 的 index.js 没有导出 apply`);
       return { manifest, apply: module.apply };
     },
     // 包的样式跟着包挂上、撤下；交回下载完了没有（下载不了的也算完，不卡着包），加载器等它再跑包
@@ -202,7 +225,7 @@ export async function boot(root) {
       const links = files.map((f) => {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = new URL(`packages/${id}/${f}`, base).href;
+        link.href = new URL(f, rootOf(id)).href;
         link.dataset.package = id;
         document.head.append(link);
         return link;
@@ -214,7 +237,9 @@ export async function boot(root) {
       return { ready, remove: () => links.forEach((l) => l.remove()) };
     },
   });
-  const sync = () => loader.sync(rows(distro.packages, storage.get(USER_LAYER, {})));
+  /** 发行版的包、外观包（接在后面），合上个人那一层 */
+  const allRows = () => rows([...distro.packages, ...(themes?.rows() ?? [])], storage.get(USER_LAYER, {}));
+  const sync = () => loader.sync(allRows());
   // 职能选哪个：发行版的默认，这个浏览器的个人那一层（内核那一行配置的 `seams`）盖在上面（蓝图 `web/architecture.md`「职能」的选法）
   const seamPrefs = () => ({ ...distro.seams, ...storage.get(USER_LAYER, {})[KERNEL]?.config?.seams });
 
@@ -325,7 +350,7 @@ export async function boot(root) {
         /** 一个包的设置项：清单里的、最终值、每一项来自哪一层（`default`、`distro`、`user`）、写错的（设置页用；停了的包也列） */
         settings: async (id) => {
           const manifest = await manifestOf(id);
-          const row = rows(distro.packages, storage.get(USER_LAYER, {})).find((r) => r.id === id);
+          const row = allRows().find((r) => r.id === id);
           const layers = [{ name: 'distro', values: row?.distro ?? {} }, { name: 'user', values: row?.user ?? {} }];
           return { manifest, ...resolve(manifest.settings ?? {}, layers) };
         },
@@ -353,6 +378,12 @@ export async function boot(root) {
   seams.prefer(seamPrefs());
 
   await sync();
+  // 外观包：订 `packages` 对一遍、接在发行版的后面加载，之后跟着装卸；重连以后重订
+  if (themes) {
+    conn.onPush((method, params) => { themes.push(method, params); });
+    conn.onRejoin(() => { themes.follow(); });
+    await themes.follow();
+  }
   if (!root.childElementCount) showStatus(root, loader.status());
 }
 

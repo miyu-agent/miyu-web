@@ -5,7 +5,8 @@
 //!   `code`；带 `#ticket=<票>` 的（`miyu web`、im 网页的「打开主网页」开的）先用记着的设备令牌、作废了再用票；都没有的用这台浏览器记着的设备令牌
 //!   （`login`）；再没有的交 `null`，内核出「输入访问密码」，握手带 `password`。勾了「自动登录」的令牌存 `localStorage` 的 `miyu.web.login`（30 天），
 //!   没勾的只放这个标签页（`sessionStorage` 的 `miyu.web.session`）；读写都兜着。原来多账号时的 `miyu.web.accounts` 读到时照上次用的那个账号的令牌迁成一份。
-//! - 本机文件、blob 的地址带设备令牌 `POST /media` 换票据（`web-ui.md`「怎么走」第三条）；同一样东西换过的记着，不再换。软件后台页 `POST /page`。
+//! - 本机文件、blob 的地址带设备令牌 `POST /media` 换票据（`web-ui.md`「怎么走」第三条）；同一样东西换过的记着，不再换。软件后台页 `POST /page`，
+//!   外观包的网页外观 `POST /theme`（核心 TH-1）。
 //! - 打开目录、选目录、桌面壁纸（`web-ui.md`「怎么走」第五条，2026-10-30 起）：带设备令牌请网页软件（`/reveal`、`/pick-dir`、`/wallpaper`、
 //!   `/wallpaper/events`）；页面开在局域网地址上的不请，交 `null`，用的地方照旧退回（复制路径、自己画的文件夹浏览器、没有「跟随壁纸」）。
 
@@ -338,6 +339,8 @@ export function servedHost() {
     },
     /** 软件的页面：带着登录令牌换票据，交回框的地址；换不到的交 `null` */
     pages: { open: async (/** @type {string} */ id) => (await post('/page', { package: id })) || null },
+    /** 外观包的网页外观（核心 TH-1）：带着登录令牌换票据，交回这个包的根（`/t/<票据>/<包>/`）；换不到的交 `null` */
+    themes: { open: async (/** @type {string} */ id) => (await post('/theme', { package: id })) || null },
     /** 网页自己的路由（`#` 后面那一段） */
     route: hashRoute(),
     /**

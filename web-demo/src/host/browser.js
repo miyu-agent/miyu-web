@@ -195,6 +195,8 @@ export function browserHost() {
     },
     /** 软件的页面：框的地址（见上面的 `packagePage`） */
     pages: { open: (/** @type {string} */ id) => packagePage(key, id) },
+    /** 外观包：桥没有 `/theme`，不加载（蓝图 `web/architecture.md`「外观包」） */
+    themes: null,
     /** 网页自己的路由（`#` 后面那一段） */
     route: hashRoute(),
     /** 桌面壁纸：问桥（见上面的 `wallpaper`） */
