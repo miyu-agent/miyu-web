@@ -2,7 +2,7 @@
 //!
 //! 1. 照终端的样子连核心（出示本机令牌，没在跑就拉起来），握手拿到人的语言。
 //! 2. `--logout`：`account.logout`、`all: true`，说作废了几个，不碰网页软件。
-//! 3. 网页软件没在跑（`run/web.lock` 没人拿着、没有 `run/web`）就拉起 `serve`，等那一行最多 10 秒。
+//! 3. 网页软件没在跑（`run/miyu-webui/lock` 没人拿着、没有 `run/miyu-webui/address`）就拉起 `serve`，等那一行最多 10 秒。
 //! 4. 问一次 `account.setup_code`（`first` 照实交给 `--format json`）：写了 `--reset` 的网址带 `#setup=<一次性码>`；别的（2026-10-30 起没设过密码的
 //!    也是：访问密码只给局域网用）要一张交接票（`login.ticket`，核心 LT-1），网址带 `#ticket=<票>`（im 设计 07 第 3.6 节、网页-乙；SU-1 起不带账号），页面存着设备令牌的照它、
 //!    没有的拿票连上；旧核心要不到票的网址就是地址本身（要了没用的码 5 分钟后自己作废）。
@@ -56,7 +56,7 @@ pub struct Launch {
     pub forget: Box<dyn Fn(&Path) -> Command + Send + Sync>,
 }
 
-/// 跳转页放在 `run/` 下的哪个目录（`web-ui.md`「怎么走」第二条第 4 款）。
+/// 跳转页放在网页包的运行时目录（`serve::runtime`，`run/miyu-webui/`）下的哪个目录（`web-ui.md`「怎么走」第二条第 4 款）。
 pub const JUMPS: &str = "open";
 
 /// 放了多久的跳转页下一次 `open` 顺手删掉（`forget` 没跑完的兜底）。
@@ -204,14 +204,14 @@ fn hand(root: &DataRoot, url: &str, secret: bool, launch: &Launch, browser: &dyn
     opened
 }
 
-/// 写一个跳转页（im 设计 07 第 3.6 节）：`run/open/<16 个随机字节的十六进制>.html`，只给本人（Unix 上目录 0700、文件 0600；Windows 上
+/// 写一个跳转页（im 设计 07 第 3.6 节）：`run/miyu-webui/open/<16 个随机字节的十六进制>.html`，只给本人（Unix 上目录 0700、文件 0600；Windows 上
 /// 数据根在本人的用户目录下，同本机令牌），里面用 `location.replace` 跳到 `url`，不留历史、不带 Referer。先删掉放久了的。
 ///
 /// # Errors
 ///
 /// 建不了目录、写不了文件、拿不到随机数。
 pub fn jump(root: &DataRoot, url: &str) -> std::io::Result<PathBuf> {
-    let dir = root.run().join(JUMPS);
+    let dir = crate::serve::runtime(root).join(JUMPS);
     private_dir(&dir)?;
     sweep(&dir);
     let mut bytes = [0u8; 16];
@@ -283,11 +283,11 @@ pub fn is_jump(path: &Path) -> bool {
         .is_some_and(|stem| stem.len() == 32 && hex(stem))
 }
 
-/// `miyu-web forget <跳转页>`：过 `after` 删掉它；只删 `run/open/` 里的跳转页，别的不碰。
+/// `miyu-web forget <跳转页>`：过 `after` 删掉它；只删 `run/miyu-webui/open/` 里的跳转页，别的不碰。
 pub fn forget(root: &DataRoot, page: &Path, after: Duration) {
     let inside = page
         .parent()
-        .zip(std::fs::canonicalize(root.run().join(JUMPS)).ok())
+        .zip(std::fs::canonicalize(crate::serve::runtime(root).join(JUMPS)).ok())
         .is_some_and(|(parent, dir)| {
             std::fs::canonicalize(parent).is_ok_and(|parent| parent == dir)
         });
@@ -393,7 +393,7 @@ async fn ensure(root: &DataRoot, port: Option<u16>, launch: &Launch) -> Result<S
         tokio::time::sleep(Duration::from_millis(50)).await;
     }
     Err(Started::Failed(format!(
-        "run/{} not written",
+        "run/miyu-webui/{} not written",
         crate::serve::ADDRESS
     )))
 }

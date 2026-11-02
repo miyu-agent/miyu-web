@@ -1,14 +1,14 @@
-//! `miyu-web serve`（`web-ui.md`「怎么走」第一条）：单实例、听 `web.listen`（默认 `127.0.0.1`，SU-1 起能听局域网）、写 `run/web` 和那一行、空闲退出；每个
+//! `miyu-web serve`（`web-ui.md`「怎么走」第一条）：单实例、听 `web.listen`（默认 `127.0.0.1`，SU-1 起能听局域网）、写 `run/miyu-webui/address` 和那一行、空闲退出；每个
 //! 请求先核对 Host，`/ws` 交给 `miyu_webserve::ws`，`/media` 交给 `media`（施工 W-10），`/page`、`/p/` 交给
 //! `backstage`（软件后台页，施工 F-6 下），`/theme`、`/t/` 交给 `theme`（网页外观，核心 TH-1），别的当页面文件
 //! （`miyu_webserve::pages`）。核对 Host、给页面、`/ws` 照转、回应的几样在共用的 `miyu-webserve`（施工 O-16，
 //! `webserve.md`「搬家表」）。
 //!
-//! 1. 先拿 `run/web.lock`，拿不到写 `running` 走。
-//! 2. 听 `web.listen` 的那个地址的端口（`run/web` 里照旧写 `http://127.0.0.1:<端口>`：本机开浏览器走回环）：被占了写 `error port <端口> in use`（`open` 认这个前缀，照人的语言说），别的起不来写 `error <原因>`。
-//! 3. 地址写进 `run/web`（先写临时文件再改名），写一行 `ready`。
-//! 4. 没有 WebSocket 连着、没有 `/media`、后台页在给，连续空闲到点就退出（听局域网的不退；`/wallpaper/events` 不算，第四轮审查 W4-3）；收到停的信号也退出。退出时先删 `run/web`、再放锁。
-//! 5. `/listen` 请换地址、端口的（`listen`）：接连接的这一圈照它换监听，在听的地址、端口跟着换，端口换了重写 `run/web`。新地址不再包含
+//! 1. 先拿 `run/miyu-webui/lock`，拿不到写 `running` 走。
+//! 2. 听 `web.listen` 的那个地址的端口（`run/miyu-webui/address` 里照旧写 `http://127.0.0.1:<端口>`：本机开浏览器走回环）：被占了写 `error port <端口> in use`（`open` 认这个前缀，照人的语言说），别的起不来写 `error <原因>`。
+//! 3. 地址写进 `run/miyu-webui/address`（先写临时文件再改名），写一行 `ready`。
+//! 4. 没有 WebSocket 连着、没有 `/media`、后台页在给，连续空闲到点就退出（听局域网的不退；`/wallpaper/events` 不算，第四轮审查 W4-3）；收到停的信号也退出。退出时先删 `run/miyu-webui/address`、再放锁。
+//! 5. `/listen` 请换地址、端口的（`listen`）：接连接的这一圈照它换监听，在听的地址、端口跟着换，端口换了重写 `run/miyu-webui/address`。新地址不再包含
 //!    别的机器连进来的那个地址的（关了局域网）：连着的 WebSocket 关掉，keep-alive 连接上再来的请求 403（第四轮审查 W4-2）。
 
 use std::convert::Infallible;
@@ -39,11 +39,17 @@ use crate::{TARGET, backstage, listen, media, theme};
 pub use miyu_client::CoreCommand;
 pub(crate) use miyu_webserve::respond::{Body, empty, full, secure};
 
-/// 单实例的锁，在 `run/` 里。
-pub const LOCK: &str = "web.lock";
+/// 单实例的锁，在网页包的运行时目录（[`runtime`]）里。
+pub const LOCK: &str = "lock";
 
-/// 网页的地址，在 `run/` 里：一行，`http://127.0.0.1:<端口>`。
-pub const ADDRESS: &str = "web";
+/// 网页的地址，在网页包的运行时目录（[`runtime`]）里：一行，`http://127.0.0.1:<端口>`。
+pub const ADDRESS: &str = "address";
+
+/// 网页包的运行时目录：`run/miyu-webui/`（核心 `DataRoot::package_runtime`，设计 55 的 `MIYU_RUNTIME_DIR`；施工 FH-5上，
+/// 原来锁、地址、跳转页直接放在 `run/` 下，名字会和以后起名叫 `web`、`open` 的包撞上）。锁、地址、跳转页都在这里。
+pub fn runtime(root: &DataRoot) -> PathBuf {
+    root.package_runtime(crate::settings::PACKAGE)
+}
 
 /// 起一个网页软件要的。
 pub struct Serve {
@@ -128,12 +134,12 @@ impl Site {
         *self.wanted.lock().unwrap_or_else(PoisonError::into_inner) = Some(port);
     }
 
-    /// 换了监听：记下在听的地址、端口，端口换了重写 `run/web`。
+    /// 换了监听：记下在听的地址、端口，端口换了重写 `run/miyu-webui/address`。
     fn listening(&self, at: SocketAddr) {
         *self.listen.lock().unwrap_or_else(PoisonError::into_inner) = at.ip();
         if self.port.swap(at.port(), Ordering::AcqRel) != at.port() {
             let url = format!("http://127.0.0.1:{}", at.port());
-            if let Err(error) = write_address(&self.root.run(), &url) {
+            if let Err(error) = write_address(&runtime(&self.root), &url) {
                 tracing::warn!(target: TARGET, error = %error, "address not written");
             }
         }
@@ -209,9 +215,14 @@ pub use crate::port::{FALLBACK_PORTS, candidates};
 ///
 /// # Errors
 ///
-/// 起不来（锁、端口、写 `run/web`）：原话已经交给了 `said`。
+/// 起不来（锁、端口、写地址）：原话已经交给了 `said`。
 pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
-    let run = serve.root.run();
+    let run = runtime(&serve.root);
+    if let Err(error) = std::fs::create_dir_all(&run) {
+        let error = format!("{} not made: {error}", run.display());
+        said(Ready::Failed(error.clone()));
+        return Err(error);
+    }
     let _lock = match lock(&run.join(LOCK)) {
         Ok(Some(lock)) => lock,
         Ok(None) => {
@@ -439,18 +450,18 @@ fn lock(path: &std::path::Path) -> Result<Option<File>, String> {
 
 /// 有没有一个网页软件在跑：锁有人拿着。
 pub fn running(root: &DataRoot) -> bool {
-    matches!(lock(&root.run().join(LOCK)), Ok(None))
+    matches!(lock(&runtime(root).join(LOCK)), Ok(None))
 }
 
-/// 地址写进 `run/web`：先写临时文件再改名。
+/// 地址写进运行时目录的 `address`：先写临时文件再改名。
 fn write_address(run: &std::path::Path, url: &str) -> Result<(), String> {
     let temp = run.join(format!("{ADDRESS}.{}.tmp", std::process::id()));
     std::fs::write(&temp, format!("{url}\n"))
         .and_then(|()| std::fs::rename(&temp, run.join(ADDRESS)))
-        .map_err(|error| format!("run/{ADDRESS} not written: {error}"))
+        .map_err(|error| format!("run/miyu-webui/{ADDRESS} not written: {error}"))
 }
 
-/// 删 `run/web`：没有的不要紧。
+/// 删地址：没有的不要紧。
 fn remove_address(run: &std::path::Path) {
     if let Err(error) = std::fs::remove_file(run.join(ADDRESS))
         && error.kind() != std::io::ErrorKind::NotFound
@@ -459,9 +470,9 @@ fn remove_address(run: &std::path::Path) {
     }
 }
 
-/// 读 `run/web` 里的地址：没有的、读不了的是空的。
+/// 读运行时目录里的地址：没有的、读不了的是空的。
 pub fn address(root: &DataRoot) -> Option<String> {
-    let text = std::fs::read_to_string(root.run().join(ADDRESS)).ok()?;
+    let text = std::fs::read_to_string(runtime(root).join(ADDRESS)).ok()?;
     let url = text.trim();
     (!url.is_empty()).then(|| url.to_string())
 }

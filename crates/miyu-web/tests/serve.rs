@@ -1,5 +1,5 @@
-//! `miyu-web serve`（施工 W-9，`web-module.md`「怎么走」第九条第 1 到 6 款）：单实例、`run/web`、那一行；端口被占说清楚；
-//! Host 只认三种写法；页面文件不出页面目录；响应头一个不少、从不设 cookie；空闲到点退出、删 `run/web`、放锁。
+//! `miyu-web serve`（施工 W-9，`web-module.md`「怎么走」第九条第 1 到 6 款）：单实例、`run/miyu-webui/address`、那一行；端口被占说清楚；
+//! Host 只认三种写法；页面文件不出页面目录；响应头一个不少、从不设 cookie；空闲到点退出、删 `run/miyu-webui/address`、放锁。
 
 use crate::support::*;
 use miyu_ipc::Ready;
@@ -46,7 +46,7 @@ async fn a_taken_shipped_port_falls_back_to_the_next_free_one() {
     assert_eq!(
         address(&home.root),
         Some(format!("http://127.0.0.1:{got}")),
-        "run/web 照实写"
+        "run/miyu-webui/address 照实写"
     );
 }
 
@@ -210,7 +210,7 @@ async fn idle_zero_never_leaves() {
     // 还在听、还回话（测试的家目录里没放页面，回什么不要紧）
     let page = request(port, "GET", "/", &format!("127.0.0.1:{port}"), &[]).await;
     assert!(page.status > 0);
-    assert!(address(&home.root).is_some(), "run/web 还在");
+    assert!(address(&home.root).is_some(), "run/miyu-webui/address 还在");
     serving.abort();
 }
 
@@ -222,6 +222,6 @@ async fn it_leaves_when_idle_and_cleans_up() {
     let _ = request(port, "GET", "/", &format!("127.0.0.1:{port}"), &[]).await;
     let ran = within("空闲退出", serving).await.expect("没崩");
     assert_eq!(ran, Ok(()));
-    assert_eq!(address(&home.root), None, "删了 run/web");
+    assert_eq!(address(&home.root), None, "删了 run/miyu-webui/address");
     assert!(!running(&home.root), "放了锁");
 }

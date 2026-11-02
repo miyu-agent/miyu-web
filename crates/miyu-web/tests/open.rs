@@ -381,7 +381,7 @@ async fn print_with_a_ticket_warns_about_sixty_seconds() {
     let site = miyu_web::serve::address(&home.root).expect("有地址");
     assert_eq!(out, format!("{site}/#ticket={TICKET}\n"));
     assert!(err.contains("60 秒内有效，只能用一次"), "{err}");
-    let jumps = home.root.run().join(miyu_web::open::JUMPS);
+    let jumps = miyu_web::serve::runtime(&home.root).join(miyu_web::open::JUMPS);
     assert!(
         std::fs::read_dir(&jumps).map_or(true, |mut dir| dir.next().is_none()),
         "--print 不写跳转页"
@@ -404,7 +404,7 @@ async fn the_jump_page_is_private_and_forgotten() {
     .await;
     assert_eq!(code, 0, "{err}");
     let url = browser.opened.lock().expect("没坏")[0].clone();
-    let jumps = home.root.run().join(miyu_web::open::JUMPS);
+    let jumps = miyu_web::serve::runtime(&home.root).join(miyu_web::open::JUMPS);
     let pages: Vec<_> = std::fs::read_dir(&jumps)
         .expect("有目录")
         .flatten()

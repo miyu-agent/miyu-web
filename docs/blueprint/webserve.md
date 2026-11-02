@@ -76,7 +76,7 @@
 | `src/client.rs` 的 `locale` | `src/open.rs` 的 `locale` | `pub` |
 | `tests/ws.rs` 的 `the_forwarding_code_never_reads_the_local_token` | 不搬，照搬过去的位置查 `miyu-webserve` 的 `ws.rs`、`pages.rs`、`respond.rs`、`lib.rs` | |
 
-留在 `miyu-web` 的：单实例、听端口、`run/web`、那一行、空闲退出（`Site` 的数忙、`idle_for`、`Busy`）、`handle` 的分派和 Host 不对时的那一行运行日志、`/media`、`web.json`、`open` 的分派和给人看的字、`stopped`。
+留在 `miyu-web` 的：单实例、听端口、`run/miyu-webui/address`、那一行、空闲退出（`Site` 的数忙、`idle_for`、`Busy`）、`handle` 的分派和 Host 不对时的那一行运行日志、`/media`、`web.json`、`open` 的分派和给人看的字、`stopped`。
 
 ### 守着它的
 

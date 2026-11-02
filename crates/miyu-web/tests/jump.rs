@@ -1,4 +1,4 @@
-//! 跳转页（网页-乙，`web-ui.md`「怎么走」第二条第 4 款）：`forget` 只删 `run/open/` 里的跳转页，放久了的下一次写跳转页时删掉，
+//! 跳转页（网页-乙，`web-ui.md`「怎么走」第二条第 4 款）：`forget` 只删 `run/miyu-webui/open/` 里的跳转页，放久了的下一次写跳转页时删掉，
 //! 网址里的 `</` 拆开。
 
 use crate::support::*;
@@ -6,9 +6,9 @@ use crate::support::*;
 #[tokio::test]
 async fn forget_only_touches_jump_pages_and_open_sweeps_stale_ones() {
     let home = Home::new();
-    let jumps = home.root.run().join(miyu_web::open::JUMPS);
+    let jumps = miyu_web::serve::runtime(&home.root).join(miyu_web::open::JUMPS);
     std::fs::create_dir_all(&jumps).expect("建得了");
-    // 不是跳转页的、不在 run/open 里的：forget 不碰
+    // 不是跳转页的、不在 run/miyu-webui/open 里的：forget 不碰
     let other = jumps.join("notes.html");
     std::fs::write(&other, "x").expect("写得进");
     let outside = home

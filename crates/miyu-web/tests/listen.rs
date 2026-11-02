@@ -252,7 +252,7 @@ async fn a_new_port_moves_the_address_file_and_lets_the_old_one_go() {
     assert_eq!(
         miyu_web::serve::address(&home.root),
         Some(format!("http://127.0.0.1:{fresh}")),
-        "run/web 照新端口写"
+        "run/miyu-webui/address 照新端口写"
     );
     assert!(
         tokio::net::TcpStream::connect(("127.0.0.1", old))
