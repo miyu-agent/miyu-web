@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { noteOf, noticeNote } from '../../packages/notify/model.js';
+import { noteOf, noticeNote, popOf } from '../../packages/notify/model.js';
 
 const manifest = JSON.parse(readFileSync(new URL('../../packages/notify/manifest.json', import.meta.url), 'utf8'));
 const t = (path) => String(manifest.text.zh[path] ?? path);
@@ -39,4 +39,15 @@ test('账号级的提醒（核心 J-3 中）：定时跑完照会话的标题、
   assert.equal(reset?.session, null);
   assert.equal(noticeNote({ kind: 'later' }, null, null, null, MIYU, t), null);
   for (const lang of ['zh', 'en', 'ja']) for (const k of ['schedule_ran', 'schedule_failed', 'schedules_reset']) assert.ok(manifest.text[lang][k], `${lang} ${k}`);
+});
+
+test('正在看的会话只在标签页不在前台时弹；别的会话前台也弹、不出声（2026-11-02）', () => {
+  assert.equal(popOf('a', 'a', false), null);
+  assert.deepEqual(popOf('a', 'a', true), { silent: false });
+  assert.deepEqual(popOf('a', 'b', false), { silent: true });
+  assert.deepEqual(popOf('a', null, false), { silent: true });
+  assert.deepEqual(popOf('a', 'b', true), { silent: false });
+  // 没有会话的（唤醒表坏了）照旧只在不在前台时弹
+  assert.equal(popOf(null, 'b', false), null);
+  assert.deepEqual(popOf(null, 'b', true), { silent: false });
 });
