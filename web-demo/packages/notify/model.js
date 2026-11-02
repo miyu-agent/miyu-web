@@ -38,11 +38,14 @@ export function noticeNote(notice, entry, look, prompt, miyu, t) {
 }
 
 /**
- * 弹不弹、出不出声（蓝图第 1 条，2026-11-02 项目主人定）：正在看的会话只在标签页不在前台时弹；别的会话前台也弹，不出声。不弹的回 `null`。
+ * 弹不弹、出不出声（蓝图第 1 条，2026-11-02 项目主人定）：正在看的会话只在标签页不在前台时弹；别的会话前台也弹，不出声；别的会话
+ * 有别的头开着的（会话表那一项 `viewed`，核心 HV-1）不弹，由开着它的那个头出。不弹的回 `null`。
  * @param {string|null} session 哪个会话的（没有会话的当成正在看的） @param {string|null} current 正在看的 @param {boolean} away 标签页不在前台
+ * @param {boolean} [viewed] 会话表那一项写着有头开着它
  * @returns {{silent: boolean}|null}
  */
-export function popOf(session, current, away) {
+export function popOf(session, current, away, viewed = false) {
+  if (session && session !== current && viewed) return null;
   if (away) return { silent: false };
   return session && session !== current ? { silent: true } : null;
 }

@@ -22,6 +22,9 @@ import { ViewLog, VIEW_PUSHES } from './view.js';
  *   订阅回应里「这一刻的」：累计用量、权限级别、还在跑的任务、工作区（会话状态里也有，之后照 `view.status` 换）
  */
 
+/** 核心的会话编号（UUID）：样张这类页面自己造的不是 */
+const SESSION_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /** 一个刚知道、还没读的会话。 @param {string} id @returns {Session} */
 export function emptySession(id) {
   return { id, view: new ViewLog(), limits: {}, model: null, todos: [], first: null, more: false, paged: false, older: false, base: null };
@@ -43,6 +46,8 @@ export class Store {
     this.unread = /** @type {Set<string>} */ (new Set());
     /** 正在看的会话：别的会话一轮结束了才记成没看过。 */
     this.viewing = /** @type {string|null} */ (null);
+    /** 上一次告诉核心开着的（`session.viewing`）；还没说过的是 `undefined` @type {string|null|undefined} */
+    this.told = undefined;
     /** 别处删掉了一个读进来的会话（不是这一页删的）：界面收掉它 @type {(id: string) => void} */
     this.removed = () => {};
     /** 排着的话被退回了（视图流推到 `withdrawn` 的那一刻）：界面把字放回输入框 @type {(session: string, text: string) => void} */
@@ -110,6 +115,8 @@ export class Store {
    */
   async boot() {
     await Promise.all([this.index.start(), this.projects.start()]);
+    // 刚连上、重连以后（核心照连接记，断了就忘了）：告诉核心开着哪个
+    this.tell(true);
     this.followParents();
     this.changed();
   }
@@ -244,11 +251,24 @@ export class Store {
     this.changed();
   }
 
-  /** 看这个会话：没看过的记号去掉。 */
+  /** 看这个会话：没看过的记号去掉，告诉核心。 */
   view(id) {
     this.viewing = id;
     if (id) this.unread.delete(id);
+    this.tell();
     this.changed();
+  }
+
+  /**
+   * 告诉核心这一页开着哪个会话（蓝图 `web.md`「连核心」第 3b 条，核心 HV-1 `session.viewing`：几个头同时开着时后台通知只由开着
+   * 它的那个头出）：变了才说，`again` 的（刚连上、重连以后）照样说；不是核心的会话（样张）说 `null`。旧核心不认的不报错。
+   * @param {boolean} [again]
+   */
+  tell(again = false) {
+    const session = this.viewing && SESSION_ID.test(this.viewing) ? this.viewing : null;
+    if (!again && session === this.told) return;
+    this.told = session;
+    this.conn.request('session.viewing', { session }).catch(() => {});
   }
 
   push(method, p) {
@@ -316,6 +336,8 @@ export class Store {
       await this.catchUp(s).catch((err) => console.error(`会话 ${s.id} 重连以后补不上：${err.message}`));
     }
     await Promise.all([this.index.start(), this.projects.start()]);
+    // 刚连上、重连以后（核心照连接记，断了就忘了）：告诉核心开着哪个
+    this.tell(true);
     this.followParents();
     this.changed();
   }

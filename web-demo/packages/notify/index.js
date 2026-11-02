@@ -1,6 +1,6 @@
 // @ts-check
 //! 系统通知（软件包 `notify`，蓝图 `web.md`「系统通知」；2026-10-17 项目主人问网页能不能发通知）：一轮做完了、有问题等回答、要人确认（时机照
-//! 终端），正在看的会话在这个标签页不在前台时弹一条浏览器的通知，别的会话前台也弹、不出声（2026-11-02），点了回到那个会话。要人留意的照会话仓库的 `onAttention`（读进来了的会话推来的
+//! 终端），正在看的会话在这个标签页不在前台时弹一条浏览器的通知，别的会话前台也弹、不出声（2026-11-02），别的头开着的不弹（核心 HV-1），点了回到那个会话。要人留意的照会话仓库的 `onAttention`（读进来了的会话推来的
 //! 会话状态）；子会话、一次性的会话不弹。权限：第一次在输入框里发话（回车、点发送）的那一下问（Firefox 只认人点了、按了键那一下里
 //! 问的），问过的这个浏览器记着不再问；人拒了的不再问。标签页关了以后的推送先不做。停用了什么都不弹。
 //! 账号级的提醒（核心 J-3 中的 `notices` 流，蓝图第 6 条）：每次新开会话的定时跑完了照同样的规矩弹（tag 同「回答完了」，互相换掉）；
@@ -47,7 +47,7 @@ export function apply(ctx) {
     for (const w of [...waiting.values()]) if (w.id === id) w.send();
   });
   ctx.effect(() => ctx.sessions.onAttention((/** @type {string} */ id, /** @type {'done'|'ask'|'approve'} */ what) => {
-    const pop = host.permission() === 'granted' ? popOf(id, ctx.chat.current?.() ?? null, host.away()) : null;
+    const pop = host.permission() === 'granted' ? popOf(id, ctx.chat.current?.() ?? null, host.away(), ctx.sessions.index.get(id)?.viewed === true) : null;
     if (!pop) return;
     const tag = `${id}:${what}`;
     const show = () => {
@@ -73,7 +73,7 @@ export function apply(ctx) {
     const note = noticeNote(params, entry, params?.session ? ctx.chat.lookOf?.(params.session) : null, prompt, MIYU, t);
     if (!note) return;
     if (note.say) ctx.composer?.say?.(note.say, false);
-    const pop = host.permission() === 'granted' ? popOf(note.session, ctx.chat.current?.() ?? null, host.away()) : null;
+    const pop = host.permission() === 'granted' ? popOf(note.session, ctx.chat.current?.() ?? null, host.away(), !!note.session && ctx.sessions.index.get(note.session)?.viewed === true) : null;
     if (!pop) return;
     const session = note.session;
     host.show({ title: note.title, body: note.body, icon: note.icon, tag: note.tag, ...pop, onclick: () => (session ? ctx.chat.open(session) : window.focus()) });

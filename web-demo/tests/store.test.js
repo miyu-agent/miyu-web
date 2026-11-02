@@ -246,3 +246,34 @@ test('在等人确认、回答的会话（核心 SL-1）：没读进来的照会
   assert.equal(store.summary('n').waiting, true, '读进来了的照会话状态');
   assert.equal(store.summary('n').running, true, '等人也算在跑（照旧）');
 });
+
+test('开着哪个会话告诉核心（核心 HV-1 session.viewing）：变了才说，样张这类说 null，起来、重连以后再说一遍；旧核心不认的不报错', async () => {
+  const told = [];
+  const A = '019a3f00-0000-7000-8000-00000000000a';
+  const B = '019a3f00-0000-7000-8000-00000000000b';
+  const conn = {
+    onPush() {},
+    request: async (method, params) => {
+      if (method === 'session.viewing') {
+        told.push(params.session);
+        throw new Error('method_not_found');
+      }
+      if (method === 'subscribe' && params.stream === 'sessions') return { sessions: [] };
+      if (method === 'subscribe' && params.stream === 'projects') return { projects: [] };
+      return {};
+    },
+  };
+  const store = new Store(/** @type {any} */ (conn));
+  await store.boot();
+  assert.deepEqual(told, [null], '刚连上：还没开会话');
+  store.view(A);
+  store.view(A);
+  store.view(B);
+  store.view('gallery');
+  store.view(null);
+  assert.deepEqual(told, [null, A, B, null], '同一个不重说；样张、新会话说 null');
+  store.view(A);
+  await store.resume();
+  assert.deepEqual(told.slice(-2), [A, A], '重连以后再说一遍');
+  await tick();
+});

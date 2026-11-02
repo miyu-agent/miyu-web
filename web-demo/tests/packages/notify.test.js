@@ -51,3 +51,12 @@ test('正在看的会话只在标签页不在前台时弹；别的会话前台�
   assert.equal(popOf(null, 'b', false), null);
   assert.deepEqual(popOf(null, 'b', true), { silent: false });
 });
+
+test('别的头开着的后台会话不弹，由开着它的那个头出；正在看的照旧（核心 HV-1，2026-11-02）', () => {
+  assert.equal(popOf('a', 'b', false, true), null);
+  assert.equal(popOf('a', 'b', true, true), null);
+  // 正在看的：这一页自己也开着它（viewed 里有这一页的一份），照旧只在不在前台时弹
+  assert.equal(popOf('a', 'a', false, true), null);
+  assert.deepEqual(popOf('a', 'a', true, true), { silent: false });
+  assert.deepEqual(popOf('a', 'b', false, false), { silent: true });
+});
