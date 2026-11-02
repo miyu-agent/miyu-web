@@ -3,7 +3,9 @@
 //!
 //! - `/wallpaper?dark=0|1`：回 `{"sig", "kind": "matugen"|"image"}`（换没换的记号），是图的多一格 `seeds`（照图算好的候选色，用核心门面的
 //!   `miyu_client::seeds`，一张图只算一次）；带 `data=1` 的回那一份本身（matugen 的 JSON，或者图）；两样都没有的 404。
-//! - `/wallpaper/events`：一条 `text/event-stream`，壁纸来处的文件变了发一条 `changed`（不轮询）；开着的不算空闲。
+//! - `/wallpaper/events`：一条 `text/event-stream`，壁纸来处的文件变了发一条 `changed`（不轮询）。不要凭据，所以开着的不算有人连着
+//!   （页面开着总连着 `/ws`，那条才算），同时最多 [`MOST_WALLPAPER_STREAMS`] 条，满了 503（2026-11-02 第四轮审查 W4-3：原来这台电脑上
+//!   随便哪个程序、哪个网页开一条不关，网页软件就一直不空闲退出，条数也不限）。
 //!
 //! 找、认图、盯文件在 crate `miyu-wallpaper`：找要跑命令，放到阻塞的线程上做。
 //!
@@ -14,19 +16,19 @@
 use std::collections::HashMap;
 use std::io;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 
 use http_body_util::{BodyExt, StreamBody};
-use hyper::Response;
 use hyper::body::{Bytes, Frame};
 use hyper::header::{self, HeaderValue};
+use hyper::{Response, StatusCode};
 use miyu_wallpaper::watch::{Watch, watch_list};
 use tokio::sync::{broadcast, mpsc};
 
 use super::{json_reply, not_found};
 use crate::TARGET;
-use crate::serve::{Body, Site};
+use crate::serve::{Body, MOST_WALLPAPER_STREAMS, Site, empty};
 
 /// 盯着壁纸来处的文件：变了告诉每一条开着的 `/wallpaper/events`。头一次有人问才开始盯；起不来的记一行，以后不再试（页面靠重新可见、
 /// 拿回焦点时再问）。
@@ -39,6 +41,17 @@ pub(crate) struct Follow {
     generation: Arc<AtomicU64>,
     /// 记着的回答：深浅 → 问的时候是第几回、找到的（只记 `Sig`）。
     answers: Mutex<HashMap<bool, (u64, Option<Found>)>>,
+    /// 开着几条 `/wallpaper/events`。
+    streams: Arc<AtomicUsize>,
+}
+
+/// 开着的一条 `/wallpaper/events`：关了还回去。
+struct Stream(Arc<AtomicUsize>);
+
+impl Drop for Stream {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::AcqRel);
+    }
 }
 
 /// 这个系统上换壁纸是不是一定会改盯着的文件（是的才能交记着的回答）。
@@ -62,6 +75,7 @@ impl Default for Follow {
             seeds: Arc::default(),
             generation: Arc::default(),
             answers: Mutex::default(),
+            streams: Arc::default(),
         }
     }
 }
@@ -119,6 +133,15 @@ impl Follow {
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .insert(dark, (at, found));
+    }
+
+    /// 再开一条 `/wallpaper/events`：满了的是空的。
+    fn stream(&self) -> Option<Stream> {
+        if self.streams.fetch_add(1, Ordering::AcqRel) >= MOST_WALLPAPER_STREAMS {
+            self.streams.fetch_sub(1, Ordering::AcqRel);
+            return None;
+        }
+        Some(Stream(Arc::clone(&self.streams)))
     }
 
     /// 还没开始盯的照「什么都没找到」那份清单先盯上（页面先开了 `/wallpaper/events`）。
@@ -181,14 +204,17 @@ fn reply(found: Option<Found>) -> Response<Body> {
     }
 }
 
-/// 回一个 `/wallpaper/events`：开着，盯的文件变了写一条 `changed`；页面关了（写不进去）就退。开着的不算空闲。
+/// 回一个 `/wallpaper/events`：开着，盯的文件变了写一条 `changed`；页面关了（写不进去）就退。开着的不算有人连着；满了 503。
 pub(crate) fn events(site: &Arc<Site>) -> Response<Body> {
+    let Some(stream) = site.wallpaper.stream() else {
+        tracing::warn!(target: TARGET, "too many wallpaper streams");
+        return empty(StatusCode::SERVICE_UNAVAILABLE);
+    };
     let mut changed = site.wallpaper.changed.subscribe();
     site.wallpaper.ensure();
     let (out, frames) = mpsc::channel::<Result<Frame<Bytes>, io::Error>>(2);
-    let busy = site.busy();
     tokio::spawn(async move {
-        let _busy = busy;
+        let _stream = stream;
         loop {
             let got = tokio::select! {
                 got = changed.recv() => got,

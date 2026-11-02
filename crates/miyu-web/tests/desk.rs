@@ -1,5 +1,5 @@
 //! 这台电脑上的几样（`web-ui.md`「怎么走」第五条，2026-10-30）：`/reveal`、`/pick-dir`、`/wallpaper` 要设备令牌，不带的、核心不认的 401；
-//! 只认 `GET`；`/wallpaper/events` 不要令牌、是一条事件流；对端不是回环的 403。不真开文件管理器、选目录框：只开不在的目录。
+//! 只认 `GET`；`/wallpaper/events` 不要令牌、是一条事件流、最多开 16 条（第四轮审查 W4-3）；对端不是回环的 403。不真开文件管理器、选目录框：只开不在的目录。
 
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
@@ -73,4 +73,37 @@ async fn wallpaper_events_stream_without_a_login() {
     let head = String::from_utf8_lossy(&head[..read]).to_lowercase();
     assert!(head.starts_with("http/1.1 200"), "{head}");
     assert!(head.contains("content-type: text/event-stream"), "{head}");
+}
+
+#[tokio::test]
+async fn wallpaper_streams_are_capped() {
+    let (_home, _core, port) = site().await;
+    let text = format!("GET /wallpaper/events HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\n\r\n");
+    let mut open = Vec::new();
+    for _ in 0..=miyu_web::serve::MOST_WALLPAPER_STREAMS {
+        let mut stream = tokio::net::TcpStream::connect(("127.0.0.1", port))
+            .await
+            .expect("连得上");
+        stream.write_all(text.as_bytes()).await.expect("写得进");
+        let mut head = [0u8; 12];
+        within("回头", stream.read_exact(&mut head))
+            .await
+            .expect("读得到");
+        open.push((head, stream));
+    }
+    let (last, _) = open.pop().expect("有");
+    assert_eq!(&last, b"HTTP/1.1 503", "满了的不给");
+    assert!(open.iter().all(|(head, _)| head == b"HTTP/1.1 200"));
+    // 关掉一条，空出来的能再开
+    drop(open.pop());
+    tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+    let mut stream = tokio::net::TcpStream::connect(("127.0.0.1", port))
+        .await
+        .expect("连得上");
+    stream.write_all(text.as_bytes()).await.expect("写得进");
+    let mut head = [0u8; 12];
+    within("回头", stream.read_exact(&mut head))
+        .await
+        .expect("读得到");
+    assert_eq!(&head, b"HTTP/1.1 200");
 }
