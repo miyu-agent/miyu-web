@@ -106,6 +106,12 @@
       ".composer"
     ]
   },
+  "composer.bar": {
+    "zh": "框里最下面那一排（工具、发送按钮）",
+    "select": [
+      ".composer-bar"
+    ]
+  },
   "composer.footer": {
     "zh": "框下面那一行",
     "select": [

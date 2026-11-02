@@ -179,3 +179,8 @@ test('像素风的图标：照界面的图标表一个不落，清理时一样�
   assert.deepEqual(Object.keys(px.icons).sort(), Object.keys(all).sort());
   assert.equal(cleanIcons(px).dropped, 0);
 });
+
+test('社区皮肤要的两个对外名字（2026-11-02）：变量表里有对话列宽 --chat-w，部件名里有框里那一排 composer.bar', () => {
+  assert.ok(known.has('--chat-w'), '变量表里没有 --chat-w');
+  assert.deepEqual(parts['composer.bar']?.select, ['.composer-bar']);
+});
