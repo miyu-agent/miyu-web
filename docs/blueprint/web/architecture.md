@@ -156,7 +156,7 @@ flowchart TB
 
 | 种类 | 挂进去以后 | 例子 |
 |---|---|---|
-| `single` 独占 | 新挂的盖住原来的，拿掉了原来的露出来 | `page.sidebar`（左栏）、`chat.empty`（空会话的首页） |
+| `single` 独占 | 新挂的盖住原来的，拿掉了原来的露出来 | `page.sidebar`（左栏）、`chat.empty`（空会话的首页）、`sidebar.brand`（左上角人格的头像、名字那一块：有挂的整块顶替，交 `null` 是藏掉，`lib/mount.js` 的 `mountSingle`，2026-11-02） |
 | `list` 一串 | 照 `order` 排，同一个 `id` 只一份 | `composer.above`（待办、运行状态行）、`composer.bar`（框里下面一排左边的按钮：附件）、`composer.head`（框里写字的地方上面：附件那一排）、`composer.payload`（跟着话一起发的：附件；这里挂的不画，见下面）、`composer.footer`（框下面那一行的中间：后台任务的按钮）、`composer.float`（浮在输入框上面、和命令列表同一个位置：后台任务的浮层）、`message.actions`（你的话、她的一轮末尾的按钮）、`page.overlay`（灯箱）、`stage.right`（跳转条）、`composer.takeover`（占着整个框：确认和提问的抽屉；有东西时框里原来的让出来）、`chat.tail`（正文末尾、最后一轮下面：确认和提问了结以后留的结果）、`stage.home`（新会话首页、输入框下面：扩展的界面块）、`stage.panel`（右边一栏的「面板」那一页：扩展的界面块；有东西才出「工作区」「面板」两个标签）、`composer.status`（框下面那一行的右边、用量前面：扩展的界面块那一小段） |
 | `keyed` 按键分派 | 照键找，找不到用兜底 | `chat.item`（按条目的种类：你的话、回答、时间线、收尾那一行）、`markdown.code`（按代码块的语言）、`markdown.line`（单独一行的媒体）、`timeline.detail`（按工具） |
 

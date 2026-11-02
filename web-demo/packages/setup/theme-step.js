@@ -110,6 +110,9 @@ export class ThemeStep {
       this.skin = v;
       this.paintSkin();
       await this.ctx.packages.set('skin', { config: { pack: v } }).catch((/** @type {any} */ err) => this.say(err?.message ?? String(err)));
+      // 皮肤推荐了配色方案的顺带切过去（同设置页，2026-11-02）
+      const palette = packs.find((/** @type {any} */ p) => p.id === v)?.palette;
+      if (palette && palette !== this.palette) await this.pickPalette(palette);
     }));
     return true;
   }

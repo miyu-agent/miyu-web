@@ -106,6 +106,12 @@
       ".composer"
     ]
   },
+  "sidebar.brand-custom": {
+    "zh": "左上角外观包挂的那一块（顶替头像、名字）",
+    "select": [
+      ".brand-custom"
+    ]
+  },
   "composer.bar": {
     "zh": "框里最下面那一排（工具、发送按钮）",
     "select": [

@@ -76,6 +76,9 @@ async function skinRow(dialog) {
   const chosen = packs.some((p) => p.id === skin.values.pack) ? skin.values.pack : '';
   const pick = select(dialog, [{ value: '', name: ctx.text('skin_factory') }, ...packs.map((p) => ({ value: p.id, name: p.name }))], chosen, async (v) => {
     await ctx.packages.set('skin', { config: { pack: v } });
+    // 皮肤推荐了配色方案的顺带切过去，人还能再改（2026-11-02，外观包要的）
+    const palette = packs.find((p) => p.id === v)?.palette;
+    if (palette) await ctx.packages.set('theme', { config: { palette } });
     dialog.drawBody();
   });
   return shell({ name: ctx.text('skin'), control: pick }).el;

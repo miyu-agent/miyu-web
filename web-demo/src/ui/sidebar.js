@@ -115,11 +115,14 @@ export class Sidebar {
     this.identity = h('button.brand-identity', { type: 'button', onclick: () => on.identity?.() },
       this.face, h('div', this.name, h('span', this.dot, this.status)));
     this.setLook(null);
+    /** 挂载位 `sidebar.brand` 挂的（外观包的品牌字标这类）：有挂的时候顶替上面那一块（`app.js` 照它藏 `identity`），交 `null` 的两样都不画 */
+    this.brandBox = h('div.brand-custom', { hidden: true });
     this.el = h('aside.sidebar',
       // 最左边给开关留的位置：开关只有一个，钉在整页左上角（`app.js` 的 `.sidebar-toggle`），左栏在它底下滑进滑出（2026-10-16 项目主人照 Claude）
       h('header.brand-row',
         h('span.brand-toggle-slot', { 'aria-hidden': 'true' }),
         this.identity,
+        this.brandBox,
         h('button.icon-button.sidebar-close', { type: 'button', title: t('sidebar.collapse'), onclick: on.close }, icon('x'))),
       this.nav,
       h('nav.session-list', h('div.session-track', this.pill, this.items)),

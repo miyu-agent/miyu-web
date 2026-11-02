@@ -12,7 +12,7 @@
 
 import { h, icon } from './dom.js';
 import { show } from '../lib/motion.js';
-import { mountList } from '../lib/mount.js';
+import { mountList, mountSingle } from '../lib/mount.js';
 import { res, t } from '../util/res.js';
 import { Sidebar } from './sidebar.js';
 import { Chat } from './chat.js';
@@ -269,6 +269,10 @@ export class App {
     // 左栏底下最左边当前账号的头像：直接连网页软件、知道是哪个账号的才画（蓝图「连核心」第 1 条「选择账号」）
     ctx.slots.declare('sidebar.actions', 'list');
     ctx.effect(() => mountList(this.sidebar.actions, ctx.slots, 'sidebar.actions', failedSlot));
+    // 左上角人格的头像、名字那一块（蓝图「左栏」第 1 条，2026-11-02 外观包要的，项目主人：头像和名字也是主题能改的，可以藏掉）：
+    // 有包挂了整块顶替，交 null 是藏掉；拿掉了照原来的画
+    ctx.slots.declare('sidebar.brand', 'single');
+    ctx.effect(() => mountSingle(this.sidebar.brandBox, ctx.slots, 'sidebar.brand', failedSlot, (on) => { this.sidebar.identity.hidden = on; }));
     // 框上面的一叠：挂进 `composer.above` 的（待办这类软件包）在流里、占着地方，下面是运行状态行，再下面是框
     this.dockAbove = h('div.dock-above');
     this.composer.box.before(this.dockAbove);

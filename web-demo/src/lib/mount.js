@@ -51,3 +51,49 @@ export function mountList(host, slots, name, failed) {
     for (const [entry, d] of [...drawn]) drop(entry, d);
   };
 }
+
+/**
+ * 把一个 `single` 挂载位画进一个节点：有挂的照它画（交回节点、`{el, dispose}`；交 `null` 是什么都不画，就是藏掉），没挂的空着、`host` 藏着；
+ * `onChange(有没有挂)` 让声明的包把原来那一块藏起来、露出来（左上角的头像、名字，蓝图「左栏」第 1 条）。画的时候抛错的照 `failed` 画。
+ * @param {HTMLElement} host @param {SlotsApi & {single: (name: string) => any}} slots @param {string} name
+ * @param {(owner: string, reason: string) => Node} failed @param {(on: boolean) => void} onChange
+ * @returns {() => void}
+ */
+export function mountSingle(host, slots, name, failed, onChange) {
+  /** @type {{el: Node, dispose?: () => void}|null} */
+  let drawn = null;
+  /** 画着的那一件（`undefined` 是还没同步过：第一次一定同步一遍） @type {any} */
+  let current;
+  const drop = () => {
+    if (!drawn) return;
+    try {
+      drawn.dispose?.();
+    } catch (err) {
+      console.error(`${current?.owner} 挂的 ${current?.id} 拿下来时出错了`, err);
+    }
+    drawn.el.parentNode?.removeChild(drawn.el);
+    drawn = null;
+  };
+  const sync = () => {
+    const entry = slots.single(name) ?? null;
+    if (entry === current) return;
+    drop();
+    current = entry;
+    if (entry) {
+      const out = slots.draw(entry);
+      drawn = out === null ? null : out instanceof Node ? { el: out } : out?.failed ? { el: failed(out.owner, out.reason) } : out?.el ? out : { el: failed(entry.owner, '画法没有交回节点') };
+      if (drawn) host.append(drawn.el);
+    }
+    host.hidden = !drawn;
+    onChange(!!entry);
+  };
+  const stop = slots.watch(name, sync);
+  sync();
+  return () => {
+    stop();
+    drop();
+    current = null;
+    host.hidden = true;
+    onChange(false);
+  };
+}

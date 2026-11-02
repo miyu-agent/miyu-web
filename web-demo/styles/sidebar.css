@@ -45,6 +45,8 @@
 /* 头上一块：头像、名字和状态、新会话、收起 */
 .brand-row { display: flex; min-height: 66px; align-items: center; padding: calc(13px * var(--space)) calc(14px * var(--space)) calc(11px * var(--space)); gap: calc(8px * var(--space)); }
 /* 左上角：会话用的人格的头像、名字（和对话区她那一轮的头像同一份），点了进编辑人格；平常和左栏同底，悬停深一档（同旁边的按钮） */
+/* 挂载位 `sidebar.brand` 挂的（外观包的品牌字标），顶替头像、名字那一块：同它占满中间那一截 */
+.brand-custom { display: flex; flex: 1; min-width: 0; align-items: center; }
 .brand-identity {
   display: flex; flex: 1; min-width: 0; align-items: center; gap: calc(10px * var(--space)); margin: calc(-4px * var(--space)) 0 calc(-4px * var(--space)) calc(-6px * var(--space)); padding: calc(4px * var(--space)) calc(6px * var(--space)); border: 0; border-radius: var(--r-10);
   background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: background-color calc(0.12s * var(--motion-scale)) ease;
