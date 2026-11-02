@@ -8,7 +8,8 @@
 //! 2. 听 `web.listen` 的那个地址的端口（`run/web` 里照旧写 `http://127.0.0.1:<端口>`：本机开浏览器走回环）：被占了写 `error port <端口> in use`（`open` 认这个前缀，照人的语言说），别的起不来写 `error <原因>`。
 //! 3. 地址写进 `run/web`（先写临时文件再改名），写一行 `ready`。
 //! 4. 没有 WebSocket 连着、没有 `/media`、后台页在给，连续空闲到点就退出（听局域网的不退）；收到停的信号也退出。退出时先删 `run/web`、再放锁。
-//! 5. `/listen` 请换地址、端口的（`listen`）：接连接的这一圈照它换监听，在听的地址、端口跟着换，端口换了重写 `run/web`。
+//! 5. `/listen` 请换地址、端口的（`listen`）：接连接的这一圈照它换监听，在听的地址、端口跟着换，端口换了重写 `run/web`。新地址不再包含
+//!    别的机器连进来的那个地址的（关了局域网）：连着的 WebSocket 关掉，keep-alive 连接上再来的请求 403（第四轮审查 W4-2）。
 
 use std::convert::Infallible;
 use std::fs::{File, OpenOptions, TryLockError};
@@ -316,6 +317,11 @@ async fn accept(
             && let Ok(at) = listener.local_addr()
         {
             site.listening(at);
+            // 先记下新地址再打扫：刚接的那条在 `ws::accept` 里照新地址再看一遍（第四轮审查 W4-2）
+            let closed = site.slots.close_unreached(at.ip());
+            if closed > 0 {
+                tracing::info!(target: TARGET, closed, "remote websockets closed");
+            }
         }
         if swap.done.send(done).is_err() {
             // 问的那头走了：照样换了。
@@ -326,9 +332,14 @@ async fn accept(
 /// 一个连进来的：一个任务里照 HTTP/1 给，能升级成 WebSocket。
 fn serve_one(stream: tokio::net::TcpStream, peer: SocketAddr, site: &Arc<Site>) {
     let site = Arc::clone(site);
+    // 连进来的是这台电脑的哪个地址；读不出的当没指定的（听的不是 `0.0.0.0`、`::` 时一换监听就不认）
+    let here = stream
+        .local_addr()
+        .map_or(IpAddr::V4(std::net::Ipv4Addr::UNSPECIFIED), |at| at.ip());
     tokio::spawn(async move {
-        let service =
-            hyper::service::service_fn(move |request| handle(request, Arc::clone(&site), peer));
+        let service = hyper::service::service_fn(move |request| {
+            handle(request, Arc::clone(&site), peer, here)
+        });
         let served = hyper::server::conn::http1::Builder::new()
             .timer(hyper_util::rt::TokioTimer::new())
             .header_read_timeout(HEADER_READ)
@@ -354,9 +365,14 @@ async fn handle(
     request: Request<Incoming>,
     site: Arc<Site>,
     peer: SocketAddr,
+    here: IpAddr,
 ) -> Result<Response<Body>, Infallible> {
     // 从别的机器来的（对端不是回环，或者同机的反向代理转进来的）：转给核心以前要说一声（`connection.remote`，SU-1、R3S-2）
     let remote = miyu_webserve::remote_request(peer, request.headers());
+    // 关了局域网以前就连着的 keep-alive 连接：连进来的地址已经不听了，不再给（第四轮审查 W4-2；Host 能写回环的写法，挡不住它）
+    if remote.is_some() && !miyu_webserve::reaches(site.listen(), here) {
+        return Ok(empty(StatusCode::FORBIDDEN));
+    }
     let host = request
         .headers()
         .get(header::HOST)
@@ -372,7 +388,7 @@ async fn handle(
     }
     let path = request.uri().path();
     if path == "/ws" {
-        return Ok(miyu_webserve::ws::accept(request, site, remote));
+        return Ok(miyu_webserve::ws::accept(request, site, remote, here));
     }
     if crate::desk::PATHS.contains(&path) {
         return Ok(crate::desk::handle(request, site, remote).await);

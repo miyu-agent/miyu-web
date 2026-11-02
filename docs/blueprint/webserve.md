@@ -38,7 +38,8 @@
 | `pages::serve(request, pages, csp, types)` | `GET`、`HEAD` 以外 405；`find` 不到、读不了 404；类型照 `type_of`，带 `Cache-Control: no-cache`、`Content-Security-Policy: <csp>`、`nosniff`、`no-referrer`；`HEAD` 只给头 |
 | `pages::type_of(types, path)` | 扩展名（小写）在表里的媒体类型；没有的 `application/octet-stream` |
 | `pages::find(pages, path)` | 请求的路径对应页面目录里哪份文件；带 `..`、`.`、空段、反斜杠的，`%xx` 解不开、不是 UTF-8、有 NUL 的，换成真实位置跑出去的，不是普通文件的，都是空的 |
-| `ws::accept(request, site, remote)` | Origin 不是 `http://` 加上 `origin_allowed` 认的的 403；不是 WebSocket 升级的 400；对的回 101，升级好以后在别的任务里转，连着时拿着 `site.busy()`；`remote`（远程请求的来源，`remote_request` 一个请求一算）有的，接上核心以后先写一行 `connection.remote {from}` 再转（SU-1） |
+| `ws::accept(request, site, remote, here)` | Origin 不是 `http://` 加上 `origin_allowed` 认的的 403；不是 WebSocket 升级的 400；对的回 101，升级好以后在别的任务里转，连着时拿着 `site.busy()`；`remote`（远程请求的来源，`remote_request` 一个请求一算）有的，接上核心以后先写一行 `connection.remote {from}` 再转（SU-1）。`here` 是这条连接连进来的本机地址（2026-11-02 第四轮审查 W4-2）：远程的占格时记下它和一个叫它关的口子，`Slots::close_unreached(新地址)` 叫新地址不再包含它的那几条关 1008；占了格再看一眼 `site.listen()`，已经不包含的 403（换监听的那一头先记新地址再打扫，两头错不开） |
+| `reaches(listen, here)` | 听 `listen` 的监听接不接得到连到本机 `here` 上的连接：`::` 都接，`0.0.0.0` 接 IPv4 的，别的只接它自己（IPv4 映射进 IPv6 的照 IPv4 算；第四轮审查 W4-2） |
 | `open::Core::connect(root, core, kind)` | 照终端的样子连核心（没在跑就拉起），出示本机令牌握手，`head.kind` 报 `kind`；`language()` 是握手回的语言 |
 | `open::Core::connect_running(root, kind)` | 同上，只连已经在跑的核心，不拉起（施工 9-1 下，网页软件的 `serve` 起来时问配置用） |
 | `open::Core::call(id, method, params)` | 一问一答，30 秒没回算没回；拒绝的交回核心的原话 |
@@ -84,7 +85,7 @@
 | 测试 | 守着什么 |
 |---|---|
 | `crates/miyu-web/tests/serve.rs`、`ws.rs`、`open.rs`、`media.rs` | 原有的测试一个不改照过（`ws.rs` 查源码的那一条照搬过去的位置查）：网页软件的行为一个字节不变 |
-| `crates/miyu-webserve/src/tests.rs` | `hosts`、`host_allowed` 的写法；`type_of` 照扩展名、不分大小写、没有的不猜；`find` 带 `..`、`%2e%2e`、`%zz`、NUL、反斜杠的不要 |
+| `crates/miyu-webserve/src/tests.rs` | `hosts`、`host_allowed` 的写法；`type_of` 照扩展名、不分大小写、没有的不猜；`find` 带 `..`、`%2e%2e`、`%zz`、NUL、反斜杠的不要；`Slots` 的上限；`reaches` 照听的地址算接不接得到、`close_unreached` 只叫新地址接不到的远程那几条（2026-11-02 第四轮审查 W4-2） |
 
 ### 施工时定的（施工 O-16，2026-10-07）
 

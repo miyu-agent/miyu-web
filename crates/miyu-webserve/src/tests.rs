@@ -2,6 +2,7 @@
 //! 不要。整套的规矩由网页软件、桥的测试经 HTTP 测。
 
 use std::collections::BTreeMap;
+use std::net::IpAddr;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -273,16 +274,63 @@ fn paths_that_leave_or_cannot_be_read_find_nothing() {
 
 #[test]
 fn websocket_slots_have_a_total_and_a_remote_limit() {
+    let lan: IpAddr = "192.168.1.5".parse().expect("合写法");
     let slots = crate::ws::Slots::new(3, 1);
-    let near = slots.take(false).expect("有空");
-    let far = slots.take(true).expect("远程的第一条");
-    assert!(slots.take(true).is_none(), "远程的满了");
-    let third = slots.take(false).expect("本机的还有一格");
-    assert!(slots.take(false).is_none(), "一共满了");
+    let near = slots.take(None).expect("有空");
+    let far = slots.take(Some(lan)).expect("远程的第一条");
+    assert!(slots.take(Some(lan)).is_none(), "远程的满了");
+    let third = slots.take(None).expect("本机的还有一格");
+    assert!(slots.take(None).is_none(), "一共满了");
     assert_eq!(slots.used(), (3, 1));
     drop(far);
     assert_eq!(slots.used(), (2, 0), "放下了还回去");
-    let again = slots.take(true).expect("远程的空出来了");
+    let again = slots.take(Some(lan)).expect("远程的空出来了");
     drop((near, third, again));
     assert_eq!(slots.used(), (0, 0));
+}
+
+#[test]
+fn a_listen_address_reaches_only_what_it_still_accepts() {
+    let ip = |text: &str| text.parse::<IpAddr>().expect("合写法");
+    let lan = ip("192.168.1.5");
+    assert!(crate::reaches(ip("0.0.0.0"), lan));
+    assert!(crate::reaches(ip("::"), lan));
+    assert!(crate::reaches(ip("::"), ip("fe80::1")));
+    assert!(
+        !crate::reaches(ip("0.0.0.0"), ip("fe80::1")),
+        "只听 IPv4 的接不到 IPv6"
+    );
+    assert!(
+        crate::reaches(lan, ip("::ffff:192.168.1.5")),
+        "映射进 IPv6 的照 IPv4 算"
+    );
+    assert!(!crate::reaches(ip("192.168.1.6"), lan));
+    assert!(!crate::reaches(ip("127.0.0.1"), lan), "关了局域网");
+    assert!(
+        crate::reaches(ip("127.0.0.1"), ip("127.0.0.1")),
+        "同机的反向代理连的是回环"
+    );
+}
+
+#[tokio::test]
+async fn turning_the_lan_off_kicks_only_remote_slots_it_no_longer_reaches() {
+    let ip = |text: &str| text.parse::<IpAddr>().expect("合写法");
+    let slots = crate::ws::Slots::new(8, 8);
+    let near = slots.take(None).expect("有空");
+    let lan = slots.take(Some(ip("192.168.1.5"))).expect("有空");
+    let proxied = slots.take(Some(ip("127.0.0.1"))).expect("有空");
+    assert_eq!(slots.close_unreached(ip("0.0.0.0")), 0, "还接得到的不叫");
+    assert_eq!(slots.close_unreached(ip("127.0.0.1")), 1);
+    let waited = std::time::Duration::from_millis(100);
+    tokio::time::timeout(waited, lan.kicked())
+        .await
+        .expect("局域网来的被叫关掉");
+    assert!(
+        tokio::time::timeout(waited, proxied.kicked())
+            .await
+            .is_err()
+    );
+    assert!(tokio::time::timeout(waited, near.kicked()).await.is_err());
+    drop(lan);
+    assert_eq!(slots.close_unreached(ip("10.0.0.1")), 1, "走了的不再算");
 }

@@ -3,7 +3,8 @@
 //!
 //! - `GET`：在听的地址、端口，别的设备打开用的网址（[`lan`]）。
 //! - `POST`：带设备令牌（同 `/media`），拿它连核心读 `web.listen`、`web.port`（不替请求出示本机令牌），和在听的不一样就请接连接的那一圈
-//!   换监听（[`Swap`]，[`swap`] 照它换）。已经连着的不断。
+//!   换监听（[`Swap`]，[`swap`] 照它换）。已经连着的不断；别的机器来的、新地址不再包含它连进来的地址的（关了局域网）例外：WebSocket
+//!   关掉，再来的请求 403（2026-11-02 第四轮审查 W4-2，`serve`）。
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, UdpSocket};
 use std::sync::Arc;

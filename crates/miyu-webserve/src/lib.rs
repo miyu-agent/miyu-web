@@ -108,6 +108,19 @@ pub fn remote(peer: SocketAddr) -> Option<IpAddr> {
     (!ip.is_loopback()).then_some(ip)
 }
 
+/// 听 `listen` 的监听接不接得到连到这台电脑 `here` 这个地址上的连接：`::` 哪个都接（Linux 上默认双栈），`0.0.0.0` 接 IPv4 的，别的只接
+/// 它自己（IPv4 映射进 IPv6 的照 IPv4 算）。关了局域网（换回回环）以后，别的机器连进来的地址不再被接到，已经连着的跟着断（第四轮审查
+/// W4-2）；同机的反向代理转进来的连的是回环，换回回环照样接得到，不断（新连接照样进得来，断了也白断）。
+#[must_use]
+pub fn reaches(listen: IpAddr, here: IpAddr) -> bool {
+    let here = here.to_canonical();
+    match listen.to_canonical() {
+        IpAddr::V6(any) if any.is_unspecified() => true,
+        IpAddr::V4(any) if any.is_unspecified() => here.is_ipv4(),
+        listen => listen == here,
+    }
+}
+
 /// 反向代理加的头（小写）：带着其中一个的请求是代理转进来的。
 const FORWARDING: [&str; 5] = [
     "forwarded",

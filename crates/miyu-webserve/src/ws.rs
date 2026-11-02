@@ -10,12 +10,16 @@
 //! 有上限的（[`Slots`]，2026-10-30 第二轮审查 W2-2、项目主人定：总共 256 条、别的机器来的 32 条）满了回 503；升级以后先等浏览器的
 //! 第一帧（[`FIRST_FRAME`] 以内，就是握手），等到了才连核心：开着不说话的空连接不占核心的连接。
 //!
+//! 别的机器来的记着它连进来的是这台电脑的哪个地址：听的地址换成不再包含它的（关了局域网），叫它关掉，1008（[`Slots::close_unreached`]，
+//! 2026-11-02 第四轮审查 W4-2，项目主人定：关了局域网，别的设备已经连着的也断）。
+//!
 //! 关了以后不马上放掉套接字：先关写的一半，把浏览器还在发的读掉、扔掉（最多等 `LINGER`），读到头再放。带着没读的数据
 //! 关，系统回的是 RST，刚写出去的关闭帧可能被对面丢掉：一帧超过 1 MiB 时帧的正文没读，Windows 上浏览器只看到连接被重置，
 //! 收不到 1009（W-9 验收时 CI 上查出来的）。
 
-use std::sync::Arc;
+use std::net::IpAddr;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex, PoisonError, Weak};
 use std::time::Duration;
 
 use futures_util::{SinkExt, StreamExt};
@@ -24,7 +28,7 @@ use hyper::header::{self, HeaderValue};
 use hyper::{Request, Response, StatusCode};
 use hyper_util::rt::TokioIo;
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::{Notify, mpsc, oneshot};
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::handshake::derive_accept_key;
 use tokio_tungstenite::tungstenite::protocol::frame::coding::CloseCode;
@@ -43,11 +47,19 @@ const LINGER: Duration = Duration::from_secs(2);
 /// 升级以后等浏览器第一帧（握手）最多多久：等不到的关掉，不连核心。
 pub const FIRST_FRAME: Duration = Duration::from_secs(10);
 
-/// 同时连着的 WebSocket 数着：一共几条、别的机器来的几条，各有上限。
+/// 同时连着的 WebSocket 数着：一共几条、别的机器来的几条，各有上限；别的机器来的每一条另记着叫它关的口子。
 pub struct Slots {
     counts: Arc<[AtomicUsize; 2]>,
     most: usize,
     most_remote: usize,
+    /// 别的机器来的（走了的随手扫掉）。
+    remotes: Mutex<Vec<Weak<Kick>>>,
+}
+
+/// 叫一条别的机器来的 WebSocket 关掉的口子：`here` 是它连进来的本机地址。
+struct Kick {
+    here: IpAddr,
+    now: Notify,
 }
 
 impl Slots {
@@ -58,11 +70,13 @@ impl Slots {
             counts: Arc::new([AtomicUsize::new(0), AtomicUsize::new(0)]),
             most,
             most_remote,
+            remotes: Mutex::default(),
         }
     }
 
-    /// 占一格：满了的是空的。`remote` 是别的机器来的。
-    pub fn take(&self, remote: bool) -> Option<Slot> {
+    /// 占一格：满了的是空的。别的机器来的交 `remote_at`：它连进来的是这台电脑的哪个地址；本机来的是空的。
+    pub fn take(&self, remote_at: Option<IpAddr>) -> Option<Slot> {
+        let remote = remote_at.is_some();
         let [all, far] = &*self.counts;
         if all.fetch_add(1, Ordering::AcqRel) >= self.most {
             all.fetch_sub(1, Ordering::AcqRel);
@@ -73,10 +87,35 @@ impl Slots {
             all.fetch_sub(1, Ordering::AcqRel);
             return None;
         }
+        let kick = remote_at.map(|here| {
+            let kick = Arc::new(Kick {
+                here,
+                now: Notify::new(),
+            });
+            let mut remotes = self.remotes.lock().unwrap_or_else(PoisonError::into_inner);
+            remotes.retain(|kick| kick.strong_count() > 0);
+            remotes.push(Arc::downgrade(&kick));
+            kick
+        });
         Some(Slot {
             counts: Arc::clone(&self.counts),
-            remote,
+            kick,
         })
+    }
+
+    /// 听的地址换成了 `listen`：别的机器来的、连进来的地址它不再包含的（[`crate::reaches`]）叫它们关掉（第四轮审查 W4-2）。交回叫了几条。
+    pub fn close_unreached(&self, listen: IpAddr) -> usize {
+        let mut remotes = self.remotes.lock().unwrap_or_else(PoisonError::into_inner);
+        remotes.retain(|kick| kick.strong_count() > 0);
+        let mut told = 0;
+        for kick in remotes.iter().filter_map(Weak::upgrade) {
+            if !crate::reaches(listen, kick.here) {
+                // 存一张许可：那条还没等着的，等的时候马上醒
+                kick.now.notify_one();
+                told += 1;
+            }
+        }
+        told
     }
 
     /// 现在连着几条：一共、别的机器来的。
@@ -90,25 +129,38 @@ impl Slots {
 /// 占着的一格：放下了还回去。
 pub struct Slot {
     counts: Arc<[AtomicUsize; 2]>,
-    remote: bool,
+    /// 别的机器来的才有。
+    kick: Option<Arc<Kick>>,
+}
+
+impl Slot {
+    /// 等到被叫关掉（[`Slots::close_unreached`]）；本机来的一直等不到。
+    pub async fn kicked(&self) {
+        match &self.kick {
+            Some(kick) => kick.now.notified().await,
+            None => std::future::pending().await,
+        }
+    }
 }
 
 impl Drop for Slot {
     fn drop(&mut self) {
         let [all, far] = &*self.counts;
         all.fetch_sub(1, Ordering::AcqRel);
-        if self.remote {
+        if self.kick.is_some() {
             far.fetch_sub(1, Ordering::AcqRel);
         }
     }
 }
 
 /// 接一个 WebSocket：Origin 不对 403，不是升级请求 400；对的回 101，升级好以后在别的任务里转。`remote` 是从别的机器来的连接的对端地址
-/// （[`crate::remote`]）：转给核心以前先说一声它是远程的（`connection.remote`，SU-1），本机来的是空的。
+/// （[`crate::remote`]）：转给核心以前先说一声它是远程的（`connection.remote`，SU-1），本机来的是空的。`here` 是这条连接连进来的本机
+/// 地址：听的地址不再包含它的时候，别的机器来的关掉（第四轮审查 W4-2）。
 pub fn accept<S: Site>(
     request: Request<Incoming>,
     site: Arc<S>,
-    remote: Option<std::net::IpAddr>,
+    remote: Option<IpAddr>,
+    here: IpAddr,
 ) -> Response<Body> {
     let headers = request.headers();
     let origin = headers
@@ -142,7 +194,8 @@ pub fn accept<S: Site>(
         return empty(StatusCode::BAD_REQUEST);
     };
     // 满了的不接（第二轮审查 W2-2）
-    let slot = match site.slots().map(|slots| slots.take(remote.is_some())) {
+    let remote_at = remote.map(|_| here);
+    let slot = match site.slots().map(|slots| slots.take(remote_at)) {
         Some(None) => {
             tracing::warn!(target: TARGET, remote = remote.is_some(), "too many websockets");
             return empty(StatusCode::SERVICE_UNAVAILABLE);
@@ -150,11 +203,14 @@ pub fn accept<S: Site>(
         Some(Some(slot)) => Some(slot),
         None => None,
     };
+    // 先记下再看听的地址：刚换掉、不再包含它连进来的地址的不接（换监听时先记新地址再打扫，两头错不开；第四轮审查 W4-2）
+    if remote.is_some() && !crate::reaches(site.listen(), here) {
+        return empty(StatusCode::FORBIDDEN);
+    }
     let accept = derive_accept_key(key.as_bytes());
     tokio::spawn(async move {
-        let _slot = slot;
         match hyper::upgrade::on(request).await {
-            Ok(upgraded) => bridge(TokioIo::new(upgraded), site, remote).await,
+            Ok(upgraded) => bridge(TokioIo::new(upgraded), site, remote, slot).await,
             Err(error) => tracing::debug!(target: TARGET, error = %error, "not upgraded"),
         }
     });
@@ -177,11 +233,19 @@ fn close(code: CloseCode) -> Message {
 }
 
 /// 两头照转，直到一头断了。远程的（`remote`）在转浏览器的第一行以前先写一行 `connection.remote`（核心 `connection.md`「网页」）。
-async fn bridge<I, S: Site>(io: I, site: Arc<S>, remote: Option<std::net::IpAddr>)
+/// 占着的那一格（`slot`）被叫关掉的（关了局域网，第四轮审查 W4-2）关 1008。
+async fn bridge<I, S: Site>(io: I, site: Arc<S>, remote: Option<IpAddr>, slot: Option<Slot>)
 where
     I: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + Send + 'static,
 {
     let _busy = site.busy();
+    let kicked = async {
+        match &slot {
+            Some(slot) => slot.kicked().await,
+            None => std::future::pending().await,
+        }
+    };
+    tokio::pin!(kicked);
     let config = WebSocketConfig::default()
         .max_message_size(Some(LIMIT))
         .max_frame_size(Some(LIMIT));
@@ -202,7 +266,12 @@ where
         sink
     });
     // 先等浏览器的第一帧（握手）：等不到的关掉，不连核心（第二轮审查 W2-2）
-    let first = match tokio::time::timeout(FIRST_FRAME, frames.next()).await {
+    let first = tokio::select! {
+        first = tokio::time::timeout(FIRST_FRAME, frames.next()) => first,
+        // 握手以前就被叫关掉的：照没说话的关 1008
+        () = &mut kicked => Ok(None),
+    };
+    let first = match first {
         Ok(Some(Ok(Message::Text(text)))) => text,
         Ok(Some(Ok(Message::Binary(_)))) => {
             send(&out, close(CloseCode::Unsupported)).await;
@@ -327,6 +396,11 @@ where
                 Some(Err(_)) => break,
             },
             _ = &mut core_gone => break,
+            () = &mut kicked => {
+                tracing::info!(target: TARGET, "remote websocket closed: no longer listening there");
+                send(&out, close(CloseCode::Policy)).await;
+                break;
+            }
         }
     }
     reader.abort();
