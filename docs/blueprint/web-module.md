@@ -209,6 +209,8 @@ HTTP（W-9、W-10）：
 | `GET /ws` | WebSocket：转到核心 | Host、Origin 对得上；身份在握手里，核心验 |
 | `POST /media` | 换一张票据 | `Authorization: Bearer <登录令牌>` |
 | `GET /media/<票据>` | 一个 blob 或者一份本机文件，可以带 `Range` | 票据 |
+| `POST /theme` | 换一张网页外观的票据（核心 TH-1，2026-11-02；`web-ui.md`「怎么走」第六条） | `Authorization: Bearer <登录令牌>` |
+| `GET /t/<票据>/<包>/<路径>` | 外观包网页目录里的一份文件 | 票据 |
 
 数据根里多的文件（W-9）：
 

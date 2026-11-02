@@ -1,6 +1,7 @@
 //! 软件后台页（`web-ui.md`「怎么走」第四条，施工 F-6 下；`package-pages.md`「网页软件怎么给后台页」）：页面带登录令牌
 //! `POST /page` 换一张票据，`GET /p/<票据>/<包>/<路径>` 拿这个包后台页里的一份文件，放进页面里隔离的框。内容由核心照
 //! `package.file` 一块 512 KiB 地给，读一块写一块。框的地址里只有票据、不带登录令牌：框里的页面读得到自己的地址。
+//! 一块块给（`stream`）、问核心、没问成写成状态码这几样网页外观（`theme`，核心 TH-1）也用；两种票据都放在 [`Backstage`] 里。
 
 #[cfg(test)]
 mod tests;
@@ -37,24 +38,43 @@ pub(crate) struct Page {
     remote: Option<IpAddr>,
 }
 
+impl Page {
+    /// 照这个登录令牌读包 `package` 的文件（网页外观的票据带一份）。
+    pub(crate) fn new(login: String, package: String, remote: Option<IpAddr>) -> Page {
+        Page {
+            login,
+            package,
+            remote,
+        }
+    }
+
+    pub(crate) fn package(&self) -> &str {
+        &self.package
+    }
+
+    pub(crate) fn remote(&self) -> Option<IpAddr> {
+        self.remote
+    }
+}
+
 impl Owned for Page {
     fn login(&self) -> &str {
         &self.login
     }
 }
 
-/// 网页软件里管软件后台页的：票据（多久作废、最多几张同 `/media`）。
+/// 网页软件里管软件后台页、网页外观的：两种票据各一份（多久作废、最多几张同 `/media`）。
 pub(crate) struct Backstage {
     tickets: Mutex<Tickets<Page>>,
+    themes: Mutex<Tickets<crate::theme::Theme>>,
 }
 
 impl Backstage {
     pub(crate) fn new(settings: &Settings) -> Backstage {
+        let idle = Duration::from_secs(settings.ticket_idle_seconds);
         Backstage {
-            tickets: Mutex::new(Tickets::new(
-                Duration::from_secs(settings.ticket_idle_seconds),
-                settings.most_tickets,
-            )),
+            tickets: Mutex::new(Tickets::new(idle, settings.most_tickets)),
+            themes: Mutex::new(Tickets::new(idle, settings.most_tickets)),
         }
     }
 
@@ -62,10 +82,25 @@ impl Backstage {
         self.tickets.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
+    /// 网页外观的票据。
+    pub(crate) fn themes(&self) -> std::sync::MutexGuard<'_, Tickets<crate::theme::Theme>> {
+        self.themes.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
     /// 打扫：过期的票据。
     pub(crate) fn sweep(&self) {
         self.tickets().sweep();
+        self.themes().sweep();
     }
+}
+
+/// 一块块给的是哪一种：响应头各是各的。
+#[derive(Clone, Copy)]
+pub(crate) enum Kind {
+    /// 软件后台页：放进隔离的框，`backstage_csp`，空来源照跨源取。
+    Frame,
+    /// 网页外观：页面自己加载，同源，照页面的 `csp`。
+    Theme,
 }
 
 /// `POST /page`：这个包有后台页的，换一张票据。
@@ -104,13 +139,16 @@ pub(crate) async fn post(
         },
         || fresh.take().unwrap_or_default(),
     );
+    issued(&ticket, &format!("/p/{ticket}/{package}/"))
+}
+
+/// 换到了票据：回 `{"url"}`，不缓存；票据造不成（系统给不出随机字节）的 500。
+pub(crate) fn issued(ticket: &str, url: &str) -> Response<Body> {
     if ticket.is_empty() {
         tracing::warn!(target: TARGET, "no random bytes for a ticket");
         return empty(StatusCode::INTERNAL_SERVER_ERROR);
     }
-    let mut response = Response::new(full(
-        json!({"url": format!("/p/{ticket}/{package}/")}).to_string(),
-    ));
+    let mut response = Response::new(full(json!({ "url": url }).to_string()));
     let headers = response.headers_mut();
     headers.insert(
         header::CONTENT_TYPE,
@@ -142,10 +180,25 @@ pub(crate) async fn get(
     }
     // 这一次的对端、换票据时的对端有一个是别的机器的，照远程问核心
     let remote = remote.or(page.remote);
-    // 先读第一块：知道一共多大、有没有这份文件，再写响应头。
+    let login = page.login.clone();
+    stream(site, page, remote, path, Kind::Frame, busy)
+        .await
+        .unwrap_or_else(|(site, failed)| refused(&site, &login, &failed))
+}
+
+/// 照 `page` 一块块给包里 `path` 那一份：先读第一块，知道一共多大、有没有这份文件，再写响应头（类型照扩展名，别的照 `kind`），
+/// 剩下的另开一个任务倒。第一块就没问成的交回原因，由调的一方写成状态码。
+pub(crate) async fn stream(
+    site: Arc<Site>,
+    page: Page,
+    remote: Option<IpAddr>,
+    path: String,
+    kind: Kind,
+    busy: crate::serve::Busy,
+) -> Result<Response<Body>, (Arc<Site>, Failed)> {
     let first = match read(&site, &page, remote, &path, 0).await {
         Ok(first) => first,
-        Err(failed) => return refused(&site, &page.login, &failed),
+        Err(failed) => return Err((site, failed)),
     };
     let (out, frames) = mpsc::channel::<Result<Frame<Bytes>, std::io::Error>>(2);
     let stream = futures_util::stream::unfold(frames, |mut frames| async move {
@@ -160,19 +213,24 @@ pub(crate) async fn get(
     );
     insert(headers, header::CONTENT_LENGTH, &first.size.to_string());
     headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-cache"));
-    insert(
-        headers,
-        header::CONTENT_SECURITY_POLICY,
-        &site.settings.backstage_csp,
-    );
-    // 框的来源是空的（不给 `allow-same-origin`）：ES 模块脚本、字体照跨源取，不给这一格取不到；票据就是凭据。
-    headers.insert(
-        header::ACCESS_CONTROL_ALLOW_ORIGIN,
-        HeaderValue::from_static("*"),
-    );
+    match kind {
+        Kind::Frame => {
+            insert(
+                headers,
+                header::CONTENT_SECURITY_POLICY,
+                &site.settings.backstage_csp,
+            );
+            // 框的来源是空的（不给 `allow-same-origin`）：ES 模块脚本、字体照跨源取，不给这一格取不到；票据就是凭据。
+            headers.insert(
+                header::ACCESS_CONTROL_ALLOW_ORIGIN,
+                HeaderValue::from_static("*"),
+            );
+        }
+        Kind::Theme => insert(headers, header::CONTENT_SECURITY_POLICY, &site.settings.csp),
+    }
     crate::serve::secure(headers);
     tokio::spawn(pour(site, page, remote, path, first, out, busy));
-    response
+    Ok(response)
 }
 
 /// `package.file` 给的一块：这一段、整份多大、读到头了没有。
@@ -270,7 +328,7 @@ async fn read(
 }
 
 /// 照登录令牌问核心一次（和 `/media` 共用连着的核心；远程来的走说过 `connection.remote` 的那条）。
-async fn ask(
+pub(crate) async fn ask(
     site: &Site,
     login: &str,
     remote: Option<IpAddr>,
@@ -283,11 +341,12 @@ async fn ask(
         .await
 }
 
-/// 没问成写成状态码；握手被拒的，这个令牌的票据一起作废（同 `/media`）。
-fn refused(site: &Site, login: &str, failed: &Failed) -> Response<Body> {
+/// 没问成写成状态码；握手被拒的，这个令牌的票据（后台页、网页外观的）一起作废（同 `/media`）。
+pub(crate) fn refused(site: &Site, login: &str, failed: &Failed) -> Response<Body> {
     let status = match failed {
         Failed::BadLogin => {
             site.backstage.tickets().revoke(login);
+            site.backstage.themes().revoke(login);
             StatusCode::UNAUTHORIZED
         }
         Failed::Unreachable(_) => StatusCode::BAD_GATEWAY,
@@ -306,7 +365,7 @@ fn status_of(reason: &str) -> StatusCode {
 }
 
 /// 换票据的正文：`{"package"}`，包的编号是非空的字符串。
-async fn read_body(request: Request<Incoming>) -> Option<String> {
+pub(crate) async fn read_body(request: Request<Incoming>) -> Option<String> {
     let bytes = Limited::new(request.into_body(), MOST_BODY)
         .collect()
         .await

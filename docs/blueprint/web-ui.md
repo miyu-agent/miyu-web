@@ -24,6 +24,7 @@
 | `crates/miyu-web/src/media/link.rs` | 照登录令牌连核心：一个令牌一条，同时问、照编号分回去，60 秒没人用就关 |
 | `crates/miyu-web/src/media/range.rs` | `Range` 要哪一段；下载的名字照 RFC 5987 转义 |
 | `crates/miyu-web/src/backstage.rs` | 软件后台页：`/page` 换票据、`/p/<票据>/<包>/<路径>` 照 `package.file` 一块块给、响应头（施工 F-6 下）；票据和连着的核心同 `/media` 那一套（`media/tickets.rs` 的 `Tickets` 两边各一份，`media/link.rs` 的 `Cores` 共用） |
+| `crates/miyu-web/src/theme.rs` | 网页外观（核心 TH-1，2026-11-02）：`/theme` 换票据、`/t/<票据>/<包>/<路径>` 照 `package.file` 给外观包网页目录里的文件；一块块给、问核心、没问成写成状态码用 `backstage.rs` 的（`stream`、`ask`、`refused`），票据放在 `Backstage` 里另一份 |
 | `crates/miyu-web/src/open.rs`、`texts.rs` | `open`：确保 `serve` 在跑；要交接票（`--reset` 要一次性码）；开浏览器；给人看的字。照终端的样子连核心一问一答（`open` 要一次性码、`serve` 起来时问配置）、开浏览器的那两样在 `crates/miyu-webserve/src/open.rs`（施工 9-1 下从 `open.rs` 挪进 `client.rs`，施工 O-16 搬过去） |
 | `crates/miyu-web/src/settings.rs`、`miyu-webui/web.json`、`miyu-webui/package.toml`（装好在网页包的文件夹：资源目录的 `packages/miyu-webui/`，或者打成包文件装进数据根的 `packages/miyu-webui/`，找法见「怎么走」第一条第 6 款；`web.json` 2026-10-11 仓库拆开以后从核心的 `resources/web/` 挪进来） | 端口（出厂 8300）、听哪个地址、空闲多久、票据多久不用作废、最多几张是配置项（`web.port`、`web.listen`、`web.idle_seconds`、`web.ticket_idle_seconds`、`web.most_tickets`），声明在网页自己的清单里，默认值照清单读，起来时问核心拿最终值（施工 9-1 下）；内容安全策略（页面的、软件后台页的 `backstage_csp`）、页面的媒体类型是常量，在 `web.json` |
 | 网页包文件夹的 `pages/` | 页面文件，和网页包放在一起（原来在 `resources/web/pages/`，2026-10-11 跟着挪）。发版时照网页的前端放进去；开发时设 `MIYU_WEB_PAGES` 指到 `web-demo/` |
@@ -98,6 +99,16 @@
 7. 页面把它放在 `<iframe sandbox="allow-scripts allow-forms">` 里，不给 `allow-same-origin`：页面在一个空的来源里跑，读不到网页的存储、登录令牌。空来源的框取 ES 模块脚本、字体是按跨源取的，所以要第 6 款的 `Access-Control-Allow-Origin`；票据就是凭据，不多开口子。`'self'` 在空来源的框里照文件的地址算，对得上网页软件自己（网页演示的桥 2026-10-10 在 Chromium 里实测）。框和网页之间的通道由页面做（网页的蓝图「软件后台」）。
 8. 有后台页在给，网页软件不算空闲。方法只认 `POST /page`、`GET /p/…`，别的 405。
 
+**六、网页外观**（2026-11-02；核心 TH-1，核心蓝图 `packages.md`「外观包」：外观包的 `[theme.web] dir` 是包里的一个目录，本身是一个普通的网页包，可以带脚本、不设限，项目主人定）
+
+1. `POST /theme`：`Authorization: Bearer <登录令牌>`；正文是 JSON `{"package"}`，写法同第四条第 1 款，不对的 400。
+2. 照这个登录令牌连核心，问 `package.list`：这个包那一项带 `theme.web.dir` 的才给（记下这个目录，去掉结尾的 `/`），不然 404。握手被拒 401。
+3. 造一张票据，写法、多久作废、最多几张同第四条第 3 款，和后台页的各是各的一份（两份都放在 `Backstage` 里）：同一个令牌、同一个包、同一个目录交回原来那一张。回应 `{"url":"/t/<票据>/<包的编号>/"}`：页面照它当这个包的根，同内置的包的 `packages/<编号>/`。
+4. `GET /t/<票据>/<包>/<路径>`：票据不认识、包和票据对不上的 404。路径解开 `%xx`（解出来不是 UTF-8、有 NUL 的 404）；空的、以 `/` 开头或结尾、有空段、`.`、`..`、`\`、`:`、控制字符的 400，不问核心。收下的接在网页目录后面（`<目录>/<路径>`），照 `package.file` 读：核心另照真实路径查，链接出了网页目录的 `not_found`。
+5. 一块块给、核心拒的换成什么状态、给到一半断了怎么办同第四条第 5 款（`not_found`、`unknown_package` 404，`bad_params` 400，别的 502；握手被拒 401，这个令牌的后台页、外观票据一起作废）。
+6. 类型照扩展名查 `web.json` 的 `types`，没有的 `application/octet-stream`。响应头：`Content-Security-Policy` 照页面的 `csp`（这些文件是页面自己加载、同源跑的，不进框），`X-Content-Type-Options: nosniff`、`Referrer-Policy: no-referrer`、`Cache-Control: no-cache`；不带 `Access-Control-Allow-Origin`：同源用不着。
+7. 有外观文件在给，网页软件不算空闲。方法只认 `POST /theme`、`GET /t/…`，别的 405。页面怎么加载见网页的蓝图 `web/architecture.md`「外观包」。
+
 **五、这台电脑上的几样**（2026-10-30 项目主人：网页的多平台适配，「打开目录」都是假的，只是复制 `~` 开头的路径。演示的桥早就有 `/reveal`、`/pick-dir`、`/wallpaper`，网页软件没有，页面只好退回）
 
 1. 只给这台电脑上来的：对端不是回环地址的（局域网里别的设备，第一条第 7 款的 `remote`）一律 403——在装 Miyu 的那台电脑上开文件管理器、弹选目录框，对别的设备没意义；页面开在局域网地址上的也不请（照旧退回）。
@@ -138,6 +149,8 @@
 | `crates/miyu-web/tests/ws.rs` | 一帧一行两头照转，一个字节不改（凭据、中文、空白、很长的一行）；Origin 不对 403；二进制 1003、超过 1 MiB 1009，照原始字节发的超长帧读得到 1009、读到头不是被重置；核心断了 1012；连不上核心发 `web.error` 再关；转发的代码里不读本机令牌（照源码查，施工 O-16 起连同搬进 `miyu-webserve` 的那几份）；听局域网时别的地址来的先写 `connection.remote`、再转握手，本机来的不写，Host 是名字的 403 |
 | `crates/miyu-web/tests/media.rs` | 核心用替身（照登录令牌握手、答 `blob.get`、`fs.read`，同一条连接上乱序答）：换票据要登录令牌（没带、带错 401）；正文 `blob`、`path` 正好一个，不对 400；没有的 404、数据根里的 403、连不上核心 502；同一个令牌、资源、三格交回同一张，连接复用；全部、`Range` 206 和 `Content-Range`、超出 416、好几段和写法不对的照没写；一块不超过 512 KiB、拼起来一个字节不差；同一条连接上同时几问各拿各的；类型照表、表里没有的不认、`sandbox`、`nosniff`、`private, no-cache`；下载的名字；令牌作废了 401、票据一起作废；在给不算空闲；票据过期、满了丢最久没用的 |
 | `crates/miyu-web/tests/backstage.rs` | 核心用替身（多答 `package.list`、`package.file`）：换票据要登录令牌（没带、带错、不是 Bearer 401）；正文不对 400；没有后台页、没有这个包 404；同一个令牌、同一个包交回同一张；页面文件和响应头（类型、`backstage_csp`、`nosniff`、`no-referrer`、`no-cache`、`Access-Control-Allow-Origin: *`、不设 cookie）；以 `/` 结尾补 `index.html`；没有的 404、核心拒 `bad_params` 400；票据只开它的包、不认识的 404；大文件一块块问、拼起来一个字节不差；令牌作废了 401、票据一起作废；方法 405 |
+| `crates/miyu-web/tests/theme.rs` | 网页外观（核心 TH-1）：换票据要登录令牌（没带、带错 401）；正文不对 400；只有后台页、什么都没带、没有这个包 404；同一个令牌、同一个包交回同一张；文件照网页目录读（路径前面接上目录）、类型照表、表里没有的 `application/octet-stream`、页面的 `csp`、`nosniff`、`no-referrer`、`no-cache`、不带 `Access-Control-Allow-Origin`、不设 cookie；没有的 404；`..`、`%2e%2e`、空的、以 `/` 结尾、空段、`\`、`:` 400 且不问核心；票据只开它的包，后台页、外观的票据互相开不了；大文件一块块问、拼起来一个字节不差；令牌作废了 401、票据一起作废；方法 405 |
+| `crates/miyu-web/src/theme/tests.rs` | 外观的地址拆成票据、包、文件（收不收的每种写法）；网页目录照 `package.list` 找（去掉结尾的 `/`，只带终端主题的、没有的、空的不算） |
 | `crates/miyu-web/src/backstage/tests.rs` | 地址拆成票据、包、文件（`%xx`、补 `index.html`、NUL、不是 UTF-8、包编号写法）；包编号的写法；核心拒的换成状态码；类型照扩展名 |
 | `crates/miyu-web/src/media/tests.rs` | `Range` 每种写法（大小写、超出、好几段、写法不对、空的资源）；下载的名字只留最后一段、`attr-char` 以外都转义 |
 | `crates/miyu-web/tests/open.rs` | 拉起真的 `miyu-web serve`；`--reset` 的带 `#setup=`，别的（没设过密码的也是）带 `#ticket=…`（不带账号）、核心不给票的什么都不带；带凭据的交给浏览器的是只给本人的跳转页、里面才是网址，过期的跳转页下一次 `open` 删掉；`--package` 的带 `package=`，和一次性码一起是 `#setup=…&package=…`；`--print`、交不给浏览器的印网址和提醒；`--format json` 只印一行 `{url, first}`、不开浏览器不印提醒；`--logout`；端口被占照人的语言说 |
@@ -179,4 +192,13 @@
 | 20 | `Access-Control-Allow-Origin: *` | 不给 `allow-same-origin` 的框来源是空的，ES 模块脚本、字体照跨源取，不给取不到；票据就是凭据 | 写 `null`（空来源都是 `null`，口子一样大） |
 | 21 | `miyu web --package <编号>` 照包编号的写法查（`backstage::valid_package`），网址里 `package=` 跟在一次性码后面 | 编号放进网址不用转义；页面照 `#` 后面的几项读 | 不查原样带（写错的到了页面才发现） |
 | 22 | `decode`（解开 `%xx`）从 `miyu-webserve` 的页面文件那里开放出来用 | 同一套规矩（不是 UTF-8、有 NUL 的不要）只写一处 | 网页软件里再写一份 |
+
+### 施工时定的（网页外观，核心 TH-1，2026-11-02）
+
+| # | 定了什么 | 为什么 | 别的选法 |
+|---|---|---|---|
+| 23 | 外观另开 `/theme`、`/t/`，地址同后台页带包的编号：`/t/<票据>/<包>/<路径>`，回应同样是 `{"url"}` | 页面的宿主换票据是同一个写法（`served.js` 的 `post`）；地址里看得出是哪个包 | 回 `{"base": "/t/<票据>/"}`（页面多一种写法）；和后台页共用 `/page`、`/p/`（后台页的文件放进框、外观的同源跑，响应头不一样，票据也不该互相开） |
+| 24 | 换票据时照 `package.list` 记下网页目录，给文件时在路径前面接上；`..` 这些网页软件自己先挡（400），不交给核心 | 核心的 `package.file` 对外观包照包目录写路径，只给网页目录下的；网页软件先挡一道，`web/../package.toml` 这种不靠核心的第二道 | 每次给文件都问一次 `package.list`（一份文件多一问）；页面自己接目录（页面能拿到包目录里网页目录外的路径去问） |
+| 25 | 响应头照页面的 `csp`、不带 `Access-Control-Allow-Origin` | 外观包的脚本、样式是页面同源加载的（项目主人：不设限），不进框 | 照后台页的 `backstage_csp`（带 `sandbox`，对子资源不起作用，写了也是假的） |
+| 26 | 一块块给、问核心、没问成写成状态码挪成 `backstage.rs` 的 `stream`、`ask`、`refused` 两边共用；握手被拒时两种票据一起作废 | 一份代码；令牌作废了，它的哪种票据都不该还能用 | `theme.rs` 再抄一份 |
 

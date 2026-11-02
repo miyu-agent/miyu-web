@@ -8,6 +8,7 @@
 //! - `listen`：`/listen`，在听的地址、端口；带登录令牌 `POST` 照核心的配置当场换（2026-10-30）。
 //! - `media`：`/media`，带登录令牌换票据，照票据一块块给 blob、本机文件，能分段（施工 W-10）。
 //! - [`backstage`]：软件后台页，带登录令牌 `POST /page` 换票据，`/p/<票据>/<包>/<路径>` 照 `package.file` 给（施工 F-6 下）。
+//! - `theme`：网页外观，带登录令牌 `POST /theme` 换票据，`/t/<票据>/<包>/<路径>` 照 `package.file` 给外观包网页目录里的文件（核心 TH-1）。
 //! - [`open`]：`miyu web` 交来的参数：确保 `serve` 在跑，第一次、`--reset` 的照终端的样子出示本机令牌要一次性码，开浏览器
 //!   （连核心、开浏览器的那两样在 `miyu-webserve`）。
 //! - [`help`]：`miyu web` 的参数、帮助页、写错时怎么说（核心 CL-7 起由网页包自己印）。
@@ -26,6 +27,7 @@ mod port;
 pub mod serve;
 pub mod settings;
 mod texts;
+mod theme;
 
 /// 运行日志的目标。
 const TARGET: &str = "miyu::web";

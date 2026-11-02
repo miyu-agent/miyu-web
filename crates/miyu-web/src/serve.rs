@@ -1,6 +1,6 @@
 //! `miyu-web serve`（`web-ui.md`「怎么走」第一条）：单实例、听 `web.listen`（默认 `127.0.0.1`，SU-1 起能听局域网）、写 `run/web` 和那一行、空闲退出；每个
 //! 请求先核对 Host，`/ws` 交给 `miyu_webserve::ws`，`/media` 交给 `media`（施工 W-10），`/page`、`/p/` 交给
-//! `backstage`（软件后台页，施工 F-6 下），别的当页面文件
+//! `backstage`（软件后台页，施工 F-6 下），`/theme`、`/t/` 交给 `theme`（网页外观，核心 TH-1），别的当页面文件
 //! （`miyu_webserve::pages`）。核对 Host、给页面、`/ws` 照转、回应的几样在共用的 `miyu-webserve`（施工 O-16，
 //! `webserve.md`「搬家表」）。
 //!
@@ -34,7 +34,7 @@ use crate::backstage::Backstage;
 use crate::listen::{Swap, Swaps};
 use crate::media::Media;
 use crate::settings::Settings;
-use crate::{TARGET, backstage, listen, media};
+use crate::{TARGET, backstage, listen, media, theme};
 
 pub use miyu_client::CoreCommand;
 pub(crate) use miyu_webserve::respond::{Body, empty, full, secure};
@@ -410,6 +410,12 @@ async fn handle(
     }
     if path.starts_with("/p/") {
         return Ok(backstage::get(request, site, remote).await);
+    }
+    if path == "/theme" {
+        return Ok(theme::post(request, site, remote).await);
+    }
+    if path.starts_with("/t/") {
+        return Ok(theme::get(request, site, remote).await);
     }
     let settings = &site.settings;
     Ok(miyu_webserve::pages::serve(&request, &site.pages, &settings.csp, &settings.types).await)

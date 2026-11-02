@@ -17,6 +17,8 @@ mod media;
 mod open;
 mod open_flags;
 mod serve;
+// 网页外观（核心 TH-1）
+mod theme;
 mod ws;
 // 发布前第二轮审查的防御性测试（2026-10-30）
 mod audit2;

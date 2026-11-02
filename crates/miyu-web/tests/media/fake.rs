@@ -1,5 +1,5 @@
 //! 核心的替身（施工 W-10）：照登录令牌握手，答 `blob.get`、`fs.read`；软件后台页用的 `package.list`、`package.file`
-//! （施工 F-6 下）。每一问单开一个任务答，慢的 blob 晚一点答：同一条连接上的回应会乱序到，网页软件要照编号分回去。
+//! （施工 F-6 下），外观包的网页目录（核心 TH-1）。每一问单开一个任务答，慢的 blob 晚一点答：同一条连接上的回应会乱序到，网页软件要照编号分回去。
 
 use std::collections::BTreeMap;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -40,6 +40,8 @@ pub struct Core {
     pub pages: BTreeMap<String, BTreeMap<String, Vec<u8>>>,
     /// 装着、没有后台页的包。
     pub plain: Vec<String>,
+    /// 带网页外观的包：编号 → (网页目录, 包目录里的相对路径 → 内容)。
+    pub themes: BTreeMap<String, (String, BTreeMap<String, Vec<u8>>)>,
 }
 
 impl Core {
@@ -61,6 +63,16 @@ impl Core {
             .entry(package.to_string())
             .or_default()
             .insert(path.to_string(), bytes);
+        self
+    }
+
+    /// 一个外观包里的一份文件：网页目录是 `dir`，`path` 照包目录写（`web/index.js`）。
+    pub fn theme(mut self, package: &str, dir: &str, path: &str, bytes: Vec<u8>) -> Core {
+        let theme = self
+            .themes
+            .entry(package.to_string())
+            .or_insert_with(|| (dir.to_string(), BTreeMap::new()));
+        theme.1.insert(path.to_string(), bytes);
         self
     }
 
@@ -126,12 +138,26 @@ fn list(core: &Core) -> Value {
         .plain
         .iter()
         .map(|package| json!({"package": package, "status": "ready"}));
-    json!({"packages": paged.chain(plain).collect::<Vec<_>>()})
+    let themes = core.themes.iter().map(|(package, (dir, _))| {
+        json!({"package": package, "kind": "theme", "theme": {"web": {"dir": dir}}, "status": "ready"})
+    });
+    json!({"packages": paged.chain(plain).chain(themes).collect::<Vec<_>>()})
 }
 
 /// 答 `package.file`：一次最多 512 KiB，带 `size`、`eof`；路径照核心的规矩（空的是 `index.html`，带 `..` 的拒）。
 fn page_file(core: &Core, params: &Value) -> Result<Value, &'static str> {
     let package = params["package"].as_str().unwrap_or_default();
+    if let Some((dir, files)) = core.themes.get(package) {
+        // 外观包：路径照包目录写，只给网页目录下的（核心 TH-1）
+        let path = params["path"].as_str().unwrap_or_default();
+        if path.split('/').any(|part| part.is_empty() || part == "..") {
+            return Err("bad_params");
+        }
+        if !path.starts_with(&format!("{dir}/")) {
+            return Err("not_found");
+        }
+        return chunk(core, files.get(path).ok_or("not_found")?, params);
+    }
     let Some(files) = core.pages.get(package) else {
         return Err(match core.plain.iter().any(|p| p == package) {
             true => "no_page",
@@ -145,7 +171,11 @@ fn page_file(core: &Core, params: &Value) -> Result<Value, &'static str> {
     if path.split('/').any(|part| part == "..") || path.starts_with('/') || path.contains('\\') {
         return Err("bad_params");
     }
-    let bytes = files.get(path).ok_or("not_found")?;
+    chunk(core, files.get(path).ok_or("not_found")?, params)
+}
+
+/// `package.file` 的一块：从 `offset` 起最多 512 KiB。
+fn chunk(core: &Core, bytes: &[u8], params: &Value) -> Result<Value, &'static str> {
     let offset = params["offset"].as_u64().unwrap_or(0);
     core.reads
         .lock()
