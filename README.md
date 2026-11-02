@@ -13,7 +13,9 @@
 
 局域网访问是明文 HTTP，不加密：同一个网络里的人能看到访问密码、登录令牌和对话内容。只在信得过的网络（自己家里）打开。在外面、在不信任的网络上用，经 [Tailscale](https://tailscale.com/) 或 [WireGuard](https://www.wireguard.com/) 连回家里再打开：流量在隧道里是加密的；Tailscale 还能给这台电脑一个 HTTPS 地址（`tailscale serve`），浏览器只在 HTTPS 下开放的麦克风、剪贴板、通知也就能用了。
 
-经这台电脑上的反向代理（`tailscale serve`、nginx、cloudflared 这类）打开的，一律当成别的设备：要访问密码，只在这台电脑上能用的（选这台电脑上的目录、读它的文件这些）用不了。代理要加上转发的头（`X-Forwarded-For` 这类）；不加头的纯 TCP 转发认不出是别的设备，别这么开。
+经这台电脑上的反向代理（`tailscale serve`、nginx、cloudflared 这类）打开的，一律当成别的设备：要访问密码，只在这台电脑上能用的（选这台电脑上的目录、读它的文件这些）用不了。代理要加上转发的头（`Forwarded`、`X-Forwarded-For`、`X-Real-IP` 这类，nginx 要在配置里写上）。
+
+**不加头的纯 TCP 转发认不出是别的设备**：`ssh -L` 端口转发、`socat`、`tailscale serve --tcp` 这类，转进来的连接在网页看来就是这台电脑自己，经它打开的人能读这台电脑的文件、不带旧密码改掉访问密码。别用它们把网页开给别人；只给自己用、而且那一头的设备也是你自己的，才可以。
 
 ### 测试
 

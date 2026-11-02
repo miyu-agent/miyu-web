@@ -152,6 +152,22 @@ async fn post_needs_a_login_and_a_core() {
 }
 
 #[tokio::test]
+async fn post_from_a_local_reverse_proxy_is_refused() {
+    // 同机的反向代理转进来的（对端是回环、带着转发的头）算远程，POST /listen 不认，每一种头各试一次（发布前审计第三轮 R3S-2）
+    let home = Home::new();
+    let (_, port, _serving) =
+        start_configured(&home, 0, settings(600), false, Some(0), false).await;
+    core_with(&home, Arc::new(Mutex::new(config("127.0.0.1", 0))));
+    let host = format!("127.0.0.1:{port}");
+    for header in PROXIED {
+        let extra = [("Authorization", "Bearer good"), header];
+        let answer = request(port, "POST", "/listen", &host, &extra).await;
+        assert_eq!(answer.status, 403, "{}", header.0);
+    }
+    assert_eq!(post(port, Some("good")).await.0, 200, "不带头的本机照旧");
+}
+
+#[tokio::test]
 async fn a_new_address_is_listened_on_at_once_and_the_idle_exit_waits() {
     let Some(lan) = lan_address() else {
         eprintln!("这台机器没有局域网地址，跳过");

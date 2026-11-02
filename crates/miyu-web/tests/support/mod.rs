@@ -178,6 +178,20 @@ impl Answer {
     }
 }
 
+/// 同机的反向代理转进来时带的头，一种一行（发布前审计第三轮 R3S-2）：带着哪一行都算远程。`X-Forwarded-For` 的来源是
+/// `100.64.0.7`，别的认不出来源。
+pub const PROXIED: [(&str, &str); 9] = [
+    ("Forwarded", "for=100.64.0.7;proto=https"),
+    ("X-Forwarded-For", "100.64.0.7"),
+    ("X-Forwarded-Host", "miyu.example.ts.net"),
+    ("X-Forwarded-Proto", "https"),
+    ("X-Real-IP", "100.64.0.7"),
+    ("Via", "1.1 nginx"),
+    ("CF-Connecting-IP", "100.64.0.7"),
+    ("True-Client-IP", "100.64.0.7"),
+    ("Tailscale-User-Login", "someone@example.com"),
+];
+
 /// 手写一个请求：`method` `path`，Host 是 `host`，另带 `extra` 几行头。
 pub async fn request(
     port: u16,

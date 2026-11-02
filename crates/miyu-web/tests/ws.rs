@@ -161,10 +161,47 @@ async fn on_the_lan_a_connection_from_another_address_is_told_to_the_core_first(
 
 #[tokio::test]
 async fn a_request_a_local_reverse_proxy_passes_on_is_told_to_the_core_as_remote() {
-    // 同机的反向代理转进来的（对端是回环、带着转发的头）也算远程（发布前审计第三轮 R3S-2）
+    // 同机的反向代理转进来的（对端是回环、带着转发的头）也算远程，每一种头各连一次（发布前审计第三轮 R3S-2；核心不另挡，
+    // 只有这一层）
     let home = Home::new();
     let mut core = fake_core(&home);
     let (_, port, _serving) = start(&home, 0, 600).await;
+    for (name, value) in PROXIED {
+        let mut request = format!("ws://127.0.0.1:{port}/ws")
+            .into_client_request()
+            .expect("合写法");
+        let headers = request.headers_mut();
+        headers.insert(
+            "Origin",
+            format!("http://127.0.0.1:{port}").parse().expect("合写法"),
+        );
+        headers.insert(name, value.parse().expect("合写法"));
+        let stream = TcpStream::connect(("127.0.0.1", port))
+            .await
+            .expect("连得上");
+        let (mut ws, _) = client_async(request, stream).await.expect("接了");
+        let hello = r#"{"id":"h","jsonrpc":"2.0","method":"hello","params":{"password":"x","protocol":[1,1]}}"#;
+        ws.send(Message::text(hello)).await.expect("发得出");
+        let connection = within("核心接到连接", core.accept()).await.expect("接得到");
+        let (read, _write) = tokio::io::split(connection);
+        let mut lines = BufReader::new(read);
+        let mut first = String::new();
+        within("核心读到", lines.read_line(&mut first))
+            .await
+            .expect("读得到");
+        let told: serde_json::Value = serde_json::from_str(&first).expect("是 JSON");
+        let from = if name == "X-Forwarded-For" {
+            "100.64.0.7"
+        } else {
+            "127.0.0.1"
+        };
+        assert_eq!(
+            told,
+            serde_json::json!({"jsonrpc": "2.0", "method": "connection.remote", "params": {"from": from}}),
+            "{name}：握手以前先说是远程"
+        );
+    }
+    // X-Forwarded-For 好几个的照最右边那个（代理写的；前面的客户端能伪造）
     let mut request = format!("ws://127.0.0.1:{port}/ws")
         .into_client_request()
         .expect("合写法");
@@ -181,22 +218,19 @@ async fn a_request_a_local_reverse_proxy_passes_on_is_told_to_the_core_as_remote
         .await
         .expect("连得上");
     let (mut ws, _) = client_async(request, stream).await.expect("接了");
-    let hello =
-        r#"{"id":"h","jsonrpc":"2.0","method":"hello","params":{"password":"x","protocol":[1,1]}}"#;
-    ws.send(Message::text(hello)).await.expect("发得出");
+    ws.send(Message::text(
+        r#"{"id":"h","jsonrpc":"2.0","method":"hello","params":{"password":"x","protocol":[1,1]}}"#,
+    ))
+    .await
+    .expect("发得出");
     let connection = within("核心接到连接", core.accept()).await.expect("接得到");
     let (read, _write) = tokio::io::split(connection);
-    let mut lines = BufReader::new(read);
     let mut first = String::new();
-    within("核心读到", lines.read_line(&mut first))
+    within("核心读到", BufReader::new(read).read_line(&mut first))
         .await
         .expect("读得到");
     let told: serde_json::Value = serde_json::from_str(&first).expect("是 JSON");
-    assert_eq!(
-        told,
-        serde_json::json!({"jsonrpc": "2.0", "method": "connection.remote", "params": {"from": "100.64.0.7"}}),
-        "照代理写上的那个来源先说一声"
-    );
+    assert_eq!(told["params"]["from"], "100.64.0.7");
 }
 
 /// 照给的 Host 要一下首页，交回状态码。
