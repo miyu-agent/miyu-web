@@ -75,8 +75,33 @@ export function mermaidBlock(source, say, deps) {
   return block;
 }
 
-/** 不留的元素：脚本、嵌别的页面的、能用动画改属性（`href`）的（2026-10-30 第二轮审查 W2-4，纵深防御） */
-const DROP = new Set(['script', 'foreignobject', 'iframe', 'object', 'embed', 'animate', 'set', 'animatemotion', 'animatetransform', 'discard']);
+/**
+ * 留的元素（白名单，2026-11-02 第四轮审查 W4-1：原来是黑名单，`<style>` 留着、作用于整页）：渲染器用得到的 SVG 元素，别的连同里面的都去掉。
+ * 小写比（XML 里是 `linearGradient` 这样的大小写）。
+ */
+export const KEEP = new Set(['svg', 'g', 'path', 'rect', 'line', 'circle', 'ellipse', 'polygon', 'polyline', 'text', 'tspan', 'title', 'desc', 'defs',
+  'marker', 'symbol', 'lineargradient', 'radialgradient', 'stop', 'a', 'use']);
+
+/** `style` 属性里留的几项：画图用得到的（填色、描边、透明度、字体、字的对齐和装饰、宽度上限、混合）；`position`、`z-index` 这些去掉 */
+const STYLE_KEEP = new Set(['fill', 'fill-opacity', 'fill-rule', 'stroke', 'stroke-width', 'stroke-opacity', 'stroke-dasharray', 'stroke-dashoffset',
+  'stroke-linecap', 'stroke-linejoin', 'opacity', 'color', 'font', 'font-family', 'font-size', 'font-weight', 'font-style', 'text-anchor',
+  'dominant-baseline', 'alignment-baseline', 'text-decoration', 'letter-spacing', 'max-width', 'mix-blend-mode', 'visibility']);
+
+/**
+ * `style` 属性清洗成只留画图的那几项（[`STYLE_KEEP`]）；值里带 `url(`、反斜杠、`@`、尖括号、引号的整项去掉（引外面的东西、转义、跳出属性）。
+ * 交回清洗后的字（一项都不剩的是空字）。纯的。
+ * @param {string} text
+ */
+export function safeStyle(text) {
+  return text.split(';').map((part) => {
+    const at = part.indexOf(':');
+    if (at < 0) return null;
+    const name = part.slice(0, at).trim().toLowerCase();
+    const value = part.slice(at + 1).trim();
+    if (!STYLE_KEEP.has(name) || !value || /url\(|\\|@|[<>"'`]|expression/i.test(value)) return null;
+    return `${name}: ${value}`;
+  }).filter(Boolean).join('; ');
+}
 
 /**
  * 链接留不留（第二轮审查 W2-4：原来只挡 `javascript:`，`data:`、`blob:` 这些照样能点；`java\tscript:` 这种带空白的也过）：白名单，
@@ -89,23 +114,34 @@ export function safeHref(value) {
 }
 
 /**
- * 核心给的 SVG 文字 → 一个能插进页面的 `<svg>`：去掉脚本、嵌页面的、动画（[`DROP`]）、`on…` 属性，链接只留 http(s) 和锚点（[`safeHref`]），留下的
- * 外链一律新标签页开；读不懂的是 `null`。
+ * 核心给的 SVG 文字 → 一个能插进页面的 `<svg>`：只留白名单里的元素（[`KEEP`]），去掉 `on…` 属性，链接只留 http(s) 和锚点（[`safeHref`]；`use` 只能
+ * 引图里自己的），`style` 照 [`safeStyle`] 清洗，最外层的 `style`、`class` 去掉（页面自己写宽高）；留下的外链一律新标签页开；读不懂的是 `null`。
  * @param {string} text
  */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
 function clean(text) {
   const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
   const svg = doc.documentElement;
   if (svg.nodeName !== 'svg' || doc.querySelector('parsererror')) return null;
   for (const el of [svg, ...svg.querySelectorAll('*')]) {
-    if (DROP.has(el.nodeName.toLowerCase())) {
+    if (!el.isConnected && el !== svg) continue;
+    const name = el.localName.toLowerCase();
+    if (el.namespaceURI !== SVG_NS || !KEEP.has(name)) {
       el.remove();
       continue;
     }
     for (const attr of [...el.attributes]) {
-      const bad = attr.name.toLowerCase().startsWith('on') || (/href$/i.test(attr.name) && !safeHref(attr.value));
+      const key = attr.name.toLowerCase();
+      const bad = key.startsWith('on') || (/href$/i.test(key) && (!safeHref(attr.value) || (name === 'use' && !attr.value.trim().startsWith('#'))));
       if (bad) el.removeAttribute(attr.name);
+      else if (key === 'style') {
+        const kept = el === svg ? '' : safeStyle(attr.value);
+        if (kept) el.setAttribute('style', kept);
+        else el.removeAttribute('style');
+      }
     }
+    if (el === svg) el.removeAttribute('class');
     if (el.nodeName.toLowerCase() === 'a' && [...el.attributes].some((attr) => /href$/i.test(attr.name) && !attr.value.trim().startsWith('#'))) {
       el.setAttribute('target', '_blank');
       el.setAttribute('rel', 'noopener noreferrer');

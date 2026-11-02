@@ -88,3 +88,15 @@ test('mermaid 图里的链接只留 http(s) 和锚点（第二轮审查 W2-4）�
     assert.equal(safeHref(bad), false, bad);
   }
 });
+
+test('图的清洗是白名单（2026-11-02 第四轮审查 W4-1）：<style>、foreignObject 不在留的元素里；style 属性只留画图的几项，带 url(、反斜杠、@、尖括号、引号的整项去掉', async () => {
+  const { KEEP, safeStyle } = await import('../../packages/mermaid/mermaid.js');
+  for (const name of ['svg', 'g', 'path', 'text', 'lineargradient', 'marker']) assert.ok(KEEP.has(name), name);
+  for (const name of ['style', 'script', 'foreignobject', 'image', 'iframe', 'animate', 'set']) assert.ok(!KEEP.has(name), name);
+  assert.equal(safeStyle('fill: #333; stroke-width: 2px'), 'fill: #333; stroke-width: 2px');
+  assert.equal(safeStyle('position: fixed; inset: 0; z-index: 99; fill: red'), 'fill: red', '盖住整页的那几项去掉');
+  assert.equal(safeStyle('fill: url(https://evil/x.svg#a); stroke: blue'), 'stroke: blue', '引外面的东西去掉');
+  assert.equal(safeStyle('fill: red"><style>body{display:none}</style>'), '', '跳出属性的去掉');
+  assert.equal(safeStyle('font-family: a\\62 c; color: green'), 'color: green', '转义去掉');
+  assert.equal(safeStyle('display: none; @import x'), '');
+});
