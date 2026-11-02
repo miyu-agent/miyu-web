@@ -32,13 +32,13 @@
 
 | 名字 | 是什么 |
 |---|---|
-| `trait Site` | `type Busy`；`root()`、`port()`（实际听的端口）、`core()`、`busy(self: &Arc<Self>)`；默认方法 `listen()`（听的地址，不实现的是 `127.0.0.1`，SU-1）、`hosts()`（`127.0.0.1:<端口>`、`localhost:<端口>`、`[::1]:<端口>`）、`origin_allowed(origin, host)`（本机三种，或 Host 认得、和请求的 Host 一样）、`host_allowed(host)`（这三种，`localhost` 不分大小写；`listen` 不是回环的另认「IP 字面量:端口」，听某一个地址的只认它）；另有 `remote(peer)`：对端不是回环的交回它的地址 |
+| `trait Site` | `type Busy`；`root()`、`port()`（实际听的端口）、`core()`、`busy(self: &Arc<Self>)`；默认方法 `listen()`（听的地址，不实现的是 `127.0.0.1`，SU-1）、`hosts()`（`127.0.0.1:<端口>`、`localhost:<端口>`、`[::1]:<端口>`）、`origin_allowed(origin, host)`（本机三种，或 Host 认得、和请求的 Host 一样）、`host_allowed(host)`（这三种，`localhost` 不分大小写；`listen` 不是回环的另认「IP 字面量:端口」，听某一个地址的只认它）；另有 `remote(peer)`：对端不是回环的交回它的地址；`remote_request(peer, headers)`：一个请求是不是远程的，对端不是回环的照 `remote`，对端是回环、但带着反向代理加的头（`Forwarded`、`X-Forwarded-*`、`X-Real-IP`、`Via`、`CF-Connecting-IP`、`True-Client-IP`、`Tailscale-*`）的也算远程，交回 `X-Forwarded-For` 最右边那个（代理自己写上的；前面的客户端能写），认不出的交对端地址（发布前审计第三轮 R3S-2，2026-11-02：同机的 nginx、cloudflared、`tailscale serve` 转进来的对端都是 `127.0.0.1`，原来都当本机，只给本机的方法、PW-2 改访问密码不带旧密码都对它们开着；宁严勿宽，本机的浏览器不会带这些头）。纯 TCP 转发（不加头的）认不出，照旧算本机：README 写明别这么开 |
 | `CoreCommand` | `Arc<dyn Fn() -> Command + Send + Sync>`：拉起核心的命令 |
 | `respond::{Body, full, empty, secure, value}` | 见「在哪」 |
 | `pages::serve(request, pages, csp, types)` | `GET`、`HEAD` 以外 405；`find` 不到、读不了 404；类型照 `type_of`，带 `Cache-Control: no-cache`、`Content-Security-Policy: <csp>`、`nosniff`、`no-referrer`；`HEAD` 只给头 |
 | `pages::type_of(types, path)` | 扩展名（小写）在表里的媒体类型；没有的 `application/octet-stream` |
 | `pages::find(pages, path)` | 请求的路径对应页面目录里哪份文件；带 `..`、`.`、空段、反斜杠的，`%xx` 解不开、不是 UTF-8、有 NUL 的，换成真实位置跑出去的，不是普通文件的，都是空的 |
-| `ws::accept(request, site, remote)` | Origin 不是 `http://` 加上 `origin_allowed` 认的的 403；不是 WebSocket 升级的 400；对的回 101，升级好以后在别的任务里转，连着时拿着 `site.busy()`；`remote`（远程连接的对端地址，`remote(peer)` 算的）有的，接上核心以后先写一行 `connection.remote {from}` 再转（SU-1） |
+| `ws::accept(request, site, remote)` | Origin 不是 `http://` 加上 `origin_allowed` 认的的 403；不是 WebSocket 升级的 400；对的回 101，升级好以后在别的任务里转，连着时拿着 `site.busy()`；`remote`（远程请求的来源，`remote_request` 一个请求一算）有的，接上核心以后先写一行 `connection.remote {from}` 再转（SU-1） |
 | `open::Core::connect(root, core, kind)` | 照终端的样子连核心（没在跑就拉起），出示本机令牌握手，`head.kind` 报 `kind`；`language()` 是握手回的语言 |
 | `open::Core::connect_running(root, kind)` | 同上，只连已经在跑的核心，不拉起（施工 9-1 下，网页软件的 `serve` 起来时问配置用） |
 | `open::Core::call(id, method, params)` | 一问一答，30 秒没回算没回；拒绝的交回核心的原话 |

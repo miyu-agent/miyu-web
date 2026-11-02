@@ -1,6 +1,6 @@
 //! `/ws`（施工 W-9，`web-module.md`「怎么走」第九条第 7 到 9 款）：Origin 对上了才接；两头一帧一行照转，一个字节都不改；
 //! 二进制 1003、超过 1 MiB 1009、核心断了 1012；连不上核心发 `web.error` 再关；网页软件的代码里不读本机令牌；听局域网时别的机器来的
-//! 先说一声 `connection.remote`，本机来的不说（SU-1）。
+//! 先说一声 `connection.remote`，本机来的不说（SU-1）；同机的反向代理转进来的也说（R3S-2）。
 
 use std::time::Duration;
 
@@ -157,6 +157,46 @@ async fn on_the_lan_a_connection_from_another_address_is_told_to_the_core_first(
     // Host 是名字的不认（DNS rebinding）
     let named = request_with_host(lan, port, &format!("evil.example:{port}")).await;
     assert_eq!(named, 403);
+}
+
+#[tokio::test]
+async fn a_request_a_local_reverse_proxy_passes_on_is_told_to_the_core_as_remote() {
+    // 同机的反向代理转进来的（对端是回环、带着转发的头）也算远程（发布前审计第三轮 R3S-2）
+    let home = Home::new();
+    let mut core = fake_core(&home);
+    let (_, port, _serving) = start(&home, 0, 600).await;
+    let mut request = format!("ws://127.0.0.1:{port}/ws")
+        .into_client_request()
+        .expect("合写法");
+    let headers = request.headers_mut();
+    headers.insert(
+        "Origin",
+        format!("http://127.0.0.1:{port}").parse().expect("合写法"),
+    );
+    headers.insert(
+        "X-Forwarded-For",
+        "6.6.6.6, 100.64.0.7".parse().expect("合写法"),
+    );
+    let stream = TcpStream::connect(("127.0.0.1", port))
+        .await
+        .expect("连得上");
+    let (mut ws, _) = client_async(request, stream).await.expect("接了");
+    let hello =
+        r#"{"id":"h","jsonrpc":"2.0","method":"hello","params":{"password":"x","protocol":[1,1]}}"#;
+    ws.send(Message::text(hello)).await.expect("发得出");
+    let connection = within("核心接到连接", core.accept()).await.expect("接得到");
+    let (read, _write) = tokio::io::split(connection);
+    let mut lines = BufReader::new(read);
+    let mut first = String::new();
+    within("核心读到", lines.read_line(&mut first))
+        .await
+        .expect("读得到");
+    let told: serde_json::Value = serde_json::from_str(&first).expect("是 JSON");
+    assert_eq!(
+        told,
+        serde_json::json!({"jsonrpc": "2.0", "method": "connection.remote", "params": {"from": "100.64.0.7"}}),
+        "照代理写上的那个来源先说一声"
+    );
 }
 
 /// 照给的 Host 要一下首页，交回状态码。

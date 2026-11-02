@@ -154,6 +154,66 @@ fn only_connections_from_other_machines_are_remote() {
 }
 
 #[test]
+fn requests_a_local_reverse_proxy_passes_on_are_remote() {
+    let at = |text: &str| text.parse::<std::net::SocketAddr>().expect("是地址");
+    let headers = |pairs: &[(&'static str, &'static str)]| {
+        let mut map = hyper::HeaderMap::new();
+        for (name, value) in pairs {
+            map.append(*name, hyper::header::HeaderValue::from_static(value));
+        }
+        map
+    };
+    let local = at("127.0.0.1:5000");
+    let ip = |text: &str| Some(text.parse::<std::net::IpAddr>().expect("是地址"));
+    assert_eq!(
+        crate::remote_request(local, &headers(&[("host", "127.0.0.1:8300")])),
+        None,
+        "本机的浏览器不带转发的头"
+    );
+    assert_eq!(
+        crate::remote_request(
+            local,
+            &headers(&[("x-forwarded-for", "6.6.6.6, 100.64.0.7")])
+        ),
+        ip("100.64.0.7"),
+        "最右边那个是代理写的，前面的客户端能伪造"
+    );
+    assert_eq!(
+        crate::remote_request(
+            local,
+            &headers(&[
+                ("x-forwarded-for", "6.6.6.6"),
+                ("x-forwarded-for", "192.168.1.30")
+            ])
+        ),
+        ip("192.168.1.30"),
+        "好几行的照最后一行"
+    );
+    for name in [
+        "forwarded",
+        "x-real-ip",
+        "via",
+        "cf-connecting-ip",
+        "true-client-ip",
+        "x-forwarded-proto",
+        "tailscale-user-login",
+    ] {
+        let mut map = hyper::HeaderMap::new();
+        map.insert(name, hyper::header::HeaderValue::from_static("x"));
+        assert_eq!(
+            crate::remote_request(local, &map),
+            ip("127.0.0.1"),
+            "{name}：认不出来源的交对端"
+        );
+    }
+    assert_eq!(
+        crate::remote_request(at("192.168.1.30:5000"), &headers(&[])),
+        ip("192.168.1.30"),
+        "对端不是回环的照旧"
+    );
+}
+
+#[test]
 fn the_type_comes_from_the_extension_and_is_never_guessed() {
     let types = BTreeMap::from([
         ("html".to_string(), "text/html; charset=utf-8".to_string()),

@@ -326,11 +326,9 @@ async fn accept(
 /// 一个连进来的：一个任务里照 HTTP/1 给，能升级成 WebSocket。
 fn serve_one(stream: tokio::net::TcpStream, peer: SocketAddr, site: &Arc<Site>) {
     let site = Arc::clone(site);
-    // 从别的机器来的（对端不是回环）：转给核心以前要说一声（`connection.remote`，SU-1）
-    let remote = miyu_webserve::remote(peer);
     tokio::spawn(async move {
         let service =
-            hyper::service::service_fn(move |request| handle(request, Arc::clone(&site), remote));
+            hyper::service::service_fn(move |request| handle(request, Arc::clone(&site), peer));
         let served = hyper::server::conn::http1::Builder::new()
             .timer(hyper_util::rt::TokioTimer::new())
             .header_read_timeout(HEADER_READ)
@@ -355,8 +353,10 @@ async fn until(at: Option<Instant>) {
 async fn handle(
     request: Request<Incoming>,
     site: Arc<Site>,
-    remote: Option<std::net::IpAddr>,
+    peer: SocketAddr,
 ) -> Result<Response<Body>, Infallible> {
+    // 从别的机器来的（对端不是回环，或者同机的反向代理转进来的）：转给核心以前要说一声（`connection.remote`，SU-1、R3S-2）
+    let remote = miyu_webserve::remote_request(peer, request.headers());
     let host = request
         .headers()
         .get(header::HOST)

@@ -107,3 +107,42 @@ pub fn remote(peer: SocketAddr) -> Option<IpAddr> {
     let ip = peer.ip().to_canonical();
     (!ip.is_loopback()).then_some(ip)
 }
+
+/// 反向代理加的头（小写）：带着其中一个的请求是代理转进来的。
+const FORWARDING: [&str; 5] = [
+    "forwarded",
+    "x-real-ip",
+    "via",
+    "cf-connecting-ip",
+    "true-client-ip",
+];
+/// 名字这样开头的也算：`X-Forwarded-For`、`X-Forwarded-Host`……，`tailscale serve` 的 `Tailscale-User-Login`……
+const FORWARDING_PREFIXES: [&str; 2] = ["x-forwarded-", "tailscale-"];
+
+/// 一个请求是不是从别的机器来的：对端不是回环的照 [`remote`]；对端是回环、但带着反向代理加的头的（同机的 nginx、cloudflared、
+/// `tailscale serve` 转进来的）也算远程，宁严勿宽（发布前审计第三轮 R3S-2；本机的浏览器不带这些头）。代理转来的交回
+/// `X-Forwarded-For` 最右边那个（代理自己写上的，前面的客户端能写），认不出的交对端地址。
+#[must_use]
+pub fn remote_request(peer: SocketAddr, headers: &hyper::HeaderMap) -> Option<IpAddr> {
+    if let Some(ip) = remote(peer) {
+        return Some(ip);
+    }
+    let proxied = headers.keys().any(|name| {
+        let name = name.as_str();
+        FORWARDING.contains(&name)
+            || FORWARDING_PREFIXES
+                .iter()
+                .any(|prefix| name.starts_with(prefix))
+    });
+    if !proxied {
+        return None;
+    }
+    let client = headers
+        .get_all("x-forwarded-for")
+        .iter()
+        .next_back()
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.rsplit(',').next())
+        .and_then(|value| value.trim().parse::<IpAddr>().ok());
+    Some(client.unwrap_or_else(|| peer.ip()).to_canonical())
+}
