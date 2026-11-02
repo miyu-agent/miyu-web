@@ -408,6 +408,7 @@
     "recap": "Recap",
     "compact_failed": "Compaction failed: {reason}",
     "compacted_stats": "Context compacted: {before} → {after} tokens",
+    "truncated": " (too long: the oldest {n} groups were left out of the summary; history can still find them)",
     "compacting": "Compacting context",
     "compacting_wait": "Compacting context…",
     "compaction_started": "Context compaction started",

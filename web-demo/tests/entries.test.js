@@ -256,3 +256,10 @@ test('收尾那一行接这一轮的出字速度（核心 SP-1 的 speed：输�
   assert.equal(speedText({ output: 0, ms: 1000 }), '');
   assert.equal(speedText({ output: 1001, ms: 3000 }), ' · 334 tok/s');
 });
+
+test('压缩时摘要请求太长、截掉最早几组的（核心 UP-2 的 truncated）：结果那一行注明，原文还能用 history 取回', () => {
+  const cut = { id: 'c40', kind: 'notice', what: 'compaction', trigger: 'manual', state: 'done', before: 203000, after: 31000, truncated: 3, at: AT };
+  const plain = { ...cut, id: 'c41', truncated: undefined };
+  assert.deepEqual(brief(itemsOf([cut], { state: 'idle' }).items), ['note: 上下文已压缩：203k → 31k token（太长，最早的 3 组没进摘要，原文还能用 history 取回）']);
+  assert.deepEqual(brief(itemsOf([plain], { state: 'idle' }).items), ['note: 上下文已压缩：203k → 31k token'], '没截的照旧');
+});

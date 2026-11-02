@@ -91,9 +91,11 @@ export function compactedNote(e, stats = null) {
   const ask = !clear && b.instructions ? t('notes.instructions', { text: b.instructions.replace(/\s+/g, ' ').trim() }) : '';
   // 看着压好的那一次带前后的用量（瞬时的 `compaction.done`，蓝图「压缩的进度」第 5 条）
   const head = clear ? t('notes.cleared') : stats ? t('notes.compacted_stats', { before: short(stats.before), after: short(stats.after) }) : t('notes.compacted');
+  // 摘要请求太长、截掉最早几组再压的（核心 UP-2 的 `truncated`）：注明，原文还能用 history 取回
+  const cut = !clear && b.truncated > 0 ? t('notes.truncated', { n: b.truncated }) : '';
   return {
     type: 'note', key: `n${e.seq}`, seq: e.seq, turn: e.turn ?? null, tone: 'good', mark: res.layout.note_marks.good,
-    text: head + ask, compaction: clear ? 'clear' : (b.trigger ?? 'auto'),
+    text: head + cut + ask, compaction: clear ? 'clear' : (b.trigger ?? 'auto'),
     // 点开看摘要（照回报点开的 Markdown 那一种）：条目里没有原文，点开时照序号问核心（`view.detail {session, compaction}`，蓝图 view.md）；
     // 清空的不能点
     detail: clear ? null : b.summary?.trim() ? { kind: 'text', text: b.summary, truncated: false } : { kind: 'compaction', upto: e.seq },

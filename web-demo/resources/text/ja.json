@@ -408,6 +408,7 @@
     "recap": "振り返り",
     "compact_failed": "圧縮に失敗しました：{reason}",
     "compacted_stats": "コンテキストを圧縮しました：{before} → {after} トークン",
+    "truncated": "（長すぎたため、最も古い {n} 組は要約に入っていません。history で原文を取り出せます）",
     "compacting": "コンテキストを圧縮しています",
     "compacting_wait": "コンテキストを圧縮中…",
     "compaction_started": "コンテキストの圧縮を開始しました",
