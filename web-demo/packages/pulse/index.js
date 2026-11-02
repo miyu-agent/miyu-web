@@ -20,7 +20,8 @@ export function apply(ctx) {
   });
   ctx.slots.mount('composer.above', { id: 'pulse', order: 20, render: () => line.el });
   const draw = (v) => {
-    const run = v.running;
+    // 正在压缩：这一行不写，压缩的进度那一行在说（蓝图「压缩的进度」第 1 条，2026-11-02 项目主人：原来一直写「思考中…」）
+    const run = v.compacting ? null : v.running;
     // 在等什么、重试、出过的事都照会话状态和条目（核心 9-8）
     const st = v.status;
     const kind = st?.waiting?.[0]?.what ?? null;
