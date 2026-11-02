@@ -3,8 +3,10 @@
 //!
 //! - 只开目录，不开文件（文件交给系统打开就是运行它）；`~`、`~/…` 照家目录接。
 //! - 还没建的：上一层在的建出来再开（核心给的是管理员放技能、脚本的文件夹，还没放过东西的不在）；上一层也不在的交「不在」。
-//! - Linux `xdg-open`、macOS `open`、Windows `explorer`；没有这个程序的交「开不了」，页面退回复制路径。
+//! - Linux `xdg-open`、macOS `open -R`、Windows `explorer`；没有这个程序的交「开不了」，页面退回复制路径。macOS 上 `.app` 这类包也是
+//!   目录，`open <目录>` 会启动它：改用 `-R`，在 Finder 里选中它、不打开（2026-11-02 第四轮审查 W4-4）。
 
+use std::ffi::OsStr;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
@@ -66,14 +68,13 @@ pub fn ready(dir: &Path) -> Option<PathBuf> {
     }
 }
 
-/// 这个系统用哪个程序开。
-fn program() -> &'static str {
-    if cfg!(target_os = "macos") {
-        "open"
-    } else if cfg!(windows) {
-        "explorer"
-    } else {
-        "xdg-open"
+/// 在 `os`（照 `std::env::consts::OS` 的写法，测试里能换）上开 `dir` 用哪个程序、带哪几个参数。macOS 用 `open -R`：在 Finder 里选中，
+/// 不打开（包目录照 `open` 开就是启动它，第四轮审查 W4-4）。
+fn command_line<'a>(os: &str, dir: &'a Path) -> (&'static str, Vec<&'a OsStr>) {
+    match os {
+        "macos" => ("open", vec![OsStr::new("-R"), dir.as_os_str()]),
+        "windows" => ("explorer", vec![dir.as_os_str()]),
+        _ => ("xdg-open", vec![dir.as_os_str()]),
     }
 }
 
@@ -84,8 +85,9 @@ pub async fn reveal(path: &str) -> Revealed {
     let Some(dir) = expand(path, home.as_deref()).and_then(|p| ready(&p)) else {
         return Revealed::Missing;
     };
-    let mut cmd = Command::new(program());
-    cmd.arg(&dir)
+    let (program, args) = command_line(std::env::consts::OS, &dir);
+    let mut cmd = Command::new(program);
+    cmd.args(args)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null());
@@ -99,7 +101,7 @@ pub async fn reveal(path: &str) -> Revealed {
         }
         Err(e) => {
             if e.kind() != ErrorKind::NotFound {
-                tracing::warn!(target: crate::TARGET, program = program(), error = %e, "file manager not started");
+                tracing::warn!(target: crate::TARGET, program, error = %e, "file manager not started");
             }
             Revealed::Unavailable
         }
@@ -129,6 +131,24 @@ mod tests {
         assert_eq!(
             expand("/srv/skills", Some(home)),
             Some(PathBuf::from("/srv/skills"))
+        );
+    }
+
+    #[test]
+    fn macos_selects_the_folder_in_finder_instead_of_opening_it() {
+        // 应用包也是目录：照 `open <目录>` 开就是启动它（第四轮审查 W4-4）
+        let app = Path::new("/Applications/Calculator.app");
+        assert_eq!(
+            command_line("macos", app),
+            ("open", vec![OsStr::new("-R"), app.as_os_str()])
+        );
+        assert_eq!(
+            command_line("linux", app),
+            ("xdg-open", vec![app.as_os_str()])
+        );
+        assert_eq!(
+            command_line("windows", app),
+            ("explorer", vec![app.as_os_str()])
         );
     }
 
