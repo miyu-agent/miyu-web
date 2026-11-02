@@ -1,0 +1,47 @@
+{
+  "id": "character",
+  "version": "0.1.0",
+  "name": {
+    "zh": "吉祥物",
+    "en": "Mascot",
+    "ja": "マスコット"
+  },
+  "summary": {
+    "zh": "选哪只吉祥物：Miyu 原来的那只，或者外观包带来的",
+    "en": "Pick a mascot: Miyu's own, or one from a theme package",
+    "ja": "マスコットを選ぶ：Miyu のもの、または外観パッケージのもの"
+  },
+  "kind": "base",
+  "description": {
+    "zh": "设置页「主题」一组里的「吉祥物」一行：和主题分开选、随便搭。外观包把吉祥物挂进 mascot.characters；选「Miyu」就是启用 mascot 包。"
+  },
+  "text": {
+    "zh": { "none": "无", "miyu": "Miyu" },
+    "en": { "none": "None", "miyu": "Miyu" },
+    "ja": { "none": "なし", "miyu": "Miyu" }
+  },
+  "inject": [
+    "slots",
+    "packages"
+  ],
+  "provides": {
+    "services": [
+      "character"
+    ]
+  },
+  "settings": {
+    "character": {
+      "type": "text",
+      "default": "",
+      "applies": "live",
+      "name": {
+        "zh": "选哪只吉祥物（编号；空着是无，miyu 是 mascot 包）",
+        "en": "Which mascot (id; empty is none, miyu is the mascot package)",
+        "ja": "どのマスコット（ID。空はなし、miyu は mascot パッケージ）"
+      }
+    }
+  },
+  "styles": [
+    "style.css"
+  ]
+}

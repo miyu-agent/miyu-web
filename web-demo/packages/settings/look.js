@@ -52,7 +52,7 @@ export function drawLook(dialog) {
     const current = palettes.find((p) => p.id === chosen);
     // 两组（2026-10-21 项目主人定叫法，照终端的外观页）：「主题」（形状和材质那一层，有主题包才有这一组）、「配色方案」（明暗、卡片、主色）
     // 「主题」一组还有「AI 输出样式」一行（蓝图 web.md「换画法」第 6 条）：不止一种样式才出
-    const rows = [await skinRow(dialog), styleRow(dialog)].filter(Boolean);
+    const rows = [await skinRow(dialog), await characterRow(dialog), styleRow(dialog)].filter(Boolean);
     replace(el, h('div.set-look', rows.length ? groupBlock(ctx.text('skin'), rows) : null,
       groupBlock(ctx.text('palette_label'), [scheme.el, h('div.set-themes', palettes.map(card)), seedRow(dialog, current?.seeds?.())])));
   };
@@ -61,6 +61,22 @@ export function drawLook(dialog) {
     if (el.isConnected) fill(el).catch(() => {});
   };
   return el;
+}
+
+/**
+ * 「吉祥物」一行（蓝图 `web.md`「选吉祥物」第 1 条，2026-11-02 项目主人：作为主题下的一个子项，随便搭）：下拉，无、Miyu、外观包挂进来的；当场换。
+ * 没有服务 `character` 的不出这一行。
+ * @param {any} dialog
+ */
+async function characterRow(dialog) {
+  const ctx = dialog.ctx;
+  if (!ctx.character) return null;
+  const { items, chosen } = await ctx.character.list();
+  const pick = select(dialog, items.map((x) => ({ value: x.id, name: x.name })), chosen, async (v) => {
+    await ctx.character.choose(v);
+    dialog.drawBody();
+  });
+  return shell({ name: ctx.text('character'), control: pick }).el;
 }
 
 /**
@@ -76,9 +92,10 @@ async function skinRow(dialog) {
   const chosen = packs.some((p) => p.id === skin.values.pack) ? skin.values.pack : '';
   const pick = select(dialog, [{ value: '', name: ctx.text('skin_factory') }, ...packs.map((p) => ({ value: p.id, name: p.name }))], chosen, async (v) => {
     await ctx.packages.set('skin', { config: { pack: v } });
-    // 皮肤推荐了配色方案的顺带切过去，人还能再改（2026-11-02，外观包要的）
-    const palette = packs.find((p) => p.id === v)?.palette;
-    if (palette) await ctx.packages.set('theme', { config: { palette } });
+    // 皮肤推荐了配色方案、吉祥物的顺带切过去，人还能再改（2026-11-02，外观包要的）
+    const pack = packs.find((p) => p.id === v);
+    if (pack?.palette) await ctx.packages.set('theme', { config: { palette: pack.palette } });
+    if (pack?.character) await ctx.character?.choose(pack.character);
     dialog.drawBody();
   });
   return shell({ name: ctx.text('skin'), control: pick }).el;

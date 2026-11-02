@@ -1,0 +1,3 @@
+/* 吉祥物站的那一层（蓝图 web.md「选吉祥物」第 3 条）：整页最前面，屏幕像素，不接鼠标（角色自己的元素要接的自己写 pointer-events） */
+.character-layer { position: fixed; inset: 0; z-index: 30; pointer-events: none; }
+.character-layer:empty { display: none; }

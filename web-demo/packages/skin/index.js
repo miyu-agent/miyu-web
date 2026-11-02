@@ -152,8 +152,9 @@ export function apply(ctx) {
   ctx.provide('skin', {
     /** 现在用的那一格的编号，出厂是 `null` */
     current: () => chosen()?.id ?? null,
-    /** 认的那几格 `{id, name, palette}`：`palette` 是这一格推荐的配色方案（编号，没写的 `null`），人选它时顺带切过去（2026-11-02，外观包要的） */
-    list: () => packs().map((/** @type {any} */ p) => ({ id: p.id, name: p.name ?? p.id, palette: typeof p.palette === 'string' && p.palette ? p.palette : null })),
+    /** 认的那几格 `{id, name, palette, character}`：推荐的配色方案、吉祥物（编号，没写的 `null`），人选它时顺带切过去（2026-11-02，外观包要的） */
+    list: () => packs().map((/** @type {any} */ p) => ({ id: p.id, name: p.name ?? p.id, palette: typeof p.palette === 'string' && p.palette ? p.palette : null,
+      character: typeof p.character === 'string' && p.character ? p.character : null })),
     /** 现在用的那一格带的吉祥物落脚点：加的点、挪的点；出厂、没带的是 `null` */
     anchors: () => {
       const p = chosen();

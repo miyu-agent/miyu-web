@@ -7,6 +7,7 @@
     { "id": "theme-persona" },
     { "id": "theme-wallpaper" },
     { "id": "skin" },
+    { "id": "character" },
     { "id": "skin-pixel", "disabled": true },
     { "id": "welcome" },
     { "id": "timeline-default" },

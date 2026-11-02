@@ -27,6 +27,7 @@
     "theme~",
     "backstage~",
     "skin~",
+    "character~",
     "personas~"
   ],
   "settings": {
@@ -773,6 +774,7 @@
         }
       },
       "skin": "主题",
+      "character": "吉祥物",
       "output_style": "AI 输出样式",
       "skin_factory": "默认主题",
       "palette_label": "配色方案",
@@ -1383,6 +1385,7 @@
         }
       },
       "skin": "Theme",
+      "character": "Mascot",
       "output_style": "AI output style",
       "skin_factory": "Default theme",
       "palette_label": "Color scheme",
@@ -1993,6 +1996,7 @@
         }
       },
       "skin": "テーマ",
+      "character": "マスコット",
       "output_style": "AI の出力スタイル",
       "skin_factory": "デフォルトテーマ",
       "palette_label": "配色",
