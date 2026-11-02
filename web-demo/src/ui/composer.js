@@ -21,7 +21,7 @@
 
 import { h, icon, replace } from './dom.js';
 import { res, t } from '../util/res.js';
-import { fit } from '../model/footer.js';
+import { fit, ringTip } from '../model/footer.js';
 import { noStop } from '../lib/format.js';
 import { read } from '../model/commands.js';
 import { CommandList } from './commands.js';
@@ -61,7 +61,7 @@ export class Composer {
    *   command: (spec: import('../model/commands.js').Spec, words: string|null) => void,
    *   history: {load: () => import('../model/history.js').Item[], save: (items: import('../model/history.js').Item[]) => void},
    *   commandsOpened?: () => void, allCommands?: () => Promise<import('../model/commands.js').Spec[]>,
-   *   session: () => string|null, models: import('./model-menu.js').On, request: (method: string, params: any) => Promise<any>, preview: () => Record<string, any>, openUsage?: (session: string) => void, files: (plan: any, fresh: boolean, onUpdate: (found: any) => void, stale: () => boolean) => Promise<any>, where: () => {cwd: string|null, home: string|null}} on
+   *   session: () => string|null, models: import('./model-menu.js').On, request: (method: string, params: any) => Promise<any>, preview: () => Record<string, any>, openUsage?: (session: string) => void, compact?: () => void, files: (plan: any, fresh: boolean, onUpdate: (found: any) => void, stale: () => boolean) => Promise<any>, where: () => {cwd: string|null, home: string|null}} on
    *   `send` 交回核心收没收；`history` 读、存输入历史（这台设备上、按账号分开）；`session` 正在看的会话；`models` 换模型的菜单问核心要列表、现在用的、选定了做什么；`files` 问核心列、找文件
    *   （`core/files.js`，没建完的先交 `onUpdate`、`stale` 说不要了就停）；`where` 这个会话的工作目录、家目录（`@` 选文件写路径照它）
    * @param {() => import('../model/commands.js').Spec[]} specs 现在的全部斜杠命令（出厂的加软件包登记的）
@@ -109,7 +109,13 @@ export class Composer {
     this.status = h('span.footer-status');
     this.middle = h('span.footer-middle');
     /** 上下文、累计那两格点了开的浮窗（蓝图「上下文明细、累计按用途」） */
-    this.contextPop = new ContextPop({ session: on.session, preview: on.preview, request: on.request, openUsage: on.openUsage });
+    this.contextPop = new ContextPop({ session: on.session, preview: on.preview, request: on.request, openUsage: on.openUsage, status: () => ({ ring: this.ring, status: this.sessionStatus }), compact: on.compact });
+    /** 「压缩」按钮（卡住的时候，同 `/compact`） */
+    this.compact = on.compact;
+    /** 用量那一格的环（`statusFooter` 交的） @type {import('../model/footer.js').Ring|null} */
+    this.ring = null;
+    /** 会话状态（明细里的已压缩、缓存断裂、花费照它） @type {any} */
+    this.sessionStatus = null;
     this.footer = h('div.composer-footer', this.left, this.middle, h('span.footer-end', this.status, this.right), this.modelMenu.el, this.contextPop.el);
     // 从命令列表里点的、选中回车的：记成 `/名字`
     this.menu = new CommandList({
@@ -809,6 +815,8 @@ export class Composer {
       this.modelSep.hidden = !model;
     }
     this.parts = f.right;
+    this.ring = f.ring ?? null;
+    this.sessionStatus = f.status ?? null;
     this.drawRight();
   }
 
@@ -854,8 +862,9 @@ export class Composer {
   }
 
   /**
-   * 右边：放不下的照先后丢（先花费，再速度，再累计，上下文最后），量的是真画出来的宽。左边量本来有多宽
-   * （`scrollWidth`，不是被挤窄以后的）：右边先让，左边最后才截掉加 `…`（`tui.md`「框下面那一行」）。
+   * 右边用量那一格（蓝图「框下面那一行的数」的「用量那一格」，2026-11-02）：一个按钮，环 · 累计 · 花费；卡住的变红，后面一个「压缩」按钮；
+   * 正在压的转圈。放不下的照先后丢（先花费、卡住的先丢「用了多少 / 线」，`fit`），量的是真画出来的宽。左边量本来有多宽（`scrollWidth`，
+   * 不是被挤窄以后的）：右边先让，左边最后才截掉加 `…`（`tui.md`「框下面那一行」）。点了开明细（`ContextPop`）。
    */
   drawRight() {
     // 中间有按钮的（后台任务），它和两边各隔一个 `footer_gap`，右边先让
@@ -863,37 +872,67 @@ export class Composer {
     // 用量前面挂着界面块那一小段的：让出它的宽
     const status = this.status.offsetWidth;
     const room = this.footer.clientWidth - this.left.scrollWidth - res.layout.footer_gap - (middle ? middle + res.layout.footer_gap : 0) - (status ? status + res.layout.footer_gap : 0);
-    // 字和地方都没变：不再写一遍、量一遍（每画一次都量，一写一量逼着整页重排，收长思考时很费，蓝图「性能」）
-    const sig = `${room}|${this.parts.map((p) => p.text).join('\n')}`;
+    const ring = this.ring;
+    // 字、环和地方都没变：不再写一遍、量一遍（每画一次都量，一写一量逼着整页重排，收长思考时很费，蓝图「性能」）
+    const sig = `${room}|${ring ? `${ring.stuck}|${ring.ratio?.toFixed(3)}|${ring.used}` : ''}|${this.parts.map((p) => p.text).join('\n')}`;
     if (sig === this.rightSig) return;
     this.rightSig = sig;
-    const measure = (parts) => {
-      this.right.textContent = parts.map((p) => p.text).join(' · ');
-      return this.right.offsetWidth;
+    if (!ring && !this.parts.length) {
+      replace(this.right);
+      this.contextPop.refresh(null);
+      return;
+    }
+    /** 照这几样画出这一格（量宽的时候也画它） @param {import('../model/footer.js').Part[]} parts */
+    const draw = (parts) => {
+      const bad = ring?.stuck === 'failed' || ring?.stuck === 'over';
+      const busy = ring?.stuck === 'compacting';
+      const text = parts.map((p) => p.text).join(bad ? ' ' : ' · ');
+      const tip = ring ? ringTip(ring) : '';
+      const cell = busy
+        ? h('span.footer-cell.footer-usage', { title: tip }, icon('loader-circle'), text)
+        : h(`button.footer-cell.footer-usage${bad ? '.is-bad' : ''}`, { type: 'button', title: tip, onclick: () => this.contextPop.toggle(cell, sig) }, ring ? ringOf(ring) : null, text);
+      replace(this.right, cell, bad && this.compact ? h('button.footer-compact', { type: 'button', onclick: () => this.compact?.() }, t('usage_cell.compact')) : null);
+      return cell;
     };
-    const kept = fit(this.parts, room, measure);
-    // 上下文、累计两格是按钮：点了开明细（蓝图「上下文明细、累计按用途」第 1 条）；花费那一格点了同点累计；速度那一格只是字
-    /** @type {Map<string, {el: HTMLElement, text: string}>} */
-    const cells = new Map();
-    replace(this.right, kept.map((p, i) => {
-      const sep = i ? ' · ' : null;
-      if (p.key === 'cost') return [sep, h('button.footer-cell', { type: 'button', dataset: { kind: 'cost' }, title: t('context_pop.tip_total'), onclick: () => cells.get('total')?.el.click() }, p.text)];
-      if (p.key !== 'context' && p.key !== 'total') return [sep, p.text];
-      const kind = /** @type {'context'|'total'} */ (p.key);
-      const el = h('button.footer-cell', { type: 'button', dataset: { kind }, title: t(`context_pop.tip_${kind}`), onclick: () => this.contextPop.toggle(kind, el, p.text) }, p.text);
-      cells.set(kind, { el, text: p.text });
-      return [sep, el];
-    }));
-    this.contextPop.refresh(cells);
+    const kept = fit(this.parts, room, (parts) => {
+      draw(parts);
+      return this.right.offsetWidth;
+    });
+    const cell = draw(kept);
+    this.contextPop.refresh(cell instanceof HTMLButtonElement ? { el: cell, text: this.parts.map((p) => p.text).join('\n') } : null);
   }
 
-  /** `/context`：开上下文明细；框下面没写上下文的提示「上下文为空」 */
+  /** `/context`：开明细、上下文那一段展开着；框下面没写用量的提示「上下文为空」 */
   openContext() {
-    const cell = this.right.querySelector('.footer-cell[data-kind="context"]');
-    if (cell instanceof HTMLElement) {
-      if (this.contextPop.kind !== 'context') cell.click();
-    } else this.say(t('commands.nothing_to_clear'));
+    const cell = this.right.querySelector('button.footer-usage');
+    if (cell instanceof HTMLElement) this.contextPop.openAt(cell, 'context');
+    else this.say(t('commands.nothing_to_clear'));
   }
+}
+
+/**
+ * 用量那一格的环：照上下文占窗口的比例画一段弧（超出的画满；不知道窗口的只画底圈）。13px，跟着字色（卡住的变红，CSS）。
+ * @param {import('../model/footer.js').Ring} ring
+ */
+function ringOf(ring) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const r = 5;
+  const c = 2 * Math.PI * r;
+  const f = Math.max(0, Math.min(1, ring.ratio ?? 0));
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('class', 'footer-ring');
+  svg.setAttribute('viewBox', '0 0 13 13');
+  svg.setAttribute('aria-hidden', 'true');
+  for (const [cls, dash] of [['footer-ring-track', null], ['footer-ring-fill', `${(c * f).toFixed(2)} ${c.toFixed(2)}`]]) {
+    const circle = document.createElementNS(NS, 'circle');
+    for (const [k, v] of Object.entries({ class: cls, cx: '6.5', cy: '6.5', r: String(r), fill: 'none', 'stroke-width': '2' })) circle.setAttribute(k, v);
+    if (dash) {
+      circle.setAttribute('stroke-dasharray', dash);
+      circle.setAttribute('stroke-linecap', f > 0 ? 'round' : 'butt');
+    }
+    svg.append(circle);
+  }
+  return svg;
 }
 
 /** 多宽：自己的 CSS 像素、不取整（`offsetWidth` 取整，缓完差不到一个像素也会跳一下）。 */

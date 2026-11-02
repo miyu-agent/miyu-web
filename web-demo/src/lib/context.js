@@ -113,3 +113,33 @@ export const inputOf = (u) => u.uncached + u.cache_read + u.cache_write;
 
 /** 几行的花费加起来：照币种各加各的，换算成的加在一起（`cost.js` 的 `addCosts`） @param {UseRow[]} rows */
 export const costOf = (rows) => addCosts(rows);
+
+/** 累计消耗、花费照 token 种类分的先后和颜色（2026-11-02 项目主人：缓存读、缓存写、输出、输入（未命中）） */
+export const KINDS = /** @type {[keyof Usage, string][]} */ ([['cache_read', 'accent'], ['cache_write', 't-thought'], ['output', 'gold'], ['uncached', 'ribbon']]);
+
+/** 几行的四项用量加起来 @param {any[]} rows @returns {Usage} */
+export function usageSum(rows) {
+  const u = { uncached: 0, cache_read: 0, cache_write: 0, output: 0 };
+  for (const r of rows ?? []) for (const [k] of KINDS) u[k] += r.usage?.[k] ?? 0;
+  return u;
+}
+
+/**
+ * 照种类分的几块（累计消耗那一段的四行，0 的不要），写法同上下文的块。
+ * @param {Usage} u @param {(kind: string) => string} label @returns {Part[]}
+ */
+export function kindParts(u, label) {
+  return KINDS.filter(([k]) => u[k] > 0).map(([k, tone]) => ({ part: `kind:${k}`, label: label(k), tokens: u[k], tone }));
+}
+
+/**
+ * 花费照种类分（核心 UP-1 的 `converted_parts`，和 `converted.currency` 同一个币种）：有的那几种照 `KINDS` 的先后，没有这一格的是 `null`。
+ * @param {any} usage 会话状态的 `usage_tree`、`usage`（同 `usage.query` 的一行） @returns {{kind: string, amount: number, currency: string}[]|null}
+ */
+export function costKinds(usage) {
+  const parts = usage?.converted_parts;
+  const currency = usage?.converted?.currency;
+  if (!parts || !currency) return null;
+  const got = KINDS.filter(([k]) => typeof parts[k] === 'number').map(([k]) => ({ kind: k, amount: parts[k], currency }));
+  return got.length ? got : null;
+}

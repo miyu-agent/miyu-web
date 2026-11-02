@@ -108,8 +108,6 @@
     "full": "开放权限",
     "read_only": "只读"
   },
-  "context": "{used}/{window}({percent}%)",
-  "total": "Σ{tokens}(C{percent}%)",
   "refused": "已拒绝：{message}",
   "prefix_ask": {"title": "检测到文件变动：", "text": "继续对话会因缓存失效支付额外输入费用，是否继续。", "compact": "压缩上下文并发送", "keep": "直接发送", "cancel": "取消", "more": "另 {n} 个"},
   "payload_busy": "附件上传中，请稍后发送",
@@ -482,14 +480,10 @@
     "empty": "没有暂存内容"
   },
   "context_pop": {
-    "tip_context": "上下文明细",
-    "tip_total": "累计按用途",
     "loading": "正在读…",
     "unsupported": "这个核心还不能看明细",
     "title": "上下文",
     "estimated": "估算",
-    "line": "到 {line} 自动压缩",
-    "usage_title": "本会话累计",
     "no_usage": "还没有用量",
     "with_subagents": "含子代理",
     "rates_from": "汇率来自 {name}",
@@ -603,5 +597,31 @@
   "gallery": {
     "no_send": "样张里发不出去",
     "command": "打开皮肤样张"
+  },
+  "usage_cell": {
+    "tip": "上下文 {used} / {window}（{percent}%）",
+    "tip_bare": "上下文 {used}",
+    "failed": "上下文压缩失败",
+    "over": "上下文超出窗口",
+    "compacting": "正在压缩上下文",
+    "compact": "压缩",
+    "line": "压缩线",
+    "compactions": "已压缩",
+    "cache_breaks": "缓存断裂",
+    "times": "{n} 次",
+    "why_failed": "自动压缩已暂停，压缩后才能继续。",
+    "why_over": "超出这个模型的窗口，压缩后才能继续。",
+    "tokens": "累计消耗",
+    "tokens_title": "累计消耗 {tokens}",
+    "hit": "缓存命中 {percent}%",
+    "by_use": "按用途",
+    "cost": "花费",
+    "no_price": "没有价格",
+    "kind": {
+      "cache_read": "缓存读",
+      "cache_write": "缓存写",
+      "output": "输出",
+      "uncached": "输入（未命中）"
+    }
   }
 }

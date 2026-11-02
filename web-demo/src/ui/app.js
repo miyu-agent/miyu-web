@@ -24,7 +24,7 @@ import { rank, startupSession } from '../model/session.js';
 import { ChatWidth } from './chat-width.js';
 import { SideColumn } from './side.js';
 import { SidebarWidth } from './sidebar-width.js';
-import { statusFooter, levelLabel, nextLevel, levelParams, previewPart } from '../model/footer.js';
+import { statusFooter, levelLabel, nextLevel, levelParams, previewRing } from '../model/footer.js';
 import { itemsOf, levelOf } from '../model/entries.js';
 import { compactingOf, lastTurn, turnEnded, untouchedTurnOf } from '../model/view-state.js';
 import { copy } from '../markdown/build.js';
@@ -216,6 +216,11 @@ export class App {
       preview: () => this.previewParams(),
       // 累计浮窗的「在用量页看」：用量页（软件包 `usage`）听这一声，开设置、弹这个会话的细则
       openUsage: (session) => this.ctx.emit('usage.show', { session }),
+      // 用量那一格卡住时的「压缩」：同 `/compact`（出错照斜杠命令的规矩写一句，蓝图「框下面那一行的数」的「用量那一格」）
+      compact: () => {
+        const spec = this.commands.list().find((x) => x.name === 'compact');
+        if (spec) runCommand(this, spec, null);
+      },
       // 换模型的菜单（蓝图「换模型的菜单」）：每次打开问一次 `model.list`；选了下一轮生效
       // 会话列表（`/sessions`，蓝图「会话列表」）：全部顶层会话照会话表；在不在跑、看没看过：读过日志的照日志，没读过的照会话表
       sessions: {
@@ -1165,12 +1170,10 @@ export class App {
       entries: s?.view.list ?? [], status: s?.view.status ?? null });
     // 排着的话（打断时有排着的不撤那一轮）
     this.queuedNow = view.queued ?? [];
-    const f = statusFooter(s?.view.status ?? null, s?.limits ?? {});
-    // 还没开的新会话：上下文那一格照核心的预览写（蓝图「上下文明细、累计按用途」第 1 条）
-    if (!this.current) {
-      const part = previewPart(this.loadPreview());
-      if (part) f.right = [...f.right.filter((p) => p.key !== 'context'), part];
-    }
+    // 条目一并交进去：认「上下文压缩失败」（蓝图「框下面那一行的数」的「用量那一格」）
+    const f = { ...statusFooter(s?.view.status ?? null, s?.limits ?? {}, s?.view.list ?? []), status: s?.view.status ?? null };
+    // 还没开的新会话：环照核心的预览画（蓝图「上下文明细、累计按用途」第 1 条）
+    if (!this.current) f.ring = previewRing(this.loadPreview()) ?? f.ring;
     // 框下面的模型（蓝图「换模型的菜单」第 1 条）：新会话、选过还没生效的、用着池的照引用写；别的照核心报的模型、端点
     const ref = this.modelRef();
     const picked = this.current ? this.picked.get(this.current) : null;

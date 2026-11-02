@@ -108,8 +108,6 @@
     "full": "Full access",
     "read_only": "Read-only"
   },
-  "context": "{used}/{window}({percent}%)",
-  "total": "Σ{tokens}(C{percent}%)",
   "refused": "Refused: {message}",
   "prefix_ask": {"title": "Files changed:", "text": "Continuing will invalidate the cache and cost extra input tokens. Continue?", "compact": "Compact and send", "keep": "Send anyway", "cancel": "Cancel", "more": "{n} more"},
   "payload_busy": "Attachments are uploading",
@@ -482,14 +480,10 @@
     "empty": "Nothing stashed"
   },
   "context_pop": {
-    "tip_context": "Context breakdown",
-    "tip_total": "Usage by purpose",
     "loading": "Loading…",
     "unsupported": "This core can't show a breakdown yet",
     "title": "Context",
     "estimated": "estimated",
-    "line": "Auto-compacts at {line}",
-    "usage_title": "This session so far",
     "no_usage": "No usage yet",
     "with_subagents": "Includes subagents",
     "rates_from": "Exchange rates by {name}",
@@ -603,5 +597,31 @@
   "gallery": {
     "no_send": "The gallery is read-only",
     "command": "Open the skin gallery"
+  },
+  "usage_cell": {
+    "tip": "Context {used} / {window} ({percent}%)",
+    "tip_bare": "Context {used}",
+    "failed": "Context compaction failed",
+    "over": "Context exceeds window",
+    "compacting": "Compacting context",
+    "compact": "Compact",
+    "line": "Compaction line",
+    "compactions": "Compacted",
+    "cache_breaks": "Cache breaks",
+    "times": "{n}×",
+    "why_failed": "Auto-compaction is paused; compact to continue.",
+    "why_over": "Larger than this model's window; compact to continue.",
+    "tokens": "Total usage",
+    "tokens_title": "Total usage {tokens}",
+    "hit": "Cache hit {percent}%",
+    "by_use": "By use",
+    "cost": "Cost",
+    "no_price": "No price",
+    "kind": {
+      "cache_read": "Cache read",
+      "cache_write": "Cache write",
+      "output": "Output",
+      "uncached": "Input (uncached)"
+    }
   }
 }

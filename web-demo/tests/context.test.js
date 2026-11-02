@@ -5,7 +5,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { scaledParts, bar, share, toneOf, useRows, partsMinus, costOf } from '../src/lib/context.js';
 import { costText } from '../src/lib/cost.js';
-import { previewPart } from '../src/model/footer.js';
 import { loadRes } from './support.js';
 
 loadRes();
@@ -80,13 +79,6 @@ test('用途归到一起时换算成的也加在一起，没换成的、没换�
   assert.deepEqual(rows[0].converted, { currency: 'CNY', amount: 7.1, rest: [{ currency: 'EUR', amount: 1 }] });
   assert.equal(rows[1].converted, undefined, '没换算的那一用途照旧只有 amounts');
   assert.equal(costText(costOf(rows)), '¥7.10 + €1.00 + $0.01', '合计：换算成的在前，没换成的照币种接在后面');
-});
-
-test('新会话的上下文那一格照预览写，写法同开了的；没有数的不写', () => {
-  assert.deepEqual(previewPart({ used: 3434, window: 1000000 }), { key: 'context', text: '3.4k/1M(0.3%)' });
-  assert.deepEqual(previewPart({ used: 3434 }), { key: 'context', text: '3.4k' });
-  assert.equal(previewPart({ used: 0 }), null);
-  assert.equal(previewPart(null), null);
 });
 
 test('子代理的各部分：连子代理的逐块减去主会话自己的，子项一样；减成 0、负的不要（2026-10-24 项目主人问子代理为什么没有明细）', () => {

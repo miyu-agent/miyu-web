@@ -3269,9 +3269,87 @@
     ]
   },
   "footer.cell": {
-    "zh": "框下面那一行：上下文、累计那两格（点了开明细）",
+    "zh": "框下面那一行：能点的那一格（用量那一格）",
     "select": [
       ".footer-cell"
+    ]
+  },
+  "footer.usage": {
+    "zh": "框下面那一行：用量那一格（环 · 累计 · 花费）",
+    "select": [
+      ".footer-usage"
+    ]
+  },
+  "footer.ring": {
+    "zh": "用量那一格的环（上下文占窗口多少）",
+    "select": [
+      ".footer-ring"
+    ]
+  },
+  "footer.ring-track": {
+    "zh": "用量那一格的环：底圈",
+    "select": [
+      ".footer-ring-track"
+    ]
+  },
+  "footer.ring-fill": {
+    "zh": "用量那一格的环：用掉的那一段",
+    "select": [
+      ".footer-ring-fill"
+    ]
+  },
+  "footer.compact": {
+    "zh": "卡住时的「压缩」按钮",
+    "select": [
+      ".footer-compact"
+    ]
+  },
+  "context.sec": {
+    "zh": "用量明细的一段（上下文、累计消耗、花费）",
+    "select": [
+      ".ctx-sec"
+    ]
+  },
+  "context.metas": {
+    "zh": "上下文那一段底下一直露着的几行",
+    "select": [
+      ".ctx-metas"
+    ]
+  },
+  "context.meta": {
+    "zh": "上下文那一段底下的一行（压缩线、已压缩、缓存断裂）",
+    "select": [
+      ".ctx-meta"
+    ]
+  },
+  "context.meta-k": {
+    "zh": "上下文那一段底下一行的名目",
+    "select": [
+      ".ctx-meta-k"
+    ]
+  },
+  "context.meta-v": {
+    "zh": "上下文那一段底下一行的数",
+    "select": [
+      ".ctx-meta-v"
+    ]
+  },
+  "context.sub": {
+    "zh": "累计消耗里「按用途」那一行暗字",
+    "select": [
+      ".ctx-sub"
+    ]
+  },
+  "context.pop-bad": {
+    "zh": "卡住时说为什么的红字",
+    "select": [
+      ".ctx-pop-bad"
+    ]
+  },
+  "context.pop-compact": {
+    "zh": "明细里的「压缩」按钮",
+    "select": [
+      ".ctx-pop-compact"
     ]
   },
   "context.pop": {
