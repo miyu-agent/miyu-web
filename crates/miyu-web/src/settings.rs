@@ -16,6 +16,9 @@ use miyu_client::places::DataRoot;
 /// 随 Miyu 一起装的网页包在资源目录里的文件夹（包编号 `miyu-webui`，这个仓库的 `miyu-webui/` 照原样放进去）：清单、常量、页面都在这里。
 pub const DIR: &str = "packages/miyu-webui";
 
+/// 网页包的编号：数据根里它自己的日志目录（`DataRoot::package_logs`）、状态目录照它分（设计 55，施工 FH-5上）。
+pub const PACKAGE: &str = "miyu-webui";
+
 /// 常量在网页包文件夹里的位置。
 pub const FILE: &str = "web.json";
 

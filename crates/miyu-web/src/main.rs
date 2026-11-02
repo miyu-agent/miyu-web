@@ -122,7 +122,7 @@ async fn serve(root: DataRoot, env: &Env, port: Option<u16>) -> u8 {
         .filter(|pages| !pages.is_empty())
         .map_or_else(|| web.join("pages"), PathBuf::from);
     let _log = miyu_client::log::install(
-        &root.state().join("logs"),
+        &root.package_logs(miyu_web::settings::PACKAGE),
         "web",
         miyu_client::log::LevelFilter::INFO,
         env.home.as_deref(),
