@@ -22,7 +22,8 @@
   },
   "inject": [
     "slots",
-    "packages"
+    "packages",
+    "skin~"
   ],
   "provides": {
     "services": [
