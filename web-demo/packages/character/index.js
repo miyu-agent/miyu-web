@@ -204,8 +204,10 @@ export function apply(ctx) {
       const items = [{ id: '', name: ctx.text('none') }];
       if (on !== null) items.push({ id: MIYU, name: ctx.text('miyu') });
       for (const e of ctx.slots.list('mascot.characters')) items.push({ id: e.id, name: typeof e.name === 'string' ? e.name : ctx.local?.(e.name) ?? e.id });
+      // 选着的那一只已经不在了（挂它的外观包卸了、停了）：照「无」写，不把编号原样露出来
       const id = ctx.config.character ?? '';
-      return { items, chosen: id || (on ? MIYU : '') };
+      const want = id || (on ? MIYU : '');
+      return { items, chosen: items.some((x) => x.id === want) ? want : '' };
     },
     /** 换一只：记进设置项；Miyu 启用 `mascot` 包，别的停用它 @param {string} id */
     choose: async (id) => {
