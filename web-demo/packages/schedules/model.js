@@ -281,3 +281,64 @@ export function dateLabel(date, now, t) {
   const day = new Date(y, m - 1, d).getDay();
   return t('pick.date', { month: m, day: d, weekday: t(`pick.weekdays.${day}`) });
 }
+
+/**
+ * 右侧栏卡片一行右边一直写的时间（2026-11-02 项目主人：「没有时间」）：有下一次的照 `nextShort`，没定下一次的写什么时候（「每 10 分钟」、
+ * 她自己定节奏的「由 AI 定」），都没有的空。纯的。
+ * @param {Schedule} s @param {Date} now @param {Text} t
+ */
+export function rowTime(s, now, t) {
+  const next = nextShort(s, now, t);
+  if (next) return next;
+  if (s.loop === 'dynamic') return t('when.dynamic');
+  const w = s.when ?? {};
+  return typeof w.every === 'number' ? everyText(w.every, t) : '';
+}
+
+/**
+ * 修改那一张照一项填（详情的「修改」，2026-11-02）：cron 是「分 时 * * *」的填成每天、别的 cron 填自定义；`every` 照整除的最大单位（天、小时、分钟）；
+ * `at` 填一次（本地的日期、时刻）。纯的。
+ * @param {Schedule} s @returns {WhenForm}
+ */
+export function formOf(s) {
+  const w = s.when ?? {};
+  if (typeof w.cron === 'string') {
+    const m = /^(\d{1,2}) (\d{1,2}) \* \* \*$/.exec(w.cron.trim().split(/\s+/).join(' '));
+    if (m && Number(m[1]) < 60 && Number(m[2]) < 24) return { kind: 'daily', time: `${m[2].padStart(2, '0')}:${m[1].padStart(2, '0')}` };
+    return { kind: 'cron', cron: w.cron.trim() };
+  }
+  if (typeof w.every === 'number') {
+    const unit = w.every % UNIT.days === 0 ? 'days' : w.every % UNIT.hours === 0 ? 'hours' : 'minutes';
+    return { kind: 'every', n: String(+(w.every / UNIT[unit]).toFixed(2)), unit };
+  }
+  if (typeof w.at === 'string') {
+    const d = new Date(w.at);
+    if (!Number.isNaN(d.getTime())) return { kind: 'once', at: `${ymd(d)}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` };
+  }
+  return { kind: 'daily', time: '08:00' };
+}
+
+/**
+ * 修改时「什么时候」能选哪几种（核心 J-5 不让循环换种类）：固定间隔的循环只有每隔，她自己定节奏的一种都没有（只改说什么），别的四种都行。
+ * @param {Schedule} s @returns {WhenForm['kind'][]}
+ */
+export function editKinds(s) {
+  if (s.loop === 'dynamic') return [];
+  if (s.loop) return ['every'];
+  return ['daily', 'every', 'once', 'cron'];
+}
+
+/**
+ * 保存交给核心的：只写改了的那几格（`when` 照整份比）；一样都没改的是 `null`。纯的。
+ * @param {Schedule} s @param {string} prompt @param {any} when 表上算出来的（`whenOf` 的 `when`；不改什么时候的是 `null`）
+ * @returns {{id: string, prompt?: string, when?: any}|null}
+ */
+export function updateOf(s, prompt, when) {
+  const same = (/** @type {any} */ a, /** @type {any} */ b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+  const pick = (/** @type {any} */ w) => (w ? Object.fromEntries(Object.entries(w).filter(([k]) => ['cron', 'recurring', 'zone', 'every', 'at'].includes(k))) : null);
+  /** @type {{id: string, prompt?: string, when?: any}} */
+  const out = { id: s.id };
+  if (prompt !== s.prompt) out.prompt = prompt;
+  if (when && !same(pick(when), pick(s.when))) out.when = when;
+  return 'prompt' in out || 'when' in out ? out : null;
+}

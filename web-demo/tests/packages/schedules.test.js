@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { sorted, cronText, everyText, dayText, whenText, whereText, nextText, metaText, skipText, cardText, whenOf, fieldOf, applyChange, onSession } from '../../packages/schedules/model.js';
+import { sorted, cronText, everyText, dayText, whenText, whereText, nextText, metaText, skipText, cardText, whenOf, fieldOf, applyChange, onSession, rowTime, formOf, editKinds, updateOf } from '../../packages/schedules/model.js';
 
 const manifest = JSON.parse(readFileSync(new URL('../../packages/schedules/manifest.json', import.meta.url), 'utf8'));
 /** 照包里的字填（没有的交回键本身，同 `ctx.text`） @param {'zh'|'en'|'ja'} lang */
@@ -177,4 +177,31 @@ test('停、续当场换样子，核心拒了换回去（2026-10-27 项目主人
   answer({ schedule: { id: 't1', paused: true } });
   await q;
   assert.equal(store.list[0].paused, true);
+});
+
+test('卡片一行右边一直写的时间（2026-11-02 项目主人：「没有时间」）：有下一次的照下次，没定下一次的写什么时候，停着的写已暂停', () => {
+  assert.equal(rowTime({ id: 't1', prompt: 'x', when: { every: 600 }, next: local([2026, 10, 27, 10, 31]).toISOString() }, now, t), '10:31');
+  assert.equal(rowTime({ id: 't2', prompt: 'x', when: { every: 600 }, loop: 'fixed' }, now, t), everyText(600, t), '固定间隔还没定下一次：写每隔多久');
+  assert.equal(rowTime({ id: 't3', prompt: 'x', when: { every: 60 }, loop: 'dynamic' }, now, t), t('when.dynamic'), '她自己定节奏：由 AI 定');
+  assert.equal(rowTime({ id: 't4', prompt: 'x', when: { every: 600 }, paused: true }, now, t), t('paused'));
+});
+
+test('修改照一项填：每天的 cron 填每天、别的 cron 填自定义、every 照整除的最大单位、at 填本地的日期时刻', () => {
+  assert.deepEqual(formOf({ id: 't1', prompt: 'x', when: { cron: '5 8 * * *', recurring: true } }), { kind: 'daily', time: '08:05' });
+  assert.deepEqual(formOf({ id: 't1', prompt: 'x', when: { cron: '0 8 * * 1-5', recurring: true } }), { kind: 'cron', cron: '0 8 * * 1-5' });
+  assert.deepEqual(formOf({ id: 't1', prompt: 'x', when: { every: 7200 } }), { kind: 'every', n: '2', unit: 'hours' });
+  assert.deepEqual(formOf({ id: 't1', prompt: 'x', when: { every: 172800 } }), { kind: 'every', n: '2', unit: 'days' });
+  assert.deepEqual(formOf({ id: 't1', prompt: 'x', when: { every: 600 } }), { kind: 'every', n: '10', unit: 'minutes' });
+  assert.deepEqual(formOf({ id: 't1', prompt: 'x', when: { at: local([2026, 10, 28, 8, 0]).toISOString() } }), { kind: 'once', at: '2026-10-28T08:00' });
+});
+
+test('修改时能选哪几种（核心 J-5 不让循环换种类）；保存只发改了的，一样都没改的是 null', () => {
+  assert.deepEqual(editKinds({ id: 't1', prompt: 'x', when: { every: 600 } }), ['daily', 'every', 'once', 'cron']);
+  assert.deepEqual(editKinds({ id: 't1', prompt: 'x', when: { every: 600 }, loop: 'fixed' }), ['every']);
+  assert.deepEqual(editKinds({ id: 't1', prompt: 'x', when: { every: 60 }, loop: 'dynamic' }), []);
+  const s = { id: 't1', prompt: '看看 CI', when: { every: 600 } };
+  assert.equal(updateOf(s, '看看 CI', null), null);
+  assert.equal(updateOf(s, '看看 CI', { every: 600 }), null, '时间算出来一样：不发');
+  assert.deepEqual(updateOf(s, '看看 CI', { every: 120 }), { id: 't1', when: { every: 120 } });
+  assert.deepEqual(updateOf(s, '看看部署', null), { id: 't1', prompt: '看看部署' });
 });

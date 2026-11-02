@@ -112,6 +112,36 @@
       ".brand-custom"
     ]
   },
+  "schedules.detail-prompt": {
+    "zh": "定时任务详情：头一行那句话",
+    "select": [
+      ".sch-detail-prompt"
+    ]
+  },
+  "schedules.detail-row": {
+    "zh": "定时任务详情：名目、值那一行",
+    "select": [
+      ".sch-detail-row"
+    ]
+  },
+  "schedules.detail-k": {
+    "zh": "定时任务详情：名目",
+    "select": [
+      ".sch-detail-k"
+    ]
+  },
+  "schedules.detail-v": {
+    "zh": "定时任务详情：值",
+    "select": [
+      ".sch-detail-v"
+    ]
+  },
+  "schedules.detail-remove": {
+    "zh": "定时任务详情：删除按钮（点一下变「确认删除」）",
+    "select": [
+      ".sch-detail-remove"
+    ]
+  },
   "composer.bar": {
     "zh": "框里最下面那一排（工具、发送按钮）",
     "select": [

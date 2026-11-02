@@ -6,6 +6,7 @@
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { metaText, skipText } from './model.js';
 import { openForm } from './form.js';
+import { openDetail } from './detail.js';
 
 export class SchedulesPage {
   /** @param {any} ctx `schedules` 包的 ctx @param {import('./store.js').ScheduleStore} store */
@@ -85,7 +86,12 @@ export class SchedulesPage {
       } }, icon('trash-2'));
       const fresh = this.fresh === s.id;
       return h(`div.set-row.sch-row${s.paused ? '.is-paused' : ''}${fresh ? '.is-fresh' : ''}`, { dataset: { id: s.id } },
-        h('div.set-text',
+        // 点名字那一块开详情（同右侧栏卡片，2026-11-02）：看全部、改时间和那句话
+        h('div.set-text.sch-open', {
+          role: 'button', tabindex: '0',
+          onclick: () => openDetail(this.ctx, this.store, s.id, { kit, title: (id) => this.title(id), toast: (text) => kit.toast(text) }),
+          onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(this.ctx, this.store, s.id, { kit, title: (id) => this.title(id), toast: (text) => kit.toast(text) }); } },
+        },
           h('div.set-name', h('span.sch-prompt', { title: s.prompt }, s.prompt), s.by?.kind === 'model' ? h('span.sch-tag', t('ai_made')) : null),
           h('p.set-desc', metaText(s, now, (id) => this.title(id), t)),
           skip ? h('p.set-desc.sch-skip', skip) : null),

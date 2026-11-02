@@ -67,5 +67,15 @@
 .sch-work-reset { flex: none; width: 26px; height: 26px; }
 .sch-card-next { display: inline-flex; flex: none; align-items: center; gap: 3px; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .sch-card-next .icon { width: 11px; height: 11px; }
-.sch-card-row:hover .sch-card-next, .sch-card-row:focus-within .sch-card-next { display: none; }
-@media (hover: none) { .sch-card-next { display: none; } }
+/* 时间一直写着（2026-11-02 项目主人：「没有时间」，原来悬停时换成按钮、触屏上不写），按钮接在后面 */
+.sch-card-row .sch-card-act { margin-left: 2px; }
+/* 详情（detail.js）：名目在左、值在右 */
+.sch-detail-prompt { margin: 0 0 calc(10px * var(--space)); color: var(--text); white-space: pre-wrap; word-break: break-word; }
+.sch-detail-row { display: flex; gap: calc(12px * var(--space)); padding: calc(4px * var(--space)) 0; font-size: calc(13px * var(--text-scale)); }
+.sch-detail-k { flex: none; width: 5.5em; color: var(--text-faint); }
+.sch-detail-v { flex: 1; min-width: 0; color: var(--text-soft); word-break: break-word; }
+.sch-detail-foot .set-btn { display: inline-flex; align-items: center; gap: 6px; }
+.sch-detail-foot .set-btn .icon { width: 14px; height: 14px; }
+.sch-detail-remove.is-armed { color: var(--t-error); }
+.sch-open { cursor: pointer; }
+.sch-open:hover .sch-prompt { text-decoration: underline; text-underline-offset: 3px; }

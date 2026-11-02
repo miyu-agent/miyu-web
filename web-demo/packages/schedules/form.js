@@ -2,23 +2,27 @@
 //! 新建定时任务的浮窗（蓝图 `web.md`「定时任务」第 1 条）：同 MCP「添加服务」那一个（设置框正中一张卡、后面一层淡遮罩，点遮罩、`Esc`、
 //! 「取消」收起，进出同它的动画；挂在 `document.body` 上，设置页重画时不冲掉写了一半的字）。说什么；什么时候（每天 | 每隔 | 一次 | 自定义）；
 //! 在哪跑（每次新开会话：人格、预设、工作目录 | 跑在会话）。「新建」发 `schedule.add`，拒了照 `data.problem` 写在那一格下面。
+//! 修改（详情的「修改」，2026-11-02）用同一张：照那一项填好，不出「在哪跑」，循环只给能改的那几种，「保存」发 `schedule.update`，只写改了的。
 
 import { h, icon } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
-import { whenOf, fieldOf, localZone, ymd } from './model.js';
+import { whenOf, fieldOf, localZone, ymd, formOf, editKinds, updateOf } from './model.js';
 import { clockField, dateField } from './pickers.js';
 import { tilde } from '../../src/lib/format.js';
 
 /**
  * 开浮窗。`session` 是从右侧栏卡片点进来的那个会话（「跑在会话」默认选它），别的是 `null`。
  * @param {any} ctx `schedules` 包的 ctx @param {any} kit 设置页交来的控件 @param {import('./store.js').ScheduleStore} store
- * @param {{session: string|null, done: (id: string) => void}} opts
+ * @param {{session: string|null, done: (id: string) => void, edit?: import('./model.js').Schedule}} opts `edit` 是要改的那一项（修改）
  */
 export function openForm(ctx, kit, store, opts) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => ctx.text(key, fields);
   document.querySelector('.sch-modal')?.remove();
+  const edit = opts.edit ?? null;
+  /** 修改：照那一项填的表（`formOf`），「什么时候」没动过就不发 `when` */
+  const start = edit ? formOf(edit) : null;
   /** @type {'daily'|'every'|'once'|'cron'} */
-  let kind = 'daily';
+  let kind = start?.kind ?? 'daily';
   /** @type {'new'|'session'} */
   let where = opts.session ? 'session' : 'new';
   /** 人格：`undefined` 照默认（不写），`null` 无人格 @type {string|null|undefined} */
@@ -26,7 +30,7 @@ export function openForm(ctx, kit, store, opts) {
   /** @type {string|undefined} */
   let preset;
   /** @type {'minutes'|'hours'|'days'} */
-  let unit = 'hours';
+  let unit = start?.kind === 'every' ? start.unit : 'hours';
   const sessions = (ctx.sessions?.index?.all?.() ?? []).filter((/** @type {any} */ e) => !e.parent && !e.oneshot && e.kind !== 'dream');
   let session = opts.session ?? sessions[0]?.session ?? null;
   const titleOf = (/** @type {string} */ id) => ctx.chat?.title?.(id) ?? sessions.find((/** @type {any} */ e) => e.session === id)?.title ?? id;
@@ -34,14 +38,15 @@ export function openForm(ctx, kit, store, opts) {
   const input = (/** @type {string} */ type, /** @type {string} */ value, /** @type {string} */ hint, /** @type {string} */ extra = '') => /** @type {HTMLInputElement} */ (h(`input.set-input.set-tool-input${extra}`,
     { type, value, placeholder: hint || null, spellcheck: 'false', autocomplete: 'off' }));
   const prompt = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.set-tool-area', { rows: 3, placeholder: t('form.prompt_hint'), spellcheck: 'false' }));
-  const time = clockField(t, '08:00');
-  const n = input('text', '1', '');
+  const time = clockField(t, start?.kind === 'daily' ? start.time : '08:00');
+  const n = input('text', start?.kind === 'every' ? start.n : '1', '');
   n.inputMode = 'numeric';
   // 一次：默认一个小时以后的整点（过了今天的落到明天）
   const soon = new Date(Date.now() + 3600_000);
-  const onceDate = dateField(t, ymd(soon));
-  const onceTime = clockField(t, `${String(soon.getHours()).padStart(2, '0')}:00`);
-  const cron = input('text', '', '0 8 * * 1-5', '.is-mono');
+  const onceAt = start?.kind === 'once' ? start.at.split('T') : null;
+  const onceDate = dateField(t, onceAt ? onceAt[0] : ymd(soon));
+  const onceTime = clockField(t, onceAt ? onceAt[1] : `${String(soon.getHours()).padStart(2, '0')}:00`);
+  const cron = input('text', start?.kind === 'cron' ? start.cron : '', '0 8 * * 1-5', '.is-mono');
   // 工作目录（2026-10-27 项目主人：空着是家目录不对；同项目设置，不让手写路径）：默认「默认工作区」，点了开系统的选目录对话框，
   // 开不了的（页面开在别的机器上）退回能写路径的框；建的时候默认工作区也照它的路径写（核心不写 `cwd` 是家目录）
   const home = () => ctx.chat?.home?.() ?? null;
@@ -84,7 +89,9 @@ export function openForm(ctx, kit, store, opts) {
     paint();
     return { el: h('div.set-seg.set-tool-kinds', buttons), paint };
   };
-  const kinds = seg(['daily', 'every', 'once', 'cron'], () => kind, (k) => { kind = k; drawKind(); });
+  // 修改循环：只给能改的那几种（核心 J-5 不让循环换种类）；她自己定节奏的一种都没有，「什么时候」整格不出
+  const kindKeys = edit ? editKinds(edit) : ['daily', 'every', 'once', 'cron'];
+  const kinds = seg(kindKeys, () => kind, (k) => { kind = k; drawKind(); });
   const wheres = seg(['where_new', 'where_session'], () => (where === 'new' ? 'where_new' : 'where_session'), (k) => { where = k === 'where_new' ? 'new' : 'session'; drawWhere(); });
 
   const units = choose(kit, ['minutes', 'hours', 'days'].map((u) => ({ value: u, name: t(`form.unit.${u}`) })), unit, (/** @type {any} */ v) => { unit = v; });
@@ -116,15 +123,54 @@ export function openForm(ctx, kit, store, opts) {
   const newRows = h('div.set-tool-group', row(t('form.persona'), personaBox, errs.persona), row(t('form.preset'), presetBox, errs.preset), row(t('form.cwd'), workBox));
   const sessionRows = h('div.set-tool-group', row(t('form.session'), sessionBox));
   const drawKind = () => {
-    for (const [k, el] of Object.entries(whenRows)) el.hidden = k !== kind;
+    for (const [k, el] of Object.entries(whenRows)) el.hidden = k !== kind || !kindKeys.length;
     errs.when.hidden = true;
   };
   const drawWhere = () => {
-    newRows.hidden = where !== 'new';
-    sessionRows.hidden = where !== 'session';
+    newRows.hidden = !!edit || where !== 'new';
+    sessionRows.hidden = !!edit || where !== 'session';
     errs.target.hidden = true;
   };
 
+  const formNow = () => (kind === 'daily' ? { kind, time: time.value() } : kind === 'every' ? { kind, n: n.value, unit } : kind === 'once' ? { kind, at: `${onceDate.value()}T${onceTime.value()}` } : { kind, cron: cron.value });
+  /**
+   * 修改的「保存」：「什么时候」动过的（和照那一项填的不一样）才算 `when`，只发改了的；一样都没改的直接收起。旧核心不认 `schedule.update` 的
+   * 底下写一句，记在 store 上（详情里的「修改」从此灰着）。
+   * @param {string} text @param {any} form
+   */
+  const save = async (text, form) => {
+    const e = /** @type {import('./model.js').Schedule} */ (edit);
+    let when = null;
+    if (kindKeys.length && JSON.stringify(form) !== JSON.stringify(start)) {
+      const got = whenOf(/** @type {any} */ (form), new Date(), localZone());
+      if ('problem' in got) {
+        say(errs.when, t(`bad.${got.problem}`));
+        return;
+      }
+      when = got.when;
+    }
+    const params = updateOf(e, text, when);
+    if (!params) return close();
+    create.disabled = true;
+    create.textContent = t('form.saving');
+    try {
+      await store.act('schedule.update', params);
+      close();
+      opts.done(e.id);
+    } catch (err) {
+      create.disabled = false;
+      create.textContent = t('form.save');
+      const x = /** @type {any} */ (err);
+      if (x?.code === -32601 || x?.data?.reason === 'unknown_method' || x?.reason === 'unknown_method') {
+        store.noUpdate = true;
+        say(bottom, t('form.no_update'));
+        return;
+      }
+      const f = fieldOf(err);
+      if (f.field && f.key) say(/** @type {any} */ (errs)[f.field], t(f.key));
+      else say(bottom, x?.message ?? String(err));
+    }
+  };
   const create = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'button', onclick: async () => {
     clear();
     const text = prompt.value.trim();
@@ -133,7 +179,8 @@ export function openForm(ctx, kit, store, opts) {
       prompt.focus();
       return;
     }
-    const form = kind === 'daily' ? { kind, time: time.value() } : kind === 'every' ? { kind, n: n.value, unit } : kind === 'once' ? { kind, at: `${onceDate.value()}T${onceTime.value()}` } : { kind, cron: cron.value };
+    const form = formNow();
+    if (edit) return save(text, form);
     const got = whenOf(/** @type {any} */ (form), new Date(), localZone());
     if ('problem' in got) {
       say(errs.when, t(`bad.${got.problem}`));
@@ -158,16 +205,19 @@ export function openForm(ctx, kit, store, opts) {
       if (f.field && f.key) say(/** @type {any} */ (errs)[f.field], t(f.key));
       else say(bottom, /** @type {any} */ (err)?.message ?? String(err));
     }
-  } }, t('form.create')));
+  } }, t(edit ? 'form.save' : 'form.create')));
 
-  const pop = h('div.set-tool-pop.sch-pop', { role: 'dialog', 'aria-modal': 'true', 'aria-label': t('form.title') },
-    h('div.set-tool-pop-head', h('strong', t('form.title')),
+  const title = t(edit ? 'form.edit_title' : 'form.title');
+  const whenField = h('div.set-tool-field', { hidden: !kindKeys.length }, h('span.set-tool-label', t('form.when')), h('div.sch-cell', kinds.el));
+  const whereField = h('div.set-tool-field', { hidden: !!edit }, h('span.set-tool-label', t('form.where')), h('div.sch-cell', wheres.el));
+  const pop = h('div.set-tool-pop.sch-pop', { role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
+    h('div.set-tool-pop-head', h('strong', title),
       h('button.icon-button', { type: 'button', title: t('form.close'), 'aria-label': t('form.close'), onclick: () => close() }, icon('x'))),
     row(t('form.prompt'), prompt, errs.prompt),
-    h('div.set-tool-field', h('span.set-tool-label', t('form.when')), h('div.sch-cell', kinds.el)),
+    whenField,
     ...Object.values(whenRows),
     h('div.sch-err-row', errs.when),
-    h('div.set-tool-field', h('span.set-tool-label', t('form.where')), h('div.sch-cell', wheres.el)),
+    whereField,
     newRows, sessionRows,
     h('div.sch-err-row', errs.target),
     bottom,
@@ -176,6 +226,7 @@ export function openForm(ctx, kit, store, opts) {
   const modal = h('div.set-tool-modal.sch-modal', { 'data-set-dismiss': '1', onclick: (/** @type {Event} */ e) => { if (e.target === e.currentTarget && !prompt.value.trim()) close(); } }, pop);
   const close = () => { if (modal.isConnected && !modal.classList.contains('is-leaving')) leave(modal, () => modal.remove()); };
   modal.addEventListener('set-dismiss', close);
+  if (edit) prompt.value = edit.prompt ?? '';
   drawKind();
   drawWhere();
   // 挂在设置框上（`Esc` 照设置框的规矩先发给它）；没有设置框的挂到页面上

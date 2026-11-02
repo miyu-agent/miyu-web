@@ -132,7 +132,11 @@
         "close": "关闭",
         "cwd_default": "默认工作区",
         "cwd_path": "工作目录的路径",
-        "cwd_pick": "选工作目录"
+        "cwd_pick": "选工作目录",
+        "edit_title": "修改定时任务",
+        "save": "保存",
+        "saving": "正在保存…",
+        "no_update": "这一版核心还不能改"
       },
       "bad": {
         "prompt": "写上要说的话",
@@ -174,6 +178,24 @@
           "4": "四",
           "5": "五",
           "6": "六"
+        }
+      },
+      "detail": {
+        "title": "定时任务",
+        "when": "什么时候",
+        "next": "下次",
+        "last": "上次",
+        "where": "在哪跑",
+        "by": "谁建的",
+        "by_person": "你",
+        "by_model": "AI",
+        "by_package": "软件包 {id}",
+        "edit": "修改",
+        "remove_sure": "确认删除",
+        "result": {
+          "ran": "跑了",
+          "queued": "排着（会话正在跑一轮）",
+          "sent": "交给了建它的软件包"
         }
       }
     },
@@ -281,7 +303,11 @@
         "close": "Close",
         "cwd_default": "Default workspace",
         "cwd_path": "Path of the working folder",
-        "cwd_pick": "Choose a working folder"
+        "cwd_pick": "Choose a working folder",
+        "edit_title": "Edit scheduled task",
+        "save": "Save",
+        "saving": "Saving…",
+        "no_update": "This core version cannot edit tasks yet"
       },
       "bad": {
         "prompt": "Write what to say",
@@ -323,6 +349,24 @@
           "4": "Th",
           "5": "Fr",
           "6": "Sa"
+        }
+      },
+      "detail": {
+        "title": "Scheduled task",
+        "when": "When",
+        "next": "Next",
+        "last": "Last",
+        "where": "Runs in",
+        "by": "Created by",
+        "by_person": "You",
+        "by_model": "AI",
+        "by_package": "Package {id}",
+        "edit": "Edit",
+        "remove_sure": "Confirm delete",
+        "result": {
+          "ran": "Ran",
+          "queued": "Queued (session was busy)",
+          "sent": "Sent to its package"
         }
       }
     },
@@ -430,7 +474,11 @@
         "close": "閉じる",
         "cwd_default": "既定のワークスペース",
         "cwd_path": "作業フォルダのパス",
-        "cwd_pick": "作業フォルダを選ぶ"
+        "cwd_pick": "作業フォルダを選ぶ",
+        "edit_title": "定期タスクを編集",
+        "save": "保存",
+        "saving": "保存中…",
+        "no_update": "このバージョンのコアはまだ編集できません"
       },
       "bad": {
         "prompt": "送る内容を入力してください",
@@ -472,6 +520,24 @@
           "4": "木",
           "5": "金",
           "6": "土"
+        }
+      },
+      "detail": {
+        "title": "定期タスク",
+        "when": "いつ",
+        "next": "次回",
+        "last": "前回",
+        "where": "実行先",
+        "by": "作成者",
+        "by_person": "あなた",
+        "by_model": "AI",
+        "by_package": "パッケージ {id}",
+        "edit": "編集",
+        "remove_sure": "削除を確認",
+        "result": {
+          "ran": "実行した",
+          "queued": "待機中（セッションが実行中）",
+          "sent": "作成したパッケージに渡した"
         }
       }
     }

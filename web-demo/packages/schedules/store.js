@@ -12,6 +12,8 @@ export class ScheduleStore {
     this.list = [];
     /** 核心有没有 `schedule.*`：还没问过是 `null` @type {boolean|null} */
     this.supported = null;
+    /** 核心不认 `schedule.update`（保存时回 `unknown_method` 以后记下）：详情里的「修改」灰着 */
+    this.noUpdate = false;
     /** @type {Set<() => void>} */
     this.listeners = new Set();
     /** 在用的几处 */
@@ -100,7 +102,7 @@ export class ScheduleStore {
 
   /**
    * 停、续、删、建：成了照回应换进列表（推送再来一遍也一样）；拒了抛出来。
-   * @param {'schedule.pause'|'schedule.resume'|'schedule.cancel'|'schedule.add'} method @param {any} params
+   * @param {'schedule.pause'|'schedule.resume'|'schedule.cancel'|'schedule.add'|'schedule.update'} method @param {any} params
    */
   async act(method, params) {
     // 停、续当场换样子（2026-10-27 项目主人：开启和停止延迟很高——盘忙时核心等落盘才回），核心回了照它的换，拒了换回去
