@@ -200,10 +200,11 @@ flowchart TB
 
 | 包 | 种类 | 要（`inject`） | 提供的服务 | 声明的挂载位 | 挂进 | 设置项 |
 |---|---|---|---|---|---|---|
-| `theme-default` | 可选 | `slots` | — | — | `theme.palettes`（「默认」，浅色晨光、深色 tokyonight） | 每个颜色一项，`light_`、`dark_` 打头（live） |
-| `theme` | 基础 | `slots`、`packages` | `theme` | `theme.palettes`（list） | — | `palette`、`scheme`（live） |
+| `theme-default` | 可选 | `slots` | — | — | `theme.palettes`（「默认」，浅色晨光、深色 tokyonight；`hidden`：兜底，不出卡片） | 每个颜色一项，`light_`、`dark_` 打头（live） |
+| `theme` | 基础 | `slots`、`packages` | `theme` | `theme.palettes`（list） | — | `palette`、`default_palette`（出厂 `auto`）、`scheme`（live） |
 | `skin` | 基础 | `slots`、`theme~` | `skin` | `skin.packs`（list） | — | `pack`（live，空着的是出厂） |
 | `skin-pixel` | 可选 | `slots` | — | — | `skin.packs`（「像素风」；字随包带着） | — |
+| `theme-auto` | 可选 | `slots`、`theme~` | — | — | `theme.palettes`（「自动」：这一刻跟随人格交得出颜色的照它，不然跟随壁纸，都没有的交 `null`；`seeds()`、`source()` 照这时用的那一套） | — |
 | `theme-persona` | 可选 | `slots`、`personas~` | — | — | `theme.palettes`（「跟随人格」；带 `seeds()`，选了经 `personas.setSeed` 存人格的主题色） | `veil`（live） |
 | `theme-wallpaper` | 可选 | `slots`、`host`、`packages` | — | — | `theme.palettes`（「跟随壁纸」，读不到不挂；是图的带 `seeds()`，设置页画「主色」） | `seed`（live，主色，空着的用第一个） |
 | `app` | 基础 | `core`、`sessions`、`host`、`page`、`slots`、`packages`、`lightbox~`、`theme~` | `chat`、`markdown`、`commands`、`composer` | `stage.right`、`stage.info`（list）、`markdown.code`（keyed）、`composer.above`、`composer.bar`、`composer.head`、`composer.payload`、`composer.footer`、`composer.float`（list） | — | 还在 `resources/layout.json` 等处，拆出去的包带走自己的 |

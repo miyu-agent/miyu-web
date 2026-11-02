@@ -30,9 +30,9 @@
     },
     "default_palette": {
       "type": "text",
-      "default": "persona",
+      "default": "auto",
       "name": {
-        "zh": "没选配色方案时用哪个（编号；出厂跟随人格，没有这个配色方案的用第一个）"
+        "zh": "没选配色方案时用哪个（编号；出厂是自动：人格有主色的跟随人格，没有的跟随壁纸，没有这个配色方案的用第一个）"
       },
       "applies": "live",
       "advanced": true

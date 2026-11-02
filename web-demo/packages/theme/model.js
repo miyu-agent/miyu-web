@@ -6,7 +6,8 @@
 
 /**
  * @typedef {{page: Record<string, string>, tui: Record<string, string>}} Colors
- * @typedef {{id: string, name?: string, order?: number, render: (scheme: 'light'|'dark') => (Colors|null)}} Palette
+ * @typedef {{id: string, name?: string, order?: number, hidden?: boolean, render: (scheme: 'light'|'dark') => (Colors|null)}} Palette
+ * `hidden`：不出卡片、设置项选不到，只当兜底（默认那一套，2026-11-02 项目主人：有了自动之后就不需要默认了）。
  */
 
 /**
@@ -20,11 +21,21 @@ export const schemeOf = (setting, system) => (setting === 'light' || setting ===
  * @param {Palette[]} all @param {string|null|undefined} wanted
  */
 /**
- * 用哪个主题：人选过的（设置项 `palette`）照它；没选、选的没了的照 `fallback`（出厂是跟随人格，2026-10-20 项目主人：默认配色跟随人格，没有人格的
- * 那一套自己退回默认的颜色）；那个也没有（停用了跟随人格）的用第一个。
+ * 用哪个主题：人选过的（设置项 `palette`）照它；没选、选的没了的照 `fallback`（出厂是自动，2026-11-02 项目主人：人格有主色的跟随人格，没有的
+ * 跟随壁纸，都没有的自己退回默认的颜色；原来 10-20 起是跟随人格）；那个也没有（停用了自动）的用第一个。
  * @param {Palette[]} all @param {string|null|undefined} wanted @param {string|null|undefined} [fallback]
  */
-export const chosenOf = (all, wanted, fallback = null) => all.find((p) => p.id === wanted) ?? all.find((p) => p.id === fallback) ?? all[0] ?? null;
+export const chosenOf = (all, wanted, fallback = null) => {
+  const pick = (/** @type {string|null|undefined} */ id) => all.find((p) => p.id === id && !p.hidden);
+  return pick(wanted) ?? pick(fallback) ?? all[0] ?? null;
+};
+
+/**
+ * 出卡片的那几套（设置页、引导）：不带 `hidden` 的、这一刻交得出颜色的（人格没头像、没自选主色的没有「跟随人格」，2026-11-02 项目主人）；
+ * 正选着的那一套照旧出（不然一张都没勾）。
+ * @param {Palette[]} all @param {string|null|undefined} chosen @param {'light'|'dark'} scheme
+ */
+export const choicesOf = (all, chosen, scheme) => all.filter((p) => !p.hidden && (p.id === chosen || !!p.render(scheme)));
 
 /**
  * 一个主题这时的颜色：交不出的用第一个主题的那一份；都交不出的是 `null`。

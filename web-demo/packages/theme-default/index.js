@@ -1,5 +1,6 @@
 // @ts-check
 //! 主题「默认」（软件包 `theme-default`，蓝图 `web.md`「主题」）：浅色是晨光，深色是 tokyonight，挂进主题包声明的 `theme.palettes`。
+//! 2026-11-02 起只兜底（`hidden`）：不出卡片、设置项选不到，自动什么都借不到、别的交不出颜色时用它（项目主人：有了自动之后就不需要默认了）。
 //! 颜色都是这个包的设置项（清单里的出厂值是原来 `theme-morning`、`theme-tokyonight` 的），都是 live 的，能单改、当场生效：浅色的
 //! `light_`、深色的 `dark_` 打头；再往下 `t_` 打头的是终端那一组（`--t-名字`），别的是页面那一组（`--名字`）。
 
@@ -20,7 +21,7 @@ export function apply(ctx) {
     }
     return { page, tui };
   };
-  const mount = () => ctx.slots.mount('theme.palettes', { id: 'default', name: ctx.text('name'), order: 0, render: split });
+  const mount = () => ctx.slots.mount('theme.palettes', { id: 'default', name: ctx.text('name'), order: 0, hidden: true, render: split });
   let undo = mount();
   // 单改了一个颜色：先挂新的再拿掉原来的，主题包当场重画
   ctx.watchConfig(() => {

@@ -3,6 +3,7 @@
   "packages": [
     { "id": "theme-default" },
     { "id": "theme" },
+    { "id": "theme-auto" },
     { "id": "theme-persona" },
     { "id": "theme-wallpaper" },
     { "id": "skin" },

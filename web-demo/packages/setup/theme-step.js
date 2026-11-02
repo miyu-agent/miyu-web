@@ -12,6 +12,8 @@ import { personaName } from './model.js';
 
 /** 「跟随人格」那一套主题的编号（软件包 `theme-persona` 挂进 `theme.palettes` 的） */
 const PERSONA_PALETTE = 'persona';
+/** 「自动」那一套（软件包 `theme-auto`，出厂）：这一刻借跟随人格或跟随壁纸，`source()` 交借的是哪一套 */
+const AUTO_PALETTE = 'auto';
 
 export class ThemeStep {
   /**
@@ -40,6 +42,8 @@ export class ThemeStep {
     /** 有没有「跟随人格」这一套（停用了 `theme-persona` 的没有，不画配色） */
     this.persona = false;
     this.scheme = 'auto';
+    /** 「主色」那一行画的时候「自动」借的是哪一套（换了头像、主色以后借的变了才整张重画） @type {string|null} */
+    this.shownSource = null;
     this.look = new Appearance(ctx, kit, catalog, id, {
       saved: () => this.refresh(),
       say: (text) => this.say(text),
@@ -47,7 +51,7 @@ export class ThemeStep {
     });
   }
 
-  /** 读这个人格的外观、网页的主题设置；主题还是默认的先换成「跟随人格」（配色才看得到）。 */
+  /** 读这个人格的外观、网页的主题设置；没选过配色方案的停在出厂的那一套（自动），不写设置项。 */
   async load() {
     await this.catalog.load();
     try {
@@ -60,10 +64,10 @@ export class ThemeStep {
     const theme = await this.ctx.packages.settings('theme').catch(() => null);
     this.scheme = theme?.values?.scheme ?? 'auto';
     this.persona = this.ctx.slots.list('theme.palettes').some((/** @type {any} */ p) => p.id === PERSONA_PALETTE);
-    if (this.persona && !theme?.values?.palette) await this.ctx.packages.set('theme', { config: { palette: PERSONA_PALETTE } }).catch(() => {});
     const list = this.ctx.slots.list('theme.palettes');
-    const want = this.persona && !theme?.values?.palette ? PERSONA_PALETTE : theme?.values?.palette;
-    this.palette = list.some((/** @type {any} */ p) => p.id === want) ? want : list[0]?.id ?? '';
+    const has = (/** @type {string|undefined} */ id) => !!id && list.some((/** @type {any} */ p) => p.id === id && !p.hidden);
+    const want = [theme?.values?.palette, theme?.values?.default_palette].find(has);
+    this.palette = want ?? list.find((/** @type {any} */ p) => !p.hidden)?.id ?? '';
     this.relook();
   }
 
@@ -122,9 +126,12 @@ export class ThemeStep {
     }));
   }
 
-  /** 「配色方案」：一套一块（上面一小块照这一套的颜色画的样子，下面名字），点了当场换；换到、换走跟随头像时「主色」那一行跟着出、收。 */
+  /**
+   * 「配色方案」：一套一块（上面一小块照这一套的颜色画的样子，下面名字），点了当场换；换到、换走跟随头像时「主色」那一行跟着出、收。
+   * 出哪几块照服务 `theme` 的 `choices()`（默认不出、人格没颜色的没有跟随人格，2026-11-02 项目主人），没有主题服务的照挂着的、去掉 hidden 的。
+   */
   paintPalettes() {
-    const list = this.ctx.slots.list('theme.palettes');
+    const list = this.ctx.theme?.choices?.() ?? this.ctx.slots.list('theme.palettes').filter((/** @type {any} */ p) => !p.hidden);
     const scheme = this.scheme === 'light' || this.scheme === 'dark' ? this.scheme : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     replace(this.paletteBox, list.map((/** @type {any} */ p) => {
       const colors = (typeof p.render === 'function' ? p.render(scheme) : null)?.page ?? {};
@@ -135,10 +142,21 @@ export class ThemeStep {
     }));
   }
 
-  /** 「主色」那一行：跟随人格的是这个人格的那一排（头像取的、能自选）；别的照那一套给的候选色（跟随壁纸照壁纸取的）；没有候选的（默认）不画。 */
+  /** 「自动」这一刻借的是哪一套（`theme-auto` 的 `source()`）；选的不是自动的就是选的那一套。 */
+  source() {
+    if (this.palette !== AUTO_PALETTE) return this.palette;
+    const auto = this.ctx.slots.list('theme.palettes').find((/** @type {any} */ p) => p.id === AUTO_PALETTE);
+    return typeof auto?.source === 'function' ? auto.source() : null;
+  }
+
+  /**
+   * 「主色」那一行：跟随人格的（选着自动、这时借的是跟随人格的也算）是这个人格的那一排（头像取的、能自选）；别的照那一套给的候选色（跟随壁纸
+   * 照壁纸取的，自动借壁纸的交的是壁纸的）；没有候选的（默认、自动什么都借不到）不画。
+   */
   mainColor() {
     const t = this.t;
-    if (this.persona && this.palette === PERSONA_PALETTE) return field(t('welcome.colors'), this.look.seedBox);
+    this.shownSource = this.source();
+    if (this.persona && this.shownSource === PERSONA_PALETTE) return field(t('welcome.colors'), this.look.seedBox);
     const palette = this.ctx.slots.list('theme.palettes').find((/** @type {any} */ p) => p.id === this.palette);
     const seeds = typeof palette?.seeds === 'function' ? palette.seeds() : null;
     if (!seeds?.colors?.length) return null;
@@ -162,16 +180,25 @@ export class ThemeStep {
     this.palette = id;
     await this.ctx.packages.set('theme', { config: { palette: id } }).catch((/** @type {any} */ err) => this.say(err?.message ?? String(err)));
     // 「主色」那一行跟着出、收：整张表重画
-    // 先记下摆着的那张：screen() 会把几格挪进新的一张、换掉 this.body
-    const old = this.body;
-    old.replaceWith(this.screen().body);
+    this.redraw();
     this.relook();
   }
 
-  /** 外观存了一样：重读人格列表（头像、配色的版本），整页照新的样子画。 */
+  /**
+   * 外观存了一样：重读人格列表（头像、配色的版本），整页照新的样子画。人格的颜色变了，配色卡片的小样跟着重画；选着自动、借的那一套变了
+   * （头一回有了头像，从壁纸换成人格）的「主色」那一行也换：整张表重画。
+   */
   async refresh() {
     await this.catalog.load();
     this.relook();
+    if (this.source() !== this.shownSource) this.redraw();
+    else this.paintPalettes();
+  }
+
+  /** 整张表重画（「主色」那一行跟着出、收、换）：先记下摆着的那张，screen() 会把几格挪进新的一张、换掉 this.body。 */
+  redraw() {
+    const old = this.body;
+    old.replaceWith(this.screen().body);
   }
 
   /** @param {string} text */

@@ -1,6 +1,6 @@
 // @ts-check
-//! 主题（软件包 `theme`，蓝图 `web.md`「主题」）：声明 `theme.palettes`，一个个主题由主题包（`theme-default`、`theme-persona`、
-//! `theme-wallpaper`）挂进来，每个都是成对的一套（浅色、深色各一份，`model.js`）。照设置项 `palette` 选哪个主题（空着的是第一个）、
+//! 主题（软件包 `theme`，蓝图 `web.md`「主题」）：声明 `theme.palettes`，一个个主题由主题包（`theme-default`、`theme-auto`、
+//! `theme-persona`、`theme-wallpaper`）挂进来，每个都是成对的一套（浅色、深色各一份，`model.js`）。照设置项 `palette` 选哪个主题（空着的是第一个）、
 //! `scheme` 选浅深（`auto` 跟随系统，`light`、`dark`），把那一份颜色写成页面的 CSS 变量：页面那一组是 `--名字`，终端那一组是
 //! `--t-名字`，名字里的 `_` 换成 `-`。
 //!
@@ -9,7 +9,7 @@
 //! 写着的一样的不重写、不发事件。
 
 import { retheme } from '../../src/lib/retheme.js';
-import { chosenOf, colorsOf as colorsIn, schemeOf } from './model.js';
+import { chosenOf, choicesOf, colorsOf as colorsIn, schemeOf } from './model.js';
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -75,6 +75,8 @@ export function apply(ctx) {
     dark: () => scheme() === 'dark',
     /** 一个主题这时实际的颜色（`{page, tui}`；都交不出的是 `null`） */
     colorsOf,
+    /** 出卡片的那几套（设置页、引导）：不带 `hidden`、这一刻交得出颜色的，正用着的照旧在 */
+    choices: () => choicesOf(palettes(), chosen()?.id, scheme()),
     /** 切浅深（左栏的按钮）：「明暗」成了定的另一边，记进个人那一层 */
     toggle: () => ctx.packages.set('theme', { config: { scheme: scheme() === 'dark' ? 'light' : 'dark' } }),
   });

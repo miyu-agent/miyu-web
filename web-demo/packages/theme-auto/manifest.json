@@ -1,0 +1,33 @@
+{
+  "id": "theme-auto",
+  "version": "0.1.0",
+  "name": {
+    "zh": "自动配色",
+    "en": "Automatic colors",
+    "ja": "自動配色"
+  },
+  "summary": {
+    "zh": "配色方案「自动」：人格有头像或主色的跟随人格，没有的跟随壁纸，都没有的用默认",
+    "en": "The \"Automatic\" color scheme: follows the persona when it has an avatar or main color, else the wallpaper, else the default",
+    "ja": "配色「自動」：人格にアイコンかメインカラーがあれば人格に、なければ壁紙に合わせ、どちらもなければデフォルト"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "一个配色方案，颜色借「跟随人格」「跟随壁纸」两套：这个会话的人格有主色（头像取的、自选的）的照人格，没有的照桌面壁纸，壁纸也读不到的用默认配色。出厂用的就是它。"
+  },
+  "text": {
+    "zh": {
+      "name": "自动"
+    },
+    "en": {
+      "name": "Automatic"
+    },
+    "ja": {
+      "name": "自動"
+    }
+  },
+  "inject": [
+    "slots",
+    "theme~"
+  ]
+}

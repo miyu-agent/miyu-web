@@ -33,7 +33,8 @@
     "packages",
     "settings~",
     "memory~",
-    "skin~"
+    "skin~",
+    "theme~"
   ],
   "settings": {
     "avatar_side": {

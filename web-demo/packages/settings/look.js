@@ -25,7 +25,8 @@ export function drawLook(dialog) {
   const ctx = dialog.ctx;
   const fill = async (/** @type {HTMLElement} */ el) => {
     const theme = await ctx.packages.settings('theme');
-    const palettes = ctx.slots.list('theme.palettes');
+    // 出卡片的那几套（不带 hidden 的默认、这时交不出颜色的跟随人格不出，2026-11-02 项目主人）；没有主题服务的照挂着的、去掉 hidden 的
+    const palettes = ctx.theme?.choices?.() ?? ctx.slots.list('theme.palettes').filter((p) => !p.hidden);
     // 照主题包这时实际用的（没选的跟随人格，2026-10-20 项目主人）；点了哪一张就记哪一张，「默认」也记下来，不再跟人格
     const chosen = ctx.theme?.current?.()?.id ?? (palettes.some((p) => p.id === theme.values.palette) ? theme.values.palette : palettes[0]?.id);
     const set = async (config) => {
