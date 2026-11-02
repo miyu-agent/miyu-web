@@ -1,6 +1,6 @@
 // @ts-check
 //! 她的回答的 Markdown：入口（蓝图 `web.md`「她的回答：Markdown」，照旧版 `app.js:4949-5083`、`8092-8099`）。
-//! 原文 → 块（`parse.js`，在收的先补齐：`stream.js`）→ DOM（`build.js`），整个换进容器。
+//! 原文 → 块（`parse.js`，在收的先补齐：`stream.js`）→ DOM（`build.js`），换进容器：开头没变的块留着原来的节点（`patch.js`，W-1075）。
 //!
 //! 每来一段字整段重画：页面一帧最多画一次（`ui/app.js` 的 `schedule`），回答的节点字变了就换（`ui/chat.js`）。
 //! 以后加的东西从扩展点接进来（[`Hooks`]），这里和解析不用改。
@@ -8,6 +8,7 @@
 import { parse } from './parse.js';
 import { liveBlocks } from './stream.js';
 import { build } from './build.js';
+import { patch } from './patch.js';
 
 /**
  * 扩展点：以后加的东西接在这里，都可以不给。
@@ -25,7 +26,7 @@ import { build } from './build.js';
  */
 
 /**
- * 把一条回答画进容器（换掉里面原来的）。
+ * 把一条回答画进容器（换掉里面原来的；开头没变的块留着原来的节点，拖着选字时选区不被打断）。
  * @param {HTMLElement} container 回答的节点（`.markdown-body`）
  * @param {string} source 原文
  * @param {{streaming?: boolean, hooks?: Hooks, say?: (text: string, good?: boolean) => void}} [options]
@@ -34,6 +35,6 @@ import { build } from './build.js';
 export function renderMarkdown(container, source, { streaming = false, hooks = {}, say } = {}) {
   const options = { line: hooks.line };
   const blocks = streaming ? liveBlocks(source, options) : parse(source, options);
-  container.replaceChildren(build(blocks, { hooks, say }));
+  patch(container, build(blocks, { hooks, say }));
   hooks.after?.(container);
 }

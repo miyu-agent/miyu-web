@@ -62,10 +62,10 @@ export class StepView {
       this.counted = -1;
       this.row = h('button.tl-row', { type: 'button', onclick: toggle },
         this.node, this.name, this.time, this.count, h('span.tl-peek-dot', t('timeline.peek_sep')), this.peek, h('span.tl-chevron', icon('chevron-right')));
-      // 在想时滚着的那几行：和那一行一样能点（2026-09-30 项目主人：原来只能点那一行）
-      this.window = h('div.tl-window', { onclick: toggle });
+      // 在想时滚着的那几行：和那一行一样能点（2026-09-30 项目主人：原来只能点那一行）；照按下、松开算（`tap`）
+      this.window = tap(h('div.tl-window'), toggle);
       // 点开的全文也整块能点：点了收起（选着字的时候不收，`guard`），悬停亮一档（2026-09-30 项目主人定）
-      this.body = h('div.tl-thought-body', { onclick: toggle });
+      this.body = tap(h('div.tl-thought-body'), toggle);
       // 全文放在和工具细节同一种收放的壳里：点开、收起都有动画
       this.el = h(`div.tl-step.is-thought${fresh ? '.is-new' : ''}`, this.row, this.window, h('div.tl-fold', h('div.tl-fold-inner', this.body)));
     } else {
@@ -443,6 +443,27 @@ export function guard(fn) {
     e.stopPropagation();
     fn();
   };
+}
+
+/**
+ * 点一下（蓝图「思考的预览」，W-1075）：主键按下、松开都在 `el` 里，中间挪得不超过 `tap_px` 才算，交给 `fn`（拖着选字的照 `guard`
+ * 不算）。不用 `click`：在想时每来一段字重画，按下的那个节点松开前就被换掉，浏览器不发 `click`，点了时开时不开（2026-11-03 项目主人）。
+ * 浏览器照常发的 `click` 不往上传：外面那一段不跟着收放。
+ * @param {HTMLElement} el @param {(e: Event) => void} fn @returns {HTMLElement}
+ */
+function tap(el, fn) {
+  /** @type {{x: number, y: number, id: number}|null} */
+  let down = null;
+  el.addEventListener('pointerdown', (e) => {
+    down = e.button === 0 ? { x: e.clientX, y: e.clientY, id: e.pointerId } : null;
+  });
+  el.addEventListener('pointerup', (e) => {
+    const d = down;
+    down = null;
+    if (d && e.pointerId === d.id && Math.hypot(e.clientX - d.x, e.clientY - d.y) <= res.timeline.tap_px) fn(e);
+  });
+  el.addEventListener('click', (e) => e.stopPropagation());
+  return el;
 }
 
 /** 字变了才写（流式的参数一个字一个字来，别每一下都动 DOM）。 */
