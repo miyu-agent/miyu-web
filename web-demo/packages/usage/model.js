@@ -273,3 +273,17 @@ export function splitModel(model) {
   const i = String(model).indexOf('/');
   return i < 0 ? { provider: '', name: String(model) } : { provider: model.slice(0, i), name: model.slice(i + 1) };
 }
+
+/**
+ * 柱子悬停浮块放哪（蓝图「用量页」第 3 条）：平常浮在图的上方、对着竖线居中（左右不出图）；上方放不下的（设置框滚到图贴着滚动区的上沿，
+ * 2026-11-02 项目主人截图：上半截被盖住）放进图里，顶贴着图的上沿、在竖线右边，右边放不下放左边。`room`、`need` 量屏幕像素（上方还剩多少、
+ * 浮块连空隙要多高），`mid`、`tipW`、`width` 是图里的 CSS 像素（竖线的横坐标、浮块宽、图宽）。
+ * @param {{room: number, need: number, mid: number, tipW: number, width: number, gap?: number}} at
+ * @returns {{left: number, inside: boolean}}
+ */
+export function tipPlace({ room, need, mid, tipW, width, gap = 12 }) {
+  const inside = room < need;
+  if (!inside) return { left: Math.max(0, Math.min(width - tipW, mid - tipW / 2)), inside };
+  const left = mid + gap + tipW <= width ? mid + gap : mid - gap - tipW;
+  return { left: Math.max(0, left), inside };
+}

@@ -6,7 +6,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { short, hitRate, hhmm } from '../../src/lib/format.js';
-import { input, total, sum, amountText, costText, costParts, uniqueRates, rateName, offsetOf, spanOf, spanParams, daysBetween, dayKey, hours, hourBars, dayBars, allBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, venueOf, splitModel } from './model.js';
+import { input, total, sum, amountText, costText, costParts, uniqueRates, rateName, offsetOf, spanOf, spanParams, daysBetween, dayKey, hours, hourBars, dayBars, allBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, venueOf, splitModel, tipPlace } from './model.js';
 
 /** 分组表先列几行 */
 const FIRST = 10;
@@ -351,10 +351,16 @@ export class UsagePage {
         cursor.setAttribute('visibility', 'visible');
         replace(tip, ...this.tipLines(b));
         tip.hidden = false;
-        // 照这一根在第几个算位置（整页放大以后量屏幕像素会偏）
+        // 横的照这一根在第几个算（整页放大以后量屏幕像素会偏）；竖的比上方还剩多少，都量屏幕像素，放大了也对得上
         const width = box.clientWidth;
         const mid = ((x + bw / 2) / W) * width;
-        tip.style.left = `${Math.min(Math.max(0, width - tip.offsetWidth), Math.max(0, mid - tip.offsetWidth / 2))}px`;
+        const rect = box.getBoundingClientRect();
+        const scale = width ? rect.width / width : 1;
+        const place = tipPlace({ room: rect.top - clipTop(box), need: tip.offsetHeight * scale + 8 * scale, mid, tipW: tip.offsetWidth, width });
+        tip.style.left = `${place.left}px`;
+        // 放进图里：顶贴着图的上沿（样式表里平常是 top: -8px 再往上挪一整块）
+        tip.style.top = place.inside ? '0' : '';
+        tip.style.transform = place.inside ? 'none' : '';
       });
     });
     svg.append(cursor);
@@ -600,4 +606,15 @@ function el(tag, attrs, kid) {
   for (const [k, v] of Object.entries(attrs)) if (v !== null && v !== undefined) node.setAttribute(k, String(v));
   if (kid !== undefined) node.textContent = kid;
   return node;
+}
+
+/**
+ * 往上数第一个会裁掉里面东西的（滚动区：设置框的内容那一栏）的上沿，屏幕像素；都不裁的是窗口的上沿 0。
+ * @param {Element} node
+ */
+function clipTop(node) {
+  for (let p = node.parentElement; p; p = p.parentElement) {
+    if (getComputedStyle(p).overflowY !== 'visible') return p.getBoundingClientRect().top;
+  }
+  return 0;
 }

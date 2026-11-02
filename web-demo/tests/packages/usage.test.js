@@ -4,7 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { input, total, sum, money, amountText, offsetOf, spanOf, spanParams, parseDay, daysBetween, midnight, hours, hourBars, dayBars, allBars, monthBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, venueOf, splitModel, dayKey } from '../../packages/usage/model.js';
+import { input, total, sum, money, amountText, offsetOf, spanOf, spanParams, parseDay, daysBetween, midnight, hours, hourBars, dayBars, allBars, monthBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, venueOf, splitModel, dayKey, tipPlace } from '../../packages/usage/model.js';
 
 const t = (/** @type {string} */ key, /** @type {any} */ f = {}) => `${key}${Object.keys(f).length ? JSON.stringify(f) : ''}`;
 const row = (/** @type {any} */ extra = {}) => ({ requests: 1, usage: { uncached: 10, cache_read: 90, cache_write: 0, output: 5 }, amounts: [], unpriced: 0, ...extra });
@@ -174,4 +174,13 @@ test('用途、场所、模型写成什么', () => {
   assert.deepEqual(splitModel('deepseek/deepseek-flash'), { provider: 'deepseek', name: 'deepseek-flash' });
   assert.deepEqual(splitModel('openrouter/z-ai/glm-5'), { provider: 'openrouter', name: 'z-ai/glm-5' });
   assert.deepEqual(splitModel('solo'), { provider: '', name: 'solo' });
+});
+
+test('柱子悬停浮块放哪：上方放得下浮在上面、对着竖线居中不出图；放不下放进图里，竖线右边放不下放左边', () => {
+  assert.deepEqual(tipPlace({ room: 300, need: 180, mid: 400, tipW: 200, width: 700 }), { left: 300, inside: false });
+  assert.deepEqual(tipPlace({ room: 300, need: 180, mid: 650, tipW: 200, width: 700 }), { left: 500, inside: false }, '靠右的不出图');
+  assert.deepEqual(tipPlace({ room: 300, need: 180, mid: 40, tipW: 200, width: 700 }), { left: 0, inside: false }, '靠左的不出图');
+  assert.deepEqual(tipPlace({ room: 60, need: 180, mid: 200, tipW: 200, width: 700 }), { left: 212, inside: true }, '上方被滚动区的上沿挡着：放进图里、竖线右边');
+  assert.deepEqual(tipPlace({ room: 60, need: 180, mid: 600, tipW: 200, width: 700 }), { left: 388, inside: true }, '右边放不下：放左边');
+  assert.deepEqual(tipPlace({ room: 60, need: 180, mid: 150, tipW: 200, width: 300 }), { left: 0, inside: true }, '两边都放不下：贴着左边');
 });
