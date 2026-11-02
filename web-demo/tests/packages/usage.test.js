@@ -4,7 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { input, total, sum, money, amountText, offsetOf, spanOf, spanParams, parseDay, daysBetween, midnight, hours, hourBars, dayBars, allBars, monthBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, venueOf, splitModel, dayKey, tipPlace } from '../../packages/usage/model.js';
+import { input, total, sum, money, amountText, offsetOf, spanOf, spanParams, parseDay, daysBetween, midnight, hours, hourBars, dayBars, allBars, monthBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, venueOf, splitModel, dayKey, tipPlace, foldVenues, mergeBy } from '../../packages/usage/model.js';
 
 const t = (/** @type {string} */ key, /** @type {any} */ f = {}) => `${key}${Object.keys(f).length ? JSON.stringify(f) : ''}`;
 const row = (/** @type {any} */ extra = {}) => ({ requests: 1, usage: { uncached: 10, cache_read: 90, cache_write: 0, output: 5 }, amounts: [], unpriced: 0, ...extra });
@@ -183,4 +183,18 @@ test('柱子悬停浮块放哪：上方放得下浮在上面、对着竖线居�
   assert.deepEqual(tipPlace({ room: 60, need: 180, mid: 200, tipW: 200, width: 700 }), { left: 212, inside: true }, '上方被滚动区的上沿挡着：放进图里、竖线右边');
   assert.deepEqual(tipPlace({ room: 60, need: 180, mid: 600, tipW: 200, width: 700 }), { left: 388, inside: true }, '右边放不下：放左边');
   assert.deepEqual(tipPlace({ room: 60, need: 180, mid: 150, tipW: 200, width: 300 }), { left: 0, inside: true }, '两边都放不下：贴着左边');
+});
+
+test('按会话：场所里的会话同一个场所并成一行（2026-11-02 项目主人：QQ 群刷屏），本机的、会话表里有的照旧；细则拆开时照那一样加起来', () => {
+  const row = (/** @type {string} */ session, /** @type {string} */ venue, /** @type {number} */ n, extra = {}) => ({ session, venue, requests: n, usage: { uncached: n, cache_read: 10 * n, cache_write: 0, output: n }, amounts: [], unpriced: 0, ...extra });
+  const rows = [row('a', 'local', 5), row('q1', 'qq:group:1', 1), row('q2', 'qq:group:1', 2), row('p1', 'qq:private:9', 1), row('gone', 'local', 3)];
+  const folded = foldVenues(rows, (id) => id === 'a');
+  assert.deepEqual(folded.map((r) => r.session), ['a', 'gone', 'venue:qq:group:1', 'venue:qq:private:9'], '本机删掉的会话不并');
+  const group = folded.find((r) => r.session === 'venue:qq:group:1');
+  assert.equal(group?.requests, 3);
+  assert.equal(group?.usage.cache_read, 30);
+  assert.deepEqual(group?.sessions, ['q1', 'q2']);
+  assert.equal(group?.venue, 'qq:group:1');
+  const parts = mergeBy([{ ...row('q1', '', 1), model: 'x' }, { ...row('q2', '', 2), model: 'x' }, { ...row('q2', '', 4), model: 'y' }], 'model');
+  assert.deepEqual(parts.map((r) => [r.model, r.requests]), [['x', 3], ['y', 4]]);
 });

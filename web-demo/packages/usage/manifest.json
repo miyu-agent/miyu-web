@@ -119,6 +119,7 @@
       "subagent": "子代理",
       "oneshot": "一次性",
       "venue_session": "场所会话",
+      "venue_sessions": "场所会话 · {n} 个",
       "venue": {
         "local": "本机",
         "qq_group": "QQ 群 {id}",
@@ -237,6 +238,7 @@
       "subagent": "subagent",
       "oneshot": "one-off",
       "venue_session": "venue session",
+      "venue_sessions": "venue sessions · {n}",
       "venue": {
         "local": "This computer",
         "qq_group": "QQ group {id}",
@@ -355,6 +357,7 @@
       "subagent": "サブエージェント",
       "oneshot": "単発",
       "venue_session": "場所のセッション",
+      "venue_sessions": "場所のセッション · {n} 件",
       "venue": {
         "local": "このコンピューター",
         "qq_group": "QQ グループ {id}",

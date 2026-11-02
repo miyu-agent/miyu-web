@@ -6,7 +6,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { short, hitRate, hhmm } from '../../src/lib/format.js';
-import { input, total, sum, amountText, costText, costParts, uniqueRates, rateName, offsetOf, spanOf, spanParams, daysBetween, dayKey, hours, hourBars, dayBars, allBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, venueOf, splitModel, tipPlace } from './model.js';
+import { input, total, sum, amountText, costText, costParts, uniqueRates, rateName, offsetOf, spanOf, spanParams, daysBetween, dayKey, hours, hourBars, dayBars, allBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, venueOf, splitModel, tipPlace, foldVenues, mergeBy } from './model.js';
 
 /** 分组表先列几行 */
 const FIRST = 10;
@@ -407,7 +407,7 @@ export class UsagePage {
     const block = h('div.use-block', tabs);
     if (!d) return block;
     const order = d.total.amounts.map((a) => a.currency);
-    const rows = sorted(d.rows.filter((r) => r.requests > 0), this.sort, this.group, order, (r) => this.nameText(r));
+    const rows = sorted(this.rows().filter((r) => r.requests > 0), this.sort, this.group, order, (r) => this.nameText(r));
     if (!rows.length) {
       block.append(h('p.use-empty', this.t('empty.range')));
       return block;
@@ -460,6 +460,12 @@ export class UsagePage {
     return block;
   }
 
+  /** 这张表的行：按会话的把同一个场所里的会话并成一行（`foldVenues`），别的照问来的 @returns {Row[]} */
+  rows() {
+    const rows = this.data?.rows ?? [];
+    return this.group === 'session' ? foldVenues(rows, (id) => this.sessions.has(id)) : rows;
+  }
+
   /** 细则的小窗：名字，四项 token、花费，照另一样拆开；本机能打开的会话一个「打开会话」 @param {Row} r */
   detail(r) {
     const u = r.usage;
@@ -487,7 +493,9 @@ export class UsagePage {
         parts.push(h('div.use-split', head, h('span.use-faint', this.t('loading'))));
         continue;
       }
-      const mine = sorted(got.filter((x) => x[this.group] === value && x.requests > 0), { by: 'tokens', desc: true }, sub);
+      // 并成一行的场所会话：拆开时把那几个会话的照这一样加在一起
+      const own = r.sessions ? mergeBy(got.filter((x) => r.sessions.includes(x.session)), sub) : got.filter((x) => x[this.group] === value);
+      const mine = sorted(own.filter((x) => x.requests > 0), { by: 'tokens', desc: true }, sub);
       parts.push(h('div.use-split', head, mine.map((x) => h('div.use-split-row',
         h('span.use-split-name', this.subName(sub, x[sub])),
         h('span.num', this.t('times', { n: x.requests.toLocaleString() })),
@@ -570,7 +578,7 @@ export class UsagePage {
     if (this.group === 'venue') return h('div.use-name-line', h('span', text));
     // 会话：场所里的（QQ 群这类）会话表不列，写场所
     const s = this.sessions.get(v);
-    if (!s && r.venue && r.venue !== 'local') return h('div.use-name-line', h('span', text), h('span.use-sub', this.t('venue_session')));
+    if (!s && r.venue && r.venue !== 'local') return h('div.use-name-line', h('span', text), h('span.use-sub', r.sessions ? this.t('venue_sessions', { n: r.sessions.length.toLocaleString() }) : this.t('venue_session')));
     if (!s) return h('div.use-name-line', h('span.use-faint', text));
     return h('div.use-name-line', h('span', text), s.parent ? h('span.use-sub', this.t('subagent')) : s.oneshot ? h('span.use-sub', this.t('oneshot')) : null);
   }

@@ -287,3 +287,42 @@ export function tipPlace({ room, need, mid, tipW, width, gap = 12 }) {
   const left = mid + gap + tipW <= width ? mid + gap : mid - gap - tipW;
   return { left: Math.max(0, left), inside };
 }
+
+/**
+ * 按会话那一张表里，场所里的会话（会话表不列、`venue` 不是 `local` 的）同一个场所并成一行（蓝图「用量页」第 4 条，2026-11-02 项目主人：
+ * QQ 群一段一个会话刷屏）：数照 `sum` 加起来，`session` 写成 `venue:<场所>`（细则照它找回这一行），`sessions` 记并进来的那几个。别的行照旧。
+ * @param {Row[]} rows `group: ["session", "venue"]` 的行 @param {(session: string) => boolean} listed 会话表里有没有
+ * @returns {Row[]}
+ */
+export function foldVenues(rows, listed) {
+  /** @type {Map<string, Row[]>} */
+  const by = new Map();
+  const out = [];
+  for (const r of rows) {
+    const away = typeof r.session === 'string' && !listed(r.session) && r.venue && r.venue !== 'local';
+    if (!away) {
+      out.push(r);
+      continue;
+    }
+    const list = by.get(r.venue) ?? [];
+    if (!list.length) by.set(r.venue, list);
+    list.push(r);
+  }
+  for (const [venue, list] of by) out.push({ ...sum(list), session: `venue:${venue}`, venue, sessions: list.map((r) => r.session) });
+  return out;
+}
+
+/**
+ * 几行照 `key` 那一格并起来（细则里并成一行的场所会话照模型、用途拆开时用），先后照头一次出现的。
+ * @param {Row[]} rows @param {string} key @returns {Row[]}
+ */
+export function mergeBy(rows, key) {
+  /** @type {Map<any, Row[]>} */
+  const by = new Map();
+  for (const r of rows) {
+    const list = by.get(r[key]) ?? [];
+    if (!list.length) by.set(r[key], list);
+    list.push(r);
+  }
+  return [...by].map(([v, list]) => ({ ...sum(list), [key]: v }));
+}
