@@ -27,7 +27,18 @@ export async function lanState(ctx) {
 }
 
 /**
- * 点「下一步」做什么（纯的）：`done` 到完成；`close` 先关上这一屏开的再到完成（开好以后回去改选了「不开放」）；`ask` 先设访问密码（没设过的；
+ * 网页软件这时听的地址是不是对局域网开着（纯的）：本机回环（`127.0.0.1`、`::1`、`localhost`、`127.` 打头的）不算；问不到的不算。
+ * @param {string|null|undefined} listen
+ */
+export function lanOpen(listen) {
+  if (typeof listen !== 'string' || !listen) return false;
+  const a = listen.replace(/^\[|\]$/g, '');
+  return !(a === '::1' || a === 'localhost' || a.startsWith('127.'));
+}
+
+/**
+ * 点「下一步」做什么（纯的）：`done` 到完成；`close` 先关上再到完成（选了「不开放」、这时却开着：这一屏开过又改选的，或者刷新回到这一屏、
+ * 以前在设置里开过的）；`ask` 先设访问密码（没设过的；
  * 旧核心不说设没设的 `null` 不问，同设置页不出那一行）；`set` 设好密码再开；`open` 直接开；`null` 还没选。
  * @param {'choose'|'password'|'shown'} phase @param {'open'|'closed'|null} chosen @param {boolean|null} passwordSet @param {boolean} opened
  * @returns {'done'|'close'|'ask'|'set'|'open'|null}
@@ -42,7 +53,7 @@ export function lanAction(phase, chosen, passwordSet, opened) {
 
 /**
  * 「在别的设备上用」一屏：先选（`choose`），选了「开放」点下一步，没设过密码的到设密码那一格（`password`），开好了画地址（`shown`）。
- * 「上一步」在后两段回到选的那一段；开好以后回去改选「不开放」的，把这一次开的关上。
+ * 「上一步」在后两段回到选的那一段；选「不开放」时这时开着的（这一屏开过又改选的、刷新回来的、以前在设置里开过的）关上。
  * @param {import('./guide.js').Guide} g
  */
 export function lanScreen(g) {
@@ -52,8 +63,9 @@ export function lanScreen(g) {
   let chosen = null;
   /** @type {'choose'|'password'|'shown'} */
   let phase = 'choose';
-  /** 这一屏开过局域网：回去改选「不开放」时关上 */
+  /** 这时对局域网开着（进这一屏先问一次，这一屏开、关跟着改）：选「不开放」时关上 */
   let opened = false;
+  host.listen.get?.().then((got) => { if (lanOpen(got?.listen)) opened = true; }, () => {});
   const list = h('div.wl-langs');
   const body = h('div.wl-lan', list);
   const draw = () => replace(list, ['open', 'closed'].map((v) => h(`button.wl-lang${v === chosen ? '.is-on' : ''}`, { type: 'button', onclick: () => { chosen = /** @type {'open'|'closed'} */ (v); draw(); g.sync(); } },
@@ -93,7 +105,7 @@ export function lanScreen(g) {
     g.sync();
     return null;
   };
-  /** 关上这一屏开的（回去改选了「不开放」） */
+  /** 关上（选了「不开放」、这时却开着） */
   const close = async () => {
     await core.request('config.set', { layer: 'system', changes: [{ key: LISTEN_KEY, unset: true }] });
     opened = false;

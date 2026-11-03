@@ -4,7 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { lanAction, lanState, LISTEN_KEY } from '../../packages/welcome/lan.js';
+import { lanAction, lanState, lanOpen, LISTEN_KEY } from '../../packages/welcome/lan.js';
 
 /** 假的 ctx：`config.schema` 回 `schema`（是 Error 的照它拒）；宿主有没有 `listen` 照 `listen`。 @param {any} schema @param {boolean} [listen] */
 const ctx = (schema, listen = true) => ({
@@ -34,4 +34,9 @@ test('下一步：没选的不动；不开放到完成，开过的先关上；�
   assert.equal(lanAction('choose', 'open', null, false), 'open', '旧核心不说设没设');
   assert.equal(lanAction('password', 'open', false, false), 'set');
   assert.equal(lanAction('shown', 'open', true, true), 'done');
+});
+
+test('这时开没开着：回环的不算，问不到的不算，别的地址算', () => {
+  for (const x of ['127.0.0.1', '127.0.1.1', '::1', '[::1]', 'localhost', '', null, undefined]) assert.equal(lanOpen(x), false, String(x));
+  for (const x of ['0.0.0.0', '::', '192.168.0.55', '[fe80::1]']) assert.equal(lanOpen(x), true, String(x));
 });
