@@ -172,6 +172,9 @@
   "themes": {
     "refresh": "Appearance \"{name}\" changed. Reload the page to apply it."
   },
+  "prefs": {
+    "too_big": "Settings are over the size limit. This change wasn't saved."
+  },
   "level_tip": "Click to switch permission level: Workspace → Full access → Read-only",
   "level_tip_member": "Click to switch permission level: Workspace → Read-only",
   "copied": "Copied {count} character(s)",

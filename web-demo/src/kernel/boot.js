@@ -7,8 +7,11 @@
 //! 编进内核的服务（宏内核：决定快慢、彼此紧挨着的放在一起，像编进内核的驱动）：
 //! `core` 连核心（线是宿主给的）、`sessions` 会话仓库、`host` 宿主（平台有关的：这个页面登录成的账号、新会话的工作目录（账号的工作区）和家目录、
 //! 附件从哪来、外链、剪贴板、桌面壁纸；蓝图「宿主」）、`page` 页面的根、`slots` 挂载位、`seams` 职能、`packages` 软件包（状态、停用、
-//! 启用、改配置）、`storage` 这台设备上存的东西（键带账号，「多用户、多终端」）、`language` 界面语言（内核自己的设置项，
+//! 启用、改配置）、`storage` 这台设备上存的东西（「多用户、多终端」）、`language` 界面语言（内核自己的设置项，
 //! 蓝图 `web.md`「界面语言」）。
+//!
+//! 个人那一层（软件包的开关、配置，内核自己的设置）跟着人走：存在核心里（`prefs.js`，核心 HP-1），这台设备上记着的一份只当缓存，
+//! 起来先照它画、核心的回来了再换；旧核心照原来只记在这台设备上。
 //!
 //! 界面语言先照发行版、浏览器定一种（还不知道账号：连不上桥的那句照它写），握手知道账号以后再照个人那一层定一次，变了重装字。职能选出来的提供者也当服务发出去（名字就是
 //! 职能的名字），用它的包跟着重来。
@@ -34,15 +37,18 @@ import { servedHost } from '../host/served.js';
 import { skinMark } from '../host/files.js';
 import { SIGNIN_SCHEME, signIn, passwordProblem, changePassword } from './signin.js';
 import { ownerStorage } from './storage.js';
+import { Prefs } from './prefs.js';
 import { useIcons } from '../lib/dom.js';
 import { KERNEL_SERVICES } from './services.js';
 
-/** 个人那一层（停用、启用、改配置）存在这台设备上的名字（带上账号）；核心有了个人设置以后搬进账号的家目录。 */
 /** 页面开在这台机器上的地址（改访问密码不要当前密码）：同核心认本机的一样，127.x 整段、localhost、::1 */
 const onLoopback = (/** @type {string} */ host) => host === 'localhost' || host === '[::1]' || host === '::1' || /^127\.\d+\.\d+\.\d+$/.test(host);
 /** JSON-RPC 的「没有这个方法」：连的核心还没有配置的接口 */
 const NO_METHOD = -32601;
+/** 个人那一层（停用、启用、改配置）在这台设备上记着的名字：核心有 `prefs` 的是它的缓存，旧核心照它（`prefs.js`） */
 const USER_LAYER = 'packages';
+/** 这台设备上原来记着的那一层已经交给核心了（第一次连上有 `prefs` 的核心时推一次，之后以核心为准） */
+const MOVED = 'prefs.moved';
 /** 内核自己的设置项在个人那一层里的编号（和软件包的补丁放在一起；发行版的写在 `distro.json` 的 `kernel`） */
 const KERNEL = 'kernel';
 /** 原来不分账号时的名字：第一次读时搬到这个账号名下 */
@@ -92,9 +98,30 @@ export async function boot(root) {
   // 这台设备上存的（原来按账号分的照上次用的那个账号、走桥时的 admin 搬过来）
   const storage = ownerStorage(host.store, LEGACY, [.../** @type {any} */ (host).formerAccount ? [/** @type {any} */ (host).formerAccount] : [], 'admin']);
   /** @type {any} */ (host).formerMoved?.();
+  const registry = new Registry();
+  /** 输入框上面说一句（还没有输入框的写进控制台） @param {string} text */
+  const say = (text) => {
+    const composer = registry.get('composer');
+    if (composer) composer.say(text);
+    else console.info(text);
+  };
+  // 个人那一层（`prefs.js`）：先照这台设备上记着的，订上核心的照它换；变了照新的对账（加载器起来以后才接上，之前的第一次对账照它读）
+  let relayer = () => Promise.resolve();
+  const prefs = new Prefs({
+    request: (method, params) => conn.request(method, params),
+    cache: { get: () => storage.get(USER_LAYER, {}), set: (layer) => storage.set(USER_LAYER, layer) },
+    moved: { get: () => storage.get(MOVED, false) === true, set: () => storage.set(MOVED, true) },
+    changed: () => relayer(),
+    tooBig: () => say(t('prefs.too_big')),
+  });
+  const followPrefs = () => prefs.follow().catch((err) => console.error(`个人设置对账出错了：${err?.message ?? err}`));
+  followPrefs();
+  // 别处改了、掉了队的推送；重连以后重订（同软件包自己的订阅）
+  conn.onPush((method, params) => { prefs.push(method, params); });
+  conn.onRejoin(() => { followPrefs(); });
   // 知道账号了：照个人那一层再定一次界面语言；界面的字、收起那一行的写法有一样变了重装字（重连时的握手照新的写）。
   // 核心有配置的：配置的 `ui.language` 说了算（蓝图「界面语言」第 5 条，规矩 A，和终端界面一样）；旧核心照这台设备上记的
-  let setting = settingOf(res.languages, distro.kernel ?? {}, storage.get(USER_LAYER, {})[KERNEL]?.config ?? {});
+  let setting = settingOf(res.languages, distro.kernel ?? {}, prefs.get()[KERNEL]?.config ?? {});
   /** 核心有没有配置的接口（`config.get`）：没有的，`/language` 只记在这台设备上 */
   let viaCore = false;
   const readCore = () => conn.request('config.get', { keys: ['ui.language'] }).then((got) => {
@@ -150,14 +177,13 @@ export async function boot(root) {
   });
 
   /**
-   * 换成这个设置（`auto` 或一种语言）：记进这台设备上的那一层（下次起来、旧核心照它）；界面的字、收起那一行的写法有一样变了，
+   * 换成这个设置（`auto` 或一种语言）：记进个人那一层（下次起来、旧核心照它）；界面的字、收起那一行的写法有一样变了，
    * 重新载入页面。交回换完用哪一种、重不重载。
    * @param {string} value
    */
   const applyLanguage = (value) => {
-    const user = storage.get(USER_LAYER, {});
-    user[KERNEL] = { ...user[KERNEL], config: { ...user[KERNEL]?.config, language: value } };
-    storage.set(USER_LAYER, user);
+    prefs.edit(KERNEL, (had) => ({ ...had, config: { ...had?.config, language: value } }))
+      .catch((err) => console.error(`记不下界面语言：${err?.message ?? err}`));
     setting = value;
     const next = pick(value, browser, res.languages);
     const reload = next.code !== language.code || next.summary !== language.summary;
@@ -181,7 +207,6 @@ export async function boot(root) {
   });
   followConfig();
 
-  const registry = new Registry();
   const slots = new Slots();
   const seams = new Seams();
   // 外观包（核心 TH-1）：网页软件给的页面才有（走桥的没有 `/theme`，宿主的 `themes` 是 `null`，不加载）
@@ -191,12 +216,7 @@ export async function boot(root) {
     open: (id) => opener.open(id),
     taken: new Set(distro.packages.map((/** @type {any} */ p) => p.id)),
     changed: () => sync(),
-    say: (name) => {
-      const text = t('themes.refresh', { name });
-      const composer = registry.get('composer');
-      if (composer) composer.say(text);
-      else console.info(text);
-    },
+    say: (name) => say(t('themes.refresh', { name })),
   }) : null;
   /** 一个包的根：外观包是网页软件给的地址，别的是 `packages/<编号>/` @param {string} id */
   const rootOf = (id) => (themes?.has(id) ? new URL(themes.base(id), base) : new URL(`packages/${id}/`, base));
@@ -238,10 +258,12 @@ export async function boot(root) {
     },
   });
   /** 发行版的包、外观包（接在后面），合上个人那一层 */
-  const allRows = () => rows([...distro.packages, ...(themes?.rows() ?? [])], storage.get(USER_LAYER, {}));
-  const sync = () => loader.sync(allRows());
-  // 职能选哪个：发行版的默认，这个浏览器的个人那一层（内核那一行配置的 `seams`）盖在上面（蓝图 `web/architecture.md`「职能」的选法）
-  const seamPrefs = () => ({ ...distro.seams, ...storage.get(USER_LAYER, {})[KERNEL]?.config?.seams });
+  const allRows = () => rows([...distro.packages, ...(themes?.rows() ?? [])], prefs.get());
+  // 一次对完再对下一次（个人那一层、外观包推来的几下挨着来，同一个包不起两份），照对的那一刻的列表
+  let syncing = Promise.resolve();
+  const sync = () => (syncing = syncing.catch(() => {}).then(() => loader.sync(allRows())));
+  // 职能选哪个：发行版的默认，个人那一层（内核那一行配置的 `seams`）盖在上面（蓝图 `web/architecture.md`「职能」的选法）
+  const seamPrefs = () => ({ ...distro.seams, ...prefs.get()[KERNEL]?.config?.seams });
 
   // 内核自己：编进内核的服务
   const kernel = new Fiber(registry, {
@@ -337,11 +359,9 @@ export async function boot(root) {
             return 'provider' in choice ? choice.provider.id : null;
           },
           set: (/** @type {string} */ name, /** @type {string} */ id) => {
-            const user = storage.get(USER_LAYER, {});
-            const config = user[KERNEL]?.config ?? {};
-            user[KERNEL] = { ...user[KERNEL], config: { ...config, seams: { ...config.seams, [name]: id } } };
-            storage.set(USER_LAYER, user);
+            const done = prefs.edit(KERNEL, (had) => ({ ...had, config: { ...had?.config, seams: { ...had?.config?.seams, [name]: id } } }));
             seams.prefer(seamPrefs());
+            return done;
           },
         },
         /** 每个包：状态，加上清单里的名字、种类（读不到清单的只有编号） */
@@ -354,15 +374,13 @@ export async function boot(root) {
           const layers = [{ name: 'distro', values: row?.distro ?? {} }, { name: 'user', values: row?.user ?? {} }];
           return { manifest, ...resolve(manifest.settings ?? {}, layers) };
         },
-        /** 改个人那一层给一个包的补丁（停用、启用、改配置），当场对账 */
+        /** 改个人那一层给一个包的补丁（停用、启用、改配置），当场对账；核心只收这个包的那一个键（`prefs.js`） */
         set: async (id, patch) => {
-          const user = storage.get(USER_LAYER, {});
-          const had = user[id] ?? {};
-          // 配置按项合：改一项不冲掉别的项；值写 null 的是改回出厂（删掉这一项）
-          const config = patch.config ? Object.fromEntries(Object.entries({ ...had.config, ...patch.config }).filter(([, v]) => v !== null)) : had.config;
-          user[id] = { ...had, ...patch, ...(config ? { config } : {}) };
-          storage.set(USER_LAYER, user);
-          await sync();
+          await prefs.edit(id, (had = {}) => {
+            // 配置按项合：改一项不冲掉别的项；值写 null 的是改回出厂（删掉这一项）
+            const config = patch.config ? Object.fromEntries(Object.entries({ ...had.config, ...patch.config }).filter(([, v]) => v !== null)) : had.config;
+            return { ...had, ...patch, ...(config ? { config } : {}) };
+          });
         },
       });
     },
@@ -376,6 +394,11 @@ export async function boot(root) {
     else registry.unset(name, kernel);
   });
   seams.prefer(seamPrefs());
+  // 个人那一层变了（核心的回来了、别处改了、这里改了）：职能重选、照新的对账
+  relayer = async () => {
+    seams.prefer(seamPrefs());
+    await sync();
+  };
 
   await sync();
   // 外观包：订 `packages` 对一遍、接在发行版的后面加载，之后跟着装卸；重连以后重订

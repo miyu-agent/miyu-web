@@ -172,6 +172,9 @@
   "themes": {
     "refresh": "外观「{name}」有变化，刷新页面后生效"
   },
+  "prefs": {
+    "too_big": "设置超出大小上限，这次的更改没有保存"
+  },
   "level_tip": "点击切换权限级别：工作区 → 开放权限 → 只读",
   "level_tip_member": "点击切换权限级别：工作区 → 只读",
   "copied": "已复制 {count} 个字符",
