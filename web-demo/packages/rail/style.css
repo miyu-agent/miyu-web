@@ -17,7 +17,8 @@
 .rail-line.is-current { width: 20px; background-color: var(--accent); opacity: 1; }
 .rail-line:hover { opacity: 1; }
 .rail-pop {
-  position: absolute; top: 50%; right: 34px; width: max-content; max-width: 320px; max-height: 60vh; padding: calc(6px * var(--space)); overflow-y: auto;
+  /* 最多露 10 行（W-1069：原来最高 60vh，一屏列二十多行太多），多了在里面滚 */
+  position: absolute; top: 50%; right: 34px; width: max-content; max-width: 320px; max-height: min(60vh, calc(10 * (13px * var(--text-scale) * 1.45 + 14px * var(--space) + 2px * var(--space)) + 12px * var(--space))); padding: calc(6px * var(--space)); overflow-y: auto;
   border: var(--float-border, 1px solid var(--line)); border-radius: var(--float-radius, var(--r-14)); background: var(--float-bg, color-mix(in srgb, var(--surface-1) 90%, transparent));
   -webkit-backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur))) saturate(1.2)); backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur))) saturate(1.2)); box-shadow: var(--float-elev, var(--float-shadow));
   transform: translateY(-50%) scale(0.96); transform-origin: right center; opacity: 0; pointer-events: none;
