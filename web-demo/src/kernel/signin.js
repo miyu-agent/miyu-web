@@ -198,7 +198,7 @@ async function passwordBox(root, error, img) {
   const keep = keepBox(false);
   let got = { password: '', keep: false };
   await screen(root, {
-    // 页面在本机地址上的：提示用 `miyu web` 开不用密码（2026-10-30 起本机打开不逼着设访问密码，没设的人到这一屏没有密码可输）
+    // 页面在本机地址上的：本来不用密码，到这一屏是没要到票（多半核心起不来，W-1089），照实说、指去终端看原因
     login: true, faceImg: img, title: t('signin.login_title'), sub: '', button: t('signin.login'), error, note: onThisComputer() ? t('signin.local_hint') : '',
     fields: [user, field(t('signin.password'), password), keep.row],
     submit: async () => {
@@ -271,6 +271,8 @@ export async function signIn(host, greeting, root, offline, retry = /** @type {n
   for (;;) {
     /** @type {any} */
     let credential = host.credential();
+    // 本机地址上手里没凭据的：先问网页软件要一张交接票（W-1089，只试一次），要不到才出「输入访问密码」
+    if (!credential && await /** @type {any} */ (host).localTicket?.()) credential = host.credential();
     /** 这一次登录勾没勾「自动登录」 */
     let keep = false;
     if (!credential && host.kind === 'served') {

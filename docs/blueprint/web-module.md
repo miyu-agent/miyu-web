@@ -207,6 +207,7 @@ HTTP（W-9、W-10）：
 |---|---|---|
 | `GET /`、`GET /<页面文件>` | 页面文件 | Host 对得上。不要登录：里面没有秘密 |
 | `GET /ws` | WebSocket：转到核心 | Host、Origin 对得上；身份在握手里，核心验 |
+| `POST /ticket` | 本机的页面没凭据时要一张交接票，回 `{"ticket"}`；核心连不上、要不到的 503 `{"error"}`（2026-11-03 项目主人：本机就不要凭证了，W-1089；`web-ui.md`「怎么走」第一条第 12 款） | 对端是回环、不带反向代理的头；Host 只认本机三种写法；Origin 和 `http://` 加 Host 逐字一样；`X-Miyu-Local: 1`；不是表单的正文。不对的 403 |
 | `POST /media` | 换一张票据 | `Authorization: Bearer <登录令牌>` |
 | `GET /media/<票据>` | 一个 blob 或者一份本机文件，可以带 `Range` | 票据 |
 | `POST /theme` | 换一张网页外观的票据（核心 TH-1，2026-11-02；`web-ui.md`「怎么走」第六条） | `Authorization: Bearer <登录令牌>` |

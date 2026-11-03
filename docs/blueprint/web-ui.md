@@ -12,8 +12,9 @@
 |---|---|
 | `crates/miyu-web/`（第 5 层，头） | 程序 `miyu-web`：只依赖 `miyu-ipc`、`miyu-store`、`miyu-log`、`miyu-webserve`，不依赖核心 |
 | `crates/miyu-web/src/main.rs` | 子命令 `open`、`serve`；找自己旁边的主程序拉起核心 |
-| `crates/miyu-web/src/serve.rs` | 单实例、听端口、写 `run/miyu-webui/address` 和那一行、空闲退出（听局域网时不退）；每个请求分给谁：Host 不对的记一行、回 403，`/ws`、`/media`、`/listen`、页面文件。网页软件的 `Site` 实现 `miyu_webserve::Site`（数忙照空闲退出；在听的地址、端口换了照新的核对 Host） |
+| `crates/miyu-web/src/serve.rs` | 单实例、听端口、写 `run/miyu-webui/address` 和那一行、空闲退出（听局域网时不退）；每个请求分给谁：Host 不对的记一行、回 403，`/ws`、`/ticket`、`/media`、`/listen`、页面文件。网页软件的 `Site` 实现 `miyu_webserve::Site`（数忙照空闲退出；在听的地址、端口换了照新的核对 Host） |
 | `crates/miyu-web/src/desk.rs`、`desk/wallpaper.rs`，`crates/miyu-desk/` | 这台电脑上的几样（「怎么走」第五条）：`/reveal`、`/pick-dir`、`/wallpaper` 要设备令牌、只给本机来的；开目录、选目录在 `miyu-desk`（桥也用它）；壁纸照桥的做法用 `miyu-wallpaper`、`miyu_client::seeds` |
+| `crates/miyu-web/src/ticket.rs` | `/ticket`（「怎么走」第一条第 12 款，W-1089）：本机的页面没凭据时照本机令牌问核心要一张交接票；只认本机的页面自己发的（`local`） |
 | `crates/miyu-web/src/listen.rs`、`follow.rs` | `/listen`（「怎么走」第一条第 11 款）：回在听的地址、端口、别的设备打开用的网址；`POST` 照核心的配置换地址、端口，接连接的那一圈照它换监听。`follow`：订核心的配置推送，那两项变了自己换 |
 | `crates/miyu-webserve/src/lib.rs`（施工 O-16 搬过去，`webserve.md`「搬家表」） | 核对 Host、Origin 的三种写法和听局域网时的 IP 写法（`Site::hosts`、`listen`、`host_allowed`、`origin_allowed`）；连接是不是远程的（`remote`） |
 | `crates/miyu-webserve/src/pages.rs`（同上，原来是 `crates/miyu-web/src/pages.rs` 和 `serve.rs` 的一段） | 页面文件：`/` 是 `index.html`，不出页面目录；类型照 `web.json` 的表、四个响应头 |
@@ -58,6 +59,16 @@
    - `GET /listen` 回 `{"listen": <在听的地址>, "port": <在听的端口>, "lan": <别的设备打开用的网址或 null>}`。`lan`：听 `0.0.0.0` 的写这台电脑往外的那个地址（UDP 套接字 `connect` 文档地址 `192.0.2.1`，不发包，读本地地址；拿不到的、是回环的 `null`），听某一个地址的就是它，回环的 `null`；写成 `http://<地址>:<端口>`（IPv6 加方括号）。
    - `POST /listen`（带设备令牌 `Authorization: Bearer <令牌>`，同 `/media`；没带的 401）：拿这个令牌连核心（`connect_login`，不拉起核心；不替请求出示本机令牌，局域网来的请求也只能用自己的登录读配置；核心不认的 401），`config.get` 重读 `web.listen`、`web.port`，和在听的不一样就换：端口没变、只换地址的先放掉旧的再听新的（同一个端口两个地址会冲突），新的听不上再听回旧的；端口变了的先听新的、听上了再放掉旧的，`run/miyu-webui/address` 照新端口写。`web.port` 和起来时读到的一样的不动端口（回退过的留着现在这个）；`--port` 起的端口不随配置换。已经连着的（WebSocket、`/media`、后台页）不断；别的机器来的、新地址不再包含它连进来的那个地址的除外（2026-11-02 第四轮审查 W4-2，项目主人定：关了局域网，别的设备已经连着的也该断，不然局域网关了别的设备照样能用）：连着的 WebSocket 关 1008，同一条 keep-alive 连接上再来的请求一律 403（Host 能写回环的写法，挡不住它们）。「包含」照听的地址算：`0.0.0.0` 包含这台电脑的 IPv4 地址，`::` 都包含，别的只包含它自己；同机的反向代理转进来的（算远程，第 7 款）连的是回环，换回回环照样接得到，不断（新连接照样进得来，断了也白断）。回应同 `GET`；换不了的（听不上、端口被占、核心连不上）多一个 `"error": <原因>`（核心的原话），状态码照旧 200，接着听原来的。它只照核心里已经存着的配置换，换不出配置以外的样子。
    - 跟着核心的配置（2026-10-30 验收时撞见：端口换走以后，开在旧端口上的页面请不到 `/listen`，再关局域网，网页软件却还听着局域网）：`serve` 起来以后自己照终端的样子连核心（出示本机令牌，同第 2 款读配置；不拉起核心），`subscribe {stream: "config"}`，先 `config.get` 读一遍换一遍，以后推来的 `config.changed` 的 `keys` 里有 `web.listen`、`web.port` 的、掉了队（`resync`）的再读再换；没有这一项的（网页包没装、旧核心）不动那一样。核心不在、断了，10 秒后再连（核心重启以后接着跟）。设置页、`miyu config set`、手改配置文件都当场生效；设置页存完再 `POST /listen` 只为拿换完的样子（换不了的原因、新的网址）。
+
+12. 本机免密（2026-11-03 项目主人：本机就不要凭证了，W-1089；同一天 core1 提的几道防护项目主人同意）：从没登录过的浏览器直接打开 `http://127.0.0.1:<端口>/`，原来出「登录 Miyu」要访问密码，刚装好、没设过密码的人走不下去。项目主人要的样子：本机打开 `localhost:<端口>` 直接进到会话页，一个提示框都不弹，眼睛看不到任何票、令牌、密码；局域网来的要访问密码。
+   - `POST /ticket`：页面手里没凭据时问网页软件要一张交接票（`web.md`「连核心」第 1 条）。只认这台电脑上的页面自己发的，下面几样都对上才给，有一样不对就 403、没有正文、不说为什么（运行日志记一行 `ticket refused`）：
+     1. 对端是回环、不带反向代理加的头（第 7 款的 `remote` 是空的；同机的 nginx、cloudflared、`tailscale serve` 转进来的算远程，R3S-2）。
+     2. Host 只认 `127.0.0.1:<端口>`、`localhost:<端口>`、`[::1]:<端口>`，端口是这一刻在听的那个；听局域网时第 4 款多认的「IP 字面量:端口」这里不认。挡 DNS 重绑定：别的网站把自己的域名解析到 `127.0.0.1`，只看对端是回环挡不住。
+     3. Origin 要有，和 `http://` 加这个 Host 逐字一样（页面自己的来源）；没有 Origin 的不给。
+     4. 带自定义头 `X-Miyu-Local: 1`：别的网站的页面要带它，浏览器先发预检，网页软件不答，就发不出来。`Content-Type` 是表单的三种（`application/x-www-form-urlencoded`、`multipart/form-data`、`text/plain`，跨站表单不用预检就能发的）一律不认；页面发的不带正文（或者带 JSON）。
+     5. 方法只认 `POST`，别的 405。
+   - 认了的照 `miyu web` 那样（第二条第 3 款）出示本机令牌连核心（`connect_or_start`，没在跑就拉起来：页面这时还没开 `/ws`，`/ws` 那头也会拉起），问 `login.ticket`（核心 LT-1：60 秒、一次性），回 `200 {"ticket": "<票>"}`。连不上核心、拉不起来、要不到的（旧核心没有 `login.ticket`，同 `miyu web` 当要不到）回 `503 {"error": <原因>}`（记一行 `ticket unavailable`）。回应带 `Content-Type: application/json`、`Cache-Control: no-store` 和第 5 款一律带的两个头。票不进日志，网页软件不记它、不缓存；页面拿到就握手用掉，不存、不放进地址。
+   - 取舍（项目主人知道、接受）：同一台电脑上别的系统用户开浏览器也能进（原来要访问密码挡着；本机令牌只给本人读，这里不看是谁）；别的网站的页面被 Host、Origin、自定义头挡住；局域网里别的设备、同机反向代理转进来的照旧要访问密码。
 
 **二、`miyu web`**（W-9，原来是 `web-module.md` 第十一条，2026-10-04 随 W-8 改过）
 
@@ -127,6 +138,8 @@
 |---|---|---|
 | `INFO` | `listening url=…`、`stopped reason=…` | 起来、退出（`idle`、`signal`） |
 | `WARN` | `rejected host=… origin=…` | Host、Origin 不对 |
+| `WARN` | `ticket refused remote=…` | `/ticket` 不是本机的页面自己发的（第一条第 12 款），回 403；不记票 |
+| `WARN` | `ticket unavailable error=…` | `/ticket` 连不上核心、要不到票，回 503 |
 | `WARN` | `core unreachable error=…` | 连不上核心 |
 | `DEBUG` | `websocket connected`、`websocket closed` | 一个标签页连上、断开 |
 | `WARN` | `media cut short offset=… error=…` | `/media` 给到一半核心那头断了、给得比说的少：连接照 HTTP 的规矩断掉，浏览器知道没收全 |
@@ -148,6 +161,8 @@
 | `crates/miyu-web/tests/serve.rs` | 单实例、`run/miyu-webui/address`、那一行；端口被占说清楚；Host 只认三种写法；页面文件不出页面目录（`..`、`%2e%2e`、链接、目录）；响应头一个不少、从不设 cookie；`HEAD`、别的方法 405；空闲到点退出、删 `run/miyu-webui/address`、放锁；听局域网时到点不退；页面文件带 `ETag`，`If-None-Match` 对上（一串里有、弱比较）回 304，改了照常给 |
 | `crates/miyu-web/tests/desk.rs` | `/reveal`、`/pick-dir`、`/wallpaper` 不带令牌、核心不认的 401，只认 `GET`；认的令牌开不在的目录回 `{"missing":true}`（测试里不真开文件管理器、选目录框）；`/wallpaper/events` 不要令牌、是 `text/event-stream`、最多同时开 16 条（关一条空出来能再开，第四轮审查 W4-3） |
 | `crates/miyu-web/tests/audit4.rs` | 第四轮审查的两条（2026-11-02）：关了局域网（`web.listen` 换回回环）以后别的设备连着的 `/ws` 5 秒内断开（W4-2）；开着一条不带凭据的 `/wallpaper/events`，空闲到点照样退出（W4-3） |
+| `crates/miyu-web/tests/ticket.rs` | `/ticket`（W-1089）：本机的页面自己发的（`127.0.0.1`、`localhost`、`[::1]` 三种 Host，带 JSON 正文的也算）拿到票，回应 `no-store`、`nosniff`、`no-referrer`、不设 cookie；伪造的 Host（名字、局域网 IP、端口不对）、Origin 不对、是 `null`、和 Host 不是逐字一样、没有 Origin、没有自定义头、自定义头不是 `1`、表单的三种正文、带反向代理的哪一种头都 403 且没有正文；`GET` 405；核心没在跑、旧核心没有 `login.ticket` 的 503 带 `error` |
+| `crates/miyu-web/src/ticket/tests.rs` | `local` 的每一条：三种本机写法认，缺 Host、Origin、自定义头，Origin 不对、`https://`、`null`、和 Host 写法不同，Host 是名字、局域网 IP、端口不对，表单的正文（带参数、大小写不同）都不认 |
 | `crates/miyu-web/tests/listen.rs` | `GET /listen` 回在听的、Host 照旧核对；`POST` 不带设备令牌、核心不认的 401；核心没在跑的回 `error`、接着听原来的；换地址（同一个端口）、换端口（`run/miyu-webui/address` 跟着换、旧端口不再接、连着的 WebSocket 不断）、配置没变不动、`--port` 起的端口不随配置换；听局域网时空闲到点不退、换回回环照旧退；不用页面请，起来先照核心的配置换、推来改动当场换回 |
 | `crates/miyu-web/src/listen/tests.rs` | `lan` 的写法（回环没有、某一个地址就是它、IPv6 加方括号）；同一个端口换地址、换端口先听新的、新端口被占留着旧的 |
 | `crates/miyu-web/tests/ws.rs` | 一帧一行两头照转，一个字节不改（凭据、中文、空白、很长的一行）；Origin 不对 403；二进制 1003、超过 1 MiB 1009，照原始字节发的超长帧读得到 1009、读到头不是被重置；核心断了 1012；连不上核心发 `web.error` 再关；转发的代码里不读本机令牌（照源码查，施工 O-16 起连同搬进 `miyu-webserve` 的那几份）；听局域网时别的地址来的先写 `connection.remote`、再转握手，本机来的不写，Host 是名字的 403 |
@@ -214,3 +229,12 @@
 | 27 | `--session` 照核心会话编号的写法（UUID）查，`--settings` 的分页照包编号的写法查；分页在不在不查 | 编号放进网址不用转义，写错的当场说；设置页有哪些页要连核心读 `config.schema`、还有软件包挂的页，命令行不知道 | 都不查原样带（写错的到了页面才发现）；命令行列一张分页表（核心、软件包加了页就对不上） |
 | 28 | 设置的首页在网址里写 `settings=`（空的），「访问」那一组写 `settings=access` | `#` 后面几项都是 `键=值`，页面照 `URLSearchParams` 读；`access` 不是一页，是「通用」里的一组，托盘程序只认这一个名字 | 首页写 `settings=general`（那就不是「上次看的那一页」了） |
 | 29 | `session=`、`settings=` 页面读完就从地址栏抹掉，`package=` 照旧留着 | 这两项是「打开时去哪」，留着的话刷新、收藏都会再切一次会话、再开一次设置 | 照 `package=` 留着 |
+
+### 施工时定的（W-1089，2026-11-03）
+
+| # | 定了什么 | 为什么 | 别的选法 |
+|---|---|---|---|
+| 30 | 本机免密走网页软件的 `POST /ticket`，照本机令牌问核心要交接票（项目主人选「本机就不要凭证了」），页面拿到照 `#ticket=` 的路子握手 | 核心那边不用改：交接票本来就是给本机来的人免密进门的，`miyu web` 一直这么用；网页软件和核心在同一台电脑上、读得到本机令牌 | 核心对本机来的 WebSocket 直接放行（核心改协议，局域网、反向代理分不清的还得网页软件说）；页面一直显示密码屏、提示去终端（刚装好的人走不下去） |
+| 31 | `/ticket` 只认本机的页面自己发的：回环、不带代理头、Host 只认本机三种写法、Origin 和 Host 逐字一样、带 `X-Miyu-Local: 1`、不是表单的正文；不对的一律 403 不说为什么（core1 提的防护） | 同机别的程序本来就读不到本机令牌，但别的网站的页面能往 `127.0.0.1` 发请求：Host 挡 DNS 重绑定，Origin 挡跨站，自定义头逼出预检（网页软件不答）、表单的三种正文挡不用预检的跨站表单 | 只看回环（DNS 重绑定、跨站表单都挡不住）；只看 Origin（没有 Origin 的老写法、表单的边角难说全） |
+| 32 | `/ticket` 照 `connect_or_start` 连核心，没在跑就拉起 | 页面要票在开 `/ws` 之前；不拉起的话核心没在跑时每次都退回密码屏，到这一屏就真的是核心起不来，提示照实说 | `connect_running` 不拉起，等 `/ws` 拉起（第一次打开总要输一次密码或刷新） |
+| 33 | 一个页面只问一次 `/ticket`：起来时没凭据、握手时令牌作废了，合起来只问这一次；要不到的（403、503、网络错）出「输入访问密码」，那一行暗字改成照实说「本来不用密码，这次没连上核心，去终端运行 miyu web 看原因」 | 握手被拒、再要、再被拒会来回；本机地址上能到密码屏的多半是核心起不来，原来那句「运行 miyu web 打开不用输入密码」不再是解法 | 每次握手被拒都再要（票作废、核心拒的时候来回转）；不出密码屏只出错误卡（旧核心、核心起不来时设过密码的人也进不去） |

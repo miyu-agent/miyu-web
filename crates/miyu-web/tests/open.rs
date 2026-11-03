@@ -23,7 +23,7 @@ pub(crate) fn answer(core: Listener, first: bool) {
     answer_with(core, first, true);
 }
 
-fn answer_with(mut core: Listener, first: bool, ticket: bool) {
+pub(crate) fn answer_with(mut core: Listener, first: bool, ticket: bool) {
     tokio::spawn(async move {
         while let Ok(connection) = core.accept().await {
             tokio::spawn(async move {

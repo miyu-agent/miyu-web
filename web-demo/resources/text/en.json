@@ -131,7 +131,7 @@
     "failed": "No login token came back",
     "not_set_title": "No access password yet",
     "not_set_sub": "On the computer Miyu runs on, open the web UI, set an access password in Settings → General → Access, then sign in here.",
-    "local_hint": "On this computer, open it with miyu web — no password needed",
+    "local_hint": "No password is needed on this computer, but the core couldn't be reached this time: run miyu web in a terminal to see why",
     "retry": "Retry",
     "show_password": "Show password",
     "hide_password": "Hide password",

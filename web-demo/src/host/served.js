@@ -3,7 +3,8 @@
 //! 第 1 条下面几款、`web-module.md` 第一条）。和走桥的那一份只差连法：
 //! - 线是 `/ws`，身份在握手里（核心 SU-1：只有主人一个人，2026-10-28 项目主人定）：地址带 `#setup=<一次性码>` 的读下来、从地址栏抹掉，握手带
 //!   `code`；带 `#ticket=<票>` 的（`miyu web`、im 网页的「打开主网页」开的）先用记着的设备令牌、作废了再用票；都没有的用这台浏览器记着的设备令牌
-//!   （`login`）；再没有的交 `null`，内核出「输入访问密码」，握手带 `password`。勾了「自动登录」的令牌存 `localStorage` 的 `miyu.web.login`（30 天），
+//!   （`login`）；再没有的、页面开在本机地址上的先 `POST /ticket` 问网页软件要一张交接票（`localTicket`，W-1089，2026-11-03 项目主人：本机就不要
+//!   凭证了），一个页面只要一次；要不到的交 `null`，内核出「输入访问密码」，握手带 `password`。勾了「自动登录」的令牌存 `localStorage` 的 `miyu.web.login`（30 天），
 //!   没勾的只放这个标签页（`sessionStorage` 的 `miyu.web.session`）；读写都兜着。原来多账号时的 `miyu.web.accounts` 读到时照上次用的那个账号的令牌迁成一份。
 //! - 本机文件、blob 的地址带设备令牌 `POST /media` 换票据（`web-ui.md`「怎么走」第三条）；同一样东西换过的记着，不再换。软件后台页 `POST /page`，
 //!   外观包的网页外观 `POST /theme`（核心 TH-1）。
@@ -133,6 +134,8 @@ export function servedHost() {
   let ticket = code ? null : handoff();
   /** 这一次握手交的是票 */
   let usedTicket = false;
+  /** 在本机地址上问网页软件要过票了（`/ticket`）：一个页面只要一次，握手被拒、再要、再被拒不来回 */
+  let askedHere = false;
   /** 这个标签页的那份先用，再用存着的 */
   let token = readLogin(tab.get(SESSION), now())?.token ?? readLogin(disk.get(LOGIN), now())?.token ?? null;
   /** 记着的令牌原来是存在这台浏览器里的（勾过「自动登录」）：拿票换到的照旧存 */
@@ -236,6 +239,25 @@ export function servedHost() {
         return { ticket: one };
       }
       return null;
+    },
+    /**
+     * 手里没凭据（没有码、票、记着的令牌，或者作废了扔掉了）、页面开在本机地址上的：`POST /ticket` 问网页软件要一张交接票（W-1089，`web-ui.md`
+     * 「怎么走」第一条第 12 款：只认本机的页面自己发的，要带 `X-Miyu-Local`；票不记、不缓存）。要到了交 `true`，下一次 `credential()` 交这张票，
+     * 换到的令牌照本机地址存进这台浏览器（同 `#ticket=`）；局域网地址上的、要不到的（403、503、网络错）、这个页面试过了的交 `false`，
+     * 内核出「输入访问密码」。
+     * @returns {Promise<boolean>}
+     */
+    localTicket: async () => {
+      if (askedHere || code || token || ticket || !onThisComputer()) return false;
+      askedHere = true;
+      try {
+        const got = await fetch('/ticket', { method: 'POST', cache: 'no-store', headers: { 'X-Miyu-Local': '1' } });
+        if (!got.ok) return false;
+        const one = (await got.json())?.ticket;
+        if (typeof one !== 'string' || !/^[0-9a-f]{16,128}$/.test(one)) return false;
+        ticket = one;
+        return true;
+      } catch { return false; }
     },
     /**
      * 握手、设密码拿到的设备令牌（`{token, expires}`）：记下，以后握手、换票据都用它。`keep`（勾了「自动登录」）的存进这台浏览器，没勾的放这个标签页；

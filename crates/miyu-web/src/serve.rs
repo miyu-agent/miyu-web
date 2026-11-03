@@ -1,5 +1,5 @@
 //! `miyu-web serve`（`web-ui.md`「怎么走」第一条）：单实例、听 `web.listen`（默认 `127.0.0.1`，SU-1 起能听局域网）、写 `run/miyu-webui/address` 和那一行、空闲退出；每个
-//! 请求先核对 Host，`/ws` 交给 `miyu_webserve::ws`，`/media` 交给 `media`（施工 W-10），`/page`、`/p/` 交给
+//! 请求先核对 Host，`/ws` 交给 `miyu_webserve::ws`，`/ticket` 交给 `ticket`（本机免密，W-1089），`/media` 交给 `media`（施工 W-10），`/page`、`/p/` 交给
 //! `backstage`（软件后台页，施工 F-6 下），`/theme`、`/t/` 交给 `theme`（网页外观，核心 TH-1），别的当页面文件
 //! （`miyu_webserve::pages`）。核对 Host、给页面、`/ws` 照转、回应的几样在共用的 `miyu-webserve`（施工 O-16，
 //! `webserve.md`「搬家表」）。
@@ -34,7 +34,7 @@ use crate::backstage::Backstage;
 use crate::listen::{Swap, Swaps};
 use crate::media::Media;
 use crate::settings::Settings;
-use crate::{TARGET, backstage, listen, media, theme};
+use crate::{TARGET, backstage, listen, media, theme, ticket};
 
 pub use miyu_client::CoreCommand;
 pub(crate) use miyu_webserve::respond::{Body, empty, full, secure};
@@ -209,7 +209,9 @@ const HEADER_READ: Duration = Duration::from_secs(30);
 const ACCEPT_PAUSE: Duration = Duration::from_secs(1);
 
 pub(crate) use crate::port::bind;
+mod stop;
 pub use crate::port::{FALLBACK_PORTS, candidates};
+use stop::stopped;
 
 /// 跑起来，直到空闲到点、收到停的信号。`said` 交那一行：起来了、已经有一个在跑、起不来。
 ///
@@ -373,7 +375,7 @@ async fn until(at: Option<Instant>) {
     }
 }
 
-/// 一个请求：先核对 Host；`/ws` 交给 WebSocket；`/listen` 在听的、换监听；这台电脑上的几样交给 `desk`；`/media` 换票据、照票据给；`GET`、`HEAD` 当页面文件；别的方法 405。
+/// 一个请求：先核对 Host；`/ws` 交给 WebSocket；`/ticket` 本机的页面要交接票；`/listen` 在听的、换监听；这台电脑上的几样交给 `desk`；`/media` 换票据、照票据给；`GET`、`HEAD` 当页面文件；别的方法 405。
 async fn handle(
     request: Request<Incoming>,
     site: Arc<Site>,
@@ -402,6 +404,9 @@ async fn handle(
     let path = request.uri().path();
     if path == "/ws" {
         return Ok(miyu_webserve::ws::accept(request, site, remote, here));
+    }
+    if path == "/ticket" {
+        return Ok(ticket::post(request, site, remote).await);
     }
     if crate::desk::PATHS.contains(&path) {
         return Ok(crate::desk::handle(request, site, remote).await);
@@ -475,26 +480,4 @@ pub fn address(root: &DataRoot) -> Option<String> {
     let text = std::fs::read_to_string(runtime(root).join(ADDRESS)).ok()?;
     let url = text.trim();
     (!url.is_empty()).then(|| url.to_string())
-}
-
-/// 收到停的信号：Ctrl+C，Unix 上另有 SIGTERM。
-async fn stopped() {
-    #[cfg(unix)]
-    {
-        let Ok(mut term) =
-            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
-        else {
-            return std::future::pending().await;
-        };
-        tokio::select! {
-            _ = tokio::signal::ctrl_c() => {}
-            _ = term.recv() => {}
-        }
-    }
-    #[cfg(not(unix))]
-    {
-        if tokio::signal::ctrl_c().await.is_err() {
-            std::future::pending::<()>().await;
-        }
-    }
 }

@@ -321,6 +321,83 @@ test('带票过来（#ticket=，miyu web 开的）：记着的令牌先用、作
   });
 });
 
+test('本机免密（W-1089）：本机地址上手里没凭据的先 POST /ticket 要票（带 X-Miyu-Local、不带正文），要到了照票握手、令牌存进这台浏览器；一个页面只试一次', async () => {
+  const disk = new Map();
+  const calls = [];
+  const T = 'e'.repeat(64);
+  await withGlobals({
+    location: at(''), history: { replaceState: () => {} },
+    localStorage: fakeStorage(disk), sessionStorage: fakeStorage(new Map()),
+    fetch: async (path, init) => { calls.push([path, init]); return { ok: true, json: async () => ({ ticket: T }) }; },
+  }, async () => {
+    const { servedHost } = await import('../src/host/served.js');
+    const host = servedHost();
+    assert.equal(host.credential(), null, '没凭据');
+    assert.equal(await host.localTicket(), true);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0][0], '/ticket');
+    assert.equal(calls[0][1].method, 'POST');
+    assert.equal(calls[0][1].headers['X-Miyu-Local'], '1');
+    assert.equal(calls[0][1].body, undefined, '不带正文（不是表单）');
+    assert.deepEqual(host.credential(), { ticket: T }, '下一次握手交这张票');
+    host.remember({ token: 'l1', expires: LATER }, false);
+    assert.deepEqual(host.credential(), { login: 'l1' }, '以后照换到的令牌');
+    assert.equal(JSON.parse(disk.get('miyu.web.login') ?? '{}').token, 'l1', '本机地址上换到的存进这台浏览器（同 #ticket=）');
+    assert.equal(location.hash, '', '地址栏里什么都不留');
+    // 令牌作废了：扔掉，同一个页面不再要（只试一次，免得来回），出「输入访问密码」
+    host.forget();
+    assert.equal(await host.localTicket(), false);
+    assert.equal(calls.length, 1, '没再要');
+    // 重新载入（新的一个页面）：手里没凭据照样先要一次
+    assert.equal(await servedHost().localTicket(), true);
+    assert.equal(calls.length, 2);
+    // 存着令牌、带着一次性码的不要
+    disk.set('miyu.web.login', JSON.stringify({ token: 'l2', expires: LATER }));
+    assert.equal(await servedHost().localTicket(), false, '有令牌的先用令牌');
+    disk.clear();
+    globalThis.location.hash = '#setup=abc123';
+    assert.equal(await servedHost().localTicket(), false, '带一次性码的不要');
+    assert.equal(calls.length, 2);
+  });
+});
+
+test('本机免密（W-1089）：令牌作废了在本机地址上也先试一次 /ticket；局域网地址不要票；要不到的（403、503、网络错、回的不是票）退回「输入访问密码」', async () => {
+  const disk = new Map([['miyu.web.login', JSON.stringify({ token: 'old', expires: LATER })]]);
+  let calls = 0;
+  /** @type {() => Promise<any>} */
+  let answer = async () => ({ ok: true, json: async () => ({ ticket: 'f'.repeat(64) }) });
+  await withGlobals({
+    location: at(''), history: { replaceState: () => {} },
+    localStorage: fakeStorage(disk), sessionStorage: fakeStorage(new Map()),
+    fetch: async () => { calls += 1; return answer(); },
+  }, async () => {
+    const { servedHost } = await import('../src/host/served.js');
+    const host = servedHost();
+    assert.deepEqual(host.credential(), { login: 'old' });
+    assert.equal(await host.localTicket(), false, '有令牌的不要');
+    host.forget();
+    assert.equal(await host.localTicket(), true, '作废了：先试一次');
+    assert.deepEqual(host.credential(), { ticket: 'f'.repeat(64) });
+    assert.equal(await host.localTicket(), false, '这张票握手又被拒：不再要，出密码屏');
+    assert.equal(calls, 1);
+    for (const [why, fails] of /** @type {[string, () => Promise<any>][]} */ ([
+      ['403', async () => ({ ok: false, status: 403, json: async () => null })],
+      ['503', async () => ({ ok: false, status: 503, json: async () => ({ error: 'core unreachable' }) })],
+      ['网络错', async () => { throw new TypeError('Failed to fetch'); }],
+      ['回的不是票', async () => ({ ok: true, json: async () => ({ ticket: 'not-hex' }) })],
+    ])) {
+      answer = fails;
+      const one = servedHost();
+      assert.equal(await one.localTicket(), false, why);
+      assert.equal(one.credential(), null, `${why}：出「输入访问密码」`);
+    }
+    calls = 0;
+    globalThis.location.hostname = '192.168.1.5';
+    assert.equal(await servedHost().localTicket(), false);
+    assert.equal(calls, 0, '局域网地址上不要票，照旧出密码屏');
+  });
+});
+
 test('本机地址：127.*、localhost、[::1] 算，局域网地址、名字不算', async () => {
   const { loopbackHost } = await import('../src/host/files.js');
   for (const yes of ['127.0.0.1', '127.1.2.3', 'localhost', 'LOCALHOST', '[::1]', '::1']) assert.equal(loopbackHost(yes), true, yes);

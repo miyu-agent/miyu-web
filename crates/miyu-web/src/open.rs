@@ -334,7 +334,7 @@ fn url_path(text: &str) -> String {
 }
 
 /// 是不是十六进制（票、跳转页的名字）。
-fn hex(text: &str) -> bool {
+pub(crate) fn hex(text: &str) -> bool {
     !text.is_empty() && text.bytes().all(|b| b.is_ascii_hexdigit())
 }
 

@@ -80,6 +80,34 @@ test('走桥的不带凭据一次就成；直接连的带记着的令牌，作�
   assert.deepEqual(calls.map((p) => p.login ?? p.code), ['old', 'c1'], '作废了的忘掉，下一次换别的凭据、新开一条线');
 });
 
+test('本机免密（W-1089）：没凭据、令牌作废了的先问宿主要票（localTicket），要到了照票握手、不出密码屏；只问一次', async () => {
+  const calls = [];
+  const asked = [];
+  let token = 'old';
+  let ticket = null;
+  const served = {
+    kind: 'served', check: async () => 'down',
+    channel: fakeLine((p) => {
+      if (p.login === 'old') throw Object.assign(new Error('bad'), { reason: 'bad_login' });
+      return { view: 1, login: { token: 'fresh', expires: 'x' } };
+    }, calls),
+    credential: () => {
+      if (token) return { login: token };
+      const one = ticket;
+      ticket = null;
+      return one ? { ticket: one } : null;
+    },
+    localTicket: async () => { asked.push(token); if (token) return false; ticket = 'a'.repeat(64); return true; },
+    remember: (/** @type {any} */ l) => { token = l.token; },
+    forget: () => { token = null; },
+  };
+  const got = await signIn(served, { head: { kind: 'web' } }, /** @type {any} */ ({}), async (err) => { throw err; });
+  assert.equal(got.setup, false);
+  assert.deepEqual(calls.map((p) => p.login ?? p.ticket ?? p.password), ['old', 'a'.repeat(64)], '作废了的扔掉，拿票握手，没出密码屏');
+  assert.deepEqual(asked, [null], '有令牌时不问，作废了问一次');
+  assert.equal(token, 'fresh', '换到的令牌记下');
+});
+
 test('握手回应给了新令牌的（票、密码换的）连同勾没勾自动登录一起记下；回应没有 account（核心 SU-1）', async () => {
   const kept = [];
   const fresh = {
