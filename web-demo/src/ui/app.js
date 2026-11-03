@@ -271,6 +271,13 @@ export class App {
     ctx.effect(() => mountList(this.sidebar.actions, ctx.slots, 'sidebar.actions', failedSlot));
     // 左上角人格的头像、名字那一块（蓝图「左栏」第 1 条，2026-11-02 外观包要的，项目主人：头像和名字也是主题能改的，可以藏掉）：
     // 有包挂了整块顶替，交 null 是藏掉；拿掉了照原来的画
+    // 左栏「更多」（W-1071）：软件包挂入口 `{id, label, icon?, run}`，左栏画成菜单
+    ctx.slots.declare('sidebar.more', 'list');
+    ctx.effect(() => {
+      const sync = () => this.sidebar.setMore(ctx.slots.list('sidebar.more'));
+      sync();
+      return ctx.slots.watch('sidebar.more', sync);
+    });
     ctx.slots.declare('sidebar.brand', 'single');
     ctx.effect(() => mountSingle(this.sidebar.brandBox, ctx.slots, 'sidebar.brand', failedSlot, (on) => { this.sidebar.identity.hidden = on; }));
     // 框上面的一叠：挂进 `composer.above` 的（待办这类软件包）在流里、占着地方，下面是运行状态行，再下面是框

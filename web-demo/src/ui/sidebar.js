@@ -18,7 +18,7 @@
 //! 在跑的会话，记号那一格是盲文转圈：整个左栏一个定时器，只在有会话在跑时走（「空闲就是真的空闲」，
 //! `00-设计理念.md` 第一节）；帧照墙上的钟取，重画了也接着转，不跳回第一帧。
 
-import { h, icon, replace } from './dom.js';
+import { h, icon, replace, hasIcon } from './dom.js';
 import { leave } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { toggle, range } from '../model/select.js';
@@ -105,10 +105,21 @@ export class Sidebar {
     const navRow = (/** @type {string} */ name, /** @type {string} */ label, /** @type {() => void} */ run, /** @type {string} */ key) =>
       h('button.sidebar-nav-row', { type: 'button', dataset: { nav: key }, onclick: run }, icon(name), h('span', label));
     this.navProjects = navRow('folder', t('sidebar.projects'), () => on.viewProjects(), 'projects');
+    /** 「更多」（挂载位 `sidebar.more`，2026-11-03 项目主人：主要留给软件包挂，W-1071）：有包挂了入口才露，点了在下面弹一个菜单 */
+    this.navMore = navRow('ellipsis', t('sidebar.more'), () => this.toggleMore(), 'more');
+    this.navMore.hidden = true;
+    this.navMore.setAttribute('aria-haspopup', 'menu');
+    this.navMore.setAttribute('aria-expanded', 'false');
+    this.moreBox = h('div.sidebar-more', this.navMore);
+    /** 挂进来的入口：`{id, label, icon?, run}` @type {any[]} */
+    this.moreEntries = [];
+    /** @type {HTMLElement|null} */
+    this.moreMenu = null;
     this.nav = h('nav.sidebar-nav',
       navRow('plus', t('sidebar.new_session_nav'), () => on.newSession(), 'new'),
       navRow('messages-square', t('sidebar.all_sessions_nav'), () => on.viewAll(), 'sessions'),
-      this.navProjects);
+      this.navProjects,
+      this.moreBox);
     /** 左上角的头像、名字：正在看的会话用的人格（`setLook`），点了打开这个人格的编辑页 */
     this.face = h('span.brand-face');
     this.name = h('strong');
@@ -145,12 +156,61 @@ export class Sidebar {
     document.addEventListener('click', (e) => {
       const target = /** @type {Element} */ (e.target);
       if (this.menuFor && !target.closest?.('.session-menu, .session-menu-button')) this.toggleMenu(null);
+      if (this.moreMenu && !target.closest?.('.sidebar-more')) this.closeMore();
     });
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
-      if (this.menuFor) this.toggleMenu(null);
+      if (this.moreMenu) this.closeMore();
+      else if (this.menuFor) this.toggleMenu(null);
       else if (this.selecting) this.select(false);
     });
+  }
+
+  /**
+   * 「更多」里挂的入口（`sidebar.more`）：一个都没有的这一行不露；菜单开着的照新的重画。
+   * @param {any[]} entries 挂进来的，每个 `{id, label, icon?, run}`
+   */
+  setMore(entries) {
+    this.moreEntries = entries.filter((x) => typeof x?.label === 'string' && typeof x?.run === 'function');
+    this.navMore.hidden = this.moreEntries.length === 0;
+    if (!this.moreMenu) return;
+    if (this.moreEntries.length) this.openMore();
+    else this.closeMore();
+  }
+
+  /** 点「更多」：开着的关上，关着的开 */
+  toggleMore() {
+    if (this.moreMenu) this.closeMore();
+    else this.openMore();
+  }
+
+  /** 在「更多」下面弹菜单：一项一个按钮（图标、名字；没写、认不得的图标画 `puzzle`，字照样对齐），样子同会话的菜单；点了先关菜单再做 */
+  openMore() {
+    this.moreMenu?.remove();
+    const close = () => this.closeMore();
+    this.moreMenu = h('div.session-menu.sidebar-more-menu', { role: 'menu' }, this.moreEntries.map((x) =>
+      h('button', {
+        type: 'button', role: 'menuitem',
+        onclick: () => {
+          close();
+          try {
+            x.run();
+          } catch (err) {
+            console.error(`${x.owner ?? '?'} 挂的「更多」${x.id ?? ''} 出错了`, err);
+          }
+        },
+      }, icon(typeof x.icon === 'string' && hasIcon(x.icon) ? x.icon : 'puzzle'), h('span', x.label))));
+    this.moreBox.append(this.moreMenu);
+    this.navMore.setAttribute('aria-expanded', 'true');
+    this.navMore.classList.add('is-on');
+  }
+
+  closeMore() {
+    const m = this.moreMenu;
+    this.moreMenu = null;
+    this.navMore.setAttribute('aria-expanded', 'false');
+    this.navMore.classList.remove('is-on');
+    if (m) leave(m, () => m.remove());
   }
 
   /** 全部会话那一页开着哪一页（`null` 是关着）：头上交互区那一行亮着。 @param {'sessions'|'projects'|null} view */

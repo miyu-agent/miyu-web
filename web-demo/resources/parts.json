@@ -111,7 +111,19 @@
     "select": [
       ".brand-custom"
     ]
+  },  "sidebar.more": {
+    "zh": "左栏「更多」那一行外面的一层（软件包挂了入口才露，W-1071）",
+    "select": [
+      ".sidebar-more"
+    ]
   },
+  "sidebar.more-menu": {
+    "zh": "左栏「更多」点开的菜单",
+    "select": [
+      ".sidebar-more-menu"
+    ]
+  },
+
   "schedules.detail-prompt": {
     "zh": "定时任务详情：头一行那句话",
     "select": [

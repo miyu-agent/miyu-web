@@ -376,6 +376,12 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
   color: var(--item-fg, var(--text)); font: calc(12.5px * var(--text-scale)) var(--font-ui); text-align: left; cursor: pointer; transition: background-color calc(160ms * var(--motion-scale)) ease;
 }
 .sidebar-nav-row[hidden] { display: none; }
+/* 「更多」（W-1071）：菜单贴着这一行下面左对齐，样子同会话的菜单 */
+.sidebar-more { position: relative; display: grid; }
+.sidebar-more:has(> .sidebar-nav-row[hidden]) { display: none; }
+.sidebar-more-menu { top: calc(100% + 2px); right: auto; left: 0; min-width: 180px; }
+.sidebar-more-menu button { display: flex; align-items: center; gap: calc(8px * var(--space)); }
+.sidebar-more-menu .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); flex: none; color: var(--text-soft); }
 .sidebar-nav-row:hover { background: var(--item-hover, color-mix(in srgb, var(--text) 3.5%, transparent)); }
 .sidebar-nav-row.is-on { background: var(--item-active, var(--sidebar-active)); box-shadow: var(--item-elev-active, var(--sidebar-active-shadow)); }
 .sidebar-nav-row .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); flex: none; color: var(--text-soft); }
