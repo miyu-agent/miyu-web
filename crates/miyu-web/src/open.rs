@@ -3,10 +3,11 @@
 //! 1. 照终端的样子连核心（出示本机令牌，没在跑就拉起来），握手拿到人的语言。
 //! 2. `--logout`：`account.logout`、`all: true`，说作废了几个，不碰网页软件。
 //! 3. 网页软件没在跑（`run/miyu-webui/lock` 没人拿着、没有 `run/miyu-webui/address`）就拉起 `serve`，等那一行最多 10 秒。
-//! 4. 问一次 `account.setup_code`（`first` 照实交给 `--format json`）：写了 `--reset` 的网址带 `#setup=<一次性码>`；别的（2026-10-30 起没设过密码的
-//!    也是：访问密码只给局域网用）要一张交接票（`login.ticket`，核心 LT-1），网址带 `#ticket=<票>`（im 设计 07 第 3.6 节、网页-乙；SU-1 起不带账号），页面存着设备令牌的照它、
-//!    没有的拿票连上；旧核心要不到票的网址就是地址本身（要了没用的码 5 分钟后自己作废）。
-//! 5. `--print`、交不给浏览器的：印网址（带了码、票的另印一句提醒）。别的交给浏览器打开：带凭据的不直接交（交出去的参数进进程
+//! 4. 问一次 `account.setup_code`（`first` 照实交给 `--format json`）：写了 `--reset` 的网址带 `#setup=<一次性码>`。别的交给浏览器的网址不带凭据
+//!    （W-1089，2026-11-03 项目主人：地址栏、历史里看不到票和令牌）：页面开在本机地址上，存着设备令牌的照它，没有的自己 `POST /ticket`
+//!    要一张票进来。印出来的（`--print`、`--format json`、交不给浏览器的）照旧要一张交接票（`login.ticket`，核心 LT-1），网址带
+//!    `#ticket=<票>`（im 设计 07 第 3.6 节、网页-乙；SU-1 起不带账号）：可能交给别的程序、别的浏览器配置；旧核心要不到票的网址就是地址本身。
+//! 5. `--print`、交不给浏览器的：印网址（带了码、票的另印一句提醒）。别的交给浏览器打开：带一次性码的不直接交（交出去的参数进进程
 //!    列表），写一个只给本人的跳转页（[`jump`]），交它的 `file://` 地址，再拉起 `miyu-web forget` 过一会儿删掉它。
 //!
 //! 网址印在标准输出上（脚本能拿）；别的话印在标准错误上。照终端的样子连核心、开浏览器这两样在 `miyu-webserve`（施工
@@ -36,7 +37,7 @@ pub struct Open {
     pub print: bool,
     /// `--format json`：给程序读（桌面端的外壳），标准输出只印一行 `{"url", "first"}`，人看的字不印；带了它就当 [`Open::print`]。
     pub json: bool,
-    /// `--ticket`：没设过访问密码也要交接票（桌面端免密，2026-10-29）；2026-10-30 起不写也一样，留着给桌面端的外壳；和 [`Open::reset`] 不一起写。
+    /// `--ticket`：没设过访问密码也要交接票（桌面端免密，2026-10-29）；2026-10-30 起不写也一样，留着给桌面端的外壳（W-1089 起交给浏览器的写了也不带票，印出来的才带）；和 [`Open::reset`] 不一起写。
     pub ticket: bool,
     /// 忘了密码：要一个一次性码重设。
     pub reset: bool,
@@ -131,44 +132,50 @@ pub async fn open(
         .as_str()
         .filter(|_| open.reset)
         .map(str::to_string);
-    // 不带码的要一张交接票（网页-乙）：旧核心没有 `login.ticket`、回应没有 `account` 的不带
+    // 交给浏览器的不带票（W-1089，2026-11-03 项目主人：地址栏、历史里看不到凭据）：页面开在本机地址上自己 `POST /ticket`；
+    // `--reset` 的码照旧带。交给了浏览器的印结果行（带着整个网址），提示都在标准错误上（核心设计 47）
+    if !open.print && !open.json {
+        let url = address_of(&site, code.as_deref(), None, open);
+        if hand(root, &url, code.is_some(), launch, browser) {
+            say(out, &language.opened(&url));
+            if code.is_some() {
+                say(err, &language.hint(Carried::Reset));
+            }
+            return 0;
+        }
+    }
+    // 印出来的（`--print`、`--format json`、交不出去的）不带码的照旧要一张交接票（网页-乙）：可能交给别的程序、别的浏览器配置
     let ticket = match code {
         Some(_) => None,
-        None => core
-            .call("ticket", "login.ticket", json!({}))
-            .await
-            .ok()
-            .and_then(|got| {
-                got["ticket"]
-                    .as_str()
-                    .filter(|t| hex(t))
-                    .map(str::to_string)
-            }),
+        None => ticket(&mut core).await,
     };
     let url = address_of(&site, code.as_deref(), ticket.as_deref(), open);
-    let secret = code.is_some() || ticket.is_some();
+    if open.json {
+        say(out, &json!({"url": url, "first": first}).to_string());
+        return 0;
+    }
+    say(out, &url);
+    if !open.print {
+        say(err, &language.no_browser());
+    }
     let carried = match (&code, &ticket) {
         (Some(_), _) => Some(Carried::Reset),
         (None, Some(_)) => Some(Carried::Ticket),
         (None, None) => None,
     };
-    if open.json {
-        say(out, &json!({"url": url, "first": first}).to_string());
-        return 0;
-    }
-    // 交给了浏览器的印结果行（带着整个网址）；交不出去、`--print` 的只印网址。提示都在标准错误上（核心设计 47）
-    if !open.print && hand(root, &url, secret, launch, browser) {
-        say(out, &language.opened(&url));
-    } else {
-        say(out, &url);
-        if !open.print {
-            say(err, &language.no_browser());
-        }
-    }
     if let Some(carried) = carried {
         say(err, &language.hint(carried));
     }
     0
+}
+
+/// 问核心要一张交接票（`login.ticket`）：旧核心没有这个方法、回应里没有票的是空的。
+async fn ticket(core: &mut Core) -> Option<String> {
+    let got = core.call("ticket", "login.ticket", json!({})).await.ok()?;
+    got["ticket"]
+        .as_str()
+        .filter(|t| hex(t))
+        .map(str::to_string)
 }
 
 /// 交给浏览器：带凭据的（`secret`）写跳转页、交它的地址、拉起 `forget`；写不了跳转页的不交（照 `--print` 办）。交回交没交出去。

@@ -1,6 +1,7 @@
 //! `miyu-web open`（施工 W-9，`web-module.md`「怎么走」第十一条）：网页软件没在跑先拉起来（真的 `miyu-web serve`）；
-//! `--reset` 的网址带 `#setup=<一次性码>`，别的（没设过密码的也是，2026-10-30）带交接票 `#ticket=<票>`（网页-乙；SU-1 起不带账号，回应里带了也不用）、旧核心要不到票的什么都不带；
-//! `--package` 的再带 `package=<编号>`（施工 F-6 下）；带凭据的交给浏览器的是只给本人的跳转页；`--print` 印网址和提醒；交不给浏览器的照
+//! `--reset` 的网址带 `#setup=<一次性码>`；别的交给浏览器的什么凭据都不带（W-1089：页面在本机地址上自己 `POST /ticket`），印出来的
+//! （`--print`、交不给浏览器的）带交接票 `#ticket=<票>`（网页-乙；SU-1 起不带账号，回应里带了也不用）、旧核心要不到票的什么都不带；
+//! `--package` 的再带 `package=<编号>`（施工 F-6 下）；带一次性码的交给浏览器的是只给本人的跳转页；`--print` 印网址和提醒；交不给浏览器的照
 //! `--print` 办；`--logout` 说作废了几个。核心是替身：照方法名答。
 
 use std::path::Path;
@@ -186,7 +187,7 @@ pub(crate) fn browser(works: bool) -> FakeBrowser {
 }
 
 #[tokio::test]
-async fn the_first_time_opens_with_a_ticket_after_starting_the_web_ui() {
+async fn the_first_time_opens_the_bare_address_after_starting_the_web_ui() {
     let home = Home::new();
     answer(fake_core(&home), true);
     let browser = browser(true);
@@ -202,18 +203,18 @@ async fn the_first_time_opens_with_a_ticket_after_starting_the_web_ui() {
     assert_eq!(code, 0, "{err}");
     let site = miyu_web::serve::address(&home.root).expect("拉起来了、写了地址");
     assert!(miyu_web::serve::running(&home.root));
-    // 没设过访问密码也拿票（2026-10-30 项目主人：访问密码只给局域网用，本机打开不逼着设）
-    assert_eq!(went(&browser), [format!("{site}/#ticket={TICKET}")]);
-    assert!(
-        browser.opened.lock().expect("没坏")[0].starts_with("file://"),
-        "带票的交跳转页，票不进进程列表"
+    // 交给浏览器的不带票（W-1089，2026-11-03 项目主人：地址栏、历史里看不到凭据）：页面在本机地址上自己 `POST /ticket`
+    assert_eq!(
+        *browser.opened.lock().expect("没坏"),
+        [format!("{site}/")],
+        "直接交地址，不写跳转页"
     );
-    // 结果行带着整个网址（2026-10-29 项目主人：原来要再 --print 才看得到），提示在标准错误上（核心设计 47）
-    assert_eq!(out, format!("已在浏览器中打开：{site}/#ticket={TICKET}\n"));
-    assert_eq!(err, "提示：链接 60 秒内有效，只能用一次\n");
+    // 结果行带着整个网址（2026-10-29 项目主人：原来要再 --print 才看得到）；没带凭据的不提示
+    assert_eq!(out, format!("已在浏览器中打开：{site}/\n"));
+    assert_eq!(err, "");
     // 已经在跑的照它的地址，不再拉起。
     let again = browser_again(&home, Open::default(), true).await;
-    assert_eq!(again, [format!("{site}/#ticket={TICKET}")]);
+    assert_eq!(again, [format!("{site}/")]);
 }
 
 async fn browser_again(home: &Home, args: Open, works: bool) -> Vec<String> {
@@ -224,7 +225,7 @@ async fn browser_again(home: &Home, args: Open, works: bool) -> Vec<String> {
 }
 
 #[tokio::test]
-async fn later_opens_carry_a_ticket_unless_reset() {
+async fn the_browser_gets_no_ticket_but_reset_carries_the_code() {
     let home = Home::new();
     answer(fake_core(&home), false);
     let browser = browser(true);
@@ -239,12 +240,8 @@ async fn later_opens_carry_a_ticket_unless_reset() {
     .await;
     assert_eq!(code, 0, "{err}");
     let site = miyu_web::serve::address(&home.root).expect("有地址");
-    assert_eq!(
-        went(&browser),
-        [format!("{site}/#ticket={TICKET}")],
-        "带票，不带账号"
-    );
-    assert_eq!(err, "提示：链接 60 秒内有效，只能用一次\n");
+    assert_eq!(went(&browser), [format!("{site}/")], "不带票");
+    assert_eq!(err, "");
     let reset = browser_again(
         &home,
         Open {
@@ -276,7 +273,8 @@ async fn a_named_package_rides_after_the_hash() {
     let site = miyu_web::serve::address(&home.root).expect("有地址");
     assert_eq!(
         went(&browser),
-        [format!("{site}/#ticket={TICKET}&package=onebot")]
+        [format!("{site}/#package=onebot")],
+        "不是凭据的照带"
     );
     let reset = browser_again(
         &home,
@@ -397,6 +395,7 @@ async fn the_jump_page_is_private_and_forgotten() {
         &home,
         Open {
             port: Some(0),
+            reset: true,
             ..Open::default()
         },
         &browser,
