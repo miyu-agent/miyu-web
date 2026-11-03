@@ -207,7 +207,17 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; us
 
 /* 卡片标题字能点（放大看）：悬停下划线、指针变手 */
 .dash-title.is-link { cursor: pointer; border-radius: var(--r-4); }
-.dash-title.is-link:hover, .dash-title.is-link:focus-visible { outline: none; text-decoration: underline; text-underline-offset: 3px; }
+.dash-title.is-link:focus-visible { outline: none; text-decoration: underline; text-underline-offset: 3px; }
+/* 收放（W-1070）：标题后面一个箭头，悬停这一行才露，收着的一直露、转向右；放大看的按钮悬停这一行才露，收着的不露 */
+.dash-chevron { display: grid; place-items: center; margin-left: calc(-4px * var(--space)); color: var(--text-faint); cursor: pointer; opacity: 0; transition: opacity calc(120ms * var(--motion-scale)) ease, transform var(--motion-slide) var(--ease-out); }
+.dash-chevron .icon { width: calc(12px * var(--space)); height: calc(12px * var(--space)); }
+.dash-head:hover .dash-chevron, .dash-title:focus-visible + .dash-chevron, .dash-card.is-folded .dash-chevron { opacity: 1; }
+.dash-card.is-folded .dash-chevron { transform: rotate(-90deg); }
+.dash-zoom { flex: none; margin-left: auto; opacity: 0; transition: opacity calc(120ms * var(--motion-scale)) ease; }
+.dash-head:hover .dash-zoom, .dash-zoom:focus-visible { opacity: 1; }
+.dash-card.is-folded .dash-zoom { display: none; }
+/* 收着的卡不占最矮的那几行 */
+.dash-slot.is-on.is-folded { flex-shrink: 0; min-height: 0; }
 /* 放大看那一页（蓝图「仪表盘」第 4 条「放大看」）：文件修改左边一列 260px（同卡片的一行，能收起：外面那一层 `.artifact-split` 在 styles/artifacts.css），右边选中的那一个；两边各自滚 */
 .dash-big { display: flex; height: 100%; min-height: 0; color: var(--text); font-family: var(--font-ui); }
 .dash-big-title { font-size: calc(13.5px * var(--text-scale)); font-weight: 600; }

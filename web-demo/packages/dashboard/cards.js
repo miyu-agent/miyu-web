@@ -8,7 +8,7 @@
 //! `head: false` 的没有头一行（会话信息：直接从会话标题开始），`rows: false` 的不限高度、设置里不出「最多露几行」（会话信息），
 //! `name` 是设置里列出来叫什么（不写的照 `card.title` 写的、再不行照编号）。设置改了（`live`）当场照新的排、改高度（`reconfigure`）。
 
-import { h, replace } from '../../src/lib/dom.js';
+import { h, icon, replace } from '../../src/lib/dom.js';
 import { unfold } from '../../src/lib/motion.js';
 import { arrange } from './model.js';
 
@@ -39,8 +39,12 @@ export class Cards {
    * @param {(owner: string, reason: string) => Node} failed 画的时候出错的那一张里写什么
    * @param {() => void} changed 有卡出来、收起了（「什么都还没有」那一句跟着）；设置改了也叫（内容照新的行数重画）
    */
-  constructor(host, slots, config, failed, changed) {
+  constructor(host, slots, config, failed, changed, folds, text) {
     this.host = host;
+    /** 哪几张卡收着（这台设备上记着，W-1070）：`get(id)`、`set(id, folded)` */
+    this.folds = folds;
+    /** 给人看的字（「展开」「收起」「放大看」） @type {(key: string) => string} */
+    this.text = text;
     this.slots = slots;
     this.config = config;
     this.failed = failed;
@@ -105,8 +109,15 @@ export class Cards {
     const title = h('strong.dash-title');
     const head = h('div.dash-head.is-sticky', title);
     const body = h('div.dash-card-body');
+    // 收放的一层（W-1070）：点标题收起、展开这张卡的正文，头一行留着
+    const fold = h('div.unfold.dash-fold', h('div.unfold-inner', body));
+    /** 标题后面悬停露的箭头、右边悬停露的「放大看」（`link` 了的卡才有） @type {HTMLElement|null} */
+    let chevron = null;
+    /** @type {HTMLElement|null} */
+    let big = null;
     const bare = entry.head === false;
-    const el = h(`section.dash-card${bare ? '.is-bare' : ''}`, { dataset: { card: id }, style: Number.isFinite(rows) ? `--card-rows: ${rows}` : null }, bare ? null : head, body);
+    const el = h(`section.dash-card${bare ? '.is-bare' : ''}`, { dataset: { card: id }, style: Number.isFinite(rows) ? `--card-rows: ${rows}` : null }, bare ? null : head, fold);
+    unfold(fold, true);
     const slot = h('div.unfold.dash-slot', { dataset: { card: id } }, h('div.unfold-inner', el));
     const keep = entry.keep ?? 3;
     const shrink = entry.shrink ?? 4;
@@ -120,7 +131,7 @@ export class Cards {
         title.textContent = text;
         el.setAttribute('aria-label', text);
       },
-      head: (...nodes) => replace(head, title, ...nodes),
+      head: (...nodes) => replace(head, title, chevron, ...nodes, big),
       gap: () => h('span.dash-gap'),
       body: (...nodes) => replace(body, ...nodes),
       show: (on) => {
@@ -136,19 +147,35 @@ export class Cards {
         slot.style.setProperty('--dash-floor', `${CHROME_PX + floor * ROW_PX}px`);
       },
       maxRows: () => d.rows,
-      // 标题字能点（放大看，蓝图「仪表盘」第 4 条「放大看」）：悬停下划线、指针变手，回车、空格也行
+      // 标题字能点（2026-11-03 项目主人，W-1070：原来点了放大看，改成收起、展开这张卡）：悬停露箭头、指针变手，回车、空格也行；
+      // 放大看（蓝图「仪表盘」第 4 条）挪到这一行最右边一个悬停才露的按钮
       link: (open) => {
+        const flip = () => setFolded(!el.classList.contains('is-folded'));
         title.classList.add('is-link');
         title.setAttribute('role', 'button');
         title.tabIndex = 0;
-        title.onclick = () => open();
+        title.onclick = flip;
         title.onkeydown = (e) => {
           if (e.key !== 'Enter' && e.key !== ' ') return;
           e.preventDefault();
-          open();
+          flip();
         };
+        chevron = h('span.dash-chevron', { 'aria-hidden': 'true', onclick: flip }, icon('chevron-down'));
+        big = h('button.icon-button.dash-zoom', { type: 'button', title: this.text('big'), 'aria-label': this.text('big'), onclick: () => open() }, icon('maximize-2'));
+        title.after(chevron);
+        head.append(big);
+        setFolded(this.folds.get(id), false);
       },
     };
+    /** 收起、展开（`remember` 为假的是照记着的摆回去，不写） @param {boolean} folded @param {boolean} [remember] */
+    function setFolded(folded, remember = true) {
+      el.classList.toggle('is-folded', folded);
+      title.setAttribute('aria-expanded', String(!folded));
+      slot.classList.toggle('is-folded', folded);
+      unfold(fold, !folded);
+      if (remember) cards.folds.set(id, folded);
+    }
+    const cards = this;
     unfold(slot, false);
     this.drawn.set(entry, d);
     const out = this.slots.draw(entry, d.card);

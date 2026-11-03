@@ -15,6 +15,8 @@ import { taskTree, fileChanges, counts, badgeOf } from './model.js';
 
 /** 人关过仪表盘的会话（这台设备、照账号记着，最多记这么多个） */
 const CLOSED = 'dashboard.closed';
+/** 收着的卡（W-1070）：`{卡的编号: true}` */
+const FOLDED = 'dashboard.folded';
 const CLOSED_MAX = 200;
 
 /** @param {any} ctx */
@@ -62,7 +64,18 @@ export function apply(ctx) {
 
   // 卡片：挂载位 `side.cards`（蓝图「仪表盘」第 4 条），外壳照这个包的设置排先后、关掉、最多露几行；自己的四张也经它挂
   ctx.slots.declare('side.cards', 'list');
-  const cards = new Cards(dash.list, ctx.slots, ctx.config, (owner, reason) => h('div.slot-failed', t('card_failed', { owner, reason })), () => dash.setEmpty(cards.any()));
+  // 哪几张卡收着：跟着这台设备（列宽、左栏收起那一类，W-1070）
+  const folds = {
+    get: (/** @type {string} */ id) => ctx.storage.get(FOLDED, {})?.[id] === true,
+    set: (/** @type {string} */ id, /** @type {boolean} */ folded) => {
+      const got = ctx.storage.get(FOLDED, {});
+      const map = got && typeof got === 'object' && !Array.isArray(got) ? got : {};
+      if (folded) map[id] = true;
+      else delete map[id];
+      ctx.storage.set(FOLDED, map);
+    },
+  };
+  const cards = new Cards(dash.list, ctx.slots, ctx.config, (owner, reason) => h('div.slot-failed', t('card_failed', { owner, reason })), () => dash.setEmpty(cards.any()), folds, (key) => t(key));
   ctx.effect(() => cards.start());
   /** @type {Array<{id: 'todo'|'tasks'|'files'|'shown', order: number, keep: number, shrink: number}>} */
   const own = [

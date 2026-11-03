@@ -6616,6 +6616,24 @@
       ".dash-title"
     ]
   },
+  "dash.fold": {
+    "zh": "仪表盘：卡里收放正文的那一层（点标题收起、展开）",
+    "select": [
+      ".dash-fold"
+    ]
+  },
+  "dash.chevron": {
+    "zh": "仪表盘：卡的标题后面收放的箭头",
+    "select": [
+      ".dash-chevron"
+    ]
+  },
+  "dash.zoom": {
+    "zh": "仪表盘：卡的头一行右边、悬停才露的放大看按钮",
+    "select": [
+      ".dash-zoom"
+    ]
+  },
   "dash.count": {
     "zh": "仪表盘：标题旁的数（几个在跑、几个等你、已完成几项）",
     "select": [

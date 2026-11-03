@@ -144,6 +144,7 @@
       "list_hide": "收起列表",
       "no_detail": "这次改动的差异读不到",
       "expand": "展开",
+      "big": "放大看",
       "collapse": "收起",
       "skipped": {
         "too_big": "文件太大，算不出差异",
@@ -214,6 +215,7 @@
       "list_hide": "Hide list",
       "no_detail": "Can't read the diff for this change",
       "expand": "Expand",
+      "big": "Open large view",
       "collapse": "Collapse",
       "skipped": {
         "too_big": "File too large to diff",
@@ -284,6 +286,7 @@
       "list_hide": "リストを隠す",
       "no_detail": "この変更の差分を読めません",
       "expand": "展開",
+      "big": "大きく表示",
       "collapse": "折りたたむ",
       "skipped": {
         "too_big": "ファイルが大きすぎて差分を出せません",
