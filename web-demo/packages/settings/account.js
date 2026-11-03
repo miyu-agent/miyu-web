@@ -8,6 +8,7 @@ import { sectionKit } from './kit.js';
 import { coreRow, groupBlock, toggle } from './rows.js';
 import { plainItem } from './model.js';
 import { fold } from './privacy.js';
+import { ACCESS } from '../../src/lib/launch.js';
 
 /** 改了要网页软件当场换监听的两项 */
 export const LISTEN_KEYS = ['web.listen', 'web.port'];
@@ -38,7 +39,10 @@ export function accessGroup(dialog, withAvatar = false) {
         cancel: () => { dialog.lanPending = false; dialog.drawBody?.(); },
       } : {})));
   }
-  return groupBlock(t('pages.account'), rows);
+  const group = groupBlock(t('pages.account'), rows);
+  // `miyu web --settings access` 照它滚到这一组（W-1085）
+  if (group) group.dataset.group = ACCESS;
+  return group;
 }
 
 /** 「用户身份」页最上面的头像（第 12d 条）；没有的交 `null`。 @param {any} dialog */

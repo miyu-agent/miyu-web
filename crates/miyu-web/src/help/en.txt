@@ -12,4 +12,7 @@ Options:
       --reset        Open with a one-time code to reset the access password
       --logout       Sign out every browser
       --package <id> Open this package's page under Backstage
+      --session <id> Open this session
+      --settings [<page>]
+                     Open Settings; access opens Access under General
   -h, --help         Print help

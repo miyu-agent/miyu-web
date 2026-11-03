@@ -2,8 +2,9 @@
 //! 拉起来的，不写进帮助（`forget <跳转页>`：过 30 秒删掉 `open` 写的跳转页，`web-ui.md`「怎么走」第二条第 4 款）。
 //!
 //! - `miyu-web serve [--port <端口>]`
-//! - `miyu-web open [--port <端口>] [--print] [--format text|json] [--ticket] [--reset] [--logout] [--package <编号>] [-h|--help]`：核心 CL-7 起
-//!   `miyu web` 是网页包的命令，清单 `args = ["open"]`，转交过来就是它；`-h` 印帮助页，写错的照命令行文案说（[`miyu_web::help`]）
+//! - `miyu-web open [--port <端口>] [--print] [--format text|json] [--ticket] [--reset] [--logout] [--package <编号>] [--session <编号>]
+//!   [--settings [<分页>]] [-h|--help]`：核心 CL-7 起 `miyu web` 是网页包的命令，清单 `args = ["open"]`，转交过来就是它；`-h` 印帮助页，
+//!   写错的照命令行文案说（[`miyu_web::help`]）
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
@@ -171,7 +172,7 @@ fn forget(rest: &[String]) -> ExitCode {
 /// 用法不对。
 fn usage() -> ExitCode {
     eprintln!(
-        "usage: miyu-web open [--port <port>] [--print] [--format text|json] [--ticket] [--reset] [--logout] [--package <id>]"
+        "usage: miyu-web open [--port <port>] [--print] [--format text|json] [--ticket] [--reset] [--logout] [--package <id>] [--session <id>] [--settings [<page>]]"
     );
     ExitCode::from(USAGE)
 }

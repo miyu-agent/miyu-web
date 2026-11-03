@@ -31,3 +31,31 @@ fn the_whole_address_is_escaped() {
         "file://srv/share/x.html"
     );
 }
+
+#[test]
+fn the_address_carries_where_to_go_after_the_credentials() {
+    let site = "http://127.0.0.1:8300";
+    assert_eq!(
+        address_of(site, None, None, &Open::default()),
+        "http://127.0.0.1:8300/"
+    );
+    let go = Open {
+        package: Some("onebot".to_string()),
+        session: Some("019a4b2c-7d3e-7f10-8a2b-3c4d5e6f7a8b".to_string()),
+        settings: Some("access".to_string()),
+        ..Open::default()
+    };
+    assert_eq!(
+        address_of(site, None, Some("ab12"), &go),
+        "http://127.0.0.1:8300/#ticket=ab12&package=onebot&session=019a4b2c-7d3e-7f10-8a2b-3c4d5e6f7a8b&settings=access"
+    );
+    let home = Open {
+        settings: Some(String::new()),
+        ..Open::default()
+    };
+    assert_eq!(
+        address_of(site, Some("9f03"), None, &home),
+        "http://127.0.0.1:8300/#setup=9f03&settings=",
+        "设置的首页写空的"
+    );
+}

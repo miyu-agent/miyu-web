@@ -43,6 +43,33 @@ fn reads_every_option() {
 }
 
 #[test]
+fn session_and_settings_name_where_to_go() {
+    const SESSION: &str = "019a4b2c-7d3e-7f10-8a2b-3c4d5e6f7a8b";
+    let got = parse(&args(&["--session", SESSION, "--settings", "access"]));
+    let want = Open {
+        session: Some(SESSION.to_string()),
+        settings: Some("access".to_string()),
+        ..Open::default()
+    };
+    assert_eq!(got, Ok(Parsed::Open(want)));
+    let home = Open {
+        settings: Some(String::new()),
+        print: true,
+        ..Open::default()
+    };
+    assert_eq!(
+        parse(&args(&["--settings", "--print"])),
+        Ok(Parsed::Open(home.clone())),
+        "分页可以不写：下一个是选项"
+    );
+    assert_eq!(
+        parse(&args(&["--print", "--settings"])),
+        Ok(Parsed::Open(home)),
+        "分页可以不写：后面没有了"
+    );
+}
+
+#[test]
 fn says_what_is_wrong() {
     assert_eq!(
         parse(&args(&["--bogus"])),
@@ -60,6 +87,23 @@ fn says_what_is_wrong() {
     assert_eq!(
         parse(&args(&["--package", "a b"])),
         Err(Bad::Value("--package", "a b".into()))
+    );
+    assert_eq!(parse(&args(&["--session"])), Err(Bad::Missing("--session")));
+    for bad in [
+        "notes",
+        "019a4b2c-7d3e-7f10-8a2b-3c4d5e6f7a8",
+        "019a4b2c7d3e-7f10-8a2b-3c4d5e6f7a8b",
+        "019a4b2c-7d3e-7f10-8a2b-3c4d5e6f7a8g",
+    ] {
+        assert_eq!(
+            parse(&args(&["--session", bad])),
+            Err(Bad::Value("--session", bad.into())),
+            "{bad}"
+        );
+    }
+    assert_eq!(
+        parse(&args(&["--settings", "a&b"])),
+        Err(Bad::Value("--settings", "a&b".into()))
     );
     assert_eq!(
         parse(&args(&["--ticket", "--reset"])),
@@ -107,6 +151,8 @@ fn the_page_picks_the_language_and_leaves_out_ticket() {
             "--reset",
             "--logout",
             "--package",
+            "--session",
+            "--settings",
             "--help",
         ] {
             assert!(text.contains(option), "{option} 在帮助里");

@@ -11,6 +11,7 @@ import { drawMarkdown, useRenderers } from '../../src/ui/render.js';
 import { PALETTE, colorOf } from '../../src/model/project.js';
 import { t } from '../../src/util/res.js';
 import { pathOf } from '../../src/model/tree.js';
+import { sessionOf, without } from '../../src/lib/launch.js';
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -21,6 +22,13 @@ export function apply(ctx) {
   // 图片点开找灯箱：用的时候再找（`lightbox~`），灯箱装上、停了整页不重来
   const app = new App(ctx.sessions, ctx.core, ctx.host, ctx, () => ctx.lightbox);
   app.mount(ctx.page.root);
+  // 打开时点名的会话（`miyu web --session <编号>`，W-1085：托盘程序点通知回到那个会话）：不照 `ui.startup`，切过去；读完从地址栏抹掉。
+  // 没有这个会话的照平常打开不存在的会话，在输入框上面说核心给的那一句
+  const nav = ctx.host.route;
+  const hash = nav?.current() ?? '';
+  const asked = sessionOf(hash);
+  if (without(hash, ['session']) !== hash) nav.replace(without(hash, ['session']));
+  if (asked) app.open(asked);
   ctx.seams.watch((/** @type {string} */ name) => { if (name.startsWith('render.')) app.chat.redraw(); });
   // 对话区：别的包经它拿滚的那一层、正文那一列、你说的话
   // Markdown 的代码块、复制：mermaid 这类包经它用；整段画（知识库页的片段、原文）：`render(容器, 原文)`

@@ -28,7 +28,8 @@ pub enum Bad {
 }
 
 /// 读 `open` 的参数：`--port <端口>`、`--print`、`--format text|json`（`json` 当 `--print`）、`--ticket`（和 `--reset` 不一起写）、
-/// `--reset`、`--logout`、`--package <编号>`（编号的写法不对的不认）；哪里有 `-h`、`--help` 都是印帮助。
+/// `--reset`、`--logout`、`--package <编号>`（编号的写法不对的不认）、`--session <编号>`（照会话编号的写法查）、`--settings [<分页>]`
+/// （分页可以不写：下一个是 `-` 打头的、没有下一个的算没写，写了的照包编号的写法查）；哪里有 `-h`、`--help` 都是印帮助。
 ///
 /// # Errors
 ///
@@ -38,7 +39,7 @@ pub fn parse(args: &[String]) -> Result<Parsed, Bad> {
         return Ok(Parsed::Help);
     }
     let mut open = Open::default();
-    let mut args = args.iter();
+    let mut args = args.iter().peekable();
     while let Some(arg) = args.next() {
         let mut value = |name: &'static str| args.next().cloned().ok_or(Bad::Missing(name));
         match arg.as_str() {
@@ -62,6 +63,23 @@ pub fn parse(args: &[String]) -> Result<Parsed, Bad> {
                 }
                 open.package = Some(id);
             }
+            "--session" => {
+                let id = value("--session")?;
+                if !session_id(&id) {
+                    return Err(Bad::Value("--session", id));
+                }
+                open.session = Some(id);
+            }
+            "--settings" => {
+                let page = match args.next_if(|next| !next.starts_with('-')) {
+                    Some(page) if !crate::backstage::valid_package(page) => {
+                        return Err(Bad::Value("--settings", page.clone()));
+                    }
+                    Some(page) => page.clone(),
+                    None => String::new(),
+                };
+                open.settings = Some(page);
+            }
             other => return Err(Bad::Unknown(other.to_string())),
         }
     }
@@ -69,6 +87,15 @@ pub fn parse(args: &[String]) -> Result<Parsed, Bad> {
         true => Err(Bad::TicketWithReset),
         false => Ok(Parsed::Open(open)),
     }
+}
+
+/// 会话编号的写法（核心的 UUID：十六进制和 `-`，8-4-4-4-12；`miyu web --session` 照它查，放进网址不用转义）。
+fn session_id(text: &str) -> bool {
+    let parts: Vec<&str> = text.split('-').collect();
+    parts.iter().map(|part| part.len()).eq([8, 4, 4, 4, 12])
+        && parts
+            .iter()
+            .all(|part| part.bytes().all(|b| b.is_ascii_hexdigit()))
 }
 
 /// 帮助页，照 `locale`（`LC_ALL`、`LC_MESSAGES`、`LANG` 的头一个）挑中文、英文；以一个换行结尾。

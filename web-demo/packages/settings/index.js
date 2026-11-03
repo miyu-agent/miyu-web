@@ -8,6 +8,7 @@ import { h, icon } from '../../src/lib/dom.js';
 import { SettingsDialog } from './dialog.js';
 import { ProviderFlow } from './onboard/flow.js';
 import { sectionKit } from './kit.js';
+import { settingsOf, without, ACCESS } from '../../src/lib/launch.js';
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -17,13 +18,15 @@ export function apply(ctx) {
   ctx.slots.declare('settings.package', 'keyed');
   /** @type {SettingsDialog|null} */
   let dialog = null;
-  const open = (page) => {
+  /** 打开、到 `page` 那一页（`null` 是上次看的）；点名了一组的（`group`：「访问」）滚到那一组 @param {string|null} page @param {string|null} [group] */
+  const open = (page, group = null) => {
     if (dialog?.isOpen) {
       if (page) dialog.show(page);
+      if (group) dialog.reveal(group);
       return;
     }
     dialog = new SettingsDialog(ctx);
-    dialog.open(page);
+    dialog.open(page, group);
   };
   ctx.effect(() => () => dialog?.close());
   // 主题那几套换了（换了壁纸、人格的头像）：开着的设置页重画「主题」一组（卡片的小样、「主色」）
@@ -55,6 +58,14 @@ export function apply(ctx) {
   ctx.commands.register({ name: 'config', summary: ctx.text('command_config') }, () => open('models'));
   ctx.commands.register({ name: 'pkg', summary: ctx.text('command_pkg') }, () => open('packages'));
   ctx.commands.register({ name: 'market', summary: ctx.text('command_market') }, () => open('market'));
+
+  // 打开时点名开设置（`miyu web --settings [<分页>]`，W-1085：托盘程序的「设置…」「在手机上打开…」）：空的到上次看的那一页（同点齿轮），
+  // `access` 到「通用」里「访问」那一组，别的到那一页；读完从地址栏抹掉
+  const nav = ctx.host.route;
+  const hash = nav?.current() ?? '';
+  const asked = settingsOf(hash);
+  if (without(hash, ['settings']) !== hash) nav.replace(without(hash, ['settings']));
+  if (asked !== null) open(asked === ACCESS ? 'general' : asked || null, asked === ACCESS ? ACCESS : null);
 
   const gear = h('button.icon-button.set-gear', { type: 'button', title: ctx.text('open'), 'aria-label': ctx.text('open'), onclick: () => open(null) }, icon('settings'), h('i.set-gear-dot', { 'aria-hidden': 'true' }));
   ctx.slots.mount('sidebar.actions', {

@@ -44,6 +44,11 @@ pub struct Open {
     pub logout: bool,
     /// 打开时直接到「软件后台」里这个软件的页面（`--package <编号>`，施工 F-6 下）：网址 `#` 后面多一个 `package=<编号>`。
     pub package: Option<String>,
+    /// 打开时直接切到这个会话（`--session <编号>`，W-1085：托盘程序点通知回到那个会话）：网址 `#` 后面多一个 `session=<编号>`。
+    pub session: Option<String>,
+    /// 打开时直接开设置（`--settings [<分页>]`，W-1085）：网址 `#` 后面多一个 `settings=<分页>`；空的是设置的首页，`access` 是「通用」里
+    /// 「访问」那一组。
+    pub settings: Option<String>,
 }
 
 /// 怎么拉起东西：`serve`、核心。
@@ -140,12 +145,7 @@ pub async fn open(
                     .map(str::to_string)
             }),
     };
-    let url = address_of(
-        &site,
-        code.as_deref(),
-        ticket.as_deref(),
-        open.package.as_deref(),
-    );
+    let url = address_of(&site, code.as_deref(), ticket.as_deref(), open);
     let secret = code.is_some() || ticket.is_some();
     let carried = match (&code, &ticket) {
         (Some(_), _) => Some(Carried::Reset),
@@ -338,18 +338,21 @@ fn hex(text: &str) -> bool {
     !text.is_empty() && text.bytes().all(|b| b.is_ascii_hexdigit())
 }
 
-/// 交给浏览器的网址：`#` 后面是一次性码（`setup=`）或者交接票（`ticket=<票>`；SU-1 起不带账号）、点名的软件后台页（`package=`），
-/// 都没有的不带 `#`。
-fn address_of(
-    site: &str,
-    code: Option<&str>,
-    ticket: Option<&str>,
-    package: Option<&str>,
-) -> String {
+/// 交给浏览器的网址：`#` 后面是一次性码（`setup=`）或者交接票（`ticket=<票>`；SU-1 起不带账号）、点名的软件后台页（`package=`）、
+/// 会话（`session=`）、设置的分页（`settings=`，首页是空的），都没有的不带 `#`。编号、分页在读参数时查过写法，放进网址不用转义。
+fn address_of(site: &str, code: Option<&str>, ticket: Option<&str>, open: &Open) -> String {
     let parts: Vec<String> = [
         code.map(|code| format!("setup={code}")),
         ticket.map(|ticket| format!("ticket={ticket}")),
-        package.map(|package| format!("package={package}")),
+        open.package
+            .as_ref()
+            .map(|package| format!("package={package}")),
+        open.session
+            .as_ref()
+            .map(|session| format!("session={session}")),
+        open.settings
+            .as_ref()
+            .map(|page| format!("settings={page}")),
     ]
     .into_iter()
     .flatten()

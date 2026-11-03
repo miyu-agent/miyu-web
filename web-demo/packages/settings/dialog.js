@@ -56,8 +56,8 @@ export class SettingsDialog {
     this.feed = new PackageFeed(this);
   }
 
-  /** 打开：画框，读配置，到 `page` 那一页（没给的回上次看的）。 */
-  async open(page) {
+  /** 打开：画框，读配置，到 `page` 那一页（没给的回上次看的）；点名了一组的（`group`）滚到那一组。 @param {string|null} page @param {string|null} [group] */
+  async open(page, group = null) {
     this.isOpen = true;
     const cfg = this.ctx.config;
     this.search = h('input.set-search', { type: 'search', placeholder: this.ctx.text('search'), 'aria-label': this.ctx.text('search'), oninput: () => { this.query = this.search.value; this.drawBody(); } });
@@ -89,8 +89,14 @@ export class SettingsDialog {
       return;
     }
     this.show(this.current);
+    if (group) this.reveal(group);
     // 窄的时候（第 15 条）：没点名哪一页的先列分页
     if (!page && this.narrow.matches) this.root.classList.remove('is-inside');
+  }
+
+  /** 滚到这一页里的一组（`data-group`：「访问」，`miyu web --settings access`，W-1085）；这一页没有的不动。 @param {string} group */
+  reveal(group) {
+    this.body.querySelector(`[data-group="${group}"]`)?.scrollIntoView({ block: 'start' });
   }
 
   /** 关：淡出、拿掉；焦点回到原来的地方。 */

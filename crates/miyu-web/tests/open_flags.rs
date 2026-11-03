@@ -1,5 +1,6 @@
 //! `miyu-web open` 给程序读的两个开关（`web-ui.md`「怎么走」第二条第 6 款，2026-10-29 桌面端的外壳要的）：`--format json` 只印一行
-//! `{url, first}`、不开浏览器不印提醒；没设过访问密码也给交接票（`--ticket` 写不写一样，2026-10-30），`--reset` 的带一次性码。核心是替身，替身和走一遍的办法借 `open`。
+//! `{url, first}`、不开浏览器不印提醒；没设过访问密码也给交接票（`--ticket` 写不写一样，2026-10-30），`--reset` 的带一次性码；`--session`、
+//! `--settings` 的去处跟在凭据后面（W-1085）。核心是替身，替身和走一遍的办法借 `open`。
 
 use serde_json::{Value, json};
 
@@ -67,5 +68,25 @@ async fn ticket_asks_for_a_ticket_even_before_a_password_is_set() {
         got,
         json!({"url": format!("{site}/#ticket={TICKET}"), "first": true}),
         "没设过密码也给票，first 照实"
+    );
+}
+
+#[tokio::test]
+async fn session_and_settings_ride_after_the_ticket() {
+    let home = Home::new();
+    answer(fake_core(&home), false);
+    let args = Open {
+        port: Some(0),
+        json: true,
+        session: Some("019a4b2c-7d3e-7f10-8a2b-3c4d5e6f7a8b".to_string()),
+        settings: Some("access".to_string()),
+        ..Open::default()
+    };
+    let (got, site) = one_line(&home, args).await;
+    assert_eq!(
+        got["url"],
+        json!(format!(
+            "{site}/#ticket={TICKET}&session=019a4b2c-7d3e-7f10-8a2b-3c4d5e6f7a8b&settings=access"
+        ))
     );
 }
