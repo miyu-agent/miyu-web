@@ -46,6 +46,8 @@ const isGallery = (id) => id === GALLERY;
 const HISTORY = 'input_history';
 /** 左栏收没收，记在这台设备上的名字（内核的 `storage` 会带上账号） */
 const COLLAPSED = 'sidebar_collapsed';
+/** 跳转条往前读到一句时一页读几轮（`view.page` 最多 50）：往上滚着读的照核心的默认 */
+const REACH_TURNS = 50;
 
 export class App {
   /**
@@ -500,6 +502,21 @@ export class App {
       this.keepFromBottom = null;
       this.composer.say(refusalText(err));
     });
+  }
+
+  /**
+   * 跳转条点了一句还没读进来的你的话（W-1069，核心 SP-2 的 `session.prompts` 列全了）：往前一页页读（一次 [`REACH_TURNS`] 轮），读进了序号 `seq`
+   * 的那一条、没有更早的了、换了会话为止。交回读进来了没有；画出来的照常经 `render`。
+   * @param {number} seq
+   */
+  async reach(seq) {
+    const id = this.current;
+    for (;;) {
+      const s = id ? this.store.sessions.get(id) : null;
+      if (!s || this.current !== id) return false;
+      if (s.first == null || s.first <= seq) return true;
+      if (!s.more || !(await this.store.older(id, REACH_TURNS))) return false;
+    }
   }
 
   /**

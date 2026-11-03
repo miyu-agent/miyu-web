@@ -274,7 +274,7 @@ export class Chat {
     // 最新的一轮：编辑、重做只有它有；不是你开的（子代理的会话里派它的会话发来的、别人说的）没有（核心只重做人开的那一轮）
     const opener = items.findLast((it) => it.type === 'user');
     const latest = opener && this.mine(opener) ? opener.turn ?? null : null;
-    /** @type {Array<{key: string, text: string, node: HTMLElement}>} 你说的话，照先后：交给看着它的（跳转条） */
+    /** @type {Array<{key: string, seq: number, text: string, node: HTMLElement, mine: boolean}>} 你说的话，照先后：交给看着它的（跳转条；`mine` 是你本人说的） */
     const prompts = [];
     /** @type {HTMLElement[]} 你新说的：画进页面以后再照它放视口 */
     const arrivals = [];
@@ -301,7 +301,7 @@ export class Chat {
       // 你的话里只有开这一轮的那一句能编辑（排进来的、别人说的没有，蓝图「排队的消息」第 5 条、「不是你说的话」）
       const mine = own && block.item.opens;
       node.classList.toggle('is-latest', latest != null && (block.kind === 'user' ? mine && block.item.turn : block.turn) === latest);
-      if (block.kind === 'user') prompts.push({ key: block.key, text: block.item.text, node });
+      if (block.kind === 'user') prompts.push({ key: block.key, seq: block.item.seq, text: block.item.text, node, mine: own });
       if (freshNote) cleared = node;
       keep.add(block.key);
       const want = prev ? prev.nextSibling : this.list.firstChild;

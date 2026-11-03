@@ -17,7 +17,8 @@
   },
   "inject": [
     "slots",
-    "chat"
+    "chat",
+    "core"
   ],
   "settings": {
     "min_prompts": {

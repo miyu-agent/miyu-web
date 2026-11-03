@@ -69,6 +69,8 @@ export function apply(ctx) {
     scroller: app.chat.el,
     list: app.chat.list,
     onPrompts: (fn) => app.chat.onPrompts(fn),
+    /** 往前读到序号 `seq` 的那一条读进来（跳转条点了没读进来的一句，W-1069）：交回读进来了没有 */
+    reach: (/** @type {number} */ seq) => app.reach(seq),
     /**
      * 看另一个会话（子代理的会话也行，第一次看时才读）。整理会话照打开前正在看的记着「← 返回」回哪；`back` 是另给的去处
      * （记忆页：回到原来看的会话、再打开那一份的记忆页），`title` 写在悬停提示里

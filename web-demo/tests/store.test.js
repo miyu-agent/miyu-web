@@ -277,3 +277,25 @@ test('开着哪个会话告诉核心（核心 HV-1 session.viewing）：变了�
   assert.deepEqual(told.slice(-2), [A, A], '重连以后再说一遍');
   await tick();
 });
+
+test('往前读一页：同一个会话一次只读一页，同时叫的等那一次；跳转条要的一页带 turns（W-1069）', async () => {
+  const calls = [];
+  /** @type {(v: any) => void} */
+  let answer = () => {};
+  const conn = {
+    onPush() {},
+    request: (method, params) => {
+      calls.push([method, params.before ?? null, params.turns ?? null]);
+      if (method === 'subscribe') return Promise.resolve({ entries: [{ id: 'm5', kind: 'user', text: '第5条', turn: 5, at: AT }], first: 5, last: 5, more: true });
+      return new Promise((resolve) => { answer = resolve; });
+    },
+  };
+  const store = new Store(/** @type {any} */ (conn));
+  await store.load('S');
+  const first = store.older('S', 50);
+  const second = store.older('S');
+  answer({ entries: [{ id: 'm1', kind: 'user', text: '第1条', turn: 1, at: AT }], first: 1, more: false });
+  assert.deepEqual(await Promise.all([first, second]), [true, true]);
+  assert.deepEqual(calls.filter(([m]) => m === 'view.page'), [['view.page', 5, 50]], '只读了一次');
+  assert.equal(await store.older('S'), false, '没有更早的不再读');
+});

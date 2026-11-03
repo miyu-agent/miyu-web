@@ -36,6 +36,8 @@ export class Store {
     this.conn = conn;
     /** @type {Map<string, Session>} */
     this.sessions = new Map();
+    /** @type {Map<string, Promise<boolean>>} 正在读更早一页的（`older`）：同一个会话一次只读一页 */
+    this.olderRuns = new Map();
     /** 会话表：全部会话，照核心推的跟着变 */
     this.index = new SessionIndex(conn);
     /** 项目（核心 H-1）：左栏的「项目」那一栏、全部会话的「项目」那一页照它 */
@@ -135,17 +137,28 @@ export class Store {
   }
 
   /**
-   * 往上翻：读更早的一页（`view.page {view: true}` 带 `before`，上一页的 `first`），拼在前面、照编号去重。没有更早的、正在读的不再读。
-   * 交回读没读。
+   * 往上翻：读更早的一页（`view.page {view: true}` 带 `before`，上一页的 `first`；`turns` 是一页最多几轮，不写照核心的默认），拼在前面、照编号去重。
+   * 没有更早的不再读；正在读的等那一次读完（跳转条往前读到一句时和滚到顶读的撞上）。交回读没读。
    * @param {string} id
+   * @param {number} [turns]
    */
-  async older(id) {
+  older(id, turns) {
     const s = this.sessions.get(id);
-    if (!s || !s.more || s.older || s.first == null) return false;
+    if (!s || !s.more || s.first == null) return Promise.resolve(false);
+    const running = this.olderRuns.get(id);
+    if (running) return running;
+    const run = this.readOlder(s, turns).finally(() => this.olderRuns.delete(id));
+    this.olderRuns.set(id, run);
+    return run;
+  }
+
+  /** @param {Session} s @param {number} [turns] */
+  async readOlder(s, turns) {
+    const id = s.id;
     s.older = true;
     this.changed();
     try {
-      const page = await this.conn.request('view.page', { session: id, view: true, before: s.first });
+      const page = await this.conn.request('view.page', { session: id, view: true, before: s.first, ...(turns ? { turns } : {}) });
       s.view.prepend(page);
       s.first = s.view.first;
       s.more = s.view.more;
