@@ -32,6 +32,11 @@ let lastPage = 'general';
 const SOURCE_URL = 'https://github.com/miyu-agent/miyu-web';
 
 
+/** 滚到一组以后多久里跟着内容长高再对齐（`reveal`） */
+const REVEAL_MS = 1500;
+/** 人动了就不再替他对齐的那几种事件 */
+const HANDS = ['wheel', 'pointerdown', 'keydown', 'touchstart'];
+
 export class SettingsDialog {
   /** @param {any} ctx */
   constructor(ctx) {
@@ -94,9 +99,24 @@ export class SettingsDialog {
     if (!page && this.narrow.matches) this.root.classList.remove('is-inside');
   }
 
-  /** 滚到这一页里的一组（`data-group`：「访问」，`miyu web --settings access`，W-1085）；这一页没有的不动。 @param {string} group */
+  /**
+   * 滚到这一页里的一组（`data-group`：「访问」，`miyu web --settings access`，W-1085）；这一页没有的不动。上面几组这时还在读（配色的图、
+   * 核心的配置），读好了长高会把它挤下去：`REVEAL_MS` 里内容一变高就再对一次，人一动（滚轮、点、按键、触摸）就不再管。
+   * @param {string} group
+   */
   reveal(group) {
-    this.body.querySelector(`[data-group="${group}"]`)?.scrollIntoView({ block: 'start' });
+    const el = this.body.querySelector(`[data-group="${group}"]`);
+    if (!el) return;
+    const pin = () => el.scrollIntoView({ block: 'start' });
+    const watch = new ResizeObserver(pin);
+    for (const child of this.body.children) watch.observe(child);
+    const quit = () => {
+      watch.disconnect();
+      for (const type of HANDS) this.body.removeEventListener(type, quit);
+    };
+    for (const type of HANDS) this.body.addEventListener(type, quit, { passive: true });
+    setTimeout(quit, REVEAL_MS);
+    pin();
   }
 
   /** 关：淡出、拿掉；焦点回到原来的地方。 */
