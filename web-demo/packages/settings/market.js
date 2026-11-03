@@ -7,7 +7,7 @@ import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { bytes, short } from '../../src/lib/format.js';
 import { pkgFace } from './logos.js';
-import { STATUS_FILTERS, QUICK_KINDS, SORTS, shownOf, sortedBy, sortsAvailable, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf, capabilityRows } from './market-model.js';
+import { STATUS_FILTERS, QUICK_KINDS, SORTS, shownOf, sortedBy, sortsAvailable, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf, capabilityRows, toolRows } from './market-model.js';
 import { select } from './rows.js';
 import { confirmIn } from './confirm.js';
 
@@ -261,6 +261,18 @@ function actionButton(dialog, p, upgradable, big) {
 }
 
 /** 看一眼（只照索引说，不下载）：同一个编号只问一次，刷新了重问 @param {any} dialog @param {string} id */
+/**
+ * 一个包的信息（`package.info`，没装的照软件源答）：「提供」那一行要它的 `tools`（核心 PV-1，看一眼的回应、搜索的那一行里都没有；W-1084）。
+ * 问一次记着，问不到的是 `null`。
+ * @param {any} dialog @param {string} id @returns {Promise<any>}
+ */
+function infoOf(dialog, id) {
+  const m = stateOf(dialog);
+  if (!m.infos) m.infos = new Map();
+  if (!m.infos.has(id)) m.infos.set(id, dialog.ctx.core.request('package.info', { package: id }).catch(() => null));
+  return m.infos.get(id);
+}
+
 function previewOf(dialog, id) {
   const m = stateOf(dialog);
   if (!m.previews.has(id)) m.previews.set(id, dialog.ctx.core.request('package.install', { source: id, preview: true }));
@@ -414,10 +426,21 @@ function detailPage(dialog, id) {
   const rows = h('div.set-rows', h('p.set-empty', t('market.loading')));
   const line = (/** @type {string} */ label, /** @type {any} */ value) => h('div.set-row', h('div.set-text', h('div.set-name', h('span', label))), h('div.set-control.mk-value', value));
   previewOf(dialog, id).then((got) => {
+    // 「提供」（核心 PV-1，W-1084）：装上以后模型多的工具，一个一行「显示名（工具名）」；没有这一格的不出。`package.info` 回来了再插进去
+    const toolsLine = () => {
+      const at = h('div.mk-provides-slot');
+      infoOf(dialog, id).then((info) => {
+        const list = toolRows(info?.tools ?? got?.tools ?? p.tools, (v) => dialog.ctx.local(v));
+        if (list.length) at.replaceWith(line(t('market.provides'), h('div.mk-provides', list.map((x) => h('span', x.title ? t('market.tool', { title: x.title, name: x.name }) : x.name)))));
+        else at.remove();
+      });
+      return at;
+    };
     const names = Object.fromEntries(Object.keys(got?.provides ?? p.provides ?? {}).map((k) => [k, kindName(dialog, k)]));
     const items = [
       got?.origin ? line(t('market.origin'), h('a.mk-link', { href: /^https?:\/\//.test(got.origin) ? got.origin : `https://${got.origin}`, target: '_blank', rel: 'noopener noreferrer' }, h('code', got.origin), icon('external-link'))) : null,
       line(t('market.includes'), providesLine(got?.provides ?? p.provides, names) || t('market.nothing')),
+      toolsLine(),
       line(t('market.capabilities'), capsLine(got?.capabilities) ?? t('market.none')),
       (got?.with ?? []).length ? line(t('market.with'), h('div.mk-with', got.with.map((/** @type {any} */ w) => h('code', `${w.package} ${w.version ?? ''}`)))) : null,
       typeof got?.download === 'number' ? line(t('market.size'), bytes(got.download)) : null,

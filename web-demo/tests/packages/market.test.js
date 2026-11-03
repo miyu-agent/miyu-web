@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { QUICK_KINDS, shownOf, actionOf, kindsOf, faceOf, needsLook, hasProgram, providesLine, percentOf, found, capabilityRows } from '../../packages/settings/market-model.js';
+import { QUICK_KINDS, shownOf, actionOf, kindsOf, faceOf, needsLook, hasProgram, providesLine, percentOf, found, capabilityRows, toolRows } from '../../packages/settings/market-model.js';
 
 const embed = { package: 'embed', version: '1.0.0', name: '语义模型', summary: '本机的语义检索模型', official: true, installed: '1.0.0', blocked: null, provides: { features: ['embed'] }, depends: [] };
 const memes = { package: 'memes', version: '0.2.0', name: '表情包', summary: '发表情包的技能', official: true, installed: null, blocked: null, provides: { skills: ['memes'], content: ['stickers'] }, depends: [] };
@@ -122,4 +122,20 @@ test('排序（核心设计 54）：默认照编号；最新、下载量、趋�
   assert.deepEqual(ids(list), ['c', 'a', 'b', 'd'], '原来的没动');
   assert.deepEqual(sortsAvailable(list), { default: true, latest: true, downloads: true, trending: true });
   assert.deepEqual(sortsAvailable([{ package: 'x' }]), { default: true, latest: false, downloads: false, trending: false }, '旧索引');
+});
+
+test('「提供」：一个工具一项，显示名照界面语言挑，没写的只有工具名；不是数组、没有名字的不算（W-1084）', () => {
+  const zh = (v) => v.zh ?? v.en ?? '';
+  assert.deepEqual(toolRows([
+    { name: 'crack_search', title: { zh: '游戏破解状态查询', en: 'Game crack status' }, from: 'script' },
+    { name: 'plain', from: 'extension' },
+    { name: 'blank', title: { zh: '  ' } },
+    { title: { zh: '没名字' } },
+  ], zh), [
+    { title: '游戏破解状态查询', name: 'crack_search' },
+    { title: null, name: 'plain' },
+    { title: null, name: 'blank' },
+  ]);
+  assert.deepEqual(toolRows(undefined, zh), []);
+  assert.deepEqual(toolRows({ name: 'x' }, zh), []);
 });

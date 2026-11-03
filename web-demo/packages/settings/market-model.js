@@ -124,6 +124,18 @@ export function providesLine(provides, names, sep = '、') {
 }
 
 /**
+ * 「提供」一行（核心 PV-1 的 `tools`，W-1084）：一个工具一项 `{title, name}`，`title` 照界面语言挑（`local`），没写的是 `null`；
+ * 不是数组、没有 `name` 的不算。
+ * @param {any} tools @param {(value: any) => string} local @returns {{title: string|null, name: string}[]}
+ */
+export function toolRows(tools, local) {
+  return (Array.isArray(tools) ? tools : []).filter((x) => typeof x?.name === 'string' && x.name).map((x) => {
+    const title = x.title && typeof x.title === 'object' ? local(x.title) : null;
+    return { title: typeof title === 'string' && title.trim() ? title : null, name: x.name };
+  });
+}
+
+/**
  * 「所需权限」一行的一项一项（`package.install {source, preview: true}` 的 `capabilities`）：核心 IN-3 起一项是 `{id, name, summary}`，
  * 写 `name`（照连接的语言的人话），悬停看 `summary`；旧核心给编号的字、`{name: 编号}` 的写编号。认不出的不写。
  * @param {any} capabilities @returns {{name: string, summary: string|null}[]}

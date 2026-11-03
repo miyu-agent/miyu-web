@@ -5968,6 +5968,18 @@
       ".mk-value"
     ]
   },
+  "mk.provides": {
+    "zh": "下载软件详情「提供」那一行的工具列表（W-1084）",
+    "select": [
+      ".mk-provides"
+    ]
+  },
+  "mk.provides-slot": {
+    "zh": "下载软件详情「提供」那一行回来以前占的位置（不显示）",
+    "select": [
+      ".mk-provides-slot"
+    ]
+  },
   "mk.ask": {
     "zh": "全部升级的确认",
     "select": [

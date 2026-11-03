@@ -800,3 +800,6 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .set-records-add:hover:not(:disabled) { background: var(--item-hover, var(--surface-3)); color: var(--text); }
 .set-records-add:disabled { opacity: 0.45; cursor: default; }
 .set-records-add .icon { width: 14px; height: 14px; }
+/* 「下载软件」详情的「提供」（W-1084）：一个工具一行，右对齐；`package.info` 回来以前那一格不占地方 */
+.mk-provides { display: grid; justify-items: end; gap: calc(2px * var(--space)); }
+.mk-provides-slot { display: none; }
