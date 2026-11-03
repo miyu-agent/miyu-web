@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { TIPS, tipsFor, pickTip } from '../src/model/tips.js';
+import { TIPS, KEYS, tipsFor, pickTip } from '../src/model/tips.js';
 
 const text = (lang) => JSON.parse(readFileSync(new URL(`../resources/text/${lang}.json`, import.meta.url), 'utf8'));
 
@@ -10,6 +10,13 @@ test('附件的那一条照软件包挂没挂上', () => {
   assert.deepEqual(tipsFor({}), TIPS);
   assert.ok(!tipsFor({ attachments: false }).includes('attach'));
   assert.deepEqual(tipsFor({ attachments: true }), [...TIPS, 'attach']);
+});
+
+test('主要指针是手指的（手机）不出要按键的几条，剩下的照样有（2026-11-03 项目主人，W-1082）', () => {
+  assert.deepEqual(tipsFor({ touch: true }), ['slash', 'mention']);
+  assert.deepEqual(tipsFor({ touch: true, attachments: true }), ['slash', 'mention', 'attach']);
+  assert.deepEqual(tipsFor({ touch: false }), TIPS);
+  for (const key of KEYS) assert.ok(TIPS.includes(key), key);
 });
 
 test('换一条不和上一条一样，照随机数挑', () => {

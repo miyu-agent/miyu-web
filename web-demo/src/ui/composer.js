@@ -327,9 +327,9 @@ export class Composer {
     return this.tip ? t(`tips.${this.tip}`) : '';
   }
 
-  /** 现在有的几条：附件照软件包挂没挂上（挂载位 `composer.payload` 的 `attachments`） */
+  /** 现在有的几条：附件照软件包挂没挂上（挂载位 `composer.payload` 的 `attachments`）；主要指针是手指的不出要按键的（W-1082） */
   tipList() {
-    return tipsFor({ attachments: this.payload().some((p) => p.id === 'attachments') });
+    return tipsFor({ attachments: this.payload().some((p) => p.id === 'attachments'), touch: matchMedia('(pointer: coarse)').matches });
   }
 
   /** 换一条小提示（换会话、发完一句框又空了）：不和上一条一样；锁着的照旧写锁的字。 */

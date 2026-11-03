@@ -5,12 +5,16 @@
 /** 一直有的几条（`text/*.json` 的 `tips.<名字>`） */
 export const TIPS = ['slash', 'mention', 'newline', 'history', 'history_list', 'stash', 'level'];
 
+/** 要按键的几条：主要指针是手指的（手机、平板）没有这些键，不出（2026-11-03 项目主人，W-1082） */
+export const KEYS = ['newline', 'history', 'history_list', 'stash', 'level'];
+
 /**
- * 现在有的几条：靠软件包的照它在不在。
- * @param {{attachments?: boolean}} has @returns {string[]}
+ * 现在有的几条：靠软件包的照它在不在；`touch` 的去掉要按键的。
+ * @param {{attachments?: boolean, touch?: boolean}} has @returns {string[]}
  */
 export function tipsFor(has) {
-  return has.attachments ? [...TIPS, 'attach'] : [...TIPS];
+  const list = has.attachments ? [...TIPS, 'attach'] : [...TIPS];
+  return has.touch ? list.filter((x) => !KEYS.includes(x)) : list;
 }
 
 /**
