@@ -257,6 +257,30 @@ test('收尾那一行接这一轮的出字速度（核心 SP-1 的 speed：输�
   assert.equal(speedText({ output: 1001, ms: 3000 }), ' · 334 tok/s');
 });
 
+test('收尾那一行在窄屏上放不下时少写几项：先去掉出字速度，再去掉用时，都放不下的交最短的（2026-11-03 项目主人，W-1082）', async () => {
+  const { fitText } = await import('../src/model/entries.js');
+  const end = turn3.find((e) => e.kind === 'end');
+  const item = (patch) => itemsOf(turn3.map((e) => (e === end ? { ...e, ...patch } : e)), { state: 'idle', permission: { level: 'workspace' } }).items.at(-1);
+  const hm = (s) => s.replace(/\d\d:\d\d/, 'HH:MM');
+  const full = item({ speed: { output: 1410, ms: 10000 } });
+  assert.deepEqual([full.text, ...full.shorter].map(hm), [
+    '▣  HH:MM · dev/m1 · 2.2s · 4.2k(C25%) · 141 tok/s',
+    '▣  HH:MM · dev/m1 · 2.2s · 4.2k(C25%)',
+    '▣  HH:MM · dev/m1 · 4.2k(C25%)',
+  ]);
+  // 没有速度的：全的就是去掉速度的那种，不重复列
+  assert.deepEqual(item({ speed: undefined }).shorter.map(hm), ['▣  HH:MM · dev/m1 · 4.2k(C25%)']);
+  // 没带模型的：去掉用时只剩时刻
+  assert.deepEqual(item({ speed: undefined, model: undefined, endpoint: undefined }).shorter.map(hm), ['▣  HH:MM · 4.2k(C25%)']);
+  const texts = [full.text, ...full.shorter];
+  const room = (n) => (/** @type {string} */ s) => s.length <= n;
+  assert.equal(fitText(texts, room(99)), texts[0]);
+  assert.equal(fitText(texts, room(texts[1].length)), texts[1], '先去掉 tok/s');
+  assert.equal(fitText(texts, room(texts[2].length)), texts[2], '再去掉用时');
+  assert.equal(fitText(texts, room(3)), texts[2], '都放不下的交最短的，CSS 截掉加 …');
+  assert.equal(fitText([], room(3)), '');
+});
+
 test('压缩时摘要请求太长、截掉最早几组的（核心 UP-2 的 truncated）：结果那一行注明，原文还能用 history 取回', () => {
   const cut = { id: 'c40', kind: 'notice', what: 'compaction', trigger: 'manual', state: 'done', before: 203000, after: 31000, truncated: 3, at: AT };
   const plain = { ...cut, id: 'c41', truncated: undefined };

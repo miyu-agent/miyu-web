@@ -293,10 +293,25 @@ function endItem(e, status) {
     return { ...base, text: said ? icon(level) + said : reason };
   }
   // 没带模型的（整理会话这类，核心没给）不写「供应商/模型」那一截
-  const head = e.model || e.endpoint
+  const by = e.model || e.endpoint;
+  const head = by
     ? t('done', { time: hhmm(e.at), endpoint: e.endpoint ?? '', model: e.model ?? '', elapsed: seconds(e.took_ms ?? 0) })
     : t('done_bare', { time: hhmm(e.at), elapsed: seconds(e.took_ms ?? 0) });
-  return { ...base, text: icon(level) + head + usageText(e.usage) + speedText(e.speed) };
+  const lead = icon(level);
+  const usage = usageText(e.usage);
+  const text = lead + head + usage + speedText(e.speed);
+  // 窄屏一行放不下时的短写法（2026-11-03 项目主人，W-1082）：先去掉出字速度，再去掉用时；和前一种一样的不列
+  const brief = by ? t('done_short', { time: hhmm(e.at), endpoint: e.endpoint ?? '', model: e.model ?? '' }) : hhmm(e.at);
+  const shorter = [lead + head + usage, lead + brief + usage].filter((s, i, all) => s !== text && s !== all[i - 1]);
+  return { ...base, text, shorter };
+}
+
+/**
+ * 一行放得下的那种写法（收尾那一行在窄屏上，W-1082）：照先后挑第一个 `fits` 的；都放不下的交最后一个（再由 CSS 截掉加 `…`）。
+ * @param {string[]} texts 从全到短 @param {(text: string) => boolean} fits @returns {string}
+ */
+export function fitText(texts, fits) {
+  return texts.find(fits) ?? texts.at(-1) ?? '';
 }
 
 /**

@@ -14,6 +14,7 @@ import { leave } from '../lib/motion.js';
 import { imageCard } from './media.js';
 import { blobUrl } from '../core/host.js';
 import { shortSession } from '../model/words.js';
+import { fitText } from '../model/entries.js';
 
 /**
  * @typedef {{copy: (text: string) => void, edit: (text: string) => void, copyTurn: (turn: number) => void, redo: () => void, openJobs: () => void, openSession: (id: string) => void, compacted?: (session: string|null) => void, reveal?: (path: string) => void}} Actions
@@ -85,8 +86,8 @@ export function userNode(it, on, media) {
 }
 
 /**
- * 收尾那一行，后面一排复制、重做。
- * @param {{text: string, tone: string, turn: number}} it
+ * 收尾那一行，后面一排复制、重做。照常结束的带着短写法（`shorter`）：窄屏上和按钮排一行，放不下换短的（`fitNarrow`）。
+ * @param {{text: string, tone: string, turn: number, shorter?: string[]}} it
  * @param {Actions} on
  */
 export function endNode(it, on) {
@@ -94,9 +95,35 @@ export function endNode(it, on) {
   redo.classList.add('is-redo');
   // 打断的那一轮，后台还有在跑的：接一句，点了打开后台任务（蓝图「后台任务」第 6 条）
   const jobs = it.jobs ? h('button.turn-end-jobs', { type: 'button', onclick: () => on.openJobs() }, t('interrupted_jobs', { count: it.jobs })) : null;
-  return h(`div.turn-end.tone-${it.tone}`,
-    h('span.turn-end-text', it.text, jobs),
-    h('span.msg-actions.turn-actions', button('copy', t('said.copy'), () => on.copyTurn(it.turn)), redo));
+  const text = h('span.turn-end-text', it.text, jobs);
+  const actions = h('span.msg-actions.turn-actions', button('copy', t('said.copy'), () => on.copyTurn(it.turn)), redo);
+  const fit = !!it.shorter?.length;
+  const node = h(`div.turn-end.tone-${it.tone}${fit ? '.is-fit' : ''}`, text, actions);
+  if (fit) fitNarrow(node, text, actions, [it.text, ...(it.shorter ?? [])]);
+  return node;
+}
+
+/**
+ * 收尾那一行在窄屏（`layout.json` 的 `narrow_below`）上不折行（2026-11-03 项目主人，W-1082）：照先后换短的写法，挑第一个放得下的
+ * （`fitText`：先去掉出字速度，再去掉用时），都放不下的 CSS 截掉加 `…`，悬停看全的；宽屏照旧写全的。
+ * 留给字的地方变了再挑一遍：这一行变宽变窄（转屏、开收左栏），后面的按钮多了少了（重做只有最新的一轮有、在回答时藏起来）；
+ * 地方没变的不量（每一行都量要逼着重排）。
+ * @param {HTMLElement} node @param {HTMLElement} text @param {HTMLElement} actions @param {string[]} texts 从全到短
+ */
+function fitNarrow(node, text, actions, texts) {
+  const narrow = matchMedia(`(max-width: ${res.layout.narrow_below}px)`);
+  let room = -1;
+  const watch = new ResizeObserver(() => {
+    const now = narrow.matches ? node.clientWidth - actions.offsetWidth : 0;
+    if (now === room) return;
+    room = now;
+    const pick = now > 0 ? fitText(texts, (s) => { text.textContent = s; return text.scrollWidth <= text.clientWidth; }) : texts[0];
+    if (text.textContent !== pick) text.textContent = pick;
+    if (pick === texts[0]) text.removeAttribute('title');
+    else text.title = texts[0];
+  });
+  watch.observe(node);
+  watch.observe(actions);
 }
 
 /**

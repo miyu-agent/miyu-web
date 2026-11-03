@@ -83,6 +83,7 @@
   "cleared": "Cleared · ↑ to restore",
   "done": "{time} · {endpoint}/{model} · {elapsed}",
   "done_bare": "{time} · {elapsed}",
+  "done_short": "{time} · {endpoint}/{model}",
   "done_usage": " · {tokens}(C{percent}%)",
   "done_speed": " · {rate} tok/s",
   "interrupted": "Interrupted",

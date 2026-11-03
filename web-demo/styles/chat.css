@@ -216,6 +216,12 @@
 .turn-end { display: flex; flex-wrap: wrap; align-items: center; column-gap: calc(10px * var(--space)); color: var(--turn-end-fg, var(--t-dim)); font: var(--turn-end-font, calc(13px * var(--text-scale))/1.6 var(--font-mono)); }
 .turn-end-text { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .turn-end.tone-error { color: var(--t-error); }
+/* 窄屏：照常结束的那一行和后面的按钮排一行、不折行，放不下的 said.js 换短的写法，再放不下截掉加 `…`（2026-11-03 项目主人，W-1082） */
+@media (max-width: 836px) {
+  .turn-end.is-fit { flex-wrap: nowrap; }
+  .turn-end.is-fit > .turn-end-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .turn-end.is-fit > .turn-actions { flex: none; }
+}
 /* 打断的那一轮后面那一句「· 后台仍有 N 个任务在运行」（蓝图「后台任务」第 6 条，点了打开后台任务）：字体、字号、颜色、字距同前面的「已中断」（2026-10-26 项目主人：原来 `text_soft`，看着像另一种字；按钮默认的字距、
    词距不跟着父元素，照样写 inherit），能点只靠悬停时字亮一档、加下划线 */
 .turn-end-jobs { padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; word-spacing: inherit; cursor: pointer; }
