@@ -4,6 +4,9 @@
   position: absolute; top: 50%; right: 6px; z-index: 12; display: flex; align-items: center;
   transform: translateY(-50%);
 }
+/* 窄屏：正文那一列右边留出这一列占的地方（离右边 6 加宽 28），你的气泡、她的字不压在横线底下；装着就留，不等画出横线，
+   发第二句时字不往左挪（2026-11-03 项目主人，W-1082）。宽屏照旧贴着对话区右边缘，放不下时压着 */
+@media (max-width: 836px) { .stage:has(.prompt-rail) .timeline { padding-right: 34px; } }
 .rail-lines { display: flex; width: 28px; max-height: 60vh; flex-direction: column; align-items: flex-end; padding: calc(6px * var(--space)) calc(4px * var(--space)); overflow: hidden; gap: calc(6px * var(--space)); }
 .rail-line {
   width: 14px; height: 2px; flex: none; padding: 0; border: 0; border-radius: var(--r-1);
