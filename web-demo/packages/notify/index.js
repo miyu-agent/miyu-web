@@ -39,6 +39,8 @@ export function apply(ctx) {
       document.removeEventListener('click', ask, true);
     };
   });
+  /** 有托盘认领了后台通知（核心 TR-1，`notices` 流的 `claimed`、`notices.claimed` 推送；W-1088） */
+  let claimed = false;
   /** 还没有标题、在等核心起的标题的：`会话:哪一种` → 发出去的那一下（等到了标题、或者到点了） @type {Map<string, {id: string, send: () => void}>} */
   const waiting = new Map();
   // 会话表里一项变了：这个会话等着的有了标题就发
@@ -47,7 +49,7 @@ export function apply(ctx) {
     for (const w of [...waiting.values()]) if (w.id === id) w.send();
   });
   ctx.effect(() => ctx.sessions.onAttention((/** @type {string} */ id, /** @type {'done'|'ask'|'approve'} */ what) => {
-    const pop = host.permission() === 'granted' ? popOf(id, ctx.chat.current?.() ?? null, host.away(), ctx.sessions.index.get(id)?.viewed === true) : null;
+    const pop = host.permission() === 'granted' ? popOf(id, ctx.chat.current?.() ?? null, host.away(), ctx.sessions.index.get(id)?.viewed === true, claimed) : null;
     if (!pop) return;
     const tag = `${id}:${what}`;
     const show = () => {
@@ -61,18 +63,27 @@ export function apply(ctx) {
     waiting.set(tag, { id, send: () => { clearTimeout(timer); waiting.delete(tag); show(); } });
   }));
 
-  // 账号级的提醒：订 `notices`（掉队、断了又连上重订；旧核心没有这个流的不报错）
-  const subscribe = () => { ctx.core?.request('subscribe', { stream: 'notices' }).catch(() => {}); };
+  // 账号级的提醒：订 `notices`（掉队、断了又连上重订；旧核心没有这个流的不报错）。回应里 `claimed` 是有托盘认领了后台通知（核心 TR-1，
+  // W-1088）：这时没在看的会话、账号级的提醒都由托盘出，这个标签页不弹；之后变了推 `notices.claimed`
+  const subscribe = () => {
+    ctx.core?.request('subscribe', { stream: 'notices' }).then((/** @type {any} */ r) => { claimed = r?.claimed === true; }, () => {});
+  };
   /** 定时任务那句话（会话表里还没有那个会话时当标题）：照 `schedule.list` 找 @param {string} id */
   const promptOf = (id) => ctx.core.request('schedule.list', {}).then((/** @type {any} */ r) => (r?.schedules ?? []).find((/** @type {any} */ s) => s.id === id)?.prompt ?? null, () => null);
   const onPush = async (/** @type {string} */ method, /** @type {any} */ params) => {
     if (method === 'resync' && params?.stream === 'notices') return subscribe();
+    if (method === 'notices.claimed') {
+      claimed = params?.claimed === true;
+      return;
+    }
     if (method !== 'notice') return;
     const entry = typeof params?.session === 'string' ? ctx.sessions.index.get(params.session) : null;
     const prompt = params?.kind === 'schedule.ran' && !entry?.title && !entry?.preview && typeof params.schedule === 'string' ? await promptOf(params.schedule) : null;
     const note = noticeNote(params, entry, params?.session ? ctx.chat.lookOf?.(params.session) : null, prompt, MIYU, t);
     if (!note) return;
     if (note.say) ctx.composer?.say?.(note.say, false);
+    // 托盘认领了的：账号级的提醒都由托盘出
+    if (claimed) return;
     const pop = host.permission() === 'granted' ? popOf(note.session, ctx.chat.current?.() ?? null, host.away(), !!note.session && ctx.sessions.index.get(note.session)?.viewed === true) : null;
     if (!pop) return;
     const session = note.session;

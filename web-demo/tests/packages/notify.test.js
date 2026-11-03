@@ -60,3 +60,11 @@ test('别的头开着的后台会话不弹，由开着它的那个头出；正�
   assert.deepEqual(popOf('a', 'a', true, true), { silent: false });
   assert.deepEqual(popOf('a', 'b', false, false), { silent: true });
 });
+
+test('托盘认领了后台通知：只为正在看的会话弹（标签页不在前台时），别的会话不弹（W-1088）', () => {
+  assert.deepEqual(popOf('a', 'a', true, false, true), { silent: false });
+  assert.equal(popOf('a', 'a', false, false, true), null);
+  assert.equal(popOf('b', 'a', true, false, true), null);
+  assert.equal(popOf('b', 'a', false, false, true), null);
+  assert.deepEqual(popOf('b', 'a', false, false, false), { silent: true }, '没认领的照旧');
+});
