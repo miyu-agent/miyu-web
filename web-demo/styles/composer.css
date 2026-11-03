@@ -34,6 +34,9 @@
   position: absolute; inset: 0; overflow: hidden; padding: var(--composer-pad-top, calc(14px * var(--space))) var(--composer-pad-x, calc(18px * var(--space))) 0; color: transparent; font: var(--composer-font, calc(14px * var(--text-scale))/1.6 var(--font-read));
   white-space: pre-wrap; overflow-wrap: break-word; pointer-events: none;
 }
+/* 手指点的设备（手机、平板）：字至少 16px，iOS Safari 点进字小于 16px 的输入框会把整页放大（2026-11-03 项目主人，W-1082）；
+   垫在底下的那一层跟着一样大，不然文件块的底色对不上字 */
+@media (pointer: coarse) { .composer-input, .composer-backdrop { font-size: max(16px, calc(14px * var(--text-scale))); } }
 .composer-block { border-radius: var(--r-4); background: color-mix(in srgb, var(--accent) 14%, transparent); color: transparent; }
 .composer-bar { display: flex; justify-content: flex-end; align-items: center; padding: calc(2px * var(--space)) calc(10px * var(--space)) calc(10px * var(--space)); }
 /* 下面一排左边：软件包挂的按钮（附件，挂载位 composer.bar）；右边预览工作区的开关、发送 */
