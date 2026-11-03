@@ -300,16 +300,10 @@ pub fn forget(root: &DataRoot, page: &Path, after: Duration) {
     }
 }
 
-/// 文件的 `file://` 地址：路径里字母、数字和 `-._~/` 以外的照 UTF-8 写成 `%XX`；Windows 的 `\` 换成 `/`、盘符前面多一个 `/`。
+/// 文件的 `file://` 地址：路径照 [`url_path`] 改写，字母、数字和 `-._~/:` 以外的照 UTF-8 写成 `%XX`。
 fn file_url(path: &Path) -> String {
-    let text = path.to_string_lossy().replace('\\', "/");
-    let text = if text.starts_with('/') {
-        text
-    } else {
-        format!("/{text}")
-    };
     let mut url = String::from("file://");
-    for byte in text.bytes() {
+    for byte in url_path(&path.to_string_lossy()).bytes() {
         match byte {
             b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' | b'/' | b':' => {
                 url.push(char::from(byte))
@@ -318,6 +312,25 @@ fn file_url(path: &Path) -> String {
         }
     }
     url
+}
+
+/// 路径写成 `file://` 后面那一截（还没转义）：`\` 换成 `/`，盘符前面多一个 `/`。Windows 的长路径写法 `\\?\C:\…` 先去掉前缀；
+/// 网络共享 `\\?\UNC\主机\共享\…`、`\\主机\共享\…` 的主机名直接接在 `file://` 后面（core1 11-03：数据根可能是人自己用
+/// `\\?\` 写法给的，原来拼成 `file:////?/C:/…`，浏览器打不开）。
+fn url_path(text: &str) -> String {
+    if let Some(share) = text.strip_prefix(r"\\?\UNC\") {
+        return share.replace('\\', "/");
+    }
+    let text = text.strip_prefix(r"\\?\").unwrap_or(text);
+    if let Some(share) = text.strip_prefix(r"\\") {
+        return share.replace('\\', "/");
+    }
+    let text = text.replace('\\', "/");
+    if text.starts_with('/') {
+        text
+    } else {
+        format!("/{text}")
+    }
 }
 
 /// 是不是十六进制（票、跳转页的名字）。
@@ -397,3 +410,6 @@ async fn ensure(root: &DataRoot, port: Option<u16>, launch: &Launch) -> Result<S
         crate::serve::ADDRESS
     )))
 }
+
+#[cfg(test)]
+mod tests;
