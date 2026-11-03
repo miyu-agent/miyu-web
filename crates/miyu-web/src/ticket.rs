@@ -7,7 +7,7 @@
 //!   `X-Miyu-Local: 1`；`Content-Type` 不是表单的三种。不是的一律 403，不说为什么。别的网站的页面带不了这个头（要先预检，网页软件不答），
 //!   发表单又带不上这个头、Origin 也是它自己的。
 //! - 认了的照 `miyu web` 那样（`open`）出示本机令牌连核心（没在跑就拉起来），`login.ticket` 要一张（核心的规矩：60 秒、一次性），
-//!   回 `{"ticket"}`。连不上核心、要不到的（旧核心没有 `login.ticket`）回 503 和 `{"error"}`，页面退回「输入访问密码」。
+//!   回 `{"ticket"}`（问的时候带 `via: "page"`，核心 LT-2 照它在运行日志里记是谁要的，W-1090）。连不上核心、要不到的（旧核心没有 `login.ticket`）回 503 和 `{"error"}`，页面退回「输入访问密码」。
 //! - 取舍（项目主人知道）：同一台电脑上别的系统用户开浏览器也能进；局域网、同机反向代理转进来的照旧要访问密码。
 //! - 票不进日志，网页软件不记它。
 
@@ -85,7 +85,7 @@ async fn issue(site: &Site) -> Result<String, String> {
         .await
         .map_err(|refused| refused.message)?;
     let got = core
-        .call("ticket", "login.ticket", json!({}))
+        .call("ticket", "login.ticket", json!({ "via": "page" }))
         .await
         .map_err(|refused| refused.message)?;
     // 旧核心没有 `login.ticket`：同 `open`，当要不到

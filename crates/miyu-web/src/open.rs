@@ -169,9 +169,12 @@ pub async fn open(
     0
 }
 
-/// 问核心要一张交接票（`login.ticket`）：旧核心没有这个方法、回应里没有票的是空的。
+/// 问核心要一张交接票（`login.ticket`，带 `via: "open"`：核心 LT-2 照它记是谁要的，W-1090）：旧核心没有这个方法、回应里没有票的是空的。
 async fn ticket(core: &mut Core) -> Option<String> {
-    let got = core.call("ticket", "login.ticket", json!({})).await.ok()?;
+    let got = core
+        .call("ticket", "login.ticket", json!({ "via": "open" }))
+        .await
+        .ok()?;
     got["ticket"]
         .as_str()
         .filter(|t| hex(t))
