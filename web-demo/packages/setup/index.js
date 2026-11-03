@@ -243,7 +243,8 @@ export function apply(ctx) {
   /**
    * 点标题出的卡片「会话信息」（2026-10-19 项目主人：只要信息、不要图标）：最上面一行会话编号（等宽暗字，只用鼠标点，点了复制，卡片不收；2026-10-26 项目主人：
    * 右栏的会话信息卡删了，编号挪到这里），再三行一样高，左边暗字、右边值——人格、预设（点了翻到换人格、换预设的那一页，会话
-   * 中途换，核心 P-13；人格那一行末尾一个铅笔开它的编辑卡片）、工作区（完整路径，长的换行写全；行末一个文件夹图标，点了直接开系统的选目录对话框换工作区）。
+   * 中途换，核心 P-13；人格那一行末尾一个铅笔开它的编辑卡片）、工作区（完整路径，长的换行写全；行末一个文件夹图标，点了直接开系统的选目录对话框换工作区；
+   * 整行悬停、点了同那个图标，2026-11-03 项目主人，W-1072）。
    * @param {HTMLElement} anchor @param {string} session @param {string|null} persona @param {string|null} preset @param {string} path
    */
   const openInfo = (anchor, session, persona, preset, path) => {
@@ -257,6 +258,7 @@ export function apply(ctx) {
   /** @param {HTMLElement} anchor @param {string} session @param {string|null} persona @param {string|null} preset @param {string} path */
   const showInfo = (anchor, session, persona, preset, path) => {
     const back = () => showInfo(anchor, session, persona, preset, path);
+    const browseHere = () => browse(ctx, infoMenu, anchor, true, chat.workdir(), pickDir, (p) => tilde(p, home()));
     infoMenu.show(anchor, {
       title: '',
       below: true,
@@ -271,8 +273,8 @@ export function apply(ctx) {
         },
         { label: t('info.preset'), title: preset != null ? presetNameOf(preset) : t('info.preset_default'), more: !!catalog.presets, keep: true, pick: () => { if (catalog.presets) switchPreset(anchor, session, preset, back); } },
         {
-          label: t('info.workspace'), title: path, still: true, wrap: true, pick: () => {},
-          action: { icon: 'folder-open', title: ctx.text('folders.open_short'), run: () => browse(ctx, infoMenu, anchor, true, chat.workdir(), pickDir, (p) => tilde(p, home())) },
+          label: t('info.workspace'), title: path, wrap: true, keep: true, pick: browseHere,
+          action: { icon: 'folder-open', title: ctx.text('folders.open_short'), run: browseHere },
         },
       ],
     });
