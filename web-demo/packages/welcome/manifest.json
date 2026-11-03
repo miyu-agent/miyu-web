@@ -7,13 +7,13 @@
     "ja": "初回セットアップ"
   },
   "summary": {
-    "zh": "第一次打开时配置语言、模型、人格和预设",
-    "en": "Set up language, model, persona and preset on first launch",
-    "ja": "初回起動時に言語・モデル・人格・プリセットを設定"
+    "zh": "第一次打开时配置语言、模型、人格、预设和局域网访问",
+    "en": "Set up language, model, persona, preset and local network access on first launch",
+    "ja": "初回起動時に言語・モデル・人格・プリセット・LAN アクセスを設定"
   },
   "kind": "optional",
   "description": {
-    "zh": "核心的 ui.welcomed 是 false 时整页盖上引导：欢迎 → 界面语言 → 模型 → 人格 → 预设 → 完成，走完写 true（蓝图 web.md「第一次引导」）。排在对话页之前、别的服务都是用到时现找：没走过引导的这台设备一打开先盖一层底色，不露出空会话。供应商那一段、控件经 settings 包的服务 settings，人格、预设经 setup 包的服务 personas，吉祥物经 mascot 包的服务 mascot，站的那一段挂进它的挂载位 mascot.anchors。"
+    "zh": "核心的 ui.welcomed 是 false 时整页盖上引导：欢迎 → 界面语言 → 模型 → 人格 → 预设 → 语义模型 → 在别的设备上用 → 完成，走完写 true（蓝图 web.md「第一次引导」）。排在对话页之前、别的服务都是用到时现找：没走过引导的这台设备一打开先盖一层底色，不露出空会话。供应商那一段、控件经 settings 包的服务 settings，人格、预设经 setup 包的服务 personas，吉祥物经 mascot 包的服务 mascot，站的那一段挂进它的挂载位 mascot.anchors。"
   },
   "inject": [
     "core",
@@ -64,7 +64,8 @@
         "theme": "外观",
         "profile": "关于你",
         "preset": "预设",
-        "embed": "语义模型"
+        "embed": "语义模型",
+        "lan": "别的设备"
       },
       "hello": {
         "title": "Miyu",
@@ -110,6 +111,19 @@
         "failed": "下载失败：{why}\n可以以后在设置的软件包页里安装",
         "continue": "继续"
       },
+      "lan": {
+        "title": "在别的设备上用",
+        "sub": "向局域网开放后，可以用手机、平板这些设备打开网页界面",
+        "open": "开放",
+        "open_note": "同一个局域网里的设备凭访问密码就能打开；连接不加密，只在信任的网络里开放",
+        "closed": "不开放",
+        "closed_note": "只有这台电脑能打开；以后可以在托盘或设置里开放",
+        "password": "访问密码",
+        "password_hint": "设一个访问密码",
+        "password_note": "别的设备打开网页时要输入它；以后可以在设置的「访问」里修改",
+        "failed": "没能开放：{error}",
+        "no_address": "已经向局域网开放；别的设备打开的地址可以在设置「通用」的「访问」里看到"
+      },
       "skip": "跳过",
       "where": "STAGE {at}/{total}",
       "to_light": "切换到浅色",
@@ -124,7 +138,8 @@
         "theme": "Appearance",
         "profile": "About you",
         "preset": "Preset",
-        "embed": "Semantic model"
+        "embed": "Semantic model",
+        "lan": "Other devices"
       },
       "hello": {
         "title": "Miyu",
@@ -170,6 +185,19 @@
         "failed": "Download failed: {why}\nYou can install it later from the Packages page in Settings",
         "continue": "Continue"
       },
+      "lan": {
+        "title": "Use on other devices",
+        "sub": "Open it to your local network to use the web interface from a phone, tablet or other device",
+        "open": "Open",
+        "open_note": "Devices on the same local network can sign in with the access password. The connection is not encrypted, so only do this on a network you trust",
+        "closed": "Don't open",
+        "closed_note": "Only this computer can open it. You can open it later from the tray or Settings",
+        "password": "Access password",
+        "password_hint": "Choose an access password",
+        "password_note": "Other devices ask for it when they open the web interface. You can change it later under Access in Settings",
+        "failed": "Could not open it to the network: {error}",
+        "no_address": "It is now open to your local network. The address for other devices is under General → Access in Settings"
+      },
       "skip": "Skip",
       "where": "STAGE {at}/{total}",
       "to_light": "Switch to light",
@@ -184,7 +212,8 @@
         "theme": "外観",
         "profile": "あなたについて",
         "preset": "プリセット",
-        "embed": "意味モデル"
+        "embed": "意味モデル",
+        "lan": "ほかの機器"
       },
       "hello": {
         "title": "Miyu",
@@ -229,6 +258,19 @@
         "progress": "ダウンロード中 {done} / {total}",
         "failed": "ダウンロードに失敗しました：{why}\nあとで設定のパッケージページからインストールできます",
         "continue": "続ける"
+      },
+      "lan": {
+        "title": "ほかの機器で使う",
+        "sub": "ローカルネットワークに公開すると、スマホやタブレットなどからウェブ画面を開けます",
+        "open": "公開する",
+        "open_note": "同じローカルネットワークの機器からアクセスパスワードで入れます。通信は暗号化されないので、信頼できるネットワークでだけ公開してください",
+        "closed": "公開しない",
+        "closed_note": "このコンピューターだけで開けます。あとからトレイや設定で公開できます",
+        "password": "アクセスパスワード",
+        "password_hint": "アクセスパスワードを決める",
+        "password_note": "ほかの機器でウェブ画面を開くときに入力します。あとで設定の「アクセス」で変更できます",
+        "failed": "公開できませんでした：{error}",
+        "no_address": "ローカルネットワークに公開しました。ほかの機器で開くアドレスは設定の「一般」→「アクセス」で確認できます"
       },
       "skip": "スキップ",
       "where": "STAGE {at}/{total}",

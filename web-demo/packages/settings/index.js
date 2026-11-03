@@ -9,6 +9,8 @@ import { SettingsDialog } from './dialog.js';
 import { ProviderFlow } from './onboard/flow.js';
 import { sectionKit } from './kit.js';
 import { settingsOf, without, ACCESS } from '../../src/lib/launch.js';
+import { lanCard } from './lan-card.js';
+import { withEye } from './account.js';
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -47,6 +49,16 @@ export function apply(ctx) {
     open: (page) => open(page ?? null),
     /** 关上（记忆详情里点出处打开那个会话） */
     close: () => dialog?.close(),
+    /**
+     * 第一次引导「在别的设备上用」那一屏（W-1086）：`card` 是别的设备打开的那张卡（地址、复制、二维码，同「访问」一组），`secret` 给访问密码框
+     * 右边加一个眼睛（同「访问」那一格）
+     */
+    lan: {
+      /** @param {string} url */
+      card: (url) => lanCard(ctx, url),
+      /** @param {HTMLInputElement} input */
+      secret: (input) => withEye(input, (k) => ctx.text(k)),
+    },
   });
   // 「默认界面」（`ui.head`，核心 9-3）：下拉的选项照核心的软件包清单（界面包），名字照清单
   ctx.slots.mount('settings.editor', {

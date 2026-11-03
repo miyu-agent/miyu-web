@@ -9,6 +9,7 @@ import { coreRow, groupBlock, toggle } from './rows.js';
 import { plainItem } from './model.js';
 import { fold } from './privacy.js';
 import { ACCESS } from '../../src/lib/launch.js';
+import { lanCard } from './lan-card.js';
 
 /** 改了要网页软件当场换监听的两项 */
 export const LISTEN_KEYS = ['web.listen', 'web.port'];
@@ -58,7 +59,7 @@ export const loopbackOnly = (value) => {
 
 /**
  * 「允许局域网访问」一行（网页软件的 `web.listen`，第 12c 条第 1 款）：开是 `0.0.0.0`，关是去掉这一项（回到出厂的 `127.0.0.1`）。没设访问密码的打开时
- * 先不写，等密码设好。开着、网页软件说得出别的设备怎么开的，下面多一行网址（点了复制）。
+ * 先不写，等密码设好。开着、网页软件说得出别的设备怎么开的，下面一张卡：网址、「复制」和二维码（`lan-card.js`，W-1086；第一次引导用同一张）。
  * @param {any} dialog @param {any} item @param {boolean} on @param {boolean} pending
  */
 function lanRow(dialog, item, on, pending) {
@@ -79,16 +80,12 @@ function lanRow(dialog, item, on, pending) {
     return !why;
   });
   const url = on ? dialog.lanInfo?.lan : null;
-  const copy = async () => {
-    await Promise.resolve(dialog.ctx.host?.clipboard?.write(url)).catch(() => null);
-    dialog.toast(t('account.copied'));
-  };
   return h('div.set-row', h('div.set-text', h('div.set-name', h('span', t('account.lan'))),
     h('p.set-desc', t('account.lan_desc')),
     // 明文 HTTP（2026-10-30 项目主人定不配证书，第二轮审查 W2-3）
     h('p.set-desc.acc-lan-warn', t('account.lan_risk')),
     pending ? h('p.set-desc.acc-lan-warn', t('account.lan_needs_password')) : null,
-    url ? h('p.set-desc', t('account.lan_open'), ' ', h('button.acc-lan-url', { type: 'button', title: t('account.copy'), onclick: copy }, url)) : null), sw);
+    typeof url === 'string' ? lanCard(dialog.ctx, url) : null), sw);
 }
 
 /**
@@ -209,10 +206,11 @@ function avatarRow(dialog) {
 }
 
 /**
- * 密码框右边一个眼睛：点了看得见写的字，再点藏起来（同登录那一屏的）；不进 Tab 的先后，按 Tab 到下一个框。
+ * 密码框右边一个眼睛：点了看得见写的字，再点藏起来（同登录那一屏的）；不进 Tab 的先后，按 Tab 到下一个框。第一次引导设访问密码那一格也用
+ * （经服务 `settings` 的 `lan.secret`，W-1086）。
  * @param {HTMLInputElement} input @param {(k: string) => string} t
  */
-function withEye(input, t) {
+export function withEye(input, t) {
   const eye = h('button.acc-eye', {
     type: 'button', tabindex: '-1', title: t('account.password_show'), 'aria-label': t('account.password_show'), 'aria-pressed': 'false',
     onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(),

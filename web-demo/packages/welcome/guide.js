@@ -1,17 +1,18 @@
 // @ts-check
 //! 第一次引导的整页（软件包 `welcome`，蓝图 `web.md`「第一次引导」第 2、10、11 条）：盖着整页的一层，一屏一屏地走：欢迎 → 界面语言 →
-//! 模型（`settings` 包的 `providers`）→ 人格、预设（`setup` 包的 `personas`）→ 完成。每一屏只交标题、内容和主按钮，这里画顶上一行
+//! 模型（`settings` 包的 `providers`）→ 人格、预设（`setup` 包的 `personas`）→ 语义模型 → 在别的设备上用（`lan.js`）→ 完成。每一屏只交标题、内容和主按钮，这里画顶上一行
 //! （步骤条）、上一步、下一步，管 `Enter`、`↑` `↓`、换屏的动画和吉祥物站哪。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { reduced } from '../../src/lib/motion.js';
 import { helloScreen, languageScreen, profileScreen, embedScreen, embedState, doneScreen, STEP_KEY, DONE_KEY, pixel } from './screens.js';
 import { twinkle } from './twinkle.js';
+import { lanScreen, lanState } from './lan.js';
 
 /** 步子的先后；`back` 是上一步回到哪 */
-const BACK = /** @type {Record<string, string|null>} */ ({ hello: null, language: 'hello', model: 'language', persona: 'model', theme: 'persona', profile: 'theme', preset: 'profile', embed: 'preset', done: 'embed' });
-/** 进步骤条的几步（`embed` 只在那一屏出的时候列，`Guide.numbered`；沙盒那一步 2026-10-19 项目主人去掉了） */
-export const NUMBERED = ['language', 'model', 'persona', 'theme', 'profile', 'preset', 'embed'];
+const BACK = /** @type {Record<string, string|null>} */ ({ hello: null, language: 'hello', model: 'language', persona: 'model', theme: 'persona', profile: 'theme', preset: 'profile', embed: 'preset', lan: 'embed', done: 'lan' });
+/** 进步骤条的几步（`embed`、`lan` 只在那一屏出的时候列，`Guide.numbered`；沙盒那一步 2026-10-19 项目主人去掉了） */
+export const NUMBERED = ['language', 'model', 'persona', 'theme', 'profile', 'preset', 'embed', 'lan'];
 /** 换一屏要选中的选项（`↑` `↓` 换着选的：选了就是它；别的只挪焦点） */
 const CHOICES = '.ob-row:not([disabled]), .wl-lang, .setup-choice, .ob-model';
 const SELECTS = new Set(['wl-lang', 'setup-choice', 'ob-model']);
@@ -105,11 +106,13 @@ export class Guide {
     /** 内置语义模型那一屏出不出（`embedState`：装了的问开不开，没装、软件源里有的问下不下；都不是的跳过、步骤条不列）：打开时问一次，
      *  问到之前当不出；走到那一步再问一次 @type {Awaited<ReturnType<typeof embedState>>} */
     this.embed = null;
+    /** 「在别的设备上用」那一屏出不出（`lanState`：页面直接连着网页软件、网页软件装着）：同上，问到之前当不出 */
+    this.lan = false;
   }
 
   /** 步骤条列的几步。 */
   numbered() {
-    return NUMBERED.filter((s) => s !== 'embed' || this.embed);
+    return NUMBERED.filter((s) => (s !== 'embed' || this.embed) && (s !== 'lan' || this.lan));
   }
 
   /**
@@ -147,6 +150,10 @@ export class Guide {
     // 内置语义模型那一屏出不出：问到了重画步骤条（「语义模型」那一段）；成员装不了包、不走那一屏，不问
     embedState(this.ctx.core).then((got) => {
       this.embed = got;
+      if (!this.head.hidden) this.drawSteps();
+    });
+    lanState(this.ctx).then((got) => {
+      this.lan = got;
       if (!this.head.hidden) this.drawSteps();
     });
     // 吉祥物的包比这个包晚加载：来了再让它上舞台
@@ -244,9 +251,19 @@ export class Guide {
       this.embed = got;
       if (!got) {
         this.drawSteps();
-        return this.go(dir > 0 ? 'done' : 'preset', dir);
+        return this.go(dir > 0 ? 'lan' : 'preset', dir);
       }
       this.show(embedScreen(this, got), dir);
+    } else if (step === 'lan') {
+      // 同上再问一次：不出的跳过（往回的接着回语义模型那一屏，它不出的再回预设）；卡片、密码的眼睛是设置包的，先等它
+      const [got] = await Promise.all([lanState(this.ctx), this.service('settings')]);
+      if (this.step !== step) return;
+      this.lan = got;
+      if (!got) {
+        this.drawSteps();
+        return this.go(dir > 0 ? 'done' : 'embed', dir);
+      }
+      this.show(lanScreen(this), dir);
     }
     else if (step === 'done') this.show(doneScreen(this), dir);
   }

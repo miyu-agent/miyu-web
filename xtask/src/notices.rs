@@ -31,7 +31,7 @@ const STANDARD: [(&str, &str); 3] = [
 ];
 
 /// 网页包里带的第三方前端资源（README「许可证」那张表）：写在段前的说明、原文在仓库里的位置。
-const DATA: [(&str, &str); 11] = [
+const DATA: [(&str, &str); 12] = [
     (
         "Lucide icons 1.55.0 (lucide-static; pages/resources/lucide.json, lucide-all.json, packages/skin-pixel/icons.json)",
         "web-demo/resources/LICENSE-lucide.txt",
@@ -75,6 +75,10 @@ const DATA: [(&str, &str); 11] = [
     (
         "material-color-utilities 0.4.0 (pages/src/lib/md3/vendor/mcu.min.js)",
         "web-demo/src/lib/md3/vendor/LICENSE",
+    ),
+    (
+        "qrcode-generator 2.0.4 (pages/src/lib/qr/vendor/qrcode.mjs)",
+        "web-demo/src/lib/qr/vendor/LICENSE",
     ),
 ];
 

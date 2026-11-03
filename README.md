@@ -44,6 +44,7 @@ AGPL-3.0-or-later（2026-10-26 项目主人定：核心和第一方程序用 AGP
 | KaTeX 0.18.4 的代码（`web-demo/vendor/katex/katex.min.js`、`katex.min.css`） | MIT | `web-demo/vendor/katex/LICENSE` |
 | KaTeX 0.18.4 的字体（`web-demo/vendor/katex/fonts/*.woff2`，原样带着，保留名 KaTeX_Main 等） | SIL OFL 1.1 | `web-demo/vendor/katex/fonts/OFL.txt` |
 | material-color-utilities 0.4.0（`web-demo/src/lib/md3/vendor/mcu.min.js`，挑了取色要用的几样打成一个文件） | Apache-2.0 | `web-demo/src/lib/md3/vendor/LICENSE` |
+| qrcode-generator 2.0.4（`web-demo/src/lib/qr/vendor/qrcode.mjs`，npm 包 `dist/qrcode.mjs` 原样带着；局域网地址的二维码） | MIT | `web-demo/src/lib/qr/vendor/LICENSE` |
 
 上面这些和网页软件编进去的第三方 Rust 包，版权和许可证原文合在 `miyu-webui/THIRD-PARTY-LICENSES.txt`（`cargo xtask notices` 生成，随网页包发；加了、升了依赖或资源要重新生成，CI 查它是不是最新的）。
 

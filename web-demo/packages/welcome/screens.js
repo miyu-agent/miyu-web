@@ -1,6 +1,6 @@
 // @ts-check
-//! 引导自己画的几屏（蓝图 `web.md`「第一次引导」第 3、4、10 条和第 9 条下面一款）：欢迎、界面语言、沙盒、完成。模型、人格、主题、
-//! 预设那几屏由别的包交来。
+//! 引导自己画的几屏（蓝图 `web.md`「第一次引导」第 3、4、10 条和第 9 条下面一款）：欢迎、界面语言、关于你、语义模型、完成（在别的设备上用
+//! 在 `lan.js`）。模型、人格、主题、预设那几屏由别的包交来。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { bytes } from '../../src/lib/format.js';
@@ -269,14 +269,14 @@ export function embedScreen(g, state) {
             // 下的时候点了「上一步」走开了的：装好了也不拉回来
             if (g.step !== 'embed') return null;
           }
-          g.go('done', 1);
+          g.go('lan', 1);
           return null;
         }
         if (chosen !== now) {
           await core.request('config.set', { layer: 'system', changes: [{ key: EMBED_KEY, value: chosen }] });
           now = chosen;
         }
-        g.go('done', 1);
+        g.go('lan', 1);
         return null;
       },
     },

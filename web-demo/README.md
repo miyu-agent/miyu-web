@@ -48,3 +48,6 @@ cargo test --manifest-path web-demo/bridge/Cargo.toml
 |---|---|---|---|---|
 | [Prism](https://prismjs.com) | 1.29.0 | MIT | `prism/prism.min.js`：旧版挑的几种语言拼成一个文件，文件头写着怎么重拼 | `data-manual` 载进来，只调 `Prism.tokenize`（`src/markdown/highlight.js`） |
 | [KaTeX](https://katex.org) | 0.18.4 | 代码 MIT（`katex/LICENSE`），字体 SIL OFL 1.1（`katex/fonts/OFL.txt`） | `katex/katex.min.js`、`katex/katex.min.css`、`katex/fonts/*.woff2` | `katex.render`（`src/markdown/math.js`） |
+| [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) | 2.0.4 | MIT（`src/lib/qr/vendor/LICENSE`，取自上游仓库） | npm 包的 `dist/qrcode.mjs`，放在 `src/lib/qr/vendor/`（软件包只能 `import` `src/lib/`，同 material-color-utilities） | `qrcode(0, 'M')`、`addData`、`isDark`（`src/lib/qr/index.js`：局域网地址的二维码，W-1086） |
+
+qrcode-generator 不是旧版带的：2026-11-03 第一次引导、设置「访问」一组画局域网地址的二维码要用（W-1086），照 npm 上的 2.0.4 原样拷来，一个字没改。
