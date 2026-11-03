@@ -6,6 +6,7 @@
 //! - `desk`：这台电脑上的几样，只给本机来的、带设备令牌：`/reveal` 开目录、`/pick-dir` 选目录（crate `miyu-desk`）、`/wallpaper` 桌面壁纸（2026-10-30）。
 //! - `follow`：跟着核心的配置推送，`web.listen`、`web.port` 变了当场换监听（2026-10-30）。
 //! - `ticket`：`/ticket`，这台电脑上的页面没有凭据时要一张交接票，只认本机来的、页面自己发的（2026-11-03 项目主人：本机就不要凭证了，W-1089）。
+//! - [`shutdown`]：`miyu web --stop` 和 `/stop`，停掉在跑的网页软件（托盘「停止」「退出」先停它，W-1091）。
 //! - `listen`：`/listen`，在听的地址、端口；带登录令牌 `POST` 照核心的配置当场换（2026-10-30）。
 //! - `media`：`/media`，带登录令牌换票据，照票据一块块给 blob、本机文件，能分段（施工 W-10）。
 //! - [`backstage`]：软件后台页，带登录令牌 `POST /page` 换票据，`/p/<票据>/<包>/<路径>` 照 `package.file` 给（施工 F-6 下）。
@@ -27,6 +28,7 @@ pub mod open;
 mod port;
 pub mod serve;
 pub mod settings;
+pub mod shutdown;
 mod texts;
 mod theme;
 mod ticket;

@@ -462,6 +462,10 @@ http://127.0.0.1:<端口>/#setup=9f03b21c…
 | 没装 | 没装网页界面。装法：装和 miyu 同一个版本的 miyu-web 包（各发行版怎么装），它装在 miyu 旁边。（核心印的） | The web UI is not installed. … |
 | 端口被占 | miyu: 端口 {port} 已被占用<br>提示：用 'miyu web --port <端口>' 换一个 | miyu: port {port} is in use<br>hint: pick another with 'miyu web --port <port>' |
 | `--logout` | 已退出 {count} 个登录<br>提示：浏览器需要重新输入访问密码 | signed out {count} logins<br>hint: browsers must enter the access password again |
+| `--stop` 停了（标准错误，W-1091） | 已停止网页界面 | stopped the web interface |
+| `--stop` 时没在运行 | 网页界面没有在运行 | the web interface is not running |
+| `--stop` 没停成 | miyu: 无法停止网页界面：{reason} | miyu: cannot stop the web interface: {reason} |
+| `--stop` 和别的选项一起写 | miyu: '--stop' 不能和别的选项一起使用<br>提示：运行 'miyu web --help' 查看用法 | miyu: '--stop' cannot be used with other options<br>hint: run 'miyu web --help' for usage |
 
 ### 守着它的
 

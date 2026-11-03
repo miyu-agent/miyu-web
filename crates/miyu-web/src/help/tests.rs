@@ -70,6 +70,23 @@ fn session_and_settings_name_where_to_go() {
 }
 
 #[test]
+fn stop_stands_alone() {
+    let want = Open {
+        stop: true,
+        ..Open::default()
+    };
+    assert_eq!(parse(&args(&["--stop"])), Ok(Parsed::Open(want)));
+    assert_eq!(
+        parse(&args(&["--stop", "--print"])),
+        Err(Bad::StopWithOthers)
+    );
+    assert_eq!(
+        parse(&args(&["--settings", "--stop"])),
+        Err(Bad::StopWithOthers)
+    );
+}
+
+#[test]
 fn says_what_is_wrong() {
     assert_eq!(
         parse(&args(&["--bogus"])),

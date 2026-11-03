@@ -3,7 +3,7 @@
 //!
 //! - `miyu-web serve [--port <端口>]`
 //! - `miyu-web open [--port <端口>] [--print] [--format text|json] [--ticket] [--reset] [--logout] [--package <编号>] [--session <编号>]
-//!   [--settings [<分页>]] [-h|--help]`：核心 CL-7 起 `miyu web` 是网页包的命令，清单 `args = ["open"]`，转交过来就是它；`-h` 印帮助页，
+//!   [--settings [<分页>]] [--stop] [-h|--help]`：核心 CL-7 起 `miyu web` 是网页包的命令，清单 `args = ["open"]`，转交过来就是它；`-h` 印帮助页，
 //!   写错的照命令行文案说（[`miyu_web::help`]）
 
 use std::path::{Path, PathBuf};
@@ -65,10 +65,15 @@ fn main() -> ExitCode {
                 && !parsed.json
                 && !parsed.ticket
                 && !parsed.reset
-                && !parsed.logout =>
+                && !parsed.logout
+                && !parsed.stop =>
         {
             ExitCode::from(runtime.block_on(serve(root, &env, parsed.port)))
         }
+        // 不连核心（W-1091）：`open` 一上来就连，会把核心拉起来
+        "open" if parsed.stop => ExitCode::from(
+            runtime.block_on(miyu_web::shutdown::command(&root, &mut std::io::stderr())),
+        ),
         "open" => {
             let launch = Launch {
                 serve: Box::new(|port| {
@@ -172,7 +177,7 @@ fn forget(rest: &[String]) -> ExitCode {
 /// 用法不对。
 fn usage() -> ExitCode {
     eprintln!(
-        "usage: miyu-web open [--port <port>] [--print] [--format text|json] [--ticket] [--reset] [--logout] [--package <id>] [--session <id>] [--settings [<page>]]"
+        "usage: miyu-web open [--port <port>] [--print] [--format text|json] [--ticket] [--reset] [--logout] [--package <id>] [--session <id>] [--settings [<page>]] [--stop]"
     );
     ExitCode::from(USAGE)
 }

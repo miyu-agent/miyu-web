@@ -50,6 +50,8 @@ pub struct Open {
     /// 打开时直接开设置（`--settings [<分页>]`，W-1085）：网址 `#` 后面多一个 `settings=<分页>`；空的是设置的首页，`access` 是「通用」里
     /// 「访问」那一组。
     pub settings: Option<String>,
+    /// `--stop`：停掉在跑的网页软件，不连核心、不开浏览器（W-1091，托盘「停止」「退出」先停它）；只能单独写。
+    pub stop: bool,
 }
 
 /// 怎么拉起东西：`serve`、核心。

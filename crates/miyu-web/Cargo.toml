@@ -18,8 +18,8 @@ path = "src/main.rs"
 miyu-client.workspace = true
 # 给页面、核对 Host 和 Origin、`/ws` 照转：共用的底子（施工 O-16，webserve.md）。
 miyu-webserve = { path = "../miyu-webserve" }
-# HTTP/1 的服务端（「起草时定的」第 24 条：正式的软件不手写协议）。本来就在依赖图里（reqwest 带进来的）。MIT。
-hyper = { version = "1", features = ["server", "http1"] }
+# HTTP/1 的服务端（「起草时定的」第 24 条：正式的软件不手写协议）；客户端那一半给 `--stop` 叫停在跑的那一个（W-1091）。本来就在依赖图里（reqwest 带进来的）。MIT。
+hyper = { version = "1", features = ["server", "client", "http1"] }
 hyper-util = { version = "0.1", default-features = false, features = ["tokio"] }
 http-body-util = "0.1"
 # 「打开目录」「选择文件夹…」（`desk`，2026-10-30）：这个仓库的 crate，和演示的桥共用。

@@ -14,6 +14,7 @@
 | `crates/miyu-web/src/main.rs` | 子命令 `open`、`serve`；找自己旁边的主程序拉起核心 |
 | `crates/miyu-web/src/serve.rs` | 单实例、听端口、写 `run/miyu-webui/address` 和那一行、空闲退出（听局域网时不退）；每个请求分给谁：Host 不对的记一行、回 403，`/ws`、`/ticket`、`/media`、`/listen`、页面文件。网页软件的 `Site` 实现 `miyu_webserve::Site`（数忙照空闲退出；在听的地址、端口换了照新的核对 Host） |
 | `crates/miyu-web/src/desk.rs`、`desk/wallpaper.rs`，`crates/miyu-desk/` | 这台电脑上的几样（「怎么走」第五条）：`/reveal`、`/pick-dir`、`/wallpaper` 要设备令牌、只给本机来的；开目录、选目录在 `miyu-desk`（桥也用它）；壁纸照桥的做法用 `miyu-wallpaper`、`miyu_client::seeds` |
+| `crates/miyu-web/src/shutdown.rs` | `miyu web --stop` 和 `/stop`（「怎么走」第二条第 10 款，W-1091）：起来时写停止钥匙、退出时删；`--stop` 不连核心，带钥匙照回环叫停，等锁放掉 |
 | `crates/miyu-web/src/ticket.rs` | `/ticket`（「怎么走」第一条第 12 款，W-1089）：本机的页面没凭据时照本机令牌问核心要一张交接票；只认本机的页面自己发的（`local`） |
 | `crates/miyu-web/src/listen.rs`、`follow.rs` | `/listen`（「怎么走」第一条第 11 款）：回在听的地址、端口、别的设备打开用的网址；`POST` 照核心的配置换地址、端口，接连接的那一圈照它换监听。`follow`：订核心的配置推送，那两项变了自己换 |
 | `crates/miyu-webserve/src/lib.rs`（施工 O-16 搬过去，`webserve.md`「搬家表」） | 核对 Host、Origin 的三种写法和听局域网时的 IP 写法（`Site::hosts`、`listen`、`host_allowed`、`origin_allowed`）；连接是不是远程的（`remote`） |
@@ -44,7 +45,7 @@
 1. 单实例：`miyu-web serve` 先拿 `run/miyu-webui/lock`，拿不到写 `running` 走。拿到了听端口，把地址写进 `run/miyu-webui/address`（先写临时文件再改名），往标准输出写一行 `ready`，和核心那一行同一个写法（`ipc.md`「那一行」，复用 `miyu-ipc` 的 `Ready`）。端口被占了写 `error port <端口> in use`（`open` 认这个写法，照人的语言说，「施工时定的」第 5 条），别的起不来写 `error <原因>`。「被占」不只照绑不绑得上：绑之前先连一下 `127.0.0.1:<端口>`（最多等 0.3 秒），有人接就算被占（2026-10-31 桌面端在 macOS 上撞见：主人自己的守护进程听着 `*:8300`，macOS 让更具体的 `127.0.0.1:8300` 也绑得上，新起的网页软件把本机的连接接走、悄悄盖住原来那个，不报被占；Linux 上这样绑不上，所以没早发现）；端口回退照样往后找。
    - 端口回退（2026-10-30，桌面端 DT-3 在一台 8300 被别的程序占着的机器上撞见：桌面窗口的人敲不了 `--port`；项目主人定「固定端口配端口回退」）：端口是出厂的（命令行没写 `--port`、配置里的 `web.port` 出处是 `default`）而且被占了的，照先后试后面九个（8301 到 8309），用头一个空的，`run/miyu-webui/address` 照实写；九个都被占的照旧报那一个出厂端口被占。回退是固定的一串，不随便挑：浏览器里存的登录、设置按地址加端口分开，同一台机器上每次落到同一个端口才不丢。人自己定的端口（`--port`、配置里写了的 `web.port`）被占照旧报错，不替人换。
 2. 端口：照 `--port`，没写照配置 `web.port`（施工 9-1 下：只能写在系统配置，设置页「通用」的「访问」一组、「软件包」那一页露；改了当场换，第 11 款）。`serve` 起来时核心在跑的就问它 `config.get` 拿 `web.*` 五项的最终值，不为这个拉起核心：`miyu web` 先经 `open` 连上核心才拉起 `serve`；核心没在跑的照清单的默认值起，记一行 `INFO web config from defaults`，连上了却被拒的记 `WARN web config not read`（固定端口，第 2 题）；`0` 是系统挑一个空的。听哪个地址照配置 `web.listen`（SU-1，2026-10-28 项目主人定「局域网能用」）：出厂 `127.0.0.1` 只有这台电脑能开；`0.0.0.0` 局域网里别的设备也能开（凭访问密码登录；网页设置页「通用」的「访问」一组的「允许局域网访问」照它，打开时没设密码的先设）；也能写这台电脑的某一个地址；不是地址的照默认。改了当场换（第 11 款）。`run/miyu-webui/address` 里、交给浏览器的网址照旧写 `http://127.0.0.1:<端口>`：本机开浏览器走回环。端口被占了：`miyu web` 照人的语言说哪个端口被占了、怎么换。出厂端口 8300（「施工时定的」第 1 条）。
-3. 空闲退出：没有 WebSocket 连着、没有 `/media`、软件后台页在给，连续 10 分钟就退出（配置 `web.idle_seconds`，出厂 600，设置页不露；`0` 是不退：服务器上由服务管理器起的那一份写 0，空闲退出码是 0、`Restart=on-failure` 不会再起它，2026-10-23 Z-1 查出；`miyu web` 拉起的照旧 600，用的时候才起），先删 `run/miyu-webui/address`、再放锁。听局域网的（在听的地址不是回环）不空闲退出（2026-10-30 项目主人定局域网访问是一个开关：开着就得一直能从别的设备打开，没人连着就退了，别的设备打不开、也起不了它），换回回环的照旧算空闲。收到停的信号照样先删再放。
+3. 空闲退出：没有 WebSocket 连着、没有 `/media`、软件后台页在给，连续 10 分钟就退出（配置 `web.idle_seconds`，出厂 600，设置页不露；`0` 是不退：服务器上由服务管理器起的那一份写 0，空闲退出码是 0、`Restart=on-failure` 不会再起它，2026-10-23 Z-1 查出；`miyu web` 拉起的照旧 600，用的时候才起），先删 `run/miyu-webui/address`（和停止钥匙，第二条第 10 款）、再放锁。听局域网的（在听的地址不是回环）不空闲退出（2026-10-30 项目主人定局域网访问是一个开关：开着就得一直能从别的设备打开，没人连着就退了，别的设备打不开、也起不了它），换回回环的照旧算空闲。收到停的信号、`miyu web --stop` 叫停的照样先删再放。
    - 不定时醒（2026-10-15 设计 00「避免轮询」）：睡到下一件到点的事（空闲到点、核心连接 60 秒到点该关），没有到点的事就只等连接来、连着的走；过期的票据在换、找、有连接走时丢。
 4. 每个请求先核对 Host：认 `127.0.0.1:<端口>`、`localhost:<端口>`、`[::1]:<端口>`；听局域网的（`web.listen` 不是回环）另认「IP 字面量:<端口>」——听的是某一个地址的只认它，`0.0.0.0` 的认这台电脑的哪个地址都行（连得进来就是这台电脑的）。不认名字，别的回 403：别的网站把自己的域名解析到这台电脑也进不来（DNS rebinding）。
 5. 页面文件：`GET /` 给 `index.html`，别的照路径在页面目录里找。带 `..` 的、换成真实位置以后跑到页面目录外的、不是普通文件的，404。类型照扩展名（`web.json` 的表）。响应头一律带：`X-Content-Type-Options: nosniff`、`Referrer-Policy: no-referrer`、`Cache-Control: no-cache`、`Content-Security-Policy`（照 `web.json`，至少有 `connect-src 'self'`、`frame-ancestors 'none'`）。从来不设 cookie（「起草时定的」第 13 条）。
@@ -73,7 +74,7 @@
 **二、`miyu web`**（W-9，原来是 `web-module.md` 第十一条，2026-10-04 随 W-8 改过）
 
 1. `miyu web` 是网页包自己带的命令（2026-10-30 项目主人定，核心 CL-7；原来是主程序内置的，照清单找网页软件再交给它）：清单 `[command]` 写 `name = "web"`、`program = "miyu-web"`、`args = ["open"]`，核心照「转交」（核心 `packages.md` 第 5 条）找程序（包文件夹的 `bin/` 先，再 `miyu` 旁边），把 `args` 放在人敲的参数前面：`miyu web --print` 就是 `miyu-web open --print`；环境里带 `MIYU_PROGRAM`（主程序的真实位置，核心 G-15）、`MIYU_PACKAGE_DIR`，退出码照它的。网页包没装就没有这个命令（`miyu web` 照核心说不认识的命令），`miyu -h` 把它列在「软件包加的命令」里，说明照清单的 `about`。
-   - `miyu web -h`、`--help`（核心不再有这一页，转交过来是 `miyu-web open --help`）：`open` 后面有 `-h`、`--help` 的不管别的参数，印帮助页、退出码 0，照核心设计 47「命令行文案」写：用法、一句说明、选项（`--port`、`--print`、`--format <text|json>`、`--reset`、`--logout`、`--package <编号>`、`--session <编号>`、`--settings [<分页>]`、`-h`），`--ticket` 不写（桌面端的外壳用的）。语言照这台机器的（`LC_ALL`、`LC_MESSAGES`、`LANG`，同核心的帮助页：印帮助不连核心），`zh` 打头的中文，别的英文。
+   - `miyu web -h`、`--help`（核心不再有这一页，转交过来是 `miyu-web open --help`）：`open` 后面有 `-h`、`--help` 的不管别的参数，印帮助页、退出码 0，照核心设计 47「命令行文案」写：用法、一句说明、选项（`--port`、`--print`、`--format <text|json>`、`--reset`、`--logout`、`--package <编号>`、`--session <编号>`、`--settings [<分页>]`、`--stop`、`-h`），`--ticket` 不写（桌面端的外壳用的）。语言照这台机器的（`LC_ALL`、`LC_MESSAGES`、`LANG`，同核心的帮助页：印帮助不连核心），`zh` 打头的中文，别的英文。
 2. `miyu-web open`：`run/miyu-webui/address` 在、锁有人拿着，网页软件就在跑，照 `run/miyu-webui/address` 的地址。不然拉起 `miyu-web serve`：和头拉起核心一样（`ipc.md`「连不上就拉起」第 4、5 条），跟终端脱开，工作目录是数据根，等那一行最多 10 秒。
 3. 照终端的样子连核心（`connect_or_start`，出示本机令牌）。要交接票时问 `login.ticket {via: "open"}`（核心 LT-2，W-1090）。写了 `--reset` 的（问一次 `account.setup_code`）：网址是 `<地址>/#setup=<一次性码>`，码在 `#` 后面，不发给服务器、不进 Referer，页面拿到以后从地址栏抹掉（设计 21 X6）。交给浏览器的不带票（2026-11-03 项目主人，W-1089：地址栏、跳转后的网址、浏览器历史里都不能出现票或令牌）：网址就是 `<地址>/`（`package=`、`session=`、`settings=` 照带，那些不是凭据），页面开在本机地址上，存着设备令牌的照它进，没有的自己 `POST /ticket`（第一条第 12 款）要一张票进来，也就不写跳转页。印出来的（`--print`、`--format json`、交不给浏览器的：桌面端、托盘、终端用，可能交给别的程序、别的浏览器配置）照旧（2026-10-30 项目主人：访问密码只给局域网用，本机打开不逼着设；原来还没设过密码的也带一次性码、先出「设置访问密码」一屏）：要一张交接票（`login.ticket`，核心 LT-1：60 秒、一次性；核心只看是不是本机令牌连上的，没设过密码也给），网址是 `<地址>/#ticket=<票>`（im 设计 07 第 3.6 节、网页-乙；SU-1 起不带账号，旧核心回应里带了也不用）：浏览器里存着设备令牌的照它进，没有、作废了的拿票一步连上，不用再输密码；页面在本机地址（回环）上拿票换到的设备令牌存进这台浏览器（`web.md`「连核心」：同勾了「自动登录」，本机终端开的是主人自己），收藏的地址下回直接进。`first` 照旧问 `account.setup_code` 拿（`--format json` 照实给），要了的码不用（5 分钟后自己作废）。旧核心要不到票的（没有 `login.ticket`）网址就是 `<地址>/`，页面照存着的登录令牌，没有的问用户名和密码。
 4. 用系统的办法打开（Linux 是 `xdg-open`，macOS 是 `open`，Windows 是 `cmd /C start "" "<网址>"`）。网址带着一次性码的不直接交（W-1089 起交给浏览器的只有 `--reset` 带凭据；交出去的参数进进程列表，同一台机器上的别人看得到；im 设计 07 第 3.6 节）：写一个跳转页 `run/miyu-webui/open/<16 个随机字节的十六进制>.html`（目录只给本人：Unix 上目录 0700、文件 0600；Windows 上在本人用户目录下的数据根里，同本机令牌 `run/token` 的办法），里面一行 `location.replace("<网址>")`（不留历史）、`<meta name="referrer" content="no-referrer">`，交出去的是这个文件的 `file://` 地址（Windows 的长路径写法 `\\?\C:\…` 先去掉前缀，网络共享 `\\?\UNC\主机\共享\…`、`\\主机\共享\…` 写成 `file://主机/共享/…`：数据根可能是人自己用这种写法给的，2026-11-03 core1 提的，W-1080）；交了以后拉起自己 `miyu-web forget <跳转页>`（跟终端脱开、不等它），它 30 秒后删掉这一页；每次 `open` 先删掉 `run/miyu-webui/open/` 里放了 2 分钟以上的（`forget` 没跑完的兜底）。不带凭据的网址照旧直接交。
@@ -87,6 +88,11 @@
    - `--session`：会话编号照核心的写法（UUID：十六进制和 `-`，8-4-4-4-12），别的照用法不对（退出码 2）。页面起来切到这个会话；没有这个会话的照平常打开不存在的会话那样，在输入框上面说核心给的那一句。
    - `--settings`：后面的分页可以不写（下一个参数是 `-` 打头的、没有下一个的都算没写），网址写 `settings=`，开设置的首页（同点左栏的齿轮，到上次看的那一页、刷新过的是「通用」）；写了的是设置页左栏的分页编号（`general`、`models`、`packages`、`market` 这些，照设置包的 `order`；核心的页照 `config.schema` 的 `pages`），另认一个 `access`：开「通用」页、滚到「访问」那一组。分页照包编号的写法查（字母、数字、`-`、`_`、`.`，1 到 64 个），别的照用法不对；写法对、页面里没有这一页的照设置页的老规矩开「通用」。
    - 这两项是一次性的（点名「现在去哪」，不是能收藏的地址）：页面读完就从地址栏抹掉（经宿主的 `route`），刷新以后不再开；`package=` 照旧留着。
+10. `--stop`（2026-11-03，W-1091：托盘 AP-2 在 Windows 虚拟机上测出来，托盘「停止」「退出 Miyu」照 `miyu core stop` 停了核心，开着的页面一重连，`/ws` 照 `connect_or_start` 又把核心拉了起来；托盘蓝图写的是「网页服务、im 这些跟着停」，托盘先 `miyu web --stop` 再停核心）：停掉这个数据根上在跑的网页软件，核心照常跑。只能单独写，和别的选项一起写的照用法不对（退出码 2）。
+   - 不连核心（`open` 一上来就连，会把核心拉起来）。没在跑的（锁没人拿着）说「网页界面没有在运行」、退出码 0。
+   - `serve` 起来时在运行时目录写一把钥匙 `run/miyu-webui/stop-key`（32 个随机字节、64 位十六进制，先写临时文件再改名，Unix 上 `0600`），退出时删。`--stop` 读地址和钥匙，照回环 `POST /stop`、头 `X-Miyu-Stop` 带钥匙；`serve` 回 204，接连接的那一圈照常收尾（删地址、删钥匙、放锁，运行日志 `stopped reason=stop`）。`--stop` 另起一个线程拿锁，拿得到就是停了，说「已停止网页界面」、退出码 0；10 秒还没停、没有地址、没有钥匙（旧版没写）、连不上、不认的说「无法停止网页界面：<原因>」、退出码 1。发出去以后连接断了的（收到就退，回应来不及发）照停了等锁。
+   - `/stop` 只认：对端是回环、不带反向代理的头、不带 Origin（浏览器发 `POST` 都带，别的网站的页面、本机的页面都叫不停它）、钥匙逐字对上（比完每个字节）。不是的一律 403、没有正文、记一行 `stop refused`；不是 `POST` 的 405。读得到钥匙的是读得到这个数据根的人，本来也能结束这个进程。
+   - 不发信号、不结束进程：仓库不许 `unsafe`，Windows 上也没有能让它照常收尾的信号。
 
 **三、媒体地址**（W-10，原来是 `web-module.md` 第十条；2026-09-30 定的「小的经协议，大的由网页给带令牌的地址」，那时说的网页模块现在是网页软件）
 
@@ -136,10 +142,12 @@
 
 | 级别 | 这件事 | 什么时候 |
 |---|---|---|
-| `INFO` | `listening url=…`、`stopped reason=…` | 起来、退出（`idle`、`signal`） |
+| `INFO` | `listening url=…`、`stopped reason=…` | 起来、退出（`idle`、`signal`、`stop`） |
 | `WARN` | `rejected host=… origin=…` | Host、Origin 不对 |
 | `WARN` | `ticket refused remote=…` | `/ticket` 不是本机的页面自己发的（第一条第 12 款），回 403；不记票 |
 | `WARN` | `ticket unavailable error=…` | `/ticket` 连不上核心、要不到票，回 503 |
+| `WARN` | `stop refused remote=…` | `/stop` 不是 `--stop` 带钥匙发的（第二条第 10 款），回 403 |
+| `WARN` | `stop key not written error=…`、`no random bytes for the stop key` | 写不成停止钥匙：`--stop` 停不了这一个，空闲到点照样退 |
 | `WARN` | `core unreachable error=…` | 连不上核心 |
 | `DEBUG` | `websocket connected`、`websocket closed` | 一个标签页连上、断开 |
 | `WARN` | `media cut short offset=… error=…` | `/media` 给到一半核心那头断了、给得比说的少：连接照 HTTP 的规矩断掉，浏览器知道没收全 |
@@ -161,6 +169,7 @@
 | `crates/miyu-web/tests/serve.rs` | 单实例、`run/miyu-webui/address`、那一行；端口被占说清楚；Host 只认三种写法；页面文件不出页面目录（`..`、`%2e%2e`、链接、目录）；响应头一个不少、从不设 cookie；`HEAD`、别的方法 405；空闲到点退出、删 `run/miyu-webui/address`、放锁；听局域网时到点不退；页面文件带 `ETag`，`If-None-Match` 对上（一串里有、弱比较）回 304，改了照常给 |
 | `crates/miyu-web/tests/desk.rs` | `/reveal`、`/pick-dir`、`/wallpaper` 不带令牌、核心不认的 401，只认 `GET`；认的令牌开不在的目录回 `{"missing":true}`（测试里不真开文件管理器、选目录框）；`/wallpaper/events` 不要令牌、是 `text/event-stream`、最多同时开 16 条（关一条空出来能再开，第四轮审查 W4-3） |
 | `crates/miyu-web/tests/audit4.rs` | 第四轮审查的两条（2026-11-02）：关了局域网（`web.listen` 换回回环）以后别的设备连着的 `/ws` 5 秒内断开（W4-2）；开着一条不带凭据的 `/wallpaper/events`，空闲到点照样退出（W4-3） |
+| `crates/miyu-web/tests/stop.rs` | `--stop`、`/stop`（W-1091）：叫停的照常收尾（锁放了、地址和钥匙删了、`serve` 正常走）；没在跑的照实说；没带钥匙、钥匙不对、带 Origin、带反向代理的头 403，`GET` 405，都照旧跑着；钥匙对上 204 |
 | `crates/miyu-web/tests/ticket.rs` | `/ticket`（W-1089）：本机的页面自己发的（`127.0.0.1`、`localhost`、`[::1]` 三种 Host，带 JSON 正文的也算）拿到票，回应 `no-store`、`nosniff`、`no-referrer`、不设 cookie；伪造的 Host（名字、局域网 IP、端口不对）、Origin 不对、是 `null`、和 Host 不是逐字一样、没有 Origin、没有自定义头、自定义头不是 `1`、表单的三种正文、带反向代理的哪一种头都 403 且没有正文；`GET` 405；核心没在跑、旧核心没有 `login.ticket` 的 503 带 `error` |
 | `crates/miyu-web/src/ticket/tests.rs` | `local` 的每一条：三种本机写法认，缺 Host、Origin、自定义头，Origin 不对、`https://`、`null`、和 Host 写法不同，Host 是名字、局域网 IP、端口不对，表单的正文（带参数、大小写不同）都不认 |
 | `crates/miyu-web/tests/listen.rs` | `GET /listen` 回在听的、Host 照旧核对；`POST` 不带设备令牌、核心不认的 401；核心没在跑的回 `error`、接着听原来的；换地址（同一个端口）、换端口（`run/miyu-webui/address` 跟着换、旧端口不再接、连着的 WebSocket 不断）、配置没变不动、`--port` 起的端口不随配置换；听局域网时空闲到点不退、换回回环照旧退；不用页面请，起来先照核心的配置换、推来改动当场换回 |

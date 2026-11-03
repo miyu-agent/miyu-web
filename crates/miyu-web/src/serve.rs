@@ -7,7 +7,8 @@
 //! 1. 先拿 `run/miyu-webui/lock`，拿不到写 `running` 走。
 //! 2. 听 `web.listen` 的那个地址的端口（`run/miyu-webui/address` 里照旧写 `http://127.0.0.1:<端口>`：本机开浏览器走回环）：被占了写 `error port <端口> in use`（`open` 认这个前缀，照人的语言说），别的起不来写 `error <原因>`。
 //! 3. 地址写进 `run/miyu-webui/address`（先写临时文件再改名），写一行 `ready`。
-//! 4. 没有 WebSocket 连着、没有 `/media`、后台页在给，连续空闲到点就退出（听局域网的不退；`/wallpaper/events` 不算，第四轮审查 W4-3）；收到停的信号也退出。退出时先删 `run/miyu-webui/address`、再放锁。
+//! 4. 没有 WebSocket 连着、没有 `/media`、后台页在给，连续空闲到点就退出（听局域网的不退；`/wallpaper/events` 不算，第四轮审查 W4-3）；收到停的信号、
+//!    `miyu web --stop` 叫停的（`/stop`，W-1091）也退出。退出时先删 `run/miyu-webui/address` 和停止钥匙、再放锁。
 //! 5. `/listen` 请换地址、端口的（`listen`）：接连接的这一圈照它换监听，在听的地址、端口跟着换，端口换了重写 `run/miyu-webui/address`。新地址不再包含
 //!    别的机器连进来的那个地址的（关了局域网）：连着的 WebSocket 关掉，keep-alive 连接上再来的请求 403（第四轮审查 W4-2）。
 
@@ -34,7 +35,7 @@ use crate::backstage::Backstage;
 use crate::listen::{Swap, Swaps};
 use crate::media::Media;
 use crate::settings::Settings;
-use crate::{TARGET, backstage, listen, media, theme, ticket};
+use crate::{TARGET, backstage, listen, media, shutdown, theme, ticket};
 
 pub use miyu_client::CoreCommand;
 pub(crate) use miyu_webserve::respond::{Body, empty, full, secure};
@@ -99,6 +100,10 @@ pub(crate) struct Site {
     quiet_since: Mutex<Instant>,
     /// 走了一个：叫醒接连接的那一圈，照新的情形算下一次几时醒。
     wake: Notify,
+    /// 停止钥匙（`shutdown`，W-1091）：没写成的是空的，`/stop` 一律不认。
+    pub(crate) key: Option<String>,
+    /// `/stop` 认了：叫接连接的那一圈收尾。
+    pub(crate) stopping: Notify,
 }
 
 /// 连着的一个：数着，走的时候减掉、记下时刻。
@@ -251,6 +256,7 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
         said(Ready::Failed(error.clone()));
         return Err(error);
     }
+    let key = shutdown::write_key(&run);
     said(Ready::Ready);
     tracing::info!(target: TARGET, url = %url, listen = %listen, "listening");
     let media = Media::new(&serve.settings);
@@ -272,6 +278,8 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
         active: AtomicUsize::new(0),
         quiet_since: Mutex::new(Instant::now()),
         wake: Notify::new(),
+        key,
+        stopping: Notify::new(),
     });
     let following = serve
         .follow
@@ -281,6 +289,7 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
         following.abort();
     }
     remove_address(&run);
+    shutdown::remove_key(&run);
     tracing::info!(target: TARGET, reason, "stopped");
     Ok(())
 }
@@ -319,6 +328,7 @@ async fn accept(
             () = site.wake.notified() => continue,
             () = until(next) => continue,
             () = &mut stop => return "signal",
+            () = site.stopping.notified() => return "stop",
         };
         let (kept, done) = listen::swap(listener, swap.listen, swap.port).await;
         let Some(kept) = kept else {
@@ -375,7 +385,7 @@ async fn until(at: Option<Instant>) {
     }
 }
 
-/// 一个请求：先核对 Host；`/ws` 交给 WebSocket；`/ticket` 本机的页面要交接票；`/listen` 在听的、换监听；这台电脑上的几样交给 `desk`；`/media` 换票据、照票据给；`GET`、`HEAD` 当页面文件；别的方法 405。
+/// 一个请求：先核对 Host；`/ws` 交给 WebSocket；`/ticket` 本机的页面要交接票；`/stop` 叫停（W-1091）；`/listen` 在听的、换监听；这台电脑上的几样交给 `desk`；`/media` 换票据、照票据给；`GET`、`HEAD` 当页面文件；别的方法 405。
 async fn handle(
     request: Request<Incoming>,
     site: Arc<Site>,
@@ -410,6 +420,9 @@ async fn handle(
     }
     if crate::desk::PATHS.contains(&path) {
         return Ok(crate::desk::handle(request, site, remote).await);
+    }
+    if path == "/stop" {
+        return Ok(shutdown::post(&request, &site, remote));
     }
     if path == "/listen" {
         return Ok(listen::handle(request, site, remote).await);

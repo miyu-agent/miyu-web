@@ -112,6 +112,24 @@ impl Language {
         )
     }
 
+    /// `--stop` 停了（W-1091）。
+    pub(crate) fn web_stopped(self) -> String {
+        self.pick("已停止网页界面", "stopped the web interface")
+    }
+
+    /// `--stop` 时本来就没在跑。
+    pub(crate) fn web_not_running(self) -> String {
+        self.pick("网页界面没有在运行", "the web interface is not running")
+    }
+
+    /// `--stop` 没停成。
+    pub(crate) fn web_not_stopped(self, reason: &str) -> String {
+        self.pick(
+            &format!("miyu: 无法停止网页界面：{reason}"),
+            &format!("miyu: cannot stop the web interface: {reason}"),
+        )
+    }
+
     /// `--logout` 以后的提示。
     pub(crate) fn logout_hint(self) -> String {
         self.pick(
