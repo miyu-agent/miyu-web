@@ -384,6 +384,8 @@
       "stopped": "Background command stopped · {title}",
       "timed_out": "Background command stopped: time limit reached · {title}",
       "too_large": "Background command stopped: output too large · {title}",
+      "too_chatty": "Background command stopped: too much output too often · {title}",
+      "lines": "Background command output · {title} · {lines} lines",
       "undone": "Background command stopped by undo · {title}",
       "restarted": "Background command stopped by restart · {title}",
       "aborted": "Background command aborted: core exited · {title}"

@@ -74,7 +74,8 @@
     "error": "●",
     "stopped": "●",
     "failed": "●",
-    "module": "◇"
+    "module": "◇",
+    "lines": "○"
   },
   "report_tail_lines": 200,
   "sidebar_rows": 20,

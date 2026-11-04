@@ -92,6 +92,8 @@ function detailNode(detail, where, markdown) {
     nested = list.el;
   }
   const wrap = (/** @type {any} */ output) => h('div.note-out', command, h('div.tl-body.note-detail', output, nested));
+  // 监视着的命令出的一批（核心 MN-1，W-1093）：字在旁白里，照写
+  if (typeof detail.text === 'string') return wrap(section(n.output_label, h('pre', detail.text || n.no_output)));
   if (!detail.hash) return wrap(section(n.output_label, h('div.note-detail-head', n.no_output)));
   const pre = h('pre', n.loading);
   const head = h('div.note-detail-head', { hidden: true });

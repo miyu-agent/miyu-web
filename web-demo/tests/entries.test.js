@@ -287,3 +287,15 @@ test('压缩时摘要请求太长、截掉最早几组的（核心 UP-2 的 trun
   assert.deepEqual(brief(itemsOf([cut], { state: 'idle' }).items), ['note: 上下文已压缩：203k → 31k token（太长，最早的 3 组没进摘要，原文还能用 history 取回）']);
   assert.deepEqual(brief(itemsOf([plain], { state: 'idle' }).items), ['note: 上下文已压缩：203k → 31k token'], '没截的照旧');
 });
+
+test('监视着的后台命令出了一批行：一行「有新输出」、空心的点，点开照旁白里的字；一小时出满 120 批停掉的照 too_chatty 说（核心 MN-1，W-1093）', () => {
+  const got = itemsOf([
+    { id: 'e40', kind: 'notice', what: 'lines', job: 'j1', title: '盯日志', command: 'tail -f log', text: 'ERROR disk full\nERROR again', lines: 2, omitted: 0, at: AT },
+    { id: 'e41', kind: 'notice', what: 'job', job: 'j1', job_kind: 'command', title: '盯日志', mark: 'stopped', reason: 'too_chatty', command: 'tail -f log', at: AT },
+  ], { state: 'idle' });
+  assert.deepEqual(brief(got.items), ['note: 后台命令有新输出 · 盯日志 · 2 行', 'note: 后台命令输出太频繁，已停止 · 盯日志']);
+  assert.equal(got.items[0].tone, 'lines');
+  assert.equal(got.items[0].mark, '○');
+  assert.deepEqual(got.items[0].detail, { kind: 'output', command: 'tail -f log', hash: null, chars: null, job: 'j1', nested: false, text: 'ERROR disk full\nERROR again' });
+  assert.equal(got.items[1].tone, 'stopped');
+});

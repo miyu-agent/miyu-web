@@ -262,8 +262,8 @@ export class JobsPanel {
       return ms != null ? t('states.done', { elapsed: seconds(ms) }) : t('states.done_plain');
     }
     if (task.state === 'failed') return task.signal != null ? t('states.signal', { signal: task.signal }) : t('states.failed', { code: task.code });
-    // 核心 7-12 下：跑到最长时间、输出太大停掉的（`why`）
-    if (task.state === 'stopped' && (task.why === 'timed_out' || task.why === 'too_large')) return t(`states.${task.why}`);
+    // 核心 7-12 下：跑到最长时间、输出太大停掉的（`why`）；监视着的命令一小时出满 120 批停掉的（核心 MN-1，W-1093）
+    if (task.state === 'stopped' && (task.why === 'timed_out' || task.why === 'too_large' || task.why === 'too_chatty')) return t(`states.${task.why}`);
     const known = t(`states.${task.state}`);
     return known === `states.${task.state}` ? task.state : known;
   }

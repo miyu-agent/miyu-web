@@ -349,6 +349,8 @@ function noticeItem(e, jobs) {
       return keyed(compactedNote(event('context.compacted', { trigger: 'clear' })));
     case 'job':
       return jobNote(e, jobs);
+    case 'lines':
+      return linesNote(e, jobs);
     case 'recap':
       return keyed({ ...recapNote(event('session.recapped', { text: e.text ?? '' })), covers: e.covers ?? null });
     case 'model':
@@ -407,6 +409,18 @@ function jobNote(e, jobs) {
     : { kind: 'output', command: e.command ?? jobs.get(e.job)?.command ?? null, hash: e.output?.blob ?? null, chars: e.output?.chars ?? null,
       job: e.job ?? null, nested: !!e.nested?.count };
   return { type: 'note', key: e.id, seq: seqOf(e.id), turn: null, tone, mark: marks[tone] ?? '', text, detail };
+}
+
+/**
+ * 监视着的后台命令出了一批行（核心 MN-1，`what: "lines"`，W-1093）：一行「后台命令有新输出 · 标题 · N 行」，空心的点（命令还在跑，
+ * 不是了结）；点开看命令和这一批的字（旁白里带着全文，最多 4000 个字，截过的中间核心写了一行省了多少），不用另取。
+ * @param {any} e @param {Map<string, any>} jobs
+ */
+function linesNote(e, jobs) {
+  const title = e.title ?? jobs.get(e.job)?.title ?? e.job;
+  const text = t('notes.command.lines', { title, lines: e.lines ?? 0 });
+  const detail = { kind: 'output', command: e.command ?? jobs.get(e.job)?.command ?? null, hash: null, chars: null, job: e.job ?? null, nested: false, text: String(e.text ?? '') };
+  return { type: 'note', key: e.id, seq: seqOf(e.id), turn: null, tone: 'lines', mark: res.layout.note_marks.lines ?? '', text, detail };
 }
 
 /**
