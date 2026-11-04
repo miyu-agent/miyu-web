@@ -146,6 +146,9 @@ async fn serve(root: DataRoot, env: &Env, port: Option<u16>) -> u8 {
         pages,
         settings,
         core: Arc::new(core),
+        // 导出的原始包放在系统临时目录下网页软件自己的子目录里（`/export`，W-1098）：数据根里核心不写
+        temp: std::env::temp_dir(),
+        export_idle: miyu_web::export::IDLE,
     };
     let ran = miyu_web::serve::run(serve, |ready| {
         print!("{}", ready.line());

@@ -212,6 +212,8 @@ HTTP（W-9、W-10）：
 | `GET /media/<票据>` | 一个 blob 或者一份本机文件，可以带 `Range` | 票据 |
 | `POST /theme` | 换一张网页外观的票据（核心 TH-1，2026-11-02；`web-ui.md`「怎么走」第六条） | `Authorization: Bearer <登录令牌>` |
 | `GET /t/<票据>/<包>/<路径>` | 外观包网页目录里的一份文件 | 票据 |
+| `POST /export` | 把一个会话导成原始包，回一张一次性的下载票据 `{"url", "bytes"}`；网页软件照本机令牌叫核心写到系统临时目录下自己的子目录（核心 SE-1 中（f8f8a9bae），设计 58，W-1098；`web-ui.md`「怎么走」第七条） | `Authorization: Bearer <登录令牌>`；Origin 和 `http://` 加 Host 逐字一样，不对的 403 |
+| `GET /export/<票据>` | 那一份原始包（`attachment`、`application/zip`），给一次就作废、文件删掉；没人取的 10 分钟删 | 票据 |
 
 数据根里多的文件（W-9）：
 

@@ -12,9 +12,10 @@
 |---|---|
 | `crates/miyu-web/`（第 5 层，头） | 程序 `miyu-web`：只依赖 `miyu-ipc`、`miyu-store`、`miyu-log`、`miyu-webserve`，不依赖核心 |
 | `crates/miyu-web/src/main.rs` | 子命令 `open`、`serve`；找自己旁边的主程序拉起核心 |
-| `crates/miyu-web/src/serve.rs` | 单实例、听端口、写 `run/miyu-webui/address` 和那一行、空闲退出（听局域网时不退）；每个请求分给谁：Host 不对的记一行、回 403，`/ws`、`/ticket`、`/media`、`/listen`、页面文件。网页软件的 `Site` 实现 `miyu_webserve::Site`（数忙照空闲退出；在听的地址、端口换了照新的核对 Host） |
+| `crates/miyu-web/src/serve.rs` | 单实例、听端口、写 `run/miyu-webui/address` 和那一行、空闲退出（听局域网时不退）；每个请求分给谁：Host 不对的记一行、回 403，`/ws`、`/ticket`、`/media`、`/listen`、`/export`、页面文件。锁、`run/miyu-webui/address` 的读写在 `serve/files.rs`（W-1098 挪出来）。网页软件的 `Site` 实现 `miyu_webserve::Site`（数忙照空闲退出；在听的地址、端口换了照新的核对 Host） |
 | `crates/miyu-web/src/desk.rs`、`desk/wallpaper.rs`，`crates/miyu-desk/` | 这台电脑上的几样（「怎么走」第五条）：`/reveal`、`/pick-dir`、`/wallpaper` 要设备令牌、只给本机来的；开目录、选目录在 `miyu-desk`（桥也用它）；壁纸照桥的做法用 `miyu-wallpaper`、`miyu_client::seeds` |
 | `crates/miyu-web/src/shutdown.rs` | `miyu web --stop` 和 `/stop`（「怎么走」第二条第 10 款，W-1091）：起来时写停止钥匙、退出时删；`--stop` 不连核心，带钥匙照回环叫停，等锁放掉 |
+| `crates/miyu-web/src/export.rs`、`export/clean.rs` | `/export`（「怎么走」第七条，核心 SE-1 中（f8f8a9bae），设计 58，W-1098）：带登录令牌换一张一次性的下载票据，网页软件照本机令牌叫核心把原始包写到自己的临时子目录，`/export/<票据>` 交给浏览器、给完删；`clean.rs` 起来时清上回剩下的、建自己的子目录 |
 | `crates/miyu-web/src/ticket.rs` | `/ticket`（「怎么走」第一条第 12 款，W-1089）：本机的页面没凭据时照本机令牌问核心要一张交接票；只认本机的页面自己发的（`local`） |
 | `crates/miyu-web/src/listen.rs`、`follow.rs` | `/listen`（「怎么走」第一条第 11 款）：回在听的地址、端口、别的设备打开用的网址；`POST` 照核心的配置换地址、端口，接连接的那一圈照它换监听。`follow`：订核心的配置推送，那两项变了自己换 |
 | `crates/miyu-webserve/src/lib.rs`（施工 O-16 搬过去，`webserve.md`「搬家表」） | 核对 Host、Origin 的三种写法和听局域网时的 IP 写法（`Site::hosts`、`listen`、`host_allowed`、`origin_allowed`）；连接是不是远程的（`remote`） |
@@ -138,6 +139,18 @@
 4. 壁纸照桥的 `/wallpaper`（crate `miyu-wallpaper` 找、认图、盯文件；候选色照 `miyu_client::seeds`，一张图算一次）：回 `{sig, kind, seeds?}`，带 `data=1` 回那一份本身（matugen 的 JSON 或者图），都没有的 404。`GET /wallpaper/events` 一条 `text/event-stream`，壁纸来处的文件变了发一条 `changed`（不带内容，不要令牌：`EventSource` 带不了头；只说变了，取还是走 `/wallpaper`）。开着的不算有人连着，同时最多 16 条，满了回 503（2026-11-02 第四轮审查 W4-3：原来开着的不算空闲，不带凭据，这台电脑上随便哪个程序、哪个网页开一条不关，网页软件就一直不空闲退出，条数也不限、一条一个任务；页面开着总连着 `/ws`，那条算忙就够了。没选换票：`EventSource` 带不了头，换票要页面多一步，只为一条只说「变了」的流不值）。记着上一次的回答（2026-10-30 桌面端在 Win11 上抓到：页面每次拿回焦点都问，网页软件每次拉一个 `reg.exe`，没带 `CREATE_NO_WINDOW` 的每次闪一个终端窗口）：Windows、macOS 上换壁纸一定会改盯着的那几份文件，盯着、文件从上次问到现在没变的直接交记着的；Linux 上有只经 IPC 换、不落文件的壁纸程序，照旧每次找。网页软件拉起的程序（`miyu-wallpaper` 找壁纸的命令、`miyu-desk` 的、`open` 起的 `forget`）在 Windows 上一律带 `CREATE_NO_WINDOW`；`serve`、核心经核心的 `spawn_detached`，本来就不开控制台。
 5. 方法只认 `GET`，别的 405。
 
+**七、导出原始包**（核心 SE-1 中（f8f8a9bae），设计 58，W-1098；core1 11-04 定的走法：页面不能叫核心写本机路径——局域网来的连接调 `session.export` 的 `to.path` 核心回 `local_machine_only`，页面也不该知道这台电脑的路径——由网页软件替它写、再交给浏览器）
+
+1. `POST /export`：`Authorization: Bearer <登录令牌>`；正文是 JSON `{session, name?}`：`session` 照核心会话编号的写法（十六进制和 `-`，最多 64 个），`name` 是存下来叫什么（页面写会话的标题），可以不写；不对的 400。方法只认 `POST`，别的 405。
+2. 只认页面自己发的（同第一条第 12 款 `/ticket` 的 Origin 规矩）：Origin 要有、和 `http://` 加这个请求的 Host 逐字一样（Host 照第一条第 4 款核对过：本机的三种、听局域网时的 IP 写法）。不是的一律 403、没有正文、不说为什么（运行日志 `export refused`）。别的网站的页面带的是它自己的 Origin；它要带 `Authorization` 头也得先预检，网页软件不答。
+3. 登录令牌照 `/media` 的办法核对：照它连核心握手（和 `/media` 共用那一池连接；从别的机器来的照第三条第 0 款先说 `connection.remote`），问一句 `config.get`，握手被拒（没带、作废了、过期了）401，连不上 502。局域网来的、同机反向代理转进来的凭登录令牌照样能导。
+4. 认了的用网页软件**自己的本机连接**导：照 `miyu web` 那样出示本机令牌连核心（`connect_or_start`，没在跑就拉起来，同 `/ticket`），`session.export {session, format: "bundle", to: {path}}`。路径在系统临时目录下网页软件自己的子目录：`<temp>/miyu-webui-<进程号>/<16 个随机字节的十六进制>.zip`（`std::env::temp_dir()`：Linux 上 `$TMPDIR` 或 `/tmp`，macOS 是本人的 `$TMPDIR`，Windows 是本人的 `%TEMP%`）。数据根里面核心拒 `export_in_data_root`；同名的拒 `export_exists`，所以每次一个新的随机名。子目录起来时建（只建这一层，已经有的不认；Unix 上 `0700`），建不成的 `/export` 一律回 503 `{"reason": "export_unwritable"}`。
+5. 导成了回 `200 {"url": "/export/<票据>", "bytes": <包多大>}`（`no-store`、`nosniff`、`no-referrer`）：票据 32 个随机字节、64 位小写十六进制，不是文件名。没成的回 `{"reason": <原因码>, "error": <核心的原话>}`：核心拒的照它的原因码（`session_not_found` 404、`bad_params` 400，`session_broken`、`export_unwritable` 这些 502），连不上核心、拉不起来 503（原因码是 `miyu-client` 的 `unreachable` 这类）；写了一半的删掉。页面照 `reason` 说人话（`web.md`「会话导出」）。
+6. `GET /export/<票据>`：把文件交给浏览器，一块 512 KiB 地读、读一块写一块；响应头 `Content-Type: application/zip`、`Content-Length`、`Content-Disposition: attachment; filename="<名字>.zip"; filename*=UTF-8''<名字>`（名字照 `name` 只留最后一段、去掉控制字符、最多 120 个字，没写的写 `miyu-<会话编号>`；`filename` 里 ASCII 以外的字和 `"`、`\`、`%` 换成 `_`，`filename*` 照 RFC 5987 写原样）、`Cache-Control: no-store`、`Content-Security-Policy: sandbox; default-src 'none'` 和第一条第 5 款一律带的两个头。票据一取就作废（再取 404），给完删文件（浏览器中途走了、读不下去的也删）：先关文件再删，Windows 上开着的删不掉。不认识的票据 404；方法只认 `GET`，别的 405。不看 Origin：浏览器照 `<a download>` 下载不带它，票据就是凭据（同 `/media`）。
+7. 多久删：没人取的过 10 分钟删（常量 `export::IDLE`，W-1098 定的：页面换到票据马上就取，取不走的多半是浏览器关了；包里有她碰过的文件内容，不在临时目录里久放）；同时等着取的最多 8 份，多了丢最早的那一份、删它的文件。不定时醒：接连接的那一圈睡到最早的那一份到点（同第一条第 3 款的「不定时醒」）。导着、给着的时候不算空闲；等着取的不算忙（空闲到点照样退）。
+8. 起来、退出：起来时先清系统临时目录下上回剩下的 `miyu-webui-*`：只认名字是 `miyu-webui-` 后面全是数字的真目录（不跟链接）；和自己同一个进程号的（上回的进程号重用了）整个删掉再建；别的进程号的可能是另一个数据根上正在跑的网页软件，只删放了 10 分钟以上的文件，删空了连目录删；读不了、删不掉的（别的用户的）跳过。退出时（空闲、信号、`--stop`）整个自己的子目录删掉。
+9. 网页软件进程重启，票据全作废，页面照 404 重新导一次。
+
 ### 发版（W-1095，2026-11-04）
 
 照官方打包模板（`miyu-agent/packages/.github/workflows/pack.yml@main`，同 miyu-render、miyu-embed；core1 11-04 照项目主人 11-03 定的进官方源）：
@@ -162,6 +175,13 @@
 | `WARN` | `media cut short offset=… error=…` | `/media` 给到一半核心那头断了、给得比说的少：连接照 HTTP 的规矩断掉，浏览器知道没收全 |
 | `WARN` | `no random bytes for a ticket` | 票据造不成，回 500 |
 | `WARN` | `page cut short offset=… error=…` | 软件后台页给到一半核心那头断了、给得比说的少：连接照 HTTP 的规矩断掉 |
+| `WARN` | `export refused remote=…` | `/export` 不是页面自己发的（Origin 不对、没有，「怎么走」第七条第 2 款），回 403 |
+| `WARN` | `export failed reason=…` | `/export` 叫核心导没成（核心拒的原因码、连不上核心的 `unreachable` 这类），回 `{reason, error}` |
+| `INFO` | `export ready bytes=…` | 原始包导好了、换了下载票据（不记票据、会话编号、路径） |
+| `INFO` | `export expired` | 导好的没人取，到点删了（第七条第 7 款） |
+| `INFO` | `export leftovers removed removed=…` | 起来时清掉了上回剩下的（第七条第 8 款） |
+| `WARN` | `export dir not made error=…`、`export not removed error=…`、`export dir not removed error=…` | 建不了自己的子目录（`/export` 一律 503）、删不掉一份、退出时删不掉子目录 |
+| `WARN` | `export cut short error=…` | 给到一半读不下去：连接照 HTTP 的规矩断掉，文件照删 |
 
 `/media` 的状态码见 `web-module.md`「出错」网页软件的 HTTP 那张表。
 
@@ -179,6 +199,8 @@
 | `crates/miyu-web/tests/desk.rs` | `/reveal`、`/pick-dir`、`/wallpaper` 不带令牌、核心不认的 401，只认 `GET`；认的令牌开不在的目录回 `{"missing":true}`（测试里不真开文件管理器、选目录框）；`/wallpaper/events` 不要令牌、是 `text/event-stream`、最多同时开 16 条（关一条空出来能再开，第四轮审查 W4-3） |
 | `crates/miyu-web/tests/audit4.rs` | 第四轮审查的两条（2026-11-02）：关了局域网（`web.listen` 换回回环）以后别的设备连着的 `/ws` 5 秒内断开（W4-2）；开着一条不带凭据的 `/wallpaper/events`，空闲到点照样退出（W4-3） |
 | `crates/miyu-web/tests/stop.rs` | `--stop`、`/stop`（W-1091）：叫停的照常收尾（锁放了、地址和钥匙删了、`serve` 正常走）；没在跑的照实说；没带钥匙、钥匙不对、带 Origin、带反向代理的头 403，`GET` 405，都照旧跑着；钥匙对上 204 |
+| `crates/miyu-web/tests/export.rs` | `/export`（核心 SE-1 中（f8f8a9bae），设计 58，W-1098；核心用替身：登录令牌、本机令牌都认，`session.export` 照给的路径写）：没带、作废了的登录令牌 401，编号的写法不对、没写 400，都不叫核心导；别的网站的 Origin、`null`、和 Host 不是逐字一样、`https`、没有 Origin 403 且没有正文，`GET /export`、`PUT /export/…` 405；导成了拿到票据（不是文件名），核心那一问是网页软件出示本机令牌的连接发的、没说 `connection.remote`，`format: "bundle"`，路径是 `<temp>/miyu-webui-<进程号>/` 下的 `.zip`、子目录 `0700`（Unix）；取到的字节一个不差，`application/zip`、`Content-Length`、`Content-Disposition`（ASCII 的和 `filename*`）、`no-store`、`nosniff`、不设 cookie，给完文件删了、再取 404；没写名字的照会话编号叫；核心拒的照原因码和原话回、什么都不留；反向代理转进来的（远程）凭登录令牌照样导，导的那一问照样走本机连接；没人取的到点删、票据作废；空闲退出时自己的子目录删掉；起来时清上回剩下的（别的进程号放久了的删、删空了连目录删，刚放的留着，同进程号的整个删掉重建，名字写法不对的、别的目录不碰） |
+| `crates/miyu-web/src/export/tests.rs` | 子目录名字只认 `miyu-webui-` 加数字；存下来叫什么（最后一段、去控制字符、最多 120 个字、补 `.zip`、空的照编号）；`Content-Disposition` 两种写法；Origin 和 Host 逐字一样 |
 | `crates/miyu-web/tests/ticket.rs` | `/ticket`（W-1089）：本机的页面自己发的（`127.0.0.1`、`localhost`、`[::1]` 三种 Host，带 JSON 正文的也算）拿到票，回应 `no-store`、`nosniff`、`no-referrer`、不设 cookie；伪造的 Host（名字、局域网 IP、端口不对）、Origin 不对、是 `null`、和 Host 不是逐字一样、没有 Origin、没有自定义头、自定义头不是 `1`、表单的三种正文、带反向代理的哪一种头都 403 且没有正文；`GET` 405；核心没在跑、旧核心没有 `login.ticket` 的 503 带 `error` |
 | `crates/miyu-web/src/ticket/tests.rs` | `local` 的每一条：三种本机写法认，缺 Host、Origin、自定义头，Origin 不对、`https://`、`null`、和 Host 写法不同，Host 是名字、局域网 IP、端口不对，表单的正文（带参数、大小写不同）都不认 |
 | `crates/miyu-web/tests/listen.rs` | `GET /listen` 回在听的、Host 照旧核对；`POST` 不带设备令牌、核心不认的 401；核心没在跑的回 `error`、接着听原来的；换地址（同一个端口）、换端口（`run/miyu-webui/address` 跟着换、旧端口不再接、连着的 WebSocket 不断）、配置没变不动、`--port` 起的端口不随配置换；听局域网时空闲到点不退、换回回环照旧退；不用页面请，起来先照核心的配置换、推来改动当场换回 |
@@ -257,3 +279,11 @@
 | 32 | `/ticket` 照 `connect_or_start` 连核心，没在跑就拉起 | 页面要票在开 `/ws` 之前；不拉起的话核心没在跑时每次都退回密码屏，到这一屏就真的是核心起不来，提示照实说 | `connect_running` 不拉起，等 `/ws` 拉起（第一次打开总要输一次密码或刷新） |
 | 33 | 一个页面只问一次 `/ticket`：起来时没凭据、握手时令牌作废了，合起来只问这一次；要不到的（403、503、网络错）出「输入访问密码」，那一行暗字改成照实说「本来不用密码，这次没连上核心，去终端运行 miyu web 看原因」 | 握手被拒、再要、再被拒会来回；本机地址上能到密码屏的多半是核心起不来，原来那句「运行 miyu web 打开不用输入密码」不再是解法 | 每次握手被拒都再要（票作废、核心拒的时候来回转）；不出密码屏只出错误卡（旧核心、核心起不来时设过密码的人也进不去） |
 | 34 | `miyu web` 交给浏览器的不带票，直接交 `<地址>/`、不写跳转页；`--print`、`--format json`、交不给浏览器的照旧带票（项目主人：地址栏、历史里看不到凭据） | 浏览器在本机地址上自己会要票；印出来的可能交给别的程序、别的浏览器配置，带着票照旧能用 | 照旧带票、页面读完用 `replaceState` 抹掉（交出去的那一刻网址已经到了浏览器手里，项目主人要的是一开始就不出现） |
+
+### 施工时定的（W-1098，2026-11-04）
+
+| # | 定了什么 | 为什么 | 别的选法 |
+|---|---|---|---|
+| 35 | 原始包由网页软件导：`POST /export` 照本机令牌叫核心写到系统临时目录下自己的子目录，再一次性交给浏览器（core1 11-04 定的） | 局域网来的连接调 `to.path` 核心回 `local_machine_only`；页面不该挑、也不该知道这台电脑的路径；网页软件和核心在同一台电脑上、读得到本机令牌 | 页面叫核心写进 blob 再走 `/media`（核心没有导到 blob 的写法）；Markdown 那样放进回应（原始包可能很大，核心只给 512 KiB 以内的） |
+| 36 | 放在系统临时目录下 `miyu-webui-<进程号>/`、每次随机名，没人取的 10 分钟删，起来时清上回剩下的 | 数据根里核心不写；同名的不覆盖；包里有她碰过的文件内容，不该久放；进程号分开一台机器上几个数据根各自的网页软件，别的进程号的只删放久了的，不碰正在跑的那一个 | 放在数据根的 `tmp/`（核心拒 `export_in_data_root`）；起来时把别的进程号的整个删掉（另一个数据根上正在跑的网页软件给到一半的被删） |
+| 37 | `/export` 只看 Origin 和 Host 逐字一样加登录令牌，不要 `/ticket` 那个自定义头 | 登录令牌在 `Authorization` 头里，别的网站的页面要带它本来就得先预检；局域网来的也要能导（Origin 是 IP 写法），所以不能照 `/ticket` 只认本机 | 照 `/ticket` 只认本机的三种写法（局域网、手机上导不了） |

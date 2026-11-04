@@ -77,7 +77,7 @@ pub(crate) fn attachment(name: Option<&str>) -> String {
 }
 
 /// RFC 5987 的 `attr-char` 照原样，别的字节写成 `%XX`。
-fn escape(text: &str) -> String {
+pub(crate) fn escape(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
     for byte in text.bytes() {
         if byte.is_ascii_alphanumeric() || b"!#$&+-.^_`|~".contains(&byte) {

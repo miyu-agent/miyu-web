@@ -43,7 +43,7 @@ pub(crate) async fn handle(
     let Some(login) = crate::media::bearer(&request) else {
         return empty(StatusCode::UNAUTHORIZED);
     };
-    if let Err(status) = check(&site, &login).await {
+    if let Err(status) = check(&site, &login, None).await {
         return empty(status);
     }
     let said = |key: &str| query.get(key).map(String::as_str);
@@ -63,8 +63,13 @@ pub(crate) async fn handle(
     }
 }
 
-/// 照设备令牌问核心一句：握手过了的过，不认的 401，连不上的 502。
-async fn check(site: &Site, login: &str) -> Result<(), StatusCode> {
+/// 照设备令牌问核心一句：握手过了的过，不认的 401，连不上的 502。`remote` 是请求从别的机器来的对端地址（这里的几样只给本机，是空的；
+/// `/export` 照它问，W-1098）。
+pub(crate) async fn check(
+    site: &Site,
+    login: &str,
+    remote: Option<std::net::IpAddr>,
+) -> Result<(), StatusCode> {
     let asked = site
         .media
         .cores
@@ -72,7 +77,7 @@ async fn check(site: &Site, login: &str) -> Result<(), StatusCode> {
             &site.root,
             &site.core,
             login,
-            None,
+            remote,
             "config.get",
             json!({"keys": ["web.port"]}),
         )

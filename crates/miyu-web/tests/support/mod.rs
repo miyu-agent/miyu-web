@@ -47,6 +47,8 @@ impl Home {
         root.prepare().expect("建得了骨架");
         let pages = dir.join("pages");
         std::fs::create_dir_all(&pages).expect("建得了");
+        // 导出的原始包放在这里（`/export`，W-1098），不碰系统临时目录：同一个测试程序里几个 `serve` 进程号一样
+        std::fs::create_dir_all(dir.join("tmp")).expect("建得了");
         Home { dir, root, pages }
     }
 
@@ -136,7 +138,6 @@ pub async fn start_configured(
     configured: Option<u16>,
     follow: bool,
 ) -> (Ready, u16, JoinHandle<Result<(), String>>) {
-    let (said, heard) = oneshot::channel();
     let serve = Serve {
         root: home.root.clone(),
         port,
@@ -146,7 +147,15 @@ pub async fn start_configured(
         pages: home.pages.clone(),
         settings,
         core: no_core(),
+        temp: home.dir.join("tmp"),
+        export_idle: miyu_web::export::IDLE,
     };
+    launch(home, serve).await
+}
+
+/// 起照给的 `serve`：交回那一行、端口（起来了的）和跑着的任务。
+pub async fn launch(home: &Home, serve: Serve) -> (Ready, u16, JoinHandle<Result<(), String>>) {
+    let (said, heard) = oneshot::channel();
     let running = tokio::spawn(run(serve, move |ready| {
         if said.send(ready).is_err() {
             // 等的那头已经不在了。

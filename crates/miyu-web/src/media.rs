@@ -3,7 +3,7 @@
 //! 回应关在一个空的来源里（`sandbox`）：有人直接打开这个地址，它碰不到页面。PDF 除外（浏览器的阅读器在沙盒里不肯开），照旧不许取别的。
 
 pub(crate) mod link;
-mod range;
+pub(crate) mod range;
 #[cfg(test)]
 mod tests;
 pub(crate) mod tickets;

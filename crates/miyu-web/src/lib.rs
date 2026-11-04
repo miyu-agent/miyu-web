@@ -11,6 +11,7 @@
 //! - `media`：`/media`，带登录令牌换票据，照票据一块块给 blob、本机文件，能分段（施工 W-10）。
 //! - [`backstage`]：软件后台页，带登录令牌 `POST /page` 换票据，`/p/<票据>/<包>/<路径>` 照 `package.file` 给（施工 F-6 下）。
 //! - `theme`：网页外观，带登录令牌 `POST /theme` 换票据，`/t/<票据>/<包>/<路径>` 照 `package.file` 给外观包网页目录里的文件（核心 TH-1）。
+//! - [`export`]：导出原始包，带登录令牌 `POST /export`，网页软件照本机令牌叫核心写到自己的临时子目录，`/export/<票据>` 交给浏览器一次、给完删（W-1098）。
 //! - [`open`]：`miyu web` 交来的参数：确保 `serve` 在跑，第一次、`--reset` 的照终端的样子出示本机令牌要一次性码，开浏览器
 //!   （连核心、开浏览器的那两样在 `miyu-webserve`）。
 //! - [`help`]：`miyu web` 的参数、帮助页、写错时怎么说（核心 CL-7 起由网页包自己印）。
@@ -20,6 +21,7 @@
 
 pub mod backstage;
 mod desk;
+pub mod export;
 mod follow;
 pub mod help;
 mod listen;

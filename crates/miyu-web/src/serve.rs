@@ -1,6 +1,6 @@
 //! `miyu-web serve`（`web-ui.md`「怎么走」第一条）：单实例、听 `web.listen`（默认 `127.0.0.1`，SU-1 起能听局域网）、写 `run/miyu-webui/address` 和那一行、空闲退出；每个
 //! 请求先核对 Host，`/ws` 交给 `miyu_webserve::ws`，`/ticket` 交给 `ticket`（本机免密，W-1089），`/media` 交给 `media`（施工 W-10），`/page`、`/p/` 交给
-//! `backstage`（软件后台页，施工 F-6 下），`/theme`、`/t/` 交给 `theme`（网页外观，核心 TH-1），别的当页面文件
+//! `backstage`（软件后台页，施工 F-6 下），`/theme`、`/t/` 交给 `theme`（网页外观，核心 TH-1），`/export` 交给 `export`（导出原始包，W-1098），别的当页面文件
 //! （`miyu_webserve::pages`）。核对 Host、给页面、`/ws` 照转、回应的几样在共用的 `miyu-webserve`（施工 O-16，
 //! `webserve.md`「搬家表」）。
 //!
@@ -13,7 +13,6 @@
 //!    别的机器连进来的那个地址的（关了局域网）：连着的 WebSocket 关掉，keep-alive 连接上再来的请求 403（第四轮审查 W4-2）。
 
 use std::convert::Infallible;
-use std::fs::{File, OpenOptions, TryLockError};
 use std::net::{IpAddr, SocketAddr};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU16, AtomicUsize, Ordering};
@@ -32,10 +31,11 @@ use miyu_client::places::DataRoot;
 use miyu_webserve::Site as _;
 
 use crate::backstage::Backstage;
+use crate::export::Exports;
 use crate::listen::{Swap, Swaps};
 use crate::media::Media;
 use crate::settings::Settings;
-use crate::{TARGET, backstage, listen, media, shutdown, theme, ticket};
+use crate::{TARGET, backstage, export, listen, media, shutdown, theme, ticket};
 
 pub use miyu_client::CoreCommand;
 pub(crate) use miyu_webserve::respond::{Body, empty, full, secure};
@@ -71,6 +71,10 @@ pub struct Serve {
     pub settings: Settings,
     /// 核心没在跑时怎么拉起来。
     pub core: CoreCommand,
+    /// 导出的原始包先放在它下面网页软件自己的 `miyu-webui-<pid>/` 里（`/export`，W-1098）：正式跑的是系统临时目录。
+    pub temp: PathBuf,
+    /// 导出的原始包没人取的过多久删（正式跑的是 [`export::IDLE`]）。
+    pub export_idle: Duration,
 }
 
 /// 跑着的这一个：各个连接共用。
@@ -90,6 +94,8 @@ pub(crate) struct Site {
     pub(crate) media: Media,
     /// 软件后台页的票据（连着的核心用 `media` 那一份）。
     pub(crate) backstage: Backstage,
+    /// 导出的原始包（`/export`，W-1098）。
+    pub(crate) exports: Exports,
     /// 盯着桌面壁纸（`/wallpaper/events`）。
     pub(crate) wallpaper: crate::desk::wallpaper::Follow,
     /// 同时连着的 WebSocket（[`MOST_WEBSOCKETS`]、[`MOST_REMOTE_WEBSOCKETS`]）。
@@ -216,6 +222,9 @@ const ACCEPT_PAUSE: Duration = Duration::from_secs(1);
 pub(crate) use crate::port::bind;
 mod stop;
 pub use crate::port::{FALLBACK_PORTS, candidates};
+mod files;
+pub use files::{address, running};
+use files::{lock, remove_address, write_address};
 use stop::stopped;
 
 /// 跑起来，直到空闲到点、收到停的信号。`said` 交那一行：起来了、已经有一个在跑、起不来。
@@ -273,6 +282,7 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
         core: serve.core,
         media,
         backstage,
+        exports: Exports::new(&serve.temp, serve.export_idle),
         wallpaper: crate::desk::wallpaper::Follow::default(),
         slots: miyu_webserve::ws::Slots::new(MOST_WEBSOCKETS, MOST_REMOTE_WEBSOCKETS),
         active: AtomicUsize::new(0),
@@ -290,6 +300,7 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
     }
     remove_address(&run);
     shutdown::remove_key(&run);
+    site.exports.remove_all();
     tracing::info!(target: TARGET, reason, "stopped");
     Ok(())
 }
@@ -308,11 +319,12 @@ async fn accept(
     loop {
         let links = site.media.sweep();
         site.backstage.sweep();
+        let exports = site.exports.sweep();
         let quiet = site.quiet_until(idle);
         if quiet.is_some_and(|at| at <= Instant::now()) {
             return "idle";
         }
-        let next = quiet.into_iter().chain(links).min();
+        let next = quiet.into_iter().chain(links).chain(exports).min();
         let swap = tokio::select! {
             accepted = listener.accept() => {
                 match accepted {
@@ -385,7 +397,7 @@ async fn until(at: Option<Instant>) {
     }
 }
 
-/// 一个请求：先核对 Host；`/ws` 交给 WebSocket；`/ticket` 本机的页面要交接票；`/stop` 叫停（W-1091）；`/listen` 在听的、换监听；这台电脑上的几样交给 `desk`；`/media` 换票据、照票据给；`GET`、`HEAD` 当页面文件；别的方法 405。
+/// 一个请求：先核对 Host；`/ws` 交给 WebSocket；`/ticket` 本机的页面要交接票；`/stop` 叫停（W-1091）；`/listen` 在听的、换监听；这台电脑上的几样交给 `desk`；`/media` 换票据、照票据给；`/export` 导出原始包（W-1098）；`GET`、`HEAD` 当页面文件；别的方法 405。
 async fn handle(
     request: Request<Incoming>,
     site: Arc<Site>,
@@ -446,51 +458,9 @@ async fn handle(
     if path.starts_with("/t/") {
         return Ok(theme::get(request, site, remote).await);
     }
+    if path == "/export" || path.starts_with("/export/") {
+        return Ok(export::handle(request, site, remote).await);
+    }
     let settings = &site.settings;
     Ok(miyu_webserve::pages::serve(&request, &site.pages, &settings.csp, &settings.types).await)
-}
-
-/// 拿单实例的锁：拿不到（有一个在跑）是空的。
-fn lock(path: &std::path::Path) -> Result<Option<File>, String> {
-    let file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .truncate(false)
-        .open(path)
-        .map_err(|error| format!("{} not opened: {error}", path.display()))?;
-    match file.try_lock() {
-        Ok(()) => Ok(Some(file)),
-        Err(TryLockError::WouldBlock) => Ok(None),
-        Err(TryLockError::Error(error)) => Err(format!("{} not locked: {error}", path.display())),
-    }
-}
-
-/// 有没有一个网页软件在跑：锁有人拿着。
-pub fn running(root: &DataRoot) -> bool {
-    matches!(lock(&runtime(root).join(LOCK)), Ok(None))
-}
-
-/// 地址写进运行时目录的 `address`：先写临时文件再改名。
-fn write_address(run: &std::path::Path, url: &str) -> Result<(), String> {
-    let temp = run.join(format!("{ADDRESS}.{}.tmp", std::process::id()));
-    std::fs::write(&temp, format!("{url}\n"))
-        .and_then(|()| std::fs::rename(&temp, run.join(ADDRESS)))
-        .map_err(|error| format!("run/miyu-webui/{ADDRESS} not written: {error}"))
-}
-
-/// 删地址：没有的不要紧。
-fn remove_address(run: &std::path::Path) {
-    if let Err(error) = std::fs::remove_file(run.join(ADDRESS))
-        && error.kind() != std::io::ErrorKind::NotFound
-    {
-        tracing::warn!(target: TARGET, error = %error, "address not removed");
-    }
-}
-
-/// 读运行时目录里的地址：没有的、读不了的是空的。
-pub fn address(root: &DataRoot) -> Option<String> {
-    let text = std::fs::read_to_string(runtime(root).join(ADDRESS)).ok()?;
-    let url = text.trim();
-    (!url.is_empty()).then(|| url.to_string())
 }
