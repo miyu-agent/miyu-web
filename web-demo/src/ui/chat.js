@@ -43,6 +43,8 @@ export class Chat {
     this.look = /** @type {Look|null} */ (res.persona);
     /** 一个人格画成什么样（`setLookFor`，软件包 `setup` 交来）：她那一块带了 `persona` 的照它画；没交的照会话现在的 @type {((id: string) => Look|null|undefined)|null} */
     this.lookFor = null;
+    /** 只读存档（核心 SE-1 下，W-1094）：最新那一轮也不出编辑、重做（`setReadonly`，下一次画照它） */
+    this.readonly = false;
     /** 正文末尾、最后一轮下面（挂载位 `chat.tail`：确认和提问了结以后留的）：一直是正文那一列的最后一个，画的时候不动它 */
     this.tail = h('div.chat-tail');
     /** 压缩的进度那一行（`compacting.js`）：正文末尾、`chat.tail` 前面，一直是同一个节点 */
@@ -264,6 +266,11 @@ export class Chat {
     if (was && !yes) this.scroll.release();
   }
 
+  /** 正在看的会话是不是只读存档：是的不标 `is-latest`，编辑、重做的按钮不出，`/edit` 也找不到能编辑的那一句。 @param {boolean} yes */
+  setReadonly(yes) {
+    this.readonly = yes;
+  }
+
   /** @param {any[]} items 正文的条目（`model/transcript.js`） */
   render(items) {
     this.last = items;
@@ -271,9 +278,9 @@ export class Chat {
     // 还没有块时钉的（`anchor` 的 `''`）排在最前面
     let prev = this.placeAnchored('', null);
     const last = items.at(-1);
-    // 最新的一轮：编辑、重做只有它有；不是你开的（子代理的会话里派它的会话发来的、别人说的）没有（核心只重做人开的那一轮）
+    // 最新的一轮：编辑、重做只有它有；不是你开的（子代理的会话里派它的会话发来的、别人说的）没有（核心只重做人开的那一轮）；存档里都没有（核心回 `archived`）
     const opener = items.findLast((it) => it.type === 'user');
-    const latest = opener && this.mine(opener) ? opener.turn ?? null : null;
+    const latest = !this.readonly && opener && this.mine(opener) ? opener.turn ?? null : null;
     /** @type {Array<{key: string, seq: number, text: string, node: HTMLElement, mine: boolean}>} 你说的话，照先后：交给看着它的（跳转条；`mine` 是你本人说的） */
     const prompts = [];
     /** @type {HTMLElement[]} 你新说的：画进页面以后再照它放视口 */

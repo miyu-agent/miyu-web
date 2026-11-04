@@ -50,14 +50,36 @@ export function timeGroup(at, now) {
 }
 
 /**
+ * 导进来的只读存档那一段（核心 SE-1 下，设计 58 第三节第 4 条，W-1094）：左栏、全部会话都排在按时间的几组后面，段里照进来的先后，
+ * 不再按最近、近 7 天细分。
+ */
+export const ARCHIVE_GROUP = /** @type {const} */ ('archived');
+
+/**
  * 照时间分组（顺序照原来的，排好的进来、排好的出去；没有会话的组不出来）。时刻照最近活动，不知道的照开的时刻（同 `rank`）。
- * @template {{session: string, active?: number|null}} T
+ * 存档（会话表那一项带 `archived: true`）不进时间的几组，单成最后一段 `archived`，有存档才出来。
+ * @template {{session: string, active?: number|null, archived?: boolean}} T
  * @param {T[]} rows @param {number} now
- * @returns {{group: typeof TIME_GROUPS[number], rows: T[]}[]}
+ * @returns {{group: typeof TIME_GROUPS[number] | typeof ARCHIVE_GROUP, rows: T[]}[]}
  */
 export function byTime(rows, now) {
   /** @type {Map<string, T[]>} */
   const out = new Map(TIME_GROUPS.map((g) => [g, []]));
-  for (const r of rows) out.get(timeGroup(r.active ?? uuidTime(r.session) ?? 0, now))?.push(r);
-  return TIME_GROUPS.map((group) => ({ group, rows: out.get(group) ?? [] })).filter((g) => g.rows.length);
+  /** @type {T[]} */
+  const archived = [];
+  for (const r of rows) {
+    if (r.archived) archived.push(r);
+    else out.get(timeGroup(r.active ?? uuidTime(r.session) ?? 0, now))?.push(r);
+  }
+  /** @type {{group: typeof TIME_GROUPS[number] | typeof ARCHIVE_GROUP, rows: T[]}[]} */
+  const groups = TIME_GROUPS.map((group) => ({ group, rows: out.get(group) ?? [] })).filter((g) => g.rows.length);
+  return archived.length ? [...groups, { group: ARCHIVE_GROUP, rows: archived }] : groups;
+}
+
+/**
+ * 存档挪到最后（别的先后不动）：左栏「会话」那一栏只露前几个，存档不占在聊的会话的位置（W-1094）。
+ * @template {{archived?: boolean}} T @param {T[]} rows @returns {T[]}
+ */
+export function archiveLast(rows) {
+  return [...rows.filter((r) => !r.archived), ...rows.filter((r) => r.archived)];
 }

@@ -55,12 +55,17 @@ async function walk(entries) {
   return out;
 }
 
-/** 选文件：系统的选文件窗口，能多选；取消的交回空的。 */
-export function pick() {
+/**
+ * 选文件：系统的选文件窗口，默认能多选；取消的交回空的。`accept` 只列哪几种（导入会话只收 `.zip`，W-1094），`multiple: false` 只选一个。
+ * @param {{accept?: string, multiple?: boolean}} [opts]
+ * @returns {Promise<FileRef[]>}
+ */
+export function pick({ accept = '', multiple = true } = {}) {
   return new Promise((resolve) => {
     const input = /** @type {HTMLInputElement} */ (document.createElement('input'));
     input.type = 'file';
-    input.multiple = true;
+    input.multiple = multiple;
+    if (accept) input.accept = accept;
     input.addEventListener('change', () => resolve(refs(input.files ?? [])), { once: true });
     input.addEventListener('cancel', () => resolve([]), { once: true });
     input.click();

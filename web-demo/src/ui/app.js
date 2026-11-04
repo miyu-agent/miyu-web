@@ -36,6 +36,8 @@ import { Crumbs, BackButton } from './crumbs.js';
 import { pathOf } from '../model/tree.js';
 import { draftOf, colorOf } from '../model/project.js';
 import { emptySession } from '../core/store.js';
+import { upload } from '../lib/upload.js';
+import { importDone, importRefusal } from '../model/session-import.js';
 
 /** 皮肤样张的会话编号：只在这一页（核心那边没有这个会话） */
 const GALLERY = 'gallery:skin';
@@ -68,6 +70,8 @@ export class App {
     /** 家目录（`@` 选文件写路径照它写成 `~/…`） */
     this.home = info.home ?? null;
     this.home = info.home;
+    /** 宿主的选文件、读字节（服务 `host` 的 `files`）：导入会话（W-1094）照它选包、分块传；没有的宿主不出「导入会话…」 */
+    this.files = /** @type {any} */ (info).files ?? null;
     this.current = /** @type {string|null} */ (null);
     /** 还没开的新会话上点过的权限级别；`null` 是没点过（核心开出来是什么就是什么）。 */
     this.pendingLevel = /** @type {string|null} */ (null);
@@ -360,6 +364,12 @@ export class App {
       page: (view) => this.sidebar.setPage(view),
       removeMany: (ids) => this.sidebar.on.removeMany(ids),
       dropped: (id) => this.sidebar.on.dropped(id),
+      // 导入会话（W-1094）：系统的选文件框只列 `.zip`、只选一个
+      ...(this.files?.pick && this.files?.read ? {
+        pickBundle: async () => (await this.files.pick({ accept: '.zip,application/zip', multiple: false }))?.[0] ?? null,
+        importBundle: (ref) => this.importSession(ref),
+      } : {}),
+      notice: (text) => this.composer.say(text),
     });
     this.root.querySelector('.stage')?.append(this.sessionsPage.el);
     // 别处（终端、别的页面）删掉了读进来的会话：和这里删的一样收掉，正在看的换到下一个
@@ -560,6 +570,44 @@ export class App {
     const top = path[0]?.session ?? null;
     const id = top ? this.store.index.get(top)?.project ?? null : this.draft.project;
     return this.store.projects.get(id);
+  }
+
+  /** 这个会话是不是导进来的只读存档（会话表那一项的 `archived: true`，核心 SE-1 下，W-1094）。 @param {string|null} id */
+  archivedOf(id) {
+    return !!id && this.store.index.get(id)?.archived === true;
+  }
+
+  /**
+   * 导入会话（蓝图 `web.md`「全部会话」的「导入会话…」，核心 SE-1 下 `session.import`，设计 58 第二节，W-1094）：有本机路径的（桌面端）
+   * 核心照路径存（`blob.put {path}`），浏览器给的只有内容，分块传（同附件，`lib/upload.js`），再交 blob 的哈希导进来。不带 `archive`：
+   * 新版导出的包默认导成能接着聊的（包里写了存档的核心照样导成存档）。成了打开包的主会话（`present` 里有它的是早就在的，多说一句）；
+   * `session_exists` 的打开撞的那一个、说一句。这两种交回 `null`；别的没成的交回要说的那一句（全部会话那一页写在大标题下面）。
+   * @param {any} ref 宿主选文件交来的（`FileRef`）
+   * @returns {Promise<string|null>}
+   */
+  async importSession(ref) {
+    const request = (/** @type {string} */ method, /** @type {any} */ params) => this.store.conn.request(method, params);
+    try {
+      // 媒体类型不写：浏览器给的 zip 有好几种写法（Windows 上是 `application/x-zip-compressed`），核心照内容认
+      const put = ref.path
+        ? await request('blob.put', { path: ref.path })
+        : await upload(request, { name: ref.name, size: ref.size }, null, (offset, length) => this.files.read(ref, offset, length),
+          { chunk: res.layout.import_chunk_bytes, tries: res.layout.import_resume_tries });
+      const done = importDone(await request('session.import', { blob: put.blob }));
+      if (!done.open) return t('sessions_page.import_failed.other', { reason: 'session.import' });
+      this.open(done.open, true);
+      if (done.present) this.composer.say(t('sessions_page.import_present'));
+      return null;
+    } catch (err) {
+      const why = importRefusal(err);
+      // 已有同编号、内容不一样的会话：没导进来，打开原来那一个（会话表里有的才开得了）
+      if (why.key === 'session_exists' && why.session && this.store.index.get(why.session)) {
+        this.open(why.session, true);
+        this.composer.say(t('sessions_page.import_failed.session_exists_opened'));
+        return null;
+      }
+      return why.key === 'other' ? t('sessions_page.import_failed.other', { reason: why.reason ?? '' }) : t(`sessions_page.import_failed.${why.key}`);
+    }
   }
 
   /** 左栏的先后（`model/session.js` 的 `rank`）：置顶的在最前，别的照最近活动。 */
@@ -1172,6 +1220,11 @@ export class App {
     const again = this.recapsAgain.get(this.current ?? '') ?? [];
     // 条目、会话状态换成正文（核心 9-8，蓝图「照条目画」）
     const view = withLocalRecaps(itemsOf(s?.view.list ?? [], s?.view.status ?? null, { parent, dream: !!this.dreamOf(this.current) }), again);
+    // 导进来的只读存档（核心 SE-1 下，设计 58 第三节第 3 条，W-1094）：输入框换成一行「这是存档」，编辑、重做不出；换到别的会话就解开。
+    // 照会话表每画一次交一次：刚导进来、会话表那一项后到的，到了就锁上
+    const archived = this.archivedOf(this.current);
+    this.composer.seal(archived ? t('archived_readonly') : null);
+    this.chat.setReadonly(archived);
     this.chat.setCompacting(s ? compactingOf(s.view.list, s.view.status) : null, this.current);
     // 先照空不空摆好输入框（居中时对话区没有高度），再画对话：不然第一句话照 0 高算停在哪，被顶到视口上面
     this.centerIfEmpty(!this.current);

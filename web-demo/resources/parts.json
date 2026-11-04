@@ -4144,6 +4144,12 @@
       ".sessions-empty"
     ]
   },
+  "sessions.note": {
+    "zh": "全部会话页：大标题下面那一句（导入会话没成的原因，W-1094）",
+    "select": [
+      ".sessions-note"
+    ]
+  },
   "sessions.tab": {
     "zh": "全部会话页：标签页",
     "select": [

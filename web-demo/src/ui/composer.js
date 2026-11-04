@@ -80,7 +80,13 @@ export class Composer {
     this.noticeTimer = 0;
     /** 空着时写的那条小提示（`tips.<名字>`；`null` 是还没挑） @type {string|null} */
     this.tip = null;
-    this.input = /** @type {HTMLTextAreaElement} */ (h('textarea.composer-input', {
+    /** 锁着写的那一句（`syncLock` 照下面两样定）；软件包锁的（`lock`）；只读存档锁的（`seal`，W-1094）。`null` 是没锁 @type {string|null} */
+    this.locked = null;
+    /** @type {string|null} */
+    this.held = null;
+    /** @type {string|null} */
+    this.sealed = null;
+    this.input =/** @type {HTMLTextAreaElement} */ (h('textarea.composer-input', {
       rows: 1,
       spellcheck: 'false',
       onkeydown: (ev) => this.key(ev),
@@ -313,8 +319,29 @@ export class Composer {
    * 回车、点发送：斜杠命令执行它；像命令、没有这个命令的提示「命令不存在」，字留着；别的照普通的话发（蓝图「命令列表」第 4、5 条）。
    * 跟着发的（附件）交出来合进参数；还在准备的不发；核心拒了的放回去（蓝图「附件」第 4 条）。
    */
-  /** 锁住（占位字换成 `text`，打不了字、发不了话），`null` 解锁照原来的占位字。 @param {string|null} text */
+  /**
+   * 锁住（占位字换成 `text`，打不了字、发不了话），`null` 解锁照原来的占位字。软件包（setup：没选人格、预设，整理会话）锁的走这里。
+   * @param {string|null} text
+   */
   lock(text) {
+    this.held = text;
+    this.syncLock();
+  }
+
+  /**
+   * 正在看的会话是只读存档（核心 SE-1 下，W-1094）：同 `lock`，框换成一行字。照会话走、由 `App` 每画一次交一次；和软件包锁的分开记，
+   * 软件包换会话时 `lock(null)` 解不掉它，它解开也不把软件包锁的解掉。两样都有的写存档这一句。
+   * @param {string|null} text
+   */
+  seal(text) {
+    this.sealed = text;
+    this.syncLock();
+  }
+
+  /** 照 `seal`、`lock` 定锁没锁、写哪一句；没变的不动（`seal` 每画一次都来）。 */
+  syncLock() {
+    const text = this.sealed || this.held || null;
+    if (text === this.locked) return;
     this.locked = text;
     this.input.disabled = !!text;
     this.input.placeholder = text ?? this.placeholder();

@@ -42,7 +42,8 @@
       "recent": "Recent",
       "week": "Past 7 days",
       "month": "Past 30 days",
-      "older": "Older"
+      "older": "Older",
+      "archived": "Archived"
     },
     "projects": "Projects",
     "more": "More",
@@ -359,6 +360,7 @@
     "from_session": "Message from session {id} “{title}”"
   },
   "esc_interrupt_hint": "Press Esc again to interrupt",
+  "archived_readonly": "This is an archive. You can read it but not continue it",
   "interrupt": "Interrupt",
   "slot_failed": "This block failed ({owner}: {reason})",
   "retry_after": {
@@ -476,7 +478,19 @@
     "context": "Context {used}/{window}",
     "context_bare": "Context {used}",
     "total": "Total {tokens}",
-    "total_short": "total {tokens}"
+    "total_short": "total {tokens}",
+    "import": "Import session…",
+    "importing": "Importing…",
+    "import_present": "This session is already here",
+    "import_failed": {
+      "bad_bundle": "Not a Miyu session bundle",
+      "bundle_mismatch": "The session bundle is damaged",
+      "bundle_too_new": "This bundle is from a newer Miyu. Please update first",
+      "unknown_attachment": "The bundle didn't finish uploading. Please import it again",
+      "session_exists": "The same session already exists with different content; not imported",
+      "session_exists_opened": "The same session already exists with different content; not imported. Opened the existing one",
+      "other": "Import failed: {reason}"
+    }
   },
   "turn_end": {
     "restarted": "Restarted",

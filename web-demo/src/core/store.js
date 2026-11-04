@@ -247,7 +247,9 @@ export class Store {
       // 哪儿开的（核心 8-33 四补：终端集成开的是 `terminal`，左栏单开一栏）
       origin: e?.origin ?? null,
       // 分叉出来的子代理（核心照 A-F 给会话表那一行加 `forked: true`；没有这一格的照普通子代理）
-      forked: e?.forked === true };
+      forked: e?.forked === true,
+      // 导进来的只读存档（核心 SE-1 下的 `archived: true`，W-1094）：「会话」那一栏排在最后一段「存档」
+      archived: e?.archived === true };
   }
 
   /**

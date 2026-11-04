@@ -6,7 +6,8 @@
 /**
  * 表里的一项，和 `session.list` 的一样：有的才写。
  * @typedef {{session: string, busy?: boolean, cwd?: string, last_active?: string, oneshot?: boolean, parent?: string|null,
- *   pinned?: boolean, project?: string, title?: string, preview?: string, tokens?: number, context?: {used: number, window?: number}}} Entry
+ *   pinned?: boolean, project?: string, title?: string, preview?: string, tokens?: number, context?: {used: number, window?: number}, archived?: boolean}} Entry
+ *   `archived`：导进来的只读存档才有，是 `true`（核心 SE-1 下，W-1094）：左栏、全部会话排在最后一段，输入框锁住
  */
 
 /** 一项变了：之前的、之后的（删掉的是 `null`，新来的之前是 `null`）。 @typedef {(id: string, before: Entry|null, after: Entry|null) => void} Change */

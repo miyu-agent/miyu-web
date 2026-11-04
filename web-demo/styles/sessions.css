@@ -29,6 +29,11 @@
 .sessions-icon.is-danger { color: var(--danger); }
 .sessions-icon.is-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 15%, transparent); }
 .sessions-icon:disabled { opacity: 0.35; cursor: default; }
+/* 导入会话（W-1094）：传、导的时候图标转圈、点不了；没成的那一句在大标题下面，红字 */
+.sessions-button:disabled { cursor: default; }
+.sessions-button.is-busy .icon { animation: tl-spin calc(900ms * var(--motion-scale)) linear infinite; }
+@media (prefers-reduced-motion: reduce) { .sessions-button.is-busy .icon { animation-duration: calc(2.4s * var(--motion-scale)); } }
+.sessions-note { margin: calc(-16px * var(--space)) 0 calc(20px * var(--space)); color: var(--danger); font-size: calc(13px * var(--text-scale)); line-height: 1.5; overflow-wrap: anywhere; }
 /* 一行：标题、什么时候开的，行与行之间一根细线；悬停铺一层淡底 */
 .sessions-list { display: grid; grid-template-columns: minmax(0, 1fr); }
 .sessions-row {

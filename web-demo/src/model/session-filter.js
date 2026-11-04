@@ -7,7 +7,8 @@ import { byTime } from './session.js';
 
 /**
  * 一行要的：会话表的一项加上读进来的状态。
- * @typedef {{session: string, title: string|null, project: string|null, active: number|null, running: boolean, unread: boolean, tokens?: number}} Row
+ * @typedef {{session: string, title: string|null, project: string|null, active: number|null, running: boolean, unread: boolean, tokens?: number, archived?: boolean}} Row
+ *   `archived`：导进来的只读存档（核心 SE-1 下），分组时单成最后一段
  * @typedef {'all'|'loose'|'running'|'unread'|`project:${string}`} Filter
  * @typedef {'active'|'created'} Sort
  */
@@ -33,7 +34,7 @@ export function filterRows(rows, filter, query, projects) {
 }
 
 /**
- * 排好、照时间分组（最近、近 7 天、近 30 天、30 天前；没有会话的组不出来）：新的在前。
+ * 排好、照时间分组（最近、近 7 天、近 30 天、30 天前；没有会话的组不出来）：新的在前。存档照同样的先后单成最后一段（`byTime`，W-1094）。
  * @param {Row[]} rows @param {Sort} sort @param {number} now
  */
 export function groupRows(rows, sort, now) {

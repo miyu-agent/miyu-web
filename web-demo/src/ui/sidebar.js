@@ -23,13 +23,13 @@ import { leave } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { toggle, range } from '../model/select.js';
 import { treeRows, capTops, pathOf } from '../model/tree.js';
-import { TIME_GROUPS, byTime } from '../model/session.js';
+import { TIME_GROUPS, ARCHIVE_GROUP, byTime, archiveLast } from '../model/session.js';
 import { SessionDrag } from './sidebar-drag.js';
 import { projectBlock } from './sidebar-projects.js';
 import { projectRows, colorOf } from '../model/project.js';
 
 /**
- * @typedef {{session: string, title: string|null, running: boolean, unread: boolean, waiting?: boolean}} Item
+ * @typedef {{session: string, title: string|null, running: boolean, unread: boolean, waiting?: boolean, archived?: boolean}} Item
  * @typedef {{newSession: () => void, open: (id: string) => void, close: () => void,
  *   rename: (id: string, title: string) => Promise<void>, pin: (id: string, on: boolean) => Promise<void>, removeMany: (ids: string[]) => Promise<string[]>, dropped: (id: string) => void,
  *   kids: (id: string) => {session: string, title: string|null, running: boolean, paused?: boolean, waiting?: boolean}[], viewAll: () => void,
@@ -99,8 +99,9 @@ export class Sidebar {
     this.terminalHeader = sectionHead(this, 'terminal', h('span', t('sidebar.terminal')), null);
     this.projectsHeader = sectionHead(this, 'projects', h('span', t('sidebar.projects')), h('span.session-group-tools',
       h('button.icon-button.session-group-button.is-select', { type: 'button', title: t('sidebar.new_project'), 'aria-label': t('sidebar.new_project'), onclick: () => on.editProject(null) }, icon('plus'))));
-    /** 「会话」那一栏里按时间分的几组的头（蓝图「会话整理和项目」第 2 条）：近 7 天、近 30 天、30 天前；「最近」那一组不另画头，就是「会话」那一栏的头 */
-    this.timeHeaders = new Map(TIME_GROUPS.map((g) => [g, h('div.session-group-header.is-time', { dataset: { key: `group:${g}` } }, h('span', t(`sidebar.groups.${g}`)))]));
+    /** 「会话」那一栏里按时间分的几组的头（蓝图「会话整理和项目」第 2 条）：近 7 天、近 30 天、30 天前；「最近」那一组不另画头，就是「会话」那一栏的头。
+     * 最后一段「存档」（导进来的只读存档，核心 SE-1 下，W-1094）的头同这几个 */
+    this.timeHeaders = new Map([...TIME_GROUPS, ARCHIVE_GROUP].map((g) => [g, h('div.session-group-header.is-time', { dataset: { key: `group:${g}` } }, h('span', t(`sidebar.groups.${g}`)))]));
     /** 头上的交互区（2026-10-19 项目主人照 Claude 的左栏）：新建会话、全部会话、项目（核心有项目才有）；全部会话那一页开着时那一行亮着 */
     const navRow = (/** @type {string} */ name, /** @type {string} */ label, /** @type {() => void} */ run, /** @type {string} */ key) =>
       h('button.sidebar-nav-row', { type: 'button', dataset: { nav: key }, onclick: run }, icon(name), h('span', label));
@@ -288,9 +289,10 @@ export class Sidebar {
     // 多选在原地（2026-10-19 项目主人）：「置顶」「项目」两栏照旧，只有「会话」那一栏的行换成勾选框（项目里的、置顶的不勾）
     const pinned = kept.filter((it) => it.pinned);
     const loose = kept.filter((it) => !it.pinned && !inProject(it));
-    // 终端开的（置顶了的、移进项目的照人挪的）：下面「终端」那一栏，照最近活动、不分时间组，同样最多露几个
-    const fromTerminal = (/** @type {any} */ it) => it.origin === 'terminal';
-    const rest = loose.filter((it) => !fromTerminal(it));
+    // 终端开的（置顶了的、移进项目的照人挪的）：下面「终端」那一栏，照最近活动、不分时间组，同样最多露几个。
+    // 存档（W-1094）不管哪儿开的都进「存档」那一段：挪到最后，不占在聊的会话露出来的那几个位置
+    const fromTerminal = (/** @type {any} */ it) => it.origin === 'terminal' && !it.archived;
+    const rest = archiveLast(loose.filter((it) => !fromTerminal(it)));
     const terminal = loose.filter(fromTerminal);
     const cap = this.selecting ? { shown: rest, more: false } : capTops(rest, pinned.some((it) => it.session === current) ? null : current, res.layout.sidebar_rows);
     const termCap = capTops(terminal, current, res.layout.sidebar_rows);
@@ -317,14 +319,17 @@ export class Sidebar {
     }) : [];
     // 「会话」那一栏照时间分组：「最近」那一组没有自己的头（就是这一栏的头），别的一组一个头，组里照树排；多选时只列顶层的、能勾
     const flat = (/** @type {any[]} */ list) => list.map((it) => ({ kind: /** @type {const} */ ('session'), session: it.session, depth: 0, item: it, hasKids: false, open: false, pick: true }));
-    const groups = byTime(cap.shown, Date.now()).map((g) => ({ group: g.group, rows: this.selecting ? flat(g.rows) : tree(g.rows) }));
+    const grouped = byTime(cap.shown, Date.now()).map((g) => ({ group: g.group, rows: this.selecting ? flat(g.rows) : tree(g.rows) }));
+    // 存档那一段画在「终端集成」下面、「查看全部」上面：排在别的会话后面（设计 58 第三节第 4 条）
+    const groups = grouped.filter((g) => g.group !== ARCHIVE_GROUP);
+    const archiveRows = grouped.find((g) => g.group === ARCHIVE_GROUP)?.rows ?? [];
     const termRows = termCap.shown.length ? tree(termCap.shown) : [];
-    const rows = [...pinnedRows, ...blocks.flatMap((b) => b.rows), ...groups.flatMap((g) => g.rows), ...termRows];
-    const sig = JSON.stringify([rows, groups.map((g) => [g.group, g.rows.length]), blocks.map((b) => [b.project, b.count, b.rows.length]), showProjects,
+    const rows = [...pinnedRows, ...blocks.flatMap((b) => b.rows), ...groups.flatMap((g) => g.rows), ...termRows, ...archiveRows];
+    const sig = JSON.stringify([rows, grouped.map((g) => [g.group, g.rows.length]), blocks.map((b) => [b.project, b.count, b.rows.length]), showProjects,
       current, this.menuFor, this.moving, this.renaming, this.selecting, [...this.selected], cap.more, termCap.more, this.on.dark()]);
     if (sig !== this.drawn) {
       this.drawn = sig;
-      const all = cap.more || termCap.more ? h('button.session-all', { type: 'button', onclick: () => this.on.viewAll() }, t('sidebar.view_all')) : null;
+      const viewAll = cap.more || termCap.more ? h('button.session-all', { type: 'button', onclick: () => this.on.viewAll() }, t('sidebar.view_all')) : null;
       const draw = (row) => (row.kind === 'session' ? this.item(row, row.session === current) : this.doneRow(row));
       const was = this.positions();
       const bar = {
@@ -345,11 +350,12 @@ export class Sidebar {
           head, h('div.sb-section-body', h('div.sb-section-inner', body)));
       const sessionsBody = groups.length
         ? groups.flatMap((g) => [g.group === 'recent' ? null : this.timeHeaders.get(g.group) ?? null, ...g.rows.map(draw)])
-        : rows.slice(pinnedRows.length + blocks.reduce((n, b) => n + b.rows.length, 0), rows.length - termRows.length).map(draw);
+        : rows.slice(pinnedRows.length + blocks.reduce((n, b) => n + b.rows.length, 0), rows.length - termRows.length - archiveRows.length).map(draw);
+      const archiveBody = archiveRows.length ? [this.timeHeaders.get(ARCHIVE_GROUP) ?? null, ...archiveRows.map(draw)] : [];
       replace(this.items, [
         pinned.length ? section('pin', this.pinnedHeader, pinnedRows.map(draw), 'pin') : null,
         showProjects ? section('projects', this.projectsHeader, blocks.map((b) => projectBlock(bar, b)), null) : null,
-        section('sessions', this.groupHeader, [...sessionsBody, termRows.length ? section('terminal', this.terminalHeader, termRows.map(draw), null) : null, all], 'loose'),
+        section('sessions', this.groupHeader, [...sessionsBody, termRows.length ? section('terminal', this.terminalHeader, termRows.map(draw), null) : null, ...archiveBody, viewAll], 'loose'),
       ]);
       this.slide(was);
       this.placeMenu();

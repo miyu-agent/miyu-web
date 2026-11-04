@@ -42,7 +42,8 @@
       "recent": "最近",
       "week": "過去 7 日",
       "month": "過去 30 日",
-      "older": "それ以前"
+      "older": "それ以前",
+      "archived": "アーカイブ"
     },
     "projects": "プロジェクト",
     "more": "その他",
@@ -359,6 +360,7 @@
     "from_session": "セッション {id}「{title}」からのメッセージ"
   },
   "esc_interrupt_hint": "もう一度 Esc で中断",
+  "archived_readonly": "アーカイブです。読むだけで、続きは話せません",
   "interrupt": "中断",
   "slot_failed": "この部分でエラーが発生しました（{owner}：{reason}）",
   "retry_after": {
@@ -476,7 +478,19 @@
     "context": "コンテキスト {used}/{window}",
     "context_bare": "コンテキスト {used}",
     "total": "合計 {tokens}",
-    "total_short": "累計 {tokens}"
+    "total_short": "累計 {tokens}",
+    "import": "セッションをインポート…",
+    "importing": "インポート中…",
+    "import_present": "このセッションはすでにあります",
+    "import_failed": {
+      "bad_bundle": "Miyu のセッションパッケージではありません",
+      "bundle_mismatch": "セッションパッケージが壊れています",
+      "bundle_too_new": "新しいバージョンの Miyu で作られたパッケージです。先にアップデートしてください",
+      "unknown_attachment": "パッケージのアップロードが終わっていません。もう一度インポートしてください",
+      "session_exists": "同じセッションがすでにあり、内容が違うためインポートしませんでした",
+      "session_exists_opened": "同じセッションがすでにあり、内容が違うためインポートしませんでした。既存のものを開きました",
+      "other": "インポートに失敗しました：{reason}"
+    }
   },
   "turn_end": {
     "restarted": "再起動しました",

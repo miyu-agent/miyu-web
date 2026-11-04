@@ -7,6 +7,9 @@
 //! 小标签）。一个顶层会话一行：标题、派过几个子代理（在跑的写「N 个子代理在跑」）、有后台任务在跑的写几个、什么时候。全部照会话表取（核心 9-5），不读每个会话的日志；读过的会话标题、在不在跑
 //! 照读到的。会话表、在跑、后台任务变了才重画（`refresh`）。多选照左栏：勾选框、`Shift` 连选、全选、删除（不问）、退出。`Esc` 关上（项目页先回
 //! 「项目」那一页）。
+//!
+//! 存档（导进来的只读存档，核心 SE-1 下，设计 58 第三节第 4 条，W-1094）：两种排法都单成最后一段「存档」，段里照排法的时刻新的在前。
+//! 顶上那一排多一个「导入会话…」：选一个 `.zip`，传上去导进来（`App.importSession`），传、导的时候按钮转圈、点不了；没成的在大标题下面写一句。
 
 import { h, icon, replace } from './dom.js';
 import { show, hide, leave } from '../lib/motion.js';
@@ -15,6 +18,7 @@ import { toggle, range } from '../model/select.js';
 import { ago } from '../model/ago.js';
 import { short, contextPercent } from '../lib/format.js';
 import { filterRows, groupRows, timeOf } from '../model/session-filter.js';
+import { ARCHIVE_GROUP } from '../model/session.js';
 import { projectCards, projectView } from './projects-page.js';
 
 /**
@@ -26,7 +30,10 @@ import { projectCards, projectView } from './projects-page.js';
  *   open: (id: string) => void, newSession: () => void, newIn: (id: string) => void, editProject: (id: string|null) => void,
  *   projects: () => {supported: boolean, list: import('../core/projects.js').Project[]}, color: (c: string|undefined) => string|null,
  *   personaName: (id: string) => string, presetName: (id: string) => string, defaultWorkdir: () => string,
- *   removeMany: (ids: string[]) => Promise<string[]>, dropped: (id: string) => void, page?: (view: 'sessions'|'projects'|null) => void}} PageActions
+ *   removeMany: (ids: string[]) => Promise<string[]>, dropped: (id: string) => void, page?: (view: 'sessions'|'projects'|null) => void,
+ *   pickBundle?: () => Promise<any|null>, importBundle?: (ref: any) => Promise<string|null>, notice?: (text: string) => void}} PageActions
+ *   `pickBundle`：弹系统的选文件框（只收 `.zip`），取消的交 `null`；`importBundle`：传上去导进来，成了的（打开了会话）交 `null`，没成的交要说的那一句；
+ *   `notice`：这一页已经关上了的时候，没成的那一句照输入框上面的提示说
  */
 
 export class SessionsPage {
@@ -57,10 +64,15 @@ export class SessionsPage {
     this.tools = h('div.sessions-tools');
     this.title = h('h1.sessions-title', t('sessions_page.title'));
     this.head = h('header.sessions-head', this.title, this.tools);
+    /** 导入会话（W-1094）：画一次留着（那一排不重建），传、导的时候转圈、点不了 */
+    this.importing = false;
+    this.importButton = /** @type {HTMLButtonElement} */ (h('button.sessions-button', { type: 'button', onclick: () => this.importBundle() }, icon('upload'), h('span', t('sessions_page.import'))));
+    /** 大标题下面那一句：导入没成的原因；打开这一页、再导一次时收掉 */
+    this.note = h('p.sessions-note', { role: 'status', hidden: true });
     this.switcher = h('div.sessions-switch', { role: 'tablist' });
     this.bar = h('div.sessions-bar');
     this.list = h('div.sessions-list');
-    this.inner = h('div.sessions-inner', this.head, this.switcher, this.bar, this.list);
+    this.inner = h('div.sessions-inner', this.head, this.note, this.switcher, this.bar, this.list);
     this.el = h('section.sessions-page', { hidden: true, 'aria-label': t('sessions_page.title') }, this.inner);
     this.onKey = (/** @type {KeyboardEvent} */ e) => {
       if (e.key !== 'Escape' || e.defaultPrevented) return;
@@ -81,6 +93,7 @@ export class SessionsPage {
     this.search.value = '';
     this.query = '';
     this.filter = 'all';
+    this.say(null);
     // 打开时那一排重画一次（界面语言换过的照新的）
     this.toolsMode = null;
     this.view = view === 'projects' && this.on.projects().supported ? 'projects' : 'sessions';
@@ -133,6 +146,8 @@ export class SessionsPage {
       tokens: typeof s.tokens === 'number' && s.tokens > 0 ? s.tokens : 0,
       // 上下文窗口用了多少（核心在会话表里给了的照它，还没给的照读进来的会话状态算，同框下面那一行；都没有的是 `null`）
       context: contextOf(s) ?? this.on.context?.(s.session) ?? null,
+      // 导进来的只读存档（核心 SE-1 下）：排在最后一段
+      archived: /** @type {any} */ (s).archived === true,
     }));
   }
 
@@ -160,6 +175,8 @@ export class SessionsPage {
         : mode === 'projects'
           ? [search, h('button.sessions-button.is-primary', { type: 'button', onclick: () => this.on.editProject(null) }, icon('plus'), t('sidebar.new_project'))]
           : [search,
+            // 宿主选得了文件的才有（W-1094）
+            this.on.importBundle && this.on.pickBundle ? this.importButton : null,
             h('button.sessions-button', { type: 'button', onclick: () => this.select(true) }, t('sessions_page.select')),
             h('button.sessions-button.is-primary', { type: 'button', onclick: () => { this.close(); this.on.newSession(); } }, icon('plus'), t('sessions_page.new'))]);
   }
@@ -195,7 +212,7 @@ export class SessionsPage {
 
   /** 画的东西拼成一串比 */
   liveSig() {
-    const rows = this.rows().map((r) => [r.session, r.title, r.project, r.active, r.running, r.unread, r.tokens, r.context, this.on.jobs(r.session), this.on.agents(r.session), this.on.agentsRunning(r.session)]);
+    const rows = this.rows().map((r) => [r.session, r.title, r.project, r.active, r.running, r.unread, r.tokens, r.context, r.archived, this.on.jobs(r.session), this.on.agents(r.session), this.on.agentsRunning(r.session)]);
     return JSON.stringify([rows, this.on.projects()]);
   }
 
@@ -242,7 +259,7 @@ export class SessionsPage {
   }
 
   /**
-   * 列表：按创建时间的照时间分组，一组一个头（滚的时候贴在顶上），组里一个会话一行；按最近活动的不分组。
+   * 列表：按创建时间的照时间分组，一组一个头（滚的时候贴在顶上），组里一个会话一行；按最近活动的不分组。存档两种排法都单成最后一段，带头。
    * @param {Row[]} rows
    */
   groups(rows) {
@@ -250,8 +267,10 @@ export class SessionsPage {
     const groups = groupRows(rows, this.sort, now);
     const order = groups.flatMap((g) => g.rows.map((r) => r.session));
     if (!groups.length) return [h('div.sessions-empty', t(this.query || this.filter !== 'all' ? 'sessions_page.no_match' : 'sessions_page.empty'))];
-    // 按最近活动的不分组，一条平的列表（2026-10-22 项目主人：已经照最近活动排了，不用再分「最近 / 近 7 天」）
-    if (this.sort === 'active') return groups.flatMap((g) => g.rows.map((r) => this.row(r, order, now)));
+    // 按最近活动的不分组，一条平的列表（2026-10-22 项目主人：已经照最近活动排了，不用再分「最近 / 近 7 天」）；存档那一段照样有头
+    if (this.sort === 'active') {
+      return groups.flatMap((g) => [g.group === ARCHIVE_GROUP ? h('div.sessions-group', t(`sidebar.groups.${g.group}`)) : null, ...g.rows.map((r) => this.row(r, order, now))]);
+    }
     return groups.flatMap((g) => [
       h('div.sessions-group', t(`sidebar.groups.${g.group}`)),
       ...g.rows.map((r) => this.row(r, order, now)),
@@ -282,6 +301,42 @@ export class SessionsPage {
       jobs(this.on.jobs(r.session)),
       usage(r),
       h('span.sessions-when', ago(timeOf(r, this.sort), now)));
+  }
+
+  /**
+   * 「导入会话…」（W-1094）：弹系统的选文件框，选了才转圈（取消了、浏览器没报取消的都不会卡在转圈上）；传、导完之前再点不算。成了的
+   * 由 `App` 打开那个会话（这一页跟着关上）；没成的那一句写在大标题下面，这一页已经关了的照输入框上面的提示说。
+   */
+  async importBundle() {
+    if (this.importing || !this.on.pickBundle || !this.on.importBundle) return;
+    const ref = await this.on.pickBundle();
+    if (!ref || this.importing) return;
+    this.importing = true;
+    this.busy(true);
+    this.say(null);
+    try {
+      const why = await this.on.importBundle(ref);
+      if (!why) return;
+      if (this.isOpen()) this.say(why);
+      else this.on.notice?.(why);
+    } finally {
+      this.importing = false;
+      this.busy(false);
+    }
+  }
+
+  /** 导入的按钮转不转圈：转的时候图标换成转圈、字换成「正在导入…」、点不了。 @param {boolean} on */
+  busy(on) {
+    this.importButton.disabled = on;
+    this.importButton.classList.toggle('is-busy', on);
+    this.importButton.setAttribute('aria-busy', String(on));
+    replace(this.importButton, icon(on ? 'loader-circle' : 'upload'), h('span', t(on ? 'sessions_page.importing' : 'sessions_page.import')));
+  }
+
+  /** 大标题下面那一句：`null` 收掉。 @param {string|null} text */
+  say(text) {
+    this.note.hidden = !text;
+    this.note.textContent = text ?? '';
   }
 
   /** 删（多选时点删除）：不问，多选当场退出，这几行一起收掉；删成的从表里拿掉，没删成的留着。 */
