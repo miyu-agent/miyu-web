@@ -65,5 +65,7 @@ test('选人格、知识库的选项（核心设计 53 第四节）：人格写�
   assert.deepEqual(pickOptions('persona', { personas: [{ persona: 'miyu', name: 'Miyu' }, { persona: 'bad', problem: 'x' }, { persona: 'neko' }] }),
     [{ value: 'miyu', name: 'Miyu' }, { value: 'neko', name: 'neko' }]);
   assert.deepEqual(pickOptions('knowledge', { bases: [{ id: 'docs', name: '文档' }, { id: 'raw' }] }), [{ value: 'docs', name: '文档' }, { value: 'raw', name: 'raw' }]);
+  assert.deepEqual(pickOptions('preset', { presets: [{ preset: 'full', name: '全功能' }, { preset: 'bad', problem: 'x' }, { preset: 'mine' }, { preset: null, name: '无工具' }] }),
+    [{ value: 'full', name: '全功能' }, { value: 'mine', name: 'mine' }], '预设（W-1096）：写错的、旧核心的「无工具」不列');
   assert.deepEqual(pickOptions('knowledge', null), []);
 });

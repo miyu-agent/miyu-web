@@ -37,6 +37,9 @@ const REVEAL_MS = 1500;
 /** 人动了就不再替他对齐的那几种事件 */
 const HANDS = ['wheel', 'pointerdown', 'keydown', 'touchstart'];
 
+
+/** 选人格、预设、知识库的项照哪个方法读列表（`pickList`） */
+const LIST_METHODS = { persona: 'persona.list', preset: 'preset.list', knowledge: 'kb.list' };
 export class SettingsDialog {
   /** @param {any} ctx */
   constructor(ctx) {
@@ -167,14 +170,14 @@ export class SettingsDialog {
   }
 
   /**
-   * 选人格、知识库的项要的列表（核心设计 53 第四节，PC-3）：第一次要的时候去读，读完了没在改字的重画一次；读着、读不到的交 `null`。
-   * @param {'persona'|'knowledge'} kind
+   * 选人格、预设、知识库的项要的列表（核心设计 53 第四节，PC-3；预设 W-1096）：第一次要的时候去读，读完了没在改字的重画一次；读着、读不到的交 `null`。
+   * @param {'persona'|'preset'|'knowledge'} kind
    */
   pickList(kind) {
     this.picks ??= new Map();
     if (this.picks.has(kind)) return this.picks.get(kind);
     this.picks.set(kind, null);
-    this.ctx.core.request(kind === 'persona' ? 'persona.list' : 'kb.list', {}).then((got) => {
+    this.ctx.core.request(LIST_METHODS[kind], {}).then((got) => {
       this.picks.set(kind, got);
       if (this.isOpen && !this.query && !this.editing()) this.drawBody();
     }, () => {});

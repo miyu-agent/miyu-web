@@ -348,12 +348,15 @@ export function referenceOptions(list) {
 export const headless = (heads) => ((heads ?? []).some((p) => p.package !== 'miyu-webui') ? [] : ['ui.head', 'terminal.']);
 
 /**
- * 选人格、知识库的项（核心设计 53 第四节，PC-3）的选项：照 `persona.list`（写错的不列）、`kb.list` 列，名字没有的写编号。
- * @param {'persona'|'knowledge'} kind @param {any} list 那条请求的回应
+ * 选人格、预设、知识库的项（核心设计 53 第四节，PC-3；预设是核心 e9c2b52cd 加的，W-1096）的选项：照 `persona.list`、`preset.list`
+ * （写错的不列）、`kb.list` 列，名字没有的写编号。
+ * @param {'persona'|'preset'|'knowledge'} kind @param {any} list 那条请求的回应
  * @returns {{value: string, name: string}[]}
  */
 export function pickOptions(kind, list) {
   if (kind === 'persona') return (list?.personas ?? []).filter((p) => p?.persona && !p.problem).map((p) => ({ value: p.persona, name: p.name || p.persona }));
+  // 旧核心末尾那一项「无工具」（`preset: null`）不是编号，不列
+  if (kind === 'preset') return (list?.presets ?? []).filter((p) => p?.preset && !p.problem).map((p) => ({ value: p.preset, name: p.name || p.preset }));
   return (list?.bases ?? []).filter((b) => b?.id).map((b) => ({ value: b.id, name: b.name || b.id }));
 }
 

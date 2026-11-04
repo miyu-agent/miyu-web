@@ -118,17 +118,17 @@ export function coreRow(dialog, item, opts = {}) {
   return row.el;
 }
 
-/** 选 Miyu 自己的东西的三种类型（核心设计 53 第四节） */
-const PICKS = new Set(['reference', 'persona', 'knowledge']);
+/** 选 Miyu 自己的东西的几种类型（核心设计 53 第四节；预设是核心 e9c2b52cd 加的，W-1096） */
+const PICKS = new Set(['reference', 'persona', 'preset', 'knowledge']);
 
 /**
- * 这三种的选项：模型照读好的模型列表，人格、知识库照 `dialog.pickList`（还没读到的是空的，读到了重画）。
+ * 这几种的选项：模型照读好的模型列表，人格、预设、知识库照 `dialog.pickList`（还没读到的是空的，读到了重画）。
  * @param {any} dialog @param {string} kind
  * @returns {{value: any, name: string}[]}
  */
 function choices(dialog, kind) {
   if (kind === 'reference') return referenceOptions(dialog.models);
-  const k = /** @type {'persona'|'knowledge'} */ (kind);
+  const k = /** @type {'persona'|'preset'|'knowledge'} */ (kind);
   return pickOptions(k, dialog.pickList?.(k));
 }
 
@@ -157,7 +157,7 @@ function control(dialog, item, value, save, saveSecret) {
     const placed = (/** @type {any[]} */ problems) => problems.length > 0 && problems.every((p) => typeof p.key === 'string' && p.key.startsWith(`${item.key}[`));
     return records(dialog, item, value, (change) => save(change, placed), control);
   }
-  // 一排选模型、人格、知识库的（PC-3）：「＋」弹同样的选项
+  // 一排选模型、人格、预设、知识库的（PC-3；预设 W-1096）：「＋」弹同样的选项
   if (item.control === 'list' && PICKS.has(item.element)) {
     const options = choices(dialog, item.element);
     return list(dialog, { ...item, options }, Array.isArray(value) ? value : [], (next) => save({ value: next }));
@@ -166,7 +166,7 @@ function control(dialog, item, value, save, saveSecret) {
   if (item.control === 'combo') return combo(dialog, Array.isArray(item.suggestions) ? item.suggestions : [], value, (next) => save(next === null ? { unset: true } : { value: next }));
   const env = envRef(value);
   if (PICKS.has(item.type) && !env) {
-    // 选模型（`reference`）、人格、知识库（PC-3）的：下拉，第一项「不指定」（照核心的默认，写在说明里）；列表里没有的现值照原样留一项
+    // 选模型（`reference`）、人格、预设（W-1096）、知识库（PC-3）的：下拉，第一项「不指定」（照核心的默认，写在说明里）；列表里没有的现值照原样留一项
     const options = [{ value: null, name: ctx.text('ref_unset') }, ...choices(dialog, item.type)];
     if (value != null && !options.some((o) => o.value === value)) options.push({ value, name: inputText(value) });
     return select(dialog, options, value ?? null, (v) => save(v === null ? { unset: true } : { value: v }));
