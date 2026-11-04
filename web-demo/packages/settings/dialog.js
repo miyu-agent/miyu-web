@@ -32,8 +32,8 @@ let lastPage = 'general';
 const SOURCE_URL = 'https://github.com/miyu-agent/miyu-web';
 
 
-/** 滚到一组以后多久里跟着内容长高再对齐（`reveal`） */
-const REVEAL_MS = 1500;
+/** 滚到一组以后多久里跟着内容长高、整页重画再对齐（`reveal`）；人一动就不管了，所以宽一点（W-1097：原来 1.5 秒，慢的机器上读回来更晚） */
+const REVEAL_MS = 4000;
 /** 人动了就不再替他对齐的那几种事件 */
 const HANDS = ['wheel', 'pointerdown', 'keydown', 'touchstart'];
 
@@ -105,21 +105,32 @@ export class SettingsDialog {
   /**
    * 滚到这一页里的一组（`data-group`：「访问」，`miyu web --settings access`，W-1085）；这一页没有的不动。上面几组这时还在读（配色的图、
    * 核心的配置），读好了长高会把它挤下去：`REVEAL_MS` 里内容一变高就再对一次，人一动（滚轮、点、按键、触摸）就不再管。
+   * 读好了配置、模型、局域网的状态会整页重画（`drawBody`），那一组换成了新的节点：每次对之前照编号重找，重画了照新的那几块再看
+   * （W-1097，2026-11-04 Windows 虚拟机上托盘「在手机上打开…」打开的设置停在「访问」上面：局域网的状态读回来重画了一次，原来一直对着换下去的旧节点）。
    * @param {string} group
    */
   reveal(group) {
-    const el = this.body.querySelector(`[data-group="${group}"]`);
-    if (!el) return;
-    const pin = () => el.scrollIntoView({ block: 'start' });
-    const watch = new ResizeObserver(pin);
-    for (const child of this.body.children) watch.observe(child);
+    const find = () => /** @type {HTMLElement|null} */ (this.body.querySelector(`[data-group="${group}"]`));
+    if (!find()) return;
+    const pin = () => find()?.scrollIntoView({ block: 'start' });
+    const grown = new ResizeObserver(pin);
+    const follow = () => {
+      grown.disconnect();
+      for (const child of this.body.children) grown.observe(child);
+      pin();
+    };
+    // 整页重画换掉了里面的几块：照新的再看、再对一次（`drawBody` 放回原来滚到的地方以后才轮到它）
+    const swapped = new MutationObserver(follow);
+    swapped.observe(this.body, { childList: true });
     const quit = () => {
-      watch.disconnect();
+      clearTimeout(timer);
+      grown.disconnect();
+      swapped.disconnect();
       for (const type of HANDS) this.body.removeEventListener(type, quit);
     };
     for (const type of HANDS) this.body.addEventListener(type, quit, { passive: true });
-    setTimeout(quit, REVEAL_MS);
-    pin();
+    const timer = setTimeout(quit, REVEAL_MS);
+    follow();
   }
 
   /** 关：淡出、拿掉；焦点回到原来的地方。 */
