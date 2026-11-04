@@ -7,7 +7,7 @@
 //!   网页软件自己的子目录 `<temp>/miyu-webui-<pid>/<随机名>.zip`（数据根里核心拒 `export_in_data_root`；同名拒 `export_exists`，所以每次随机），
 //!   回 `{url, bytes}`：一张一次性的下载票据。
 //! - `GET /export/<票据>`：把文件交给浏览器（`attachment`、`application/zip`、`no-store`），给完删文件；票据一取就作废。
-//! - 没人取的过 [`IDLE`] 删；网页软件起来时先清上回剩下的（[`Exports::new`]），退出时整个子目录删掉。
+//! - 没人取的过 [`IDLE`] 删；网页软件起来时先清上回剩下的（`Exports::new`），退出时整个子目录删掉。
 
 use std::collections::HashMap;
 use std::io;
@@ -63,7 +63,7 @@ pub(crate) struct Exports {
 }
 
 impl Exports {
-    /// 起来时：先清 `temp` 下上回剩下的（[`clean`]），再建自己的子目录（Unix 上 0700）。
+    /// 起来时：先清 `temp` 下上回剩下的（[`clean()`]），再建自己的子目录（Unix 上 0700）。
     pub(crate) fn new(temp: &Path, idle: Duration) -> Exports {
         let own = std::process::id();
         clean(temp, own, idle);

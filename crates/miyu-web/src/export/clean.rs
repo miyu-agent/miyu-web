@@ -7,9 +7,11 @@ use std::time::Duration;
 use super::PREFIX;
 use crate::TARGET;
 
-/// 建自己的子目录：只建这一层（已经有的不认，起来时 [`clean`] 已经删掉了同进程号剩下的），Unix 上只给本人。
+/// 建自己的子目录：只建这一层（已经有的不认，起来时 [`clean()`] 已经删掉了同进程号剩下的），Unix 上只给本人。
 pub(super) fn make(dir: &Path) -> io::Result<()> {
     let mut builder = std::fs::DirBuilder::new();
+    // 只建这一层（本来就是，写明白：上一层是系统临时目录，不替它建）
+    builder.recursive(false);
     #[cfg(unix)]
     std::os::unix::fs::DirBuilderExt::mode(&mut builder, 0o700);
     builder.create(dir)
