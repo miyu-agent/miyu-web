@@ -3,7 +3,7 @@
 //! 新会话、收起；会话表（头上一行「会话」，照旧版组头的样子）；底下换主题。
 //!
 //! 一项悬停时右边出竖着的三个点（照 Claude Code 的侧栏）：左边一段渐隐，标题淡出去；点开是会话的菜单，样子照旧版
-//! （`app.js:2455-2540`）：复制编号、重命名、删除（点了就删，不再问）。
+//! （`app.js:2455-2540`）：复制编号、重命名、导出…（W-1098）、删除（点了就删，不再问）。
 //!
 //! 子代理的会话挂在派它的会话下面，一层层往下（「子代理的会话」，照 `model/tree.js` 排）：文件树那样的线画出从属；结束了的收成
 //! 「已完成 N 个」；顶层会话的记号那一格是展开、收起整棵的箭头（在跑、没看过的照旧转圈、圆点，指针移上去换成箭头）；子代理下面还
@@ -37,7 +37,7 @@ import { projectRows, colorOf } from '../model/project.js';
  *   projects: () => {supported: boolean, list: import('../core/projects.js').Project[]}, viewProjects: () => void, editProject: (id: string|null) => void,
  *   openProject: (id: string) => void, newIn: (id: string) => void, deleteProject: (id: string) => void, parentOf?: (id: string) => string|null,
  *   prefs?: {get: (key: string, fallback: any) => any, set: (key: string, value: any) => void},
- *   theme: () => void, dark: () => boolean, copyId: (id: string) => void, notYet: (name: string) => void}} Handlers
+ *   theme: () => void, dark: () => boolean, copyId: (id: string) => void, exportSession: (id: string) => void, notYet: (name: string) => void}} Handlers
  */
 
 /** 这台设备上记着收起了哪几栏 */
@@ -528,6 +528,8 @@ export class Sidebar {
         ...(!row.depth && it.project && this.on.projects().supported ? [[t('sidebar.move_out'), false, () => this.on.place(id, { project: null })]] : []),
         [t('sidebar.copy_id'), false, () => this.on.copyId(id)],
         [t('sidebar.rename'), false, () => this.startRename(id)],
+        // 导出（W-1098）：开导出框；存档也能导
+        [t('sidebar.export'), false, () => this.on.exportSession(id)],
         [t('sidebar.delete'), true, () => this.removeAll([id])],
       ], () => this.toggleMenu(null))) : null);
   }

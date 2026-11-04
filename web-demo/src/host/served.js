@@ -17,7 +17,7 @@
  */
 
 import { notify } from './notify.js';
-import { fileTools, store, dropFromHash, hashRoute, onThisComputer } from './files.js';
+import { fileTools, store, dropFromHash, hashRoute, onThisComputer, download } from './files.js';
 
 /** 这台浏览器记着的设备令牌（勾了「自动登录」的）：`{token, expires}` */
 const LOGIN = 'miyu.web.login';
@@ -349,6 +349,22 @@ export function servedHost() {
         const got = await desk('/reveal', { path }).then((r) => r?.json(), () => null).catch(() => null);
         if (got?.ok) return { ok: true };
         return got?.missing ? { missing: true } : null;
+      },
+      /**
+       * 导出原始包（W-1098，`web-ui.md`「怎么走」第七条）：带登录令牌 `POST /export`，网页软件照本机令牌叫核心写到它的临时目录、换一张一次性的
+       * 下载票据，再照 `a[download]` 下载（名字照网页软件给的 `<name>.zip`）。交回包多大；没成的抛错，带 `reason`（核心的原因码，或者
+       * `http_<状态码>`），`message` 是原话。
+       * @param {string} session @param {string} name
+       * @returns {Promise<{bytes: number}>}
+       */
+      bundle: async (session, name) => {
+        const fail = (/** @type {string} */ reason, /** @type {string} */ message) => Object.assign(new Error(message), { reason });
+        if (!token) throw fail('bad_login', 'no login');
+        const got = await fetch('/export', { method: 'POST', cache: 'no-store', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ session, name }) });
+        const reply = await got.json().catch(() => null);
+        if (!got.ok || typeof reply?.url !== 'string') throw fail(reply?.reason ?? `http_${got.status}`, reply?.error ?? `HTTP ${got.status}`);
+        download(reply.url);
+        return { bytes: typeof reply.bytes === 'number' ? reply.bytes : 0 };
       },
     },
     /**

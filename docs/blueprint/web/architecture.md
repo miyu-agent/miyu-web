@@ -58,6 +58,8 @@ flowchart TB
 | `files.preview(文件)` 框里的缩略图 | 浏览器文件的临时地址；核心存好的那一份是桥的 `/blob` 地址；本机的文件（`@` 选文件交过来的，只有路径）是桥的 `/file` 地址 |
 | `files.read(文件, 从哪, 多长)` 读附件的一段字节（分块传给核心，`blob.write`，核心施工 W-5） | 浏览器文件切一段读出来 |
 | `open(地址)` 外面的链接，交回开了没有（被浏览器拦了的是假；X-42 上的登录要提示） | 新标签页 |
+| `files.save(名字, 字)` 把一段字存成文件（导出会话的 Markdown，`web.md`「导出会话」第 5 条，W-1098） | 浏览器的 Blob 加 `a[download]`，过一分钟松开 |
+| `files.bundle(会话, 名字)` 导出原始包并下载（`web.md`「导出会话」第 6 条，W-1098）：交回 `{bytes}`，没成的抛错带 `reason`、原话 | 没有（导出框不列原始包）；`served.js` 带登录令牌 `POST /export`，照回的一次性地址 `a[download]` 下载（`web-ui.md`「怎么走」第七条） |
 | `files.pickDir({title, start})` 选目录（工作区的「选择文件夹…」，设置页的路径项，`web.md`「设置页」第 5 条）：交路径，取消了交 `false`，开不了交 `null`（用的地方退回自己画的文件夹浏览器） | 浏览器给不了本机路径：页面在本机的请桥开系统的对话框（桥的 `/pick-dir`，Linux 照 zenity、kdialog，macOS 照 osascript，Windows 照 PowerShell；2026-10-08 项目主人：应该打开目录选择器）；页面开在别的机器上、桥那台没有对话框程序的交 `null` |
 | `wallpaper(深色)` 桌面壁纸（主题「跟随壁纸」，`web.md`「跟着人格的外观」第 5 条）：matugen 生成的那份颜色优先，交 `{sig, kind: 'matugen', colors}`；没有的交 `{sig, kind: 'image', seeds}`（桥照图算好的候选色）；`sig` 是换没换的记号，读不到的交 `null`；`wallpaperChanges(回调)` 盯着换没换，变了叫回调（不轮询，交回关掉的函数） | 页面在本机的问桥的 `/wallpaper`、`/wallpaper/events`（crate `miyu-wallpaper`：matugen 的输出文件；Linux 的 KDE、GNOME、XFCE、Cinnamon、MATE、awww、swww、hyprpaper、swaybg、wpaperd、waypaper、feh、nitrogen；macOS；Windows）；页面开在别的机器上的交 `null`（那是桥那台机器的） |
 | `openPath(路径)` 用系统里打开这种文件的程序打开本机的文件（设置页点来源，第 7 条） | 没有（交 `false`，设置页改成复制路径） |

@@ -252,7 +252,35 @@ export function hashRoute() {
 }
 
 /**
- * 选文件、拖放、读附件，交给服务 `host` 的 `files`（选目录各自补）。
+ * 叫浏览器下载一个地址（`a[download]`，导出会话，W-1098）：`name` 空着的照服务器给的名字（`Content-Disposition`）。
+ * @param {string} url @param {string} [name]
+ */
+export function download(url, name = '') {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.rel = 'noopener';
+  a.hidden = true;
+  document.body.append(a);
+  a.click();
+  a.remove();
+}
+
+/** Blob 地址放多久再松开：点了下载以后浏览器还要读它 */
+const RELEASE_MS = 60_000;
+
+/**
+ * 把一段字存成文件（导出会话的 Markdown，W-1098）：浏览器的 Blob 加 `a[download]`，过一会儿松开。
+ * @param {string} name @param {string} text @param {string} [type]
+ */
+export function saveText(name, text, type = 'text/markdown;charset=utf-8') {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  download(url, name);
+  setTimeout(() => URL.revokeObjectURL(url), RELEASE_MS);
+}
+
+/**
+ * 选文件、拖放、读附件、把字存成文件，交给服务 `host` 的 `files`（选目录各自补）。
  * @param {Urls} urls
  */
 export function fileTools(urls) {
@@ -264,6 +292,7 @@ export function fileTools(urls) {
     refs,
     text: (/** @type {FileRef} */ ref, /** @type {number} */ max) => text(urls, ref, max),
     read,
+    save: saveText,
   };
 }
 

@@ -38,6 +38,8 @@ import { draftOf, colorOf } from '../model/project.js';
 import { emptySession } from '../core/store.js';
 import { upload } from '../lib/upload.js';
 import { importDone, importRefusal } from '../model/session-import.js';
+import { localeOf } from '../model/session-export.js';
+import { openExport } from './export-dialog.js';
 
 /** 皮肤样张的会话编号：只在这一页（核心那边没有这个会话） */
 const GALLERY = 'gallery:skin';
@@ -105,6 +107,8 @@ export class App {
       theme: () => this.ctx.theme?.toggle(),
       dark: () => !!this.ctx.theme?.dark(),
       copyId: (id) => copy(id, (text, good) => this.composer.say(text, good)),
+      // 导出会话（W-1098）：开导出框，存档也能导
+      exportSession: (id) => this.exportSession(id),
       notYet: (name) => this.composer.say(t('sidebar.not_yet', { name })),
       // 改名：空着的是去掉标题（回到照第一句话写）；改成了照推来的 session.meta_changed 画
       rename: async (id, title) => {
@@ -608,6 +612,22 @@ export class App {
       }
       return why.key === 'other' ? t('sessions_page.import_failed.other', { reason: why.reason ?? '' }) : t(`sessions_page.import_failed.${why.key}`);
     }
+  }
+
+  /**
+   * 导出会话（蓝图 `web.md`「导出会话」，核心 SE-1 中（f8f8a9bae）`session.export`，设计 58，W-1098）：开导出框。Markdown 照页面的语言写
+   * （`locale`），存成文件、复制走宿主；原始包经宿主请网页软件导（`files.bundle`，走桥的没有，框里不列）。
+   * @param {string} id
+   */
+  exportSession(id) {
+    openExport({
+      session: id,
+      title: this.titleOf(id),
+      locale: localeOf(this.ctx.language?.current?.code ?? document.documentElement.lang),
+      request: (method, params) => this.store.conn.request(method, params),
+      save: this.files?.save ?? null,
+      bundle: this.files?.bundle ?? null,
+    });
   }
 
   /** 左栏的先后（`model/session.js` 的 `rank`）：置顶的在最前，别的照最近活动。 */

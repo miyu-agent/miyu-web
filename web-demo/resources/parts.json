@@ -7462,6 +7462,109 @@
       ".prefix-ask-btn"
     ]
   },
+  "export.layer": {
+    "zh": "导出会话的框：遮罩（W-1098）",
+    "select": [
+      ".export-ask"
+    ]
+  },
+  "export.card": {
+    "zh": "导出会话的框：卡片",
+    "select": [
+      ".export-card"
+    ]
+  },
+  "export.title": {
+    "zh": "导出会话的框：标题「导出会话」",
+    "select": [
+      ".export-title"
+    ]
+  },
+  "export.sub": {
+    "zh": "导出会话的框：标题下面那个会话的名字",
+    "select": [
+      ".export-sub"
+    ]
+  },
+  "export.purpose": {
+    "zh": "导出会话的框：用途的一项（选中的 aria-checked）",
+    "select": [
+      ".export-purpose"
+    ]
+  },
+  "export.purpose-name": {
+    "zh": "导出会话的框：用途的名字",
+    "select": [
+      ".export-purpose-name"
+    ]
+  },
+  "export.purpose-desc": {
+    "zh": "导出会话的框：用途下面那一行说明",
+    "select": [
+      ".export-purpose-desc"
+    ]
+  },
+  "export.label": {
+    "zh": "导出会话的框：选项左边的名字（范围、带思考、工具）",
+    "select": [
+      ".export-label"
+    ]
+  },
+  "export.seg": {
+    "zh": "导出会话的框：分段的一排（范围、工具）",
+    "select": [
+      ".export-seg"
+    ]
+  },
+  "export.seg-item": {
+    "zh": "导出会话的框：分段的一格",
+    "select": [
+      ".export-seg-item"
+    ]
+  },
+  "export.turns": {
+    "zh": "导出会话的框：最近几轮的数字框和「轮」",
+    "select": [
+      ".export-turns-box",
+      ".export-turns"
+    ]
+  },
+  "export.switch": {
+    "zh": "导出会话的框：「带思考」的开关",
+    "select": [
+      ".export-switch"
+    ]
+  },
+  "export.switch-knob": {
+    "zh": "导出会话的框：开关里的圆钮",
+    "select": [
+      ".export-switch i"
+    ]
+  },
+  "export.note": {
+    "zh": "导出会话的框：原始包那一句提醒",
+    "select": [
+      ".export-note"
+    ]
+  },
+  "export.result": {
+    "zh": "导出会话的框：导完、没成的那一句",
+    "select": [
+      ".export-result"
+    ]
+  },
+  "export.foot": {
+    "zh": "导出会话的框：底下一排按钮",
+    "select": [
+      ".export-foot"
+    ]
+  },
+  "export.button": {
+    "zh": "导出会话的框：按钮（关闭、复制、下载）",
+    "select": [
+      ".export-btn"
+    ]
+  },
   "dash.command-full": {
     "zh": "右侧边栏看后台命令时，输出上面那一块完整的命令",
     "select": [

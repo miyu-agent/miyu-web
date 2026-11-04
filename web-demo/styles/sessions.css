@@ -139,3 +139,56 @@
 }
 /* 一共用了多少 token（同框下面那一行的 Σ）：时刻左边，暗字、等宽的数 */
 .sessions-tokens { flex: none; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); font-variant-numeric: tabular-nums; }
+
+/* 导出会话的框（蓝图 web.md「导出会话」，W-1098）：遮罩、卡片、底下一排按钮同「发送前问前缀」（composer.css）；这里是用途、选项、结果那几行 */
+.export-ask > .export-card { display: grid; gap: calc(14px * var(--space)); width: min(480px, 100%); }
+.export-card [hidden] { display: none !important; }
+.export-title { margin: 0; font-size: calc(15px * var(--text-scale)); font-weight: 600; }
+.export-sub { margin: calc(-10px * var(--space)) 0 0; color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 用途：一项一行，名字下面一行说明；选中的铺淡底、名字用强调色 */
+.export-purposes { display: grid; gap: calc(4px * var(--space)); }
+.export-purpose {
+  display: grid; gap: calc(2px * var(--space)); padding: calc(8px * var(--space)) calc(10px * var(--space)); border: 0; border-radius: var(--r-8, 8px); background: none; color: var(--text);
+  font: inherit; text-align: left; cursor: pointer; transition: background-color calc(0.15s * var(--motion-scale)) ease;
+}
+.export-purpose:hover:not(:disabled) { background: color-mix(in srgb, var(--surface-2) 70%, transparent); }
+.export-purpose[aria-checked="true"] { background: var(--surface-2); }
+.export-purpose:disabled { cursor: default; }
+.export-purpose:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.export-purpose-name { font-size: calc(13.5px * var(--text-scale)); font-weight: 500; }
+.export-purpose[aria-checked="true"] .export-purpose-name { color: var(--accent); }
+.export-purpose-desc { color: var(--text-soft); font-size: calc(12px * var(--text-scale)); line-height: 1.5; }
+/* Markdown 的选项：左边名字，右边控件 */
+.export-options { display: grid; gap: calc(10px * var(--space)); padding: calc(2px * var(--space)) calc(10px * var(--space)); }
+.export-row { display: flex; flex-wrap: wrap; align-items: center; gap: calc(8px * var(--space)) calc(12px * var(--space)); }
+.export-label { min-width: 64px; color: var(--text-soft); font-size: calc(13px * var(--text-scale)); }
+.export-control { display: flex; flex-wrap: wrap; align-items: center; gap: calc(8px * var(--space)); }
+/* 分段（同全部会话页「会话」「项目」那一排的底和滑块的颜色） */
+.export-seg { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--seg-radius, var(--r-8)); background: var(--seg-bg, var(--surface-2)); }
+.export-seg-item {
+  height: 26px; padding: 0 calc(11px * var(--space)); border: 0; border-radius: var(--seg-thumb-radius, var(--r-6)); background: transparent; color: var(--text-soft);
+  font: calc(12.5px * var(--text-scale)) var(--font-ui); cursor: pointer; transition: background-color calc(0.15s * var(--motion-scale)), color calc(0.15s * var(--motion-scale));
+}
+.export-seg-item:hover { color: var(--text); }
+.export-seg-item[aria-checked="true"] { background: var(--seg-thumb-bg, var(--surface-1)); box-shadow: var(--seg-thumb-elev, 0 1px 2px rgb(0 0 0 / 14%)); color: var(--text); font-weight: 500; }
+.export-turns-box { display: inline-flex; align-items: center; gap: calc(6px * var(--space)); color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); }
+.export-turns {
+  width: 52px; height: 26px; padding: 0 calc(8px * var(--space)); border: 0; border-radius: var(--field-radius, var(--r-8)); background: var(--field-bg, var(--surface-1));
+  box-shadow: var(--field-elev, var(--composer-shadow)); color: var(--text); font: calc(12.5px * var(--text-scale)) var(--font-ui); text-align: center; outline: 0;
+}
+.export-turns:focus { box-shadow: var(--field-elev-focus, var(--composer-focus-shadow)); }
+/* 开关（同设置页的开关） */
+.export-switch { position: relative; width: 36px; height: 20px; padding: 0; border: var(--switch-border, 0); border-radius: var(--switch-radius, var(--r-pill)); background: var(--switch-bg, color-mix(in srgb, var(--text) 16%, transparent)); cursor: pointer; transition: background-color calc(0.16s * var(--motion-scale)) ease; }
+.export-switch i { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: var(--knob-radius, var(--r-round)); background: var(--knob-bg, var(--surface-1)); box-shadow: var(--knob-elev, var(--bubble-shadow)); transition: transform calc(0.16s * var(--motion-scale)) var(--ease-out); }
+.export-switch[aria-checked="true"] { background: var(--switch-active, var(--accent)); }
+.export-switch[aria-checked="true"] i { transform: translateX(16px); }
+.export-note { margin: 0; padding: calc(8px * var(--space)) calc(10px * var(--space)); border-radius: var(--r-8, 8px); background: var(--surface-2); color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); line-height: 1.55; }
+.export-result { margin: 0; color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); line-height: 1.5; overflow-wrap: anywhere; }
+.export-result.is-bad { color: var(--danger); }
+.export-grow { flex: 1; }
+.export-btn { display: inline-flex; align-items: center; gap: calc(6px * var(--space)); }
+.export-btn .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
+.export-btn:disabled { opacity: 0.6; cursor: default; }
+.export-btn.is-busy { opacity: 1; }
+.export-btn.is-busy .icon { animation: tl-spin calc(900ms * var(--motion-scale)) linear infinite; }
+@media (prefers-reduced-motion: reduce) { .export-btn.is-busy .icon { animation-duration: calc(2.4s * var(--motion-scale)); } }
