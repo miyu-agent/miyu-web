@@ -5,7 +5,7 @@
 - `crates/miyu-web`：网页软件（`miyu-web serve`、`miyu-web open`），图纸 `docs/blueprint/web-module.md`。
 - `crates/miyu-webserve`：只听本机的网页端口的底子：给页面文件、核对 Host 和 Origin、`/ws` 原样转给核心，图纸 `docs/blueprint/webserve.md`。
 - `web-demo/`：页面（原生 JavaScript，按 ES 模块组织，不用框架、不用构建），图纸 `docs/blueprint/web.md`、`web-ui.md`；怎么跑见 `web-demo/README.md`。
-- `miyu-webui/`：网页的软件包（包编号 `miyu-webui`，配置键前缀 `web`）：清单、常量 `web.json`、matugen 模板；发版时随核心一起装进资源目录的 `packages/miyu-webui/`，或经 `tools/pack-web.py` 打成包文件 `miyu-webui-<版本>-<系统>.miyu` 从软件源装。
+- `miyu-webui/`：网页的软件包（包编号 `miyu-webui`，配置键前缀 `web`）：清单、常量 `web.json`、matugen 模板；发版时随核心一起装进资源目录的 `packages/miyu-webui/`，或经 `tools/pack-web.py` 打成包文件 `miyu-webui-<版本>-<系统>.miyu` 从软件源装（发版：推 `v<版本>` 的标签，`.github/workflows/release.yml` 照官方打包模板一种系统打一个传进 Release；版本在 `Cargo.toml` 和 `miyu-webui/package.toml` 两处，一样）。
 
 ### 在别的设备上用
 

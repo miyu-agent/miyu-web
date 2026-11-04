@@ -1,0 +1,42 @@
+# 发版（照官方打包模板，同 miyu-render、miyu-embed，W-1095）：推 `v*` 标签（v 加上 miyu-webui/package.toml 里的版本，和
+# Cargo.toml 的工作区版本一样）时一种系统打一个 `.miyu`（`miyu pkg pack` 打的，软件源只收这种），传进这个标签的 Release；软件源每天收一次，
+# 收进索引以后 `miyu pkg install miyu-webui` 就装得上。包里：本仓库编的 miyu-web 程序、miyu-webui/ 的清单和常量、web-demo 里给浏览器的页面、
+# 本仓库的许可证（AGPL）和第三方许可证清单（tools/pack-web.py --stage 搭的，和本机打的一个样子）。
+# 手动跑（不是标签）的不传 Release，包放进这一趟的产物：发版前先试一遍三种系统打不打得出来。Linux aarch64 等 CI 测上了再加（同 render、im）。
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  pack:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: linux-x86_64
+          - os: macos-latest
+            target: macos-aarch64
+          - os: windows-latest
+            target: windows-x86_64
+    uses: miyu-agent/packages/.github/workflows/pack.yml@main
+    permissions:
+      contents: write
+    with:
+      package: miyu-webui
+      folder: dist/miyu-webui
+      target: ${{ matrix.target }}
+      runs-on: ${{ matrix.os }}
+      build: |
+        set -euo pipefail
+        rustup toolchain install
+        cargo build --release --locked -p miyu-web
+        exe=""
+        if [ "$RUNNER_OS" = Windows ]; then exe=.exe; fi
+        # Windows 的机器上 python3 不一定在，照 python 找
+        py=python3
+        if ! "$py" --version > /dev/null 2>&1; then py=python; fi
+        "$py" tools/pack-web.py --stage dist/miyu-webui --binary "target/release/miyu-web$exe" --target "$TARGET"

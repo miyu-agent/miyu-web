@@ -138,6 +138,15 @@
 4. 壁纸照桥的 `/wallpaper`（crate `miyu-wallpaper` 找、认图、盯文件；候选色照 `miyu_client::seeds`，一张图算一次）：回 `{sig, kind, seeds?}`，带 `data=1` 回那一份本身（matugen 的 JSON 或者图），都没有的 404。`GET /wallpaper/events` 一条 `text/event-stream`，壁纸来处的文件变了发一条 `changed`（不带内容，不要令牌：`EventSource` 带不了头；只说变了，取还是走 `/wallpaper`）。开着的不算有人连着，同时最多 16 条，满了回 503（2026-11-02 第四轮审查 W4-3：原来开着的不算空闲，不带凭据，这台电脑上随便哪个程序、哪个网页开一条不关，网页软件就一直不空闲退出，条数也不限、一条一个任务；页面开着总连着 `/ws`，那条算忙就够了。没选换票：`EventSource` 带不了头，换票要页面多一步，只为一条只说「变了」的流不值）。记着上一次的回答（2026-10-30 桌面端在 Win11 上抓到：页面每次拿回焦点都问，网页软件每次拉一个 `reg.exe`，没带 `CREATE_NO_WINDOW` 的每次闪一个终端窗口）：Windows、macOS 上换壁纸一定会改盯着的那几份文件，盯着、文件从上次问到现在没变的直接交记着的；Linux 上有只经 IPC 换、不落文件的壁纸程序，照旧每次找。网页软件拉起的程序（`miyu-wallpaper` 找壁纸的命令、`miyu-desk` 的、`open` 起的 `forget`）在 Windows 上一律带 `CREATE_NO_WINDOW`；`serve`、核心经核心的 `spawn_detached`，本来就不开控制台。
 5. 方法只认 `GET`，别的 405。
 
+### 发版（W-1095，2026-11-04）
+
+照官方打包模板（`miyu-agent/packages/.github/workflows/pack.yml@main`，同 miyu-render、miyu-embed；core1 11-04 照项目主人 11-03 定的进官方源）：
+
+1. 版本写在两处，一样：`Cargo.toml` 的工作区版本、`miyu-webui/package.toml` 的 `version`（`tools/pack-web.py` 核对，不一样的不打）。第一版 `0.1.0`。
+2. 清单写 `targets = ["linux-x86_64", "macos-aarch64", "windows-x86_64"]`：三台 CI 测着的这三种，Linux aarch64 等 CI 测上了再加。托盘程序装进资源目录的也是这一份清单，写全了在这三种上都认（原来不写 targets、由打包脚本补一种，写死一种别的系统就装不上）。
+3. `.github/workflows/release.yml`：推 `v<版本>` 的标签时一种系统一个 job：编 release 的 `miyu-web`，`tools/pack-web.py --stage dist/miyu-webui` 照装好的样子搭包文件夹（清单、`web.json`、`matugen/`、`loading.html`、`pages/`、`bin/miyu-web`、本仓库的 `LICENSE`（AGPL-3.0-or-later）、`THIRD-PARTY-LICENSES.txt`），模板照它 `miyu pkg pack`、核对标签和版本、传进 Release。手动跑（`workflow_dispatch`）的不传，包放进产物：发版前先试三种系统打不打得出来。
+4. 打标签、推标签由项目主人自己跑。
+
 ### 出错、运行日志
 
 | 级别 | 这件事 | 什么时候 |
