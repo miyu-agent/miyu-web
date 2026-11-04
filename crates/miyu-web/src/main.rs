@@ -108,7 +108,7 @@ fn main() -> ExitCode {
 /// `serve`：读资源、装运行日志，跑到空闲退出。
 async fn serve(root: DataRoot, env: &Env, port: Option<u16>) -> u8 {
     let failed = |reason: String| {
-        print!("{}", miyu_client::connect::Ready::Failed(reason).line());
+        print!("{}", miyu_client::connect::Ready::failed(reason).line());
         1
     };
     // 网页包的文件夹：核心挑的、程序带着装的，都不是的照资源目录（`web-ui.md`「怎么走」第一条第 6 款）

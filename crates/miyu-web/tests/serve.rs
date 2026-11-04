@@ -27,7 +27,7 @@ async fn a_taken_port_is_said_plainly() {
     let taken = std::net::TcpListener::bind("127.0.0.1:0").expect("占得了");
     let port = taken.local_addr().expect("有地址").port();
     let (ready, _, running) = start(&home, port, 600).await;
-    assert_eq!(ready, Ready::Failed(format!("port {port} in use")));
+    assert_eq!(ready, Ready::failed(format!("port {port} in use")));
     assert!(within("走", running).await.expect("没崩").is_err());
     assert_eq!(address(&home.root), None, "没写地址");
 }

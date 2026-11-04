@@ -227,7 +227,7 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
     let run = runtime(&serve.root);
     if let Err(error) = std::fs::create_dir_all(&run) {
         let error = format!("{} not made: {error}", run.display());
-        said(Ready::Failed(error.clone()));
+        said(Ready::failed(error.clone()));
         return Err(error);
     }
     let _lock = match lock(&run.join(LOCK)) {
@@ -237,7 +237,7 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
             return Ok(());
         }
         Err(error) => {
-            said(Ready::Failed(error.clone()));
+            said(Ready::failed(error.clone()));
             return Err(error);
         }
     };
@@ -245,7 +245,7 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
     let listener = match bind(listen, serve.port, serve.fallback).await {
         Ok(listener) => listener,
         Err(reason) => {
-            said(Ready::Failed(reason.clone()));
+            said(Ready::failed(reason.clone()));
             return Err(reason);
         }
     };
@@ -253,7 +253,7 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
     let port = at.port();
     let url = format!("http://127.0.0.1:{port}");
     if let Err(error) = write_address(&run, &url) {
-        said(Ready::Failed(error.clone()));
+        said(Ready::failed(error.clone()));
         return Err(error);
     }
     let key = shutdown::write_key(&run);

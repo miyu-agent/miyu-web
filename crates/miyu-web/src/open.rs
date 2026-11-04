@@ -399,7 +399,7 @@ async fn ensure(root: &DataRoot, port: Option<u16>, launch: &Launch) -> Result<S
     }
     match miyu_client::connect::spawn_detached((launch.serve)(port), root.path()).await {
         Ok(Ready::Ready | Ready::Running) => {}
-        Ok(Ready::Failed(reason)) => {
+        Ok(Ready::Failed { reason, .. }) => {
             return Err(
                 match reason
                     .strip_prefix("port ")
