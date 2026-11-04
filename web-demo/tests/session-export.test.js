@@ -10,9 +10,9 @@ test('四种用途，原始包在最后', () => {
 });
 
 test('用途的默认照核心参考：read 全部、带思考、她看到的；agent 现在的上下文、不带思考；chat 全部、不带思考、一行', () => {
-  assert.deepEqual(defaultsFor('read'), { range: 'all', turns: DEFAULT_TURNS, thinking: true, tools: 'seen' });
-  assert.deepEqual(defaultsFor('agent'), { range: 'context', turns: DEFAULT_TURNS, thinking: false, tools: 'seen' });
-  assert.deepEqual(defaultsFor('chat'), { range: 'all', turns: DEFAULT_TURNS, thinking: false, tools: 'line' });
+  assert.deepEqual(defaultsFor('read'), { range: 'all', turns: DEFAULT_TURNS, thinking: true, tools: 'seen', children: 'reports' });
+  assert.deepEqual(defaultsFor('agent'), { range: 'context', turns: DEFAULT_TURNS, thinking: false, tools: 'seen', children: 'reports' });
+  assert.deepEqual(defaultsFor('chat'), { range: 'all', turns: DEFAULT_TURNS, thinking: false, tools: 'line', children: 'reports' });
   assert.equal(DEFAULT_TURNS, 20);
   // 每次给一份新的：框里改了不碰下一次的默认
   const one = defaultsFor('read');
@@ -40,9 +40,9 @@ test('最近几轮：1 到 9999 的整数，别的不收', () => {
 test('Markdown 的参数：放进回应、照用途、最近几轮写成 {turns}、带页面语言', () => {
   const id = '0190a1b2-c3d4-7e5f-8a9b-0c1d2e3f4a5b';
   assert.deepEqual(markdownParams(id, 'read', defaultsFor('read'), 'zh'),
-    { session: id, format: 'markdown', to: 'inline', for: 'read', range: 'all', thinking: true, tools: 'seen', locale: 'zh' });
-  assert.deepEqual(markdownParams(id, 'agent', { ...defaultsFor('agent'), range: 'turns', turns: 7, tools: 'full' }, 'en'),
-    { session: id, format: 'markdown', to: 'inline', for: 'agent', range: { turns: 7 }, thinking: false, tools: 'full', locale: 'en' });
+    { session: id, format: 'markdown', to: 'inline', for: 'read', range: 'all', thinking: true, tools: 'seen', children: 'reports', locale: 'zh' });
+  assert.deepEqual(markdownParams(id, 'agent', { ...defaultsFor('agent'), range: 'turns', turns: 7, tools: 'full', children: 'append' }, 'en'),
+    { session: id, format: 'markdown', to: 'inline', for: 'agent', range: { turns: 7 }, thinking: false, tools: 'full', children: 'append', locale: 'en' });
 });
 
 test('没成怎么说：export_too_big 另写一句，别的照核心的原话，没有原话的写原因码', () => {

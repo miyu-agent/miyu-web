@@ -13,7 +13,7 @@ export const MOST_TURNS = 9999;
 
 /**
  * @typedef {'read'|'agent'|'chat'|'bundle'} Purpose
- * @typedef {{range: 'all'|'context'|'turns', turns: number, thinking: boolean, tools: 'line'|'seen'|'full'}} Options
+ * @typedef {{range: 'all'|'context'|'turns', turns: number, thinking: boolean, tools: 'line'|'seen'|'full', children: 'reports'|'append'}} Options
  */
 
 /**
@@ -28,6 +28,8 @@ export function defaultsFor(purpose) {
     turns: DEFAULT_TURNS,
     thinking: purpose === 'read' || purpose === 'bundle',
     tools: purpose === 'chat' ? 'line' : 'seen',
+    // 子代理：只写交代、回报；`append` 再把每个子会话整份附在后面（核心 SE-1 中下下，W-1098 补）
+    children: 'reports',
   };
 }
 
@@ -66,6 +68,7 @@ export function markdownParams(session, purpose, options, locale) {
     range: options.range === 'turns' ? { turns: options.turns } : options.range,
     thinking: options.thinking,
     tools: options.tools,
+    children: options.children,
     locale,
   };
 }

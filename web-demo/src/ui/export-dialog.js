@@ -99,11 +99,17 @@ export function openExport(o) {
     { value: 'seen', name: t('export.tools_seen') },
     { value: 'full', name: t('export.tools_full') },
   ], options.tools, (v) => { options.tools = /** @type {Options['tools']} */ (v); });
+  // 子代理（核心 SE-1 中下下，W-1098 补）：只写交代、回报，或者整份附在后面
+  const children = segments(t('export.children'), [
+    { value: 'reports', name: t('export.children_reports') },
+    { value: 'append', name: t('export.children_append') },
+  ], options.children, (v) => { options.children = /** @type {Options['children']} */ (v); });
   const line = (/** @type {string} */ label, /** @type {Node[]} */ ...control) => h('div.export-row', h('span.export-label', label), h('div.export-control', control));
   const markdownBox = h('div.export-options',
     line(t('export.range'), range.el, turnsBox),
     line(t('export.thinking'), thinking.el),
-    line(t('export.tools'), tools.el));
+    line(t('export.tools'), tools.el),
+    line(t('export.children'), children.el));
   const bundleNote = h('p.export-note', t('export.bundle_note'));
 
   // 结果、出错的那一句；底下的按钮
@@ -184,6 +190,7 @@ export function openExport(o) {
     purposes.forEach((one, i) => rows[i].setAttribute('aria-checked', String(one === p)));
     range.show(options.range);
     tools.show(options.tools);
+    children.show(options.children);
     thinking.show(options.thinking);
     turns.value = String(options.turns);
     turnsBox.hidden = options.range !== 'turns';

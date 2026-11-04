@@ -31,6 +31,9 @@ use clean::{clean, make};
 
 mod clean;
 
+/// 叫核心打原始包最多等多久没回音（核心 CA-1 `Core::call_waiting`，W-1098 补）：大会话、附件多的要一阵，10 分钟够；`call` 只等 30 秒。
+const EXPORT_WAIT: Duration = Duration::from_secs(10 * 60);
+
 /// 导出的原始包没人取的过多久删（W-1098 定的：页面换到票据马上就取，取不走的多半是浏览器关了；包里有她碰过的文件内容，不在临时目录里久放）。
 pub const IDLE: Duration = Duration::from_secs(10 * 60);
 
@@ -221,8 +224,9 @@ async fn bundle(
         .map_err(unreachable)?;
     let path = file.to_string_lossy();
     let params = json!({"session": session, "format": "bundle", "to": {"path": path}});
+    // 大会话打包要一阵：等 [`EXPORT_WAIT`]（核心 CA-1 的 `call_waiting`；原来照 `call` 的 30 秒，到点回 503，W-1098 补）
     let got = core
-        .call("export", "session.export", params)
+        .call_waiting("export", "session.export", params, EXPORT_WAIT)
         .await
         .map_err(|refused| {
             let status = match refused.reason.as_str() {
