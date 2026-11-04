@@ -11,6 +11,7 @@ use std::time::Duration;
 use serde::Deserialize;
 use serde_json::{Value, json};
 
+use miyu_client::CoreCommand;
 use miyu_client::places::DataRoot;
 
 /// 随 Miyu 一起装的网页包在资源目录里的文件夹（包编号 `miyu-webui`，这个仓库的 `miyu-webui/` 照原样放进去）：清单、常量、页面都在这里。
@@ -130,27 +131,32 @@ impl Settings {
         })
     }
 
-    /// 核心在跑的，问它 `config.get` 换上最终值（施工 9-1 下）。不为这个拉起核心：`miyu web` 先经 `open` 连上核心才拉起
-    /// `serve`，核心总在跑；直接起 `serve`、核心没在跑的照默认，记一行 `INFO web config from defaults`。连上了却拒了的照默认，
-    /// 记一行 `WARN web config not read`。
-    pub async fn from_core(self, root: &DataRoot) -> Settings {
-        let mut client = match miyu_client::open::Core::connect_running(root, "miyu-web").await {
-            Ok(client) => client,
-            Err(error) => {
-                tracing::info!(target: crate::TARGET, error = %error, "web config from defaults");
-                return self;
-            }
-        };
-        match client
-            .call("config", "config.get", json!({"keys": KEYS}))
+    /// 问核心 `config.get` 换上最终值（施工 9-1 下）。核心没在跑的照 `core` 拉起来再问（W-1099，2026-11-04：原来不拉、照默认起，
+    /// 出厂端口 8300 先听上、拿到配置才换过去，这中间 `miyu web --print` 印过 8300 的地址；主人机器上 8300 是旧版 Miyu，点进去进错地方）。
+    /// 连不上、拉不起来的交回原因，`serve` 照它说起不来，不写地址。连上了却拒了的照默认，记一行 `WARN web config not read`。
+    ///
+    /// # Errors
+    ///
+    /// 连不上核心、拉不起来：原话。
+    pub async fn from_core(self, root: &DataRoot, core: &CoreCommand) -> Result<Settings, String> {
+        let mut client = miyu_client::open::Core::connect(root, core, "miyu-web")
             .await
-        {
-            Ok(result) => self.configured(&result["items"]),
-            Err(error) => {
-                tracing::warn!(target: crate::TARGET, error = %error, "web config not read");
-                self
-            }
-        }
+            .map_err(|refused| {
+                tracing::warn!(target: crate::TARGET, error = %refused.message, "core unreachable");
+                format!("core unreachable: {}", refused.message)
+            })?;
+        Ok(
+            match client
+                .call("config", "config.get", json!({"keys": KEYS}))
+                .await
+            {
+                Ok(result) => self.configured(&result["items"]),
+                Err(error) => {
+                    tracing::warn!(target: crate::TARGET, error = %error, "web config not read");
+                    self
+                }
+            },
+        )
     }
 
     /// 照核心 `config.get` 交回的 `items`（键到 `{"value", …}`）换上最终值；没有的、不合范围的照旧。

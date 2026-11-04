@@ -133,7 +133,12 @@ async fn serve(root: DataRoot, env: &Env, port: Option<u16>) -> u8 {
         miyu_client::log::LevelFilter::INFO,
         env.home.as_deref(),
     );
-    let settings = settings.from_core(&root).await;
+    // 先拿到核心的配置再听端口（W-1099）：拿不到的说起不来，不照出厂端口先听上
+    let core_command: miyu_web::serve::CoreCommand = Arc::new(core);
+    let settings = match settings.from_core(&root, &core_command).await {
+        Ok(settings) => settings,
+        Err(error) => return failed(error),
+    };
     // 命令行没写、配置里也没人写的才是出厂端口，被占了能往后挪
     let fallback = port.is_none() && !settings.port_chosen;
     let serve = Serve {
@@ -145,7 +150,7 @@ async fn serve(root: DataRoot, env: &Env, port: Option<u16>) -> u8 {
         follow: true,
         pages,
         settings,
-        core: Arc::new(core),
+        core: core_command,
         // 导出的原始包放在系统临时目录下网页软件自己的子目录里（`/export`，W-1098）：数据根里核心不写
         temp: std::env::temp_dir(),
         export_idle: miyu_web::export::IDLE,
