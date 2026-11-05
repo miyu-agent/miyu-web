@@ -28,16 +28,30 @@ export function packagePlan(detail, home, text) {
   let title = text(`plan.${doing}`, { id });
   if (typeof p.version === 'string' && p.version) title += ` ${p.version}`;
   if (p.replaces && typeof p.replaces === 'object') title += typeof p.replaces.version === 'string' ? text('plan.replaces', { version: p.replaces.version }) : text('plan.replaces_unknown');
-  // 包文件夹：装回出厂的（`restores`）`install` 是编号不是文件夹，不写（不然名字写两遍）
-  const path = typeof detail.install === 'string' && doing !== 'restore' ? tilde(detail.install, home) : null;
+  // 包文件夹：装回出厂的（`restores`）、从软件源装的 `install` 是编号不是文件夹，不写（不然名字写两遍）；核心 PK-3 上起照 `source`
+  // 认（`file` 才是文件夹），没写 `source` 的旧核心照旧写
+  const local = p.source === undefined || p.source === 'file';
+  const path = typeof detail.install === 'string' && doing !== 'restore' && local ? tilde(detail.install, home) : null;
   /** @type {{label: string, items: string[]}[]} */
   const rows = [];
   const row = (/** @type {string} */ key, /** @type {string[]} */ items) => {
     if (items.length) rows.push({ label: text(`plan.labels.${key}`), items });
   };
+  // 从哪来（核心 PK-3 上：official、community、file、shipped、distro；从软件源装的另有源的名字 `feed`，不是官方源的接在后面，W-1109）
+  if (doing !== 'remove') row('source', sourceOf(p, text));
   row('includes', included(p, doing, text));
   row('skipped', list(p.skipped).filter((s) => s && typeof s.file === 'string').map((s) => text('plan.skipped', { file: s.file, why: String(s.why ?? '') })));
-  row('needs', list(p.capabilities).map((c) => (typeof c?.name === 'string' && c.name ? c.name : String(c?.id ?? ''))).filter(Boolean));
+  // 要的能力：这一刻已经批过的（`held`）接「（已批）」
+  row('needs', list(p.capabilities).map((c) => {
+    const name = typeof c === 'string' ? c : typeof c?.name === 'string' && c.name ? c.name : String(c?.id ?? '');
+    return name && c?.held === true ? `${name}${text('plan.held')}` : name;
+  }).filter(Boolean));
+  // 一起装的依赖、推荐的（只列，不跟着装）
+  const pkgs = (/** @type {any} */ xs) => list(xs).filter((w) => typeof w?.package === 'string').map((w) => (typeof w.version === 'string' && w.version ? `${w.package} ${w.version}` : w.package));
+  row('with', pkgs(p.with));
+  row('recommends', pkgs(p.recommends));
+  // 核心给的注意（社区的、本机文件的才有，照连接的语言一句一个，推荐的那几句接在后面）：一句一行
+  row('notice', [...strings(p.notice), ...strings(p.recommends_notice)]);
   if (doing === 'remove') {
     const keys = strings(p.settings);
     row('deletes', [...(keys.length ? [text('plan.settings_keys', { keys: keys.join(text('plan.separator')) })] : []), ...stateDir(p.state, home, text)]);
@@ -48,6 +62,18 @@ export function packagePlan(detail, home, text) {
   }
   if (Number.isInteger(p.size) && Number.isInteger(p.files)) row('size', [text('plan.size', { size: bytes(p.size), files: p.files })]);
   return { title, path, rows };
+}
+
+/**
+ * 「来源」那一行：认得的五种照字表（`plan.sources.*`），不是官方源的源名字接在后面；旧核心（`source` 是源的名字）、没写的不写。
+ * @param {any} p @param {(key: string, fields?: Record<string, any>) => string} text @returns {string[]}
+ */
+function sourceOf(p, text) {
+  if (typeof p.source !== 'string' || !p.source) return [];
+  const key = `plan.sources.${p.source}`;
+  const name = text(key);
+  if (name === key) return [];
+  return [typeof p.feed === 'string' && p.feed && p.feed !== 'official' ? text('plan.source_feed', { source: name, feed: p.feed }) : name];
 }
 
 /**

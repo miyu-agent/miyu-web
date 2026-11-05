@@ -142,10 +142,42 @@ export function toolRows(tools, local) {
  */
 export function capabilityRows(capabilities) {
   return (Array.isArray(capabilities) ? capabilities : []).map((c) => {
-    if (typeof c === 'string') return c ? { name: c, summary: null } : null;
+    if (typeof c === 'string') return c ? { name: c, summary: null, held: false } : null;
     const name = typeof c?.name === 'string' && c.name ? c.name : typeof c?.id === 'string' && c.id ? c.id : null;
-    return name ? { name, summary: typeof c?.summary === 'string' && c.summary ? c.summary : null } : null;
+    return name ? { name, summary: typeof c?.summary === 'string' && c.summary ? c.summary : null, held: c?.held === true } : null;
   }).filter((x) => x !== null);
+}
+
+/** 核心 PK-3 上以后才有的「从哪来」（`official`、`community` 旧核心也会出：那时 `source` 是源的名字，官方源就叫 `official`）。 */
+const NEW_SOURCES = new Set(['file', 'shipped', 'distro']);
+
+/**
+ * 预览是不是核心 PK-3 上以后的（认 `approve`）：从软件源装的有 `feed`，别的 `source` 是 `file`、`shipped`、`distro`；升级的看 `upgrades`
+ * 里的。旧核心不认 `approve`，带了会拒，只在新核心上带（W-1109）。 @param {any} preview
+ */
+export function takesApprove(preview) {
+  const one = (/** @type {any} */ x) => typeof x?.feed === 'string' || NEW_SOURCES.has(x?.source);
+  return one(preview) || (Array.isArray(preview?.upgrades) && preview.upgrades.some(one));
+}
+
+/**
+ * 装、升的时候一起批的能力（核心 PK-3 上的 `approve: {"<编号>": [能力…]}`）：照预览拼，装的是要装的那个（`id`）加上 `with` 里的，
+ * 升的是 `upgrades` 加上 `with` 里的；没要能力的不写。一项都没有、或者是旧核心的预览，交 `null`（不带这一格）（W-1109）。
+ * @param {any} preview `package.install` / `package.upgrade` 带 `preview: true` 的回应 @param {string|null} [id] 装的那个包
+ */
+export function approveOf(preview, id = null) {
+  if (!preview || !takesApprove(preview)) return null;
+  const ids = (/** @type {any} */ caps) => (Array.isArray(caps) ? caps.map((c) => (typeof c === 'string' ? c : c?.id)).filter((x) => typeof x === 'string' && x) : []);
+  /** @type {Record<string, string[]>} */
+  const out = {};
+  const add = (/** @type {any} */ pkg, /** @type {any} */ caps) => {
+    const got = ids(caps);
+    if (typeof pkg === 'string' && pkg && got.length) out[pkg] = [...new Set([...(out[pkg] ?? []), ...got])];
+  };
+  if (id) add(id, preview.capabilities);
+  for (const u of Array.isArray(preview.upgrades) ? preview.upgrades : []) add(u?.package, u?.capabilities);
+  for (const w of Array.isArray(preview.with) ? preview.with : []) add(w?.package, w?.capabilities);
+  return Object.keys(out).length ? out : null;
 }
 
 /** 下载进度：百分数（没有总数的是 `null`） @param {{done?: number, total?: number}|null} p */

@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { QUICK_KINDS, shownOf, actionOf, kindsOf, faceOf, needsLook, hasProgram, providesLine, percentOf, found, capabilityRows, toolRows } from '../../packages/settings/market-model.js';
+import { QUICK_KINDS, shownOf, actionOf, kindsOf, faceOf, needsLook, hasProgram, providesLine, percentOf, found, capabilityRows, toolRows, approveOf, takesApprove } from '../../packages/settings/market-model.js';
 
 const embed = { package: 'embed', version: '1.0.0', name: '语义模型', summary: '本机的语义检索模型', official: true, installed: '1.0.0', blocked: null, provides: { features: ['embed'] }, depends: [] };
 const memes = { package: 'memes', version: '0.2.0', name: '表情包', summary: '发表情包的技能', official: true, installed: null, blocked: null, provides: { skills: ['memes'], content: ['stickers'] }, depends: [] };
@@ -88,10 +88,25 @@ test('带不带程序（核心 U23下上：自己那一层只收不带程序的�
 });
 
 test('所需权限：核心 IN-3 起写人话的名字、带说明；旧核心给编号的写编号，认不出的不写', () => {
-  assert.deepEqual(capabilityRows([{ id: 'network', name: '联网', summary: '访问网络上的服务' }, { id: 'files', name: '', summary: '' }]),
-    [{ name: '联网', summary: '访问网络上的服务' }, { name: 'files', summary: null }]);
-  assert.deepEqual(capabilityRows(['network', { name: 'exec' }, null, 3, '']), [{ name: 'network', summary: null }, { name: 'exec', summary: null }]);
+  assert.deepEqual(capabilityRows([{ id: 'network', name: '联网', summary: '访问网络上的服务' }, { id: 'files', name: '', summary: '', held: true }]),
+    [{ name: '联网', summary: '访问网络上的服务', held: false }, { name: 'files', summary: null, held: true }]);
+  assert.deepEqual(capabilityRows(['network', { name: 'exec' }, null, 3, '']), [{ name: 'network', summary: null, held: false }, { name: 'exec', summary: null, held: false }]);
   assert.deepEqual(capabilityRows(undefined), []);
+});
+
+test('装、升的时候一起批的能力：照预览拼要装的、一起装的、升的；旧核心的预览不带（W-1109）', () => {
+  const caps = (...ids) => ids.map((id) => ({ id, name: id, summary: '' }));
+  const install = { source: 'community', feed: 'kit-feed', capabilities: caps('network', 'exec'), with: [{ package: 'dep', source: 'official', feed: 'official', capabilities: caps('fs.read') }, { package: 'plain', source: 'official', feed: 'official' }] };
+  assert.deepEqual(approveOf(install, 'kit'), { kit: ['network', 'exec'], dep: ['fs.read'] });
+  const upgrade = { upgrades: [{ package: 'a', from: '1', to: '2', source: 'official', feed: 'official', capabilities: caps('network') }, { package: 'b', from: '1', to: '2', source: 'official', feed: 'official' }], with: [] };
+  assert.deepEqual(approveOf(upgrade), { a: ['network'] });
+  // 什么能力都不要的、旧核心的（source 是源的名字、没有 feed）：不带
+  assert.equal(approveOf({ source: 'official', feed: 'official', capabilities: [] }, 'x'), null);
+  assert.equal(approveOf({ source: 'my-feed', capabilities: caps('network') }, 'x'), null);
+  assert.equal(takesApprove({ source: 'file', capabilities: [] }), true);
+  // 旧核心从官方源装的：source 是源的名字 official，没有 feed，不算
+  assert.equal(takesApprove({ source: 'official', capabilities: caps('network') }), false);
+  assert.equal(approveOf(null, 'x'), null);
 });
 
 test('快速筛选的几种（MCP、脚本、技能）一个都没有也有个数，选着的和第一排叠着用', () => {

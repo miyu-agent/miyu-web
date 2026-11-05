@@ -253,16 +253,17 @@ export class Drawer {
   }
 
   /**
-   * 装、卸软件包的那几行（`package-plan.js`）：包文件夹一行，下面左边名目、右边内容；「无法加载」一项一行，别的照顿号连成一行。
+   * 装、卸软件包的那几行（`package-plan.js`）：包文件夹一行，下面左边名目、右边内容；「无法加载」「注意」一项一行，别的照顿号连成一行。
    * @param {import('./package-plan.js').Plan} plan
    */
   planRows(plan) {
     const t = this.text;
     const skipped = t('plan.labels.skipped');
+    const notice = t('plan.labels.notice');
     return h('div.asking-plan',
       plan.path ? h('div.asking-path', h('span', plan.path)) : null,
       plan.rows.map((r) => h('div.asking-plan-row', h('span.asking-plan-label', r.label),
-        h('span.asking-plan-items', r.label === skipped ? r.items.map((x) => h('div', x)) : r.items.join(t('plan.separator'))))));
+        h('span.asking-plan-items', r.label === skipped || r.label === notice ? r.items.map((x) => h('div', x)) : r.items.join(t('plan.separator'))))));
   }
 
   /** 一个选项：编号（能多选的是勾选框）、标题、说明；确认的「不允许」在编辑时下面接理由的框。 */

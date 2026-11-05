@@ -7,7 +7,7 @@ import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { bytes, short } from '../../src/lib/format.js';
 import { pkgFace } from './logos.js';
-import { STATUS_FILTERS, QUICK_KINDS, SORTS, shownOf, sortedBy, sortsAvailable, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf, capabilityRows, toolRows } from './market-model.js';
+import { STATUS_FILTERS, QUICK_KINDS, SORTS, shownOf, sortedBy, sortsAvailable, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf, capabilityRows, toolRows, approveOf } from './market-model.js';
 import { select } from './rows.js';
 import { confirmIn } from './confirm.js';
 
@@ -256,7 +256,7 @@ function actionButton(dialog, p, upgradable, big) {
   const up = (m.up?.upgrades ?? []).find((/** @type {any} */ u) => u.package === p.package);
   return h(`button.set-btn.is-primary${cls}`, {
     type: 'button', disabled: !!m.busy, title: kind === 'upgrade' && up ? `${up.from} → ${up.to}` : undefined,
-    onclick: () => (kind === 'upgrade' ? upgrade(dialog, [p.package]) : install(dialog, p, big)),
+    onclick: () => (kind === 'upgrade' ? (big ? upgradeSeen(dialog, p.package) : upgrade(dialog, [p.package])) : install(dialog, p, big)),
   }, t(kind === 'upgrade' ? 'market.upgrade' : 'market.install'));
 }
 
@@ -297,17 +297,23 @@ async function install(dialog, p, fromDetail) {
       return;
     }
   }
-  await run(dialog, p.package, () => dialog.ctx.core.request('package.install', { source: p.package }), (got) => {
+  // 详情里点的：人看过要的能力了，照预览一起批（核心 PK-3 上的 `approve`；卡片上直接点的都是不要能力、不带依赖的，W-1109）
+  const approve = fromDetail ? approveOf(await previewOf(dialog, p.package).catch(() => null), p.package) : null;
+  await run(dialog, p.package, () => dialog.ctx.core.request('package.install', approve ? { source: p.package, approve } : { source: p.package }), (got) => {
     const name = p.name ?? p.package;
     // 带程序的装好了照旧默认不开（核心照设计 37 第四节第 4 条）：提示到软件包页打开它
     dialog.toast(dialog.ctx.text(got?.enabled === false ? 'market.done_off' : 'market.done', { name }));
   });
 }
 
-/** 升级：几个编号（全部的是 `null`） @param {any} dialog @param {string[]|null} ids */
-async function upgrade(dialog, ids) {
+/**
+ * 升级：几个编号（全部的是 `null`）；`approve` 是一起批的能力（人看过了的才有，W-1109）。
+ * @param {any} dialog @param {string[]|null} ids @param {Record<string, string[]>|null} [approve]
+ */
+async function upgrade(dialog, ids, approve = null) {
   const busy = ids?.[0] ?? '*';
-  await run(dialog, busy, () => dialog.ctx.core.request('package.upgrade', ids ? { packages: ids } : {}), (got) => {
+  const params = { ...(ids ? { packages: ids } : {}), ...(approve ? { approve } : {}) };
+  await run(dialog, busy, () => dialog.ctx.core.request('package.upgrade', params), (got) => {
     const n = (got?.upgraded ?? []).length;
     dialog.toast(dialog.ctx.text('market.upgraded', { n }));
   });
@@ -377,7 +383,19 @@ function upgradeExtras(dialog) {
   return [all, why.length ? h('div.mk-skips', why.map((w) => h('p', w))) : null].filter(Boolean);
 }
 
-/** 全部升级：先看一眼（`preview`），弹窗列「名字 旧版本 → 新版本」和下载多大，确认了才升 @param {any} dialog */
+/**
+ * 详情里点的升级：人在详情里看过新版要的能力了，先问一次升级的预览，照它一起批（W-1109）；问不到的照旧升、不批。
+ * @param {any} dialog @param {string} id
+ */
+async function upgradeSeen(dialog, id) {
+  const got = await dialog.ctx.core.request('package.upgrade', { packages: [id], preview: true }).catch(() => null);
+  await upgrade(dialog, [id], approveOf(got));
+}
+
+/**
+ * 全部升级：先看一眼（`preview`），弹窗列「名字 旧版本 → 新版本」、新版要的能力、注意、下载多大，确认了才升，确认就照预览一起批能力
+ * （核心 PK-3 上，W-1109）。 @param {any} dialog
+ */
 async function confirmAll(dialog) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
   const m = stateOf(dialog);
@@ -388,16 +406,21 @@ async function confirmAll(dialog) {
     dialog.toast(problemText(dialog, err));
     return;
   }
-  const rows = (got?.upgrades ?? []).map((/** @type {any} */ u) => h('li', h('span', nameOf(m, u.package)), h('code', `${u.from} → ${u.to}`)));
+  const rows = (got?.upgrades ?? []).map((/** @type {any} */ u) => {
+    const caps = capsLine(dialog, u.capabilities);
+    return h('li', h('span', nameOf(m, u.package)), h('code', `${u.from} → ${u.to}`), caps ? h('span', t('market.caps_of'), caps) : null);
+  });
+  const notices = (Array.isArray(got?.notice) ? got.notice : []).map((/** @type {string} */ s) => h('p.mk-warn', t('market.notice', { text: s })));
   const close = () => leave(layer, () => layer.remove());
   const layer = h('div.mk-ask', { 'data-set-dismiss': '1', onclick: (/** @type {Event} */ e) => { if (e.target === e.currentTarget) close(); } },
     h('div.mk-ask-card', { role: 'dialog', 'aria-modal': 'true' },
       h('strong', t('market.upgrade_all_title', { n: rows.length })),
       h('ul.mk-ask-list', rows),
+      ...notices,
       h('p.mk-ask-size', t('market.download', { size: bytes(got?.download ?? 0) })),
       h('div.mk-ask-foot',
         h('button.set-btn', { type: 'button', onclick: close }, t('market.cancel')),
-        h('button.set-btn.is-primary', { type: 'button', onclick: () => { close(); upgrade(dialog, null); } }, t('market.upgrade_all')))));
+        h('button.set-btn.is-primary', { type: 'button', onclick: () => { close(); upgrade(dialog, null, approveOf(got)); } }, t('market.upgrade_all')))));
   layer.addEventListener('set-dismiss', close);
   dialog.panel.append(layer);
 }
@@ -418,10 +441,12 @@ function detailPage(dialog, id) {
   const p = m.list.find((x) => x.package === id);
   if (!p) return [h('p.set-empty', t('market.bad.unknown'))];
   const face = faceOf(p);
+  // 社区的先写网页自己那一句；核心给了「注意」（PK-3 上）的换成核心的，不写两遍（W-1109）
+  const warn = p.official ? null : h('p.mk-warn', t('market.community_warn'));
   const head = h('div.mk-detail-head', pkgFace(dialog.ctx.core, p, hasIcon(face) ? face : 'package', '.mk-face.is-big', typeof p.source === 'string' ? p.source : null),
     h('div.mk-detail-text', h('strong', p.name ?? p.package), h('p', p.summary ?? ''),
       h('p.mk-version', [t('market.version', { version: p.version ?? '' }), t(p.official ? 'market.official' : 'market.community')].join(' · ')),
-      p.official ? null : h('p.mk-warn', t('market.community_warn')),
+      warn,
       p.blocked ? h('p.mk-warn.is-blocked', t('market.blocked_why', { reason: String(p.blocked) })) : null));
   const rows = h('div.set-rows', h('p.set-empty', t('market.loading')));
   const line = (/** @type {string} */ label, /** @type {any} */ value) => h('div.set-row', h('div.set-text', h('div.set-name', h('span', label))), h('div.set-control.mk-value', value));
@@ -441,24 +466,34 @@ function detailPage(dialog, id) {
       got?.origin ? line(t('market.origin'), h('a.mk-link', { href: /^https?:\/\//.test(got.origin) ? got.origin : `https://${got.origin}`, target: '_blank', rel: 'noopener noreferrer' }, h('code', got.origin), icon('external-link'))) : null,
       line(t('market.includes'), providesLine(got?.provides ?? p.provides, names) || t('market.nothing')),
       toolsLine(),
-      line(t('market.capabilities'), capsLine(got?.capabilities) ?? t('market.none')),
+      line(t('market.capabilities'), capsLine(dialog, got?.capabilities) ?? t('market.none')),
       (got?.with ?? []).length ? line(t('market.with'), h('div.mk-with', got.with.map((/** @type {any} */ w) => h('code', `${w.package} ${w.version ?? ''}`)))) : null,
+      // 推荐的（核心 PK-3 上：要装的包推荐的、还没装的），只列出来，不跟着装
+      (got?.recommends ?? []).length ? line(t('market.recommends'), h('div.mk-with', got.recommends.map((/** @type {any} */ w) => h('code', `${w.package} ${w.version ?? ''}`)))) : null,
       typeof got?.download === 'number' ? line(t('market.size'), bytes(got.download)) : null,
       // 装着别的版本的才写「替换」（同一个版本重装不写）
       got?.replaces && got.replaces.version !== p.version ? line(t('market.replaces'), t('market.replaces_version', { version: got.replaces.version ?? '' })) : null,
     ].filter(Boolean);
-    replace(rows, items);
+    // 核心给的注意（核心 PK-3 上：社区的、本机文件的才有，照连接的语言一句一个），一句一行，前缀「注意：」是网页的字；推荐的那几句接在后面
+    const notices = [...(Array.isArray(got?.notice) ? got.notice : []), ...(Array.isArray(got?.recommends_notice) ? got.recommends_notice : [])]
+      .filter((s) => typeof s === 'string' && s).map((s) => h('p.mk-warn', t('market.notice', { text: s })));
+    if (notices.length) warn?.remove();
+    replace(rows, [...notices, ...items]);
   }, (err) => replace(rows, h('p.set-empty.is-bad', problemText(dialog, err))));
   const action = actionButton(dialog, p, upgradableOf(m), true);
   return [head, h('section.set-group', h('h3.set-group-name', t('market.about')), rows),
     h('div.mk-detail-foot', m.problems[id] ? h('p.mk-problem', m.problems[id]) : null, action)];
 }
 
-/** 「所需权限」：名字顿号连成一行，有一句说明的悬停看；一项都没有的交 `null` @param {any} capabilities */
-function capsLine(capabilities) {
+/**
+ * 「所需权限」：名字顿号连成一行，有一句说明的悬停看；这一刻已经批过的（核心 PK-3 上的 `held`）接「（已批）」；一项都没有的交 `null`。
+ * @param {any} dialog @param {any} capabilities
+ */
+function capsLine(dialog, capabilities) {
   const rows = capabilityRows(capabilities);
   if (!rows.length) return null;
-  return h('span', rows.flatMap((c, i) => [i ? '、' : null, h('span', c.summary ? { title: c.summary } : {}, c.name)]).filter((x) => x !== null));
+  const held = dialog.ctx.text('market.held');
+  return h('span', rows.flatMap((c, i) => [i ? '、' : null, h('span', c.summary ? { title: c.summary } : {}, c.held ? `${c.name}${held}` : c.name)]).filter((x) => x !== null));
 }
 
 /**
