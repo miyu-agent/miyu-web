@@ -2,7 +2,7 @@
 # Cargo.toml 的工作区版本一样）时一种系统打一个 `.miyu`（`miyu pkg pack` 打的，软件源只收这种），传进这个标签的 Release；软件源每天收一次，
 # 收进索引以后 `miyu pkg install miyu-webui` 就装得上。包里：本仓库编的 miyu-web 程序、miyu-webui/ 的清单和常量、web-demo 里给浏览器的页面、
 # 本仓库的许可证（AGPL）和第三方许可证清单（tools/pack-web.py --stage 搭的，和本机打的一个样子）。
-# 手动跑（不是标签）的不传 Release，包放进这一趟的产物：发版前先试一遍三种系统打不打得出来。Linux aarch64 等 CI 测上了再加（同 render、im）。
+# 手动跑（不是标签）的不传 Release，包放进这一趟的产物：发版前先试一遍四种系统打不打得出来（linux-aarch64 2026-11-05 加，W-1100，跑在 ubuntu-24.04-arm 上）。
 name: release
 
 on:
@@ -18,6 +18,8 @@ jobs:
         include:
           - os: ubuntu-24.04
             target: linux-x86_64
+          - os: ubuntu-24.04-arm
+            target: linux-aarch64
           - os: macos-latest
             target: macos-aarch64
           - os: windows-latest
