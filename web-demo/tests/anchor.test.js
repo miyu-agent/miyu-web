@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { anchorAt, atBottom, pinAt } from '../src/model/anchor.js';
+import { anchorAt, atBottom, followAfter, pinAt } from '../src/model/anchor.js';
 
 test('内容变长：停到内容底边，不垫', () => {
   assert.deepEqual(anchorAt(200, 500, 900), { top: 400, pad: 0 });
@@ -38,6 +38,20 @@ test('清空过的：跟着往上走也不越过「上下文已清空」那一�
 test('离底边够近才算在底下', () => {
   assert.equal(atBottom({ scrollHeight: 1000, scrollTop: 460, clientHeight: 500 }, 48), true);
   assert.equal(atBottom({ scrollHeight: 1000, scrollTop: 400, clientHeight: 500 }, 48), false);
+});
+
+test('滚了一下以后跟不跟：往上的不跟，没在跟着的要往下滚到底才接着跟（W-1076）', () => {
+  // 往上滚：在跟着的也不跟了
+  assert.equal(followAfter(true, -25, true), false);
+  // 在跟着、还在底下：接着跟（浏览器多报一次、挪了不到一像素的也算）
+  assert.equal(followAfter(true, 0, true), true);
+  assert.equal(followAfter(true, 30, true), true);
+  // 没在跟着：垫的收到视口底边以后停在哪都算在底下，Firefox 多报的那一下没往下，不算回到底
+  assert.equal(followAfter(false, 0, true), false);
+  assert.equal(followAfter(false, 1, true), false);
+  // 真往下滚到了底才接着跟
+  assert.equal(followAfter(false, 40, true), true);
+  assert.equal(followAfter(false, 40, false), false);
 });
 
 test('她的一段正文长过视口：第一行顶到视口最上面（留一点边）就停住', () => {

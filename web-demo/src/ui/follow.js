@@ -16,7 +16,7 @@
 //! - 她的一段正文长过视口：第一行顶到视口最上面就停住，停住以后上面的内容变短（前面那一段收起）它也钉在那里；
 //!   她开始下一步回到最底下接着跟；一段只停一次，人滚过的不动。
 //! - 点开、收起时间线：被点的那一行留在屏幕原来的地方，内容往下长、往上收，收完照人在不在底下重新定跟不跟。
-//! - 人滚上去就钉住，滚回底再跟着；你发出一句话，清掉垫的空白，回到最底下。往上滚的那一下（滚轮往上、`PageUp`、`↑`、`Home`）
+//! - 人滚上去就钉住，滚回底再跟着（要真往下滚到底，`followAfter`；在底下时滚轮往下也算，`back`，W-1076）；你发出一句话，清掉垫的空白，回到最底下。往上滚的那一下（滚轮往上、`PageUp`、`↑`、`Home`）
 //!   就算离开：滚轮是一小段一小段平滑地滚，头一小段还在「算在底下」的范围里，不这样的话下一段字来了又被拉回底下，一抖一抖的。
 //!   只有人动过（按下指针、滚轮、触摸、翻页键）以后一小会儿（`scroll_intent_ms`）里的滚动算人滚的：内容变矮时浏览器自己把视口
 //!   往回收，不算，跟着最新的照旧放回去（2026-09-30 项目主人指出：她的思考滚着滚着，清空留的空档没了——那几行变矮时浏览器收了
@@ -26,7 +26,7 @@
 import { res } from '../util/res.js';
 import { cubicBezier, parseBezier, reduced } from '../lib/motion.js';
 import { offsetIn } from './dom.js';
-import { anchorAt, atBottom, pinAt, padFor } from '../model/anchor.js';
+import { anchorAt, atBottom, followAfter, pinAt, padFor } from '../model/anchor.js';
 
 export class Follow {
   /**
@@ -79,7 +79,8 @@ export class Follow {
     el.addEventListener('wheel', intend, { passive: true });
     el.addEventListener('touchmove', intend, { passive: true });
     document.addEventListener('keydown', (e) => { if (['PageUp', 'PageDown', 'ArrowUp', 'ArrowDown', 'Home', 'End', ' '].includes(e.key)) intend(); }, { capture: true });
-    el.addEventListener('wheel', (e) => { if (e.deltaY < 0) this.leave(); }, { passive: true });
+    // 往下滚：滚开时垫的收掉了，人停在滚动范围的底上，再往下滚不出滚动事件，照这一下算回到底（W-1076）
+    el.addEventListener('wheel', (e) => { if (e.deltaY < 0) this.leave(); else if (e.deltaY > 0) this.back(); }, { passive: true });
     el.addEventListener('keydown', (e) => { if (['PageUp', 'ArrowUp', 'Home'].includes(e.key)) this.leave(); });
     // 从别的标签页切回来：藏着的时候一帧都没走，攒下来的一下放到位，不当着人的面滑过去（2026-10-23 项目主人：切回来看到内容
     // 刚滑下来）；切回来后一小会儿里的都一下到位
@@ -99,7 +100,7 @@ export class Follow {
   /** 滚了：自己放的不算；人滚的照新的地方定跟不跟（往上滚的一律不跟，往下滚回底边才跟），停住的那段交给人。 */
   scrolled() {
     const top = this.el.scrollTop;
-    const up = top < this.lastTop - 1;
+    const delta = top - this.lastTop;
     this.lastTop = top;
     if (this.placed != null && Math.abs(top - this.placed) <= 1) return;
     // 没人动过：内容变矮时浏览器自己收的，不算人滚；跟着最新的照旧放回去
@@ -110,7 +111,7 @@ export class Follow {
     this.placed = null;
     this.hold = null;
     this.fold = null;
-    this.follow = !up && atBottom(this.el, res.layout.follow_within);
+    this.follow = followAfter(this.follow, delta, atBottom(this.el, res.layout.follow_within));
     if (!this.follow) {
       this.floor = Math.min(this.floor, this.el.scrollTop);
       this.trim();
@@ -143,6 +144,15 @@ export class Follow {
       };
       requestAnimationFrame(step);
     }, res.timeline.fold_ms);
+  }
+
+  /** 人往下滚到了底：接着跟着最新的（没在跟着、还没到底的不管，到底以前的滚动事件照 `scrolled` 算）。 */
+  back() {
+    if (this.follow || !atBottom(this.el, res.layout.follow_within)) return;
+    this.follow = true;
+    this.floor = this.el.scrollTop;
+    if (this.pin) this.pin = null;
+    this.anchor();
   }
 
   /** 人往上滚了：不再跟着最新的，钉在这里（停住的正文交给人）。 */

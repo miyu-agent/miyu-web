@@ -46,3 +46,12 @@ export function pinAt(target, start, margin) {
  * @param {number} near 多近算在底下（`layout.json` 的 `follow_within`）
  */
 export const atBottom = (box, near) => box.scrollHeight - box.scrollTop - box.clientHeight < near;
+
+/**
+ * 人滚了一下以后跟不跟着最新的：往上滚的不跟；在跟着的不往上、还在底下就接着跟；没在跟着的要真往下滚、到了底才接着跟
+ * （W-1076，2026-11-05 项目主人：Firefox 里滚轮慢慢往上滚，被拉回来、上下抖。人滚开时垫的空白收到视口底边，停在哪都算在底下，
+ * Firefox 平滑滚动多报的那一下没往上，原来就当成回到了底）。
+ * @param {boolean} following 这一下以前跟不跟 @param {number} delta 视口这一下挪了多少（往下为正）
+ * @param {boolean} bottom 这时在不在底下（`atBottom`）
+ */
+export const followAfter = (following, delta, bottom) => delta >= -1 && bottom && (following || delta > 1);
