@@ -156,7 +156,7 @@
 照官方打包模板（`miyu-agent/packages/.github/workflows/pack.yml@main`，同 miyu-render、miyu-embed；core1 11-04 照项目主人 11-03 定的进官方源）：
 
 1. 版本写在两处，一样：`Cargo.toml` 的工作区版本、`miyu-webui/package.toml` 的 `version`（`tools/pack-web.py` 核对，不一样的不打）。第一版 `0.1.0`。
-2. 清单写 `targets = ["linux-x86_64", "macos-aarch64", "windows-x86_64"]`：三台 CI 测着的这三种，Linux aarch64 等 CI 测上了再加。托盘程序装进资源目录的也是这一份清单，写全了在这三种上都认（原来不写 targets、由打包脚本补一种，写死一种别的系统就装不上）。
+2. 清单写 `targets = ["linux-x86_64", "linux-aarch64", "macos-aarch64", "windows-x86_64"]`：CI 测着的这四种（linux-aarch64 2026-11-05 加，W-1100：核心发版 RL-1 的命令行版照 `pack-web.py --stage` 要四种；CI、release.yml 多一台 `ubuntu-24.04-arm`）。托盘程序装进资源目录的也是这一份清单，写全了在这几种上都认（原来不写 targets、由打包脚本补一种，写死一种别的系统就装不上）。
 3. `.github/workflows/release.yml`：推 `v<版本>` 的标签时一种系统一个 job：编 release 的 `miyu-web`，`tools/pack-web.py --stage dist/miyu-webui` 照装好的样子搭包文件夹（清单、`web.json`、`matugen/`、`loading.html`、`pages/`、`bin/miyu-web`、本仓库的 `LICENSE`（AGPL-3.0-or-later）、`THIRD-PARTY-LICENSES.txt`），模板照它 `miyu pkg pack`、核对标签和版本、传进 Release。手动跑（`workflow_dispatch`）的不传，包放进产物：发版前先试三种系统打不打得出来。
 4. 打标签、推标签由项目主人自己跑。
 
