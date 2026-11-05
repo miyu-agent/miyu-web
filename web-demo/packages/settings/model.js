@@ -386,10 +386,17 @@ export const mcpStopped = (p) => p.enabled !== false && (p.mcp ?? []).some((s) =
 export const mcpNeedsLogin = (p) => p.enabled !== false && (p.mcp ?? []).some((s) => s.state === 'stopped' && !s.covered && s.reason === 'needs_login');
 
 /**
- * 几个包的编号换成给人看的名字（核心 F-11：缺的依赖 `missing`、依赖它的 `by` 都是编号）：列表里有、有名字的照名字，没装的照编号；先后照原样。
+ * 几个包的编号换成给人看的名字（核心 F-11：缺的依赖 `missing`、依赖它的 `by` 都是编号）：列表里有、有名字的照名字，没装的照原文；先后照原样。
+ * 依赖可以带版本下限（核心 PK-2，`onebot>=1.2.0`，只有 `>=` 一种写法）：在第一个 `>=` 处切开，前半段当编号查名字，下限原样接在名字后面
+ * （「接入QQ >=1.2.0」）（W-1103）。
  * @param {any[]|null|undefined} packages `package.list` 的 `packages` @param {string[]} ids
  */
-export const packageNames = (packages, ids) => ids.map((id) => (packages ?? []).find((p) => p.package === id)?.name ?? id);
+export const packageNames = (packages, ids) => ids.map((dep) => {
+  const cut = dep.indexOf('>=');
+  const id = cut < 0 ? dep : dep.slice(0, cut);
+  const name = (packages ?? []).find((p) => p.package === id)?.name;
+  return name ? (cut < 0 ? name : `${name} ${dep.slice(cut)}`) : dep;
+});
 
 /**
  * 自己写的 MCP 服务推来一项（`mcp.changed {name, server}`，核心 F-9 补）：换掉同名的；新的接在后面（照配置里自己写的先后，新写的在最后）；

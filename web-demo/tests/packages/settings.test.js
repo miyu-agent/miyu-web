@@ -299,6 +299,8 @@ test('依赖的编号换成名字：列表里有名字的照名字，没装的�
   const list = [{ package: 'onebot', name: '接入QQ' }, { package: 'nameless' }];
   assert.deepEqual(packageNames(list, ['ghost', 'onebot', 'nameless']), ['ghost', '接入QQ', 'nameless']);
   assert.deepEqual(packageNames(null, ['onebot']), ['onebot']);
+  // 带版本下限的（核心 PK-2，W-1103）：照 `>=` 前面的编号查名字，下限接在后面；没装的照原文
+  assert.deepEqual(packageNames(list, ['onebot>=1.2.0', 'ghost>=2.0', 'nameless>=0.1']), ['接入QQ >=1.2.0', 'ghost>=2.0', 'nameless>=0.1']);
   const manifest = JSON.parse(readFileSync(new URL('../../packages/settings/manifest.json', import.meta.url), 'utf8'));
   for (const lang of ['zh', 'en', 'ja']) {
     const pkg = manifest.text[lang].pkg;
