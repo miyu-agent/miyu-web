@@ -41,13 +41,25 @@ export function packagePlan(detail, home, text) {
   if (doing === 'remove') {
     const keys = strings(p.settings);
     row('deletes', [...(keys.length ? [text('plan.settings_keys', { keys: keys.join(text('plan.separator')) })] : []), ...stateDir(p.state, home, text)]);
-    // 包的配置目录 `etc/<编号>/`（核心 PK-5）：留着的写留在哪，连它一起删的（`purge`）写会删掉；目录不在、是空的没有这一格（W-1105）
-    if (p.config && typeof p.config === 'object' && typeof p.config.path === 'string' && p.config.path) {
-      row('config', [text(p.config.kept === false ? 'plan.config_purged' : 'plan.config_kept', { path: tilde(p.config.path, home) })]);
-    }
+    // 包留下的配置（核心 PK-5、PK-5补）：`config: {path?, kept, settings?}`，配置目录 `etc/<编号>/` 里有东西才有 `path`，`settings` 是
+    // 写在 etc/config.toml 里、会留下的设置项数；留着的写留在哪、留几项，连它们一起删的（`purge`）写会删掉；两样都没有的没有这一格
+    // （W-1105、W-1108）
+    if (p.config && typeof p.config === 'object') row('config', configItems(p.config, home, text));
   }
   if (Number.isInteger(p.size) && Number.isInteger(p.files)) row('size', [text('plan.size', { size: bytes(p.size), files: p.files })]);
   return { title, path, rows };
+}
+
+/**
+ * 「配置」那一行：目录一项、设置一项，有什么写什么（W-1108）。
+ * @param {any} config @param {string|null} home @param {(key: string, fields?: Record<string, any>) => string} text @returns {string[]}
+ */
+function configItems(config, home, text) {
+  const purged = config.kept === false;
+  const items = [];
+  if (typeof config.path === 'string' && config.path) items.push(text(purged ? 'plan.config_purged' : 'plan.config_kept', { path: tilde(config.path, home) }));
+  if (Number.isInteger(config.settings) && config.settings > 0) items.push(text(purged ? 'plan.settings_purged' : 'plan.settings_kept', { n: config.settings }));
+  return items;
 }
 
 /**

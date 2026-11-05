@@ -57,6 +57,10 @@ test('卸：一并删除写设置的键和状态目录，设置不算进包含�
   assert.deepEqual(cfg({ path: '/home/me/.miyu/etc/notes', kept: true }), ['卸载软件包 notes', null, '配置：留在 ~/.miyu/etc/notes']);
   assert.deepEqual(cfg({ path: '/home/me/.miyu/etc/notes', kept: false }), ['卸载软件包 notes', null, '配置：会删掉 ~/.miyu/etc/notes']);
   assert.deepEqual(cfg(undefined), ['卸载软件包 notes', null]);
+  // PK-5补（W-1108）：只有设置的、两样都有的，有什么写什么
+  assert.deepEqual(cfg({ kept: true, settings: 2 }), ['卸载软件包 notes', null, '配置：留下 2 项设置']);
+  assert.deepEqual(cfg({ path: '/home/me/.miyu/etc/notes', kept: false, settings: 3 }), ['卸载软件包 notes', null, '配置：会删掉 ~/.miyu/etc/notes、会删掉 3 项设置']);
+  assert.deepEqual(cfg({ kept: true }), ['卸载软件包 notes', null]);
   assert.equal(packagePlan({ tool: 'package', install: '/x', preview: { package: 'net', restores: true } }, null, t)?.title, '恢复软件包 net');
   assert.equal(packagePlan({ tool: 'package', enable: 'kit', preview: { package: 'kit' } }, null, t)?.title, '启用扩展 kit');
 });

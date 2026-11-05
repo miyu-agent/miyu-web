@@ -367,20 +367,30 @@ function removeButton(dialog, p) {
 function purgeButton(dialog, p) {
   if (p.required || p.layer === 'shipped' || p.removed) return null;
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
-  /** @type {Map<string, Promise<string|null>>} */
+  /** @type {Map<string, Promise<{path: string|null, settings: number}|null>>} */
   const asked = (dialog.purgeable ??= new Map());
   const key = `${p.package}@${p.version ?? ''}`;
   if (!asked.has(key)) {
+    // 有 `config` 这一格就出（PK-5补：只有设置、没有目录的也有，`{kept, settings}`）
     asked.set(key, dialog.ctx.core.request('package.remove', { package: p.package, preview: true })
-      .then((/** @type {any} */ r) => (typeof r?.config?.path === 'string' && r.config.path ? r.config.path : null), () => null));
+      .then((/** @type {any} */ r) => {
+        const c = r?.config;
+        if (!c || typeof c !== 'object') return null;
+        const path = typeof c.path === 'string' && c.path ? c.path : null;
+        const settings = Number.isInteger(c.settings) && c.settings > 0 ? c.settings : 0;
+        return path || settings ? { path, settings } : null;
+      }, () => null));
   }
   const button = h('button.set-btn.is-danger', { type: 'button', hidden: true }, t('pkg.purge'));
-  asked.get(key)?.then((path) => {
-    if (!path) return;
+  asked.get(key)?.then((left) => {
+    if (!left) return;
     const home = dialog.ctx.host?.home ?? null;
     button.hidden = false;
     button.onclick = async () => {
-      const ask = t('pkg.purge_ask', { name: p.name ?? p.package, path: home ? tilde(path, home) : path });
+      const name = p.name ?? p.package;
+      const path = left.path && home ? tilde(left.path, home) : left.path;
+      const ask = path && left.settings ? t('pkg.purge_ask_both', { name, path, n: left.settings })
+        : path ? t('pkg.purge_ask', { name, path }) : t('pkg.purge_ask_settings', { name, n: left.settings });
       if (!await confirmIn(button, { text: ask, yes: t('pkg.purge'), no: t('ask_no') })) return;
       try {
         await dialog.ctx.core.request('package.remove', { package: p.package, purge: true });

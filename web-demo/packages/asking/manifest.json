@@ -123,6 +123,8 @@
         "state_dir_path": "状态目录 {path}",
         "config_kept": "留在 {path}",
         "config_purged": "会删掉 {path}",
+        "settings_kept": "留下 {n} 项设置",
+        "settings_purged": "会删掉 {n} 项设置",
         "size": "{size}，{files} 个文件",
         "programs": {
           "ui": "界面程序",
@@ -220,6 +222,8 @@
         "state_dir_path": "state directory {path}",
         "config_kept": "kept in {path}",
         "config_purged": "{path} will be deleted",
+        "settings_kept": "{n} settings kept",
+        "settings_purged": "{n} settings will be deleted",
         "size": "{size}, {files} files",
         "programs": {
           "ui": "UI program",
@@ -317,6 +321,8 @@
         "state_dir_path": "状態ディレクトリ {path}",
         "config_kept": "{path} に残す",
         "config_purged": "{path} を削除",
+        "settings_kept": "設定 {n} 項目を残す",
+        "settings_purged": "設定 {n} 項目を削除",
         "size": "{size}、{files} ファイル",
         "programs": {
           "ui": "UI プログラム",
