@@ -120,7 +120,7 @@ function packageRow(dialog, p, child = false) {
   // 包开着、带的 MCP 服务有停下的：写「服务已停止」（核心的状态是好好的也照这个写）
   // 服务全被自制的同名服务替代了（F-9 补的 `covered`，`status` 照旧 `off`）：写「被自制的服务替代」，不当关着
   const control = controlFor(dialog, p, null);
-  const state = p.covered && !bad ? h('span.set-pkg-status', t('pkg.covered'))
+  const state = p.covered === true && !bad ? h('span.set-pkg-status', t('pkg.covered'))
     // 卸掉了又没有开关的出厂包（核心 PE-1：删人格连带卸掉的）：写「已卸载」，点进去「装回」
     : p.removed && !control ? h('span.set-pkg-status', t('pkg.removed'))
     : mcpStopped(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_stopped'))
@@ -280,12 +280,17 @@ function infoCard(dialog, p, e) {
   // 状态：扩展照它跑得怎样（停下的写为什么）；别的只写要留意的（好好的「已启用」、关着的「已停用」开关已经说了）
   const status = e ? stateText(t, e)
     : p.status === 'depends_missing' && p.missing?.length ? t('pkg.depends_missing', { names: packageNames(dialog.packages, p.missing).join(t('pkg.sep')) })
-    : p.covered && !bad ? t('pkg.covered')
+    : p.covered === true && !bad ? t('pkg.covered')
     : QUIET.has(p.status) ? null : t(`pkg.status.${p.status}`);
   const alarm = bad || failed(e);
   const from = typeof p.from === 'string' ? t(`pkg.from.${p.from}`) : null;
   const author = typeof p.author === 'string' && p.author.trim() ? p.author.trim() : null;
-  const meta = [p.version ? t('pkg.version', { version: p.version }) : null, from && !from.startsWith('pkg.') ? from : null, author].filter(Boolean).join(' · ');
+  // 下面一层还有同编号的、被它盖住的（核心 SD-1，`foldCovered` 挂上的 `covers`）：写盖过了哪一层的哪一版，那一份更新的注明（W-1106）
+  const covers = (Array.isArray(p.covers) ? p.covers : []).map((/** @type {any} */ c) => {
+    const layer = typeof c.layer === 'string' ? t(`pkg.from.${c.layer}`) : '';
+    return t(c.newer ? 'pkg.covers_newer' : 'pkg.covers', { layer: layer.startsWith('pkg.') ? c.layer : layer, version: c.version ?? '' });
+  });
+  const meta = [p.version ? t('pkg.version', { version: p.version }) : null, from && !from.startsWith('pkg.') ? from : null, author, ...covers].filter(Boolean).join(' · ');
   const upstream = typeof p.upstream === 'string' && /^https:\/\/[^\s]+$/.test(p.upstream) ? p.upstream : null;
   const control = controlFor(dialog, p, e);
   const stderr = e ? (Array.isArray(e.stderr) ? e.stderr.join('\n') : e.stderr ?? '') : '';
@@ -334,11 +339,11 @@ function openButton(dialog, id) {
 }
 
 /**
- * 卸载：只有自己装的、不是必需的才有（出厂的卸掉和关掉是一回事，照列表的开关）。先弹窗问一句（2026-10-20 项目主人：不要点两下）。
+ * 卸载：只有自己装的、系统装的（核心 SD-1：卸掉只在 `etc/removed/` 记一笔，文件不动，能装回）、不是必需的才有（出厂的卸掉和关掉是一回事，照列表的开关）。先弹窗问一句（2026-10-20 项目主人：不要点两下）。
  * @param {any} dialog @param {any} p
  */
 function removeButton(dialog, p) {
-  if (p.required || p.layer === 'shipped') return null;
+  if (p.required || p.layer === 'shipped' || p.removed) return null;
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   const button = h('button.set-btn.is-danger', { type: 'button', onclick: async () => {
     if (!await confirmIn(button, { text: t('pkg.uninstall_ask', { name: p.name ?? p.package }), yes: t('ask_yes'), no: t('ask_no') })) return;
@@ -360,7 +365,7 @@ function removeButton(dialog, p) {
  * @param {any} dialog @param {any} p
  */
 function purgeButton(dialog, p) {
-  if (p.required || p.layer === 'shipped') return null;
+  if (p.required || p.layer === 'shipped' || p.removed) return null;
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
   /** @type {Map<string, Promise<string|null>>} */
   const asked = (dialog.purgeable ??= new Map());

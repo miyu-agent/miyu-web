@@ -2,6 +2,8 @@
 //! 给人看的字（蓝图 `web.md`「时间线的数」第 5 条）：工具的显示名、对象是哪个参数、结果那一句的模板，和终端界面、`miyu ask`
 //! 同一份。握手以后照界面语言问核心的 `human.get`（核心施工 W-1；原来由桥读资源目录经 `web.human` 给）。
 
+import { foldCovered } from '../lib/packages.js';
+
 /**
  * @typedef {{tools: Record<string, {name: string, subject?: string, icon?: string, block?: string}>, said: Record<string, string>,
  *   packages: Record<string, string>, icons: Record<string, string>}} Human
@@ -20,7 +22,7 @@
 export async function loadHuman(conn, language, packages = true) {
   const [got, listed] = await Promise.all([
     conn.request('human.get', { language }),
-    packages ? conn.request('package.list', {}).then((r) => r?.packages ?? [], () => []) : [],
+    packages ? conn.request('package.list', {}).then((r) => foldCovered(r?.packages ?? []), () => []) : [],
   ]);
   return { tools: got?.tools ?? {}, said: got?.said ?? {}, packages: got?.packages ?? {}, icons: iconsOf(listed) };
 }

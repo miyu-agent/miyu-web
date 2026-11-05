@@ -7,6 +7,7 @@
 
 import { h, icon, hasIcon } from '../../src/lib/dom.js';
 import { FrameHost } from './frame.js';
+import { foldCovered } from '../../src/lib/packages.js';
 import { sitePort, openSite } from './external.js';
 
 export class FullPage {
@@ -48,7 +49,7 @@ export class FullPage {
     this.close();
     this.shown = key;
     const t = (/** @type {string} */ path) => this.ctx.text(path);
-    const listed = await this.ctx.core.request('package.list', {}).then((r) => r?.packages ?? [], () => []);
+    const listed = await this.ctx.core.request('package.list', {}).then((r) => foldCovered(r?.packages ?? []), () => []);
     // 软件包自己写的图标不在常用那一套里的：先读整套
     const own = listed.find((/** @type {any} */ x) => x.package === route.package)?.icon;
     if (own && !hasIcon(own)) await Promise.resolve(this.ctx.icons?.more()).catch(() => {});

@@ -383,6 +383,8 @@
         },
         "required": "必需",
         "version": "版本 {version}",
+        "covers": "盖过了{layer} {version}",
+        "covers_newer": "盖过了{layer} {version}（那一份更新）",
         "features": "功能",
         "settings": "设置",
         "uninstall": "卸载",
@@ -406,6 +408,7 @@
         "upstream": "上游",
         "from": {
           "shipped": "内置",
+          "distro": "系统装的",
           "official": "官方软件源",
           "community": "社区软件源",
           "local": "本地"
@@ -999,6 +1002,8 @@
         },
         "required": "Required",
         "version": "Version {version}",
+        "covers": "overrides the {layer} {version}",
+        "covers_newer": "overrides the {layer} {version} (newer)",
         "features": "Features",
         "settings": "Settings",
         "uninstall": "Uninstall",
@@ -1022,6 +1027,7 @@
         "upstream": "Upstream",
         "from": {
           "shipped": "Built-in",
+          "distro": "System package",
           "official": "Official source",
           "community": "Community source",
           "local": "Local"
@@ -1615,6 +1621,8 @@
         },
         "required": "必須",
         "version": "バージョン {version}",
+        "covers": "{layer}の {version} より優先",
+        "covers_newer": "{layer}の {version} より優先（そちらの方が新しい）",
         "features": "機能",
         "settings": "設定",
         "uninstall": "アンインストール",
@@ -1638,6 +1646,7 @@
         "upstream": "アップストリーム",
         "from": {
           "shipped": "内蔵",
+          "distro": "システムのパッケージ",
           "official": "公式ソース",
           "community": "コミュニティのソース",
           "local": "ローカル"

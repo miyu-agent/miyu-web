@@ -7,6 +7,8 @@
 //! 当场撤回；升级了的、这一页加载过又装回来的，浏览器还拿着原来那份脚本（ES 模块同一个地址只取一次），只说一句刷新页面后生效。
 //! 一个外观包起不来（换不到票据、清单坏了、脚本抛错）只它故障，照别的包一样写在设置页「软件包」里；能照别的可选包停用。
 
+import { foldReply, shadowed } from '../lib/packages.js';
+
 /** 包编号的写法（同网页软件的 `valid_package`：放进地址里不用转义） */
 const PACKAGE = /^[A-Za-z0-9._-]{1,64}$/;
 
@@ -104,7 +106,7 @@ export class Themes {
           console.error(`读不到装着的外观包：${err?.message ?? err}`);
           return null;
         });
-      if (listed) await this.reconcile(themeIds(listed, this.deps.taken), null);
+      if (listed) await this.reconcile(themeIds(foldReply(listed), this.deps.taken), null);
     });
   }
 
@@ -120,6 +122,8 @@ export class Themes {
     if (method !== 'package.changed' || typeof params?.package !== 'string') return false;
     const id = params.package;
     const entry = params.entry ?? null;
+    // 被上面一层盖住的那份（核心 SD-1）不加载，推来了也不管
+    if (shadowed(entry)) return true;
     this.serial(async () => {
       const carries = themeIds({ packages: entry ? [entry] : [] }, this.deps.taken).includes(id);
       if (carries && this.has(id)) {

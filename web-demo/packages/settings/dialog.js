@@ -21,6 +21,7 @@ import { Subpage, swap } from './subpage.js';
 import { drawAdvanced } from './advanced.js';
 import { drawToolPage, hasToolPage } from './tool-pages.js';
 import { EXTERNAL_PREFIX } from './tool-model.js';
+import { foldCovered } from '../../src/lib/packages.js';
 
 /** 刚存成的那一项重画出来还画对勾的时限（毫秒） */
 const SAVED_MS = 1000;
@@ -156,7 +157,7 @@ export class SettingsDialog {
       core.request('config.schema', {}),
       core.request('config.get', { all: true }),
       // 核心的软件包（9-1）：「默认界面」的选项照它列（读不到的旧核心是空的）
-      core.request('package.list', {}).then((r) => { this.pkgGroups = Array.isArray(r?.groups) ? r.groups : []; return r?.packages ?? []; }, () => []),
+      core.request('package.list', {}).then((r) => { this.pkgGroups = Array.isArray(r?.groups) ? r.groups : []; return foldCovered(r?.packages ?? []); }, () => []),
       // 技能、脚本两页（核心 X-26、X-27；没有推送，打开、改了配置时重读）：旧核心没有的是 `null`，不出那一页
       core.request('skill.list', {}).then((r) => (Array.isArray(r?.skills) ? r : null), () => null),
       core.request('script.list', {}).then((r) => (Array.isArray(r?.scripts) ? r : null), () => null),

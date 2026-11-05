@@ -2,6 +2,8 @@
 //! 设置页的纯逻辑（蓝图 `web.md`「设置页」）：核心的配置清单（`config.schema`）和最终值（`config.get`）合成一页页、一组组的项；
 //! 每一项来自哪一层、写在哪一层、`expect` 写什么、搜索对不对得上。不碰 DOM、不发请求。
 
+import { coverOf, shadowed } from '../../src/lib/packages.js';
+
 /**
  * @typedef {{key: string, type: string, control: string, name: string, description: string, page: string, group: string,
  *   common?: boolean, layers: string[], applies: string, default?: any, options?: {value: any, name: string}[],
@@ -373,6 +375,11 @@ export const editableKeys = (settings) => Object.keys(settings ?? {}).filter((k)
  * @param {any[]} list @param {string} id @param {any|null} entry
  */
 export function applyPackageChange(list, id, entry) {
+  // 推来的是被上面一层盖住的那份（核心 SD-1，W-1106）：认的那份不动，只换它下面挂的同一层那一项
+  if (shadowed(entry)) {
+    const one = coverOf(entry);
+    return list.map((p) => (p.package === id ? { ...p, covers: [...(p.covers ?? []).filter((/** @type {any} */ c) => c.layer !== one.layer), one] } : p));
+  }
   const rest = list.filter((p) => p.package !== id);
   if (!entry) return rest;
   if (rest.length === list.length) return [...rest, entry].sort((a, b) => a.package.localeCompare(b.package));

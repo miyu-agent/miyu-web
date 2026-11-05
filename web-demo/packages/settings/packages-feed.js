@@ -5,6 +5,7 @@
 //! MCP 服务（核心 F-9 补）订上以后读一次 `mcp.list`，之后跟 `mcp.changed`。换了在「软件包」「MCP」页的重画（正在改一项的不打断）。
 
 import { applyPackageChange, applyServerChange } from './model.js';
+import { foldCovered } from '../../src/lib/packages.js';
 
 /** 装卸包推来的 `package.changed` 一阵一阵的：停这么久再重读技能、脚本 */
 const TOOLS_SETTLE_MS = 300;
@@ -28,7 +29,7 @@ export class PackageFeed {
     this.live = true;
     try {
       const got = await this.dialog.ctx.core.request('subscribe', { stream: 'packages' });
-      if (Array.isArray(got?.packages)) this.dialog.packages = got.packages;
+      if (Array.isArray(got?.packages)) this.dialog.packages = foldCovered(got.packages);
     } catch {
       // 旧核心没有这个流、核心 e1cc0d5e8 以前组里的管理员订不了（`not_permitted`）：照 `package.list` 读的那一份，不跟推送，不报错
       this.live = false;
