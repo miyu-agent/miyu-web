@@ -6,7 +6,7 @@
 #   web.json、matugen/  这个仓库的 miyu-webui/ 原样
 #   THIRD-PARTY-LICENSES.txt  这个仓库的 miyu-webui/ 原样（cargo xtask notices 生成的第三方许可证清单），LICENSE 照仓库根的
 #   loading.html  这个仓库的 miyu-webui/ 原样（桌面端启动时的等待页，node tools/loading.mjs 生成）
-#   pages/        web-demo 里给浏览器的七样：index.html、distro.json、src、styles、packages、resources、vendor
+#   pages/        web-demo 里给浏览器的八样：index.html、manifest.webmanifest（应用清单，AP-6）、distro.json、src、styles、packages、resources、vendor
 #   bin/miyu-web  --binary 给的程序（这一种系统上编好的 release，脚本不编）
 # 清单的 targets 写全了三种（托盘程序装进资源目录的也是这一份，写全了在这三种上都认）。
 #   python3 tools/pack-web.py --miyu <主程序 miyu> --binary target/release/miyu-web --target linux-x86_64 --out <目录>
@@ -16,7 +16,7 @@ import argparse, json, pathlib, re, shutil, subprocess, tempfile, tomllib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 # 包编号：包文件夹叫这个名字，pkg pack 照文件夹名定编号、出的文件名
 PACKAGE = 'miyu-webui'
-PAGES = ['index.html', 'distro.json', 'src', 'styles', 'packages', 'resources', 'vendor']
+PAGES = ['index.html', 'manifest.webmanifest', 'distro.json', 'src', 'styles', 'packages', 'resources', 'vendor']
 TARGETS = ['linux-x86_64', 'linux-aarch64', 'macos-aarch64', 'windows-x86_64']
 
 
