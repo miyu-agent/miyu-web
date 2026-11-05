@@ -2,7 +2,7 @@
 //! 装、卸软件包的确认卡片写什么（蓝图 `web.md`「确认和提问」；核心 F-10 下上：访问类别 `install`，`detail` 是
 //! `{tool: "package", install|remove|enable, preview}`，`preview` 同 `package.install` / `package.remove` 带 `preview: true` 的回应）。
 //! 照命令行 `miyu pkg install` 的排法（`crates/miyu-cli/src/pkg/confirm.rs`），说法换成软件的规范用语（2026-10-12 项目主人）：
-//! 标题「安装软件包 notes 0.2.0」，下面一行包文件夹，再几行「包含」「无法加载」「所需权限」「一并删除」「大小」，没有的那一行不写。纯的。
+//! 标题「安装软件包 notes 0.2.0」，下面一行包文件夹，再几行「包含」「无法加载」「所需权限」「一并删除」「配置」「大小」，没有的那一行不写。纯的。
 
 import { bytes } from '../../src/lib/format.js';
 
@@ -41,6 +41,10 @@ export function packagePlan(detail, home, text) {
   if (doing === 'remove') {
     const keys = strings(p.settings);
     row('deletes', [...(keys.length ? [text('plan.settings_keys', { keys: keys.join(text('plan.separator')) })] : []), ...stateDir(p.state, home, text)]);
+    // 包的配置目录 `etc/<编号>/`（核心 PK-5）：留着的写留在哪，连它一起删的（`purge`）写会删掉；目录不在、是空的没有这一格（W-1105）
+    if (p.config && typeof p.config === 'object' && typeof p.config.path === 'string' && p.config.path) {
+      row('config', [text(p.config.kept === false ? 'plan.config_purged' : 'plan.config_kept', { path: tilde(p.config.path, home) })]);
+    }
   }
   if (Number.isInteger(p.size) && Number.isInteger(p.files)) row('size', [text('plan.size', { size: bytes(p.size), files: p.files })]);
   return { title, path, rows };

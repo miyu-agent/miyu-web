@@ -111,6 +111,7 @@
           "skipped": "无法加载",
           "needs": "所需权限",
           "deletes": "一并删除",
+          "config": "配置",
           "size": "大小",
           "packages": "软件包"
         },
@@ -120,6 +121,8 @@
         "state_dir": "状态目录",
         "state_dir_at": "状态目录 {path}（{size}）",
         "state_dir_path": "状态目录 {path}",
+        "config_kept": "留在 {path}",
+        "config_purged": "会删掉 {path}",
         "size": "{size}，{files} 个文件",
         "programs": {
           "ui": "界面程序",
@@ -205,6 +208,7 @@
           "skipped": "Failed to load",
           "needs": "Permissions",
           "deletes": "Also deletes",
+          "config": "Config",
           "size": "Size",
           "packages": "Packages"
         },
@@ -214,6 +218,8 @@
         "state_dir": "state directory",
         "state_dir_at": "state directory {path} ({size})",
         "state_dir_path": "state directory {path}",
+        "config_kept": "kept in {path}",
+        "config_purged": "{path} will be deleted",
         "size": "{size}, {files} files",
         "programs": {
           "ui": "UI program",
@@ -299,6 +305,7 @@
           "skipped": "読み込めないもの",
           "needs": "必要な権限",
           "deletes": "同時に削除",
+          "config": "設定ファイル",
           "size": "サイズ",
           "packages": "パッケージ"
         },
@@ -308,6 +315,8 @@
         "state_dir": "状態ディレクトリ",
         "state_dir_at": "状態ディレクトリ {path}（{size}）",
         "state_dir_path": "状態ディレクトリ {path}",
+        "config_kept": "{path} に残す",
+        "config_purged": "{path} を削除",
         "size": "{size}、{files} ファイル",
         "programs": {
           "ui": "UI プログラム",

@@ -52,6 +52,11 @@ test('卸：一并删除写设置的键和状态目录，设置不算进包含�
   assert.deepEqual(at({ path: '/srv/miyu/var/lib/notes' }), ['卸载软件包 notes', null, '一并删除：状态目录 /srv/miyu/var/lib/notes']);
   assert.deepEqual(at(undefined), ['卸载软件包 notes', null]);
   assert.deepEqual(at(false), ['卸载软件包 notes', null]);
+  // 配置目录 etc/<编号>/（核心 PK-5，W-1105）：留着的写留在哪，purge 的写会删掉；没有这一格的不写
+  const cfg = (config) => flat(packagePlan({ tool: 'package', remove: 'notes', preview: { package: 'notes', config } }, '/home/me', t));
+  assert.deepEqual(cfg({ path: '/home/me/.miyu/etc/notes', kept: true }), ['卸载软件包 notes', null, '配置：留在 ~/.miyu/etc/notes']);
+  assert.deepEqual(cfg({ path: '/home/me/.miyu/etc/notes', kept: false }), ['卸载软件包 notes', null, '配置：会删掉 ~/.miyu/etc/notes']);
+  assert.deepEqual(cfg(undefined), ['卸载软件包 notes', null]);
   assert.equal(packagePlan({ tool: 'package', install: '/x', preview: { package: 'net', restores: true } }, null, t)?.title, '恢复软件包 net');
   assert.equal(packagePlan({ tool: 'package', enable: 'kit', preview: { package: 'kit' } }, null, t)?.title, '启用扩展 kit');
 });
