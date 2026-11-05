@@ -4,8 +4,14 @@
 //! 下面（`covers`），设置「软件包」页照它写一句（W-1106）。纯的。
 //! `covered: true` 是另一回事（核心 F-9 补：包里的 MCP 服务全被自制的同名服务替代了，认的那份也可能有），只有对象才算被盖住。
 
-/** 这一项是不是被上面一层盖住的那份（SD-1 的对象，不是 F-9 的 `true`）。 @param {any} p */
-export const shadowed = (p) => !!p && typeof p.covered === 'object' && p.covered !== null;
+/** 对象才算（不是 F-9 的 `true`）。 @param {any} v */
+const isObj = (v) => typeof v === 'object' && v !== null;
+
+/**
+ * 这一项是不是被上面一层盖住的那份：核心 SD-1补 起这一格叫 `shadowed`（core1 11-05：和 F-9 的 `covered: true` 分开），SD-1 时叫
+ * `covered`，两种都认。 @param {any} p
+ */
+export const shadowed = (p) => !!p && (isObj(p.shadowed) || isObj(p.covered));
 
 /**
  * 只留认的那份；被盖住的照编号挂到认的那份的 `covers` 上（`{layer, version, newer}`，照列表的先后）。不是数组的原样交回。
@@ -24,7 +30,7 @@ export function foldCovered(list) {
 
 /** 被盖住的那一项挂到认的那份上的样子：哪一层、这一份的版本、这一份是不是更新。 @param {any} p */
 export function coverOf(p) {
-  const c = p.covered;
+  const c = isObj(p.shadowed) ? p.shadowed : p.covered;
   return { layer: typeof p.layer === 'string' ? p.layer : null, version: typeof c.version === 'string' ? c.version : typeof p.version === 'string' ? p.version : null, newer: c.newer === true };
 }
 

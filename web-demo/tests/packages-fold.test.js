@@ -18,6 +18,12 @@ test('被盖住的挂到认的那份下面，列表里只留认的那份；别�
   assert.deepEqual(foldReply({ packages: [winner, under], groups: [1] }).groups, [1]);
 });
 
+test('核心 SD-1补 起叫 shadowed，照样认', () => {
+  const renamed = { package: 'notes', layer: 'distro', shadowed: { by: 'home', version: '0.1.0', over: '0.2.0', newer: false } };
+  assert.equal(shadowed(renamed), true);
+  assert.deepEqual(foldCovered([winner, renamed])[0].covers, [{ layer: 'distro', version: '0.1.0', newer: false }]);
+});
+
 test('covered: true 是 F-9 的「服务全被自制的替代」，不算被盖住', () => {
   const mcp = { package: 'kit', layer: 'home', covered: true };
   assert.equal(shadowed(mcp), false);
