@@ -9,6 +9,7 @@
 //! 配置里自己写的服务（F-9 补）2026-10-20 起在「MCP」页（`tool-pages.js`）。
 
 import { confirmIn } from './confirm.js';
+import { tilde } from '../../src/lib/format.js';
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField, findBox, shell } from './rows.js';
 import { splitKey, itemFor, pkgSwitch, pkgGroupsOf, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy } from './model.js';
@@ -295,6 +296,7 @@ function infoCard(dialog, p, e) {
     e && e.on && e.state === 'stopped' && stderr
       ? h('button.set-btn', { type: 'button', onclick: () => { dialog.extensions.toggleSet(dialog.extensions.showing, id); dialog.extensions.redraw(id); } }, t(showing ? 'ext.hide_output' : 'ext.show_output')) : null,
     removeButton(dialog, p),
+    purgeButton(dialog, p),
     p.removed && !control ? reinstallButton(dialog, p) : null,
   ].filter(Boolean);
   const caps = e?.capabilities ?? [];
@@ -348,6 +350,43 @@ function removeButton(dialog, p) {
       dialog.toast(refusal(dialog, err));
     }
   } }, t('pkg.uninstall'));
+  return button;
+}
+
+/**
+ * 「卸载并删除配置」（W-1105，2026-11-05 项目主人：单独一个按钮）：核心 PK-5 起卸的时候能连包的配置目录 `etc/<编号>/` 一起删（`purge`）。
+ * 能卸的包先问一次预览（`package.remove` 带 `preview: true`），预览里有 `config`（目录在、不是空的）才出这个按钮；旧核心的预览没有这一格，
+ * 不出，也就不会带它不认的 `purge`。点了照删的路径问一句，再照 `purge: true` 卸。预览照包的编号、版本记在这一次打开的设置里，不每画一次问一次。
+ * @param {any} dialog @param {any} p
+ */
+function purgeButton(dialog, p) {
+  if (p.required || p.layer === 'shipped') return null;
+  const t = (/** @type {string} */ key, /** @type {any} */ fields) => dialog.ctx.text(key, fields);
+  /** @type {Map<string, Promise<string|null>>} */
+  const asked = (dialog.purgeable ??= new Map());
+  const key = `${p.package}@${p.version ?? ''}`;
+  if (!asked.has(key)) {
+    asked.set(key, dialog.ctx.core.request('package.remove', { package: p.package, preview: true })
+      .then((/** @type {any} */ r) => (typeof r?.config?.path === 'string' && r.config.path ? r.config.path : null), () => null));
+  }
+  const button = h('button.set-btn.is-danger', { type: 'button', hidden: true }, t('pkg.purge'));
+  asked.get(key)?.then((path) => {
+    if (!path) return;
+    const home = dialog.ctx.host?.home ?? null;
+    button.hidden = false;
+    button.onclick = async () => {
+      const ask = t('pkg.purge_ask', { name: p.name ?? p.package, path: home ? tilde(path, home) : path });
+      if (!await confirmIn(button, { text: ask, yes: t('pkg.purge'), no: t('ask_no') })) return;
+      try {
+        await dialog.ctx.core.request('package.remove', { package: p.package, purge: true });
+        asked.delete(key);
+        dialog.back();
+        await dialog.reload();
+      } catch (err) {
+        dialog.toast(refusal(dialog, err));
+      }
+    };
+  });
   return button;
 }
 
