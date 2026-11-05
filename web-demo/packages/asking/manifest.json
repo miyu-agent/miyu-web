@@ -118,6 +118,8 @@
         "separator": "、",
         "settings_keys": "设置 {keys}",
         "state_dir": "状态目录",
+        "state_dir_at": "状态目录 {path}（{size}）",
+        "state_dir_path": "状态目录 {path}",
         "size": "{size}，{files} 个文件",
         "programs": {
           "ui": "界面程序",
@@ -210,6 +212,8 @@
         "separator": ", ",
         "settings_keys": "settings {keys}",
         "state_dir": "state directory",
+        "state_dir_at": "state directory {path} ({size})",
+        "state_dir_path": "state directory {path}",
         "size": "{size}, {files} files",
         "programs": {
           "ui": "UI program",
@@ -302,6 +306,8 @@
         "separator": "、",
         "settings_keys": "設定 {keys}",
         "state_dir": "状態ディレクトリ",
+        "state_dir_at": "状態ディレクトリ {path}（{size}）",
+        "state_dir_path": "状態ディレクトリ {path}",
         "size": "{size}、{files} ファイル",
         "programs": {
           "ui": "UI プログラム",

@@ -46,6 +46,12 @@ test('带人格、预设的包（核心 P-11 下的 personas、presets）：接�
 test('卸：一并删除写设置的键和状态目录，设置不算进包含；装回出厂的写恢复', () => {
   const plan = packagePlan({ tool: 'package', remove: 'notes', preview: { package: 'notes', layer: 'home', version: '1.0', settings: ['notes.dir', 'notes.style'], state: true, files: 2, size: 2048 } }, null, t);
   assert.deepEqual(flat(plan), ['卸载软件包 notes 1.0', null, '一并删除：设置 notes.dir、notes.style、状态目录', '大小：2 KB，2 个文件']);
+  // 核心 PK-4 起 state 是 {path, size}（W-1104）：写路径和大小，家目录写成 ~；没有大小的只写路径；没有这一格的不写
+  const at = (state) => flat(packagePlan({ tool: 'package', remove: 'notes', preview: { package: 'notes', state } }, '/home/me', t));
+  assert.deepEqual(at({ path: '/home/me/.miyu/var/lib/notes', size: 12288 }), ['卸载软件包 notes', null, '一并删除：状态目录 ~/.miyu/var/lib/notes（12 KB）']);
+  assert.deepEqual(at({ path: '/srv/miyu/var/lib/notes' }), ['卸载软件包 notes', null, '一并删除：状态目录 /srv/miyu/var/lib/notes']);
+  assert.deepEqual(at(undefined), ['卸载软件包 notes', null]);
+  assert.deepEqual(at(false), ['卸载软件包 notes', null]);
   assert.equal(packagePlan({ tool: 'package', install: '/x', preview: { package: 'net', restores: true } }, null, t)?.title, '恢复软件包 net');
   assert.equal(packagePlan({ tool: 'package', enable: 'kit', preview: { package: 'kit' } }, null, t)?.title, '启用扩展 kit');
 });

@@ -40,10 +40,22 @@ export function packagePlan(detail, home, text) {
   row('needs', list(p.capabilities).map((c) => (typeof c?.name === 'string' && c.name ? c.name : String(c?.id ?? ''))).filter(Boolean));
   if (doing === 'remove') {
     const keys = strings(p.settings);
-    row('deletes', [...(keys.length ? [text('plan.settings_keys', { keys: keys.join(text('plan.separator')) })] : []), ...(p.state === true ? [text('plan.state_dir')] : [])]);
+    row('deletes', [...(keys.length ? [text('plan.settings_keys', { keys: keys.join(text('plan.separator')) })] : []), ...stateDir(p.state, home, text)]);
   }
   if (Number.isInteger(p.size) && Number.isInteger(p.files)) row('size', [text('plan.size', { size: bytes(p.size), files: p.files })]);
   return { title, path, rows };
+}
+
+/**
+ * 一并删除的状态目录：旧核心回 `true`，只写「状态目录」；核心 PK-4（2026-11-05）起回 `{path, size}`，写路径（家目录写成 `~`）和里面多大
+ * （没有大小的只写路径）；没有这一格的（目录不存在）不写（W-1104）。
+ * @param {any} state @param {string|null} home @param {(key: string, fields?: Record<string, any>) => string} text @returns {string[]}
+ */
+function stateDir(state, home, text) {
+  if (state === true) return [text('plan.state_dir')];
+  if (!state || typeof state !== 'object' || typeof state.path !== 'string' || !state.path) return [];
+  const path = tilde(state.path, home);
+  return [Number.isInteger(state.size) ? text('plan.state_dir_at', { path, size: bytes(state.size) }) : text('plan.state_dir_path', { path })];
 }
 
 /**
