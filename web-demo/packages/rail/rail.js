@@ -20,6 +20,10 @@ import { listed } from './listed.js';
 
 /** 画出来的句子变了以后等多久再问核心（连着变的只问一次） */
 const ASK_AFTER_MS = 250;
+/** 换到没问过的会话：等核心列的最多等多久，过了照画出来的画 */
+const ASK_WAIT_MS = 400;
+/** 记着核心列的几个会话（切回来当场照它画） */
+const CACHED = 32;
 
 export class PromptRail {
   /**
@@ -36,6 +40,13 @@ export class PromptRail {
     this.shown = [];
     /** @type {{session: string, prompts: Asked[]|null}|null} 核心列的、是哪个会话的（问不到的 `prompts` 是 `null`） */
     this.asked = null;
+    /** @type {Map<string, Asked[]>} 问到过的会话核心列的（最近的 `CACHED` 个）：切回来当场照它画，不先画一半再补全 */
+    this.cache = new Map();
+    /** @type {string|null} 上一次画的是哪个会话 */
+    this.session = null;
+    /** @type {string|null} 换到了没问过的这个会话、等着核心列的：先不画 */
+    this.waiting = null;
+    this.waitTimer = 0;
     /** @type {Listed[]} */
     this.prompts = [];
     this.drawn = '';
@@ -71,11 +82,27 @@ export class PromptRail {
    */
   update(shown) {
     this.shown = shown;
-    const sig = `${this.chat.current() ?? ''}|${shown.map((p) => p.seq).join(',')}`;
+    const session = this.chat.current();
+    const sig = `${session ?? ''}|${shown.map((p) => p.seq).join(',')}`;
     if (sig !== this.shownSig) {
       this.shownSig = sig;
       clearTimeout(this.askTimer);
-      this.askTimer = window.setTimeout(() => this.ask(), ASK_AFTER_MS);
+      if (session !== this.session) {
+        // 换了会话：当场问。问到过的照记着的先画；没问过的等问回来（最多 `ASK_WAIT_MS`）再画，不先照画出来的画一截、过一会儿
+        // 变长（2026-11-06 项目主人：切换之后跳转条先短后变长）
+        this.session = session;
+        clearTimeout(this.waitTimer);
+        this.waiting = session && !this.cache.has(session) && !this.unsupported.has(session) ? session : null;
+        if (this.waiting) {
+          this.waitTimer = window.setTimeout(() => {
+            this.waiting = null;
+            this.redraw();
+          }, ASK_WAIT_MS);
+        }
+        this.ask();
+      } else {
+        this.askTimer = window.setTimeout(() => this.ask(), ASK_AFTER_MS);
+      }
     }
     this.redraw();
     if (this.want != null) this.reached();
@@ -101,32 +128,56 @@ export class PromptRail {
     }
     if (run !== this.asking || session !== this.chat.current()) return;
     this.asked = { session, prompts: prompts?.map((p) => ({ seq: p.seq, text: String(p.text ?? '') })) ?? null };
+    if (this.asked.prompts) {
+      this.cache.delete(session);
+      this.cache.set(session, this.asked.prompts);
+      if (this.cache.size > CACHED) this.cache.delete(/** @type {string} */ (this.cache.keys().next().value));
+    }
+    if (this.waiting === session) {
+      this.waiting = null;
+      clearTimeout(this.waitTimer);
+    }
     this.redraw();
   }
 
   /** 照核心列的、画出来的拼一份；句子变了才重排横线和浮层。 */
   redraw() {
     const session = this.chat.current();
-    const asked = this.asked?.session === session ? this.asked.prompts : null;
+    const asked = this.asked?.session === session ? this.asked.prompts : (session && this.cache.get(session)) || null;
     this.prompts = listed(asked, this.shown);
-    // 画不画只看句子够不够（`rail.min_prompts`）
-    this.el.hidden = this.prompts.length < this.config.min_prompts;
+    // 画不画只看句子够不够（`rail.min_prompts`）；换到没问过的会话、还在等核心列的先不画
+    this.el.hidden = (session != null && this.waiting === session) || this.prompts.length < this.config.min_prompts;
     const sig = JSON.stringify(this.prompts.map((p) => [p.seq, p.text]));
     if (sig !== this.drawn) {
       this.drawn = sig;
+      // 亮哪一条先算好、插进去以前就标上：插进去以后再量正文的位置会先照没亮的样子排一次，再标就从短变长地动一下
+      // （2026-11-06 项目主人：切换之后亮的那条先短后变长）
+      const now = this.el.hidden ? -1 : this.viewing();
+      const lines = this.prompts.map((p, i) => h(`button.rail-line${i === now ? '.is-current' : ''}`, { type: 'button', 'aria-label': p.text, onclick: () => this.jump(p.seq) }));
+      const items = this.prompts.map((p, i) => h(`button.rail-item${i === now ? '.is-current' : ''}`, { type: 'button', role: 'menuitem', title: p.text, onclick: () => this.jump(p.seq) }, oneLine(p.text)));
+      this.lines.replaceChildren(...lines);
+      this.list.replaceChildren(...items);
       this.current = -1;
-      this.lines.replaceChildren(...this.prompts.map((p) => h('button.rail-line', { type: 'button', 'aria-label': p.text, onclick: () => this.jump(p.seq) })));
-      this.list.replaceChildren(...this.prompts.map((p) => h('button.rail-item', { type: 'button', role: 'menuitem', title: p.text, onclick: () => this.jump(p.seq) }, oneLine(p.text))));
+      if (now >= 0) this.light(now);
     }
     this.mark();
   }
 
-  /** 照现在滚到哪，亮正在看的那一句（没读进来的都在读进来的上面）；横线多过这一列放得下的，亮的那条露在中间。 */
+  /** 正在看的是第几句（没读进来的都在读进来的上面）。 */
+  viewing() {
+    const tops = this.prompts.map((p) => (p.node ? offsetIn(p.node, this.scroller) : -Infinity));
+    return reading(tops, this.scroller.clientHeight, this.config.current_at);
+  }
+
+  /** 照现在滚到哪，亮正在看的那一句。 */
   mark() {
     if (this.el.hidden) return;
-    const tops = this.prompts.map((p) => (p.node ? offsetIn(p.node, this.scroller) : -Infinity));
-    const now = reading(tops, this.scroller.clientHeight, this.config.current_at);
-    if (now === this.current) return;
+    const now = this.viewing();
+    if (now !== this.current) this.light(now);
+  }
+
+  /** 亮第 `now` 句；横线多过这一列放得下的，亮的那条露在中间。 @param {number} now */
+  light(now) {
     this.current = now;
     [...this.lines.children].forEach((el, i) => el.classList.toggle('is-current', i === now));
     [...this.list.children].forEach((el, i) => el.classList.toggle('is-current', i === now));
@@ -194,6 +245,7 @@ export class PromptRail {
     this.watch.disconnect();
     clearTimeout(this.closeTimer);
     clearTimeout(this.askTimer);
+    clearTimeout(this.waitTimer);
     this.asking += 1;
   }
 }
