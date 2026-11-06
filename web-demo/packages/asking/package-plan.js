@@ -124,6 +124,8 @@ function included(p, doing, text) {
   if (p.mascot === true) items.push(text('plan.carried.mascot'));
   if (typeof p.connection === 'string') items.push(text('plan.carried.connection', { platform: p.connection }));
   for (const name of strings(p.mcp)) items.push(text('plan.carried.mcp', { name }));
+  // 提供的模型驱动（核心 MD-1：用它的模型时发给模型的全部对话都经过它，装之前写出来）
+  for (const name of strings(p.drivers)) items.push(text('plan.carried.driver', { name }));
   for (const name of strings(p.skills)) items.push(text('plan.carried.skill', { name }));
   for (const name of strings(p.scripts)) items.push(text('plan.carried.script', { name }));
   for (const name of strings(p.slash)) items.push(text('plan.carried.slash', { name }));

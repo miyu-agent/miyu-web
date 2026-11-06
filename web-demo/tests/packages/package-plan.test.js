@@ -43,6 +43,11 @@ test('带人格、预设的包（核心 P-11 下的 personas、presets）：接�
   assert.deepEqual(flat(plan), ['安装软件包 pets', '/w/pets', '包含：斜杠命令 /pat、人格 cat、人格 dog、预设 pet-mode、1 项设置']);
 });
 
+test('带模型驱动的扩展（核心 MD-1 的 drivers）：接在 MCP 服务后面，一个驱动一项', () => {
+  const plan = packagePlan({ tool: 'package', install: '/w/echo', preview: { package: 'echo-llm', program: 'process', mcp: ['tools'], drivers: ['echo', 'echo-fast'], skills: ['x'], capabilities: [{ id: 'model.driver', name: '提供模型驱动' }] } }, null, t);
+  assert.deepEqual(flat(plan), ['安装软件包 echo-llm', '/w/echo', '包含：扩展程序、MCP 服务 tools、模型驱动 echo、模型驱动 echo-fast、技能 x', '所需权限：提供模型驱动']);
+});
+
 test('卸：一并删除写设置的键和状态目录，设置不算进包含；装回出厂的写恢复', () => {
   const plan = packagePlan({ tool: 'package', remove: 'notes', preview: { package: 'notes', layer: 'home', version: '1.0', settings: ['notes.dir', 'notes.style'], state: true, files: 2, size: 2048 } }, null, t);
   assert.deepEqual(flat(plan), ['卸载软件包 notes 1.0', null, '一并删除：设置 notes.dir、notes.style、状态目录', '大小：2 KB，2 个文件']);
