@@ -478,6 +478,12 @@
       ".asking-path"
     ]
   },
+  "asking.guard": {
+    "zh": "确认和提问：守卫的话",
+    "select": [
+      ".asking-guard"
+    ]
+  },
   "asking.plan-row": {
     "zh": "确认和提问：计划一行",
     "select": [

@@ -30,6 +30,8 @@
 .asking-plan-label { color: var(--text-faint); }
 .asking-plan-items { color: var(--text); overflow-wrap: anywhere; }
 .asking-command { white-space: pre-wrap; }
+/* 守卫要问人时写的话（核心 HK-1，`detail.reason`，第三方写的字原样显示）：正文的字体，照原样换行 */
+.asking-guard { margin: calc(-4px * var(--space)) 0 calc(10px * var(--space)); color: var(--text-soft); font-size: calc(13px * var(--text-scale)); line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 .asking-outside {
   flex: none; padding: 0 calc(6px * var(--space)); border-radius: var(--r-4); background: color-mix(in srgb, var(--t-warn) 14%, transparent);
   color: var(--t-warn); font-family: var(--font-ui); font-size: calc(11px * var(--text-scale)); line-height: calc(18px * var(--text-scale));

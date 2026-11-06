@@ -194,7 +194,8 @@ export function answerOf(d, i) {
  * 确认的问题行：`要写 1 个文件` 这类（`access.<种类>`，没有的 `access_other`），下面的路径（家目录写 `~`，工作区外的标出来）。
  * 跑命令的（核心 D-4 起 `detail` 是 `{command, sandbox, title, tool}`）：问题行是她写的短标题，没有的写「要运行一条命令」；下面是命令原文，
  * `sandbox: false` 是这一次不在沙盒里跑。装、卸软件包的（核心 F-10 下上，`access: install`，`detail.preview`）：问题行是「安装软件包 notes 0.2.0」，
- * 下面是包文件夹和「包含」「无法加载」这几行（`package-plan.js`）。
+ * 下面是包文件夹和「包含」「无法加载」这几行（`package-plan.js`）。扩展的守卫要问人的（核心 HK-1，`detail.guard`）：问题行是「notes 请你确认：shell」，
+ * 下面是守卫写的话（`guard`，原样）。
  * @param {{access: string, detail?: any}} body
  * @param {string|null} home
  * @param {(key: string, fields?: Record<string, any>) => string} text 照键取字（`ctx.text`：没有这个键的交回键本身）
@@ -207,8 +208,13 @@ export function approvalHead(body, home, text) {
   const known = text(key, fields);
   const exec = access === 'exec' && typeof body.detail?.command === 'string';
   const plan = packagePlan(body.detail, home, text);
+  // 扩展的守卫要问人的（核心 HK-1：`detail` 是 `{guard, tool, reason?}`，没有 `rule`，只能允许这一次或者不允许）：问题行写是哪个包要你确认、
+  // 哪件工具，下面原样写它的话
+  const guard = typeof body.detail?.guard === 'string' ? body.detail.guard : null;
+  const said = guard && typeof body.detail?.reason === 'string' ? body.detail.reason.trim() : '';
   return {
-    title: plan ? plan.title : exec ? body.detail?.title || text('exec_untitled') : known === key ? text('access_other', fields) : known,
+    title: guard ? text('guard_title', { guard, tool: body.detail?.tool ?? access }) : plan ? plan.title : exec ? body.detail?.title || text('exec_untitled') : known === key ? text('access_other', fields) : known,
+    guard: said || null,
     plan,
     command: exec ? body.detail?.command ?? null : null,
     outsideSandbox: body.detail?.sandbox === false,

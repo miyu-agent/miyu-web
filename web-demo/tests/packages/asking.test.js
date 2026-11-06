@@ -99,6 +99,19 @@ test('确认的问题行：写几个文件、家目录写 ~、工作区外和私
   assert.equal(approvalHead({ call_id: 'x', access: 'network', detail: { tool: 'web_fetch' } }, null, text).title, 'access_other{"count":0,"tool":"web_fetch"}');
 });
 
+test('扩展的守卫要问人（核心 HK-1）：问题行写是哪个包、哪件工具，下面原样写它的话；没有 rule 只有允许这一次、不允许', () => {
+  const text = (key, fields) => `${key}${fields ? JSON.stringify(fields) : ''}`;
+  const body = { call_id: 'g', access: 'execute', detail: { guard: 'company-policy', tool: 'shell', reason: '  这条命令会删生产库的表\n请先找 DBA 确认  ' } };
+  const head = approvalHead(body, null, text);
+  assert.equal(head.title, 'guard_title{"guard":"company-policy","tool":"shell"}');
+  assert.equal(head.guard, '这条命令会删生产库的表\n请先找 DBA 确认', '头尾空白去掉，中间的换行留着');
+  assert.equal(head.command, null);
+  assert.equal(approvalHead({ ...body, detail: { guard: 'company-policy', tool: 'write' } }, null, text).guard, null, '没写理由的不画');
+  assert.equal(approvalHead({ call_id: 'x', access: 'execute', detail: { tool: 'shell' } }, null, text).guard, null, '不是守卫的照旧');
+  const d = openApproval({ body });
+  assert.deepEqual(d.questions[0].options.map((o) => o.decision), ['once', 'deny']);
+});
+
 test('了结以后留下的：提问一道一块、记下是谁问的，多选用「、」接、补充接在后面、没答的写未回答；确认允许的不留、不允许的带理由；取消的一行', () => {
   const d = openAsk(ask('demo_ask_2'));
   assert.deepEqual(report(d, { kind: 'ask', answers: [{ picked: ['输入框', '时间线'], notes: '先小改' }, { picked: [] }] }), {
