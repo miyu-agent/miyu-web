@@ -43,6 +43,8 @@
   "follow_keep": 0.4,
   "scroll_intent_ms": 1000,
   "release_ms": 320,
+  "defer_keep": 16,
+  "defer_batch": 8,
   "center_move_ms": 280,
   "pin_margin": 16,
   "sidebar_peek": {

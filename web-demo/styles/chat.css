@@ -12,6 +12,8 @@
 .chat-scroll.chat-ghost { position: absolute; z-index: 2; overflow: hidden; pointer-events: none; animation: fade-out calc(0.1s * var(--motion-scale)) var(--ease-in) both; }
 .chat-scroll > .timeline.is-switching-in { animation: switch-in calc(0.18s * var(--motion-scale)) var(--ease-out) calc(0.1s * var(--motion-scale)) both; }
 @keyframes switch-in { from { opacity: 0; transform: translateY(6px); } }
+/* 换会话头一次画出来的块先不排版视口外的，空闲时再一批批排成真高度（`ui/defer.js`，W-1110）；估的高度是平常一块的样子 */
+.timeline > .is-deferred { content-visibility: auto; contain-intrinsic-size: auto 180px; }
 @media (prefers-reduced-motion: reduce) { .chat-scroll.chat-ghost, .chat-scroll > .timeline.is-switching-in { animation: none; } }
 .chat-scroll:hover { scrollbar-color: var(--scrollbar-color, var(--line-strong) transparent); }
 /* 新会话首页输入框下面（挂载位 stage.home：扩展的界面块）：和输入框一样宽，只在空会话里露 */

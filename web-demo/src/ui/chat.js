@@ -12,6 +12,7 @@ import { Ticker, waitingNode } from './timeline.js';
 import { segmentView, drawMarkdown } from './render.js';
 import { richHooks } from './rich.js';
 import { Follow } from './follow.js';
+import { Deferred } from './defer.js';
 import { userNode, endNode } from './said.js';
 import { noteNode } from './notes.js';
 import { CompactingRow } from './compacting.js';
@@ -60,6 +61,8 @@ export class Chat {
     // 顶上的淡出：左上角浮着那一条（挂载位 `stage.info`）露着时才有，正文滚到它下面淡掉、不透出字（2026-10-10 项目主人）
     this.el = h('div.chat-scroll', h('div.chat-fade-top', { 'aria-hidden': 'true' }), this.olderEl, this.list, this.spacer, h('div.chat-fade', { 'aria-hidden': 'true' }));
     this.scroll = new Follow(this.el, this.list, this.spacer);
+    /** 换会话头一次画出来的块先不排版视口外的，空闲时再一批批排（W-1110）；视口上方长出来的那一截交给 `follow.js` 补，人一动当场排完 */
+    this.deferred = new Deferred(this.el, (top, by, at) => this.scroll.shifted(top, by, at), () => this.scroll.anchor());
     /** 看着你说的话的（软件包 rail 这类，经服务 `chat`）：每画一次交一份；新来的先拿到现在的 */
     this.promptWatchers = new Set();
     /** @type {Array<{key: string, text: string, node: HTMLElement}>} */
@@ -76,6 +79,8 @@ export class Chat {
     this.ticker = new Ticker(this.list);
     /** 换了会话以后画过一次了：之后新来的时间线的步淡入，第一次画的（读回来的历史）不淡入。 */
     this.settled = false;
+    /** 换了会话、还没画出块来：头一次画出来的视口外的先不排版（W-1110） */
+    this.switched = false;
     /** @type {Map<string, {node: HTMLElement, content: HTMLElement|null, sig: string, items: Map<string, {node: HTMLElement, sig: string, view?: ReturnType<typeof segmentView>}>}>} */
     this.blocks = new Map();
   }
@@ -185,12 +190,14 @@ export class Chat {
     const old = [...this.list.children].filter((n) => n !== this.compacting.el && n !== this.tail);
     this.ghost?.remove();
     this.ghost = null;
+    this.deferred.clear();
     if (animate && old.length && !reduced() && this.el.isConnected) this.ghost = this.fadeOut(old);
     this.blocks.clear();
     this.anchored.clear();
     this.list.replaceChildren(this.compacting.el, this.tail);
     this.scroll.toLatest(true);
     this.settled = false;
+    this.switched = true;
     this.list.classList.remove('is-switching-in');
     if (this.ghost) {
       void this.list.offsetWidth;
@@ -206,6 +213,8 @@ export class Chat {
     const list = h('div', { class: this.list.className });
     list.classList.remove('is-switching-in');
     list.style.marginTop = `${this.list.offsetTop - this.el.scrollTop}px`;
+    // 挪过去的要重排一遍：视口外的先不排（同 `defer.js`，W-1110），长会话整个挪过去原来一次几十毫秒
+    for (const n of nodes) n.classList.add('is-deferred');
     list.append(...nodes);
     const ghost = h('div', { class: `${this.el.className} chat-ghost`, 'aria-hidden': 'true', inert: true }, list);
     Object.assign(ghost.style, { top: `${this.el.offsetTop}px`, left: `${this.el.offsetLeft}px`, width: `${this.el.clientWidth}px`, height: `${this.el.clientHeight}px` });
@@ -295,6 +304,8 @@ export class Chat {
     // 提示行（后台命令完成、压缩……）缩不缩进跟着它前面那一块她的回复（中途换了人格，旧的回复照回复时的人格画，2026-10-20 项目主人：
     // 从无人格换到有人格，旧回复没有头、提示行却缩了进去）；前面还没有她的回复的照现在的人格
     let bare = !this.look?.avatar;
+    /** @type {HTMLElement[]} 这一次新画的块：换会话以后头一次画的先不排版视口外的（W-1110） */
+    const made = [];
     for (const [i, block] of blocks.entries()) {
       if (block.kind === 'her') bare = !this.lookOf(block)?.avatar;
       const own = block.kind === 'user' && this.mine(block.item);
@@ -302,7 +313,9 @@ export class Chat {
       const freshNote = this.settled && block.kind === 'note' && block.item.compaction === 'clear' && appended;
       // 你新说的一句（不是刚打开会话时读回来的、不是往上翻读进来的）：回到最底下，照最新的露；别人说的不拽视口
       const fresh = this.settled && own && appended;
+      const isNew = !this.blocks.has(block.key);
       const node = this.block(block, bare);
+      if (isNew) made.push(node);
       // 你新说的一句：回到最底下；重做的落回原来的位置（`follow.js`）。等它画进页面再放
       if (fresh) arrivals.push(node);
       // 你的话里只有开这一轮的那一句能编辑（排进来的、别人说的没有，蓝图「排队的消息」第 5 条、「不是你说的话」）
@@ -320,6 +333,13 @@ export class Chat {
       if (keep.has(key)) continue;
       rec.node.remove();
       this.blocks.delete(key);
+    }
+    // 换会话以后头一次画出来的块：视口外的先不排版。最底下的 `defer_keep` 块照常排：视口附近的浏览器本来就会提前排，那一圈要是
+    // 估的高度，排出真高度时没人补，看着的内容会跳。往上翻读进来的更早的一页不这样：人正往那里滚，滚进估的高度里会跳；整个重画
+    // （`redraw`）的也不：照原来的 `scrollTop` 放回去，得是真高度
+    if (this.switched && made.length) {
+      this.switched = false;
+      this.deferred.add(made.slice(0, Math.max(0, made.length - res.layout.defer_keep)));
     }
     for (const node of arrivals) this.scroll.arrived(node);
     // 看着的时候清空了：那一行顶到最上面（照终端的 Ctrl+L）

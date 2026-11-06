@@ -155,6 +155,22 @@ export class Follow {
     this.anchor();
   }
 
+  /**
+   * 视口上方的一块长了 `by`（`defer.js`：先不排版的块摘掉以后排成了真高度，W-1110；变矮是负的）：看着的地方不动，滚动位置放到
+   * `top`，到过的最深处、还在缓着要去的地方跟着挪（不挪的，缓的那一帧照旧的目标往回拉，2026-11-06 量出来一下拉回十几像素）；
+   * 清空那一行在它下面的也挪。记成自己放的：这一下的滚动事件不当成人滚的。
+   * @param {number} top @param {number} by @param {number} at 那一块原来在内容里多深
+   */
+  shifted(top, by, at) {
+    this.el.scrollTop = top;
+    this.floor += by;
+    if (this.glideTo != null) this.glideTo += by;
+    if (this.base && at < this.base) this.base += by;
+    this.fold = null;
+    this.placed = this.el.scrollTop;
+    this.lastTop = this.placed;
+  }
+
   /** 人往上滚了：不再跟着最新的，钉在这里（停住的正文交给人）。 */
   leave() {
     this.placed = null;
@@ -281,7 +297,9 @@ export class Follow {
     // 一下定位的（钉住被点的那一行、清空顶到最上面、往回）：还在缓的停掉
     this.glideTo = null;
     this.spacer.style.height = `${padFor(top, view, natural)}px`;
-    this.el.scrollTop = top;
+    // 差不到一像素的不写：写一下 `scrollTop`（哪怕原地）会掐掉在走的平滑滚动（跳转条点了刚开始滚，内容一变高就被这里掐了，
+    // 2026-11-06 实测，W-1110）
+    if (Math.abs(this.el.scrollTop - top) >= 1) this.el.scrollTop = top;
     this.placed = this.el.scrollTop;
     this.lastTop = this.placed;
   }
