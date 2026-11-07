@@ -2,7 +2,7 @@
 
 [package]
 # 版本和 Cargo.toml 的工作区版本一样（tools/pack-web.py 核对）；推 v<版本> 的标签发版（.github/workflows/release.yml）
-version = "0.1.0"
+version = "2026.11.0"
 # 带本机程序 miyu-web：一种系统一个包文件。CI 测着的这四种（linux-aarch64 2026-11-05 加，W-1100：核心发版 RL-1 的命令行版要四种，CI 多一台 ubuntu-24.04-arm）；
 # 托盘程序装进资源目录的也是这一份，写全了在这三种上都认
 targets = ["linux-x86_64", "linux-aarch64", "macos-aarch64", "windows-x86_64"]
