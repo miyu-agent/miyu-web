@@ -136,11 +136,12 @@
     {
       "name": "context",
       "summary": {
-        "zh": "查看上下文里各部分占了多少",
-        "en": "Show what is taking up the context",
-        "ja": "コンテキストの内訳を表示する"
+        "zh": "查看上下文明细；带数值设这个会话的上下文上限（如 128k），off 去掉",
+        "en": "Show the context breakdown; with a number, cap this session's context (e.g. 128k), off to remove",
+        "ja": "コンテキストの内訳を表示する。数値を付けるとこのセッションの上限を設定（例 128k）、off で解除"
       },
-      "run": "context"
+      "run": "context",
+      "args": true
     },
     {
       "name": "copy",

@@ -12,7 +12,8 @@ const input = (u) => u.uncached + u.cache_read + u.cache_write;
 
 /**
  * @typedef {'failed'|'over'|'compacting'|null} Stuck
- * @typedef {{ratio: number|null, used: number, window: number|null, stuck: Stuck}} Ring 用量那一格的环：上下文占窗口多少（`null` 是不知道窗口）、卡住没有
+ * @typedef {{ratio: number|null, used: number, window: number|null, stuck: Stuck, cap?: number|null}} Ring 用量那一格的环：上下文占窗口多少（`null` 是不知道窗口）、卡住没有、
+ *   这个会话设了的上下文上限（`cap`，W-1129；窗口已经照它压小了）
  * @typedef {{key: string, text: string}} Part
  */
 
@@ -20,7 +21,8 @@ const input = (u) => u.uncached + u.cache_read + u.cache_write;
  * 照会话状态写（蓝图 `web.md`「照条目画」第 3 条、「框下面那一行的数」的「用量那一格」，2026-11-02）：级别照 `permission`，模型照 `model`；
  * 右边一格：累计 token 和花费都连子代理（`usage_tree`，旧核心没有的照 `usage`；同终端的 Σ），花费照 `converted`（核心 UC-1，一笔都算不出
  * 的不写）；环照 `context.used ÷ window`（窗口没有的照订阅回应的限额）；卡住的（`stuckOf`）写是哪一种和「用了多少 / 线」。还是 0 的不写。
- * @param {any} status @param {{window?: number, compaction_line?: number}} [limits] 订阅回应里的限额 @param {any[]} [entries] 视图的条目（认压缩失败）
+ * 设了会话上限的（核心 CTX-1，设计 68：`context.context`，订阅回应的限额 `context`）右边多一格「会话上限 128k」，人知道窗口是被哪一格压小的。
+ * @param {any} status @param {{window?: number, compaction_line?: number, context?: number}} [limits] 订阅回应里的限额 @param {any[]} [entries] 视图的条目（认压缩失败）
  * @returns {{left: {level: string, label: string, model: string|null, endpoint: string|null}, right: Part[], ring: Ring|null}}
  */
 export function statusFooter(status, limits = {}, entries = []) {
@@ -28,6 +30,7 @@ export function statusFooter(status, limits = {}, entries = []) {
   const used = status?.context?.used ?? 0;
   const window = status?.context?.window ?? limits.window ?? null;
   const line = status?.context?.compaction_line ?? limits.compaction_line ?? null;
+  const cap = capOf(status, limits);
   const stuck = stuckOf(status, entries, window, line);
   const right = [];
   const usage = status?.usage_tree ?? status?.usage;
@@ -38,11 +41,12 @@ export function statusFooter(status, limits = {}, entries = []) {
     right.push({ key: 'nums', text: `${short(used)}/${short((stuck === 'failed' ? line : window) ?? 0)}` });
   } else if (all && input(all) + all.output > 0) {
     right.push({ key: 'total', text: short(input(all) + all.output) });
-    // 花费接在后面（2026-10-26 项目主人）：窄的时候它先让出来
-    const cost = costText(usage);
-    if (cost) right.push({ key: 'cost', text: cost });
   }
-  const ring = used > 0 || right.length ? { ratio: window ? used / window : null, used, window, stuck } : null;
+  if (!stuck && cap) right.push({ key: 'cap', text: t('usage_cell.cap_part', { n: short(cap) }) });
+  // 花费接在后面（2026-10-26 项目主人）：窄的时候它先让出来
+  const cost = !stuck && all && input(all) + all.output > 0 ? costText(usage) : null;
+  if (cost) right.push({ key: 'cost', text: cost });
+  const ring = used > 0 || right.length ? { ratio: window ? used / window : null, used, window, stuck, cap } : null;
   return { left: { level, label: levelLabel(level), model: status?.model?.model ?? null, endpoint: status?.model?.endpoint ?? null }, right, ring };
 }
 
@@ -65,8 +69,14 @@ export function stuckOf(status, entries, window, line) {
   return window && used > window ? 'over' : null;
 }
 
-/** 环悬停写的：「上下文 41.2k / 1M（4.1%）」，没窗口的只写用了多少 @param {Ring} ring */
-export const ringTip = (ring) => (ring.window ? t('usage_cell.tip', { used: short(ring.used), window: short(ring.window), percent: percentTenths(ring.used, ring.window) }) : t('usage_cell.tip_bare', { used: short(ring.used) }));
+/** 这个会话设的上下文上限（`context.context`，旧核心、没设的是 `null`；订阅回应的限额里也有）。 @param {any} status @param {any} limits @returns {number|null} */
+export function capOf(status, limits = {}) {
+  const cap = status?.context?.context ?? limits?.context;
+  return typeof cap === 'number' && cap > 0 ? cap : null;
+}
+
+/** 环悬停写的：「上下文 41.2k / 1M（4.1%）」，设了会话上限的接「，会话上限」；没窗口的只写用了多少 @param {Ring} ring */
+export const ringTip = (ring) => (ring.window ? t(ring.cap ? 'usage_cell.tip_cap' : 'usage_cell.tip', { used: short(ring.used), window: short(ring.window), percent: percentTenths(ring.used, ring.window) }) : t('usage_cell.tip_bare', { used: short(ring.used) }));
 
 /**
  * 还没开的新会话：环照核心的预览画（`session.context` 不写 `session`，蓝图「上下文明细、累计按用途」第 1 条），没有累计、花费。
@@ -74,7 +84,7 @@ export const ringTip = (ring) => (ring.window ? t('usage_cell.tip', { used: shor
  */
 export function previewRing(preview) {
   const used = preview?.used ?? 0;
-  return used > 0 ? { ratio: preview?.window ? used / preview.window : null, used, window: preview?.window ?? null, stuck: null } : null;
+  return used > 0 ? { ratio: preview?.window ? used / preview.window : null, used, window: preview?.window ?? null, stuck: null, cap: null } : null;
 }
 
 /** 左边的级别：图标加名字，`⏵⏵ 开放权限`（图标照 TUI 的 `layout.json`）。 */
@@ -98,8 +108,8 @@ export function levelParams(level) {
   return level === 'read_only' ? { read_only: true } : { level: 'full', read_only: false };
 }
 
-/** 丢的先后：先花费（2026-10-26 项目主人：窄的时候金额先让出来），卡住的先丢「用了多少 / 线」，再累计，那几个字留到最后。 */
-const DROP = ['cost', 'nums', 'total', 'stuck'];
+/** 丢的先后：先花费（2026-10-26 项目主人：窄的时候金额先让出来），再会话上限（悬停环、明细里还写着），卡住的先丢「用了多少 / 线」，再累计，那几个字留到最后。 */
+const DROP = ['cost', 'cap', 'nums', 'total', 'stuck'];
 
 /**
  * 右边放得下的几格：照 `DROP` 的先后一格格丢，直到 `measure` 量出来不超过 `room`。

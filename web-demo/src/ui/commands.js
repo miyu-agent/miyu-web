@@ -350,8 +350,18 @@ const RUNS = {
     app.composer.focus();
   },
   copy: copyReply,
-  // 上下文明细（蓝图「上下文明细、累计按用途」第 1 条）：开框下面上下文那一格的浮窗
-  context: (app) => app.composer.openContext(),
+  // 上下文明细（蓝图「上下文明细、累计按用途」第 1 条）：开框下面上下文那一格的浮窗。带数值的（`128000`、`128k`、`1m`、`off`）设这个
+  // 会话的上下文上限（核心 CTX-2 的命令 `context`，设计 68，W-1129）：原样交核心，回执照核心那一句
+  context: async (app, spec, words) => {
+    const want = (words ?? '').trim();
+    if (!want) return app.composer.openContext();
+    if (!app.current) {
+      app.composer.say(t('commands.needs_session'));
+      return;
+    }
+    const got = await app.store.conn.request('command.run', { session: app.current, text: `/context ${want}` });
+    if (got?.said) app.composer.say(got.said, true);
+  },
   help: (app) => app.composer.openHelp(),
 };
 

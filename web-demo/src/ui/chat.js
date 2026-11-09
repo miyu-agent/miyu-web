@@ -98,7 +98,7 @@ export class Chat {
    */
   setWhere(session, cwd, def = null) {
     if (this.where.session === session && this.where.cwd === cwd && this.where.def === def) return;
-    this.where = { session, home: this.home, cwd, def, lightbox: () => this.ext?.lightbox?.(), detail: (call) => (session ? this.ext?.detail?.(session, call) ?? Promise.resolve(null) : Promise.resolve(null)), nested: (call, after) => (session ? this.ext?.nested?.(session, { call }, after) ?? Promise.resolve(null) : Promise.resolve(null)), nestedJob: (job, after) => (session ? this.ext?.nested?.(session, { job }, after) ?? Promise.resolve(null) : Promise.resolve(null)), summary: (upto) => (session ? this.ext?.summary?.(session, upto) ?? Promise.resolve(null) : Promise.resolve(null)) };
+    this.where = { session, home: this.home, cwd, def, lightbox: () => this.ext?.lightbox?.(), detail: (call) => (session ? this.ext?.detail?.(session, call) ?? Promise.resolve(null) : Promise.resolve(null)), nested: (call, after) => (session ? this.ext?.nested?.(session, { call }, after) ?? Promise.resolve(null) : Promise.resolve(null)), nestedJob: (job, after) => (session ? this.ext?.nested?.(session, { job }, after) ?? Promise.resolve(null) : Promise.resolve(null)), summary: (upto) => (session ? this.ext?.summary?.(session, upto) ?? Promise.resolve(null) : Promise.resolve(null)), open: (id) => this.ext?.open?.(id) };
     this.markdown = { say: this.say, hooks: richHooks(this.where, this.say, this.ext) };
   }
 

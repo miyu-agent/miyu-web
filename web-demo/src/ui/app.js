@@ -69,7 +69,7 @@ export class App {
     this.skills = /** @type {import('../model/skills.js').Skill[]} */ ([]);
     this.skillsFor = /** @type {string|null|undefined} */ (undefined);
     this.skillNames = /** @type {Set<string>} */ (new Set());
-    this.ext = { slots: ctx.slots, lightbox, storage: ctx.storage, skills: () => this.skillNames, titleOf: (id) => this.titleOf(id), detail: (session, call) => this.callDetail(session, call), nested: (session, which, after) => this.nestedDetail(session, which, after), summary: (session, upto) => this.compactionSummary(session, upto) };
+    this.ext = { slots: ctx.slots, lightbox, storage: ctx.storage, skills: () => this.skillNames, titleOf: (id) => this.titleOf(id), detail: (session, call) => this.callDetail(session, call), nested: (session, which, after) => this.nestedDetail(session, which, after), summary: (session, upto) => this.compactionSummary(session, upto), open: (/** @type {string} */ id) => this.open(id) };
     /** 一次调用改了什么（`view.detail`）：同一次调用的结果不会变，照「会话 调用」记着只问一次 @type {Map<string, Promise<any>>} */
     this.details = new Map();
     this.store = store;

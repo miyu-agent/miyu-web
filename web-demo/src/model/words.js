@@ -299,6 +299,9 @@ export function details(step) {
     const card = { kind: /** @type {const} */ ('diff'), op: t(created ? 'timeline.created' : 'timeline.changed'), created, path: arg(step, 'file_path') ?? '', diff };
     return step.status === 'ok' ? [card] : [card, ...result];
   }
+  // 问顾问（核心 ADV-1、ADV-2，设计 69，W-1129）：问题、顾问的回答（照 Markdown），再一个按钮进顾问会话看问答（`detail.session`，
+  // 同子代理的会话照父会话列）；没答成的（旗舰池里没有模型、出错）照常写结果那一句
+  if (step.name === 'advisor') return advisorDetails(step, output, result);
   // 派子代理：完整的提示词；出错了的接着结果
   if (kindOf(step.name) === 'agent') {
     const prompt = arg(step, 'prompt');
@@ -373,6 +376,21 @@ function generic(d) {
 }
 
 /** 参数里的一个字符串，没有的是 `null`。 */
+/**
+ * 问顾问那一步点开的几段（W-1129）：问题、回答、进顾问会话的按钮。 @param {any} step @param {string} output @param {any[]} result
+ * @returns {any[]}
+ */
+export function advisorDetails(step, output, result) {
+  const question = arg(step, 'question');
+  const ok = step.status === 'ok';
+  const session = ok && typeof step.detail?.session === 'string' ? step.detail.session : null;
+  return [
+    ...(question ? [{ kind: /** @type {const} */ ('text'), label: t('timeline.question'), text: question }] : []),
+    ...(ok && output ? [{ kind: /** @type {const} */ ('markdown'), label: t('timeline.answer'), text: output }] : ok ? [] : result),
+    ...(session ? [{ kind: /** @type {const} */ ('session'), label: '', text: t('timeline.open_advisor'), session }] : []),
+  ];
+}
+
 function arg(step, key) {
   const v = step.kind === 'tool' ? step.parsed?.[key] : null;
   return typeof v === 'string' ? v : null;

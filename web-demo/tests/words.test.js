@@ -320,3 +320,14 @@ test('派子代理那一步：参数里 fork 是真的画分叉 git-fork，别�
   assert.equal(row(tool('subagent', null, { args: '{"description":"查资料","fork":tr', parsed: undefined, state: 'running', status: null, title })).icon, 'bot', '参数还在写');
   assert.equal(res.timeline.icon_fork, 'git-fork');
 });
+
+test('问顾问（核心 ADV-1、ADV-2，设计 69，W-1129）：点开是问题、回答（照 Markdown）、进顾问会话的按钮；没答成的照常写结果', () => {
+  const ok = details(tool('advisor', { question: '先 A 还是先 B？' }, { output: 'Take **A** first.\n', status: 'ok', detail: { session: 's-adv' } }));
+  assert.deepEqual(ok.map((s) => s.kind), ['text', 'markdown', 'session']);
+  assert.equal(ok[0].text, '先 A 还是先 B？');
+  assert.equal(ok[1].text, 'Take **A** first.');
+  assert.equal(/** @type {any} */ (ok[2]).session, 's-adv');
+  const bad = details(tool('advisor', { question: 'q' }, { output: 'No model is set in the flagship pool.', status: 'error', detail: null }));
+  assert.deepEqual(bad.map((s) => s.kind), ['text', 'text'], '没答成：问题、结果那一句，没有按钮');
+  assert.equal(bad[1].text, 'No model is set in the flagship pool.');
+});

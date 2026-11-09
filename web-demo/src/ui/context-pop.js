@@ -230,6 +230,8 @@ export class ContextPop {
     // 已压缩、缓存断裂：会话状态的 `usage` 里是 0 的核心不写这两格，有用量的照 0 写；还没开的新会话没有
     const usage = status.usage ?? null;
     const more = [
+      // 这个会话设了的上下文上限（核心 CTX-1，`session.context` 的 `context`，W-1129）：窗口照它压小了
+      c.context ? meta(t('usage_cell.cap'), short(c.context)) : null,
       c.line ? meta(t('usage_cell.line'), short(c.line)) : null,
       usage ? meta(t('usage_cell.compactions'), t('usage_cell.times', { n: usage.compactions ?? 0 })) : null,
       usage ? meta(t('usage_cell.cache_breaks'), t('usage_cell.times', { n: usage.cache_breaks ?? 0 })) : null,

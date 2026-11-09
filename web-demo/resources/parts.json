@@ -4708,6 +4708,12 @@
       ".tl-label"
     ]
   },
+  "tl.open-session": {
+    "zh": "时间线：进顾问会话的按钮",
+    "select": [
+      ".tl-open-session"
+    ]
+  },
   "tl.found-row": {
     "zh": "翻记忆、查知识库、读文档",
     "select": [

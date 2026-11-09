@@ -25,6 +25,7 @@
     "edit": "square-pen",
     "trash": "square-pen",
     "subagent": "bot",
+    "advisor": "lightbulb",
     "send_message": "bot-message-square",
     "jobs": "list-checks",
     "sessions": "message-circle",

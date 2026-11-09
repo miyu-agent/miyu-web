@@ -7,7 +7,8 @@ import { addCosts } from './cost.js';
 /**
  * @typedef {{part: string, label: string, tokens: number, tone?: string, children?: Part[]}} Part
  *   `tone` 是自己定的颜色（累计那一个里的用途），不写的照 `part` 认
- * @typedef {{window?: number, line?: number, used?: number, basis?: string, anchor?: number, estimated_total?: number, parts?: Part[]}} Context
+ * @typedef {{window?: number, line?: number, used?: number, basis?: string, anchor?: number, estimated_total?: number, parts?: Part[], context?: number}} Context
+ *   `context` 是这个会话设的上下文上限（核心 CTX-1，没设的不写），`window` 已经照它压小
  */
 
 /** 顶层几块的颜色（CSS 变量名），别的照 `text-faint` */

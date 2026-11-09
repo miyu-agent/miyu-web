@@ -13,7 +13,7 @@ const names = (specs) => specs.map((s) => s.name);
 
 test('出厂的清单照蓝图：去掉 /icons、/exit，加 /clear、/stop（O-6，2026-10-07）、/recap、/language、/redo、/edit（/settings、/config、/pkg 由软件包 settings 登记）；/compact、/sessions（带着搜的词，2026-10-02）、/language、/model 带参数；每条都是真的，各有各的做法（/model 2026-10-01 起是真的；假命令 2026-10-07 删了，/help 做成真的）', () => {
   assert.deepEqual(names(list), ['undo', 'restore', 'redo', 'edit', 'compact', 'clear', 'stop', 'recap', 'new', 'sessions', 'language', 'model', 'context', 'copy', 'help']);
-  assert.deepEqual(list.filter((s) => s.args).map((s) => s.name), ['compact', 'sessions', 'language', 'model']);
+  assert.deepEqual(list.filter((s) => s.args).map((s) => s.name), ['compact', 'sessions', 'language', 'model', 'context'], '/context 带数值设会话上限（W-1129）');
   const runs = Object.fromEntries(list.map((s) => [s.name, s.run]));
   assert.deepEqual(runs, { undo: 'revert', restore: 'unrevert', redo: 'redo', edit: 'edit', compact: 'compact', clear: 'clear', stop: 'stop', recap: 'recap', new: 'new', sessions: 'sessions', context: 'context', copy: 'copy',
     language: 'language', model: 'model', help: 'help' });

@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { statusFooter, fit, stuckOf, previewRing, ringTip } from '../src/model/footer.js';
+import { statusFooter, fit, stuckOf, previewRing, ringTip, capOf } from '../src/model/footer.js';
 
 loadRes();
 
@@ -24,7 +24,7 @@ test('一个会话的底栏：级别、模型照会话状态；右边一格累�
   const f = statusFooter(status);
   assert.deepEqual(f.left, { level: 'full', label: '⏵⏵ 开放权限', model: 'deepseek-v4', endpoint: 'deepseek' }, '旧的工作区读成开放权限（LV-3）');
   assert.deepEqual(f.right.map((p) => p.text), ['12.4k']);
-  assert.deepEqual(f.ring, { ratio: 0.0023, used: 2300, window: 1_000_000, stuck: null });
+  assert.deepEqual(f.ring, { ratio: 0.0023, used: 2300, window: 1_000_000, stuck: null, cap: null });
   assert.equal(ringTip(/** @type {any} */ (f.ring)), '上下文 2.3k / 1M（0.2%）');
 });
 
@@ -88,8 +88,8 @@ test('卡住了没有：最近一次压缩失败了、或自动压缩暂停了�
 });
 
 test('新会话的环照预览画；没有数的不画', () => {
-  assert.deepEqual(previewRing({ used: 3434, window: 1000000 }), { ratio: 0.003434, used: 3434, window: 1000000, stuck: null });
-  assert.deepEqual(previewRing({ used: 3434 }), { ratio: null, used: 3434, window: null, stuck: null });
+  assert.deepEqual(previewRing({ used: 3434, window: 1000000 }), { ratio: 0.003434, used: 3434, window: 1000000, stuck: null, cap: null });
+  assert.deepEqual(previewRing({ used: 3434 }), { ratio: null, used: 3434, window: null, stuck: null, cap: null });
   assert.equal(previewRing({ used: 0 }), null);
   assert.equal(previewRing(null), null);
 });
@@ -106,4 +106,18 @@ test('换级别发给核心的参数：只读只开只读开关；开放权限�
   assert.deepEqual(levelParams('read_only'), { read_only: true });
   assert.deepEqual(levelParams('full'), { level: 'full', read_only: false });
   assert.deepEqual(levelParams('workspace'), { level: 'full', read_only: false }, '不再发 workspace');
+});
+
+test('会话设了上下文上限（核心 CTX-1，设计 68，W-1129）：右边累计后面接「会话上限 128k」，悬停环接「会话上限」；放不下先丢花费、再丢它；没设的不写', () => {
+  const capped = { ...status, context: { used: 2300, window: 128_000, context: 128_000 }, usage: { ...status.usage, converted: { currency: 'CNY', amount: 0.32 }, amounts: [{ currency: 'USD', amount: 0.045 }] } };
+  const f = statusFooter(capped);
+  assert.deepEqual(f.right.map((p) => p.text), ['12.4k', '会话上限 128k', '¥0.32']);
+  assert.equal(ringTip(/** @type {any} */ (f.ring)), '上下文 2.3k / 128k（1.8%，会话上限）');
+  const widths = { total: 40, cap: 90, cost: 50 };
+  const measure = (/** @type {any[]} */ parts) => parts.reduce((n, p) => n + widths[/** @type {'total'} */ (p.key)], 0);
+  assert.deepEqual(fit(f.right, 135, measure).map((p) => p.key), ['total', 'cap'], '先丢花费');
+  assert.deepEqual(fit(f.right, 60, measure).map((p) => p.key), ['total'], '再丢会话上限');
+  assert.equal(capOf(null, { context: 200_000 }), 200_000, '会话状态没有的照订阅回应的限额');
+  assert.equal(capOf({ context: { window: 1_000_000 } }, {}), null, '没设的不写');
+  assert.deepEqual(statusFooter(status).right.map((p) => p.text), ['12.4k']);
 });

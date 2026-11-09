@@ -307,6 +307,8 @@ export class StepView {
       if (s.kind === 'rows') return h('div.tl-detail', h('div.tl-label', s.label), ...s.rows.map((r) => h(`div.tl-found-row${r.struck ? '.is-struck' : ''}`, r.head ? h('span.tl-found-head', r.head) : null, h('span.tl-found-text', r.text))));
       if (s.kind === 'blocks') return h('div.tl-detail', h('div.tl-label', s.label), ...s.blocks.map((b) => h('div.tl-found-block', b.head ? h('div.tl-found-head', b.head) : null, b.md ? this.markdownNode(b.text) : h('pre', b.text))));
       if (s.kind === 'markdown') return h('div.tl-detail', h('div.tl-label', s.label), this.markdownNode(s.text));
+      // 进一个会话看（问顾问那一步的顾问会话，W-1129）：照子代理的会话一样打开，顶上的路径点得回来
+      if (s.kind === 'session') return h('div.tl-detail', h('button.tl-open-session', { type: 'button', onclick: () => this.where.open?.(s.session) }, icon('arrow-right'), h('span', s.text)));
       return h('div.tl-detail', h('div.tl-label', s.label), h('pre', s.text));
     }));
     if (cards.length) this.fullDiff(step, cards);

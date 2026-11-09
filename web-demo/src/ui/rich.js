@@ -23,7 +23,8 @@ const isSvg = (target) => /\.svg$/i.test(target.split(/[?#]/)[0]);
 /**
  * 看着的这个会话在哪：会话编号（新会话还没开的是 `null`）、家目录、工作目录；时间线里的结果图点开找的灯箱。
  * @typedef {{session: string|null, home: string|null, cwd: string|null, lightbox?: () => any, detail?: (call: string) => Promise<any>,
- *   nested?: (call: string, after: number|null) => Promise<any[]|null>, nestedJob?: (job: string, after: number|null) => Promise<any[]|null>, summary?: (upto: number) => Promise<string|null>}} Where
+ *   nested?: (call: string, after: number|null) => Promise<any[]|null>, nestedJob?: (job: string, after: number|null) => Promise<any[]|null>, summary?: (upto: number) => Promise<string|null>,
+ *   open?: (session: string) => void}} Where `open` 进一个会话（问顾问那一步的顾问会话，W-1129）
  *   `detail` 问核心一次调用改了什么（`view.detail`，编辑、写入点开时）；`nested` 问脚本里调的工具（核心 M-5 上，点开执行命令时），`nestedJob` 照后台任务问（回报那一行点开时）；`summary` 问一次压缩的摘要原文（压缩那一行点开时）
  */
 
