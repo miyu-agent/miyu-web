@@ -9,6 +9,7 @@ import { h, icon, hasIcon } from '../../src/lib/dom.js';
 import { FrameHost } from './frame.js';
 import { foldCovered } from '../../src/lib/packages.js';
 import { sitePort, openSite } from './external.js';
+import { servesItself } from './route.js';
 
 export class FullPage {
   /**
@@ -28,6 +29,8 @@ export class FullPage {
     this.shown = '';
     /** 开界面块整页时软件包 `widgets` 还没起来（直接带着网址打开页面时会这样）：等它起来了重开（`index.js` 听 `service.set`） */
     this.awaitWidgets = false;
+    /** 后台页由它自己的服务提供的包：不开整页，交给它跳过去（`index.js`） @type {((id: string) => void)|null} */
+    this.served = null;
     /** 打开前的标题 */
     this.title = '';
     this.onKey = (/** @type {KeyboardEvent} */ e) => {
@@ -55,6 +58,14 @@ export class FullPage {
     if (own && !hasIcon(own)) await Promise.resolve(this.ctx.icons?.more()).catch(() => {});
     if (this.shown !== key) return;
     const p = listed.find((/** @type {any} */ x) => x.package === route.package);
+    // 后台页由它自己的服务提供的（核心 BP-1 的 `page_server`；旧核心上没有后台页、问得到端口的也算）：不开整页，交给 `served`
+    // 跳过去（发版前 check 14，W-1120）
+    if (!route.widget && this.served && (await servesItself(p, () => sitePort(this.ctx.core, route.package)))) {
+      if (this.shown !== key) return;
+      this.shown = '';
+      this.served(route.package);
+      return;
+    }
     // 界面块的整页：清单里声明了的、位置是 page 的那一块
     const widget = route.widget ? (p?.widgets ?? []).find((/** @type {any} */ w) => w.id === route.widget && w.place === 'page') : null;
     const name = widget?.title ? `${p?.name ?? route.package} · ${widget.title}` : p?.name ?? route.package;

@@ -14,6 +14,12 @@ export function apply(ctx) {
   let pushed = false;
   const nav = ctx.host.route;
   const page = new FullPage(ctx, () => back());
+  // 点名的包后台页由它自己的服务提供（发版前 check 14，W-1120）：网址里这一段去掉，这个标签页直接换成它的网页；打不开的说一句、留在网页
+  page.served = (id) => {
+    pushed = false;
+    nav.replace('');
+    openSite(ctx, id, { here: true }).then((why) => { if (why) ctx.composer?.say(why); });
+  };
   const sync = () => {
     const route = parseRoute(nav.current());
     if (route) page.show(route);

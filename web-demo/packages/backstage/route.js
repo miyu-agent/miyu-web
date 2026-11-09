@@ -25,3 +25,15 @@ export function parseRoute(hash) {
 export function formatRoute(route) {
   return `#package=${route.package}${route.widget ? `&widget=${route.widget}` : ''}`;
 }
+
+/**
+ * 点名的这个包的后台页是不是由它自己的服务提供（发版前 check 14，W-1120）：`package.list` 带 `page_server` 的是（核心 BP-1）；旧核心上
+ * 没有后台页、`status` 问得到端口的也算（接入通讯平台以前就是这样）；有后台页、没写 `page_server` 的不是，不问端口。
+ * @param {any} p `package.list` 里的这一项（没列着的是 `undefined`） @param {() => Promise<number|null>} probe 问它的端口
+ * @returns {Promise<boolean>}
+ */
+export async function servesItself(p, probe) {
+  if (p?.page_server) return true;
+  if (p?.page) return false;
+  return (await probe()) != null;
+}

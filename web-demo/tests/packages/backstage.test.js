@@ -4,7 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseRoute, formatRoute } from '../../packages/backstage/route.js';
+import { parseRoute, formatRoute, servesItself } from '../../packages/backstage/route.js';
 
 test('读网址：#package=<编号>、另带 widget；和别的几项混着也认；写法不对的不认', () => {
   assert.deepEqual(parseRoute('#package=qq-connect'), { package: 'qq-connect', widget: null });
@@ -35,4 +35,15 @@ test('宿主抹掉口令、一次性码，软件页面那一段留着', async ()
   globalThis.location.hash = '#k=ab12';
   dropFromHash(['k']);
   assert.deepEqual(seen, ['/#package=wx', '/#package=wx&widget=today', '/']);
+});
+
+test('后台页由它自己的服务提供（发版前 check 14，W-1120）：page_server 的是、不问端口；有后台页没写的不是；没有后台页的问得到端口才算', async () => {
+  let asked = 0;
+  const port = (/** @type {number|null} */ n) => async () => { asked += 1; return n; };
+  assert.equal(await servesItself({ page: true, page_server: true }, port(null)), true);
+  assert.equal(await servesItself({ page: true }, port(8301)), false);
+  assert.equal(asked, 0, '这两种不问端口');
+  assert.equal(await servesItself({ package: 'im' }, port(8301)), true, '旧核心上的 im');
+  assert.equal(await servesItself({ package: 'x' }, port(null)), false);
+  assert.equal(await servesItself(undefined, port(null)), false, '没列着的');
 });

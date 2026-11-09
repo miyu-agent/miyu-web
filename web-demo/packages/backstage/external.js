@@ -72,10 +72,11 @@ export async function sitePort(core, id) {
 
 /**
  * 在新标签页打开：问到端口、要到票再开（都在本机，很快，还在点的那一下浏览器放行的时间里；打不开的不白开一个空标签页），交回一句为什么打不开。
- * @param {any} ctx 这个包的上下文 @param {string} id
+ * `here`：这个标签页直接换成它（带着网址进来的，`miyu web --package`；发版前 check 14，W-1120），不另开。
+ * @param {any} ctx 这个包的上下文 @param {string} id @param {{here?: boolean}} [how]
  * @returns {Promise<string|null>} 打不开的原因；开了是 `null`
  */
-export async function openSite(ctx, id) {
+export async function openSite(ctx, id, { here = false } = {}) {
   try {
     const port = await sitePort(ctx.core, id);
     if (!port) return ctx.text('site.no_web');
@@ -84,8 +85,9 @@ export async function openSite(ctx, id) {
     const dark = ctx.theme?.dark?.() ?? matchMedia('(prefers-color-scheme: dark)').matches;
     const lang = (document.documentElement.lang || 'zh').split('-')[0];
     const url = siteUrl(port, { scheme: dark ? 'dark' : 'light', colors: currentColors(), ticket, lang });
-    // 开外面的链接照宿主的（浏览器开新标签页，桌面端照它自己的）
-    ctx.host.open(url);
+    // 开外面的链接照宿主的（浏览器开新标签页，桌面端照它自己的）；带着网址进来的就地换
+    if (here) location.replace(url);
+    else ctx.host.open(url);
     return null;
   } catch (err) {
     return /** @type {any} */ (err)?.message ?? String(err);
