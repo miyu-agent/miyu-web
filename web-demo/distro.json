@@ -27,6 +27,7 @@
     { "id": "schedules" },
     { "id": "pulse" },
     { "id": "attachments" },
+    { "id": "voice" },
     { "id": "jobs" },
     { "id": "dashboard" },
     { "id": "goal" },

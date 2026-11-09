@@ -18,7 +18,7 @@ import { Sidebar } from './sidebar.js';
 import { Chat } from './chat.js';
 import { Composer } from './composer.js';
 import { Artifacts } from './artifacts.js';
-import { runCommand, runUnlisted, refusalText, redo, copyTurn, Commands, revertLatest } from './commands.js';
+import { runCommand, runUnlisted, refusalText, redo, copyTurn, turnText, Commands, revertLatest } from './commands.js';
 import { coreSpecs } from '../model/commands.js';
 import { readSkills } from '../model/skills.js';
 import { rank, startupSession } from '../model/session.js';
@@ -200,8 +200,20 @@ export class App {
       openSession: (id) => this.open(id),
       // 她 show 过的那一样在右栏打开（正文里的卡片、灯箱里的「在右栏打开」）
       reveal: (path) => this.artifacts.reveal(path),
+      // 收尾那一行复制、重做中间软件包挂的按钮（挂载位 `turn.actions`：`render({turn, session})` 交一个节点，朗读这类，W-1128）
+      turnTools: (turn) => ctx.slots.list('turn.actions').flatMap((/** @type {any} */ e) => {
+        try {
+          const node = e.render?.({ turn, session: this.current });
+          return node ? [node] : [];
+        } catch (err) {
+          console.error(`收尾那一行的按钮画不出来（${e.id}）：${/** @type {any} */ (err)?.message}`);
+          return [];
+        }
+      }),
     }, this.ext);
     ctx.slots.watch('markdown.code', () => this.chat.redraw());
+    ctx.slots.declare('turn.actions', 'list');
+    ctx.slots.watch('turn.actions', () => this.chat.redraw());
     // 正文里交给软件包画的条目（确认和提问了结以后留的，按 `asking`）；挂的变了，正文重画
     ctx.slots.declare('chat.item', 'keyed');
     ctx.slots.watch('chat.item', () => this.chat.redraw());

@@ -480,11 +480,17 @@ function itemsNow(s) {
   return s ? itemsOf(s.view.list, s.view.status).items : [];
 }
 
+/** 她这一轮说的全部正文（原文，段与段之间空一行）；`turn` 不写的是最后有正文的那一轮（朗读用，W-1128）。 */
+export function turnText(app, turn) {
+  const s = app.current ? app.store.sessions.get(app.current) : null;
+  const replies = itemsNow(s).filter((it) => it.type === 'reply');
+  const at = turn ?? replies.filter((it) => !it.streaming).at(-1)?.turn;
+  return replies.filter((it) => it.turn === at).map((it) => it.text.trim()).join('\n\n');
+}
+
 /** 复制她这一轮说的全部正文（原文，段与段之间空一行）。 */
 export async function copyTurn(app, turn) {
-  const s = app.current ? app.store.sessions.get(app.current) : null;
-  const items = itemsNow(s);
-  const text = items.filter((it) => it.type === 'reply' && it.turn === turn).map((it) => it.text.trim()).join('\n\n');
+  const text = turnText(app, turn);
   if (!text) {
     app.composer.say(t('commands.nothing_to_copy'));
     return;

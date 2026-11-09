@@ -18,9 +18,9 @@ import { fitText } from '../model/entries.js';
 import { skillPieces } from '../model/skills.js';
 
 /**
- * @typedef {{copy: (text: string) => void, edit: (text: string) => void, copyTurn: (turn: number) => void, redo: () => void, openJobs: () => void, openSession: (id: string) => void, compacted?: (session: string|null) => void, reveal?: (path: string) => void}} Actions
+ * @typedef {{copy: (text: string) => void, edit: (text: string) => void, copyTurn: (turn: number) => void, redo: () => void, openJobs: () => void, openSession: (id: string) => void, compacted?: (session: string|null) => void, reveal?: (path: string) => void, turnTools?: (turn: number) => Node[]}} Actions
  *   复制一段字；照改过的话重做最新的一轮；复制她这一轮说的全部正文；原样重做最新的一轮；打开后台任务的浮层；看另一个会话；
- *   在右栏打开她展示过的那一样
+ *   在右栏打开她展示过的那一样；收尾那一行软件包挂的按钮（挂载位 `turn.actions`，朗读这类，W-1128）
  * @typedef {{session: string|null, lightbox: () => any, mine?: boolean, titleOf?: (id: string) => string|null, skills?: Set<string>}} Media
  *   附件的地址照哪个会话取、现在的灯箱、是不是你说的、一个会话的标题（「来自「标题」」用）、能点名的技能（气泡里 `$名字` 着色，W-1124）
  * @typedef {{kind: 'image'|'file', blob: string, media_type: string, width: number|null, height: number|null, name: string|null}} Attachment
@@ -99,7 +99,7 @@ export function endNode(it, on) {
   // 打断的那一轮，后台还有在跑的：接一句，点了打开后台任务（蓝图「后台任务」第 6 条）
   const jobs = it.jobs ? h('button.turn-end-jobs', { type: 'button', onclick: () => on.openJobs() }, t('interrupted_jobs', { count: it.jobs })) : null;
   const text = h('span.turn-end-text', it.text, jobs);
-  const actions = h('span.msg-actions.turn-actions', button('copy', t('said.copy'), () => on.copyTurn(it.turn)), redo);
+  const actions = h('span.msg-actions.turn-actions', button('copy', t('said.copy'), () => on.copyTurn(it.turn)), ...(on.turnTools?.(it.turn) ?? []), redo);
   const fit = !!it.shorter?.length;
   const node = h(`div.turn-end.tone-${it.tone}${fit ? '.is-fit' : ''}`, text, actions);
   if (fit) fitNarrow(node, text, actions, [it.text, ...(it.shorter ?? [])]);

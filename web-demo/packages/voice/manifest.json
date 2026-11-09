@@ -1,0 +1,165 @@
+{
+  "id": "voice",
+  "version": "0.1.0",
+  "name": {
+    "zh": "语音",
+    "en": "Voice",
+    "ja": "音声"
+  },
+  "summary": {
+    "zh": "装了语音包时：输入框的麦克风、回答的朗读",
+    "en": "With the voice packages: a microphone in the input box and read-aloud for replies",
+    "ja": "音声パッケージがあるとき：入力欄のマイクと回答の読み上げ"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "总线上有 stt 才画麦克风：浏览器录成 16 kHz 单声道 wav，分块传给核心，stt.transcribe 认成字放进输入框。有 tts 才画朗读：一句一句 tts.synthesize，在浏览器里放；右上角自动朗读只在这个标签页生效。"
+  },
+  "inject": [
+    "slots",
+    "core",
+    "host",
+    "composer",
+    "chat",
+    "sessions"
+  ],
+  "settings": {
+    "after": {
+      "type": "choice",
+      "choices": [
+        "insert",
+        "send"
+      ],
+      "default": "insert",
+      "name": {
+        "zh": "认出的字（insert 放进输入框，send 直接发）",
+        "en": "Recognized text (insert into the box, or send)",
+        "ja": "認識した文字（insert は入力欄へ、send はそのまま送信）"
+      }
+    },
+    "silence_ms": {
+      "type": "number",
+      "default": 1200,
+      "min": 300,
+      "max": 5000,
+      "integer": true,
+      "name": {
+        "zh": "静下来多久算说完（毫秒）",
+        "en": "Silence that ends a recording (ms)",
+        "ja": "話し終わりとみなす無音（ミリ秒）"
+      }
+    },
+    "max_seconds": {
+      "type": "number",
+      "default": 120,
+      "min": 5,
+      "max": 600,
+      "integer": true,
+      "name": {
+        "zh": "一次最长录几秒",
+        "en": "Longest recording (seconds)",
+        "ja": "一回の最長録音（秒）"
+      }
+    },
+    "threshold": {
+      "type": "number",
+      "default": 0.015,
+      "min": 0.001,
+      "max": 0.5,
+      "name": {
+        "zh": "多响算在说话（0～1）",
+        "en": "Loudness that counts as speech (0–1)",
+        "ja": "話しているとみなす音量（0〜1）"
+      }
+    },
+    "chunk_bytes": {
+      "type": "number",
+      "default": 524288,
+      "min": 1024,
+      "max": 524288,
+      "integer": true,
+      "name": {
+        "zh": "分块传给核心时一块多少字节（核心收的上限 512 KiB）",
+        "en": "Upload chunk size in bytes (core accepts up to 512 KiB)",
+        "ja": "コアへ分割して送るときの 1 ブロックのバイト数（コアの上限 512 KiB）"
+      }
+    }
+  },
+  "styles": [
+    "style.css"
+  ],
+  "text": {
+    "zh": {
+      "mic": "语音输入",
+      "mic_stop": "停止并识别",
+      "mic_working": "正在识别…",
+      "unclear": "没听清，再说一次",
+      "speak": "朗读",
+      "speak_stop": "停止朗读",
+      "auto": "自动朗读",
+      "errors": {
+        "bad_audio": "录下的声音认不了",
+        "too_long": "说得太长了，分几次说",
+        "engine_failed": "识别引擎出错了",
+        "mic_busy": "麦克风正被占用",
+        "no_microphone": "找不到麦克风",
+        "mic_denied": "没有麦克风权限，请在浏览器里允许",
+        "empty_text": "这一段没有能念的字",
+        "not_configured": "朗读还没配好，去语音包的设置里配",
+        "no_speaker": "找不到能放声音的设备",
+        "no_provider": "语音包没装或没在运行",
+        "not_exported": "语音包没登记这个功能",
+        "play": "这一句放不出来",
+        "other": "语音出错：{reason}"
+      }
+    },
+    "en": {
+      "mic": "Voice input",
+      "mic_stop": "Stop and transcribe",
+      "mic_working": "Transcribing…",
+      "unclear": "Didn't catch that. Try again",
+      "speak": "Read aloud",
+      "speak_stop": "Stop reading",
+      "auto": "Auto read aloud",
+      "errors": {
+        "bad_audio": "Couldn't read the recording",
+        "too_long": "Too long. Say it in parts",
+        "engine_failed": "The speech engine failed",
+        "mic_busy": "The microphone is in use",
+        "no_microphone": "No microphone found",
+        "mic_denied": "No microphone permission. Allow it in the browser",
+        "empty_text": "Nothing to read aloud here",
+        "not_configured": "Read-aloud isn't set up. Configure it in the voice package settings",
+        "no_speaker": "No audio output found",
+        "no_provider": "The voice package isn't installed or running",
+        "not_exported": "The voice package doesn't offer this",
+        "play": "Couldn't play this sentence",
+        "other": "Voice error: {reason}"
+      }
+    },
+    "ja": {
+      "mic": "音声入力",
+      "mic_stop": "停止して認識",
+      "mic_working": "認識中…",
+      "unclear": "聞き取れませんでした。もう一度どうぞ",
+      "speak": "読み上げ",
+      "speak_stop": "読み上げを停止",
+      "auto": "自動読み上げ",
+      "errors": {
+        "bad_audio": "録音を認識できません",
+        "too_long": "長すぎます。分けて話してください",
+        "engine_failed": "音声エンジンでエラーが起きました",
+        "mic_busy": "マイクは使用中です",
+        "no_microphone": "マイクが見つかりません",
+        "mic_denied": "マイクの許可がありません。ブラウザで許可してください",
+        "empty_text": "読み上げられる文字がありません",
+        "not_configured": "読み上げが未設定です。音声パッケージの設定で設定してください",
+        "no_speaker": "音声出力が見つかりません",
+        "no_provider": "音声パッケージが未インストールか停止しています",
+        "not_exported": "音声パッケージがこの機能を提供していません",
+        "play": "この文を再生できません",
+        "other": "音声エラー：{reason}"
+      }
+    }
+  }
+}

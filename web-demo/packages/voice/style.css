@@ -1,0 +1,10 @@
+/* 语音（软件包 voice，W-1128）：输入框下面一排的麦克风；录着的时候 accent 色一圈在呼吸，认的时候转圈 */
+.voice-mic.is-recording { color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); animation: voice-breathe 1.4s ease-in-out infinite; }
+.voice-mic.is-busy .icon { animation: voice-spin 0.9s linear infinite; }
+/* 收尾那一行的朗读：念着的那一轮按钮常亮（别的按钮悬停才亮） */
+.voice-speak.is-playing { color: var(--accent); opacity: 1; }
+/* 右上角的自动朗读：开着 accent 色 */
+.voice-auto.is-on { color: var(--accent); }
+@keyframes voice-breathe { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent); } }
+@keyframes voice-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .voice-mic.is-recording, .voice-mic.is-busy .icon { animation: none; } }

@@ -771,6 +771,18 @@ export class Composer {
     this.changed();
   }
 
+  /** 在光标那里插一段字（说的话认成的字，软件包 `voice`，W-1128）：选着的字换掉，光标停在插进去的后面。 @param {string} text */
+  insertText(text) {
+    if (!text) return;
+    const start = this.input.selectionStart ?? this.input.value.length;
+    const end = this.input.selectionEnd ?? start;
+    const next = splice(this.input.value, start, end, text);
+    this.input.value = next.value;
+    this.input.setSelectionRange(next.caret, next.caret);
+    this.changed();
+    this.input.focus();
+  }
+
   /** `Esc`：关掉，这个词没变就不再开。 */
   dismissMention() {
     this.mentionDismissed = this.mentionAt?.key ?? null;

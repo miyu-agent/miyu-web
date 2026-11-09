@@ -313,6 +313,8 @@ export async function boot(root) {
         /** 核心在哪个系统上（握手 `host.platform`）：Windows 上路径照 Windows 的写法给人看（`shownPath`） */
         platform: info.platform,
         files: host.files,
+        /** 一个 blob 的地址（`blob.get`，照这个账号、不分会话；软件包 `voice` 放合成好的声音，W-1128） */
+        blobUrl: (/** @type {string} */ hash, /** @type {string} */ type) => host.urls.blob(hash, type),
         pages: host.pages,
         route: host.route,
         open: host.open,

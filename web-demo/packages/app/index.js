@@ -4,7 +4,7 @@
 
 import { App } from '../../src/ui/app.js';
 import { NestedList } from '../../src/ui/nested.js';
-import { withdrawQueued } from '../../src/ui/commands.js';
+import { withdrawQueued, turnText } from '../../src/ui/commands.js';
 import { useConnection as linkCardsUse } from '../../src/ui/linkcards.js';
 import { codeBlock, copy } from '../../src/markdown/build.js';
 import { drawMarkdown, useRenderers } from '../../src/ui/render.js';
@@ -95,6 +95,8 @@ export function apply(ctx) {
     /** 钉一个节点在这时正文里最后一块的后面，交回钉在哪；照交回的位置再钉（换了会话回来） */
     anchor: (node) => app.chat.anchor(node),
     place: (where, node) => app.chat.place(where, node),
+    /** 她一轮说的全部正文（原文，段与段之间空一行）；`turn` 不写的是最后说完的那一轮（朗读，软件包 `voice`，W-1128） */
+    turnText: (/** @type {number|undefined} */ turn) => turnText(app, turn),
     /** 正在看的会话在哪个目录干活；账号的工作区（握手回应的 `host.workspace`，新会话默认在这里） */
     workdir: () => app.workdir(),
     defaultWorkdir: () => app.cwd,
@@ -168,6 +170,10 @@ export function apply(ctx) {
     takeover: (open) => app.composer.takeover(open),
     /** 锁住输入框（`text` 是占位字，`null` 解锁）：默认的人格没了、还没选的时候（软件包 `setup`） */
     lock: (text) => app.composer.lock(text),
+    /** 在光标那里插一段字（说的话认成的字，软件包 `voice`，W-1128）：照打字一样触发 `input` */
+    insert: (/** @type {string} */ text) => app.composer.insertText(text),
+    /** 照点发送一样发出去（语音「说完直接发」） */
+    send: () => app.composer.submit(),
     /** 输入框上面的列表选一样（同 `/language`：标题、按键提示、一行一样、现在的写「当前」）：`/persona`、`/preset` */
     pick: (ask) => app.composer.picker.show(ask),
     /** 认领没在回答、框里没字时的两下 `Esc`（`{hint, run}`：第一下提示 `hint`，第二下 `run`；`null` 放开）：整理记忆时叫停整理 */

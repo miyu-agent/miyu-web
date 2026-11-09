@@ -111,7 +111,8 @@
     "select": [
       ".brand-custom"
     ]
-  },  "sidebar.more": {
+  },
+  "sidebar.more": {
     "zh": "左栏「更多」那一行外面的一层（软件包挂了入口才露，W-1071）",
     "select": [
       ".sidebar-more"
@@ -123,7 +124,6 @@
       ".sidebar-more-menu"
     ]
   },
-
   "schedules.detail-prompt": {
     "zh": "定时任务详情：头一行那句话",
     "select": [
@@ -686,6 +686,24 @@
     "zh": "附件：拖放字",
     "select": [
       ".attach-drop-text"
+    ]
+  },
+  "voice.mic": {
+    "zh": "语音：输入框的麦克风",
+    "select": [
+      ".voice-mic"
+    ]
+  },
+  "voice.speak": {
+    "zh": "语音：收尾那一行的朗读",
+    "select": [
+      ".voice-speak"
+    ]
+  },
+  "voice.auto": {
+    "zh": "语音：右上角的自动朗读",
+    "select": [
+      ".voice-auto"
     ]
   },
   "bs.page": {
