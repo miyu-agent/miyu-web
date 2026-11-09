@@ -541,7 +541,8 @@ export function apply(ctx) {
     key: 'preset.default',
     options: () => (catalog.presets ?? []).filter((p) => !p.problem).map((p) => ({ value: p.preset, name: presetName(p) })),
   });
-  // 终端会话（核心 8-33，给 shellhook 开的会话）用哪个人格、预设：不写是跟随默认人格、默认预设（没有单独的无人格）
+  // 终端会话（核心 8-33，给 shellhook 开的会话）用哪个人格、预设：不写是跟随默认人格、默认预设（没有单独的无人格）；那一项写
+  // 「跟随新会话设置」（发版前 check 第 21 条，2026-11-09 项目主人，同终端）
   ctx.slots.mount('settings.editor', {
     id: 'setup-terminal-persona',
     key: 'terminal.persona',
