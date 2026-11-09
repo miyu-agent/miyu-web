@@ -3646,6 +3646,12 @@
       ".picker-note"
     ]
   },
+  "picker.side": {
+    "zh": "选择列表：右边暗字",
+    "select": [
+      ".picker-side"
+    ]
+  },
   "help.section": {
     "zh": "按键帮助：一节",
     "select": [

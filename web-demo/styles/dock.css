@@ -68,6 +68,7 @@
 .picker-action:hover { background: var(--surface-3); color: var(--text); }
 .picker-action .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
 .picker-note { flex: none; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
+.picker-side { flex: none; margin-left: calc(8px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); font-variant-numeric: tabular-nums; }
 /* 帮助（/help）：两段，段名暗色加粗；一行左边命令、按键（等宽，一列对齐），右边说明；放不下自己滚 */
 .help-body { max-height: min(56vh, 460px); overflow-y: auto; overscroll-behavior: contain; padding: 0 calc(10px * var(--space)) calc(6px * var(--space)); }
 .help-section { margin: calc(8px * var(--space)) 0 calc(4px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); font-weight: 700; }

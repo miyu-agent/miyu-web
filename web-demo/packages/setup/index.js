@@ -305,12 +305,12 @@ export function apply(ctx) {
       title: t('info.switch_preset'), below: true, back,
       rows: [
         ...(catalog.presets ?? []).map((p) => ({
-          title: presetName(p), desc: p.problem ? t('preset_bad') : p.summary ?? '', current: sameAs(p.preset, now), off: !!p.problem, keep: true,
+          title: presetName(p), desc: p.problem ? t('preset_bad') : p.summary ?? '', side: p.problem ? undefined : tokensOf(p), current: sameAs(p.preset, now), off: !!p.problem, keep: true,
           action: p.problem ? undefined : editAction('preset', p.preset, () => { if (anchor.isConnected) switchPreset(anchor, session, now, back, m); }, () => m.close()),
           pick: () => { if (!sameAs(p.preset, now)) confirmSwitch(anchor, session, { preset: p.preset }, back, m); },
         })),
         // 最后一行「无工具」：交 `preset: null`
-        ...(catalog.noTools ? [{ title: presetName(catalog.noTools), desc: catalog.noTools.summary ?? '', current: now === false, keep: true,
+        ...(catalog.noTools ? [{ title: presetName(catalog.noTools), desc: catalog.noTools.summary ?? '', side: tokensOf(catalog.noTools), current: now === false, keep: true,
           pick: () => { if (now !== false) confirmSwitch(anchor, session, { preset: null }, back, m); } }] : []),
       ],
     });
@@ -421,7 +421,9 @@ export function apply(ctx) {
    */
   const tokensOf = (p) => {
     const n = presetTokens(p);
-    return n == null ? undefined : t('preset_tokens', { n: short(n) });
+    // 「约 1.2k toks」，0 的写「0 tok」（W-1123，同一天验收时项目主人定的样式）
+    if (n == null) return undefined;
+    return n === 0 ? t('preset_no_tokens') : t('preset_tokens', { n: short(n) });
   };
 
   /**
@@ -568,12 +570,13 @@ export function apply(ctx) {
   });
   /**
    * 几行选项交给输入框上面的列表（同 `/language`、会话列表那一个位置那一个样子：`↑` `↓` 选、`Enter` 定、`Esc` 关）。
-   * @param {string} title @param {{title: string, desc?: string, current?: boolean, off?: boolean, action?: any, pick: () => void}[]} rows
+   * @param {string} title @param {{title: string, desc?: string, side?: string, current?: boolean, off?: boolean, action?: any, pick: () => void}[]} rows
    */
   const listOf = (title, rows) => ctx.composer.pick({
     // 有编辑的列表（人格、预设）提示里多「E 编辑」
     title, hint: t(rows.some((r) => r.action) ? 'picker_hint_edit' : 'picker_hint'), note: t('picker_current'),
-    items: rows.map((r) => ({ label: r.title, desc: r.desc || '', off: !!r.off, ...(r.action ? { action: r.action } : {}) })),
+    // 预设右边的 token 数（W-1123：`/preset` 的列表原来没带上）
+    items: rows.map((r) => ({ label: r.title, desc: r.desc || '', off: !!r.off, ...(r.side ? { side: r.side } : {}), ...(r.action ? { action: r.action } : {}) })),
     current: rows.findIndex((r) => r.current),
     choose: (/** @type {number} */ i) => rows[i]?.pick(),
   });

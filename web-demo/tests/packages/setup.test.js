@@ -206,8 +206,8 @@ test('删人格连带卸掉的出厂包（核心 PE-1）：删后多出来的 re
   assert.equal(newlyRemoved(before, null), null);
 });
 
-test('预设右边的 token 数：核心给了、大于 0 的写，0（「无功能」）和没给的不写', () => {
+test('预设右边的 token 数：核心给了的写，0（「无功能」）也写（W-1123），没给的不写', () => {
   assert.equal(presetTokens({ preset: 'full', tokens: 3712 }), 3712);
-  assert.equal(presetTokens({ preset: 'none', tokens: 0 }), null);
+  assert.equal(presetTokens({ preset: 'none', tokens: 0 }), 0);
   assert.equal(presetTokens({ preset: 'old' }), null);
 });
