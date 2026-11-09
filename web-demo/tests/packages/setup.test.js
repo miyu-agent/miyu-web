@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave, plainPath } from '../../packages/setup/model.js';
+import { personaName, presetName, presetTokens, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave, plainPath } from '../../packages/setup/model.js';
 import { rowsOf, split, filterTree, withChanges, fallbackSections } from '../../packages/setup/feature-tree.js';
 
 const list = [{ persona: 'engineer', name: null }, { persona: 'miyu', name: 'Miyu' }, { persona: 'bad', problem: 'persona.toml:2: …' }];
@@ -204,4 +204,10 @@ test('删人格连带卸掉的出厂包（核心 PE-1）：删后多出来的 re
   assert.equal(newlyRemoved(after, after), null);
   assert.equal(newlyRemoved(null, after), null);
   assert.equal(newlyRemoved(before, null), null);
+});
+
+test('预设右边的 token 数：核心给了、大于 0 的写，0（「无功能」）和没给的不写', () => {
+  assert.equal(presetTokens({ preset: 'full', tokens: 3712 }), 3712);
+  assert.equal(presetTokens({ preset: 'none', tokens: 0 }), null);
+  assert.equal(presetTokens({ preset: 'old' }), null);
 });

@@ -10,7 +10,7 @@
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { short } from '../../src/lib/format.js';
 import { Menu } from './menu.js';
-import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, lastChoice } from './model.js';
+import { personaName, presetName, presetTokens, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, lastChoice } from './model.js';
 import { Catalog } from './catalog.js';
 import { ListPage, problemText } from './page.js';
 import { browse } from './folders.js';
@@ -419,7 +419,10 @@ export function apply(ctx) {
    * 预设右边写的它占多少 token（核心 DM-4 的 `tokens`，估的、不算人格；发版前 check 4，W-1119）：「约 1.2k」，没有这一格的不写。
    * @param {{tokens?: number}} p
    */
-  const tokensOf = (p) => (typeof p.tokens === 'number' ? t('preset_tokens', { n: short(p.tokens) }) : undefined);
+  const tokensOf = (p) => {
+    const n = presetTokens(p);
+    return n == null ? undefined : t('preset_tokens', { n: short(n) });
+  };
 
   /**
    * 预设的几行：照 `preset.list`，一行一个名字，下面简单描述（没有的不写，2026-10-23）；写错的暗着。给了 `reopen` 的同人格多一个编辑。

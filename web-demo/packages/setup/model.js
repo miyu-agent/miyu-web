@@ -11,6 +11,9 @@ export const personaName = (p) => p.name || p.persona;
 /** 预设写给人看的名字：没有显示名的写编号。 @param {Preset} p */
 export const presetName = (p) => p.name || p.preset;
 
+/** 预设右边写的 token 数（发版前 check 4，核心 DM-4 的 `tokens`）：核心没给的、是 0 的（「无功能」，2026-11-09 项目主人：0 就不写）不写。 @param {Preset} p */
+export const presetTokens = (p) => (typeof p.tokens === 'number' && p.tokens > 0 ? p.tokens : null);
+
 /**
  * 删人格连带卸掉的出厂包（核心 PE-1）：`package.list` 删前、删后两份里，删后多出来的 `removed` 的那一个；没有、读不到的是 `null`。
  * @param {any[]|null} before @param {any[]|null} after
