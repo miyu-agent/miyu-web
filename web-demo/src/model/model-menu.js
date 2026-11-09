@@ -39,15 +39,15 @@ export function menuOf(list, current) {
     const how = pool.strategy === 'rotate' ? t('model_menu.rotate') : '';
     // 成员是空的（下架的模型被核心拿空了，核心 8-23 的 `usable`）：暗着选不了，照它挑会是 `no_model`
     const usable = pool.usable !== false && pool.models.length > 0;
-    // 固定池上面写显示名（旗舰、日常、轻量），下面暗字前面接 `@flagship`（2026-10-26 项目主人定名，同终端）
+    // 固定池写 `@旗舰池`（2026-10-26 项目主人定名；2026-11-09 改成「旗舰池」这样、写成 `@旗舰池`，暗字里不再接 `@flagship`，同终端，W-1118）
     const name = poolName(pool.name);
-    const desc = [name ? ref : '', how, members].filter(Boolean).join(' · ');
-    return { ref, title: name ?? ref, desc, current: ref === current, usable, why: usable ? '' : t('model_menu.pool_empty'), find: `${name ?? ''}\n${ref}\n${members}` };
+    const desc = [how, members].filter(Boolean).join(' · ');
+    return { ref, title: name ? `@${name}` : ref, desc, current: ref === current, usable, why: usable ? '' : t('model_menu.pool_empty'), find: `${name ?? ''}\n${ref}\n${members}` };
   });
   return { models, pools };
 }
 
-/** 固定池的显示名（旗舰、日常、轻量，照界面语言）；人建的池没有，交回 `null`。 @param {string} name 池名，不带 `@` */
+/** 固定池的显示名（旗舰池、日常池、轻量池，照界面语言）；人建的池没有，交回 `null`。 @param {string} name 池名，不带 `@` */
 export const poolName = (name) => (isFixedPool(name) ? t(`model_menu.fixed_pools.${name}`) : null);
 
 /** 供应商的显示名（核心 8-21：`name.value`，已经照配置、目录、编号退好；旧核心是字或没有）。 */
@@ -86,9 +86,9 @@ export function footerOf(ref) {
  * @returns {{model: string|null, endpoint: string|null, full?: string}}
  */
 export function footerLabel(left, list) {
-  // 用着固定池的写显示名，暗色那一格写 `@flagship`，悬停同样（2026-10-26 项目主人定名）
+  // 用着固定池的写 `@旗舰池`，不写 `@flagship`（2026-10-26 项目主人定名；2026-11-09 改，同终端，W-1118）
   const fixed = left.model?.startsWith('@') ? poolName(left.model.slice(1)) : null;
-  if (fixed && left.model) return { model: fixed, endpoint: left.model, full: left.model };
+  if (fixed && left.model) return { model: `@${fixed}`, endpoint: null };
   if (!left.model || !left.endpoint || left.model.startsWith('@')) return left;
   const full = `${left.endpoint}/${left.model}`;
   const p = list ? (list.providers ?? []).find((x) => x.id === left.endpoint) : null;

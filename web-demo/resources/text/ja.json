@@ -525,7 +525,7 @@
     "open_usage": "使用量ページで見る"
   },
   "model_menu": {
-    "fixed_pools": { "flagship": "フラッグシップ", "normal": "日常", "lite": "ライト" },
+    "fixed_pools": { "flagship": "フラッグシッププール", "normal": "日常プール", "lite": "ライトプール" },
     "tip": "モデルを変更",
     "models": "モデル",
     "pools": "モデルプール",
