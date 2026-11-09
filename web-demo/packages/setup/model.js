@@ -3,7 +3,7 @@
 //! 纯函数。
 
 /** `persona.list` 的一项：写错的只有 `persona`、`problem`。 @typedef {{persona: string, name?: string|null, summary?: string|null, problem?: string}} Persona */
-/** `preset.list` 的一项：写错的只有 `preset`、`problem`。 @typedef {{preset: string, name?: string|null, summary?: string|null, problem?: string}} Preset */
+/** `preset.list` 的一项：写错的只有 `preset`、`problem`。 @typedef {{preset: string, name?: string|null, summary?: string|null, problem?: string, tokens?: number}} Preset */
 
 /** 人格写给人看的名字：没有显示名的写编号。 @param {Persona} p */
 export const personaName = (p) => p.name || p.persona;

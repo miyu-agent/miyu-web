@@ -1684,6 +1684,12 @@
       ".setup-menu-desc"
     ]
   },
+  "setup.menu-side": {
+    "zh": "人格、预设、工作区：菜单右边的暗字（预设占多少 token）",
+    "select": [
+      ".setup-menu-side"
+    ]
+  },
   "setup.menu-note": {
     "zh": "人格、预设、工作区：菜单说明",
     "select": [

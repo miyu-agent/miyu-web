@@ -7,7 +7,7 @@
 import { h, icon, replace } from '../../src/lib/dom.js';
 
 /**
- * @typedef {{title: string, desc?: string, icon?: string, current?: boolean, off?: boolean, tip?: string, label?: string, more?: boolean, still?: boolean,
+ * @typedef {{title: string, desc?: string, side?: string, icon?: string, current?: boolean, off?: boolean, tip?: string, label?: string, more?: boolean, still?: boolean,
  *   danger?: boolean, keep?: boolean, wrap?: boolean, mono?: boolean, mouse?: boolean, action?: {icon: string, title: string, run: () => void, key?: string}, pick: (el: HTMLElement) => void}} Row
  *   `label` 是左边暗字的名字（名字、值一行的样子，左上角的「会话信息」），`more` 末尾一个 ›，`still` 只是看的、点不了、不亮，`keep` 点了不收菜单，
  *   `wrap` 值太长换行写全（不截断），`mono` 值用等宽暗字（会话编号），`mouse` 只用鼠标点（不进键盘的上下、打开时不停在它上面，悬停照样亮），`action` 行末一个图标按钮（带 `key` 的，移到这一行按这个键也一样：人格、预设的编辑是 `e`）
@@ -68,6 +68,8 @@ export class Menu {
         onmouseleave: (/** @type {MouseEvent} */ e) => { if (r.mouse) /** @type {HTMLElement} */ (e.currentTarget).classList.remove('is-selected'); },
         onclick: () => this.pick(r),
       }, r.icon ? icon(r.icon) : null, r.label != null ? h('span.setup-menu-label', r.label) : null, text,
+        // 右边暗字的一小格（预设占多少 token，发版前 check 4，W-1119）
+        r.side ? h('span.setup-menu-side', r.side) : null,
         r.action ? h('button.setup-menu-action.is-inline', {
           type: 'button', title: r.action.title, 'aria-label': r.action.title, onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(),
           onclick: (/** @type {MouseEvent} */ e) => { e.stopPropagation(); r.action?.run(); },

@@ -276,6 +276,7 @@
         "busy": "选择文件夹的窗口已经开着"
       },
       "choose_preset": "选择预设",
+      "preset_tokens": "约 {n}",
       "locked_preset": "请选择预设",
       "preset_bad": "文件有误",
       "presets": {
@@ -491,6 +492,7 @@
         "busy": "The folder picker is already open"
       },
       "choose_preset": "Select preset",
+      "preset_tokens": "~{n}",
       "locked_preset": "Select a preset",
       "preset_bad": "Invalid file",
       "presets": {
@@ -706,6 +708,7 @@
         "busy": "フォルダ選択画面はすでに開いています"
       },
       "choose_preset": "プリセットを選ぶ",
+      "preset_tokens": "約 {n}",
       "locked_preset": "先にプリセットを選んでください",
       "preset_bad": "ファイルに誤りがあります",
       "presets": {

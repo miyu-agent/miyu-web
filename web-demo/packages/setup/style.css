@@ -46,6 +46,7 @@
 .setup-menu-title { overflow: hidden; color: var(--text); font-size: calc(12.5px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
 .setup-menu-row.is-current .setup-menu-title { color: var(--accent); }
 .setup-menu-desc { overflow: hidden; color: var(--text-faint); font-size: calc(11px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
+.setup-menu-side { flex: none; color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .setup-menu-note { padding: calc(6px * var(--space)) calc(10px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
 .setup-menu-foot { display: flex; justify-content: flex-end; gap: calc(6px * var(--space)); margin-top: calc(6px * var(--space)); padding-top: calc(6px * var(--space)); }
 .setup-menu-btn { height: 28px; padding: 0 calc(12px * var(--space)); border: var(--btn-border, 0); border-radius: var(--btn-radius, var(--r-8)); background: var(--btn-bg, var(--surface-2)); color: var(--btn-fg, var(--text)); font: calc(12.5px * var(--text-scale)) var(--font-ui); cursor: pointer; }

@@ -8,6 +8,7 @@
 //! - 左栏左上角的头像点了（事件 `persona.open`）：直接在页面上开这个会话用的人格的编辑卡片（`quick-edit.js`）。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { short } from '../../src/lib/format.js';
 import { Menu } from './menu.js';
 import { personaName, presetName, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, lastChoice } from './model.js';
 import { Catalog } from './catalog.js';
@@ -415,6 +416,12 @@ export function apply(ctx) {
   const sameAs = (id, now) => id === now || (now === false && !catalog.noTools && id === catalog.noToolsAs());
 
   /**
+   * 预设右边写的它占多少 token（核心 DM-4 的 `tokens`，估的、不算人格；发版前 check 4，W-1119）：「约 1.2k」，没有这一格的不写。
+   * @param {{tokens?: number}} p
+   */
+  const tokensOf = (p) => (typeof p.tokens === 'number' ? t('preset_tokens', { n: short(p.tokens) }) : undefined);
+
+  /**
    * 预设的几行：照 `preset.list`，一行一个名字，下面简单描述（没有的不写，2026-10-23）；写错的暗着。给了 `reopen` 的同人格多一个编辑。
    * 最后一行「无工具」（核心 P-16 下）：选了交 `false`，不能编辑。
    * @param {string|false|null} chosen @param {(preset: string|false) => void} pick @param {() => void} [reopen] @param {() => void} [before]
@@ -424,12 +431,13 @@ export function apply(ctx) {
       title: presetName(p),
       desc: p.problem ? t('preset_bad') : p.summary ?? '',
       tip: p.problem ? catalog.problemOf('preset', p).map((x) => problemText(ctx, x)).join('\n') : undefined,
+      side: p.problem ? undefined : tokensOf(p),
       current: sameAs(p.preset, chosen) && !p.problem,
       off: !!p.problem,
       action: p.problem ? undefined : editAction('preset', p.preset, reopen, before),
       pick: () => pick(p.preset),
     })),
-    ...(catalog.noTools ? [{ title: presetName(catalog.noTools), desc: catalog.noTools.summary ?? '', current: chosen === false, pick: () => pick(false) }] : []),
+    ...(catalog.noTools ? [{ title: presetName(catalog.noTools), desc: catalog.noTools.summary ?? '', side: tokensOf(catalog.noTools), current: chosen === false, pick: () => pick(false) }] : []),
   ];
 
   const openPersonas = () => {
