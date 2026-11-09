@@ -143,6 +143,10 @@
 .mention-name { color: var(--text); }
 .mention-row.is-selected .mention-name { color: var(--accent); }
 .mention-path .is-mark { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+/* `$` 点名技能的列表（W-1124）：借 `@` 列表的框和行，一行是 `$名字`，后面暗色接说明 */
+.skill-name { flex: none; color: var(--text); font: calc(13px * var(--text-scale)) var(--font-mono); white-space: nowrap; }
+.mention-row.is-selected .skill-name { color: var(--accent); }
+.skill-summary { min-width: 0; margin-left: calc(10px * var(--space)); overflow: hidden; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
 .mention-empty { padding: calc(7px * var(--space)) calc(10px * var(--space)); color: var(--text-faint); font-size: calc(13px * var(--text-scale)); }
 .mention-empty.is-error { color: var(--t-warn); }
 .mention-hint { padding: calc(6px * var(--space)) calc(10px * var(--space)) calc(2px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); line-height: calc(16px * var(--text-scale)); }

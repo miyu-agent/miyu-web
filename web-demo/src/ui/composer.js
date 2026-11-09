@@ -9,7 +9,8 @@
 //! `ui/history.js`）；发出去的话、执行的命令记进去，两下 `Esc` 清掉的那句单独留一份，空着按 `↑` 先拿回它。
 //! 光标前面是 `@` 词时开 `@` 选文件的列表（蓝图「`@` 选文件」：词怎么认、写进去的路径在 `model/mention.js`，列表在
 //! `ui/mention.js`，列、找由桥做）；选定的图片这些交给跟着话一起发的（附件）收，别的在框里写成一块 `[文件名]`（`model/blocks.js`：
-//! 框底下垫一层同样排版的字给块铺底，退格、`Delete` 整块删，发出去换回路径）。
+//! 框底下垫一层同样排版的字给块铺底，退格、`Delete` 整块删，发出去换回路径）。光标前面是 `$` 词时开点名技能的列表（蓝图「`$` 点名技能」，
+//! W-1124：词怎么认、一句话点了哪几个在 `model/skills.js`，列表在 `ui/skill-list.js`），发的时候点了的技能名交 `skills`。
 //!
 //! 框（`box`）上面浮着的几样挂在框上：提示、命令列表、运行状态行（`ui/pulse.js`，整页挂）；待办在框上面的流里
 //! （`ui/todo.js`，整页挂）。在回答时整块带 `is-running`：提示浮到运行状态行上面，待办下面给它空出地方（`styles/dock.css`）。
@@ -32,6 +33,8 @@ import { ModelMenu } from './model-menu.js';
 import { ContextPop } from './context-pop.js';
 import { HistoryList } from './history.js';
 import { MentionList } from './mention.js';
+import { SkillList } from './skill-list.js';
+import { skillWordAt, filterSkills, skillsIn } from '../model/skills.js';
 import { wordAt, plan, pathText, dirWord, splice, failure } from '../model/mention.js';
 import { blockLabel, expand, used, erase, pieces } from '../model/blocks.js';
 import { Recall } from '../model/history.js';
@@ -61,9 +64,11 @@ export class Composer {
    *   command: (spec: import('../model/commands.js').Spec, words: string|null) => void,
    *   history: {load: () => import('../model/history.js').Item[], save: (items: import('../model/history.js').Item[]) => void},
    *   commandsOpened?: () => void, allCommands?: () => Promise<import('../model/commands.js').Spec[]>,
-   *   session: () => string|null, models: import('./model-menu.js').On, request: (method: string, params: any) => Promise<any>, preview: () => Record<string, any>, openUsage?: (session: string) => void, compact?: () => void, files: (plan: any, fresh: boolean, onUpdate: (found: any) => void, stale: () => boolean) => Promise<any>, where: () => {cwd: string|null, home: string|null}} on
+   *   skills: () => Promise<import('../model/skills.js').Skill[]>,
+ *   session: () => string|null, models: import('./model-menu.js').On, request: (method: string, params: any) => Promise<any>, preview: () => Record<string, any>, openUsage?: (session: string) => void, compact?: () => void, files: (plan: any, fresh: boolean, onUpdate: (found: any) => void, stale: () => boolean) => Promise<any>, where: () => {cwd: string|null, home: string|null}} on
    *   `send` 交回核心收没收；`history` 读、存输入历史（这台设备上、按账号分开）；`session` 正在看的会话；`models` 换模型的菜单问核心要列表、现在用的、选定了做什么；`files` 问核心列、找文件
-   *   （`core/files.js`，没建完的先交 `onUpdate`、`stale` 说不要了就停）；`where` 这个会话的工作目录、家目录（`@` 选文件写路径照它）
+   *   （`core/files.js`，没建完的先交 `onUpdate`、`stale` 说不要了就停）；`where` 这个会话的工作目录、家目录（`@` 选文件写路径照它）；
+   *   `skills` 正在看的会话（空会话是不带会话的那一份）能点名的技能（`command.catalog` 的 `skills`，W-1124）
    * @param {() => import('../model/commands.js').Spec[]} specs 现在的全部斜杠命令（出厂的加软件包登记的）
    * @param {() => Payload[]} payload 现在跟着话一起发的几样（挂载位 `composer.payload`）
    */
@@ -150,6 +155,13 @@ export class Composer {
     this.mentionDismissed = /** @type {string|null} */ (null);
     this.mentionSeq = 0;
     this.mentionTimer = 0;
+    /** `$` 点名技能（蓝图「`$` 点名技能」，W-1124）：现在的词、`Esc` 关掉的那个词、问到第几次（同 `@`） */
+    this.skillList = new SkillList({ pick: (skill) => this.pickSkill(skill), dismiss: () => this.dismissSkill() });
+    this.skillAt = /** @type {{start: number, end: number, word: string, key: string}|null} */ (null);
+    this.skillDismissed = /** @type {string|null} */ (null);
+    this.skillSeq = 0;
+    /** 正在看的会话能点名的技能（整页问回来就推进来，`setSkills`）：发的时候照它认点了哪几个，不等 @type {import('../model/skills.js').Skill[]} */
+    this.knownSkills = [];
     /** 框里的文件块：名字 → 写进话里的路径（发出去换回去；发成了清掉） */
     this.blocks = /** @type {Map<string, string>} */ (new Map());
     /** 框底下垫的那层字：和框同样排版，只给块铺底（框里的字是框自己画的） */
@@ -170,7 +182,7 @@ export class Composer {
     this.stashed = /** @type {import('../model/stash.js').Draft|null} */ (null);
     this.stashChip = h('button.composer-stash', { type: 'button', hidden: true, onclick: () => { this.toggleStash(); this.input.focus(); } }, icon('save'));
     this.field = h('div.composer-field', this.backdrop, this.input);
-    this.box = h('div.composer', this.notice, this.jumpButton, this.takeoverEl, this.head, this.field, this.bar = h('div.composer-bar', h('div.composer-left', this.tools, this.stashChip), this.sendButton), this.menu.el, this.picker.el, this.help.el, this.historyList.el, this.sessionList.el, this.mention.el, this.float);
+    this.box = h('div.composer', this.notice, this.jumpButton, this.takeoverEl, this.head, this.field, this.bar = h('div.composer-bar', h('div.composer-left', this.tools, this.stashChip), this.sendButton), this.menu.el, this.picker.el, this.help.el, this.historyList.el, this.sessionList.el, this.mention.el, this.skillList.el, this.float);
     this.el = h('div.composer-dock', this.box, this.footer);
     this.parts = /** @type {{key: string, text: string}[]} */ ([]);
     /** 撤销时放回框里的那句：恢复时还没动过的收回去（`tui.md`「输入框」第 7 条）。 */
@@ -427,12 +439,14 @@ export class Composer {
       if (this.running) this.on.interrupt();
       return;
     }
+    // 点了名的技能（`$名字`，W-1124）：照先后交 `skills`，字照原样发
+    const skills = skillsIn(text, this.knownSkills.map((s) => s.name));
     const taken = parts.map((p) => ({ p, given: p.take() })).filter((x) => x.given);
     this.set('');
     // 文件块换回路径写在原来的位置（蓝图「`@` 选文件」第 5 条）
     const blocks = used(text, this.blocks);
     const sent = expand(text, this.blocks);
-    const ok = await this.on.send(sent, Object.assign({}, ...taken.map((x) => x.given)));
+    const ok = await this.on.send(sent, Object.assign({}, ...taken.map((x) => x.given), skills.length ? { skills } : {}));
     // 记进输入历史：框里的样子加上用到的块（翻出来照样是块）；发成了的连带过去的附件（核心存好的那一份、发在哪个会话；
     // 新会话发了才有编号）
     const kept = ok ? taken.map((x) => [x.p.id, x.p.keep?.(x.given)]).filter(([, v]) => v) : [];
@@ -531,6 +545,7 @@ export class Composer {
       return;
     }
     if (this.mention.key(ev)) return;
+    if (this.skillList.key(ev)) return;
     // 框里只有一个命令名（`/goal`）、历史里有它带参数的：↑ 翻那几条，不归命令列表（2026-10-17 项目主人）
     const recall = ev.key === 'ArrowUp' && !ev.shiftKey && !ev.ctrlKey && !ev.metaKey && !ev.altKey && this.recall.prefixed(this.input.value);
     if (!recall && this.menu.key(ev)) return;
@@ -678,6 +693,7 @@ export class Composer {
    * `fresh`（清单隔一阵的重建）。不是的、命令列表或输入历史列表开着的关掉；`Esc` 关掉的那个词没变就一直关着。
    */
   syncMention() {
+    this.syncSkill();
     const el = this.input;
     const w = el.selectionStart === el.selectionEnd ? wordAt(el.value, el.selectionStart) : null;
     if (!w || this.menu.open || this.historyList.open || this.sessionList.open) {
@@ -701,6 +717,58 @@ export class Composer {
       show(await this.on.files(plan(w.word), fresh, show, stale)
         .catch((err) => ({ items: [], partial: false, layer: false, error: failure(err) })));
     }, res.layout.mention_delay_ms);
+  }
+
+  /**
+   * `$` 点名技能（蓝图「`$` 点名技能」第 2 条）：光标前面是 `$` 词（没选着字）的，问能点名的技能（开着的列表照新的字重筛），照名字筛了画；
+   * 一个技能都没有的（旧核心、预设没开技能）、筛完一个都对不上的不开（`$100` 这类照常打字）。不是的、别的列表开着的关掉；`Esc` 关掉的
+   * 那个词没变就一直关着。
+   */
+  syncSkill() {
+    const el = this.input;
+    const w = el.selectionStart === el.selectionEnd ? skillWordAt(el.value, el.selectionStart) : null;
+    if (!w || this.menu.open || this.historyList.open || this.sessionList.open) {
+      if (!w) this.skillDismissed = null;
+      this.skillAt = null;
+      this.skillSeq += 1;
+      this.skillList.close();
+      return;
+    }
+    const key = `${w.start}:${w.word}`;
+    if (key === this.skillDismissed || key === this.skillAt?.key) return;
+    this.skillAt = { ...w, key };
+    const seq = ++this.skillSeq;
+    this.on.skills().then((all) => {
+      if (seq !== this.skillSeq) return;
+      const items = filterSkills(all, w.word);
+      if (items.length) this.skillList.show(w.word, items);
+      else this.skillList.close();
+    }, () => this.skillList.close());
+  }
+
+  /** 整页问到了正在看的会话能点名的技能（`command.catalog` 的 `skills`）。 @param {import('../model/skills.js').Skill[]} list */
+  setSkills(list) {
+    this.knownSkills = list;
+  }
+
+  /** `$` 列表里 `Esc`：关掉，这个词没变就不再开。 */
+  dismissSkill() {
+    this.skillDismissed = this.skillAt?.key ?? null;
+    this.skillSeq += 1;
+    this.skillList.close();
+  }
+
+  /** 选定了一个技能：词换成 `$名字 `（照人打的字发，核心照 `skills` 套正文）。 @param {import('../model/skills.js').Skill} skill */
+  pickSkill(skill) {
+    const at = this.skillAt;
+    if (!at) return;
+    this.skillSeq += 1;
+    this.skillList.close();
+    this.skillAt = null;
+    const next = splice(this.input.value, at.start, at.end, `$${skill.name} `);
+    this.input.value = next.value;
+    this.input.setSelectionRange(next.caret, next.caret);
+    this.changed();
   }
 
   /** `Esc`：关掉，这个词没变就不再开。 */

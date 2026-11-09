@@ -190,6 +190,8 @@
   background: var(--bubble-bg, color-mix(in srgb, var(--text) 5.5%, var(--surface))); color: var(--text);
   font-family: var(--font-read); font-size: calc(14px * var(--text-scale)); line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere;
 }
+/* 气泡里点了名的技能（`$名字`，W-1124）：强调色，不展开正文 */
+.user-skill { color: var(--accent); font-weight: 600; }
 
 /* 她的一轮 */
 .assistant-message { position: relative; max-width: 92%; margin-bottom: calc(30px * var(--space)); padding-left: calc(40px * var(--space)); }

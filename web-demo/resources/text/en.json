@@ -338,6 +338,11 @@
     "loading": "Loading sessions…",
     "hint": "↑↓ select · Enter open · Esc close"
   },
+  "skills": {
+    "title": "${word} · {count}",
+    "no_match": "No matching skills",
+    "hint": "↑↓ select · Enter pick · Esc close"
+  },
   "mention": {
     "title": "@{word} · {count}",
     "partial": "Partial list, type / to browse folders",

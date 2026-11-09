@@ -20,6 +20,7 @@ import { Composer } from './composer.js';
 import { Artifacts } from './artifacts.js';
 import { runCommand, runUnlisted, refusalText, redo, copyTurn, Commands, revertLatest } from './commands.js';
 import { coreSpecs } from '../model/commands.js';
+import { readSkills } from '../model/skills.js';
 import { rank, startupSession } from '../model/session.js';
 import { ChatWidth } from './chat-width.js';
 import { SideColumn } from './side.js';
@@ -64,7 +65,11 @@ export class App {
   constructor(store, conn, info, ctx, lightbox) {
     this.ctx = ctx;
     /** 软件包接进来的：挂载位、现在的灯箱（`rich.js` 的 `Ext`） */
-    this.ext = { slots: ctx.slots, lightbox, storage: ctx.storage, titleOf: (id) => this.titleOf(id), detail: (session, call) => this.callDetail(session, call), nested: (session, which, after) => this.nestedDetail(session, which, after), summary: (session, upto) => this.compactionSummary(session, upto) };
+    /** 正在看的会话能点名的技能（`command.catalog` 的 `skills`，W-1124）、问的是哪个会话（空会话是 `null`，还没问是 `undefined`）、名字（气泡里着色照它） */
+    this.skills = /** @type {import('../model/skills.js').Skill[]} */ ([]);
+    this.skillsFor = /** @type {string|null|undefined} */ (undefined);
+    this.skillNames = /** @type {Set<string>} */ (new Set());
+    this.ext = { slots: ctx.slots, lightbox, storage: ctx.storage, skills: () => this.skillNames, titleOf: (id) => this.titleOf(id), detail: (session, call) => this.callDetail(session, call), nested: (session, which, after) => this.nestedDetail(session, which, after), summary: (session, upto) => this.compactionSummary(session, upto) };
     /** 一次调用改了什么（`view.detail`）：同一次调用的结果不会变，照「会话 调用」记着只问一次 @type {Map<string, Promise<any>>} */
     this.details = new Map();
     this.store = store;
@@ -221,6 +226,8 @@ export class App {
         save: (items) => ctx.storage.set(HISTORY, items),
       },
       session: () => this.current,
+      // `$` 点名技能（W-1124）：问过这个会话的照记着的，没问过的先问
+      skills: () => (this.skillsFor === this.current ? Promise.resolve(this.skills) : this.refreshCommands().then(() => this.skills)),
       // 上下文明细、累计按用途的浮窗问核心（蓝图「上下文明细、累计按用途」）
       request: (method, params) => this.store.conn.request(method, params),
       preview: () => this.previewParams(),
@@ -782,6 +789,7 @@ export class App {
       if (!this.commands.core.every((c) => c.later)) this.commands.setCore([]);
       const all = await this.store.conn.request('command.catalog', {}).catch(() => null);
       if (this.current !== null || !all) return;
+      this.setSkills(all.skills, null);
       this.commands.setCore(coreSpecs(all.commands ?? []).map((s) => ({ ...s, later: true })));
       this.commands.setLater(new Set((all.commands ?? []).flatMap((c) => [c.name, ...(c.aliases ?? [])].map((n) => String(n).toLowerCase()))));
       // 照框里现在的字重筛：问的时候列表可能因为一条都对不上关了（打得快，`/go` 时核心的还没回来）
@@ -791,8 +799,24 @@ export class App {
     this.commands.setLater(new Set());
     const got = await this.store.conn.request('command.catalog', { session }).catch(() => null);
     if (this.current !== session || !got) return;
+    this.setSkills(got.skills, session);
     this.commands.setCore(coreSpecs(got.commands ?? []));
     this.composer.menu.update(this.composer.input.value);
+  }
+
+  /**
+   * 记下能点名的技能（核心 SK-1：`command.catalog` 顶层的 `skills`；旧核心没有这一格，技能照旧在斜杠命令里），交给输入框；名字变了的
+   * 对话区重画（气泡里的 `$名字` 照它着色，蓝图「`$` 点名技能」第 4 条）。
+   * @param {any} list @param {string|null} session
+   */
+  setSkills(list, session) {
+    this.skills = readSkills(list);
+    this.skillsFor = session;
+    this.composer.setSkills(this.skills);
+    const names = new Set(this.skills.map((s) => s.name));
+    if ([...names].join('\n') === [...this.skillNames].join('\n')) return;
+    this.skillNames = names;
+    this.chat.redraw();
   }
 
   /** 还没开的新会话改人格、预设、工作区（软件包 `setup`）：告诉软件包（`draft.changed`），重画（`@` 照它列文件）。 @param {Partial<{persona: string|false|null, preset: string|false|null, cwd: string|null}>} patch */

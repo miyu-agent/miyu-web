@@ -366,7 +366,7 @@ export class Chat {
     let rec = this.blocks.get(block.key);
     if (!rec || rec.sig !== sig) {
       const node = block.kind === 'user'
-        ? userNode(block.item, this.on, { session: this.where.session, lightbox: this.ext.lightbox, mine: this.mine(block.item), titleOf: this.ext.titleOf })
+        ? userNode(block.item, this.on, { session: this.where.session, lightbox: this.ext.lightbox, mine: this.mine(block.item), titleOf: this.ext.titleOf, skills: this.ext.skills?.() })
         : block.kind === 'note' ? (block.item.slot ? slotNode(block.item, this) : noteNode(block.item, this.where, this.markdown)) : herNode(!!block.cont, look);
       if (block.kind === 'note') node.classList.toggle('is-bare', bare);
       rec?.node.replaceWith(node);

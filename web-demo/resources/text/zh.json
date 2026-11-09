@@ -338,6 +338,11 @@
     "loading": "正在加载会话…",
     "hint": "↑↓ 选择 · Enter 打开 · Esc 关闭"
   },
+  "skills": {
+    "title": "${word} · {count} 个",
+    "no_match": "无匹配的技能",
+    "hint": "↑↓ 选择 · Enter 选定 · Esc 关闭"
+  },
   "mention": {
     "title": "@{word} · {count} 个",
     "partial": "仅显示部分结果，输入 / 按目录查找",

@@ -15,13 +15,14 @@ import { imageCard } from './media.js';
 import { blobUrl } from '../core/host.js';
 import { shortSession } from '../model/words.js';
 import { fitText } from '../model/entries.js';
+import { skillPieces } from '../model/skills.js';
 
 /**
  * @typedef {{copy: (text: string) => void, edit: (text: string) => void, copyTurn: (turn: number) => void, redo: () => void, openJobs: () => void, openSession: (id: string) => void, compacted?: (session: string|null) => void, reveal?: (path: string) => void}} Actions
  *   复制一段字；照改过的话重做最新的一轮；复制她这一轮说的全部正文；原样重做最新的一轮；打开后台任务的浮层；看另一个会话；
  *   在右栏打开她展示过的那一样
- * @typedef {{session: string|null, lightbox: () => any, mine?: boolean, titleOf?: (id: string) => string|null}} Media
- *   附件的地址照哪个会话取、现在的灯箱、是不是你说的、一个会话的标题（「来自「标题」」用）
+ * @typedef {{session: string|null, lightbox: () => any, mine?: boolean, titleOf?: (id: string) => string|null, skills?: Set<string>}} Media
+ *   附件的地址照哪个会话取、现在的灯箱、是不是你说的、一个会话的标题（「来自「标题」」用）、能点名的技能（气泡里 `$名字` 着色，W-1124）
  * @typedef {{kind: 'image'|'file', blob: string, media_type: string, width: number|null, height: number|null, name: string|null}} Attachment
  */
 
@@ -32,7 +33,9 @@ import { fitText } from '../model/entries.js';
  * @param {Media} media
  */
 export function userNode(it, on, media) {
-  const bubble = it.text ? h('div.user-bubble', it.text) : null;
+  // 点了名的技能（`$名字`）照人打的字写、着色，不展开正文（蓝图「`$` 点名技能」第 4 条，W-1124）
+  const said = media.skills?.size ? skillPieces(it.text, media.skills).map((p) => (p.skill ? h('span.user-skill', p.text) : p.text)) : it.text;
+  const bubble = it.text ? h('div.user-bubble', said) : null;
   const edit = button('pencil', t('said.edit'), () => startEdit());
   edit.classList.add('is-edit');
   const mine = media.mine !== false;

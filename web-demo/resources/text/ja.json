@@ -338,6 +338,11 @@
     "loading": "セッションを読み込み中…",
     "hint": "↑↓ 選択 · Enter 開く · Esc 閉じる"
   },
+  "skills": {
+    "title": "${word} · {count} 件",
+    "no_match": "一致するスキルはありません",
+    "hint": "↑↓ 選択 · Enter 決定 · Esc 閉じる"
+  },
   "mention": {
     "title": "@{word} · {count} 件",
     "partial": "一部のみ表示、/ でフォルダを探せます",

@@ -3790,6 +3790,24 @@
       ".slist-hint"
     ]
   },
+  "skills.name": {
+    "zh": "点名技能：名字",
+    "select": [
+      ".skill-name"
+    ]
+  },
+  "skills.summary": {
+    "zh": "点名技能：说明",
+    "select": [
+      ".skill-summary"
+    ]
+  },
+  "said.skill": {
+    "zh": "你的话：点名的技能",
+    "select": [
+      ".user-skill"
+    ]
+  },
   "mention.title": {
     "zh": "提到文件：标题",
     "select": [
