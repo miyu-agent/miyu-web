@@ -65,7 +65,7 @@ export function askFirst(kit, label, ask, run) {
 
 /**
  * 新建：只填名字的那一步（2026-10-08 项目主人：人格先填名字，建好接着在详情里写；预设填名字，功能先全开），放在浮卡里。名字空着「建好」
- * 点不了；`create` 交回一句错就写在下面、字留着。名字下面一格编号（发版前 check 28，W-1125，2026-11-09 项目主人：没有编号就不知道
+ * 点不了；`create` 交回一句错就写在下面、字留着。名字上面一格 id（发版前 check 28，W-1125，同终端 11-02 项目主人定的「编号改名 id，放在名字上面一行」，2026-11-09 项目主人：没有编号就不知道
  * 命令行里对应哪个）：不填的由核心起；填的照 `validId`，不对的当场说、「建好」点不了。
  * @param {Kit} kit @param {(key: string) => string} t @param {string} hint
  * @param {(name: string, id: string|null) => Promise<string|null>} create @param {() => void} cancel
@@ -100,5 +100,5 @@ export function nameFirst(kit, t, hint, create, cancel) {
     });
   }
   requestAnimationFrame(() => input.focus());
-  return h('div.setup-editor', field(t('edit.name'), input), field(t('edit.id'), id), err, h('div.setup-foot', h('span.setup-grow'), kit.button(t('edit.cancel'), {}, cancel), ok));
+  return h('div.setup-editor', field(t('edit.id'), id), field(t('edit.name'), input), err, h('div.setup-foot', h('span.setup-grow'), kit.button(t('edit.cancel'), {}, cancel), ok));
 }
