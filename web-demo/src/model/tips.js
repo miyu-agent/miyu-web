@@ -9,11 +9,11 @@ export const TIPS = ['slash', 'mention', 'newline', 'history', 'history_list', '
 export const KEYS = ['newline', 'history', 'history_list', 'stash', 'level'];
 
 /**
- * 现在有的几条：靠软件包的照它在不在；`touch` 的去掉要按键的。
- * @param {{attachments?: boolean, touch?: boolean}} has @returns {string[]}
+ * 现在有的几条：靠软件包的照它在不在；`skills` 是这个会话有能点名的技能（核心 SN-1 起才有，W-1126），有才提 `$`；`touch` 的去掉要按键的。
+ * @param {{attachments?: boolean, skills?: boolean, touch?: boolean}} has @returns {string[]}
  */
 export function tipsFor(has) {
-  const list = has.attachments ? [...TIPS, 'attach'] : [...TIPS];
+  const list = [...TIPS, ...(has.skills ? ['skill'] : []), ...(has.attachments ? ['attach'] : [])];
   return has.touch ? list.filter((x) => !KEYS.includes(x)) : list;
 }
 

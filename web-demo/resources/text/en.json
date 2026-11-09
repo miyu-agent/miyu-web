@@ -74,6 +74,7 @@
   "tips": {
     "slash": "Type / to see all commands",
     "mention": "Type @ to pick a file",
+    "skill": "Type $ to name a skill, several per message",
     "newline": "Shift+Enter for a new line",
     "history": "Press ↑ in an empty box to bring back your last message",
     "history_list": "Ctrl+R to search what you sent before",

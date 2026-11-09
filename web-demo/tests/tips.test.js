@@ -19,6 +19,12 @@ test('主要指针是手指的（手机）不出要按键的几条，剩下的�
   for (const key of KEYS) assert.ok(TIPS.includes(key), key);
 });
 
+test('有能点名的技能才提 $（W-1126，核心 SN-1）', () => {
+  assert.ok(!tipsFor({}).includes('skill'));
+  assert.ok(tipsFor({ skills: true }).includes('skill'));
+  assert.ok(tipsFor({ skills: true, touch: true }).includes('skill'), '不用按键，手机上也提');
+});
+
 test('换一条不和上一条一样，照随机数挑', () => {
   const list = ['a', 'b', 'c'];
   assert.equal(pickTip(list, null, 0), 'a');
@@ -37,7 +43,7 @@ test('只剩一条、一条都没有', () => {
 test('每一条三种语言都有字，不再有「给 X 发消息」', () => {
   for (const lang of ['zh', 'en', 'ja']) {
     const t = text(lang);
-    for (const key of tipsFor({ attachments: true })) assert.equal(typeof t.tips?.[key], 'string', `${lang} tips.${key}`);
+    for (const key of tipsFor({ attachments: true, skills: true })) assert.equal(typeof t.tips?.[key], 'string', `${lang} tips.${key}`);
     assert.equal(t.placeholder, undefined);
     assert.equal(t.placeholder_bare, undefined);
     assert.ok(!Object.values(t.tips).some((s) => s.includes('她')));

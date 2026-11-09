@@ -74,6 +74,7 @@
   "tips": {
     "slash": "/ でコマンド一覧",
     "mention": "@ でファイルを選ぶ",
+    "skill": "$ でスキルを指名、一文に複数可",
     "newline": "Shift+Enter で改行",
     "history": "空のまま ↑ で前のメッセージを呼び出す",
     "history_list": "Ctrl+R で送ったメッセージを検索",
