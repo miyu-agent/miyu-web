@@ -12,7 +12,8 @@ import { h, replace } from './dom.js';
 import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { fitAbove } from './fit.js';
-import { Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText } from '../model/commands.js';
+import { Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText, contextMin } from '../model/commands.js';
+import { short } from '../model/format.js';
 import { itemsOf, seqOf } from '../model/entries.js';
 import { copy } from '../markdown/build.js';
 import { Refusal } from '../core/connection.js';
@@ -359,8 +360,15 @@ const RUNS = {
       app.composer.say(t('commands.needs_session'));
       return;
     }
-    const got = await app.store.conn.request('command.run', { session: app.current, text: `/context ${want}` });
-    if (got?.said) app.composer.say(got.said, true);
+    try {
+      const got = await app.store.conn.request('command.run', { session: app.current, text: `/context ${want}` });
+      if (got?.said) app.composer.say(got.said, true);
+    } catch (err) {
+      // 太小、照它算不出压缩线（核心 `bad_params`，`data.field` 是 `context`，`data.min` 是最少要多少）：说最少要多少
+      const min = contextMin(err);
+      if (min == null) throw err;
+      app.composer.say(t('commands.context_min', { n: short(min) }));
+    }
   },
   help: (app) => app.composer.openHelp(),
 };

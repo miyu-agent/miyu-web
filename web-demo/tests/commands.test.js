@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { typed, menuTyped, filter, find, read, Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText } from '../src/model/commands.js';
+import { typed, menuTyped, filter, find, read, Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText, contextMin } from '../src/model/commands.js';
 
 const res = loadRes();
 const list = res.commands.commands;
@@ -285,4 +285,11 @@ test('能点名用的技能（核心 PT-2下 command.catalog 的 skill: true）�
   // 不是技能、没写参数的照旧：带了字的当话
   assert.equal(list[1].args, false);
   assert.equal(read(list, '/dream 随便').kind, 'talk');
+});
+
+test('/context <数值> 设得太小（核心 CTX-1：bad_params、data.field 是 context、data.min，W-1129）：认出最少要多少；别的拒绝不认', () => {
+  assert.equal(contextMin({ reason: 'bad_params', data: { field: 'context', min: 23000 } }), 23000);
+  assert.equal(contextMin({ reason: 'bad_params', data: { field: 'model' } }), null);
+  assert.equal(contextMin({ reason: 'stopped' }), null);
+  assert.equal(contextMin(null), null);
 });

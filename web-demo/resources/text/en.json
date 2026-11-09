@@ -303,6 +303,7 @@
     "recap_working": "Recapping…",
     "stop_idle": "Nothing is running",
     "needs_session": "Start a session first",
+    "context_min": "The context cap must be at least {n}",
     "running": "Running {name}…",
     "needs_words": {
       "goal": "Enter a goal",

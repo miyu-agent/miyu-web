@@ -277,8 +277,9 @@ export class StepView {
     this.command.hidden = !lines;
     this.drawThumbs(step, open);
     if (!open) return;
-    // 照条目画的（核心 9-8）：条目里没有结果原文，点开时问一次核心（`view.detail` 的 `output`），问到了重画
-    if (step.title && !step.output && step.state === 'done' && !(step.detail && step.status === 'ok')) {
+    // 照条目画的（核心 9-8）：条目里没有结果原文，点开时问一次核心（`view.detail` 的 `output`），问到了重画。问顾问那一步的 `detail`
+    // 只有顾问会话，回答还得照原文画（W-1129）
+    if (step.title && !step.output && step.state === 'done' && !(step.detail && step.status === 'ok' && step.name !== 'advisor')) {
       if (this.output == null) this.fetchOutput(step);
       step = { ...step, output: this.output ?? '' };
     }

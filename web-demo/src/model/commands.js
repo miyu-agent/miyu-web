@@ -207,3 +207,12 @@ export function keptAttachments(said, history) {
     size: sizes.get(a.blob) ?? null,
   }));
 }
+
+/**
+ * `/context <数值>` 设得太小被拒（核心 CTX-1：`bad_params`，`data.field` 是 `context`）：最少要多少；别的拒绝是 `null`。
+ * @param {any} err @returns {number|null}
+ */
+export function contextMin(err) {
+  const data = err?.data;
+  return err?.reason === 'bad_params' && data?.field === 'context' && typeof data.min === 'number' ? data.min : null;
+}
