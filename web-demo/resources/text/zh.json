@@ -109,7 +109,6 @@
     "output_limit": "回复超过了输出上限"
   },
   "levels": {
-    "workspace": "工作区",
     "full": "开放权限",
     "read_only": "只读"
   },

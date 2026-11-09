@@ -16,8 +16,14 @@ import { shownOf } from './artifacts.js';
 import { nestedTail } from '../lib/nested.js';
 import { speakerOf, moduleNote, peerNote, changeNote, modelNote, compactedNote, failureText, recapNote, compactFailedNote, workspaceNote } from './notes.js';
 
-/** 权限级别：只读的写 `read_only`，别的照 `level`（`tui.md`「正文」第 4 条）。 @param {any} p */
-export const levelOf = (p) => (p?.read_only ? 'read_only' : p?.level ?? 'workspace');
+/**
+ * 记下的级别读成现在的两样（LV-3，2026-11-09 项目主人定：级别只剩「只读」「开放权限」，去掉「工作区」）：只读的是 `read_only`，
+ * 别的（旧的 `workspace` 也算）都是 `full`；没记的是 `null`。 @param {string|null|undefined} level
+ */
+export const levelName = (level) => (level == null ? null : level === 'read_only' ? 'read_only' : 'full');
+
+/** 权限级别：只读的写 `read_only`，别的都是 `full`（`tui.md`「正文」第 4 条；LV-3 起没有工作区一级）。 @param {any} p */
+export const levelOf = (p) => (p?.read_only ? 'read_only' : 'full');
 
 /** 条目编号里的序号（`m12`、`e30` → 12、30；`b6.1` → 6）：排排着的话、回报的编号用。 @param {string} id */
 export const seqOf = (id) => Number.parseInt(String(id).replace(/^[a-z]+/, ''), 10) || 0;
@@ -104,7 +110,7 @@ export function itemsOf(entries, status, opts = {}) {
     }
   }
   markOpeners(items);
-  const level = status?.permission ? levelOf(status.permission) : items.findLast((it) => it.type === 'user')?.level ?? 'workspace';
+  const level = status?.permission ? levelOf(status.permission) : items.findLast((it) => it.type === 'user')?.level ?? 'full';
   const busy = status && status.state && status.state !== 'idle';
   const turn = busy ? currentTurn(shown) : null;
   // 在压缩的不画：压缩的进度那一行已经说着在做什么（2026-10-10 项目主人：手动压缩时进度条上面多一个头像和三个球）
@@ -182,7 +188,7 @@ function userItem(e, jobs, opts) {
     attachments: (e.attachments ?? []).map((/** @type {any} */ a) => ({ kind: a.kind, blob: a.blob, media_type: a.media_type, width: a.width ?? null, height: a.height ?? null, name: a.name ?? null })),
     speaker,
     opens: false,
-    level: e.level ?? null,
+    level: levelName(e.level),
   };
 }
 
@@ -267,7 +273,7 @@ export function stepOf(e) {
   };
 }
 
-/** 图标和它后面的空：`▣` 多空一格，别的照 `layout.json`；没记着级别的用 `✻`（`tui.md`「正文」第 4 条）。 @param {string|null} level */
+/** 图标和它后面的空照 `layout.json`；没记着级别的用 `✻`（`tui.md`「正文」第 4 条）。 @param {string|null} level */
 function icon(level) {
   const l = res.layout;
   const mark = level ? l.level_icons[level] : null;
@@ -279,7 +285,7 @@ function icon(level) {
  * @param {any} e @param {any} status
  */
 function endItem(e, status) {
-  const level = e.level ?? null;
+  const level = levelName(e.level);
   const base = { type: 'done', key: e.id, turn: e.turn ?? null, level, tone: 'dim' };
   const reason = e.reason;
   if (reason === 'interrupted') {

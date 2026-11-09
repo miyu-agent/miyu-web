@@ -89,9 +89,9 @@ test('确认的问题行：写几个文件、家目录写 ~、工作区外和私
   assert.deepEqual(priv.paths, [{ path: '~/.ssh/id_ed25519', zone: 'private' }, { path: '/etc/hosts', zone: 'read_only' }, { path: '/w/a', zone: null }]);
   // 跑命令的（D-4）：问题行是短标题，带命令原文，`sandbox: false` 标出来；没有短标题的写「要运行一条命令」；老的只有 `tool` 的照原来
   const exec = approvalHead(approval('demo_approve_2').body, null, text);
-  assert.deepEqual([exec.title, exec.command, exec.outsideSandbox], ['清掉另一个仓库的编译产物', 'cargo clean --manifest-path ~/src/other/Cargo.toml', true]);
+  assert.deepEqual([exec.title, exec.command, 'outsideSandbox' in exec], ['清掉另一个仓库的编译产物', 'cargo clean --manifest-path ~/src/other/Cargo.toml', false], 'LV-3 起不再标沙盒外');
   const bare = approvalHead({ call_id: 'x', access: 'execute', detail: { command: 'ls', tool: 'shell' } }, null, text);
-  assert.deepEqual([bare.title, bare.command, bare.outsideSandbox], ['exec_untitled', 'ls', false]);
+  assert.deepEqual([bare.title, bare.command], ['exec_untitled', 'ls']);
   // 高危命令（核心 5-17）：带 `hazard` 的标出来，没有的不标
   assert.equal(approvalHead({ call_id: 'h', access: 'execute', detail: { command: 'git push --force', hazard: 'git_force_push', sandbox: true, tool: 'shell' } }, null, text).hazard, true);
   assert.equal(bare.hazard, false);

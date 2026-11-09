@@ -24,7 +24,7 @@ const input = (u) => u.uncached + u.cache_read + u.cache_write;
  * @returns {{left: {level: string, label: string, model: string|null, endpoint: string|null}, right: Part[], ring: Ring|null}}
  */
 export function statusFooter(status, limits = {}, entries = []) {
-  const level = status?.permission ? levelOf(status.permission) : 'workspace';
+  const level = status?.permission ? levelOf(status.permission) : 'full';
   const used = status?.context?.used ?? 0;
   const window = status?.context?.window ?? limits.window ?? null;
   const line = status?.context?.compaction_line ?? limits.compaction_line ?? null;
@@ -77,11 +77,11 @@ export function previewRing(preview) {
   return used > 0 ? { ratio: preview?.window ? used / preview.window : null, used, window: preview?.window ?? null, stuck: null } : null;
 }
 
-/** 左边的级别：图标加名字，`▣ 工作区`（图标照 TUI 的 `layout.json`）。 */
+/** 左边的级别：图标加名字，`⏵⏵ 开放权限`（图标照 TUI 的 `layout.json`）。 */
 export const levelLabel = (level) => `${res.layout.level_icons[level]}${res.text.levels[level]}`;
 
 /**
- * 点一下换到下一级：照 `layout.json` 的 `level_cycle`，工作区 → 开放权限 → 只读 → 工作区（照 TUI 的 Tab）。
+ * 点一下换到下一级：照 `layout.json` 的 `level_cycle`，开放权限 ⇄ 只读（照 TUI 的 Tab；LV-3 起没有工作区，切回开放权限不问）。
  * @param {string} level
  */
 export function nextLevel(level) {
@@ -90,12 +90,12 @@ export function nextLevel(level) {
 }
 
 /**
- * 换到这一级发给核心的参数（`session.set_permission_level`，蓝图 `protocol.md`）：只读只开只读开关，常用的那一级
- * 不动；工作区、开放权限写级别，并关掉只读。
+ * 换到这一级发给核心的参数（`session.set_permission_level`，蓝图 `protocol.md`）：只读只开只读开关；开放权限写 `full` 并关掉只读
+ * （LV-3：不再发 `workspace`）。
  * @param {string} level 换到的那一级
  */
 export function levelParams(level) {
-  return level === 'read_only' ? { read_only: true } : { level, read_only: false };
+  return level === 'read_only' ? { read_only: true } : { level: 'full', read_only: false };
 }
 
 /** 丢的先后：先花费（2026-10-26 项目主人：窄的时候金额先让出来），卡住的先丢「用了多少 / 线」，再累计，那几个字留到最后。 */

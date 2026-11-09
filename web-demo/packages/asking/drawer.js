@@ -242,8 +242,8 @@ export class Drawer {
       ? h('div.asking-previews', q.options.map((o, i) => h(`pre.asking-preview${i === d.cursor[d.tab] ? '.is-shown' : ''}`, o.preview ?? '')))
       : null;
     return [
-      // 「沙盒外」跟在短标题后面（2026-10-07 项目主人：原来接在命令末尾，命令长了离标题远）
-      h('div.asking-question', head ? head.title : q.question, head?.hazard ? h('span.asking-outside.is-danger', t('hazard')) : null, head?.outsideSandbox ? h('span.asking-outside', t('outside_sandbox')) : null),
+      // 「高危命令」跟在短标题后面（2026-10-07 项目主人：原来接在命令末尾，命令长了离标题远；LV-3 起没有沙盒，不再标「沙盒外」）
+      h('div.asking-question', head ? head.title : q.question, head?.hazard ? h('span.asking-outside.is-danger', t('hazard')) : null),
       head?.guard ? h('div.asking-guard', head.guard) : null,
       head?.command != null ? h('div.asking-paths', h('div.asking-path', h('span.asking-command', head.command.split('\n').map((l) => `$ ${l}`).join('\n')))) : null,
       head?.paths.length ? h('div.asking-paths', head.paths.map((p) => h('div.asking-path', h('span', p.path), p.zone ? h('span.asking-outside', { title: p.zone === 'private' ? t('private_tip') : p.zone === 'read_only' ? t('read_only_tip') : null }, t(p.zone)) : null))) : null,

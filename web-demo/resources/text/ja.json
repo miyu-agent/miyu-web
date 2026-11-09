@@ -109,7 +109,6 @@
     "output_limit": "応答が出力上限を超えました"
   },
   "levels": {
-    "workspace": "ワークスペース",
     "full": "フルアクセス",
     "read_only": "読み取り専用"
   },

@@ -21,7 +21,7 @@ import { packagePlan } from './package-plan.js';
 
 /** 放行的几种决定，照先后；请求没提规则的只给头尾两种（核心会拒 `no_rule`）。`workspace` 核心还不收（D-1 回 `bad_params`），收了再加。 */
 const DECISIONS = ['once', 'session', 'deny'];
-const NEEDS_RULE = new Set(['session', 'workspace']);
+const NEEDS_RULE = new Set(['session']);
 
 /** @param {'ask'|'approve'} kind @param {{who?: string, body: any}} item @param {Question[]} questions @returns {Drawer} */
 function make(kind, item, questions) {
@@ -217,7 +217,6 @@ export function approvalHead(body, home, text) {
     guard: said || null,
     plan,
     command: exec ? body.detail?.command ?? null : null,
-    outsideSandbox: body.detail?.sandbox === false,
     // 被认出来的高危命令（核心 5-17：`detail.hazard` 是种类，`git_force_push` 这些）：标一个「高危命令」（2026-10-20 项目主人定的字，终端一样）
     hazard: typeof body.detail?.hazard === 'string' && body.detail.hazard !== '',
     // `zone`：`outside` 工作区外，`private` 别的程序的私密目录（`~/.ssh` 这类，核心 5-13），`read_only` 受保护的路径（核心 5-17 下上），各一个标记；别的不标

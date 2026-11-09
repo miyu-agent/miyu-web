@@ -22,7 +22,7 @@ const status = {
 
 test('一个会话的底栏：级别、模型照会话状态；右边一格累计 token，环照上下文占窗口多少；会话状态里有速度也不写（2026-10-26 项目主人：挪到每轮收尾那一行）', () => {
   const f = statusFooter(status);
-  assert.deepEqual(f.left, { level: 'workspace', label: '▣ 工作区', model: 'deepseek-v4', endpoint: 'deepseek' });
+  assert.deepEqual(f.left, { level: 'full', label: '⏵⏵ 开放权限', model: 'deepseek-v4', endpoint: 'deepseek' }, '旧的工作区读成开放权限（LV-3）');
   assert.deepEqual(f.right.map((p) => p.text), ['12.4k']);
   assert.deepEqual(f.ring, { ratio: 0.0023, used: 2300, window: 1_000_000, stuck: null });
   assert.equal(ringTip(/** @type {any} */ (f.ring)), '上下文 2.3k / 1M（0.2%）');
@@ -34,14 +34,14 @@ test('累计和花费连子代理（usage_tree，同终端的 Σ，2026-11-02 �
   assert.deepEqual(statusFooter(status).right.map((p) => p.text), ['12.4k']);
 });
 
-test('只读开着写只读，只读盖过常用的那一级；还是 0 的不写；没有会话状态的是工作区、什么数都不写', () => {
+test('只读开着写只读，只读盖过常用的那一级；还是 0 的不写；没有会话状态的是开放权限、什么数都不写', () => {
   assert.equal(statusFooter({ ...status, permission: { level: 'full', read_only: true } }).left.label, '⏸ 只读');
   assert.equal(statusFooter({ ...status, permission: { level: 'full', read_only: false } }).left.level, 'full');
   const fresh = statusFooter({ state: 'idle', permission: { level: 'workspace', read_only: false }, context: { window: 1_000_000, used: 0 } });
   assert.equal(fresh.left.model, null);
   assert.deepEqual(fresh.right, []);
   assert.equal(fresh.ring, null);
-  assert.deepEqual(statusFooter(null), { left: { level: 'workspace', label: '▣ 工作区', model: null, endpoint: null }, right: [], ring: null });
+  assert.deepEqual(statusFooter(null), { left: { level: 'full', label: '⏵⏵ 开放权限', model: null, endpoint: null }, right: [], ring: null });
 });
 
 test('会话状态不知道窗口多大的照订阅回应的限额；都不知道的环不画比例，悬停只写用了多少', () => {
@@ -94,15 +94,16 @@ test('新会话的环照预览画；没有数的不画', () => {
   assert.equal(previewRing(null), null);
 });
 
-test('点一下换下一级：工作区 → 开放权限 → 只读 → 工作区', async () => {
+test('点一下换下一级：开放权限 ⇄ 只读（LV-3 起没有工作区）', async () => {
   const { nextLevel, levelLabel } = await import('../src/model/footer.js');
-  assert.deepEqual(['workspace', 'full', 'read_only'].map(nextLevel), ['full', 'read_only', 'workspace']);
+  // LV-3（2026-11-09 项目主人）：只剩开放权限、只读两样，来回换
+  assert.deepEqual(['full', 'read_only'].map(nextLevel), ['read_only', 'full']);
   assert.equal(levelLabel('full'), '⏵⏵ 开放权限');
 });
 
-test('换级别发给核心的参数：只读只开只读开关，常用的那一级不动；工作区、开放权限写级别并关掉只读', async () => {
+test('换级别发给核心的参数：只读只开只读开关；开放权限写 full 并关掉只读，不再发 workspace（LV-3）', async () => {
   const { levelParams } = await import('../src/model/footer.js');
   assert.deepEqual(levelParams('read_only'), { read_only: true });
-  assert.deepEqual(levelParams('workspace'), { level: 'workspace', read_only: false });
   assert.deepEqual(levelParams('full'), { level: 'full', read_only: false });
+  assert.deepEqual(levelParams('workspace'), { level: 'full', read_only: false }, '不再发 workspace');
 });

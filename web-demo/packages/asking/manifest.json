@@ -62,7 +62,6 @@
       "decision": {
         "once": "允许本次",
         "session": "此目录不再询问",
-        "workspace": "本工作区内允许",
         "deny": "不允许"
       },
       "reason_hint": "理由（可选）",
@@ -76,7 +75,6 @@
       "access_other": "使用 {tool}",
       "outside": "工作区外",
       "exec_untitled": "运行命令",
-      "outside_sandbox": "沙盒外运行",
       "hazard": "高危命令",
       "guard_title": "{guard} 请你确认：{tool}",
       "unanswered": "未回答",
@@ -170,7 +168,6 @@
       "decision": {
         "once": "Allow this time",
         "session": "Don’t ask again for this folder",
-        "workspace": "Allow in this workspace",
         "deny": "Don't allow"
       },
       "reason_hint": "Reason (optional)",
@@ -184,7 +181,6 @@
       "access_other": "Use {tool}",
       "outside": "Outside workspace",
       "exec_untitled": "Run command",
-      "outside_sandbox": "Runs outside the sandbox",
       "hazard": "Dangerous command",
       "guard_title": "{guard} asks you to confirm: {tool}",
       "unanswered": "Unanswered",
@@ -278,7 +274,6 @@
       "decision": {
         "once": "今回だけ許可",
         "session": "このフォルダでは確認しない",
-        "workspace": "このワークスペースでは許可",
         "deny": "許可しない"
       },
       "reason_hint": "理由を書く（なくてもよい）",
@@ -292,7 +287,6 @@
       "access_other": "{tool} を使います",
       "outside": "ワークスペース外",
       "exec_untitled": "コマンドを実行します",
-      "outside_sandbox": "サンドボックス外で実行",
       "hazard": "危険なコマンド",
       "guard_title": "{guard} が確認を求めています：{tool}",
       "unanswered": "未回答",

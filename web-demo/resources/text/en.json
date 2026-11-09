@@ -109,7 +109,6 @@
     "output_limit": "Reply exceeded the output limit"
   },
   "levels": {
-    "workspace": "Workspace",
     "full": "Full access",
     "read_only": "Read-only"
   },
