@@ -12,6 +12,9 @@ export const personaName = (p) => p.name || p.persona;
 export const presetName = (p) => p.name || p.preset;
 
 /** 预设右边写的 token 数（发版前 check 4，核心 DM-4 的 `tokens`）：核心没给的不写；是 0 的（「无功能」）也写（2026-11-09 验收时项目主人：「无预设后面还是要加上0」）。 @param {Preset} p */
+/** 人自己填的编号（发版前 check 28，W-1125；照核心 `miyu_store::layers::valid`）：小写字母开头，小写字母、数字、`-`、`_`，最多 64 个。 @param {string} id */
+export const validId = (id) => /^[a-z][a-z0-9_-]{0,63}$/.test(id);
+
 export const presetTokens = (p) => (typeof p.tokens === 'number' && p.tokens >= 0 ? p.tokens : null);
 
 /**

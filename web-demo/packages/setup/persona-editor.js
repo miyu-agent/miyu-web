@@ -102,6 +102,8 @@ export class PersonaEditor {
       field(t('edit.seed'), this.look.seedBox),
       field(t('edit.background'), this.look.backgroundBox),
       field(t('edit.name'), this.name),
+      // 编号只看不改（发版前 check 28，W-1125：命令行里用它）
+      field(t('edit.id'), h('code.setup-id', this.id)),
       field(t('edit.summary'), this.summary),
       field(t('edit.persona'), this.persona),
       field(t('edit.examples'), this.pairs.el),

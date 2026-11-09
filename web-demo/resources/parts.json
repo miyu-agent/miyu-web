@@ -1690,6 +1690,12 @@
       ".setup-menu-side"
     ]
   },
+  "setup.id": {
+    "zh": "人格、预设：编号",
+    "select": [
+      ".setup-id"
+    ]
+  },
   "setup.menu-note": {
     "zh": "人格、预设、工作区：菜单说明",
     "select": [

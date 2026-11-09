@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { personaName, presetName, presetTokens, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave, plainPath } from '../../packages/setup/model.js';
+import { personaName, presetName, presetTokens, validId, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, problemsOf, cleanPairs, halfPair, personaSave, plainPath } from '../../packages/setup/model.js';
 import { rowsOf, split, filterTree, withChanges, fallbackSections } from '../../packages/setup/feature-tree.js';
 
 const list = [{ persona: 'engineer', name: null }, { persona: 'miyu', name: 'Miyu' }, { persona: 'bad', problem: 'persona.toml:2: …' }];
@@ -210,4 +210,9 @@ test('预设右边的 token 数：核心给了的写，0（「无功能」）也
   assert.equal(presetTokens({ preset: 'full', tokens: 3712 }), 3712);
   assert.equal(presetTokens({ preset: 'none', tokens: 0 }), 0);
   assert.equal(presetTokens({ preset: 'old' }), null);
+});
+
+test('人自己填的编号（W-1125）：小写字母开头，小写字母、数字、- 和 _，最多 64 个', () => {
+  for (const ok of ['dev', 'my-preset_2', 'a', 'a'.repeat(64)]) assert.equal(validId(ok), true, ok);
+  for (const bad of ['', 'Dev', '1dev', '-dev', 'my preset', '小白', 'a.b', 'a'.repeat(65)]) assert.equal(validId(bad), false, bad);
 });

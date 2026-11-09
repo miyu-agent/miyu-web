@@ -41,13 +41,14 @@ function badCard(ctx, id, problems) {
 const KINDS = {
   persona: {
     list: (c) => c.personas, fallback: (c) => c.personaDefault, name: personaName, none: 'page.none', add: 'edit.new_persona', intro: 'page.intro', summary: true,
-    create: (core, name) => core.request('persona.set', { changes: [{ key: 'persona.name', value: name }] }).then((r) => r?.persona),
+    // 填了编号的照它建，`new` 让核心在编号已经有了时拒（核心 ID-1：不改掉同编号的那份）
+    create: (core, name, id) => core.request('persona.set', { ...(id ? { persona: id, new: true } : {}), changes: [{ key: 'persona.name', value: name }] }).then((r) => r?.persona),
     editor: (ctx, kit, catalog, id, hooks, look) => new PersonaEditor(ctx, kit, catalog, id, hooks, look),
   },
   preset: {
     // 预设也写简单描述（2026-10-23 项目主人定，推翻 10-08 的「预设不写说明」）；没有的不写
     list: (c) => c.presets, fallback: (c) => c.presetDefault ?? 'full', name: presetName, none: 'presets.none', add: 'edit.new_preset', intro: null, summary: true,
-    create: (core, name) => core.request('preset.set', { changes: [{ key: 'preset.name', value: name }] }).then((r) => r?.preset),
+    create: (core, name, id) => core.request('preset.set', { ...(id ? { preset: id, new: true } : {}), changes: [{ key: 'preset.name', value: name }] }).then((r) => r?.preset),
     editor: (ctx, kit, catalog, id, hooks, look) => new PresetEditor(ctx, kit, catalog, id, hooks, look),
   },
 };
@@ -159,10 +160,10 @@ export class ListPage {
     if (!this.kit || this.open) return;
     const t = (key) => this.ctx.text(key);
     const card = floatCard({ title: t(this.k.add), body: h('div'), close: t('edit.close'), onDismiss: () => this.dismiss() });
-    card.setBody(nameFirst(this.kit, t, t('edit.name_hint'), async (name) => {
+    card.setBody(nameFirst(this.kit, t, t('edit.name_hint'), async (name, want) => {
       let id;
       try {
-        id = await this.k.create(this.ctx.core, name);
+        id = await this.k.create(this.ctx.core, name, want);
       } catch (err) {
         return refusalText(err);
       }

@@ -4,6 +4,7 @@
 //! `kit`（`settings/kit.js`），和设置页长一个样。
 
 import { h } from '../../src/lib/dom.js';
+import { validId } from './model.js';
 
 /**
  * 设置页交来的控件（`settings.section` 的 `render(kit)`；软件包之间不互相 import，这里照用到的写一份形状）。
@@ -64,30 +65,40 @@ export function askFirst(kit, label, ask, run) {
 
 /**
  * 新建：只填名字的那一步（2026-10-08 项目主人：人格先填名字，建好接着在详情里写；预设填名字，功能先全开），放在浮卡里。名字空着「建好」
- * 点不了；`create` 交回一句错就写在下面、字留着。
+ * 点不了；`create` 交回一句错就写在下面、字留着。名字下面一格编号（发版前 check 28，W-1125，2026-11-09 项目主人：没有编号就不知道
+ * 命令行里对应哪个）：不填的由核心起；填的照 `validId`，不对的当场说、「建好」点不了。
  * @param {Kit} kit @param {(key: string) => string} t @param {string} hint
- * @param {(name: string) => Promise<string|null>} create @param {() => void} cancel
+ * @param {(name: string, id: string|null) => Promise<string|null>} create @param {() => void} cancel
  */
 export function nameFirst(kit, t, hint, create, cancel) {
   const input = kit.field('', hint);
+  const id = kit.field('', t('edit.id_hint'));
+  id.spellcheck = false;
+  id.autocomplete = 'off';
   const err = h('p.setup-error', { hidden: true });
+  const say = (/** @type {string|null} */ why) => { err.hidden = !why; err.textContent = why ?? ''; };
+  const idBad = () => !!id.value.trim() && !validId(id.value.trim());
+  const sync = () => {
+    ok.disabled = !input.value.trim() || idBad();
+    say(idBad() ? t('edit.id_bad') : null);
+  };
   const submit = async () => {
     const name = input.value.trim();
-    if (!name) return;
+    if (!name || idBad()) return;
     ok.disabled = true;
-    const why = await create(name);
-    err.hidden = !why;
-    err.textContent = why ?? '';
+    say(await create(name, id.value.trim() || null));
     ok.disabled = false;
   };
   const ok = kit.button(t('edit.create'), { primary: true }, submit);
   ok.disabled = true;
-  input.addEventListener('input', () => { ok.disabled = !input.value.trim(); });
-  input.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' || e.isComposing) return;
-    e.preventDefault();
-    submit();
-  });
+  for (const box of [input, id]) {
+    box.addEventListener('input', sync);
+    box.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || e.isComposing) return;
+      e.preventDefault();
+      submit();
+    });
+  }
   requestAnimationFrame(() => input.focus());
-  return h('div.setup-editor', field(t('edit.name'), input), err, h('div.setup-foot', h('span.setup-grow'), kit.button(t('edit.cancel'), {}, cancel), ok));
+  return h('div.setup-editor', field(t('edit.name'), input), field(t('edit.id'), id), err, h('div.setup-foot', h('span.setup-grow'), kit.button(t('edit.cancel'), {}, cancel), ok));
 }

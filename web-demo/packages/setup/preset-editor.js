@@ -91,6 +91,8 @@ export class PresetEditor {
     const remove = got.remove ? askFirst(this.kit, t(`edit.${got.remove}`), () => t(`edit.${got.remove}_ask`, { name: this.title.textContent || this.id }), () => this.drop()) : null;
     replace(this.body,
       field(t('edit.name'), name),
+      // 编号只看不改（发版前 check 28，W-1125：命令行里用它）
+      field(t('edit.id'), h('code.setup-id', this.id)),
       field(t('edit.summary'), summary),
       field(t('edit.icon'), this.iconRow(got, label)),
       'unattended_steps' in got ? this.stepsRow(got.unattended_steps) : null,
