@@ -50,7 +50,22 @@ export function apply(ctx) {
     const floats = box && menuSel ? [...box.querySelectorAll(menuSel)].filter(shown).map((el) => el.getBoundingClientRect()) : [];
     const table = combine(anchors?.anchors ?? [], [], ctx.skin?.anchors?.() ?? null);
     const off = (/** @type {string} */ id) => table.find((a) => a.id === id) ?? {};
-    return surfaceOf(box && shown(box) ? box.getBoundingClientRect() : null, floats, { composer: off('composer'), floats: off('composer.floats') });
+    return surfaceOf(box && shown(box) && !covered(box) ? box.getBoundingClientRect() : null, floats, { composer: off('composer'), floats: off('composer.floats') });
+  };
+  /**
+   * 输入框被对话区里整页的东西盖住了（「全部会话」那一页）：不站，不然悬在那一页半空（同那只吉祥物的落脚点 `composer`，蓝图「吉祥物」第 2 条）。
+   * 量法同 `mascot/anchors.js`：框正中那一点上、对话区里最上面的那样东西不在输入框那一块（框、它上下挂的那几行、从它们弹出的菜单）里，就是盖住了
+   * @param {Element} box
+   */
+  const covered = (box) => {
+    const stage = box.closest(pick('stage') || '.stage');
+    if (!stage) return false;
+    const dock = box.parentElement ?? box;
+    const r = box.getBoundingClientRect();
+    const x = (Math.max(0, r.left) + Math.min(innerWidth, r.right)) / 2;
+    const y = (Math.max(0, r.top) + Math.min(innerHeight, r.bottom)) / 2;
+    const hit = document.elementsFromPoint(x, y).find((e) => stage.contains(e) && e !== stage);
+    return !!hit && !dock.contains(hit);
   };
   /** @type {Set<(s: any) => void>} */
   const surfaces = new Set();
@@ -78,6 +93,8 @@ export function apply(ctx) {
     if (!box) return () => {};
     const mo = new MutationObserver(bump);
     mo.observe(box, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'style'] });
+    // 对话区里整页的东西（「全部会话」那一页）开了、关了：它们是对话区的直接孩子，只看这一层的 hidden、class，不往正文里看
+    for (const kid of box.closest(pick('stage') || '.stage')?.children ?? []) mo.observe(kid, { attributes: true, attributeFilter: ['hidden', 'class'] });
     const ro = new ResizeObserver(bump);
     ro.observe(box);
     return () => { mo.disconnect(); ro.disconnect(); };

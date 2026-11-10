@@ -33,14 +33,19 @@ export function endedOf(entries) {
   return e.reason === 'error' ? 'error' : e.reason === 'interrupted' ? 'interrupted' : 'done';
 }
 
+/** 浮层窄于这么多（CSS 像素）的不算台面：「跳到底部」那颗 32px 的圆钮这类，站不下一只吉祥物 */
+export const FLOAT_MIN = 160;
+
 /**
  * 站的那条边：弹出的列表露着的照最上面那一个，不然照输入框；各自加上主题挪的 `dy`、`dx`（`combine` 过的落脚点）。都没有的是 `null`。
+ * 窄于 `FLOAT_MIN` 的浮层不算（2026-11-11 项目主人：「跳到底部」一露出来，螃蟹、小鲸鱼就被顶到那颗圆钮上）。
  * @param {{top: number, left: number, right: number}|null} box 输入框 @param {{top: number, left: number, right: number}[]} floats 露着的弹出列表
  * @param {{composer?: {dx?: number, dy?: number}, floats?: {dx?: number, dy?: number}}} off
  * @returns {{top: number, left: number, right: number}|null}
  */
 export function surfaceOf(box, floats, off) {
-  const top = floats.length ? floats.reduce((a, b) => (b.top < a.top ? b : a)) : null;
+  const wide = floats.filter((f) => f.right - f.left >= FLOAT_MIN);
+  const top = wide.length ? wide.reduce((a, b) => (b.top < a.top ? b : a)) : null;
   const r = top ?? box;
   if (!r) return null;
   const o = (top ? off.floats : off.composer) ?? {};

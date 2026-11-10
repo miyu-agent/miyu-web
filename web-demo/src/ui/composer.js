@@ -187,7 +187,7 @@ export class Composer {
     this.float = h('div.composer-float');
     /** 占着整个框的（挂载位 `composer.takeover`：确认和提问的抽屉）；有东西占着时框里原来的让出来（`takeover`） */
     this.takeoverEl = h('div.composer-takeover');
-    /** 跳到底部（蓝图「输入框」）：浮在框右上角，正文离底部远了才露；点了做什么由整页接（`onJump`） */
+    /** 跳到底部（蓝图「输入框」）：浮在框上沿正中，正文离底部远了才露；点了做什么由整页接（`onJump`） */
     this.jumpButton = h('button.composer-jump', { type: 'button', hidden: true, title: t('jump_bottom'), 'aria-label': t('jump_bottom'), onclick: () => this.onJump?.() }, icon('arrow-down'));
     /** Ctrl+S 暂存着的（`model/stash.js`）：只在这个页面里；存着时框下面那一排左边一个保存图标，悬停看那句，点了取回 */
     this.stashed = /** @type {import('../model/stash.js').Draft|null} */ (null);

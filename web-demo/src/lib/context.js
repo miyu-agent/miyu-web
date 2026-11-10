@@ -144,3 +144,15 @@ export function costKinds(usage) {
   const got = KINDS.filter(([k]) => typeof parts[k] === 'number').map(([k]) => ({ kind: k, amount: parts[k], currency }));
   return got.length ? got : null;
 }
+
+/** 往下弹时浮窗离那一格多远、离窗口底边至少留多少（屏幕像素） */
+const BELOW_GAP = 6;
+const BELOW_MARGIN = 8;
+
+/**
+ * 那一格下面放不放得下浮窗（都是屏幕像素）。
+ * @param {number} bottom 那一格的下沿 @param {number} height 浮窗多高 @param {number} viewport 窗口多高
+ */
+export function fitsBelow(bottom, height, viewport) {
+  return bottom + BELOW_GAP + height + BELOW_MARGIN <= viewport;
+}

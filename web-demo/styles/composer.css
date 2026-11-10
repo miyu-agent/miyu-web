@@ -159,9 +159,10 @@
    逐帧录出来的），照抄的一律不放动画 */
 .composer-takeover-ghost, .composer-takeover-ghost * { animation: none !important; transition: none !important; }
 
-/* 跳到底部（蓝图 web.md「输入框」）：框右上角、框上沿上面 10px 浮一个圆按钮；进来从下面升上来，走的时候沉下去 */
+/* 跳到底部（蓝图 web.md「输入框」）：框上沿正中、上面 10px 浮一个圆按钮；进来从下面升上来，走的时候沉下去。
+   2026-11-11 项目主人：原来在框的右上角，正是吉祥物站的地方，一露出来就把它顶上去，换到正中 */
 .composer-jump {
-  position: absolute; right: 0; bottom: calc(100% + 10px); z-index: 3; display: grid; width: 32px; height: 32px; padding: 0; place-items: center;
+  position: absolute; left: calc(50% - 16px); bottom: calc(100% + 10px); z-index: 3; display: grid; width: 32px; height: 32px; padding: 0; place-items: center;
   border: var(--float-border, 1px solid var(--line)); border-radius: var(--float-radius, var(--r-round)); background: var(--float-bg, var(--surface-1)); box-shadow: var(--float-elev, var(--card-shadow)); color: var(--text-soft);
   cursor: pointer; transition: color calc(0.15s * var(--motion-scale)) ease; animation: rise-in var(--motion-in) var(--ease-out);
 }

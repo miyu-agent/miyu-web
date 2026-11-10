@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { nowOf, endedOf, surfaceOf, characterOf, DENIRO } from '../../packages/character/model.js';
+import { nowOf, endedOf, surfaceOf, characterOf, DENIRO, FLOAT_MIN } from '../../packages/character/model.js';
 
 test('这一刻在做什么：没在跑 idle；等人 waiting；压缩 compacting；照 doing 分想、写、工具，派子代理的工具算 subagent', () => {
   assert.equal(nowOf(null), 'idle');
@@ -36,6 +36,14 @@ test('站的那条边：弹出的列表露着的照最上面那一个，不然�
   assert.deepEqual(surfaceOf(box, [], { composer: { dy: -20 } }), { top: 680, left: 300, right: 900 }, '大肥鱼的丝带比框高出 20px');
   assert.deepEqual(surfaceOf(box, [{ top: 450, left: 320, right: 700 }], { composer: { dy: -20 }, floats: { dy: -3, dx: 2 } }), { top: 447, left: 322, right: 702 });
   assert.equal(surfaceOf(null, [], {}), null);
+});
+
+test('站的那条边：站不下的小浮层（跳到底部的圆钮）不算，照旧站在输入框上', () => {
+  const box = { top: 700, left: 300, right: 900 };
+  const jump = { top: 658, left: 584, right: 616 };
+  assert.deepEqual(surfaceOf(box, [jump], { composer: { dy: -20 } }), { top: 680, left: 300, right: 900 });
+  assert.deepEqual(surfaceOf(box, [jump, { top: 450, left: 300, right: 900 }], {}), { top: 450, left: 300, right: 900 }, '同时露着命令列表的照命令列表');
+  assert.deepEqual(surfaceOf(box, [{ top: 660, left: 306, right: 306 + FLOAT_MIN }], {}), { top: 660, left: 306, right: 306 + FLOAT_MIN }, '刚好够宽的提示条算');
 });
 
 test('吉祥物改名 deniro（2026-11-10 项目主人）：设置里改名以前存的 miyu 读成 deniro，别的照原样，没设的是空的', () => {

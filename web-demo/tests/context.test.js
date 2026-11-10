@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { scaledParts, bar, share, toneOf, useRows, partsMinus, costOf } from '../src/lib/context.js';
+import { scaledParts, bar, share, toneOf, useRows, partsMinus, costOf, fitsBelow } from '../src/lib/context.js';
 import { costText } from '../src/lib/cost.js';
 import { loadRes } from './support.js';
 
@@ -101,4 +101,11 @@ test('子代理的各部分：连子代理的逐块减去主会话自己的，�
   // 主会话自己没有的块照原样
   assert.deepEqual(partsMinus([{ part: 'demos', label: '示范', tokens: 7 }], []), [{ part: 'demos', label: '示范', tokens: 7, children: undefined }]);
   assert.deepEqual(partsMinus([], own), []);
+});
+
+test('用量明细往下弹：那一格下面放得下才往下，放不下的照旧往上', () => {
+  assert.equal(fitsBelow(500, 300, 1000), true, '输入框在正中，下面够');
+  assert.equal(fitsBelow(980, 300, 1000), false, '主题把输入框放到最底下，下面不够');
+  assert.equal(fitsBelow(686, 300, 1000), true, '刚好放下（隔 6、留 8）');
+  assert.equal(fitsBelow(687, 300, 1000), false);
 });

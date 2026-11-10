@@ -9,7 +9,7 @@ import { show, hide, unfold } from '../lib/motion.js';
 import { t } from '../util/res.js';
 import { short, money } from '../lib/format.js';
 import { costText, ratesOf, rateName } from '../lib/cost.js';
-import { scaledParts, bar, share, toneOf, useRows, USE_TONES, costOf, partsMinus, usageSum, kindParts, costKinds, inputOf, KINDS } from '../lib/context.js';
+import { scaledParts, bar, share, toneOf, useRows, USE_TONES, costOf, partsMinus, usageSum, kindParts, costKinds, inputOf, KINDS, fitsBelow } from '../lib/context.js';
 
 /** @typedef {'context'|'tokens'|'cost'} Section */
 
@@ -125,14 +125,14 @@ export class ContextPop {
 
   /**
    * 摆在那一格上面，右边对齐那一格，放不下往左挪（量的是屏幕像素，整页放大以后换回自己的 CSS 像素）；还没开的新会话输入框在正中，
-   * 摆在下面（2026-10-23 项目主人）
+   * 摆在下面（2026-10-23 项目主人）；下面放不下的照旧摆上面（2026-11-11：主题把新会话的输入框放到最底下时，往下弹到了屏幕外面）
    */
   place() {
     const parent = this.el.parentElement;
     if (!parent || !this.anchor) return;
-    this.el.classList.toggle('is-below', !!this.el.closest('.is-empty'));
     const scale = scaleOf(parent);
     const box = this.anchor.getBoundingClientRect();
+    this.el.classList.toggle('is-below', !!this.el.closest('.is-empty') && fitsBelow(box.bottom, this.el.offsetHeight * scale, innerHeight));
     const root = parent.getBoundingClientRect();
     const width = this.el.offsetWidth;
     const left = Math.min((box.right - root.left) / scale - width, root.width / scale - width);
