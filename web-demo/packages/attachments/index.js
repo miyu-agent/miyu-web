@@ -70,6 +70,9 @@ export function apply(ctx) {
     keep: (given) => tray.keep(given),
     recall: (saved) => tray.recall(saved?.kept ?? null, saved?.session ?? null),
     settle: () => tray.settle(),
+    // 切会话（W-1137）：这一排收起来跟着原来的会话，切回来放回去
+    stow: () => tray.stow(),
+    unstow: (/** @type {any} */ row) => tray.unstow(row),
     // 光标在最前面按退格：拿掉最后一张（蓝图「附件」第 3 条）
     dropLast: () => tray.dropLast(),
     // 一句话太长、发不出去的（施工 YC-11，蓝图「附件」第 4 条）：输入框交过来的字转成一个文字附件放进框里，收下了交 `true`；

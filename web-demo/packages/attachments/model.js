@@ -89,6 +89,35 @@ export class Tray {
     /** 交出去的几块，拒了照它放回来；不是这里交出去的不认 */
     /** @type {WeakMap<Taken, Item[]>} */
     this.given = new WeakMap();
+    /** 切会话收起来的几排（W-1137）：传到一半的传完了照样记上 @type {Set<Item[]>} */
+    this.stowed = new Set();
+  }
+
+  /** 这一块在哪一排（框里的，或者收起来的）。 @param {number} id */
+  holder(id) {
+    if (this.items.some((it) => it.id === id)) return this.items;
+    for (const row of this.stowed) if (row.some((it) => it.id === id)) return row;
+    return null;
+  }
+
+  /**
+   * 切会话（W-1137）：框里这一排收起来交出去、框里清空；传到一半的接着传，传完了记在收起来的那一排上。一块都没有的交 `null`。
+   * @returns {Item[]|null}
+   */
+  stow() {
+    if (!this.items.length) return null;
+    const row = this.items;
+    this.stowed.add(row);
+    this.items = [];
+    this.changed();
+    return row;
+  }
+
+  /** 切回来：收起来的那一排放回框里，排在现在框里的前面。 @param {Item[]} row */
+  unstow(row) {
+    if (!this.stowed.delete(row)) return;
+    this.items = [...row, ...this.items];
+    this.changed();
   }
 
   /** 看着变。交回怎么不看。 */
@@ -119,7 +148,7 @@ export class Tray {
    * @param {Put} put
    */
   ready(id, put) {
-    const item = this.items.find((it) => it.id === id);
+    const item = this.holder(id)?.find((it) => it.id === id);
     if (!item) return false;
     item.state = 'ready';
     item.put = put;
@@ -127,11 +156,12 @@ export class Tray {
     return true;
   }
 
-  /** 拿掉一块（传到一半的也能拿）；交回拿掉的那块。 */
+  /** 拿掉一块（传到一半的也能拿；切会话收起来的那几排里的也认，传坏了照样拿掉）；交回拿掉的那块。 */
   remove(id) {
-    const at = this.items.findIndex((it) => it.id === id);
-    if (at < 0) return null;
-    const [item] = this.items.splice(at, 1);
+    const row = this.holder(id);
+    const at = row ? row.findIndex((it) => it.id === id) : -1;
+    if (!row || at < 0) return null;
+    const [item] = row.splice(at, 1);
     this.changed();
     return item;
   }

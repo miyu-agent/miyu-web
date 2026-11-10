@@ -41,6 +41,7 @@ import { Recall } from '../model/history.js';
 import { show, hide, span } from '../lib/motion.js';
 import { isNewline, insertNewline } from '../lib/newline.js';
 import { stash } from '../model/stash.js';
+import { emptyDesk } from '../model/desk.js';
 import { tipsFor, pickTip } from '../model/tips.js';
 import { sendTooLong } from '../core/connection.js';
 
@@ -52,11 +53,13 @@ const emptyNone = () => new Set((res.commands.empty_none ?? []).map((/** @type {
 /**
  * @typedef {{id: string, has: () => boolean, busy: () => boolean, take: () => Record<string, any>|null, putBack: (given: any) => void,
  *   keep?: (given: any) => any, recall?: (saved: {session: string, kept: any}|null) => void, settle?: () => void,
- *   offer?: (refs: any[]) => any[], dropLast?: () => boolean, adopt?: (text: string, name: string) => boolean}} Payload
+ *   offer?: (refs: any[]) => any[], dropLast?: () => boolean, adopt?: (text: string, name: string) => boolean,
+ *   stow?: () => any, unstow?: (saved: any) => void}} Payload
  *   跟着话一起发的一样（挂载位 `composer.payload` 的一件，蓝图 `web/architecture.md`）；`keep`、`recall`、`settle` 是输入历史用的：
  *   交出去的记成能存下来的样子、翻出来的换上（`null` 拿掉）、改了字留下（蓝图「输入历史」第 1、2 条）；`offer` 是 `@` 选文件交过来的
  *   本机文件，收下它认得的，交回不收的（蓝图「`@` 选文件」第 5 条）；`dropLast` 是光标在最前面按退格，拿掉最后一块，拿掉了交回 `true`；`adopt` 是一句话太长发不出去时把字转成
- *   一个叫 `name` 的文字附件，收下了交回 `true`（施工 YC-11）
+ *   一个叫 `name` 的文字附件，收下了交回 `true`（施工 YC-11）；`stow` 切会话时收起框里这几样（传到一半的接着传）、交回记着的（没有的 `null`），
+ *   `unstow` 切回来放回去（W-1137）
  */
 
 export class Composer {
@@ -526,6 +529,55 @@ export class Composer {
       }
     }
     this.input.select();
+  }
+
+  /**
+   * 切会话（W-1137，`model/desk.js`）：交出框里这个会话的那一份——字、光标、文件块、`Ctrl+S` 暂存的、撤销放回来的那句、翻输入历史翻到哪
+   * 和两下 `Esc` 清掉的那句、跟着话发的几样（挂载位 `composer.payload` 能 `stow` 的：附件，传到一半的接着传）——框回到空的；开着的
+   * 命令列表、`@`、`$`、输入历史的列表关掉。
+   * @returns {import('../model/desk.js').Desk}
+   */
+  takeDesk() {
+    /** @type {Record<string, any>} */
+    const parts = {};
+    for (const p of this.payload()) {
+      const saved = p.stow?.();
+      if (saved != null) parts[p.id] = saved;
+    }
+    const r = this.recall;
+    const desk = {
+      text: this.input.value, start: this.input.selectionStart ?? 0, end: this.input.selectionEnd ?? 0,
+      blocks: /** @type {[string, string][]} */ ([...this.blocks]), stashed: this.stashed, putBackText: this.putBackText,
+      recall: { at: r.at, shown: r.shown, draft: r.draft, cleared: r.cleared, prefix: r.prefix }, parts,
+    };
+    Object.assign(r, { at: -1, shown: null, draft: '', cleared: null, prefix: null });
+    this.blocks = new Map();
+    this.stashed = null;
+    this.syncStash();
+    this.esc = 0;
+    this.historyList.close();
+    this.dismissMention();
+    this.dismissSkill();
+    this.mentionDismissed = null;
+    this.skillDismissed = null;
+    this.set('');
+    return desk;
+  }
+
+  /** 切回来：放回这个会话记着的那一份（`takeDesk` 交出去的）；`null` 的框照空的。 @param {import('../model/desk.js').Desk|null} desk */
+  putDesk(desk) {
+    if (!desk || emptyDesk(desk)) return;
+    this.blocks = new Map(desk.blocks);
+    this.stashed = desk.stashed;
+    this.syncStash();
+    Object.assign(this.recall, desk.recall);
+    for (const p of this.payload()) {
+      if (desk.parts[p.id] != null) p.unstow?.(desk.parts[p.id]);
+    }
+    this.input.value = desk.text;
+    this.input.setSelectionRange(Math.min(desk.start, desk.text.length), Math.min(desk.end, desk.text.length));
+    this.putBackText = desk.putBackText;
+    this.changed();
   }
 
   /** 恢复了：撤销时放回来的那句还没动过的，收回去，免得回车再发一遍。 */

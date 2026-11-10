@@ -164,3 +164,24 @@ test('键盘拿掉：光标在最前面按退格，拿掉最后一张（在传�
   assert.equal(tray.dropLast(), true);
   assert.equal(tray.dropLast(), false);
 });
+
+test('切会话（W-1137）：框里这一排收起来、框空了；传到一半的传完了记在收起来的那一排上；切回来放回去', () => {
+  const tray = new Tray();
+  const a = tray.add({ name: 'a.png', size: 3, type: 'image/png' });
+  tray.ready(a.id, { blob: 'h1', name: 'a.png', media_type: 'image/png' });
+  const b = tray.add({ name: 'b.pdf', size: 5, type: 'application/pdf' });
+  const row = tray.stow();
+  assert.ok(row);
+  assert.equal(tray.items.length, 0);
+  assert.equal(tray.stow(), null, '空的不收');
+  assert.ok(tray.ready(b.id, { blob: 'h2', name: 'b.pdf', media_type: 'application/pdf' }), '收起来的照样传完');
+  const c = tray.add({ name: 'c.txt', size: 1, type: 'text/plain' });
+  tray.remove(c.id);
+  tray.unstow(/** @type {any} */ (row));
+  assert.deepEqual(tray.items.map((it) => [it.name, it.state]), [['a.png', 'ready'], ['b.pdf', 'ready']]);
+  tray.unstow(/** @type {any} */ (row));
+  assert.equal(tray.items.length, 2, '放回过的不再放一遍');
+  const d = tray.add({ name: 'd.png', size: 1, type: 'image/png' });
+  tray.stow();
+  assert.ok(tray.remove(d.id), '收起来的传坏了照样拿掉');
+});

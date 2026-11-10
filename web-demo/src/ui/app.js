@@ -41,6 +41,7 @@ import { upload } from '../lib/upload.js';
 import { importDone, importRefusal } from '../model/session-import.js';
 import { localeOf } from '../model/session-export.js';
 import { restBefore } from '../model/pace.js';
+import { Desks } from '../model/desk.js';
 import { openExport } from './export-dialog.js';
 
 /** 皮肤样张的会话编号：只在这一页（核心那边没有这个会话） */
@@ -81,6 +82,8 @@ export class App {
     /** 宿主的选文件、读字节（服务 `host` 的 `files`）：导入会话（W-1094）照它选包、分块传；没有的宿主不出「导入会话…」 */
     this.files = /** @type {any} */ (info).files ?? null;
     this.current = /** @type {string|null} */ (null);
+    /** 各会话框里没发的那一份（W-1137，`model/desk.js`） */
+    this.desks = new Desks();
     /** 还没开的新会话上点过的权限级别；`null` 是没点过（核心开出来是什么就是什么）。 */
     this.pendingLevel = /** @type {string|null} */ (null);
     /** 还没开的新会话里选的模型（换模型的菜单、`/model`）：开会话时带上 */
@@ -160,6 +163,8 @@ export class App {
         if (kids.includes(this.current ?? '')) this.current = id;
         for (const kid of kids) this.store.drop(kid);
         this.store.drop(id);
+        // 删掉的会话：框里记着的那一份不要了
+        for (const gone of [id, ...kids]) this.desks.drop(gone);
         // 正在看的被删了：开会话表里下一个还在的（一起删的几个里还没收完的跳过）
         if (this.current === id) this.open(this.ranked().find((x) => !this.store.sessions.get(x)?.gone) ?? null);
       },
@@ -698,6 +703,8 @@ export class App {
     // 回到新会话再问一次预览（技能、工具可能变了）
     this.preview = null;
     const other = id !== this.current;
+    // 输入框跟着会话走（W-1137，2026-11-10 项目主人：没发的字切会话时带了过去）：现在这一份记在原来那个名下，换上新的那个自己的
+    if (other) this.desks.swap(this.current, id, () => this.composer.takeDesk(), (desk) => this.composer.putDesk(desk));
     this.current = id;
     this.sessionsPage?.close();
     // 没读过的会话第一次打开时才读、订阅：子代理的不进会话表的顶层；全部会话那一页开的老会话进（`listed`）
