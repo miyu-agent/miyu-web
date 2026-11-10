@@ -27,6 +27,7 @@ import { SideColumn } from './side.js';
 import { SidebarWidth } from './sidebar-width.js';
 import { statusFooter, levelLabel, nextLevel, levelParams, previewRing } from '../model/footer.js';
 import { itemsOf, levelOf } from '../model/entries.js';
+import { statusRows } from '../model/status.js';
 import { compactingOf, lastTurn, turnEnded, untouchedTurnOf } from '../model/view-state.js';
 import { copy } from '../markdown/build.js';
 import { childrenFromStatus, runningDeepStatus } from '../lib/jobs.js';
@@ -230,6 +231,8 @@ export class App {
       interrupt: () => this.interrupt(),
       cycleLevel: () => this.cycleLevel(),
       command: (spec, words) => runCommand(this, spec, words),
+      // `/status` 里点会话 ID：复制，输入框上面说一句
+      copyText: (text) => copy(text, (said, good) => this.composer.say(said, good)),
       // 列表里没有的命令：开着的会话里交核心认，核心不认、带着字的交回 'talk' 照话发
       unlisted: (name, words, opens) => runUnlisted(this, name, words, opens),
       // 命令列表开了：照正在看的会话重问核心认哪些（预设、记忆开关换了，下一次打开就是新的）
@@ -1221,6 +1224,29 @@ export class App {
     } catch (err) {
       this.composer.say(refusalText(err));
     }
+  }
+
+  /** `/status` 要写的几行（`model/status.js`）；还没开会话的是 `null`。 */
+  statusRows() {
+    const id = this.current;
+    const s = id ? this.store.sessions.get(id) : null;
+    if (!id || !s) return null;
+    const status = s.view.status ?? null;
+    const persona = status?.persona ?? this.store.index.get(id)?.persona ?? null;
+    const preset = status?.preset ?? this.store.index.get(id)?.preset ?? null;
+    const level = status?.permission ? levelOf(status.permission) : null;
+    const effort = this.effortLevel();
+    return statusRows({
+      id,
+      title: this.store.summary(id).title || null,
+      persona: persona ? this.ctx.personas?.personaName?.(persona) ?? persona : t('status_box.no_persona'),
+      preset: preset ? this.ctx.personas?.presetName?.(preset) ?? preset : null,
+      level: level ? res.text.levels[level] ?? level : null,
+      cwd: this.workdir(),
+      effort: effort ? effortLabel(effort) : null,
+      status,
+      limits: s.limits ?? {},
+    }, (key, fields) => t(`status_box.${key}`, fields));
   }
 
   /**

@@ -14,10 +14,11 @@ import { fitAbove } from './fit.js';
 const LINE = 24;
 
 export class HelpPanel {
-  constructor() {
+  /** @param {string} [title] 头一行的标题（`/status` 用同一个浮层，`StatusPanel`） */
+  constructor(title = t('help.title')) {
     this.body = h('div.help-body');
     this.el = h('div.dock-help.dock-float', { hidden: true, role: 'dialog' },
-      h('div.picker-head', h('strong.picker-title', t('help.title')), h('span.picker-hint', t('help.hint'))), this.body);
+      h('div.picker-head', h('strong.picker-title', title), h('span.picker-hint', t('help.hint'))), this.body);
     this.isOpen = false;
     this.onKey = (/** @type {KeyboardEvent} */ e) => {
       const page = Math.max(LINE, this.body.clientHeight - LINE);
@@ -47,7 +48,13 @@ export class HelpPanel {
         h('span.help-what', s.summary),
       ]));
     const keys = /** @type {[string, string][]} */ (res.text.help.keys).flatMap(([key, what]) => [h('kbd.help-key', key), h('span.help-what', what)]);
-    replace(this.body, section(t('help.commands'), commands), section(t('help.keys_title'), keys));
+    this.present(section(t('help.commands'), commands), section(t('help.keys_title'), keys));
+  }
+
+  /** 换成这些内容、露出来。 @param {...any} nodes */
+  present(...nodes) {
+    this.close();
+    replace(this.body, ...nodes);
     this.body.scrollTop = 0;
     this.isOpen = true;
     show(this.el);
@@ -63,5 +70,27 @@ export class HelpPanel {
     document.removeEventListener('keydown', this.onKey, true);
     document.removeEventListener('pointerdown', this.onDown, true);
     hide(this.el);
+  }
+}
+
+/**
+ * 会话状态（`/status`，蓝图 `web.md`「会话状态 `/status`」，W-1152）：同帮助的浮层、同一套按键，一行一样「名字　值」；会话 ID 那一行
+ * 点了复制。
+ */
+export class StatusPanel extends HelpPanel {
+  /** @param {{copy: (text: string) => void}} on */
+  constructor(on) {
+    super(t('status_box.title'));
+    this.on = on;
+  }
+
+  /** @param {import('../model/status.js').Row[]} rows */
+  show(rows) {
+    this.present(h('div.help-grid.status-grid', rows.flatMap((r) => [
+      h('span.help-what', r.name),
+      r.key === 'id'
+        ? h('button.status-value.is-copy', { type: 'button', title: t('status_box.copy'), onclick: () => this.on.copy(r.value) }, r.value)
+        : h('span.status-value', r.value),
+    ])));
   }
 }

@@ -3726,6 +3726,12 @@
       ".help-what"
     ]
   },
+  "status.value": {
+    "zh": "会话状态：一行的值",
+    "select": [
+      ".status-value"
+    ]
+  },
   "history.title": {
     "zh": "历史：标题",
     "select": [

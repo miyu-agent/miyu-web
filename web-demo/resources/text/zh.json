@@ -570,6 +570,7 @@
     "search": "搜索模型",
     "no_match": "无匹配结果"
   },
+  "status_box": {"title": "会话状态", "copy": "复制", "sep": " · ", "no_persona": "无人格", "keys": {"id": "会话 ID", "title": "标题", "persona": "人格", "preset": "预设", "level": "权限", "cwd": "工作区", "model": "模型", "context": "上下文", "compaction": "压缩", "usage": "累计", "cache": "缓存", "cost": "花费"}, "effort": "思考 {effort}", "window": "窗口 {window}", "context": "{used} / {window}（{percent}%）", "cap": "会话上限 {n}", "times": "已压缩 {n} 次", "line": "到 {line} 自动压缩", "usage": "{total}（输入 {input} · 输出 {output}）", "hit": "命中 {percent}%", "breaks": "断裂 {n} 次"},
   "help": {
     "title": "帮助",
     "hint": "↑↓ 滚动 · Esc 关闭",

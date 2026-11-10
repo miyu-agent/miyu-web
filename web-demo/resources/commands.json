@@ -144,6 +144,15 @@
       "args": true
     },
     {
+      "name": "status",
+      "summary": {
+        "zh": "查看会话状态",
+        "en": "Show this session's status",
+        "ja": "セッションの状態を表示する"
+      },
+      "run": "status"
+    },
+    {
       "name": "copy",
       "summary": {
         "zh": "复制AI的上一条回答",

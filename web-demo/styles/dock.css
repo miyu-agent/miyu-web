@@ -154,3 +154,8 @@
 @media (prefers-reduced-motion: reduce) {
   .pulse-shine, .dock-commands, .dock-picker, .dock-help, .dock-history, .dock-mention, .dock-slist { animation: none; }
 }
+/* 会话状态（`/status`，W-1152）：同帮助的浮层，一行「名字　值」；值能选能换行，会话 ID 是等宽字、点了复制 */
+.status-grid { padding-top: calc(4px * var(--space)); }
+.status-value { color: var(--text); font-size: calc(13px * var(--text-scale)); line-height: calc(22px * var(--text-scale)); overflow-wrap: anywhere; user-select: text; }
+button.status-value { padding: 0; border: 0; background: none; font-family: var(--font-mono); font-size: calc(12.5px * var(--text-scale)); text-align: left; cursor: pointer; }
+button.status-value:hover { color: var(--accent); }

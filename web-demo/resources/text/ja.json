@@ -570,6 +570,7 @@
     "search": "モデルを検索",
     "no_match": "見つかりません"
   },
+  "status_box": {"title": "セッションの状態", "copy": "コピー", "sep": " · ", "no_persona": "人格なし", "keys": {"id": "セッション ID", "title": "タイトル", "persona": "人格", "preset": "プリセット", "level": "権限", "cwd": "ワークスペース", "model": "モデル", "context": "コンテキスト", "compaction": "圧縮", "usage": "累計", "cache": "キャッシュ", "cost": "費用"}, "effort": "思考 {effort}", "window": "ウィンドウ {window}", "context": "{used} / {window}（{percent}%）", "cap": "セッション上限 {n}", "times": "圧縮 {n} 回", "line": "{line} で自動圧縮", "usage": "{total}（入力 {input} · 出力 {output}）", "hit": "ヒット {percent}%", "breaks": "断裂 {n} 回"},
   "help": {
     "title": "ヘルプ",
     "hint": "↑↓ スクロール · Esc 閉じる",

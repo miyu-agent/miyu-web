@@ -372,6 +372,12 @@ const RUNS = {
     }
   },
   help: (app) => app.composer.openHelp(),
+  // 会话状态（蓝图「会话状态 `/status`」，W-1152）：照页面已经有的数写，不另外问核心；还没开会话的提示先开始会话
+  status: (app) => {
+    const rows = app.statusRows();
+    if (rows) app.composer.openStatus(rows);
+    else app.composer.say(t('commands.needs_session'));
+  },
 };
 
 /** `/redo`、`/edit` 能不能做：在回答时提示「回答进行中」，最新一轮不是你开的（或一轮都没有）提示「无法重做」。 */
