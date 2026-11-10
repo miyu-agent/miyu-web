@@ -193,7 +193,7 @@ export class Composer {
     this.stashed = /** @type {import('../model/stash.js').Draft|null} */ (null);
     this.stashChip = h('button.composer-stash', { type: 'button', hidden: true, onclick: () => { this.toggleStash(); this.input.focus(); } }, icon('save'));
     this.field = h('div.composer-field', this.backdrop, this.input);
-    this.box = h('div.composer', this.notice, this.jumpButton, this.takeoverEl, this.head, this.field, this.bar = h('div.composer-bar', h('div.composer-left', this.tools, this.stashChip), this.sendSide, this.sealButton, this.sendButton), this.menu.el, this.picker.el, this.help.el, this.historyList.el, this.sessionList.el, this.mention.el, this.skillList.el, this.float);
+    this.box = h('div.composer', this.notice, this.jumpButton, this.takeoverEl, this.head, this.field, this.bar = h('div.composer-bar', h('div.composer-left', this.tools, this.stashChip), this.sealButton, this.sendSide, this.sendButton), this.menu.el, this.picker.el, this.help.el, this.historyList.el, this.sessionList.el, this.mention.el, this.skillList.el, this.float);
     this.el = h('div.composer-dock', this.box, this.footer);
     this.parts = /** @type {{key: string, text: string}[]} */ ([]);
     /** 撤销时放回框里的那句：恢复时还没动过的收回去（`tui.md`「输入框」第 7 条）。 */
