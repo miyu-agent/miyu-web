@@ -14,7 +14,7 @@ import { listed } from './listed.js';
  * @typedef {import('./listed.js').Shown} Shown
  * @typedef {import('./listed.js').Asked} Asked
  * @typedef {import('./listed.js').Listed} Listed
- * @typedef {{scroller: HTMLElement, current: () => string|null, reach: (seq: number) => Promise<boolean>}} Chat 对话区（服务 `chat`）
+ * @typedef {{scroller: HTMLElement, current: () => string|null, reach: (seq: number) => Promise<boolean>, leave?: () => void}} Chat 对话区（服务 `chat`）
  * @typedef {{request: (method: string, params: any) => Promise<any>}} Core
  */
 
@@ -233,8 +233,13 @@ export class PromptRail {
     }));
   }
 
-  /** @param {HTMLElement} node */
+  /**
+   * 滚之前先告诉对话区「人离开了底下」（`chat.leave`，W-1148）：对话区只把人动过以后一小会儿（`scroll_intent_ms`，1 秒）里的滚动算人滚的，
+   * 往前读几页花得比这久的（会话大、连得慢），滚起来就被「跟着最新的」当成浏览器自己收的、拉回底下——读进来了却没跳过去。
+   * @param {HTMLElement} node
+   */
   scrollTo(node) {
+    this.chat.leave?.();
     const top = this.scroller.scrollTop + offsetIn(node, this.scroller) - this.config.jump_margin;
     this.scroller.scrollTo({ top, behavior: 'smooth' });
   }
