@@ -55,6 +55,7 @@
 /* 没测成：原话下面两个小字按钮「重新设置」「跳过」，和设置页的 `.set-link` 一个样子，中间隔开 */
 .ob-fail-actions { display: flex; gap: 16px; margin: 4px 0 0 21px; }
 .ob-fail-btn { padding: 0; border: 0; background: none; color: var(--accent); font: 12px var(--font-ui); cursor: pointer; }
+.ob-fail-actions.is-flush { margin-left: 0; }
 .ob-fail-btn:hover { text-decoration: underline; }
 .ob-models { display: grid; gap: 8px; }
 .ob-model-list { display: grid; max-height: min(320px, 42vh); overflow-y: auto; gap: 2px; }

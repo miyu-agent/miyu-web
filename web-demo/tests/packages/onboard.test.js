@@ -121,6 +121,15 @@ test('没测成：核心说要模型名的要填模型名，列模型时认证�
   assert.equal(failureOf({ ok: false, stage: 'request', error: { class: 'weird' } }).key, 'onboard.classes.other');
 });
 
+test('没测成以后的动作：重试排最前（照填的原样再测）；要补模型名的没写时不给重试，写了再给（发版前 check）', async () => {
+  const { failActions } = await import('../../packages/settings/onboard/logic.js');
+  const auth = failureOf({ ok: false, stage: 'list', error: { class: 'retryable', message: 'timeout' } });
+  assert.deepEqual(failActions(auth, false), ['retry', 'redo', 'skip_test']);
+  const need = failureOf({ ok: false, stage: 'list', need_model: true, error: { class: 'other', message: 'no models listed' } });
+  assert.deepEqual(failActions(need, false), ['redo', 'skip_test']);
+  assert.deepEqual(failActions(need, true), ['retry', 'redo', 'skip_test']);
+});
+
 test('配好了的照密钥取不取得到算：引用的密钥没了的不算，没写密钥的算（2026-10-13 项目主人实测）', () => {
   const got = usableIds([
     { id: 'deepseek', key: { ref: 'secret:deepseek-1', set: false } },

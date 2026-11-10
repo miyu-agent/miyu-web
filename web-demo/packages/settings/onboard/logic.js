@@ -222,6 +222,17 @@ export function filterNames(models, query) {
 }
 
 /**
+ * 没测成以后原话下面给哪几个动作、照什么先后（字是 `onboard.<键>`）：「重试」照填的原样再测（发版前 check，2026-11-10 项目主人：出错了没有
+ * 重试，只能退回上一步再进来重新设置）、「重新设置」改填的、「跳过」不测照填的存。要补模型名的（`needsModel`）没写模型名时重试还是同一个结果，
+ * 不给，写了再给。
+ * @param {{needsModel: boolean}} why `failureOf` 的 @param {boolean} hasModel 模型名那一行写了没有
+ * @returns {('retry'|'redo'|'skip_test')[]}
+ */
+export function failActions(why, hasModel) {
+  return why.needsModel && !hasModel ? ['redo', 'skip_test'] : ['retry', 'redo', 'skip_test'];
+}
+
+/**
  * 没测成的那一行写什么（蓝图第 6 条）：核心说要模型名的（`need_model`，核心 8-11 五补）写「未获取到模型列表」（多一行填模型名），
  * `stage` 是 `config` 的写「配置错误」，别的照出错的分类（列模型时认证错的也是）；有状态码的接 ` · 401`。交回字的键和要不要填模型名。
  * @param {any} result `provider.test` 的回应

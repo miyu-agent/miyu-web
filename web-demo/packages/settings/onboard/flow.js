@@ -9,7 +9,7 @@ import { h, icon, replace } from '../../../src/lib/dom.js';
 import { logoEl } from '../../../src/lib/logo.js';
 import { secretName, providerName } from '../model.js';
 import { select } from '../rows.js';
-import { providerRows, mineRows, usableIds, testParams, setupChanges, noPools, modelOrder, filterNames, failureOf, validUrl, cleanUrl, customId, customIdProblem } from './logic.js';
+import { providerRows, mineRows, usableIds, testParams, setupChanges, noPools, modelOrder, filterNames, failureOf, failActions, validUrl, cleanUrl, customId, customIdProblem } from './logic.js';
 
 /** 模型最多列几个（再多的搜） */
 const MAX_MODELS = 200;
@@ -109,7 +109,8 @@ export class ProviderFlow {
   /** 选一家（第 5 条）。 */
   list() {
     const t = this.t;
-    if (this.failed) return { title: t('onboard.title_list'), sub: t('onboard.sub_list'), body: h('p.ob-note.is-bad', t('onboard.load_failed', { reason: this.failed })) };
+    // 读不到的：原话下面一个「重试」，再读一遍（原来只能退回上一步再进来）
+    if (this.failed) return { title: t('onboard.title_list'), sub: t('onboard.sub_list'), body: h('div', h('p.ob-note.is-bad', t('onboard.load_failed', { reason: this.failed })), h('div.ob-fail-actions.is-flush', h('button.ob-fail-btn', { type: 'button', onclick: () => this.start() }, t('onboard.retry')))) };
     const { common, local } = providerRows(this.featured, this.detect, this.usable);
     const mine = mineRows(this.providers, [...common, ...local]);
     const groups = [];
@@ -321,6 +322,8 @@ export class ProviderFlow {
       queueMicrotask(() => field?.focus());
     };
     for (const el of [...fields, modelRow]) el.addEventListener('keydown', enter);
+    /** 「重试」：填的不动，照原样再测一遍（发版前 check：获取模型出错了只能退回上一步再进来；网络一时不通的不用重填） */
+    const retry = () => { state.failed = false; run(); };
     const run = async () => {
       if (!canTest()) return;
       state.running = true;
@@ -361,10 +364,16 @@ export class ProviderFlow {
         const why = failureOf(got);
         result.className = 'ob-result is-bad';
         state.failed = true;
+        const actions = h('div.ob-fail-actions');
         replace(result, h('div.ob-result-line', icon('x'), h('span', t(why.key) + (why.status ? ` · ${why.status}` : ''))), why.message ? h('p.ob-result-raw', why.message) : null,
-          h('div.ob-fail-actions', h('button.ob-fail-btn', { type: 'button', onclick: again }, t('onboard.redo')), h('button.ob-fail-btn', { type: 'button', onclick: skipHere }, t('onboard.skip_test'))));
+          actions);
+        const act = { retry, redo: again, skip_test: skipHere };
+        const drawActions = () => replace(actions, failActions(why, !!modelInput.value.trim()).map((k) => h('button.ob-fail-btn', { type: 'button', onclick: act[k] }, t(`onboard.${k}`))));
+        drawActions();
         if (why.needsModel) {
           modelRow.hidden = false;
+          // 写了模型名才有得重试
+          modelInput.oninput = drawActions;
           queueMicrotask(() => modelInput.focus());
         }
       }
