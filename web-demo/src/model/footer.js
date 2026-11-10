@@ -1,9 +1,9 @@
 // @ts-check
 //! 输入框下面那一行要写的字（蓝图 `web.md`「框下面那一行的数」，照 TUI 演示的 `ui/footer.rs`、`core/push.rs`）：
-//! 左边权限级别和模型，右边用量那一格（环 · 累计 · 花费，卡住的变红，2026-11-02）；还是 0 的不写；放不下时先收花费。
+//! 左边权限级别和模型，右边用量那一格（环 · 会话上限 · 累计(命中率) · 花费，卡住的变红，2026-11-02）；还是 0 的不写；放不下时先收花费。
 
 import { res, t } from '../util/res.js';
-import { short, percentTenths } from './format.js';
+import { short, percentTenths, hitRate } from './format.js';
 import { levelOf } from './entries.js';
 import { compactingOf } from './view-state.js';
 import { costText } from '../lib/cost.js';
@@ -35,14 +35,17 @@ export function statusFooter(status, limits = {}, entries = []) {
   const right = [];
   const usage = status?.usage_tree ?? status?.usage;
   const all = usage?.usage;
+  // 会话上限写在累计的左边（2026-11-10 项目主人：「会话上限放到总消耗左侧」，原来在它后面）
+  if (!stuck && cap) right.push({ key: 'cap', text: t('usage_cell.cap_part', { n: short(cap) }) });
   if (stuck === 'compacting') right.push({ key: 'stuck', text: t('usage_cell.compacting') });
   else if (stuck) {
     right.push({ key: 'stuck', text: t(`usage_cell.${stuck}`) });
     right.push({ key: 'nums', text: `${short(used)}/${short((stuck === 'failed' ? line : window) ?? 0)}` });
   } else if (all && input(all) + all.output > 0) {
-    right.push({ key: 'total', text: short(input(all) + all.output) });
+    // 累计后面紧跟缓存命中率「128.4k(C99%)」（2026-11-10 项目主人；同收尾行的算法：命中 ÷ 输入），一次输入都没记下的不写
+    const hit = input(all) > 0 ? t('usage_cell.hit_part', { percent: hitRate(all.cache_read, input(all)) }) : '';
+    right.push({ key: 'total', text: `${short(input(all) + all.output)}${hit}` });
   }
-  if (!stuck && cap) right.push({ key: 'cap', text: t('usage_cell.cap_part', { n: short(cap) }) });
   // 花费接在后面（2026-10-26 项目主人）：窄的时候它先让出来
   const cost = !stuck && all && input(all) + all.output > 0 ? costText(usage) : null;
   if (cost) right.push({ key: 'cost', text: cost });

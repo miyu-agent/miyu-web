@@ -646,6 +646,7 @@
     "tip_cap": "コンテキスト {used} / {window}（{percent}%、セッション上限）",
     "cap": "セッション上限",
     "cap_part": "セッション上限 {n}",
+    "hit_part": "(C{percent}%)",
     "failed": "コンテキストの圧縮に失敗",
     "over": "コンテキストがウィンドウを超過",
     "compacting": "コンテキストを圧縮中",

@@ -646,6 +646,7 @@
     "tip_cap": "上下文 {used} / {window}（{percent}%，会话上限）",
     "cap": "会话上限",
     "cap_part": "会话上限 {n}",
+    "hit_part": "(C{percent}%)",
     "failed": "上下文压缩失败",
     "over": "上下文超出窗口",
     "compacting": "正在压缩上下文",

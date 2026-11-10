@@ -20,18 +20,18 @@ const status = {
   usage: { usage: u(1400, 10000, 1000), main: u(1300, 10000, 900) },
 };
 
-test('一个会话的底栏：级别、模型照会话状态；右边一格累计 token，环照上下文占窗口多少；会话状态里有速度也不写（2026-10-26 项目主人：挪到每轮收尾那一行）', () => {
+test('一个会话的底栏：级别、模型照会话状态；右边一格累计 token 接缓存命中率「12.4k(C88%)」（2026-11-10 项目主人），环照上下文占窗口多少；会话状态里有速度也不写（2026-10-26 项目主人：挪到每轮收尾那一行）', () => {
   const f = statusFooter(status);
   assert.deepEqual(f.left, { level: 'full', label: '⏵⏵ 开放权限', model: 'deepseek-v4', endpoint: 'deepseek' }, '旧的工作区读成开放权限（LV-3）');
-  assert.deepEqual(f.right.map((p) => p.text), ['12.4k']);
+  assert.deepEqual(f.right.map((p) => p.text), ['12.4k(C88%)']);
   assert.deepEqual(f.ring, { ratio: 0.0023, used: 2300, window: 1_000_000, stuck: null, cap: null });
   assert.equal(ringTip(/** @type {any} */ (f.ring)), '上下文 2.3k / 1M（0.2%）');
 });
 
 test('累计和花费连子代理（usage_tree，同终端的 Σ，2026-11-02 项目主人）；旧核心没有的照 usage', () => {
   const tree = { usage: u(5000, 40000, 3000), amounts: [], converted: { currency: 'CNY', amount: 0.42 } };
-  assert.deepEqual(statusFooter({ ...status, usage_tree: tree }).right.map((p) => p.text), ['48k', '¥0.42']);
-  assert.deepEqual(statusFooter(status).right.map((p) => p.text), ['12.4k']);
+  assert.deepEqual(statusFooter({ ...status, usage_tree: tree }).right.map((p) => p.text), ['48k(C89%)', '¥0.42']);
+  assert.deepEqual(statusFooter(status).right.map((p) => p.text), ['12.4k(C88%)']);
 });
 
 test('只读开着写只读，只读盖过常用的那一级；还是 0 的不写；没有会话状态的是开放权限、什么数都不写', () => {
@@ -54,17 +54,17 @@ test('会话状态不知道窗口多大的照订阅回应的限额；都不知�
 
 test('花费接在累计后面：有 converted 写它（rest 接在后面），一笔都没换成的、没定价的不写（核心 UC-1，2026-10-26、10-31 项目主人）', () => {
   const priced = (cost) => statusFooter({ ...status, usage: { ...status.usage, ...cost } }).right.map((p) => p.text);
-  assert.deepEqual(priced({ amounts: [{ currency: 'USD', amount: 0.045 }], converted: { currency: 'CNY', amount: 0.32 } }), ['12.4k', '¥0.32']);
+  assert.deepEqual(priced({ amounts: [{ currency: 'USD', amount: 0.045 }], converted: { currency: 'CNY', amount: 0.32 } }), ['12.4k(C88%)', '¥0.32']);
   assert.deepEqual(priced({ amounts: [{ currency: 'USD', amount: 0.4 }, { currency: 'CNY', amount: 0.32 }], converted: { currency: 'CNY', amount: 0.32, rest: [{ currency: 'USD', amount: 0.4 }] } }).at(-1), '¥0.32 + $0.40');
-  assert.deepEqual(priced({ amounts: [{ currency: 'USD', amount: 0.05 }] }), ['12.4k'], '汇率还没有（第一次）：只写 token');
-  assert.deepEqual(priced({ amounts: [] }), ['12.4k'], '没定价：只写 token');
+  assert.deepEqual(priced({ amounts: [{ currency: 'USD', amount: 0.05 }] }), ['12.4k(C88%)'], '汇率还没有（第一次）：只写 token');
+  assert.deepEqual(priced({ amounts: [] }), ['12.4k(C88%)'], '没定价：只写 token');
 });
 
 test('放不下时先收花费，累计留着；卡住的先收「用了多少 / 线」，那几个字留着', () => {
   const width = (ps) => ps.map((p) => p.text).join(' · ').length;
   const parts = statusFooter({ ...status, usage: { ...status.usage, amounts: [], converted: { currency: 'CNY', amount: 0.32 } } }).right;
-  assert.deepEqual(fit(parts, 20, width).map((p) => p.key), ['total', 'cost']);
-  assert.deepEqual(fit(parts, 8, width).map((p) => p.key), ['total'], '放不下：先收花费');
+  assert.deepEqual(fit(parts, 22, width).map((p) => p.key), ['total', 'cost']);
+  assert.deepEqual(fit(parts, 12, width).map((p) => p.key), ['total'], '放不下：先收花费');
   assert.deepEqual(fit(parts, 2, width), []);
   const stuck = statusFooter({ ...status, context: { window: 128000, used: 203000 } }).right;
   assert.deepEqual(stuck.map((p) => p.text), ['上下文超出窗口', '203k/128k']);
@@ -108,16 +108,16 @@ test('换级别发给核心的参数：只读只开只读开关；开放权限�
   assert.deepEqual(levelParams('workspace'), { level: 'full', read_only: false }, '不再发 workspace');
 });
 
-test('会话设了上下文上限（核心 CTX-1，设计 68，W-1129）：右边累计后面接「会话上限 128k」，悬停环接「会话上限」；放不下先丢花费、再丢它；没设的不写', () => {
+test('会话设了上下文上限（核心 CTX-1，设计 68，W-1129）：右边累计左边写「会话上限 128k」（2026-11-10 项目主人），悬停环接「会话上限」；放不下先丢花费、再丢它；没设的不写', () => {
   const capped = { ...status, context: { used: 2300, window: 128_000, context: 128_000 }, usage: { ...status.usage, converted: { currency: 'CNY', amount: 0.32 }, amounts: [{ currency: 'USD', amount: 0.045 }] } };
   const f = statusFooter(capped);
-  assert.deepEqual(f.right.map((p) => p.text), ['12.4k', '会话上限 128k', '¥0.32']);
+  assert.deepEqual(f.right.map((p) => p.text), ['会话上限 128k', '12.4k(C88%)', '¥0.32']);
   assert.equal(ringTip(/** @type {any} */ (f.ring)), '上下文 2.3k / 128k（1.8%，会话上限）');
   const widths = { total: 40, cap: 90, cost: 50 };
   const measure = (/** @type {any[]} */ parts) => parts.reduce((n, p) => n + widths[/** @type {'total'} */ (p.key)], 0);
-  assert.deepEqual(fit(f.right, 135, measure).map((p) => p.key), ['total', 'cap'], '先丢花费');
+  assert.deepEqual(fit(f.right, 135, measure).map((p) => p.key), ['cap', 'total'], '先丢花费');
   assert.deepEqual(fit(f.right, 60, measure).map((p) => p.key), ['total'], '再丢会话上限');
   assert.equal(capOf(null, { context: 200_000 }), 200_000, '会话状态没有的照订阅回应的限额');
   assert.equal(capOf({ context: { window: 1_000_000 } }, {}), null, '没设的不写');
-  assert.deepEqual(statusFooter(status).right.map((p) => p.text), ['12.4k']);
+  assert.deepEqual(statusFooter(status).right.map((p) => p.text), ['12.4k(C88%)']);
 });
