@@ -121,7 +121,7 @@ async fn get_tells_what_is_listened_on() {
     let body: Value = serde_json::from_slice(&answer.body).expect("是 JSON");
     assert_eq!(
         body,
-        json!({"listen": "127.0.0.1", "port": port, "lan": null})
+        json!({"listen": "127.0.0.1", "port": port, "lan": null, "lans": []})
     );
     let other = request(port, "GET", "/listen", "evil.example:80", &[]).await;
     assert_eq!(other.status, 403, "Host 照旧核对");
@@ -147,7 +147,7 @@ async fn post_needs_a_login_and_a_core() {
     assert_eq!(status, 200);
     assert_eq!(
         body,
-        json!({"listen": "127.0.0.1", "port": port, "lan": null})
+        json!({"listen": "127.0.0.1", "port": port, "lan": null, "lans": []})
     );
 }
 
@@ -190,7 +190,7 @@ async fn a_new_address_is_listened_on_at_once_and_the_idle_exit_waits() {
     assert_eq!(status, 200);
     assert_eq!(
         body,
-        json!({"listen": lan.to_string(), "port": port, "lan": format!("http://{lan}:{port}")}),
+        json!({"listen": lan.to_string(), "port": port, "lan": format!("http://{lan}:{port}"), "lans": [format!("http://{lan}:{port}")]}),
         "端口不变，换了地址"
     );
     // 局域网来的 POST /listen 不认（第二轮审查 W2-1：它替请求连核心不说远程）
@@ -247,7 +247,7 @@ async fn a_new_port_moves_the_address_file_and_lets_the_old_one_go() {
     assert_eq!(status, 200);
     assert_eq!(
         body,
-        json!({"listen": "127.0.0.1", "port": fresh, "lan": null})
+        json!({"listen": "127.0.0.1", "port": fresh, "lan": null, "lans": []})
     );
     assert_eq!(
         miyu_web::serve::address(&home.root),

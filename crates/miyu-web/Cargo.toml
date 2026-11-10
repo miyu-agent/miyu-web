@@ -36,6 +36,9 @@ base64 = "0.22"
 # 读 web.json。
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+# 「允许局域网访问」的网址照网卡挑（W-1135，2026-11-10：开着代理的 TUN 网卡时，往外的那个地址是虚拟的）：列这台电脑的网卡和地址。
+# MIT OR BSD-3-Clause。
+if-addrs = "0.13"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "sync", "time", "signal", "fs"] }
 tracing = { version = "0.1", default-features = false, features = ["std"] }
 
