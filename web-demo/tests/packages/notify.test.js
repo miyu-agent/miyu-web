@@ -1,6 +1,6 @@
 // @ts-check
-//! 系统通知写什么（软件包 `notify` 的 `model.js`，2026-10-17 项目主人定）：标题照会话的标题；正文只写为什么通知，不带 AI 写的字；
-//! 图标是人格的头像，没有的用 Miyu 的；子会话、一次性的会话不弹。
+//! 系统通知写什么（软件包 `notify` 的 `model.js`，2026-10-17 项目主人定，2026-11-10 改成照人格来）：标题是人格的名字，无人格的写 Miyu；
+//! 图标是人格的头像，没头像的、无人格的不带；正文是会话的标题接为什么通知，不带 AI 写的字；子会话、一次性的会话不弹。
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,35 +9,39 @@ import { noteOf, noticeNote, popOf } from '../../packages/notify/model.js';
 
 const manifest = JSON.parse(readFileSync(new URL('../../packages/notify/manifest.json', import.meta.url), 'utf8'));
 const t = (path) => String(manifest.text.zh[path] ?? path);
-const MIYU = 'http://x/resources/assets/miyu-avatar.png';
+const MIYUKI = { name: '美雪', avatar: 'blob:x/1' };
 
-test('正文只写为什么：回答完了、等你回答、等你确认；三种语言都有', () => {
-  assert.deepEqual(['done', 'ask', 'approve'].map((w) => noteOf(/** @type {any} */ (w), { title: 'a' }, null, MIYU, t)?.body), ['回答完了', '等你回答', '等你确认']);
+test('正文是会话的标题接为什么：回答完了、等你回答、等你确认；没标题的只写为什么；三种语言都有', () => {
+  assert.deepEqual(['done', 'ask', 'approve'].map((w) => noteOf(/** @type {any} */ (w), { title: 'a' }, null, t)?.body), ['a · 回答完了', 'a · 等你回答', 'a · 等你确认']);
+  assert.equal(noteOf('done', { preview: '帮我看看' }, null, t)?.body, '帮我看看 · 回答完了', '没标题的照第一句');
+  assert.equal(noteOf('done', null, null, t)?.body, '回答完了');
   for (const lang of ['zh', 'en', 'ja']) for (const w of ['done', 'ask', 'approve']) assert.ok(manifest.text[lang][w], `${lang} ${w}`);
 });
 
-test('标题照会话的标题，没有的照第一句，再没有写 Miyu；图标是人格的头像，没有的用 Miyu 的', () => {
-  assert.deepEqual(noteOf('done', { title: '修登录页' }, { avatar: 'blob:x/1' }, MIYU, t), { title: '修登录页', body: '回答完了', icon: 'blob:x/1' });
-  assert.equal(noteOf('done', { preview: '帮我看看' }, null, MIYU, t)?.title, '帮我看看');
-  assert.equal(noteOf('done', null, undefined, MIYU, t)?.title, 'Miyu');
-  assert.equal(noteOf('ask', { title: 'a' }, { avatar: null }, MIYU, t)?.icon, MIYU, '人格没有头像的用 Miyu 的');
+test('标题、图标照会话的人格（2026-11-10 项目主人）：有头像的带头像；没头像的不带图标；无人格的写 Miyu、不带图标', () => {
+  assert.deepEqual(noteOf('done', { title: '修登录页' }, MIYUKI, t), { title: '美雪', body: '修登录页 · 回答完了', icon: 'blob:x/1' });
+  assert.deepEqual(noteOf('ask', { title: 'a' }, { name: '美雪', avatar: null }, t), { title: '美雪', body: 'a · 等你回答' }, '没头像的不带图标');
+  assert.deepEqual(noteOf('done', { title: 'a' }, null, t), { title: 'Miyu', body: 'a · 回答完了' }, '无人格的写程序名');
+  assert.equal(noteOf('done', { title: 'a' }, undefined, t)?.title, 'Miyu', '人格列表还没读到的也写程序名');
+  assert.equal(noteOf('done', { title: 'a' }, { name: '  ', avatar: 'blob:x' }, t)?.icon, undefined, '没名字的当无人格');
 });
 
 test('子会话、一次性的会话不弹', () => {
-  assert.equal(noteOf('done', { title: 'a', parent: 's1' }, null, MIYU, t), null);
-  assert.equal(noteOf('done', { title: 'a', oneshot: true }, null, MIYU, t), null);
+  assert.equal(noteOf('done', { title: 'a', parent: 's1' }, MIYUKI, t), null);
+  assert.equal(noteOf('done', { title: 'a', oneshot: true }, MIYUKI, t), null);
 });
 
-test('账号级的提醒（核心 J-3 中）：定时跑完照会话的标题、tag 同「回答完了」；没跑完另一句；唤醒表坏了页面里也说；认不得的不弹', () => {
-  const ran = noticeNote({ kind: 'schedule.ran', schedule: 't3', session: 's1', ok: true }, { title: '早报' }, { avatar: 'blob:a' }, null, MIYU, t);
-  assert.deepEqual(ran, { title: '早报', body: '定时任务跑完了', icon: 'blob:a', tag: 's1:done', session: 's1', say: null });
-  assert.equal(noticeNote({ kind: 'schedule.ran', schedule: 't3', session: 's1', ok: false }, null, null, '整理今天的新闻', MIYU, t)?.title, '整理今天的新闻', '会话表里还没有的照那句话');
-  assert.equal(noticeNote({ kind: 'schedule.ran', schedule: 't3', session: 's1', ok: false }, null, null, null, MIYU, t)?.body, '定时任务没跑完');
-  assert.equal(noticeNote({ kind: 'schedule.ran', session: 's1' }, null, null, null, MIYU, t)?.title, 'Miyu');
-  const reset = noticeNote({ kind: 'schedules.reset' }, null, null, null, MIYU, t);
+test('账号级的提醒（核心 J-3 中）：定时跑完照人格写标题、正文接会话的标题，tag 同「回答完了」；没跑完另一句；唤醒表坏了写 Miyu、页面里也说；认不得的不弹', () => {
+  const ran = noticeNote({ kind: 'schedule.ran', schedule: 't3', session: 's1', ok: true }, { title: '早报' }, MIYUKI, null, t);
+  assert.deepEqual(ran, { title: '美雪', body: '早报 · 定时任务跑完了', icon: 'blob:x/1', tag: 's1:done', session: 's1', say: null });
+  assert.equal(noticeNote({ kind: 'schedule.ran', schedule: 't3', session: 's1', ok: false }, null, null, '整理今天的新闻', t)?.body, '整理今天的新闻 · 定时任务没跑完', '会话表里还没有的照那句话');
+  assert.equal(noticeNote({ kind: 'schedule.ran', schedule: 't3', session: 's1', ok: false }, null, null, null, t)?.body, '定时任务没跑完');
+  assert.deepEqual([noticeNote({ kind: 'schedule.ran', session: 's1' }, null, null, null, t)?.title, noticeNote({ kind: 'schedule.ran', session: 's1' }, null, null, null, t)?.icon], ['Miyu', undefined]);
+  const reset = noticeNote({ kind: 'schedules.reset' }, null, null, null, t);
   assert.equal(reset?.say, reset?.body);
   assert.equal(reset?.session, null);
-  assert.equal(noticeNote({ kind: 'later' }, null, null, null, MIYU, t), null);
+  assert.deepEqual([reset?.title, reset?.icon], ['Miyu', undefined]);
+  assert.equal(noticeNote({ kind: 'later' }, null, null, null, t), null);
   for (const lang of ['zh', 'en', 'ja']) for (const k of ['schedule_ran', 'schedule_failed', 'schedules_reset']) assert.ok(manifest.text[lang][k], `${lang} ${k}`);
 });
 

@@ -12,8 +12,6 @@ import { noteOf, noticeNote, popOf } from './model.js';
 const ASKED = 'notify_asked';
 /** 没有标题的会话等核心起的标题最多多久（毫秒） */
 const TITLE_WAIT_MS = 5000;
-/** 没有人格头像的会话用 Miyu 的图标（同页面的图标） */
-const MIYU = new URL('resources/assets/logo.png', location.href).href;
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -53,7 +51,7 @@ export function apply(ctx) {
     if (!pop) return;
     const tag = `${id}:${what}`;
     const show = () => {
-      const note = noteOf(what, ctx.sessions.index.get(id), ctx.chat.lookOf?.(id), MIYU, t);
+      const note = noteOf(what, ctx.sessions.index.get(id), ctx.chat.lookOf?.(id), t);
       if (note) host.show({ ...note, ...pop, tag, onclick: () => ctx.chat.open(id) });
     };
     // 新会话第一轮做完时核心起的标题多半还没到（2026-10-31 项目主人：通知写的是第一句话）：等它最多 TITLE_WAIT_MS，到了照标题写
@@ -79,7 +77,7 @@ export function apply(ctx) {
     if (method !== 'notice') return;
     const entry = typeof params?.session === 'string' ? ctx.sessions.index.get(params.session) : null;
     const prompt = params?.kind === 'schedule.ran' && !entry?.title && !entry?.preview && typeof params.schedule === 'string' ? await promptOf(params.schedule) : null;
-    const note = noticeNote(params, entry, params?.session ? ctx.chat.lookOf?.(params.session) : null, prompt, MIYU, t);
+    const note = noticeNote(params, entry, params?.session ? ctx.chat.lookOf?.(params.session) : null, prompt, t);
     if (!note) return;
     if (note.say) ctx.composer?.say?.(note.say, false);
     // 托盘认领了的：账号级的提醒都由托盘出
@@ -87,7 +85,7 @@ export function apply(ctx) {
     const pop = host.permission() === 'granted' ? popOf(note.session, ctx.chat.current?.() ?? null, host.away(), !!note.session && ctx.sessions.index.get(note.session)?.viewed === true) : null;
     if (!pop) return;
     const session = note.session;
-    host.show({ title: note.title, body: note.body, icon: note.icon, tag: note.tag, ...pop, onclick: () => (session ? ctx.chat.open(session) : window.focus()) });
+    host.show({ title: note.title, body: note.body, ...(note.icon ? { icon: note.icon } : {}), tag: note.tag, ...pop, onclick: () => (session ? ctx.chat.open(session) : window.focus()) });
   };
   if (ctx.core) {
     ctx.core.onPush(onPush);
