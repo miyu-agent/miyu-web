@@ -124,6 +124,12 @@ test('模型那一行写显示名（目录给的），下面写供应商的显�
   assert.deepEqual(filterRows(models, 'workbuddy flash').map((r) => r.ref), ['magpie/workbuddy/deepseek-v4.1-flash'], '模型名也算，几段都要有');
   assert.deepEqual(filterRows(models, 'deepseek').map((r) => r.title), ['DeepSeek V4.1 Flash', 'DeepSeek V4.1 Flash', 'GLM-5.3-Flash'], '供应商的显示名也算');
   assert.equal(filterRows(models, '  ').length, 4);
+  // 标点、空白不算（2026-11-10 项目主人：搜 opus5.5 找不到 claude-opus-5-5；同 im I-191）
+  assert.deepEqual(filterRows(models, 'qwen37').map((r) => r.title), ['Qwen3.7 Max'], '不打点也对得上');
+  assert.deepEqual(filterRows(models, 'GLM 5-3').map((r) => r.title), ['GLM-5.3-Flash'], '点换成横线、大写也对得上');
+  assert.deepEqual(filterRows(models, 'v4.1flash').map((r) => r.ref).length, 2, '名字里的空格也跳过');
+  assert.equal(filterRows(models, '- .').length, 4, '只有标点的那一段不算');
+  assert.deepEqual(filterRows(models, 'workbuddy max').map((r) => r.ref), [], '几段都要在同一个模型上有');
 });
 
 test('框下面那一截写显示名和供应商的显示名（重名的也写显示名，悬停写完整的）；找不到的写模型名；池、没有列表的照原样', () => {

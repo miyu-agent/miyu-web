@@ -53,13 +53,22 @@ export const poolName = (name) => (isFixedPool(name) ? t(`model_menu.fixed_pools
 /** 供应商的显示名（核心 8-21：`name.value`，已经照配置、目录、编号退好；旧核心是字或没有）。 */
 const providerName = (p) => (typeof p.name === 'object' ? p.name?.value : p.name) || p.id;
 
+/** 比的时候只留字母、数字（含汉字这类，照 Unicode），不分大小写：`claude-opus-5-5` 和 `opus5.5` 都成 `…opus55`。 @param {string} text */
+const bare = (text) => text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+
 /**
- * 搜索框：照 `find`（显示名、模型名、供应商）找，空格分开的几段都要有，不分大小写；空的全给。
+ * 搜索框：照 `find`（显示名、模型名、供应商，一行一样）找，空格分开的几段都要有（哪一行都行，一段不跨行），不分大小写；比的时候两边都去掉标点、空白
+ * （2026-11-10 项目主人：搜 `opus5.5` 找不到 `claude-opus-5-5`；同 im I-191，`opus5.5`、`OPUS 5-5`、`opus55` 都对得上），只有标点的那一段不算；
+ * 空的全给。
  * @param {Row[]} rows @param {string} query
  */
 export function filterRows(rows, query) {
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
-  return words.length ? rows.filter((r) => words.every((w) => r.find.toLowerCase().includes(w))) : rows;
+  const words = query.split(/\s+/).map(bare).filter(Boolean);
+  if (!words.length) return rows;
+  return rows.filter((r) => {
+    const lines = r.find.split('\n').map(bare);
+    return words.every((w) => lines.some((l) => l.includes(w)));
+  });
 }
 
 /** 用不了的为什么：冷却到几点（本地时间）、没设 key。 */
