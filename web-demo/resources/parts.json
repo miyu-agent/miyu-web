@@ -694,6 +694,18 @@
       ".voice-mic"
     ]
   },
+  "voice.bars": {
+    "zh": "麦克风「正在听」的竖条（样子 b，W-1139）",
+    "select": [
+      ".voice-bar"
+    ]
+  },
+  "composer.send_side": {
+    "zh": "输入框下面一排、发送左边挨着的那一组（语音的麦克风）",
+    "select": [
+      ".composer-send-side"
+    ]
+  },
   "voice.speak": {
     "zh": "语音：收尾那一行的朗读",
     "select": [

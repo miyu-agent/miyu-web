@@ -58,15 +58,24 @@ export function apply(ctx) {
   let rec = null;
   let busy = false;
   let pressedAt = 0;
-  const mic = h('button.icon-button.voice-mic', { type: 'button', title: t('mic'), 'aria-label': t('mic') }, icon('mic'));
+  // 「正在听」的样子（2026-11-10 项目主人：原来换成方块、外面一圈淡淡的边，不好看，重做）：按钮里一直是麦克风，录着的时候照 `data-look` 画，
+  // 三种先都留着给主人挑（W-1139，挑定了留一种）：a 外面一圈往外扩散的光环，b 三四根跟着音量跳的竖条，c 实心强调色底、白麦克风、右上角一个闪的红点。
+  // 临时照根上的 `data-voice-listen` 挑，没写的是 a。
+  const glyph = h('span.voice-glyph', icon('mic'));
+  const bars = h('span.voice-bars', { 'aria-hidden': 'true' }, [0, 1, 2, 3].map((i) => h('span.voice-bar', { style: `--i: ${i}` })));
+  const mic = h('button.icon-button.voice-mic', { type: 'button', title: t('mic'), 'aria-label': t('mic') }, glyph, bars);
   const paint = () => {
     mic.classList.toggle('is-recording', !!rec);
     mic.classList.toggle('is-busy', busy);
+    mic.dataset.look = globalThis.document?.documentElement?.dataset.voiceListen || 'a';
+    if (!rec) mic.style.removeProperty('--voice-level');
     const label = busy ? t('mic_working') : rec ? t('mic_stop') : t('mic');
     mic.title = label;
     mic.setAttribute('aria-label', label);
-    mic.replaceChildren(icon(busy ? 'loader-circle' : rec ? 'square' : 'mic'));
+    glyph.replaceChildren(icon(busy ? 'loader-circle' : 'mic'));
   };
+  /** 录着的音量（0～1，均方根）画成竖条的高度：人说话一般在 0.02～0.2，开方以后拉开 @param {number} level */
+  const meter = (level) => mic.style.setProperty('--voice-level', String(Math.min(1, Math.sqrt(Math.max(0, level) * 8))));
   const start = async () => {
     if (rec || busy) return;
     const r = new Recorder({
@@ -74,6 +83,7 @@ export function apply(ctx) {
       quiet: ctx.config.silence_ms,
       maxMs: ctx.config.max_seconds * 1000,
       onEnd: (why) => finish(r, why),
+      onLevel: meter,
     });
     rec = r;
     paint();
@@ -264,7 +274,7 @@ export function apply(ctx) {
     const tts = ready(names, 'tts');
     if (!stt && rec) rec.end('stop');
     if (!tts) hush();
-    toggle('mic', stt, () => ctx.slots.mount('composer.bar', { id: 'voice-mic', order: 20, render: () => mic }) ?? (() => {}));
+    toggle('mic', stt, () => ctx.slots.mount('composer.send_side', { id: 'voice-mic', order: 10, render: () => mic }) ?? (() => {}));
     toggle('speak', tts, () => ctx.slots.mount('turn.actions', { id: 'voice-speak', order: 10, render: turnButton }) ?? (() => {}));
     toggle('auto', tts, () => ctx.slots.mount('stage.tools', { id: 'voice-auto', order: 5, render: () => auto }) ?? (() => {}));
     paint();

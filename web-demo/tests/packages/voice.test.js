@@ -75,3 +75,12 @@ test('认出的字插在光标那里、换掉选着的', () => {
   assert.deepEqual(insertAt('帮我看', 2, 2, '一下'), { value: '帮我一下看', caret: 4 });
   assert.deepEqual(insertAt('abc', 1, 2, 'X'), { value: 'aXc', caret: 2 });
 });
+
+test('麦克风挂在发送左边（composer.send_side），不在左边那一排（2026-11-10 项目主人，W-1139）', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const index = await readFile(new URL('../../packages/voice/index.js', import.meta.url), 'utf8');
+  assert.match(index, /slots\.mount\('composer\.send_side', \{ id: 'voice-mic'/);
+  assert.doesNotMatch(index, /slots\.mount\('composer\.bar', \{ id: 'voice-mic'/);
+  const composer = await readFile(new URL('../../src/ui/composer.js', import.meta.url), 'utf8');
+  assert.match(composer, /this\.sendSide, this\.sendButton\)/, '发送按钮左边挨着');
+});

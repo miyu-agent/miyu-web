@@ -178,6 +178,8 @@ export class Composer {
     this.help = new HelpPanel();
     this.head = h('div.composer-head');
     this.tools = h('span.composer-tools');
+    /** 发送按钮左边挨着的（挂载位 `composer.send_side`：语音的麦克风；2026-11-10 项目主人：麦克风挪到发送左边，W-1139） */
+    this.sendSide = h('span.composer-send-side');
     this.float = h('div.composer-float');
     /** 占着整个框的（挂载位 `composer.takeover`：确认和提问的抽屉）；有东西占着时框里原来的让出来（`takeover`） */
     this.takeoverEl = h('div.composer-takeover');
@@ -187,7 +189,7 @@ export class Composer {
     this.stashed = /** @type {import('../model/stash.js').Draft|null} */ (null);
     this.stashChip = h('button.composer-stash', { type: 'button', hidden: true, onclick: () => { this.toggleStash(); this.input.focus(); } }, icon('save'));
     this.field = h('div.composer-field', this.backdrop, this.input);
-    this.box = h('div.composer', this.notice, this.jumpButton, this.takeoverEl, this.head, this.field, this.bar = h('div.composer-bar', h('div.composer-left', this.tools, this.stashChip), this.sendButton), this.menu.el, this.picker.el, this.help.el, this.historyList.el, this.sessionList.el, this.mention.el, this.skillList.el, this.float);
+    this.box = h('div.composer', this.notice, this.jumpButton, this.takeoverEl, this.head, this.field, this.bar = h('div.composer-bar', h('div.composer-left', this.tools, this.stashChip), this.sendSide, this.sendButton), this.menu.el, this.picker.el, this.help.el, this.historyList.el, this.sessionList.el, this.mention.el, this.skillList.el, this.float);
     this.el = h('div.composer-dock', this.box, this.footer);
     this.parts = /** @type {{key: string, text: string}[]} */ ([]);
     /** 撤销时放回框里的那句：恢复时还没动过的收回去（`tui.md`「输入框」第 7 条）。 */

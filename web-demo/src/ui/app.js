@@ -286,15 +286,17 @@ export class App {
       files: (plan, fresh, onUpdate, stale) => listFiles(this.store.conn, this.workdir(), plan, fresh, onUpdate, stale),
       where: () => ({ cwd: this.workdir(), home: this.home }),
     }, () => this.commands.list(), () => ctx.slots.list('composer.payload'));
-    // 框里：下面一排左边的按钮、写字的地方上面一排（附件这类软件包画）；跟着话一起发的不画，发的时候交出来
+    // 框里：下面一排左边的按钮、发送左边挨着的（语音的麦克风）、写字的地方上面一排（附件这类软件包画）；跟着话一起发的不画，发的时候交出来
     const failedSlot = (owner, reason) => h('div.slot-failed', t('slot_failed', { owner, reason }));
     ctx.slots.declare('composer.bar', 'list');
+    ctx.slots.declare('composer.send_side', 'list');
     ctx.slots.declare('composer.head', 'list');
     ctx.slots.declare('composer.payload', 'list');
     ctx.slots.declare('composer.footer', 'list');
     ctx.slots.declare('composer.float', 'list');
     ctx.slots.declare('composer.takeover', 'list');
     ctx.effect(() => mountList(this.composer.tools, ctx.slots, 'composer.bar', failedSlot));
+    ctx.effect(() => mountList(this.composer.sendSide, ctx.slots, 'composer.send_side', failedSlot));
     ctx.effect(() => mountList(this.composer.head, ctx.slots, 'composer.head', failedSlot));
     ctx.effect(() => mountList(this.composer.middle, ctx.slots, 'composer.footer', failedSlot));
     ctx.effect(() => mountList(this.composer.float, ctx.slots, 'composer.float', failedSlot));

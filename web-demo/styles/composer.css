@@ -42,6 +42,9 @@
 /* 下面一排左边：软件包挂的按钮（附件，挂载位 composer.bar）；右边预览工作区的开关、发送 */
 .composer-left { display: flex; align-items: center; gap: calc(6px * var(--space)); min-width: 0; margin-right: auto; }
 .composer-tools { display: flex; align-items: center; gap: calc(2px * var(--space)); }
+/* 发送左边挨着的（挂载位 composer.send_side：语音的麦克风，W-1139）：和发送隔一点，空着不占地方 */
+.composer-send-side { display: flex; align-items: center; gap: calc(2px * var(--space)); }
+.composer-send-side:not(:empty) { margin-right: calc(6px * var(--space)); }
 .composer-send {
   display: grid; width: 32px; height: 32px; padding: 0; place-items: center; border: var(--send-border, 0); border-radius: var(--send-radius, var(--r-10));
   background: var(--send-bg, var(--accent)); color: var(--send-fg, var(--on-primary)); cursor: pointer; transition: background-color calc(0.15s * var(--motion-scale)) ease, color calc(0.15s * var(--motion-scale)) ease, transform calc(0.1s * var(--motion-scale)) ease;

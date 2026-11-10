@@ -169,7 +169,7 @@ flowchart TB
 | 种类 | 挂进去以后 | 例子 |
 |---|---|---|
 | `single` 独占 | 新挂的盖住原来的，拿掉了原来的露出来 | `page.sidebar`（左栏）、`chat.empty`（空会话的首页）、`sidebar.brand`（左上角人格的头像、名字那一块：有挂的整块顶替，交 `null` 是藏掉，`lib/mount.js` 的 `mountSingle`，2026-11-02） |
-| `list` 一串 | 照 `order` 排，同一个 `id` 只一份 | `composer.above`（待办、运行状态行）、`sidebar.more`（左栏「更多」的菜单：挂的是数据 `{id, label, icon?, run}`，左栏统一画成菜单项；没有挂的不露那一行，2026-11-03，W-1071）、`composer.bar`（框里下面一排左边的按钮：附件）、`composer.head`（框里写字的地方上面：附件那一排）、`composer.payload`（跟着话一起发的：附件；这里挂的不画，见下面）、`composer.footer`（框下面那一行的中间：后台任务的按钮）、`composer.float`（浮在输入框上面、和命令列表同一个位置：后台任务的浮层）、`message.actions`（你的话、她的一轮末尾的按钮）、`page.overlay`（灯箱）、`stage.right`（跳转条）、`composer.takeover`（占着整个框：确认和提问的抽屉；有东西时框里原来的让出来）、`chat.tail`（正文末尾、最后一轮下面：确认和提问了结以后留的结果）、`stage.home`（新会话首页、输入框下面：扩展的界面块）、`stage.panel`（右边一栏的「面板」那一页：扩展的界面块；有东西才出「工作区」「面板」两个标签）、`composer.status`（框下面那一行的右边、用量前面：扩展的界面块那一小段） |
+| `list` 一串 | 照 `order` 排，同一个 `id` 只一份 | `composer.above`（待办、运行状态行）、`sidebar.more`（左栏「更多」的菜单：挂的是数据 `{id, label, icon?, run}`，左栏统一画成菜单项；没有挂的不露那一行，2026-11-03，W-1071）、`composer.bar`（框里下面一排左边的按钮：附件）、`composer.send_side`（框里下面一排、发送左边挨着的：语音的麦克风，W-1139）、`composer.head`（框里写字的地方上面：附件那一排）、`composer.payload`（跟着话一起发的：附件；这里挂的不画，见下面）、`composer.footer`（框下面那一行的中间：后台任务的按钮）、`composer.float`（浮在输入框上面、和命令列表同一个位置：后台任务的浮层）、`message.actions`（你的话、她的一轮末尾的按钮）、`page.overlay`（灯箱）、`stage.right`（跳转条）、`composer.takeover`（占着整个框：确认和提问的抽屉；有东西时框里原来的让出来）、`chat.tail`（正文末尾、最后一轮下面：确认和提问了结以后留的结果）、`stage.home`（新会话首页、输入框下面：扩展的界面块）、`stage.panel`（右边一栏的「面板」那一页：扩展的界面块；有东西才出「工作区」「面板」两个标签）、`composer.status`（框下面那一行的右边、用量前面：扩展的界面块那一小段） |
 | `keyed` 按键分派 | 照键找，找不到用兜底 | `chat.item`（按条目的种类：你的话、回答、时间线、收尾那一行）、`markdown.code`（按代码块的语言）、`markdown.line`（单独一行的媒体）、`timeline.detail`（按工具） |
 
 - 挂载位的名字照 `地方.东西`，声明时写明挂进去是「替换」还是「添加」。往没声明的挂载位里挂、同一个名字声明两次：加载时报错。
@@ -231,7 +231,7 @@ flowchart TB
 | `theme-auto` | 可选 | `slots`、`theme~` | — | — | `theme.palettes`（「自动」：这一刻跟随人格交得出颜色的照它，不然跟随壁纸，都没有的交 `null`；`seeds()`、`source()` 照这时用的那一套） | — |
 | `theme-persona` | 可选 | `slots`、`personas~` | — | — | `theme.palettes`（「跟随人格」；带 `seeds()`，选了经 `personas.setSeed` 存人格的主题色） | `veil`（live） |
 | `theme-wallpaper` | 可选 | `slots`、`host`、`packages` | — | — | `theme.palettes`（「跟随壁纸」，读不到不挂；是图的带 `seeds()`，设置页画「主色」） | `seed`（live，主色，空着的用第一个） |
-| `app` | 基础 | `core`、`sessions`、`host`、`page`、`slots`、`packages`、`lightbox~`、`theme~` | `chat`、`markdown`、`commands`、`composer` | `stage.right`、`stage.info`（list）、`markdown.code`（keyed）、`composer.above`、`composer.bar`、`composer.head`、`composer.payload`、`composer.footer`、`composer.float`（list） | — | 还在 `resources/layout.json` 等处，拆出去的包带走自己的 |
+| `app` | 基础 | `core`、`sessions`、`host`、`page`、`slots`、`packages`、`lightbox~`、`theme~` | `chat`、`markdown`、`commands`、`composer` | `stage.right`、`stage.info`（list）、`markdown.code`（keyed）、`composer.above`、`composer.bar`、`composer.send_side`、`composer.head`、`composer.payload`、`composer.footer`、`composer.float`（list） | — | 还在 `resources/layout.json` 等处，拆出去的包带走自己的 |
 | `timeline-default` | 可选 | `seams` | — | — | 职能 `render.timeline`（「出厂」；画法还在 `src/ui/timeline.js`、`steps.js`） | — |
 | `markdown-default` | 可选 | `seams` | — | — | 职能 `render.markdown`（「出厂」；画法还在 `src/markdown/`） | — |
 | `timeline-plain`、`markdown-plain` | 可选（样板，默认停用） | `seams` | — | — | 职能 `render.timeline`、`render.markdown`（「纯文字」，`web.md`「换画法」第 7 条） | — |
