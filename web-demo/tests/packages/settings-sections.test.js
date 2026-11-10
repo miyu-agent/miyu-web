@@ -1,5 +1,5 @@
 // @ts-check
-//! 软件包设置分卡片（`packages/settings/package-sections.js`，W-1141；2026-11-10 项目主人：「这软件包设置页，怎么是纯平铺，而且选择 mimo 也会
+//! 软件包设置分卡片（`packages/settings/package-sections.js`，W-1141，核心 SG-1；2026-11-10 项目主人：「这软件包设置页，怎么是纯平铺，而且选择 mimo 也会
 //! 出现 minimax 的配置项目」「可以看看 im web 的会话卡片的设计」）：核心给包的项 `section`、包那一组 `sections`，一组一张卡，条件不满足、
 //! 一项不剩的不画；旧核心照原来平铺。
 
@@ -41,13 +41,13 @@ test('一组一张卡：没分组的（含写了不认识的组）排最前、�
   assert.deepEqual(cardsOf(g2.items, sectionsOf(g2), valueLookup(picked))?.map((c) => c.name), [null, 'MiMo']);
 });
 
-test('旧核心不带 sections：交回 null，照原来平铺；读不懂的分组不认，名字是三语对象的照语言挑', () => {
+test('旧核心不带 sections：交回 null，照原来平铺；读不懂的分组不认', () => {
   const pages = buildPages(schema(null), { items: {} });
   const group = pages[0].groups[0];
   assert.equal(group.sections, undefined);
   assert.equal(cardsOf(group.items, sectionsOf(group), valueLookup(pages)), null);
-  assert.deepEqual(sectionsOf({ sections: [{ id: '' }, { name: 'x' }, { id: 'a', name: { zh: '甲', en: 'A' } }, { id: 'b', shown_when: { key: 'k' } }] }, 'en'),
-    [{ id: 'a', name: 'A' }, { id: 'b', name: 'b' }], '缺 id 的不认；shown_when 的 is 不是数组的当没写');
+  assert.deepEqual(sectionsOf({ sections: [{ id: '' }, { name: 'x' }, { id: 'a', name: '甲' }, { id: 'b', shown_when: { key: 'k', is: 'x' } }] }),
+    [{ id: 'a', name: '甲' }, { id: 'b', name: 'b' }], '缺 id 的不认；没名字的照编号写；shown_when 的 is 不是数组的当没写');
 });
 
 test('条件：值在 is 里才画；数、真假照字一样也算；找不到那一项的当满足，不把能改的藏了', () => {
@@ -57,10 +57,4 @@ test('条件：值在 is 里才画；数、真假照字一样也算；找不到�
   assert.equal(shown({ key: 'a', is: [true] }, look({ a: 'true' })), true);
   assert.equal(shown({ key: 'gone', is: ['x'] }, look({})), true);
   assert.equal(shown(undefined, look({})), true);
-});
-
-test('组上没写 sections 的照 config.schema 顶上照组编号的那一份', () => {
-  const s = { ...schema(null), sections: { say: SECTIONS } };
-  const pages = buildPages(s, { items: {} });
-  assert.equal(pages[0].groups[0].sections?.length, 3);
 });

@@ -1,7 +1,7 @@
 // @ts-check
 //! 一个包的设置项分成一张张卡片（W-1141，2026-11-10 项目主人：「这软件包设置页，怎么是纯平铺，而且选择 mimo 也会出现 minimax 的配置项目」
 //! 「可以看看 im web 的会话卡片的设计」）。核心在 `config.schema` 里给包的每一项一格 `section`（组编号，没分组的是空的），包那一组多一列
-//! `sections`：`[{id, name, shown_when?: {key, is: [...]}}]`（核心 PS 线，`key` 是全名、`is` 是数组）。这里只算分组、条件，画在
+//! `sections`：`[{id, name, shown_when?: {key, is: [...]}}]`（核心 SG-1；`key` 是全名、`is` 永远是数组，`name` 核心照连接的语言挑好）。这里只算分组、条件，画在
 //! `core-packages.js`：没分组的排最前、没有组名；分了组的照 `sections` 的先后一组一张卡；`shown_when` 不满足的卡不画（值照旧留着，核心照旧
 //! 读、照旧校验）；一格不剩的卡不画。旧核心不带 `sections` 的交回空的，照原来一组一块平铺。
 
@@ -9,19 +9,19 @@
 /** @typedef {{id: string, name: string, shown_when?: ShownWhen}} Section */
 
 /**
- * 包那一组的 `sections`：组上写的（`group.sections`），没有的再看 `config.schema` 顶上照组编号的那一份（`schema.sections[组]`）；名字照语言挑好。
- * 读不懂的一项不认。
- * @param {any} group 合好的组（`buildPages` 带上了它的 `sections`） @param {string} [lang] 这个连接的语言（名字写成三语对象时挑）
+ * 包那一组的 `sections`（核心 SG-1：只放在 `config.schema` 的 `groups` 里这个包自己那一组上）。读不懂的一项不认：没有 `id` 的不认，
+ * `shown_when` 的 `is` 不是数组的当没写条件。
+ * @param {any} group 合好的组（`buildPages` 带上了它的 `sections`）
  * @returns {Section[]}
  */
-export function sectionsOf(group, lang = 'zh') {
+export function sectionsOf(group) {
   const raw = Array.isArray(group?.sections) ? group.sections : [];
   return raw.flatMap((/** @type {any} */ s) => {
     if (!s || typeof s.id !== 'string' || !s.id) return [];
-    const name = typeof s.name === 'string' ? s.name : s.name && typeof s.name === 'object' ? (s.name[lang] ?? s.name.zh ?? s.name.en ?? Object.values(s.name)[0] ?? s.id) : s.id;
+    const name = typeof s.name === 'string' && s.name ? s.name : s.id;
     const when = s.shown_when;
     const shown = when && typeof when.key === 'string' && Array.isArray(when.is) ? { key: when.key, is: when.is } : undefined;
-    return [{ id: s.id, name: String(name), ...(shown ? { shown_when: shown } : {}) }];
+    return [{ id: s.id, name, ...(shown ? { shown_when: shown } : {}) }];
   });
 }
 

@@ -255,12 +255,11 @@ function infoPage(dialog, id) {
   // 名字后面写「默认 / 已改」（W-1141）；核心给了 `sections` 的照它一组一张卡（`package-sections.js`）
   const ids = new Set((dialog.packages ?? []).map((/** @type {any} */ x) => x.package));
   const valueOf = valueLookup(dialog.pages);
-  const lang = (globalThis.document?.documentElement?.lang ?? 'zh').slice(0, 2);
   const row = (/** @type {any} */ item) => coreRow(dialog, item, { mark: true });
   const groups = site ? [] : ((dialog.pages ?? []).find((/** @type {any} */ x) => x.id === 'packages')?.groups ?? [])
     .flatMap((/** @type {any} */ g) => {
       const items = g.items.filter((/** @type {any} */ item) => ownerOf(item, ids) === id && item.key !== `packages.${id}.off`);
-      const cards = cardsOf(items, sectionsOf(g, lang), valueOf);
+      const cards = cardsOf(items, sectionsOf(g), valueOf);
       if (!cards) return [{ name: g.id === id ? t('pkg.settings') : g.name, rows: items.map(row).filter(Boolean) }];
       // 没分组的那一张：这个包自己的组不写组名（W-1141），别的组（「API Key 和地址」）照旧写它的组名
       return cards.map((c) => ({ name: c.id === null ? (g.id === id ? null : g.name) : c.name, rows: c.items.map(row).filter(Boolean) }));

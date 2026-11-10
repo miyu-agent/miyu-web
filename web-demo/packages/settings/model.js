@@ -44,8 +44,8 @@ export function buildPages(schema, got, opts = {}) {
       .map((i) => ({ ...i, entry: got.items?.[i.key] ?? null, problems: problems.filter((x) => x.key === i.key) }))
       .sort((a, b) => Number(!!b.common) - Number(!!a.common));
     const home = moveGroups[g.id] ?? g.page;
-    // 包那一组的分组（W-1141，核心 PS 线：`sections`，组上写的，没有的照顶上照组编号的那一份）：原样带上，`package-sections.js` 照它分卡片
-    const sections = Array.isArray(/** @type {any} */ (g).sections) ? /** @type {any} */ (g).sections : /** @type {any} */ (schema).sections?.[g.id];
+    // 包那一组的分组（W-1141，核心 SG-1：`sections` 只写在 `groups` 里这个包自己那一组上）：原样带上，`package-sections.js` 照它分卡片
+    const sections = /** @type {any} */ (g).sections;
     if (items.length) byPage.get(merge[home] ?? home)?.groups.push({ id: g.id, name: g.name, items, ...(Array.isArray(sections) && sections.length ? { sections } : {}) });
   }
   // 对不上清单里哪一项的（整份写坏了、不认识的键、只属于带占位那几项的不算）：放那一页顶上。别的头的项连它的问题一起不列，
