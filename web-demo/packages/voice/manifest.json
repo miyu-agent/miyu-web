@@ -97,6 +97,7 @@
       "speak": "朗读",
       "speak_stop": "停止朗读",
       "auto": "自动朗读",
+      "auto_on": "自动朗读：开着",
       "errors": {
         "bad_audio": "录下的声音认不了",
         "too_long": "说得太长了，分几次说",
@@ -121,6 +122,7 @@
       "speak": "Read aloud",
       "speak_stop": "Stop reading",
       "auto": "Auto read aloud",
+      "auto_on": "Auto read aloud: on",
       "errors": {
         "bad_audio": "Couldn't read the recording",
         "too_long": "Too long. Say it in parts",
@@ -145,6 +147,7 @@
       "speak": "読み上げ",
       "speak_stop": "読み上げを停止",
       "auto": "自動読み上げ",
+      "auto_on": "自動読み上げ：オン",
       "errors": {
         "bad_audio": "録音を認識できません",
         "too_long": "長すぎます。分けて話してください",

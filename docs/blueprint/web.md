@@ -692,6 +692,8 @@
 3. 朗读（查到 `tts`）：她每一轮收尾那一行（复制、重做中间，宿主新开的挂载位 `turn.actions`：`render({turn, session})` 交一个按钮）一个朗读按钮。点了把这一轮的正文（同复制这一轮的）切成一句一句（句末的标点、换行；太短的并进下一句，太长的照逗号再切；围起来的代码块整块一段），一句一句 `tts.synthesize {text, persona}`（`persona` 是这个会话的人格，照它挑音色），第一句好了就在浏览器里放，边放边合成下一句；再点一下停，念着的那一轮按钮换成方块、常亮。念过的照这一轮记着，再听不再合成、不再花钱。哪一句回 `empty_text`（代码块、只有符号）的跳过，接着念下一句。
 4. 自动朗读（查到 `tts`）：对话区右上角（挂载位 `stage.tools`，右栏开关左边）一个开关，开着 accent 色；只在这个标签页生效（记在页面里，刷新、别的标签页都是关的）。开着时正在看的会话答完一轮（会话仓库的 `onAttention` 是 `done`）就念最后说完的那一轮；关掉时念着的停。
 5. 出错：提供方的出错码在 `data.code`（核心转成 `method_failed`），总线自己的在 `reason`，照字表 `errors` 说一句人话：认不了录音、太长、引擎出错、麦克风被占用、找不到麦克风、没有麦克风权限（浏览器拒了）、没有能念的字、朗读还没配好、找不到放声音的设备、语音包没装或没在运行、没登记这个功能、这一句放不出来；别的照原话「语音出错：…」。
+   - 被打断的不算出错（发版前 check 29，2026-11-11 项目主人：朗读时冒出「语音出错：The fetching process for the media resource was aborted by the user agent at the user's request」）：浏览器在 `play()` 还没放起来就被停、被换掉时抛 `AbortError`，原来当出错照原话说给人。现在自己停的不说；没停的那一句再放一次，还被打断就跳过接着念下一句；音频坏了、没权限这些照旧说（`voice/model.js` 的 `interrupted`、`playSentence`）。
+   - 自动朗读的开关（发版前 check 30，同一天：「toggle 效果不明显」）：开着铺选中的底（`--chip-active`，没有的照 `--accent-soft`）、图标 accent 色，悬停再深一档；原来只换图标颜色。悬停的字开着写「自动朗读：开着」，`aria-pressed` 跟着。
 6. 设置（软件包页）：认出的字（`insert` 放进输入框、`send` 直接发）、静下来多久算说完（毫秒，300～5000）、一次最长录几秒（5～600）、多响算在说话（0～1，出厂 0.015）、分块上传一块多少字节。
 7. 宿主为它补的：挂载位 `turn.actions`；`composer.insert`（光标那里插字）、`composer.send`；`chat.turnText(turn?)`（一轮的正文，不写的是最后说完的那一轮）；`host.blobUrl(hash, type)`（合成好的声音的地址）。图标 `mic`、`mic-off` 并进界面的图标表，像素风皮肤跟着重做（`tools/pixel-icons.py`）。
 

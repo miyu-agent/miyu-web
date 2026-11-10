@@ -13,8 +13,10 @@
 }
 /* 收尾那一行的朗读：念着的那一轮按钮常亮（别的按钮悬停才亮） */
 .voice-speak.is-playing { color: var(--accent); opacity: 1; }
-/* 右上角的自动朗读：开着 accent 色 */
-.voice-auto.is-on { color: var(--accent); }
+/* 右上角的自动朗读：开着铺选中的底、图标 accent 色（同筛选小块选中的样子；2026-11-11 项目主人：原来只换图标颜色，开、关分不清），
+   悬停再深一档 */
+.voice-auto.is-on { background: var(--chip-active, var(--accent-soft)); color: var(--chip-fg-active, var(--accent)); }
+.voice-auto.is-on:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--chip-fg-active, var(--accent)); }
 @keyframes voice-bar { 0% { transform: scaleY(0.45); } 100% { transform: scaleY(1); } }
 @keyframes voice-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .voice-mic.is-busy .voice-glyph .icon, .voice-bar { animation: none; } }

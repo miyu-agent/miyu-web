@@ -11,7 +11,7 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { upload } from '../../src/lib/upload.js';
-import { ready, sentences, errorKey, micErrorKey } from './model.js';
+import { ready, sentences, errorKey, micErrorKey, interrupted, playSentence } from './model.js';
 import { Recorder } from './recorder.js';
 
 /** 按住超过这么久再松开的算按住说话，松开就停（毫秒）；短的是点一下，接着录 */
@@ -163,7 +163,12 @@ export function apply(ctx) {
       b.setAttribute('aria-label', label);
       b.replaceChildren(icon(on ? 'square' : 'volume-2'));
     }
-    auto.classList.toggle('is-on', autoOn());
+    const on = autoOn();
+    auto.classList.toggle('is-on', on);
+    auto.setAttribute('aria-pressed', String(on));
+    const label = on ? t('auto_on') : t('auto');
+    auto.title = label;
+    auto.setAttribute('aria-label', label);
   };
   /** 停下正在念的。 */
   const hush = () => {
@@ -180,15 +185,8 @@ export function apply(ctx) {
     const type = typeof got?.media_type === 'string' ? got.media_type : 'audio/mpeg';
     return { url: await ctx.host.blobUrl(got.audio, type), type };
   };
-  /** 放一句，放完了（停了的也算）交回。 @param {Run} run @param {string} url */
-  const play = (run, url) => new Promise((resolve, reject) => {
-    const audio = new Audio(url);
-    run.audio = audio;
-    run.cancel = () => resolve(undefined);
-    audio.onended = () => resolve(undefined);
-    audio.onerror = () => reject(new Error(t('errors.play')));
-    audio.play().catch(reject);
-  });
+  /** 放一句，放完了（停了的、被打断的也算）交回（`model.js` 的 `playSentence`）。 @param {Run} run @param {string} url */
+  const play = (run, url) => playSentence(run, () => new Audio(url), () => new Error(t('errors.play')));
   /**
    * 念一轮：一句一句合成，第一句好了就放，后面的边放边合成下一句（同一时间只多合成一句）。
    * @param {string} session @param {number|undefined} turn @param {string} text
@@ -224,7 +222,8 @@ export function apply(ctx) {
         await play(run, url);
       }
     } catch (err) {
-      if (!run.stopped) fail(err);
+      // 自己停的、被打断的（浏览器的 AbortError）不说；真的出错照旧说
+      if (!run.stopped && !interrupted(err)) fail(err);
     } finally {
       if (playing === run) {
         playing = null;
