@@ -36,7 +36,7 @@ const KIND = {
     mascot_head: 'n', mascot_head_shade: 'n', mascot_outline: 'n',
     dim: 'nv', hover: 'nv', md_italic: 'nv', md_quote: 'nv', diagram_text: 'nv', diagram_line: 'nv', code_comment: 'nv', code_operator: 'nv',
     mascot_ear: 'nv', mascot_ear_shade: 'nv',
-    accent: 'p', workspace: 'p', md_bold: 'p', md_link: 'p', md_url: 'p', md_table_head: 'p', mascot_eye: 'p',
+    accent: 'p', workspace: 'p', full: 'p', md_bold: 'p', md_link: 'p', md_url: 'p', md_table_head: 'p', mascot_eye: 'p',
     md_code: 't', md_image: 't', mascot_fin: 't', mascot_fin_shade: 't',
   },
 };

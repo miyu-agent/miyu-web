@@ -385,7 +385,7 @@
     },
     "light_t_full": {
       "type": "color",
-      "default": "#b14a5c",
+      "default": "#3a63c9",
       "name": {
         "zh": "浅色 终端色 full"
       },
@@ -1129,7 +1129,7 @@
     },
     "dark_t_full": {
       "type": "color",
-      "default": "#f7768e",
+      "default": "#7aa2f7",
       "name": {
         "zh": "深色 终端色 full"
       },

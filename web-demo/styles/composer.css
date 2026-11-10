@@ -187,7 +187,7 @@
 .footer-model-prov { flex: none; margin-left: 0.4em; color: var(--t-dim); font-size: calc(11px * var(--text-scale)); }
 /* 思考强度用工作区那个蓝（蓝图「换模型的菜单」第 1 条）；前面的点照框下面那一行的暗色 */
 .footer-model-sep { flex: none; white-space: pre; }
-.footer-model-effort { flex: none; color: var(--t-workspace); }
+.footer-model-effort { flex: none; color: var(--t-workspace, var(--t-full)); }
 /* 菜单：浮在那一截上面，和命令列表一样的底、细线、阴影；进出从那一截长出来、缩回去（原点在那一截的中点） */
 .model-menu {
   /* 宽照列表最长的那个名字，最窄 --menu-min、最宽 --menu-w；打开时定下来，换页不变（model-menu.js） */
