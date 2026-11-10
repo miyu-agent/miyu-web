@@ -12,6 +12,7 @@ import { confirmIn } from './confirm.js';
 import { tilde } from '../../src/lib/format.js';
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField, findBox, shell } from './rows.js';
+import { cardsOf, sectionsOf, valueLookup } from './package-sections.js';
 import { splitKey, itemFor, pkgSwitch, pkgGroupsOf, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy } from './model.js';
 import { openPage, probeSites } from './backstage.js';
 import { serverRow } from './mcp-servers.js';
@@ -250,10 +251,20 @@ function infoPage(dialog, id) {
   if (!p) return [h('p.set-empty', t('pkg.gone'))];
   const missing = p.status === 'program_missing';
   const site = !!dialog.sites?.get(id);
-  // 它的设置项：照每一项归哪个包（`ownerOf`），一组一块；组就是这个包的写「设置」，别的组（联网搜索的「API Key 和地址」）照组名
+  // 它的设置项：照每一项归哪个包（`ownerOf`），一组一块；组就是这个包的写「设置」，别的组（联网搜索的「API Key 和地址」）照组名。
+  // 名字后面写「默认 / 已改」（W-1141）；核心给了 `sections` 的照它一组一张卡（`package-sections.js`）
   const ids = new Set((dialog.packages ?? []).map((/** @type {any} */ x) => x.package));
+  const valueOf = valueLookup(dialog.pages);
+  const lang = (globalThis.document?.documentElement?.lang ?? 'zh').slice(0, 2);
+  const row = (/** @type {any} */ item) => coreRow(dialog, item, { mark: true });
   const groups = site ? [] : ((dialog.pages ?? []).find((/** @type {any} */ x) => x.id === 'packages')?.groups ?? [])
-    .map((/** @type {any} */ g) => ({ g, rows: g.items.filter((/** @type {any} */ item) => ownerOf(item, ids) === id && item.key !== `packages.${id}.off`).map((/** @type {any} */ item) => coreRow(dialog, item)).filter(Boolean) }))
+    .flatMap((/** @type {any} */ g) => {
+      const items = g.items.filter((/** @type {any} */ item) => ownerOf(item, ids) === id && item.key !== `packages.${id}.off`);
+      const cards = cardsOf(items, sectionsOf(g, lang), valueOf);
+      if (!cards) return [{ name: g.id === id ? t('pkg.settings') : g.name, rows: items.map(row).filter(Boolean) }];
+      // 没分组的那一张：这个包自己的组不写组名（W-1141），别的组（「API Key 和地址」）照旧写它的组名
+      return cards.map((c) => ({ name: c.id === null ? (g.id === id ? null : g.name) : c.name, rows: c.items.map(row).filter(Boolean) }));
+    })
     .filter((/** @type {any} */ x) => x.rows.length);
   const ext = dialog.extensions;
   const head = dialog.extensions.entries.has(id)
@@ -263,7 +274,7 @@ function infoPage(dialog, id) {
   return [
     head,
     missing ? null : mcpGroup(dialog, p),
-    ...groups.map((/** @type {any} */ x) => groupBlock(x.g.id === id ? t('pkg.settings') : x.g.name, x.rows)),
+    ...groups.map((/** @type {any} */ x) => groupBlock(x.name, x.rows)),
     // 平台接入的（没有自己网页的）：终端管理员在这个平台上的号，接在它的设置项后面
     !site && !missing && p.connection?.platform ? ownerAccounts(dialog, p.connection.platform) : null,
   ].filter(Boolean);

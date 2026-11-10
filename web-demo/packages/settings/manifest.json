@@ -236,6 +236,9 @@
         }
       },
       "reset": "恢复默认",
+      "mark_default": "默认",
+      "mark_changed": "已改",
+      "mark_restore": "恢复默认",
       "conflict": "已在别处修改，当前值：{value}",
       "default_mark": "默认",
       "secret_set": "已设置",
@@ -865,6 +868,9 @@
         }
       },
       "reset": "Reset to default",
+      "mark_default": "Default",
+      "mark_changed": "Changed",
+      "mark_restore": "Reset",
       "conflict": "Changed elsewhere, current value: {value}",
       "default_mark": "Default",
       "secret_set": "Set",
@@ -1494,6 +1500,9 @@
         }
       },
       "reset": "デフォルトに戻す",
+      "mark_default": "デフォルト",
+      "mark_changed": "変更済み",
+      "mark_restore": "元に戻す",
       "conflict": "ほかで変更されました。現在は {value}",
       "default_mark": "デフォルト",
       "secret_set": "設定済み",

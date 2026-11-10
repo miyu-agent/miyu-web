@@ -1300,6 +1300,14 @@
       ".set-reset"
     ]
   },
+  "set.mark": {
+    "zh": "设置项名字后面的「默认 / 已改」小标签（软件包的设置项，悬停换成「恢复默认」）",
+    "select": [
+      ".set-mark",
+      ".set-mark-was",
+      ".set-mark-undo"
+    ]
+  },
   "set.status": {
     "zh": "设置页：状态",
     "select": [

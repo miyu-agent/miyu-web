@@ -29,14 +29,15 @@ const SPIN_AFTER_MS = 300;
 /**
  * 一行的壳：名字、说明、小字（没有就不出这一行）、问题；右边控件和 ↺。交回节点和几个钩子（转圈、对勾、写原因）。
  * @param {{name: string, description?: string, source?: Node|string|null, problems?: {level: string, message: string}[],
- *   control: Node, reset?: (() => void)|null, resetTitle?: string}} o
+ *   control: Node, reset?: (() => void)|null, resetTitle?: string, mark?: Node|null}} o `mark`：名字后面的「默认 / 已改」（[`fieldMark`]，
+ *   软件包的设置项用，有它的不再露 ↺）
  */
 export function shell(o) {
   const status = h('span.set-status');
   const error = h('p.set-error', { hidden: true });
   const el = h('div.set-row',
     h('div.set-text',
-      h('div.set-name', h('span', o.name)),
+      h('div.set-name', h('span', o.name), o.mark ?? null),
       o.description ? h('p.set-desc', { title: o.description }, o.description) : null,
       o.source ? h('p.set-source', o.source) : null,
       ...(o.problems ?? []).map((p) => h(`p.set-problem.is-${p.level === 'error' ? 'error' : 'warn'}`, p.message)),
@@ -64,10 +65,22 @@ export function shell(o) {
 }
 
 /**
- * 核心的一项（第 4–8 条）。`compact` 的不写说明、不写生效时机（模型详情里：名字已经说清了，每一项都是下一轮生效）。
+ * 名字后面的「默认 / 已改」小标签（W-1141，照 im 的 `shell/mark.js`，2026-11-10 项目主人：软件包设置照 im 网页的会话卡片）：没写的「默认」淡底淡字；
+ * 写了的「已改」强调色，悬停换成「恢复默认」，点了调 `restore`。
+ * @param {any} ctx @param {boolean} changed @param {() => void} restore
+ */
+export function fieldMark(ctx, changed, restore) {
+  if (!changed) return h('span.set-mark', ctx.text('mark_default'));
+  return h('button.set-mark.is-changed', { type: 'button', title: ctx.text('reset'), onclick: restore },
+    h('span.set-mark-was', ctx.text('mark_changed')), h('span.set-mark-undo', ctx.text('mark_restore')));
+}
+
+/**
+ * 核心的一项（第 4–8 条）。`compact` 的不写说明、不写生效时机（模型详情里：名字已经说清了，每一项都是下一轮生效）。`mark` 的名字后面写
+ * 「默认 / 已改」、不露 ↺（软件包的设置项，W-1141）。
  * @param {any} dialog 设置页的弹窗（`dialog.js`）
  * @param {import('./model.js').Item} item
- * @param {{compact?: boolean}} [opts]
+ * @param {{compact?: boolean, mark?: boolean}} [opts]
  */
 export function coreRow(dialog, item, opts = {}) {
   const ctx = dialog.ctx;
@@ -110,8 +123,9 @@ export function coreRow(dialog, item, opts = {}) {
     source: null,
     problems: item.problems,
     control: made,
-    reset: written ? () => save({ unset: true }) : null,
+    reset: written && !opts.mark ? () => save({ unset: true }) : null,
     resetTitle: ctx.text('reset'),
+    mark: opts.mark ? fieldMark(ctx, written, () => save({ unset: true })) : null,
   });
   // 刚存成的：存完整页重读重画了，对勾画在新的这一行上
   if (dialog.justSaved?.(item.key)) row.done();

@@ -14,7 +14,7 @@ import { coverOf, shadowed } from '../../src/lib/packages.js';
  * @typedef {{key?: string, level: string, message: string, file?: string, line?: number}} Problem
  * @typedef {SchemaItem & {entry: Entry|null, problems: Problem[], fact?: {value: any}}} Item 合好的一项（`fact`：配置里没写时模型目录给的值，
  *   模型那一页用）
- * @typedef {{id: string, name: string, items: Item[]}} Group
+ * @typedef {{id: string, name: string, items: Item[], sections?: any[]}} Group 合好的组（`sections`：包那一组的分组，W-1141）
  * @typedef {{id: string, name: string, groups: Group[], problems: Problem[]}} Page
  */
 
@@ -44,7 +44,9 @@ export function buildPages(schema, got, opts = {}) {
       .map((i) => ({ ...i, entry: got.items?.[i.key] ?? null, problems: problems.filter((x) => x.key === i.key) }))
       .sort((a, b) => Number(!!b.common) - Number(!!a.common));
     const home = moveGroups[g.id] ?? g.page;
-    if (items.length) byPage.get(merge[home] ?? home)?.groups.push({ id: g.id, name: g.name, items });
+    // 包那一组的分组（W-1141，核心 PS 线：`sections`，组上写的，没有的照顶上照组编号的那一份）：原样带上，`package-sections.js` 照它分卡片
+    const sections = Array.isArray(/** @type {any} */ (g).sections) ? /** @type {any} */ (g).sections : /** @type {any} */ (schema).sections?.[g.id];
+    if (items.length) byPage.get(merge[home] ?? home)?.groups.push({ id: g.id, name: g.name, items, ...(Array.isArray(sections) && sections.length ? { sections } : {}) });
   }
   // 对不上清单里哪一项的（整份写坏了、不认识的键、只属于带占位那几项的不算）：放那一页顶上。别的头的项连它的问题一起不列，
   // 不认识的键不管叫什么都要提示（改了名的旧键 `tui.startup` 留在文件里，人得看得到去删）
