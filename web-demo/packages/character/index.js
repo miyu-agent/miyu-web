@@ -1,7 +1,8 @@
 // @ts-check
 //! 选吉祥物（软件包 `character`，蓝图 `web.md`「选吉祥物」，2026-11-02 项目主人：吉祥物作为主题下的一个子项，和主题分开选、随便搭）：
 //! 声明挂载位 `mascot.characters`（外观包挂吉祥物），照设置项 `character` 把选着的那一只画进整页最前面一层（`host.layer`，不跟着输入框藏）。
-//! 「Miyu」是软件包 `mascot`：选它就启用那个包，选别的停用它（那个包自己画、自己挂在 `body` 上，这里不管它怎么画）。
+//! 「Deniro」是软件包 `mascot`：选它就启用那个包，选别的停用它（那个包自己画、自己挂在 `body` 上，这里不管它怎么画）。改名以前存的 `miyu`
+//! 照 `deniro` 读（`characterOf`，2026-11-10 项目主人）。
 //! 提供服务 `character`：`current()`、`list()`（给设置页的下拉）、`choose(id)`。交给角色的 host 里状态、站的那条边、有人动了由这里统一算
 //! （`model.js`，2026-11-02 77 要的：混搭的两只同一时刻播同一个动作、站同一条边）。
 
@@ -10,10 +11,7 @@ const SETTLE_MS = 400;
 
 import { h } from '../../src/lib/dom.js';
 import { combine } from '../../src/lib/anchors.js';
-import { nowOf, endedOf, surfaceOf } from './model.js';
-
-/** 「Miyu」那一项的编号：软件包 `mascot` */
-export const MIYU = 'miyu';
+import { nowOf, endedOf, surfaceOf, characterOf, DENIRO } from './model.js';
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -162,10 +160,10 @@ export function apply(ctx) {
     drawn.el.parentNode?.removeChild(drawn.el);
     drawn = null;
   };
-  /** 照设置项画：选着的不是挂进来的（无、Miyu、挂的包没了）什么都不画 */
+  /** 照设置项画：选着的不是挂进来的（无、Deniro、挂的包没了）什么都不画 */
   const sync = () => {
-    const id = ctx.config.character ?? '';
-    const entry = id && id !== MIYU ? ctx.slots.list('mascot.characters').find((/** @type {any} */ e) => e.id === id) ?? null : null;
+    const id = characterOf(ctx.config.character);
+    const entry = id && id !== DENIRO ? ctx.slots.list('mascot.characters').find((/** @type {any} */ e) => e.id === id) ?? null : null;
     if (drawn?.entry === entry) return;
     drop();
     if (!entry) return;
@@ -194,28 +192,28 @@ export function apply(ctx) {
 
   ctx.provide('character', {
     /** 现在选着的编号（空的是无） */
-    current: () => ctx.config.character ?? '',
+    current: () => characterOf(ctx.config.character),
     /**
-     * 设置页下拉的几项 `{id, name}`：无、Miyu（装了 `mascot` 包才有）、挂进来的；`chosen` 是这时选着的（设置项空着、`mascot` 包手动开了的算 Miyu）。
+     * 设置页下拉的几项 `{id, name}`：无、Deniro（装了 `mascot` 包才有）、挂进来的；`chosen` 是这时选着的（设置项空着、`mascot` 包手动开了的算 Deniro）。
      * @returns {Promise<{items: {id: string, name: string}[], chosen: string}>}
      */
     list: async () => {
       const on = await mascotOn();
       const items = [{ id: '', name: ctx.text('none') }];
-      if (on !== null) items.push({ id: MIYU, name: ctx.text('miyu') });
+      if (on !== null) items.push({ id: DENIRO, name: ctx.text('deniro') });
       for (const e of ctx.slots.list('mascot.characters')) items.push({ id: e.id, name: typeof e.name === 'string' ? e.name : ctx.local?.(e.name) ?? e.id });
       // 选着的那一只已经不在了（挂它的外观包卸了、停了）：照「无」写，不把编号原样露出来
-      const id = ctx.config.character ?? '';
-      const want = id || (on ? MIYU : '');
+      const id = characterOf(ctx.config.character);
+      const want = id || (on ? DENIRO : '');
       return { items, chosen: items.some((x) => x.id === want) ? want : '' };
     },
-    /** 换一只：记进设置项；Miyu 启用 `mascot` 包，别的停用它 @param {string} id */
+    /** 换一只：记进设置项；Deniro 启用 `mascot` 包，别的停用它 @param {string} id */
     choose: async (id) => {
       await ctx.packages.set('character', { config: { character: id || null } });
       const on = await mascotOn();
       if (on === null) return;
-      if (id === MIYU && !on) await ctx.packages.set('mascot', { disabled: false });
-      if (id !== MIYU && on) await ctx.packages.set('mascot', { disabled: true });
+      if (id === DENIRO && !on) await ctx.packages.set('mascot', { disabled: false });
+      if (id !== DENIRO && on) await ctx.packages.set('mascot', { disabled: true });
     },
   });
 }

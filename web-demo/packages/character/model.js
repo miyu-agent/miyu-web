@@ -46,3 +46,16 @@ export function surfaceOf(box, floats, off) {
   const o = (top ? off.floats : off.composer) ?? {};
   return { top: Math.round(r.top + (o.dy ?? 0)), left: Math.round(r.left + (o.dx ?? 0)), right: Math.round(r.right + (o.dx ?? 0)) };
 }
+
+/** 软件包 `mascot` 那一只的编号（2026-11-10 项目主人：吉祥物不叫 miyu，叫 deniro） */
+export const DENIRO = 'deniro';
+
+/**
+ * 设置项 `character` 里存的编号照现在的写法读：原来存的 `miyu`（改名以前选的那只）读成 `deniro`，别的照原样，没设的是空的。只在读的时候认，
+ * 不替人写回配置：人下一次换吉祥物时自然写成新的。
+ * @param {unknown} raw @returns {string}
+ */
+export function characterOf(raw) {
+  if (typeof raw !== 'string') return '';
+  return raw === 'miyu' ? DENIRO : raw;
+}

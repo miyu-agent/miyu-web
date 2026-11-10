@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { nowOf, endedOf, surfaceOf } from '../../packages/character/model.js';
+import { nowOf, endedOf, surfaceOf, characterOf, DENIRO } from '../../packages/character/model.js';
 
 test('这一刻在做什么：没在跑 idle；等人 waiting；压缩 compacting；照 doing 分想、写、工具，派子代理的工具算 subagent', () => {
   assert.equal(nowOf(null), 'idle');
@@ -36,4 +36,14 @@ test('站的那条边：弹出的列表露着的照最上面那一个，不然�
   assert.deepEqual(surfaceOf(box, [], { composer: { dy: -20 } }), { top: 680, left: 300, right: 900 }, '大肥鱼的丝带比框高出 20px');
   assert.deepEqual(surfaceOf(box, [{ top: 450, left: 320, right: 700 }], { composer: { dy: -20 }, floats: { dy: -3, dx: 2 } }), { top: 447, left: 322, right: 702 });
   assert.equal(surfaceOf(null, [], {}), null);
+});
+
+test('吉祥物改名 deniro（2026-11-10 项目主人）：设置里改名以前存的 miyu 读成 deniro，别的照原样，没设的是空的', () => {
+  assert.equal(DENIRO, 'deniro');
+  assert.equal(characterOf('miyu'), 'deniro', '改名以前选的那只照旧认');
+  assert.equal(characterOf('deniro'), 'deniro');
+  assert.equal(characterOf('clawd'), 'clawd', '外观包挂的照原样');
+  assert.equal(characterOf(''), '');
+  assert.equal(characterOf(undefined), '');
+  assert.equal(characterOf(null), '');
 });
