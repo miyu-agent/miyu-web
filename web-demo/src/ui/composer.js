@@ -42,6 +42,7 @@ import { show, hide, span } from '../lib/motion.js';
 import { isNewline, insertNewline } from '../lib/newline.js';
 import { stash } from '../model/stash.js';
 import { tipsFor, pickTip } from '../model/tips.js';
+import { sendTooLong } from '../core/connection.js';
 
 /** 空会话里打了、带着字就先开会话的核心命令（`commands.json` 的 `opens_session`） */
 const opensSession = () => new Set((res.commands.opens_session ?? []).map((/** @type {string} */ n) => n.toLowerCase()));
@@ -51,10 +52,11 @@ const emptyNone = () => new Set((res.commands.empty_none ?? []).map((/** @type {
 /**
  * @typedef {{id: string, has: () => boolean, busy: () => boolean, take: () => Record<string, any>|null, putBack: (given: any) => void,
  *   keep?: (given: any) => any, recall?: (saved: {session: string, kept: any}|null) => void, settle?: () => void,
- *   offer?: (refs: any[]) => any[], dropLast?: () => boolean}} Payload
+ *   offer?: (refs: any[]) => any[], dropLast?: () => boolean, adopt?: (text: string, name: string) => boolean}} Payload
  *   跟着话一起发的一样（挂载位 `composer.payload` 的一件，蓝图 `web/architecture.md`）；`keep`、`recall`、`settle` 是输入历史用的：
  *   交出去的记成能存下来的样子、翻出来的换上（`null` 拿掉）、改了字留下（蓝图「输入历史」第 1、2 条）；`offer` 是 `@` 选文件交过来的
- *   本机文件，收下它认得的，交回不收的（蓝图「`@` 选文件」第 5 条）；`dropLast` 是光标在最前面按退格，拿掉最后一块，拿掉了交回 `true`
+ *   本机文件，收下它认得的，交回不收的（蓝图「`@` 选文件」第 5 条）；`dropLast` 是光标在最前面按退格，拿掉最后一块，拿掉了交回 `true`；`adopt` 是一句话太长发不出去时把字转成
+ *   一个叫 `name` 的文字附件，收下了交回 `true`（施工 YC-11）
  */
 
 export class Composer {
@@ -442,11 +444,25 @@ export class Composer {
     // 点了名的技能（`$名字`，W-1124）：照先后交 `skills`，字照原样发
     const skills = skillsIn(text, this.knownSkills.map((s) => s.name));
     const taken = parts.map((p) => ({ p, given: p.take() })).filter((x) => x.given);
-    this.set('');
     // 文件块换回路径写在原来的位置（蓝图「`@` 选文件」第 5 条）
     const blocks = used(text, this.blocks);
     const sent = expand(text, this.blocks);
-    const ok = await this.on.send(sent, Object.assign({}, ...taken.map((x) => x.given), skills.length ? { skills } : {}));
+    const along = Object.assign({}, ...taken.map((x) => x.given), skills.length ? { skills } : {});
+    // 整条请求超过协议一行 1 MiB 的（施工 YC-11，压测报告 F5）：不发；附件收得下的转成一个文字附件放进框里，人再按回车发，收不下的字留在框里
+    if (sendTooLong(sent, along)) {
+      for (const x of taken) x.p.putBack(x.given);
+      const name = pastedName(new Date());
+      if (parts.some((p) => p.adopt?.(sent, name))) {
+        this.set('');
+        this.blocks = new Map();
+        this.say(t('too_long_attached', { name }));
+      } else {
+        this.say(t('too_long'));
+      }
+      return;
+    }
+    this.set('');
+    const ok = await this.on.send(sent, along);
     // 记进输入历史：框里的样子加上用到的块（翻出来照样是块）；发成了的连带过去的附件（核心存好的那一份、发在哪个会话；
     // 新会话发了才有编号）
     const kept = ok ? taken.map((x) => [x.p.id, x.p.keep?.(x.given)]).filter(([, v]) => v) : [];
@@ -1045,4 +1061,13 @@ function ringOf(ring) {
 /** 多宽：自己的 CSS 像素、不取整（`offsetWidth` 取整，缓完差不到一个像素也会跳一下）。 */
 function widthOf(el) {
   return parseFloat(getComputedStyle(el).width) || 0;
+}
+
+/**
+ * 太长、转成附件的那段字叫什么（施工 YC-11）：`pasted-年月日-时分秒.txt`，照这台设备的时刻；不写人的语言，文件名到哪都认得。
+ * @param {Date} at
+ */
+export function pastedName(at) {
+  const two = (/** @type {number} */ n) => String(n).padStart(2, '0');
+  return `pasted-${at.getFullYear()}${two(at.getMonth() + 1)}${two(at.getDate())}-${two(at.getHours())}${two(at.getMinutes())}${two(at.getSeconds())}.txt`;
 }

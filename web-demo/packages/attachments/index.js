@@ -72,6 +72,15 @@ export function apply(ctx) {
     settle: () => tray.settle(),
     // 光标在最前面按退格：拿掉最后一张（蓝图「附件」第 3 条）
     dropLast: () => tray.dropLast(),
+    // 一句话太长、发不出去的（施工 YC-11，蓝图「附件」第 4 条）：输入框交过来的字转成一个文字附件放进框里，收下了交 `true`；
+    // 放不下（超过 `max_mib`、框里满了）的交 `false`，字留在框里
+    adopt: (/** @type {string} */ text, /** @type {string} */ name) => {
+      const [ref] = files.refs([new File([text], name, { type: 'text/plain' })]);
+      const r = admit(tray.items.length, ref ? [ref] : [], ctx.config);
+      if (!r.accepted.length) return false;
+      put(tray.add(r.accepted[0]));
+      return true;
+    },
     // `@` 选文件交过来的（蓝图「`@` 选文件」第 5 条）：图片、PDF、音频、视频收下（本机的路径直接交给核心存），交回不收的
     offer: (refs) => {
       const mine = refs.filter(attachable);

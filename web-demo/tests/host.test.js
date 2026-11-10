@@ -9,7 +9,7 @@ import { join, dirname, resolve, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { urls } from '../src/host/browser.js';
 import { ownerStorage } from '../src/kernel/storage.js';
-import { Connection, Refusal, LINE_MAX, tooLong } from '../src/core/connection.js';
+import { Connection, Refusal, LINE_MAX, tooLong, sendTooLong } from '../src/core/connection.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -491,4 +491,32 @@ test('前缀要变（核心 OV-1 下 prefix_changing）：开轮的那几样问�
   refuse(ch.sent[5]);
   await assert.rejects(other, (e) => e instanceof Refusal && e.reason === 'prefix_changing');
   assert.equal(asked.length, 3);
+});
+
+test('说一句话发不发得出去照整条 session.send 算（施工 YC-11）：输入框放行的，连接一定发得出去；附件、技能一起算', async () => {
+  // 正好放得下的最长一句：再多一个字就超
+  let lo = 0;
+  let hi = LINE_MAX;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (sendTooLong('a'.repeat(mid))) hi = mid - 1;
+    else lo = mid;
+  }
+  assert.equal(sendTooLong('a'.repeat(lo)), false);
+  assert.equal(sendTooLong('a'.repeat(lo + 1)), true);
+  assert.ok(lo > LINE_MAX - 300, '信封只占一点');
+  // 正文刚好不到 1 MiB、加上信封就超的，输入框先拦下
+  assert.equal(sendTooLong('a'.repeat(LINE_MAX - 10)), true);
+  // 跟着发的也算：同一句带上附件就超
+  assert.equal(sendTooLong('a'.repeat(lo), { attachments: [{ blob: 'b'.repeat(64), name: 'x.png' }] }), true);
+  // 放行的那一句真发：会话编号、请求编号都是真的样子，连接照样发出去
+  const ch = /** @type {any} */ (fakeChannel());
+  const conn = new Connection(() => ch);
+  const up = conn.connect();
+  ch.readyState = 1;
+  ch.onopen();
+  await up;
+  for (let i = 0; i < 12; i++) conn.raw('session.list', {}).catch(() => {});
+  conn.raw('session.send', { session: '01a1c2ff-6982-747f-9a04-38bca0005b58', text: 'a'.repeat(lo), prefix: 'compact' }).catch(() => {});
+  assert.equal(ch.sent.length, 13);
 });

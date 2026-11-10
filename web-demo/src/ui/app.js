@@ -926,6 +926,11 @@ export class App {
     } catch (err) {
       // 前缀要变、问了以后取消的（核心 OV-1 下）：不发，话留在框里（同被拒），不另说
       if (/** @type {any} */ (err)?.reason === 'prefix_cancelled') return false;
+      // 一行超过 1 MiB、连接没发的（施工 YC-11）：照人的语言说，字照旧放回框里
+      if (/** @type {any} */ (err)?.reason === 'too_large') {
+        this.composer.say(t('too_long'));
+        return false;
+      }
       const why = refusalText(err);
       this.composer.say(why === err.message ? t('refused', { message: why }) : why);
       return false;

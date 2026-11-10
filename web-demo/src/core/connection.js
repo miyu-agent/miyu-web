@@ -215,3 +215,13 @@ export function tooLong(line) {
   if (line.length * 3 <= LINE_MAX) return false;
   return new TextEncoder().encode(line).length > LINE_MAX;
 }
+
+/**
+ * 说这一句的 `session.send` 发得出去吗（施工 YC-11，压测报告 F5：贴一两 MB 的日志回车）：照整条请求序列化以后算，会话编号、
+ * 请求编号、前缀照最长的写法占位，`extra` 是跟着发的（附件、点名的技能）。超了交 `true`，输入框先拦下，不等连接拒。
+ * @param {string} text @param {Record<string, any>} [extra]
+ */
+export function sendTooLong(text, extra = {}) {
+  const params = { session: '00000000-0000-0000-0000-000000000000', text, ...extra, prefix: 'compact' };
+  return tooLong(JSON.stringify({ jsonrpc: '2.0', id: 'web-00000000-0000000000', method: 'session.send', params }));
+}

@@ -115,6 +115,8 @@
   "refused": "Refused: {message}",
   "prefix_ask": {"title": "Files changed:", "text": "Continuing will invalidate the cache and cost extra input tokens. Continue?", "compact": "Compact and send", "keep": "Send anyway", "cancel": "Cancel", "more": "{n} more"},
   "payload_busy": "Attachments are uploading",
+  "too_long": "This message is too long to send (over 1 MiB)",
+  "too_long_attached": "This message was too long, so it is now the attachment {name}. Press Enter to send",
   "no_bridge": "Can't reach the bridge: open the link with #k= that the bridge printed",
   "signin": {
     "login_title": "Sign in to Miyu",

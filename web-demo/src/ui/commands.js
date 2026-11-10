@@ -197,7 +197,8 @@ export async function runCommand(app, spec, words) {
     // 前缀要变、问了以后取消的（核心 OV-1 下）：不发、不说
     if (err instanceof Refusal && err.reason === 'prefix_cancelled') return;
     if (!(err instanceof Refusal)) console.error(err);
-    app.composer.say(refusalText(err));
+    // 一行超过 1 MiB、连接没发的（施工 YC-11）：照人的语言说
+    app.composer.say(err instanceof Refusal && err.reason === 'too_large' ? t('too_long') : refusalText(err));
   }
 }
 
