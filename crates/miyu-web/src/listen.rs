@@ -152,8 +152,8 @@ fn answer(site: &Site, error: Option<String>) -> Response<Body> {
     let listen = miyu_webserve::Site::listen(site);
     let port = miyu_webserve::Site::port(site);
     let all = lans(listen, port);
-    let mut body =
-        json!({"listen": listen.to_string(), "port": port, "lan": all.first(), "lans": all});
+    let first = all.first().map(|lan| lan.url.clone());
+    let mut body = json!({"listen": listen.to_string(), "port": port, "lan": first, "lans": all});
     if let Some(error) = error {
         body["error"] = Value::String(error);
     }
