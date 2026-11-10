@@ -26,14 +26,15 @@ export function sectionsOf(group) {
 }
 
 /**
- * 条件满不满足：那一项现在的值（写了的照写的，没写的照默认）在 `is` 里。找不到那一项的当满足（宁可多画，不把能改的藏了）。
+ * 条件满不满足：那一项现在的值（写了的照写的，没写的照默认）在 `is` 里。核心 SG-1 只许它指同一个包里的一个 `option` 项、值都是它的选项，
+ * 照选项的值比就够。找不到那一项的当满足（宁可多画，不把能改的藏了）。
  * @param {ShownWhen|undefined} when @param {(key: string) => {found: boolean, value: any}} valueOf
  */
 export function shown(when, valueOf) {
   if (!when) return true;
   const { found, value } = valueOf(when.key);
   if (!found) return true;
-  return when.is.some((v) => v === value || (v != null && value != null && String(v) === String(value)));
+  return when.is.includes(value);
 }
 
 /**

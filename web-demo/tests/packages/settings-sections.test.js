@@ -50,11 +50,10 @@ test('旧核心不带 sections：交回 null，照原来平铺；读不懂的分
     [{ id: 'a', name: '甲' }, { id: 'b', name: 'b' }], '缺 id 的不认；没名字的照编号写；shown_when 的 is 不是数组的当没写');
 });
 
-test('条件：值在 is 里才画；数、真假照字一样也算；找不到那一项的当满足，不把能改的藏了', () => {
+test('条件：选项的值在 is 里才画；找不到那一项的当满足，不把能改的藏了', () => {
   const look = (/** @type {Record<string, any>} */ values) => (/** @type {string} */ key) => (key in values ? { found: true, value: values[key] } : { found: false, value: undefined });
   assert.equal(shown({ key: 'a', is: ['x', 'y'] }, look({ a: 'y' })), true);
   assert.equal(shown({ key: 'a', is: ['x'] }, look({ a: 'z' })), false);
-  assert.equal(shown({ key: 'a', is: [true] }, look({ a: 'true' })), true);
   assert.equal(shown({ key: 'gone', is: ['x'] }, look({})), true);
   assert.equal(shown(undefined, look({})), true);
 });
