@@ -2,12 +2,15 @@
 //! 2026-10-08 项目主人：选择文件夹应该打开目录选择器）。浏览器给不了本机路径；网页软件、桥和页面在同一台电脑上，由它们开。
 //!
 //! - Linux：依次试 `zenity`（GTK）、`kdialog`（KDE），都没有的交「开不了」，页面退回自己画的文件夹浏览器；
-//! - macOS：`osascript` 的 `choose folder`；只有 `-128`（人点了取消）算取消，别的错（开始的目录不在报 `-1700` 这类）去掉开始的目录再开一次，
+//! - macOS：`osascript` 先 `activate`（提到前面，不然框开在浏览器后面，W-1134）再 `choose folder`；只有 `-128`（人点了取消）算取消，别的错（开始的目录不在报 `-1700` 这类）去掉开始的目录再开一次，
 //!   还不成的交「开不了」，页面退回自己画的文件夹浏览器（W-1111，2026-11-06 项目主人：Mac 上点了「选择文件夹」什么都没发生——原来
 //!   出错的一律当成取消，页面什么都不出）；
 //! - Windows：PowerShell 的 `FolderBrowserDialog`。
 //!
 //! 标题、从哪个目录开始经环境变量交给对话框程序，不拼进命令行（不用管引号、转义）。点了取消的交「取消了」。
+//! zenity、kdialog 点了取消和连不上显示（网页软件是从显示变量过期的终端里起的这类）退出码一样：标准错误里说连不上显示、起不来
+//! 图形界面的算出错，接着试下一个，都不成的交「开不了」，页面退回自己画的文件夹浏览器（W-1134，2026-11-10 项目主人：点了文件夹
+//! 按钮完全没反应——原来一律当成取消，页面什么都不出）。
 //!
 //! 同一时间只开一个：已经开着一个时再来的交「开着呢」，不开第二个（2026-10-30 桌面端：Windows 上框开在后面看不见，点十几次挂了五个）。
 //! Windows 上网页软件是后台起的、拿不到前台：对话框挂在一个看不见的置顶小窗下面开，盖在最上面。
@@ -52,8 +55,10 @@ struct Tool {
 /// 没选出目录（退出码不是 0）的时候，怎么认出是人点了取消。
 #[derive(Clone, Copy)]
 enum Cancel {
-    /// 退出码不是 0 就是取消（zenity、kdialog，Windows 那一段脚本）。
+    /// 退出码不是 0 就是取消（Windows 那一段脚本）。
     Exit,
+    /// 退出码不是 0 的是取消，标准错误里说连不上显示、起不来图形界面的是出错（zenity、kdialog）。
+    Shown,
     /// 标准错误里有这个才是取消，别的是出错（osascript：人点了取消报 `-128`）。
     Says(&'static str),
 }
@@ -74,6 +79,8 @@ fn ran(cancel: Cancel, success: bool, stdout: &[u8], stderr: &[u8]) -> Ran {
     if !success {
         return match cancel {
             Cancel::Exit => Ran::Cancelled,
+            Cancel::Shown if no_display(stderr) => Ran::Failed,
+            Cancel::Shown => Ran::Cancelled,
             Cancel::Says(code) if String::from_utf8_lossy(stderr).contains(code) => Ran::Cancelled,
             Cancel::Says(_) => Ran::Failed,
         };
@@ -94,11 +101,21 @@ fn ran(cancel: Cancel, success: bool, stdout: &[u8], stderr: &[u8]) -> Ran {
     }
 }
 
+/// 标准错误里说的是连不上显示、起不来图形界面（GTK 的「Failed to open display」「cannot open display」，Qt 的「could not
+/// connect to display」「Could not load the Qt platform plugin」）：对话框根本没出来，不是人点了取消。
+fn no_display(stderr: &[u8]) -> bool {
+    let said = String::from_utf8_lossy(stderr).to_lowercase();
+    ["open display", "connect to display", "qt platform plugin"]
+        .iter()
+        .any(|sign| said.contains(sign))
+}
+
 /// macOS 上依次试的：给了开始的目录的先照它开，出错了（目录不在报 `-1700` 这类）再不带它开一次。
 fn mac_tools(start: Option<&str>) -> Vec<Tool> {
+    // 先 `activate`：网页软件是后台起的，不提到前面的话框开在浏览器后面，人看着像点了没反应（W-1134，2026-11-10 项目主人在 Mac 上）
     let tool = |script: &str| Tool {
         program: "osascript",
-        args: vec!["-e".into(), script.into()],
+        args: vec!["-e".into(), "activate".into(), "-e".into(), script.into()],
         cancel: Cancel::Says("(-128)"),
     };
     let plain =
@@ -160,12 +177,12 @@ fn tools(start: Option<&str>) -> Vec<Tool> {
         Tool {
             program: "zenity",
             args: zenity,
-            cancel: Cancel::Exit,
+            cancel: Cancel::Shown,
         },
         Tool {
             program: "kdialog",
             args: kdialog,
-            cancel: Cancel::Exit,
+            cancel: Cancel::Shown,
         },
     ]
 }
@@ -269,10 +286,30 @@ mod tests {
             "根目录留着"
         );
         assert_eq!(ran(mac, true, b"\n", b""), Ran::Cancelled);
-        // zenity、kdialog、Windows 那一段：退出码不是 0 就是取消（照旧）
+        // Windows 那一段：退出码不是 0 就是取消（照旧）
         assert_eq!(
             ran(Cancel::Exit, false, b"", b"Gtk-WARNING"),
             Ran::Cancelled
+        );
+    }
+
+    /// zenity、kdialog：点了取消的照旧是取消（带别的警告也是）；连不上显示、起不来图形界面的是出错，接着试下一个，都不成的页面
+    /// 退回自己画的浏览器（W-1134，标准错误照本机实测的原话）。
+    #[test]
+    fn a_picker_that_cannot_reach_the_display_failed_rather_than_was_cancelled() {
+        let shown = Cancel::Shown;
+        assert_eq!(ran(shown, false, b"", b""), Ran::Cancelled);
+        let warned = "(zenity:12): Gtk-WARNING **: 10:10:49.794: Theme parsing error\n";
+        assert_eq!(ran(shown, false, b"", warned.as_bytes()), Ran::Cancelled);
+        let gtk = "(zenity:3498161): Gtk-WARNING **: 10:10:49.794: Failed to open display\n";
+        assert_eq!(ran(shown, false, b"", gtk.as_bytes()), Ran::Failed);
+        let x11 = "(zenity:7): Gtk-WARNING **: cannot open display: :0\n";
+        assert_eq!(ran(shown, false, b"", x11.as_bytes()), Ran::Failed);
+        let qt = "qt.qpa.xcb: could not connect to display \nqt.qpa.plugin: Could not load the Qt platform plugin \"xcb\"\n";
+        assert_eq!(ran(shown, false, b"", qt.as_bytes()), Ran::Failed);
+        assert_eq!(
+            ran(shown, true, b"/home/me/src\n", b""),
+            Ran::Path("/home/me/src".into())
         );
     }
 
@@ -281,10 +318,16 @@ mod tests {
     fn mac_retries_without_the_start_folder() {
         let two = mac_tools(Some("/gone"));
         assert_eq!(two.len(), 2);
-        assert!(two[0].args[1].contains("MIYU_PICK_START"));
-        assert!(!two[1].args[1].contains("MIYU_PICK_START"));
+        assert!(two[0].args[3].contains("MIYU_PICK_START"));
+        assert!(!two[1].args[3].contains("MIYU_PICK_START"));
         let one = mac_tools(None);
         assert_eq!(one.len(), 1);
-        assert!(!one[0].args[1].contains("MIYU_PICK_START"));
+        assert!(!one[0].args[3].contains("MIYU_PICK_START"));
+        // 先提到前面再开框（W-1134）
+        assert!(
+            two.iter()
+                .chain(&one)
+                .all(|tool| tool.args[..2] == ["-e", "activate"])
+        );
     }
 }
