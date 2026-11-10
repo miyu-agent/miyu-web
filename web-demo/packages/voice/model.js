@@ -157,6 +157,40 @@ function cut(s, max) {
   return out;
 }
 
+/**
+ * 放的时候抛的是不是「被打断」（浏览器的 `AbortError`）：`play()` 还没放起来就被 `pause()`、换了音源、被浏览器收走都抛它，
+ * 火狐的原话是「The fetching process for the media resource was aborted by the user agent at the user's request」。
+ * 这不是合成、音频坏了，不该当出错说给人（发版前 check 29，2026-11-11 项目主人）。
+ * @param {any} err
+ */
+export function interrupted(err) {
+  return err?.name === 'AbortError';
+}
+
+/**
+ * 放一句，放完了交回；人停了的（`run.stopped`，`run.cancel` 叫醒）也算放完。被打断的（[`interrupted`]）不算出错：没停的再放一次
+ * （`tries` 一共放几次），还被打断就跳过这一句；音频坏了、放不出来的（`onerror`、别的错）照旧抛出去。
+ * @param {{audio: any, stopped: boolean, cancel: (() => void)|null}} run 正在念的一轮
+ * @param {() => {play: () => Promise<void>, onended: any, onerror: any}} make 造这一句的播放器
+ * @param {() => Error} broken 音频坏了时抛什么
+ * @param {number} [tries]
+ * @returns {Promise<void>}
+ */
+export function playSentence(run, make, broken, tries = 2) {
+  return new Promise((resolve, reject) => {
+    const audio = make();
+    run.audio = audio;
+    run.cancel = () => resolve();
+    audio.onended = () => resolve();
+    audio.onerror = () => reject(broken());
+    audio.play().catch((/** @type {any} */ err) => {
+      if (!interrupted(err)) return reject(err);
+      if (run.stopped || tries <= 1) return resolve();
+      playSentence(run, make, broken, tries - 1).then(resolve, reject);
+    });
+  });
+}
+
 /** 字表里有一句话的出错码（核心 `reference/bus.md`：总线的、`stt`、`tts` 的） */
 export const CODES = ['bad_audio', 'too_long', 'engine_failed', 'mic_busy', 'no_microphone', 'empty_text', 'not_configured', 'no_speaker', 'no_provider', 'not_exported'];
 

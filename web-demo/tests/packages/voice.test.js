@@ -1,7 +1,7 @@
 // 语音（软件包 voice，W-1128）的纯逻辑：总线上能不能用、降采样、打 wav、静下来算说完、切句、出错码。
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ready, downsample, wav, loudness, Silence, sentences, errorKey, micErrorKey, insertAt, RATE } from '../../packages/voice/model.js';
+import { ready, downsample, wav, loudness, Silence, sentences, errorKey, micErrorKey, insertAt, RATE, interrupted, playSentence } from '../../packages/voice/model.js';
 
 test('总线上 stt、tts 有人提供、ready 才算能用，不认包名', () => {
   const names = [
@@ -83,4 +83,59 @@ test('麦克风挂在发送左边（composer.send_side），不在左边那一�
   assert.doesNotMatch(index, /slots\.mount\('composer\.bar', \{ id: 'voice-mic'/);
   const composer = await readFile(new URL('../../src/ui/composer.js', import.meta.url), 'utf8');
   assert.match(composer, /this\.sendSide, this\.sendButton\)/, '发送按钮左边挨着');
+});
+
+// 发版前 check 29（2026-11-11 项目主人）：朗读时冒出「语音出错：The fetching process for the media resource was aborted by the user agent
+// at the user's request」——浏览器的 AbortError（还没放起来就被停、被换掉），原来当出错说给人。
+const abort = () => Object.assign(new Error("The fetching process for the media resource was aborted by the user agent at the user's request"), { name: 'AbortError' });
+/** 假的播放器：`plays` 一个个照着来，'end' 放完、'abort' 被打断、'bad' 音频坏了、'never' 一直放着、别的错原样抛 */
+const player = (plays) => {
+  let made = 0;
+  const make = () => {
+    const how = plays[made++];
+    const audio = { onended: null, onerror: null, play: () => {
+      if (how === 'end') { queueMicrotask(() => audio.onended()); return Promise.resolve(); }
+      if (how === 'bad') { queueMicrotask(() => audio.onerror()); return Promise.resolve(); }
+      if (how === 'never') return new Promise(() => {});
+      return Promise.reject(how === 'abort' ? abort() : how);
+    } };
+    return audio;
+  };
+  return { make, made: () => made };
+};
+const run = () => ({ audio: null, stopped: false, cancel: null });
+const broken = () => new Error('这一句放不出来');
+
+test('朗读被打断（AbortError）不算出错：再放一次，放得出来就照常放完', async () => {
+  assert.equal(interrupted(abort()), true);
+  assert.equal(interrupted(new Error('x')), false);
+  const p = player(['abort', 'end']);
+  await playSentence(run(), p.make, broken);
+  assert.equal(p.made(), 2, '再放了一次');
+});
+
+test('朗读连着被打断：跳过这一句，不抛出错', async () => {
+  const p = player(['abort', 'abort', 'end']);
+  await playSentence(run(), p.make, broken);
+  assert.equal(p.made(), 2, '只再放一次');
+});
+
+test('人点了停：放着的那一句当场交回，随后浏览器抛的 AbortError 不再放、不出错', async () => {
+  const p = player(['never']);
+  const r = run();
+  const done = playSentence(r, p.make, broken);
+  r.stopped = true;
+  r.cancel();
+  await done;
+  // 停的那一刻 play() 还没放起来：抛 AbortError，照停了的算
+  const q = player(['abort', 'end']);
+  const stopped = { ...run(), stopped: true };
+  await playSentence(stopped, q.make, broken);
+  assert.equal(q.made(), 1, '停了的不再放');
+});
+
+test('音频坏了、别的错照旧抛：这一句放不出来', async () => {
+  await assert.rejects(playSentence(run(), player(['bad']).make, broken), /放不出来/);
+  const denied = Object.assign(new Error('not allowed'), { name: 'NotAllowedError' });
+  await assert.rejects(playSentence(run(), player([denied]).make, broken), /not allowed/);
 });
