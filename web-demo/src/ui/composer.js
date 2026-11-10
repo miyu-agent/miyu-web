@@ -313,6 +313,17 @@ export class Composer {
       for (const p of this.payload()) p.settle?.();
     }
     this.menu.update(this.input.value);
+    this.fit();
+    this.drawBlocks();
+    this.syncButton();
+    this.syncMention();
+  }
+
+  /**
+   * 照框里的字量一次高度（字没变也量）：字号、行高、内边距变了的时候调，比如主题换了、主题的样式刚读到（2026-11-11 项目主人：
+   * Claude 风格刷新以后框里的字偏下、按钮偏上——高度是主题的变量写上以前量的，一直留到下一次打字）。
+   */
+  fit() {
     const el = this.input;
     // 还没挂进页面时量不出高度（是 0），挂上以后由页面再调一次
     if (!el.isConnected) return;
@@ -333,9 +344,6 @@ export class Composer {
       void el.offsetHeight;
     }
     el.style.height = `${to}px`;
-    this.drawBlocks();
-    this.syncButton();
-    this.syncMention();
   }
 
   /**
