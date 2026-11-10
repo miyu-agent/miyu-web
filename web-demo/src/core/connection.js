@@ -146,7 +146,11 @@ export class Connection {
     });
   }
 
-  /** 发一条请求、等回应（不问前缀）。 @param {string} method @param {any} [params] */
+  /**
+   * 发一条请求、等回应（不问前缀）。编号每发一条换一个（这条连接起来时的随机前缀加一个只增不减的数，重连也接着数）：核心照编号去重，
+   * 同一个编号换了参数再来拒 `id_reused`（核心 YC-7）；前缀确认以后带 `prefix` 重发的也走这里，是新编号（W-1138 查过网页里没有沿用老编号的）。
+   * @param {string} method @param {any} [params]
+   */
   raw(method, params = {}) {
     const id = `web-${this.prefix}-${++this.n}`;
     return new Promise((resolve, reject) => {

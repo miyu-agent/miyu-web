@@ -472,6 +472,25 @@ test('一行超过上限、核心认不出编号的（核心 YC-5 的 line_too_l
   ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', id: null, error: said }) });
 });
 
+test('请求编号一条一个（核心 YC-7 的 id_reused：同一个编号换了参数再来会被拒）：前缀确认以后重发的也是新编号（W-1138）', async () => {
+  const ch = /** @type {any} */ (fakeChannel());
+  const conn = new Connection(() => ch);
+  const up = conn.connect();
+  ch.readyState = 1;
+  ch.onopen();
+  await up;
+  conn.onPrefixAsk = async () => 'keep';
+  const sent = conn.request('session.send', { session: 's1', text: '你好' });
+  ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', id: ch.sent[0].id, error: { code: -32010, message: 'x', data: { reason: 'prefix_changing', files: [] } } }) });
+  await new Promise((r) => setTimeout(r, 0));
+  assert.notEqual(ch.sent[1].id, ch.sent[0].id, '带 prefix 重发的换了编号');
+  ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', id: ch.sent[1].id, result: {} }) });
+  await sent;
+  conn.request('session.list', {}).catch(() => {});
+  conn.request('session.list', {}).catch(() => {});
+  assert.equal(new Set(ch.sent.map((/** @type {any} */ r) => r.id)).size, ch.sent.length, '一条一个编号');
+});
+
 test('前缀要变（核心 OV-1 下 prefix_changing）：开轮的那几样问一声，选的带上 prefix 重发同一个请求；取消的拒 prefix_cancelled；别的方法、带了 prefix 的不问', async () => {
   const ch = /** @type {any} */ (fakeChannel());
   const conn = new Connection(() => ch);
