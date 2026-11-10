@@ -4,8 +4,8 @@
 //! 没有对话框程序）在菜单里画一个文件夹浏览器，列核心那台机器上的目录（`fs.list`，路径都照核心给的，
 //! 哪个系统都一样）：顶上是现在的目录，一行一个子目录，点进去；「上一级」照 `fs.realpath` 的 `..`；「选这个目录」交出去。点开的点
 //! 文件夹不收起菜单。以点开头的隐藏目录不列（要用的直接写路径）。
-//! 等系统的对话框回来时框上面写一句「正在打开…」，等的时候再点不另发；网页软件说已经开着一个的写一句（2026-10-30 桌面端：Windows 上框开在
-//! 后面看不见，点了十几次）。
+//! 等系统的对话框回来时菜单里写「正在打开…」，下面「取消」「在这里选」（对话框开在别的窗口后面、看不见的时候照样能选，W-1134），等的时候
+//! 再点不另发；网页软件说已经开着一个的菜单里写那一句（2026-10-30 桌面端：Windows 上框开在后面看不见，点了十几次）。
 
 import { h } from '../../src/lib/dom.js';
 import { plainPath } from './model.js';
@@ -28,7 +28,7 @@ export async function browse(ctx, menu, anchor, below, from, done, show) {
   // Windows 的原样路径（`\\?\C:\…`）先换成平常的写法：对话框、浏览器都认不了它
   const start = plainPath(from);
   const button = (label, primary, onclick, off = false) => h(`button.setup-menu-btn${primary ? '.is-primary' : ''}`, { type: 'button', onclick, disabled: off }, label);
-  const go = async (dir) => {
+  const go = async (/** @type {string} */ dir, /** @type {string} */ why = '') => {
     let items = [];
     let note = '';
     let bad = false;
@@ -47,7 +47,7 @@ export async function browse(ctx, menu, anchor, below, from, done, show) {
       title: show(dir),
       below,
       back: up,
-      note: note || (items.length ? '' : t('folders.empty')),
+      note: why || note || (items.length ? '' : t('folders.empty')),
       rows: [
         ...(up ? [{ title: t('folders.up'), icon: 'arrow-up', pick: up }] : []),
         ...items.sort((a, b) => name(a).localeCompare(name(b))).map((x) => ({ title: name(x), icon: 'folder', pick: () => go(x.full) })),
@@ -55,25 +55,39 @@ export async function browse(ctx, menu, anchor, below, from, done, show) {
       foot: [button(t('folders.cancel'), false, () => menu.close()), button(t('folders.choose'), true, () => { menu.close(); done(dir); }, bad)],
     });
   };
-  // 系统的选目录对话框：选了交出去，取消了（`false`）就算了，已经开着一个的写一句，开不了（`null`）才画浏览器
-  const say = (/** @type {string} */ text) => ctx.composer?.say?.(text);
-  if (waiting) return void say(t('folders.opening'));
+  // 系统的选目录对话框：等它回来时菜单里写「正在打开…」，下面一个「在这里选」（2026-11-10 项目主人：Mac 上会话标题菜单、新建项目里点了
+  // 什么都没有——对话框开在浏览器后面，原来那句提示写在输入框上面，项目框盖着看不见；W-1134）。选了交出去；取消了（`false`）收起菜单；
+  // 已经开着一个的照旧在菜单里等；开不了（`null`）的画浏览器、写一句为什么。点了「在这里选」的以后对话框回来什么都不做。
+  let here = false;
+  const browseHere = () => { here = true; void go(start); };
+  const wait = (/** @type {string} */ note) => menu.show(anchor, {
+    title: t('folders.title'),
+    below,
+    note,
+    rows: [],
+    foot: [button(t('folders.cancel'), false, () => { here = true; menu.close(); }), button(t('folders.here'), true, browseHere)],
+  });
+  if (waiting) return void wait(t('folders.busy'));
   const asking = ctx.host?.files?.pickDir?.({ title: t('folders.title'), start });
+  if (!asking) return void (await go(start));
+  waiting = true;
+  wait(t('folders.opening'));
   /** @type {any} */
   let picked = null;
-  if (asking) {
-    waiting = true;
-    say(t('folders.opening'));
-    try {
-      picked = await asking;
-    } catch {
-      picked = null;
-    } finally {
-      waiting = false;
-    }
+  try {
+    picked = await asking;
+  } catch {
+    picked = null;
+  } finally {
+    waiting = false;
   }
-  if (typeof picked === 'string') return done(plainPath(picked));
-  if (picked === false) return;
-  if (picked?.busy) return void say(t('folders.busy'));
-  await go(start);
+  if (here) return;
+  if (typeof picked === 'string') {
+    menu.close();
+    return done(plainPath(picked));
+  }
+  if (picked === false) return void menu.close();
+  if (picked?.busy) return void wait(t('folders.busy'));
+  // 这台电脑上对话框起不来的：画浏览器，下面写一句
+  await go(start, t('folders.fallback'));
 }

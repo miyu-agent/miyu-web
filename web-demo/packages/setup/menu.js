@@ -131,13 +131,25 @@ export class Menu {
     for (const kid of this.el.children) kid.animate([{ opacity: 0 }, { opacity: 1 }], { duration: same ? 140 : 200, delay: same ? 0 : 40, easing: 'ease-out', fill: 'backwards' });
   }
 
-  /** 放不下（空会话里输入框在窗口中间，上面地方少）：列表那一截矮下去，整个菜单留在窗口里。 */
+  /**
+   * 放不下（空会话里输入框在窗口中间，上面地方少）：列表那一截矮下去，整个菜单留在窗口里。开在会裁边的框里的（新建项目的浮动框）照那个框的边算：
+   * 原来只照窗口算，文件夹浏览器的底下一截连「选择此文件夹」被框裁掉（W-1134，2026-11-10）。
+   */
   fit() {
     const list = /** @type {HTMLElement|null} */ (this.el.querySelector('.setup-menu-list'));
     if (!list) return;
     list.style.maxHeight = '';
+    let top = 8;
+    let bottom = innerHeight - 8;
+    for (let up = this.el.parentElement; up && up !== document.body; up = up.parentElement) {
+      const style = getComputedStyle(up);
+      if (style.overflowY === 'visible' && style.overflowX === 'visible') continue;
+      const box = up.getBoundingClientRect();
+      top = Math.max(top, box.top + 8);
+      bottom = Math.min(bottom, box.bottom - 8);
+    }
     const r = this.el.getBoundingClientRect();
-    const over = this.view?.below ? r.bottom - (innerHeight - 8) : 8 - r.top;
+    const over = this.view?.below ? r.bottom - bottom : top - r.top;
     if (over > 0) list.style.maxHeight = `${Math.max(96, list.clientHeight - over)}px`;
   }
 

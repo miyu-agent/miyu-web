@@ -275,8 +275,10 @@
         "partial": "仅显示部分",
         "cancel": "取消",
         "choose": "选择此文件夹",
-        "opening": "正在打开选择文件夹的窗口…",
-        "busy": "选择文件夹的窗口已经开着"
+        "opening": "正在打开选择文件夹的窗口…没看到的话，可能在别的窗口后面",
+        "busy": "选择文件夹的窗口已经开着",
+        "fallback": "打不开系统的选择文件夹窗口，在这里选",
+        "here": "在这里选"
       },
       "choose_preset": "选择预设",
       "preset_tokens": "约 {n} toks",
@@ -495,8 +497,10 @@
         "partial": "Partial list",
         "cancel": "Cancel",
         "choose": "Select this folder",
-        "opening": "Opening the folder picker…",
-        "busy": "The folder picker is already open"
+        "opening": "Opening the folder picker… If you don't see it, it may be behind other windows",
+        "busy": "The folder picker is already open",
+        "fallback": "Couldn't open the system folder picker; choose here instead",
+        "here": "Choose here"
       },
       "choose_preset": "Select preset",
       "preset_tokens": "~{n} toks",
@@ -715,8 +719,10 @@
         "partial": "多すぎるため一部だけ表示",
         "cancel": "キャンセル",
         "choose": "このフォルダにする",
-        "opening": "フォルダ選択画面を開いています…",
-        "busy": "フォルダ選択画面はすでに開いています"
+        "opening": "フォルダ選択画面を開いています…見当たらない場合は、ほかのウィンドウの後ろにあるかもしれません",
+        "busy": "フォルダ選択画面はすでに開いています",
+        "fallback": "システムのフォルダ選択画面を開けないため、ここで選んでください",
+        "here": "ここで選ぶ"
       },
       "choose_preset": "プリセットを選ぶ",
       "preset_tokens": "約 {n} toks",
