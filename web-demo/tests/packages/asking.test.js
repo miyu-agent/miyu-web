@@ -175,6 +175,20 @@ test('留下的照了结的那一条和问的那一条算：答了的卡片（�
   assert.deepEqual([cancelled?.type, cancelled?.kind], ['cancelled', 'ask']);
 });
 
+test('核心记下的回答里空的格不写：只写了自己的字的没有 picked、没答的那道是空的，留下的卡片照样画（发版前 check：此区块出错 got.picked is not iterable）', () => {
+  const asked = { seq: 1, kind: 'question.asked', body: { call_id: 'c1', questions: [
+    { header: 'a', question: '用哪个？', options: [{ label: '甲' }, { label: '乙' }] },
+    { header: 'b', question: '还有吗？', options: [{ label: '有' }] },
+    { header: 'c', question: '备注？', options: [{ label: '无' }] },
+  ] } };
+  const got = reportOf({ seq: 2, kind: 'question.answered', body: { call_id: 'c1', answers: [{ text: '都不要' }, {}, { notes: '回头说' }] } }, asked);
+  assert.deepEqual(got?.rows, [
+    { label: 'a', answer: { text: '都不要', notes: null } },
+    { label: 'b', answer: null },
+    { label: 'c', answer: { text: '', notes: '回头说' } },
+  ]);
+});
+
 test('多选题最下面的按钮：勾了才能点；点了交这一道、跳到下一道没答的（光标停在「输入其他答案」上也一样）；只有一道的直接交', () => {
   const two = openAsk({ body: { call_id: 'm', questions: [
     { header: 'a', question: '多选', multiple: true, options: [{ label: 'x' }, { label: 'y' }] },

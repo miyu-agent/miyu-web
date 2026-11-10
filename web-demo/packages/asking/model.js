@@ -237,8 +237,9 @@ export function report(d, result) {
     type: 'answered',
     who: d.who,
     rows: d.questions.map((q, i) => {
-      const got = result.answers[i] ?? { picked: [] };
-      const parts = [...got.picked, ...(got.text ? [got.text] : [])];
+      // 核心记下的回答里空的格不写（只写了自己的字的没有 `picked`，这道没答的是 `{}`；`sessions.md` 的 `answers`：几格都可不写）
+      const got = result.answers[i] ?? {};
+      const parts = [...(got.picked ?? []), ...(got.text ? [got.text] : [])];
       return { label: q.header || q.question, answer: parts.length || got.notes ? { text: parts.join('、'), notes: got.notes ?? null } : null };
     }),
   };
