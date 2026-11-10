@@ -645,7 +645,6 @@
     "tip_bare": "Context {used}",
     "tip_cap": "Context {used} / {window} ({percent}%, session cap)",
     "cap": "Session cap",
-    "cap_part": "Session cap {n}",
     "hit_part": "(C{percent}%)",
     "failed": "Context compaction failed",
     "over": "Context exceeds window",

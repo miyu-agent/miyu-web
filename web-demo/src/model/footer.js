@@ -1,6 +1,6 @@
 // @ts-check
 //! 输入框下面那一行要写的字（蓝图 `web.md`「框下面那一行的数」，照 TUI 演示的 `ui/footer.rs`、`core/push.rs`）：
-//! 左边权限级别和模型，右边用量那一格（环 · 会话上限 · 累计(命中率) · 花费，卡住的变红，2026-11-02）；还是 0 的不写；放不下时先收花费。
+//! 左边权限级别和模型，右边用量那一格（环 · 累计(命中率) · 花费，卡住的变红，2026-11-02）；还是 0 的不写；放不下时先收花费。
 
 import { res, t } from '../util/res.js';
 import { short, percentTenths, hitRate } from './format.js';
@@ -21,7 +21,7 @@ const input = (u) => u.uncached + u.cache_read + u.cache_write;
  * 照会话状态写（蓝图 `web.md`「照条目画」第 3 条、「框下面那一行的数」的「用量那一格」，2026-11-02）：级别照 `permission`，模型照 `model`；
  * 右边一格：累计 token 和花费都连子代理（`usage_tree`，旧核心没有的照 `usage`；同终端的 Σ），花费照 `converted`（核心 UC-1，一笔都算不出
  * 的不写）；环照 `context.used ÷ window`（窗口没有的照订阅回应的限额）；卡住的（`stuckOf`）写是哪一种和「用了多少 / 线」。还是 0 的不写。
- * 设了会话上限的（核心 CTX-1，设计 68：`context.context`，订阅回应的限额 `context`）右边多一格「会话上限 128k」，人知道窗口是被哪一格压小的。
+ * 设了会话上限的（核心 CTX-1，设计 68：`context.context`，订阅回应的限额 `context`）这一行不写（2026-11-11 项目主人），只记在环上（`ring.cap`，悬停、明细里写）。
  * @param {any} status @param {{window?: number, compaction_line?: number, context?: number}} [limits] 订阅回应里的限额 @param {any[]} [entries] 视图的条目（认压缩失败）
  * @returns {{left: {level: string, label: string, model: string|null, endpoint: string|null}, right: Part[], ring: Ring|null}}
  */
@@ -35,8 +35,7 @@ export function statusFooter(status, limits = {}, entries = []) {
   const right = [];
   const usage = status?.usage_tree ?? status?.usage;
   const all = usage?.usage;
-  // 会话上限写在累计的左边（2026-11-10 项目主人：「会话上限放到总消耗左侧」，原来在它后面）
-  if (!stuck && cap) right.push({ key: 'cap', text: t('usage_cell.cap_part', { n: short(cap) }) });
+  // 会话上限不在这一行写（2026-11-11 项目主人：「footer 都去掉会话上限 xk 的显示」）：悬停环、上下文明细里有
   if (stuck === 'compacting') right.push({ key: 'stuck', text: t('usage_cell.compacting') });
   else if (stuck) {
     right.push({ key: 'stuck', text: t(`usage_cell.${stuck}`) });
@@ -111,8 +110,8 @@ export function levelParams(level) {
   return level === 'read_only' ? { read_only: true } : { level: 'full', read_only: false };
 }
 
-/** 丢的先后：先花费（2026-10-26 项目主人：窄的时候金额先让出来），再会话上限（悬停环、明细里还写着），卡住的先丢「用了多少 / 线」，再累计，那几个字留到最后。 */
-const DROP = ['cost', 'cap', 'nums', 'total', 'stuck'];
+/** 丢的先后：先花费（2026-10-26 项目主人：窄的时候金额先让出来），卡住的先丢「用了多少 / 线」，再累计，那几个字留到最后。 */
+const DROP = ['cost', 'nums', 'total', 'stuck'];
 
 /**
  * 右边放得下的几格：照 `DROP` 的先后一格格丢，直到 `measure` 量出来不超过 `room`。

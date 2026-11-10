@@ -108,15 +108,11 @@ test('换级别发给核心的参数：只读只开只读开关；开放权限�
   assert.deepEqual(levelParams('workspace'), { level: 'full', read_only: false }, '不再发 workspace');
 });
 
-test('会话设了上下文上限（核心 CTX-1，设计 68，W-1129）：右边累计左边写「会话上限 128k」（2026-11-10 项目主人），悬停环接「会话上限」；放不下先丢花费、再丢它；没设的不写', () => {
+test('会话设了上下文上限（核心 CTX-1，设计 68，W-1129）：底栏那一行不写它（2026-11-11 项目主人：footer 去掉），悬停环接「会话上限」；没设的不写', () => {
   const capped = { ...status, context: { used: 2300, window: 128_000, context: 128_000 }, usage: { ...status.usage, converted: { currency: 'CNY', amount: 0.32 }, amounts: [{ currency: 'USD', amount: 0.045 }] } };
   const f = statusFooter(capped);
-  assert.deepEqual(f.right.map((p) => p.text), ['会话上限 128k', '12.4k(C88%)', '¥0.32']);
+  assert.deepEqual(f.right.map((p) => p.text), ['12.4k(C88%)', '¥0.32']);
   assert.equal(ringTip(/** @type {any} */ (f.ring)), '上下文 2.3k / 128k（1.8%，会话上限）');
-  const widths = { total: 40, cap: 90, cost: 50 };
-  const measure = (/** @type {any[]} */ parts) => parts.reduce((n, p) => n + widths[/** @type {'total'} */ (p.key)], 0);
-  assert.deepEqual(fit(f.right, 135, measure).map((p) => p.key), ['cap', 'total'], '先丢花费');
-  assert.deepEqual(fit(f.right, 60, measure).map((p) => p.key), ['total'], '再丢会话上限');
   assert.equal(capOf(null, { context: 200_000 }), 200_000, '会话状态没有的照订阅回应的限额');
   assert.equal(capOf({ context: { window: 1_000_000 } }, {}), null, '没设的不写');
   assert.deepEqual(statusFooter(status).right.map((p) => p.text), ['12.4k(C88%)']);
