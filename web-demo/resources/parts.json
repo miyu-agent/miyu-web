@@ -184,6 +184,12 @@
       ".composer-send"
     ]
   },
+  "composer.seal_action": {
+    "zh": "只读会话发送按钮那里的「新开会话」",
+    "select": [
+      ".composer-seal-action"
+    ]
+  },
   "composer.send.disabled": {
     "zh": "发送按钮用不了时",
     "select": [

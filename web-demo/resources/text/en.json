@@ -375,6 +375,9 @@
   },
   "esc_interrupt_hint": "Press Esc again to interrupt",
   "archived_readonly": "This is an archive. You can read it but not continue it",
+  "session_read_only": "Line {line} of this session's log is damaged. You can only see what came before it and can't continue this session. Start a new session to go on.",
+  "session_unavailable": "This session can't be read right now. Try again later.",
+  "new_session": "New session",
   "interrupt": "Interrupt",
   "slot_failed": "This block failed ({owner}: {reason})",
   "retry_after": {

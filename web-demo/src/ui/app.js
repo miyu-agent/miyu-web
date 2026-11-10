@@ -958,6 +958,8 @@ export class App {
         this.composer.say(t('too_long'));
         return false;
       }
+      // 说话时才知道日志坏了一行的（核心 YC-6）：照只读的再读一遍，框锁上（W-1138）
+      if (/** @type {any} */ (err)?.reason === 'session_read_only' && this.current) this.store.markReadOnly(this.current, err);
       const why = refusalText(err);
       this.composer.say(why === err.message ? t('refused', { message: why }) : why);
       return false;
@@ -1311,8 +1313,15 @@ export class App {
     // 导进来的只读存档（核心 SE-1 下，设计 58 第三节第 3 条，W-1094）：输入框换成一行「这是存档」，编辑、重做不出；换到别的会话就解开。
     // 照会话表每画一次交一次：刚导进来、会话表那一项后到的，到了就锁上
     const archived = this.archivedOf(this.current);
-    this.composer.seal(archived ? t('archived_readonly') : null);
-    this.chat.setReadonly(archived);
+    // 日志中间坏了一行（核心 YC-6 的 `session_read_only`）：坏行以前的照 `view.page` 只读地看，框锁住写核心那一句，发送按钮那里换成「新开会话」；
+    // 这一刻读不了（核心 YC-2 的 `session_unavailable`）：一时的错，框锁住写那一句，过一会儿自己再订阅（`store.js`），不当成坏了（W-1138）
+    const broken = s?.broken ?? null;
+    const away = !broken && s?.unavailable ? s.unavailable : null;
+    const sealed = archived ? t('archived_readonly')
+      : broken ? broken.message || t('session_read_only', { line: broken.line ?? '?' })
+        : away ? away.message || t('session_unavailable') : null;
+    this.composer.seal(sealed, broken && !archived ? { label: t('new_session'), run: () => this.open(null) } : null);
+    this.chat.setReadonly(archived || !!broken);
     this.chat.setCompacting(s ? compactingOf(s.view.list, s.view.status) : null, this.current);
     // 先照空不空摆好输入框（居中时对话区没有高度），再画对话：不然第一句话照 0 高算停在哪，被顶到视口上面
     this.centerIfEmpty(!this.current);

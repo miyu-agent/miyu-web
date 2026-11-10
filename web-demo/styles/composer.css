@@ -56,6 +56,10 @@
 .composer-send.is-stop:hover { background: color-mix(in srgb, var(--ribbon) 30%, var(--surface-1)); }
 .stop-mark { width: 10px; height: 10px; border-radius: var(--r-2-5); background: currentColor; }
 .composer-send:active:not(:disabled) { transform: scale(0.94); }
+/* 只读会话（日志坏了一行，W-1138）：发送按钮的位置换成「新开会话」，同发送按钮的颜色、高度 */
+.composer-seal-action { height: 32px; padding: 0 calc(14px * var(--space, 1)); border: var(--send-border, 0); border-radius: var(--send-radius, var(--r-10)); background: var(--send-bg, var(--accent)); color: var(--send-fg, var(--on-primary)); font: 500 calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer; white-space: nowrap; }
+.composer-seal-action:hover { background: var(--send-hover, color-mix(in srgb, var(--accent) 88%, var(--text))); }
+.composer-seal-action[hidden] { display: none; }
 .composer-send .icon { width: calc(17px * var(--space)); height: calc(17px * var(--space)); stroke-width: 2.1; }
 .composer-send:disabled { background: var(--send-bg-disabled, var(--surface-2)); color: var(--send-fg-disabled, var(--text-faint)); cursor: default; }
 

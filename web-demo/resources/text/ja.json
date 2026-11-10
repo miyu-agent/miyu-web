@@ -375,6 +375,9 @@
   },
   "esc_interrupt_hint": "もう一度 Esc で中断",
   "archived_readonly": "アーカイブです。読むだけで、続きは話せません",
+  "session_read_only": "セッションログの {line} 行目が壊れています。この行より前しか表示できず、続きは話せません。続けるには新しいセッションを始めてください。",
+  "session_unavailable": "セッションを一時的に読み込めません。しばらくしてからもう一度お試しください。",
+  "new_session": "新しいセッション",
   "interrupt": "中断",
   "slot_failed": "この部分でエラーが発生しました（{owner}：{reason}）",
   "retry_after": {

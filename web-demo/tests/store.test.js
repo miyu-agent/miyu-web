@@ -299,3 +299,75 @@ test('往前读一页：同一个会话一次只读一页，同时叫的等那�
   assert.deepEqual(calls.filter(([m]) => m === 'view.page'), [['view.page', 5, 50]], '只读了一次');
   assert.equal(await store.older('S'), false, '没有更早的不再读');
 });
+
+/** 一个假核心：订阅视图流照 `subscribe` 交回或拒；`view.page` 照 `page`。 */
+function withView(/** @type {(n: number) => any} */ subscribe, /** @type {any} */ page = null) {
+  const calls = [];
+  let n = 0;
+  const conn = {
+    onPush: () => {},
+    request: async (/** @type {string} */ method, /** @type {any} */ params) => {
+      calls.push([method, params]);
+      if (method === 'subscribe' && params.stream === 'view') return subscribe(n++);
+      if (method === 'view.page') return page;
+      return {};
+    },
+  };
+  return { store: new Store(/** @type {any} */ (conn)), calls };
+}
+
+/** 等排着的回调跑完（假计时器下 `tick` 用不了：它也是 setTimeout） */
+const flush = async () => { for (let i = 0; i < 5; i++) await new Promise((r) => setImmediate(r)); };
+
+/** 核心拒的样子（`Refusal` 的几格）。 @param {string} reason @param {string} message @param {any} [data] */
+const refused = (reason, message, data = null) => Object.assign(new Error(message), { reason, data });
+
+test('日志中间坏了一行（核心 YC-6 的 session_read_only，W-1138）：不订阅，照 view.page 读坏行以前的那一页，记下坏在哪；会话照常在', async () => {
+  const page = { entries: [{ id: 'e1', kind: 'user', text: '你好' }], first: 1, more: false, broken: { segment: '000000000001.jsonl', line: 7 } };
+  const { store, calls } = withView(() => { throw refused('session_read_only', '会话日志第 7 行坏了……', { segment: '000000000001.jsonl', line: 7 }); }, page);
+  await store.ensure('S');
+  const s = store.sessions.get('S');
+  assert.ok(s, '会话照常留着');
+  assert.deepEqual(s.broken, { segment: '000000000001.jsonl', line: 7, message: '会话日志第 7 行坏了……' });
+  assert.deepEqual(s.view.list.map((e) => e.id), ['e1'], '坏行以前的照样看得到');
+  assert.deepEqual(calls.find(([m]) => m === 'view.page')?.[1], { session: 'S', view: true });
+});
+
+test('这一刻读不了（核心 YC-2 的 session_unavailable，W-1138）：会话照常在、不当成坏了；过一会儿自己再订阅，订上了就好了', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { store } = withView((n) => {
+    if (n === 0) throw refused('session_unavailable', '会话暂时无法读取，请稍后重试。');
+    return { entries: [{ id: 'e1', kind: 'user', text: '在吗' }], first: 1, more: false };
+  });
+  await store.ensure('S');
+  const s = store.sessions.get('S');
+  assert.deepEqual(s?.unavailable, { message: '会话暂时无法读取，请稍后重试。' });
+  assert.equal(s?.broken, undefined, '不当成坏了');
+  t.mock.timers.tick(3000);
+  await flush();
+  assert.equal(s?.unavailable, null, '再订阅上了');
+  assert.deepEqual(s?.view.list.map((e) => e.id), ['e1']);
+});
+
+test('一直读不了（session_unavailable）：照间隔试完就不再自己试；再点开的照头一次再来（W-1138）', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  let tried = 0;
+  const { store } = withView(() => { tried += 1; throw refused('session_unavailable', 'x'); });
+  await store.ensure('S');
+  for (const ms of [3000, 10000, 30000, 60000]) {
+    t.mock.timers.tick(ms);
+    await flush();
+  }
+  assert.equal(tried, 5, '头一次加四次');
+  t.mock.timers.tick(120000);
+  await flush();
+  assert.equal(tried, 5, '试完不再自己试');
+  await store.ensure('S');
+  assert.equal(tried, 6, '再点开的再来一次');
+});
+
+test('订阅的最新一页碰到坏行的（回应带 broken，核心 YC-6）：同 session_read_only，记下坏在哪、只读地看（W-1138）', async () => {
+  const { store } = withView(() => ({ entries: [{ id: 'e1', kind: 'user', text: '你好' }], first: 1, more: false, broken: { segment: '000000000001.jsonl', line: 13 } }));
+  await store.ensure('S');
+  assert.deepEqual(store.sessions.get('S')?.broken, { segment: '000000000001.jsonl', line: 13, message: '' });
+});

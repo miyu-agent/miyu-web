@@ -14,13 +14,22 @@ import { ViewLog, VIEW_PUSHES } from './view.js';
 /**
  * @typedef {{id: string, view: ViewLog, limits: any, todos: {content: string, status: string}[],
  *   model: {ref?: string, endpoint?: string, model?: string, effort?: {level: string, from: string}}|null,
- *   first: number|null, more: boolean, paged: boolean, older: boolean, base: Base|null, gone?: boolean}} Session
- *   `first` 读进来的最早一条的序号，`more` 还有更早的（`view.page`），`paged` 往前翻过，`older` 正在读更早的一页
+ *   first: number|null, more: boolean, paged: boolean, older: boolean, base: Base|null, gone?: boolean,
+ *   broken?: {segment: string|null, line: number|null, message: string}|null, unavailable?: {message: string}|null, tries?: number, retry?: number}} Session
+ *   `first` 读进来的最早一条的序号，`more` 还有更早的（`view.page`），`paged` 往前翻过，`older` 正在读更早的一页；`broken` 日志中间坏了一行、
+ *   只读地看（核心 YC-6 的 `session_read_only`）；`unavailable` 这一刻读不了、过一会儿再订阅（核心 YC-2 的 `session_unavailable`），`tries` 自己
+ *   再试了几次、`retry` 排着的那一次
  */
 /**
  * @typedef {{upto: number, usage: any, permission: {level: string, read_only: boolean}|null, jobs: any[]|null, workspace: {cwd: string, dirs?: string[]}|null, defaultWorkspace: string|null, compactable?: boolean|null}} Base
  *   订阅回应里「这一刻的」：累计用量、权限级别、还在跑的任务、工作区（会话状态里也有，之后照 `view.status` 换）
  */
+
+/**
+ * 会话这一刻读不了（核心 YC-2 的 `session_unavailable`：读日志时读写出错，日志没坏）以后隔多久再订阅一次（毫秒），照先后，试完这几次不再自己试；
+ * 再点开它的照头一次再来（W-1138）
+ */
+export const UNAVAILABLE_RETRY_MS = [3000, 10000, 30000, 60000];
 
 /** 核心的会话编号（UUID）：样张这类页面自己造的不是 */
 const SESSION_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -176,7 +185,19 @@ export class Store {
    * @param {Session} s
    */
   async subscribeView(s) {
-    const r = await this.conn.request('subscribe', { session: s.id, stream: 'view' });
+    let r;
+    try {
+      r = await this.conn.request('subscribe', { session: s.id, stream: 'view' });
+    } catch (err) {
+      const reason = /** @type {any} */ (err)?.reason;
+      if (reason === 'session_read_only') return this.readOnly(s, /** @type {any} */ (err));
+      if (reason === 'session_unavailable') return this.unavailable(s, /** @type {any} */ (err));
+      throw err;
+    }
+    s.unavailable = null;
+    s.tries = 0;
+    // 订阅的最新一页碰到坏行的也带 `broken`（核心 YC-6）：同 `session_read_only`，只读地看
+    s.broken = r?.broken ? { segment: typeof r.broken.segment === 'string' ? r.broken.segment : null, line: typeof r.broken.line === 'number' ? r.broken.line : null, message: '' } : null;
     s.view.reset(r);
     s.first = s.view.first;
     s.more = s.view.more;
@@ -223,6 +244,7 @@ export class Store {
 
   /** 删了的会话：从表里拿掉，不再列。 */
   drop(id) {
+    clearTimeout(this.sessions.get(id)?.retry);
     this.sessions.delete(id);
     this.extra.delete(id);
     this.unread.delete(id);
@@ -258,8 +280,13 @@ export class Store {
    */
   async ensure(id, listed = false) {
     if (listed) this.extra.add(id);
-    if (this.sessions.has(id)) {
-      if (listed) this.changed();
+    const had = this.sessions.get(id);
+    if (had) {
+      // 这一刻读不了、自己试完了的：再点开的照头一次再来
+      if (had.unavailable && !had.retry) {
+        had.tries = 0;
+        await this.catchUp(had);
+      } else if (listed) this.changed();
       return;
     }
     await this.load(id);
@@ -355,6 +382,48 @@ export class Store {
     this.tell(true);
     this.followParents();
     this.changed();
+  }
+
+  /**
+   * 日志中间坏了一行（核心 YC-6 的 `session_read_only`：说话、订阅都拒，`data` 带 `segment`、`line`）：不订阅，照 `view.page` 读坏行以前的最新一页
+   * （回应带 `broken`），只读地看；往上翻照常。界面照 `broken` 锁住输入框、写核心那一句（W-1138）。
+   * @param {Session} s @param {any} err
+   */
+  async readOnly(s, err) {
+    const page = await this.conn.request('view.page', { session: s.id, view: true });
+    const at = page?.broken ?? err?.data ?? {};
+    s.unavailable = null;
+    s.broken = { segment: typeof at.segment === 'string' ? at.segment : null, line: typeof at.line === 'number' ? at.line : null, message: err?.message ?? '' };
+    s.view.reset(page);
+    s.first = s.view.first;
+    s.more = s.view.more;
+  }
+
+  /**
+   * 这一刻读不了（核心 YC-2 的 `session_unavailable`）：一时的错，会话照常列着、不当成坏了；记下核心那一句，照 [`UNAVAILABLE_RETRY_MS`] 过一会儿
+   * 再订阅一次，订上了就好了（W-1138）。
+   * @param {Session} s @param {any} err
+   */
+  unavailable(s, err) {
+    s.unavailable = { message: err?.message ?? '' };
+    const tries = s.tries ?? 0;
+    if (s.retry || tries >= UNAVAILABLE_RETRY_MS.length) return;
+    s.retry = /** @type {any} */ (setTimeout(() => {
+      s.retry = 0;
+      s.tries = tries + 1;
+      if (s.gone || this.sessions.get(s.id) !== s) return;
+      this.catchUp(s).catch((e) => console.error(`会话 ${s.id} 再订阅不上：${e.message}`));
+    }, UNAVAILABLE_RETRY_MS[tries]));
+  }
+
+  /**
+   * 说话时核心回了 `session_read_only`（订阅时还好、后来坏的这种）：照只读的再读一遍。
+   * @param {string} id @param {any} err
+   */
+  markReadOnly(id, err) {
+    const s = this.sessions.get(id);
+    if (!s) return;
+    this.readOnly(s, err).then(() => this.changed(), (e) => console.error(`会话 ${id} 读不了：${e.message}`));
   }
 
   /** 掉了队、断线重连：重新订阅视图流，换上最新的一页（`04-核心协议.md` 第七节）。 @param {Session} s */

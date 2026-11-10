@@ -106,6 +106,10 @@ export class Composer {
     this.input.placeholder = this.placeholder();
     // 一开始框里没字：先灰着（原来先是能发的蓝色，挂好了才变灰，刷新时右下角闪一下）
     this.sendButton = h('button.composer-send', { type: 'button', title: t('send'), disabled: true, onclick: () => this.submit() }, icon('arrow-up'));
+    /** 只读会话（日志坏了一行，W-1138）发送按钮的位置换成的字按钮：「新开会话」 */
+    this.sealButton = h('button.composer-seal-action', { type: 'button', hidden: true });
+    /** @type {{label: string, run: () => void}|null} */
+    this.sealAction = null;
     this.notice = h('div.composer-notice', { hidden: true });
     /** 第几句提示：等着出的被新的一句、`quiet` 顶掉了就不出 */
     this.noticeTurn = 0;
@@ -189,7 +193,7 @@ export class Composer {
     this.stashed = /** @type {import('../model/stash.js').Draft|null} */ (null);
     this.stashChip = h('button.composer-stash', { type: 'button', hidden: true, onclick: () => { this.toggleStash(); this.input.focus(); } }, icon('save'));
     this.field = h('div.composer-field', this.backdrop, this.input);
-    this.box = h('div.composer', this.notice, this.jumpButton, this.takeoverEl, this.head, this.field, this.bar = h('div.composer-bar', h('div.composer-left', this.tools, this.stashChip), this.sendSide, this.sendButton), this.menu.el, this.picker.el, this.help.el, this.historyList.el, this.sessionList.el, this.mention.el, this.skillList.el, this.float);
+    this.box = h('div.composer', this.notice, this.jumpButton, this.takeoverEl, this.head, this.field, this.bar = h('div.composer-bar', h('div.composer-left', this.tools, this.stashChip), this.sendSide, this.sealButton, this.sendButton), this.menu.el, this.picker.el, this.help.el, this.historyList.el, this.sessionList.el, this.mention.el, this.skillList.el, this.float);
     this.el = h('div.composer-dock', this.box, this.footer);
     this.parts = /** @type {{key: string, text: string}[]} */ ([]);
     /** 撤销时放回框里的那句：恢复时还没动过的收回去（`tui.md`「输入框」第 7 条）。 */
@@ -349,17 +353,28 @@ export class Composer {
 
   /**
    * 正在看的会话是只读存档（核心 SE-1 下，W-1094）：同 `lock`，框换成一行字。照会话走、由 `App` 每画一次交一次；和软件包锁的分开记，
-   * 软件包换会话时 `lock(null)` 解不掉它，它解开也不把软件包锁的解掉。两样都有的写存档这一句。
-   * @param {string|null} text
+   * 软件包换会话时 `lock(null)` 解不掉它，它解开也不把软件包锁的解掉。两样都有的写存档这一句。日志坏了一行的只读会话（核心 YC-6，W-1138）
+   * 同样锁，另给 `action`：发送按钮那里换成一个字按钮（「新开会话」）。
+   * @param {string|null} text @param {{label: string, run: () => void}|null} [action]
    */
-  seal(text) {
+  seal(text, action = null) {
     this.sealed = text;
+    this.sealAction = action;
     this.syncLock();
   }
 
   /** 照 `seal`、`lock` 定锁没锁、写哪一句；没变的不动（`seal` 每画一次都来）。 */
   syncLock() {
     const text = this.sealed || this.held || null;
+    const action = this.sealed ? this.sealAction ?? null : null;
+    this.sealButton.hidden = !action;
+    this.sendButton.hidden = !!action;
+    // 只读会话里说不了话：发送左边挨着的（麦克风）一起收起
+    this.sendSide.hidden = !!action;
+    if (action) {
+      this.sealButton.textContent = action.label;
+      this.sealButton.onclick = () => action.run();
+    }
     if (text === this.locked) return;
     this.locked = text;
     this.input.disabled = !!text;
