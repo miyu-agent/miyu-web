@@ -40,6 +40,7 @@ import { emptySession } from '../core/store.js';
 import { upload } from '../lib/upload.js';
 import { importDone, importRefusal } from '../model/session-import.js';
 import { localeOf } from '../model/session-export.js';
+import { restBefore } from '../model/pace.js';
 import { openExport } from './export-dialog.js';
 
 /** 皮肤样张的会话编号：只在这一页（核心那边没有这个会话） */
@@ -477,6 +478,10 @@ export class App {
     addEventListener('resize', () => this.schedule());
     ctx.on('theme.changed', () => this.sidebar.drawThemeButton());
     this.frame = 0;
+    /** 歇着等下一次画的定时器、上一次画用了多久、什么时候画完的（`schedule`） */
+    this.resting = 0;
+    this.drawMs = 0;
+    this.drawnAt = 0;
     /** 新会话说第一句时正在开的那个会话（`createSession`）：这期间再说的等它，不另开 @type {Promise<void>|null} */
     this.creating = null;
     /** 会话 → 照回应再画一次的回顾（`/recap` 回应里 `cached` 为真的，蓝图「回顾」第 3 条；只在这一页里） */
@@ -654,8 +659,21 @@ export class App {
     return rank(this.store.order.map((id) => this.store.summary(id))).map((x) => x.session);
   }
 
+  /** 下一帧画一次；上一次画得久的（大回复涌进来，施工 YC-11）先歇一会儿，中间来的合在一起画（`model/pace.js`）。 */
   schedule() {
-    if (!this.frame) this.frame = requestAnimationFrame(() => { this.frame = 0; this.render(); });
+    if (this.frame || this.resting) return;
+    const rest = restBefore(this.drawMs, performance.now() - this.drawnAt);
+    if (rest > 0) {
+      this.resting = setTimeout(() => { this.resting = 0; this.schedule(); }, rest);
+      return;
+    }
+    this.frame = requestAnimationFrame(() => {
+      this.frame = 0;
+      const from = performance.now();
+      this.render();
+      this.drawnAt = performance.now();
+      this.drawMs = this.drawnAt - from;
+    });
   }
 
   /**
