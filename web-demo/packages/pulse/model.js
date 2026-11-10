@@ -137,13 +137,16 @@ export function entriesBeat(entries, status) {
 
 /**
  * 照会话状态的重试（`doing.retrying`，核心 9-8 补上）：第几次、上限、原话、换端点没有、什么时候再试（`at`）；不在重试的是 `null`。
- * @param {any} status @param {number|null} turn 在跑的那一轮
+ * 模型连上了却一直不出字的（分类 `stalled`，核心 YC-3）前面加「模型没有响应」，原话接在后面（`stalled` 照它写一句；W-1138）。
+ * @param {any} status @param {number|null} turn 在跑的那一轮 @param {(message: string) => string} [stalled]
  */
-export function statusRetry(status, turn) {
+export function statusRetry(status, turn, stalled) {
   const d = status?.doing;
   if (d?.what !== 'retrying') return null;
   const due = d.at ? Date.parse(d.at) : Number.NaN;
-  return { turn, attempt: d.attempt, limit: d.limit, message: d.message ?? '', failover: d.failover === true, ...(Number.isNaN(due) ? {} : { due }) };
+  const said = d.message ?? '';
+  const message = d.class === 'stalled' && stalled ? stalled(said) : said;
+  return { turn, attempt: d.attempt, limit: d.limit, message, failover: d.failover === true, ...(Number.isNaN(due) ? {} : { due }) };
 }
 
 /**

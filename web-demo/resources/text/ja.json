@@ -94,6 +94,7 @@
   "failed": "エラー：{message}",
   "error_classes": {
     "retryable": "一時的なエラー",
+    "stalled": "モデルが応答しません",
     "rate_limited": "レート制限",
     "context_too_long": "コンテキストが長すぎます",
     "auth": "認証エラー",

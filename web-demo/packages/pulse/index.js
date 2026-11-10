@@ -31,7 +31,7 @@ export function apply(ctx) {
       id: `${v.session}:${run.turn}`,
       start: run.start,
       beat: entriesBeat(v.entries, st),
-      retry: statusRetry(st, run.turn),
+      retry: statusRetry(st, run.turn, (message) => (message ? ctx.text('stalled_with', { message }) : ctx.text('stalled'))),
       queued: v.queued.map((q) => ({ seq: q.seq, text: q.text })),
       waiting: wait,
     } : null);

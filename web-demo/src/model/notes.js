@@ -18,6 +18,9 @@ import { shortSession } from './words.js';
 /** 内核自己查出来的几种错：不是供应商的原话，写分类的人话（`tui.md`「正文」第 4 条）。 */
 const KERNEL_CLASSES = ['bad_stream', 'empty_reply', 'bad_summary', 'compaction_paused', 'no_model', 'cooling', 'output_limit'];
 
+/** 模型连上了却一直不出字（核心 YC-3 的 `stalled`，等满空闲超时）：不是供应商回的错，原话是核心说的等了多久；写「模型没有响应：原话」（W-1138）。 */
+const STALLED = 'stalled';
+
 /**
  * 一句话是谁说的：人是你（核心 SU-6上 起 `by` 不带账号）；子代理照派它的那次的标题；父会话写「派它的会话」，别的会话写「从会话 短编号 收到消息」；别的 harness 照它报的名字、注明是别的 agent；平台上的人写「外部」；定时任务写「定时任务 编号」、循环写「循环」。
  * @param {any} by 事件的 `by`
@@ -181,6 +184,7 @@ export function failureText(f) {
   const cls = f.class ?? 'other';
   const span = waitSpan(f.retry_after_ms);
   const wait = span ? t(`retry_after.${span.unit}`, { n: span.n }) : null;
+  if (cls === STALLED) return message ? t('reason_with', { head: classes[cls], message }) : classes[cls];
   if (KERNEL_CLASSES.includes(cls)) {
     const head = wait ? t('retry_after.join', { head: classes[cls] ?? cls, wait }) : classes[cls] ?? cls;
     // 模型都在冷却、说了要等多久的不接原话（同终端：那句是内核自己的英文）

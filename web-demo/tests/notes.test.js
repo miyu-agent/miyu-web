@@ -24,6 +24,11 @@ test('谁说的：你的、别的账号的、子代理发给她的（标题照�
   assert.deepEqual(of({ kind: 'external', platform: 'qq' }), { kind: 'external', name: '外部' });
 });
 
+test('模型连上了却一直不出字（核心 YC-3 的 stalled，W-1138）：写「模型没有响应」，原话接在后面', () => {
+  assert.equal(failureText({ class: 'stalled', message: '空闲超时：180 秒没有收到新的内容' }), '模型没有响应：空闲超时：180 秒没有收到新的内容');
+  assert.equal(failureText({ class: 'stalled' }), '模型没有响应');
+});
+
 test('定时任务、循环交进来的（核心 J-1 上、J-2）：写「定时任务 编号」，带 loop 的写「循环」', () => {
   const of = (by) => speakerOf(by, new Map());
   assert.deepEqual(of({ kind: 'schedule', schedule: 't3' }), { kind: 'schedule', name: '定时任务 t3' });

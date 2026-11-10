@@ -119,6 +119,11 @@ test('重试照会话状态的 doing.retrying：第几次、上限、原话、�
   assert.deepEqual(statusRetry({ doing }, 7), { turn: 7, attempt: 2, limit: 5, message: '429 Too Many Requests', failover: false, due: Date.parse(doing.at) });
   assert.deepEqual(statusRetry({ doing: { ...doing, failover: true, at: undefined } }, 7), { turn: 7, attempt: 2, limit: 5, message: '429 Too Many Requests', failover: true });
   assert.equal(statusRetry({ doing: { what: 'replying' } }, 7), null);
+  // 模型没有响应（核心 YC-3 的 stalled，W-1138）：照传进来的那一句包原话；别的分类不动
+  const stalled = (m) => (m ? `模型没有响应：${m}` : '模型没有响应');
+  assert.equal(statusRetry({ doing: { ...doing, class: 'stalled', message: 'idle 180s' } }, 7, stalled).message, '模型没有响应：idle 180s');
+  assert.equal(statusRetry({ doing: { ...doing, class: 'stalled', message: '' } }, 7, stalled).message, '模型没有响应');
+  assert.equal(statusRetry({ doing: { ...doing, class: 'rate_limited' } }, 7, stalled).message, '429 Too Many Requests');
   assert.equal(statusRetry(null, 7), null);
 });
 

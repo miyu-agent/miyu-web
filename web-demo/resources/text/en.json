@@ -94,6 +94,7 @@
   "failed": "Error: {message}",
   "error_classes": {
     "retryable": "Temporary error",
+    "stalled": "The model stopped responding",
     "rate_limited": "Rate limited",
     "context_too_long": "Context too long",
     "auth": "Authentication failed",

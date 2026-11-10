@@ -484,6 +484,7 @@
         "config_error": "配置错误",
         "classes": {
           "retryable": "临时错误",
+          "stalled": "模型没有响应",
           "rate_limited": "请求受限",
           "context_too_long": "上下文太长",
           "auth": "认证失败",
@@ -1112,6 +1113,7 @@
         "config_error": "Configuration error",
         "classes": {
           "retryable": "Temporary error",
+          "stalled": "The model stopped responding",
           "rate_limited": "Rate limited",
           "context_too_long": "Context too long",
           "auth": "Authentication failed",
@@ -1740,6 +1742,7 @@
         "config_error": "設定エラー",
         "classes": {
           "retryable": "一時的なエラー",
+          "stalled": "モデルが応答しません",
           "rate_limited": "リクエスト制限",
           "context_too_long": "コンテキストが長すぎます",
           "auth": "認証失敗",

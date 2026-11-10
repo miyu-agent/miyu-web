@@ -174,6 +174,8 @@
       "retry": " · 重试 {attempt}/{limit}：{message}",
       "retry_wait": " · {wait} 后重试 {attempt}/{limit}：{message}",
       "retry_failover": " · 换端点重试 {attempt}/{limit}：{message}",
+      "stalled": "模型没有响应",
+      "stalled_with": "模型没有响应：{message}",
       "waiting_ask": "等待回答",
       "withdraw": "撤回",
       "withdraw_tip": "撤回这条，放回输入框"
@@ -182,6 +184,8 @@
       "retry": " · Retry {attempt}/{limit}: {message}",
       "retry_wait": " · Retrying in {wait} {attempt}/{limit}: {message}",
       "retry_failover": " · Retrying on another endpoint {attempt}/{limit}: {message}",
+      "stalled": "The model stopped responding",
+      "stalled_with": "The model stopped responding: {message}",
       "waiting_ask": "Waiting for your answer",
       "withdraw": "Withdraw",
       "withdraw_tip": "Withdraw this message and put it back in the input box"
@@ -190,6 +194,8 @@
       "retry": " · 再試行 {attempt}/{limit}：{message}",
       "retry_wait": " · {wait}後に再試行 {attempt}/{limit}：{message}",
       "retry_failover": " · エンドポイントを替えて再試行 {attempt}/{limit}：{message}",
+      "stalled": "モデルが応答しません",
+      "stalled_with": "モデルが応答しません：{message}",
       "waiting_ask": "回答を待っています",
       "withdraw": "取り消す",
       "withdraw_tip": "このメッセージを取り消して入力欄に戻す"

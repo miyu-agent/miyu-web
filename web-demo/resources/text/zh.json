@@ -94,6 +94,7 @@
   "failed": "出错：{message}",
   "error_classes": {
     "retryable": "临时错误",
+    "stalled": "模型没有响应",
     "rate_limited": "请求受限",
     "context_too_long": "上下文太长",
     "auth": "认证失败",
