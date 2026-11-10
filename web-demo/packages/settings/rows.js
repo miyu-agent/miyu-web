@@ -4,7 +4,7 @@
 //! （`look.js`）共用 `shell`。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { envRef, inputText, listElement, LAYER, writtenIn, secretName, referenceOptions, pickOptions, comboState, COMBO_OTHER } from './model.js';
+import { envRef, inputText, listElement, LAYER, writtenIn, secretName, referenceOptions, pickOptions, comboState, COMBO_OTHER, choicesFrom, packageChoices, choiceOptions } from './model.js';
 import { slider } from './slider.js';
 import { records } from './records.js';
 
@@ -201,6 +201,9 @@ function control(dialog, item, value, save, saveSecret) {
     const label = h('button.set-env', { type: 'button', onclick: () => { label.replaceWith(field); field.focus(); } }, ctx.text('from_env', { name: env }));
     return label;
   }
+  // 选项由包在运行时给的（核心 SG-2 的 `choices_from`）：先照文字框画，问到了换成下拉；问不到、回空的留着文字框
+  const from = choicesFrom(item);
+  if (from && !env) return fromPackage(dialog, from, value, save);
   // 文字、数：一行字，`Enter`、离开时存，整串交给核心照类型读（`input`）；清空了是从这一层删掉（回到默认）；环境变量引用的先写
   // 「来自环境变量 X」，点了才改
   // 几行的字（控件 `textarea`，核心 P-9 三补：「更多描述」，能分行）：几行的框，占满这一行（`.set-area` 把控件放到名字下面）
@@ -209,6 +212,36 @@ function control(dialog, item, value, save, saveSecret) {
   if (!env) return field;
   const label = h('button.set-env', { type: 'button', onclick: () => { label.replaceWith(field); field.focus(); } }, ctx.text('from_env', { name: env }));
   return label;
+}
+
+/**
+ * 选项由包给的文字项（核心 SG-2）：调 `package.call {package, method}`（不带 `params`）取选项。这一次开着设置时问过的照记着的直接画
+ * 下拉（存了重画不闪回文字框）；头一次先画文字框，问到了、人又没在里面打字就换成下拉。调不到（包没在跑、没登记、超时）、回的不是
+ * 选项的：留着文字框，照样能写。
+ * @param {any} dialog @param {{package: string, method: string}} from @param {any} value 现在的值
+ * @param {(change: {value?: any, input?: string, unset?: boolean}) => any} save
+ */
+function fromPackage(dialog, from, value, save) {
+  const ctx = dialog.ctx;
+  /** @type {Map<string, any>} 问过的：选项，问不到的是 `null`，还在问的是那个 Promise */
+  const asked = (dialog.packageChoices ??= new Map());
+  const key = `${from.package}\n${from.method}`;
+  const picker = (/** @type {any[]} */ list) => select(dialog, choiceOptions(list, value, ctx.text('combo_unset')), typeof value === 'string' && value !== '' ? value : null,
+    (v) => save(v === null ? { unset: true } : { value: v }));
+  const known = asked.get(key);
+  if (Array.isArray(known)) return picker(known);
+  const field = textField(inputText(value), 'text', '', (text) => save(text === '' ? { unset: true } : { input: text }));
+  if (known === null) return field;
+  const asking = known ?? ctx.core.request('package.call', { package: from.package, method: from.method })
+    .then((/** @type {any} */ got) => packageChoices(got), () => null);
+  if (!known) {
+    asked.set(key, asking);
+    asking.then((/** @type {any} */ list) => asked.set(key, list));
+  }
+  asking.then((/** @type {any} */ list) => {
+    if (list && field.isConnected && document.activeElement !== field && field.dataset.dirty !== '1') field.replaceWith(picker(list));
+  });
+  return field;
 }
 
 /**

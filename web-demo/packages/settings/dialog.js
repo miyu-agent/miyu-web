@@ -67,6 +67,8 @@ export class SettingsDialog {
 
   /** 打开：画框，读配置，到 `page` 那一页（没给的回上次看的）；点名了一组的（`group`）滚到那一组。 @param {string|null} page @param {string|null} [group] */
   async open(page, group = null) {
+    /** 包在运行时给的选项（核心 SG-2 的 `choices_from`，`rows.js` 的 `fromPackage`）：每次打开设置重新问 */
+    this.packageChoices = new Map();
     this.isOpen = true;
     const cfg = this.ctx.config;
     this.search = h('input.set-search', { type: 'search', placeholder: this.ctx.text('search'), 'aria-label': this.ctx.text('search'), oninput: () => { this.query = this.search.value; this.drawBody(); } });

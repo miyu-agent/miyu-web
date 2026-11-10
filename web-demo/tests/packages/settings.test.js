@@ -416,3 +416,35 @@ test('「允许局域网访问」照 web.listen 认开没开：回环（127.*、
   for (const v of ['127.0.0.1', '127.0.1.1', '::1', '[::1]', 'localhost', ' LOCALHOST ', '', undefined, null]) assert.equal(loopbackOnly(v), true, String(v));
   for (const v of ['0.0.0.0', '192.168.1.5', '::']) assert.equal(loopbackOnly(v), false, v);
 });
+
+// 核心 SG-2（W-1152）：选项由包在运行时给的文字项、不用填号的平台
+import { choicesFrom, packageChoices, choiceOptions, asksOwnerNumber } from '../../packages/settings/model.js';
+
+test('choices_from：只认文字项、包名和方法名都写了的；旧核心没有这一格的照文字框', () => {
+  assert.deepEqual(choicesFrom({ type: 'text', choices_from: { package: 'miyu-say', method: 'voices' } }), { package: 'miyu-say', method: 'voices' });
+  assert.equal(choicesFrom({ type: 'text' }), null);
+  assert.equal(choicesFrom({ type: 'number', choices_from: { package: 'p', method: 'm' } }), null);
+  assert.equal(choicesFrom({ type: 'text', choices_from: { package: 'p' } }), null);
+});
+
+test('包回的选项：名字没写的照 value，说明暗色写；回空的、不是这个样子的退回文字框（null）', () => {
+  assert.deepEqual(packageChoices({ choices: [{ value: 'a', name: '甲', description: '说明' }, { value: 'b' }, { name: '没有值' }] }),
+    [{ value: 'a', name: '甲', desc: '说明' }, { value: 'b', name: 'b' }]);
+  assert.equal(packageChoices({ choices: [] }), null);
+  assert.equal(packageChoices({ choices: 'x' }), null);
+  assert.equal(packageChoices(null), null);
+});
+
+test('下拉列哪几项：头一项不设；存着的值不在列表里的照样留一项', () => {
+  const list = [{ value: 'a', name: '甲' }];
+  assert.deepEqual(choiceOptions(list, 'a', '不设'), [{ value: null, name: '不设' }, { value: 'a', name: '甲' }]);
+  assert.deepEqual(choiceOptions(list, 'old', '不设').at(-1), { value: 'old', name: 'old' });
+  assert.equal(choiceOptions(list, null, '不设').length, 2);
+});
+
+test('终端管理员的号那一块：接平台的画；带 owner_builtin 的（voice）不画；旧核心没这一格的照旧画', () => {
+  assert.equal(asksOwnerNumber({ platform: 'qq' }), true);
+  assert.equal(asksOwnerNumber({ platform: 'voice', owner_builtin: true }), false);
+  assert.equal(asksOwnerNumber({ platform: 'telegram', owner_builtin: false }), true);
+  assert.equal(asksOwnerNumber(undefined), false);
+});

@@ -183,6 +183,54 @@ export function plainItem(schema, got, key) {
   return itemFor(schema, got, key, {});
 }
 
+/**
+ * 选项由包在运行时给的文字项（核心 SG-2，`config.schema` 的 `choices_from: {package, method}`）：问哪个包的哪个方法；不是这个样子的、
+ * 旧核心没有这一格的是 `null`（照文字框画）。
+ * @param {any} item
+ * @returns {{package: string, method: string}|null}
+ */
+export function choicesFrom(item) {
+  const from = item?.choices_from;
+  return item?.type === 'text' && typeof from?.package === 'string' && from.package && typeof from?.method === 'string' && from.method
+    ? { package: from.package, method: from.method } : null;
+}
+
+/**
+ * 包回的选项（`package.call` 的回应 `{choices: [{value, name?, description?}]}`）读成下拉的几项：`value` 不是字的不要，名字没写的照
+ * `value`。一项都没有、不是这个样子的是 `null`（退回文字框）。
+ * @param {any} got
+ * @returns {{value: string, name: string, desc?: string}[]|null}
+ */
+export function packageChoices(got) {
+  if (!Array.isArray(got?.choices)) return null;
+  const list = got.choices
+    .filter((/** @type {any} */ c) => typeof c?.value === 'string')
+    .map((/** @type {any} */ c) => ({ value: c.value, name: typeof c.name === 'string' && c.name ? c.name : c.value, ...(typeof c.description === 'string' && c.description ? { desc: c.description } : {}) }));
+  return list.length ? list : null;
+}
+
+/**
+ * 下拉里列哪几项：头一项「不设」（值 `null`，从这一层删掉），接着包给的；现在存着的值不在里面的照原样多留一项（核心不照列表查值，
+ * 写什么存什么）。
+ * @param {{value: string, name: string, desc?: string}[]} list @param {any} value 现在的值 @param {string} unset 「不设」
+ * @returns {{value: string|null, name: string, desc?: string}[]}
+ */
+export function choiceOptions(list, value, unset) {
+  /** @type {{value: string|null, name: string, desc?: string}[]} */
+  const options = [{ value: null, name: unset }, ...list];
+  if (typeof value === 'string' && value !== '' && !list.some((c) => c.value === value)) options.push({ value, name: value });
+  return options;
+}
+
+/**
+ * 平台接入的包的信息页上画不画「终端管理员在这个平台上的号」：有 `connection.platform`、又没带 `owner_builtin: true` 的才画（核心 SG-2：
+ * 现在只有 `voice` 带，主人不用填号）。旧核心没有这一格的照旧画。
+ * @param {any} connection `package.list` 一项的 `connection`
+ */
+export function asksOwnerNumber(connection) {
+  return typeof connection?.platform === 'string' && !!connection.platform && connection.owner_builtin !== true;
+}
+
 /** 窗口这类大数写短：`1000000` → `1M`，`128000` → `128k`。 */
 export function shortCount(n) {
   if (typeof n !== 'number') return '';

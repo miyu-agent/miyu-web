@@ -13,7 +13,7 @@ import { tilde } from '../../src/lib/format.js';
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField, findBox, shell } from './rows.js';
 import { cardsOf, sectionsOf, valueLookup } from './package-sections.js';
-import { splitKey, itemFor, pkgSwitch, pkgGroupsOf, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy } from './model.js';
+import { splitKey, itemFor, pkgSwitch, pkgGroupsOf, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy, asksOwnerNumber } from './model.js';
 import { openPage, probeSites } from './backstage.js';
 import { serverRow } from './mcp-servers.js';
 import { stateText, failed } from './extensions.js';
@@ -275,7 +275,8 @@ function infoPage(dialog, id) {
     missing ? null : mcpGroup(dialog, p),
     ...groups.map((/** @type {any} */ x) => groupBlock(x.name, x.rows)),
     // 平台接入的（没有自己网页的）：终端管理员在这个平台上的号，接在它的设置项后面
-    !site && !missing && p.connection?.platform ? ownerAccounts(dialog, p.connection.platform) : null,
+    // 带 `owner_builtin` 的平台（核心 SG-2，现在只有 voice）主人不用填号：不画
+    !site && !missing && asksOwnerNumber(p.connection) ? ownerAccounts(dialog, p.connection.platform) : null,
   ].filter(Boolean);
 }
 
