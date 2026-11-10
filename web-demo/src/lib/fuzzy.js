@@ -4,6 +4,13 @@
 //! 照文件筛的（`fileFilter`）目录只认连着的一截。
 
 /**
+ * 比的时候只留字母、数字（含汉字这类，照 Unicode），不分大小写：`claude-opus-5-5` 和 `opus5.5` 都成 `…opus55`（2026-11-10 项目主人：
+ * 搜 `opus5.5` 找不到 `claude-opus-5-5`）。找模型的几处搜索共用（模型菜单、设置页、引导）。
+ * @param {string} text
+ */
+export const bare = (text) => text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+
+/**
  * 一段字对不对得上，多少分（越大越靠前）；对不上是 `null`；没写字的都对得上（0 分）。
  * @param {string} query @param {string} text
  * @returns {number|null}

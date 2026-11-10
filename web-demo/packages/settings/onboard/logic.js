@@ -3,6 +3,7 @@
 //! 选一家那一屏有哪几行、标什么；配置里的编号怎么起（目录里的、自定义的）；`provider.test` 带什么；存的时候写哪几项。
 
 import { validId, providerName } from '../model.js';
+import { bare } from '../../../src/lib/fuzzy.js';
 
 /** 通用的二级域名：`api.example.co.uk` 取 `example`（`cli/setup.md` 第 4 条第 3 款） */
 const SECOND_LEVEL = new Set(['co', 'com', 'net', 'org', 'edu', 'gov', 'ac']);
@@ -203,7 +204,8 @@ export function modelOrder(models, tried) {
 export function filterNames(models, query) {
   // 空格分开的几个词都要有（不分先后），每个词也可以是跳着的几个字（「cline deepseek」找得到 clinepass/cline-pass/deepseek-v4.1-flash，
   // 「dsflash」找得到 deepseek-flash；2026-10-23 项目主人：搜索不支持模糊搜索）；连着含着的排前面
-  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  // 比的时候两边都去掉标点、空白（`bare`：2026-11-10 项目主人：引导里搜 opus5.5 搜不到 opus5-5），只有标点的那一段不算
+  const words = query.split(/\s+/).map(bare).filter(Boolean);
   if (!words.length) return models;
   const loose = (/** @type {string} */ text, /** @type {string} */ w) => {
     let i = 0;
@@ -212,7 +214,7 @@ export function filterNames(models, query) {
   };
   const scored = [];
   for (const m of models) {
-    const low = m.toLowerCase();
+    const low = bare(m);
     if (!words.every((w) => low.includes(w) || loose(low, w))) continue;
     scored.push({ m, exact: words.every((w) => low.includes(w)) ? 0 : 1 });
   }

@@ -3,6 +3,7 @@
 //! 每一项来自哪一层、写在哪一层、`expect` 写什么、搜索对不对得上。不碰 DOM、不发请求。
 
 import { coverOf, shadowed } from '../../src/lib/packages.js';
+import { bare } from '../../src/lib/fuzzy.js';
 
 /**
  * @typedef {{key: string, type: string, control: string, name: string, description: string, page: string, group: string,
@@ -316,11 +317,12 @@ export function poolRemoval(id, got, layer) {
  * @returns {T[]}
  */
 export function filterModels(rows, query) {
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  // 比的时候两边都去掉标点、空白（`bare`：`opus5.5` 找得到 `claude-opus-5-5`），一段不跨行；只有标点的那一段不算
+  const words = query.split(/\s+/).map(bare).filter(Boolean);
   if (!words.length) return rows;
   return rows.filter((r) => {
-    const hay = `${r.name}\n${r.model}\n${r.provider ?? ''}`.toLowerCase();
-    return words.every((w) => hay.includes(w));
+    const lines = [r.name, r.model, r.provider ?? ''].map(bare);
+    return words.every((w) => lines.some((l) => l.includes(w)));
   });
 }
 

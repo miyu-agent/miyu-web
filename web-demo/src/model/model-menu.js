@@ -5,6 +5,7 @@
 import { res, t } from '../util/res.js';
 import { hhmm } from './format.js';
 import { poolOrder, isFixedPool } from '../lib/fixed-pools.js';
+import { bare } from '../lib/fuzzy.js';
 
 /**
  * @typedef {{ref: string, title: string, desc: string, current: boolean, usable: boolean, why: string, find: string, logo?: any, brand?: string}} Row 一行：选了交给
@@ -52,9 +53,6 @@ export const poolName = (name) => (isFixedPool(name) ? t(`model_menu.fixed_pools
 
 /** 供应商的显示名（核心 8-21：`name.value`，已经照配置、目录、编号退好；旧核心是字或没有）。 */
 const providerName = (p) => (typeof p.name === 'object' ? p.name?.value : p.name) || p.id;
-
-/** 比的时候只留字母、数字（含汉字这类，照 Unicode），不分大小写：`claude-opus-5-5` 和 `opus5.5` 都成 `…opus55`。 @param {string} text */
-const bare = (text) => text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
 
 /**
  * 搜索框：照 `find`（显示名、模型名、供应商，一行一样）找，空格分开的几段都要有（哪一行都行，一段不跨行），不分大小写；比的时候两边都去掉标点、空白

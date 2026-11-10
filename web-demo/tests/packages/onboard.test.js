@@ -152,6 +152,23 @@ test('找模型：空格分开的几个词都要有，词也可以跳着；连�
   assert.deepEqual(filterNames(list, '  '), list);
 });
 
+test('引导里找模型不管标点、空白：opus5.5、OPUS 5-5、opus55 都找得到 claude-opus-5-5、排最前（跳着对得上的排后面），只有标点的一段不算（发版前 check）', async () => {
+  const { filterNames } = await import('../../packages/settings/onboard/logic.js');
+  const list = ['anthropic/claude-opus-5-5', 'anthropic/claude-sonnet-5-5', 'openai/gpt-5.5'];
+  for (const q of ['opus5.5', 'OPUS 5-5', 'opus55', 'claude_opus 5.5']) assert.equal(filterNames(list, q)[0], 'anthropic/claude-opus-5-5', q);
+  assert.deepEqual(filterNames(list, 'gpt5-5'), ['openai/gpt-5.5']);
+  assert.deepEqual(filterNames(list, ' - . '), list);
+});
+
+test('设置页找模型也不管标点（同一个办法）', async () => {
+  const { filterModels } = await import('../../packages/settings/model.js');
+  const rows = [{ name: 'Claude Opus 5.5', model: 'claude-opus-5-5', provider: 'Anthropic' }, { name: 'GPT-5.5', model: 'gpt-5.5', provider: 'OpenAI' }];
+  assert.deepEqual(filterModels(rows, 'opus5-5').map((r) => r.model), ['claude-opus-5-5']);
+  assert.deepEqual(filterModels(rows, 'opus55 anthropic').map((r) => r.model), ['claude-opus-5-5']);
+  assert.deepEqual(filterModels(rows, 'gpt5.5 anthropic'), []);
+  assert.deepEqual(filterModels(rows, '.'), rows);
+});
+
 test('自定义的显示名称写进 providers.<id>.name，空着的不写', async () => {
   const { setupChanges } = await import('../../packages/settings/onboard/logic.js');
   const named = setupChanges({ kind: 'custom', driver: 'openai-chat', base_url: 'http://h:1/v1', id: 'magpie', name: 'Magpie 中转' }, null, { taken: new Set() });
