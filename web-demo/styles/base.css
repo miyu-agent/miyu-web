@@ -123,7 +123,8 @@ button, textarea { font: inherit; color: inherit; }
 /* 起不来时整页一句话 */
 #app.fatal { padding: calc(32px * var(--space)); color: var(--danger, #b3403a); font-size: calc(15px * var(--text-scale)); }
 /* 连着桥、连不上桥（蓝图 web.md「连核心」第 9 条）：页面正中，不留一片白。主题还没挂上时颜色照回退的写 */
-.boot-wait { display: grid; height: 100%; min-height: 60vh; place-items: center; color: var(--text-faint, #9a948c); font-size: calc(14px * var(--text-scale)); }
+.boot-wait { display: grid; height: 100%; min-height: 60vh; place-items: center; align-content: center; gap: 10px; color: var(--text-faint, #9a948c); font-size: calc(14px * var(--text-scale)); }
+.boot-wait-why { max-width: 30em; margin: 0 16px; color: var(--text-soft, #625d56); font-size: calc(13px * var(--text-scale)); line-height: 1.6; text-align: center; }
 #app.offline { display: grid; min-height: 100vh; place-items: center; padding: calc(16px * var(--space)); }
 /* 带着管理员后台的网址刷新进来：后台画出来以前不露主界面（内核加、设置包的后台去掉） */
 .boot-card {

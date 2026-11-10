@@ -9,6 +9,7 @@
 //! 蹲在卡片上沿（静态图，2026-10-22 项目主人选的样板二 B）。
 
 import { h, icon, replace } from '../lib/dom.js';
+import { waitScreen } from './wait.js';
 import { t } from '../util/res.js';
 import { Connection, Refusal } from '../core/connection.js';
 import { onThisComputer } from '../host/files.js';
@@ -284,7 +285,7 @@ export async function signIn(host, greeting, root, offline, retry = /** @type {n
         keep = got.keep;
         credential = { password: got.password };
       }
-      replace(root, h('div.boot-wait', t('boot.connecting_web')));
+      replace(root, waitScreen(t('boot.connecting_web'), t('boot.connecting_slow')));
     }
     const conn = new Connection(host.channel, retry, host.check);
     await conn.connect().catch(offline);

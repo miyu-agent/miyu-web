@@ -157,6 +157,7 @@
   },
   "boot": {
     "connecting_web": "正在连接…",
+    "connecting_slow": "连了很久还没连上。这台设备开着代理或 VPN（比如 TUN 模式）的话，关掉或者把这个地址设成直连再试。",
     "web_title": "连不上网页软件",
     "web_why": "网页软件没在跑。",
     "web_how": "在终端里运行 miyu web。",

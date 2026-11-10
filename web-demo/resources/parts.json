@@ -3010,6 +3010,12 @@
       ".boot-wait"
     ]
   },
+  "boot.wait_why": {
+    "zh": "连了很久还没连上的原因",
+    "select": [
+      ".boot-wait-why"
+    ]
+  },
   "boot.why": {
     "zh": "启动：原因",
     "select": [

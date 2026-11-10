@@ -23,6 +23,7 @@ import { Slots } from './slots.js';
 import { Seams } from './seams.js';
 import { Loader, rows } from './loader.js';
 import { Themes, themeManifest } from './themes.js';
+import { waitScreen } from './wait.js';
 import { resolve } from './config.js';
 import { loadResources, useTexts, moreIcons, res, t } from '../util/res.js';
 import { pick, settingOf, options, languageSpec, fromConfig } from './language.js';
@@ -76,7 +77,7 @@ export async function boot(root) {
   // 两份宿主：有桥的口令走桥，没有的是网页软件给的页面（蓝图 `web/architecture.md`「浏览器的第二份宿主」）
   const host = browserHost() ?? servedHost();
   const served = host.kind === 'served';
-  root.replaceChildren(Object.assign(document.createElement('div'), { className: 'boot-wait', textContent: t(served ? 'boot.connecting_web' : 'boot.connecting') }));
+  root.replaceChildren(waitScreen(t(served ? 'boot.connecting_web' : 'boot.connecting'), served ? t('boot.connecting_slow') : null));
   // 旧代码（src/ui）经它拿地址、开外链、写剪贴板
   useHost(host);
   // 能当场确认、回答（确认和提问的抽屉，核心 D-1、D-2）：核心照造会话的那个连接的 `caps.input` 定这个会话有没有人能确认、回答

@@ -157,6 +157,7 @@
   },
   "boot": {
     "connecting_web": "Connecting…",
+    "connecting_slow": "Still connecting. If this device uses a proxy or VPN (such as TUN mode), turn it off or let this address connect directly, then try again.",
     "web_title": "Can't reach the web app",
     "web_why": "The web app isn't running.",
     "web_how": "Run miyu web in a terminal.",
