@@ -80,17 +80,23 @@ function lanRow(dialog, item, on, pending) {
     return !why;
   });
   const url = on ? dialog.lanInfo?.lan : null;
-  // 几块网卡都能开的，别的地址列在卡下面（网页软件的 `lans`，W-1135）；Mac 上别的设备打不开多半是防火墙挡了传入连接，开着时写一句去哪放行
-  // （2026-11-10 项目主人：Mac 上换了真实地址也打不开）
-  const others = on && Array.isArray(dialog.lanInfo?.lans) ? dialog.lanInfo.lans.filter((/** @type {any} */ u) => typeof u === 'string' && u !== url) : [];
+  // 每块网卡的地址都列（网页软件的 `lans`，带网卡名，W-1135；2026-11-10 项目主人：全部列出、不分先后，组网、代理的虚拟网卡也列，人看网卡名
+  // 自己挑）：卡照第一个画，别的写在卡下面；Mac 上别的设备打不开多半是防火墙挡了传入连接，开着时写一句去哪放行（同一天：换了真实地址也打不开）
+  /** @type {{url: string, card: string|null}[]} */
+  const all = on && Array.isArray(dialog.lanInfo?.lans)
+    ? dialog.lanInfo.lans.filter((/** @type {any} */ l) => typeof l?.url === 'string').map((/** @type {any} */ l) => ({ url: l.url, card: typeof l.card === 'string' ? l.card : null }))
+    : [];
+  const named = (/** @type {{url: string, card: string|null}} */ l) => (l.card ? `${l.url}（${l.card}）` : l.url);
+  const others = all.filter((l) => l.url !== url).map(named);
+  const mine = all.find((l) => l.url === url)?.card ?? null;
   const mac = on && dialog.ctx.host?.platform === 'macos';
   return h('div.set-row', h('div.set-text', h('div.set-name', h('span', t('account.lan'))),
     h('p.set-desc', t('account.lan_desc')),
     // 明文 HTTP（2026-10-30 项目主人定不配证书，第二轮审查 W2-3）
     h('p.set-desc.acc-lan-warn', t('account.lan_risk')),
     pending ? h('p.set-desc.acc-lan-warn', t('account.lan_needs_password')) : null,
-    typeof url === 'string' ? lanCard(dialog.ctx, url) : null,
-    typeof url === 'string' && others.length ? h('p.set-desc', t('account.lan_others', { urls: others.join('  ') })) : null,
+    typeof url === 'string' ? lanCard(dialog.ctx, url, mine) : null,
+    typeof url === 'string' && others.length ? h('p.set-desc', t('account.lan_others', { urls: others.join('、') })) : null,
     typeof url === 'string' && mac ? h('p.set-desc', t('account.lan_mac_firewall')) : null), sw);
 }
 
@@ -143,7 +149,7 @@ export async function relisten(dialog, keys) {
     const was = dialog.lanInfo;
     if (was) {
       const moved = (/** @type {any} */ u) => (typeof u === 'string' ? u.replace(/:\d+$/, `:${port}`) : u);
-      dialog.lanInfo = { ...was, port, lan: moved(was.lan), lans: Array.isArray(was.lans) ? was.lans.map(moved) : was.lans };
+      dialog.lanInfo = { ...was, port, lan: moved(was.lan), lans: Array.isArray(was.lans) ? was.lans.map((/** @type {any} */ l) => ({ ...l, url: moved(l?.url) })) : was.lans };
     }
     if (dialog.current === 'general') dialog.drawBody?.();
     return;

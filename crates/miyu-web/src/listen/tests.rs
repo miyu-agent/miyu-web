@@ -4,7 +4,7 @@ use super::*;
 
 #[test]
 fn lan_address_follows_what_is_listened_on() {
-    let lan = |listen: IpAddr, port: u16| lans(listen, port).into_iter().next();
+    let lan = |listen: IpAddr, port: u16| lans(listen, port).into_iter().next().map(|lan| lan.url);
     assert_eq!(
         lan(IpAddr::V4(Ipv4Addr::LOCALHOST), 8300),
         None,
@@ -31,65 +31,50 @@ fn lan_address_follows_what_is_listened_on() {
     }
 }
 
-/// 听 `0.0.0.0` 的照网卡挑：代理的 TUN 网卡（Mac 上 Clash 的 `utun` 带 198.18 的假地址，2026-11-10 项目主人撞见）、Tailscale 的 100.64
-/// 网段、Docker 网桥都不要；私有网段在前，往外的那个在同一档最前；挑没了的照往外的那个，它也是虚拟网段的就什么都不给。
+/// 听 `0.0.0.0` 的照网卡全列（2026-11-10 项目主人：全部列出、不分先后，组网、代理的虚拟网卡也列，带网卡名）：照网卡的先后；回环、链路本地不列；
+/// 同一个地址只列一次；读不到网卡的照往外的那个，不知道网卡名；听 `::` 的列 IPv6。
 #[test]
-fn the_lan_address_skips_tunnels_and_puts_private_cards_first() {
+fn the_lan_addresses_list_every_card_in_order_with_its_name() {
     let ip = |s: &str| -> IpAddr { s.parse().expect("是地址") };
     let cards = |list: &[(&str, &str)]| -> Vec<(String, IpAddr)> {
         list.iter().map(|(n, a)| ((*n).to_owned(), ip(a))).collect()
     };
+    let named = |list: &[(&str, &str)]| -> Vec<(Option<String>, IpAddr)> {
+        list.iter()
+            .map(|(n, a)| (Some((*n).to_owned()), ip(a)))
+            .collect()
+    };
     let mac = cards(&[
         ("lo0", "127.0.0.1"),
         ("utun4", "198.18.0.1"),
-        ("en0", "192.168.0.3"),
+        ("en0", "172.20.10.12"),
         ("utun5", "100.101.1.2"),
-        ("bridge100", "192.168.64.1"),
-        ("en7", "10.0.0.8"),
+        ("bridge100", "169.254.3.1"),
         ("en0", "fe80::1"),
+        ("en0", "172.20.10.12"),
     ]);
-    // 默认路由在 TUN 上：往外的那个是 198.18.0.3
     assert_eq!(
         pick(&mac, Some(ip("198.18.0.3")), false),
-        vec![ip("192.168.0.3"), ip("10.0.0.8")]
+        named(&[
+            ("utun4", "198.18.0.1"),
+            ("en0", "172.20.10.12"),
+            ("utun5", "100.101.1.2")
+        ])
     );
-    // 往外的那个是第二块实体网卡：同一档里它排前面
-    let two = cards(&[("eth0", "192.168.1.9"), ("wlan0", "192.168.0.3")]);
-    assert_eq!(
-        pick(&two, Some(ip("192.168.0.3")), false),
-        vec![ip("192.168.0.3"), ip("192.168.1.9")]
-    );
-    // Linux 上的容器、虚拟机、WireGuard、Tailscale 网卡
-    let linux = cards(&[
-        ("docker0", "172.17.0.1"),
-        ("virbr0", "192.168.122.1"),
-        ("wg0", "10.8.0.2"),
-        ("tailscale0", "100.64.0.5"),
-        ("enp5s0", "172.20.1.4"),
-    ]);
-    assert_eq!(pick(&linux, None, false), vec![ip("172.20.1.4")]);
-    // 读不到网卡的照往外的那个；它也是代理的假地址的不给
     assert_eq!(
         pick(&[], Some(ip("192.168.0.3")), false),
-        vec![ip("192.168.0.3")]
+        vec![(None, ip("192.168.0.3"))]
     );
-    assert_eq!(
-        pick(&[], Some(ip("198.19.2.1")), false),
-        Vec::<IpAddr>::new()
-    );
-    // 听 `::` 的挑 IPv6：链路本地不要，唯一本地在前
+    assert_eq!(pick(&[], Some(ip("169.254.0.3")), false), Vec::new());
     let six = cards(&[
         ("en0", "fe80::1"),
         ("en0", "2001:db8::5"),
-        ("en0", "fd00::5"),
+        ("tailscale0", "fd7a::5"),
     ]);
     assert_eq!(
         pick(&six, None, true),
-        vec![ip("fd00::5"), ip("2001:db8::5")]
+        named(&[("en0", "2001:db8::5"), ("tailscale0", "fd7a::5")])
     );
-    // 同一个地址只列一次
-    let twice = cards(&[("en0", "192.168.0.3"), ("en0", "192.168.0.3")]);
-    assert_eq!(pick(&twice, None, false), vec![ip("192.168.0.3")]);
 }
 
 #[tokio::test]

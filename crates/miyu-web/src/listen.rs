@@ -1,7 +1,7 @@
 //! `/listen`（`web-ui.md`「怎么走」第一条第 11 款，2026-10-30 项目主人：网页默认只给本机，设置页一个开关放开到局域网、能填监听地址和
 //! 端口；网页软件开着就不空闲退出，等它重启才生效等于不生效）：
 //!
-//! - `GET`：在听的地址、端口，别的设备打开用的网址（`lan`，几块网卡都能开的全列在 `lans`，[`lans`]）。
+//! - `GET`：在听的地址、端口，别的设备打开用的网址（`lan`；每块网卡的地址带网卡名全列在 `lans`，[`lans`]）。
 //! - `POST`：带设备令牌（同 `/media`），拿它连核心读 `web.listen`、`web.port`（不替请求出示本机令牌），和在听的不一样就请接连接的那一圈
 //!   换监听（[`Swap`]，[`swap`] 照它换）。已经连着的不断；别的机器来的、新地址不再包含它连进来的地址的（关了局域网）例外：WebSocket
 //!   关掉，再来的请求 403（2026-11-02 第四轮审查 W4-2，`serve`）。
@@ -168,10 +168,18 @@ fn answer(site: &Site, error: Option<String>) -> Response<Body> {
     response
 }
 
-/// 别的设备打开用的网址，好用的在前：听回环的没有；听某一个地址的就是它；听 `0.0.0.0`、`::` 的照这台电脑的网卡挑（[`pick`]），
-/// 读不到网卡的照往外的那个地址（[`outward`]）。
-pub(crate) fn lans(listen: IpAddr, port: u16) -> Vec<String> {
-    let ips = match listen {
+/// 别的设备打开用的一个地址：网址和哪块网卡（听某一个地址的、照往外的那个地址的不知道是哪块，空的）。
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub(crate) struct Lan {
+    pub(crate) url: String,
+    pub(crate) card: Option<String>,
+}
+
+/// 别的设备打开用的地址：听回环的没有；听某一个地址的就是它；听 `0.0.0.0`、`::` 的照这台电脑的网卡全列（[`pick`]），读不到网卡的照往外的
+/// 那个地址（[`outward`]）。
+pub(crate) fn lans(listen: IpAddr, port: u16) -> Vec<Lan> {
+    let url = |ip: IpAddr| format!("http://{}", SocketAddr::new(ip, port));
+    match listen {
         ip if ip.is_loopback() => Vec::new(),
         ip if ip.is_unspecified() => {
             let cards: Vec<(String, IpAddr)> = if_addrs::get_if_addrs()
@@ -182,97 +190,48 @@ pub(crate) fn lans(listen: IpAddr, port: u16) -> Vec<String> {
                 })
                 .unwrap_or_default();
             pick(&cards, outward(ip), ip.is_ipv6())
+                .into_iter()
+                .map(|(card, ip)| Lan { url: url(ip), card })
+                .collect()
         }
-        ip => vec![ip],
-    };
-    ips.into_iter()
-        .map(|ip| format!("http://{}", SocketAddr::new(ip, port)))
-        .collect()
+        ip => vec![Lan {
+            url: url(ip),
+            card: None,
+        }],
+    }
 }
 
-/// 从网卡里挑别的设备连得进来的地址（2026-11-10 项目主人：Mac 上开着代理的 TUN 网卡，显示的是 198.18 开头的虚拟地址，局域网里的设备打不开；
-/// 原来只照往外的那个地址，默认路由在哪块网卡上就是哪块）：同一族（听 `::` 的挑 IPv6）；不要回环、链路本地；不要代理、VPN、虚拟机、容器的
-/// 虚拟网卡（照名字认，[`virtual_card`]），也不要它们常用的网段（`198.18.0.0/15` 代理的假地址、`100.64.0.0/10` Tailscale 这类）。
-/// 私有网段在前（`192.168`、`10`、`172.16`），往外的那个地址在挑出来的里面的排在同一档最前，别的照网卡的先后；一个地址只列一次。
-/// 都挑没了、往外的那个地址又不是虚拟网段的，就交它。
-fn pick(cards: &[(String, IpAddr)], outward: Option<IpAddr>, v6: bool) -> Vec<IpAddr> {
-    let mut got: Vec<IpAddr> = Vec::new();
+/// 网卡上别的设备可能连得进来的地址，全列、照网卡的先后，带上网卡名（2026-11-10 项目主人在提问里选的「全部列出、不分先后」：Tailscale、
+/// EasyTier 这类组网的地址在同一个虚拟网里打得开，跳过就把能用的藏起来了；代理 TUN 的假地址也照列，人看网卡名自己挑。原来只照往外的那个
+/// 地址，开着 TUN 时只给了一个虚拟地址）：同一族（听 `::` 的列 IPv6）；回环、链路本地这种本来就不给别的设备用的不列；一个地址只列一次。
+/// 读不到网卡的照往外的那个地址（不知道网卡名）。
+fn pick(
+    cards: &[(String, IpAddr)],
+    outward: Option<IpAddr>,
+    v6: bool,
+) -> Vec<(Option<String>, IpAddr)> {
+    let mut got: Vec<(Option<String>, IpAddr)> = Vec::new();
     for (name, ip) in cards {
-        if ip.is_ipv6() == v6 && usable(*ip) && !virtual_card(name) && !got.contains(ip) {
-            got.push(*ip);
+        if ip.is_ipv6() == v6 && usable(*ip) && !got.iter().any(|(_, seen)| seen == ip) {
+            got.push((Some(name.clone()), *ip));
         }
     }
-    // 先后照档；同一档里往外的那个排最前，别的照原来的先后（稳定排序）
-    got.sort_by_key(|ip| (rank(*ip), Some(*ip) != outward));
     if got.is_empty()
         && let Some(ip) = outward.filter(|ip| ip.is_ipv6() == v6 && usable(*ip))
     {
-        got.push(ip);
+        got.push((None, ip));
     }
     got
 }
 
-/// 别的设备连得进来：不是回环、没指定、链路本地，也不是代理、VPN 常用的那两段。
+/// 别的设备可能连得进来：不是回环、没指定、链路本地（`169.254.0.0/16`、`fe80::/10`）。
 fn usable(ip: IpAddr) -> bool {
     match ip {
-        IpAddr::V4(v4) => {
-            let [a, b, ..] = v4.octets();
-            !(v4.is_loopback()
-                || v4.is_unspecified()
-                || v4.is_link_local()
-                || (a == 198 && (b & 0xfe) == 18)
-                || (a == 100 && (b & 0xc0) == 64))
-        }
+        IpAddr::V4(v4) => !(v4.is_loopback() || v4.is_unspecified() || v4.is_link_local()),
         IpAddr::V6(v6) => {
             !(v6.is_loopback() || v6.is_unspecified() || (v6.segments()[0] & 0xffc0) == 0xfe80)
         }
     }
-}
-
-/// 网卡的档：私有网段在前。
-fn rank(ip: IpAddr) -> u8 {
-    match ip {
-        IpAddr::V4(v4) => match v4.octets() {
-            [192, 168, ..] => 0,
-            [10, ..] => 1,
-            [172, b, ..] if (b & 0xf0) == 16 => 2,
-            _ => 3,
-        },
-        // 唯一本地地址（`fc00::/7`）在前
-        IpAddr::V6(v6) => u8::from((v6.segments()[0] & 0xfe00) != 0xfc00),
-    }
-}
-
-/// 照名字认的虚拟网卡：代理、VPN 的隧道（`utun`、`tun`、`tap`、`wg`、Tailscale、ZeroTier），容器、虚拟机的网桥（Docker、libvirt、
-/// VirtualBox、VMware、Hyper-V 的 `vEthernet`），macOS 的 AirDrop 那几块（`awdl`、`llw`）。
-fn virtual_card(name: &str) -> bool {
-    const SIGNS: [&str; 20] = [
-        "utun",
-        "tun",
-        "tap",
-        "wg",
-        "tailscale",
-        "zt",
-        "docker",
-        "br-",
-        "veth",
-        "virbr",
-        "vboxnet",
-        "vmnet",
-        "vethernet",
-        "awdl",
-        "llw",
-        "bridge",
-        "lxc",
-        "lxd",
-        "podman",
-        "cni",
-    ];
-    let name = name.to_ascii_lowercase();
-    SIGNS.iter().any(|sign| name.starts_with(sign))
-        || name.contains("clash")
-        || name.contains("meta")
-        || name.contains("vpn")
 }
 
 /// 这台电脑往外的那个地址：UDP 套接字 `connect` 一个文档地址（`192.0.2.1`、`2001:db8::1`），不发包，读本地地址；拿不到的、是回环的、

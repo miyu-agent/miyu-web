@@ -190,7 +190,7 @@ async fn a_new_address_is_listened_on_at_once_and_the_idle_exit_waits() {
     assert_eq!(status, 200);
     assert_eq!(
         body,
-        json!({"listen": lan.to_string(), "port": port, "lan": format!("http://{lan}:{port}"), "lans": [format!("http://{lan}:{port}")]}),
+        json!({"listen": lan.to_string(), "port": port, "lan": format!("http://{lan}:{port}"), "lans": [{"url": format!("http://{lan}:{port}"), "card": null}]}),
         "端口不变，换了地址"
     );
     // 局域网来的 POST /listen 不认（第二轮审查 W2-1：它替请求连核心不说远程）

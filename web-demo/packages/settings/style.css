@@ -752,6 +752,7 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .acc-lan-label, .acc-lan-scan { margin: 0; color: var(--text-soft); font: calc(12.5px * var(--text-scale)) / 1.5 var(--font-ui); }
 .acc-lan-addr { display: flex; flex-wrap: wrap; align-items: center; gap: calc(8px * var(--space)); }
 .acc-lan-url { color: var(--text); font: calc(13px * var(--text-scale)) var(--font-mono); overflow-wrap: anywhere; user-select: all; }
+.acc-lan-nic { color: var(--text-faint); font: calc(12px * var(--text-scale)) var(--font-mono); }
 @media (max-width: 480px) {
   .acc-lan-card { flex-direction: column; align-items: flex-start; }
 }

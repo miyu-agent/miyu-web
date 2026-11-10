@@ -11,10 +11,10 @@ const SVG = 'http://www.w3.org/2000/svg';
 const COPIED_MS = 1500;
 
 /**
- * 一张卡：`url` 是 `GET /listen`、`POST /listen` 回的 `lan`。
- * @param {any} ctx 设置包的 ctx（字、剪贴板） @param {string} url
+ * 一张卡：`url` 是 `GET /listen`、`POST /listen` 回的 `lan`，`card` 是它在哪块网卡上（`lans` 里那一项的，W-1135；不知道的不写）。
+ * @param {any} ctx 设置包的 ctx（字、剪贴板） @param {string} url @param {string|null} [card]
  */
-export function lanCard(ctx, url) {
+export function lanCard(ctx, url, card = null) {
   const t = (/** @type {string} */ k) => ctx.text(k);
   const copy = /** @type {HTMLButtonElement} */ (h('button.set-btn', { type: 'button', onclick: async () => {
     await Promise.resolve(ctx.host?.clipboard?.write(url)).catch(() => null);
@@ -24,7 +24,7 @@ export function lanCard(ctx, url) {
   return h('div.acc-lan-card', qrImage(url),
     h('div.acc-lan-side',
       h('p.acc-lan-label', t('account.lan_open')),
-      h('div.acc-lan-addr', h('code.acc-lan-url', url), copy),
+      h('div.acc-lan-addr', h('code.acc-lan-url', url), card ? h('span.acc-lan-nic', card) : null, copy),
       h('p.acc-lan-scan', t('account.lan_scan'))));
 }
 
