@@ -43,6 +43,8 @@ fn main() -> ExitCode {
         }
         _ => return usage(),
     };
+    // 打开文件数的软上限调到够用（施工 YC-11，压测报告 F1）：常驻的 `serve` 才调，起运行时的线程之前；调不上去的照旧跑，装好日志再记
+    let raised = (command == "serve").then(miyu_ipc::open_files::raise);
     let Ok(runtime) = tokio::runtime::Runtime::new() else {
         eprintln!("miyu-web: no runtime");
         return ExitCode::from(1);
@@ -68,7 +70,7 @@ fn main() -> ExitCode {
                 && !parsed.logout
                 && !parsed.stop =>
         {
-            ExitCode::from(runtime.block_on(serve(root, &env, parsed.port)))
+            ExitCode::from(runtime.block_on(serve(root, &env, parsed.port, raised)))
         }
         // 不连核心（W-1091）：`open` 一上来就连，会把核心拉起来
         "open" if parsed.stop => ExitCode::from(
@@ -105,8 +107,13 @@ fn main() -> ExitCode {
     }
 }
 
-/// `serve`：读资源、装运行日志，跑到空闲退出。
-async fn serve(root: DataRoot, env: &Env, port: Option<u16>) -> u8 {
+/// `serve`：读资源、装运行日志，跑到空闲退出。`raised` 是起来时调打开文件数上限的结果。
+async fn serve(
+    root: DataRoot,
+    env: &Env,
+    port: Option<u16>,
+    raised: Option<std::io::Result<miyu_ipc::open_files::Raised>>,
+) -> u8 {
     let failed = |reason: String| {
         print!("{}", miyu_client::connect::Ready::failed(reason).line());
         1
@@ -133,6 +140,13 @@ async fn serve(root: DataRoot, env: &Env, port: Option<u16>) -> u8 {
         miyu_client::log::LevelFilter::INFO,
         env.home.as_deref(),
     );
+    match raised {
+        Some(Ok(miyu_ipc::open_files::Raised::To { from, to })) => {
+            tracing::info!(target: "miyu::web", from, to, "open files raised");
+        }
+        Some(Err(error)) => tracing::warn!(target: "miyu::web", %error, "open files not raised"),
+        _ => {}
+    }
     // 先拿到核心的配置再听端口（W-1099）：拿不到的说起不来，不照出厂端口先听上
     let core_command: miyu_web::serve::CoreCommand = Arc::new(core);
     let settings = match settings.from_core(&root, &core_command).await {
