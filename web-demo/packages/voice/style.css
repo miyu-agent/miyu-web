@@ -1,40 +1,20 @@
 /* 语音（软件包 voice，W-1128）：发送左边的麦克风（W-1139）；认的时候转圈。
-   「正在听」三种样子给主人挑（2026-11-10，W-1139，挑定了留一种）：照按钮上的 data-look。
-   a 外面一圈往外扩散的光环；b 换成四根跟着音量跳的竖条（--voice-level，没有音量的轻轻起伏）；c 实心强调色底、白麦克风、右上角一个闪的红点 */
-.voice-mic { position: relative; }
+   「正在听」：按钮淡 accent 底，麦克风换成四根跟着录音音量跳的竖条（--voice-level；还没收到音量时照 0.35 轻轻起伏）；
+   2026-11-10 项目主人在三种样子（光环、竖条、实心红点）里选的竖条（W-1139） */
 .voice-glyph { display: grid; place-items: center; }
 .voice-bars { display: none; align-items: center; gap: 2px; height: 16px; }
 .voice-mic.is-busy .voice-glyph .icon { animation: voice-spin 0.9s linear infinite; }
-/* a：光环 */
-.voice-mic.is-recording[data-look="a"] { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: var(--r-pill); }
-.voice-mic.is-recording[data-look="a"]::after {
-  content: ""; position: absolute; inset: 0; border-radius: var(--r-pill); border: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
-  animation: voice-halo calc(1.6s * var(--motion-scale, 1)) ease-out infinite; pointer-events: none;
-}
-/* b：竖条 */
-.voice-mic.is-recording[data-look="b"] { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: var(--r-pill); }
-.voice-mic.is-recording[data-look="b"] .voice-glyph { display: none; }
-.voice-mic.is-recording[data-look="b"] .voice-bars { display: flex; }
+.voice-mic.is-recording { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: var(--r-pill); }
+.voice-mic.is-recording .voice-glyph { display: none; }
+.voice-mic.is-recording .voice-bars { display: flex; }
 .voice-bar {
   width: 3px; height: calc(4px + 12px * var(--voice-level, 0.35)); border-radius: var(--r-2); background: currentColor; transform-origin: center;
   animation: voice-bar calc(0.9s * var(--motion-scale, 1)) ease-in-out calc(var(--i) * -0.22s) infinite alternate;
-}
-/* c：实心底、红点 */
-.voice-mic.is-recording[data-look="c"] { color: var(--on-primary); background: var(--accent); border-radius: var(--r-pill); }
-.voice-mic.is-recording[data-look="c"]::after {
-  content: ""; position: absolute; top: 2px; right: 2px; width: 7px; height: 7px; border-radius: var(--r-round);
-  background: var(--danger, #e5484d); box-shadow: 0 0 0 2px var(--surface-1, #fff);
-  animation: voice-blink calc(1.2s * var(--motion-scale, 1)) ease-in-out infinite; pointer-events: none;
 }
 /* 收尾那一行的朗读：念着的那一轮按钮常亮（别的按钮悬停才亮） */
 .voice-speak.is-playing { color: var(--accent); opacity: 1; }
 /* 右上角的自动朗读：开着 accent 色 */
 .voice-auto.is-on { color: var(--accent); }
-@keyframes voice-halo { 0% { transform: scale(0.9); opacity: 0.9; } 100% { transform: scale(1.45); opacity: 0; } }
 @keyframes voice-bar { 0% { transform: scaleY(0.45); } 100% { transform: scaleY(1); } }
-@keyframes voice-blink { 50% { opacity: 0.25; } }
 @keyframes voice-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) {
-  .voice-mic.is-recording::after, .voice-mic.is-busy .voice-glyph .icon, .voice-bar { animation: none; }
-  .voice-mic.is-recording[data-look="a"]::after { transform: scale(1.15); opacity: 0.5; }
-}
+@media (prefers-reduced-motion: reduce) { .voice-mic.is-busy .voice-glyph .icon, .voice-bar { animation: none; } }

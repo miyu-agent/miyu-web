@@ -58,16 +58,14 @@ export function apply(ctx) {
   let rec = null;
   let busy = false;
   let pressedAt = 0;
-  // 「正在听」的样子（2026-11-10 项目主人：原来换成方块、外面一圈淡淡的边，不好看，重做）：按钮里一直是麦克风，录着的时候照 `data-look` 画，
-  // 三种先都留着给主人挑（W-1139，挑定了留一种）：a 外面一圈往外扩散的光环，b 三四根跟着音量跳的竖条，c 实心强调色底、白麦克风、右上角一个闪的红点。
-  // 临时照根上的 `data-voice-listen` 挑，没写的是 a。
+  // 「正在听」（2026-11-10 项目主人：原来换成方块、外面一圈淡淡的边，不好看；三种样子里选了竖条，W-1139）：录着的时候麦克风换成四根
+  // 跟着录音音量跳的竖条（`--voice-level`，还没收到音量时样式里照一个中间值轻轻起伏）。
   const glyph = h('span.voice-glyph', icon('mic'));
   const bars = h('span.voice-bars', { 'aria-hidden': 'true' }, [0, 1, 2, 3].map((i) => h('span.voice-bar', { style: `--i: ${i}` })));
   const mic = h('button.icon-button.voice-mic', { type: 'button', title: t('mic'), 'aria-label': t('mic') }, glyph, bars);
   const paint = () => {
     mic.classList.toggle('is-recording', !!rec);
     mic.classList.toggle('is-busy', busy);
-    mic.dataset.look = globalThis.document?.documentElement?.dataset.voiceListen || 'a';
     if (!rec) mic.style.removeProperty('--voice-level');
     const label = busy ? t('mic_working') : rec ? t('mic_stop') : t('mic');
     mic.title = label;
