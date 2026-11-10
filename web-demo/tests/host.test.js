@@ -451,6 +451,27 @@ test('一行超过 1 MiB 的请求不发：当场拒 too_large，连接照旧能
   assert.equal(tooLong('a'.repeat(LINE_MAX + 1)), true);
 });
 
+test('一行超过上限、核心认不出编号的（核心 YC-5 的 line_too_long，id 是 null）：拒等着的里头最长的那一条，别的照常等；带了编号的照编号拒（W-1138）', async () => {
+  const ch = /** @type {any} */ (fakeChannel());
+  const conn = new Connection(() => ch);
+  const up = conn.connect();
+  ch.readyState = 1;
+  ch.onopen();
+  await up;
+  const short = conn.request('session.list', {});
+  const long = conn.request('package.call', { data: 'a'.repeat(5000) });
+  const said = { code: -32010, message: '消息超过 1 MiB，没有收。大的内容请用附件发。', data: { reason: 'line_too_long', limit: 1048576 } };
+  ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', id: null, error: said }) });
+  await assert.rejects(long, (e) => e instanceof Refusal && e.reason === 'line_too_long' && e.message === said.message && e.data.limit === 1048576);
+  ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', id: ch.sent[0].id, result: { ok: 1 } }) });
+  assert.deepEqual(await short, { ok: 1 }, '短的那一条照常等到回应');
+  const again = conn.request('session.list', {});
+  ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', id: ch.sent[2].id, error: said }) });
+  await assert.rejects(again, (e) => e instanceof Refusal && e.reason === 'line_too_long');
+  // 没有等着的：不出错
+  ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', id: null, error: said }) });
+});
+
 test('前缀要变（核心 OV-1 下 prefix_changing）：开轮的那几样问一声，选的带上 prefix 重发同一个请求；取消的拒 prefix_cancelled；别的方法、带了 prefix 的不问', async () => {
   const ch = /** @type {any} */ (fakeChannel());
   const conn = new Connection(() => ch);

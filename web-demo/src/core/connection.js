@@ -54,7 +54,7 @@ export class Connection {
     this.n = 0;
     // 命令编号要自己保证不撞：每条连接取一段随机数当前缀（蓝图 `protocol.md`，照 `miyu ask`）
     this.prefix = Math.random().toString(16).slice(2, 10);
-    /** @type {Map<string, {resolve: (v: any) => void, reject: (e: Error) => void}>} */
+    /** 等着回应的请求：编号 → 怎么交回、这一行多长（UTF-16 码元，认不出编号的 `line_too_long` 照它挑） @type {Map<string, {resolve: (v: any) => void, reject: (e: Error) => void, size: number}>} */
     this.waiting = new Map();
     /** @type {Set<(method: string, params: any) => void>} */
     this.pushes = new Set();
@@ -105,6 +105,15 @@ export class Connection {
       fail(new Error(m.params?.message ?? 'bridge'));
       return;
     }
+    // 一行超过上限、核心认不出编号的（核心 YC-5 的 `line_too_long`，`id` 是 null）：拒等着的里头最长的那一条——只有它可能超（W-1138）
+    if (m.id == null && m.error?.data?.reason === 'line_too_long') {
+      const longest = [...this.waiting.entries()].sort((x, y) => y[1].size - x[1].size)[0];
+      if (longest) {
+        this.waiting.delete(longest[0]);
+        longest[1].reject(new Refusal(m.error.message, m.error.code, 'line_too_long', m.error.data ?? null));
+      }
+      return;
+    }
     const waiter = m.id != null ? this.waiting.get(m.id) : undefined;
     if (waiter) {
       this.waiting.delete(m.id);
@@ -150,7 +159,7 @@ export class Connection {
         reject(new Refusal('请求太大，超过 1 MiB', -32602, 'too_large'));
         return;
       }
-      this.waiting.set(id, { resolve, reject });
+      this.waiting.set(id, { resolve, reject, size: line.length });
       this.ws.send(line);
     });
   }
