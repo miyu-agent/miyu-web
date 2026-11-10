@@ -4741,7 +4741,7 @@
     ]
   },
   "tl.open-session": {
-    "zh": "时间线：进顾问会话的按钮",
+    "zh": "时间线：进求助会话的按钮",
     "select": [
       ".tl-open-session"
     ]

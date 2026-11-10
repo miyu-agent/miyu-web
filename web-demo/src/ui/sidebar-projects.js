@@ -40,7 +40,8 @@ export function projectBlock(bar, block) {
         // 照现在是开是关（展开、收起原地换样子，不重画）
         onclick: (/** @type {MouseEvent} */ e) => bar.flip(id, !(/** @type {HTMLElement} */ (e.currentTarget)).closest('.project')?.classList.contains('is-open')),
       },
-        h('span.session-lead.project-folder', icon('folder')),
+        // 合着的文件夹、开着的文件夹各画一个，照展开没展开露哪一个（样式里换，展开、收起不重画；2026-11-11 项目主人）
+        h('span.session-lead.project-folder', icon('folder'), icon('folder-open')),
         // 收着的、里面有在跑的写 `(N)`（展开着的照样式藏起来：展开、收起不重画）
         h('span.session-copy', block.count ? h('span.session-count', t('sidebar.kids', { count: block.count })) : null, h('strong', p.name))),
       h('span.session-trailing',

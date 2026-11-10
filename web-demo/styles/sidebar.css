@@ -339,6 +339,9 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
    最右一个展开箭头（没悬停、没展开时不画）；下面那一块高度缓过去（0.24 秒），收着的里面的会话不占地方 */
 .project-row .session-item-main { padding-right: calc(52px * var(--space)); }
 .project-folder .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); color: var(--project-color, var(--text-faint)); }
+/* 收着画合着的文件夹，展开了画开着的（2026-11-11 项目主人：「有两个 logo 可以表示文件夹的开合」） */
+.project:not(.is-open) .project-folder .icon + .icon { display: none; }
+.project.is-open .project-folder .icon:first-child { display: none; }
 .project-row .session-trailing { right: 22px; padding: 0 calc(2px * var(--space)); }
 .project-chevron {
   position: absolute; top: 0; right: 7px; bottom: 0; display: grid; place-items: center; color: var(--text-faint); pointer-events: none;

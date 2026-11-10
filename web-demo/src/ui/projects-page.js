@@ -47,7 +47,7 @@ export function projectView(page, p) {
     // 回「项目」那一页：一个返回的箭头（2026-10-19 项目主人：原来「全部项目 / 名字」一行，换成返回的箭头更合理）
     h('button.project-back', { type: 'button', onclick: () => page.go('projects') }, icon('chevron-left'), h('span', t('project_page.back'))),
     h('header.project-head',
-      h('h1.project-title', icon('folder'), h('span', p.name)),
+      h('h1.project-title', icon('folder-open'), h('span', p.name)),
       h('div.sessions-tools',
         h('button.sessions-button', { type: 'button', onclick: () => page.on.editProject(p.project) }, icon('settings'), t('project_page.settings')),
         h('button.sessions-button.is-primary', { type: 'button', onclick: () => { page.close(); page.on.newIn(p.project); } }, icon('plus'), t('project_page.new_session')))),
