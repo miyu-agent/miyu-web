@@ -484,6 +484,8 @@ export class App {
     store.on(() => this.takeBackIfEnded());
     addEventListener('resize', () => this.schedule());
     ctx.on('theme.changed', () => this.sidebar.drawThemeButton());
+    // 主题换了、它的样式刚读到（皮肤包每画一次叫一声）：框里字的大小、内边距可能变了，等这一帧排好再量一次高度
+    ctx.on('skin.changed', () => requestAnimationFrame(() => this.composer.fit()));
     this.frame = 0;
     /** 歇着等下一次画的定时器、上一次画用了多久、什么时候画完的（`schedule`） */
     this.resting = 0;
