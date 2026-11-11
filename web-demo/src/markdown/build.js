@@ -192,7 +192,8 @@ export async function copy(text, say) {
     await writeClipboard(text);
     say?.(t('copied', { count: [...text].length }), true);
   } catch (err) {
-    if (say) say(t('copy_failed', { reason: err.message }));
+    // 浏览器不给写剪贴板（局域网 http 打开的手机，老办法也不行）：说怎么办，不甩一句英文的原因
+    if (say) say(err?.reason === 'unsupported' ? t('copy_unsupported') : t('copy_failed', { reason: err.message }));
     else console.error(err);
   }
 }

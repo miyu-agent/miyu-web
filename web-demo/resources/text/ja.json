@@ -185,6 +185,8 @@
   "level_tip_member": "クリックで権限レベルを切り替え：ワークスペース → 読み取り専用",
   "copied": "{count} 文字をコピーしました",
   "copy_failed": "コピーに失敗：{reason}",
+  "copy_unsupported": "コピーできません。文字を選択して手動でコピーしてください",
+  "side_close": "右パネルを閉じる",
   "reason_with": "{head}：{message}",
   "list_sep": "、",
   "timeline": {

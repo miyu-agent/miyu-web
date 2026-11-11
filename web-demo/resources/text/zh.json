@@ -185,6 +185,8 @@
   "level_tip_member": "点击切换权限级别：工作区 → 只读",
   "copied": "已复制 {count} 个字符",
   "copy_failed": "复制失败：{reason}",
+  "copy_unsupported": "复制不了，请长按选中文字后复制",
+  "side_close": "收起右栏",
   "reason_with": "{head}：{message}",
   "list_sep": "、",
   "timeline": {

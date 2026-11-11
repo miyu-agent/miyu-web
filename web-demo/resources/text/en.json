@@ -185,6 +185,8 @@
   "level_tip_member": "Click to switch permission level: Workspace → Read-only",
   "copied": "Copied {count} character(s)",
   "copy_failed": "Couldn't copy: {reason}",
+  "copy_unsupported": "Can’t copy here. Select the text and copy it manually.",
+  "side_close": "Close side panel",
   "reason_with": "{head}: {message}",
   "list_sep": ", ",
   "timeline": {

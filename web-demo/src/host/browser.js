@@ -24,6 +24,7 @@
 
 import { notify } from './notify.js';
 import { fileTools, store, onThisMachine, dropFromHash, hashRoute } from './files.js';
+import { writeText } from '../lib/touch.js';
 
 const KEY = 'miyu.web.bridge-key';
 
@@ -214,8 +215,8 @@ export function browserHost() {
     restart: () => location.reload(),
     /** 接住页面里的链接：浏览器自己会办，什么都不做；交回怎么不接。 */
     intercept: (/** @type {HTMLElement} */ root) => () => {},
-    // 写字；写一张图（灯箱的「复制图片」，PNG：剪贴板普遍只收它）
-    clipboard: { write: (/** @type {string} */ text) => navigator.clipboard.writeText(text), image: (/** @type {Blob} */ png) => navigator.clipboard.write([new ClipboardItem({ [png.type]: png })]) },
+    // 写字（不是安全上下文、被拒的退回老办法，`lib/touch.js`）；写一张图（灯箱的「复制图片」，PNG：剪贴板普遍只收它）
+    clipboard: { write: (/** @type {string} */ text) => writeText(text), image: (/** @type {Blob} */ png) => navigator.clipboard.write([new ClipboardItem({ [png.type]: png })]) },
     // 系统通知（`notify.js`）
     notify,
     store,
