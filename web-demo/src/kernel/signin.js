@@ -15,7 +15,7 @@ import { Connection, Refusal } from '../core/connection.js';
 import { onThisComputer } from '../host/files.js';
 
 /** 「账号」那一屏的步骤条：后面几段照引导（`packages/welcome` 的 `NUMBERED`） */
-const STEPS = ['account', 'language', 'model', 'persona', 'theme', 'profile', 'preset', 'sandbox'];
+const STEPS = ['account', 'language', 'model', 'persona', 'theme', 'profile', 'preset'];
 /** 访问密码最长几个字节（核心 SU-1；只挡拿超长的串耗 argon2）。没有最短：2026-10-30 项目主人去掉了「至少 8 位」，只要不是空的、不全是空白 */
 const PASSWORD_MAX = 1024;
 

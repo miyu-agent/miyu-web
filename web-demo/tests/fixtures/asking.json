@@ -167,7 +167,6 @@
         "access": "execute",
         "detail": {
           "command": "cargo clean --manifest-path ~/src/other/Cargo.toml",
-          "sandbox": false,
           "title": "清掉另一个仓库的编译产物",
           "tool": "shell"
         }

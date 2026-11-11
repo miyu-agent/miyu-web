@@ -1,18 +1,16 @@
 // @ts-check
-//! 「隐私与安全」页的私密目录、只禁写那两张表（蓝图 `web.md`「设置页」第 12b 条；核心施工 5-15 下、5-17）：一对配置并成一张表。
+//! 「隐私与安全」页私密目录那张表（蓝图 `web.md`「设置页」第 12b 条；核心施工 5-15 下）：一对配置并成一张表。受保护的路径（只禁写）
+//! 那一对随沙盒一起没了（核心 LV-5，2026-11-11）。
 //! `sandbox.private.remove` 的 `options` 是这台机器的出厂列表，值是去掉的出厂项；`sandbox.private.add` 是加了的。不碰页面，测试直接调。
 
 export const ADD = 'sandbox.private.add';
 export const REMOVE = 'sandbox.private.remove';
 
 /**
- * 画成一张表的几对（核心 5-15 下、5-17）：加了的、去掉的默认项（`remove` 的 `options` 是这台机器的默认清单），有的带一个总开关。
- * 私密目录（藏起来）和只禁写（能读不能写）同一个画法。
+ * 画成一张表的几对（核心 5-15 下）：加了的、去掉的默认项（`remove` 的 `options` 是这台机器的默认清单），带一个总开关。
  */
 export const PAIRS = [
   { add: ADD, remove: REMOVE, enabled: 'sandbox.private.enabled', words: null },
-  // 受保护的路径（核心 5-17 下上）：有文件，表里的字说「路径」不说「目录」（`privacy.readonly.*`）；总开关核心 5-17 下上补起有，旧核心没有这一项的不画开关
-  { add: 'sandbox.readonly.add', remove: 'sandbox.readonly.remove', enabled: 'sandbox.readonly.enabled', words: 'readonly' },
 ];
 
 /** 是不是每个工作区里的那一处（相对路径）：不是 `~`、`/`、Windows 的 `C:\…`、`\\…` 开头的 @param {string} path */

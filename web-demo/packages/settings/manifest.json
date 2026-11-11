@@ -793,15 +793,6 @@
           "empty": "没有技能目录",
           "search": "搜索目录",
           "no_match": "没有对得上的目录"
-        },
-        "readonly": {
-          "drop_ask": "是否确认从列表中删除此路径？",
-          "add_title": "添加受保护的路径",
-          "add_hint": "一行一个，例如 ~/.bashrc、/etc/hosts 或工作区里的 Makefile（Shift+回车换行）",
-          "add_hint_windows": "一行一个，例如 {home}\\.gitconfig、C:\\Windows\\System32\\drivers\\etc\\hosts 或工作区里的 Makefile（Shift+回车换行）",
-          "empty": "没有受保护的路径",
-          "search": "搜索路径",
-          "no_match": "没有对得上的路径"
         }
       },
       "skin": "主题",
@@ -1435,15 +1426,6 @@
           "empty": "No skill folders",
           "search": "Search folders",
           "no_match": "No matching folders"
-        },
-        "readonly": {
-          "drop_ask": "Remove this path from the list?",
-          "add_title": "Add a protected path",
-          "add_hint": "One per line, e.g. ~/.bashrc, /etc/hosts or Makefile in the workspace (Shift+Enter for a new line)",
-          "add_hint_windows": "One per line, e.g. {home}\\.gitconfig, C:\\Windows\\System32\\drivers\\etc\\hosts or Makefile in the workspace (Shift+Enter for a new line)",
-          "empty": "No protected paths",
-          "search": "Search paths",
-          "no_match": "No matching paths"
         }
       },
       "skin": "Theme",
@@ -2077,15 +2059,6 @@
           "empty": "スキルフォルダはありません",
           "search": "フォルダを検索",
           "no_match": "一致するフォルダはありません"
-        },
-        "readonly": {
-          "drop_ask": "このパスを一覧から削除しますか？",
-          "add_title": "保護するパスを追加",
-          "add_hint": "1 行に 1 つ。例：~/.bashrc、/etc/hosts、ワークスペースの Makefile（Shift+Enter で改行）",
-          "add_hint_windows": "1 行に 1 つ。例：{home}\\.gitconfig、C:\\Windows\\System32\\drivers\\etc\\hosts、ワークスペースの Makefile（Shift+Enter で改行）",
-          "empty": "保護するパスはありません",
-          "search": "パスを検索",
-          "no_match": "一致するパスはありません"
         }
       },
       "skin": "テーマ",

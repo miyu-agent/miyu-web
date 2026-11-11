@@ -192,8 +192,8 @@ export function answerOf(d, i) {
 
 /**
  * 确认的问题行：`要写 1 个文件` 这类（`access.<种类>`，没有的 `access_other`），下面的路径（家目录写 `~`，工作区外的标出来）。
- * 跑命令的（核心 D-4 起 `detail` 是 `{command, sandbox, title, tool}`）：问题行是她写的短标题，没有的写「要运行一条命令」；下面是命令原文，
- * `sandbox: false` 是这一次不在沙盒里跑。装、卸软件包的（核心 F-10 下上，`access: install`，`detail.preview`）：问题行是「安装软件包 notes 0.2.0」，
+ * 跑命令的（核心 D-4 起 `detail` 是 `{command, title, tool}`；沙盒没了以后不再有 `sandbox` 那一格，核心 LV-2）：问题行是她写的短标题，
+ * 没有的写「要运行一条命令」；下面是命令原文。装、卸软件包的（核心 F-10 下上，`access: install`，`detail.preview`）：问题行是「安装软件包 notes 0.2.0」，
  * 下面是包文件夹和「包含」「无法加载」这几行（`package-plan.js`）。扩展的守卫要问人的（核心 HK-1，`detail.guard`）：问题行是「notes 请你确认：shell」，
  * 下面是守卫写的话（`guard`，原样）。
  * @param {{access: string, detail?: any}} body

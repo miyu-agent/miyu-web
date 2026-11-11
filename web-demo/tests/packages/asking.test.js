@@ -87,13 +87,13 @@ test('确认的问题行：写几个文件、家目录写 ~、工作区外和私
   // 别的程序的私密目录（核心 5-13 的 `private`）也标出来；只能读的（`read_only`）、没写的不标
   const priv = approvalHead({ call_id: 'p', access: 'read', detail: { tool: 'read', paths: [{ path: '/home/alice/.ssh/id_ed25519', write: false, zone: 'private' }, { path: '/etc/hosts', zone: 'read_only' }, { path: '/w/a' }] } }, '/home/alice', text);
   assert.deepEqual(priv.paths, [{ path: '~/.ssh/id_ed25519', zone: 'private' }, { path: '/etc/hosts', zone: 'read_only' }, { path: '/w/a', zone: null }]);
-  // 跑命令的（D-4）：问题行是短标题，带命令原文，`sandbox: false` 标出来；没有短标题的写「要运行一条命令」；老的只有 `tool` 的照原来
+  // 跑命令的（D-4）：问题行是短标题，带命令原文；没有短标题的写「要运行一条命令」；老的只有 `tool` 的照原来
   const exec = approvalHead(approval('demo_approve_2').body, null, text);
   assert.deepEqual([exec.title, exec.command, 'outsideSandbox' in exec], ['清掉另一个仓库的编译产物', 'cargo clean --manifest-path ~/src/other/Cargo.toml', false], 'LV-3 起不再标沙盒外');
   const bare = approvalHead({ call_id: 'x', access: 'execute', detail: { command: 'ls', tool: 'shell' } }, null, text);
   assert.deepEqual([bare.title, bare.command], ['exec_untitled', 'ls']);
   // 高危命令（核心 5-17）：带 `hazard` 的标出来，没有的不标
-  assert.equal(approvalHead({ call_id: 'h', access: 'execute', detail: { command: 'git push --force', hazard: 'git_force_push', sandbox: true, tool: 'shell' } }, null, text).hazard, true);
+  assert.equal(approvalHead({ call_id: 'h', access: 'execute', detail: { command: 'git push --force', hazard: 'git_force_push', tool: 'shell' } }, null, text).hazard, true);
   assert.equal(bare.hazard, false);
   assert.equal(approvalHead({ call_id: 'x', access: 'execute', detail: { tool: 'shell' } }, null, text).title, 'access.exec{"count":0,"tool":"shell"}');
   assert.equal(approvalHead({ call_id: 'x', access: 'network', detail: { tool: 'web_fetch' } }, null, text).title, 'access_other{"count":0,"tool":"web_fetch"}');

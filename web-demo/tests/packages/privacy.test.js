@@ -48,18 +48,12 @@ test('一次加好几个（一行一个）：空行、已经在的跳过，去�
   assert.equal(findRows(rows, '  ').length, rows.length);
 });
 
-test('只禁写（核心 5-17）同一个画法：键照那一对的；一组里两项都在才认是哪一对', () => {
+test('一组里两项都在才认是哪一对；受保护的路径那一对随沙盒没了（核心 LV-5），不再认', () => {
   const add = { key: 'sandbox.readonly.add', entry: { value: [] } };
-  const remove = { key: 'sandbox.readonly.remove', options: [{ value: '.git/hooks', name: '.git/hooks' }, { value: '~/.bashrc', name: '~/.bashrc' }], entry: { value: [] } };
-  assert.deepEqual(privateRows(add, remove).map((r) => r.path), ['.git/hooks', '~/.bashrc']);
-  assert.deepEqual(dropChange({ path: '.git/hooks', shipped: true }, add, remove), { key: 'sandbox.readonly.remove', value: ['.git/hooks'] });
-  assert.deepEqual(batchChange('~/.zshrc', add, remove).changes, [{ key: 'sandbox.readonly.add', value: ['~/.zshrc'] }]);
-  assert.equal(pairIn([add, remove])?.add, 'sandbox.readonly.add');
-  assert.equal(pairIn([add]), null);
+  const remove = { key: 'sandbox.readonly.remove', options: [], entry: { value: [] } };
+  assert.equal(pairIn([add, remove]), null);
   assert.equal(pairIn(items([], []))?.enabled, 'sandbox.private.enabled');
-  // 受保护的路径（核心 5-17 下上）用自己的说法
-  assert.equal(pairIn([add, remove])?.words, 'readonly');
-  assert.equal(pairIn(items([], []))?.words, null);
+  assert.equal(pairIn(items([], []).slice(0, 1)), null);
 });
 
 test('每个工作区里的那一处：相对路径才算，Windows 的绝对路径不算', () => {

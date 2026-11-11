@@ -152,8 +152,7 @@
       "persona": "Persona",
       "theme": "Theme",
       "profile": "About you",
-      "preset": "Preset",
-      "sandbox": "Sandbox"
+      "preset": "Preset"
     }
   },
   "boot": {

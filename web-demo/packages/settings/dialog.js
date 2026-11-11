@@ -365,7 +365,6 @@ export class SettingsDialog {
     // 高级：一组一行，点进去看（`advanced.js`，2026-10-19 项目主人：不平铺）
     else if (this.current === 'advanced' && page) kids = drawAdvanced(this, page);
     // 老核心上的成员：通用页只有主题，下面一句暗字（配置每人一份在核心 Y-2下下中）；成员的软件包页照下面那一条，核心的软件包没读、是空的，只列网页自己的组件
-    // 成员的「隐私与安全」整页一句话：关不掉沙盒，私密目录也用不上（本来就访问不到沙盒外面）（2026-10-24 项目主人）
     else if (this.current === 'packages') {
       // 顶上搜索、筛选，核心的软件包一个一行、点进去是它的信息页，最后一段网页自己的组件（`core-packages.js`）
       kids = [
