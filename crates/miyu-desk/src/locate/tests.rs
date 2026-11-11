@@ -36,6 +36,7 @@ fn wanted(name: &str, size: Option<u64>, modified_ms: Option<u64>) -> Wanted {
         name: name.to_string(),
         size,
         modified_ms,
+        exact: false,
     }
 }
 
@@ -86,11 +87,11 @@ fn the_one_whose_time_matches_wins_over_a_copy() {
         find(&home, &wanted("a.bin", Some(100), near), &roots),
         Some(real)
     );
-    // 哪个的时刻都对不上：交先找到的那个（浅的）。
-    assert_eq!(
-        find(&home, &wanted("a.bin", Some(100), Some(1)), &roots),
-        Some(copy)
-    );
+    // 哪个的时刻都对不上：交先找到的那个（浅的）；说了只认对得上的就没有。
+    let off = wanted("a.bin", Some(100), Some(1));
+    assert_eq!(find(&home, &off, &roots), Some(copy));
+    let strict = Wanted { exact: true, ..off };
+    assert_eq!(find(&home, &strict, &roots), None);
 }
 
 #[test]

@@ -7,7 +7,8 @@
 //!   开着的不算有人连着、条数有上限（第四轮审查 W4-3）。
 //! - 开目录、选目录、找文件在共用的 crate `miyu-desk`（和演示的桥一份代码）；壁纸在 [`wallpaper`]。
 //! - `/locate?name=…&size=…&modified=…&near=…`（2026-11-11 项目主人定）：浏览器不给附件的路径，照名字、大小、改的时刻在这台电脑上找它，
-//!   回 `{"path": "…"}`，没找到的 `{}`。`near` 是先看的地方（会话的工作区，可以写几个）；`wait` 是最多找几毫秒（没写的 2 秒，最多 15 秒）。
+//!   回 `{"path": "…"}`，没找到的 `{}`。`near` 是先看的地方（会话的工作区，可以写几个）；`wait` 是最多找几毫秒（没写的 2 秒，最多 15 秒）；`exact=1` 只认
+//!   改的时刻也对得上的。
 //!   Miyu 的数据根不进。
 
 use std::collections::HashMap;
@@ -110,13 +111,14 @@ pub(crate) async fn check(
     }
 }
 
-/// `/locate` 要找的那个文件：`name` 必写，`size`、`modified`（Unix 毫秒）写了数的才比。
+/// `/locate` 要找的那个文件：`name` 必写，`size`、`modified`（Unix 毫秒）写了数的才比；`exact=1` 只认改的时刻也对得上的。
 fn wanted(query: &HashMap<String, String>) -> miyu_desk::locate::Wanted {
     let number = |key: &str| query.get(key).and_then(|text| text.parse::<u64>().ok());
     miyu_desk::locate::Wanted {
         name: query.get("name").cloned().unwrap_or_default(),
         size: number("size"),
         modified_ms: number("modified"),
+        exact: query.get("exact").is_some_and(|flag| flag == "1"),
     }
 }
 

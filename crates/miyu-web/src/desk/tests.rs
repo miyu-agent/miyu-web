@@ -30,6 +30,7 @@ fn locate_reads_the_file_and_every_place_to_look_first() {
     // 没写、写得不是数的不比。
     let loose = wanted(&query("name=a.txt&size=big"));
     assert_eq!((loose.size, loose.modified_ms), (None, None));
+    assert!(!loose.exact && wanted(&query("name=a.txt&exact=1")).exact);
     assert!(PATHS.contains(&"/locate"));
     assert_eq!(wait(&query("name=a")), miyu_desk::locate::LIMIT);
     assert_eq!(wait(&query("wait=10000")).as_millis(), 10_000);
