@@ -188,6 +188,16 @@ async fn locating_looks_near_first_and_refuses_bad_names() {
     )
     .await;
     assert_eq!(got, Located::At(file));
+    // 工作区里藏得深的，比别处浅的同名文件先找到（工作区整个翻完才看别处）。
+    let deep = home.file("work/a/b/c/d/e/deep.txt", 5);
+    let got = super::locate(
+        wanted("deep.txt", Some(5), None),
+        vec![home.0.join("work")],
+        Vec::new(),
+        super::LIMIT,
+    )
+    .await;
+    assert_eq!(got, Located::At(deep));
     let bad = super::locate(
         wanted("../clip.mov", None, None),
         Vec::new(),

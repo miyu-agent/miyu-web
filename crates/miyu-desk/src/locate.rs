@@ -3,7 +3,7 @@
 //!
 //! - 只照名字、大小、改的时刻认，不读内容（项目主人：「按文件名找就好了，比对会有额外的性能开销而且没什么必要」）：名字要一样；
 //!   页面说了大小的，大小要一样；改的时刻对得上的（差 2 秒以内）当场就是它，对不上的留着当退路（页面说了只认对得上的就不留）。
-//! - 哪儿找：先看页面说的那几处（会话的工作区），再看家目录下常放文件的几个文件夹（下载、桌面、文稿、影片、图片、音乐），最后整个家目录
+//! - 哪儿找：先把页面说的那几处（会话的工作区）整个翻完，再看家目录下常放文件的几个文件夹（下载、桌面、文稿、影片、图片、音乐），最后整个家目录
 //!   一层层往下；点开头的文件夹、`node_modules`、`target`、macOS 的资源库、Windows 的 `AppData` 不进。有时限（[`LIMIT`]）、有文件夹数
 //!   的上限，到了就交回手上最好的。先问现成的索引（macOS 的 Spotlight、Linux 上装了的 `plocate`）：一下就回，外接盘上的也找得到。
 //! - 不照名字一个个比：每个文件夹里直接问「这里有没有叫这个名字的」，大小写、中文的两种写法（NFC、NFD）由文件系统自己认。
@@ -190,14 +190,18 @@ pub async fn locate(
         return Located::At(found);
     }
     let home = home();
-    let mut roots: Vec<PathBuf> = near.into_iter().filter(|p| p.is_absolute()).collect();
+    let near: Vec<PathBuf> = near.into_iter().filter(|p| p.is_absolute()).collect();
+    let mut rest = Vec::new();
     if let Some(home) = &home {
-        roots.extend(usual(home));
-        roots.push(home.clone());
+        rest.extend(usual(home));
+        rest.push(home.clone());
     }
     let until = Instant::now() + limit.min(LIMIT_MOST);
     let found = tokio::task::spawn_blocking(move || {
-        walk(&wanted, &roots, (home.as_deref(), &avoid), until)
+        // 页面说的那几处先整个翻完（多半就在会话的工作区里，藏得再深也要找到），再一层层翻别处：先浅后深是给「不知道在哪」
+        // 用的，家目录很大时（量过一个文稿下有十一万个文件夹的）深处的时限里轮不到。
+        let ends = (home.as_deref(), avoid.as_slice());
+        walk(&wanted, &near, ends, until).or_else(|| walk(&wanted, &rest, ends, until))
     })
     .await;
     match found {
