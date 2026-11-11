@@ -108,6 +108,9 @@
 
 @media (max-width: 836px) {
   .composer-dock { padding: 0 max(6px, calc(clamp(16px, 4vw, 28px) - 12px)) calc(8px * var(--space)); }
+  /* 框下面那一行：左边（级别、模型）先保住，照自己的字宽、不缩，右边的用量那一格照剩下的地方收（先花费、再累计，`footer.js` 的 `fit`）；
+     原来两边一起挤，模型名被截成「@…」（2026-11-11 手机上 360px 宽）。左边自己就比一整行宽的才截模型名 */
+  .footer-left { flex: 0 0 auto; max-width: 100%; }
 }
 
 /* 换级别（蓝图「输入框下面那一行」）：级别那一格原地换，不上下移：旧的先淡出、糊开一点（前 45%），新的接着淡入、由糊变清
@@ -378,3 +381,10 @@
 .prefix-ask-btn.is-primary:hover, .export-btn.is-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 88%, var(--text)); }
 .prefix-ask-btn:focus-visible, .export-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @keyframes prefix-ask-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* 手指点的（蓝图「手机上」）：框下面那一行的级别、模型、用量那几格只有一行字高（18px 上下），手指点不准——这一行高到 36px，
+   那几格上下各垫 8px（点得到的地方 34px 上下），字照旧对齐 */
+@media (pointer: coarse) {
+  .composer-footer { height: 36px; }
+  .footer-level, .footer-model, .footer-usage { padding-top: 8px; padding-bottom: 8px; }
+}

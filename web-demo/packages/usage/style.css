@@ -116,3 +116,10 @@
   .use-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .use-seg { margin-left: 0; }
 }
+
+/* 手机上（蓝图「手机上」）：表本来就能横着滚，名字那一格不截成 …，照字宽写全 */
+@media (max-width: 640px) {
+  .use-table td { overflow: visible; text-overflow: clip; }
+  .use-name-line, .use-name-line > * { overflow: visible; text-overflow: clip; }
+  .use-name-line > :first-child, .use-name-line > .use-sub { flex: none; }
+}

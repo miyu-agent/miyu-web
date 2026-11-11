@@ -159,3 +159,18 @@
 .status-value { color: var(--text); font-size: calc(13px * var(--text-scale)); line-height: calc(22px * var(--text-scale)); overflow-wrap: anywhere; user-select: text; }
 button.status-value { padding: 0; border: 0; background: none; font-family: var(--font-mono); font-size: calc(12.5px * var(--text-scale)); text-align: left; cursor: pointer; }
 button.status-value:hover { color: var(--accent); }
+
+/* ── 手机上（窄屏，蓝图 web.md「手机上」；2026-11-11 项目主人：文字截断、菜单超出屏幕）：这几种列表一行排不下名字加说明——命令列表里
+   名字那一列照最长的名字定宽，说明只剩一个字；改成名字一行、说明在下面折行写全，一行高跟着字走，至少 44px 好点；列表最高半屏，多的在里面滚 ── */
+@media (max-width: 836px) {
+  .commands-list, .mention-list, .slist { max-height: min(calc(var(--rows) * 44px), 46dvh); }
+  .commands-list { grid-template-columns: minmax(0, 1fr); }
+  .command-row { grid-template-columns: minmax(0, 1fr); align-content: center; row-gap: 1px; height: auto; min-height: 44px; padding-top: calc(6px * var(--space)); padding-bottom: calc(6px * var(--space)); }
+  .command-name { white-space: normal; overflow-wrap: anywhere; }
+  .command-summary { overflow: visible; font-size: calc(12px * var(--text-scale)); line-height: 1.45; text-overflow: clip; white-space: normal; }
+  .mention-row { flex-wrap: wrap; row-gap: 1px; height: auto; min-height: 44px; padding-top: calc(6px * var(--space)); padding-bottom: calc(6px * var(--space)); }
+  .mention-path { white-space: normal; overflow-wrap: anywhere; }
+  .skill-summary { flex-basis: 100%; margin-left: 0; overflow: visible; line-height: 1.45; text-overflow: clip; white-space: normal; }
+  .slist-row { height: auto; min-height: 44px; }
+  .slist-name { white-space: normal; overflow-wrap: anywhere; }
+}

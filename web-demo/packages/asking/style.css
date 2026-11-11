@@ -132,3 +132,11 @@
 @media (prefers-reduced-motion: reduce) {
   .asking, .asking-report.is-fresh { animation: none; }
 }
+
+/* 手指点的（蓝图「手机上」）：一个选项上下垫到 40px 高；底下一行写按键的那句（↑↓、Enter、Esc）手机上用不上，不写，「取消」大一点 */
+@media (pointer: coarse) {
+  .asking-option { padding-top: calc(10px * var(--space)); padding-bottom: calc(10px * var(--space)); }
+  .asking-keys { display: none; }
+  .asking-foot { justify-content: flex-end; }
+  .asking-cancel, .asking-notes-add { min-height: 32px; padding-inline: calc(8px * var(--space)); }
+}

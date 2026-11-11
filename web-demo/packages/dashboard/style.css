@@ -232,3 +232,6 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; us
 .dash-big.is-tasks > .dash-big-list { height: 100%; box-sizing: border-box; border-right: 0; }
 .dash-big.is-tasks .dash-row { height: auto; min-height: 30px; padding-block: calc(4px * var(--space)); line-height: 18px; }
 .dash-big.is-tasks .dash-name, .dash-big.is-tasks .dash-command { overflow: visible; white-space: normal; overflow-wrap: anywhere; }
+
+/* 触屏没有悬停：卡片头上的「放大看」、折叠箭头一直露着 */
+@media (hover: none) { .dash-zoom, .dash-chevron { opacity: 1; } }

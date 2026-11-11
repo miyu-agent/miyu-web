@@ -61,7 +61,11 @@
 .sessions-empty { padding: calc(40px * var(--space)) 0; color: var(--text-faint); font-size: calc(13px * var(--text-scale)); text-align: center; }
 @media (max-width: 836px) {
   .sessions-inner { width: calc(100% - 26px); padding-top: calc(56px * var(--space)); }
-  .sessions-search { width: 120px; }
+  /* 搜索框单独占一行，下面一排按钮照自己的字宽、不折（2026-11-11 手机上：搜索框和三颗按钮挤一行，按钮的字被挤成一个字一行） */
+  .sessions-tools { flex-wrap: wrap; width: 100%; }
+  .sessions-search-box { flex: 1 1 100%; }
+  .sessions-search { flex: 1; width: auto; min-width: 0; }
+  .sessions-button { flex: none; white-space: nowrap; }
 }
 
 /* 「会话」「项目」两页的切换（蓝图「会话整理和项目」第 6 条，照模型菜单的：两格，滑块跟着换） */

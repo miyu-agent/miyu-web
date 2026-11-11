@@ -6720,6 +6720,30 @@
       ".side-column"
     ]
   },
+  "side.head": {
+    "zh": "右边那一栏盖在上面时顶上的一行（放关的按钮）",
+    "select": [
+      ".side-head"
+    ]
+  },
+  "side.close": {
+    "zh": "右边那一栏盖在上面时关的按钮",
+    "select": [
+      ".side-close"
+    ]
+  },
+  "side.scrim": {
+    "zh": "窄屏右边那一栏盖在上面时后面压暗的一层",
+    "select": [
+      ".side-scrim"
+    ]
+  },
+  "level.glyph": {
+    "zh": "权限级别的记号画成的图标（框下面那一行、一轮末尾）",
+    "select": [
+      ".level-glyph"
+    ]
+  },
   "dash": {
     "zh": "仪表盘：整块（右边那一栏里）",
     "select": [
