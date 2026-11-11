@@ -1,15 +1,21 @@
 // @ts-check
 //! 设置「通用」页里的「访问」一组（网页自己的一组；蓝图 `web.md`「设置页」第 12c 条；2026-10-30 项目主人：原来单独一页，放进通用，网页默认只给本机，
-//! 一个开关放开到局域网、能填监听地址和端口、写访问密码）：允许局域网访问、监听地址、端口、访问密码。头像挪到「用户身份」页（第 12d 条）。
-//! 「退出登录」同一天项目主人定整行去掉：本机没设访问密码时点了会停在输不了密码的那一屏；要踢掉别的设备就改访问密码，或者 `miyu web --logout`。
+//! 一个开关放开到局域网、能填监听地址和端口、写访问密码）。2026-11-11 项目主人（W-1153）照 im 网页的会话卡片重排成一张卡片：卡片头是开关和现在的
+//! 状态，开着时里面分行——监听地址和端口一行两个框、紧跟着访问密码、别的设备怎么打开（二维码、地址、「更多地址」）。头像挪到「用户身份」页（第 12d 条）。
+//! 「退出登录」2026-10-30 项目主人定整行去掉：本机没设访问密码时点了会停在输不了密码的那一屏；要踢掉别的设备就改访问密码，或者 `miyu web --logout`。
 
 import { h, icon } from '../../src/lib/dom.js';
 import { sectionKit } from './kit.js';
-import { coreRow, groupBlock, toggle } from './rows.js';
+import { groupBlock, toggle, textField } from './rows.js';
 import { plainItem } from './model.js';
 import { fold } from './privacy.js';
 import { ACCESS } from '../../src/lib/launch.js';
 import { lanCard } from './lan-card.js';
+import { ALL, lanAddrs, loopbackOnly, portOf, turnOnWay } from './access-model.js';
+import { askPassword, passwordRows } from './access-password.js';
+
+export { loopbackOnly } from './access-model.js';
+export { withEye } from './access-password.js';
 
 /** 改了要网页软件当场换监听的两项 */
 export const LISTEN_KEYS = ['web.listen', 'web.port'];
@@ -22,25 +28,7 @@ export function accessGroup(dialog, withAvatar = false) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
   const listen = dialog.schema ? plainItem(dialog.schema, dialog.got ?? {}, 'web.listen') : null;
   const port = dialog.schema ? plainItem(dialog.schema, dialog.got ?? {}, 'web.port') : null;
-  const rows = [withAvatar ? avatarRow(dialog) : null];
-  if (listen) {
-    const on = !loopbackOnly(listen.entry?.value ?? listen.default);
-    // 打开时没设访问密码：先不写，展开下面几行、密码的格子直接打开，设好了接着写（第 12c 条第 1 款）
-    if (on) dialog.lanPending = false;
-    const pending = !on && !!dialog.lanPending;
-    const shown = on || pending;
-    if (on && dialog.lanInfo === undefined) lookUp(dialog);
-    rows.push(lanRow(dialog, listen, on, pending));
-    rows.push(fold(dialog, 'lan', !shown,
-      coreRow(dialog, listen),
-      port ? portRow(dialog, port, on) : null,
-      ...passwordRows(dialog, pending ? {
-        open: true,
-        done: () => turnOn(dialog, listen),
-        cancel: () => { dialog.lanPending = false; dialog.drawBody?.(); },
-      } : {})));
-  }
-  const group = groupBlock(t('pages.account'), rows);
+  const group = groupBlock(t('pages.account'), [withAvatar ? avatarRow(dialog) : null, listen ? lanBlock(dialog, listen, port) : null]);
   // `miyu web --settings access` 照它滚到这一组（W-1085）
   if (group) group.dataset.group = ACCESS;
   return group;
@@ -51,72 +39,97 @@ export function avatarGroup(dialog) {
   return groupBlock(null, [avatarRow(dialog)]);
 }
 
-/** 写的地址是不是只有这台电脑（回环）：`127.*`、`::1`、`localhost`；别的（`0.0.0.0`、这台电脑的某一个地址）算听局域网。 @param {unknown} value */
-export const loopbackOnly = (value) => {
-  const v = typeof value === 'string' ? value.trim().toLowerCase() : '';
-  return v === '' || v === 'localhost' || v === '::1' || v === '[::1]' || /^127\./.test(v);
-};
-
 /**
- * 「允许局域网访问」一行（网页软件的 `web.listen`，第 12c 条第 1 款）：开是 `0.0.0.0`，关是去掉这一项（回到出厂的 `127.0.0.1`）。没设访问密码的打开时
- * 先不写，等密码设好。开着、网页软件说得出别的设备怎么开的，下面一张卡：网址、「复制」和二维码（`lan-card.js`，W-1086；第一次引导用同一张）。
- * @param {any} dialog @param {any} item @param {boolean} on @param {boolean} pending
+ * 局域网访问那张卡片（第 12c 条，W-1153）。卡片头：「允许局域网访问」、后面一个小标签写现在的状态（「仅本机」「已开启」）、一句说明、一句
+ * `warn` 色的不加密，右边开关。开着时下面展开（收起展开的动画同私密目录的总开关）：监听地址和端口、访问密码、别的设备怎么打开。
+ *
+ * 开关（网页软件的 `web.listen`）：开是写 `0.0.0.0`（这台电脑的所有地址，不用人再去改地址），关是去掉这一项（回到出厂的 `127.0.0.1`）。
+ * 没设访问密码的打开时先弹窗设（`askPassword`），设好了才写；不设的开关拨回去、提示要先设密码（没密码不放开局域网，规矩照旧）。
+ * @param {any} dialog @param {any} listen @param {any} port
  */
-function lanRow(dialog, item, on, pending) {
+function lanBlock(dialog, listen, port) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
-  const sw = toggle(on || pending, async (/** @type {boolean} */ next) => {
-    if (next && dialog.ctx.host?.access?.set() === false) {
-      dialog.lanPending = true;
-      dialog.drawBody?.();
-      return true;
+  const on = !loopbackOnly(listen.entry?.value ?? listen.default);
+  if (on && dialog.lanInfo === undefined) lookUp(dialog);
+  const sw = toggle(on, async (/** @type {boolean} */ next) => {
+    if (next && turnOnWay(dialog.ctx.host?.access?.set()) === 'ask' && !(await askPassword(dialog, sw))) {
+      dialog.toast(t('account.lan_password_first'));
+      return false;
     }
-    dialog.lanPending = false;
-    if (!next && !on) {
-      dialog.drawBody?.();
-      return true;
-    }
-    const why = await dialog.save(item, next ? { value: '0.0.0.0' } : { unset: true });
+    const why = await dialog.save(listen, next ? { value: ALL } : { unset: true });
     if (why) dialog.toast(why);
+    // 打开了：卡片往下展开（地址和端口、访问密码、二维码），露不全的挪到露得出来为止；本来就露着的不动
+    else if (next) dialog.reveal?.(ACCESS, 'nearest');
     return !why;
   });
-  const url = on ? dialog.lanInfo?.lan : null;
-  // 每块网卡的地址都列（网页软件的 `lans`，带网卡名，W-1135；2026-11-10 项目主人：全部列出、不分先后，组网、代理的虚拟网卡也列，人看网卡名
-  // 自己挑）：卡照第一个画，别的写在卡下面；Mac 上别的设备打不开多半是防火墙挡了传入连接，开着时写一句去哪放行（同一天：换了真实地址也打不开）
-  /** @type {{url: string, card: string|null}[]} */
-  const all = on && Array.isArray(dialog.lanInfo?.lans)
-    ? dialog.lanInfo.lans.filter((/** @type {any} */ l) => typeof l?.url === 'string').map((/** @type {any} */ l) => ({ url: l.url, card: typeof l.card === 'string' ? l.card : null }))
-    : [];
-  const named = (/** @type {{url: string, card: string|null}} */ l) => (l.card ? `${l.url}（${l.card}）` : l.url);
-  const others = all.filter((l) => l.url !== url).map(named);
-  const mine = all.find((l) => l.url === url)?.card ?? null;
-  const mac = on && dialog.ctx.host?.platform === 'macos';
-  return h('div.set-row', h('div.set-text', h('div.set-name', h('span', t('account.lan'))),
-    h('p.set-desc', t('account.lan_desc')),
-    // 明文 HTTP（2026-10-30 项目主人定不配证书，第二轮审查 W2-3）
-    h('p.set-desc.acc-lan-warn', t('account.lan_risk')),
-    pending ? h('p.set-desc.acc-lan-warn', t('account.lan_needs_password')) : null,
-    typeof url === 'string' ? lanCard(dialog.ctx, url, mine) : null,
-    typeof url === 'string' && others.length ? h('p.set-desc', t('account.lan_others', { urls: others.join('、') })) : null,
-    typeof url === 'string' && mac ? h('p.set-desc', t('account.lan_mac_firewall')) : null), sw);
+  sw.setAttribute('aria-label', t('account.lan'));
+  const { main, others } = lanAddrs(on ? dialog.lanInfo : null);
+  // Mac 上别的设备打不开多半是防火墙挡了传入连接，开着时写一句去哪放行（2026-11-10 项目主人：换了真实地址也打不开）
+  const mac = on && !!main && dialog.ctx.host?.platform === 'macos';
+  return h('div.acc-card',
+    h('div.acc-card-head',
+      h('div.set-text',
+        h('div.set-name', h('span', t('account.lan')), h(`span.set-mark.acc-state${on ? '.is-on' : ''}`, t(on ? 'account.lan_state_on' : 'account.lan_state_off'))),
+        h('p.acc-card-desc', t('account.lan_desc')),
+        // 明文 HTTP（2026-10-30 项目主人定不配证书，第二轮审查 W2-3）
+        h('p.acc-card-desc.acc-lan-warn', t('account.lan_risk'))),
+      sw),
+    fold(dialog, 'lan', !on,
+      listenRow(dialog, listen, port, on),
+      ...passwordRows(dialog),
+      main ? h('div.acc-card-open', lanCard(dialog.ctx, main.url, main.card, {
+        inset: true, others, open: !!dialog.lanMore, remember: (/** @type {boolean} */ open) => { dialog.lanMore = open; },
+      }), mac ? h('p.acc-card-desc', t('account.lan_mac_firewall')) : null) : null));
 }
 
 /**
- * 「端口」一行（`web.port`，照通用的行）：网页软件实际听的和配置里的不一样的（出厂端口被占、回退了）下面多一行暗字写现在用的。
- * @param {any} dialog @param {any} item @param {boolean} on
+ * 「监听地址和端口」一行（`web.listen`、`web.port`，W-1153，2026-11-11 项目主人：「监听地址和端口我认为应该是一行的两个输入框而不是两个配置
+ * 项目」，原来各占一行、把访问密码挤到很下面）：左边名字和一句说明，右边地址的框、冒号、端口的框。改完（回车、离开）就存：地址写成回环的存完开关
+ * 跟着关；地址清空的放回原来的（要关用开关）；端口清空的去掉这一项（回到出厂的端口），写得不是 1–65535 的放回原来的。核心拒了的原因写在这一行
+ * 下面。网页软件实际听的端口和配置里的不一样的（出厂端口被占、回退了）多一行暗字写现在用的。
+ * @param {any} dialog @param {any} listen @param {any} port @param {boolean} on
  */
-function portRow(dialog, item, on) {
-  const row = coreRow(dialog, item);
+function listenRow(dialog, listen, port, on) {
+  const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
+  const error = h('p.set-error', { hidden: true });
+  const save = async (/** @type {any} */ item, /** @type {any} */ change) => {
+    error.hidden = true;
+    const why = await dialog.save(item, change);
+    if (!why) return;
+    error.textContent = why;
+    error.hidden = false;
+  };
+  const addrNow = String(listen.entry?.value ?? listen.default ?? '');
+  const addr = textField(addrNow, 'text', listen.name ?? '', (text) => {
+    if (text === '') addr.value = addrNow;
+    else void save(listen, { input: text });
+  });
+  addr.classList.add('acc-listen-addr');
+  addr.setAttribute('aria-label', listen.name ?? t('account.listen'));
+  addr.autocomplete = 'off';
+  const wrote = port ? port.entry?.value ?? port.default : null;
+  const portNow = wrote == null ? '' : String(wrote);
+  const number = port ? textField(portNow, 'number', port.name ?? '', (text) => {
+    const n = portOf(text);
+    if (n === null) number.value = portNow;
+    else void save(port, n === '' ? { unset: true } : { value: n });
+  }) : null;
+  if (number) {
+    number.classList.add('acc-listen-port');
+    number.inputMode = 'numeric';
+    number.setAttribute('aria-label', port.name ?? '');
+    number.autocomplete = 'off';
+  }
   const now = dialog.lanInfo?.port;
-  const wrote = item.entry?.value ?? item.default;
-  if (on && row && typeof now === 'number' && now !== wrote) row.querySelector('.set-text')?.append(h('p.set-desc', dialog.ctx.text('account.port_now', { port: now })));
-  return row;
-}
-
-/** 没设密码时打开的：密码设好了，接着写 `0.0.0.0` @param {any} dialog @param {any} item */
-async function turnOn(dialog, item) {
-  dialog.lanPending = false;
-  const why = await dialog.save(item, { value: '0.0.0.0' });
-  if (why) dialog.toast(why);
+  const problems = [...(listen.problems ?? []), ...(port?.problems ?? [])];
+  return h('div.set-row.acc-listen-row',
+    h('div.set-text',
+      h('div.set-name', h('span', t(port ? 'account.listen' : 'account.listen_only'))),
+      h('p.acc-card-desc', t('account.listen_desc')),
+      on && typeof now === 'number' && typeof wrote === 'number' && now !== wrote ? h('p.acc-card-desc', t('account.port_now', { port: now })) : null,
+      ...problems.map((p) => h(`p.set-problem.is-${p.level === 'error' ? 'error' : 'warn'}`, p.message)),
+      error),
+    h('div.acc-listen', addr, number ? h('span.acc-listen-colon', { 'aria-hidden': 'true' }, ':') : null, number));
 }
 
 /** 问网页软件一次在听的（`GET /listen`）：拿到了记下、重画；问不到的记成 `null`，不再问。 @param {any} dialog */
@@ -218,81 +231,4 @@ function avatarRow(dialog) {
     drawActions();
   });
   return h('div.set-row.acc-avatar-row', h('div.set-text', h('div.set-name', h('span', t('account.avatar')))), h('div.acc-avatar-control', holder, actions));
-}
-
-/**
- * 密码框右边一个眼睛：点了看得见写的字，再点藏起来（同登录那一屏的）；不进 Tab 的先后，按 Tab 到下一个框。第一次引导设访问密码那一格也用
- * （经服务 `settings` 的 `lan.secret`，W-1086）。
- * @param {HTMLInputElement} input @param {(k: string) => string} t
- */
-export function withEye(input, t) {
-  const eye = h('button.acc-eye', {
-    type: 'button', tabindex: '-1', title: t('account.password_show'), 'aria-label': t('account.password_show'), 'aria-pressed': 'false',
-    onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(),
-    onclick: () => {
-      const shown = input.type === 'password';
-      input.type = shown ? 'text' : 'password';
-      const label = t(shown ? 'account.password_hide' : 'account.password_show');
-      eye.setAttribute('aria-pressed', String(shown));
-      eye.title = label;
-      eye.setAttribute('aria-label', label);
-    },
-  }, icon('eye'));
-  return h('span.acc-secret', input, eye);
-}
-
-/**
- * 「访问密码」一行（核心 SU-1 补；蓝图第 12c 条第 2 款）：设没设、右边「设置」或「修改」；点了下面展开一格新的密码，右边一个眼睛（2026-10-31
- * 项目主人：一个框加眼睛直接设，不再输两遍、本机的不要当前密码），从局域网别的设备连进来的改的时候多「当前访问密码」）、
- * 「确定」「取消」。旧核心握手不说设没设的不出。`open` 的（打开局域网时还没设密码）格子直接打开，设好了叫 `done`、取消了叫 `cancel`。
- * @param {any} dialog @param {{open?: boolean, done?: () => void, cancel?: () => void}} [how] @returns {HTMLElement[]}
- */
-function passwordRows(dialog, how = {}) {
-  const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
-  const access = dialog.ctx.host?.access;
-  if (!access || access.set() === null) return [];
-  const form = h('div.set-form.acc-password-form', { hidden: true });
-  const desc = h('p.set-desc');
-  const button = h('button.set-btn', { type: 'button', onclick: () => open() });
-  const label = () => {
-    desc.textContent = t(access.set() ? 'account.password_is_set' : 'account.password_unset');
-    button.textContent = t(access.set() ? 'account.password_change' : 'account.password_set');
-  };
-  label();
-  const close = () => { form.hidden = true; form.replaceChildren(); button.hidden = false; };
-  const open = (focus = true) => {
-    const field = (/** @type {string} */ name, /** @type {string} */ auto) => /** @type {HTMLInputElement} */ (h('input.set-input', { type: 'password', placeholder: t(name), 'aria-label': t(name), autocomplete: auto, spellcheck: 'false' }));
-    const old = access.needsOld() ? field('account.password_old', 'current-password') : null;
-    const fresh = field('account.password_new', 'new-password');
-    const error = h('p.set-error', { hidden: true });
-    const ok = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'button', onclick: () => submit() }, t('account.ok')));
-    const fail = (/** @type {string} */ why) => { error.textContent = why; error.hidden = false; };
-    const submit = async () => {
-      const why = access.problem(fresh.value, fresh.value);
-      if (why) return fail(why);
-      ok.disabled = true;
-      const refused = await access.change(fresh.value, old ? old.value : null);
-      ok.disabled = false;
-      if (refused) return fail(refused);
-      close();
-      label();
-      dialog.toast(t('account.password_done'));
-      if (how.done) how.done();
-      else dialog.drawBody?.();
-    };
-    const cancel = () => {
-      close();
-      how.cancel?.();
-    };
-    for (const input of [old, fresh]) input?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) submit(); });
-    // 浏览器记密码照这一格（没有用户名，给一个固定的藏着，同登录那一屏；不然会把上面的「端口」当成用户名）
-    const user = h('input', { type: 'text', autocomplete: 'username', value: 'Miyu', hidden: true, readonly: true, tabindex: '-1' });
-    form.replaceChildren(user, h('div.set-form-keyrow', old ? withEye(old, t) : null, withEye(fresh, t)), error,
-      h('div.set-form-buttons', h('button.set-btn', { type: 'button', onclick: cancel }, t('account.cancel')), ok));
-    form.hidden = false;
-    button.hidden = true;
-    if (focus) queueMicrotask(() => (old ?? fresh).focus());
-  };
-  if (how.open) open(true);
-  return [h('div.set-row', h('div.set-text', h('div.set-name', h('span', t('account.password'))), desc), h('div.acc-actions', button)), form];
 }

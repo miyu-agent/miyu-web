@@ -751,16 +751,53 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .acc-actions { display: flex; flex: none; align-items: center; gap: calc(6px * var(--space)); }
 /* 「允许局域网访问」（第 12c 条）：没设密码时打开的那一句 warn 色 */
 .acc-lan-warn { color: var(--t-warn, var(--gold)); }
-/* 别的设备怎么打开（W-1086；第一次引导用同一张）：左边二维码（白底黑块，不跟着主题变），右边网址等宽、「复制」，下面一句扫码的提示 */
-.acc-lan-card { display: flex; align-items: center; gap: calc(14px * var(--space)); max-width: 460px; margin-top: calc(10px * var(--space)); padding: calc(12px * var(--space)); border: var(--card-border, 0); border-radius: var(--card-radius, var(--r-12)); background: var(--card-bg, var(--surface-1)); box-shadow: var(--card-elev, var(--card-shadow)); }
+/* 「访问」那张卡片（第 12c 条，W-1153，2026-11-11 项目主人：照 im 网页的会话卡片）：一张亮一档的卡、浅阴影、不描边；卡片头是名字、状态小标签、
+   说明和开关，开着时下面分行（行和行之间照设置页的细线） */
+.acc-card { margin-top: calc(8px * var(--space)); padding: calc(4px * var(--space)) calc(16px * var(--space)); border: var(--card-border, 0); border-radius: var(--card-radius, var(--r-12)); background: var(--card-bg, var(--surface-1)); box-shadow: var(--card-elev, var(--card-shadow)); }
+.acc-card-head { display: flex; align-items: center; gap: calc(16px * var(--space)); padding: calc(12px * var(--space)) 0; }
+/* 卡片里的说明写全、不截成两行（设置页别处的说明照旧两行） */
+.acc-card-desc { margin: calc(3px * var(--space)) 0 0; color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); line-height: 1.5; overflow-wrap: anywhere; }
+.acc-card-desc.acc-lan-warn { color: var(--t-warn, var(--gold)); }
+.acc-state.is-on { background: var(--accent-soft); color: var(--on-primary-container, var(--accent)); }
+.acc-card .pv-body > .set-row { border-top: var(--divider, 1px solid var(--line)); border-bottom: 0; }
+/* 监听地址和端口：一行两个框，中间一个冒号；窄的时候整组换到名字下面、地址的框占满 */
+.acc-listen { display: flex; flex: none; align-items: center; gap: calc(6px * var(--space)); }
+.acc-listen .set-input.acc-listen-addr { width: 168px; font-family: var(--font-mono); }
+.acc-listen .set-input.acc-listen-port { width: 76px; font-family: var(--font-mono); }
+.acc-listen-colon { color: var(--text-faint); font: calc(13px * var(--text-scale)) var(--font-mono); }
+.acc-card .acc-password-form { padding-top: 0; }
+.acc-card-open { padding: calc(12px * var(--space)) 0; border-top: var(--divider, 1px solid var(--line)); }
+/* 没设访问密码时打开局域网弹的小窗（`access-password.js`）：标题、一句为什么、一格密码 */
+.acc-ask { width: min(380px, 100%); }
+.acc-ask-title { color: var(--text); font-size: calc(15px * var(--text-scale)); font-weight: 600; }
+.acc-ask-field { display: grid; gap: calc(6px * var(--space)); }
+.acc-ask-field .set-input { width: 100%; box-sizing: border-box; }
+.acc-ask-field .set-error { margin: 0; }
+/* 别的设备怎么打开（W-1086；第一次引导用同一张）：左边二维码（白底黑块，不跟着主题变），右边网址等宽、「复制」，下面一句扫码的提示；
+   别的网卡上的地址在下面一个一行（「更多地址」点开，W-1153），地址放不下换行、不截 */
+.acc-lan-card { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: calc(12px * var(--space)) calc(14px * var(--space)); max-width: 460px; margin-top: calc(10px * var(--space)); padding: calc(12px * var(--space)); border: var(--card-border, 0); border-radius: var(--card-radius, var(--r-12)); background: var(--card-bg, var(--surface-1)); box-shadow: var(--card-elev, var(--card-shadow)); }
+.acc-lan-card.is-inset { max-width: none; margin-top: 0; border: 0; background: var(--surface-2); box-shadow: none; }
+.acc-lan-card.is-inset .set-btn { background: var(--surface-1); }
+.acc-lan-card.is-inset .set-btn:hover { background: var(--btn-hover, var(--surface-3)); }
 .acc-lan-qr { display: block; flex: none; width: 132px; height: 132px; border-radius: var(--r-4); }
-.acc-lan-side { display: grid; flex: 1; gap: calc(6px * var(--space)); min-width: 0; }
+.acc-lan-side { display: grid; gap: calc(6px * var(--space)); min-width: 0; }
 .acc-lan-label, .acc-lan-scan { margin: 0; color: var(--text-soft); font: calc(12.5px * var(--text-scale)) / 1.5 var(--font-ui); }
-.acc-lan-addr { display: flex; flex-wrap: wrap; align-items: center; gap: calc(8px * var(--space)); }
-.acc-lan-url { color: var(--text); font: calc(13px * var(--text-scale)) var(--font-mono); overflow-wrap: anywhere; user-select: all; }
-.acc-lan-nic { color: var(--text-faint); font: calc(12px * var(--text-scale)) var(--font-mono); }
+.acc-lan-addr, .acc-lan-item { display: flex; flex-wrap: wrap; align-items: center; gap: calc(4px * var(--space)) calc(8px * var(--space)); min-width: 0; }
+.acc-lan-url { min-width: 0; color: var(--text); font: calc(13px * var(--text-scale)) var(--font-mono); overflow-wrap: anywhere; user-select: all; }
+.acc-lan-nic { color: var(--text-faint); font: calc(12px * var(--text-scale)) var(--font-mono); overflow-wrap: anywhere; }
+.acc-lan-foot { display: flex; }
+.acc-lan-more .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); transition: transform calc(0.16s * var(--motion-scale)) var(--ease-out); }
+.acc-lan-more.is-open .icon { transform: rotate(180deg); }
+.acc-lan-list { display: grid; grid-column: 1 / -1; gap: calc(8px * var(--space)); padding-top: calc(10px * var(--space)); border-top: var(--divider, 1px solid var(--line)); }
+.acc-lan-item .set-btn { margin-left: auto; }
 @media (max-width: 480px) {
-  .acc-lan-card { flex-direction: column; align-items: flex-start; }
+  .acc-lan-card { grid-template-columns: minmax(0, 1fr); }
+}
+/* 窄的时候（设置页的行这时都换行）：两个框换到名字下面，地址的框占满剩下的、端口的框照旧宽 */
+@media (max-width: 640px) {
+  .acc-listen-row .set-text { flex-basis: 100%; }
+  .acc-listen { flex: 1 1 100%; min-width: 0; }
+  .acc-listen .set-input.acc-listen-addr { flex: 1 1 0; width: auto; min-width: 0; }
 }
 
 /* 账号页最上面「管理员后台」的入口卡片（第 12c 条） */

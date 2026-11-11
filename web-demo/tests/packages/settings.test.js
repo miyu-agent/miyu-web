@@ -417,6 +417,41 @@ test('「允许局域网访问」照 web.listen 认开没开：回环（127.*、
   for (const v of ['0.0.0.0', '192.168.1.5', '::']) assert.equal(loopbackOnly(v), false, v);
 });
 
+// W-1153（2026-11-11 项目主人：开关一开就该听所有网卡、没设密码第一次打开弹窗设、二维码卡片上「更多」列全部地址）
+test('打开局域网：写的是 0.0.0.0；没设访问密码的先弹窗设，设了的、旧核心不说设没设的直接写', async () => {
+  const { ALL, turnOnWay, loopbackOnly } = await import('../../packages/settings/access-model.js');
+  assert.equal(ALL, '0.0.0.0');
+  assert.equal(loopbackOnly(ALL), false, '写了它开关就是开着');
+  assert.equal(turnOnWay(false), 'ask');
+  assert.equal(turnOnWay(true), 'write');
+  assert.equal(turnOnWay(null), 'write');
+  assert.equal(turnOnWay(undefined), 'write');
+});
+
+test('别的设备能开的地址：卡上画的是 lan（带它的网卡名），别的网卡的照先后列在「更多地址」里、去掉重的；没有 lan 的什么都不列', async () => {
+  const { lanAddrs } = await import('../../packages/settings/access-model.js');
+  const info = { lan: 'http://192.168.0.55:8300', lans: [
+    { url: 'http://192.168.0.55:8300', card: 'enp5s0' }, { url: 'http://100.93.205.44:8300', card: 'tailscale0' },
+    { url: 'http://100.93.205.44:8300', card: 'tailscale0' }, { url: 'http://192.168.0.155:8300' }, { card: 'bad' }, null] };
+  assert.deepEqual(lanAddrs(info), {
+    main: { url: 'http://192.168.0.55:8300', card: 'enp5s0' },
+    others: [{ url: 'http://100.93.205.44:8300', card: 'tailscale0' }, { url: 'http://192.168.0.155:8300', card: null }],
+  });
+  // 旧的网页软件只有 lan
+  assert.deepEqual(lanAddrs({ lan: 'http://192.168.0.55:8300' }), { main: { url: 'http://192.168.0.55:8300', card: null }, others: [] });
+  for (const none of [null, undefined, {}, { lans: [{ url: 'http://10.0.0.2:8300' }] }]) assert.deepEqual(lanAddrs(none), { main: null, others: [] });
+});
+
+test('端口那一格：1–65535 的整数才收，空的是去掉这一项，别的不收', async () => {
+  const { portOf } = await import('../../packages/settings/access-model.js');
+  assert.equal(portOf(' 8300 '), 8300);
+  assert.equal(portOf('1'), 1);
+  assert.equal(portOf('65535'), 65535);
+  assert.equal(portOf(''), '');
+  assert.equal(portOf('  '), '');
+  for (const bad of ['0', '65536', '83a0', '-1', '8300.5', '123456']) assert.equal(portOf(bad), null, bad);
+});
+
 // 核心 SG-2（W-1152）：选项由包在运行时给的文字项、不用填号的平台
 import { choicesFrom, packageChoices, choiceOptions, asksOwnerNumber } from '../../packages/settings/model.js';
 

@@ -7524,6 +7524,50 @@
       ".acc-lan-scan"
     ]
   },
+  "acc.card": {
+    "zh": "设置「访问」：局域网访问那张卡片（亮一档的底、浅阴影）",
+    "select": [
+      ".acc-card"
+    ]
+  },
+  "acc.card-desc": {
+    "zh": "设置「访问」卡片里的说明（写全、不截）",
+    "select": [
+      ".acc-card-desc"
+    ]
+  },
+  "acc.state": {
+    "zh": "设置「访问」：名字后面写现在状态的小标签（仅本机、已开启）",
+    "select": [
+      ".acc-state"
+    ]
+  },
+  "acc.listen": {
+    "zh": "设置「访问」：监听地址和端口那两个框和中间的冒号",
+    "select": [
+      ".acc-listen-addr",
+      ".acc-listen-port",
+      ".acc-listen-colon"
+    ]
+  },
+  "acc.card-open": {
+    "zh": "设置「访问」卡片里「别的设备怎么打开」那一块",
+    "select": [
+      ".acc-card-open"
+    ]
+  },
+  "acc.ask-title": {
+    "zh": "没设访问密码时打开局域网弹的小窗：标题",
+    "select": [
+      ".acc-ask-title"
+    ]
+  },
+  "acc.lan-list": {
+    "zh": "别的设备打开的那张卡：「更多地址」点开的那几行",
+    "select": [
+      ".acc-lan-list"
+    ]
+  },
   "acc.avatar": {
     "zh": "设置「用户身份」：自己的头像（圆的）",
     "select": [
