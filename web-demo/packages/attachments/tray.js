@@ -4,6 +4,8 @@
 //! 正中一个播放记号）；左下角一个扩展名的小标签。只排一行，放不下的往右排出去、横着滚，两头有东西没露全的那一边虚化；不折行、
 //! 不叠。传的时候罩一层、转一个小圈；悬停露 ×。进来缩放淡入，拿掉缩回去淡出、宽度收掉，后面的滑过来补上（「动效」）。
 //! 缩略图的地址由宿主给（浏览器是文件内容的临时地址，桌面端是路径换成的），跟着那一张：拿走时松开。
+//! 只给路径的（第 10 条）：照文件画（不读内容：不画缩略图、不数行），右下角一个小标签「仅路径」；在找的罩一层转圈；没找到的标签写
+//! 「没找到」，点这张卡在卡里贴路径（回车确认，Esc、点别处放弃）；找到了的也能点了改。
 
 import { h, icon, setUrl } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
@@ -13,6 +15,12 @@ import { kindOf, extOf, lineCount } from './model.js';
 /** 一张卡悬停写的：名字，知道原来路径的另起一行写路径。 @param {{name: string, path?: string}} it */
 export const tipOf = (it) => (it.path ? `${it.name}\n${it.path}` : it.name);
 
+/**
+ * 一张卡悬停写的，连状态：没找到的写怎么办；别的照 [`tipOf`]。
+ * @param {{name: string, path?: string, state?: string}} it @param {(key: string) => string} t
+ */
+export const hintOf = (it, t) => (it.state === 'lost' ? `${it.name}\n${t('lost_hint')}` : tipOf(it));
+
 export class TrayView {
   /**
    * @param {import('./model.js').Tray} tray
@@ -21,13 +29,15 @@ export class TrayView {
    * @param {{preview: (file: any) => Promise<{url: string, release: () => void}|null>, text: (file: any, max: number) => Promise<string|null>}} files
    *   宿主的文件能力：缩略图的地址、读文字文件
    * @param {{count_lines_max: number}} config
+   * @param {{fill?: (id: number, text: string) => boolean}} [on] 人贴了路径（只给路径的那一块）：收下了交 `true`
    */
-  constructor(tray, t, remove, files, config) {
+  constructor(tray, t, remove, files, config, on = {}) {
     this.tray = tray;
     this.t = t;
     this.remove = remove;
     this.files = files;
     this.config = config;
+    this.on = on;
     this.strip = h('div.attach-strip');
     // 那一排出来、收起：高度从 0 长出来、收回去（外面一层放高度，里面一层裁掉，间距在最里面，收着的连间距一起收掉）
     this.el = h('div.attach-tray', h('div.attach-clip', h('div.attach-pad', this.strip)));
@@ -69,14 +79,65 @@ export class TrayView {
       }
       if (chip.state !== it.state) {
         chip.state = it.state;
-        chip.el.classList.toggle('is-uploading', it.state === 'uploading');
+        this.dress(chip.el, it);
       }
       // 悬停写名字；知道它原来在哪的（第 2 条的子条目）下面一行写路径
-      const tip = tipOf(it);
+      const tip = hintOf(it, this.t);
       if (chip.el.title !== tip) chip.el.title = tip;
     }
     this.el.classList.toggle('has-items', this.tray.items.length > 0);
     this.edges();
+  }
+
+  /**
+   * 照状态换一张卡的样子：在传、在找的罩一层转圈；只给路径的右下角写「仅路径」，没找到的写「没找到」、能点了贴路径。
+   * @param {HTMLElement} el @param {import('./model.js').Item} it
+   */
+  dress(el, it) {
+    const t = this.t;
+    el.classList.toggle('is-uploading', it.state === 'uploading' || it.state === 'locating');
+    el.classList.toggle('is-path', it.state === 'path' && !!it.bare);
+    el.classList.toggle('is-lost', it.state === 'lost');
+    const busy = el.querySelector('.attach-busy');
+    if (busy) /** @type {HTMLElement} */ (busy).title = t(it.state === 'locating' ? 'locating' : 'uploading');
+    const tag = el.querySelector('.attach-tag');
+    if (tag) tag.textContent = it.state === 'lost' ? t('lost') : it.state === 'path' && it.bare ? t('path_only') : '';
+    if (it.state !== 'lost' && it.state !== 'path') el.querySelector('.attach-path-input')?.remove();
+  }
+
+  /**
+   * 在卡里贴路径（只给路径的那一块：没找到的、想改的）：卡下面一个输入框，回车交给 `on.fill`（收下了收起，不收的留着接着改），
+   * Esc、点别处放弃。
+   * @param {HTMLElement} el @param {import('./model.js').Item} it
+   */
+  edit(el, it) {
+    if (el.querySelector('.attach-path-input') || !this.on.fill) return;
+    const input = /** @type {HTMLInputElement} */ (h('input.attach-path-input', {
+      type: 'text', spellcheck: 'false', autocomplete: 'off', placeholder: this.t('path_hint'), 'aria-label': this.t('path_hint'), value: it.path ?? '',
+    }));
+    // 拿掉输入框时浏览器会再报一次失焦：只收一次
+    let open = true;
+    const close = () => {
+      if (!open) return;
+      open = false;
+      input.remove();
+      el.classList.remove('is-editing');
+    };
+    input.addEventListener('keydown', (e) => {
+      // 这里的键不归输入框（回车不是发消息）
+      e.stopPropagation();
+      if (e.key === 'Escape') { e.preventDefault(); close(); }
+      if (e.key !== 'Enter' || e.isComposing) return;
+      e.preventDefault();
+      if (this.on.fill?.(it.id, input.value)) close();
+    });
+    input.addEventListener('paste', (e) => e.stopPropagation());
+    input.addEventListener('click', (e) => e.stopPropagation());
+    input.addEventListener('blur', close);
+    el.classList.add('is-editing');
+    el.append(input);
+    input.focus();
+    input.select();
   }
 
   /** 两头有东西没露全的那一边虚化。 */
@@ -94,30 +155,42 @@ export class TrayView {
   chip(it) {
     const t = this.t;
     const kind = kindOf(it.file);
+    // 只给路径的不读内容（几个 G 的视频别读）：不画缩略图、不数行，照文件画
+    const bare = !!it.bare;
     // 缩略图的地址可能要等（直接连网页软件的先换票据）；取不到的照文件画（下面的 `error`）
-    const shown = kind === 'image' || kind === 'video' ? this.files.preview(it.file) : null;
+    const shown = !bare && (kind === 'image' || kind === 'video') ? this.files.preview(it.file) : null;
     const src = shown?.then((s) => s?.url ?? '') ?? Promise.resolve('');
     const ext = extOf(it.name);
     const badge = () => (ext ? h('span.attach-ext', ext) : null);
+    // 点这张卡：没找到的、只给路径的贴路径、改路径（× 自己管自己）
+    const wire = (/** @type {HTMLElement} */ node) => {
+      node.addEventListener('click', (e) => {
+        if (/** @type {HTMLElement} */ (e.target).closest('.attach-remove, .attach-path-input')) return;
+        if (it.state === 'lost' || (it.state === 'path' && it.bare)) this.edit(node, it);
+      });
+      return node;
+    };
     const x = h('button.attach-remove', { type: 'button', title: t('remove'), 'aria-label': t('remove'), onclick: () => this.remove(it.id) }, icon('x'));
     const busy = h('span.attach-busy', { title: t('uploading') }, icon('loader-circle'));
+    // 右下角的小标签：只给路径的才有字（`dress` 照状态写）
+    const tag = () => h('span.attach-tag');
     const card = () => {
       // 大小不知道的（撤销放回来、这台设备的输入历史里查不到的）不写
       const sub = h('span.attach-sub', it.size != null ? bytes(it.size) : '');
-      if (kind === 'text') {
+      if (kind === 'text' && !bare) {
         this.files.text(it.file, this.config.count_lines_max).then((text) => {
           if (text != null) sub.textContent = t('lines', { count: lineCount(text) });
         });
       }
-      return h('div.attach-chip.is-file', { title: it.name }, h('span.attach-name', it.name), sub, badge(), busy, x);
+      return h('div.attach-chip.is-file', { title: it.name }, h('span.attach-name', it.name), sub, badge(), tag(), busy, x);
     };
     let el;
     if (shown && kind === 'video') {
       const video = h('video', { muted: true, preload: 'metadata', playsinline: true });
-      el = h('div.attach-chip.is-media.is-video', { title: it.name }, video, h('span.attach-play', icon('play')), badge(), busy, x);
+      el = h('div.attach-chip.is-media.is-video', { title: it.name }, video, h('span.attach-play', icon('play')), badge(), tag(), busy, x);
       video.addEventListener('error', () => {
-        const plain = card();
-        plain.classList.toggle('is-uploading', el.classList.contains('is-uploading'));
+        const plain = wire(card());
+        this.dress(plain, it);
         el.replaceWith(plain);
         const chip = this.chips.get(it.id);
         if (chip) chip.el = plain;
@@ -126,10 +199,11 @@ export class TrayView {
       setUrl(video, 'src', src, '#t=0.1');
     } else if (shown) {
       const img = h('img', { alt: it.name, decoding: 'async' });
-      el = h('div.attach-chip.is-media', { title: it.name }, img, badge(), busy, x);
+      el = h('div.attach-chip.is-media', { title: it.name }, img, badge(), tag(), busy, x);
       // 取不出图的（输入历史翻出来的、发它的会话已经删了）照文件画
       img.addEventListener('error', () => {
-        const plain = card();
+        const plain = wire(card());
+        this.dress(plain, it);
         el.replaceWith(plain);
         const chip = this.chips.get(it.id);
         if (chip) chip.el = plain;
@@ -139,6 +213,7 @@ export class TrayView {
     } else {
       el = card();
     }
+    wire(el);
     return { el, shown, state: '' };
   }
 

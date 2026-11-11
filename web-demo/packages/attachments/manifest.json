@@ -13,7 +13,7 @@
   },
   "kind": "optional",
   "description": {
-    "zh": "输入框里放图片和文件：回形针、拖进来、粘贴；分块传给核心存好（有本机路径的直接 blob.put），跟着话一起发。"
+    "zh": "输入框里放图片和文件：回形针、拖进来、粘贴；分块传给核心存好（有本机路径的直接 blob.put），跟着话一起发。超过上限的在这台电脑上找到原文件、只把路径交给她。"
   },
   "inject": [
     "slots",
@@ -70,6 +70,17 @@
         "zh": "传的时候接不上，连着几次没往前走就算传不上",
         "ja": "送信が続かないとき、何回連続で進まなければ失敗とみなすか"
       }
+    },
+    "seek_ms": {
+      "type": "number",
+      "default": 10000,
+      "min": 500,
+      "max": 15000,
+      "integer": true,
+      "name": {
+        "zh": "只给路径的文件最多找多久（毫秒）",
+        "ja": "パスだけ渡すファイルを探す最長時間（ミリ秒）"
+      }
     }
   },
   "styles": [
@@ -91,7 +102,15 @@
         "too_many_uploads": "同时上传的文件过多"
       },
       "drop_here": "把文件拖到这里",
-      "lines": "{count} 行"
+      "lines": "{count} 行",
+      "locating": "正在查找文件位置",
+      "path_only": "仅路径",
+      "lost": "未找到",
+      "lost_hint": "未找到文件位置，点击填写路径",
+      "path_hint": "粘贴完整路径",
+      "bad_path": "请写完整的路径",
+      "need_path": "「{name}」还没有路径",
+      "too_big_remote": "{name} 超过 {mib} MiB，无法发送：文件在这台设备上，Miyu 所在的电脑读不到"
     },
     "en": {
       "attach": "Add attachment",
@@ -108,7 +127,15 @@
         "too_many_uploads": "Too many simultaneous uploads"
       },
       "drop_here": "Drop files here",
-      "lines": "{count} lines"
+      "lines": "{count} lines",
+      "locating": "Locating the file",
+      "path_only": "Path",
+      "lost": "Not found",
+      "lost_hint": "File location not found; click to enter its path",
+      "path_hint": "Paste the full path",
+      "bad_path": "Enter the full path",
+      "need_path": "\"{name}\" has no path yet",
+      "too_big_remote": "{name} is over {mib} MiB and can't be sent: the file is on this device, and the computer running Miyu can't read it"
     },
     "ja": {
       "attach": "ファイルを添付",
@@ -125,7 +152,15 @@
         "too_many_uploads": "同時にアップロードしている数が多すぎます"
       },
       "drop_here": "ここにファイルをドロップ",
-      "lines": "{count} 行"
+      "lines": "{count} 行",
+      "locating": "ファイルの場所を検索中",
+      "path_only": "パス",
+      "lost": "見つかりません",
+      "lost_hint": "ファイルの場所が見つかりません。クリックしてパスを入力",
+      "path_hint": "フルパスを貼り付け",
+      "bad_path": "フルパスを入力してください",
+      "need_path": "「{name}」のパスがまだありません",
+      "too_big_remote": "{name} は {mib} MiB を超えているため送信できません：ファイルはこの端末にあり、Miyu のあるコンピューターからは読めません"
     }
   }
 }

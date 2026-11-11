@@ -8,6 +8,9 @@
 //!   （`blob.open`、`blob.write`、`blob.close`，核心施工 W-5，`src/lib/upload.js`），字节由宿主读（`files.read`）。
 //! - 原来的路径（第 2 条的子条目，2026-11-11 项目主人定）：浏览器不给拖进来、选进来的文件的路径，传的同时请网页软件在这台电脑上照名字、大小、
 //!   改的时刻找一找（宿主的 `files.locate`，只认改的时刻也对得上的），找到了记在这一块上、发的时候带 `path`：她看得到原文件在哪，能直接改它。
+//! - 只给路径（第 10 条，2026-11-11 项目主人定，核心 AT-1）：超过上限的、传完核心嫌大的（图片超过 5 MiB、一边超过 8000 像素）不传内容，
+//!   照样进框里，请网页软件找它在这台电脑上的哪儿（不认改的时刻也行，最多找 10 秒），找到了发的时候只交路径；没找到的等人贴路径。页面
+//!   开在别的设备上的（文件不在核心那台电脑上）照旧不收。
 //! - 框里那一排挂进 `composer.head`（`tray.js`）；发的时候经 `composer.payload` 交出去，核心拒了放回来（`model.js` 的 `Tray`）；
 //!   记进输入历史的是核心存好的那一份，翻出来的照它回到框里（蓝图「输入历史」）。
 //!
@@ -24,7 +27,17 @@ export function apply(ctx) {
   const t = (path, fields) => ctx.text(path, fields);
   const tray = new Tray();
   const files = ctx.host.files;
-  const view = new TrayView(tray, t, (id) => tray.remove(id), files, ctx.config);
+  /** 这台电脑上能不能找文件在哪：能的话太大的只给路径，不能的照旧不收 */
+  const local = () => !!files.local?.();
+  const home = () => ctx.chat?.home?.() ?? null;
+  const view = new TrayView(tray, t, (id) => tray.remove(id), files, ctx.config, {
+    // 人贴了路径：写法不对的说一句
+    fill: (id, text) => {
+      const ok = tray.fill(id, text, home());
+      if (!ok) ctx.composer.say(t('bad_path'));
+      return ok;
+    },
+  });
   ctx.effect(() => () => view.destroy());
   ctx.effect(() => tray.watch(() => ctx.composer.changed()));
 
@@ -41,6 +54,14 @@ export function apply(ctx) {
       .then((/** @type {string|null} */ path) => { if (path) tray.located(item.id, path); }, () => {});
   };
 
+  /** 只给路径的那一块在哪：请网页软件找（先看这个会话的工作区，最多 `seek_ms`），找到没找到都记上。 */
+  const seek = (/** @type {import('./model.js').Item} */ item) => {
+    if (item.state !== 'locating') return;
+    const near = [ctx.chat?.workdir?.()].filter((dir) => typeof dir === 'string' && dir);
+    files.locate({ name: item.name, size: item.size, modified: item.file.modified, near, wait: ctx.config.seek_ms })
+      .then((/** @type {string|null} */ path) => tray.found(item.id, path), () => tray.found(item.id, null));
+  };
+
   /** 传一个：有路径的核心照路径存，只有内容的分块传（同时找它原来在哪）；出错的那一块拿掉，提示一句。 */
   const put = async (/** @type {import('./model.js').Item} */ item) => {
     const type = mediaType(item.file.type);
@@ -54,17 +75,24 @@ export function apply(ctx) {
           { chunk: ctx.config.chunk_bytes, tries: ctx.config.resume_tries }));
       tray.ready(item.id, got);
     } catch (err) {
-      if (tray.remove(item.id)) ctx.composer.say(t('failed', { name: item.name, reason: reasonOf(err, t) }));
+      // 核心嫌大（图片另有上限）：这台电脑上能找的改成只给路径，不拿掉
+      const big = /** @type {any} */ (err)?.reason === 'attachment_too_big' && local() ? tray.overflow(item.id) : null;
+      if (big) seek(big);
+      else if (tray.remove(item.id)) ctx.composer.say(t('failed', { name: item.name, reason: reasonOf(err, t) }));
     }
   };
 
-  /** 放进来几个：超大的、放不下的不收，提示；收下的一个个传。 */
+  /**
+   * 放进来几个：放不下的不收，提示；收下的一个个传。超过上限的：这台电脑上能找的照样收、只给路径（去找它在哪）；页面开在别的设备上的
+   * 不收，说明白为什么。
+   */
   const take = (/** @type {import('./model.js').FileLike[]} */ list) => {
     if (!list.length) return;
-    const r = admit(tray.items.length, list, ctx.config);
-    for (const f of r.tooBig) ctx.composer.say(t('too_big', { name: f.name, mib: ctx.config.max_mib }));
+    const r = admit(tray.items.length, list, ctx.config, local());
+    for (const f of r.tooBig) ctx.composer.say(t(files.elsewhere?.() ? 'too_big_remote' : 'too_big', { name: f.name, mib: ctx.config.max_mib }));
     if (r.tooMany) ctx.composer.say(t('too_many', { max: ctx.config.max_files }));
     for (const f of r.accepted) put(tray.add(f));
+    for (const f of r.oversize) seek(tray.addBare(f));
     ctx.composer.focus();
   };
 
@@ -78,6 +106,11 @@ export function apply(ctx) {
     render: () => null,
     has: () => tray.has(),
     busy: () => tray.busy(),
+    // 有一块还没有路径（没找到、人还没贴）：发不出去，说是哪一块
+    blocked: () => {
+      const name = tray.pathless();
+      return name == null ? null : t('need_path', { name });
+    },
     take: () => tray.take(),
     putBack: (given) => tray.putBack(given),
     // 输入历史（蓝图「输入历史」第 1、2 条）：交出去的记成核心存好的那一份；翻出来的换上、走回没发的那句拿掉；改了字留下

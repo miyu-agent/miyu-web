@@ -467,6 +467,12 @@ export class Composer {
       this.say(t('payload_busy'));
       return;
     }
+    // 软件包说这一句现在发不出去（附件里有一块还没有路径，蓝图「附件」第 10 条）：照它说的写一句，不发
+    const blocked = parts.map((p) => p.blocked?.()).find(Boolean);
+    if (blocked) {
+      this.say(blocked);
+      return;
+    }
     if (text.trim() === '' && !parts.some((p) => p.has())) {
       // 在回答、框里空着：发送按钮是打断
       if (this.running) this.on.interrupt();

@@ -73,6 +73,28 @@
 .attach-busy .icon { width: calc(18px * var(--space)); height: calc(18px * var(--space)); animation: attach-spin calc(0.9s * var(--motion-scale)) linear infinite; }
 @keyframes attach-spin { to { transform: rotate(360deg); } }
 
+/* 只给路径的（蓝图 web.md「附件」第 10 条）：右下角一个小标签，同扩展名那一个的样子，颜色照强调色淡一些；没找到的照警告色（终端色的 warn，没有的照 danger），
+   这张卡能点（贴路径）。在找的同在传的罩一层转圈 */
+.attach-tag {
+  position: absolute; right: 8px; bottom: 8px; max-width: calc(100% - 16px); padding: calc(1px * var(--space)) calc(6px * var(--space)); overflow: hidden; border-radius: var(--r-5);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface-3)); color: var(--text-soft); font-size: calc(11px * var(--text-scale)); font-weight: 600; line-height: calc(16px * var(--text-scale));
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.attach-tag:empty { display: none; }
+.attach-chip.is-media .attach-tag { box-shadow: 0 1px 3px rgb(0 0 0 / 18%); }
+.attach-chip.is-lost .attach-tag { background: color-mix(in srgb, var(--t-warn, var(--danger)) 26%, var(--surface-3)); color: var(--text); }
+.attach-chip.is-lost, .attach-chip.is-path { cursor: pointer; }
+.attach-chip.is-lost:hover, .attach-chip.is-path:hover { background: var(--card-hover, var(--surface-2)); }
+/* 两个标签并排：扩展名让出右边标签的地方（三四个字母的放得下）；没找到的那一张只留右边的标签（字长，扩展名名字里有） */
+.attach-chip.is-path .attach-ext { max-width: calc(100% - 68px); }
+.attach-chip.is-lost .attach-ext { display: none; }
+/* 在卡里贴路径：贴着卡的下沿一个输入框，盖住两个标签；不描边，底色加聚焦的影 */
+.attach-path-input {
+  position: absolute; right: 6px; bottom: 6px; left: 6px; z-index: 2; width: auto; height: 26px; padding: 0 calc(7px * var(--space)); border: var(--field-border, 0); border-radius: var(--field-radius, var(--r-8)); outline: 0;
+  background: var(--field-bg-focus, var(--surface-1)); box-shadow: var(--field-elev-focus, var(--card-shadow)); color: var(--field-fg, var(--text)); font: calc(12px * var(--text-scale)) var(--font-mono);
+}
+.attach-chip.is-editing .attach-tag, .attach-chip.is-editing .attach-ext, .attach-chip.is-editing .attach-sub { visibility: hidden; }
+
 /* 拿掉：悬停右上角露一个 × */
 .attach-remove {
   position: absolute; top: 4px; right: 4px; z-index: 1; display: grid; width: 20px; height: 20px; padding: 0; place-items: center;

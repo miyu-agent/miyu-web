@@ -314,6 +314,8 @@ export function fileTools(urls) {
     text: (/** @type {FileRef} */ ref, /** @type {number} */ max) => text(urls, ref, max),
     read,
     save: saveText,
+    /** 页面是不是开在别的设备上（文件在这台设备上，核心那台电脑读不到它） */
+    elsewhere: () => !onThisComputer(),
     /** 这台电脑上能不能找文件在哪（页面和网页软件在同一台电脑上、网页软件有 `/locate`）：出厂不能，直接连网页软件的那一份自己补 */
     local: () => false,
     /** 找一个文件在这台电脑上的哪儿：交回路径，没找到、找不了的交 `null` @param {Wanted} _wanted @returns {Promise<string|null>} */

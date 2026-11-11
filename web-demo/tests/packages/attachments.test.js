@@ -4,8 +4,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { Tray, admit, mediaType, extOf, attachable, sourcePath, findable } from '../../packages/attachments/model.js';
-import { tipOf } from '../../packages/attachments/tray.js';
+import { Tray, admit, mediaType, extOf, attachable, sourcePath, findable, fullPath, sentOf } from '../../packages/attachments/model.js';
+import { tipOf, hintOf } from '../../packages/attachments/tray.js';
 
 /** 这个包的设置项的出厂值 */
 const config = Object.fromEntries(Object.entries(JSON.parse(readFileSync(new URL('../../packages/attachments/manifest.json', import.meta.url), 'utf8')).settings).map(([k, s]) => [k, s.default]));
@@ -234,4 +234,94 @@ test('值不值得找它原来在哪：浏览器给的只有内容的文件才�
   assert.equal(findable({ name: 'a', size: 1, type: '', path: '/a', modified: 1 }, now), false, '已经有路径');
   assert.equal(findable({ name: 'a', size: 1, type: '', file: blob, path: '/a', modified: 1 }, now), false);
   assert.equal(findable({ name: 'a', size: 1, type: '', stored: { session: 's', hash: 'h' }, modified: 1 }, now), false, '核心存好的那一份');
+});
+
+test('超过上限的（第 10 条）：这台电脑上能找的照样收、另算只给路径的，和别的一起照先后占位置；不能找的照旧不收', () => {
+  const big = (name) => file(name, config.max_mib * 1024 * 1024 + 1);
+  const kept = admit(0, [file('a.txt'), big('大.mp4'), file('b.txt')], config, true);
+  assert.deepEqual([kept.accepted.map((f) => f.name), kept.oversize.map((f) => f.name), kept.tooBig.length, kept.tooMany], [['a.txt', 'b.txt'], ['大.mp4'], 0, 0]);
+  const full = admit(config.max_files - 1, [big('大.mp4'), file('a.txt'), big('更大.mkv')], config, true);
+  assert.deepEqual([full.accepted.length, full.oversize.map((f) => f.name), full.tooMany], [0, ['大.mp4'], 2], '放满了多的不收，太大的也占位置');
+  const plain = admit(0, [big('大.mp4'), file('a.txt')], config);
+  assert.deepEqual([plain.accepted.map((f) => f.name), plain.oversize, plain.tooBig.map((f) => f.name)], [['a.txt'], [], ['大.mp4']]);
+});
+
+test('只给路径的附件要完整的路径：/、盘符、\\\\ 开头；~ 开头的知道家目录才换成完整的；两头的空白、引号去掉', () => {
+  assert.equal(fullPath('/home/a/录像.mp4'), '/home/a/录像.mp4');
+  assert.equal(fullPath('  "/home/a/b c.mp4"\n'), '/home/a/b c.mp4');
+  assert.equal(fullPath("'C:\\Users\\a\\v.mp4'"), 'C:\\Users\\a\\v.mp4');
+  assert.equal(fullPath('~/视频/a.mp4', '/home/a'), '/home/a/视频/a.mp4');
+  assert.equal(fullPath('~/v/a.mp4', '/home/a/'), '/home/a/v/a.mp4');
+  assert.equal(fullPath('~', '/home/a'), '/home/a');
+  assert.equal(fullPath('~/v/a.mp4', 'C:\\Users\\a'), 'C:\\Users\\a\\v\\a.mp4');
+  for (const bad of [['~/v/a.mp4', null], ['~user/a', '/home/a'], ['v/a.mp4', '/home/a'], ['', null], ['a.mp4', null], ['/a\u0007b', null], [null, null]]) {
+    assert.equal(fullPath(bad[0], bad[1]), null, String(bad[0]));
+  }
+});
+
+test('只给路径的那一块：先是在找（不能发）；找到了能发，交出去的没有 blob，只有路径、名字（最多 200 个字）、大小', () => {
+  const tray = new Tray();
+  const video = tray.addBare({ name: '录像.mp4', size: 3_000_000_000, type: 'video/mp4', file: new Blob(['x']), modified: 1 });
+  assert.deepEqual([video.state, video.bare, tray.busy()], ['locating', true, true]);
+  assert.equal(tray.take(), null);
+  assert.equal(tray.located(video.id, '/x/录像.mp4'), false, '顺便带路径的那条路不认只给路径的');
+  assert.equal(tray.found(video.id, '/home/a/Movies/录像.mp4'), true);
+  assert.deepEqual([video.state, video.path, tray.busy(), tray.pathless()], ['path', '/home/a/Movies/录像.mp4', false, null]);
+  assert.equal(tray.found(video.id, '/other'), false, '找完了的不再改');
+  const long = tray.addBare({ name: `${'长'.repeat(250)}.bin`, size: 1.5, type: '', path: '/data/long.bin' });
+  assert.equal(long.state, 'path', '宿主给了完整路径的直接能发');
+  const normal = tray.add({ name: 'a.txt', size: 3, type: 'text/plain' });
+  tray.ready(normal.id, { blob: 'sha256:a', name: 'a.txt', media_type: 'text/plain' });
+  const taken = /** @type {any} */ (tray.take());
+  assert.deepEqual(taken.attachments[0], { path: '/home/a/Movies/录像.mp4', name: '录像.mp4', size: 3_000_000_000 });
+  assert.equal([...taken.attachments[1].name].length, 200);
+  assert.deepEqual([taken.attachments[1].path, taken.attachments[1].size, 'blob' in taken.attachments[1]], ['/data/long.bin', 1, false]);
+  assert.deepEqual(taken.attachments[2], { blob: 'sha256:a', name: 'a.txt', media_type: 'text/plain' });
+  // 核心拒了放回来，照旧能发；输入历史记着路径，翻出来不用再找
+  tray.putBack(taken);
+  assert.deepEqual(tray.items.map((it) => it.state), ['path', 'path', 'ready']);
+  const again = /** @type {any} */ (tray.take());
+  const kept = /** @type {any} */ (tray.keep(again));
+  assert.deepEqual(kept[0], { path: '/home/a/Movies/录像.mp4', name: '录像.mp4', size: 3_000_000_000, media_type: 'video/mp4', path_only: true });
+  tray.recall([...kept, { path: 'bad', name: 'x', size: 1, media_type: '', path_only: true }], 's1');
+  assert.deepEqual(tray.items.map((it) => [it.name.slice(0, 2), it.state, !!it.bare]), [['录像', 'path', true], ['长长', 'path', true], ['a.', 'ready', false]], '路径不对的不要');
+  assert.deepEqual(sentOf(tray.items[0]), { path: '/home/a/Movies/录像.mp4', name: '录像.mp4', size: 3_000_000_000 });
+});
+
+test('没找到的：等人贴路径，这时发不出去、说得出是哪一块；贴的写法不对的不收；贴对了、拿掉了就能发', () => {
+  const tray = new Tray();
+  const a = tray.addBare({ name: 'a.iso', size: 9e9, type: '', file: new Blob(['x']), modified: 1 });
+  const b = tray.addBare({ name: 'b.iso', size: 9e9, type: '', file: new Blob(['x']), modified: 1 });
+  assert.equal(tray.fill(a.id, '/x/a.iso'), false, '还在找的不收');
+  assert.equal(tray.found(a.id, null), false);
+  assert.equal(tray.found(b.id, 'relative/b.iso'), false, '写法核心不收的也算没找到');
+  assert.deepEqual([a.state, b.state, tray.busy(), tray.pathless()], ['lost', 'lost', false, 'a.iso']);
+  assert.equal(tray.take(), null, '有一块没有路径：不交');
+  assert.equal(hintOf(a, (k) => k), 'a.iso\nlost_hint');
+  assert.equal(tray.fill(a.id, 'a.iso'), false);
+  assert.equal(tray.fill(a.id, '~/isos/a.iso'), false, '不知道家目录的不收');
+  assert.equal(tray.fill(a.id, '~/isos/a.iso', '/home/u'), true);
+  assert.deepEqual([a.state, a.path, tray.pathless()], ['path', '/home/u/isos/a.iso', 'b.iso']);
+  assert.equal(hintOf(a, (k) => k), tipOf(a));
+  assert.equal(tray.fill(a.id, '/mnt/a.iso'), true, '找到了的也能改');
+  tray.remove(b.id);
+  assert.deepEqual(/** @type {any} */ (tray.take()).attachments, [{ path: '/mnt/a.iso', name: 'a.iso', size: 9e9 }]);
+});
+
+test('传完核心嫌大的（图片另有上限）：这一块改成只给路径的去找；已经知道路径的直接能发；不在传的不动', () => {
+  const tray = new Tray();
+  const img = tray.add({ name: '大图.png', size: 6 * 1024 * 1024, type: 'image/png', file: new Blob(['x']), modified: 1 });
+  tray.located(img.id, '~/图/大图.png');
+  const picked = tray.add({ name: 'p.png', size: 6 * 1024 * 1024, type: 'image/png', path: '/pics/p.png' });
+  const done = tray.add({ name: 'ok.png', size: 1, type: 'image/png' });
+  tray.ready(done.id, { blob: 'sha256:ok', name: 'ok.png', media_type: 'image/png' });
+  assert.equal(tray.overflow(done.id), null, '传好了的不动');
+  assert.equal(tray.overflow(999), null);
+  assert.deepEqual([tray.overflow(img.id)?.state, img.bare, img.path], ['locating', true, undefined], '~/ 开头的不是完整的路径：重新找');
+  assert.deepEqual([tray.overflow(picked.id)?.state, picked.path], ['path', '/pics/p.png']);
+  // 切会话收起来的那一排里的也认（找完了记在收起来的那一排上）
+  const row = /** @type {any} */ (tray.stow());
+  assert.equal(tray.found(img.id, '/home/a/图/大图.png'), true);
+  tray.unstow(row);
+  assert.deepEqual(tray.items.map((it) => it.state), ['path', 'path', 'ready']);
 });
