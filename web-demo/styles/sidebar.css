@@ -11,7 +11,8 @@
   display: grid;
   grid-template-columns: var(--left-w) minmax(0, 1fr) 0px;
   width: 100%;
-  height: calc(100dvh / var(--ui-scale));
+  /* 手机上输入法弹出来：照可见区域的高（`--app-height`，`lib/touch.js` 的 `followVisible` 写），没有的照 100dvh */
+  height: calc(var(--app-height, 100dvh) / var(--ui-scale));
   overflow: hidden;
   zoom: var(--ui-scale);
   transition: grid-template-columns calc(0.28s * var(--motion-scale)) cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -159,6 +160,11 @@
 /* 触屏没有悬停：三个点一直露着 */
 @media (hover: none) {
   .session-trailing { opacity: 1; pointer-events: auto; }
+  /* 「会话」栏头的多选也是悬停才露的 */
+  .session-group-button.is-select { opacity: 1; }
+  /* 一行高一点、三个点大一点，手指好点（至少 40px 的地方） */
+  .session-item-main, .sidebar-nav-row { min-height: 40px; }
+  .session-menu-button { width: 32px; height: 32px; }
 }
 
 /* 底下一行：换主题，靠右 */
@@ -180,7 +186,9 @@
 /* 窄屏：不放大；左栏是从左边滑出来的一层，后面一层遮罩 */
 @media (max-width: 836px) {
   :root { --ui-scale: 1; }
-  .app-shell, .app-shell.is-sidebar-collapsed { display: block; }
+  /* overflow: clip：浮层超出去一点时（左上角的会话信息卡），聚焦它里面的一行会把 `hidden` 的这一层横着滚过去，整页歪一截、
+     回不来（2026-11-11 手机上量到滚了 17px）；`clip` 不让滚 */
+  .app-shell, .app-shell.is-sidebar-collapsed { display: block; overflow: clip; }
   /* 窄屏的左栏只照抽屉开没开：宽屏收起时的透明、不接鼠标在这里不算（2026-09-30 项目主人指出：宽屏收起过，窄屏点了只变暗、
      左栏是透明的） */
   .sidebar, .app-shell.is-sidebar-collapsed .sidebar {

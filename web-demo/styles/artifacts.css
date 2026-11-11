@@ -27,6 +27,17 @@
   position: fixed; z-index: 46; top: 8px; right: 8px; bottom: 8px; width: min(340px, calc(100vw - 16px));
   border-radius: var(--r-14); background: var(--surface); box-shadow: var(--float-elev, var(--float-shadow));
 }
+/* 盖在上面时顶上一行，右边一个关的按钮（2026-11-11 项目主人：手机上右侧边栏打开了收不起——原来只能点它外面那一小条、按 Esc）；
+   窄屏后面压暗一层（同左栏的抽屉），点它收起；手指在这一栏上往右划也收起（`side.js`） */
+.side-head { display: flex; justify-content: flex-end; padding: calc(6px * var(--space)) calc(6px * var(--space)) 0; }
+.side-head[hidden] { display: none; }
+.side-column.is-overlay { grid-template-rows: auto minmax(0, 1fr); }
+.side-close { width: 32px; height: 32px; }
+.side-scrim { display: none; }
+@media (max-width: 836px) {
+  .side-scrim { position: fixed; inset: 0; z-index: 45; display: block; padding: 0; border: 0; background: var(--scrim); animation: fade-in var(--motion-in) var(--ease-out) both; }
+  .side-scrim[hidden] { display: none; }
+}
 .stage-tools-slot { display: contents; }
 /* 开关这一栏换宽的那一下（连左栏自动收起、放回）、拖宽度的时候：不过渡宽（三列那一层平常挂着左栏开关用的过渡，不拿掉的话换完又连续变 0.28 秒） */
 .app-shell.is-artifact-swapping, .app-shell.is-artifact-swapping.is-sidebar-collapsed,

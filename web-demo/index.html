@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <!-- 不让浏览器自动翻译：界面的字自己照语言换，收起那一行的英文、21.3k 这些翻了就错（蓝图 web.md「界面语言」第 7 条） -->
   <meta name="google" content="notranslate">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- interactive-widget=resizes-content：安卓 Chrome 上输入法弹出来时页面跟着缩（不然只缩可见区域，输入框被盖住）；别的浏览器由 `lib/touch.js` 的 `followVisible` 照可见区域定高（蓝图 web.md「手机上」） -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <title>Miyu</title>
   <link rel="icon" href="resources/assets/logo.svg" type="image/svg+xml">
   <link rel="icon" href="resources/assets/logo.png" type="image/png" sizes="256x256">

@@ -44,6 +44,7 @@ import { localeOf } from '../model/session-export.js';
 import { restBefore } from '../model/pace.js';
 import { Desks } from '../model/desk.js';
 import { openExport } from './export-dialog.js';
+import { followVisible, onSwipe } from '../lib/touch.js';
 
 /** 皮肤样张的会话编号：只在这一页（核心那边没有这个会话） */
 const GALLERY = 'gallery:skin';
@@ -148,8 +149,9 @@ export class App {
       },
       projects: () => ({ supported: this.store.projects.supported, list: this.store.projects.list }),
       // 全部会话的「项目」那一页、一个项目的页（占对话区那一块）
-      viewProjects: () => this.sessionsPage.open('projects'),
-      openProject: (id) => this.sessionsPage.openProject(id),
+      // 窄屏的抽屉：进了那一页就收起，不然还盖在上面（2026-11-11 手机上点「全部会话」页面换了、抽屉不走）
+      viewProjects: () => { this.drawer(false); this.sessionsPage.open('projects'); },
+      openProject: (id) => { this.drawer(false); this.sessionsPage.openProject(id); },
       // 新建项目、项目设置：窗口由软件包 setup 画（人格、预设、工作区的下拉照它的）
       editProject: (id) => this.ctx.emit('project.edit', { project: id ? this.store.projects.get(id) : null, count: this.store.projects.list.length }),
       newIn: (id) => this.newIn(id),
@@ -170,7 +172,7 @@ export class App {
         if (this.current === id) this.open(this.ranked().find((x) => !this.store.sessions.get(x)?.gone) ?? null);
       },
       // 查看全部：全部会话那一页
-      viewAll: () => this.sessionsPage.open(),
+      viewAll: () => { this.drawer(false); this.sessionsPage.open(); },
       // 挂在一个会话下面的子代理（左栏的树）：标题照派它时的；子会话自己改过标题的照它
       kids: (id) => this.kids(id),
       // 左栏露出来的子代理：读进它们的会话（才知道下面还挂了几个）
@@ -486,6 +488,10 @@ export class App {
     // 打断时她还没开始做事的那一轮：结束了就撤掉、把话放回框里（蓝图「按键」两下 `Esc`）
     store.on(() => this.takeBackIfEnded());
     addEventListener('resize', () => this.schedule());
+    // 手机上输入法弹出来、收回去：整页照可见区域定高，输入框贴着输入法的上沿（蓝图「手机上」）；跟着最新的正文重新贴底
+    followVisible(document.documentElement, () => { this.schedule(); this.syncJump?.(); });
+    // 窄屏的抽屉：手指在左栏上往左划收起
+    onSwipe(this.sidebar.el, 'left', () => this.drawer(false));
     ctx.on('theme.changed', () => this.sidebar.drawThemeButton());
     // 主题换了、它的样式刚读到（皮肤包每画一次叫一声）：框里字的大小、内边距可能变了，等这一帧排好再量一次高度
     ctx.on('skin.changed', () => requestAnimationFrame(() => this.composer.fit()));

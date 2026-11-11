@@ -5,6 +5,7 @@
 //! 不画描边（浮起来的层那一圈细线除外）。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { keepInView } from '../../src/lib/touch.js';
 
 /**
  * @typedef {{title: string, desc?: string, side?: string, icon?: string, current?: boolean, off?: boolean, tip?: string, label?: string, more?: boolean, still?: boolean,
@@ -136,6 +137,8 @@ export class Menu {
    * 原来只照窗口算，文件夹浏览器的底下一截连「选择此文件夹」被框裁掉（W-1134，2026-11-10）。
    */
   fit() {
+    // 横着超出窗口的挪回来（手机上左上角的会话信息卡从标题那里起，右边伸出屏幕；`lib/touch.js`）
+    keepInView(this.el);
     const list = /** @type {HTMLElement|null} */ (this.el.querySelector('.setup-menu-list'));
     if (!list) return;
     list.style.maxHeight = '';

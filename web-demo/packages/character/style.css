@@ -1,3 +1,5 @@
 /* 吉祥物站的那一层（蓝图 web.md「选吉祥物」第 3 条）：整页最前面，屏幕像素，不接鼠标（角色自己的元素要接的自己写 pointer-events） */
 .character-layer { position: fixed; inset: 0; z-index: 30; pointer-events: none; }
 .character-layer:empty { display: none; }
+/* 窄屏不画（同 Deniro，`mascot/style.css`）：手机上它站在输入框上沿，正压着那一排按钮，又挪不走（2026-11-11 项目主人） */
+@media (max-width: 836px) { .character-layer { display: none; } }

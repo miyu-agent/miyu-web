@@ -8,7 +8,8 @@
 //! 窄栏左边缘能拖着改宽（2026-10-24 项目主人）：默认、最窄都是左栏这时的宽（`base`，同一天项目主人：原来 312 比左栏宽一点），最宽到对话那一列
 //! 只剩 `chat_min`（`room`），拖过的记在这台设备上；放不下记下的宽时照放得下的最宽画，不改记下的。
 
-import { h, replace } from './dom.js';
+import { h, replace, icon } from './dom.js';
+import { onSwipe } from '../lib/touch.js';
 import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 
@@ -54,14 +55,20 @@ export class SideColumn {
     this.width = stored === OLD_NARROWEST ? 0 : stored;
     // 左边缘拖着改宽：只在窄栏露（盖在上面的、点进去看工作区的不露）
     this.handle = h('div.side-resize-handle', { hidden: true, title: t('artifacts.resize'), onpointerdown: (/** @type {PointerEvent} */ e) => this.resize(e) });
-    this.el = h('aside.side-column', { hidden: true }, this.handle);
+    // 盖在上面时顶上一行：右边一个关的按钮（2026-11-11 项目主人：手机上「右侧边栏打开了就无法缩起」——原来只能点它外面那一小条、按 Esc）
+    this.head = h('div.side-head', { hidden: true }, h('button.icon-button.side-close', { type: 'button', title: t('side_close'), 'aria-label': t('side_close'), onclick: () => this.close('button') }, icon('x')));
+    this.el = h('aside.side-column', { hidden: true }, this.handle, this.head);
+    // 盖在上面时后面压暗的一层（只在窄屏画，`artifacts.css`）：点它收起，也不让这一下点到后面的东西
+    this.scrim = h('button.side-scrim', { type: 'button', hidden: true, tabIndex: -1, 'aria-label': t('side_close'), onclick: () => this.close('outside') });
+    // 手指在这一栏上往右划：收起（它是从右边出来的）
+    onSwipe(this.el, 'right', () => { if (this.mode === 'overlay') this.close('swipe'); });
     /** @type {Mode|null} */
     this.mode = null;
     /** @type {Set<(state: {mode: Mode|null, fits: boolean, why: string}) => void>} */
     this.listeners = new Set();
     this.onDown = (/** @type {PointerEvent} */ e) => {
       const at = /** @type {Element} */ (e.target);
-      if (this.mode !== 'overlay' || this.el.contains(at) || at.closest?.('.stage-tools')) return;
+      if (this.mode !== 'overlay' || this.el.contains(at) || at === this.scrim || at.closest?.('.stage-tools')) return;
       this.close('outside');
     };
     this.onKey = (/** @type {KeyboardEvent} */ e) => {
@@ -74,11 +81,11 @@ export class SideColumn {
 
   /** 放进一块内容（同一时间只有一块）；交回怎么拿掉 @param {Node} node */
   mount(node) {
-    replace(this.el, this.handle, node);
+    replace(this.el, this.handle, this.head, node);
     return () => {
       if (this.el.lastChild !== node) return;
       this.close('unmounted');
-      replace(this.el, this.handle);
+      replace(this.el, this.handle, this.head);
     };
   }
 
@@ -155,6 +162,7 @@ export class SideColumn {
     this.mode = mode;
     this.handle.hidden = mode !== 'narrow';
     this.el.classList.toggle('is-overlay', mode === 'overlay');
+    this.cover(mode === 'overlay');
     if (mode === 'overlay') {
       // 盖在上面：不动那一列，在自己的位置上浮现；原来推着正文的收回去
       show(this.el);
@@ -176,6 +184,7 @@ export class SideColumn {
     const was = this.mode;
     this.mode = null;
     this.handle.hidden = true;
+    this.cover(false);
     this.listen(false);
     hide(this.el);
     if (was !== 'overlay') this.swap(false, -1);
@@ -192,6 +201,7 @@ export class SideColumn {
     if (!this.mode) return;
     this.mode = null;
     this.handle.hidden = true;
+    this.cover(false);
     this.listen(false);
     this.el.classList.remove('is-overlay');
     this.el.hidden = true;
@@ -219,6 +229,13 @@ export class SideColumn {
     };
     if (!on && !this.shell.classList.contains('has-side')) return apply();
     this.artifacts.swapWidth(apply, dir * 24);
+  }
+
+  /** 盖在上面时的那两样：顶上关的按钮、后面压暗的一层 @param {boolean} on */
+  cover(on) {
+    this.head.hidden = !on;
+    if (on && !this.scrim.isConnected) this.el.before(this.scrim);
+    this.scrim.hidden = !on;
   }
 
   /** 盖在上面时听点外面、`Esc` @param {boolean} on */

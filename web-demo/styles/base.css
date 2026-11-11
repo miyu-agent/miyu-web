@@ -74,6 +74,8 @@
 
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
+/* 手指横着划到头不当成浏览器的「后退」（收抽屉、收右栏、滚表格时划过了头，整页被翻回上一页；蓝图「手机上」） */
+html { overscroll-behavior-x: none; }
 body {
   background: var(--page-bg, var(--surface));
   color: var(--text);
