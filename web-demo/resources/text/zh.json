@@ -309,6 +309,8 @@
     "recap_working": "正在回顾…",
     "stop_idle": "未在运行",
     "needs_session": "需要先开始会话",
+    "retitling": "正在重新起标题…",
+    "nothing_to_title": "还没有可以起标题的对话",
     "context_min": "上下文上限至少要 {n}",
     "running": "正在执行 {name}…",
     "needs_words": {

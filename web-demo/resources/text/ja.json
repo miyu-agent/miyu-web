@@ -309,6 +309,8 @@
     "recap_working": "振り返っています…",
     "stop_idle": "実行中ではありません",
     "needs_session": "会話を始めてから使えます",
+    "retitling": "タイトルを付け直しています…",
+    "nothing_to_title": "タイトルを付けられる会話がまだありません",
     "context_min": "コンテキスト上限は {n} 以上にしてください",
     "running": "{name} を実行中…",
     "needs_words": {

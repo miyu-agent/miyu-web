@@ -114,6 +114,16 @@
       "args": true
     },
     {
+      "name": "rename",
+      "summary": {
+        "zh": "重命名会话；不带名字时让 AI 重新起一个",
+        "en": "Rename the session; with no name, the AI picks a new title",
+        "ja": "セッション名を変更する。名前を省くと AI が付け直す"
+      },
+      "run": "rename",
+      "args": true
+    },
+    {
       "name": "language",
       "summary": {
         "zh": "切换界面语言，可附 zh、ja、auto",

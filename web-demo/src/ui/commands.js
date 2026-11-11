@@ -12,7 +12,7 @@ import { h, replace } from './dom.js';
 import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { fitAbove } from './fit.js';
-import { Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText, contextMin } from '../model/commands.js';
+import { Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText, contextMin, nothingToTitle } from '../model/commands.js';
 import { short } from '../model/format.js';
 import { itemsOf, seqOf } from '../model/entries.js';
 import { copy } from '../markdown/build.js';
@@ -369,6 +369,25 @@ const RUNS = {
       const min = contextMin(err);
       if (min == null) throw err;
       app.composer.say(t('commands.context_min', { n: short(min) }));
+    }
+  },
+  // 改名（核心 TT-1，2026-11-11 项目主人：「直接运行 rename 应该是用一次 ai 请求去更新标题」，同终端）：带名字的照它改
+  // （`session.set_meta`）；不带的让模型照最近几轮重起一个（`session.retitle`：请求发出去就回，起好了照推来的 `session.meta_changed`
+  // 换标题），先说一句在起。她一句正文都还没答过的（`bad_params`）说没有可起的。
+  rename: async (app, spec, words) => {
+    const session = opened(app);
+    if (!session) return;
+    const title = words.trim();
+    if (title) {
+      await app.store.conn.request('session.set_meta', { session, title });
+      return;
+    }
+    try {
+      await app.store.conn.request('session.retitle', { session });
+      app.composer.say(t('commands.retitling'));
+    } catch (err) {
+      if (!nothingToTitle(err)) throw err;
+      app.composer.say(t('commands.nothing_to_title'));
     }
   },
   help: (app) => app.composer.openHelp(),

@@ -209,6 +209,14 @@ export function keptAttachments(said, history) {
 }
 
 /**
+ * `session.retitle` 拒的是不是「没东西可起」（核心 TT-1：她一句带正文的回答都还没有，`bad_params`）：是的说一句人话，别的照原话。
+ * @param {any} err
+ */
+export function nothingToTitle(err) {
+  return err?.reason === 'bad_params';
+}
+
+/**
  * `/context <数值>` 设得太小被拒（核心 CTX-1：`bad_params`，`data.field` 是 `context`）：最少要多少；别的拒绝是 `null`。
  * @param {any} err @returns {number|null}
  */
