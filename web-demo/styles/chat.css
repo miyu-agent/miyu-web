@@ -222,12 +222,19 @@
 .turn-end { display: flex; flex-wrap: wrap; align-items: center; column-gap: calc(10px * var(--space)); color: var(--turn-end-fg, var(--t-dim)); font: var(--turn-end-font, calc(13px * var(--text-scale))/1.6 var(--font-mono)); }
 .turn-end-text { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .turn-end.tone-error { color: var(--t-error); }
-/* 窄屏：照常结束的那一行和后面的按钮排一行、不折行，放不下的 said.js 换短的写法，再放不下截掉加 `…`（2026-11-03 项目主人，W-1082） */
+/* 窄屏：照常结束的那一行和后面的按钮先试着排一行，放不下的 said.js 换短的写法（2026-11-03 项目主人，W-1082）；最短的也放不下的
+   折成几行写全（`.is-wrap`），不截成 `…`（2026-11-11 项目主人，W-1154）；写的是短的那种时（`.is-short`）点一下换成全的 */
 @media (max-width: 836px) {
   .turn-end.is-fit { flex-wrap: nowrap; }
-  .turn-end.is-fit > .turn-end-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .turn-end.is-fit > .turn-end-text { overflow: hidden; white-space: nowrap; }
   .turn-end.is-fit > .turn-actions { flex: none; }
+  .turn-end.is-fit.is-wrap { flex-wrap: wrap; row-gap: calc(2px * var(--space)); }
+  .turn-end.is-fit.is-wrap > .turn-end-text { overflow: visible; white-space: normal; }
+  .turn-end.is-short > .turn-end-text { cursor: pointer; }
 }
+/* 权限级别的记号（`⏵⏵`、`⏸`）画成自带的图标（`level-glyph.js`）：跟着字的颜色，实心；连后面的空一共占三个字符宽（原来「两个记号加一个空格」
+   那么宽，后面的字不挪地方）；底边坐在基线上、比字矮，不把这一行撑高，再往下挪一点对齐字的中线 */
+.level-glyph { position: relative; top: 0.1em; display: inline-block; width: 1.2em; height: 0.9em; margin-right: calc(3ch - 1.2em); fill: currentColor; stroke: currentColor; stroke-width: 0.6; vertical-align: baseline; }
 /* 打断的那一轮后面那一句「· 后台仍有 N 个任务在运行」（蓝图「后台任务」第 6 条，点了打开后台任务）：字体、字号、颜色、字距同前面的「已中断」（2026-10-26 项目主人：原来 `text_soft`，看着像另一种字；按钮默认的字距、
    词距不跟着父元素，照样写 inherit），能点只靠悬停时字亮一档、加下划线 */
 .turn-end-jobs { padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; word-spacing: inherit; cursor: pointer; }
@@ -249,6 +256,12 @@
 .user-actions .msg-action { height: 26px; }
 .user-message:hover .user-actions, .user-actions:focus-within { opacity: 1; pointer-events: auto; }
 .user-message.is-editing .user-actions { display: none; }
+/* 触屏没有悬停（蓝图「手机上」；2026-11-11 项目主人：发出去的话点不到复制）：这两排按钮一直露着，一颗至少 36px 好点 */
+@media (hover: none) {
+  .user-actions, .turn-actions { opacity: 1; pointer-events: auto; }
+  .msg-action { width: 36px; height: 36px; }
+  .user-actions .msg-action { height: 30px; }
+}
 /* 她的一轮：收尾那一行后面；最新的一轮一直露着，更早的悬停在这一轮上才露；不撑高那一行 */
 .turn-actions { margin: calc(-4px * var(--space)) 0; opacity: 0; transition: opacity calc(0.15s * var(--motion-scale)) ease; }
 .assistant-message.is-latest .turn-actions, .assistant-message:hover .turn-actions, .turn-actions:focus-within { opacity: 1; }

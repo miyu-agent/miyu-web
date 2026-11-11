@@ -8,7 +8,8 @@
 //! - 编辑、重做只有最新的那一轮有，在回答时没有：由对话区给节点打 `is-latest`、给整块打 `is-running`，CSS 藏。
 //!   做什么由整页给（`app.js`），这里只画、接键。
 
-import { h, icon, setUrl } from './dom.js';
+import { h, icon, replace, setUrl } from './dom.js';
+import { levelNodes } from './level-glyph.js';
 import { res, t } from '../util/res.js';
 import { leave } from '../lib/motion.js';
 import { imageCard } from './media.js';
@@ -98,7 +99,7 @@ export function endNode(it, on) {
   redo.classList.add('is-redo');
   // 打断的那一轮，后台还有在跑的：接一句，点了打开后台任务（蓝图「后台任务」第 6 条）
   const jobs = it.jobs ? h('button.turn-end-jobs', { type: 'button', onclick: () => on.openJobs() }, t('interrupted_jobs', { count: it.jobs })) : null;
-  const text = h('span.turn-end-text', it.text, jobs);
+  const text = h('span.turn-end-text', ...levelNodes(it.text), jobs);
   const actions = h('span.msg-actions.turn-actions', button('copy', t('said.copy'), () => on.copyTurn(it.turn)), ...(on.turnTools?.(it.turn) ?? []), redo);
   const fit = !!it.shorter?.length;
   const node = h(`div.turn-end.tone-${it.tone}${fit ? '.is-fit' : ''}`, text, actions);
@@ -107,8 +108,9 @@ export function endNode(it, on) {
 }
 
 /**
- * 收尾那一行在窄屏（`layout.json` 的 `narrow_below`）上不折行（2026-11-03 项目主人，W-1082）：照先后换短的写法，挑第一个放得下的
- * （`fitText`：先去掉出字速度，再去掉用时），都放不下的 CSS 截掉加 `…`，悬停看全的；宽屏照旧写全的。
+ * 收尾那一行在窄屏（`layout.json` 的 `narrow_below`）上先试一行（2026-11-03 项目主人，W-1082）：照先后换短的写法，挑第一个放得下的
+ * （`fitText`：先去掉出字速度，再去掉用时）；最短的也放不下的折成几行写全，不截成 `…`（2026-11-11 项目主人：「无论如何都不应该省略成点点点」，
+ * W-1154；原来 CSS 截掉）。写的是短的那种时点一下这行字换成全的（折行），再点换回去——手机上没有悬停看全的。宽屏照旧写全的。
  * 留给字的地方变了再挑一遍：这一行变宽变窄（转屏、开收左栏），后面的按钮多了少了（重做只有最新的一轮有、在回答时藏起来）；
  * 地方没变的不量（每一行都量要逼着重排）。
  * @param {HTMLElement} node @param {HTMLElement} text @param {HTMLElement} actions @param {string[]} texts 从全到短
@@ -120,10 +122,27 @@ function fitNarrow(node, text, actions, texts) {
     const now = narrow.matches ? node.clientWidth - actions.offsetWidth : 0;
     if (now === room) return;
     room = now;
-    const pick = now > 0 ? fitText(texts, (s) => { text.textContent = s; return text.scrollWidth <= text.clientWidth; }) : texts[0];
-    if (text.textContent !== pick) text.textContent = pick;
-    if (pick === texts[0]) text.removeAttribute('title');
+    draw();
+  });
+  /** 点开看全的 */
+  let full = false;
+  let shown = texts[0];
+  const fill = (/** @type {string} */ s) => replace(text, ...levelNodes(s));
+  const draw = () => {
+    // 量的时候照一行排（`is-wrap` 是折行的样子）
+    node.classList.remove('is-wrap');
+    const fits = (/** @type {string} */ s) => { fill(s); return text.scrollWidth <= text.clientWidth; };
+    shown = room > 0 && !full ? fitText(texts, fits) : texts[0];
+    fill(shown);
+    node.classList.toggle('is-wrap', room > 0 && text.scrollWidth > text.clientWidth);
+    node.classList.toggle('is-short', room > 0 && (full || shown !== texts[0]));
+    if (shown === texts[0]) text.removeAttribute('title');
     else text.title = texts[0];
+  };
+  text.addEventListener('click', () => {
+    if (!(room > 0) || (!full && shown === texts[0])) return;
+    full = !full;
+    draw();
   });
   watch.observe(node);
   watch.observe(actions);

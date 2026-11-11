@@ -89,6 +89,22 @@ export function previewRing(preview) {
   return used > 0 ? { ratio: preview?.window ? used / preview.window : null, used, window: preview?.window ?? null, stuck: null, cap: null } : null;
 }
 
+/**
+ * 一句打头是权限级别记号的字（框下面那一格 `⏵⏵ 开放权限`、收尾那一行 `⏵⏵ 16:06 · …`）拆成「画哪个图标、后面的字」：记号是 `layout.json`
+ * 的 `level_icons`，图标是 `level_svg` 里同一级的名字。画的时候用自带的图标，不靠字体（2026-11-11 项目主人：手机上没有这两个字的字体，
+ * 变成方块和 emoji）；复制出去的照旧是原来那句字。打头不是记号的、那一级没写图标的 `icon` 是 `null`、字原样。
+ * @param {string} text @returns {{icon: string|null, text: string}}
+ */
+export function levelParts(text) {
+  const marks = res.layout.level_icons ?? {};
+  const svgs = res.layout.level_svg ?? {};
+  for (const [level, mark] of Object.entries(marks)) {
+    const glyph = String(mark).trimEnd();
+    if (glyph && svgs[level] && text.startsWith(glyph)) return { icon: svgs[level], text: text.slice(glyph.length).replace(/^ /, '') };
+  }
+  return { icon: null, text };
+}
+
 /** 左边的级别：图标加名字，`⏵⏵ 开放权限`（图标照 TUI 的 `layout.json`）。 */
 export const levelLabel = (level) => `${res.layout.level_icons[level]}${res.text.levels[level]}`;
 

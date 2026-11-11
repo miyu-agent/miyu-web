@@ -44,6 +44,7 @@ import { stash } from '../model/stash.js';
 import { emptyDesk } from '../model/desk.js';
 import { tipsFor, pickTip } from '../model/tips.js';
 import { sendTooLong } from '../core/connection.js';
+import { levelNodes } from './level-glyph.js';
 
 /** 空会话里打了、带着字就先开会话的核心命令（`commands.json` 的 `opens_session`） */
 const opensSession = () => new Set((res.commands.opens_session ?? []).map((/** @type {string} */ n) => n.toLowerCase()));
@@ -1045,7 +1046,8 @@ export class Composer {
     const first = this.drawnLevel == null;
     this.drawnLevel = level;
     this.levelButton.className = `footer-level level-${level}`;
-    const next = h('span', label);
+    // 记号画成自带的图标，不靠字体（手机上是方块、emoji，`level-glyph.js`）
+    const next = h('span', ...levelNodes(label));
     if (first) {
       replace(this.levelRoll, next);
       return;

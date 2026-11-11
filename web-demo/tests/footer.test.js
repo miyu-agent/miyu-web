@@ -117,3 +117,17 @@ test('会话设了上下文上限（核心 CTX-1，设计 68，W-1129）：底�
   assert.equal(capOf({ context: { window: 1_000_000 } }, {}), null, '没设的不写');
   assert.deepEqual(statusFooter(status).right.map((p) => p.text), ['12.4k(C88%)']);
 });
+
+test('权限级别的记号拆成「画哪个图标、后面的字」（W-1154，手机上那两个字是方块、emoji）：打头是记号的换成自带图标的名字，别的原样', async () => {
+  const { levelParts } = await import('../src/model/footer.js');
+  assert.deepEqual(levelParts('⏵⏵ 开放权限'), { icon: 'fast-forward', text: '开放权限' });
+  assert.deepEqual(levelParts('⏸ 只读'), { icon: 'pause', text: '只读' });
+  assert.deepEqual(levelParts('⏵⏵ 16:06 · fake/fake · 501k(C99%)'), { icon: 'fast-forward', text: '16:06 · fake/fake · 501k(C99%)' }, '收尾那一行');
+  assert.deepEqual(levelParts('✻ 16:06 · fake/fake'), { icon: null, text: '✻ 16:06 · fake/fake' }, '没记着级别的照旧是字');
+  assert.deepEqual(levelParts('出错了：⏸ 不在开头'), { icon: null, text: '出错了：⏸ 不在开头' });
+  // 两个图标都在内核自带的那一套里（不等整套图标读进来）
+  const { readFileSync } = await import('node:fs');
+  const icons = JSON.parse(readFileSync(new URL('../resources/lucide.json', import.meta.url), 'utf8')).icons;
+  const layout = JSON.parse(readFileSync(new URL('../resources/layout.json', import.meta.url), 'utf8'));
+  for (const [level, name] of Object.entries(layout.level_svg)) assert.ok(icons[name] && layout.level_icons[level], `${level} → ${name}`);
+});
