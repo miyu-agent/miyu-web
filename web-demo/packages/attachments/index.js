@@ -18,7 +18,7 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { show, hide } from '../../src/lib/motion.js';
-import { Tray, admit, mediaType, attachable, findable } from './model.js';
+import { Tray, admit, mediaType, attachable, findable, withoutPaths } from './model.js';
 import { TrayView } from './tray.js';
 import { upload, serial } from '../../src/lib/upload.js';
 
@@ -106,12 +106,18 @@ export function apply(ctx) {
     render: () => null,
     has: () => tray.has(),
     busy: () => tray.busy(),
-    // 有一块还没有路径（没找到、人还没贴）：发不出去，说是哪一块
+    // 只是在找文件位置（没有在传的）：按了发送说的那一句另写，不说「上传中」
+    busyText: () => (tray.seeking() ? t('locating_wait') : null),
+    // 有一块还没有路径（没找到、人还没贴）：发不出去，说是哪一块。页面开在别的设备上、框里却有只给路径的（输入历史翻出来的、
+    // 撤销放回来的）：核心不收远程连接带路径的附件（`local_machine_only`），先说明白
     blocked: () => {
-      const name = tray.pathless();
-      return name == null ? null : t('need_path', { name });
+      const lost = tray.pathless();
+      if (lost != null) return t('need_path', { name: lost });
+      const bare = files.elsewhere?.() ? tray.bareName() : null;
+      return bare == null ? null : t('need_local', { name: bare });
     },
-    take: () => tray.take(),
+    // 页面开在别的设备上：有内容的附件不带原来的路径（核心整条拒 `local_machine_only`）
+    take: () => (files.elsewhere?.() ? withoutPaths(tray.take()) : tray.take()),
     putBack: (given) => tray.putBack(given),
     // 输入历史（蓝图「输入历史」第 1、2 条）：交出去的记成核心存好的那一份；翻出来的换上、走回没发的那句拿掉；改了字留下
     keep: (given) => tray.keep(given),

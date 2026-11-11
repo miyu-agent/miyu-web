@@ -60,8 +60,27 @@ export function findable(file, now) {
   return typeof file.modified === 'number' && file.modified > 0 && now - file.modified > FRESH_MS;
 }
 
-/** 只给路径的附件名字最多几个字（核心 AT-1：1～200 个字符，超了的 `bad_params`）。 */
-const NAME_MAX = 200;
+/** 只给路径的附件名字最多几个字节（核心 AT-1 照文件名的写法：1 到 255 字节，没有控制字符、`/`、`\\`，不对的 `bad_params`）。 */
+const NAME_MAX_BYTES = 255;
+
+/**
+ * 只给路径的附件的名字，照核心收的写法收拾：去掉控制字符和两种分隔符，照 UTF-8 截到 255 字节（不截在一个字中间），空了的写 `file`。
+ * @param {string} name
+ */
+export function fileName(name) {
+  // eslint-disable-next-line no-control-regex
+  const clean = String(name ?? '').replace(/[\u0000-\u001f\u007f-\u009f/\\]/g, '');
+  const encoder = new TextEncoder();
+  let out = '';
+  let used = 0;
+  for (const ch of clean) {
+    const size = encoder.encode(ch).length;
+    if (used + size > NAME_MAX_BYTES) break;
+    out += ch;
+    used += size;
+  }
+  return out || 'file';
+}
 
 /**
  * 只给路径的附件要的路径（第 10 条，核心 AT-1 只查写法）：完整的绝对路径（`/`、Windows 的盘符、`\\` 开头）、没有控制字符、最多 4096 字节。
@@ -86,13 +105,13 @@ export function fullPath(text, home = null) {
 /**
  * 交给核心的一个附件长什么样（`session.send` 的 `attachments` 的一项）：`blob.put` 回应里的三格，知道原来路径的另带 `path`
  * （她看得到原文件在哪，能直接改它；模型看不了这个附件时核心的占位那一句也带上它）。只给路径的（第 10 条，核心 AT-1）没有 `blob`：
- * 路径、名字（最多 200 个字）、几个字节，核心不读内容，给她一句占位，她自己用工具读。
+ * 路径、名字（最多 255 字节）、几个字节，核心不读内容，给她一句占位，她自己用工具读。
  * @param {Item} it @returns {Sent}
  */
 export function sentOf(it) {
   if (it.bare) {
     const size = Number.isFinite(it.size) && it.size >= 0 ? { size: Math.floor(it.size) } : {};
-    return { path: /** @type {string} */ (it.path), name: [...it.name].slice(0, NAME_MAX).join('') || 'file', ...size };
+    return { path: /** @type {string} */ (it.path), name: fileName(it.name), ...size };
   }
   const put = /** @type {Put} */ (it.put);
   return { blob: put.blob, name: put.name, media_type: put.media_type, ...(it.path ? { path: it.path } : {}) };
@@ -156,6 +175,17 @@ export function lineCount(text) {
 export function extOf(name) {
   const dot = name.lastIndexOf('.');
   return dot > 0 ? name.slice(dot + 1).toUpperCase() : '';
+}
+
+/**
+ * 交出去的几项里有内容的不带原来的路径（页面开在别的设备上：核心不收远程连接带 `path` 的附件，整条拒 `local_machine_only`）。
+ * 原地改、交回同一个（放回、记输入历史照它认）；`null` 照旧是 `null`。
+ * @param {Taken|null} taken
+ */
+export function withoutPaths(taken) {
+  if (!taken) return taken;
+  for (const one of taken.attachments) if ('blob' in one && one.blob) delete one.path;
+  return taken;
 }
 
 /** 框里那一排：照先后的几块，变了告诉看着的。 */
@@ -302,6 +332,16 @@ export class Tray {
   /** 第一块还没有路径的（没找到、人还没贴）叫什么；没有的是 `null`。发之前照它说一句，不悄悄发不出去。 */
   pathless() {
     return this.items.find((it) => it.state === 'lost')?.name ?? null;
+  }
+
+  /** 第一块只给路径的叫什么；没有的是 `null`（页面开在别的设备上时这种发不了：核心不收远程连接带路径的附件）。 */
+  bareName() {
+    return this.items.find((it) => it.bare)?.name ?? null;
+  }
+
+  /** 是不是只有在找的、没有在传的（发不了时说的那一句不一样）。 */
+  seeking() {
+    return this.items.some((it) => it.state === 'locating') && !this.items.some((it) => it.state === 'uploading');
   }
 
   /**

@@ -110,7 +110,9 @@
       "path_hint": "粘贴完整路径",
       "bad_path": "请写完整的路径",
       "need_path": "「{name}」还没有路径",
-      "too_big_remote": "{name} 超过 {mib} MiB，无法发送：文件在这台设备上，Miyu 所在的电脑读不到"
+      "too_big_remote": "{name} 超过 {mib} MiB，无法发送：文件在这台设备上，Miyu 所在的电脑读不到",
+      "locating_wait": "正在查找文件位置，请稍后发送",
+      "need_local": "「{name}」只有路径，无法在这台设备上发送"
     },
     "en": {
       "attach": "Add attachment",
@@ -135,7 +137,9 @@
       "path_hint": "Paste the full path",
       "bad_path": "Enter the full path",
       "need_path": "\"{name}\" has no path yet",
-      "too_big_remote": "{name} is over {mib} MiB and can't be sent: the file is on this device, and the computer running Miyu can't read it"
+      "too_big_remote": "{name} is over {mib} MiB and can't be sent: the file is on this device, and the computer running Miyu can't read it",
+      "locating_wait": "Locating the file; send in a moment",
+      "need_local": "\"{name}\" is a path-only attachment and can't be sent from this device"
     },
     "ja": {
       "attach": "ファイルを添付",
@@ -160,7 +164,9 @@
       "path_hint": "フルパスを貼り付け",
       "bad_path": "フルパスを入力してください",
       "need_path": "「{name}」のパスがまだありません",
-      "too_big_remote": "{name} は {mib} MiB を超えているため送信できません：ファイルはこの端末にあり、Miyu のあるコンピューターからは読めません"
+      "too_big_remote": "{name} は {mib} MiB を超えているため送信できません：ファイルはこの端末にあり、Miyu のあるコンピューターからは読めません",
+      "locating_wait": "ファイルの場所を検索中です。終わってから送信してください",
+      "need_local": "「{name}」はパスのみの添付のため、この端末からは送信できません"
     }
   }
 }

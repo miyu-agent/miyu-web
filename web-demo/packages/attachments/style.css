@@ -120,5 +120,9 @@
   .attach-busy .icon { animation-duration: calc(2.4s * var(--motion-scale)); }
 }
 
-/* 触屏没有悬停：拿掉的 × 一直露着 */
-@media (hover: none) { .attach-remove { opacity: 1; width: 24px; height: 24px; } }
+/* 触屏没有悬停：拿掉的 × 一直露着；名字那一行给它让出位置（× 24px、离右边 4px），不压住名字的末尾（2026-11-11：手机端那批让
+   × 一直露着以后压字）。用鼠标的样子不变 */
+@media (hover: none) {
+  .attach-remove { opacity: 1; width: 24px; height: 24px; }
+  .attach-chip.is-file { padding-right: calc(30px * var(--space)); }
+}

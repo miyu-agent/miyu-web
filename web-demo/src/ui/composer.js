@@ -463,8 +463,10 @@ export class Composer {
       return;
     }
     const parts = this.payload();
-    if (parts.some((p) => p.busy())) {
-      this.say(t('payload_busy'));
+    const busy = parts.find((p) => p.busy());
+    if (busy) {
+      // 在准备什么由那个包说（附件在找文件位置时另有一句）；没说的照「附件上传中」
+      this.say(busy.busyText?.() ?? t('payload_busy'));
       return;
     }
     // 软件包说这一句现在发不出去（附件里有一块还没有路径，蓝图「附件」第 10 条）：照它说的写一句，不发
