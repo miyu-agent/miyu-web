@@ -6,6 +6,8 @@
 //!   选文件、拖放、缩略图都经宿主（服务 `host` 的 `files`，蓝图 `web/architecture.md`「宿主」）：浏览器给内容，桌面端给路径。
 //! - 传：有本机路径的（`@` 选文件交过来的、桌面端）直接 `blob.put` 的 `path`；只有内容的（浏览器）分块传给核心
 //!   （`blob.open`、`blob.write`、`blob.close`，核心施工 W-5，`src/lib/upload.js`），字节由宿主读（`files.read`）。
+//! - 原来的路径（第 2 条的子条目，2026-11-11 项目主人定）：浏览器不给拖进来、选进来的文件的路径，传的同时请网页软件在这台电脑上照名字、大小、
+//!   改的时刻找一找（宿主的 `files.locate`，只认改的时刻也对得上的），找到了记在这一块上、发的时候带 `path`：她看得到原文件在哪，能直接改它。
 //! - 框里那一排挂进 `composer.head`（`tray.js`）；发的时候经 `composer.payload` 交出去，核心拒了放回来（`model.js` 的 `Tray`）；
 //!   记进输入历史的是核心存好的那一份，翻出来的照它回到框里（蓝图「输入历史」）。
 //!
@@ -13,7 +15,7 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { show, hide } from '../../src/lib/motion.js';
-import { Tray, admit, mediaType, attachable } from './model.js';
+import { Tray, admit, mediaType, attachable, findable } from './model.js';
 import { TrayView } from './tray.js';
 import { upload, serial } from '../../src/lib/upload.js';
 
@@ -28,10 +30,22 @@ export function apply(ctx) {
 
   // 分块传的一个接一个（核心一条连接同时开的上传有上限）
   const queue = serial();
-  /** 传一个：有路径的核心照路径存，只有内容的分块传；出错的那一块拿掉，提示一句。 */
+  /**
+   * 这个文件原来在这台电脑上的哪儿：请网页软件找（先看这个会话的工作区），找到了记在这一块上。只有内容、带着改的时刻的才找
+   * （`findable`）；找不了、没找到的就不带，不提示。
+   */
+  const locate = (/** @type {import('./model.js').Item} */ item) => {
+    if (!files.local?.() || !findable(item.file, Date.now())) return;
+    const near = [ctx.chat?.workdir?.()].filter((dir) => typeof dir === 'string' && dir);
+    files.locate({ name: item.name, size: item.size, modified: item.file.modified, near, exact: true })
+      .then((/** @type {string|null} */ path) => { if (path) tray.located(item.id, path); }, () => {});
+  };
+
+  /** 传一个：有路径的核心照路径存，只有内容的分块传（同时找它原来在哪）；出错的那一块拿掉，提示一句。 */
   const put = async (/** @type {import('./model.js').Item} */ item) => {
     const type = mediaType(item.file.type);
     const request = (method, params) => ctx.core.request(method, params);
+    locate(item);
     try {
       const path = item.file.path;
       const got = path

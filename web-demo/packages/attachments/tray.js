@@ -10,6 +10,9 @@ import { leave } from '../../src/lib/motion.js';
 import { bytes } from '../../src/lib/format.js';
 import { kindOf, extOf, lineCount } from './model.js';
 
+/** 一张卡悬停写的：名字，知道原来路径的另起一行写路径。 @param {{name: string, path?: string}} it */
+export const tipOf = (it) => (it.path ? `${it.name}\n${it.path}` : it.name);
+
 export class TrayView {
   /**
    * @param {import('./model.js').Tray} tray
@@ -68,6 +71,9 @@ export class TrayView {
         chip.state = it.state;
         chip.el.classList.toggle('is-uploading', it.state === 'uploading');
       }
+      // 悬停写名字；知道它原来在哪的（第 2 条的子条目）下面一行写路径
+      const tip = tipOf(it);
+      if (chip.el.title !== tip) chip.el.title = tip;
     }
     this.el.classList.toggle('has-items', this.tray.items.length > 0);
     this.edges();

@@ -19,7 +19,8 @@
     "slots",
     "core",
     "host",
-    "composer"
+    "composer",
+    "chat"
   ],
   "settings": {
     "max_files": {

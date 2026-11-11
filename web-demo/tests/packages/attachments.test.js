@@ -4,7 +4,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { Tray, admit, mediaType, extOf, attachable } from '../../packages/attachments/model.js';
+import { Tray, admit, mediaType, extOf, attachable, sourcePath, findable } from '../../packages/attachments/model.js';
+import { tipOf } from '../../packages/attachments/tray.js';
 
 /** 这个包的设置项的出厂值 */
 const config = Object.fromEntries(Object.entries(JSON.parse(readFileSync(new URL('../../packages/attachments/manifest.json', import.meta.url), 'utf8')).settings).map(([k, s]) => [k, s.default]));
@@ -184,4 +185,53 @@ test('切会话（W-1137）：框里这一排收起来、框空了；传到一�
   const d = tray.add({ name: 'd.png', size: 1, type: 'image/png' });
   tray.stow();
   assert.ok(tray.remove(d.id), '收起来的传坏了照样拿掉');
+});
+
+test('原来的路径（第 2 条的子条目）：找到了记在这一块上，发的时候带 path；没找到的、写法核心不收的不带；宿主给了路径的照带', () => {
+  const tray = new Tray();
+  const a = tray.add({ name: '报告.md', size: 3, type: 'text/markdown', file: new Blob(['abc']), modified: 1 });
+  const b = tray.add({ name: 'b.png', size: 3, type: 'image/png', file: new Blob(['abc']), modified: 1 });
+  const c = tray.add({ name: 'c.pdf', size: 3, type: 'application/pdf', path: '/home/a/c.pdf' });
+  for (const [it, type] of [[a, 'text/markdown'], [b, 'image/png'], [c, 'application/pdf']]) tray.ready(it.id, { blob: `sha256:${it.name}`, name: it.name, media_type: type });
+  let seen = 0;
+  tray.watch(() => { seen += 1; });
+  assert.equal(tray.located(a.id, '/home/a/文档/报告.md'), true);
+  assert.equal(seen, 1, '变了要重画（悬停的字）');
+  assert.equal(tray.located(b.id, 'relative/b.png'), false, '不是绝对路径：核心会拒，不记');
+  assert.equal(tray.located(b.id, null), false);
+  assert.equal(tray.located(999, '/x'), false, '已经拿掉的不管');
+  assert.equal(tipOf(tray.items[0]), '报告.md\n/home/a/文档/报告.md');
+  assert.equal(tipOf(tray.items[1]), 'b.png');
+  const taken = /** @type {any} */ (tray.take());
+  assert.deepEqual(taken.attachments, [
+    { blob: 'sha256:报告.md', name: '报告.md', media_type: 'text/markdown', path: '/home/a/文档/报告.md' },
+    { blob: 'sha256:b.png', name: 'b.png', media_type: 'image/png' },
+    { blob: 'sha256:c.pdf', name: 'c.pdf', media_type: 'application/pdf', path: '/home/a/c.pdf' },
+  ]);
+  // 输入历史里也带着，翻出来再发照带；记着的写法不对的不带
+  const kept = /** @type {any} */ (tray.keep(taken));
+  assert.deepEqual(kept.map((k) => k.path), ['/home/a/文档/报告.md', undefined, '/home/a/c.pdf']);
+  assert.equal('path' in kept[1], false);
+  tray.recall([...kept, { blob: 'sha256:x', name: 'x', media_type: 'text/plain', size: 1, path: 'bad' }], 's1');
+  assert.deepEqual(/** @type {any} */ (tray.take()).attachments.map((x) => x.path), ['/home/a/文档/报告.md', undefined, '/home/a/c.pdf', undefined]);
+});
+
+test('原来的路径写法：绝对路径（/、~/、盘符、\\\\ 开头）、没有控制字符、最多 4096 字节（核心 protocol.md 的 session.send）', () => {
+  for (const ok of ['/a/b.txt', '~/文档/a b.txt', 'C:\\Users\\a\\b.txt', 'D:/x/y', '\\\\server\\share\\f']) assert.equal(sourcePath(ok), ok, ok);
+  for (const bad of ['', 'a/b', './a', '~', '~user/a', 'C:', '/a\nb', '/a\u0000', '/a\u0085b', null, undefined, 7]) assert.equal(sourcePath(bad), null, String(bad));
+  assert.equal(sourcePath(`/${'a'.repeat(4095)}`)?.length, 4096);
+  assert.equal(sourcePath(`/${'a'.repeat(4096)}`), null);
+  assert.equal(sourcePath(`/${'字'.repeat(1365)}`)?.length, 1366, '照字节算：4096 以内');
+  assert.equal(sourcePath(`/${'字'.repeat(1366)}`), null);
+});
+
+test('值不值得找它原来在哪：浏览器给的只有内容的文件才找；宿主给了路径的、输入历史翻出来的、刚刚才有的（粘贴的截图、字转成的附件）不找', () => {
+  const now = 1_800_000_000_000;
+  const blob = new Blob(['x']);
+  assert.equal(findable({ name: 'a', size: 1, type: '', file: blob, modified: now - 60_000 }, now), true);
+  assert.equal(findable({ name: 'a', size: 1, type: '', file: blob, modified: now - 100 }, now), false, '刚刚才有的');
+  assert.equal(findable({ name: 'a', size: 1, type: '', file: blob }, now), false, '不知道改的时刻');
+  assert.equal(findable({ name: 'a', size: 1, type: '', path: '/a', modified: 1 }, now), false, '已经有路径');
+  assert.equal(findable({ name: 'a', size: 1, type: '', file: blob, path: '/a', modified: 1 }, now), false);
+  assert.equal(findable({ name: 'a', size: 1, type: '', stored: { session: 's', hash: 'h' }, modified: 1 }, now), false, '核心存好的那一份');
 });

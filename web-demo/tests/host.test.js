@@ -560,3 +560,17 @@ test('说一句话发不发得出去照整条 session.send 算（施工 YC-11）
   conn.raw('session.send', { session: '01a1c2ff-6982-747f-9a04-38bca0005b58', text: 'a'.repeat(lo), prefix: 'compact' }).catch(() => {});
   assert.equal(ch.sent.length, 13);
 });
+
+test('找文件在这台电脑上的哪儿（/locate）：查询串带名字、大小、改的时刻；先看的几处一处写一次；没有的、不是数的、空的不写', async () => {
+  const { locateQuery, refs, fileTools } = await import('../src/host/files.js');
+  const q = locateQuery({ name: '录像 01.mp4', size: 4096.9, modified: 1794378736422, near: ['/home/a/work', '', '/tmp/b'], wait: 10000, exact: true });
+  assert.equal(q.toString(), 'name=%E5%BD%95%E5%83%8F+01.mp4&size=4096&modified=1794378736422&wait=10000&near=%2Fhome%2Fa%2Fwork&near=%2Ftmp%2Fb&exact=1');
+  assert.equal(locateQuery({ name: 'a.txt', size: null, modified: Number.NaN, wait: -1 }).toString(), 'name=a.txt');
+  // 浏览器的文件带上改的时刻（找的时候照它认）
+  const [ref] = refs([new File(['abc'], 'a.txt', { type: 'text/plain', lastModified: 1700000000000 })]);
+  assert.equal(ref.modified, 1700000000000);
+  // 出厂的宿主不能找：桥没有这条路
+  const tools = fileTools(/** @type {any} */ ({}));
+  assert.equal(tools.local(), false);
+  assert.equal(await tools.locate({ name: 'a.txt' }), null);
+});

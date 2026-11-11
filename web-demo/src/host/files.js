@@ -3,9 +3,9 @@
 //! 读附件的字节、这台设备上存东西的存法；框里的缩略图、读文字文件照宿主给的地址（两份宿主各自的 `urls`，异步给：直接连的要先换票据）。
 
 /**
- * @typedef {{name: string, size: number, type: string, file?: Blob, path?: string, relative?: string, stored?: {session: string, hash: string}}} FileRef
+ * @typedef {{name: string, size: number, type: string, file?: Blob, path?: string, relative?: string, modified?: number, stored?: {session: string, hash: string}}} FileRef
  *   `stored`：核心存好的那一份（输入历史翻出来的附件），缩略图、内容照桥的 `/blob` 取
- *   一个要当附件的文件：浏览器给的只有内容（`file`），桌面端给的有路径（`path`）；拖进来、选进来的文件夹里的带它在文件夹里的路径（`relative`，`笔记/日语/语法.md`）
+ *   一个要当附件的文件：浏览器给的只有内容（`file`）和改的时刻（`modified`，Unix 毫秒），桌面端给的有路径（`path`）；拖进来、选进来的文件夹里的带它在文件夹里的路径（`relative`，`笔记/日语/语法.md`）
  * @typedef {{readyState: number, send: (text: string) => void, onopen: any, onmessage: any, onclose: any, onerror: any}} Channel
  *   连核心的一条线，样子照 WebSocket：`readyState` 是 1 时通着，一帧一条 JSON-RPC 消息
  * @typedef {{getItem: (k: string) => string|null, setItem: (k: string, v: string) => void, removeItem: (k: string) => void, keys?: () => string[]}} Store
@@ -13,7 +13,28 @@
  */
 
 /** 浏览器的文件换成附件用的样子。 */
-export const refs = (/** @type {Iterable<File>} */ list) => [...list].map((file) => /** @type {FileRef} */ ({ name: file.name, size: file.size, type: file.type, file }));
+export const refs = (/** @type {Iterable<File>} */ list) => [...list].map((file) => /** @type {FileRef} */ ({ name: file.name, size: file.size, type: file.type, file, modified: file.lastModified }));
+
+/**
+ * @typedef {{name: string, size?: number|null, modified?: number|null, near?: string[], wait?: number, exact?: boolean}} Wanted
+ *   要在这台电脑上找的一个文件（网页软件的 `/locate`，2026-11-11 项目主人定：浏览器不给路径，照名字、大小、改的时刻找）：`near` 是先看的
+ *   几处（会话的工作区），`wait` 最多找几毫秒（不写的照网页软件出厂的），`exact` 只认改的时刻也对得上的
+ */
+
+/**
+ * `/locate` 的查询串：没有的、不是数的不写；`near` 一处写一次，空的不写。
+ * @param {Wanted} wanted
+ */
+export function locateQuery(wanted) {
+  const q = new URLSearchParams({ name: wanted.name });
+  const whole = (/** @type {any} */ n) => (typeof n === 'number' && Number.isFinite(n) && n >= 0 ? String(Math.floor(n)) : null);
+  for (const [key, value] of [['size', whole(wanted.size)], ['modified', whole(wanted.modified)], ['wait', whole(wanted.wait)]]) {
+    if (value != null) q.set(/** @type {string} */ (key), value);
+  }
+  for (const dir of wanted.near ?? []) if (typeof dir === 'string' && dir) q.append('near', dir);
+  if (wanted.exact) q.set('exact', '1');
+  return q;
+}
 
 /** 选文件夹：系统的选文件夹窗口，交回里面全部的文件（带 `relative`，连文件夹自己的名字）；取消的交回空的。 */
 export function pickFolder() {
@@ -293,6 +314,10 @@ export function fileTools(urls) {
     text: (/** @type {FileRef} */ ref, /** @type {number} */ max) => text(urls, ref, max),
     read,
     save: saveText,
+    /** 这台电脑上能不能找文件在哪（页面和网页软件在同一台电脑上、网页软件有 `/locate`）：出厂不能，直接连网页软件的那一份自己补 */
+    local: () => false,
+    /** 找一个文件在这台电脑上的哪儿：交回路径，没找到、找不了的交 `null` @param {Wanted} _wanted @returns {Promise<string|null>} */
+    locate: async (_wanted) => null,
   };
 }
 

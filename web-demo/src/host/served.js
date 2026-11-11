@@ -17,7 +17,7 @@
  */
 
 import { notify } from './notify.js';
-import { fileTools, store, dropFromHash, hashRoute, onThisComputer, download } from './files.js';
+import { fileTools, store, dropFromHash, hashRoute, onThisComputer, download, locateQuery } from './files.js';
 import { writeText } from '../lib/touch.js';
 
 /** 这台浏览器记着的设备令牌（勾了「自动登录」的）：`{token, expires}` */
@@ -179,8 +179,8 @@ export function servedHost() {
     } catch { return ''; }
   };
   /**
-   * 这台电脑上的几样（`/reveal`、`/pick-dir`、`/wallpaper`）：带登录令牌 `GET`，交回回应；页面开在局域网地址上的、没令牌的交 `null`。
-   * @param {string} path @param {Record<string, string>} params
+   * 这台电脑上的几样（`/reveal`、`/pick-dir`、`/locate`、`/wallpaper`）：带登录令牌 `GET`，交回回应；页面开在局域网地址上的、没令牌的交 `null`。
+   * @param {string} path @param {Record<string, string>|URLSearchParams} params
    */
   const desk = async (path, params) => {
     if (!onThisComputer() || !token) return null;
@@ -332,6 +332,16 @@ export function servedHost() {
     },
     files: {
       ...fileTools(urls),
+      /** 这台电脑上能不能找文件在哪（`/locate`）：页面开在本机地址上、有令牌 */
+      local: () => onThisComputer() && !!token,
+      /**
+       * 找一个文件在这台电脑上的哪儿（`/locate`，浏览器不给拖进来、选进来的文件的路径）：交回绝对路径；没找到、找不了的
+       * （页面开在局域网地址上、问不到）交 `null`。
+       */
+      locate: async (/** @type {import('./files.js').Wanted} */ wanted) => {
+        const got = await desk('/locate', locateQuery(wanted)).then((r) => (r?.ok ? r.json() : null), () => null).catch(() => null);
+        return typeof got?.path === 'string' && got.path ? got.path : null;
+      },
       /**
        * 选目录：请网页软件开系统的对话框（`/pick-dir`）。交回选的绝对路径；点了取消的交 `false`；开不了的（页面开在局域网地址上、这台电脑
        * 上没有对话框程序、问不到）交 `null`，用的地方退回自己画的文件夹浏览器；已经开着一个的交 `{busy: true}`。

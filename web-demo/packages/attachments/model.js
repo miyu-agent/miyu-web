@@ -4,13 +4,15 @@
 
 
 /**
- * @typedef {{name: string, size: number, type: string, file?: Blob, path?: string, stored?: {session: string, hash: string}}} FileLike
+ * @typedef {{name: string, size: number, type: string, file?: Blob, path?: string, modified?: number, stored?: {session: string, hash: string}}} FileLike
  *   宿主给的一个文件（`host/browser.js` 的 `FileRef`；测试里是假的）；输入历史翻出来的是核心存好的那一份（`stored`：发在哪个会话、编号）
  * @typedef {{blob: string, name: string, media_type: string, kind?: string, width?: number, height?: number}} Put `blob.put` 的回应
- * @typedef {{id: number, file: FileLike, name: string, size: number, state: 'uploading'|'ready', put: Put|null, recalled?: boolean}} Item
- *   框里的一块；`recalled` 是跟着输入历史翻出来、还没留下的（换一条时换掉）
- * @typedef {{blob: string, name: string, media_type: string, size: number}} Kept 记进输入历史的一块：核心存好的那一份
- * @typedef {{attachments: {blob: string, name: string, media_type: string}[]}} Taken 发的时候交出去的，合进 `session.send` 的参数
+ * @typedef {{id: number, file: FileLike, name: string, size: number, state: 'uploading'|'ready', put: Put|null, path?: string, recalled?: boolean}} Item
+ *   框里的一块；`path` 是它在核心那台电脑上原来的路径（`@` 选文件交过来的、网页软件找到的，第 2 条的子条目）；`recalled` 是跟着输入历史翻出来、
+ *   还没留下的（换一条时换掉）
+ * @typedef {{blob: string, name: string, media_type: string, size: number, path?: string}} Kept 记进输入历史的一块：核心存好的那一份
+ * @typedef {{blob: string, name: string, media_type: string, path?: string}} Sent 交给核心的一个附件（`session.send` 的 `attachments` 的一项）
+ * @typedef {{attachments: Sent[]}} Taken 发的时候交出去的，合进 `session.send` 的参数
  */
 
 /** 媒体类型的写法（`kernel/ids.md` 第 5 条）：两截，只用小写字母、数字和 `!#$&^_.+-`，最长 127 个字符。 */
@@ -24,6 +26,45 @@ const MEDIA_TYPE_MAX = 127;
 export function mediaType(type) {
   const t = (type ?? '').toLowerCase();
   return t.length <= MEDIA_TYPE_MAX && MEDIA_TYPE.test(t) ? t : null;
+}
+
+/** 原来的路径最长多少字节（核心 `protocol.md` 的 `session.send`：超过的 `bad_params`）。 */
+const PATH_MAX_BYTES = 4096;
+
+/**
+ * 附件原来的路径写法对不对（核心只查写法，不对的整句拒 `bad_params`，所以这里先筛掉、不带）：绝对路径（`/`、`~/`、Windows 的盘符或
+ * `\\` 开头）、没有控制字符、最多 4096 字节。对的照原样交回，不对的是 `null`。
+ * @param {unknown} path @returns {string|null}
+ */
+export function sourcePath(path) {
+  if (typeof path !== 'string' || path === '') return null;
+  const absolute = path.startsWith('/') || path.startsWith('~/') || /^[A-Za-z]:[\\/]/.test(path) || path.startsWith('\\\\');
+  // eslint-disable-next-line no-control-regex
+  if (!absolute || /[\u0000-\u001f\u007f-\u009f]/.test(path)) return null;
+  return new TextEncoder().encode(path).length <= PATH_MAX_BYTES ? path : null;
+}
+
+/** 改了没多久的文件不找：刚粘贴的截图、太长的字转成的文字附件是此刻才有的，磁盘上没有它。 */
+const FRESH_MS = 3000;
+
+/**
+ * 值不值得请网页软件找它原来在哪：浏览器给的、只有内容的文件（不是宿主已经给了路径的、不是输入历史翻出来的核心存好的那一份），
+ * 带着改的时刻，而且不是刚刚才有的（`now` 是此刻，Unix 毫秒）。
+ * @param {FileLike & {modified?: number}} file @param {number} now
+ */
+export function findable(file, now) {
+  if (file.path || file.stored || !file.file) return false;
+  return typeof file.modified === 'number' && file.modified > 0 && now - file.modified > FRESH_MS;
+}
+
+/**
+ * 交给核心的一个附件长什么样（`session.send` 的 `attachments` 的一项）：`blob.put` 回应里的三格，知道原来路径的另带 `path`
+ * （她看得到原文件在哪，能直接改它；模型看不了这个附件时核心的占位那一句也带上它）。
+ * @param {Item} it @returns {Sent}
+ */
+export function sentOf(it) {
+  const put = /** @type {Put} */ (it.put);
+  return { blob: put.blob, name: put.name, media_type: put.media_type, ...(it.path ? { path: it.path } : {}) };
 }
 
 /**
@@ -137,6 +178,9 @@ export class Tray {
   add(file) {
     /** @type {Item} */
     const item = { id: ++this.seq, file, name: file.name, size: file.size, state: 'uploading', put: null };
+    // 宿主给了路径的（`@` 选文件交过来的）：发的时候带上
+    const path = sourcePath(file.path);
+    if (path) item.path = path;
     this.items.push(item);
     this.changed();
     return item;
@@ -152,6 +196,20 @@ export class Tray {
     if (!item) return false;
     item.state = 'ready';
     item.put = put;
+    this.changed();
+    return true;
+  }
+
+  /**
+   * 找到它原来在哪了（网页软件照名字、大小、改的时刻找的，第 2 条的子条目）：记在这一块上，发的时候带上。写法核心不收的不记；已经拿掉、
+   * 发出去了的不管。记上了交回 `true`。
+   * @param {number} id @param {string|null} path
+   */
+  located(id, path) {
+    const item = this.holder(id)?.find((it) => it.id === id);
+    const ok = sourcePath(path);
+    if (!item || !ok) return false;
+    item.path = ok;
     this.changed();
     return true;
   }
@@ -182,16 +240,13 @@ export class Tray {
   }
 
   /**
-   * 发：交出全部（只要 blob、名字、媒体类型）、框里清空。没有的、还在传的交 `null`。
+   * 发：交出全部（blob、名字、媒体类型，知道原来路径的带 `path`）、框里清空。没有的、还在传的交 `null`。
    * @returns {Taken|null}
    */
   take() {
     if (!this.has() || this.busy()) return null;
     const items = this.items;
-    const taken = { attachments: items.map((it) => {
-      const put = /** @type {Put} */ (it.put);
-      return { blob: put.blob, name: put.name, media_type: put.media_type };
-    }) };
+    const taken = { attachments: items.map(sentOf) };
     this.given.set(taken, items);
     this.items = [];
     this.changed();
@@ -199,8 +254,8 @@ export class Tray {
   }
 
   /**
-   * 交出去的记进输入历史的样子（蓝图 `web.md`「输入历史」第 1 条）：只留核心存好的那一份、名字、媒体类型、大小，浏览器里的
-   * 文件存不下。不是这里交出去的交 `null`。
+   * 交出去的记进输入历史的样子（蓝图 `web.md`「输入历史」第 1 条）：只留核心存好的那一份、名字、媒体类型、大小（知道原来路径的
+   * 带 `path`），浏览器里的文件存不下。不是这里交出去的交 `null`。
    * @param {Taken} taken
    * @returns {Kept[]|null}
    */
@@ -209,7 +264,7 @@ export class Tray {
     if (!items) return null;
     return items.map((it) => {
       const put = /** @type {Put} */ (it.put);
-      return { blob: put.blob, name: put.name, media_type: put.media_type, size: it.size };
+      return { blob: put.blob, name: put.name, media_type: put.media_type, size: it.size, ...(it.path ? { path: it.path } : {}) };
     });
   }
 
@@ -223,7 +278,8 @@ export class Tray {
     this.items = this.items.filter((it) => !it.recalled);
     for (const k of kept ?? []) {
       const file = { name: k.name, size: k.size, type: k.media_type, stored: { session: /** @type {string} */ (session), hash: k.blob } };
-      this.items.push({ id: ++this.seq, file, name: k.name, size: k.size, state: 'ready', put: { blob: k.blob, name: k.name, media_type: k.media_type }, recalled: true });
+      const path = sourcePath(k.path);
+      this.items.push({ id: ++this.seq, file, name: k.name, size: k.size, state: 'ready', put: { blob: k.blob, name: k.name, media_type: k.media_type }, ...(path ? { path } : {}), recalled: true });
     }
     this.changed();
   }
