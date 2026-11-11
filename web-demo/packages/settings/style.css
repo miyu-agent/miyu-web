@@ -858,6 +858,8 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
   .set-name > span:first-child { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
   .set-tool-id { flex-basis: 100%; white-space: normal; overflow-wrap: anywhere; }
   .set-row > .set-text { flex: 1 1 55%; min-width: min(100%, 7.5em); }
+  /* 软件包、技能这类一行里后面跟着好几样（状态、标签、开关、箭头）的：名字那一块照剩下的地方排，不把后面的一样样挤到下一行 */
+  .set-row.set-pkg > .set-text, .set-row.is-expandable > .set-text { flex: 1 1 0; min-width: 6em; }
   /* 掉到下一行的控件靠右（同没掉下来时的位置） */
   .set-row > .set-control { max-width: 100%; margin-left: auto; }
   .set-row > .set-control:has(> .set-input:not(.is-number), > .set-combo, > .set-secret) { flex: 1 1 100%; }
