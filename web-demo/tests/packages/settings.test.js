@@ -448,3 +448,47 @@ test('终端管理员的号那一块：接平台的画；带 owner_builtin 的�
   assert.equal(asksOwnerNumber({ platform: 'telegram', owner_builtin: false }), true);
   assert.equal(asksOwnerNumber(undefined), false);
 });
+
+// W-1153（2026-11-11 项目主人：「每次调整这个开关，都会跳到这一页的最上方」）：重画换上去那一刻内容矮一截（主题卡片晚一步才画），滚动位置被收上去
+test('设置页重画以后回到原来滚到的地方：内容还没长够高的先记着，长高了接着去；紧跟着再重画照原来要的，不照被收过的；人动了就不再管', async () => {
+  const { ScrollKeeper } = await import('../../packages/settings/keep-scroll.js');
+  /** 假的一栏：滚不过 `内容高 - 栏高` */
+  const body = { height: 1577, view: 622, top: 0, get scrollTop() { return this.top; }, set scrollTop(v) { this.top = Math.max(0, Math.min(v, this.height - this.view)); } };
+  /** @type {{again: () => void, drop: () => void}|null} */
+  let watching = null;
+  let stops = 0;
+  const keep = new ScrollKeeper(body, (again, drop) => { watching = { again, drop }; return () => { watching = null; stops += 1; }; });
+  body.scrollTop = 955;
+  // 第一次重画：换上去时矮了 404，只滚得到 551
+  let want = keep.wanted();
+  assert.equal(want, 955);
+  body.height = 1173;
+  keep.restore(want);
+  assert.equal(body.scrollTop, 551, '内容不够高，先到这');
+  assert.ok(watching, '开始看内容长高');
+  // 还没长高又重画一次（存的回执、网页软件换完监听各画一次）：要回的还是 955，不是 551
+  want = keep.wanted();
+  assert.equal(want, 955, '照原来要的，不照被收过的');
+  keep.restore(want);
+  assert.equal(body.scrollTop, 551);
+  // 长高了：回到原来的地方，不再看
+  body.height = 1577;
+  watching?.again();
+  assert.equal(body.scrollTop, 955);
+  assert.equal(watching, null, '到了就不再看');
+  assert.equal(keep.wanted(), 955);
+  // 人自己动了：不再把他拉回去
+  body.height = 1173;
+  keep.restore(955);
+  body.scrollTop = 100;
+  watching?.drop();
+  body.height = 1577;
+  assert.equal(body.scrollTop, 100);
+  assert.equal(keep.wanted(), 100, '照人滚到的');
+  assert.equal(watching, null);
+  assert.equal(stops, 2);
+  // 放得下的当场到，不看
+  keep.restore(300);
+  assert.equal(body.scrollTop, 300);
+  assert.equal(watching, null);
+});

@@ -57,6 +57,14 @@ export function drawLook(dialog) {
       groupBlock(ctx.text('palette_label'), [scheme.el, h('div.set-themes', palettes.map(card)), seedRow(dialog, current?.seeds?.())])));
   };
   const el = later(fill);
+  // 整页重画时这一组要重新问主题包、晚一步才画出来：先照上一次的高垫着，画好了去掉。不垫的话换上去那一刻整页矮一截，滚到下面的被收回去
+  // （W-1153，2026-11-11 项目主人：拨「允许局域网访问」整页往上跳）
+  const was = dialog.lookEl?.isConnected ? dialog.lookEl.offsetHeight : 0;
+  if (was) {
+    el.style.minHeight = `${was}px`;
+    new MutationObserver((_, seen) => { el.style.minHeight = ''; seen.disconnect(); }).observe(el, { childList: true });
+  }
+  dialog.lookEl = el;
   dialog.refreshLook = () => {
     if (el.isConnected) fill(el).catch(() => {});
   };

@@ -18,6 +18,7 @@ import { PackageFeed } from './packages-feed.js';
 import { drawCorePackages, followExtension, openInfo } from './core-packages.js';
 import { drawBackstage } from './backstage.js';
 import { Subpage, swap } from './subpage.js';
+import { ScrollKeeper } from './keep-scroll.js';
 import { drawAdvanced } from './advanced.js';
 import { drawToolPage, hasToolPage } from './tool-pages.js';
 import { EXTERNAL_PREFIX } from './tool-model.js';
@@ -75,6 +76,9 @@ export class SettingsDialog {
     this.nav = h('nav.set-nav');
     this.title = h('strong.set-title');
     this.body = h('div.set-body');
+    /** 重画以后回到原来滚到的地方（`keep-scroll.js`，W-1153）；`revealing` 是正对着某一组的时候（`reveal`） */
+    this.keep = new ScrollKeeper(this.body, (again, drop) => this.watchBody(again, drop));
+    this.revealing = false;
     /** 点进去的一层（软件包的设置，`subpage.js`） */
     this.sub = new Subpage();
     this.panel = h('section.set-panel', { role: 'dialog', 'aria-modal': 'true', 'aria-label': this.ctx.text('title'), style: `--set-w: ${cfg.width}px; --set-h: ${cfg.height}px` },
@@ -110,12 +114,13 @@ export class SettingsDialog {
    * 核心的配置），读好了长高会把它挤下去：`REVEAL_MS` 里内容一变高就再对一次，人一动（滚轮、点、按键、触摸）就不再管。
    * 读好了配置、模型、局域网的状态会整页重画（`drawBody`），那一组换成了新的节点：每次对之前照编号重找，重画了照新的那几块再看
    * （W-1097，2026-11-04 Windows 虚拟机上托盘「在手机上打开…」打开的设置停在「访问」上面：局域网的状态读回来重画了一次，原来一直对着换下去的旧节点）。
-   * @param {string} group
+   * `block` 是对到哪：`start` 顶到最上面（从外面点名来的）；`nearest` 只挪到整组露得出来为止、本来就露着的不动（刚打开局域网，卡片往下展开，W-1153）。
+   * @param {string} group @param {'start'|'nearest'} [block]
    */
-  reveal(group) {
+  reveal(group, block = 'start') {
     const find = () => /** @type {HTMLElement|null} */ (this.body.querySelector(`[data-group="${group}"]`));
     if (!find()) return;
-    const pin = () => find()?.scrollIntoView({ block: 'start' });
+    const pin = () => find()?.scrollIntoView({ block });
     const grown = new ResizeObserver(pin);
     const follow = () => {
       grown.disconnect();
@@ -126,11 +131,15 @@ export class SettingsDialog {
     const swapped = new MutationObserver(follow);
     swapped.observe(this.body, { childList: true });
     const quit = () => {
+      this.revealing = false;
       clearTimeout(timer);
       grown.disconnect();
       swapped.disconnect();
       for (const type of HANDS) this.body.removeEventListener(type, quit);
     };
+    // 正对着这一组的时候，重画以后回到哪由这里管（`drawBody` 不另守滚动位置）
+    this.revealing = true;
+    this.keep.drop();
     for (const type of HANDS) this.body.addEventListener(type, quit, { passive: true });
     const timer = setTimeout(quit, REVEAL_MS);
     follow();
@@ -145,6 +154,7 @@ export class SettingsDialog {
     this.extensions.stop();
     this.feed.stop();
     this.sub.closeAll();
+    this.keep?.drop();
     // 记着的 MCP 登录「等待」只在弹窗开着时算（蓝图第 20 条）
     this.mcpLogin = null;
     this.pvOff = null;
@@ -279,6 +289,9 @@ export class SettingsDialog {
     this.search.value = '';
     this.root.classList.add('is-inside');
     this.drawNav();
+    // 换了一页：上一页没回到的那一处不带过来，这一页长高了也不替它往下滚
+    this.keep.drop();
+    this.turned = true;
     this.drawBody();
   }
 
@@ -320,7 +333,9 @@ export class SettingsDialog {
    * @param {import('./subpage.js').Dir|null} [dir] @param {number|null} [restore]
    */
   drawBody(dir = null, restore = null) {
-    const scroll = this.body.scrollTop;
+    // 上一次重画没回到的那一处照旧要回去（`keep-scroll.js`，W-1153）；搜着的、开着一层的不守
+    if (this.query.trim() || this.sub.page) this.keep.drop();
+    const scroll = this.keep.wanted();
     if (this.query.trim()) this.sub.closeAll();
     this.root.classList.toggle('has-sub', !!this.sub.page);
     this.root.classList.toggle('is-bare-sub', !!this.sub.page?.bare);
@@ -382,6 +397,34 @@ export class SettingsDialog {
       ];
     }
     swap(this.body, kids, dir, restore ?? scroll);
+    // 这一页最上面有晚一步才画出来的（主题卡片）：换上去那一刻矮一截、滚不到原来那么低，长高了接着回去。进出一层、正对着某一组
+    // （`reveal`，它自己跟着长高对）的不管
+    if (dir || this.revealing || this.turned) this.keep.drop();
+    else this.keep.restore(restore ?? scroll);
+    this.turned = false;
+  }
+
+  /**
+   * 给 `ScrollKeeper` 看右边那一栏：里面哪一块长高了、换了一批都叫 `again`；人动了（滚轮、点、按键、触摸）、过了 `REVEAL_MS` 叫 `drop`。
+   * @param {() => void} again @param {() => void} drop @returns {() => void}
+   */
+  watchBody(again, drop) {
+    const grown = new ResizeObserver(again);
+    const follow = () => {
+      grown.disconnect();
+      for (const child of this.body.children) grown.observe(child);
+    };
+    follow();
+    const swapped = new MutationObserver(follow);
+    swapped.observe(this.body, { childList: true });
+    for (const type of HANDS) this.body.addEventListener(type, drop, { passive: true });
+    const timer = setTimeout(drop, REVEAL_MS);
+    return () => {
+      clearTimeout(timer);
+      grown.disconnect();
+      swapped.disconnect();
+      for (const type of HANDS) this.body.removeEventListener(type, drop);
+    };
   }
 
   /**
@@ -501,7 +544,8 @@ export class SettingsDialog {
         return;
       }
       // 叠着几层的（浮卡上又弹了问一句的）先关最上面那层：后挂上的在后面
-      const open = [...this.panel.querySelectorAll('.set-menu, .set-drawer, .set-form, .set-pool.is-editing, [data-set-dismiss]')].at(-1);
+      // 藏着的表单不算（「访问密码」那一格没点开时也在页面里：原来它一直占着 `Esc`，「通用」页按 `Esc` 关不掉设置，W-1153）
+      const open = [...this.panel.querySelectorAll('.set-menu, .set-drawer, .set-form:not([hidden]), .set-pool.is-editing, [data-set-dismiss]')].at(-1);
       if (open) {
         open.dispatchEvent(new CustomEvent('set-dismiss'));
         return;
