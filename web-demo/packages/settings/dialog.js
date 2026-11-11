@@ -386,8 +386,8 @@ export class SettingsDialog {
           // 私密目录（隐私与安全页，核心 5-15 下）：两项并成一张表；这一组别的项照通用的行
           ? privateGroup(this, g.name, g.items)
           : this.extensions.entries.has(g.id)
-          ? h('section.set-group', h('h3.set-group-name', g.name), this.extensions.body(g.id, g.items.map((item) => coreRow(this, item)).filter(Boolean)))
-          : groupBlock(g.name, g.items.map((item) => coreRow(this, item))))),
+          ? h('section.set-group', h('h3.set-group-name', g.name), g.description ? h('p.set-group-desc', g.description) : null, this.extensions.body(g.id, g.items.map((item) => coreRow(this, item)).filter(Boolean)))
+          : groupBlock(g.name, g.items.map((item) => coreRow(this, item)), g.description))),
         // 「访问」一组（第 12c 条，2026-10-30 项目主人：原来单独一页，放进通用）：核心没有「用户身份」页的头像也放这里
         this.current === 'general' ? accessGroup(this, !this.pages.some((p) => p.id === 'user')) : null,
         // 最底下一行源码链接（蓝图「设置」第 12a 条，2026-10-26 许可证换成 AGPL-3.0-or-later：第 13 条要让用网页的人拿得到源码）

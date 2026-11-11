@@ -13,11 +13,17 @@ import { records } from './records.js';
  * @param {string|null} name
  * @param {Node[]} rows
  */
-/** 一组：组名、几行；一行都没有的（专门的编辑器把行都藏了）整组不画。 */
-export const groupBlock = (name, rows) => {
+/**
+ * 一组：组名、几行；一行都没有的（专门的编辑器把行都藏了）整组不画。`description` 是这一组的说明（核心 HZ-1，`config.schema` 的
+ * `groups[].description`）：写在组名下面，写全、不截。
+ * @param {string|null} name @param {(Node|null|undefined|false)[]} rows @param {string} [description]
+ */
+export const groupBlock = (name, rows, description) => {
   const shown = rows.filter(Boolean);
   // 组名是空的不画头一行（高级页点进去的那一层，页头已经写着组名）
-  return shown.length ? h('section.set-group', name ? h('h3.set-group-name', name) : null, h('div.set-rows', shown)) : null;
+  return shown.length
+    ? h('section.set-group', name ? h('h3.set-group-name', name) : null, description ? h('p.set-group-desc', description) : null, h('div.set-rows', shown))
+    : null;
 };
 
 /** 对不上哪一项的问题：那一页顶上一条横幅。 */

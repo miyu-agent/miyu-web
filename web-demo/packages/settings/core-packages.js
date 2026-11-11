@@ -47,7 +47,7 @@ export function drawCorePackages(dialog, page, web) {
   const webPart = h('section.set-part', packages.length ? h('h2.set-part-name', t('packages_web')) : null, web.node);
   // 对不上哪个包的组（核心自己的模块）照旧一组一组摊开；联网搜索的 key 这类照 `ownerOf` 认回它的包，挪进信息页
   const rest = (page?.groups ?? []).filter((g) => g.items.every((item) => !ownerOf(item, ids)))
-    .map((g) => groupBlock(g.name, g.items.map((item) => coreRow(dialog, item)))).filter(Boolean);
+    .map((g) => groupBlock(g.name, g.items.map((item) => coreRow(dialog, item)), g.description)).filter(Boolean);
   const chips = h('div.set-pkg-chips', { role: 'tablist' });
   const count = (/** @type {string} */ f) => (f === 'all' ? packages.length + webCount : f === 'web' ? webCount : packages.filter((p) => pkgKinds(p, carried).includes(f)).length);
   const drawChips = () => {

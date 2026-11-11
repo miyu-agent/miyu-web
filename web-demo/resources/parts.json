@@ -1240,6 +1240,12 @@
       ".set-group-name"
     ]
   },
+  "set.group-desc": {
+    "zh": "设置页：一组的说明",
+    "select": [
+      ".set-group-desc"
+    ]
+  },
   "set.subgroup-name": {
     "zh": "设置页：小组名字",
     "select": [

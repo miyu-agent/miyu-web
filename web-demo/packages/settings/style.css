@@ -67,6 +67,8 @@
 .set-group { margin-top: calc(12px * var(--space)); }
 .set-group + .set-group { margin-top: calc(24px * var(--space)); }
 .set-group-name { margin: 0 0 calc(2px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); font-weight: 600; }
+/* 组的说明（核心 HZ-1）：组名下面一段，写全、不截 */
+.set-group-desc { margin: 0 0 calc(6px * var(--space)); color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); line-height: 1.5; overflow-wrap: anywhere; }
 .set-subgroup { margin-top: calc(10px * var(--space)); }
 .set-subgroup-name { margin: calc(14px * var(--space)) 0 0; color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); font-weight: 600; }
 .set-rows { display: flex; flex-direction: column; }

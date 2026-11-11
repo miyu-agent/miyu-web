@@ -527,3 +527,21 @@ test('设置页重画以后回到原来滚到的地方：内容还没长够高�
   assert.equal(body.scrollTop, 300);
   assert.equal(watching, null);
 });
+
+test('组的说明（核心 HZ-1，groups[].description）：有字的带到那一组上、画在组名下面；没写、空白的不带；组照 schema 的先后（受保护的命令排在私密目录前面）', () => {
+  const schema = {
+    pages: [{ id: 'privacy', name: '隐私与安全' }],
+    groups: [
+      { id: 'protected', name: '受保护的命令', page: 'privacy', description: '打开的这几类命令，每次运行前都先问你。' },
+      { id: 'private', name: '私密目录', page: 'privacy', description: '  ' },
+    ],
+    items: [
+      { key: 'permission.confirm.git', group: 'protected', name: 'Git 危险操作', control: 'toggle', layers: ['system'] },
+      { key: 'sandbox.private.enabled', group: 'private', name: '启用', control: 'toggle', layers: ['system'] },
+    ],
+  };
+  const [page] = buildPages(/** @type {any} */ (schema), { items: {}, problems: [] });
+  assert.deepEqual(page.groups.map((g) => g.id), ['protected', 'private']);
+  assert.equal(/** @type {any} */ (page.groups[0]).description, '打开的这几类命令，每次运行前都先问你。');
+  assert.equal('description' in page.groups[1], false);
+});

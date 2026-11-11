@@ -47,7 +47,9 @@ export function buildPages(schema, got, opts = {}) {
     const home = moveGroups[g.id] ?? g.page;
     // 包那一组的分组（W-1141，核心 SG-1：`sections` 只写在 `groups` 里这个包自己那一组上）：原样带上，`package-sections.js` 照它分卡片
     const sections = /** @type {any} */ (g).sections;
-    if (items.length) byPage.get(merge[home] ?? home)?.groups.push({ id: g.id, name: g.name, items, ...(Array.isArray(sections) && sections.length ? { sections } : {}) });
+    // 组的说明（核心 HZ-1：`groups` 里可选的 `description`，现在只有「受保护的命令」带）：有字的带上，画在组名下面
+    const description = typeof (/** @type {any} */ (g).description) === 'string' ? /** @type {any} */ (g).description.trim() : '';
+    if (items.length) byPage.get(merge[home] ?? home)?.groups.push({ id: g.id, name: g.name, items, ...(description ? { description } : {}), ...(Array.isArray(sections) && sections.length ? { sections } : {}) });
   }
   // 对不上清单里哪一项的（整份写坏了、不认识的键、只属于带占位那几项的不算）：放那一页顶上。别的头的项连它的问题一起不列，
   // 不认识的键不管叫什么都要提示（改了名的旧键 `tui.startup` 留在文件里，人得看得到去删）
