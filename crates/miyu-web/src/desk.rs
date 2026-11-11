@@ -2,10 +2,13 @@
 //! 给不了本机路径、读不到桌面壁纸，由和页面在同一台电脑上的网页软件替它做。
 //!
 //! - 对端不是回环地址的（局域网里别的设备）一律 403：在装 Miyu 的那台电脑上开文件管理器、弹选目录框，对别的设备没意义。
-//! - `/reveal`、`/pick-dir`、`/wallpaper` 要设备令牌（`Authorization: Bearer`），照它问核心一句（同 `/media` 那一池连接），不认的 401：别的
+//! - `/reveal`、`/pick-dir`、`/locate`、`/wallpaper` 要设备令牌（`Authorization: Bearer`），照它问核心一句（同 `/media` 那一池连接），不认的 401：别的
 //!   网站能往 `127.0.0.1` 发不带头的请求，带了这个头就要先预检，网页软件不答，浏览器就不发。`/wallpaper/events` 只说变了，不要令牌：
 //!   开着的不算有人连着、条数有上限（第四轮审查 W4-3）。
-//! - 开目录、选目录在共用的 crate `miyu-desk`（和演示的桥一份代码）；壁纸在 [`wallpaper`]。
+//! - 开目录、选目录、找文件在共用的 crate `miyu-desk`（和演示的桥一份代码）；壁纸在 [`wallpaper`]。
+//! - `/locate?name=…&size=…&modified=…&near=…`（2026-11-11 项目主人定）：浏览器不给附件的路径，照名字、大小、改的时刻在这台电脑上找它，
+//!   回 `{"path": "…"}`，没找到的 `{}`。`near` 是先看的地方（会话的工作区，可以写几个）；`wait` 是最多找几毫秒（没写的 2 秒，最多 15 秒）。
+//!   Miyu 的数据根不进。
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -21,7 +24,13 @@ use crate::serve::{Body, Site, empty, full};
 pub(crate) mod wallpaper;
 
 /// 归这里管的几个路径。
-pub(crate) const PATHS: [&str; 4] = ["/reveal", "/pick-dir", "/wallpaper", "/wallpaper/events"];
+pub(crate) const PATHS: [&str; 5] = [
+    "/reveal",
+    "/pick-dir",
+    "/locate",
+    "/wallpaper",
+    "/wallpaper/events",
+];
 
 /// 一个请求：`remote` 是对端不是回环地址时的那个地址。
 pub(crate) async fn handle(
@@ -59,6 +68,17 @@ pub(crate) async fn handle(
             let got = miyu_desk::pick::pick_dir(said("title").unwrap_or_default(), start).await;
             json_reply(got.json())
         }
+        "/locate" => {
+            let _busy = site.busy();
+            let got = miyu_desk::locate::locate(
+                wanted(&query),
+                near(request.uri().query().unwrap_or_default()),
+                vec![site.root.path().to_path_buf()],
+                wait(&query),
+            )
+            .await;
+            json_reply(got.json())
+        }
         _ => wallpaper::serve(&site, said("dark") == Some("1"), said("data") == Some("1")).await,
     }
 }
@@ -88,6 +108,34 @@ pub(crate) async fn check(
         Err(Failed::BadLogin) => Err(StatusCode::UNAUTHORIZED),
         Err(Failed::Unreachable(_)) => Err(StatusCode::BAD_GATEWAY),
     }
+}
+
+/// `/locate` 要找的那个文件：`name` 必写，`size`、`modified`（Unix 毫秒）写了数的才比。
+fn wanted(query: &HashMap<String, String>) -> miyu_desk::locate::Wanted {
+    let number = |key: &str| query.get(key).and_then(|text| text.parse::<u64>().ok());
+    miyu_desk::locate::Wanted {
+        name: query.get("name").cloned().unwrap_or_default(),
+        size: number("size"),
+        modified_ms: number("modified"),
+    }
+}
+
+/// `/locate` 最多找多久：`wait`（毫秒）写了数的照它，没写的照出厂的；封顶在 `miyu-desk` 里。
+fn wait(query: &HashMap<String, String>) -> std::time::Duration {
+    query
+        .get("wait")
+        .and_then(|text| text.parse::<u64>().ok())
+        .map_or(miyu_desk::locate::LIMIT, std::time::Duration::from_millis)
+}
+
+/// `/locate` 先看的几处：查询串里的每一个 `near`（同名的键能写几次，[`query`] 只留最后一个，这里另拆）。
+fn near(text: &str) -> Vec<std::path::PathBuf> {
+    text.split('&')
+        .filter_map(|pair| pair.strip_prefix("near="))
+        .filter_map(|value| miyu_webserve::pages::decode(&value.replace('+', " ")))
+        .filter(|value| !value.is_empty())
+        .map(std::path::PathBuf::from)
+        .collect()
 }
 
 /// 拆查询串：`+` 是空格，`%xx` 解开；解不开的那一项不要。
