@@ -670,6 +670,18 @@
       ".attach-busy"
     ]
   },
+  "attach.tag": {
+    "zh": "附件：仅路径、未找到的小标签",
+    "select": [
+      ".attach-tag"
+    ]
+  },
+  "attach.path_input": {
+    "zh": "附件：贴路径的输入框",
+    "select": [
+      ".attach-path-input"
+    ]
+  },
   "attach.remove": {
     "zh": "拿掉",
     "select": [
@@ -3208,6 +3220,12 @@
     "zh": "你的话：文件扩展名",
     "select": [
       ".user-file-ext"
+    ]
+  },
+  "user.file_tag": {
+    "zh": "你的话：文件「仅路径」的小标签",
+    "select": [
+      ".user-file-tag"
     ]
   },
   "user.video": {

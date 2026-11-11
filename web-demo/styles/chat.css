@@ -171,6 +171,14 @@
   text-overflow: ellipsis; white-space: nowrap;
 }
 .user-file:hover .user-file-ext { background: var(--surface-3); }
+/* 只给路径的（蓝图 web.md「附件」第 10 条）：右下角「仅路径」的小标签；能点的是按钮（打开所在的文件夹），去掉按钮自己的样子 */
+button.user-file { border: 0; font: inherit; cursor: pointer; }
+.user-file-tag {
+  position: absolute; right: 8px; bottom: 8px; max-width: calc(100% - 16px); padding: calc(1px * var(--space)) calc(6px * var(--space)); overflow: hidden; border-radius: var(--r-5);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface-3)); color: var(--text-soft); font-size: calc(11px * var(--text-scale)); font-weight: 600; line-height: calc(16px * var(--text-scale));
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.user-file.is-path .user-file-ext { max-width: calc(100% - 68px); }
 /* 你的话里的视频：第一帧，中间一个播放记号；点了原地换成带控制条的播放器 */
 .user-video {
   position: relative; display: grid; max-width: min(100%, var(--user-media)); max-height: var(--user-media); overflow: hidden;

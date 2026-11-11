@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { typed, menuTyped, filter, find, read, Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText, contextMin } from '../src/model/commands.js';
+import { typed, menuTyped, filter, find, read, Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText, contextMin, baseName, dirName } from '../src/model/commands.js';
 
 const res = loadRes();
 const list = res.commands.commands;
@@ -301,4 +301,35 @@ test('/rename 不带名字时 session.retitle 拒 bad_params 是「没东西可�
   assert.equal(nothingToTitle(null), false);
   const rename = list.find((s) => s.name === 'rename');
   assert.match(JSON.stringify(rename), /不带名字/, '说明写清两种用法');
+});
+
+test('撤掉的那一句里只给路径的附件（核心 AT-1，没有 blob）：放回框里还是只给路径的；有内容的知道原来路径的照带', async () => {
+  const said = { id: 'm7', kind: 'user', text: '剪一下', attachments: [
+    { kind: 'file', path: '/home/a/Movies/录像.mp4', name: '录像.mp4', size: 3_000_000_000, path_only: true },
+    { path: 'D:\\v\\b.mkv' },
+    { kind: 'file', blob: 'b2', media_type: 'text/markdown', name: '说明.md', path: '/home/a/说明.md' },
+  ] };
+  assert.deepEqual(keptAttachments(said, []), [
+    { path: '/home/a/Movies/录像.mp4', name: '录像.mp4', size: 3_000_000_000, media_type: '', path_only: true },
+    { path: 'D:\\v\\b.mkv', name: 'b.mkv', size: null, media_type: '', path_only: true },
+    { blob: 'b2', name: '说明.md', media_type: 'text/markdown', size: null, path: '/home/a/说明.md' },
+  ]);
+  // 条目画成你的话：只给路径的带着路径、大小和 path_only，有内容的不带 path_only
+  const { itemsOf } = await import('../src/model/entries.js');
+  const user = itemsOf([said], { state: 'idle' }).items.find((it) => it.type === 'user');
+  assert.deepEqual(user.attachments.map((x) => [x.path ?? null, x.path_only ?? false, x.size ?? null, x.blob ?? null]), [
+    ['/home/a/Movies/录像.mp4', true, 3_000_000_000, null],
+    ['D:\\v\\b.mkv', true, null, null],
+    ['/home/a/说明.md', false, null, 'b2'],
+  ]);
+});
+
+test('路径的最后一段、所在的文件夹：两种分隔符都认', () => {
+  assert.equal(baseName('/home/a/Movies/录像.mp4'), '录像.mp4');
+  assert.equal(baseName('C:\\Users\\a\\v.mp4'), 'v.mp4');
+  assert.equal(baseName(''), 'file');
+  assert.equal(dirName('/home/a/Movies/录像.mp4'), '/home/a/Movies');
+  assert.equal(dirName('C:\\Users\\a\\v.mp4'), 'C:\\Users\\a');
+  assert.equal(dirName('/a.txt'), '/');
+  assert.equal(dirName('a.txt'), 'a.txt');
 });

@@ -185,7 +185,12 @@ function userItem(e, jobs, opts) {
     seq: seqOf(e.id),
     turn: e.turn ?? null,
     text: e.text ?? '',
-    attachments: (e.attachments ?? []).map((/** @type {any} */ a) => ({ kind: a.kind, blob: a.blob, media_type: a.media_type, width: a.width ?? null, height: a.height ?? null, name: a.name ?? null })),
+    // 只给路径的（核心 AT-1：没有 `blob`，带 `path_only`）另带路径、大小；有内容的知道原来路径的也带上（放回输入框时照带）
+    attachments: (e.attachments ?? []).map((/** @type {any} */ a) => ({
+      kind: a.kind, blob: a.blob, media_type: a.media_type, width: a.width ?? null, height: a.height ?? null, name: a.name ?? null,
+      ...(typeof a.path === 'string' && a.path ? { path: a.path } : {}),
+      ...(a.path_only === true || (!a.blob && typeof a.path === 'string') ? { path_only: true, size: typeof a.size === 'number' ? a.size : null } : {}),
+    })),
     speaker,
     opens: false,
     level: levelName(e.level),

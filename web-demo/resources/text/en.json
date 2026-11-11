@@ -374,6 +374,9 @@
     "cancel": "Cancel",
     "send": "Send",
     "download": "Download {name}",
+    "path_only": "Path",
+    "path_copied": "Path copied: {path}",
+    "path_missing": "Folder not found: {path}",
     "from": "From “{title}”",
     "from_session": "Message from session {id} “{title}”"
   },

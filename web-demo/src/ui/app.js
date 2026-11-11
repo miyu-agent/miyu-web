@@ -19,7 +19,7 @@ import { Chat } from './chat.js';
 import { Composer } from './composer.js';
 import { Artifacts } from './artifacts.js';
 import { runCommand, runUnlisted, refusalText, redo, copyTurn, turnText, Commands, revertLatest } from './commands.js';
-import { coreSpecs } from '../model/commands.js';
+import { coreSpecs, dirName } from '../model/commands.js';
 import { readSkills } from '../model/skills.js';
 import { rank, startupSession } from '../model/session.js';
 import { ChatWidth } from './chat-width.js';
@@ -209,6 +209,15 @@ export class App {
       openSession: (id) => this.open(id),
       // 她 show 过的那一样在右栏打开（正文里的卡片、灯箱里的「在右栏打开」）
       reveal: (path) => this.artifacts.reveal(path),
+      // 只给路径的附件点了（蓝图「附件」第 10 条）：请这台电脑的文件管理器打开它所在的文件夹；文件夹不在的说一句，开不了的
+      // （页面开在别的设备上、没有文件管理器）复制路径
+      revealFile: async (path) => {
+        const dir = dirName(path);
+        const got = this.files?.reveal ? await this.files.reveal(dir).catch(() => null) : null;
+        if (got?.ok) return;
+        if (got?.missing) this.composer.say(t('said.path_missing', { path: dir }));
+        else copy(path, (said, good) => this.composer.say(good ? t('said.path_copied', { path }) : said, good));
+      },
       // 收尾那一行复制、重做中间软件包挂的按钮（挂载位 `turn.actions`：`render({turn, session})` 交一个节点，朗读这类，W-1128）
       turnTools: (turn) => ctx.slots.list('turn.actions').flatMap((/** @type {any} */ e) => {
         try {

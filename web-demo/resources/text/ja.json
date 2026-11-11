@@ -374,6 +374,9 @@
     "cancel": "キャンセル",
     "send": "送信",
     "download": "{name} をダウンロード",
+    "path_only": "パス",
+    "path_copied": "パスをコピーしました：{path}",
+    "path_missing": "フォルダーがありません：{path}",
     "from": "「{title}」から",
     "from_session": "セッション {id}「{title}」からのメッセージ"
   },

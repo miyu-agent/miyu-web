@@ -374,6 +374,9 @@
     "cancel": "取消",
     "send": "发送",
     "download": "下载 {name}",
+    "path_only": "仅路径",
+    "path_copied": "已复制路径：{path}",
+    "path_missing": "文件夹不存在：{path}",
     "from": "来自「{title}」",
     "from_session": "从会话 {id}「{title}」收到消息"
   },

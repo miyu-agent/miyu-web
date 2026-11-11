@@ -191,21 +191,36 @@ export class Menu {
   dismiss(value) { this.dismissed = value; }
 }
 
+/** 路径的最后一段（两种分隔符都认）；空的写 `file`。 @param {string} path */
+export const baseName = (path) => path.split(/[\\/]/).filter(Boolean).pop() ?? 'file';
+
+/** 路径所在的文件夹（去掉最后一段；两种分隔符都认）；只有一段的是它自己。 @param {string} path */
+export const dirName = (path) => {
+  const at = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+  return at > 0 ? path.slice(0, at) : at === 0 ? path.slice(0, 1) : path;
+};
+
 /**
  * 你的一句话（条目 `user`）带的附件，换成附件包放回框里的样子（`{blob, name, media_type, size}`，核心存好的那一份）：大小照这台设备的
- * 输入历史（发的时候记下的），查不到的是 `null`；没名字的照种类和媒体类型起一个（`image.png`）。
- * @param {{attachments?: {kind: string, blob: string, media_type: string, name?: string|null}[]}} said
+ * 输入历史（发的时候记下的），查不到的是 `null`；没名字的照种类和媒体类型起一个（`image.png`）。知道原来路径的带 `path`；只给路径的
+ * （核心 AT-1，没有 `blob`）是 `{path, name, size, media_type, path_only: true}`。
+ * @param {{attachments?: {kind?: string, blob?: string, media_type?: string, name?: string|null, path?: string, path_only?: boolean, size?: number|null}[]}} said
  * @param {{parts?: Record<string, any>}[]} history 输入历史的条目
  */
 export function keptAttachments(said, history) {
   const sizes = new Map();
   for (const item of history ?? []) for (const k of item.parts?.attachments ?? []) if (k?.blob) sizes.set(k.blob, k.size);
-  return (said.attachments ?? []).map((a) => ({
-    blob: a.blob,
-    name: a.name ?? `${a.kind}.${(a.media_type.split('/')[1] ?? 'bin').split('+')[0]}`,
-    media_type: a.media_type,
-    size: sizes.get(a.blob) ?? null,
-  }));
+  return (said.attachments ?? []).map((a) => {
+    if (a.path_only || !a.blob) return { path: a.path ?? '', name: a.name ?? baseName(a.path ?? ''), size: a.size ?? null, media_type: a.media_type ?? '', path_only: true };
+    const type = a.media_type ?? '';
+    return {
+      blob: a.blob,
+      name: a.name ?? `${a.kind}.${(type.split('/')[1] ?? 'bin').split('+')[0]}`,
+      media_type: type,
+      size: sizes.get(a.blob) ?? null,
+      ...(a.path ? { path: a.path } : {}),
+    };
+  });
 }
 
 /**
