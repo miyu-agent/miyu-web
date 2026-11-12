@@ -7,7 +7,7 @@ import { drawMarket, marketPush } from './market.js';
 import { accessGroup, avatarGroup, relisten, LISTEN_KEYS } from './account.js';
 import { hasPrivate, privateGroup } from './privacy.js';
 import { leave } from '../../src/lib/motion.js';
-import { buildPages, search, pagesWithErrors, LAYER, expectFor, navGroups, pkgMatch, ownerOf, headless } from './model.js';
+import { buildPages, search, pagesWithErrors, LAYER, expectFor, navGroups, pkgMatch, ownerOf, headless, needsRestart } from './model.js';
 import { coreRow, groupBlock, banner, toggle } from './rows.js';
 import { drawLook } from './look.js';
 import { drawPackages } from './packages.js';
@@ -446,8 +446,10 @@ export class SettingsDialog {
   async saveMany(layer, changes) {
     if (!changes.length) return null;
     this.lastProblems = [];
+    /** @type {any} */
+    let got = null;
     try {
-      await this.ctx.core.request('config.set', { layer, changes });
+      got = await this.ctx.core.request('config.set', { layer, changes });
     } catch (err) {
       if (err.reason === 'config_conflict' || err.data?.current) {
         await this.reload();
@@ -464,6 +466,9 @@ export class SettingsDialog {
     await this.reload();
     // 监听地址、端口：请网页软件当场换（第 12c 条第 1 款；这一组、「软件包」页都算）
     if (changes.some((c) => LISTEN_KEYS.includes(c.key))) void relisten(this, changes.map((c) => c.key));
+    // 要重启核心才生效的（`applies: restart`，核心 CPU-1 的 `core.workers` 头一个）：名字下面照旧不写生效时机，存成了提示一句
+    // （2026-11-12 项目主人：「改完弹一句提示」，不然改了以为没反应）
+    if (needsRestart(got)) this.toast(this.ctx.text('applies_restart'));
     return null;
   }
 

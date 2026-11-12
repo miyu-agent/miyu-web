@@ -545,3 +545,11 @@ test('组的说明（核心 HZ-1，groups[].description）：有字的带到那�
   assert.equal(/** @type {any} */ (page.groups[0]).description, '打开的这几类命令，每次运行前都先问你。');
   assert.equal('description' in page.groups[1], false);
 });
+
+test('改了要重启核心才生效的设置（config.set 回应 keys 的 applies 是 restart，核心 CPU-1）：存成了提示一句；别的生效时机不提示（2026-11-12 项目主人）', async () => {
+  const { needsRestart } = await import('../../packages/settings/model.js');
+  assert.equal(needsRestart({ keys: { 'core.workers': { applies: 'restart', value: 4 } } }), true);
+  assert.equal(needsRestart({ keys: { 'ui.language': { applies: 'now' }, 'compaction.line': { applies: 'next_turn' } } }), false);
+  assert.equal(needsRestart({ keys: {} }), false);
+  assert.equal(needsRestart(null), false);
+});

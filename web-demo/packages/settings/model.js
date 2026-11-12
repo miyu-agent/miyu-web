@@ -589,3 +589,11 @@ export function strategiesOf(item) {
   const listed = (item?.options ?? []).map((o) => o.value).filter((v) => known.includes(v));
   return listed.length ? listed : ['pin', 'rotate'];
 }
+
+/**
+ * `config.set` 的回应里有没有要重启核心才生效的（`keys` 每一项的 `applies` 是 `restart`）。
+ * @param {any} got
+ */
+export function needsRestart(got) {
+  return Object.values(got?.keys ?? {}).some((k) => /** @type {any} */ (k)?.applies === 'restart');
+}
