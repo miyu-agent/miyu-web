@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-# 把网页打成软件包文件 `miyu-webui-<版本>-<系统>.miyu`（包编号 miyu-webui，核心设计 48）（蓝图 web-ui.md「怎么走」第一条第 6 款，2026-10-29：新装的 Miyu 只有核心，网页要从软件源装）。
+# 把网页打成软件包文件 `webui-<版本>-<系统>.miyu`（包编号 webui，核心设计 48）（蓝图 web-ui.md「怎么走」第一条第 6 款，2026-10-29：新装的 Miyu 只有核心，网页要从软件源装）。
 # 照装好的样子搭一个包文件夹，再交核心的 `miyu pkg pack` 打（核心 packages.md、cli/pkg.md 的 pack）：
-#   package.toml  这个仓库的 miyu-webui/package.toml 原样（2026-11-04 起清单自己写 version、targets，W-1095：发版照官方打包模板，
+#   package.toml  这个仓库的 webui/package.toml 原样（2026-11-04 起清单自己写 version、targets，W-1095：发版照官方打包模板，
 #                 模板照清单的 version 核对标签）；version 要和 Cargo.toml 的工作区版本一样，--target 要在 targets 里
-#   web.json、matugen/  这个仓库的 miyu-webui/ 原样
-#   THIRD-PARTY-LICENSES.txt  这个仓库的 miyu-webui/ 原样（cargo xtask notices 生成的第三方许可证清单），LICENSE 照仓库根的
-#   loading.html  这个仓库的 miyu-webui/ 原样（桌面端启动时的等待页，node tools/loading.mjs 生成）
+#   web.json、matugen/  这个仓库的 webui/ 原样
+#   THIRD-PARTY-LICENSES.txt  这个仓库的 webui/ 原样（cargo xtask notices 生成的第三方许可证清单），LICENSE 照仓库根的
+#   loading.html  这个仓库的 webui/ 原样（桌面端启动时的等待页，node tools/loading.mjs 生成）
 #   pages/        web-demo 里给浏览器的八样：index.html、manifest.webmanifest（应用清单，AP-6）、distro.json、src、styles、packages、resources、vendor
 #   bin/miyu-web  --binary 给的程序（这一种系统上编好的 release，脚本不编）
 # 清单的 targets 写全了三种（托盘程序装进资源目录的也是这一份，写全了在这三种上都认）。
@@ -15,7 +15,7 @@ import argparse, json, pathlib, re, shutil, subprocess, tempfile, tomllib
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 # 包编号：包文件夹叫这个名字，pkg pack 照文件夹名定编号、出的文件名
-PACKAGE = 'miyu-webui'
+PACKAGE = 'webui'
 PAGES = ['index.html', 'manifest.webmanifest', 'distro.json', 'src', 'styles', 'packages', 'resources', 'vendor']
 TARGETS = ['linux-x86_64', 'linux-aarch64', 'macos-aarch64', 'windows-x86_64']
 

@@ -1,14 +1,14 @@
-// 桌面端启动时的等待页 `miyu-webui/loading.html`（蓝图 `web.md`「第一次引导」第 2a 条，2026-10-31 项目主人）：网页软件起来之前外壳从磁盘读、
+// 桌面端启动时的等待页 `webui/loading.html`（蓝图 `web.md`「第一次引导」第 2a 条，2026-10-31 项目主人）：网页软件起来之前外壳从磁盘读、
 // 当 `data:` 页面开，所以一个文件自带一切，不引别的文件、不连网。正中是欢迎页的字符剪影：照 `packages/welcome/glyphs.js`、`glyph-mask.js`
 // 原样内联（去掉 `import`、`export` 那几个字），加一个最小的 `h`；明暗照系统的；下面一行小字是占位 `{{starting}}`，外壳照系统语言换。
 //
-//   node tools/loading.mjs        重出 miyu-webui/loading.html（剪影改了跟着重出；测试 web-demo/tests/loading.test.js 查它对得上）
+//   node tools/loading.mjs        重出 webui/loading.html（剪影改了跟着重出；测试 web-demo/tests/loading.test.js 查它对得上）
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = new URL('../', import.meta.url);
-export const OUTPUT = new URL('miyu-webui/loading.html', ROOT);
+export const OUTPUT = new URL('webui/loading.html', ROOT);
 const read = (/** @type {string} */ path) => readFileSync(new URL(path, ROOT), 'utf8');
 
 /** 模块写法换成一份脚本里的：去掉 `// @ts-check`、`import` 行，`export` 去掉。 @param {string} code */

@@ -401,7 +401,7 @@ export function referenceOptions(list) {
  * 除了网页界面没有别的界面的（只装了桌面端、没装终端界面）：「默认界面」没得选、「终端会话」那一组用不上，都不列（蓝图「设置页」第 18 条）。
  * @param {{package: string}[]|undefined} heads @returns {string[]}
  */
-export const headless = (heads) => ((heads ?? []).some((p) => p.package !== 'miyu-webui') ? [] : ['ui.head', 'terminal.']);
+export const headless = (heads) => ((heads ?? []).some((p) => p.package !== 'webui') ? [] : ['ui.head', 'terminal.']);
 
 /**
  * 选人格、预设、知识库的项（核心设计 53 第四节，PC-3；预设是核心 e9c2b52cd 加的，W-1096）的选项：照 `persona.list`、`preset.list`

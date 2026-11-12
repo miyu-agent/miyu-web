@@ -1,4 +1,4 @@
-//! 单实例的锁、`run/miyu-webui/address`（从 `serve.rs` 挪出来，W-1098 加 `/export` 时那一份又到了 500 行）。
+//! 单实例的锁、`run/webui/address`（从 `serve.rs` 挪出来，W-1098 加 `/export` 时那一份又到了 500 行）。
 
 use std::fs::{File, OpenOptions, TryLockError};
 
@@ -33,7 +33,7 @@ pub(super) fn write_address(run: &std::path::Path, url: &str) -> Result<(), Stri
     let temp = run.join(format!("{ADDRESS}.{}.tmp", std::process::id()));
     std::fs::write(&temp, format!("{url}\n"))
         .and_then(|()| std::fs::rename(&temp, run.join(ADDRESS)))
-        .map_err(|error| format!("run/miyu-webui/{ADDRESS} not written: {error}"))
+        .map_err(|error| format!("run/webui/{ADDRESS} not written: {error}"))
 }
 
 /// 删地址：没有的不要紧。

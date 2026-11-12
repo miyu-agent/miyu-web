@@ -1,5 +1,5 @@
 // @ts-check
-//! 桌面端启动时的等待页 `miyu-webui/loading.html`（蓝图 `web.md`「第一次引导」第 2a 条）：照 `tools/loading.mjs` 生成，和欢迎页的剪影源文件对得上；
+//! 桌面端启动时的等待页 `webui/loading.html`（蓝图 `web.md`「第一次引导」第 2a 条）：照 `tools/loading.mjs` 生成，和欢迎页的剪影源文件对得上；
 //! 自带一切（不引文件、不连网）、100 KB 以内、占位只出现一次、脚本读得成。
 
 import { test } from 'node:test';

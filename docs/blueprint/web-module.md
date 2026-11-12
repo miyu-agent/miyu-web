@@ -70,8 +70,8 @@
 | `crates/miyu-webserve/src/pages.rs`（W-9 写在 `crates/miyu-web/src/pages.rs`，施工 O-16 搬进共用的 `miyu-webserve`，`webserve.md`） | 页面文件、响应头 | W-9 |
 | `crates/miyu-webserve/src/ws.rs`、`lib.rs`（同上） | 核对 Host、Origin；WebSocket 和核心连接两头照转 | W-9 |
 | `crates/miyu-web/src/media.rs`、`media/` | `POST /media` 换票据，`GET /media/<票据>` 分段给；细的见 `web-ui.md`「在哪」 | W-10 |
-| `miyu-webui/web.json`（装好在网页包的文件夹 `packages/miyu-webui/`，2026-10-30 以前叫 `packages/web/`；2026-10-11 从核心的 `resources/web/` 挪进来） | 媒体类型的表、页面的内容安全策略（端口、空闲多久、票据记多久施工 9-1 下挪进网页的清单 `packages/web/package.toml`，成了配置项） | W-9、W-10、9-1 下 |
-| 网页包文件夹的 `pages/`（`packages/miyu-webui/pages/`） | 页面文件（原来在 `resources/web/pages/`，2026-10-11 跟着挪进网页包的文件夹）。开发时设 `MIYU_WEB_PAGES` 指到 `web-demo/` | W-9 |
+| `webui/web.json`（装好在网页包的文件夹 `packages/webui/`，2026-10-30 以前叫 `packages/web/`；2026-10-11 从核心的 `resources/web/` 挪进来） | 媒体类型的表、页面的内容安全策略（端口、空闲多久、票据记多久施工 9-1 下挪进网页的清单 `packages/web/package.toml`，成了配置项） | W-9、W-10、9-1 下 |
+| 网页包文件夹的 `pages/`（`packages/webui/pages/`） | 页面文件（原来在 `resources/web/pages/`，2026-10-11 跟着挪进网页包的文件夹）。开发时设 `MIYU_WEB_PAGES` 指到 `web-demo/` | W-9 |
 
 - 分层照 `01-架构.md` 第九节：`miyu-mermaid`、`miyu-net` 在第 3 层（执行器），`miyu-web` 在第 5 层（头）。门禁读那张表，三行要先登记（「要跟着改的别的页」）。
 - `miyu-web` 只依赖 `miyu-ipc`、`miyu-store`、`miyu-kernel`（编号的写法），不依赖 `miyu-endpoint`、`miyu-core`：它不是核心。
@@ -219,8 +219,8 @@ HTTP（W-9、W-10）：
 
 | 文件 | 内容 | 谁写 |
 |---|---|---|
-| `run/miyu-webui/lock` | 空文件，网页软件的单实例锁在它上面 | 网页软件 |
-| `run/miyu-webui/address` | 一行：网页的地址，`http://127.0.0.1:<端口>` | 网页软件，每次起来 |
+| `run/webui/lock` | 空文件，网页软件的单实例锁在它上面 | 网页软件 |
+| `run/webui/address` | 一行：网页的地址，`http://127.0.0.1:<端口>` | 网页软件，每次起来 |
 | `home/<账号>/logins.json` | 登录令牌的哈希、什么时候造的、什么时候过期（W-8） | 核心 |
 | `system/accounts.json` | 登录用的用户名、argon2id 的密码哈希（W-8） | 核心 |
 
@@ -486,7 +486,7 @@ http://127.0.0.1:<端口>/#setup=9f03b21c…
 | `crates/miyu-endpoint/tests/login.rs` | 一次性码只给本机令牌的连接、一次、5 分钟、`first`；用码连上的只能设密码；用户名、密码的写法；设好了换出登录令牌、落了盘才回、以前的登录全部作废；密码登录对、错一样的话、60 秒错 5 次就拒、不验；登录令牌认得、过期不认、作废不认；凭据写两种、只写用户名拒；`logout` 一个、全部、断开连接；`accounts.json`、`logins.json` 坏了的样子；日志里没有码、密码、令牌 | W-8 |
 | `crates/miyu-store/src/accounts/tests.rs` | `accounts.json` 读写一字不差、0600、改名落盘；argon2id 的参数照写的、验得过、错的验不过 | W-8 |
 | `crates/miyu-ipc/tests/socket.rs`、`pipe.rs` | `connect_bare` 连得上、不读 `run/token` | W-8 |
-| `crates/miyu-web/tests/serve.rs` | 单实例、`run/miyu-webui/address`、那一行；Host、Origin 不对 403；页面文件不出页面目录；响应头；不设 cookie；空闲退出 | W-9 |
+| `crates/miyu-web/tests/serve.rs` | 单实例、`run/webui/address`、那一行；Host、Origin 不对 403；页面文件不出页面目录；响应头；不设 cookie；空闲退出 | W-9 |
 | `crates/miyu-web/tests/ws.rs` | 真核心：一帧一行两头照转、一个字节都不改；握手的凭据照原样到核心；核心断了 WebSocket 关 1012；网页软件的代码里不读本机令牌（照源码查） | W-9 |
 | `crates/miyu-web/tests/open.rs`、`crates/miyu/tests/web.rs` | 没设过密码、`--reset` 的带一次性码，别的不带；`--print`；`--logout`；没装时说怎么装 | W-9 |
 | `crates/miyu-web/tests/media.rs`、`src/media/tests.rs` | 换票据要登录令牌；同一个资源交回同一张；`Range` 206、416；类型照表、`nosniff`、`sandbox`；下载的名字转义；票据作废 404（细的见 `web-ui.md`「守着它的」） | W-10 |
@@ -564,7 +564,7 @@ http://127.0.0.1:<端口>/#setup=9f03b21c…
 | 25 | 网页软件的数（端口、空闲多久、票据、媒体类型、内容安全策略）放在 `resources/web/web.json`，不进核心的配置清单。施工 9-1 下（2026-10-07 项目主人定）搬了：端口、空闲多久、票据那四项成了网页自己清单里的配置项，端口设置页露、另外三项不露；媒体类型、内容安全策略留作常量 | 进了核心的配置清单，核心就有了为网页写的东西；软件包的清单能声明配置项以后再搬（设计 05 第二节） | 核心替它声明（照 `tui.startup` 的先例） |
 | 26 | 网页软件只听 `127.0.0.1`，Host 只认三种写法，Origin 对上才接 WebSocket（SU-1 起：`web.listen` 能放开到局域网，Host 另认 IP 写法，远程的先 `connection.remote`、凭访问密码登录） | 远程默认关（设计 04 P6）；Host 挡 DNS rebinding，Origin 挡别的网站 | 也听 `::1`（`localhost` 两种都通，代价是两个监听） |
 | 27 | 页面文件不要登录也给 | 里面没有秘密；登录要先有页面 | 页面也要票据 |
-| 28 | 网页软件起停照核心的样子：`run/miyu-webui/lock`、`run/miyu-webui/address`、`ready` 那一行 | 头已经会拉起核心、等那一行，同一套代码 | 一直前台跑（照桥，关了终端就没了） |
+| 28 | 网页软件起停照核心的样子：`run/webui/lock`、`run/webui/address`、`ready` 那一行 | 头已经会拉起核心、等那一行，同一套代码 | 一直前台跑（照桥，关了终端就没了） |
 | 29 | `fs.*` 的出厂数写在代码里，配置那一步能改 | 照 `jobs.output_chars` 的放法；这几个数终端演示定过（设计 13 H14） | 现在就做成配置项（每一项要三种语言的名字和说明） |
 | 30 | `logins.json` 最多 64 行，过期的写的时候删 | 文件不会一直长；写的时候顺手删，不另起清理 | 不设上限 |
 | 31 | `link.preview` 在后台的任务里抓，回应照 `id` 对上，不挡这个连接后面的请求 | 抓一页要几秒；一个连接上的请求本来一条条办，页面上别的都会卡住 | 照一条条办（卡片多的时候整个页面卡几秒） |
@@ -643,7 +643,7 @@ http://127.0.0.1:<端口>/#setup=9f03b21c…
 - `10-自带软件.md` 第四节：可选软件包加「画 mermaid」；`net` 多一样「链接卡片 `link.preview`」。
 - `13-终端界面.md` 第九节：SVG 由核心经 `mermaid.render` 出（`view.detail` 随 M9）。
 - `01-架构.md` 第九节：登记 `miyu-mermaid`、`miyu-net`（第 3 层）、`miyu-web`（第 5 层）。
-- `07-存储.md` 第二节：`system/accounts.json`、`home/<账号>/logins.json`，`run/miyu-webui/lock`、`run/miyu-webui/address`。
+- `07-存储.md` 第二节：`system/accounts.json`、`home/<账号>/logins.json`，`run/webui/lock`、`run/webui/address`。
 - `24-威胁模型.md` 第二节：加三行。本机别的进程（包括沙盒里的命令）连网页软件的端口：页面谁都拿得到、里面没有秘密，WebSocket、媒体要登录令牌或票据，Host、Origin 挡 DNS rebinding 和别的网站；挡不住：浏览器里的页面有能执行脚本的漏洞。进程列表里的一次性码：只用一次、建了管理员就作废（第 3 题，随用户系统）。网页软件被攻破：它没有本机令牌，只看得到经它转的登录令牌。
 
 ### 要跟着改的别的页
@@ -657,7 +657,7 @@ http://127.0.0.1:<端口>/#setup=9f03b21c…
 - `store/resources.md`：`Human` 交出模板原文；资源目录里多 `software/mermaid/`、`software/net/`、`web/`；「还没有的」那条「网页、字体这类资源」改掉。W-1、W-4、W-7、W-9。
 - `fs.md`：列一层、建清单、打分、从最近在的一层换真实位置、读一段。W-2、W-3、W-6。
 - `http.md`：写明 `miyu-net` 另有自己的客户端（不走代理的钉地址；走代理的先在本机解析过闸），不经 `miyu-http`；代理照同一套环境变量。W-7。
-- `log.md`：目标多 `miyu::web`、`miyu::net`、`miyu::mermaid`；网页软件自己的 `state/logs/web.log`（FH-5上 起挪进 `DataRoot::package_logs("miyu-webui")`，见 `web-ui.md`「怎么走」第 10 条）。W-4、W-7、W-9。
+- `log.md`：目标多 `miyu::web`、`miyu::net`、`miyu::mermaid`；网页软件自己的 `state/logs/web.log`（FH-5上 起挪进 `DataRoot::package_logs("webui")`，见 `web-ui.md`「怎么走」第 10 条）。W-4、W-7、W-9。
 - `licenses.md`：新依赖 `mermaid-rs-renderer` 和它带的字体库、`hyper`、`tokio-tungstenite`，`ignore` 挪进 `miyu-fs`，`argon2`（W-8）。W-2、W-4、W-8、W-9。
 - `cli/main.md` 加子命令 `web`；新页 `cli/web.md`。W-9。
 - 新页：`mermaid.md`（W-4，这一页第五条挪过去）、`net.md`（W-7，第八条挪过去）、网页软件一页 `web-ui.md`（W-9，第九、十、十一条挪过去；名字施工时定，不和 proto/web-demo 分支的 `web.md` 撞）。README 的页表跟着加。

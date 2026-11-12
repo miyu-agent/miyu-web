@@ -180,7 +180,7 @@ async fn serve(
     u8::from(ran.is_err())
 }
 
-/// `forget <跳转页>`：过一会儿删掉 `open` 写的跳转页（只删 `run/miyu-webui/open/` 里的）。等多久照 `MIYU_WEB_FORGET_MS`（测试用），不写是 30 秒。
+/// `forget <跳转页>`：过一会儿删掉 `open` 写的跳转页（只删 `run/webui/open/` 里的）。等多久照 `MIYU_WEB_FORGET_MS`（测试用），不写是 30 秒。
 fn forget(rest: &[String]) -> ExitCode {
     let [page] = rest else {
         return usage();

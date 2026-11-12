@@ -1,6 +1,6 @@
-# 发版（照官方打包模板，同 miyu-render、miyu-embed，W-1095）：推 `v*` 标签（v 加上 miyu-webui/package.toml 里的版本，和
+# 发版（照官方打包模板，同 miyu-render、miyu-embed，W-1095）：推 `v*` 标签（v 加上 webui/package.toml 里的版本，和
 # Cargo.toml 的工作区版本一样）时一种系统打一个 `.miyu`（`miyu pkg pack` 打的，软件源只收这种），传进这个标签的 Release；软件源每天收一次，
-# 收进索引以后 `miyu pkg install miyu-webui` 就装得上。包里：本仓库编的 miyu-web 程序、miyu-webui/ 的清单和常量、web-demo 里给浏览器的页面、
+# 收进索引以后 `miyu pkg install webui` 就装得上。包里：本仓库编的 miyu-web 程序、webui/ 的清单和常量、web-demo 里给浏览器的页面、
 # 本仓库的许可证（AGPL）和第三方许可证清单（tools/pack-web.py --stage 搭的，和本机打的一个样子）。
 # 手动跑（不是标签）的不传 Release，包放进这一趟的产物：发版前先试一遍四种系统打不打得出来（linux-aarch64 2026-11-05 加，W-1100，跑在 ubuntu-24.04-arm 上）。
 name: release
@@ -28,8 +28,8 @@ jobs:
     permissions:
       contents: write
     with:
-      package: miyu-webui
-      folder: dist/miyu-webui
+      package: webui
+      folder: dist/webui
       target: ${{ matrix.target }}
       runs-on: ${{ matrix.os }}
       build: |
@@ -41,4 +41,4 @@ jobs:
         # Windows 的机器上 python3 不一定在，照 python 找
         py=python3
         if ! "$py" --version > /dev/null 2>&1; then py=python; fi
-        "$py" tools/pack-web.py --stage dist/miyu-webui --binary "target/release/miyu-web$exe" --target "$TARGET"
+        "$py" tools/pack-web.py --stage dist/webui --binary "target/release/miyu-web$exe" --target "$TARGET"

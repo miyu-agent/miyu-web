@@ -19,24 +19,24 @@ function quiet(fn) {
 test('package.list 里挑出带网页外观的，照先后；只带终端主题的、编号放不进地址的、和网页自带的包撞了的不要', () => {
   const listed = {
     packages: [
-      look('miyu-webui-theme-claude-style'),
+      look('webui-theme-claude-style'),
       { package: 'tui-only', kind: 'theme', theme: { tui: { file: 'theme.json' } } },
       { package: 'onebot', page: true },
       look('bad name'),
       look('skin'),
       look('both', { theme: { tui: { file: 't.json' }, web: { dir: 'web' } } }),
-      look('miyu-webui-theme-claude-style'),
+      look('webui-theme-claude-style'),
       { package: 'broken', code: 'bad_theme_dir', problem: '…' },
     ],
   };
-  quiet(() => assert.deepEqual(themeIds(listed, new Set(['skin', 'app'])), ['miyu-webui-theme-claude-style', 'both']));
+  quiet(() => assert.deepEqual(themeIds(listed, new Set(['skin', 'app'])), ['webui-theme-claude-style', 'both']));
   assert.deepEqual(themeIds({}, new Set()), []);
   assert.deepEqual(themeIds(null, new Set()), []);
 });
 
 test('外观包的清单：编号照核心的包编号，种类一律可选；不是 JSON 对象的抛错', () => {
-  assert.deepEqual(themeManifest({ id: 'claude', kind: 'base', name: { zh: '克' }, styles: ['a.css'] }, 'miyu-webui-theme-claude'), {
-    id: 'miyu-webui-theme-claude', kind: 'optional', name: { zh: '克' }, styles: ['a.css'],
+  assert.deepEqual(themeManifest({ id: 'claude', kind: 'base', name: { zh: '克' }, styles: ['a.css'] }, 'webui-theme-claude'), {
+    id: 'webui-theme-claude', kind: 'optional', name: { zh: '克' }, styles: ['a.css'],
   });
   for (const bad of [null, [], 'x', 3]) assert.throws(() => themeManifest(bad, 'x'), /不是 JSON 对象/);
 });

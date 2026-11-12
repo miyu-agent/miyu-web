@@ -15,7 +15,7 @@
 //! - [`open`]：`miyu web` 交来的参数：确保 `serve` 在跑，第一次、`--reset` 的照终端的样子出示本机令牌要一次性码，开浏览器
 //!   （连核心、开浏览器的那两样在 `miyu-webserve`）。
 //! - [`help`]：`miyu web` 的参数、帮助页、写错时怎么说（核心 CL-7 起由网页包自己印）。
-//! - [`settings`]：网页包里的 `web.json`（装好在 `resources/packages/miyu-webui/`）：内容安全策略、媒体类型的表；端口、空闲多久照清单。
+//! - [`settings`]：网页包里的 `web.json`（装好在 `resources/packages/webui/`）：内容安全策略、媒体类型的表；端口、空闲多久照清单。
 //!
 //! 不依赖核心：只用 `miyu-ipc`、`miyu-store`、`miyu-log`、`miyu-webserve`（分层照 `01-架构.md` 第九节第 5 层）。
 

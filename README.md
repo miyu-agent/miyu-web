@@ -5,7 +5,7 @@
 - `crates/miyu-web`：网页软件（`miyu-web serve`、`miyu-web open`），图纸 `docs/blueprint/web-module.md`。
 - `crates/miyu-webserve`：只听本机的网页端口的底子：给页面文件、核对 Host 和 Origin、`/ws` 原样转给核心，图纸 `docs/blueprint/webserve.md`。
 - `web-demo/`：页面（原生 JavaScript，按 ES 模块组织，不用框架、不用构建），图纸 `docs/blueprint/web.md`、`web-ui.md`；怎么跑见 `web-demo/README.md`。
-- `miyu-webui/`：网页的软件包（包编号 `miyu-webui`，配置键前缀 `web`）：清单、常量 `web.json`、matugen 模板；发版时随核心一起装进资源目录的 `packages/miyu-webui/`，或经 `tools/pack-web.py` 打成包文件 `miyu-webui-<版本>-<系统>.miyu` 从软件源装（发版：推 `v<版本>` 的标签，`.github/workflows/release.yml` 照官方打包模板一种系统打一个传进 Release；版本在 `Cargo.toml` 和 `miyu-webui/package.toml` 两处，一样）。
+- `webui/`：网页的软件包（包编号 `webui`，配置键前缀 `web`）：清单、常量 `web.json`、matugen 模板；发版时随核心一起装进资源目录的 `packages/webui/`，或经 `tools/pack-web.py` 打成包文件 `webui-<版本>-<系统>.miyu` 从软件源装（发版：推 `v<版本>` 的标签，`.github/workflows/release.yml` 照官方打包模板一种系统打一个传进 Release；版本在 `Cargo.toml` 和 `webui/package.toml` 两处，一样）。
 
 ### 在别的设备上用
 
@@ -46,7 +46,7 @@ AGPL-3.0-or-later（2026-10-26 项目主人定：核心和第一方程序用 AGP
 | material-color-utilities 0.4.0（`web-demo/src/lib/md3/vendor/mcu.min.js`，挑了取色要用的几样打成一个文件） | Apache-2.0 | `web-demo/src/lib/md3/vendor/LICENSE` |
 | qrcode-generator 2.0.4（`web-demo/src/lib/qr/vendor/qrcode.mjs`，npm 包 `dist/qrcode.mjs` 原样带着；局域网地址的二维码） | MIT | `web-demo/src/lib/qr/vendor/LICENSE` |
 
-上面这些和网页软件编进去的第三方 Rust 包，版权和许可证原文合在 `miyu-webui/THIRD-PARTY-LICENSES.txt`（`cargo xtask notices` 生成，随网页包发；加了、升了依赖或资源要重新生成，CI 查它是不是最新的）。
+上面这些和网页软件编进去的第三方 Rust 包，版权和许可证原文合在 `webui/THIRD-PARTY-LICENSES.txt`（`cargo xtask notices` 生成，随网页包发；加了、升了依赖或资源要重新生成，CI 查它是不是最新的）。
 
 吉祥物、默认头像和 logo（`web-demo/resources/assets/mascot.png`、`miyu-avatar.png`、`logo.svg`、`logo.png`、`logo-192.png`、`logo-512.png`、`mark.svg`、`mark-figure.svg`）是项目自己做的，和代码一样照 AGPL-3.0-or-later。
 
