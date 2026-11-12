@@ -20,11 +20,11 @@ function fakeConn(reply, listed = { packages: [] }) {
 }
 
 test('照界面语言问核心的 human.get，留 tools、said、packages；回应里别的格子不要；包的图标照 package.list', async () => {
-  const conn = fakeConn({ language: 'ja', tools: { shell: { name: 'コマンド実行', subject: 'description' } }, said: { 'core/x': '{a} 件' }, packages: { meme_send: 'miyu-memes' } },
-    { packages: [{ package: 'miyu-memes', icon: 'smile' }] });
+  const conn = fakeConn({ language: 'ja', tools: { shell: { name: 'コマンド実行', subject: 'description' } }, said: { 'core/x': '{a} 件' }, packages: { meme_send: 'memes' } },
+    { packages: [{ package: 'memes', icon: 'smile' }] });
   const human = await loadHuman(/** @type {any} */ (conn), 'ja');
   assert.deepEqual(conn.asked, [['human.get', { language: 'ja' }], ['package.list', {}]]);
-  assert.deepEqual(human, { tools: { shell: { name: 'コマンド実行', subject: 'description' } }, said: { 'core/x': '{a} 件' }, packages: { meme_send: 'miyu-memes' }, icons: { 'miyu-memes': 'smile' } });
+  assert.deepEqual(human, { tools: { shell: { name: 'コマンド実行', subject: 'description' } }, said: { 'core/x': '{a} 件' }, packages: { meme_send: 'memes' }, icons: { 'memes': 'smile' } });
 });
 
 test('回应缺了格子的当空的、包的列表问不到的当没有图标；字问不到（核心太旧、读不懂资源）照原样报出去', async () => {
@@ -33,6 +33,6 @@ test('回应缺了格子的当空的、包的列表问不到的当没有图标�
 });
 
 test('包的图标：只留写了图标的包；列表不是数组的当没有', async () => {
-  assert.deepEqual(iconsOf([{ package: 'miyu-memes', icon: 'smile' }, { package: 'plain' }, { package: 'blank', icon: '' }, { icon: 'x' }]), { 'miyu-memes': 'smile' });
+  assert.deepEqual(iconsOf([{ package: 'memes', icon: 'smile' }, { package: 'plain' }, { package: 'blank', icon: '' }, { icon: 'x' }]), { 'memes': 'smile' });
   assert.deepEqual(iconsOf(null), {});
 });

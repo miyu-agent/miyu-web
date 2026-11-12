@@ -456,7 +456,7 @@ test('端口那一格：1–65535 的整数才收，空的是去掉这一项，�
 import { choicesFrom, packageChoices, choiceOptions, asksOwnerNumber } from '../../packages/settings/model.js';
 
 test('choices_from：只认文字项、包名和方法名都写了的；旧核心没有这一格的照文字框', () => {
-  assert.deepEqual(choicesFrom({ type: 'text', choices_from: { package: 'miyu-say', method: 'voices' } }), { package: 'miyu-say', method: 'voices' });
+  assert.deepEqual(choicesFrom({ type: 'text', choices_from: { package: 'say', method: 'voices' } }), { package: 'say', method: 'voices' });
   assert.equal(choicesFrom({ type: 'text' }), null);
   assert.equal(choicesFrom({ type: 'number', choices_from: { package: 'p', method: 'm' } }), null);
   assert.equal(choicesFrom({ type: 'text', choices_from: { package: 'p' } }), null);

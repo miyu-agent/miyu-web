@@ -198,9 +198,9 @@ test('Windows 的原样路径换成平常的写法（2026-10-30 桌面端：\\\\
 
 test('删人格连带卸掉的出厂包（核心 PE-1）：删后多出来的 removed 那一个；原来就卸了的、读不到的不算', async () => {
   const { newlyRemoved } = await import('../../packages/setup/model.js');
-  const before = [{ package: 'miyu-base-persona-engineer' }, { package: 'old', removed: true }];
-  const after = [{ package: 'miyu-base-persona-engineer', name: '软件工程师人格', removed: true }, { package: 'old', removed: true }];
-  assert.equal(newlyRemoved(before, after)?.package, 'miyu-base-persona-engineer');
+  const before = [{ package: 'base-persona-engineer' }, { package: 'old', removed: true }];
+  const after = [{ package: 'base-persona-engineer', name: '软件工程师人格', removed: true }, { package: 'old', removed: true }];
+  assert.equal(newlyRemoved(before, after)?.package, 'base-persona-engineer');
   assert.equal(newlyRemoved(after, after), null);
   assert.equal(newlyRemoved(null, after), null);
   assert.equal(newlyRemoved(before, null), null);

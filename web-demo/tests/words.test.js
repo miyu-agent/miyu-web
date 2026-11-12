@@ -300,7 +300,7 @@ test('读了技能的 SKILL.md（视图条目的 skill）：写「使用技能 �
 test('软件包的工具用包的图标（2026-10-16 项目主人）：照 human.get 的 packages 认包、package.list 的 icon；包没写图标的、旧核心不给的照扳手；自带的工具照自己的图标；出错的照出错', () => {
   const saved = res.human;
   try {
-    res.human = { ...saved, packages: { meme_send: 'miyu-memes', plain_tool: 'plain-pkg', read: 'basesystem' }, icons: { 'miyu-memes': 'smile', basesystem: 'cpu' } };
+    res.human = { ...saved, packages: { meme_send: 'memes', plain_tool: 'plain-pkg', read: 'basesystem' }, icons: { 'memes': 'smile', basesystem: 'cpu' } };
     assert.equal(row(tool('meme_send', { id: 'm1' })).icon, 'smile');
     assert.equal(row(tool('plain_tool', {})).icon, 'wrench');
     assert.equal(row(tool('read', { file_path: '/tmp/a' })).icon, 'file-text');

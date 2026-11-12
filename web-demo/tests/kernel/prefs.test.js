@@ -106,7 +106,7 @@ test('别处改了推来的整份：当场照它换；别的包的、没订上�
   assert.equal(w.prefs.push('prefs.changed', { package: PACKAGE, values: { skin: { config: { pack: 'x' } } } }), false);
   await w.prefs.follow();
   const before = w.local.changed;
-  assert.equal(w.prefs.push('prefs.changed', { package: 'miyu-tui', values: {} }), false);
+  assert.equal(w.prefs.push('prefs.changed', { package: 'tui', values: {} }), false);
   assert.equal(w.prefs.push('prefs.changed', { package: PACKAGE, values: { theme: { config: { scheme: 'dark' } } } }), true);
   assert.deepEqual(w.prefs.get(), { theme: { config: { scheme: 'dark' } } });
   assert.deepEqual(w.local.layer, { theme: { config: { scheme: 'dark' } } });

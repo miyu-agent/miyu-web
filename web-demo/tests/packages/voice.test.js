@@ -5,8 +5,8 @@ import { ready, downsample, wav, loudness, Silence, sentences, errorKey, micErro
 
 test('总线上 stt、tts 有人提供、ready 才算能用，不认包名', () => {
   const names = [
-    { name: 'stt', kind: 'provides', package: 'miyu-voice-input', ready: true },
-    { name: 'tts', kind: 'provides', package: 'miyu-say', ready: false },
+    { name: 'stt', kind: 'provides', package: 'voice-input', ready: true },
+    { name: 'tts', kind: 'provides', package: 'say', ready: false },
     { name: 'stt.engine', kind: 'plugs', package: 'x', ready: true },
   ];
   assert.equal(ready(names, 'stt'), true);
