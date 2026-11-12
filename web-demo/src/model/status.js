@@ -56,6 +56,8 @@ export function statusRows(f, t) {
     add('compaction', [
       own ? t('times', { n: own.compactions ?? 0 }) : null,
       line ? t('line', { line: short(line) }) : null,
+      // 这个会话钉了压缩线的（核心 CT-1：`view.status` 顶层的 `compaction_line`，百分数）接着写（W-1163）
+      Number.isInteger(s.compaction_line) ? t('line_pinned', { n: s.compaction_line }) : null,
     ].filter(Boolean).join(sep));
   }
   const all = usage?.usage ?? null;

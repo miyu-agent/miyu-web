@@ -5,17 +5,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { typed, menuTyped, filter, find, read, Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText, contextMin, baseName, dirName } from '../src/model/commands.js';
+import { typed, menuTyped, filter, find, read, Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText, contextMin, baseName, dirName, compactLineArg, lineOutOfRange, pinnedLine } from '../src/model/commands.js';
 
 const res = loadRes();
 const list = res.commands.commands;
 const names = (specs) => specs.map((s) => s.name);
 
 test('出厂的清单照蓝图：去掉 /icons、/exit，加 /clear、/stop（O-6，2026-10-07）、/recap、/language、/redo、/edit（/settings、/config、/pkg 由软件包 settings 登记）；/compact、/sessions（带着搜的词，2026-10-02）、/language、/model 带参数；每条都是真的，各有各的做法（/model 2026-10-01 起是真的；假命令 2026-10-07 删了，/help 做成真的）', () => {
-  assert.deepEqual(names(list), ['undo', 'restore', 'redo', 'edit', 'compact', 'clear', 'stop', 'recap', 'new', 'sessions', 'rename', 'language', 'model', 'context', 'status', 'copy', 'help']);
-  assert.deepEqual(list.filter((s) => s.args).map((s) => s.name), ['compact', 'sessions', 'rename', 'language', 'model', 'context'], '/context 带数值设会话上限（W-1129）');
+  assert.deepEqual(names(list), ['undo', 'restore', 'redo', 'edit', 'compact', 'clear', 'stop', 'recap', 'new', 'sessions', 'rename', 'language', 'model', 'context', 'compact-line', 'status', 'copy', 'help']);
+  assert.deepEqual(list.filter((s) => s.args).map((s) => s.name), ['compact', 'sessions', 'rename', 'language', 'model', 'context', 'compact-line'], '/context 带数值设会话上限（W-1129）；/compact-line 带数（W-1163）');
   const runs = Object.fromEntries(list.map((s) => [s.name, s.run]));
-  assert.deepEqual(runs, { undo: 'revert', restore: 'unrevert', redo: 'redo', edit: 'edit', compact: 'compact', clear: 'clear', stop: 'stop', recap: 'recap', new: 'new', sessions: 'sessions', rename: 'rename', context: 'context', status: 'status', copy: 'copy',
+  assert.deepEqual(runs, { undo: 'revert', restore: 'unrevert', redo: 'redo', edit: 'edit', compact: 'compact', clear: 'clear', stop: 'stop', recap: 'recap', new: 'new', sessions: 'sessions', rename: 'rename', context: 'context', 'compact-line': 'compact_line', status: 'status', copy: 'copy',
     language: 'language', model: 'model', help: 'help' });
   assert.deepEqual(find(list, 'resume')?.name, 'sessions', '2026-10-02：/sessions 加 /resume 别名');
 });
@@ -66,9 +66,9 @@ test('回车时这一行是什么：命令带着参数；列表里没有的名�
 test('边打边筛：名字（或别名）开头的排前面，含着的排后面，各照清单的先后；不分大小写', () => {
   assert.deepEqual(names(filter(list, 're')), ['undo', 'restore', 'redo', 'clear', 'recap', 'sessions', 'rename'], 'rewind、reset（别名）、restore、redo、recap、resume（别名）、rename 开头');
   assert.deepEqual(names(filter(list, 'e')), ['edit', 'undo', 'restore', 'redo', 'clear', 'recap', 'new', 'sessions', 'rename', 'language', 'model',
-    'context', 'help'], 'e 开头的只有 /edit，排前面；别的都是含着的，照清单的先后');
+    'context', 'compact-line', 'help'], 'e 开头的只有 /edit，排前面；别的都是含着的，照清单的先后');
   assert.deepEqual(names(filter(list, 'rew')), ['undo'], '筛的时候别名也算，列表里写正名');
-  assert.deepEqual(names(filter(list, 'T')), ['restore', 'edit', 'compact', 'clear', 'stop', 'context', 'status']);
+  assert.deepEqual(names(filter(list, 'T')), ['restore', 'edit', 'compact', 'clear', 'stop', 'context', 'compact-line', 'status']);
   assert.equal(filter(list, '').length, list.length, '刚打一个 /：全部');
   assert.deepEqual(filter(list, 'zzz'), []);
 });
@@ -332,4 +332,23 @@ test('路径的最后一段、所在的文件夹：两种分隔符都认', () =>
   assert.equal(dirName('C:\\Users\\a\\v.mp4'), 'C:\\Users\\a');
   assert.equal(dirName('/a.txt'), '/');
   assert.equal(dirName('a.txt'), 'a.txt');
+});
+
+test('/compact-line 后面写的（核心 CT-1，W-1163）：空的看、off 回到跟着设置、整数（可带 %）设，别的写法不对；超范围的拒绝认得出；会话钉的照 view.status 顶层的百分数', () => {
+  assert.deepEqual(compactLineArg(''), { kind: 'show' });
+  assert.deepEqual(compactLineArg('  '), { kind: 'show' });
+  assert.deepEqual(compactLineArg('OFF'), { kind: 'off' });
+  assert.deepEqual(compactLineArg('70'), { kind: 'set', value: 70 });
+  assert.deepEqual(compactLineArg('70%'), { kind: 'set', value: 70 }, '带百分号也认');
+  assert.deepEqual(compactLineArg('120'), { kind: 'set', value: 120 }, '范围交给核心查');
+  for (const bad of ['7.5', 'abc', '-3', '70 80', '1000']) assert.deepEqual(compactLineArg(bad), { kind: 'bad' }, bad);
+  assert.equal(lineOutOfRange({ reason: 'bad_params', data: { field: 'compaction_line' } }), true);
+  assert.equal(lineOutOfRange({ reason: 'bad_params', data: { field: 'context', min: 4096 } }), false);
+  assert.equal(lineOutOfRange({ reason: 'session_not_found' }), false);
+  assert.equal(pinnedLine({ compaction_line: 70, context: { compaction_line: 89600 } }), 70, '顶层的是百分数');
+  assert.equal(pinnedLine({ context: { compaction_line: 89600 } }), null, '只有生效的 token 数、没钉的不算');
+  assert.equal(pinnedLine(null), null);
+  const spec = list.find((s) => s.name === 'compact-line');
+  assert.equal(spec?.run, 'compact_line');
+  assert.match(JSON.stringify(spec?.summary), /off/);
 });

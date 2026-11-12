@@ -232,7 +232,8 @@ export class ContextPop {
     const more = [
       // 这个会话设了的上下文上限（核心 CTX-1，`session.context` 的 `context`，W-1129）：窗口照它压小了
       c.context ? meta(t('usage_cell.cap'), short(c.context)) : null,
-      c.line ? meta(t('usage_cell.line'), short(c.line)) : null,
+      // 这个会话钉了压缩线的（核心 CT-1，`view.status` 顶层的 `compaction_line`，百分数）接在后面（W-1163）
+      c.line ? meta(t('usage_cell.line'), Number.isInteger(status.compaction_line) ? `${short(c.line)} · ${t('usage_cell.line_pinned', { n: status.compaction_line })}` : short(c.line)) : null,
       usage ? meta(t('usage_cell.compactions'), t('usage_cell.times', { n: usage.compactions ?? 0 })) : null,
       usage ? meta(t('usage_cell.cache_breaks'), t('usage_cell.times', { n: usage.cache_breaks ?? 0 })) : null,
       bad ? h('p.ctx-pop-bad', t(`usage_cell.why_${ring.stuck}`)) : null,

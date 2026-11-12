@@ -38,3 +38,13 @@ test('连子代理的照 usage_tree；没有的行不写；窗口照订阅回应
   assert.equal(bare.context, '500 / 200k（0.3%）');
   assert.deepEqual(Object.keys(text({ ...facts, status: null })), ['id', 'title', 'persona', 'preset', 'level', 'cwd']);
 });
+
+test('压缩那一行：会话钉了压缩线的（核心 CT-1，view.status 顶层的 compaction_line，百分数）接「这个会话 70%」；没钉的不写（W-1163）', () => {
+  const tr = (/** @type {string} */ key, /** @type {any} */ fields) => t(`status_box.${key}`, fields);
+  const base = { id: 's1', title: null, persona: null, preset: null, level: null, cwd: null, effort: null };
+  const pinned = statusRows({ ...base, status: { compaction_line: 70, context: { window: 128000, compaction_line: 89600, used: 1000 }, usage: { compactions: 1 } } }, tr);
+  const row = pinned.find((r) => r.key === 'compaction');
+  assert.match(row?.value ?? '', /这个会话 70%/);
+  const plain = statusRows({ ...base, status: { context: { window: 128000, compaction_line: 108800, used: 1000 }, usage: { compactions: 0 } } }, tr);
+  assert.doesNotMatch(plain.find((r) => r.key === 'compaction')?.value ?? '', /这个会话/);
+});

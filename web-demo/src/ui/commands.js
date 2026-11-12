@@ -12,7 +12,7 @@ import { h, replace } from './dom.js';
 import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { fitAbove } from './fit.js';
-import { Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText, contextMin, nothingToTitle } from '../model/commands.js';
+import { Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText, contextMin, nothingToTitle, compactLineArg, lineOutOfRange, pinnedLine } from '../model/commands.js';
 import { short } from '../model/format.js';
 import { itemsOf, seqOf } from '../model/entries.js';
 import { copy } from '../markdown/build.js';
@@ -370,6 +370,49 @@ const RUNS = {
       if (min == null) throw err;
       app.composer.say(t('commands.context_min', { n: short(min) }));
     }
+  },
+  // 这个会话的压缩线（核心 CT-1，主人 todolist 第 33 条，2026-11-12 定单开一条命令，同终端，W-1163）：`/compact-line 70` 钉这个会话的
+  // （`session.configure` 的 `compaction_line`），`off` 回到跟着设置，只打名字说现在多少、从哪来。设、去掉要开着的会话（同 `/context 128k`）；
+  // 看的没开会话也能说设置的那个数。
+  compact_line: async (app, spec, words) => {
+    const arg = compactLineArg(words);
+    if (arg.kind === 'bad') {
+      app.composer.say(t('commands.line_range'));
+      return;
+    }
+    // 设置里的压缩线（`compaction.line` 的最终值）；读不到的是 null
+    const configured = async () => {
+      const got = await app.store.conn.request('config.get', { keys: ['compaction.line'] }).catch(() => null);
+      const n = got?.items?.['compaction.line']?.value;
+      return Number.isInteger(n) ? n : null;
+    };
+    if (arg.kind === 'show') {
+      const pinned = app.current ? pinnedLine(app.store.sessions.get(app.current)?.view?.status) : null;
+      if (pinned != null) {
+        app.composer.say(t('commands.line_session', { n: pinned }));
+        return;
+      }
+      const n = await configured();
+      app.composer.say(n == null ? t('commands.line_config_bare') : t('commands.line_config', { n }));
+      return;
+    }
+    if (!app.current) {
+      app.composer.say(t('commands.needs_session'));
+      return;
+    }
+    try {
+      await app.store.conn.request('session.configure', { session: app.current, compaction_line: arg.kind === 'set' ? arg.value : null });
+    } catch (err) {
+      if (!lineOutOfRange(err)) throw err;
+      app.composer.say(t('commands.line_range'));
+      return;
+    }
+    if (arg.kind === 'set') {
+      app.composer.say(t('commands.line_set', { n: arg.value }), true);
+      return;
+    }
+    const n = await configured();
+    app.composer.say(n == null ? t('commands.line_off_bare') : t('commands.line_off', { n }), true);
   },
   // 改名（核心 TT-1，2026-11-11 项目主人：「直接运行 rename 应该是用一次 ai 请求去更新标题」，同终端）：带名字的照它改
   // （`session.set_meta`）；不带的让模型照最近几轮重起一个（`session.retitle`：请求发出去就回，起好了照推来的 `session.meta_changed`

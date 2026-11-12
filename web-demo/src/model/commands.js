@@ -232,6 +232,35 @@ export function nothingToTitle(err) {
 }
 
 /**
+ * `/compact-line` 后面写的（核心 CT-1，主人 todolist 第 33 条，W-1163）：空的看现在多少，`off` 回到跟着设置，整数（可以带 `%`）
+ * 照它设（范围核心查），别的写法不对。
+ * @param {string|null|undefined} words
+ * @returns {{kind: 'show'}|{kind: 'off'}|{kind: 'set', value: number}|{kind: 'bad'}}
+ */
+export function compactLineArg(words) {
+  const w = (words ?? '').trim().toLowerCase();
+  if (!w) return { kind: 'show' };
+  if (w === 'off') return { kind: 'off' };
+  const m = /^(\d{1,3})%?$/.exec(w);
+  return m ? { kind: 'set', value: Number(m[1]) } : { kind: 'bad' };
+}
+
+/** `session.configure` 的 `compaction_line` 不在 20 到 95 里被拒（核心 CT-1：`bad_params`，`data.field` 是 `compaction_line`）。 @param {any} err */
+export function lineOutOfRange(err) {
+  return err?.reason === 'bad_params' && err?.data?.field === 'compaction_line';
+}
+
+/**
+ * 会话钉着的压缩线（`view.status` 顶层的 `compaction_line`，窗口的百分之几；没钉的不写）。注意 `context.compaction_line` 是生效的
+ * 压缩线 token 数，单位不同。
+ * @param {any} status @returns {number|null}
+ */
+export function pinnedLine(status) {
+  const n = status?.compaction_line;
+  return Number.isInteger(n) ? n : null;
+}
+
+/**
  * `/context <数值>` 设得太小被拒（核心 CTX-1：`bad_params`，`data.field` 是 `context`）：最少要多少；别的拒绝是 `null`。
  * @param {any} err @returns {number|null}
  */
