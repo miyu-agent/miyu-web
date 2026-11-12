@@ -484,6 +484,12 @@
       ".asking-question"
     ]
   },
+  "asking.timer": {
+    "zh": "确认后面的倒计时（多久后自动拒绝）",
+    "select": [
+      ".asking-timer"
+    ]
+  },
   "asking.path": {
     "zh": "确认和提问：路径",
     "select": [

@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { openAsk, openApproval, press, saveEdit, approvalHead, report, pendingFromStatus, reportOf, multiReady, submitMulti, withReason, askKey, answerParams } from '../../packages/asking/model.js';
+import { openAsk, openApproval, press, saveEdit, approvalHead, report, pendingFromStatus, reportOf, multiReady, submitMulti, withReason, askKey, answerParams, countdown } from '../../packages/asking/model.js';
 
 const fake = JSON.parse(readFileSync(new URL('../fixtures/asking.json', import.meta.url), 'utf8'));
 const ask = (id) => fake.asks.find((a) => a.body.call_id === id);
@@ -204,4 +204,18 @@ test('多选题最下面的按钮：勾了才能点；点了交这一道、跳�
   const done = submitMulti(press(one, 'space').d).done;
   assert.deepEqual(done, { kind: 'ask', answers: [{ picked: ['x'] }] }, '只有一道的直接交');
   assert.equal(multiReady(openAsk({ body: { call_id: 's', questions: [{ question: '单选', options: [{ label: 'x' }] }] } })), false, '单选的没有这个按钮');
+});
+
+test('确认的倒计时（核心 CD-1，todolist 第 49 条）：分:秒，一小时以上带时；没带、读不懂的不画；过了的写 0:00', () => {
+  const now = Date.parse('2026-11-12T10:00:00Z');
+  assert.equal(countdown('2026-11-12T10:05:00Z', now), '5:00');
+  assert.equal(countdown('2026-11-12T10:00:01.200Z', now), '0:02', '不满一秒的往上取');
+  assert.equal(countdown('2026-11-12T11:04:32Z', now), '1:04:32');
+  assert.equal(countdown('2026-11-12T09:59:00Z', now), '0:00');
+  assert.equal(countdown(undefined, now), null, 'permission.confirm.timeout 是 0 的不带 expires_at');
+  assert.equal(countdown('不是时刻', now), null);
+  // 视图里那一步的 approval 带着 expires_at，开抽屉时一起进 body
+  const status = { waiting: [{ what: 'approve', entry: 'e1', call: 'c1' }] };
+  const entries = [{ id: 'e1', approval: { access: 'write', expires_at: '2026-11-12T10:05:00Z' } }];
+  assert.equal(pendingFromStatus(status, entries)[0].body.expires_at, '2026-11-12T10:05:00Z');
 });

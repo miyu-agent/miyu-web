@@ -299,3 +299,21 @@ export function reportOf(settle, asked) {
   if (b.status === 'cancelled' || b.status === 'skipped') return report(d, { kind: d.kind, cancelled: true });
   return null;
 }
+
+/**
+ * 确认还剩多久自动拒绝（核心 CD-1：`tool.approval_requested` 的 `expires_at`、视图里那一步的 `approval.expires_at`；配置
+ * `permission.confirm.timeout`，出厂 5 分钟，`0` 一直等、不带这一格；todolist 第 49 条）：`4:32`，一小时以上 `1:04:32`；没带的、
+ * 读不懂的 `null`（不画）；过了的 `0:00`（核心到点记拒绝，抽屉跟着收）。
+ * @param {unknown} expiresAt @param {number} now
+ * @returns {string|null}
+ */
+export function countdown(expiresAt, now) {
+  if (typeof expiresAt !== 'string') return null;
+  const at = Date.parse(expiresAt);
+  if (Number.isNaN(at)) return null;
+  const left = Math.max(0, Math.ceil((at - now) / 1000));
+  const pad = (/** @type {number} */ n) => String(n).padStart(2, '0');
+  const hours = Math.floor(left / 3600);
+  const mins = Math.floor((left % 3600) / 60);
+  return hours ? `${hours}:${pad(mins)}:${pad(left % 60)}` : `${mins}:${pad(left % 60)}`;
+}

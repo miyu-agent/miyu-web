@@ -4,7 +4,7 @@
 //! 跟着字长高的框：`Enter` 保存、`Shift+Enter` 换行、`Esc` 退出编辑。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { press, saveEdit, cancel, hasReview, onOther, answerOf, approvalHead, multiReady, submitMulti, onDeny, withReason } from './model.js';
+import { press, saveEdit, cancel, hasReview, onOther, answerOf, approvalHead, multiReady, submitMulti, onDeny, withReason, countdown } from './model.js';
 import { isNewline, insertNewline } from '../../src/lib/newline.js';
 
 /** 键 → `model.js` 的按键名 */
@@ -29,6 +29,10 @@ export class Drawer {
     /** 按过一下 `Esc` 的时刻（两下取消） */
     this.escAt = 0;
     this.pointer = '';
+    /** 确认的倒计时那几个字（核心 CD-1）和走表 @type {HTMLElement|null} */
+    this.timerEl = null;
+    /** @type {any} */
+    this.timer = 0;
     this.el = h('div.asking', { hidden: true, tabindex: '-1', role: 'dialog', style: `--asking-max-vh: ${config.max_vh}` });
     this.el.addEventListener('keydown', (e) => this.key(e));
     // 够宽时文字画放在选项右边
@@ -53,6 +57,8 @@ export class Drawer {
   }
 
   close() {
+    clearInterval(this.timer);
+    this.timer = 0;
     this.d = null;
     this.editing = null;
     this.el.hidden = true;
@@ -171,6 +177,7 @@ export class Drawer {
     const d = /** @type {import('./model.js').Drawer} */ (this.d);
     const t = this.text;
     const review = d.tab === d.questions.length;
+    this.timerEl = null;
     const scroll = h('div.asking-body', review ? this.reviewPage() : this.questionPage());
     replace(this.el,
       d.who ? h('div.asking-who', t('asking', { who: d.who })) : null,
@@ -179,6 +186,10 @@ export class Drawer {
       this.foot = h('div.asking-foot', this.keysEl = h('span.asking-keys'),
         h('span.asking-foot-right', h('button.asking-cancel', { type: 'button', onclick: () => this.cancel() }, t('cancel')), review ? null : this.nextButton())));
     this.drawKeys();
+    // 确认的倒计时（核心 CD-1）：一秒走一格；没带 `expires_at` 的不走
+    this.tick();
+    clearInterval(this.timer);
+    this.timer = this.timerEl ? setInterval(() => this.tick(), 1000) : 0;
     // 画上去了才量得到：写了几行的框照字长高（单行的照本来的高，同 `grow`）
     for (const box of scroll.querySelectorAll('textarea.asking-edit')) grow(/** @type {HTMLTextAreaElement} */ (box));
     scroll.querySelector('.asking-option.is-selected')?.scrollIntoView({ block: 'nearest' });
@@ -189,6 +200,13 @@ export class Drawer {
       box.setSelectionRange(box.value.length, box.value.length);
       grow(box);
     }
+  }
+
+  /** 倒计时那几个字：「4:32 后自动拒绝」（2026-11-12 core1 转主人定：所有允许、拒绝的确认都倒计时，到时按拒绝）。 */
+  tick() {
+    if (!this.timerEl || !this.d) return;
+    const left = countdown(this.d.body?.expires_at, Date.now());
+    this.timerEl.textContent = left == null ? '' : this.text('auto_deny', { time: left });
   }
 
   /**
@@ -243,7 +261,8 @@ export class Drawer {
       : null;
     return [
       // 「高危命令」跟在短标题后面（2026-10-07 项目主人：原来接在命令末尾，命令长了离标题远；LV-3 起没有沙盒，不再标「沙盒外」）
-      h('div.asking-question', head ? head.title : q.question, head?.hazard ? h('span.asking-outside.is-danger', t('hazard')) : null),
+      h('div.asking-question', head ? head.title : q.question, head?.hazard ? h('span.asking-outside.is-danger', t('hazard')) : null,
+        this.timerEl = d.kind === 'approve' && countdown(d.body?.expires_at, Date.now()) != null ? h('span.asking-timer') : null),
       head?.guard ? h('div.asking-guard', head.guard) : null,
       head?.command != null ? h('div.asking-paths', h('div.asking-path', h('span.asking-command', head.command.split('\n').map((l) => `$ ${l}`).join('\n')))) : null,
       head?.paths.length ? h('div.asking-paths', head.paths.map((p) => h('div.asking-path', h('span', p.path), p.zone ? h('span.asking-outside', { title: p.zone === 'private' ? t('private_tip') : p.zone === 'read_only' ? t('read_only_tip') : null }, t(p.zone)) : null))) : null,

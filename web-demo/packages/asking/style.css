@@ -21,6 +21,8 @@
 .asking-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .asking-question > .asking-outside { margin-left: calc(8px * var(--space)); vertical-align: 1px; font-weight: 400; }
 .asking-question { margin-bottom: calc(8px * var(--space)); color: var(--text); font-size: calc(14px * var(--text-scale)); font-weight: 600; line-height: 1.45; }
+/* 确认的倒计时（核心 CD-1）：问题后面暗色小字，数字等宽不跳 */
+.asking-question > .asking-timer { margin-left: calc(8px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); font-weight: 400; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .asking-paths { display: grid; gap: calc(2px * var(--space)); margin: calc(-4px * var(--space)) 0 calc(10px * var(--space)); }
 .asking-path { display: flex; align-items: center; gap: calc(8px * var(--space)); color: var(--text-soft); font-family: var(--font-mono); font-size: calc(12.5px * var(--text-scale)); word-break: break-all; }
 /* 装、卸软件包的那几行：包文件夹一行（同路径），下面左边名目（淡、固定宽）、右边内容 */
