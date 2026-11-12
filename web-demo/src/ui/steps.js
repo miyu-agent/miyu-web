@@ -129,6 +129,7 @@ export class StepView {
     this.el.classList.toggle('is-preparing', step.state === 'preparing');
     this.setIcon(r.icon, step.state === 'preparing');
     this.name.textContent = r.name;
+    this.name.classList.toggle('is-titled', !!r.titled);
     setTime(this.time, r, step.state === 'preparing');
     if (step.kind === 'thought') this.updateThought(step, open);
     else this.updateTool(step, r, open, spinning);

@@ -58,6 +58,8 @@
 .tl-node { display: grid; flex: 0 0 var(--tl-col); width: var(--tl-col); height: var(--tl-col); place-items: center; color: var(--tl-soft); transition: color calc(0.15s * var(--motion-scale)) ease; }
 .tl-node .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); }
 .tl-name { flex: 0 0 auto; color: var(--text); white-space: nowrap; }
+/* 执行命令的名字那一格写的是她起的短标题（2026-11-12）：长了同对象那样截掉加省略号 */
+.tl-name.is-titled { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .tl-time, .tl-count { flex: none; color: var(--tl-soft); font: 400 calc(10.5px * var(--text-scale)) var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* 思考用时后面估的 token 数（「正在思考 · 24s · 12k」）：同用时的样子 */
 .tl-count[hidden] { display: none; }

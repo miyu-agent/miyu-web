@@ -34,10 +34,10 @@ test('执行命令里脚本调过工具的（核心 M-5 上）：那一行带最
   assert.equal(row(tool('read', { file_path: 'a' }, { title: { name: '读取' }, nested })).nested, undefined);
 });
 
-test('执行命令：图标 square-terminal（带外框），名字、对象照核心的标题；用时照这一步的用时，在跑的走表', () => {
+test('执行命令：图标 square-terminal（带外框），名字写核心标题里的短标题；用时照这一步的用时，在跑的走表', () => {
   const title = { name: '执行命令', object: '列目录' };
   const r = row(tool('shell', { command: 'ls -la', description: '列目录' }, { duration: 23, title }));
-  assert.deepEqual([r.icon, r.name, r.subject, r.took, r.mono], ['square-terminal', '执行命令', '列目录', '23 ms', false]);
+  assert.deepEqual([r.icon, r.name, r.subject, r.took, r.mono], ['square-terminal', '列目录', null, '23 ms', false]);
   assert.equal(row(tool('shell', { command: 'x' }, { duration: 1234, title })).took, '1.2 s');
   assert.equal(row(tool('shell', { command: 'x' }, { duration: 12_400, title })).took, '12 s');
   const running = row(tool('shell', { command: 'x' }, { state: 'running', status: null, start: ms(5), title }));
@@ -330,4 +330,14 @@ test('问顾问（核心 ADV-1、ADV-2，设计 69，W-1129）：点开是问题
   const bad = details(tool('advisor', { question: 'q' }, { output: 'No model is set in the flagship pool.', status: 'error', detail: null }));
   assert.deepEqual(bad.map((s) => s.kind), ['text', 'text'], '没答成：问题、结果那一句，没有按钮');
   assert.equal(bad[1].text, 'No model is set in the flagship pool.');
+});
+
+test('执行命令有短标题的只写短标题，没写的照旧「执行命令」（2026-11-12 项目主人）', () => {
+  const titled = row(tool('shell', { command: 'ls' }, { title: { name: '执行命令', object: '列目录' } }));
+  assert.equal(titled.name, '列目录');
+  assert.equal(titled.subject, null, '不再写「执行命令 · 列目录」');
+  assert.equal(titled.titled, true);
+  const bare = row(tool('shell', { command: 'ls' }, { title: { name: '执行命令' } }));
+  assert.equal(bare.name, '执行命令');
+  assert.equal(bare.subject, null);
 });

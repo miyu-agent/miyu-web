@@ -54,8 +54,9 @@ export const failed = (step) => step.kind === 'tool' && (step.status === 'error'
  * @typedef {{since: number, format: 'secs'|'tenths'|'job'}} Timer 走表：从 `since` 起，`secs` 整秒 `12s`、`tenths`
  *   一位小数 `1.2 s`、`job` 读秒 `3m 05s`
  * @typedef {{icon: string, name: string, subject: string|null, mono: boolean, said: string|null, took: string|null,
- *   timer: Timer|null, failed: boolean, diff: {added: number, removed: number}|null, nested?: {text: string, tone: string|null}|null}} Row
- *   `diff`：编辑、写入这一步加减的行数；`nested`：执行命令里脚本最近调的那个工具（`#12 翻记忆`，核心 M-5 上）
+ *   timer: Timer|null, failed: boolean, diff: {added: number, removed: number}|null, nested?: {text: string, tone: string|null}|null, titled?: boolean}} Row
+ *   `diff`：编辑、写入这一步加减的行数；`nested`：执行命令里脚本最近调的那个工具（`#12 翻记忆`，核心 M-5 上）；`titled`：名字那一格写的是
+ *   她起的短标题（执行命令，2026-11-12），长了照对象那样截
  */
 
 /**
@@ -121,7 +122,9 @@ function titled(step, kind, base) {
   if (kind === 'command') {
     const took = step.state === 'done' && step.duration != null ? toolDuration(step.duration) : null;
     const timer = step.state === 'running' && step.start != null ? { since: step.start, format: /** @type {const} */ ('job') } : null;
-    return { ...base, icon, name, subject: object, took, timer, failed: bad, nested: nestedTail(step.nested) };
+    // 有短标题的只写短标题（2026-11-12 项目主人：去掉「执行命令 ·」，前面的终端图标、下面的命令认得出是命令）；她没写的照旧「执行命令」
+    if (object) return { ...base, icon, name: object, titled: true, took, timer, failed: bad, nested: nestedTail(step.nested) };
+    return { ...base, icon, name, took, timer, failed: bad, nested: nestedTail(step.nested) };
   }
   if (kind === 'agent') {
     const subject = step.job ? t('timeline.agent_subject', { job: step.job, title: object ?? '' }) : t('timeline.agent_pending', { title: object ?? '' });
