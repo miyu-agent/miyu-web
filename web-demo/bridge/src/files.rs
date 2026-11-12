@@ -209,7 +209,7 @@ pub(crate) fn decode(path: &str) -> String {
 fn kind(file: &Path) -> &'static str {
     match file.extension().and_then(|e| e.to_str()) {
         Some("html") => "text/html; charset=utf-8",
-        Some("js") => "text/javascript; charset=utf-8",
+        Some("js" | "mjs") => "text/javascript; charset=utf-8",
         Some("css") => "text/css; charset=utf-8",
         Some("json") => "application/json; charset=utf-8",
         Some("png") => "image/png",

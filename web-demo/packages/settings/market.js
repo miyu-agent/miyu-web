@@ -188,7 +188,10 @@ export function drawMarket(dialog) {
   const meta = m.stale ? h('p.mk-meta', t('market.stale', { at: whenOf(m.generated) }))
     : upgradable.size ? h('p.mk-meta', t('market.meta', { at: whenOf(m.generated), n: m.list.length })) : null;
   update();
-  return [h('div.set-pkg-tools.mk-tools', h('label.set-pkg-find', icon('search'), input), sortBox, filterBtn, ups, refresh), meta, statusChips, extra, empty, grid];
+  // 搜索框、排序、筛选那一排和下面一排筛选钉在上面，往下滚只滚卡片（发版前 check 55，2026-11-12 项目主人：「向下滚动不应该把搜索框、
+  // 筛选之类的东西也滚上去」）；照已安装页的 `.set-pkg-pin`
+  return [h('div.set-pkg-pin.mk-pin', h('div.set-pkg-tools.mk-tools', h('label.set-pkg-find', icon('search'), input), sortBox, filterBtn, ups, refresh), meta, statusChips),
+    extra, empty, grid];
 }
 
 /** 索引的时刻：本地的「10月21日 09:30」 @param {string|null} at */
