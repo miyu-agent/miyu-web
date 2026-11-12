@@ -78,14 +78,14 @@ test('装：来源、已批的能力、一起装的、推荐的、注意一句�
       capabilities: [{ id: 'network', name: '联网', summary: '', held: true }, { id: 'exec', name: '跑程序', summary: '' }],
       with: [{ package: 'dep', version: '0.2', source: 'official', feed: 'official' }],
       recommends: [{ package: 'extra', version: '3', source: 'official', feed: 'official' }],
-      notice: ['这个包没经过官方审核。', '它带的程序会以你的身份在这台机器上跑，不在沙盒里。'],
-      recommends_notice: ['推荐的 extra 也没经过官方审核。'],
+      notice: ['这是个社区包，没有经过官方审核，可能存在风险。'],
+      recommends_notice: ['extra 是社区包，没有经过官方审核，可能存在风险。'],
     },
   };
   assert.deepEqual(flat(packagePlan(detail, '/home/me', t)), [
     '安装软件包 kit 1.0', null,
     '来源：社区（friends）', '所需权限：联网（已批）、跑程序', '一起装：dep 0.2', '推荐：extra 3',
-    '注意：这个包没经过官方审核。、它带的程序会以你的身份在这台机器上跑，不在沙盒里。、推荐的 extra 也没经过官方审核。',
+    '注意：这是个社区包，没有经过官方审核，可能存在风险。、extra 是社区包，没有经过官方审核，可能存在风险。',
   ]);
   // 官方源的不接源名字；旧核心（source 是源的名字）不写来源
   assert.deepEqual(flat(packagePlan({ tool: 'package', install: 'x', preview: { package: 'x', source: 'official', feed: 'official' } }, null, t)), ['安装软件包 x', null, '来源：官方软件源']);

@@ -18,7 +18,7 @@ import { openPage, probeSites } from './backstage.js';
 import { serverRow } from './mcp-servers.js';
 import { stateText, failed } from './extensions.js';
 import { pkgFace } from './logos.js';
-import { accessTags } from './market-model.js';
+import { accessTags, ACCESS_MAX } from './market-model.js';
 
 /** 列表上不写的状态：开关已经说了 */
 const QUIET = new Set(['ready', 'off']);
@@ -142,13 +142,17 @@ function packageRow(dialog, p, child = false) {
 }
 
 /**
- * 一行后面的小标签：接入方式（2026-11-12 项目主人：编号不再带接入方式；`accessTags`，最多三个）；一个都认不出的（出厂的内置包这类）照旧写种类。
+ * 一行后面的小标签：接入方式（2026-11-12 项目主人：编号不再带接入方式；`accessTags`，最多三个）；一个都认不出的照旧写种类。
+ * 出厂的内置包（`kind: builtin`，`base-*`）打头一个「内置」，后面接它带的（核心 PV-2 起 `package.list` 每一项带 `provides`，带技能、
+ * 脚本的认得出来；2026-11-12 项目主人：内置的两个头都写「内置」），一共最多三个。
  * @param {any} dialog @param {any} p
  */
 function pkgTags(dialog, p) {
   const tags = accessTags(p);
-  if (!tags.length) return [h('span.set-pkg-tag', dialog.ctx.text(`pkg.kind.${pkgTag(p)}`))];
-  return tags.map((k) => h('span.set-pkg-tag', dialog.ctx.text(`market.access.${k}`)));
+  const builtin = p?.kind === 'builtin' ? [dialog.ctx.text('pkg.kind.builtin')] : [];
+  const names = [...builtin, ...tags.map((k) => dialog.ctx.text(`market.access.${k}`))].slice(0, ACCESS_MAX);
+  if (!names.length) return [h('span.set-pkg-tag', dialog.ctx.text(`pkg.kind.${pkgTag(p)}`))];
+  return names.map((name) => h('span.set-pkg-tag', name));
 }
 
 /** 进一个包的信息页（设置页的搜索点了软件包也走它）；从组那一层点进来的叠在它上面（`child`）。 @param {any} dialog @param {string} id @param {boolean} [child] */
