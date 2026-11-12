@@ -154,3 +154,17 @@ test('「提供」：一个工具一项，显示名照界面语言挑，没写�
   assert.deepEqual(toolRows(undefined, zh), []);
   assert.deepEqual(toolRows({ name: 'x' }, zh), []);
 });
+
+test('接入方式的标签（2026-11-12 项目主人：包编号不再带接入方式）：软件源一行照 kind、provides，装着的一项照 kind、connection、mcp、command；照先后最多三个', async () => {
+  const { accessTags, ACCESS_MAX } = await import('../../packages/settings/market-model.js');
+  assert.deepEqual(accessTags({ kind: 'bundle', provides: { scripts: ['ocr'] } }), ['scripts']);
+  assert.deepEqual(accessTags({ kind: 'bundle', provides: { skills: ['a'], mcp: ['notes'], scripts: [] } }), ['mcp', 'skills'], '空的种类不算');
+  assert.deepEqual(accessTags({ kind: 'process', provides: { command: ['im'], skills: ['x'], scripts: ['y'], personas: ['p'] } }), ['program', 'skills', 'scripts'], '最多三个');
+  assert.equal(ACCESS_MAX, 3);
+  assert.deepEqual(accessTags({ kind: 'theme' }), ['theme']);
+  // 装着的（package.list）没有 provides
+  assert.deepEqual(accessTags({ kind: 'process', connection: { platform: 'qq' }, mcp: [{ name: 'x' }] }), ['connection', 'program', 'mcp']);
+  assert.deepEqual(accessTags({ kind: 'worker', command: { name: 'ocr' } }), ['program']);
+  assert.deepEqual(accessTags({ kind: 'builtin' }), [], '出厂的内置包认不出，照旧写种类');
+  assert.deepEqual(accessTags({}), []);
+});

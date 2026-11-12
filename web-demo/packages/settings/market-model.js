@@ -224,3 +224,29 @@ export function sortsAvailable(all) {
   for (const [sort, field] of Object.entries(SORT_FIELD)) out[sort] = all.some((p) => sortValue(p, field) !== null);
   return out;
 }
+
+/**
+ * 接入方式的标签（2026-11-12 项目主人：包编号不再带接入方式，改成列表、搜索结果上的标签）：照核心已有的几格认，不加清单字段。
+ * 软件源搜索的一行看 `kind`、`provides`；装着的一项（`package.list`）看 `kind`、`connection`、`mcp`、`command`。照这个先后，最多三个。
+ */
+export const ACCESS_TAGS = /** @type {const} */ (['connection', 'program', 'mcp', 'skills', 'scripts', 'theme', 'mascot', 'ui', 'personas']);
+/** 最多画几个 */
+export const ACCESS_MAX = 3;
+
+/** 一个包的接入方式标签，照 `ACCESS_TAGS` 的先后，最多 `ACCESS_MAX` 个；认不出的没有。 @param {any} p @returns {string[]} */
+export function accessTags(p) {
+  const carried = (/** @type {string} */ k) => { const v = p?.provides?.[k]; return Array.isArray(v) ? v.length > 0 : !!v; };
+  const kind = typeof p?.kind === 'string' ? p.kind : '';
+  const has = {
+    connection: !!p?.connection || kind === 'connection',
+    program: kind === 'process' || kind === 'worker' || !!p?.command || carried('command'),
+    mcp: (Array.isArray(p?.mcp) && p.mcp.length > 0) || carried('mcp'),
+    skills: carried('skills'),
+    scripts: carried('scripts'),
+    theme: kind === 'theme',
+    mascot: kind === 'mascot',
+    ui: kind === 'ui',
+    personas: carried('personas'),
+  };
+  return ACCESS_TAGS.filter((k) => has[k]).slice(0, ACCESS_MAX);
+}

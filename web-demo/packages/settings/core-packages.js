@@ -18,6 +18,7 @@ import { openPage, probeSites } from './backstage.js';
 import { serverRow } from './mcp-servers.js';
 import { stateText, failed } from './extensions.js';
 import { pkgFace } from './logos.js';
+import { accessTags } from './market-model.js';
 
 /** 列表上不写的状态：开关已经说了 */
 const QUIET = new Set(['ready', 'off']);
@@ -136,8 +137,18 @@ function packageRow(dialog, p, child = false) {
   },
   pkgFace(dialog.ctx.core, p),
   h('div.set-text', h('div.set-name', h('span', p.name ?? id)), p.summary ? h('p.set-desc', p.summary) : null),
-  state, h('span.set-pkg-tag', t(`pkg.kind.${pkgTag(p)}`)), control ? h('div.set-control', control) : null,
+  state, ...pkgTags(dialog, p), control ? h('div.set-control', control) : null,
   h('span.set-pkg-arrow', icon('chevron-right')));
+}
+
+/**
+ * 一行后面的小标签：接入方式（2026-11-12 项目主人：编号不再带接入方式；`accessTags`，最多三个）；一个都认不出的（出厂的内置包这类）照旧写种类。
+ * @param {any} dialog @param {any} p
+ */
+function pkgTags(dialog, p) {
+  const tags = accessTags(p);
+  if (!tags.length) return [h('span.set-pkg-tag', dialog.ctx.text(`pkg.kind.${pkgTag(p)}`))];
+  return tags.map((k) => h('span.set-pkg-tag', dialog.ctx.text(`market.access.${k}`)));
 }
 
 /** 进一个包的信息页（设置页的搜索点了软件包也走它）；从组那一层点进来的叠在它上面（`child`）。 @param {any} dialog @param {string} id @param {boolean} [child] */

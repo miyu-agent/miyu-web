@@ -632,6 +632,7 @@
       },
       "command_market": "打开下载软件",
       "market": {
+        "access": {"connection": "接入平台", "program": "带程序", "mcp": "MCP", "skills": "技能", "scripts": "脚本", "theme": "外观", "mascot": "吉祥物", "ui": "界面", "personas": "人格"},
         "loading": "正在读软件源…",
         "unreachable": "连不上软件源",
         "retry": "重试",
@@ -1266,6 +1267,7 @@
       },
       "command_market": "Open Get software",
       "market": {
+        "access": {"connection": "Platform", "program": "Program", "mcp": "MCP", "skills": "Skills", "scripts": "Scripts", "theme": "Look", "mascot": "Mascot", "ui": "Interface", "personas": "Personas"},
         "loading": "Reading the package source…",
         "unreachable": "Can't reach the package source",
         "retry": "Retry",
@@ -1900,6 +1902,7 @@
       },
       "command_market": "ソフトのダウンロードを開く",
       "market": {
+        "access": {"connection": "接続", "program": "プログラム", "mcp": "MCP", "skills": "スキル", "scripts": "スクリプト", "theme": "外観", "mascot": "マスコット", "ui": "画面", "personas": "人格"},
         "loading": "ソフトウェアソースを読み込み中…",
         "unreachable": "ソフトウェアソースに接続できません",
         "retry": "再試行",

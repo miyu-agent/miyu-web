@@ -7,7 +7,7 @@ import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { bytes, short } from '../../src/lib/format.js';
 import { pkgFace } from './logos.js';
-import { STATUS_FILTERS, QUICK_KINDS, SORTS, shownOf, sortedBy, sortsAvailable, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf, capabilityRows, toolRows, approveOf } from './market-model.js';
+import { STATUS_FILTERS, QUICK_KINDS, SORTS, shownOf, sortedBy, sortsAvailable, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf, capabilityRows, toolRows, approveOf, accessTags } from './market-model.js';
 import { select } from './rows.js';
 import { confirmIn } from './confirm.js';
 
@@ -218,7 +218,8 @@ function card(dialog, p, upgradable) {
         // 下载次数（核心设计 54；软件源给了才写）
         typeof p.downloads === 'number' ? h('span.mk-downloads', { title: t('market.downloads_n', { n: p.downloads.toLocaleString() }) }, icon('download'), short(p.downloads)) : null)),
     h('p.mk-summary', p.summary ?? ''),
-    h('div.mk-card-foot', tag, actionButton(dialog, p, upgradable, false)),
+    // 接入方式的标签（2026-11-12 项目主人：编号不再带接入方式）：脚本、技能、MCP、带程序……，和官方、社区那一个排在一起
+    h('div.mk-card-foot', h('div.mk-tags', tag, ...accessTags(p).map((k) => h('span.mk-tag.mk-access', t(`market.access.${k}`)))), actionButton(dialog, p, upgradable, false)),
     m.problems[p.package] ? h('p.mk-problem', m.problems[p.package]) : null);
 }
 

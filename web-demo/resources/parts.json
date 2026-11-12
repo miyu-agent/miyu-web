@@ -1240,6 +1240,18 @@
       ".set-group-name"
     ]
   },
+  "market.tags": {
+    "zh": "下载软件：卡片底下的几个小标签",
+    "select": [
+      ".mk-tags"
+    ]
+  },
+  "market.access": {
+    "zh": "下载软件：接入方式的标签",
+    "select": [
+      ".mk-access"
+    ]
+  },
   "set.group-desc": {
     "zh": "设置页：一组的说明",
     "select": [
