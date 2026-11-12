@@ -388,3 +388,9 @@
   .composer-footer { height: 36px; }
   .footer-level, .footer-model, .footer-usage { padding-top: 8px; padding-bottom: 8px; }
 }
+
+/* 只能看的会话（通讯平台上的群、私聊，W-1168）：框不浮起来、框里原来的和框下面那一行都收起，只写一行暗字「只能看」 */
+.composer-dock.is-watch .composer { background: transparent; box-shadow: none; }
+.composer-dock.is-watch .composer > :is(.composer-head, .composer-field, .composer-bar, .composer-notice),
+.composer-dock.is-watch .composer-footer { display: none; }
+.composer-watch { margin: 0; padding: calc(10px * var(--space)) 0; color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); text-align: center; }

@@ -388,6 +388,7 @@
   },
   "esc_interrupt_hint": "再按一次 Esc 打断",
   "archived_readonly": "这是存档，只能看，不能接着聊",
+  "venue_readonly": "通讯平台上的会话，只能看",
   "session_read_only": "会话日志第 {line} 行坏了，只能看到这一行以前的内容，不能接着聊。要继续请新开一个会话。",
   "session_unavailable": "会话暂时无法读取，请稍后重试。",
   "new_session": "新开会话",

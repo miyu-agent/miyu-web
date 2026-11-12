@@ -24,6 +24,8 @@ export class SessionIndex {
     this.listeners = new Set();
     /** 订阅着（核心有这个流）；退回读一次的是假 */
     this.live = false;
+    /** 整张表读到过一次了（只能看的会话照「表里没有」认，读到以前不算，W-1168） */
+    this.loaded = false;
     conn.onPush((method, params) => this.push(method, params));
   }
 
@@ -58,6 +60,7 @@ export class SessionIndex {
 
   /** 整张表换上：没了的算删掉。整理记忆的会话（`kind: "dream"`，核心 D-1 下）另放，不进表。 @param {Entry[]} list */
   replace(list) {
+    this.loaded = true;
     this.dreams = new Map(list.filter(isDream).map((e) => [e.session, e]));
     const next = new Map(list.filter((e) => !isDream(e)).map((e) => [e.session, e]));
     const before = this.entries;

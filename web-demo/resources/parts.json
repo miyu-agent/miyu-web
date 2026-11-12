@@ -178,6 +178,12 @@
       ".composer-notice"
     ]
   },
+  "composer.watch": {
+    "zh": "只能看的会话里替代输入框的那一行字",
+    "select": [
+      ".composer-watch"
+    ]
+  },
   "composer.send": {
     "zh": "发送按钮",
     "select": [

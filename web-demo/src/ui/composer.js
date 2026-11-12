@@ -197,6 +197,9 @@ export class Composer {
     this.stashChip = h('button.composer-stash', { type: 'button', hidden: true, onclick: () => { this.toggleStash(); this.input.focus(); } }, icon('save'));
     this.field = h('div.composer-field', this.backdrop, this.input);
     this.box = h('div.composer', this.notice, this.jumpButton, this.takeoverEl, this.head, this.field, this.bar = h('div.composer-bar', h('div.composer-left', this.tools, this.stashChip), this.sealButton, this.sendSide, this.sendButton), this.menu.el, this.picker.el, this.help.el, this.statusBox.el, this.historyList.el, this.sessionList.el, this.mention.el, this.skillList.el, this.float);
+    /** 只能看的会话（W-1168）：框里原来的、框下面那一行都收起，只写这一句 */
+    this.watchLine = h('p.composer-watch', { hidden: true });
+    this.box.append(this.watchLine);
     this.el = h('div.composer-dock', this.box, this.footer);
     this.parts = /** @type {{key: string, text: string}[]} */ ([]);
     /** 撤销时放回框里的那句：恢复时还没动过的收回去（`tui.md`「输入框」第 7 条）。 */
@@ -360,6 +363,17 @@ export class Composer {
   lock(text) {
     this.held = text;
     this.syncLock();
+  }
+
+  /**
+   * 正在看的会话只能看（通讯平台上的群、私聊，W-1168）：框里原来的、框下面那一行都收起，换成一行字；`null` 放回来。照会话走、由
+   * `App` 每画一次交一次。
+   * @param {string|null} text
+   */
+  watch(text) {
+    this.el.classList.toggle('is-watch', !!text);
+    this.watchLine.textContent = text ?? '';
+    this.watchLine.hidden = !text;
   }
 
   /**

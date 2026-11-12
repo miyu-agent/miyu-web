@@ -26,6 +26,7 @@ import { ChatWidth } from './chat-width.js';
 import { SideColumn } from './side.js';
 import { SidebarWidth } from './sidebar-width.js';
 import { statusFooter, levelLabel, nextLevel, levelParams, previewRing } from '../model/footer.js';
+import { watchOnly } from '../model/watch.js';
 import { itemsOf, levelOf } from '../model/entries.js';
 import { statusRows } from '../model/status.js';
 import { compactingOf, lastTurn, turnEnded, untouchedTurnOf } from '../model/view-state.js';
@@ -630,6 +631,13 @@ export class App {
   /** 这个会话是不是导进来的只读存档（会话表那一项的 `archived: true`，核心 SE-1 下，W-1094）。 @param {string|null} id */
   archivedOf(id) {
     return !!id && this.store.index.get(id)?.archived === true;
+  }
+
+  /** 这个会话是不是只能看（通讯平台上的群、私聊，im 的「查看会话」点名打开的，W-1168；`model/watch.js`）。 @param {string|null} id */
+  watchOnlyOf(id) {
+    const s = id ? this.store.sessions.get(id) : null;
+    return watchOnly({ id, loaded: this.store.index.loaded, listed: !!id && !!this.store.index.get(id), dream: !!this.dreamOf(id),
+      gallery: !!id && isGallery(id), subscribed: !!s?.base && !s.broken && !s.unavailable && !s.gone });
   }
 
   /**
@@ -1360,11 +1368,14 @@ export class App {
     // 这一刻读不了（核心 YC-2 的 `session_unavailable`）：一时的错，框锁住写那一句，过一会儿自己再订阅（`store.js`），不当成坏了（W-1138）
     const broken = s?.broken ?? null;
     const away = !broken && s?.unavailable ? s.unavailable : null;
-    const sealed = archived ? t('archived_readonly')
+    // 通讯平台上的群、私聊（W-1168）：输入框连框下面那一行一起收起，换成一行「只能看」；编辑、重做不出
+    const watching = this.watchOnlyOf(this.current);
+    this.composer.watch(watching ? t('venue_readonly') : null);
+    const sealed = watching ? t('venue_readonly') : archived ? t('archived_readonly')
       : broken ? broken.message || t('session_read_only', { line: broken.line ?? '?' })
         : away ? away.message || t('session_unavailable') : null;
     this.composer.seal(sealed, broken && !archived ? { label: t('new_session'), run: () => this.open(null) } : null);
-    this.chat.setReadonly(archived || !!broken);
+    this.chat.setReadonly(archived || watching || !!broken);
     this.chat.setCompacting(s ? compactingOf(s.view.list, s.view.status) : null, this.current);
     // 先照空不空摆好输入框（居中时对话区没有高度），再画对话：不然第一句话照 0 高算停在哪，被顶到视口上面
     this.centerIfEmpty(!this.current);
