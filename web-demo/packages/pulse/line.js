@@ -10,12 +10,13 @@
 import { h } from '../../src/lib/dom.js';
 import { unfold } from '../../src/lib/motion.js';
 import { clock } from '../../src/lib/format.js';
-import { Pulse, widest, dotCount, retryLine } from './model.js';
+import { Pulse, widest, dotCount, retryLine, ranMs } from './model.js';
 
 /**
- * @typedef {{id: string, start: number, beat: unknown, retry: {attempt: number, limit: number, message: string, failover?: boolean, due?: number}|null, queued: {seq: number, text: string}[], waiting?: string|null}} PulseState
+ * @typedef {{id: string, start: number, beat: unknown, retry: {attempt: number, limit: number, message: string, failover?: boolean, due?: number}|null, queued: {seq: number, text: string}[], waiting?: string|null, waited?: number, waitingSince?: number|null}} PulseState
  *   在跑的那一轮（会话加回合、开始的时刻）、这一轮出过的事的记号（`entriesBeat`）、在等的重试、排着的话（蓝图「排队的消息」）；`waiting` 是
- *   在等你确认、回答时写的那几个字（「等你回答」：静止的，不扫流光、不轮点、不写用时）
+ *   在等你确认、回答时写的那几个字（「等你回答」：静止的，不扫流光、不轮点、不写用时）；`waited`、`waitingSince`
+ *   是核心会话状态的 `waited_ms`、`waiting_since`（等人的那几段不算用时，`ranMs`）
  */
 
 export class PulseLine {
@@ -71,6 +72,8 @@ export class PulseLine {
     unfold(this.el, !!s);
     if (!s) return;
     const now = Date.now();
+    // 扣掉等你的那几段以后跑了多久：用时、换词都照它（2026-11-12 项目主人：抽屉出来时计时要停）
+    const ran = ranMs(s.start, now, s.waited, s.waitingSince);
     // 在等你确认、回答：一行静止的字（蓝图「运行状态行」），了结了照常走、流光从头扫
     if (s.waiting != null) {
       if (this.drawn !== -1) {
@@ -84,7 +87,7 @@ export class PulseLine {
       return;
     }
     if (this.drawn === -1) this.drawn = null;
-    const word = this.pulse.word({ id: s.id, start: s.start }, s.beat, now, this.config.words);
+    const word = this.pulse.word({ id: s.id, start: now - ran }, s.beat, now, this.config.words);
     const { dot_mark: mark, dot_count: count, sweep_seconds: sweep } = this.config;
     if (this.pulse.shown !== this.drawn) {
       this.drawn = this.pulse.shown;
@@ -96,7 +99,7 @@ export class PulseLine {
     const n = dotCount((now - (this.pulse.shown ?? now)) / 1000, sweep, count);
     setText(this.dots, mark.repeat(n));
     setText(this.ghost, mark.repeat(count - n));
-    setText(this.clock, clock(Math.max(0, now - s.start) / 1000));
+    setText(this.clock, clock(ran / 1000));
     // 重试：还在等的倒数（一秒走一格），换了端点当场再来的（`failover`，核心施工 8-9）写「换端点重试」；只有一行，放不下的截掉
     const retry = retryLine(s.retry, now);
     setText(this.retry, retry ? this.t(retry.key, retry.fields) : '');

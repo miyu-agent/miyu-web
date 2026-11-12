@@ -34,6 +34,9 @@ export function apply(ctx) {
       retry: statusRetry(st, run.turn, (message) => (message ? ctx.text('stalled_with', { message }) : ctx.text('stalled'))),
       queued: v.queued.map((q) => ({ seq: q.seq, text: q.text })),
       waiting: wait,
+      // 等你的那几段不算用时（核心会话状态的 `waited_ms`、`waiting_since`，2026-11-12 项目主人）
+      waited: typeof st?.waited_ms === 'number' ? st.waited_ms : 0,
+      waitingSince: st?.waiting_since ? Date.parse(st.waiting_since) : null,
     } : null);
     root.style.setProperty('--pulse-lines', String(1 + (run ? v.queued.length : 0)));
   };

@@ -163,3 +163,14 @@ export function retryLine(retry, now) {
   if (typeof retry.due === 'number' && retry.due > now) return { key: 'retry_wait', fields: { ...fields, wait: clock(Math.ceil((retry.due - now) / 1000)) } };
   return { key: 'retry', fields };
 }
+
+/**
+ * 这一轮扣掉等你的那几段以后跑了多少毫秒（2026-11-12 项目主人：「抽屉出来的时候计时没有暂停」）：照核心会话状态的 `waited_ms`
+ * （等完了的总毫秒）、`waiting_since`（正在等的这一段的起点），算法照 `view.md`「会话状态」：现在 − 开始 − 等完的 −（现在 − 正在等的起点）。
+ * 等着的时候停在开始等的那一刻，答完从停住的地方接着走；刷新页面也对得上（数是核心记的）。
+ * @param {number} start 这一轮开始的时刻 @param {number} now @param {number} [waited] `waited_ms` @param {number|null} [waitingSince] `waiting_since`
+ */
+export function ranMs(start, now, waited = 0, waitingSince = null) {
+  const until = waitingSince != null && waitingSince <= now ? waitingSince : now;
+  return Math.max(0, until - start - (waited || 0));
+}

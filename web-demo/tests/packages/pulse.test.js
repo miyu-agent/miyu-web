@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { Pulse, widest, columns, dotCount, entriesBeat, statusRetry, localWords, retryLine } from '../../packages/pulse/model.js';
+import { Pulse, widest, columns, dotCount, entriesBeat, statusRetry, localWords, retryLine, ranMs } from '../../packages/pulse/model.js';
 import { local } from '../../src/lib/text.js';
 
 /** 这个包的设置项的出厂值 */
@@ -154,4 +154,18 @@ test('重试那一截：还在等的写还要等多久（一秒走一格）；�
   const manifest = JSON.parse(readFileSync(new URL('../../packages/pulse/manifest.json', import.meta.url), 'utf8'));
   assert.equal(local(manifest.text, { code: 'zh', fallback: 'zh' }).retry_wait, ' · {wait} 后重试 {attempt}/{limit}：{message}');
   assert.ok(manifest.text.ja.retry_wait.includes('{wait}'));
+});
+
+test('用时扣掉等你的那几段：正在等停在开始等的那一刻，答完从停住的地方接着走（2026-11-12 项目主人）', () => {
+  // 没等过：现在 − 开始
+  assert.equal(ranMs(1000, 11_000), 10_000);
+  // 跑了 4 秒开始等，又过了 6 秒还在等：停在 4 秒
+  assert.equal(ranMs(1000, 11_000, 0, 5000), 4000);
+  // 等了 6 秒答完，又跑了 2 秒：6 秒
+  assert.equal(ranMs(1000, 13_000, 6000), 6000);
+  // 等完过一次、又在等：两段都扣
+  assert.equal(ranMs(1000, 20_000, 6000, 15_000), 8000);
+  // 时钟歪了也不写负数；等的起点晚于现在的当没在等
+  assert.equal(ranMs(5000, 1000), 0);
+  assert.equal(ranMs(1000, 5000, 0, 9000), 4000);
 });
