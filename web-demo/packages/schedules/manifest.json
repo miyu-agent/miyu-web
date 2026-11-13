@@ -7,13 +7,13 @@
     "ja": "定期タスク"
   },
   "summary": {
-    "zh": "在设置里看、建、停、删定时任务；右侧栏列这个会话上的",
-    "en": "View, create, pause and delete scheduled tasks in Settings; the sidebar lists this session's",
-    "ja": "設定で定期タスクを表示・作成・停止・削除。右サイドバーにこのセッションの分を表示"
+    "zh": "在设置里看、建、停、删定时任务；右侧栏列这个会话上的，输入框右上方写循环下次几点",
+    "en": "View, create, pause and delete scheduled tasks in Settings; the sidebar lists this session's; above the input box, the next loop run",
+    "ja": "設定で定期タスクを表示・作成・停止・削除。右サイドバーにこのセッションの分を表示。入力欄の右上にループの次回時刻"
   },
   "kind": "optional",
   "description": {
-    "zh": "设置页多一页「定时任务」：一个任务一行（那句话、什么时候、在哪、下次），开关停续、删除；「新建」开一个浮窗：说什么、每天/每隔/一次/自定义、每次新开会话或跑在一个会话上。右侧栏多一张卡「定时任务」，列跑在这个会话上的（连 /loop）。旧核心没有定时任务的两处都不出。"
+    "zh": "设置页多一页「定时任务」：一个任务一行（那句话、什么时候、在哪、下次），开关停续、删除；「新建」开一个浮窗：说什么、每天/每隔/一次/自定义、每次新开会话或跑在一个会话上。右侧栏多一张卡「定时任务」，列跑在这个会话上的（连 /loop）；这个会话挂着循环时，输入框右上方写下一次几点。旧核心没有定时任务的两处都不出。"
   },
   "inject": [
     "slots",
@@ -197,7 +197,8 @@
           "queued": "排着（会话正在跑一轮）",
           "sent": "交给了建它的软件包"
         }
-      }
+      },
+      "loop_tag": "循环"
     },
     "en": {
       "title": "Scheduled tasks",
@@ -368,7 +369,8 @@
           "queued": "Queued (session was busy)",
           "sent": "Sent to its package"
         }
-      }
+      },
+      "loop_tag": "Loop"
     },
     "ja": {
       "title": "定期タスク",
@@ -539,7 +541,8 @@
           "queued": "待機中（セッションが実行中）",
           "sent": "作成したパッケージに渡した"
         }
-      }
+      },
+      "loop_tag": "ループ"
     }
   }
 }

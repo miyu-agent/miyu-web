@@ -218,6 +218,52 @@ export function onSession(list, session) {
   return session ? list.filter((s) => s.target?.session === session) : [];
 }
 
+/**
+ * 输入框右上方那一截写哪个循环（蓝图「定时任务」第 2b 条，照终端 `loop_tag.rs` 的 `of`）：跑在这个会话上的循环（带 `loop` 的）里，
+ * 在跑的在前，有下一次的在前，下一次早的在前；没有的、没有会话的是 `null`。纯的。
+ * @param {Schedule[]} list @param {string|null} session @returns {Schedule|null}
+ */
+export function loopOn(list, session) {
+  if (!session) return null;
+  /** @param {Schedule} s @returns {number[]} */
+  const key = (s) => {
+    const at = s.next ? Date.parse(s.next) : NaN;
+    return [s.paused ? 1 : 0, Number.isFinite(at) ? 0 : 1, Number.isFinite(at) ? at : 0];
+  };
+  const mine = list.filter((s) => s.loop && s.target?.session === session);
+  mine.sort((a, b) => {
+    const x = key(a);
+    const y = key(b);
+    return x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
+  });
+  return mine[0] ?? null;
+}
+
+/**
+ * 那一截写什么（第 2b 条）：下一次今天的只写时分「13:07」，明天的「明天 13:07」，再往后「10/30 13:07」（`state` 是 `next`）；
+ * 停着的「已暂停」（`paused`）；还没定下一次的只画图标，字是空的（`mark`）。纯的。
+ * @param {Schedule} s @param {Date} now @param {Text} t @returns {{state: 'next'|'paused'|'mark', text: string}}
+ */
+export function loopTag(s, now, t) {
+  if (s.paused) return { state: 'paused', text: t('paused') };
+  const d = s.next ? new Date(s.next) : null;
+  if (!d || Number.isNaN(d.getTime())) return { state: 'mark', text: '' };
+  const time = clock(d);
+  const day = ymd(d);
+  if (day === ymd(now)) return { state: 'next', text: time };
+  if (day === ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1))) return { state: 'next', text: t('day.tomorrow', { time }) };
+  return { state: 'next', text: `${d.getMonth() + 1}/${d.getDate()} ${time}` };
+}
+
+/**
+ * 放得下哪一种（照终端 `fit`）：整截放得下写整截，不然只画图标，图标也放不下的不画。宽度都是像素。纯的。
+ * @param {number} room 这一格能用的宽 @param {number} full 整截的宽 @param {number} mark 只有图标的宽 @returns {'full'|'mark'|'none'}
+ */
+export function fitOf(room, full, mark) {
+  if (full <= room) return 'full';
+  return mark <= room ? 'mark' : 'none';
+}
+
 /** 浏览器的时区（IANA 名）；拿不到的是 `null`。 */
 export function localZone() {
   try {

@@ -154,6 +154,18 @@
       ".sch-detail-remove"
     ]
   },
+  "schedules.loop-pill": {
+    "zh": "定时任务：输入框右上方的循环标记",
+    "select": [
+      ".loop-pill"
+    ]
+  },
+  "schedules.loop-text": {
+    "zh": "定时任务：循环标记的字",
+    "select": [
+      ".loop-text"
+    ]
+  },
   "composer.bar": {
     "zh": "框里最下面那一排（工具、发送按钮）",
     "select": [
