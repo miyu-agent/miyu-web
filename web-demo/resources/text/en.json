@@ -320,6 +320,7 @@
     "line_range": "The compaction line must be between 20 and 95",
     "retitling": "Picking a new title…",
     "nothing_to_title": "Nothing to title yet",
+    "title_removed": "Title removed",
     "context_min": "The context cap must be at least {n}",
     "running": "Running {name}…",
     "needs_words": {

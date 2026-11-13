@@ -12,7 +12,7 @@ import { h, replace } from './dom.js';
 import { show, hide } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { fitAbove } from './fit.js';
-import { Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText, contextMin, nothingToTitle, compactLineArg, lineOutOfRange, pinnedLine } from '../model/commands.js';
+import { Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText, contextMin, nothingToTitle, renameArg, compactLineArg, lineOutOfRange, pinnedLine } from '../model/commands.js';
 import { short } from '../model/format.js';
 import { itemsOf, seqOf } from '../model/entries.js';
 import { copy } from '../markdown/build.js';
@@ -420,9 +420,15 @@ const RUNS = {
   rename: async (app, spec, words) => {
     const session = opened(app);
     if (!session) return;
-    const title = words.trim();
-    if (title) {
-      await app.store.conn.request('session.set_meta', { session, title });
+    const arg = renameArg(words);
+    if (arg.kind === 'set') {
+      await app.store.conn.request('session.set_meta', { session, title: arg.title });
+      return;
+    }
+    // `/rename -`：去掉人起的标题，回到照第一句话写（同终端）
+    if (arg.kind === 'clear') {
+      await app.store.conn.request('session.set_meta', { session, title: null });
+      app.composer.say(t('commands.title_removed'), true);
       return;
     }
     try {

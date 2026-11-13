@@ -307,6 +307,16 @@ test('/rename 不带名字时 session.retitle 拒 bad_params 是「没东西可�
   assert.match(JSON.stringify(rename), /不带名字/, '说明写清两种用法');
 });
 
+test('/rename 后面写的什么：不带字（交来的是 null）重起，- 去掉标题，别的照改（2026-11-13 主人 1113 初验：words is null）', async () => {
+  const { renameArg } = await import('../src/model/commands.js');
+  assert.deepEqual(renameArg(null), { kind: 'retitle' });
+  assert.deepEqual(renameArg(undefined), { kind: 'retitle' });
+  assert.deepEqual(renameArg('   '), { kind: 'retitle' });
+  assert.deepEqual(renameArg(' - '), { kind: 'clear' });
+  assert.deepEqual(renameArg(' 新标题 '), { kind: 'set', title: '新标题' });
+  assert.deepEqual(renameArg('-x'), { kind: 'set', title: '-x' });
+});
+
 test('撤掉的那一句里只给路径的附件（核心 AT-1，没有 blob）：放回框里还是只给路径的；有内容的知道原来路径的照带', async () => {
   const said = { id: 'm7', kind: 'user', text: '剪一下', attachments: [
     { kind: 'file', path: '/home/a/Movies/录像.mp4', name: '录像.mp4', size: 3_000_000_000, path_only: true },

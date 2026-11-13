@@ -275,3 +275,16 @@ export function contextMin(err) {
   const data = err?.data;
   return err?.reason === 'bad_params' && data?.field === 'context' && typeof data.min === 'number' ? data.min : null;
 }
+
+/**
+ * `/rename` 后面写的什么（核心 TT-1，W-1157；2026-11-13 主人 1113 初验：只打 `/rename` 报「words is null」——不带字时交来的是
+ * `null`）：没写字的让模型重起（`retitle`），只写一个 `-` 的去掉人起的标题、回到照第一句话写（`clear`，同终端），别的照它改（`set`）。
+ * @param {string|null|undefined} words
+ * @returns {{kind: 'retitle'}|{kind: 'clear'}|{kind: 'set', title: string}}
+ */
+export function renameArg(words) {
+  const title = (words ?? '').trim();
+  if (!title) return { kind: 'retitle' };
+  if (title === '-') return { kind: 'clear' };
+  return { kind: 'set', title };
+}

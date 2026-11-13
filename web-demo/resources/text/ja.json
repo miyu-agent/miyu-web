@@ -320,6 +320,7 @@
     "line_range": "圧縮ラインは 20〜95 の範囲で指定してください",
     "retitling": "タイトルを付け直しています…",
     "nothing_to_title": "タイトルを付けられる会話がまだありません",
+    "title_removed": "タイトルを消しました",
     "context_min": "コンテキスト上限は {n} 以上にしてください",
     "running": "{name} を実行中…",
     "needs_words": {

@@ -116,9 +116,9 @@
     {
       "name": "rename",
       "summary": {
-        "zh": "重命名会话；不带名字时让 AI 重新起一个",
-        "en": "Rename the session; with no name, the AI picks a new title",
-        "ja": "セッション名を変更する。名前を省くと AI が付け直す"
+        "zh": "重命名会话；不带名字时让 AI 重新起一个，写 - 去掉标题",
+        "en": "Rename the session; with no name, the AI picks a new title; - removes it",
+        "ja": "セッション名を変更する。名前を省くと AI が付け直し、- で消す"
       },
       "run": "rename",
       "args": true
