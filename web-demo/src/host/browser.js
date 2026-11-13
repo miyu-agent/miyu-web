@@ -52,6 +52,12 @@ export function urls(key) {
       if (download) q.set('download', '1');
       return `/file?${q}`;
     },
+    /** 她展示过的一个文件（核心 SW-1）：桥和核心在同一台电脑上，照 `path` 读本机文件。 */
+    shown: async (s) => {
+      const q = new URLSearchParams({ k: key, path: s.path });
+      if (s.download) q.set('download', '1');
+      return `/file?${q}`;
+    },
     /** 一个 blob（你的话里的附件）：下载的存成 `name`。 */
     blob: async (hash, type, how = {}) => {
       const q = new URLSearchParams({ k: key, hash, type });

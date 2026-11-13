@@ -74,9 +74,11 @@ export class App {
     this.skills = /** @type {import('../model/skills.js').Skill[]} */ ([]);
     this.skillsFor = /** @type {string|null|undefined} */ (undefined);
     this.skillNames = /** @type {Set<string>} */ (new Set());
-    this.ext = { slots: ctx.slots, lightbox, storage: ctx.storage, skills: () => this.skillNames, titleOf: (id) => this.titleOf(id), detail: (session, call) => this.callDetail(session, call), nested: (session, which, after) => this.nestedDetail(session, which, after), summary: (session, upto) => this.compactionSummary(session, upto), open: (/** @type {string} */ id) => this.open(id) };
+    this.ext = { slots: ctx.slots, lightbox, storage: ctx.storage, skills: () => this.skillNames, titleOf: (id) => this.titleOf(id), detail: (session, call) => this.callDetail(session, call), shownState: (session, s) => this.shownState(session, s), nested: (session, which, after) => this.nestedDetail(session, which, after), summary: (session, upto) => this.compactionSummary(session, upto), open: (/** @type {string} */ id) => this.open(id) };
     /** 一次调用改了什么（`view.detail`）：同一次调用的结果不会变，照「会话 调用」记着只问一次 @type {Map<string, Promise<any>>} */
     this.details = new Map();
+    /** 展示过的文件还读不读得到（`shownState`） @type {Map<string, Promise<string|null>>} */
+    this.shownStates = new Map();
     this.store = store;
     this.cwd = info.cwd;
     /** 家目录（`@` 选文件写路径照它写成 `~/…`） */
@@ -819,6 +821,24 @@ export class App {
     const key = `${session} ${call}`;
     if (!this.details.has(key)) this.details.set(key, this.store.conn.request('view.detail', { session, call }).catch(() => null));
     return /** @type {Promise<any>} */ (this.details.get(key));
+  }
+
+  /**
+   * 她展示过的文件还读不读得到（核心 SW-1，W-1172：`session.shown` 写 `length: 0` 只问大小，核心照展示时的大小和修改时间核对）：读得到、
+   * 问不到的（旧核心、没这一步）交 `null`，照常画；`file_changed`、`file_gone` 交原因，画成「文件已变」「文件已不在」。照「会话 调用 修改时间」记着
+   * 只问一次。
+   * @param {string|null} session @param {import('../model/artifacts.js').Shown} s
+   * @returns {Promise<string|null>}
+   */
+  shownState(session, s) {
+    if (!session || !s.call || isGallery(session)) return Promise.resolve(null);
+    const key = `${session} ${s.call} ${s.modified ?? ''}`;
+    if (!this.shownStates.has(key)) {
+      const asked = this.store.conn.request('session.shown', { session, call: s.call, length: 0 })
+        .then(() => null, (/** @type {any} */ err) => (err?.reason === 'file_changed' || err?.reason === 'file_gone' ? err.reason : null));
+      this.shownStates.set(key, asked);
+    }
+    return /** @type {Promise<string|null>} */ (this.shownStates.get(key));
   }
 
   /**

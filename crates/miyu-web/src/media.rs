@@ -1,5 +1,6 @@
 //! `/media`（`web-ui.md`「怎么走」第三条，施工 W-10）：页面带登录令牌 `POST /media` 换一张票据，`GET /media/<票据>` 拿一个
-//! blob 或者一份本机文件，能带 `Range`。内容由核心照 `blob.get`、`fs.read` 一块 512 KiB 地给，读一块写一块，不整个读进内存。
+//! blob、一份本机文件或者她展示过的一个文件（核心 SW-1，W-1172），能带 `Range`。内容由核心照 `blob.get`、`fs.read`、
+//! `session.shown` 一块 512 KiB 地给，读一块写一块，不整个读进内存。
 //! 回应关在一个空的来源里（`sandbox`）：有人直接打开这个地址，它碰不到页面。PDF 除外（浏览器的阅读器在沙盒里不肯开），照旧不许取别的。
 
 pub(crate) mod link;
@@ -187,7 +188,7 @@ pub(crate) async fn get(
     if wanted.download {
         let name = wanted.name.as_deref().or(match &wanted.source {
             Source::Path(path) => Some(path.as_str()),
-            Source::Blob(_) => None,
+            Source::Blob(_) | Source::Shown { .. } => None,
         });
         insert(
             headers,
@@ -272,7 +273,7 @@ async fn size(
         .ok_or_else(|| Failed::Unreachable("no size".into()))
 }
 
-/// 照来源问 `blob.get` 或者 `fs.read`；远程来的（`remote`）走说过 `connection.remote` 的那条连接。
+/// 照来源问 `blob.get`、`fs.read` 或者 `session.shown`；远程来的（`remote`）走说过 `connection.remote` 的那条连接。
 async fn ask(
     site: &Site,
     login: &str,
@@ -290,6 +291,10 @@ async fn ask(
             "fs.read",
             json!({"path": path, "offset": offset, "length": length}),
         ),
+        Source::Shown { session, call } => (
+            "session.shown",
+            json!({"session": session, "call": call, "offset": offset, "length": length}),
+        ),
     };
     site.media
         .cores
@@ -306,8 +311,11 @@ fn refused(site: &Site, login: &str, failed: &Failed) -> Response<Body> {
         }
         Failed::Unreachable(_) => StatusCode::BAD_GATEWAY,
         Failed::Refused(reason) => match reason.as_str() {
-            "unknown_blob" | "path_unreadable" => StatusCode::NOT_FOUND,
+            "unknown_blob" | "path_unreadable" | "unknown_shown" => StatusCode::NOT_FOUND,
             "path_forbidden" => StatusCode::FORBIDDEN,
+            // 展示的文件改过、换过（核心每次读都核对大小和修改时间）、没了：页面照状态码写「文件已变」「文件已不在」
+            "file_changed" => StatusCode::CONFLICT,
+            "file_gone" => StatusCode::GONE,
             "bad_params" => StatusCode::BAD_REQUEST,
             _ => StatusCode::BAD_GATEWAY,
         },
@@ -327,7 +335,7 @@ pub(crate) fn bearer(request: &Request<Incoming>) -> Option<String> {
     (scheme.eq_ignore_ascii_case("bearer") && !token.is_empty()).then(|| token.to_string())
 }
 
-/// 换票据的正文：`blob`、`path` 正好一个；`type`、`name` 是字符串，`download` 是布尔，都可以不写。
+/// 换票据的正文：`blob`、`path`、`session` 加 `call`（展示的文件）正好一样；`type`、`name` 是字符串，`download` 是布尔，都可以不写。
 async fn read_body(
     request: Request<Incoming>,
 ) -> Option<(Source, Option<String>, Option<String>, bool)> {
@@ -343,17 +351,33 @@ async fn read_body(
         Some(Value::String(text)) => Some(Some(text.clone())),
         Some(_) => None,
     };
-    let source = match (text("blob")?, text("path")?) {
-        (Some(blob), None) => Source::Blob(blob),
-        (None, Some(path)) => Source::Path(path),
-        _ => return None,
-    };
+    let source = source_of(
+        text("blob")?,
+        text("path")?,
+        text("session")?,
+        text("call")?,
+    )?;
     let download = match body.get("download") {
         None | Some(Value::Null) => false,
         Some(Value::Bool(download)) => *download,
         Some(_) => return None,
     };
     Some((source, text("type")?, text("name")?, download))
+}
+
+/// 要的是哪一种：`blob`、`path`、`session` 加 `call` 正好一样，多了、少了、只写一半的都不收。
+fn source_of(
+    blob: Option<String>,
+    path: Option<String>,
+    session: Option<String>,
+    call: Option<String>,
+) -> Option<Source> {
+    match (blob, path, session, call) {
+        (Some(blob), None, None, None) => Some(Source::Blob(blob)),
+        (None, Some(path), None, None) => Some(Source::Path(path)),
+        (None, None, Some(session), Some(call)) => Some(Source::Shown { session, call }),
+        _ => None,
+    }
 }
 
 /// 媒体类型：页面说的在 `web.json` 的表里出现过的照它；本机文件照扩展名查表；都没有的 `application/octet-stream`。
@@ -365,7 +389,7 @@ fn content_type(settings: &Settings, wanted: &Wanted) -> String {
     }
     match &wanted.source {
         Source::Path(path) => settings.type_of(Path::new(path)).to_string(),
-        Source::Blob(_) => OCTET.to_string(),
+        Source::Blob(_) | Source::Shown { .. } => OCTET.to_string(),
     }
 }
 

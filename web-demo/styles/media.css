@@ -186,6 +186,9 @@ p.has-link-card { margin: calc(10px * var(--space)) 0; }
   color: var(--text); cursor: pointer; font: inherit; text-align: left; text-decoration: none; transition: background-color calc(0.15s * var(--motion-scale)) ease;
 }
 .shown-card:hover { background: var(--card-hover, var(--surface-2)); }
+/* 读不了的那一样（文件变了、没了，核心 SW-1）：同一张卡片，点不了、悬停不变，小字写为什么 */
+.shown-card.is-missing { cursor: default; }
+.shown-card.is-missing:hover { background: var(--card-bg, color-mix(in srgb, var(--surface-2) 50%, var(--surface-1))); }
 .shown-card-icon {
   display: grid; width: 36px; height: 36px; flex: none; place-items: center; border-radius: var(--r-9);
   background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent);

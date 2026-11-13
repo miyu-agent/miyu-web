@@ -1,7 +1,8 @@
 //! 分段、下载的名字（施工 W-10）。
 
 use super::range::{Span, attachment, span};
-use super::{PDF, SANDBOX, policy};
+use super::tickets::Source;
+use super::{PDF, SANDBOX, policy, source_of};
 
 #[test]
 fn one_range_or_the_whole() {
@@ -61,4 +62,32 @@ fn only_pdf_leaves_the_sandbox() {
     assert_eq!(policy("text/html; charset=utf-8"), SANDBOX);
     assert_eq!(policy("application/pdf"), PDF);
     assert!(!PDF.contains("sandbox") && PDF.contains("default-src 'none'"));
+}
+
+/// 核心 SW-1（W-1172）：展示的文件照「会话 + 调用编号」换票据；三种正好写一样，只写一半的不收。
+#[test]
+fn a_ticket_names_exactly_one_kind_of_source() {
+    let s = |v: &str| Some(v.to_string());
+    assert_eq!(
+        source_of(s("sha256:a"), None, None, None),
+        Some(Source::Blob("sha256:a".into()))
+    );
+    assert_eq!(
+        source_of(None, s("/a"), None, None),
+        Some(Source::Path("/a".into()))
+    );
+    assert_eq!(
+        source_of(None, None, s("0193"), s("call_1")),
+        Some(Source::Shown {
+            session: "0193".into(),
+            call: "call_1".into()
+        })
+    );
+    assert_eq!(source_of(None, None, s("0193"), None), None, "少了调用编号");
+    assert_eq!(
+        source_of(None, s("/a"), s("0193"), s("call_1")),
+        None,
+        "两样都写"
+    );
+    assert_eq!(source_of(None, None, None, None), None);
 }

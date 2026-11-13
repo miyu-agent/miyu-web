@@ -9,21 +9,21 @@ import { shownOf, shownList, panelList, shownKind, codeLanguage, undismissed, or
 
 loadRes();
 
-const HASH = (c) => `sha256:${c.repeat(64)}`;
 /** 一步 show：编号、路径、媒体类型，别的格照给的 */
-const step = (id, path, type, more = {}) => ({ id, kind: 'tool', name: 'show', state: 'ok', turn: 1, shown: { path, blob: HASH('a'), name: path.split('/').pop(), media_type: type, size: 10, ...more } });
+const step = (id, path, type, more = {}) => ({ id, kind: 'tool', name: 'show', call: `call_${id}`, state: 'ok', turn: 1, shown: { path, name: path.split('/').pop(), media_type: type, size: 10, modified: '2026-11-13T01:00:00Z', ...more } });
 
-test('一个路径一项（最后那一次），最后展示的在前；藏起来的不算；没展示成的（没有 shown、没有 blob）不算', () => {
+test('一个路径一项（最后那一次），最后展示的在前；藏起来的不算；没展示成的（没有 shown、没有 path）不算', () => {
   const list = shownList([
     step('b1.0', '/w/a.png', 'image/png', { width: 4, height: 3 }),
     step('b2.0', '/w/r.html', 'text/html', { title: '报告' }),
     { id: 'b3.0', kind: 'tool', name: 'show', state: 'failed', turn: 2 },
-    step('b4.0', '/w/a.png', 'image/png', { blob: HASH('b') }),
+    step('b4.0', '/w/a.png', 'image/png', { modified: '2026-11-13T02:00:00Z' }),
     { ...step('b5.0', '/w/gone.md', 'text/markdown'), hidden: true },
-    { id: 'b6.0', kind: 'tool', name: 'show', shown: { path: '/w/x' } },
+    { id: 'b6.0', kind: 'tool', name: 'show', shown: { name: 'x' } },
     { id: 'm7', kind: 'reply', text: '好了' },
   ]);
-  assert.deepEqual(list.map((s) => [s.path, s.seq, s.blob]), [['/w/a.png', 4, HASH('b')], ['/w/r.html', 2, HASH('a')]]);
+  // 内容不在核心里（核心 SW-1）：带着那一步的调用编号和展示时的修改时间，读的时候照它们认
+  assert.deepEqual(list.map((s) => [s.path, s.seq, s.call, s.modified]), [['/w/a.png', 4, 'call_b4.0', '2026-11-13T02:00:00Z'], ['/w/r.html', 2, 'call_b2.0', '2026-11-13T01:00:00Z']]);
   assert.equal(list[1].title, '报告');
   assert.equal(list[1].name, 'r.html');
   assert.deepEqual([list[0].width, list[0].height], [null, null], '后来那一次没给宽高');
@@ -43,10 +43,10 @@ test('种类照媒体类型：text/plain 带语言的是代码；别的文件不
 });
 
 test('没写名字的照路径最后一截；不是工具条目的是 null', () => {
-  const s = shownOf({ id: 'b9.1', kind: 'tool', shown: { path: '/w/sub/n.txt', blob: HASH('c'), media_type: 'text/plain' } });
+  const s = shownOf({ id: 'b9.1', kind: 'tool', shown: { path: '/w/sub/n.txt', media_type: 'text/plain' } });
   assert.equal(s?.name, 'n.txt');
   assert.equal(s?.seq, 9);
-  assert.equal(shownOf({ id: 'm1', kind: 'reply', shown: { path: '/x', blob: HASH('c') } }), null);
+  assert.equal(shownOf({ id: 'm1', kind: 'reply', shown: { path: '/x' } }), null);
 });
 
 test('下拉里删掉的不列；同一个路径后来又展示了（序号更新）的照旧列', () => {
@@ -60,7 +60,7 @@ test('下拉里删掉的不列；同一个路径后来又展示了（序号更�
 test('音视频（2026-10-23 项目主人：show 出来的只能下载）：video/*、audio/* 是视频、音频；核心认成别的文件、后缀是音视频的照后缀换；都不进右栏', () => {
   assert.equal(shownKind('video/mp4'), 'video');
   assert.equal(shownKind('audio/mpeg'), 'audio');
-  const tool = (path, media_type) => ({ kind: 'tool', id: 'e3', shown: { path, blob: 'sha256:aa', media_type, size: 10 } });
+  const tool = (path, media_type) => ({ kind: 'tool', id: 'e3', shown: { path, media_type, size: 10 } });
   const v = shownOf(tool('/w/测试视频.MP4', 'application/octet-stream'));
   assert.equal(v?.kind, 'video');
   assert.equal(v?.type, 'video/mp4');

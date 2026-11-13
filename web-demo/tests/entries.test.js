@@ -231,12 +231,11 @@ test('她发出去的图（核心 X-19）：一张一条，排在那一步后面
 });
 
 test('她 show 过的（核心 D-5）：接在那一段后面画在正文里，一样一条；没展示成的那一步不出', () => {
-  const blob = `sha256:${'d'.repeat(64)}`;
   const entries = [
     { id: 'u1', kind: 'user', text: '做个图', turn: 5, at: AT },
-    { id: 'b9.0', kind: 'tool', name: 'show', state: 'ok', turn: 5, at: AT, args: '{"path":"a.png"}', shown: { path: '/w/a.png', blob, name: 'a.png', media_type: 'image/png', size: 9, width: 4, height: 3 } },
+    { id: 'b9.0', kind: 'tool', name: 'show', state: 'ok', turn: 5, at: AT, args: '{"path":"a.png"}', shown: { path: '/w/a.png', name: 'a.png', media_type: 'image/png', size: 9, width: 4, height: 3 } },
     { id: 'b9.1', kind: 'tool', name: 'show', state: 'failed', turn: 5, at: AT, args: '{"path":"nope"}' },
-    { id: 'b9.2', kind: 'tool', name: 'show', state: 'ok', turn: 5, at: AT, args: '{"path":"r.html"}', shown: { path: '/w/r.html', blob, name: 'r.html', media_type: 'text/html', size: 2048, title: '报告' } },
+    { id: 'b9.2', kind: 'tool', name: 'show', state: 'ok', turn: 5, at: AT, args: '{"path":"r.html"}', shown: { path: '/w/r.html', name: 'r.html', media_type: 'text/html', size: 2048, title: '报告' } },
     { id: 'g9.0', kind: 'group', turn: 5, steps: ['b9.0', 'b9.1', 'b9.2'], summary: [{ text: '展示了 2 个' }], at: AT },
     { id: 'm10', kind: 'reply', turn: 5, text: '好了', at: AT },
   ];

@@ -213,3 +213,7 @@
   .artifact-resize-handle { display: none; }
   .artifact-markdown { padding: calc(22px * var(--space)) calc(16px * var(--space)) calc(48px * var(--space)); }
 }
+
+/* 文字类只读了开头（核心 SW-1 起展示不限大小，W-1172）：顶上一行暗色小字说只显示开头多少 */
+.artifact-headed { display: contents; }
+.artifact-head-note { margin: 0; padding: calc(6px * var(--space)) calc(14px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }

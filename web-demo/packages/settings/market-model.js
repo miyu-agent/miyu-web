@@ -11,9 +11,9 @@ export const QUICK_KINDS = /** @type {const} */ (['mcp', 'scripts', 'skills']);
  * 这里只定先后：认得的照这张表排在前面，别的照编号排在后面。
  */
 export const KIND_FILTERS = /** @type {const} */ (['theme', 'connection', 'language', 'extension', 'ui', 'mascot', 'builtin',
-  'skills', 'scripts', 'mcp', 'command', 'slash', 'personas', 'presets', 'features', 'content']);
+  'skills', 'scripts', 'mcp', 'knowledge', 'command', 'slash', 'personas', 'presets', 'features', 'content']);
 /** 卡片的图标：照它带的头一种 */
-const FACES = { theme: 'palette', connection: 'plug', language: 'languages', extension: 'package', mascot: 'smile', personas: 'user-round', presets: 'toggle-right', skills: 'sparkles', scripts: 'square-terminal', mcp: 'plug', command: 'square-terminal', slash: 'square-terminal', content: 'file-text', features: 'package' };
+const FACES = { theme: 'palette', connection: 'plug', language: 'languages', extension: 'package', mascot: 'smile', personas: 'user-round', presets: 'toggle-right', knowledge: 'library', skills: 'sparkles', scripts: 'square-terminal', mcp: 'plug', command: 'square-terminal', slash: 'square-terminal', content: 'file-text', features: 'package' };
 
 /** 清单的种类换成筛选的那一种：核心的 `process`、`worker` 对人都是插件（核心 G-11 给的是清单 `kind` 的原样） */
 const KIND_ALIAS = /** @type {Record<string, string>} */ ({ process: 'extension', worker: 'extension' });

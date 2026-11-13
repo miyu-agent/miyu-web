@@ -168,3 +168,11 @@ test('接入方式的标签（2026-11-12 项目主人：包编号不再带接入
   assert.deepEqual(accessTags({ kind: 'builtin' }), [], '出厂的内置包认不出，照旧写种类');
   assert.deepEqual(accessTags({}), []);
 });
+
+test('带知识库的（核心 PV-3，W-1172）：种类 knowledge 排在 MCP 后面、命令前面，卡片图标是书架；「包含」照这个先后写', () => {
+  const kb = { package: 'notes', provides: { knowledge: ['manual'], skills: ['read-manual'], command: ['notes'] } };
+  assert.deepEqual(kindsOf(kb), ['knowledge', 'skills', 'command']);
+  assert.equal(faceOf(kb), 'sparkles', '先照技能');
+  assert.equal(faceOf({ provides: { knowledge: ['manual'] } }), 'library');
+  assert.equal(providesLine(kb.provides, { knowledge: '知识库', skills: '技能', command: '命令' }), '技能 read-manual；知识库 manual；命令 notes');
+});

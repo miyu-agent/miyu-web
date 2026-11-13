@@ -469,6 +469,8 @@ function detailPage(dialog, id) {
     const items = [
       got?.origin ? line(t('market.origin'), h('a.mk-link', { href: /^https?:\/\//.test(got.origin) ? got.origin : `https://${got.origin}`, target: '_blank', rel: 'noopener noreferrer' }, h('code', got.origin), icon('external-link'))) : null,
       line(t('market.includes'), providesLine(got?.provides ?? p.provides, names) || t('market.nothing')),
+      // 许可证（核心 PV-3，W-1172：清单可选的 SPDX 短串，没写的不出这一行）
+      typeof (got?.license ?? p.license) === 'string' && (got?.license ?? p.license) ? line(t('market.license'), h('code', got?.license ?? p.license)) : null,
       toolsLine(),
       line(t('market.capabilities'), capsLine(dialog, got?.capabilities) ?? t('market.none')),
       (got?.with ?? []).length ? line(t('market.with'), h('div.mk-with', got.with.map((/** @type {any} */ w) => h('code', `${w.package} ${w.version ?? ''}`)))) : null,

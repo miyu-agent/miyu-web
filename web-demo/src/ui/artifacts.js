@@ -19,7 +19,8 @@ import { h, icon, replace, setUrl } from './dom.js';
 import { show, hide, reduced } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { shownList, panelList, codeLanguage, undismissed } from '../model/artifacts.js';
-import { blobUrl } from '../core/host.js';
+import { shownUrl } from '../core/host.js';
+import { bytes } from '../lib/format.js';
 import { drawMarkdown } from './render.js';
 import { paint } from '../markdown/highlight.js';
 import { copy } from '../markdown/build.js';
@@ -445,7 +446,7 @@ export class Artifacts {
     const a = this.list.find((x) => x.path === this.current);
     const session = this.where.session;
     if (!a || !session) return;
-    const sig = `${a.path}\n${a.blob}\n${this.mode}`;
+    const sig = `${a.path}\n${a.call}\n${a.size}\n${a.modified}\n${this.mode}`;
     if (!force && sig === this.drawn) return;
     this.drawn = sig;
     const hasPreview = a.kind !== 'code' && a.kind !== 'text';
@@ -457,12 +458,16 @@ export class Artifacts {
     this.title.textContent = a.title ?? a.name;
     this.title.parentElement?.setAttribute('title', a.path);
     this.badge.textContent = t(`artifacts.types.${a.kind}`);
-    setUrl(this.download, 'href', blobUrl(a.blob, blobType(a), { download: true, name: a.name }));
+    setUrl(this.download, 'href', shownUrl(session, a, blobType(a), { download: true }));
     this.drawMenu();
     const token = ++this.token;
     this.text = null;
-    // 地址可能要等（直接连网页软件的先换票据）；blob 按内容定，不会变
-    const url = await blobUrl(a.blob, blobType(a));
+    // 文件变了、没了（核心 SW-1：每次读都核对展示时的大小和修改时间）：写为什么，不去取
+    const problem = await (this.ext?.shownState?.(session, a) ?? Promise.resolve(null));
+    if (token !== this.token) return;
+    if (problem) return replace(this.view, h('div.artifact-failure', icon('circle-alert'), t(`artifacts.${problem}`)));
+    // 地址可能要等（直接连网页软件的先换票据）
+    const url = await shownUrl(session, a, blobType(a));
     if (token !== this.token) return;
     if (a.kind === 'image') return replace(this.view, imageStage(url, a.name));
     // PDF 交给浏览器自己的阅读器
@@ -475,12 +480,17 @@ export class Artifacts {
     replace(this.view, h('div.artifact-loading', icon('loader-circle'), t('artifacts.loading')));
     await this.settled();
     if (token !== this.token) return;
-    fetch(url, { cache: 'no-store' })
-      .then((r) => (r.ok ? r.text() : Promise.reject(new Error(`${r.status} ${r.statusText}`))))
-      .then((text) => {
+    // 文字类只读开头（核心 SW-1 起展示不限大小）：照 Range 要前 `text_head` 个字节，不认 Range 的（演示的桥）照整份读回来再截
+    const head = res.artifacts.text_head ?? 1048576;
+    fetch(url, { cache: 'no-store', headers: { Range: `bytes=0-${head - 1}` } })
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.status === 409 ? t('artifacts.file_changed') : r.status === 410 ? t('artifacts.file_gone') : `${r.status} ${r.statusText}`))))
+      .then((buffer) => {
         if (token !== this.token) return;
+        const cut = buffer.byteLength > head || (a.size != null && a.size > head);
+        const text = new TextDecoder().decode(buffer.slice(0, head));
         this.text = text;
-        replace(this.view, mode === 'source' ? source(text, a) : preview(a.kind, text, this.where, this.say, this.ext));
+        const body = mode === 'source' ? source(text, a) : preview(a.kind, text, this.where, this.say, this.ext);
+        replace(this.view, cut ? h('div.artifact-headed', h('p.artifact-head-note', t('artifacts.text_head', { size: bytes(head) })), body) : body);
       })
       .catch((err) => {
         if (token !== this.token) return;

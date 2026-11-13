@@ -211,6 +211,8 @@ export function servedHost() {
   const urls = {
     file: (path, download = false) => media({ path, ...(download ? { download: true } : {}) }),
     blob: (hash, type, how = {}) => media({ blob: hash, type, ...(how.download ? { download: true } : {}), ...(how.download && how.name ? { name: how.name } : {}) }),
+    // 她展示过的（核心 SW-1，W-1172）：照「会话 + 调用编号」，网页软件经 `session.shown` 一段段读、带 Range（视频拖进度）；局域网来的也一样
+    shown: (s) => media({ session: s.session, call: s.call, type: s.type, ...(s.download ? { download: true } : {}), ...(s.download && s.name ? { name: s.name } : {}) }),
   };
   return {
     kind: 'served',

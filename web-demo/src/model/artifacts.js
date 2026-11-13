@@ -12,8 +12,10 @@
 
 import { res } from '../util/res.js';
 /**
- * @typedef {{path: string, blob: string, name: string, title: string|null, kind: string, type: string, size: number|null,
+ * @typedef {{path: string, call: string|null, modified: string|null, name: string, title: string|null, kind: string, type: string, size: number|null,
  *   language: string|null, width: number|null, height: number|null, id: string, seq: number, order: number, turn: number|null}} Shown
+ *   内容不在核心里（核心 SW-1，2026-11-13，W-1172：原来是 `blob`）：照 `path` 读（演示的桥），或者照「会话 + `call`」经网页软件读
+ *   （`session.shown`）；`modified` 是展示那一刻的修改时间，和 `size` 一起认文件变没变
  *   `kind` 是 `image`、`pdf`、`html`、`markdown`、`code`、`text`、`video`、`audio`（在正文里播，不进右栏）、`file`（别的文件：只能下载，
  *   不进右栏）；`type` 是核心认的媒体类型（核心认成别的文件、后缀是音视频的，照后缀换成的）
  */
@@ -32,19 +34,20 @@ export function orderOf(id) {
 }
 
 /**
- * 一条工具条目带的展示；不是展示、没展示成（没有 `shown`、没有 `blob`）的是 `null`。
+ * 一条工具条目带的展示；不是展示、没展示成（没有 `shown`、没有 `path`）的是 `null`。
  * @param {any} e 视图里的条目
  * @returns {Shown|null}
  */
 export function shownOf(e) {
   const s = e?.kind === 'tool' ? e.shown : null;
-  if (!s || typeof s.blob !== 'string' || !s.blob || typeof s.path !== 'string') return null;
+  if (!s || typeof s.path !== 'string' || !s.path) return null;
   const name = typeof s.name === 'string' && s.name ? s.name : s.path.split('/').pop() ?? s.path;
   const type = mediaGuess(typeof s.media_type === 'string' ? s.media_type : 'application/octet-stream', name);
   const language = typeof s.language === 'string' && s.language ? s.language : null;
   return {
     path: s.path,
-    blob: s.blob,
+    call: typeof e.call === 'string' && e.call ? e.call : null,
+    modified: typeof s.modified === 'string' && s.modified ? s.modified : null,
     name,
     title: typeof s.title === 'string' && s.title ? s.title : null,
     kind: shownKind(type, language),

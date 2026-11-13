@@ -142,6 +142,20 @@ function packageRow(dialog, p, child = false) {
 }
 
 /**
+ * 装着的一个包的许可证（核心 PV-3：`package.info` 装着的那一份带 `license`，清单没写的没有）：照编号问一次记着；问不到的是 `null`。
+ * @param {any} dialog @param {string} id
+ * @returns {Promise<string|null>}
+ */
+function licenseOf(dialog, id) {
+  dialog.licenses ??= new Map();
+  if (!dialog.licenses.has(id)) {
+    dialog.licenses.set(id, dialog.ctx.core.request('package.info', { package: id, source: false })
+      .then((/** @type {any} */ got) => (typeof got?.license === 'string' && got.license ? got.license : null), () => null));
+  }
+  return dialog.licenses.get(id);
+}
+
+/**
  * 一行后面的小标签：接入方式（2026-11-12 项目主人：编号不再带接入方式；`accessTags`，最多三个）；一个都认不出的照旧写种类。
  * 出厂的内置包（`kind: builtin`，`base-*`）打头一个「内置」，后面接它带的（核心 PV-2 起 `package.list` 每一项带 `provides`，带技能、
  * 脚本的认得出来；2026-11-12 项目主人：内置的两个头都写「内置」），一共最多三个。
@@ -318,6 +332,9 @@ function infoCard(dialog, p, e) {
   });
   const meta = [p.version ? t('pkg.version', { version: p.version }) : null, from && !from.startsWith('pkg.') ? from : null, author, ...covers].filter(Boolean).join(' · ');
   const upstream = typeof p.upstream === 'string' && /^https:\/\/[^\s]+$/.test(p.upstream) ? p.upstream : null;
+  const metaEl = meta || status ? h('p.set-pkg-card-meta', meta, meta && status ? ' · ' : null, status ? h(`span${alarm ? '.is-bad' : ''}`, status) : null) : null;
+  // 许可证（核心 PV-3，W-1172）：`package.list` 不带，问一次 `package.info`（只查装着的），有才接在那一行后面
+  if (metaEl) licenseOf(dialog, id).then((license) => { if (license) metaEl.append(' · ', t('pkg.license', { license })); });
   const control = controlFor(dialog, p, e);
   const stderr = e ? (Array.isArray(e.stderr) ? e.stderr.join('\n') : e.stderr ?? '') : '';
   const showing = !!e && dialog.extensions.showing.has(id);
@@ -339,7 +356,7 @@ function infoCard(dialog, p, e) {
       h('div.set-pkg-card-text',
         h('div.set-pkg-card-name', p.name ?? id),
         p.summary ? h('p.set-pkg-card-desc', p.summary) : null,
-        meta || status ? h('p.set-pkg-card-meta', meta, meta && status ? ' · ' : null, status ? h(`span${alarm ? '.is-bad' : ''}`, status) : null) : null,
+        metaEl,
         upstream ? h('p.set-pkg-card-meta.set-pkg-upstream', h('span', t('pkg.upstream')),
           h('a', { href: upstream, target: '_blank', rel: 'noopener noreferrer', title: upstream }, h('span', upstream.replace(/^https:\/\//, '').replace(/\/$/, '')), icon('external-link'))) : null,
         actions.length ? h('div.set-pkg-card-actions', actions) : null),

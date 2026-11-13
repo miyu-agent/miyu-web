@@ -490,7 +490,10 @@ function itemNode(it, chat) {
   if (it.type === 'waiting') return waitingNode();
   if (it.type === 'media') return mediaNode(it, chat);
   // 她 show 过的（核心 D-5）：图片缩略图，别的一张卡片，点了在右栏打开
-  if (it.type === 'shown') return shownNode(it.shown, { lightbox: chat.ext?.lightbox, reveal: chat.on.reveal });
+  if (it.type === 'shown') {
+    const session = chat.where.session;
+    return shownNode(it.shown, { session, lightbox: chat.ext?.lightbox, reveal: chat.on.reveal, state: (s) => chat.ext?.shownState?.(session, s) ?? Promise.resolve(null) });
+  }
   const node = h('div.reply.markdown-body');
   drawMarkdown(node, it.text, { say: chat.markdown.say, hooks: chat.markdown.hooks(it.scope), streaming: it.streaming });
   return node;

@@ -12,6 +12,8 @@ pub(crate) enum Source {
     Blob(String),
     /// 一份本机文件：绝对路径。
     Path(String),
+    /// 她 `show` 过的一个文件（核心 SW-1，W-1172）：会话、展示那一步的调用编号，照 `session.shown` 读。
+    Shown { session: String, call: String },
 }
 
 /// 一张票据要的东西：认得出是哪个登录令牌换的（令牌作废了，它的票据一起作废）。

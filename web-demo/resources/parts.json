@@ -3048,6 +3048,12 @@
       ".artifact-failure"
     ]
   },
+  "artifact.head-note": {
+    "zh": "预览工作区：只显示开头的那一行小字",
+    "select": [
+      ".artifact-head-note"
+    ]
+  },
   "artifact.toggle": {
     "zh": "预览工作区：开关",
     "select": [

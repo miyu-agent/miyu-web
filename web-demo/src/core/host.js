@@ -32,6 +32,17 @@ export function blobUrl(hash, type, how = {}) {
 }
 
 
+/**
+ * 她展示过的一个文件的地址（核心 SW-1，W-1172：内容不在核心里，照路径或者「会话 + 调用编号」读）。`download` 为真的叫浏览器存下来，存成 `name`。
+ * @param {string|null} session @param {import('../model/artifacts.js').Shown} s @param {string} type 媒体类型
+ * @param {{download?: boolean}} [how]
+ * @returns {Promise<string>}
+ */
+export function shownUrl(session, s, type, how = {}) {
+  if (!host || !session || !s.call) return Promise.resolve('');
+  return host.urls.shown({ session, call: s.call, path: s.path, type, name: s.name, download: !!how.download });
+}
+
 /** 外面的链接：浏览器是新标签页，桌面端是系统的浏览器；交回开了没有。 */
 export function openExternal(url) {
   return !!host?.open(url);

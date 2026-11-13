@@ -257,6 +257,9 @@
     "audio_failed": "再生できません"
   },
   "artifacts": {
+    "file_changed": "ファイルが変更されました",
+    "file_gone": "ファイルがありません",
+    "text_head": "先頭の {size} だけ表示",
     "toggle": "プレビューワークスペース",
     "preview": "プレビュー",
     "source": "ソース",

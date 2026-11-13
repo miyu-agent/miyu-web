@@ -180,7 +180,9 @@ export function watchDrop(target, on, { local = false, folders = false } = {}) {
 
 /**
  * 本机文件、blob 的地址（宿主给的；异步：直接连网页软件的要先换票据）
- * @typedef {{file: (path: string, download?: boolean) => Promise<string>, blob: (hash: string, type: string, how?: {download?: boolean, name?: string|null}) => Promise<string>}} Urls
+ * @typedef {{file: (path: string, download?: boolean) => Promise<string>, blob: (hash: string, type: string, how?: {download?: boolean, name?: string|null}) => Promise<string>,
+ *   shown: (s: {session: string, call: string, path: string, type: string, name?: string|null, download?: boolean}) => Promise<string>}} Urls
+ *   `shown`：她展示过的一个文件（核心 SW-1，W-1172）：演示的桥照 `path` 读本机文件，网页软件照「会话 + 调用编号」经 `session.shown` 读
  */
 
 /**
