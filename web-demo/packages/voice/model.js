@@ -255,3 +255,36 @@ export function micErrorKey(err) {
 export function insertAt(value, start, end, text) {
   return { value: value.slice(0, start) + text + value.slice(end), caret: start + text.length };
 }
+
+/**
+ * 语音输入开始录、停下时的提示音（2026-11-13 主人定，todolist 第 62 条；声音照语音包 voice-common 的 chime：开始 880 Hz 110 毫秒接 1320 Hz
+ * 150 毫秒，结束倒过来，中间隔 20 毫秒，幅度 0.3，每个音头尾 10 毫秒淡入淡出）。交回几个音：频率、从第几毫秒起、响多久。纯的。
+ * @param {'start'|'stop'} kind
+ * @returns {{freq: number, at: number, ms: number}[]}
+ */
+export function chimeTones(kind) {
+  const low = { freq: 880, ms: 110 };
+  const high = { freq: 1320, ms: 150 };
+  const order = kind === 'start' ? [low, high] : [high, low];
+  let at = 0;
+  return order.map((t) => {
+    const tone = { freq: t.freq, at, ms: t.ms };
+    at += t.ms + CHIME.gap_ms;
+    return tone;
+  });
+}
+
+/** 提示音的幅度、淡入淡出、两个音之间空多久（同语音包） */
+export const CHIME = { gain: 0.3, fade_ms: 10, gap_ms: 20 };
+
+/** 一声提示音一共多长（毫秒）：开始那一声放完再开麦，免得录进去。 @param {'start'|'stop'} kind */
+export function chimeLength(kind) {
+  const tones = chimeTones(kind);
+  const last = tones[tones.length - 1];
+  return last.at + last.ms;
+}
+
+/** 设置 `voice-input.chime`（`config.get` 的回应）开没开：没有这一项（语音包旧、没装）的当开着。 @param {any} got */
+export function chimeOn(got) {
+  return got?.items?.['voice-input.chime']?.value !== false;
+}

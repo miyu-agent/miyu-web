@@ -1,7 +1,7 @@
 // 语音（软件包 voice，W-1128）的纯逻辑：总线上能不能用、降采样、打 wav、静下来算说完、切句、出错码。
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ready, downsample, wav, loudness, Silence, sentences, errorKey, micErrorKey, insertAt, RATE, interrupted, playSentence, stopRun } from '../../packages/voice/model.js';
+import { ready, downsample, wav, loudness, Silence, sentences, errorKey, micErrorKey, insertAt, RATE, interrupted, playSentence, stopRun, chimeTones, chimeLength, chimeOn, CHIME } from '../../packages/voice/model.js';
 
 test('总线上 stt、tts 有人提供、ready 才算能用，不认包名', () => {
   const names = [
@@ -161,4 +161,15 @@ test('音频坏了、别的错照旧抛：这一句放不出来', async () => {
   await assert.rejects(playSentence(run(), player(['bad']).make, broken), /放不出来/);
   const denied = Object.assign(new Error('not allowed'), { name: 'NotAllowedError' });
   await assert.rejects(playSentence(run(), player([denied]).make, broken), /not allowed/);
+});
+
+test('语音输入的提示音（todolist 第 62 条，同语音包）：开始 880→1320、结束倒过来，隔 20 毫秒；设置没写的当开着', () => {
+  assert.deepEqual(chimeTones('start'), [{ freq: 880, at: 0, ms: 110 }, { freq: 1320, at: 130, ms: 150 }]);
+  assert.deepEqual(chimeTones('stop'), [{ freq: 1320, at: 0, ms: 150 }, { freq: 880, at: 170, ms: 110 }]);
+  assert.equal(chimeLength('start'), 280, '开始那一声放完再开麦');
+  assert.deepEqual(CHIME, { gain: 0.3, fade_ms: 10, gap_ms: 20 });
+  assert.equal(chimeOn({ items: { 'voice-input.chime': { value: false } } }), false);
+  assert.equal(chimeOn({ items: { 'voice-input.chime': { value: true } } }), true);
+  assert.equal(chimeOn({ items: {} }), true, '语音包旧、没这一项的当开着');
+  assert.equal(chimeOn(null), true);
 });

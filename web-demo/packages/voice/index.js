@@ -11,7 +11,8 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { upload } from '../../src/lib/upload.js';
-import { ready, sentences, errorKey, micErrorKey, interrupted, playSentence, stopRun } from './model.js';
+import { ready, sentences, errorKey, micErrorKey, interrupted, playSentence, stopRun, chimeOn } from './model.js';
+import { chime } from './chime.js';
 import { Recorder } from './recorder.js';
 
 /** 按住超过这么久再松开的算按住说话，松开就停（毫秒）；短的是点一下，接着录 */
@@ -58,6 +59,10 @@ export function apply(ctx) {
   let rec = null;
   let busy = false;
   let pressedAt = 0;
+  /** 这一次录音响不响提示音（开始时照设置读一次，停下时照它） */
+  let chiming = false;
+  /** 开始那一声在放、麦还没开 */
+  let opening = false;
   // 「正在听」（2026-11-10 项目主人：原来换成方块、外面一圈淡淡的边，不好看；三种样子里选了竖条，W-1139）：录着的时候麦克风换成四根
   // 跟着录音音量跳的竖条（`--voice-level`，还没收到音量时样式里照一个中间值轻轻起伏）。
   const glyph = h('span.voice-glyph', icon('mic'));
@@ -85,6 +90,13 @@ export function apply(ctx) {
     });
     rec = r;
     paint();
+    // 开始录的提示音（todolist 第 62 条，设置 `voice-input.chime`）：放完再开麦，免得录进去；读不到设置的当开着
+    opening = true;
+    chiming = await request('config.get', { keys: ['voice-input.chime'] }).then(chimeOn, () => true);
+    if (chiming && rec === r) await chime('start');
+    // 响着的时候又点了一下：当没开始
+    if (!opening || rec !== r) return;
+    opening = false;
     try {
       await r.start();
     } catch (err) {
@@ -95,13 +107,24 @@ export function apply(ctx) {
       ctx.composer.say(key ? t(`errors.${key}`) : t('errors.other', { reason: /** @type {any} */ (err)?.message ?? String(err) }));
     }
   };
-  const stop = () => rec?.end('stop');
+  const stop = () => {
+    // 开始那一声还没放完、麦还没开：收回去，不传空录音
+    if (opening) {
+      opening = false;
+      rec = null;
+      paint();
+      return;
+    }
+    rec?.end('stop');
+  };
   /** 停了：传上去、认成字、放进框里。 @param {Recorder} r @param {string} _why */
   const finish = async (r, _why) => {
     if (rec !== r) return;
     rec = null;
     busy = true;
     paint();
+    // 停下的提示音：不等它，接着传
+    if (chiming) chime('stop');
     try {
       const bytes = r.wav();
       const put = await upload(request, { name: 'voice.wav', size: bytes.length }, 'audio/wav',
