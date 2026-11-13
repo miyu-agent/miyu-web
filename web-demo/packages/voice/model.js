@@ -214,7 +214,7 @@ export function stopRun(run) {
 }
 
 /** 字表里有一句话的出错码（核心 `reference/bus.md`：总线的、`stt`、`tts` 的） */
-export const CODES = ['bad_audio', 'too_long', 'engine_failed', 'mic_busy', 'no_microphone', 'empty_text', 'not_configured', 'no_speaker', 'no_provider', 'not_exported'];
+export const CODES = ['bad_audio', 'too_long', 'silent_audio', 'engine_failed', 'mic_busy', 'no_microphone', 'empty_text', 'not_configured', 'no_speaker', 'no_provider', 'not_exported'];
 
 /**
  * 出错了照哪一句说：提供方的出错码在 `data.code`（核心转成 `method_failed`），总线自己的在 `reason`；字表里有的交它的键，

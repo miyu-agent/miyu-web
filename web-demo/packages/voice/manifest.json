@@ -101,6 +101,7 @@
       "errors": {
         "bad_audio": "录下的声音认不了",
         "too_long": "说得太长了，分几次说",
+        "silent_audio": "录到的全是静音：麦克风可能被静音、没插好，或者系统的默认输入没有声音",
         "engine_failed": "识别引擎出错了",
         "mic_busy": "麦克风正被占用",
         "no_microphone": "找不到麦克风",
@@ -126,6 +127,7 @@
       "errors": {
         "bad_audio": "Couldn't read the recording",
         "too_long": "Too long. Say it in parts",
+        "silent_audio": "The recording was silent. The microphone may be muted or unplugged, or the system default input has no sound",
         "engine_failed": "The speech engine failed",
         "mic_busy": "The microphone is in use",
         "no_microphone": "No microphone found",
@@ -151,6 +153,7 @@
       "errors": {
         "bad_audio": "録音を認識できません",
         "too_long": "長すぎます。分けて話してください",
+        "silent_audio": "録音が無音でした。マイクがミュートか未接続、またはシステムの既定の入力に音がありません",
         "engine_failed": "音声エンジンでエラーが起きました",
         "mic_busy": "マイクは使用中です",
         "no_microphone": "マイクが見つかりません",

@@ -62,6 +62,8 @@ test('切句：照句末标点、换行切，短的并进下一句，长的照�
 
 test('出错码：提供方的在 data.code，总线的在 reason；不认得的交 null 照原话说', () => {
   assert.equal(errorKey({ reason: 'method_failed', data: { code: 'mic_busy' } }), 'mic_busy');
+  // 语音包 VO-26：整段数字静音（麦克风静音、系统默认输入没声音）照字表说
+  assert.equal(errorKey({ reason: 'method_failed', data: { code: 'silent_audio' } }), 'silent_audio');
   assert.equal(errorKey({ reason: 'no_provider', data: { name: 'stt' } }), 'no_provider');
   assert.equal(errorKey({ reason: 'method_failed', data: { code: 'weird' } }), null);
   assert.equal(errorKey(new Error('x')), null);
