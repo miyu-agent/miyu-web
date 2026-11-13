@@ -97,6 +97,8 @@ const player = (plays) => {
       if (how === 'end') { queueMicrotask(() => audio.onended()); return Promise.resolve(); }
       if (how === 'bad') { queueMicrotask(() => audio.onerror()); return Promise.resolve(); }
       if (how === 'never') return new Promise(() => {});
+      // 抛 AbortError 却照样在放（火狐上见过）：随后照常放完
+      if (how === 'abort-playing') { audio.paused = false; setTimeout(() => audio.onended?.(), 5); return Promise.reject(abort()); }
       return Promise.reject(how === 'abort' ? abort() : how);
     } };
     return audio;
@@ -112,6 +114,27 @@ test('朗读被打断（AbortError）不算出错：再放一次，放得出来�
   const p = player(['abort', 'end']);
   await playSentence(run(), p.make, broken);
   assert.equal(p.made(), 2, '再放了一次');
+});
+
+test('被打断再放之前，原来那个停掉、音源清掉（同一句不会两个同时响）', async () => {
+  const calls = [];
+  let made = 0;
+  const make = () => {
+    const n = ++made;
+    const audio = { onended: null, onerror: null, paused: true,
+      pause: () => calls.push(`pause ${n}`), removeAttribute: (k) => calls.push(`clear ${n} ${k}`), load: () => calls.push(`load ${n}`),
+      play: () => (n === 1 ? Promise.reject(abort()) : (queueMicrotask(() => audio.onended()), Promise.resolve())) };
+    return audio;
+  };
+  await playSentence(run(), make, broken);
+  assert.deepEqual(calls, ['pause 1', 'clear 1 src', 'load 1']);
+  assert.equal(made, 2);
+});
+
+test('抛了 AbortError 却照样在放的：等它放完，不再造第二个（两个同时响像回音，2026-11-13 主人 1113 初验第 5 条）', async () => {
+  const p = player(['abort-playing', 'end']);
+  await playSentence(run(), p.make, broken);
+  assert.equal(p.made(), 1, '只有一个在放');
 });
 
 test('朗读连着被打断：跳过这一句，不抛出错', async () => {

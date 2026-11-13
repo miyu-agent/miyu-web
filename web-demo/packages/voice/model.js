@@ -185,7 +185,18 @@ export function playSentence(run, make, broken, tries = 2) {
     audio.onerror = () => reject(broken());
     audio.play().catch((/** @type {any} */ err) => {
       if (!interrupted(err)) return reject(err);
-      if (run.stopped || tries <= 1) return resolve();
+      if (run.stopped) return resolve();
+      // 抛了 AbortError 却照样在放（火狐上 blob 地址这样过）：等它放完，不另造一个——原来再放一次，两个同时响，听着像回音
+      // （2026-11-13 主人 1113 初验第 5 条：「播报语音有回音，感觉是两个音轨在同时重复播放」）
+      if (audio.paused === false) return;
+      // 再放之前先把这一个停干净、清掉音源，免得它后来又响起来
+      audio.onended = null;
+      audio.onerror = null;
+      audio.pause?.();
+      audio.removeAttribute?.('src');
+      audio.load?.();
+      if (tries <= 1) return resolve();
+      console.warn('朗读的这一句被打断（AbortError），停掉原来那个再放一次');
       playSentence(run, make, broken, tries - 1).then(resolve, reject);
     });
   });
