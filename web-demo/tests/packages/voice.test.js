@@ -1,7 +1,7 @@
 // 语音（软件包 voice，W-1128）的纯逻辑：总线上能不能用、降采样、打 wav、静下来算说完、切句、出错码。
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ready, downsample, wav, loudness, Silence, sentences, errorKey, micErrorKey, insertAt, RATE, interrupted, playSentence } from '../../packages/voice/model.js';
+import { ready, downsample, wav, loudness, Silence, sentences, errorKey, micErrorKey, insertAt, RATE, interrupted, playSentence, stopRun } from '../../packages/voice/model.js';
 
 test('总线上 stt、tts 有人提供、ready 才算能用，不认包名', () => {
   const names = [
@@ -88,59 +88,59 @@ test('麦克风挂在发送左边（composer.send_side），不在左边那一�
 // 发版前 check 29（2026-11-11 项目主人）：朗读时冒出「语音出错：The fetching process for the media resource was aborted by the user agent
 // at the user's request」——浏览器的 AbortError（还没放起来就被停、被换掉），原来当出错说给人。
 const abort = () => Object.assign(new Error("The fetching process for the media resource was aborted by the user agent at the user's request"), { name: 'AbortError' });
-/** 假的播放器：`plays` 一个个照着来，'end' 放完、'abort' 被打断、'bad' 音频坏了、'never' 一直放着、别的错原样抛 */
+/** 假的播放器：`plays` 照 `play()` 的先后一个个来（同一个元素再放也往下取），'end' 放完、'abort' 被打断、'abort-playing' 拒成
+ * AbortError 却照样在放（火狐上见过，随后放完）、'bad' 音频坏了、'never' 一直放着、别的错原样抛 */
 const player = (plays) => {
   let made = 0;
+  let played = 0;
+  const all = [];
   const make = () => {
-    const how = plays[made++];
-    const audio = { onended: null, onerror: null, play: () => {
+    made++;
+    const audio = { onended: null, onerror: null, paused: true, pauses: 0, pause: () => { audio.pauses++; audio.paused = true; }, play: () => {
+      const how = plays[played++];
       if (how === 'end') { queueMicrotask(() => audio.onended()); return Promise.resolve(); }
       if (how === 'bad') { queueMicrotask(() => audio.onerror()); return Promise.resolve(); }
-      if (how === 'never') return new Promise(() => {});
-      // 抛 AbortError 却照样在放（火狐上见过）：随后照常放完
+      if (how === 'never') { audio.paused = false; return new Promise(() => {}); }
       if (how === 'abort-playing') { audio.paused = false; setTimeout(() => audio.onended?.(), 5); return Promise.reject(abort()); }
       return Promise.reject(how === 'abort' ? abort() : how);
     } };
+    all.push(audio);
     return audio;
   };
-  return { make, made: () => made };
+  return { make, made: () => made, played: () => played, all };
 };
-const run = () => ({ audio: null, stopped: false, cancel: null });
+const run = () => ({ audio: null, audios: [], stopped: false, cancel: null });
 const broken = () => new Error('这一句放不出来');
 
-test('朗读被打断（AbortError）不算出错：再放一次，放得出来就照常放完', async () => {
+test('朗读被打断（AbortError）不算出错：在同一个播放器上再放一次，放得出来就照常放完', async () => {
   assert.equal(interrupted(abort()), true);
   assert.equal(interrupted(new Error('x')), false);
   const p = player(['abort', 'end']);
   await playSentence(run(), p.make, broken);
-  assert.equal(p.made(), 2, '再放了一次');
+  assert.deepEqual([p.made(), p.played()], [1, 2], '同一个元素再放，不另造（另造的话两个会同时响）');
 });
 
-test('被打断再放之前，原来那个停掉、音源清掉（同一句不会两个同时响）', async () => {
-  const calls = [];
-  let made = 0;
-  const make = () => {
-    const n = ++made;
-    const audio = { onended: null, onerror: null, paused: true,
-      pause: () => calls.push(`pause ${n}`), removeAttribute: (k) => calls.push(`clear ${n} ${k}`), load: () => calls.push(`load ${n}`),
-      play: () => (n === 1 ? Promise.reject(abort()) : (queueMicrotask(() => audio.onended()), Promise.resolve())) };
-    return audio;
-  };
-  await playSentence(run(), make, broken);
-  assert.deepEqual(calls, ['pause 1', 'clear 1 src', 'load 1']);
-  assert.equal(made, 2);
-});
-
-test('抛了 AbortError 却照样在放的：等它放完，不再造第二个（两个同时响像回音，2026-11-13 主人 1113 初验第 5 条）', async () => {
+test('抛了 AbortError 却照样在放的：等它放完，不重放（火狐每句两遍、像回音，2026-11-13 主人 1113 初验第 5 条）', async () => {
   const p = player(['abort-playing', 'end']);
   await playSentence(run(), p.make, broken);
-  assert.equal(p.made(), 1, '只有一个在放');
+  assert.deepEqual([p.made(), p.played()], [1, 1], '只放了一遍');
 });
 
 test('朗读连着被打断：跳过这一句，不抛出错', async () => {
   const p = player(['abort', 'abort', 'end']);
   await playSentence(run(), p.make, broken);
-  assert.equal(p.made(), 2, '只再放一次');
+  assert.deepEqual([p.made(), p.played()], [1, 2], '只再放一次');
+});
+
+test('停下一轮：这一轮造过的播放器全停、等着的那一句交回（第二下点朗读是停，前面的不再叠着响）', async () => {
+  const p = player(['end', 'never']);
+  const r = run();
+  await playSentence(r, p.make, broken);
+  const second = playSentence(r, p.make, broken);
+  stopRun(r);
+  await second;
+  assert.equal(r.stopped, true);
+  assert.deepEqual(p.all.map((a) => a.pauses), [1, 1], '两句的播放器都停了');
 });
 
 test('人点了停：放着的那一句当场交回，随后浏览器抛的 AbortError 不再放、不出错', async () => {

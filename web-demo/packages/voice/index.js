@@ -11,13 +11,13 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { upload } from '../../src/lib/upload.js';
-import { ready, sentences, errorKey, micErrorKey, interrupted, playSentence } from './model.js';
+import { ready, sentences, errorKey, micErrorKey, interrupted, playSentence, stopRun } from './model.js';
 import { Recorder } from './recorder.js';
 
 /** 按住超过这么久再松开的算按住说话，松开就停（毫秒）；短的是点一下，接着录 */
 const HOLD_MS = 450;
 
-/** @typedef {{key: string, audio: HTMLAudioElement|null, stopped: boolean, cancel: (() => void)|null}} Run 正在念的一轮：哪一轮、放着的那一句、停了没有、停的时候叫醒等着的 */
+/** @typedef {{key: string, audio: HTMLAudioElement|null, audios?: HTMLAudioElement[], stopped: boolean, cancel: (() => void)|null}} Run 正在念的一轮：哪一轮、放着的那一句、停了没有、停的时候叫醒等着的 */
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -173,9 +173,8 @@ export function apply(ctx) {
   /** 停下正在念的。 */
   const hush = () => {
     if (!playing) return;
-    playing.stopped = true;
-    playing.audio?.pause();
-    playing.cancel?.();
+    // 这一轮造过的都停（火狐上被打断的那个可能还在响，2026-11-13 主人 1113 初验第 5 条）
+    stopRun(playing);
     playing = null;
     paintSpeak();
   };
@@ -198,7 +197,7 @@ export function apply(ctx) {
     const parts = sentences(text);
     if (!parts.length) return;
     /** @type {Run} */
-    const run = { key, audio: null, stopped: false, cancel: null };
+    const run = { key, audio: null, audios: [], stopped: false, cancel: null };
     playing = run;
     paintSpeak();
     const persona = ctx.chat.persona?.(session) ?? null;

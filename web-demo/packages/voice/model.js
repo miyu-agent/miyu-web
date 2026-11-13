@@ -168,10 +168,13 @@ export function interrupted(err) {
 }
 
 /**
- * 放一句，放完了交回；人停了的（`run.stopped`，`run.cancel` 叫醒）也算放完。被打断的（[`interrupted`]）不算出错：没停的再放一次
- * （`tries` 一共放几次），还被打断就跳过这一句；音频坏了、放不出来的（`onerror`、别的错）照旧抛出去。
- * @param {{audio: any, stopped: boolean, cancel: (() => void)|null}} run 正在念的一轮
- * @param {() => {play: () => Promise<void>, onended: any, onerror: any}} make 造这一句的播放器
+ * 放一句，放完了交回；人停了的（`run.stopped`，`run.cancel` 叫醒）也算放完。被打断的（[`interrupted`]）不算出错。
+ * 2026-11-13 主人 1113 初验第 5 条（火狐，每一句都有回音；同一段反复点朗读会一遍遍叠着放）：火狐 `play()` 拒成 AbortError 时元素可能
+ * 照样在放。原来照拒绝新造第二个元素再放同一句（每句两遍），两遍都算放完才交回，交回以后旧的那个还在响、没人停它。现在：拒了却还在放的
+ * （`paused` 是 false）等它放完、不重放；真停了的在同一个元素上再 `play()`（`tries` 一共放几次），还被打断就跳过这一句。这一轮造过的
+ * 元素都记在 `run.audios`，人停的时候全停（`index.js` 的 `hush`）。音频坏了、放不出来的（`onerror`、别的错）照旧抛出去。
+ * @param {{audio: any, audios?: any[], stopped: boolean, cancel: (() => void)|null}} run 正在念的一轮
+ * @param {() => {play: () => Promise<void>, onended: any, onerror: any, paused?: boolean}} make 造这一句的播放器
  * @param {() => Error} broken 音频坏了时抛什么
  * @param {number} [tries]
  * @returns {Promise<void>}
@@ -180,26 +183,34 @@ export function playSentence(run, make, broken, tries = 2) {
   return new Promise((resolve, reject) => {
     const audio = make();
     run.audio = audio;
+    (run.audios ??= []).push(audio);
     run.cancel = () => resolve();
     audio.onended = () => resolve();
     audio.onerror = () => reject(broken());
-    audio.play().catch((/** @type {any} */ err) => {
-      if (!interrupted(err)) return reject(err);
-      if (run.stopped) return resolve();
-      // 抛了 AbortError 却照样在放（火狐上 blob 地址这样过）：等它放完，不另造一个——原来再放一次，两个同时响，听着像回音
-      // （2026-11-13 主人 1113 初验第 5 条：「播报语音有回音，感觉是两个音轨在同时重复播放」）
-      if (audio.paused === false) return;
-      // 再放之前先把这一个停干净、清掉音源，免得它后来又响起来
-      audio.onended = null;
-      audio.onerror = null;
-      audio.pause?.();
-      audio.removeAttribute?.('src');
-      audio.load?.();
-      if (tries <= 1) return resolve();
-      console.warn('朗读的这一句被打断（AbortError），停掉原来那个再放一次');
-      playSentence(run, make, broken, tries - 1).then(resolve, reject);
-    });
+    const attempt = (/** @type {number} */ left) => {
+      audio.play().catch((/** @type {any} */ err) => {
+        if (!interrupted(err)) return reject(err);
+        if (run.stopped) return resolve();
+        // 拒了却照样在放：等它放完（`onended`），不另起一遍
+        if (audio.paused === false) return;
+        if (left <= 1) return resolve();
+        console.warn('朗读的这一句被打断（AbortError），在同一个播放器上再放一次');
+        attempt(left - 1);
+      });
+    };
+    attempt(tries);
   });
+}
+
+/**
+ * 停下正在念的一轮：记成停了，这一轮造过的播放器全停，叫醒等着的那一句（`index.js` 的 `hush`；2026-11-13 主人 1113 初验第 5 条：
+ * 火狐上同一段反复点朗读会叠着放，前面的不停）。
+ * @param {{audio: any, audios?: any[], stopped: boolean, cancel: (() => void)|null}} run
+ */
+export function stopRun(run) {
+  run.stopped = true;
+  for (const audio of run.audios?.length ? run.audios : [run.audio]) audio?.pause?.();
+  run.cancel?.();
 }
 
 /** 字表里有一句话的出错码（核心 `reference/bus.md`：总线的、`stt`、`tts` 的） */
