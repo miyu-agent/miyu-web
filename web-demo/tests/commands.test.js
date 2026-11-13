@@ -134,6 +134,10 @@ test('核心认的命令（command.catalog）：写成交给核心的命令，�
   assert.deepEqual(core[1], { name: 'remember', aliases: [], summary: '记一条记忆', run: 'core', args: true, argument: '<内容>' });
   const local = [{ name: 'clear', aliases: ['reset'], summary: '网页的清空', run: 'clear' }, { name: 'help', summary: '帮助', run: 'help' }];
   assert.deepEqual(mergeSpecs(local, core).map((s) => `${s.name}:${s.run}`), ['clear:clear', 'help:help', 'remember:core']);
+  // 同名的说明照核心清单（2026-11-13 主人验收 1113），核心没列的照网页自己的
+  const merged = mergeSpecs(local, core);
+  assert.equal(merged[0].summary, '清空上下文');
+  assert.equal(merged[1].summary, '帮助');
 });
 
 test('空会话里打了核心认的命令（要造好的会话才能用）：不当话发出去，交 later；别的照旧（2026-10-10）', () => {

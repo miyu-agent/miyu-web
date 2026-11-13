@@ -570,7 +570,7 @@
     "loading": "正在加载模型列表…",
     "empty": "未配置模型",
     "effort": {
-      "title": "思考强度",
+      "title": "思考程度",
       "default": "默认",
       "levels": {
         "off": "关",

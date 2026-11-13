@@ -31,12 +31,19 @@ export function coreSpecs(catalog) {
 
 /**
  * 网页自己的（出厂的、软件包登记的）在前，核心的接在后面；核心的名字、别名和网页的撞了的不要（网页的那条做得更多：空会话里怎么说、
- * 回执怎么画），核心新加的命令网页不用改就有。
+ * 回执怎么画），核心新加的命令网页不用改就有。网页自己的、核心清单也列了同名的（`/stop`、`/clear`、`/goal`……）：做法照网页的，说明、
+ * 参数提示、几种写法照核心那条（2026-11-13 主人验收 1113：`/stop` 写的还是头自己那句旧说明，核心 11-09 早改了）。
  * @param {Spec[]} local @param {Spec[]} core @returns {Spec[]}
  */
 export function mergeSpecs(local, core) {
+  const byName = new Map(core.map((s) => [s.name, s]));
+  const own = local.map((s) => {
+    const c = byName.get(s.name);
+    if (!c) return s;
+    return { ...s, ...(c.summary ? { summary: c.summary } : {}), ...(c.argument ? { argument: c.argument } : {}), ...(c.usage?.length ? { usage: c.usage } : {}) };
+  });
   const taken = new Set(local.flatMap((s) => [s.name, ...(s.aliases ?? [])]));
-  return [...local, ...core.filter((s) => ![s.name, ...(s.aliases ?? [])].some((n) => taken.has(n)))];
+  return [...own, ...core.filter((s) => ![s.name, ...(s.aliases ?? [])].some((n) => taken.has(n)))];
 }
 /**
  * @typedef {{kind: 'command', spec: Spec, words: string|null}|{kind: 'unlisted', name: string, words: string|null, opens?: boolean}|{kind: 'unknown'}|{kind: 'later'}|{kind: 'needs_words', spec: Spec}|{kind: 'empty_fixed', spec: Spec}|{kind: 'talk'}} Line

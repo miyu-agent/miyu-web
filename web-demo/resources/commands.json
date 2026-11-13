@@ -76,9 +76,9 @@
     {
       "name": "stop",
       "summary": {
-        "zh": "停止全部：中断本轮、后台命令和子代理，丢弃排队的消息",
-        "en": "Stop everything: interrupt this turn, background commands and subagents, discard queued messages",
-        "ja": "すべて止める：今の返信を中断し、バックグラウンドのコマンドとサブエージェントも止める。待機中のメッセージは送らない"
+        "zh": "停止此会话所有处理中的东西",
+        "en": "Stop everything running in the session",
+        "ja": "セッションで動いているものをすべて止める"
       },
       "run": "stop"
     },

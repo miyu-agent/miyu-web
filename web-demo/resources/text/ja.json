@@ -570,7 +570,7 @@
     "loading": "モデル一覧を読み込み中…",
     "empty": "モデルが設定されていません",
     "effort": {
-      "title": "思考の強さ",
+      "title": "思考の程度",
       "default": "既定",
       "levels": {
         "off": "オフ",

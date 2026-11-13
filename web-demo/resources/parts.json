@@ -3451,7 +3451,7 @@
     ]
   },
   "footer.model-effort": {
-    "zh": "框下面那一行：模型思考强度",
+    "zh": "框下面那一行：模型思考程度",
     "select": [
       ".footer-model-effort"
     ]
@@ -3673,7 +3673,7 @@
     ]
   },
   "model.menu-line": {
-    "zh": "思考强度那一行",
+    "zh": "思考程度那一行",
     "select": [
       ".model-menu-line"
     ]
