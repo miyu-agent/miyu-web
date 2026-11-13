@@ -19,11 +19,13 @@
 .dock-above { display: grid; grid-template-columns: minmax(0, 1fr); }
 .dock-above > * { grid-column: 1 / -1; }
 .dock-above > .dock-lane { grid-row: 99; }
-/* 有长期目标时这一行分两格：目标占右边它要的宽，`.dock-beside`（循环的下次，软件包 schedules）在左边剩下的里面靠右，不往目标上压
-   （蓝图「定时任务」第 2b 条）；运行状态行照旧横跨整行 */
-.dock-above:has(> .dock-goal.is-on) { grid-template-columns: minmax(0, 1fr) auto; }
-.dock-above:has(> .dock-goal.is-on) > .dock-goal { grid-column: 2; }
-.dock-above:has(> .dock-goal.is-on) > .dock-beside { grid-column: 1; }
+/* 右边有东西时这一行分三格（蓝图「定时任务」第 2b 条）：长期目标最靠右、占它要的宽；`.dock-beside`（循环的下次，软件包 schedules）
+   挨在它左边，挤的时候先让运行状态行、再缩它自己；运行状态行在最左那格，长了截掉，不从右边两截底下穿过去。收着的照旧横跨整行（收的动画在原处） */
+.dock-above:has(> .dock-goal.is-on, > .dock-beside.is-on) { grid-template-columns: minmax(0, 1fr) minmax(0, max-content) auto; }
+.dock-above:has(> .dock-goal.is-on, > .dock-beside.is-on) > .dock-lane { grid-column: 1; }
+.dock-above:has(> .dock-goal.is-on, > .dock-beside.is-on) > .dock-beside.is-on { grid-column: 2; }
+.dock-above:has(> .dock-goal.is-on, > .dock-beside.is-on) > .dock-goal.is-on { grid-column: 3; }
+.dock-above > .dock-goal:not(.is-on), .dock-above > .dock-beside:not(.is-on) { grid-column: 1 / -1; }
 
 /* 提示在回答时、有长期目标或循环标记那一行时浮到这一行上面：用独立的 translate，不碰提示自己的定位和 transform */
 .composer-dock:has(.dock-goal.is-on, .dock-beside.is-on) .composer-notice { translate: 0 calc(-1 * (var(--pulse-row) + var(--pulse-gap))); }

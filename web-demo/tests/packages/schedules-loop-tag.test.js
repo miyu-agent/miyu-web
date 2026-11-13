@@ -58,10 +58,13 @@ test('放不放得下（照终端 fit）：整截、只有图标、都不画', (
   assert.equal(fitOf(10, 80, 14), 'none');
 });
 
-test('有长期目标时这一行分两格，循环标记在左边那格、不压目标（styles/dock.css）', () => {
+test('右边有东西时这一行分三格：运行状态行在左、截掉，循环标记挨着目标、不压它（styles/dock.css）', () => {
   const css = readFileSync(new URL('../../styles/dock.css', import.meta.url), 'utf8');
-  assert.match(css, /\.dock-above:has\(> \.dock-goal\.is-on\) \{ grid-template-columns: minmax\(0, 1fr\) auto; \}/);
-  assert.match(css, /\.dock-above:has\(> \.dock-goal\.is-on\) > \.dock-goal \{ grid-column: 2; \}/);
-  assert.match(css, /\.dock-above:has\(> \.dock-goal\.is-on\) > \.dock-beside \{ grid-column: 1; \}/);
-  assert.match(css, /\.dock-above > \* \{ grid-column: 1 \/ -1; \}/, '待办这些照旧横跨整行，不被分进两格');
+  const on = '.dock-above:has(> .dock-goal.is-on, > .dock-beside.is-on)';
+  const rule = (/** @type {string} */ sel, /** @type {string} */ body) => assert.ok(css.includes(`${sel} { ${body} }`), `${sel} { ${body} }`);
+  rule(on, 'grid-template-columns: minmax(0, 1fr) minmax(0, max-content) auto;');
+  rule(`${on} > .dock-lane`, 'grid-column: 1;');
+  rule(`${on} > .dock-beside.is-on`, 'grid-column: 2;');
+  rule(`${on} > .dock-goal.is-on`, 'grid-column: 3;');
+  rule('.dock-above > *', 'grid-column: 1 / -1;');
 });

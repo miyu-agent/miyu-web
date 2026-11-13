@@ -81,9 +81,9 @@
 .sch-open:hover .sch-prompt { text-decoration: underline; text-underline-offset: 3px; }
 
 /* 输入框右上方的循环标记（蓝图「定时任务」第 2b 条）：和运行状态行、长期目标同一行（styles/dock.css 的 .dock-lane、.dock-beside），
-   同样的上下空和左右边距，靠右；有长期目标时右边不留边距（目标那一截左边的边距就是中间的空）。暗字，停着的再暗一档 */
+   同样的上下空和右边距，靠右；左边的空是运行状态行右边那一截，有长期目标时右边不留边距（目标那一截左边的边距就是中间的空）。暗字，停着的再暗一档 */
 .dock-loop { align-self: start; min-width: 0; }
-.loop-body { display: flex; justify-content: flex-end; min-width: 0; overflow: hidden; padding: var(--pulse-clear) calc(19px * var(--space)) var(--pulse-gap); }
+.loop-body { display: flex; justify-content: flex-end; min-width: 0; overflow: hidden; padding: var(--pulse-clear) calc(19px * var(--space)) var(--pulse-gap) 0; }
 .dock-above:has(> .dock-goal.is-on) .loop-body { padding-right: 0; }
 .loop-pill {
   display: inline-flex; flex: none; align-items: center; gap: calc(6px * var(--space)); height: var(--pulse-row); padding: 0; border: 0; background: none;
