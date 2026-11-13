@@ -378,6 +378,11 @@ function noticeItem(e, jobs) {
       return keyed(peerNote(event('peer.idle', { session: e.session, reason: e.reason, status: e.status })));
     case 'answered':
       return answeredNote(e);
+    case 'retitle_failed':
+      // 人要的重起标题没起成（核心 TT-3，2026-11-13：超时、出错、模型回工具调用或空字），标题没变：红点一行，字照核心写好的
+      // （「更改标题失败」），后面接那一次的错。只在视图流里有，刷新就没了
+      return keyed({ type: 'note', seq, turn: null, tone: 'failed', mark: res.layout.note_marks.failed,
+        text: e.error ? `${e.text ?? ''} · ${failureText(e.error)}` : String(e.text ?? ''), detail: null });
     default:
       // `reverted`（撤销：提示在输入框上面）、`paused`（暂停了自动压缩：原来也不画）这些不画
       return null;

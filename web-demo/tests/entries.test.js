@@ -298,3 +298,12 @@ test('监视着的后台命令出了一批行：一行「有新输出」、空�
   assert.deepEqual(got.items[0].detail, { kind: 'output', command: 'tail -f log', hash: null, chars: null, job: 'j1', nested: false, text: 'ERROR disk full\nERROR again' });
   assert.equal(got.items[1].tone, 'stopped');
 });
+
+test('人要的重起标题没起成（核心 TT-3 的旁白 retitle_failed）：红点一行，照核心写好的字，后面接那一次的错', () => {
+  const AT = '2026-11-13T10:00:00Z';
+  const got = itemsOf([{ id: 'x5.1', kind: 'notice', what: 'retitle_failed', text: '更改标题失败', error: { message: 'timed out' }, at: AT }], { state: 'idle' });
+  const note = got.items.find((it) => it.type === 'note');
+  assert.ok(note, JSON.stringify(got.items));
+  assert.equal(note.tone, 'failed');
+  assert.ok(note.text.startsWith('更改标题失败'), note.text);
+});
