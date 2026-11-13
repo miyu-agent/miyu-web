@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { itemsOf, stepOf } from '../src/model/entries.js';
+import { itemsOf, stepOf, levelName, levelOf } from '../src/model/entries.js';
 
 loadRes();
 
@@ -13,16 +13,16 @@ const AT = '2026-10-10T04:02:00.000Z';
 const brief = (items) => items.map((it) => `${it.type}: ${it.type === 'steps' ? it.steps.map((s) => s.kind).join(',') : it.slot ? `[${it.slot}]` : it.text}`);
 
 const turn3 = [
-  { id: 'm2', kind: 'user', text: '你好', turn: 3, level: 'workspace', at: AT },
+  { id: 'm2', kind: 'user', text: '你好', turn: 3, level: 'full', at: AT },
   { id: 'g6.0', kind: 'group', turn: 3, steps: ['b6.0', 'b6.1'], summary: [{ text: '思考了 1s' }], summary_en: [{ text: 'Thought for 1s' }, { text: ' · ' }, { text: '+3', tone: 'added' }], took_ms: 900, at: AT },
   { id: 'b6.0', kind: 'thought', group: 'g6.0', turn: 3, text: '想一想', took_ms: 300, at: AT },
   { id: 'b6.1', kind: 'tool', group: 'g6.0', turn: 3, call: 'c1', name: 'edit', state: 'ok', args: '{"file_path":"a.txt"}', title: { name: '编辑', object: '~/a.txt', said: '改了 1 处' }, diff: { added: 3, removed: 1 }, took_ms: 40, at: AT },
   { id: 'b6.2', kind: 'reply', turn: 3, text: '汪！', at: AT },
-  { id: 'e9', kind: 'end', turn: 3, level: 'workspace', reason: 'completed', endpoint: 'dev', model: 'm1', took_ms: 2216, usage: { uncached: 3000, cache_read: 1000, cache_write: 0, output: 150 }, at: AT },
+  { id: 'e9', kind: 'end', turn: 3, level: 'full', reason: 'completed', endpoint: 'dev', model: 'm1', took_ms: 2216, usage: { uncached: 3000, cache_read: 1000, cache_write: 0, output: 150 }, at: AT },
 ];
 
 test('一轮：你的话（开轮那一句）、时间线的一段、她的回答、收尾那一行；收起那一行照核心给的（界面语言是自动的照英文那份）', () => {
-  const got = itemsOf(turn3, { state: 'idle', permission: { level: 'workspace' } });
+  const got = itemsOf(turn3, { state: 'idle', permission: { level: 'full' } });
   assert.deepEqual(brief(got.items), ['user: 你好', 'steps: thought,tool', 'reply: 汪！', 'done: ⏵⏵ 12:02 · dev/m1 · 2.2s · 4.2k(C25%)'.replace('12:02', got.items[3].text.match(/\d\d:\d\d/)[0])]);
   const user = got.items[0];
   assert.equal(user.opens, true);
@@ -75,7 +75,7 @@ test('在跑：这一轮还没有她的条目画三个球；排着的话不进�
 });
 
 test('收尾那一行：打断的接后台还在跑的任务数，出错的照出错那一句，别的原因照界面的字', () => {
-  const end = (reason, extra = {}) => itemsOf([{ id: 'e1', kind: 'end', turn: 1, level: 'workspace', reason, at: AT, ...extra }], { state: 'idle', jobs: [{ job: 'j1', state: 'running' }, { job: 'j2', state: 'done' }] }).items[0];
+  const end = (reason, extra = {}) => itemsOf([{ id: 'e1', kind: 'end', turn: 1, level: 'full', reason, at: AT, ...extra }], { state: 'idle', jobs: [{ job: 'j1', state: 'running' }, { job: 'j2', state: 'done' }] }).items[0];
   assert.equal(end('interrupted').interrupted, true);
   assert.equal(end('interrupted').jobs, 1);
   assert.equal(end('error', { error: { class: 'auth', status: 401, message: 'bad key' } }).tone, 'error');
@@ -135,7 +135,7 @@ test('模块替她开的一轮（长期目标的续轮）：一行「目标 · �
   const entries = [
     { id: 'm4', kind: 'user', text: prompt, turn: 5, round: 2, from: { kind: 'module', id: 'goal' }, at: AT },
     { id: 'b9.0', kind: 'reply', turn: 5, text: '修好了一个。', at: AT },
-    { id: 'e9', kind: 'end', turn: 5, level: 'workspace', reason: 'completed', at: AT },
+    { id: 'e9', kind: 'end', turn: 5, level: 'full', reason: 'completed', at: AT },
     { id: 'm5', kind: 'user', text: prompt, turn: 6, from: { kind: 'module', id: 'goal' }, at: AT },
     { id: 'm6', kind: 'user', text: '别的', turn: 7, from: { kind: 'module', id: 'later' }, at: AT },
   ];
@@ -210,7 +210,7 @@ test('要人确认、没定就取消了的那一步：这一段后面一行交�
 test('她发出去的图（核心 X-19）：一张一条，排在那一步后面、跟着她这一轮；表情包、描述照原样；没有 blob 的、不认识的种类跳过', () => {
   const image = { kind: 'image', blob: 'ab12', media_type: 'image/gif', width: 300, height: 240 };
   const entries = [
-    { id: 'm2', kind: 'user', text: '来张图', turn: 4, level: 'workspace', at: AT },
+    { id: 'm2', kind: 'user', text: '来张图', turn: 4, level: 'full', at: AT },
     { id: 'g7.0', kind: 'group', turn: 4, steps: ['b7.0'], summary: [{ text: '发了表情包' }], at: AT },
     { id: 'b7.0', kind: 'tool', group: 'g7.0', turn: 4, call: 'c1', name: 'send_sticker', state: 'ok', args: '{}', at: AT },
     { id: 's8.0', kind: 'media', turn: 4, image, alt: '一只猫在点头', sticker: true, at: AT },
@@ -219,14 +219,14 @@ test('她发出去的图（核心 X-19）：一张一条，排在那一步后面
     { id: 'z9', kind: 'later_kind', turn: 4, at: AT },
     { id: 'b9.0', kind: 'reply', turn: 4, text: '喏', at: AT },
   ];
-  const got = itemsOf(entries, { state: 'busy', since: AT, permission: { level: 'workspace' } });
+  const got = itemsOf(entries, { state: 'busy', since: AT, permission: { level: 'full' } });
   assert.deepEqual(got.items.map((it) => `${it.type}:${it.key}`), ['user:m2', 'steps:g7.0', 'media:s8.0', 'media:s8.1', 'reply:b9.0']);
   assert.deepEqual(got.items[2], { type: 'media', key: 's8.0', turn: 4, image: { blob: 'ab12', media_type: 'image/gif', width: 300, height: 240, name: null }, alt: '一只猫在点头', sticker: true });
   assert.equal(got.items[3].sticker, false);
   assert.equal(got.items[3].alt, null);
   assert.equal(got.items[3].image.name, 'b.png');
   // 只发了图、还没开口的一轮也算她来过：不画三个球
-  const only = itemsOf(entries.slice(0, 4), { state: 'busy', since: AT, permission: { level: 'workspace' } });
+  const only = itemsOf(entries.slice(0, 4), { state: 'busy', since: AT, permission: { level: 'full' } });
   assert.equal(only.items.some((it) => it.type === 'waiting'), false);
 });
 
@@ -248,7 +248,7 @@ test('她 show 过的（核心 D-5）：接在那一段后面画在正文里，�
 test('收尾那一行接这一轮的出字速度（核心 SP-1 的 speed：输出 ÷ 首字到结束），没有这一格、ms 是 0 的不写（2026-10-26 项目主人：从框下面那一行挪过来）', async () => {
   const { speedText } = await import('../src/model/entries.js');
   const end = turn3.find((e) => e.kind === 'end');
-  const done = (speed) => itemsOf(turn3.map((e) => (e === end ? { ...e, speed } : e)), { state: 'idle', permission: { level: 'workspace' } }).items.at(-1).text.replace(/\d\d:\d\d/, 'HH:MM');
+  const done = (speed) => itemsOf(turn3.map((e) => (e === end ? { ...e, speed } : e)), { state: 'idle', permission: { level: 'full' } }).items.at(-1).text.replace(/\d\d:\d\d/, 'HH:MM');
   assert.equal(done({ output: 1410, ms: 10000 }), '⏵⏵ HH:MM · dev/m1 · 2.2s · 4.2k(C25%) · 141 tok/s');
   assert.equal(done(undefined), '⏵⏵ HH:MM · dev/m1 · 2.2s · 4.2k(C25%)');
   assert.equal(speedText({ output: 50, ms: 0 }), '');
@@ -259,7 +259,7 @@ test('收尾那一行接这一轮的出字速度（核心 SP-1 的 speed：输�
 test('收尾那一行在窄屏上放不下时少写几项：先去掉出字速度，再去掉用时，都放不下的交最短的（2026-11-03 项目主人，W-1082）', async () => {
   const { fitText } = await import('../src/model/entries.js');
   const end = turn3.find((e) => e.kind === 'end');
-  const item = (patch) => itemsOf(turn3.map((e) => (e === end ? { ...e, ...patch } : e)), { state: 'idle', permission: { level: 'workspace' } }).items.at(-1);
+  const item = (patch) => itemsOf(turn3.map((e) => (e === end ? { ...e, ...patch } : e)), { state: 'idle', permission: { level: 'full' } }).items.at(-1);
   const hm = (s) => s.replace(/\d\d:\d\d/, 'HH:MM');
   const full = item({ speed: { output: 1410, ms: 10000 } });
   assert.deepEqual([full.text, ...full.shorter].map(hm), [
@@ -306,4 +306,15 @@ test('人要的重起标题没起成（核心 TT-3 的旁白 retitle_failed）�
   assert.ok(note, JSON.stringify(got.items));
   assert.equal(note.tone, 'failed');
   assert.ok(note.text.startsWith('更改标题失败'), note.text);
+});
+
+test('权限级别只认 full：别的（以前的 workspace 也算）按只读，跟核心 AUD-4 一样按最严的算；没记的照旧', () => {
+  assert.equal(levelName('full'), 'full');
+  assert.equal(levelName('read_only'), 'read_only');
+  assert.equal(levelName('workspace'), 'read_only');
+  assert.equal(levelName(null), null);
+  assert.equal(levelOf({ level: 'full', read_only: false }), 'full');
+  assert.equal(levelOf({ level: 'full', read_only: true }), 'read_only');
+  assert.equal(levelOf({ level: 'workspace', read_only: false }), 'read_only');
+  assert.equal(levelOf(null), 'full');
 });

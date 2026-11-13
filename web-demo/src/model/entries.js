@@ -17,13 +17,16 @@ import { nestedTail } from '../lib/nested.js';
 import { speakerOf, moduleNote, peerNote, changeNote, modelNote, compactedNote, failureText, recapNote, compactFailedNote, workspaceNote } from './notes.js';
 
 /**
- * 记下的级别读成现在的两样（LV-3，2026-11-09 项目主人定：级别只剩「只读」「开放权限」，去掉「工作区」）：只读的是 `read_only`，
- * 别的（旧的 `workspace` 也算）都是 `full`；没记的是 `null`。 @param {string|null|undefined} level
+ * 记下的级别读成现在的两样（LV-3，2026-11-09 项目主人定：级别只剩「只读」「开放权限」）：`full` 是 `full`，别的都按只读
+ * （核心 AUD-4 起不认识的级别按最严的算，`guard.md`）；没记的是 `null`。 @param {string|null|undefined} level
  */
-export const levelName = (level) => (level == null ? null : level === 'read_only' ? 'read_only' : 'full');
+export const levelName = (level) => (level == null ? null : level === 'full' ? 'full' : 'read_only');
 
-/** 权限级别：只读的写 `read_only`，别的都是 `full`（`tui.md`「正文」第 4 条；LV-3 起没有工作区一级）。 @param {any} p */
-export const levelOf = (p) => (p?.read_only ? 'read_only' : 'full');
+/**
+ * 权限级别：只读开关开着、或者级别不是 `full` 的写 `read_only`，别的是 `full`（`tui.md`「正文」第 4 条；核心 AUD-4 起不认识的级别
+ * 按只读算）；没有权限这一格的照 `full`。 @param {any} p
+ */
+export const levelOf = (p) => (p == null ? 'full' : p.read_only || p.level !== 'full' ? 'read_only' : 'full');
 
 /** 条目编号里的序号（`m12`、`e30` → 12、30；`b6.1` → 6）：排排着的话、回报的编号用。 @param {string} id */
 export const seqOf = (id) => Number.parseInt(String(id).replace(/^[a-z]+/, ''), 10) || 0;

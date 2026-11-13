@@ -13,7 +13,7 @@ const u = (uncached, cache_read, output) => ({ uncached, cache_read, cache_write
 /** 会话状态（核心 9-8 的 `view.status`）：一次主请求以后的样子 */
 const status = {
   state: 'idle',
-  permission: { level: 'workspace', read_only: false },
+  permission: { level: 'full', read_only: false },
   model: { endpoint: 'deepseek', model: 'deepseek-v4' },
   speed: { output: 50, ms: 10000 },
   context: { window: 1_000_000, used: 2300 },
@@ -37,7 +37,7 @@ test('累计和花费连子代理（usage_tree，同终端的 Σ，2026-11-02 �
 test('只读开着写只读，只读盖过常用的那一级；还是 0 的不写；没有会话状态的是开放权限、什么数都不写', () => {
   assert.equal(statusFooter({ ...status, permission: { level: 'full', read_only: true } }).left.label, '⏸ 只读');
   assert.equal(statusFooter({ ...status, permission: { level: 'full', read_only: false } }).left.level, 'full');
-  const fresh = statusFooter({ state: 'idle', permission: { level: 'workspace', read_only: false }, context: { window: 1_000_000, used: 0 } });
+  const fresh = statusFooter({ state: 'idle', permission: { level: 'full', read_only: false }, context: { window: 1_000_000, used: 0 } });
   assert.equal(fresh.left.model, null);
   assert.deepEqual(fresh.right, []);
   assert.equal(fresh.ring, null);
@@ -101,11 +101,10 @@ test('点一下换下一级：开放权限 ⇄ 只读（LV-3 起没有工作区�
   assert.equal(levelLabel('full'), '⏵⏵ 开放权限');
 });
 
-test('换级别发给核心的参数：只读只开只读开关；开放权限写 full 并关掉只读，不再发 workspace（LV-3）', async () => {
+test('换级别发给核心的参数：只读只开只读开关；开放权限写 full 并关掉只读（LV-3）', async () => {
   const { levelParams } = await import('../src/model/footer.js');
   assert.deepEqual(levelParams('read_only'), { read_only: true });
   assert.deepEqual(levelParams('full'), { level: 'full', read_only: false });
-  assert.deepEqual(levelParams('workspace'), { level: 'full', read_only: false }, '不再发 workspace');
 });
 
 test('会话设了上下文上限（核心 CTX-1，设计 68，W-1129）：底栏那一行不写它（2026-11-11 项目主人：footer 去掉），悬停环接「会话上限」；没设的不写', () => {
