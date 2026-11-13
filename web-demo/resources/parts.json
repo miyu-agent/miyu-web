@@ -1231,7 +1231,8 @@
   "set.title": {
     "zh": "设置页：标题",
     "select": [
-      ".set-title"
+      ".set-title",
+      ".set-side-title"
     ]
   },
   "set.back": {

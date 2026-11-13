@@ -3,6 +3,7 @@
 //! （`config.set`），别处改了（`config.changed`）重读重画，正在改的那一项不被冲掉。各页怎么画在 `rows.js`、`look.js`、`models.js`。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
+import { BackHistory } from './back-history.js';
 import { drawMarket, marketPush } from './market.js';
 import { accessGroup, avatarGroup, relisten, LISTEN_KEYS } from './account.js';
 import { hasPrivate, privateGroup } from './privacy.js';
@@ -82,7 +83,10 @@ export class SettingsDialog {
     /** 点进去的一层（软件包的设置，`subpage.js`） */
     this.sub = new Subpage();
     this.panel = h('section.set-panel', { role: 'dialog', 'aria-modal': 'true', 'aria-label': this.ctx.text('title'), style: `--set-w: ${cfg.width}px; --set-h: ${cfg.height}px` },
-      h('aside.set-side', h('label.set-search-box', icon('search'), this.search), this.nav),
+      // 窄屏的分页列表顶上一行：「设置」和关掉（2026-11-13 主人验 check 7：手机上列表这一层没有关的按钮，回不到对话）
+      h('aside.set-side', h('div.set-side-head', h('strong.set-side-title', this.ctx.text('title')),
+        h('button.icon-button.set-close', { type: 'button', title: this.ctx.text('close'), 'aria-label': this.ctx.text('close'), onclick: () => this.close() }, icon('x'))),
+      h('label.set-search-box', icon('search'), this.search), this.nav),
       h('div.set-main',
         h('header.set-head', h('button.set-back', { type: 'button', onclick: () => this.back() }, icon('chevron-left'), h('span.set-back-text', this.ctx.text('back')), h('span.set-back-sub', this.ctx.text('back_sub'))), this.title,
           h('button.icon-button.set-close', { type: 'button', title: this.ctx.text('close'), 'aria-label': this.ctx.text('close'), onclick: () => this.close() }, icon('x'))),
@@ -92,6 +96,9 @@ export class SettingsDialog {
     this.body.addEventListener('focusout', () => setTimeout(() => this.flush(), 0));
     document.body.append(this.root);
     this.narrow = matchMedia(`(max-width: ${cfg.narrow}px)`);
+    // 窄屏：手机的返回键一层层退（`back-history.js`）
+    this.backs = this.narrow.matches ? new BackHistory(() => this.backStep()) : null;
+    this.backs?.start();
     document.addEventListener('keydown', this.onKey, true);
     this.ctx.core.onPush(this.onPush);
     this.current = page ?? lastPage;
@@ -149,6 +156,8 @@ export class SettingsDialog {
   close() {
     if (!this.isOpen) return;
     this.isOpen = false;
+    this.backs?.stop();
+    this.backs = null;
     document.removeEventListener('keydown', this.onKey, true);
     this.ctx.core.pushes?.delete(this.onPush);
     this.extensions.stop();
@@ -326,6 +335,32 @@ export class SettingsDialog {
   back() {
     if (this.sub.page) this.drawBody('pop', this.sub.close());
     else this.root.classList.remove('is-inside');
+  }
+
+  /**
+   * 叠在上面的一层（菜单、详情、浮卡，浮卡上又弹了问一句的）先收最上面那层：后挂上的在后面。藏着的表单不算（「访问密码」那一格没
+   * 点开时也在页面里：原来它一直占着 `Esc`，「通用」页按 `Esc` 关不掉设置，W-1153）。`Esc`、手机的返回键都先走它。交回收了没有。
+   * @returns {boolean}
+   */
+  dismissTop() {
+    const open = [...this.panel.querySelectorAll('.set-menu, .set-drawer, .set-form:not([hidden]), .set-pool.is-editing, [data-set-dismiss]')].at(-1);
+    if (!open) return false;
+    open.dispatchEvent(new CustomEvent('set-dismiss'));
+    return true;
+  }
+
+  /**
+   * 手机的返回键退一步（`back-history.js`）：点进去的一层先退，再从这一页回分页列表，列表上再按就关掉设置。交回退完还开着没有。
+   * @returns {boolean}
+   */
+  backStep() {
+    if (this.dismissTop()) return true;
+    if (this.sub.page || (this.narrow.matches && this.root.classList.contains('is-inside'))) {
+      this.back();
+      return true;
+    }
+    this.close();
+    return false;
   }
 
   /**
@@ -547,13 +582,7 @@ export class SettingsDialog {
         typing.dispatchEvent(new CustomEvent('set-revert'));
         return;
       }
-      // 叠着几层的（浮卡上又弹了问一句的）先关最上面那层：后挂上的在后面
-      // 藏着的表单不算（「访问密码」那一格没点开时也在页面里：原来它一直占着 `Esc`，「通用」页按 `Esc` 关不掉设置，W-1153）
-      const open = [...this.panel.querySelectorAll('.set-menu, .set-drawer, .set-form:not([hidden]), .set-pool.is-editing, [data-set-dismiss]')].at(-1);
-      if (open) {
-        open.dispatchEvent(new CustomEvent('set-dismiss'));
-        return;
-      }
+      if (this.dismissTop()) return;
       if (this.query) {
         this.query = '';
         this.search.value = '';

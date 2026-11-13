@@ -18,6 +18,9 @@
 
 /* 左边分页（第 3 条） */
 .set-side { display: flex; flex-direction: column; gap: calc(10px * var(--space)); min-height: 0; padding: calc(12px * var(--space)); background: color-mix(in srgb, var(--sidebar-bg) 78%, transparent); }
+/* 窄屏分页列表顶上一行（「设置」和关掉，check 7）：宽的时候不画 */
+.set-side-head { display: none; align-items: center; justify-content: space-between; gap: calc(8px * var(--space)); padding: calc(2px * var(--space)) 0 calc(2px * var(--space)) calc(4px * var(--space)); }
+.set-side-title { color: var(--text); font-size: calc(15px * var(--text-scale)); font-weight: 600; }
 .set-search-box { display: flex; align-items: center; gap: calc(6px * var(--space)); height: 32px; padding: 0 calc(9px * var(--space)); border-radius: var(--field-radius, var(--r-8)); background: var(--field-bg, var(--surface-1)); color: var(--field-fg, var(--text-faint)); box-shadow: var(--field-elev, var(--card-shadow)); }
 .set-search { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: calc(13px * var(--text-scale)) var(--font-ui); }
 .set-search::-webkit-search-cancel-button { display: none; }
@@ -470,6 +473,7 @@ body > .set-ask { z-index: 95; }
   .set-panel { grid-template-columns: 1fr; width: 100vw; height: var(--app-height, 100dvh); border: var(--modal-border, 0); border-radius: var(--modal-radius, 0); }
   .set-layer:not(.is-inside) .set-main, .set-layer.is-inside .set-side { display: none; }
   .set-back { display: inline-flex; }
+  .set-side-head { display: flex; }
   .set-prov-wrap { grid-template-columns: 1fr; }
   .set-row { flex-wrap: wrap; }
   .set-drawer { position: fixed; inset: 0; width: 100%; z-index: 7; }
