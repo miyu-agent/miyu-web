@@ -1029,7 +1029,7 @@ export class App {
     const asked = this.draft.cwd;
     // 在项目里新建的：项目刚删掉了的不带（照不在项目里开）
     const project = this.store.projects.get(this.draft.project) ? this.draft.project : null;
-    this.current = await this.store.create(asked ?? this.cwd, this.pendingModel, this.draft.persona, this.draft.preset, !!asked, project);
+    this.current = await this.store.create(asked ?? this.cwd, this.pendingModel, this.draft.persona, this.draft.preset, project);
     if (this.store.createdWide === this.current) this.ctx.emit('workdir.wide', { session: this.current, cwd: asked });
     this.pendingModel = null;
     this.draft = { persona: null, preset: null, cwd: null, project: null };

@@ -8,15 +8,16 @@ use serde_json::json;
 
 use super::*;
 
-/// 网页包的文件夹照装好的样子拼一份（仓库拆开以后）：这个仓库的 `webui/` 里的清单、`web.json`。一个进程拼一次。
+/// 网页包的文件夹：这个仓库的 `webui/` 就是装好的样子（清单 `package.toml`、常量 `web.json`，文件名同 [`MANIFEST`]、[`FILE`]），
+/// 直接读它。原来每个进程往系统临时目录拷一份、从不删（2026-11-13 审计：/tmp 是内存盘，攒了几十个 `miyu-web-shipped-*`）。
 fn shipped_root() -> &'static Path {
     static ROOT: OnceLock<PathBuf> = OnceLock::new();
     ROOT.get_or_init(|| {
-        let root = std::env::temp_dir().join(format!("miyu-web-shipped-{}", std::process::id()));
-        std::fs::create_dir_all(&root).unwrap();
-        let ours = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../webui");
-        std::fs::copy(ours.join("package.toml"), root.join(MANIFEST)).unwrap();
-        std::fs::copy(ours.join("web.json"), root.join(FILE)).unwrap();
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../webui");
+        assert!(
+            root.join(MANIFEST).is_file() && root.join(FILE).is_file(),
+            "仓库里的 webui/ 要有清单和常量"
+        );
         root
     })
 }
