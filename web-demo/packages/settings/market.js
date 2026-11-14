@@ -7,6 +7,7 @@ import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { bytes, short } from '../../src/lib/format.js';
 import { pkgFace } from './logos.js';
+import { hostedByDriver } from '../../src/lib/packages.js';
 import { STATUS_FILTERS, QUICK_KINDS, SORTS, shownOf, sortedBy, sortsAvailable, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf, capabilityRows, toolRows, approveOf, accessTags } from './market-model.js';
 import { select } from './rows.js';
 import { confirmIn } from './confirm.js';
@@ -465,10 +466,21 @@ function detailPage(dialog, id) {
       });
       return at;
     };
+    // 驱动会让供应商自己跑的工具（核心 HT-4，照命令行确认屏）：接在「包含」下面，一个驱动一行、名目空着；看一眼的回应没有的，照
+    // `package.info` 的 `contains`（装着的才有）再看一次
+    const hostedLines = (/** @type {any} */ from) => hostedByDriver(from).map((x) => line('', t('market.hosted_by', { driver: x.driver, names: x.tools.join(t('pkg.sep')) })));
+    const hostedSlot = () => {
+      const now = hostedLines(got);
+      if (now.length) return now;
+      const at = h('div.mk-hosted-slot');
+      infoOf(dialog, id).then((info) => { const later = hostedLines(info?.contains); if (later.length) at.replaceWith(...later); else at.remove(); });
+      return [at];
+    };
     const names = Object.fromEntries(Object.keys(got?.provides ?? p.provides ?? {}).map((k) => [k, kindName(dialog, k)]));
     const items = [
       got?.origin ? line(t('market.origin'), h('a.mk-link', { href: /^https?:\/\//.test(got.origin) ? got.origin : `https://${got.origin}`, target: '_blank', rel: 'noopener noreferrer' }, h('code', got.origin), icon('external-link'))) : null,
       line(t('market.includes'), providesLine(got?.provides ?? p.provides, names) || t('market.nothing')),
+      ...hostedSlot(),
       // 许可证（核心 PV-3，W-1172：清单可选的 SPDX 短串，没写的不出这一行）
       typeof (got?.license ?? p.license) === 'string' && (got?.license ?? p.license) ? line(t('market.license'), h('code', got?.license ?? p.license)) : null,
       toolsLine(),

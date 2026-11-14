@@ -48,6 +48,15 @@ test('带模型驱动的扩展（核心 MD-1 的 drivers）：接在 MCP 服务�
   assert.deepEqual(flat(plan), ['安装软件包 echo-llm', '/w/echo', '包含：扩展程序、MCP 服务 tools、模型驱动 echo、模型驱动 echo-fast、技能 x', '所需权限：提供模型驱动']);
 });
 
+test('驱动会让供应商自己跑的工具（核心 HT-4）：接在「包含」下面，一个驱动一行，名目空着；没声明的驱动不写，卸的不写', () => {
+  const preview = { package: 'antigravity', program: 'process', drivers: ['ag', 'ag-lite'], hosted: { ag: ['search_web', 'read_url_content'] }, capabilities: [] };
+  const plan = packagePlan({ tool: 'package', install: '/w/ag', preview }, null, t);
+  assert.deepEqual(flat(plan), ['安装软件包 antigravity', '/w/ag', '包含：扩展程序、模型驱动 ag、模型驱动 ag-lite', '：模型驱动 ag 会让供应商自己跑：search_web、read_url_content']);
+  assert.equal(plan.rows[1].each, true, '一项一行');
+  assert.ok(!flat(packagePlan({ tool: 'package', install: '/w/ag', preview: { ...preview, hosted: undefined } }, null, t)).some((x) => x?.includes('自己跑')), '没有 hosted 的不写');
+  assert.ok(!flat(packagePlan({ tool: 'package', remove: 'antigravity', preview }, null, t)).some((x) => x?.includes('自己跑')), '卸的不写');
+});
+
 test('卸：一并删除写设置的键和状态目录，设置不算进包含；装回出厂的写恢复', () => {
   const plan = packagePlan({ tool: 'package', remove: 'notes', preview: { package: 'notes', layer: 'home', version: '1.0', settings: ['notes.dir', 'notes.style'], state: true, files: 2, size: 2048 } }, null, t);
   assert.deepEqual(flat(plan), ['卸载软件包 notes 1.0', null, '一并删除：设置 notes.dir、notes.style、状态目录', '大小：2 KB，2 个文件']);

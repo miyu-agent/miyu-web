@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { foldCovered, foldReply, shadowed } from '../src/lib/packages.js';
+import { foldCovered, foldReply, shadowed, hostedByDriver } from '../src/lib/packages.js';
 import { applyPackageChange } from '../packages/settings/model.js';
 
 const winner = { package: 'notes', layer: 'home', version: '0.2.0', from: 'local' };
@@ -37,4 +37,12 @@ test('推来被盖住的那份：认的那份不换，只换它下面同一层�
   assert.deepEqual(got[0].covers, [{ layer: 'distro', version: '0.1.0', newer: false }]);
   const up = applyPackageChange(list, 'notes', { ...winner, version: '0.4.0' });
   assert.equal(up[0].version, '0.4.0');
+});
+
+test('驱动会让供应商自己跑的工具（核心 HT-4 的 hosted）：照 drivers 的先后，hosted 里多出来的接在后面，没工具名的、不是字的不算', () => {
+  assert.deepEqual(hostedByDriver({ drivers: ['b', 'a'], hosted: { a: ['x'], b: ['y', 'z'], c: ['w'], d: [], e: [1] } }),
+    [{ driver: 'b', tools: ['y', 'z'] }, { driver: 'a', tools: ['x'] }, { driver: 'c', tools: ['w'] }]);
+  assert.deepEqual(hostedByDriver({ drivers: ['a'] }), []);
+  assert.deepEqual(hostedByDriver(null), []);
+  assert.deepEqual(hostedByDriver({ hosted: { ag: ['search_web'] } }), [{ driver: 'ag', tools: ['search_web'] }], 'package.info 的 contains 没有 drivers 也认');
 });

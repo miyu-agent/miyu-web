@@ -5,10 +5,11 @@
 //! 标题「安装软件包 notes 0.2.0」，下面一行包文件夹，再几行「包含」「无法加载」「所需权限」「一并删除」「配置」「大小」，没有的那一行不写。纯的。
 
 import { bytes } from '../../src/lib/format.js';
+import { hostedByDriver } from '../../src/lib/packages.js';
 
 /**
- * @typedef {{title: string, path: string|null, rows: {label: string, items: string[]}[]}} Plan
- *   `items` 一项一个（「包含」照顿号连成一行，「无法加载」一项一行，由画的那边定）
+ * @typedef {{title: string, path: string|null, rows: {label: string, items: string[], each?: boolean}[]}} Plan
+ *   `items` 一项一个（「包含」照顿号连成一行，「无法加载」一项一行，由画的那边定；`each` 的一项一行）
  */
 
 /**
@@ -40,6 +41,9 @@ export function packagePlan(detail, home, text) {
   // 从哪来（核心 PK-3 上：official、community、file、shipped、distro；从软件源装的另有源的名字 `feed`，不是官方源的接在后面，W-1109）
   if (doing !== 'remove') row('source', sourceOf(p, text));
   row('includes', included(p, doing, text));
+  // 驱动会让供应商自己跑的工具（核心 HT-4，照命令行确认屏）：接在「包含」下面，一个驱动一行，名目那一格空着
+  const hosted = doing === 'remove' ? [] : hostedByDriver(p).map((x) => text('plan.hosted_by', { driver: x.driver, names: x.tools.join(text('plan.separator')) }));
+  if (hosted.length) rows.push({ label: '', items: hosted, each: true });
   row('skipped', list(p.skipped).filter((s) => s && typeof s.file === 'string').map((s) => text('plan.skipped', { file: s.file, why: String(s.why ?? '') })));
   // 要的能力：这一刻已经批过的（`held`）接「（已批）」
   row('needs', list(p.capabilities).map((c) => {

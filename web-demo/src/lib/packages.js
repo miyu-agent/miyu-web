@@ -33,3 +33,19 @@ export function coverOf(p) {
 
 /** 整个回应：`packages` 照 [`foldCovered`] 收，别的格子不动。 @param {any} reply @returns {any} */
 export const foldReply = (reply) => (reply && Array.isArray(reply.packages) ? { ...reply, packages: foldCovered(reply.packages) } : reply);
+
+/**
+ * 包里的模型驱动会让供应商自己跑哪些工具（核心 HT-4：装包看一眼的回应、`package.info` 的 `contains` 多一格
+ * `hosted: {"<驱动名>": ["<工具名>", …]}`，没声明的驱动不列，全没声明的整格不带）：一个驱动一项 `{driver, tools}`，照命令行的先后
+ * （`drivers` 的先后，`hosted` 里有、`drivers` 里没有的接在后面），没有工具名的驱动不算。纯的。
+ * @param {any} p 看一眼的回应，或 `package.info` 的 `contains`
+ * @returns {{driver: string, tools: string[]}[]}
+ */
+export function hostedByDriver(p) {
+  const hosted = isObj(p?.hosted) ? p.hosted : null;
+  if (!hosted) return [];
+  const listed = (Array.isArray(p.drivers) ? p.drivers : []).filter((d) => typeof d === 'string');
+  const order = [...listed, ...Object.keys(hosted).filter((d) => !listed.includes(d))];
+  return order.map((driver) => ({ driver, tools: (Array.isArray(hosted[driver]) ? hosted[driver] : []).filter((x) => typeof x === 'string' && x) }))
+    .filter((x) => x.tools.length);
+}
