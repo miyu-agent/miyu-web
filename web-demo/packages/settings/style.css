@@ -9,7 +9,7 @@
 .set-scrim { position: absolute; inset: 0; background: var(--veil-bg, color-mix(in srgb, var(--surface) 60%, transparent)); -webkit-backdrop-filter: var(--veil-blur, blur(calc(4px * var(--blur)))); backdrop-filter: var(--veil-blur, blur(calc(4px * var(--blur)))); }
 .set-panel {
   position: relative; display: grid; grid-template-columns: 200px minmax(0, 1fr);
-  width: min(var(--set-w), calc(100vw - 48px)); height: min(var(--set-h), calc(100vh - 48px));
+  width: min(var(--set-w), calc(100vw - 48px)); height: min(var(--set-h), calc(var(--app-height-rest, 100vh) - 48px));
   overflow: hidden; border: var(--modal-border, 1px solid var(--line)); border-radius: var(--modal-radius, var(--r-16)); box-shadow: var(--modal-elev, var(--float-shadow));
   /* 一点点磨砂（2026-10-19 项目主人：稍微有一点，不用左栏那么虚；2026-10-20 再透明一成：八成八改七成八） */
   background: var(--modal-bg, color-mix(in srgb, var(--surface) 78%, transparent)); -webkit-backdrop-filter: var(--modal-blur, blur(calc(18px * var(--blur)))); backdrop-filter: var(--modal-blur, blur(calc(18px * var(--blur))));
@@ -469,8 +469,10 @@ body > .set-ask { z-index: 95; }
 
 /* 窄（第 15 条）：占满整个窗口，先列分页，点进去看那一页 */
 @media (max-width: 640px) {
-  /* 高照可见区域（`--app-height`，输入法弹出来时文字框不被盖住，蓝图「手机上」） */
-  .set-panel { grid-template-columns: 1fr; width: 100vw; height: var(--app-height, 100dvh); border: var(--modal-border, 0); border-radius: var(--modal-radius, 0); }
+  /* 高照不算输入法的可见区域（`--app-height-rest`，`lib/touch.js`）：输入法盖在上面，不跟着缩、不把设置项挤在一起（2026-11-14 主人验收，蓝图「手机上」）；
+     打字的框被盖住的由 `keepTypingVisible` 滚出来。窗比这一层高的从顶上排，不居中（居中会把顶上推出屏幕） */
+  .set-layer { align-items: start; }
+  .set-panel { grid-template-columns: 1fr; width: 100vw; height: var(--app-height-rest, var(--app-height, 100dvh)); border: var(--modal-border, 0); border-radius: var(--modal-radius, 0); }
   .set-layer:not(.is-inside) .set-main, .set-layer.is-inside .set-side { display: none; }
   .set-back { display: inline-flex; }
   .set-side-head { display: flex; }

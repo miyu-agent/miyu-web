@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { visibleBox, shiftInto, swipeOf, writeText, legacyCopy, SWIPE_MIN } from '../../src/lib/touch.js';
+import { visibleBox, restOf, coveredBy, shiftInto, swipeOf, writeText, legacyCopy, SWIPE_MIN } from '../../src/lib/touch.js';
 
 test('可见区域：输入法弹出来照可见的高，矮一大截才算输入法开着；捏着放大的不跟；没有这个接口的是 null', () => {
   assert.deepEqual(visibleBox({ height: 844, offsetTop: 0, scale: 1 }, 844), { height: 844, top: 0, keyboard: false });
@@ -12,6 +12,24 @@ test('可见区域：输入法弹出来照可见的高，矮一大截才算输�
   assert.equal(visibleBox({ height: 422, offsetTop: 100, scale: 2 }, 844), null, '放大着');
   assert.equal(visibleBox(null, 844), null);
   assert.equal(visibleBox({ height: 0, offsetTop: 0, scale: 1 }, 844), null);
+});
+
+test('不算输入法的高：触屏上同一个宽度取见过最高的那次，转屏重来；不是触屏的照这一刻的（设置窗照它，输入法盖在上面不跟着缩）', () => {
+  let rest = restOf(null, { height: 844 }, 390, true);
+  assert.deepEqual(rest, { width: 390, height: 844 });
+  // 安卓 Chrome resizes-content：输入法弹出来，排版视口跟着缩到 508，可见的也是 508
+  rest = restOf(rest, { height: 508 }, 390, true);
+  assert.deepEqual(rest, { width: 390, height: 844 }, '输入法开着不跟着缩');
+  assert.equal(visibleBox({ height: 508, offsetTop: 0, scale: 1 }, Math.max(508, rest.height))?.keyboard, true, '拿它比才看得出输入法开着');
+  assert.deepEqual(restOf(rest, { height: 390 }, 844, true), { width: 844, height: 390 }, '转屏重来');
+  assert.deepEqual(restOf({ width: 1280, height: 900 }, { height: 600 }, 1280, false), { width: 1280, height: 600 }, '不是触屏：拉窗口照这一刻的');
+  assert.equal(restOf(rest, null, 390, true), null);
+});
+
+test('输入法盖住的框往上挪多少：下沿超过可见区域下沿（留 16px）的那一截，没盖着的是 0', () => {
+  assert.equal(coveredBy(700, 508), 208);
+  assert.equal(coveredBy(480, 508), 0);
+  assert.equal(coveredBy(495.2, 508, 16), 4);
 });
 
 test('浮层挪回屏幕里：超出右边往左挪、超出左边往右挪，在里面的不动，比屏幕还宽的贴左边', () => {

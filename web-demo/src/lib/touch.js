@@ -20,7 +20,22 @@ export function visibleBox(vv, layout) {
 export const KEYBOARD_MIN = 120;
 
 /**
+ * 不算输入法时可见区域有多高（`--app-height-rest`）：触屏上同一个宽度下见过的最高的那一次，宽度变了（转屏）重来；不是触屏的就照这一刻的
+ * （拉窗口不当成输入法）。安卓 Chrome 照 `interactive-widget=resizes-content` 连排版视口一起缩，拿排版视口比看不出输入法开着，
+ * 要拿这个比。纯的。
+ * @param {{width: number, height: number}|null} prev 上一次的 @param {{height: number}|null} box `visibleBox` 算的
+ * @param {number} width 排版视口多宽（`innerWidth`） @param {boolean} touch 是不是触屏（`pointer: coarse`）
+ * @returns {{width: number, height: number}|null}
+ */
+export function restOf(prev, box, width, touch) {
+  if (!box) return null;
+  if (!touch || !prev || prev.width !== width) return { width, height: box.height };
+  return { width, height: Math.max(prev.height, box.height) };
+}
+
+/**
  * 页面的高跟着可见区域（`--app-height`，`sidebar.css` 的 `.app-shell` 照它）：手机上输入法弹出来，输入框贴着它上沿、正文跟着缩，不被盖住。
+ * 不算输入法的那个高另写 `--app-height-rest`（`restOf`）：设置窗照它，输入法盖在上面、不跟着挤（2026-11-14 主人验收：「覆盖就可以了」）。
  * 浏览器为了露出输入框把页面往上推了的（iOS：可见区域离页面顶不是 0）推回去——整页已经只有可见区域那么高，不用它推。
  * 输入法开着记在 `html.has-keyboard` 上。没有 `visualViewport` 的浏览器什么都不做（照 `100dvh`）。
  * @param {HTMLElement} root 整页那一层（写 `--app-height`）
@@ -29,15 +44,21 @@ export const KEYBOARD_MIN = 120;
 export function followVisible(root, changed) {
   const vv = window.visualViewport;
   if (!vv) return () => {};
+  const coarse = matchMedia('(pointer: coarse)');
   let last = '';
+  /** @type {{width: number, height: number}|null} */
+  let rest = null;
   const sync = () => {
-    const box = visibleBox(vv, innerHeight);
-    const next = box ? `${box.height}|${box.keyboard}` : '';
+    rest = restOf(rest, visibleBox(vv, innerHeight), innerWidth, coarse.matches);
+    const box = visibleBox(vv, Math.max(innerHeight, rest?.height ?? 0));
+    const next = box ? `${box.height}|${box.keyboard}|${rest?.height}` : '';
     if (box?.top) scrollTo(0, 0);
     if (next === last) return;
     last = next;
     if (box) root.style.setProperty('--app-height', `${box.height}px`);
     else root.style.removeProperty('--app-height');
+    if (rest) root.style.setProperty('--app-height-rest', `${rest.height}px`);
+    else root.style.removeProperty('--app-height-rest');
     document.documentElement.classList.toggle('has-keyboard', !!box?.keyboard);
     changed?.();
   };
@@ -45,6 +66,40 @@ export function followVisible(root, changed) {
   vv.addEventListener('scroll', sync);
   sync();
   return () => { vv.removeEventListener('resize', sync); vv.removeEventListener('scroll', sync); };
+}
+
+/**
+ * 输入法盖着的那一块里的框要往上挪多少（CSS 像素）：框的下沿 `bottom` 超过可见区域的下沿 `visible`（再留 `pad`）的那一截；没盖着的是 0。纯的。
+ * @param {number} bottom @param {number} visible @param {number} [pad]
+ */
+export function coveredBy(bottom, visible, pad = 16) {
+  return Math.max(0, Math.ceil(bottom - (visible - pad)));
+}
+
+/**
+ * 不跟着输入法缩的那一层（设置窗）里，正在打字的框被输入法盖住时，把它所在那一格往上滚出来（`coveredBy`）：聚焦时、输入法弹完（可见区域变了）时各看一次。
+ * 没有 `visualViewport` 的什么都不做。交回停下。
+ * @param {HTMLElement} layer
+ */
+export function keepTypingVisible(layer) {
+  const vv = window.visualViewport;
+  if (!vv) return () => {};
+  const check = () => {
+    const field = /** @type {HTMLElement|null} */ (document.activeElement);
+    if (!field || !layer.contains(field) || !field.matches('input, textarea, [contenteditable="true"]')) return;
+    const by = coveredBy(field.getBoundingClientRect().bottom, vv.height + vv.offsetTop);
+    if (!by) return;
+    for (let el = field.parentElement; el && el !== layer.parentElement; el = el.parentElement) {
+      if (el.scrollHeight > el.clientHeight && /auto|scroll/.test(getComputedStyle(el).overflowY)) {
+        el.scrollTop += by;
+        return;
+      }
+    }
+  };
+  const later = () => setTimeout(check, 0);
+  layer.addEventListener('focusin', later);
+  vv.addEventListener('resize', check);
+  return () => { layer.removeEventListener('focusin', later); vv.removeEventListener('resize', check); };
 }
 
 /**

@@ -8,6 +8,7 @@ import { drawMarket, marketPush } from './market.js';
 import { accessGroup, avatarGroup, relisten, LISTEN_KEYS } from './account.js';
 import { hasPrivate, privateGroup } from './privacy.js';
 import { leave } from '../../src/lib/motion.js';
+import { keepTypingVisible } from '../../src/lib/touch.js';
 import { buildPages, search, pagesWithErrors, LAYER, expectFor, navGroups, pkgMatch, ownerOf, headless, needsRestart } from './model.js';
 import { coreRow, groupBlock, banner, toggle } from './rows.js';
 import { drawLook } from './look.js';
@@ -48,6 +49,8 @@ export class SettingsDialog {
   constructor(ctx) {
     this.ctx = ctx;
     this.isOpen = false;
+    /** 停下「打字的框别被输入法盖住」（`keepTypingVisible`），开着时才有 @type {(() => void)|null} */
+    this.unkeep = null;
     /** 重画「通用」页的「主题」一组（`look.js` 画的时候填；主题那几套换了时设置包叫它） @type {(() => void)|null} */
     this.refreshLook = null;
     /** @type {import('./model.js').Page[]} */
@@ -100,6 +103,8 @@ export class SettingsDialog {
     this.backs = this.narrow.matches ? new BackHistory(() => this.backStep()) : null;
     this.backs?.start();
     document.addEventListener('keydown', this.onKey, true);
+    // 手机上输入法盖在设置窗上面、窗不跟着缩（`--app-height-rest`）：打字的框被盖住时把它滚出来
+    this.unkeep = keepTypingVisible(this.root);
     this.ctx.core.onPush(this.onPush);
     this.current = page ?? lastPage;
     this.body.replaceChildren(h('p.set-empty', this.ctx.text('loading')));
@@ -159,6 +164,8 @@ export class SettingsDialog {
     this.backs?.stop();
     this.backs = null;
     document.removeEventListener('keydown', this.onKey, true);
+    this.unkeep?.();
+    this.unkeep = null;
     this.ctx.core.pushes?.delete(this.onPush);
     this.extensions.stop();
     this.feed.stop();
