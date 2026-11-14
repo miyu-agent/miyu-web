@@ -8,6 +8,7 @@ import { h, icon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { whenText, whereText, dayText, skipText } from './model.js';
 import { openForm } from './form.js';
+import { escDismisses } from './dismiss.js';
 
 /**
  * @param {any} ctx `schedules` 包的 ctx @param {import('./store.js').ScheduleStore} store @param {string} id 哪一项
@@ -75,9 +76,12 @@ export function openDetail(ctx, store, id, opts) {
   const off = store.on(draw);
   const close = () => {
     off();
+    unEsc();
     if (modal.isConnected && !modal.classList.contains('is-leaving')) leave(modal, () => modal.remove());
   };
   modal.addEventListener('set-dismiss', close);
+  // 设置框外面（右侧栏卡片、输入框上面的循环标记点开的）`Esc` 也收（`dismiss.js`）
+  const unEsc = escDismisses(modal);
   draw();
   (document.querySelector('.set-panel') ?? document.body).append(modal);
 }

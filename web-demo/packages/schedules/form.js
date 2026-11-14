@@ -8,6 +8,7 @@ import { h, icon } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { whenOf, fieldOf, localZone, ymd, formOf, editKinds, updateOf } from './model.js';
 import { clockField, dateField } from './pickers.js';
+import { escDismisses } from './dismiss.js';
 import { tilde } from '../../src/lib/format.js';
 
 /**
@@ -224,8 +225,10 @@ export function openForm(ctx, kit, store, opts) {
     h('div.set-tool-pop-foot', h('button.set-btn', { type: 'button', onclick: () => close() }, t('form.cancel')), create));
   // 点遮罩：写了字的不收（同记忆页的小窗），`Esc`、✕、「取消」照收
   const modal = h('div.set-tool-modal.sch-modal', { 'data-set-dismiss': '1', onclick: (/** @type {Event} */ e) => { if (e.target === e.currentTarget && !prompt.value.trim()) close(); } }, pop);
-  const close = () => { if (modal.isConnected && !modal.classList.contains('is-leaving')) leave(modal, () => modal.remove()); };
+  const close = () => { unEsc(); if (modal.isConnected && !modal.classList.contains('is-leaving')) leave(modal, () => modal.remove()); };
   modal.addEventListener('set-dismiss', close);
+  // 设置框外面（右侧栏卡片点进来的）`Esc` 也收（`dismiss.js`）
+  const unEsc = escDismisses(modal);
   if (edit) prompt.value = edit.prompt ?? '';
   drawKind();
   drawWhere();
