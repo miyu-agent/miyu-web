@@ -152,7 +152,7 @@ export function tilde(path, home) {
 }
 
 /** 示范对话的一对：你说的、人格回的。 @typedef {{user: string, assistant: string}} Pair */
-/** `persona.set`、`preset.set` 的一项改动。 @typedef {{key: string, value?: string, unset?: true}} Change */
+/** `persona.set`、`preset.set` 的一项改动。 @typedef {{key: string, value?: string|number|boolean, unset?: true}} Change */
 
 /**
  * 说明改了发什么：写了的发字，清空了发空字（就是没有说明，盖住出厂的那句；核心 P-3 再补）；没变的什么都不发。
@@ -168,7 +168,8 @@ export function summaryChange(kind, before, after) {
 /**
  * 编辑器里的人格（详情的四样、「子代理可选」）和读进来时提示词的版本（存的时候当 `expect` 带回去，防覆盖别处的改动）。
  * `life` 是推演方法（核心 LF-8 上，`persona.read {prompt: "life"}`）：没读过的（引导里新建的）不写，不发。
- * @typedef {{name: string, summary: string, persona: string, reminders: string, pairs: Pair[], subagent?: boolean, life?: string,
+ * `lifeContext` 是人生会话的上下文上限那一格写的字（核心 LF-10，`persona.get` 的 `life_context`；没写的是空字，核心不认这一格的不写）。
+ * @typedef {{name: string, summary: string, persona: string, reminders: string, pairs: Pair[], subagent?: boolean, life?: string, lifeContext?: string,
  *   versions: {persona: string|null, reminders: string|null, examples: string|null, life?: string|null}}} PersonaDraft
  */
 
@@ -199,6 +200,12 @@ export function personaSave(before, after) {
   changes.push(...summaryChange('persona', before.summary, after.summary));
   // 子代理可选（核心 P-10 补）：拨了才发；没读到这一格的（引导里新建的）当关着
   if (!!after.subagent !== !!before.subagent) changes.push({ key: 'persona.subagent', value: !!after.subagent });
+  // 人生会话的上下文上限（核心 LF-10）：清空了是「用出厂的」，发 `unset`；写得不对的不发（编辑器存之前先拦，`lifeContextOf`）
+  if (typeof after.lifeContext === 'string' && typeof before.lifeContext === 'string') {
+    const was = lifeContextOf(before.lifeContext);
+    const now = lifeContextOf(after.lifeContext);
+    if (now.ok && (!was.ok || was.value !== now.value)) changes.push(now.value == null ? { key: 'life.context', unset: true } : { key: 'life.context', value: now.value });
+  }
   if (changes.length) out.changes = changes;
   const prompts = {};
   for (const key of /** @type {const} */ (['persona', 'reminders'])) {
@@ -213,4 +220,17 @@ export function personaSave(before, after) {
   if (JSON.stringify(pairs) !== JSON.stringify(cleanPairs(before.pairs))) prompts.examples = { pairs, expect: before.versions.examples };
   if (Object.keys(prompts).length) out.prompts = prompts;
   return out.changes || out.prompts ? out : null;
+}
+
+/**
+ * 人生会话的上下文上限那一格写的字认成数（核心 LF-10，`persona.set` 的 `life.context` 要正整数）：空着是 `null`（用出厂的），
+ * 数字中间的空格、逗号、下划线不算（`100,000`）；别的写法、0 都不对。
+ * @param {string} text @returns {{ok: true, value: number|null}|{ok: false}}
+ */
+export function lifeContextOf(text) {
+  const plain = String(text ?? '').replace(/[\s,_]/g, '');
+  if (!plain) return { ok: true, value: null };
+  if (!/^\d+$/.test(plain)) return { ok: false };
+  const value = Number(plain);
+  return Number.isSafeInteger(value) && value > 0 ? { ok: true, value } : { ok: false };
 }

@@ -268,7 +268,11 @@
         "life": "推演人生",
         "life_method": "推演方法",
         "life_method_desc": "她每次醒来时照着过日子的那段话；空着用出厂的",
-        "life_method_hint": "空着用出厂的推演方法"
+        "life_method_hint": "空着用出厂的推演方法",
+        "life_context": "人生会话上下文窗口",
+        "life_context_desc": "人生会话最多带多少 token；会话里用 /context 改的也算数，后改的为准",
+        "life_context_hint": "空着用出厂的 {n}",
+        "life_context_bad": "要写一个正整数（token）"
       },
       "folders": {
         "open": "选择文件夹…",
@@ -505,7 +509,11 @@
         "life": "Simulated life",
         "life_method": "Life method",
         "life_method_desc": "What she follows each time she wakes to live her day; leave empty for the built-in one",
-        "life_method_hint": "Empty uses the built-in life method"
+        "life_method_hint": "Empty uses the built-in life method",
+        "life_context": "Life session context window",
+        "life_context_desc": "Most tokens the life session keeps; /context in that session also counts, the later change wins",
+        "life_context_hint": "Empty uses the default {n}",
+        "life_context_bad": "Enter a positive whole number (tokens)"
       },
       "folders": {
         "open": "Select folder…",
@@ -742,7 +750,11 @@
         "life": "人生の推演",
         "life_method": "推演のしかた",
         "life_method_desc": "目覚めるたびに彼女が一日を過ごすときに従う文章。空なら既定のもの",
-        "life_method_hint": "空なら既定の推演のしかたを使います"
+        "life_method_hint": "空なら既定の推演のしかたを使います",
+        "life_context": "人生セッションのコンテキスト上限",
+        "life_context_desc": "人生セッションが持てる最大トークン数。セッション内の /context の変更も有効で、後の変更が優先されます",
+        "life_context_hint": "空なら既定の {n}",
+        "life_context_bad": "正の整数（トークン数）を入れてください"
       },
       "folders": {
         "open": "フォルダを選ぶ…",

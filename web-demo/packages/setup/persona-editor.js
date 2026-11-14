@@ -5,12 +5,12 @@
 //! 别处改过了（`persona_conflict`）写一句、给「重新读」；写错的照核心给人看的那一句（`data.message`）。
 //! 最上面三行是外观（头像、主题色、背景图，`appearance.js`）：换、删当场存，不等「保存」。
 //! 「推演人生」开关（核心设计 70，`life.js`）也当场生效；开着的才在下面露出「推演方法」（2026-11-14 下午主人改：原来收在「高级」里），
-//! 推演方法跟着「保存」存。
+//! 推演方法跟着「保存」存；它下面是人生会话的上下文上限（核心 LF-10，主人 11-14 下午定），同样开着才露、跟着「保存」存。
 
 import { h, replace } from '../../src/lib/dom.js';
 import { field, switchField, area, askFirst } from './form.js';
 import { Pairs } from './pairs.js';
-import { personaSave, halfPair, newlyRemoved } from './model.js';
+import { personaSave, halfPair, newlyRemoved, lifeContextOf } from './model.js';
 import { Appearance } from './appearance.js';
 import { LifeSwitch } from './life.js';
 
@@ -68,6 +68,8 @@ export class PersonaEditor {
       ]);
       /** 出厂的推演方法：没写时用的就是它，当占位字 */
       this.lifeDefault = typeof life?.default === 'string' ? life.default : '';
+      /** 人生会话上下文上限出厂的数（核心 LF-10）：旧核心没有这一格的是 `null`，不画 */
+      this.lifeContextDefault = typeof got?.life_context_default === 'number' ? got.life_context_default : null;
       this.remove = got?.remove ?? null;
       this.look.set(got);
       this.before = {
@@ -78,6 +80,7 @@ export class PersonaEditor {
         pairs: Array.isArray(examples?.pairs) ? examples.pairs : [],
         subagent: got?.subagent === true,
         ...(life ? { life: life.text ?? '' } : {}),
+        ...(this.lifeContextDefault != null ? { lifeContext: typeof got?.life_context === 'number' ? String(got.life_context) : '' } : {}),
         versions: { persona: persona?.version ?? null, reminders: reminders?.version ?? null, examples: examples?.version ?? null, life: life?.version ?? null },
       };
       this.lifeSwitch = new LifeSwitch(this.ctx, this.kit, {
@@ -107,7 +110,12 @@ export class PersonaEditor {
     const them = () => this.name?.value.trim() || t('edit.them');
     this.pairs = new Pairs(d.pairs, { you: t('edit.you'), them, add: t('edit.add_pair'), drop: t('edit.drop_pair'), userHint: t('edit.user_hint'), replyHint: t('edit.reply_hint') }, () => this.sync());
     this.name.addEventListener('input', () => { this.pairs?.rename(them()); this.sync(); });
-    for (const a of [this.summary, this.persona, this.reminders, this.life]) a?.addEventListener('input', () => this.sync());
+    // 人生会话的上下文上限：空着的照出厂的数（占位字写它）
+    this.lifeContext = typeof d.lifeContext === 'string' ? this.kit.field(d.lifeContext, this.t('edit.life_context_hint', { n: (this.lifeContextDefault ?? 0).toLocaleString() })) : null;
+    if (this.lifeContext) this.lifeContext.setAttribute('inputmode', 'numeric');
+    /** 那一格下面写错了的提示（不是正整数、核心拒了 `bad_life_context`） */
+    this.lifeContextNote = h('p.setup-error.setup-life-context-note', { hidden: true });
+    for (const a of [this.summary, this.persona, this.reminders, this.life, this.lifeContext]) a?.addEventListener('input', () => { this.lifeContextBad(null); this.sync(); });
     // 子代理可选（核心 P-10 补，2026-10-17 项目主人：默认关，开了的人格才在派子代理时可挑）：同别的格，点「保存」才存
     this.subagentOn = !!d.subagent;
     const subagent = this.kit.toggle(this.subagentOn, (on) => { this.subagentOn = on; this.sync(); return true; });
@@ -129,6 +137,7 @@ export class PersonaEditor {
       switchField(t('edit.subagent'), subagent),
       this.lifeRow(),
       this.lifeMethodRow(),
+      this.lifeContextRow(),
       this.memoryRow(),
       this.note,
       h('div.setup-foot', remove, h('span.setup-grow'), this.kit.button(t('edit.cancel'), {}, () => this.hooks.close()), this.saveBtn));
@@ -146,6 +155,7 @@ export class PersonaEditor {
 
   /** 露出、收起推演方法那一格：收着的时候量不出高，露出来再照字长高一次（`form.js` 的 `area` 只在打字时长）。 @param {boolean} on */
   showMethod(on) {
+    if (this.lifeContextField) this.lifeContextField.hidden = !on;
     if (!this.lifeMethod || !this.life) return;
     this.lifeMethod.hidden = !on;
     if (!on) return;
@@ -163,6 +173,25 @@ export class PersonaEditor {
     this.lifeMethod.classList.add('setup-life-method');
     this.showMethod(this.lifeSwitch.on());
     return this.lifeMethod;
+  }
+
+  /**
+   * 人生会话的上下文上限那一格（核心 LF-10）：「推演人生」开着才露，跟着「保存」存；核心没有这一格的不画。名字下面暗字说清楚这里存的是人格里的数，
+   * 人生会话里经 `/context` 改的也算数、后改的为准（所以会话那时用的可能和这里不一样），模型窗口更小的照模型的。
+   */
+  lifeContextRow() {
+    if (!this.lifeContext || !this.lifeOk || !this.lifeSwitch) return null;
+    this.lifeContextField = field(this.t('edit.life_context'), h('div.setup-life-context', this.lifeContext, this.lifeContextNote), this.t('edit.life_context_desc'));
+    this.lifeContextField.classList.add('setup-life-method');
+    this.lifeContextField.hidden = !this.lifeSwitch.on();
+    return this.lifeContextField;
+  }
+
+  /** 上下文上限那一格下面写错了的那句；`null` 收起。 @param {string|null} text */
+  lifeContextBad(text) {
+    if (!this.lifeContextNote) return;
+    this.lifeContextNote.hidden = !text;
+    this.lifeContextNote.textContent = text ?? '';
   }
 
   /**
@@ -189,12 +218,15 @@ export class PersonaEditor {
   current() {
     const b = /** @type {PersonaDraft} */ (this.before);
     return { ...b, name: this.name?.value ?? b.name, summary: this.summary?.value ?? b.summary, persona: this.persona?.value ?? b.persona, reminders: this.reminders?.value ?? b.reminders, pairs: this.pairs?.value() ?? b.pairs, subagent: this.subagentOn ?? b.subagent,
-      ...(this.life ? { life: this.life.value } : {}) };
+      ...(this.life ? { life: this.life.value } : {}), ...(this.lifeContext ? { lifeContext: this.lifeContext.value } : {}) };
   }
 
   /** 改了没存。 */
   dirty() {
-    return !!this.before && personaSave(this.before, this.current()) != null;
+    if (!this.before) return false;
+    // 上下文上限写成了认不出的字也算改了（「保存」亮着，点了在那一格下面说哪里不对）
+    const typed = this.lifeContext && (this.lifeContext.value.trim() !== (this.before.lifeContext ?? '').trim());
+    return personaSave(this.before, this.current()) != null || !!typed;
   }
 
   /** 「存」：改了字（或者外观当场存过）、名字不空才点得了。 */
@@ -227,6 +259,11 @@ export class PersonaEditor {
       this.pairs?.mark(half);
       return;
     }
+    if (this.lifeContext && !lifeContextOf(this.lifeContext.value).ok) {
+      this.lifeContextBad(this.t('edit.life_context_bad'));
+      this.lifeContext.focus();
+      return;
+    }
     const payload = personaSave(this.before, this.current());
     if (!payload) {
       // 只改了外观：已经当场存了，这里只说一声、关掉卡片
@@ -242,7 +279,11 @@ export class PersonaEditor {
       await this.ctx.core.request('persona.set', { persona: this.id, ...payload });
     } catch (err) {
       this.sync();
-      if (err?.reason === 'persona_conflict') {
+      if (err?.reason === 'persona_invalid' && err?.data?.problem === 'bad_life_context') {
+        // 核心拒了这一格：照它给人看的那句写在格子下面
+        this.lifeContextBad(refusalText(err));
+        this.lifeContext?.focus();
+      } else if (err?.reason === 'persona_conflict') {
         this.say(this.t('edit.conflict'), [h('button.setup-link', { type: 'button', onclick: () => this.load() }, this.t('edit.reload'))]);
       } else {
         this.say(refusalText(err));
