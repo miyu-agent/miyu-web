@@ -104,13 +104,15 @@
 .footer-status:empty { display: none; }
 /* 中间：软件包挂的（后台任务的按钮，挂载位 composer.footer）；空着不占地方 */
 .footer-middle { display: flex; flex: none; align-items: center; }
-.footer-middle:empty { display: none; }
+.footer-middle:empty, .footer-middle:not(:has(> :not([hidden]))) { display: none; }
 
 @media (max-width: 836px) {
   .composer-dock { padding: 0 max(6px, calc(clamp(16px, 4vw, 28px) - 12px)) calc(8px * var(--space)); }
   /* 框下面那一行：左边（级别、模型）先保住，照自己的字宽、不缩，右边的用量那一格照剩下的地方收（先花费、再累计，`footer.js` 的 `fit`）；
      原来两边一起挤，模型名被截成「@…」（2026-11-11 手机上 360px 宽）。左边自己就比一整行宽的才截模型名 */
   .footer-left { flex: 0 0 auto; max-width: 100%; }
+  /* 右边有用量那一格时左边最宽给它留出圈的位置（间距加圈）：原来左边能占满整行，圈被挤出屏幕右边（2026-11-14 UI review 第 7 条） */
+  .composer-footer:has(.footer-usage) .footer-left { max-width: calc(100% - 36px * var(--space)); }
 }
 
 /* 换级别（蓝图「输入框下面那一行」）：级别那一格原地换，不上下移：旧的先淡出、糊开一点（前 45%），新的接着淡入、由糊变清
