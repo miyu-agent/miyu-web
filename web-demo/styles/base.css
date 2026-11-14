@@ -173,3 +173,14 @@ button, textarea { font: inherit; color: inherit; }
   display: grid; place-items: center; border-radius: var(--r-5); background: color-mix(in srgb, var(--text) 8%, transparent);
   color: var(--text-soft); font-size: calc(10.5px * var(--text-scale)); font-weight: 600; line-height: 1;
 }
+
+/* 手指点的（`(pointer: coarse)`，蓝图「手机上」）：小控件看着的大小不变，点得到的地方往外扩到 32px 上下（2026-11-14 UI review 第 11 条：
+   开关 36×20、分段 24 高、设置的「‹ 设置」27 高、右栏卡片的 ✕ 和暂停 22×22、输入框上面循环和目标那一截 20 高、左栏「多选」22×22、框下面的用量小圈 19 宽）。
+   扩的是透明的 ::after，挨着的几格（分段、卡片里并排的两个按钮）只往上下扩、左右少扩，不抢旁边那一格 */
+@media (pointer: coarse) {
+  :is(.set-switch, .set-back, .set-seg-item, .use-seg button, .dash-icon-btn, .dash-remove, .loop-pill, .goal-pill, .session-group-button, .footer-usage) { position: relative; }
+  :is(.set-switch, .set-back, .session-group-button)::after { content: ""; position: absolute; inset: -6px; }
+  :is(.set-seg-item, .use-seg button, .loop-pill, .goal-pill)::after { content: ""; position: absolute; inset: -6px 0; }
+  :is(.dash-icon-btn, .dash-remove)::after { content: ""; position: absolute; inset: -5px -2px; }
+  .footer-usage::after { content: ""; position: absolute; inset: 0 -7px; }
+}
