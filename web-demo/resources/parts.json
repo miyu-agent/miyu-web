@@ -7932,11 +7932,5 @@
     "select": [
       ".setup-life-line"
     ]
-  },
-  "setup.advanced": {
-    "zh": "人格详情最下面收着的「高级」",
-    "select": [
-      ".setup-advanced summary"
-    ]
   }
 }

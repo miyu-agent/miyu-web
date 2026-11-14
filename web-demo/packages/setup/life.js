@@ -14,8 +14,9 @@ const refusalText = (err) => err?.data?.message ?? err?.message ?? String(err);
 
 /**
  * @typedef {import('./form.js').Kit} Kit
- * @typedef {{id: () => string|null, open?: (session: string) => void, say: (text: string) => void}} Hooks
- *   `id` 人格编号（引导里还没建的是 `null`：只记下想开）；`open` 打开人生会话（设置页里有，引导里没有）；`say` 出错写在卡片里
+ * @typedef {{id: () => string|null, open?: (session: string) => void, say: (text: string) => void, changed?: (on: boolean) => void}} Hooks
+ *   `id` 人格编号（引导里还没建的是 `null`：只记下想开）；`open` 打开人生会话（设置页里有，引导里没有）；`say` 出错写在卡片里；
+ *   `changed` 开关摆成开、关以后（人格详情照它露出、收起推演方法）
  */
 
 export class LifeSwitch {
@@ -49,9 +50,15 @@ export class LifeSwitch {
     return true;
   }
 
+  /** 开关现在是不是开着：在跑的；引导里还没建人格、拨开了的。 */
+  on() {
+    return this.now.state === 'running' || (!this.hooks.id() && this.wanted);
+  }
+
   paint() {
     const t = this.t;
-    const on = this.now.state === 'running' || (!this.hooks.id() && this.wanted);
+    const on = this.on();
+    this.hooks.changed?.(on);
     this.toggle.classList.toggle('is-on', on);
     this.toggle.setAttribute('aria-checked', String(on));
     const s = this.now;
@@ -69,6 +76,7 @@ export class LifeSwitch {
     if (act === 'start' && !(await this.kit.confirm(this.toggle, this.t('life.ask')))) return false;
     if (!id) {
       this.wanted = on;
+      this.paint();
       return true;
     }
     if (!act) return true;

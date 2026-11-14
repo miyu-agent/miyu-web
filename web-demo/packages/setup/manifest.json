@@ -266,7 +266,6 @@
         "by_global": "跟随全局",
         "follow_global": "跟随全局默认",
         "life": "推演人生",
-        "advanced": "高级",
         "life_method": "推演方法",
         "life_method_desc": "她每次醒来时照着过日子的那段话；空着用出厂的",
         "life_method_hint": "空着用出厂的推演方法"
@@ -504,7 +503,6 @@
         "by_global": "Follows global",
         "follow_global": "Follow global default",
         "life": "Simulated life",
-        "advanced": "Advanced",
         "life_method": "Life method",
         "life_method_desc": "What she follows each time she wakes to live her day; leave empty for the built-in one",
         "life_method_hint": "Empty uses the built-in life method"
@@ -742,7 +740,6 @@
         "by_global": "全体設定に従う",
         "follow_global": "全体の既定に従う",
         "life": "人生の推演",
-        "advanced": "詳細",
         "life_method": "推演のしかた",
         "life_method_desc": "目覚めるたびに彼女が一日を過ごすときに従う文章。空なら既定のもの",
         "life_method_hint": "空なら既定の推演のしかたを使います"

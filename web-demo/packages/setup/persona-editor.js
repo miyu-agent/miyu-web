@@ -4,7 +4,8 @@
 //! `persona.read` 给的版本；「取消」关掉卡片、丢掉没存的。删除照核心的 `remove`：改过的出厂「恢复出厂」、自己建的「删除」，点两次才删。
 //! 别处改过了（`persona_conflict`）写一句、给「重新读」；写错的照核心给人看的那一句（`data.message`）。
 //! 最上面三行是外观（头像、主题色、背景图，`appearance.js`）：换、删当场存，不等「保存」。
-//! 「推演人生」开关（核心设计 70，`life.js`）也当场生效；「推演方法」收在最下面的「高级」里，跟着「保存」存（2026-11-14）。
+//! 「推演人生」开关（核心设计 70，`life.js`）也当场生效；开着的才在下面露出「推演方法」（2026-11-14 下午主人改：原来收在「高级」里），
+//! 推演方法跟着「保存」存。
 
 import { h, replace } from '../../src/lib/dom.js';
 import { field, switchField, area, askFirst } from './form.js';
@@ -81,6 +82,8 @@ export class PersonaEditor {
       };
       this.lifeSwitch = new LifeSwitch(this.ctx, this.kit, {
         id: () => this.id,
+        // 开关拨了：推演方法那一格跟着露出、收起
+        changed: (on) => this.showMethod(on),
         open: (session) => { this.hooks.close(); this.ctx.settings?.close?.(); this.ctx.chat.open(session); },
         say: (text) => this.say(text),
       });
@@ -125,8 +128,8 @@ export class PersonaEditor {
       field(t('edit.reminders'), this.reminders),
       switchField(t('edit.subagent'), subagent),
       this.lifeRow(),
+      this.lifeMethodRow(),
       this.memoryRow(),
-      this.advanced(),
       this.note,
       h('div.setup-foot', remove, h('span.setup-grow'), this.kit.button(t('edit.cancel'), {}, () => this.hooks.close()), this.saveBtn));
     this.sync();
@@ -135,17 +138,31 @@ export class PersonaEditor {
   /** 「推演人生」一行（核心设计 70，`life.js`）：开关，名字下面一行暗字写状态；核心没有 `life.*` 的不画。 */
   lifeRow() {
     if (!this.lifeOk || !this.lifeSwitch) return null;
-    const row = switchField(this.t('edit.life'), this.lifeSwitch.toggle);
+    // 状态那一行跟在开关右边（名字那一列窄，放下面截得只剩「进行中 · …」）
+    const row = switchField(this.t('edit.life'), h('div.setup-life-control', this.lifeSwitch.toggle, this.lifeSwitch.status));
     row.classList.add('setup-life');
-    row.querySelector('.setup-field-name')?.append(this.lifeSwitch.status);
     return row;
   }
 
-  /** 「高级」（收着，点开）：推演方法（2026-11-14 主人定收在高级里）。核心不认 `life` 的什么都不画。 */
-  advanced() {
-    if (!this.life) return null;
-    return h('details.setup-advanced', h('summary', this.t('edit.advanced')),
-      field(this.t('edit.life_method'), this.life, this.t('edit.life_method_desc')));
+  /** 露出、收起推演方法那一格：收着的时候量不出高，露出来再照字长高一次（`form.js` 的 `area` 只在打字时长）。 @param {boolean} on */
+  showMethod(on) {
+    if (!this.lifeMethod || !this.life) return;
+    this.lifeMethod.hidden = !on;
+    if (!on) return;
+    const box = this.life;
+    requestAnimationFrame(() => {
+      box.style.height = 'auto';
+      box.style.height = `${box.scrollHeight}px`;
+    });
+  }
+
+  /** 推演方法那一格：「推演人生」开着才露（2026-11-14 下午主人定）；核心不认 `life` 的不画。 */
+  lifeMethodRow() {
+    if (!this.life || !this.lifeOk || !this.lifeSwitch) return null;
+    this.lifeMethod = field(this.t('edit.life_method'), this.life, this.t('edit.life_method_desc'));
+    this.lifeMethod.classList.add('setup-life-method');
+    this.showMethod(this.lifeSwitch.on());
+    return this.lifeMethod;
   }
 
   /**

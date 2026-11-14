@@ -97,9 +97,8 @@ export class PersonaStep {
     // 中途关了重来、人格已经建过的照它现在的人生摆
     this.life ??= new LifeSwitch(this.ctx, this.kit, { id: () => this.id, say: (text) => this.say(text) });
     this.life.load().then((ok) => { if (!ok) lifeRow.hidden = true; });
-    const lifeRow = switchField(t('edit.life'), this.life.toggle);
+    const lifeRow = switchField(t('edit.life'), h('div.setup-life-control', this.life.toggle, this.life.status));
     lifeRow.classList.add('setup-life');
-    lifeRow.querySelector('.setup-field-name')?.append(this.life.status);
     const body = h('div.setup-editor.is-welcome',
       field(t('edit.avatar'), this.avatarBox),
       field(t('edit.background'), this.backgroundBox),
