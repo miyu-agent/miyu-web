@@ -2,8 +2,10 @@
 
 在浏览器里用 Miyu：网页软件 `miyu-web` 默认只听本机的端口（设置「通用」→「访问」能放开到局域网），给页面文件，把浏览器的 WebSocket 转成核心协议。核心在 [miyu-agent/miyu](https://github.com/miyu-agent/miyu)，这里照 `Cargo.toml` 的 git 依赖钉住核心的一个提交，只经门面 `miyu-client` 用核心的东西（核心仓库的设计 `32-仓库拆分.md`）。
 
+怎么用见 [网页](https://github.com/miyu-agent/miyu/blob/main/docs/guide/heads/web.md)，放到服务器上、从别的机器打开见 [常驻和服务器](https://github.com/miyu-agent/miyu/blob/main/docs/guide/service.md)。
+
 - `crates/miyu-web`：网页软件（`miyu-web serve`、`miyu-web open`），图纸 `docs/blueprint/web-module.md`。
-- `crates/miyu-webserve`：只听本机的网页端口的底子：给页面文件、核对 Host 和 Origin、`/ws` 原样转给核心，图纸 `docs/blueprint/webserve.md`。
+- `crates/miyu-webserve`：网页端口的底子：给页面文件、核对 Host 和 Origin、`/ws` 原样转给核心，图纸 `docs/blueprint/webserve.md`。
 - `web-demo/`：页面（原生 JavaScript，按 ES 模块组织，不用框架、不用构建），图纸 `docs/blueprint/web.md`、`web-ui.md`；怎么跑见 `web-demo/README.md`。
 - `webui/`：网页的软件包（包编号 `webui`，配置键前缀 `web`）：清单、常量 `web.json`、matugen 模板；发版时随核心一起装进资源目录的 `packages/webui/`，或经 `tools/pack-web.py` 打成包文件 `webui-<版本>-<系统>.miyu` 从软件源装（发版：推 `v<版本>` 的标签，`.github/workflows/release.yml` 照官方打包模板一种系统打一个传进 Release；版本在 `Cargo.toml` 和 `webui/package.toml` 两处，一样）。
 
@@ -11,9 +13,9 @@
 
 设置「通用」→「访问」打开「允许局域网访问」、设好访问密码，同一个局域网里的手机、电脑就能用这台电脑的地址和端口打开网页（设置页上写着网址）。
 
-局域网访问是明文 HTTP，不加密：同一个网络里的人能看到访问密码、登录令牌和对话内容。只在信得过的网络（自己家里）打开。在外面、在不信任的网络上用，经 [Tailscale](https://tailscale.com/) 或 [WireGuard](https://www.wireguard.com/) 连回家里再打开：流量在隧道里是加密的；Tailscale 还能给这台电脑一个 HTTPS 地址（`tailscale serve`），浏览器只在 HTTPS 下开放的麦克风、剪贴板、通知也就能用了。
+局域网访问是明文 HTTP，不加密：同一个网络里的人能看到访问密码、登录令牌和对话内容。只在信得过的网络（自己家里）打开。在外面、在不信任的网络上用，经 [Tailscale](https://tailscale.com/) 或 [WireGuard](https://www.wireguard.com/) 连回家里再打开：流量在隧道里是加密的。
 
-经这台电脑上的反向代理（`tailscale serve`、nginx、cloudflared 这类）打开的，一律当成别的设备：要访问密码，只在这台电脑上能用的（选这台电脑上的目录、读它的文件这些）用不了。代理要加上转发的头（`Forwarded`、`X-Forwarded-For`、`X-Real-IP` 这类，nginx 要在配置里写上）。
+经这台电脑上的反向代理（nginx、cloudflared 这类）打开的，一律当成别的设备：要访问密码，只在这台电脑上能用的（选这台电脑上的目录、读它的文件这些）用不了。代理要加上转发的头（`Forwarded`、`X-Forwarded-For`、`X-Real-IP` 这类，nginx 要在配置里写上）。网页只认 `Host` 是 `127.0.0.1`、`localhost`、`[::1]` 加端口的请求，听局域网时也认这台电脑的 IP 加端口，不认域名；`/ws` 只接 `Origin` 是 `http://` 加这些地址的。代理用自己的域名或 HTTPS（包括 `tailscale serve` 给的 HTTPS 地址）给出页面时，请求会被拒（403）。
 
 **不加头的纯 TCP 转发认不出是别的设备**：`ssh -L` 端口转发、`socat`、`tailscale serve --tcp` 这类，转进来的连接在网页看来就是这台电脑自己，经它打开的人能读这台电脑的文件、不带旧密码改掉访问密码。别用它们把网页开给别人；只给自己用、而且那一头的设备也是你自己的，才可以。
 

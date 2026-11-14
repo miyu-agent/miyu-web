@@ -8,24 +8,25 @@
 
 浏览器只会说 WebSocket，核心听的是本机的套接字，中间要一个桥（`bridge/`）：它给页面文件，把 `/ws` 转到核心，
 替页面出示本机令牌。核心在另一个仓库（`miyu-agent/miyu`），先在它的检出里编一次核心（`cargo build -p miyu`），下面的
-`<核心检出>` 换成它的路径。在这个仓库的根目录：
+`<核心检出>` 换成它的路径。
 
 ```sh
-cargo build --manifest-path web-demo/bridge/Cargo.toml
-# 第一次：在核心检出里建数据根的骨架、写模型的配置（system/config.toml；已经有配置的不覆盖）
+# 第一次：在核心检出的根目录建数据根的骨架、写模型的配置（etc/config.toml；已经有配置的不覆盖）
 MIYU_DEV_BASE_URL=<地址，写到 /v1> MIYU_DEV_MODEL=<模型> MIYU_DEV_WINDOW=300000 cargo xtask dev-home <单独的测试目录>
+# 回到这个仓库的根目录
+cargo build --manifest-path web-demo/bridge/Cargo.toml
 MIYU_HOME=<同一个目录> MIYU_RESOURCES=<核心检出>/resources MIYU_CORE_BIN=<核心检出>/target/debug/miyu \
-  DEEPSEEK_API_KEY=<key> MIYU_DEV_BASE_URL=<地址，写到 /v1> web-demo/bridge/target/debug/miyu-web-bridge 8766
+  MIYU_DEV_API_KEY=<key> MIYU_DEV_BASE_URL=<地址，写到 /v1> web-demo/bridge/target/debug/miyu-web-bridge 8766
 ```
 
 - 打开桥打出来的链接（`http://127.0.0.1:8766/#k=…`）。口令这一次启动有效，没有它连不上。最后那个数是端口，不写是 8765。
-- 模型从数据根的配置来（核心施工 8-6）：`dev-home` 写一家供应商 `dev`，地址引用环境变量 `MIYU_DEV_BASE_URL`、key 引用 `DEEPSEEK_API_KEY`，配置文件里没有地址和 key（`dev-home` 要设着地址，只查它的写法、不写进去）。
+- 模型从数据根的配置来：`dev-home` 写一家供应商 `dev`，地址引用环境变量 `MIYU_DEV_BASE_URL`、key 引用 `MIYU_DEV_API_KEY`，配置文件里没有地址和 key（`dev-home` 要设着地址，只查它的写法、不写进去）。
 - 变量写在命令前面，不要 `export`；key 和地址只放在命令里，不写进任何文件。
 - 核心没在跑时桥用 `MIYU_CORE_BIN` 拉起来；核心只在起来那一刻读环境变量，改了变量先停核心。桥停了核心不跟着停。
 - 新会话在起桥的那个目录里干活。
 - 时间线上工具的显示名、结果那一句由桥照 `MIYU_RESOURCES` 读（`web.human`）；换了桥的代码要重新编、重启桥。
 - 桥还顶着核心以后的网页模块做几样（蓝图 `web.md` 最后一节）：给本机文件和 blob（`/file`、`/blob`，带口令，数据根不给）、抓链接卡片（`web.link_preview`、`/link-image`，要能联网，内网地址不抓）。
-- 预览工作区：让她用 `write` 把产物写进这个会话工作目录下的 `artifacts/`，写完右边自动打开（窗口够宽时）。
+- 预览工作区：让 AI 用 `write` 把产物写进这个会话工作目录下的 `artifacts/`，写完右边自动打开（窗口够宽时）。
 
 ### 测试
 
