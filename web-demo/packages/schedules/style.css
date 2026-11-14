@@ -89,7 +89,9 @@
   display: inline-flex; flex: none; align-items: center; gap: calc(6px * var(--space)); height: var(--pulse-row); padding: 0; border: 0; background: none;
   color: var(--text-soft); font: 500 calc(13px * var(--text-scale)) var(--font-ui); white-space: nowrap; cursor: pointer;
 }
-.loop-pill:hover .loop-text { text-decoration: underline; text-underline-offset: 3px; }
+.loop-pill:hover .loop-text, .loop-pill:focus-visible .loop-text { text-decoration: underline; text-underline-offset: 3px; }
+/* 键盘焦点不画描边圈（外面一层 overflow 会把它裁成上下两条线，W-1181 走查）：同悬停加下划线、字亮一档 */
+.loop-pill:focus-visible { outline: none; color: var(--text); }
 .loop-mark { display: inline-flex; }
 .loop-pill .icon { width: calc(13px * var(--space)); height: calc(13px * var(--space)); flex: none; }
 .loop-pill[data-state="paused"] { color: var(--text-faint); }
