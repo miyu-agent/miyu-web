@@ -6,8 +6,10 @@
 /**
  * 表里的一项，和 `session.list` 的一样：有的才写。
  * @typedef {{session: string, busy?: boolean, cwd?: string, last_active?: string, oneshot?: boolean, parent?: string|null,
- *   pinned?: boolean, project?: string, title?: string, preview?: string, tokens?: number, context?: {used: number, window?: number}, archived?: boolean}} Entry
+ *   pinned?: boolean, project?: string, title?: string, preview?: string, tokens?: number, context?: {used: number, window?: number}, archived?: boolean,
+ *   persona?: string|null, life?: boolean, life_ended?: boolean}} Entry
  *   `archived`：导进来的只读存档才有，是 `true`（核心 SE-1 下，W-1094）：左栏、全部会话排在最后一段，输入框锁住
+ *   `life`：人生会话才有（核心 LF-1，设计 70）：不进左栏、全部会话，从左栏「更多」的「推演人生」打开；`life_ended` 结束了的（封存、只读）
  */
 
 /** 一项变了：之前的、之后的（删掉的是 `null`，新来的之前是 `null`）。 @typedef {(id: string, before: Entry|null, after: Entry|null) => void} Change */

@@ -7896,5 +7896,47 @@
     "select": [
       ".mk-downloads"
     ]
+  },
+  "life.empty": {
+    "zh": "推演人生的卡：一条人生都没有时那段说明",
+    "select": [
+      ".life-empty"
+    ]
+  },
+  "life.row": {
+    "zh": "推演人生的卡：一个人生一行",
+    "select": [
+      ".life-row"
+    ]
+  },
+  "life.name": {
+    "zh": "推演人生的卡：人格名",
+    "select": [
+      ".life-name"
+    ]
+  },
+  "life.doing": {
+    "zh": "推演人生的卡：她在干嘛那一句",
+    "select": [
+      ".life-doing"
+    ]
+  },
+  "life.state": {
+    "zh": "推演人生的卡：进行中、已暂停、下次几点醒",
+    "select": [
+      ".life-state"
+    ]
+  },
+  "setup.life-line": {
+    "zh": "人格详情「推演人生」下面那一行状态",
+    "select": [
+      ".setup-life-line"
+    ]
+  },
+  "setup.advanced": {
+    "zh": "人格详情最下面收着的「高级」",
+    "select": [
+      ".setup-advanced summary"
+    ]
   }
 }

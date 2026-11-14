@@ -7,12 +7,13 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { floatCard } from './float.js';
-import { field, area } from './form.js';
+import { field, area, switchField } from './form.js';
 import { Pairs } from './pairs.js';
 import { personaSave, halfPair, personaName, presetName } from './model.js';
 import { featureTree, withChanges, fallbackSections } from './feature-tree.js';
 import { shrink, store } from './avatars.js';
 import { refusalText } from './persona-editor.js';
+import { LifeSwitch } from './life.js';
 
 /**
  * @typedef {{ready: () => void, mascot?: {hop: () => void}|null}} Host 主按钮能不能点变了；吉祥物（有的话）
@@ -92,6 +93,13 @@ export class PersonaStep {
     });
     this.paintAvatar();
     this.paintBackground();
+    // 推演人生（核心设计 70 第二节第 10 条：第一次引导里也有这个开关）：人格还没建，拨开只记下（拨的时候问过），「下一步」建好人格以后开；
+    // 中途关了重来、人格已经建过的照它现在的人生摆
+    this.life ??= new LifeSwitch(this.ctx, this.kit, { id: () => this.id, say: (text) => this.say(text) });
+    this.life.load().then((ok) => { if (!ok) lifeRow.hidden = true; });
+    const lifeRow = switchField(t('edit.life'), this.life.toggle);
+    lifeRow.classList.add('setup-life');
+    lifeRow.querySelector('.setup-field-name')?.append(this.life.status);
     const body = h('div.setup-editor.is-welcome',
       field(t('edit.avatar'), this.avatarBox),
       field(t('edit.background'), this.backgroundBox),
@@ -100,6 +108,7 @@ export class PersonaStep {
       field(t('edit.persona'), this.persona),
       field(t('edit.examples'), this.pairs.el),
       field(t('edit.reminders'), this.reminders),
+      lifeRow,
       this.note);
     return {
       title: t(this.id ? 'welcome.persona_edit' : 'welcome.persona_title'),
@@ -223,6 +232,7 @@ export class PersonaStep {
       if (!id) return t('welcome.save_failed');
       // 老核心上的成员写不了配置（Y-2下下上）：不设成默认，引导走完新会话照它开
       if (this.catalog.personaDefault !== id) await this.ctx.core.request('config.set', { layer: 'system', changes: [{ key: 'persona.default', value: id }] });
+      const fresh = !this.id;
       this.id = id;
       this.before = now;
       this.avatar = null;
@@ -230,7 +240,8 @@ export class PersonaStep {
       this.bgDropped = false;
       this.host.mascot?.hop();
       await this.catalog.load();
-      return null;
+      // 拨开过「推演人生」的：人格建好了，这时开（开不成的写原因，人格照样存好了，再点「下一步」照常往下走）
+      return fresh ? (await this.life?.started(id)) ?? null : null;
     } catch (err) {
       return refusalText(err);
     }
@@ -264,7 +275,7 @@ export class PresetStep {
 
   async load() {
     await this.catalog.load();
-    const list = (this.catalog.presets ?? []).filter((p) => !p.problem);
+    const list = (this.catalog.presets ?? []).filter((p) => !p.problem && !p.hidden);
     const got = await Promise.all(list.map((p) => this.ctx.core.request('preset.get', { preset: p.preset }).catch(() => null)));
     list.forEach((p, i) => { if (got[i]) this.features.set(p.preset, this.tree(got[i])); });
     const def = this.catalog.presetDefault;

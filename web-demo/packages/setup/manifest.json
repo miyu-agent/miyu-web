@@ -264,7 +264,12 @@
         "delete_ask": "确认删除「{name}」吗？",
         "restore_ask": "确认把「{name}」恢复出厂吗？改过的内容会丢掉。",
         "by_global": "跟随全局",
-        "follow_global": "跟随全局默认"
+        "follow_global": "跟随全局默认",
+        "life": "推演人生",
+        "advanced": "高级",
+        "life_method": "推演方法",
+        "life_method_desc": "她每次醒来时照着过日子的那段话；空着用出厂的",
+        "life_method_hint": "空着用出厂的推演方法"
       },
       "folders": {
         "open": "选择文件夹…",
@@ -375,7 +380,18 @@
       "project_fixed": "这个会话在项目里，人格和预设由项目定",
       "picker_hint": "↑↓ 选择 · Enter 确定 · Esc 关闭",
       "picker_hint_edit": "↑↓ 选择 · Enter 确定 · Esc 关闭 · E 编辑",
-      "picker_current": "当前"
+      "picker_current": "当前",
+      "life": {
+        "open": "打开",
+        "ask": "开启推演人生？她会按自己定的时间醒来，过一段自己的日子；每次醒来是一次模型请求，会多花 token；她会自己记事，记下的进她的记忆。关掉算暂停。",
+        "hint": "她自己按时醒来过日子，每次醒来多花一次请求",
+        "running_next": "进行中 · 下次醒 {time}",
+        "state": {
+          "running": "进行中",
+          "paused": "已暂停",
+          "ended": "上一段已结束"
+        }
+      }
     },
     "en": {
       "choose_persona": "Select persona",
@@ -486,7 +502,12 @@
         "delete_ask": "Delete \"{name}\"?",
         "restore_ask": "Restore \"{name}\" to its built-in version? Your changes will be lost.",
         "by_global": "Follows global",
-        "follow_global": "Follow global default"
+        "follow_global": "Follow global default",
+        "life": "Simulated life",
+        "advanced": "Advanced",
+        "life_method": "Life method",
+        "life_method_desc": "What she follows each time she wakes to live her day; leave empty for the built-in one",
+        "life_method_hint": "Empty uses the built-in life method"
       },
       "folders": {
         "open": "Select folder…",
@@ -597,7 +618,18 @@
       "project_fixed": "This session is in a project; the project sets its persona and preset",
       "picker_hint": "↑↓ select · Enter confirm · Esc close",
       "picker_hint_edit": "↑↓ select · Enter confirm · Esc close · E edit",
-      "picker_current": "current"
+      "picker_current": "current",
+      "life": {
+        "open": "Open",
+        "ask": "Turn on simulated life? She wakes on her own schedule and lives a little of her own day. Each wakeup is one model request and costs tokens. She notes things down herself, and they go into her memory. Turning it off pauses it.",
+        "hint": "She wakes on her own to live her day; each wakeup costs a request",
+        "running_next": "Running · wakes {time}",
+        "state": {
+          "running": "Running",
+          "paused": "Paused",
+          "ended": "The last one has ended"
+        }
+      }
     },
     "ja": {
       "choose_persona": "人格を選ぶ",
@@ -708,7 +740,12 @@
         "delete_ask": "「{name}」を削除しますか？",
         "restore_ask": "「{name}」を初期状態に戻しますか？変更内容は失われます。",
         "by_global": "全体設定に従う",
-        "follow_global": "全体の既定に従う"
+        "follow_global": "全体の既定に従う",
+        "life": "人生の推演",
+        "advanced": "詳細",
+        "life_method": "推演のしかた",
+        "life_method_desc": "目覚めるたびに彼女が一日を過ごすときに従う文章。空なら既定のもの",
+        "life_method_hint": "空なら既定の推演のしかたを使います"
       },
       "folders": {
         "open": "フォルダを選ぶ…",
@@ -819,7 +856,18 @@
       "project_fixed": "このセッションはプロジェクト内のため、人格とプリセットはプロジェクトが決めます",
       "picker_hint": "↑↓ 選択 · Enter 決定 · Esc 閉じる",
       "picker_hint_edit": "↑↓ 選択 · Enter 決定 · Esc 閉じる · E 編集",
-      "picker_current": "現在"
+      "picker_current": "現在",
+      "life": {
+        "open": "開く",
+        "ask": "人生の推演をオンにしますか？彼女は自分で決めた時刻に目覚めて、自分の一日を過ごします。目覚めるたびにモデルへのリクエストが1回発生し、トークンを使います。書き留めたことは彼女の記憶に残ります。オフにすると一時停止です。",
+        "hint": "自分で目覚めて一日を過ごします。目覚めるたびにリクエストが1回",
+        "running_next": "進行中 · 次に目覚める {time}",
+        "state": {
+          "running": "進行中",
+          "paused": "一時停止中",
+          "ended": "前回の人生は終了"
+        }
+      }
     }
   }
 }

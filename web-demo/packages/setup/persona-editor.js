@@ -4,12 +4,14 @@
 //! `persona.read` 给的版本；「取消」关掉卡片、丢掉没存的。删除照核心的 `remove`：改过的出厂「恢复出厂」、自己建的「删除」，点两次才删。
 //! 别处改过了（`persona_conflict`）写一句、给「重新读」；写错的照核心给人看的那一句（`data.message`）。
 //! 最上面三行是外观（头像、主题色、背景图，`appearance.js`）：换、删当场存，不等「保存」。
+//! 「推演人生」开关（核心设计 70，`life.js`）也当场生效；「推演方法」收在最下面的「高级」里，跟着「保存」存（2026-11-14）。
 
 import { h, replace } from '../../src/lib/dom.js';
 import { field, switchField, area, askFirst } from './form.js';
 import { Pairs } from './pairs.js';
 import { personaSave, halfPair, newlyRemoved } from './model.js';
 import { Appearance } from './appearance.js';
+import { LifeSwitch } from './life.js';
 
 /**
  * @typedef {import('./model.js').PersonaDraft} PersonaDraft
@@ -58,9 +60,13 @@ export class PersonaEditor {
   async load() {
     const read = (prompt) => this.ctx.core.request('persona.read', { persona: this.id, prompt });
     try {
-      const [got, persona, reminders, examples] = await Promise.all([
+      const [got, persona, reminders, examples, life] = await Promise.all([
         this.ctx.core.request('persona.get', { persona: this.id }), read('persona'), read('reminders'), read('examples'),
+        // 推演方法（核心 LF-8 上）：旧核心不认 `life`，读不到的不画那一格
+        read('life').catch(() => null),
       ]);
+      /** 出厂的推演方法：没写时用的就是它，当占位字 */
+      this.lifeDefault = typeof life?.default === 'string' ? life.default : '';
       this.remove = got?.remove ?? null;
       this.look.set(got);
       this.before = {
@@ -70,8 +76,15 @@ export class PersonaEditor {
         reminders: reminders?.text ?? '',
         pairs: Array.isArray(examples?.pairs) ? examples.pairs : [],
         subagent: got?.subagent === true,
-        versions: { persona: persona?.version ?? null, reminders: reminders?.version ?? null, examples: examples?.version ?? null },
+        ...(life ? { life: life.text ?? '' } : {}),
+        versions: { persona: persona?.version ?? null, reminders: reminders?.version ?? null, examples: examples?.version ?? null, life: life?.version ?? null },
       };
+      this.lifeSwitch = new LifeSwitch(this.ctx, this.kit, {
+        id: () => this.id,
+        open: (session) => { this.hooks.close(); this.ctx.settings?.close?.(); this.ctx.chat.open(session); },
+        say: (text) => this.say(text),
+      });
+      this.lifeOk = await this.lifeSwitch.load();
       this.draw(this.before);
     } catch (err) {
       replace(this.body, h('p.setup-error', refusalText(err)));
@@ -86,10 +99,12 @@ export class PersonaEditor {
     this.summary = this.kit.field(d.summary, t('edit.summary_hint'));
     this.persona = area(d.persona, t('edit.persona_hint'), 4);
     this.reminders = area(d.reminders, t('edit.reminders_hint'), 2);
+    // 推演方法：空着的照出厂那一份（占位字写它）
+    this.life = typeof d.life === 'string' ? area(d.life, this.lifeDefault || t('edit.life_method_hint'), 3) : null;
     const them = () => this.name?.value.trim() || t('edit.them');
     this.pairs = new Pairs(d.pairs, { you: t('edit.you'), them, add: t('edit.add_pair'), drop: t('edit.drop_pair'), userHint: t('edit.user_hint'), replyHint: t('edit.reply_hint') }, () => this.sync());
     this.name.addEventListener('input', () => { this.pairs?.rename(them()); this.sync(); });
-    for (const a of [this.summary, this.persona, this.reminders]) a.addEventListener('input', () => this.sync());
+    for (const a of [this.summary, this.persona, this.reminders, this.life]) a?.addEventListener('input', () => this.sync());
     // 子代理可选（核心 P-10 补，2026-10-17 项目主人：默认关，开了的人格才在派子代理时可挑）：同别的格，点「保存」才存
     this.subagentOn = !!d.subagent;
     const subagent = this.kit.toggle(this.subagentOn, (on) => { this.subagentOn = on; this.sync(); return true; });
@@ -109,10 +124,28 @@ export class PersonaEditor {
       field(t('edit.examples'), this.pairs.el),
       field(t('edit.reminders'), this.reminders),
       switchField(t('edit.subagent'), subagent),
+      this.lifeRow(),
       this.memoryRow(),
+      this.advanced(),
       this.note,
       h('div.setup-foot', remove, h('span.setup-grow'), this.kit.button(t('edit.cancel'), {}, () => this.hooks.close()), this.saveBtn));
     this.sync();
+  }
+
+  /** 「推演人生」一行（核心设计 70，`life.js`）：开关，名字下面一行暗字写状态；核心没有 `life.*` 的不画。 */
+  lifeRow() {
+    if (!this.lifeOk || !this.lifeSwitch) return null;
+    const row = switchField(this.t('edit.life'), this.lifeSwitch.toggle);
+    row.classList.add('setup-life');
+    row.querySelector('.setup-field-name')?.append(this.lifeSwitch.status);
+    return row;
+  }
+
+  /** 「高级」（收着，点开）：推演方法（2026-11-14 主人定收在高级里）。核心不认 `life` 的什么都不画。 */
+  advanced() {
+    if (!this.life) return null;
+    return h('details.setup-advanced', h('summary', this.t('edit.advanced')),
+      field(this.t('edit.life_method'), this.life, this.t('edit.life_method_desc')));
   }
 
   /**
@@ -138,7 +171,8 @@ export class PersonaEditor {
   /** 编辑器里现在写的。 @returns {PersonaDraft} */
   current() {
     const b = /** @type {PersonaDraft} */ (this.before);
-    return { ...b, name: this.name?.value ?? b.name, summary: this.summary?.value ?? b.summary, persona: this.persona?.value ?? b.persona, reminders: this.reminders?.value ?? b.reminders, pairs: this.pairs?.value() ?? b.pairs, subagent: this.subagentOn ?? b.subagent };
+    return { ...b, name: this.name?.value ?? b.name, summary: this.summary?.value ?? b.summary, persona: this.persona?.value ?? b.persona, reminders: this.reminders?.value ?? b.reminders, pairs: this.pairs?.value() ?? b.pairs, subagent: this.subagentOn ?? b.subagent,
+      ...(this.life ? { life: this.life.value } : {}) };
   }
 
   /** 改了没存。 */

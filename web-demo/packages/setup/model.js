@@ -3,7 +3,7 @@
 //! 纯函数。
 
 /** `persona.list` 的一项：写错的只有 `persona`、`problem`。 @typedef {{persona: string, name?: string|null, summary?: string|null, problem?: string}} Persona */
-/** `preset.list` 的一项：写错的只有 `preset`、`problem`。 @typedef {{preset: string, name?: string|null, summary?: string|null, problem?: string, tokens?: number}} Preset */
+/** `preset.list` 的一项：写错的只有 `preset`、`problem`。 @typedef {{preset: string, name?: string|null, summary?: string|null, problem?: string, tokens?: number, hidden?: boolean}} Preset */
 
 /** 人格写给人看的名字：没有显示名的写编号。 @param {Persona} p */
 export const personaName = (p) => p.name || p.persona;
@@ -16,6 +16,14 @@ export const presetName = (p) => p.name || p.preset;
 export const validId = (id) => /^[a-z][a-z0-9_-]{0,63}$/.test(id);
 
 export const presetTokens = (p) => (typeof p.tokens === 'number' && p.tokens >= 0 ? p.tokens : null);
+
+/**
+ * 选预设的地方列哪些（核心 LF-7 起 `preset.list` 的 `hidden`；设计 70 第三节第 7 条，出厂的「推演人生」带它）：带 `hidden` 的不列进新会话、
+ * 中途换预设、默认预设这些「选一个」的列表，预设管理页照列。正选着的照样留着（看着人生会话打开换预设，现在的那一行还在）。
+ * @template {Preset} T @param {T[]} presets @param {string|false|null} [keep] 正选着的
+ * @returns {T[]}
+ */
+export const pickable = (presets, keep = null) => presets.filter((p) => !p.hidden || (keep != null && p.preset === keep));
 
 /**
  * 删人格连带卸掉的出厂包（核心 PE-1）：`package.list` 删前、删后两份里，删后多出来的 `removed` 的那一个；没有、读不到的是 `null`。
@@ -77,13 +85,14 @@ export function personaInUse(chosen, fallback, list) {
  * 新会话先选上上一次的（2026-10-09 项目主人：不然每次新会话都要选好麻烦）：会话表里最新的那个顶层会话的人格、预设。工作区不跟
  * （2026-10-22 项目主人：上一个会话换到 `~` 以后新建会话也跟着在 `~`，不对），新会话一律从默认工作区开始。
  * 那个会话没人格的选「无人格」（`false`）；人格、预设已经没了、写错了的不选（照默认的）；一个会话都没有的交 `null`。
- * @param {{session?: string, oneshot?: boolean, parent?: string|null, persona?: string, preset?: string|null, no_tools?: boolean, cwd?: string}[]} sessions 从新到旧
+ * @param {{session?: string, oneshot?: boolean, parent?: string|null, persona?: string, preset?: string|null, no_tools?: boolean, cwd?: string, life?: boolean}[]} sessions 从新到旧
  * @param {Persona[]} personas @param {Preset[]} presets
  * @param {false|string|null} [noTools] 无工具的会话接着选什么（`Catalog.noToolsAs`）：旧核心 `false`，新核心（P-17）出厂的 `none`
  * @returns {{persona?: string|false, preset?: string|false}|null}
  */
 export function lastChoice(sessions, personas, presets, noTools = false) {
-  const last = sessions.find((e) => !e.oneshot && !e.parent);
+  // 人生会话（核心 LF-1 起会话表那一项的 `life`）不算：它是她自己过日子的会话，选的是出厂的「推演人生」预设
+  const last = sessions.find((e) => !e.oneshot && !e.parent && !e.life);
   if (!last) return null;
   /** @type {{persona?: string|false, preset?: string|false}} */
   const out = {};
@@ -158,7 +167,9 @@ export function summaryChange(kind, before, after) {
 
 /**
  * 编辑器里的人格（详情的四样、「子代理可选」）和读进来时提示词的版本（存的时候当 `expect` 带回去，防覆盖别处的改动）。
- * @typedef {{name: string, summary: string, persona: string, reminders: string, pairs: Pair[], subagent?: boolean, versions: {persona: string|null, reminders: string|null, examples: string|null}}} PersonaDraft
+ * `life` 是推演方法（核心 LF-8 上，`persona.read {prompt: "life"}`）：没读过的（引导里新建的）不写，不发。
+ * @typedef {{name: string, summary: string, persona: string, reminders: string, pairs: Pair[], subagent?: boolean, life?: string,
+ *   versions: {persona: string|null, reminders: string|null, examples: string|null, life?: string|null}}} PersonaDraft
  */
 
 /** 示范对话要存的那几对：字前后的空白去掉，两头都空的不要。 @param {Pair[]} pairs @returns {Pair[]} */
@@ -192,6 +203,11 @@ export function personaSave(before, after) {
   const prompts = {};
   for (const key of /** @type {const} */ (['persona', 'reminders'])) {
     if (after[key].trim() !== before[key].trim()) prompts[key] = { text: after[key].trim(), expect: before.versions[key] };
+  }
+  // 推演方法（设计 70 第二节第 9 条）：清空了是「用出厂的那一份」，发 `unset`（同 `persona.read` 的 `default` 当占位）
+  if (typeof after.life === 'string' && typeof before.life === 'string' && after.life.trim() !== before.life.trim()) {
+    const text = after.life.trim();
+    prompts.life = text ? { text, expect: before.versions.life ?? null } : { unset: true, expect: before.versions.life ?? null };
   }
   const pairs = cleanPairs(after.pairs);
   if (JSON.stringify(pairs) !== JSON.stringify(cleanPairs(before.pairs))) prompts.examples = { pairs, expect: before.versions.examples };

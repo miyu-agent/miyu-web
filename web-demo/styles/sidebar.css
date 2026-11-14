@@ -394,7 +394,7 @@ body.is-dragging-session, body.is-dragging-session * { cursor: grabbing !importa
 .sidebar-more-menu button { display: flex; align-items: center; gap: calc(8px * var(--space)); }
 .sidebar-more-menu .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); flex: none; color: var(--text-soft); }
 .sidebar-nav-row:hover { background: var(--item-hover, color-mix(in srgb, var(--text) 3.5%, transparent)); }
-.sidebar-nav-row.is-on { background: var(--item-active, var(--sidebar-active)); box-shadow: var(--item-elev-active, var(--sidebar-active-shadow)); }
+.sidebar-nav-row.is-on, .sidebar-nav-row.is-here { background: var(--item-active, var(--sidebar-active)); box-shadow: var(--item-elev-active, var(--sidebar-active-shadow)); }
 .sidebar-nav-row .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); flex: none; color: var(--text-soft); }
 /* 一栏一块（置顶、项目、会话）：栏与栏之间用间距分开，不画细线（同一天项目主人）；收起的那一截高度缓过去；整块是放会话的一块，拖的时候整块亮 */
 .sb-section { display: grid; border-radius: var(--r-10); transition: background-color calc(120ms * var(--motion-scale)) ease, box-shadow calc(120ms * var(--motion-scale)) ease; }

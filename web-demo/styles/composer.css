@@ -381,6 +381,8 @@
 .prefix-ask-btn:hover, .export-btn:hover:not(:disabled) { background: var(--surface-3); }
 .prefix-ask-btn.is-primary, .export-btn.is-primary { background: var(--accent); color: var(--on-primary); }
 .prefix-ask-btn.is-primary:hover, .export-btn.is-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 88%, var(--text)); }
+.prefix-ask-btn.is-primary.is-danger, .prefix-ask-btn.is-primary.is-danger:hover { background: var(--danger); color: #fff; }
+.prefix-ask-btn.is-primary.is-danger:hover { filter: brightness(1.06); }
 .prefix-ask-btn:focus-visible, .export-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @keyframes prefix-ask-in { from { opacity: 0; } to { opacity: 1; } }
 

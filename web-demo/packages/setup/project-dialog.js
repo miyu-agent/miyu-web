@@ -139,7 +139,7 @@ export async function editProject(ctx, catalog, what, workspaces) {
   ], personaValue, (/** @type {string} */ v) => { form.persona = v === DEFAULT ? undefined : v === NONE ? null : v; });
   const preset = kit.select([
     { value: DEFAULT, name: t('default') },
-    ...(catalog.presets ?? []).filter((p) => !p.problem || p.preset === form.preset).map((p) => ({ value: p.preset, name: presetName(p) })),
+    ...(catalog.presets ?? []).filter((p) => (!p.problem && !p.hidden) || p.preset === form.preset).map((p) => ({ value: p.preset, name: presetName(p) })),
   ], form.preset ?? DEFAULT, (/** @type {string} */ v) => { form.preset = v === DEFAULT ? undefined : v; });
 
   // 附加提示词、留言

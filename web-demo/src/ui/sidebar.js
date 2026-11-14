@@ -214,6 +214,11 @@ export class Sidebar {
     if (m) leave(m, () => m.remove());
   }
 
+  /** 正在看的会话在「更多」里（人生会话，2026-11-14）：「更多」那一行照选中的亮着（菜单开着的 `is-on` 另算）。 @param {boolean} here */
+  setMoreHere(here) {
+    this.navMore.classList.toggle('is-here', here);
+  }
+
   /** 全部会话那一页开着哪一页（`null` 是关着）：头上交互区那一行亮着。 @param {'sessions'|'projects'|null} view */
   setPage(view) {
     for (const row of this.nav.querySelectorAll('.sidebar-nav-row')) row.classList.toggle('is-on', /** @type {HTMLElement} */ (row).dataset.nav === view);

@@ -136,9 +136,10 @@ export class SessionsPage {
     if (redraw) this.draw();
   }
 
-  /** 全部顶层会话（不是一次性的、不是子会话），带上在跑、没看过、项目。 @returns {Row[]} */
+  /** 全部顶层会话（不是一次性的、不是子会话、不是人生会话），带上在跑、没看过、项目。 @returns {Row[]} */
   rows() {
-    return this.on.list().filter((s) => !s.oneshot && !s.parent).map((s) => ({
+    // 人生会话不列（2026-11-14 项目主人：怕误删，从左栏「更多」的「推演人生」打开）
+    return this.on.list().filter((s) => !s.oneshot && !s.parent && !/** @type {any} */ (s).life).map((s) => ({
       session: s.session, title: s.title ?? this.on.titleOf(s.session), project: s.project ?? null,
       active: s.last_active ? Date.parse(s.last_active) : this.on.active(s.session),
       running: this.on.running(s.session), unread: this.on.unread(s.session),

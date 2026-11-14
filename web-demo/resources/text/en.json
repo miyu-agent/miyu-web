@@ -391,6 +391,9 @@
     "from_session": "Message from session {id} “{title}”"
   },
   "esc_interrupt_hint": "Press Esc again to interrupt",
+  "life_ended_readonly": "This life has ended. You can only read it",
+  "ask": {"cancel": "Cancel"},
+  "life": {"kill_title": "End this life?", "kill_text": "She will never wake again and this session becomes read-only. The memories from this life will be erased and cannot be recovered.", "kill_yes": "End life", "new_title": "Start a new life?", "new_text": "The current life ends first: she will never wake again, and the memories from it will be erased and cannot be recovered. Then a new one begins.", "new_yes": "End and start over"},
   "archived_readonly": "This is an archive. You can read it but not continue it",
   "venue_readonly": "A chat on a messaging platform. You can only read it",
   "session_read_only": "Line {line} of this session's log is damaged. You can only see what came before it and can't continue this session. Start a new session to go on.",

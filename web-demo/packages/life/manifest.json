@@ -1,0 +1,77 @@
+{
+  "id": "life",
+  "version": "0.1.0",
+  "name": {
+    "zh": "推演人生",
+    "en": "Simulated life",
+    "ja": "人生の推演"
+  },
+  "summary": {
+    "zh": "左栏「更多」里列各人格的人生会话，点了打开",
+    "en": "Lists each persona's life session under More in the left sidebar",
+    "ja": "左サイドバーの「その他」に各人格の人生セッションを並べる"
+  },
+  "kind": "optional",
+  "description": {
+    "zh": "人生会话（人格设置里开「推演人生」以后她自己过日子的会话）不进左栏和全部会话，免得和别的会话混在一起误删。左栏「更多」多一项「推演人生」，点了列出各人格的人生：在跑、暂停、结束了，下次几点醒，她现在在干嘛；点一行打开那个会话。"
+  },
+  "inject": [
+    "slots",
+    "core",
+    "sessions",
+    "chat",
+    "personas~",
+    "settings~",
+    "icons~"
+  ],
+  "styles": [
+    "style.css"
+  ],
+  "text": {
+    "zh": {
+      "title": "推演人生",
+      "close": "关闭",
+      "empty": "还没有人格在推演人生。在人格设置里打开「推演人生」，她会按自己定的时间醒来，过一段自己的日子，记下的事进她的记忆。每次醒来是一次模型请求，会多花 token。",
+      "open_personas": "打开人格设置",
+      "states": {
+        "running": "进行中",
+        "paused": "已暂停",
+        "ended": "已结束",
+        "none": "未开始"
+      },
+      "next": "下次醒 {time}",
+      "tomorrow": "明天 {time}",
+      "loading": "正在读取…"
+    },
+    "en": {
+      "title": "Simulated life",
+      "close": "Close",
+      "empty": "No persona is living a simulated life yet. Turn on Simulated life in a persona's settings: she wakes on her own schedule, lives a little of her own day, and what she notes goes into her memory. Each wakeup is one model request and costs tokens.",
+      "open_personas": "Open persona settings",
+      "states": {
+        "running": "Running",
+        "paused": "Paused",
+        "ended": "Ended",
+        "none": "Not started"
+      },
+      "next": "Wakes {time}",
+      "tomorrow": "tomorrow {time}",
+      "loading": "Loading…"
+    },
+    "ja": {
+      "title": "人生の推演",
+      "close": "閉じる",
+      "empty": "人生を推演している人格はまだありません。人格の設定で「人生の推演」をオンにすると、彼女は自分で決めた時刻に目覚めて自分の一日を過ごし、書き留めたことは記憶に残ります。目覚めるたびにモデルへのリクエストが1回発生し、トークンを使います。",
+      "open_personas": "人格の設定を開く",
+      "states": {
+        "running": "進行中",
+        "paused": "一時停止中",
+        "ended": "終了",
+        "none": "未開始"
+      },
+      "next": "次に目覚める {time}",
+      "tomorrow": "明日 {time}",
+      "loading": "読み込み中…"
+    }
+  }
+}

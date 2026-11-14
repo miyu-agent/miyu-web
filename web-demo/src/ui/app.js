@@ -27,6 +27,7 @@ import { SideColumn } from './side.js';
 import { SidebarWidth } from './sidebar-width.js';
 import { statusFooter, levelLabel, nextLevel, levelParams, previewRing } from '../model/footer.js';
 import { watchOnly } from '../model/watch.js';
+import { isLife, lifeEnded } from '../lib/life.js';
 import { itemsOf, levelOf } from '../model/entries.js';
 import { statusRows } from '../model/status.js';
 import { compactingOf, lastTurn, turnEnded, untouchedTurnOf } from '../model/view-state.js';
@@ -276,7 +277,8 @@ export class App {
       // 换模型的菜单（蓝图「换模型的菜单」）：每次打开问一次 `model.list`；选了下一轮生效
       // 会话列表（`/sessions`，蓝图「会话列表」）：全部顶层会话照会话表；在不在跑、看没看过：读过日志的照日志，没读过的照会话表
       sessions: {
-        rows: async () => this.store.index.all().filter((s) => !s.oneshot && !s.parent).map((s) => {
+        // 人生会话不列（设计 70，从左栏「更多」的「推演人生」打开）
+        rows: async () => this.store.index.all().filter((s) => !s.oneshot && !s.parent && !isLife(s)).map((s) => {
           const it = this.store.summary(s.session);
           return { session: s.session, title: this.titleOf(s.session), pinned: it.pinned, active: it.active };
         }),
@@ -1368,7 +1370,9 @@ export class App {
 
   render() {
     const s = this.current ? this.store.sessions.get(this.current) : null;
-    this.sidebar.render(rank(this.store.order.map((id) => this.store.summary(id))), this.current);
+    // 人生会话不进左栏（2026-11-14 项目主人：怕和别的会话混在一起误删）：看着它时「更多」那一行亮着，它在「推演人生」里
+    this.sidebar.render(rank(this.store.order.filter((id) => !isLife(this.store.index.get(id))).map((id) => this.store.summary(id))), this.current);
+    this.sidebar.setMoreHere(!!this.current && isLife(this.store.index.get(this.current)));
     this.sessionsPage?.refresh();
     this.composer?.sessionList.refresh();
     const path = this.current ? pathOf(this.current, (id) => this.parentOf(id)).map((id) => ({ session: id, title: this.titleOf(id) })) : [];
@@ -1384,6 +1388,8 @@ export class App {
     // 导进来的只读存档（核心 SE-1 下，设计 58 第三节第 3 条，W-1094）：输入框换成一行「这是存档」，编辑、重做不出；换到别的会话就解开。
     // 照会话表每画一次交一次：刚导进来、会话表那一项后到的，到了就锁上
     const archived = this.archivedOf(this.current);
+    // 结束了的人生会话（核心 LF-4 的 `life_ended`）：封存了，只读，照存档那样锁住输入框
+    const ended = !!this.current && lifeEnded(this.store.index.get(this.current));
     // 日志中间坏了一行（核心 YC-6 的 `session_read_only`）：坏行以前的照 `view.page` 只读地看，框锁住写核心那一句，发送按钮那里换成「新开会话」；
     // 这一刻读不了（核心 YC-2 的 `session_unavailable`）：一时的错，框锁住写那一句，过一会儿自己再订阅（`store.js`），不当成坏了（W-1138）
     const broken = s?.broken ?? null;
@@ -1391,11 +1397,11 @@ export class App {
     // 通讯平台上的群、私聊（W-1168）：输入框连框下面那一行一起收起，换成一行「只能看」；编辑、重做不出
     const watching = this.watchOnlyOf(this.current);
     this.composer.watch(watching ? t('venue_readonly') : null);
-    const sealed = watching ? t('venue_readonly') : archived ? t('archived_readonly')
+    const sealed = watching ? t('venue_readonly') : archived ? t('archived_readonly') : ended ? t('life_ended_readonly')
       : broken ? broken.message || t('session_read_only', { line: broken.line ?? '?' })
         : away ? away.message || t('session_unavailable') : null;
     this.composer.seal(sealed, broken && !archived ? { label: t('new_session'), run: () => this.open(null) } : null);
-    this.chat.setReadonly(archived || watching || !!broken);
+    this.chat.setReadonly(archived || ended || watching || !!broken);
     this.chat.setCompacting(s ? compactingOf(s.view.list, s.view.status) : null, this.current);
     // 先照空不空摆好输入框（居中时对话区没有高度），再画对话：不然第一句话照 0 高算停在哪，被顶到视口上面
     this.centerIfEmpty(!this.current);

@@ -110,7 +110,7 @@ export function openForm(ctx, kit, store, opts) {
       ...personas.filter((/** @type {any} */ p) => p?.persona && !p.problem).map((/** @type {any} */ p) => ({ value: p.persona, name: p.name ?? p.persona }))], '',
     (/** @type {string} */ v) => { persona = v === '' ? undefined : v === '-' ? null : v; }));
     presetBox.replaceWith(choose(kit, [{ value: '', name: t('form.default') },
-      ...presets.filter((/** @type {any} */ p) => p?.preset && !p.problem).map((/** @type {any} */ p) => ({ value: p.preset, name: p.name ?? p.preset }))], '',
+      ...presets.filter((/** @type {any} */ p) => p?.preset && !p.problem && !p.hidden).map((/** @type {any} */ p) => ({ value: p.preset, name: p.name ?? p.preset }))], '',
     (/** @type {string} */ v) => { preset = v === '' ? undefined : v; }));
   });
 
