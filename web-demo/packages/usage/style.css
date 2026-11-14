@@ -59,7 +59,8 @@
 .use-table { width: 100%; min-width: 480px; border-collapse: collapse; table-layout: fixed; font-size: calc(13px * var(--text-scale)); font-variant-numeric: tabular-nums; }
 .use-col-requests, .use-col-tokens, .use-col-hit { width: 92px; } .use-col-cost { width: 136px; }
 .use-table th { padding: calc(6px * var(--space)) calc(8px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); font-weight: 500; text-align: left; white-space: nowrap; }
-.use-table th button { display: inline-flex; align-items: center; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+/* 表头一律对中线：排着序的那一格前面有箭头、别的那格是空的，照基线排会高低不齐（2026-11-14 UI review 第 3 条） */
+.use-table th button { display: inline-flex; align-items: center; padding: 0; border: 0; background: none; color: inherit; font: inherit; vertical-align: middle; cursor: pointer; }
 .use-table th button:hover, .use-table th button.is-on { color: var(--text); }
 .use-arrow { display: inline-block; width: 1em; text-align: center; }
 .use-table th.num, .use-table td.num { text-align: right; }
@@ -117,8 +118,10 @@
   .use-seg { margin-left: 0; }
 }
 
-/* 手机上（蓝图「手机上」）：表本来就能横着滚，名字那一格不截成 …，照字宽写全 */
+/* 手机上（蓝图「手机上」）：表本来就能横着滚，名字那一格不截成 …，照字宽写全：表照内容排宽（不照固定列宽），名字那一列跟着字变宽、
+   整张表横着滚；原来列宽固定，写全的名字压在后面几列上（2026-11-14 UI review 第 3 条） */
 @media (max-width: 640px) {
+  .use-table { width: max-content; min-width: 100%; table-layout: auto; }
   .use-table td { overflow: visible; text-overflow: clip; }
   .use-name-line, .use-name-line > * { overflow: visible; text-overflow: clip; }
   .use-name-line > :first-child, .use-name-line > .use-sub { flex: none; }
