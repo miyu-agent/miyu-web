@@ -216,6 +216,12 @@ body.is-dragging-card, body.is-dragging-card * { cursor: grabbing !important; us
 .dash-zoom { flex: none; margin-left: auto; opacity: 0; transition: opacity calc(120ms * var(--motion-scale)) ease; }
 .dash-head:hover .dash-zoom, .dash-zoom:focus-visible { opacity: 1; }
 .dash-card.is-folded .dash-zoom { display: none; }
+/* 有悬停的：没露的时候不占地方，卡片头最右边的东西（展示文件的搜索、文件修改的 +N -N）贴着右边；悬停时它从右边长出来
+   （2026-11-14 UI review 第 10 条：原来透明的它照样占一格，搜索图标停在卡片中间） */
+@media (hover: hover) {
+  .dash-zoom { width: 0; overflow: hidden; transition: opacity calc(120ms * var(--motion-scale)) ease, width calc(120ms * var(--motion-scale)) ease; }
+  .dash-head:hover .dash-zoom, .dash-zoom:focus-visible { width: calc(32px * var(--space)); }
+}
 /* 收着的卡不占最矮的那几行 */
 .dash-slot.is-on.is-folded { flex-shrink: 0; min-height: 0; }
 /* 放大看那一页（蓝图「仪表盘」第 4 条「放大看」）：文件修改左边一列 260px（同卡片的一行，能收起：外面那一层 `.artifact-split` 在 styles/artifacts.css），右边选中的那一个；两边各自滚 */
