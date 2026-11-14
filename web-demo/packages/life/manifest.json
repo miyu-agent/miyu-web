@@ -13,7 +13,7 @@
   },
   "kind": "optional",
   "description": {
-    "zh": "人生会话（人格设置里开「推演人生」以后她自己过日子的会话）不进左栏和全部会话，免得和别的会话混在一起误删。左栏「更多」多一项「推演人生」，点了列出各人格的人生：在跑、暂停、结束了，下次几点醒，她现在在干嘛；点一行打开那个会话。"
+    "zh": "人生会话（人格设置里开「推演人生」以后 AI 自己过日子的会话）不进左栏和全部会话，免得和别的会话混在一起误删。左栏「更多」多一项「推演人生」，点了列出各人格的人生：在跑、暂停、结束了，下次几点醒，现在在干嘛；点一行打开那个会话。"
   },
   "inject": [
     "slots",
@@ -31,7 +31,7 @@
     "zh": {
       "title": "推演人生",
       "close": "关闭",
-      "empty": "还没有人格在推演人生。在人格设置里打开「推演人生」，她会按自己定的时间醒来，过一段自己的日子，记下的事进她的记忆。每次醒来是一次模型请求，会多花 token。",
+      "empty": "还没有人格在推演人生。在人格设置里打开「推演人生」，AI 会按自己定的时间醒来，过一段自己的日子，记下的事进这个人格的记忆。每次醒来是一次模型请求，会多花 token。",
       "open_personas": "打开人格设置",
       "states": {
         "running": "进行中",
@@ -46,7 +46,7 @@
     "en": {
       "title": "Simulated life",
       "close": "Close",
-      "empty": "No persona is living a simulated life yet. Turn on Simulated life in a persona's settings: she wakes on her own schedule, lives a little of her own day, and what she notes goes into her memory. Each wakeup is one model request and costs tokens.",
+      "empty": "No persona is living a simulated life yet. Turn on Simulated life in a persona's settings: the AI wakes on its own schedule, lives a little of its own day, and what it notes goes into this persona's memory. Each wakeup is one model request and costs tokens.",
       "open_personas": "Open persona settings",
       "states": {
         "running": "Running",
@@ -61,7 +61,7 @@
     "ja": {
       "title": "人生の推演",
       "close": "閉じる",
-      "empty": "人生を推演している人格はまだありません。人格の設定で「人生の推演」をオンにすると、彼女は自分で決めた時刻に目覚めて自分の一日を過ごし、書き留めたことは記憶に残ります。目覚めるたびにモデルへのリクエストが1回発生し、トークンを使います。",
+      "empty": "人生を推演している人格はまだありません。人格の設定で「人生の推演」をオンにすると、AIは自分で決めた時刻に目覚めて自分の一日を過ごし、書き留めたことは記憶に残ります。目覚めるたびにモデルへのリクエストが1回発生し、トークンを使います。",
       "open_personas": "人格の設定を開く",
       "states": {
         "running": "進行中",

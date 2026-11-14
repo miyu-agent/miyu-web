@@ -3326,7 +3326,7 @@
     ]
   },
   "turn.actions": {
-    "zh": "她的一轮",
+    "zh": "AI 的一轮",
     "select": [
       ".turn-actions"
     ]
@@ -4088,7 +4088,7 @@
     ]
   },
   "conversation.media-alt": {
-    "zh": "读不出来时她给的那一句描述",
+    "zh": "读不出来时 AI 给的那一句描述",
     "select": [
       ".conversation-media-alt"
     ]
@@ -6356,13 +6356,13 @@
     ]
   },
   "dream.answer": {
-    "zh": "整理会话里她的回答（一条条决定）",
+    "zh": "整理会话里 AI 的回答（一条条决定）",
     "select": [
       ".dream-answer"
     ]
   },
   "dream.answer-foot": {
-    "zh": "整理会话里她的回答下面那一行（原文）",
+    "zh": "整理会话里 AI 的回答下面那一行（原文）",
     "select": [
       ".dream-answer-foot"
     ]
@@ -7916,7 +7916,7 @@
     ]
   },
   "life.doing": {
-    "zh": "推演人生的卡：她在干嘛那一句",
+    "zh": "推演人生的卡：现在在干嘛那一句",
     "select": [
       ".life-doing"
     ]
