@@ -224,9 +224,9 @@ export class PersonaEditor {
   /** 改了没存。 */
   dirty() {
     if (!this.before) return false;
-    // 上下文上限写成了认不出的字也算改了（「保存」亮着，点了在那一格下面说哪里不对）
-    const typed = this.lifeContext && (this.lifeContext.value.trim() !== (this.before.lifeContext ?? '').trim());
-    return personaSave(this.before, this.current()) != null || !!typed;
+    // 上下文上限写成了认不出的字也算改了（「保存」亮着，点了在那一格下面说哪里不对）；认得出、数没变的（`64,000` 和 `64000`）不算
+    const bad = !!this.lifeContext && !lifeContextOf(this.lifeContext.value).ok;
+    return personaSave(this.before, this.current()) != null || bad;
   }
 
   /** 「存」：改了字（或者外观当场存过）、名字不空才点得了。 */
