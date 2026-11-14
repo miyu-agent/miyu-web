@@ -1,6 +1,7 @@
 // @ts-check
 //! 右边的跳转条（蓝图 `web.md`「右边的跳转条」，照 ChatGPT 网页端）：你说的一句话一条短横线，正在看的那条亮；指针靠近
-//! 弹出一个浮层列出每一句，点哪句平滑滚到哪句（浮层照样开着，指针离开才收）。哪一句算正在看的由 `reading.js` 算。
+//! 弹出一个浮层列出每一句，点哪句平滑滚到哪句（浮层照样开着，指针离开才收）。点横线不跳、打开这个浮层并钉住（2026-11-14 主人验收：
+//! 「用户并不知道每个横线代表着什么」），点外面、`Esc` 才收；手机上点横线同样。哪一句算正在看的由 `reading.js` 算。
 //! 任何宽度都画（窄屏、预览工作区开着、右栏开着缝放不下时也画，贴着对话区右边缘；2026-10-24 项目主人）。数都是这个包的设置项（清单）。
 //! 列这个会话里你问过的全部（W-1069，核心 SP-2 的 `session.prompts`，`listed.js` 拼）：画出来的句子变了（换了会话、说了新的、撤销、重做）
 //! 再问一次；没读进来的那一句点了先往前读到它（`chat.reach`），画出来再滚过去。
@@ -53,6 +54,16 @@ export class PromptRail {
     this.shownSig = '';
     this.current = -1;
     this.closeTimer = 0;
+    /** 点横线打开的：指针离开不收，点外面、`Esc` 才收 */
+    this.pinned = false;
+    /** 钉住时听的那一页（测试换成假的） */
+    this.doc = document;
+    this.onOutside = (/** @type {Event} */ e) => { if (!this.el.contains(/** @type {Node} */ (e.target))) this.unpin(); };
+    this.onKey = (/** @type {KeyboardEvent} */ e) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      e.preventDefault();
+      this.unpin();
+    };
     this.askTimer = 0;
     this.asking = 0;
     /** @type {Set<string>} 核心不认 `session.prompts` 的会话：不再问 */
@@ -153,7 +164,7 @@ export class PromptRail {
       // 亮哪一条先算好、插进去以前就标上：插进去以后再量正文的位置会先照没亮的样子排一次，再标就从短变长地动一下
       // （2026-11-06 项目主人：切换之后亮的那条先短后变长）
       const now = this.el.hidden ? -1 : this.viewing();
-      const lines = this.prompts.map((p, i) => h(`button.rail-line${i === now ? '.is-current' : ''}`, { type: 'button', 'aria-label': p.text, onclick: () => this.jump(p.seq) }));
+      const lines = this.prompts.map((p, i) => h(`button.rail-line${i === now ? '.is-current' : ''}`, { type: 'button', 'aria-label': p.text, 'aria-haspopup': 'menu', onclick: () => this.pin() }));
       const items = this.prompts.map((p, i) => h(`button.rail-item${i === now ? '.is-current' : ''}`, { type: 'button', role: 'menuitem', title: p.text, onclick: () => this.jump(p.seq) }, oneLine(p.text)));
       this.lines.replaceChildren(...lines);
       this.list.replaceChildren(...items);
@@ -187,15 +198,35 @@ export class PromptRail {
     }
   }
 
-  /** 弹出、收起浮层（CSS 照 `is-open` 淡入淡出）；弹出时正在看的那一句滚进视野。 */
+  /** 弹出、收起浮层（CSS 照 `is-open` 淡入淡出）；弹出时正在看的那一句滚进视野。钉住了的指针离开不收。 @param {boolean} yes */
   show(yes) {
     clearTimeout(this.closeTimer);
+    if (!yes && this.pinned) return;
     if (yes) {
       if (!this.pop.classList.contains('is-open')) this.list.children[this.current]?.scrollIntoView({ block: 'nearest' });
       this.pop.classList.add('is-open');
       return;
     }
     this.closeTimer = window.setTimeout(() => this.pop.classList.remove('is-open'), this.config.close_ms);
+  }
+
+  /** 点了横线：打开浮层并钉住，点外面（按下就算）、`Esc` 才收。已经钉着的不再挂一遍。 */
+  pin() {
+    this.show(true);
+    if (this.pinned) return;
+    this.pinned = true;
+    this.doc.addEventListener('pointerdown', this.onOutside, true);
+    this.doc.addEventListener('keydown', this.onKey);
+  }
+
+  /** 收起钉住的浮层（照收起的动画）。 */
+  unpin() {
+    if (!this.pinned) return;
+    this.pinned = false;
+    this.doc.removeEventListener('pointerdown', this.onOutside, true);
+    this.doc.removeEventListener('keydown', this.onKey);
+    clearTimeout(this.closeTimer);
+    this.pop.classList.remove('is-open');
   }
 
   /**
@@ -246,6 +277,7 @@ export class PromptRail {
 
   /** 不画了：停掉量尺寸的、收起的、等着问核心的计时。 */
   dispose() {
+    this.unpin();
     this.scroller.removeEventListener('scroll', this.onScroll);
     this.watch.disconnect();
     clearTimeout(this.closeTimer);

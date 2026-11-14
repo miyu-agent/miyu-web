@@ -55,3 +55,43 @@ test('跳到一句：先告诉对话区人离开了底下，再平滑滚过去�
   PromptRail.prototype.scrollTo.call(/** @type {any} */ ({ ...rail, chat: {} }), /** @type {any} */ (box(-900)));
   assert.deepEqual(did, ['scroll 3976 smooth']);
 });
+
+test('点横线不跳：打开浮层并钉住，指针离开不收；点外面、Esc 才收（2026-11-14 主人验收：不知道每条横线是什么）', () => {
+  /** @type {Map<string, Function>} */
+  const heard = new Map();
+  const doc = {
+    addEventListener: (/** @type {string} */ type, /** @type {Function} */ f) => heard.set(type, f),
+    removeEventListener: (/** @type {string} */ type) => heard.delete(type),
+  };
+  const classes = new Set();
+  const pop = { classList: { add: (/** @type {string} */ c) => classes.add(c), remove: (/** @type {string} */ c) => classes.delete(c), contains: (/** @type {string} */ c) => classes.has(c) } };
+  const inside = {};
+  /** @type {number[]} */
+  const jumped = [];
+  const rail = Object.assign(Object.create(PromptRail.prototype), {
+    pop, doc, pinned: false, closeTimer: 0, current: -1, list: { children: [] }, config: { close_ms: 0 },
+    el: { contains: (/** @type {any} */ n) => n === inside },
+    jump: (/** @type {number} */ seq) => jumped.push(seq),
+  });
+  rail.onOutside = (/** @type {any} */ e) => { if (!rail.el.contains(e.target)) rail.unpin(); };
+  rail.onKey = (/** @type {any} */ e) => { if (e.key === 'Escape') rail.unpin(); };
+  rail.pin();
+  assert.equal(classes.has('is-open'), true, '打开了浮层');
+  assert.deepEqual(jumped, [], '没有跳');
+  rail.show(false);
+  assert.equal(classes.has('is-open'), true, '钉住了指针离开不收');
+  heard.get('pointerdown')?.({ target: inside });
+  assert.equal(classes.has('is-open'), true, '点浮层里面不收');
+  heard.get('pointerdown')?.({ target: {} });
+  assert.equal(classes.has('is-open'), false, '点外面收起');
+  assert.equal(heard.size, 0, '收了以后不再听');
+  rail.pin();
+  heard.get('keydown')?.({ key: 'Escape', preventDefault() {} });
+  assert.equal(classes.has('is-open'), false, 'Esc 收起');
+});
+
+test('横线的点击交给 pin，不交给 jump', () => {
+  const src = readFileSync(new URL('../../packages/rail/rail.js', import.meta.url), 'utf8');
+  const line = src.split('\n').find((l) => l.includes("button.rail-line"));
+  assert.ok(line?.includes('onclick: () => this.pin()'), line);
+});
