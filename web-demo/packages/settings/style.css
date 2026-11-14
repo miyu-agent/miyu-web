@@ -65,7 +65,9 @@
 .set-gear { position: relative; }
 .set-gear-dot { position: absolute; top: 4px; right: 4px; display: none; width: 7px; height: 7px; border-radius: var(--r-round); background: var(--t-warn); box-shadow: 0 0 0 2px var(--side-bg, var(--sidebar-bg)); pointer-events: none; }
 /* 锁着的控件：灰着、点不了 */
-.set-empty { padding: calc(24px * var(--space)) 0; color: var(--text-faint); font-size: calc(13px * var(--text-scale)); }
+/* 空着、读着、没找到：各页一样，居中一句暗字（同知识库、记忆，2026-11-14 主人定统一居中，UI review 第 9 条）；弹出来的小菜单里的照它的大小收小 */
+.set-empty { margin: 0; padding: calc(34px * var(--space)) 0; color: var(--text-faint); font-size: calc(13px * var(--text-scale)); text-align: center; }
+.set-menu .set-empty { padding: calc(12px * var(--space)) calc(10px * var(--space)); }
 .set-empty.is-bad { color: var(--danger); }
 .set-group { margin-top: calc(12px * var(--space)); }
 .set-group + .set-group { margin-top: calc(24px * var(--space)); }
@@ -76,7 +78,7 @@
 .set-subgroup-name { margin: calc(14px * var(--space)) 0 0; color: var(--text-soft); font-size: calc(12.5px * var(--text-scale)); font-weight: 600; }
 .set-rows { display: flex; flex-direction: column; }
 .set-row { display: flex; align-items: center; gap: calc(16px * var(--space)); padding: calc(12px * var(--space)) 0; border-bottom: var(--divider, 1px solid var(--line)); }
-/* 几行的框：放到名字、说明下面，占满这一行；↺ 和转圈照旧在框前面 */
+/* 几行的框：放到名字、说明下面，占满这一行；↺ 和转圈浮在框右上角的上面（见「控件」） */
 .set-row:has(.set-area) { flex-wrap: wrap; }
 .set-row:has(.set-area) .set-text { flex-basis: 100%; }
 .set-row:has(.set-area) .set-control { flex: 1; }
@@ -107,6 +109,17 @@
 .set-control { position: relative; display: flex; flex: none; align-items: center; gap: calc(6px * var(--space)); }
 .set-reset { display: inline-grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: var(--r-6); background: transparent; color: var(--text-faint); opacity: 0; cursor: pointer; transition: opacity calc(0.15s * var(--motion-scale)) ease; }
 .set-row:hover .set-reset, .set-reset:focus-visible { opacity: 1; }
+/* ↺ 和转圈浮在控件左边、不占地方（2026-11-14 UI review 第 4 条：原来透明的 ↺ 照样占 26px，占满一行的框比名字往右缩一截）；
+   占满一行的控件（几行的框、宽的一行、手机上掉到下一行占满的文字框）浮在框右上角的上面，名字、说明那一块右边让出这一截 */
+.set-control > :is(.set-reset, .set-status) { position: absolute; top: 50%; translate: 0 -50%; }
+.set-control > .set-status { right: calc(100% + 6px * var(--space)); }
+.set-control > .set-reset { right: calc(100% + 28px * var(--space)); }
+.set-row:is(.is-wide, :has(.set-area)) > .set-control > :is(.set-reset, .set-status) { top: auto; bottom: calc(100% + 4px * var(--space)); translate: none; }
+.set-row:is(.is-wide, :has(.set-area)) > .set-control > .set-status { right: 0; }
+.set-row:is(.is-wide, :has(.set-area)) > .set-control > .set-reset { right: calc(22px * var(--space)); }
+.set-row:is(.is-wide, :has(.set-area)):has(> .set-control > .set-reset) > .set-text { padding-right: calc(52px * var(--space)); box-sizing: border-box; }
+/* 控件在名字右边的：名字、说明那一块给 ↺ 让出位置（同原来它占着的那一截），不压字 */
+.set-row:not(.is-wide):not(:has(.set-area)):has(> .set-control > .set-reset) > .set-text { margin-right: calc(38px * var(--space)); }
 .set-reset:hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }
 .set-status { display: inline-grid; place-items: center; width: 16px; color: var(--text-faint); }
 .set-status.is-busy .icon { animation: set-spin calc(0.9s * var(--motion-scale)) linear infinite; }
@@ -218,7 +231,9 @@
 .set-prov-text small { color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); }
 .set-prov-text small.is-warn { color: var(--t-warn, var(--gold)); }
 .set-prov:hover { background: var(--item-hover, var(--surface-2)); color: var(--item-fg-hover, var(--text)); }
-.set-prov.is-on { background: var(--item-active, var(--sidebar-active)); box-shadow: var(--item-elev-active, var(--sidebar-active-shadow)); color: var(--item-fg-active, var(--text)); }
+/* 内容区里选中的那一项退回内容区的选中底（surface_3），不退回左栏的 sidebar_active：深色左栏的主题（大肥鱼）左栏选中色是深蓝，
+   退回它就是深蓝底深字（2026-11-14 UI review 第 1 条） */
+.set-prov.is-on { background: var(--item-active, var(--surface-3)); box-shadow: var(--item-elev-active, var(--sidebar-active-shadow)); color: var(--item-fg-active, var(--text)); }
 .set-prov.is-add { color: var(--text-faint); }
 .set-prov.is-add .icon { width: calc(16px * var(--space)); height: calc(16px * var(--space)); margin: 0 calc(1px * var(--space)); }
 .set-prov-main { min-width: 0; }
@@ -877,6 +892,16 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
   .set-row > .set-control:has(> .set-input:not(.is-number), > .set-combo, > .set-secret) { flex: 1 1 100%; }
   .set-row > .set-control:has(> .set-input:not(.is-number), > .set-combo, > .set-secret) > :is(.set-input, .set-combo, .set-secret) { flex: 1; width: auto; min-width: 0; }
   .set-combo .set-input { width: 100%; }
+  /* 掉到下一行占满的文字框：↺、转圈同几行的框，浮在框右上角的上面（UI review 第 4 条） */
+  .set-row > .set-control:has(> .set-input:not(.is-number), > .set-combo, > .set-secret) > :is(.set-reset, .set-status) { top: auto; bottom: calc(100% + 4px * var(--space)); translate: none; }
+  .set-row > .set-control:has(> .set-input:not(.is-number), > .set-combo, > .set-secret) > .set-status { right: 0; }
+  .set-row > .set-control:has(> .set-input:not(.is-number), > .set-combo, > .set-secret) > .set-reset { right: calc(22px * var(--space)); }
+  /* 没有说明的一行（只有名字）：名字照自己的字宽，不占一半宽，下拉的值长一点（「Claude 风格」「Deepy（小鲸鱼）」）也不至于整个掉到下一行；
+     还放不下的下拉自己截字（2026-11-14 UI review 第 5 条） */
+  .set-row:not(:has(.set-desc, .set-source, .set-problem)) > .set-text { flex: 0 1 auto; min-width: min(100%, 4em); }
+  .set-row > .set-control:has(> .set-select) { flex: 0 1 auto; min-width: 0; }
+  .set-control > .set-select { min-width: 0; max-width: 100%; }
+  .set-control > .set-select > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 }
 /* 触屏没有悬停：一行里悬停才露的恢复默认、删除一直露着 */
 @media (hover: none) { .set-reset, .set-tool-del { opacity: 1; } }
