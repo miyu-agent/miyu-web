@@ -409,8 +409,26 @@ export class Composer {
 
   /** 空着时的占位字：一条小提示（`model/tips.js`，2026-10-24 项目主人定：不再写「给 X 发消息」）；还没挑的先挑一条。 */
   placeholder() {
-    if (this.tip == null) this.tip = pickTip(this.tipList(), null, Math.random());
+    if (this.tip == null) this.pickFrom(this.tipList(), null);
     return this.tip ? t(`tips.${this.tip}`) : '';
+  }
+
+  /** 照这一份挑一条，记下是照哪一份挑的（`freshTips` 拿它比） @param {string[]} list @param {string|null} last */
+  pickFrom(list, last) {
+    this.tip = pickTip(list, last, Math.random());
+    this.tipFrom = list.join();
+  }
+
+  /**
+   * 能提的变了（附件包挂上、模型名露出来、技能表到了：构造时先挑的那一条是照没有它们的那一份挑的，W-1190 走查测出手机上附件、模型那两条
+   * 一直轮不到）：框空着、没锁着时照新的一份重挑一条；没变的不动。底栏每画一次看一眼。
+   */
+  freshTips() {
+    if (this.input.value !== '' || this.locked) return;
+    const list = this.tipList();
+    if (list.join() === this.tipFrom) return;
+    this.pickFrom(list, this.tip ?? null);
+    this.input.placeholder = this.placeholder();
   }
 
   /**
@@ -424,7 +442,7 @@ export class Composer {
 
   /** 换一条小提示（换会话、发完一句框又空了）：不和上一条一样；锁着的照旧写锁的字。 */
   newTip() {
-    this.tip = pickTip(this.tipList(), this.tip ?? null, Math.random());
+    this.pickFrom(this.tipList(), this.tip ?? null);
     if (!this.locked) this.input.placeholder = this.placeholder();
   }
 
@@ -1059,6 +1077,7 @@ export class Composer {
     this.ring = f.ring ?? null;
     this.sessionStatus = f.status ?? null;
     this.drawRight();
+    this.freshTips();
   }
 
   /**
