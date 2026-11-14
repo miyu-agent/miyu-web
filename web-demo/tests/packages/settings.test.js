@@ -553,3 +553,14 @@ test('改了要重启核心才生效的设置（config.set 回应 keys 的 appli
   assert.equal(needsRestart({ keys: {} }), false);
   assert.equal(needsRestart(null), false);
 });
+
+test('新建模型池：固定、没有成员，子代理能选照白卡上的开关一起写（2026-11-14 主人：新建时没法设子代理可选）；名字特殊的键加引号', async () => {
+  const { newPoolChanges } = await import('../../packages/settings/model.js');
+  assert.deepEqual(newPoolChanges('fast', true), [
+    { key: 'pools.fast.strategy', value: 'pin', expect: {} },
+    { key: 'pools.fast.models', value: [], expect: {} },
+    { key: 'pools.fast.subagent', value: true, expect: {} },
+  ]);
+  assert.equal(newPoolChanges('fast', false)[2].value, false);
+  assert.equal(newPoolChanges('a.b', false)[0].key, 'pools."a.b".strategy');
+});

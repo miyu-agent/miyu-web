@@ -1,13 +1,14 @@
 // @ts-check
 //! 模型池（蓝图 `web.md`「设置页」第 14 条）：一个池一张卡片：头上 `@名字`、调用方式（固定、轮换）、「＋ 添加」（从还没进来的模型里
 //! 勾）、删除；下面成员一行一个（序号、名字、哪一家，悬停露出往上、往下、✕），最下面一行「子代理能选」开关。卡片下面一行
-//! 「＋ 新建模型池」（同「＋ 添加供应商」，2026-10-11：原来是一整块淡底的大卡），点了原地变成一张白卡写名字，回车建好。改了当场存，
+//! 「＋ 新建模型池」（同「＋ 添加供应商」，2026-10-11：原来是一整块淡底的大卡），点了原地变成一张白卡写名字、下面一行「子代理能选」
+//! （默认关，2026-11-14 主人：新建时没法设），回车建好。改了当场存，
 //! 写进系统配置。三个固定池（核心 Q-1：`fixed`）排最前、没有删除。
 
 import { h, icon } from '../../src/lib/dom.js';
 import { pickModels } from './picker.js';
 import { toggle } from './rows.js';
-import { itemFor, LAYER, validId, keySegment, moveMember, poolRemoval, duplicates, providerName, poolOrder, strategiesOf } from './model.js';
+import { itemFor, LAYER, validId, keySegment, moveMember, poolRemoval, duplicates, providerName, poolOrder, strategiesOf, newPoolChanges } from './model.js';
 import { isFixedPool } from '../../src/lib/fixed-pools.js';
 
 /** 卡片头上的池名：固定池写显示名、后面暗字接 `@flagship`。 @param {any} ctx @param {string} name */
@@ -101,24 +102,30 @@ export function drawPools(dialog, list) {
   };
   const pools = poolOrder(list.pools ?? []);
 
-  // 新建：卡片下面一行「＋ 新建模型池」，点了原地变成一张白卡：头上「@」加名字框，下面一行「回车创建 · Esc 取消」；回车建好（固定、
-  // 没有成员），`Esc`、空着点别处回到那一行
+  // 新建：卡片下面一行「＋ 新建模型池」，点了原地变成一张白卡：头上「@」加名字框，下面「子代理能选」开关（同建好的卡片底下那一行，
+  // 默认关；2026-11-14 主人），最下面一行「回车创建 · Esc 取消」；回车建好（固定、没有成员、子代理照开关），`Esc`、空着点别处回到那一行
   const create = h('button.set-prov.is-add.set-pool-new', { type: 'button' }, icon('plus'), h('span', t('new_pool')));
   create.addEventListener('click', () => {
     const hint = h('span.set-new-hint', t('pool_new_hint'));
     const input = /** @type {HTMLInputElement} */ (h('input.set-input', { type: 'text', placeholder: t('pool_name_hint'), spellcheck: 'false', autocomplete: 'off' }));
-    const box = h('div.set-pool.is-editing', h('div.set-pool-head', h('span.set-new-at', '@'), input), hint);
+    // 「子代理能选」：名字照核心清单里那一项（`pools.<id>.subagent`），清单里没有的不画（老核心）；只记在这张白卡上，回车时一起写
+    const sub = field('_', 'subagent');
+    let subagent = false;
+    const sw = sub ? toggle(false, (/** @type {boolean} */ next) => { subagent = next; input.focus(); return true; }) : null;
+    const box = h('div.set-pool.is-editing', h('div.set-pool-head', h('span.set-new-at', '@'), input),
+      sw ? h('div.set-pool-foot', h('span', sub.name), sw) : null, hint);
     const cancel = () => box.replaceWith(create);
     const fail = (why) => { hint.textContent = why; hint.classList.add('is-bad'); };
     box.addEventListener('set-dismiss', cancel);
-    input.addEventListener('blur', () => setTimeout(() => { if (box.isConnected && !input.value.trim()) cancel(); }, 120));
+    // 空着点别处收起；点的是这张白卡里面（拨开关）的不算
+    input.addEventListener('blur', () => setTimeout(() => { if (box.isConnected && !input.value.trim() && !box.contains(document.activeElement) && !box.matches(':hover')) cancel(); }, 120));
     input.addEventListener('keydown', async (e) => {
       if (e.key !== 'Enter') return;
       const id = input.value.trim();
       if (!validId(id)) return fail(ctx.text('models.form.bad_id'));
       if ((list.pools ?? []).some((p) => p.name === id)) return fail(ctx.text('models.form.taken_id', { id }));
-      const base = `pools.${keySegment(id)}`;
-      const why = await dialog.saveMany(layer, [{ key: `${base}.strategy`, value: 'pin', expect: {} }, { key: `${base}.models`, value: [], expect: {} }]);
+      // 核心清单里没有「子代理能选」的（老核心）不写这一项
+      const why = await dialog.saveMany(layer, newPoolChanges(id, subagent).filter((c) => sub || !c.key.endsWith('.subagent')));
       if (why) fail(why);
     });
     create.replaceWith(box);

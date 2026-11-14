@@ -354,6 +354,21 @@ export function providerRemoval(id, got, layer) {
 /** 模型池那一页的先后（蓝图「设置页」第 14 条）：同换模型的菜单，固定池照旗舰、日常、轻量排最前 */
 export { poolOrder } from '../../src/lib/fixed-pools.js';
 
+/**
+ * 新建模型池写哪几项（「＋ 新建模型池」那张白卡回车，蓝图「设置页」第 14 条）：固定（`pin`）、没有成员，「子代理能选」照白卡上的开关
+ * （2026-11-14 主人：「新建模型池的时候没法设置子代理可选」；默认关）。都带 `expect: {}`：这一层原来没有这个池。
+ * @param {string} id @param {boolean} subagent
+ * @returns {{key: string, value: any, expect: {}}[]}
+ */
+export function newPoolChanges(id, subagent) {
+  const base = `pools.${keySegment(id)}`;
+  return [
+    { key: `${base}.strategy`, value: 'pin', expect: {} },
+    { key: `${base}.models`, value: [], expect: {} },
+    { key: `${base}.subagent`, value: !!subagent, expect: {} },
+  ];
+}
+
 /** 删一个池：它在这一层写着的几项（`pools.<id>.*`）各一条 `unset`。 @param {string} id @param {{items: Record<string, Entry>}} got @param {string} layer */
 export function poolRemoval(id, got, layer) {
   const prefix = `pools.${keySegment(id)}.`;
