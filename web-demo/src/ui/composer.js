@@ -413,9 +413,13 @@ export class Composer {
     return this.tip ? t(`tips.${this.tip}`) : '';
   }
 
-  /** 现在有的几条：附件照软件包挂没挂上（挂载位 `composer.payload` 的 `attachments`）；有能点名的技能才提 `$`（W-1126；构造时先挑一条，那时技能表还没建）；主要指针是手指的不出要按键的（W-1082） */
+  /**
+   * 现在有的几条：附件照软件包挂没挂上（挂载位 `composer.payload` 的 `attachments`）；有能点名的技能才提 `$`（W-1126；构造时先挑一条，那时技能表还没建）；
+   * 主要指针是手指的不出要按键的、换手机的说法（W-1082、W-1190），框下面露着模型名的多一条点它换模型
+   */
   tipList() {
-    return tipsFor({ attachments: this.payload().some((p) => p.id === 'attachments'), skills: !!this.knownSkills?.length, touch: matchMedia('(pointer: coarse)').matches });
+    return tipsFor({ attachments: this.payload().some((p) => p.id === 'attachments'), skills: !!this.knownSkills?.length,
+      touch: matchMedia('(pointer: coarse)').matches, model: !!this.model && !this.model.hidden });
   }
 
   /** 换一条小提示（换会话、发完一句框又空了）：不和上一条一样；锁着的照旧写锁的字。 */

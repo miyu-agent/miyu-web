@@ -80,7 +80,10 @@
     "history_list": "Ctrl+R to search what you sent before",
     "stash": "Ctrl+S stashes this draft; press it again in an empty box to get it back",
     "level": "Tab switches the permission level",
-    "attach": "Drag or paste images and files here to send them along"
+    "attach": "Drag or paste images and files here to send them along",
+    "attach_touch": "Tap the paperclip to pick images and files to send along",
+    "level_touch": "Tap the permission level under the box to switch it",
+    "model_touch": "Tap the model name under the box to switch models or effort"
   },
   "send": "Send",
   "esc_clear_hint": "Press Esc again to clear",

@@ -80,7 +80,10 @@
     "history_list": "Ctrl+R 搜以前发过的话",
     "stash": "Ctrl+S 先存起这句，空着再按取回来",
     "level": "Tab 换权限级别",
-    "attach": "把图片、文件拖进来或粘贴进来，跟着话一起发"
+    "attach": "把图片、文件拖进来或粘贴进来，跟着话一起发",
+    "attach_touch": "点框里的回形针选图片、文件，跟着话一起发",
+    "level_touch": "点框下面的「开放权限」「只读」换权限级别",
+    "model_touch": "点框下面的模型名换模型、调思考程度"
   },
   "send": "发送",
   "esc_clear_hint": "再按一次 Esc 清空",
