@@ -40,6 +40,19 @@
         "en": "Which mascot (id; empty is none, deniro is the mascot package)",
         "ja": "どのマスコット（ID。空はなし、deniro は mascot パッケージ）"
       }
+    },
+    "narrow": {
+      "type": "json",
+      "default": {
+        "scale": 0.6,
+        "gap": 8
+      },
+      "applies": "live",
+      "name": {
+        "zh": "窄屏（手机）上外观包的吉祥物缩到几倍；输入框上面那一行右边给它让位时再多空几像素",
+        "en": "On narrow screens (phones), how far a theme's mascot shrinks; extra pixels left free beside it in the row above the input box",
+        "ja": "狭い画面（スマホ）で外観パッケージのマスコットを何倍に縮めるか。入力欄の上の行で右に空けるときに足す余白（px）"
+      }
     }
   },
   "styles": [

@@ -4,7 +4,8 @@
 //! 升起来会把它顶上去）。能去哪儿照落脚点表（`resources/mascot-anchors.json`，第 11 条），照部件名找页面上的东西、量在 `anchors.js`；
 //! 别的包经挂载位 `mascot.anchors` 加点，主题包（服务 `skin` 的 `anchors()`）加点、挪点。和 TUI 首页的是同一个模型（`model.js`），画在一块小画布上（`sprite.js`），手里的电脑、游戏机在
 //! `props.js`，怎么动在 `behavior.js`、`world.js`。只有它自己接鼠标：左键拖、点它。跟着这些事动：打字（页面上哪个框都算）、鼠标动、她在
-//! 回答（事件 `view.changed`）、换主题（`theme.changed` 重取颜色）。窄屏不出来；停用了就没有。
+//! 回答（事件 `view.changed`）、换主题（`theme.changed` 重取颜色）。窄屏（手机）上缩到设置项 `narrow` 的倍数站着（2026-11-14 主人选：原来窄屏
+//! 不出来）；平常站的那一格报给框上面那一行，让它右边空出来（`src/lib/lane.js`，宽屏也让）。停用了就没有。
 //! 给别的包一个服务 `mascot`（蓝图「第一次引导」第 11 条）：`stage(舞台)` 换到别的台子上站（舞台的 `group`：挂载位里写了同一个
 //! `group` 的那几格；撤了回到输入框），`hop()`、`droop()`、
 //! `busy(on)` 做动作。`<body data-mascot="hold">` 时先藏着不画（第一次引导一打开盖着底色、还没定站哪的那一下：不然先在输入框上露一下）。
@@ -16,9 +17,8 @@ import { Behavior } from './behavior.js';
 import { runningDeepStatus } from '../../src/lib/jobs.js';
 import { anchorProblem, combine, tableProblems } from '../../src/lib/anchors.js';
 import { Anchors, KINDS } from './anchors.js';
+import { NARROW, scaleOf, homeLaneOf, narrowOf, setLane } from '../../src/lib/lane.js';
 
-/** 窄屏（和左栏变抽屉的是同一个宽）不出来 */
-const NARROW = '(max-width: 836px)';
 /** 能打字的 `<input>`（看光标） */
 const TEXTY = new Set(['text', 'search', 'url', 'email', 'password', 'number', '']);
 
@@ -57,6 +57,10 @@ export function apply(ctx) {
   const size = () => ({ w: (c.cols + 2) * c.pixel, h: (c.rows + 2) * c.pixel });
   /** 别的包交来的舞台（第一次引导），没有的站在输入框上 @type {Stage|null} */
   let stage = null;
+  /** 画几倍：舞台的照舞台，不然窄屏照设置项 `narrow` 缩 */
+  const scaleNow = () => stage?.scale ?? scaleOf(narrow.matches, c.narrow);
+  /** 框上面那一行右边让多宽：站在舞台上的不让（`src/lib/lane.js`） */
+  const lane = () => setLane('mascot', stage ? 0 : homeLaneOf(Number(c.home?.right ?? 0), size().w, scaleNow(), narrowOf(c.narrow).gap));
   /** 落脚点：表、部件名读到以前不出来（不然先在地上露一下再跳上去） */
   const anchors = new Anchors({ size, inset: () => c.home.edge, layer, kinds: KINDS });
   let ready = false;
@@ -113,7 +117,7 @@ export function apply(ctx) {
       // 脚底是画布里最下面一行有东西的底边：照它对到台子上，歪绕着脚（蹲、抻在模型里画，不拉伸图片）
       const foot = (sprite.bottom + 1) * c.pixel;
       // 和上一帧一样的不再写：每写一次样式都要重算，下一帧量落脚点时逼着整页重排
-      const sig = [Math.round(x - size().w / 2), Math.round(y - foot), foot, rot.toFixed(2), stage?.scale ?? 1, size().h, clip ? `${clip.left.toFixed(1)},${clip.right.toFixed(1)}` : ''].join('|');
+      const sig = [Math.round(x - size().w / 2), Math.round(y - foot), foot, rot.toFixed(2), scaleNow(), size().h, clip ? `${clip.left.toFixed(1)},${clip.right.toFixed(1)}` : ''].join('|');
       if (sig !== placed) {
         placed = sig;
         el.style.transform = `translate(${Math.round(x - size().w / 2)}px, ${Math.round(y - foot)}px)`;
@@ -121,7 +125,7 @@ export function apply(ctx) {
         body.style.transformOrigin = `50% ${foot}px`;
         body.style.transform = `rotate(${rot.toFixed(2)}deg)`;
         scaler.style.transformOrigin = `50% ${foot}px`;
-        scaler.style.transform = `scale(${stage?.scale ?? 1})`;
+        scaler.style.transform = `scale(${scaleNow()})`;
         body.style.setProperty('--foot-gap', `${size().h - foot}px`);
         // 扒着一道边：藏在那一块后面的那一截裁掉
         el.style.clipPath = clip ? `inset(0px ${clip.right.toFixed(1)}px 0px ${clip.left.toFixed(1)}px)` : '';
@@ -162,7 +166,7 @@ export function apply(ctx) {
     hold: (kind) => props.hold(kind),
     nextProp: () => props.next(),
     reduced,
-    hidden: () => !ready || narrow.matches || document.body.dataset.mascot === 'hold',
+    hidden: () => !ready || document.body.dataset.mascot === 'hold',
   });
   /** 碰过的那几块什么时候收回去 @type {WeakMap<HTMLElement, number>} */
   const touchTimers = new WeakMap();
@@ -320,7 +324,7 @@ export function apply(ctx) {
   const listen = [
     [document, 'pointermove', onMove, { passive: true }], [document, 'keydown', onKey, true], [document, 'input', onType, true], [document, 'focusout', onBlur, true],
     [canvas, 'pointerdown', onDown], [canvas, 'pointermove', onDrag], [canvas, 'pointerup', onUp], [canvas, 'pointercancel', onUp],
-    [window, 'resize', wake], [document, 'visibilitychange', wake], [narrow, 'change', wake], [document, 'scroll', onScroll, { capture: true, passive: true }],
+    [window, 'resize', wake], [document, 'visibilitychange', wake], [narrow, 'change', wake], [narrow, 'change', lane], [document, 'scroll', onScroll, { capture: true, passive: true }],
     [document, 'transitionrun', onTransition, true], [document, 'click', follow, true], [document, 'keyup', follow, true],
   ];
   for (const [target, name, fn, opt] of listen) target.addEventListener(name, fn, opt);
@@ -340,7 +344,9 @@ export function apply(ctx) {
     clearTimeout(zzTimer);
     behavior.destroy();
     layer.remove();
+    setLane('mascot', 0);
   });
+  lane();
   // 她在回答、别的包叫它忙（引导里测连接）：掏电脑、灯一闪一闪；结束合上、跳一下、灯快闪两下。有后台任务在跑（连嵌套的）：灯隔一阵
   // 亮一下（在跑的任务连子孙照会话状态的 `running_deep`，核心 9-8）
   let answering = false;
@@ -357,6 +363,7 @@ export function apply(ctx) {
     /** 换到这个舞台上（跳过去）；交回撤销的函数，撤了跳回输入框。 @param {Stage} next */
     stage: (next) => {
       stage = next;
+      lane();
       stageWatch.disconnect();
       stageResized.disconnect();
       if (next.root) {
@@ -367,6 +374,7 @@ export function apply(ctx) {
       return () => {
         if (stage !== next) return;
         stage = null;
+        lane();
         stageWatch.disconnect();
         stageResized.disconnect();
         behavior.goHome();

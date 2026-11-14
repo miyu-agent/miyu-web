@@ -1,6 +1,8 @@
 /* 人格、工作区（软件包 setup，蓝图 web.md「人格、预设、工作区」）：空会话输入框上面一排按钮；开着的会话左上角一小条；弹出的小菜单。
    控件不画描边：底色一块，悬停深一点；浮起来的菜单照换模型的菜单（半透明、毛玻璃、一圈细线、浮起来的影） */
 .setup-row { position: relative; display: flex; flex-wrap: wrap; gap: calc(6px * var(--space)); margin: 0 calc(2px * var(--space)) calc(8px * var(--space)); }
+/* 吉祥物站在框右上沿：右边给它让出来，放不下的按钮折到下一行，不被它压着（--character-lane，src/lib/lane.js；2026-11-14 手机上缩着站以后 360 宽压过「设置工作区」） */
+.setup-row { padding-right: var(--character-lane, 0px); }
 .setup-row[hidden] { display: none; }
 .setup-btn {
   display: inline-flex; align-items: center; gap: calc(6px * var(--space)); max-width: 320px; height: 28px; padding: 0 calc(11px * var(--space)); border: var(--chip-border, 0); border-radius: var(--chip-radius, var(--r-pill));

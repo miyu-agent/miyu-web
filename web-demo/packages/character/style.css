@@ -1,5 +1,6 @@
 /* 吉祥物站的那一层（蓝图 web.md「选吉祥物」第 3 条）：整页最前面，屏幕像素，不接鼠标（角色自己的元素要接的自己写 pointer-events） */
 .character-layer { position: fixed; inset: 0; z-index: 30; pointer-events: none; }
 .character-layer:empty { display: none; }
-/* 窄屏不画（同 Deniro，`mascot/style.css`）：手机上它站在输入框上沿，正压着那一排按钮，又挪不走（2026-11-11 项目主人） */
-@media (max-width: 836px) { .character-layer { display: none; } }
+/* 窄屏（手机）缩着画（2026-11-14 主人选：原来窄屏不画，它站在输入框上沿压着那一排按钮）：缩的是角色里面那一层、绕它的脚，最外层照角色自己
+   摆的位置不动（角色用 transform 挪位置，缩最外层会把挪的那一段也缩了）。倍数是设置项 narrow 的 scale，index.js 写进 --character-scale */
+.character-layer > * > * { scale: var(--character-scale, 1); transform-origin: 50% 100%; }

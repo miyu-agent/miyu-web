@@ -21,8 +21,12 @@
 .dock-above > .dock-lane { grid-row: 99; }
 /* 右边有东西时这一行分三格（蓝图「定时任务」第 2b 条）：长期目标最靠右、占它要的宽；`.dock-beside`（循环的下次，软件包 schedules）
    挨在它左边，挤的时候先让运行状态行、再缩它自己；运行状态行在最左那格，长了截掉，不从右边两截底下穿过去。收着的照旧横跨整行（收的动画在原处） */
-.dock-above:has(> .dock-goal.is-on, > .dock-beside.is-on) { grid-template-columns: minmax(0, 1fr) minmax(0, max-content) auto; }
-.dock-above:has(> .dock-goal.is-on, > .dock-beside.is-on) > .dock-lane { grid-column: 1; }
+/* 吉祥物站在框右上沿时右边再空一列（2026-11-14 主人选手机上缩小站着、这一行右边让一格；宽屏也让，原来桌面上 Deniro 盖着循环的下次）：
+   宽是 src/lib/lane.js 写在 html 上的 --character-lane（从框右边到吉祥物左边），扣掉右边那一截自己的 19px 内边距 */
+.dock-above { --lane-col: max(0px, calc(var(--character-lane, 0px) - 19px * var(--space))); }
+.dock-above > .dock-lane { padding-right: var(--lane-col); }
+.dock-above:has(> .dock-goal.is-on, > .dock-beside.is-on) { grid-template-columns: minmax(0, 1fr) minmax(0, max-content) auto var(--lane-col); }
+.dock-above:has(> .dock-goal.is-on, > .dock-beside.is-on) > .dock-lane { grid-column: 1; padding-right: 0; }
 .dock-above:has(> .dock-goal.is-on, > .dock-beside.is-on) > .dock-beside.is-on { grid-column: 2; }
 .dock-above:has(> .dock-goal.is-on, > .dock-beside.is-on) > .dock-goal.is-on { grid-column: 3; }
 .dock-above > .dock-goal:not(.is-on), .dock-above > .dock-beside:not(.is-on) { grid-column: 1 / -1; }

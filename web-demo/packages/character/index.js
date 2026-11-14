@@ -5,6 +5,8 @@
 //! 照 `deniro` 读（`characterOf`，2026-11-10 项目主人）。
 //! 提供服务 `character`：`current()`、`list()`（给设置页的下拉）、`choose(id)`。交给角色的 host 里状态、站的那条边、有人动了由这里统一算
 //! （`model.js`，2026-11-02 77 要的：混搭的两只同一时刻播同一个动作、站同一条边）。
+//! 窄屏（手机）上照设置项 `narrow` 缩着画（`--character-scale`，`style.css` 绕脚缩里面那一层；2026-11-14 主人选，原来窄屏不画）；站在输入框上时
+//! 量它看得见的那一块，报给框上面那一行让出右边一格（`src/lib/lane.js`，宽屏也让）。
 
 /** 弹出、收起以后跟着动画再量几帧（毫秒） */
 const SETTLE_MS = 400;
@@ -12,6 +14,7 @@ const SETTLE_MS = 400;
 import { h } from '../../src/lib/dom.js';
 import { combine } from '../../src/lib/anchors.js';
 import { nowOf, endedOf, surfaceOf, characterOf, DENIRO } from './model.js';
+import { NARROW, scaleOf, laneOf, narrowOf, setLane } from '../../src/lib/lane.js';
 
 /** @param {any} ctx */
 export function apply(ctx) {
@@ -27,6 +30,13 @@ export function apply(ctx) {
   /** @type {Set<(s: any) => void>} */
   const states = new Set();
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const narrow = matchMedia(NARROW);
+  /** 窄屏照设置项缩（`style.css` 照 `--character-scale` 缩角色里面那一层，站的位置不变） */
+  const rescale = () => {
+    layer.style.setProperty('--character-scale', String(scaleOf(narrow.matches, ctx.config.narrow)));
+    lastSurface = '';
+    bump();
+  };
 
   // 站的那条边：照落脚点表的 composer、composer.floats 两个点和部件名表找页面上的东西，加上主题挪的（combine）
   /** @type {{anchors: any[]}|null} */
@@ -79,6 +89,7 @@ export function apply(ctx) {
     if (key !== lastSurface) {
       lastSurface = key;
       for (const fn of [...surfaces]) fn(now);
+      measureLane(now);
     }
     if (performance.now() < settleUntil) frame = requestAnimationFrame(tick);
   };
@@ -102,7 +113,8 @@ export function apply(ctx) {
   let unwatchBox = () => {};
   ctx.effect(() => {
     addEventListener('resize', bump);
-    return () => { removeEventListener('resize', bump); unwatchBox(); cancelAnimationFrame(frame); };
+    narrow.addEventListener('change', rescale);
+    return () => { removeEventListener('resize', bump); narrow.removeEventListener('change', rescale); unwatchBox(); cancelAnimationFrame(frame); setLane('character', 0); };
   });
   ctx.on('theme.changed', bump);
 
@@ -167,6 +179,21 @@ export function apply(ctx) {
 
   /** 画着的那一只 @type {{entry: any, el: Node, dispose?: () => void}|null} */
   let drawn = null;
+  /**
+   * 框上面那一行右边让多宽：站在输入框上（不是浮层上）时量角色里面那一层（缩过的、看得见的那一块）；没画、藏着、站在浮层上的不改上一回的
+   * （浮层弹出来顶上去那一下不让那一行跟着跳）。没有画着的撤掉。
+   * @param {{top: number, left: number, right: number}|null} s
+   */
+  function measureLane(s) {
+    if (!drawn) { setLane('character', 0); return; }
+    const box = document.querySelector('.composer')?.getBoundingClientRect();
+    if (!s || !box || Math.abs(s.right - box.right) > 40 || Math.abs(s.top - box.top) > 40) return;
+    const root = drawn.el instanceof Element ? drawn.el : null;
+    const inner = root?.firstElementChild ?? root;
+    if (!inner) return;
+    const r = inner.getBoundingClientRect();
+    if (r.width > 0) setLane('character', laneOf(r, box.right, narrowOf(ctx.config.narrow).gap));
+  }
   const drop = () => {
     if (!drawn) return;
     try {
@@ -183,7 +210,7 @@ export function apply(ctx) {
     const entry = id && id !== DENIRO ? ctx.slots.list('mascot.characters').find((/** @type {any} */ e) => e.id === id) ?? null : null;
     if (drawn?.entry === entry) return;
     drop();
-    if (!entry) return;
+    if (!entry) { setLane('character', 0); return; }
     const out = ctx.slots.draw(entry, host);
     const got = out instanceof Node ? { el: out } : out?.el ? out : null;
     if (!got) {
@@ -192,13 +219,17 @@ export function apply(ctx) {
     }
     drawn = { entry, ...got };
     layer.append(got.el);
+    lastSurface = '';
+    bump();
   };
   ctx.effect(() => ctx.slots.watch('mascot.characters', sync));
   ctx.watchConfig(sync);
+  ctx.watchConfig(rescale);
   ctx.effect(() => () => {
     drop();
     layer.remove();
   });
+  rescale();
   sync();
 
   /** 软件包 `mascot` 这时开着没有（没装的是 `null`） */
