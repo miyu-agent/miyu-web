@@ -49,3 +49,14 @@ export function hostedByDriver(p) {
   return order.map((driver) => ({ driver, tools: (Array.isArray(hosted[driver]) ? hosted[driver] : []).filter((x) => typeof x === 'string' && x) }))
     .filter((x) => x.tools.length);
 }
+
+/**
+ * `package.info` 里驱动会让供应商自己跑的工具：装着的那一份在 `contains` 里，没装的（软件源那一份，`from: "source"`，核心 RB-1）在顶上；
+ * 写法同 {@link hostedByDriver}。以前的索引没有这一格的是空的。纯的。
+ * @param {any} info `package.info` 的回应
+ * @returns {{driver: string, tools: string[]}[]}
+ */
+export function infoHosted(info) {
+  const inside = hostedByDriver(info?.contains);
+  return inside.length ? inside : hostedByDriver(info);
+}

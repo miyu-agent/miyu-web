@@ -3,7 +3,8 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { foldCovered, foldReply, shadowed, hostedByDriver } from '../src/lib/packages.js';
+import { readFileSync } from 'node:fs';
+import { foldCovered, foldReply, shadowed, hostedByDriver, infoHosted } from '../src/lib/packages.js';
 import { applyPackageChange } from '../packages/settings/model.js';
 
 const winner = { package: 'notes', layer: 'home', version: '0.2.0', from: 'local' };
@@ -45,4 +46,14 @@ test('驱动会让供应商自己跑的工具（核心 HT-4 的 hosted）：照 
   assert.deepEqual(hostedByDriver({ drivers: ['a'] }), []);
   assert.deepEqual(hostedByDriver(null), []);
   assert.deepEqual(hostedByDriver({ hosted: { ag: ['search_web'] } }), [{ driver: 'ag', tools: ['search_web'] }], 'package.info 的 contains 没有 drivers 也认');
+});
+
+test('package.info 的 hosted（核心 RB-1）：装着的照 contains 里的，没装的（软件源那一份）照顶上的；以前的索引没有这一格的什么都不画', () => {
+  const source = { from: 'source', source: 'official', package: 'deepseek', provides: { driver: 1 }, hosted: { deepseek: ['web_search'] } };
+  assert.deepEqual(infoHosted(source), [{ driver: 'deepseek', tools: ['web_search'] }]);
+  assert.deepEqual(infoHosted({ package: 'deepseek', contains: { drivers: ['deepseek'], hosted: { deepseek: ['x'] } } }), [{ driver: 'deepseek', tools: ['x'] }]);
+  assert.deepEqual(infoHosted({ from: 'source', package: 'old', provides: { driver: 1 } }), [], '旧索引没写');
+  assert.deepEqual(infoHosted(null), []);
+  const market = readFileSync(new URL('../packages/settings/market.js', import.meta.url), 'utf8');
+  assert.match(market, /hostedLines\(infoHosted\(info\)\)/, '没装的包详情照 infoHosted 画');
 });

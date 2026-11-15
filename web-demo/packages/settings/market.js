@@ -7,7 +7,7 @@ import { h, icon, hasIcon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { bytes, short } from '../../src/lib/format.js';
 import { pkgFace } from './logos.js';
-import { hostedByDriver } from '../../src/lib/packages.js';
+import { hostedByDriver, infoHosted } from '../../src/lib/packages.js';
 import { STATUS_FILTERS, QUICK_KINDS, SORTS, shownOf, sortedBy, sortsAvailable, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf, capabilityRows, toolRows, approveOf, accessTags } from './market-model.js';
 import { select } from './rows.js';
 import { confirmIn } from './confirm.js';
@@ -467,13 +467,13 @@ function detailPage(dialog, id) {
       return at;
     };
     // 驱动会让供应商自己跑的工具（核心 HT-4，照命令行确认屏）：接在「包含」下面，一个驱动一行、名目空着；看一眼的回应没有的，照
-    // `package.info` 的 `contains`（装着的才有）再看一次
-    const hostedLines = (/** @type {any} */ from) => hostedByDriver(from).map((x) => line('', t('market.hosted_by', { driver: x.driver, names: x.tools.join(t('pkg.sep')) })));
+    // `package.info` 再看一次：装着的在 `contains` 里，没装的在顶上（核心 RB-1，`infoHosted`）
+    const hostedLines = (/** @type {{driver: string, tools: string[]}[]} */ list) => list.map((x) => line('', t('market.hosted_by', { driver: x.driver, names: x.tools.join(t('pkg.sep')) })));
     const hostedSlot = () => {
-      const now = hostedLines(got);
+      const now = hostedLines(hostedByDriver(got));
       if (now.length) return now;
       const at = h('div.mk-hosted-slot');
-      infoOf(dialog, id).then((info) => { const later = hostedLines(info?.contains); if (later.length) at.replaceWith(...later); else at.remove(); });
+      infoOf(dialog, id).then((info) => { const later = hostedLines(infoHosted(info)); if (later.length) at.replaceWith(...later); else at.remove(); });
       return [at];
     };
     const names = Object.fromEntries(Object.keys(got?.provides ?? p.provides ?? {}).map((k) => [k, kindName(dialog, k)]));
