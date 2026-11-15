@@ -425,12 +425,12 @@
       "failed_plain": "Background command failed · {title}",
       "signal": "Background command failed · {title} · signal {signal}",
       "stopped": "Background command stopped · {title}",
-      "timed_out": "Background command stopped: time limit reached · {title}",
+      "timed_out": "Background command stopped: time limit · {title}",
       "too_large": "Background command stopped: output too large · {title}",
-      "too_chatty": "Background command stopped: too much output too often · {title}",
+      "too_chatty": "Background command stopped: output too frequent · {title}",
       "lines": "Background command output · {title} · {lines} lines",
       "undone": "Background command stopped by undo · {title}",
-      "restarted": "Background command stopped by restart · {title}",
+      "restarted": "Background command stopped by core restart · {title}",
       "aborted": "Background command aborted: core exited · {title}"
     },
     "agent": {
@@ -438,7 +438,7 @@
       "done": "Subagent submitted its report · {title}",
       "stopped": "Subagent stopped · {title}",
       "undone": "Subagent stopped by undo · {title}",
-      "restarted": "Subagent stopped by restart · {title}",
+      "restarted": "Subagent stopped by core restart · {title}",
       "aborted": "Subagent aborted: core exited · {title}"
     },
     "unknown": "{what} · {title} · {reason}",
