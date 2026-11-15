@@ -168,7 +168,7 @@
       "notes_label": "Notes",
       "notes_add": "Add notes",
       "decision": {
-        "once": "Allow this time",
+        "once": "Allow once",
         "session": "Don’t ask again for this folder",
         "deny": "Don't allow"
       },

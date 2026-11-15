@@ -233,7 +233,7 @@
         "too_large": "Stopped: output too large",
         "too_chatty": "Stopped: output too frequent",
         "undone": "Stopped by undo",
-        "restarted": "Stopped by restart",
+        "restarted": "Stopped by core restart",
         "aborted": "Aborted: core exited",
         "confirm": "Needs your confirmation",
         "ask": "Asking you"
@@ -305,7 +305,7 @@
         "too_large": "出力が大きすぎて停止",
         "too_chatty": "出力が頻繁すぎて停止",
         "undone": "取り消しで停止",
-        "restarted": "再起動で停止",
+        "restarted": "コア再起動で停止",
         "aborted": "中断：コアが終了",
         "confirm": "確認待ち",
         "ask": "質問中"
