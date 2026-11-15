@@ -228,6 +228,8 @@ export class Store {
     });
     /** 刚开的这个会话的目录太宽（照人选的用着）：外面照它提醒一句 */
     this.createdWide = wide === true ? session : null;
+    /** 刚开的这个会话实际在哪干活（核心 WN-1：选的目录太宽、核心改用别处的，回应写实际的），外面照它和选的比 */
+    this.createdCwd = typeof used === 'string' ? used : null;
     // 推送还没到时先记上，左栏当场有它
     // 没选目录的核心另给这个会话一个子目录（核心 5-14 上），照回应的记
     this.index.seed(session, { cwd: typeof used === 'string' ? used : cwd, ...(project ? { project } : {}) });

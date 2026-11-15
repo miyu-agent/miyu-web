@@ -28,6 +28,7 @@ import { SidebarWidth } from './sidebar-width.js';
 import { statusFooter, levelLabel, nextLevel, levelParams, previewRing } from '../model/footer.js';
 import { watchOnly } from '../model/watch.js';
 import { isLife, lifeEnded } from '../lib/life.js';
+import { movedFrom } from '../model/paths.js';
 import { itemsOf, levelOf } from '../model/entries.js';
 import { statusRows } from '../model/status.js';
 import { compactingOf, lastTurn, turnEnded, untouchedTurnOf } from '../model/view-state.js';
@@ -1033,6 +1034,9 @@ export class App {
     const project = this.store.projects.get(this.draft.project) ? this.draft.project : null;
     this.current = await this.store.create(asked ?? this.cwd, this.pendingModel, this.draft.persona, this.draft.preset, project);
     if (this.store.createdWide === this.current) this.ctx.emit('workdir.wide', { session: this.current, cwd: asked });
+    // 选的目录太宽、核心改用了别处（核心 WN-1，同 miyu ask 那一句「工作目录 ~ 范围过大，改用 …」）：照实际的提示；没选目录的不说
+    const moved = movedFrom(asked, this.store.createdCwd, this.home);
+    if (moved) this.ctx.emit('workdir.adjusted', { session: this.current, asked, cwd: moved });
     this.pendingModel = null;
     this.draft = { persona: null, preset: null, cwd: null, project: null };
     this.store.view(this.current);

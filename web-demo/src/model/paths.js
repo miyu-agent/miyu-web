@@ -42,3 +42,19 @@ export function placeOf(hello) {
   const platform = ['linux', 'macos', 'windows'].includes(host?.platform) ? host.platform : null;
   return { cwd: typeof host?.workspace === 'string' ? host.workspace : null, home: typeof host?.home === 'string' ? host.home : null, platform };
 }
+
+/**
+ * 开会话时选的目录核心有没有换成别处（核心 WN-1：家目录、根目录这类太宽的，核心改用会话的默认工作区，回应的 `cwd` 写实际的、
+ * 家目录下的写成 `~/…`）：换了的交实际的那个（照回应原样），没换、没选的交 `null`。两边都照家目录写成 `~` 再比，结尾的 `/` 不算。
+ * @param {string|null|undefined} asked 选的目录 @param {string|null|undefined} used 回应的 `cwd` @param {string|null} home
+ * @returns {string|null}
+ */
+export function movedFrom(asked, used, home) {
+  if (!asked || !used) return null;
+  const plain = (/** @type {string} */ p) => {
+    const trimmed = p.length > 1 ? p.replace(/\/+$/, '') : p;
+    if (home && (trimmed === home || trimmed.startsWith(`${home}/`))) return `~${trimmed.slice(home.length)}`;
+    return trimmed;
+  };
+  return plain(asked) === plain(used) ? null : used;
+}

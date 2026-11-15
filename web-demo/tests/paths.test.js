@@ -19,3 +19,14 @@ test('握手的 host.platform：认得的三种照原样，别的是 null', asyn
   assert.equal(placeOf({ host: { platform: 'beos' } }).platform, null);
   assert.equal(placeOf({}).platform, null);
 });
+
+test('开会话时选的目录核心换了别处（核心 WN-1）：换了的交实际的，没换、没选的是 null；家目录写成 ~ 再比，结尾的 / 不算', async () => {
+  const { movedFrom } = await import('../src/model/paths.js');
+  const home = '/home/me';
+  assert.equal(movedFrom('/home/me', '~/.miyu/workspace/01ab', home), '~/.miyu/workspace/01ab', '家目录太宽，核心改用默认工作区');
+  assert.equal(movedFrom('/home/me/src/miyu', '~/src/miyu', home), null, '同一个目录，回应写成 ~/…');
+  assert.equal(movedFrom('/home/me/src/miyu/', '~/src/miyu', home), null, '结尾的 / 不算');
+  assert.equal(movedFrom('/', '/', home), null, '根目录照用（太宽的另由 wide 提醒）');
+  assert.equal(movedFrom(null, '~/.miyu/workspace/01ab', home), null, '没选目录的不说');
+  assert.equal(movedFrom('/home/me', null, home), null, '旧核心回应不带 cwd');
+});
