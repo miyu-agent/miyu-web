@@ -3589,6 +3589,42 @@
       ".ctx-pop-note"
     ]
   },
+  "context.quota-row": {
+    "zh": "额度：一个窗口那一行（用到 80% 带 is-warn、满了 is-full）",
+    "select": [
+      ".ctx-quota-row"
+    ]
+  },
+  "context.quota-name": {
+    "zh": "额度：窗口的名字（5 小时、每周、每月）",
+    "select": [
+      ".ctx-quota-name"
+    ]
+  },
+  "context.quota-bar": {
+    "zh": "额度：条的底",
+    "select": [
+      ".ctx-quota-bar"
+    ]
+  },
+  "context.quota-fill": {
+    "zh": "额度：条上用掉的那一截",
+    "select": [
+      ".ctx-quota-fill"
+    ]
+  },
+  "context.quota-pct": {
+    "zh": "额度：百分比",
+    "select": [
+      ".ctx-quota-pct"
+    ]
+  },
+  "context.quota-reset": {
+    "zh": "额度：多久后重置",
+    "select": [
+      ".ctx-quota-reset"
+    ]
+  },
   "context.pop-foot": {
     "zh": "上下文明细：最下面那一行暗字",
     "select": [

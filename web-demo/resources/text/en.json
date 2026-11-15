@@ -562,7 +562,8 @@
       "memory": "Memory",
       "other": "Other"
     },
-    "open_usage": "Open in Usage"
+    "open_usage": "Open in Usage",
+    "quota": {"title": "Quota", "in_hours": "resets in {n} h", "in_minutes": "resets in {n} min", "at": "resets {month}/{day} {time}"}
   },
   "model_menu": {
     "fixed_pools": { "flagship": "Flagship pool", "normal": "Everyday pool", "lite": "Lite pool" },

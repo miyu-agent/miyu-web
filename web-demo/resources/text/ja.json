@@ -562,7 +562,8 @@
       "memory": "記憶",
       "other": "その他"
     },
-    "open_usage": "使用量ページで見る"
+    "open_usage": "使用量ページで見る",
+    "quota": {"title": "利用枠", "in_hours": "{n} 時間後にリセット", "in_minutes": "{n} 分後にリセット", "at": "{month}月{day}日 {time} にリセット"}
   },
   "model_menu": {
     "fixed_pools": { "flagship": "フラッグシッププール", "normal": "日常プール", "lite": "ライトプール" },

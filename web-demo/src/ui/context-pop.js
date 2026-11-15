@@ -1,6 +1,6 @@
 // @ts-check
 //! 用量的明细（蓝图 `web.md`「上下文明细、累计按用途」，2026-11-02 改成一个浮窗三段）：点框下面那一行的用量那一格往上弹，三段：
-//! 上下文（`session.context`）、累计消耗（`usage.query` 按 `use` 分、连子代理，`session.usage_parts` 拆块）、花费（会话状态的
+//! 上下文（`session.context`）、额度（`session.quota`，核心 QU-1）、累计消耗（`usage.query` 按 `use` 分、连子代理，`session.usage_parts` 拆块）、花费（会话状态的
 //! `usage_tree`，按种类分的是核心 UP-1 的 `converted_parts`）。每段的头一行能点、展开收起，展开、收起只缓那一块的高度、转箭头，浮窗不重画。
 //! 打开时问一次核心，开着时那一格的字变了再问一次。点外面、`Esc`、再点那一格收起。数怎么摊、怎么排在 `lib/context.js`。
 
@@ -9,9 +9,10 @@ import { show, hide, unfold } from '../lib/motion.js';
 import { t } from '../util/res.js';
 import { short, money } from '../lib/format.js';
 import { costText, ratesOf, rateName } from '../lib/cost.js';
+import { quotaRows, percentText } from '../lib/quota.js';
 import { scaledParts, bar, share, toneOf, useRows, USE_TONES, costOf, partsMinus, usageSum, kindParts, costKinds, inputOf, KINDS, fitsBelow } from '../lib/context.js';
 
-/** @typedef {'context'|'tokens'|'cost'} Section */
+/** @typedef {'context'|'tokens'|'cost'|'quota'} Section */
 
 /** 头一次打开等问到了再露，最多等多久（毫秒） */
 const SHOW_WAIT_MS = 150;
@@ -157,10 +158,12 @@ export class ContextPop {
         return { ...r, parts, all };
       }).catch(unsupported)
       : Promise.resolve(null);
-    const [c, u] = await Promise.all([context, usage]);
+    // 供应商的额度（核心 QU-1，2026-11-14 主人定）：和用量一起问一次，核心那边缓存、每轮后台刷新，这边不轮询；没额度的回 `{}`
+    const quota = session ? this.on.request('session.quota', { session }).catch(() => null) : Promise.resolve(null);
+    const [c, u, q] = await Promise.all([context, usage, quota]);
     if (seq !== this.seq || !this.isOpen) return;
     // 一时问不到的（连接断了）留着上一次的
-    const data = { context: c ?? this.data?.context ?? false, usage: session ? (u ?? this.data?.usage ?? false) : null };
+    const data = { context: c ?? this.data?.context ?? false, usage: session ? (u ?? this.data?.usage ?? false) : null, quota: session ? (q ?? this.data?.quota ?? null) : null };
     // 和画着的一样的不重画（照上一次画的那一份，问到的没变）
     const same = JSON.stringify(data) === JSON.stringify(this.data);
     this.data = data;
@@ -180,7 +183,24 @@ export class ContextPop {
       this.section('context', this.contextView(this.data.context, info)),
       usage === null ? null : this.section('tokens', usage === false ? this.unsupported(t('usage_cell.tokens')) : this.tokensView(usage)),
       usage === null ? null : this.section('cost', this.costView(info.status, usage || null)),
+      this.quotaView(this.data.quota),
       usage ? this.foot(usage) : null);
+  }
+
+  /**
+   * 额度那一段（核心 QU-1，2026-11-14 主人定）：头一行「额度」，下面一行一个窗口：名字、圆角带底色的条、百分比、多久后重置；
+   * 80% 起黄、满了红。没额度的（不是 opencode Go、查不到）整段不出。
+   * @param {any} quota `session.quota` 的回应
+   */
+  quotaView(quota) {
+    const rows = quotaRows(quota, new Date(), t);
+    if (!rows.length) return null;
+    return this.section('quota', { head: [h('strong.ctx-pop-title', t('context_pop.quota.title'))], body: null, more: h('div.ctx-quota',
+      rows.map((r) => h(`div.ctx-quota-row.is-${r.tone}`,
+        h('span.ctx-quota-name', r.label),
+        h('span.ctx-quota-bar', h('span.ctx-quota-fill', { style: `width: ${Math.min(100, Math.max(0, r.percent))}%` })),
+        h('span.ctx-quota-pct', percentText(r.percent)),
+        h('span.ctx-quota-reset', r.reset ?? '')))) });
   }
 
   /** 核心不支持的那一段：头一行加一行暗字 @param {string} title */
