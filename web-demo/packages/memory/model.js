@@ -4,7 +4,17 @@
 
 /** 类别的先后（核心 `memory.md`「一条记忆」） */
 // 「认识的人」（`person`，核心 E-1 上）：她认识的别人，一条记下是谁（`who`）
-export const CLASSES = /** @type {const} */ (['user', 'person', 'feedback', 'episode', 'reference']);
+// 「后天」（`change`，核心 LF-11）：AI 在推演人生里记下的自己的变化，人只能看、作废、恢复，写不了、改不了
+export const CLASSES = /** @type {const} */ (['user', 'person', 'feedback', 'episode', 'reference', 'change']);
+
+/** 「记一条」能选的几类：「后天」只有 AI 自己记得了（核心 `memory.remember` 不收它） */
+export const ADD_CLASSES = CLASSES.filter((c) => c !== 'change');
+
+/** 是不是「后天」那一类 @param {{class?: string}} m */
+export const isChange = (m) => m.class === 'change';
+
+/** 详情里能不能改内容、关键词：作废的、「后天」的不能（核心对「后天」的 `memory.update` 回 `change_note`） @param {{class?: string, retired?: string|null}} m */
+export const editable = (m) => !isRetired(m) && !isChange(m);
 
 /** 作废了没有：核心作废时没写原因的给空字符串，不是 `null` 就算作废 @param {{retired?: string|null}} m */
 export const isRetired = (m) => m.retired != null;
@@ -15,7 +25,7 @@ export const KEYWORDS_MAX = 200;
 
 /**
  * @typedef {{id: string, class: string, text: string, by?: string, at?: string, used?: number, used_at?: string|null,
- *   sources?: {session: string, turn: number}[], retired?: string|null, venue?: string|null, keywords?: string|null, who?: string|null}} Memory
+ *   sources?: {session: string, turn: number}[], retired?: string|null, venue?: string|null, keywords?: string|null, who?: string|null, why?: string|null}} Memory
  */
 
 /** 字数照码点数（一个汉字、一个表情都算一个） @param {string} s */

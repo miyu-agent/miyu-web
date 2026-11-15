@@ -10,7 +10,7 @@ import { DreamCard } from './dream.js';
 import { dreamOutcome, dreamResultText } from './dream-model.js';
 import { tabsRow, peoplePage, cardPop } from './people.js';
 import { filterButton, filterChips, filterMenu } from './filter.js';
-import { CLASSES, TEXT_MAX, KEYWORDS_MAX, chars, counts, visible, hasKeywords, updateOf, canSave, saveNote, shortId, agoText, isRetired, tidying } from './model.js';
+import { ADD_CLASSES, TEXT_MAX, KEYWORDS_MAX, chars, counts, visible, hasKeywords, updateOf, canSave, saveNote, shortId, agoText, isRetired, isChange, editable, tidying } from './model.js';
 
 /** 一次列几条（滚到底再多读一批） */
 const PAGE = 200;
@@ -411,7 +411,10 @@ export class MemoryPage {
     const at = m.at ? Date.parse(m.at) : NaN;
     return h(`div.mem-row${isRetired(m) ? '.is-retired' : ''}`, { role: 'button', tabindex: '0', onclick: () => this.openDetail(m.id), onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter') this.openDetail(m.id); } },
       // 「认识的人」那一类：内容前面一个小标签写是谁（核心 E-1 上的 `who`）
-      h('span.mem-text', m.who ? h('span.mem-who', m.who) : null, this.marked(m.text)),
+      // 「后天」那一类（核心 LF-11）：内容下面一行暗字写是什么让 AI 变的（`why`）
+      m.why && isChange(m)
+        ? h('span.mem-lines', h('span.mem-text', this.marked(m.text)), h('span.mem-why', m.why))
+        : h('span.mem-text', m.who ? h('span.mem-who', m.who) : null, this.marked(m.text)),
       // 右边一格：日期、用到几次；作废的悬停时换成「找回」（同一格，不挤下一行）
       h('span.mem-side',
         h('span.mem-meta', h('span', [t(`classes.${m.class}`), Number.isFinite(at) ? agoText(at, Date.now(), this.t) : ''].filter(Boolean).join(' · ')), h('span', m.used ? t('used', { n: m.used }) : t('unused'))),
@@ -436,7 +439,7 @@ export class MemoryPage {
     const ok = /** @type {HTMLButtonElement} */ (h('button.set-btn.is-primary', { type: 'submit', disabled: true }, t('remember')));
     // 选了「认识的人」的多一行「是谁」，必填（核心 E-1 上：`memory.remember` 带 `who`）
     const who = /** @type {HTMLInputElement} */ (h('input.set-input.mem-who-input', { type: 'text', placeholder: t('add_who'), hidden: true, spellcheck: 'false', autocomplete: 'off' }));
-    const kinds = h('div.mem-chips', CLASSES.map((k) => h(`button.mem-chip${k === cls ? '.is-on' : ''}`, { type: 'button', onclick: (/** @type {Event} */ e) => {
+    const kinds = h('div.mem-chips', ADD_CLASSES.map((k) => h(`button.mem-chip${k === cls ? '.is-on' : ''}`, { type: 'button', onclick: (/** @type {Event} */ e) => {
       cls = k;
       for (const b of kinds.children) b.classList.toggle('is-on', b === e.currentTarget);
       who.hidden = cls !== 'person';
@@ -496,9 +499,11 @@ export class MemoryPage {
     }
     this.seen = m;
     const name = this.personas.find((p) => p.persona === this.persona)?.name ?? '';
-    const ro = isRetired(m);
+    // 作废的、「后天」的只看不改（「后天」能作废，核心 LF-11）
+    const ro = !editable(m);
     const area = /** @type {HTMLTextAreaElement} */ (h('textarea.set-input.set-area.mem-area', { disabled: ro }, m.text));
-    const withKw = this.keywords || hasKeywords([m]);
+    // 「后天」没有关键词（核心 LF-11），不画那一格
+    const withKw = !isChange(m) && (this.keywords || hasKeywords([m]));
     const kw = withKw ? keywordBox(m.keywords ?? null, t('detail.keywords_hint'), ro) : null;
     const count = h('span.mem-count', `${chars(m.text)} / ${TEXT_MAX}`);
     const kwCount = kw ? h('span.mem-count', `${chars(m.keywords ?? '')} / ${KEYWORDS_MAX}`) : null;
@@ -527,18 +532,19 @@ export class MemoryPage {
     const sources = (m.sources ?? []).map((s) => h('button.mem-source', { type: 'button', onclick: () => { this.ctx.chat?.open?.(s.session); this.ctx.settings?.close?.(); } },
       t('detail.source', { id: shortId(s.session), turn: s.turn })));
     const form = h('form.mem-detail',
-      ro ? h('div.mem-retired-banner', h('span', m.retired ? t('detail.retired', { why: m.retired }) : t('detail.retired_plain')), h('button.set-btn', { type: 'button', onclick: () => this.restore(m.id) }, icon('rotate-ccw'), t('restore'))) : null,
+      isRetired(m) ? h('div.mem-retired-banner', h('span', m.retired ? t('detail.retired', { why: m.retired }) : t('detail.retired_plain')), h('button.set-btn', { type: 'button', onclick: () => this.restore(m.id) }, icon('rotate-ccw'), t('restore'))) : null,
       h('p.mem-gone', { hidden: true }, t('detail.gone')),
       row(t('detail.text'), [area, count]),
       kw ? row(t('detail.keywords'), [kw, h('div.mem-kw-foot', h('span.mem-hint', t('detail.keywords_note')), kwCount)]) : null,
       row(t('detail.class'), h('span.mem-plain', t(`classes.${m.class}`))),
+      isChange(m) ? row(t('detail.why'), h(`span.mem-plain${m.why ? '' : '.is-faint'}`, m.why || t('detail.no_why'))) : null,
       who ? row(t('detail.who'), who) : null,
       row(t('detail.at'), h('span.mem-plain', [Number.isFinite(at) ? new Date(at).toLocaleDateString() : '', t(m.by === 'person' ? 'detail.by_person' : 'detail.by_tool')].filter(Boolean).join(' · '))),
       row(t('detail.used'), h(`span.mem-plain${m.used ? '' : '.is-faint'}`, m.used ? t('detail.used_n', { n: m.used, when: Number.isFinite(usedAt) ? agoText(usedAt, Date.now(), this.t) : '' }) : t('unused'))),
       row(t('detail.sources'), sources.length ? h('div.mem-sources', sources) : h('span.mem-plain.is-faint', t('detail.no_source'))),
       m.venue ? row(t('detail.venue'), h('span.mem-plain', m.venue)) : null,
-      ro ? null : h('div.mem-actions', note,
-        h('button.set-btn.is-danger', { type: 'button', onclick: () => this.forget(m.id) }, icon('trash-2'), t('detail.forget')), save));
+      isRetired(m) ? null : h('div.mem-actions', isChange(m) ? h('span.mem-note', t('detail.change_note')) : note,
+        h('button.set-btn.is-danger', { type: 'button', onclick: () => this.forget(m.id) }, icon('trash-2'), t('detail.forget')), isChange(m) ? null : save));
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const change = updateOf(m, area.value, kw ? kw.value : null, who ? who.value : null);
@@ -692,6 +698,7 @@ export class MemoryPage {
     if (d?.reason === 'memory_too_long') return this.t(d.field === 'keywords' ? 'too_long_keywords' : 'too_long', { n: d.limit ?? (d.field === 'keywords' ? KEYWORDS_MAX : max) });
     if (d?.reason === 'memory_not_current') return this.t('not_current');
     if (d?.reason === 'unknown_memory') return this.t('not_current');
+    if (d?.reason === 'change_note') return this.t('detail.change_note');
     return d?.message ?? err?.message ?? String(err);
   }
 

@@ -121,7 +121,8 @@
         "person": "认识的人",
         "feedback": "对 AI 的要求",
         "episode": "发生过的事",
-        "reference": "资料位置"
+        "reference": "资料位置",
+        "change": "后天"
       },
       "show_retired": "显示作废的",
       "used": "用到 {n} 次",
@@ -168,7 +169,10 @@
         "forget": "作废",
         "retired": "已作废：{why}",
         "gone": "这一条在别处改过了",
-        "retired_plain": "已作废"
+        "retired_plain": "已作废",
+        "why": "为什么",
+        "no_why": "没写",
+        "change_note": "AI 自己记下的变化，只能作废"
       },
       "ago": {
         "now": "刚才",
@@ -298,7 +302,8 @@
         "person": "People",
         "feedback": "Requests for the AI",
         "episode": "What happened",
-        "reference": "Where things are"
+        "reference": "Where things are",
+        "change": "Acquired"
       },
       "show_retired": "Show retired",
       "used": "Used {n} times",
@@ -345,7 +350,10 @@
         "forget": "Retire",
         "retired": "Retired: {why}",
         "gone": "This one was changed elsewhere",
-        "retired_plain": "Retired"
+        "retired_plain": "Retired",
+        "why": "Why",
+        "no_why": "Not given",
+        "change_note": "A change the AI noted itself. It can only be retired"
       },
       "ago": {
         "now": "Just now",
@@ -475,7 +483,8 @@
         "person": "知り合い",
         "feedback": "AI への要望",
         "episode": "出来事",
-        "reference": "資料の場所"
+        "reference": "資料の場所",
+        "change": "後天"
       },
       "show_retired": "無効化したものも表示",
       "used": "{n} 回使用",
@@ -522,7 +531,10 @@
         "forget": "無効化",
         "retired": "無効化済み：{why}",
         "gone": "この記憶はほかで変更されています",
-        "retired_plain": "無効化済み"
+        "retired_plain": "無効化済み",
+        "why": "理由",
+        "no_why": "なし",
+        "change_note": "AI が自分で記録した変化です。無効化のみできます"
       },
       "ago": {
         "now": "たった今",

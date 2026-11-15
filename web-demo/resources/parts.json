@@ -7968,5 +7968,29 @@
     "select": [
       ".setup-life-line"
     ]
+  },
+  "mem.why": {
+    "zh": "记忆页「后天」一条下面写为什么的那一行",
+    "select": [
+      ".mem-why"
+    ]
+  },
+  "setup.acquired-text": {
+    "zh": "人格详情「后天」里一条的内容",
+    "select": [
+      ".setup-acquired-text"
+    ]
+  },
+  "setup.acquired-why": {
+    "zh": "人格详情「后天」里一条下面写为什么的那一行",
+    "select": [
+      ".setup-acquired-why"
+    ]
+  },
+  "setup.acquired-empty": {
+    "zh": "人格详情「后天」还没有时那一行",
+    "select": [
+      ".setup-acquired-empty"
+    ]
   }
 }

@@ -234,3 +234,18 @@ export function lifeContextOf(text) {
   const value = Number(plain);
   return Number.isSafeInteger(value) && value > 0 ? { ok: true, value } : { ok: false };
 }
+
+/**
+ * 人格详情的「后天」（核心 LF-11）：`memory.list`（`class` 写 `change`，不含作废的）交回的那几条（新的在前），排成旧的在前，只留内容和
+ * 为什么（`why`，没写的是 `null`）。别的类、作废的、没有内容的不列；交回的不是列表的当没有。
+ * @param {any} memories @returns {{text: string, why: string|null}[]}
+ */
+export function acquiredOf(memories) {
+  if (!Array.isArray(memories)) return [];
+  const seq = (/** @type {any} */ m) => Number(String(m.id ?? '').replace(/^m/, '')) || 0;
+  const at = (/** @type {any} */ m) => Date.parse(m.at) || 0;
+  return memories
+    .filter((m) => m && m.class === 'change' && m.retired == null && typeof m.text === 'string' && m.text.trim())
+    .sort((a, b) => at(a) - at(b) || seq(a) - seq(b))
+    .map((m) => ({ text: m.text, why: typeof m.why === 'string' && m.why.trim() ? m.why.trim() : null }));
+}

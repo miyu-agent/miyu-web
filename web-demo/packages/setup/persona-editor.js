@@ -6,6 +6,7 @@
 //! 最上面三行是外观（头像、主题色、背景图，`appearance.js`）：换、删当场存，不等「保存」。
 //! 「推演人生」开关（核心设计 70，`life.js`）也当场生效；开着的才在下面露出「推演方法」（2026-11-14 下午主人改：原来收在「高级」里），
 //! 推演方法跟着「保存」存；它下面是人生会话的上下文上限（核心 LF-10，主人 11-14 下午定），同样开着才露、跟着「保存」存。
+//! 再下面是「后天」（核心 LF-11，`acquired.js`）：AI 在人生里记下的自己的变化，只看；暂停着也照带，所以开关关着也露。
 
 import { h, replace } from '../../src/lib/dom.js';
 import { field, switchField, area, askFirst } from './form.js';
@@ -13,6 +14,7 @@ import { Pairs } from './pairs.js';
 import { personaSave, halfPair, newlyRemoved, lifeContextOf } from './model.js';
 import { Appearance } from './appearance.js';
 import { LifeSwitch } from './life.js';
+import { acquiredField } from './acquired.js';
 
 /**
  * @typedef {import('./model.js').PersonaDraft} PersonaDraft
@@ -138,6 +140,7 @@ export class PersonaEditor {
       this.lifeRow(),
       this.lifeMethodRow(),
       this.lifeContextRow(),
+      this.acquiredRow(),
       this.memoryRow(),
       this.note,
       h('div.setup-foot', remove, h('span.setup-grow'), this.kit.button(t('edit.cancel'), {}, () => this.hooks.close()), this.saveBtn));
@@ -185,6 +188,12 @@ export class PersonaEditor {
     this.lifeContextField.classList.add('setup-life-method');
     this.lifeContextField.hidden = !this.lifeSwitch.on();
     return this.lifeContextField;
+  }
+
+  /** 「后天」那一行（核心 LF-11）：核心有推演人生的才画，读不到的 `acquired.js` 自己拿掉。 */
+  acquiredRow() {
+    if (!this.lifeOk || !this.lifeSwitch || !this.id) return null;
+    return acquiredField(this.ctx, this.id);
   }
 
   /** 上下文上限那一格下面写错了的那句；`null` 收起。 @param {string|null} text */

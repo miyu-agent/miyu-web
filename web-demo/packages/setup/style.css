@@ -440,3 +440,11 @@
 .setup-life-context { display: flex; flex-direction: column; align-items: flex-start; gap: calc(4px * var(--space)); min-width: 0; }
 .setup-life-context > input { width: min(100%, 14em); }
 .setup-life-context > p.setup-life-context-note { margin: 0; }
+/* 「后天」（核心 LF-11）：一条一行、旧的在前，内容下面暗字写为什么；只看 */
+.setup-field.setup-acquired-row[hidden] { display: none; }
+.setup-acquired { min-width: 0; padding-top: calc(4px * var(--space)); }
+.setup-acquired-list { display: flex; flex-direction: column; gap: calc(8px * var(--space)); margin: 0; padding: 0; list-style: none; }
+.setup-acquired-list > li { display: flex; flex-direction: column; gap: calc(2px * var(--space)); min-width: 0; }
+.setup-acquired-text { color: var(--text); font-size: calc(13px * var(--text-scale)); line-height: 1.55; overflow-wrap: anywhere; }
+.setup-acquired-why { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); line-height: 1.5; overflow-wrap: anywhere; }
+.setup-acquired-empty { margin: 0; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
