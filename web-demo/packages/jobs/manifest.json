@@ -111,11 +111,11 @@
         "failed": "Failed · exit code {code}",
         "signal": "Failed · signal {signal}",
         "stopped": "Stopped",
-        "timed_out": "Stopped: time limit reached",
+        "timed_out": "Stopped: time limit",
         "too_large": "Stopped: output too large",
         "too_chatty": "Stopped: output too frequent",
         "undone": "Stopped by undo",
-        "restarted": "Stopped by restart",
+        "restarted": "Stopped by core restart",
         "aborted": "Aborted: core exited",
         "paused": "Waiting for input",
         "running_plain": "Running"
@@ -163,7 +163,7 @@
         "too_large": "出力が大きすぎて停止",
         "too_chatty": "出力が頻繁すぎて停止",
         "undone": "取り消しで停止",
-        "restarted": "再起動で停止",
+        "restarted": "コア再起動で停止",
         "aborted": "中断：コアが終了しました",
         "paused": "入力待ち",
         "running_plain": "実行中"
