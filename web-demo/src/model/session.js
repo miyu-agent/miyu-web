@@ -5,14 +5,29 @@
 import { uuidTime } from './ago.js';
 
 /**
- * 会话的先后（蓝图 `web.md`「左栏」组头、「全部会话」第 3 条）：置顶的在最前，别的照最近活动从近到远；不知道活动时刻的（没读过日志、
- * 核心还没给 `last_active`）照开的时刻（编号里的时间）。
- * @template {{session: string, pinned?: boolean, active?: number|null}} T
+ * 左栏、会话列表排先后的时刻（蓝图 `web.md`「左栏」，2026-11-16 项目主人）：人最后一次发话（核心 SX-1 的 `last_spoken`），只切进去不挪，
+ * 循环、定时任务、人生自己醒这些没人说话的轮不算；没人说过话的照开的时刻（编号里的时间），不照最近活动：没人理的人生会话每醒一次就会跳到最上面。
+ * @param {{session: string, spoken?: number|null}} r
+ */
+export const spokenAt = (r) => r.spoken ?? uuidTime(r.session) ?? 0;
+
+/** 会话表那一项的 `last_spoken`（毫秒）；还没人说过话的、读不出来的是 `null`。 @param {{last_spoken?: string}|undefined} e */
+export function spokenOf(e) {
+  const at = Date.parse(e?.last_spoken ?? '');
+  return Number.isNaN(at) ? null : at;
+}
+
+/** 最近活动的时刻，不知道的照开的时刻：打开页面进哪个会话、删了正在看的切到哪个照它（同终端）。 @param {{session: string, active?: number|null}} r */
+export const activeAt = (r) => r.active ?? uuidTime(r.session) ?? 0;
+
+/**
+ * 会话的先后（蓝图 `web.md`「左栏」组头、「会话列表」）：置顶的在最前，别的照 `at` 从近到远，出厂照人最后一次发话（`spokenAt`）。
+ * @template {{session: string, pinned?: boolean, active?: number|null, spoken?: number|null}} T
  * @param {T[]} rows
+ * @param {(r: T) => number} [at]
  * @returns {T[]}
  */
-export function rank(rows) {
-  const at = (r) => r.active ?? uuidTime(r.session) ?? 0;
+export function rank(rows, at = spokenAt) {
   return [...rows].sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || at(b) - at(a));
 }
 
@@ -56,20 +71,21 @@ export function timeGroup(at, now) {
 export const ARCHIVE_GROUP = /** @type {const} */ ('archived');
 
 /**
- * 照时间分组（顺序照原来的，排好的进来、排好的出去；没有会话的组不出来）。时刻照最近活动，不知道的照开的时刻（同 `rank`）。
+ * 照时间分组（顺序照原来的，排好的进来、排好的出去；没有会话的组不出来）。时刻照 `at`，出厂照最近活动，不知道的照开的时刻；左栏传
+ * `spokenAt`，和它排的先后一致。
  * 存档（会话表那一项带 `archived: true`）不进时间的几组，单成最后一段 `archived`，有存档才出来。
- * @template {{session: string, active?: number|null, archived?: boolean}} T
- * @param {T[]} rows @param {number} now
+ * @template {{session: string, active?: number|null, spoken?: number|null, archived?: boolean}} T
+ * @param {T[]} rows @param {number} now @param {(r: T) => number} [at]
  * @returns {{group: typeof TIME_GROUPS[number] | typeof ARCHIVE_GROUP, rows: T[]}[]}
  */
-export function byTime(rows, now) {
+export function byTime(rows, now, at = activeAt) {
   /** @type {Map<string, T[]>} */
   const out = new Map(TIME_GROUPS.map((g) => [g, []]));
   /** @type {T[]} */
   const archived = [];
   for (const r of rows) {
     if (r.archived) archived.push(r);
-    else out.get(timeGroup(r.active ?? uuidTime(r.session) ?? 0, now))?.push(r);
+    else out.get(timeGroup(at(r), now))?.push(r);
   }
   /** @type {{group: typeof TIME_GROUPS[number] | typeof ARCHIVE_GROUP, rows: T[]}[]} */
   const groups = TIME_GROUPS.map((group) => ({ group, rows: out.get(group) ?? [] })).filter((g) => g.rows.length);

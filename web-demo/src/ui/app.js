@@ -21,7 +21,7 @@ import { Artifacts } from './artifacts.js';
 import { runCommand, runUnlisted, refusalText, redo, copyTurn, turnText, Commands, revertLatest } from './commands.js';
 import { coreSpecs, dirName } from '../model/commands.js';
 import { readSkills } from '../model/skills.js';
-import { rank, startupSession } from '../model/session.js';
+import { rank, activeAt, startupSession } from '../model/session.js';
 import { ChatWidth } from './chat-width.js';
 import { SideColumn } from './side.js';
 import { SidebarWidth } from './sidebar-width.js';
@@ -281,7 +281,7 @@ export class App {
         // 人生会话不列（设计 70，从左栏「更多」的「推演人生」打开）
         rows: async () => this.store.index.all().filter((s) => !s.oneshot && !s.parent && !isLife(s)).map((s) => {
           const it = this.store.summary(s.session);
-          return { session: s.session, title: this.titleOf(s.session), pinned: it.pinned, active: it.active };
+          return { session: s.session, title: this.titleOf(s.session), pinned: it.pinned, active: it.active, spoken: it.spoken };
         }),
         current: () => this.current,
         live: (/** @type {string} */ id) => {
@@ -694,9 +694,9 @@ export class App {
     });
   }
 
-  /** 左栏的先后（`model/session.js` 的 `rank`）：置顶的在最前，别的照最近活动。 */
+  /** 最近动静的先后：置顶的在最前，别的照最近活动（`activeAt`）。打开页面进哪个会话、删了正在看的切到哪个照它；左栏照人发话排（`render`）。 */
   ranked() {
-    return rank(this.store.order.map((id) => this.store.summary(id))).map((x) => x.session);
+    return rank(this.store.order.map((id) => this.store.summary(id)), activeAt).map((x) => x.session);
   }
 
   /** 下一帧画一次；上一次画得久的（大回复涌进来，施工 YC-11）先歇一会儿，中间来的合在一起画（`model/pace.js`）。 */

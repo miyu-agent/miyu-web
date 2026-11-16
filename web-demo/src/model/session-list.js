@@ -5,7 +5,7 @@ import { rank } from './session.js';
 import { shortSession } from './words.js';
 
 /**
- * @typedef {{session: string, title: string|null, pinned: boolean, active: number|null}} Row 全部顶层会话里的一个（照「全部会话」读）
+ * @typedef {{session: string, title: string|null, pinned: boolean, active: number|null, spoken?: number|null}} Row 全部顶层会话里的一个（照「全部会话」读）；`spoken` 是人最后一次发话，先后照它（同左栏）
  * @typedef {{session: string, short: string, title: string|null, active: number|null, mark: 'running'|'unread'|null,
  *   hit: {title: [number, number][], short: [number, number][]}}} Item 列表里的一行
  */

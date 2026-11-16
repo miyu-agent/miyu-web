@@ -10,6 +10,7 @@ import { res } from '../util/res.js';
 import { SessionIndex } from './session-index.js';
 import { ProjectList } from './projects.js';
 import { ViewLog, VIEW_PUSHES } from './view.js';
+import { spokenAt, spokenOf } from '../model/session.js';
 
 /**
  * @typedef {{id: string, view: ViewLog, limits: any, todos: {content: string, status: string}[],
@@ -74,12 +75,12 @@ export class Store {
   }
 
   /**
-   * 左栏列哪些（蓝图 `web.md`「左栏」）：顶层的会话（不是一次性的、不是子会话）照最近活动的几个（`layout.json` 的 `listed_sessions`），
-   * 加上置顶的、项目里的（项目展开时全部列出来）、全部会话那一页开过的；先后由界面排（`rank`）。
+   * 左栏列哪些（蓝图 `web.md`「左栏」）：顶层的会话（不是一次性的、不是子会话）照人最后一次发话的几个（`layout.json` 的 `listed_sessions`，
+   * 没人说过话的照开的时刻，同 `spokenAt`），加上置顶的、项目里的（项目展开时全部列出来）、全部会话那一页开过的；先后由界面排（`rank`）。
    */
   get order() {
     const top = this.index.all().filter((e) => !e.oneshot && !e.parent);
-    const at = (e) => Date.parse(e.last_active ?? '') || 0;
+    const at = (e) => spokenAt({ session: e.session, spoken: spokenOf(e) });
     const sorted = [...top].sort((a, b) => at(b) - at(a));
     // 项目里的会话不在下面按时间的那几组里（蓝图「会话整理和项目」第 4 条），不占那几个的数
     const recent = sorted.filter((e) => !e.project).slice(0, res.layout.listed_sessions).map((e) => e.session);
@@ -265,9 +266,11 @@ export class Store {
     const e = this.index.get(id);
     const listed = Date.parse(e?.last_active ?? '');
     const state = s?.view.status?.state;
+    // 人最后一次发话（核心 SX-1）：左栏照它排，切进去不挪（`spokenAt`）
+    const spoken = spokenOf(e);
     return { session: id, title: e?.title ?? e?.preview ?? null, running: state ? state !== 'idle' : !!e?.busy,
       // 在等人确认、回答（核心 SL-1：会话表的 `waiting`；读进来了的照会话状态）
-      waiting: state ? state === 'waiting' : e?.waiting === true, created: null, pinned: !!e?.pinned, active: Number.isNaN(listed) ? null : listed, unread: this.unread.has(id), project: e?.project ?? null,
+      waiting: state ? state === 'waiting' : e?.waiting === true, created: null, pinned: !!e?.pinned, active: Number.isNaN(listed) ? null : listed, spoken, unread: this.unread.has(id), project: e?.project ?? null,
       // 哪儿开的（核心 8-33 四补：终端集成开的是 `terminal`，左栏单开一栏）
       origin: e?.origin ?? null,
       // 分叉出来的子代理（核心照 A-F 给会话表那一行加 `forked: true`；没有这一格的照普通子代理）

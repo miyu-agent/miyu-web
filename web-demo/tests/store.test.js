@@ -30,20 +30,20 @@ function withIndex(listed, projects = []) {
 
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
-test('起来时订阅会话表（9-5）：左栏照最近活动列顶层的，一次性的、子会话不列；只读在跑的、派过子代理的，别的不读日志', async () => {
+test('起来时订阅会话表（9-5）：左栏照人最后一次发话列顶层的，一次性的、子会话不列；只读在跑的、派过子代理的，别的不读日志', async () => {
   const listed = [
-    { session: 'new', oneshot: false, parent: null, last_active: '2026-10-01T01:00:00.000Z' },
-    { session: 'busy', oneshot: false, parent: null, busy: true, last_active: '2026-10-01T05:00:00.000Z' },
-    { session: 'mid', oneshot: false, parent: null, last_active: '2026-10-01T03:00:00.000Z', title: '修 CI' },
-    { session: 'child', oneshot: false, parent: 'mid', last_active: '2026-10-01T09:00:00.000Z' },
-    { session: 'ask', oneshot: true, parent: null, last_active: '2026-10-01T09:30:00.000Z' },
-    { session: 'quiet', oneshot: false, parent: null, preview: '帮我看看这个报错', last_active: '2026-10-01T00:30:00.000Z' },
-    { session: 'term', oneshot: false, parent: null, origin: 'terminal', last_active: '2026-10-01T00:10:00.000Z' },
+    { session: 'new', oneshot: false, parent: null, last_spoken: '2026-10-01T01:00:00.000Z' },
+    { session: 'busy', oneshot: false, parent: null, busy: true, last_spoken: '2026-10-01T05:00:00.000Z' },
+    { session: 'mid', oneshot: false, parent: null, last_spoken: '2026-10-01T03:00:00.000Z', title: '修 CI' },
+    { session: 'child', oneshot: false, parent: 'mid', last_spoken: '2026-10-01T09:00:00.000Z' },
+    { session: 'ask', oneshot: true, parent: null, last_spoken: '2026-10-01T09:30:00.000Z' },
+    { session: 'quiet', oneshot: false, parent: null, preview: '帮我看看这个报错', last_spoken: '2026-10-01T00:30:00.000Z' },
+    { session: 'term', oneshot: false, parent: null, origin: 'terminal', last_spoken: '2026-10-01T00:10:00.000Z' },
   ];
   const { store, loaded } = withIndex(listed);
   await store.boot();
   await tick();
-  assert.deepEqual(store.order, ['busy', 'mid', 'new', 'quiet', 'term'], '照最近活动，子代理的、一次性的不列');
+  assert.deepEqual(store.order, ['busy', 'mid', 'new', 'quiet', 'term'], '照人最后一次发话，子代理的、一次性的不列');
   assert.deepEqual(loaded.sort(), ['busy', 'mid'], '在跑的、派过子代理的才读');
   assert.equal(store.summary('quiet').title, '帮我看看这个报错', '没标题的拿第一句话的预览');
   assert.equal(store.summary('mid').title, '修 CI');
@@ -191,18 +191,18 @@ test('读进来了的会话：标题、置顶照会话表；在不在跑照会�
   assert.deepEqual([store.summary('L').title, store.summary('L').pinned], ['改过的名字', false]);
 });
 
-test('项目（核心 H-1、H-2）：起来时订阅项目表；项目里的会话不占最近活动的那几个，项目里的全部读进左栏；推来的改、删跟着变', async () => {
+test('项目（核心 H-1、H-2）：起来时订阅项目表；项目里的会话不占人发过话的那几个，项目里的全部读进左栏；推来的改、删跟着变', async () => {
   const at = (h) => `2026-10-01T${String(h).padStart(2, '0')}:00:00.000Z`;
   const listed = [
-    { session: 'loose', parent: null, last_active: at(1) },
-    ...Array.from({ length: 7 }, (_, i) => ({ session: `p${i}`, parent: null, project: 'P', last_active: at(10 + i) })),
-    { session: 'pin', parent: null, project: 'P', pinned: true, last_active: at(20) },
+    { session: 'loose', parent: null, last_spoken: at(1) },
+    ...Array.from({ length: 7 }, (_, i) => ({ session: `p${i}`, parent: null, project: 'P', last_spoken: at(10 + i) })),
+    { session: 'pin', parent: null, project: 'P', pinned: true, last_spoken: at(20) },
   ];
   const { store, push } = withIndex(listed, [{ project: 'P', name: '网页' }]);
   await store.boot();
   assert.equal(store.projects.supported, true);
   assert.deepEqual(store.projects.list.map((p) => p.name), ['网页']);
-  assert.deepEqual(store.order, ['loose', 'pin', 'p6', 'p5', 'p4', 'p3', 'p2', 'p1', 'p0'], '最近活动的照不在项目里的排；置顶的照列；项目里的全部');
+  assert.deepEqual(store.order, ['loose', 'pin', 'p6', 'p5', 'p4', 'p3', 'p2', 'p1', 'p0'], '人发过话的照不在项目里的排；置顶的照列；项目里的全部');
   assert.equal(store.summary('p6').project, 'P');
   assert.equal(store.summary('loose').project, null);
   push('projects.changed', { project: { project: 'P', name: '网页 2', color: '#3a63c9' } });

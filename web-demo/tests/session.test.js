@@ -3,20 +3,22 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { rank, startupSession, timeGroup, byTime } from '../src/model/session.js';
+import { rank, activeAt, startupSession, timeGroup, byTime } from '../src/model/session.js';
 
 
-test('先后：置顶的在最前，别的照最近活动从近到远；不知道活动时刻的照开的时刻（编号里的时间）', () => {
+test('先后：置顶的在最前，别的照人最后一次发话从近到远；没人说过话的照开的时刻（编号里的时间），不照最近活动', () => {
   // 编号里的时间：前 12 位十六进制是毫秒
   const id = (ms) => `${ms.toString(16).padStart(12, '0').replace(/^(.{8})(.{4})$/, '$1-$2')}-7000-8000-000000000000`;
   const rows = [
-    { session: id(1000), pinned: false, active: 9000 },
-    { session: id(2000), pinned: false, active: null },
-    { session: id(3000), pinned: true, active: 4000 },
-    { session: id(5000), pinned: false, active: null },
-    { session: id(6000), pinned: true, active: 8000 },
+    { session: id(1000), pinned: false, spoken: 9000, active: 9000 },
+    { session: id(2000), pinned: false, spoken: null, active: 99000 },
+    { session: id(3000), pinned: true, spoken: 4000, active: 4000 },
+    { session: id(5000), pinned: false, spoken: null, active: null },
+    { session: id(6000), pinned: true, spoken: 8000, active: 8000 },
   ];
   assert.deepEqual(rank(rows).map((r) => r.session), [id(6000), id(3000), id(1000), id(5000), id(2000)]);
+  // 打开页面进哪个会话照最近活动（`activeAt`）
+  assert.deepEqual(rank(rows, activeAt).map((r) => r.session), [id(6000), id(3000), id(2000), id(1000), id(5000)]);
 });
 
 test('打开页面时进哪个会话：ui.startup 是 recent 的进最近的那个，new、读不出来的（核心旧、没有这一项）是新会话', () => {

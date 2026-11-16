@@ -23,7 +23,7 @@ import { leave } from '../lib/motion.js';
 import { res, t } from '../util/res.js';
 import { toggle, range } from '../model/select.js';
 import { treeRows, capTops, pathOf } from '../model/tree.js';
-import { TIME_GROUPS, ARCHIVE_GROUP, byTime, archiveLast } from '../model/session.js';
+import { TIME_GROUPS, ARCHIVE_GROUP, byTime, archiveLast, spokenAt } from '../model/session.js';
 import { SessionDrag } from './sidebar-drag.js';
 import { projectBlock } from './sidebar-projects.js';
 import { projectRows, colorOf } from '../model/project.js';
@@ -324,7 +324,7 @@ export class Sidebar {
     }) : [];
     // 「会话」那一栏照时间分组：「最近」那一组没有自己的头（就是这一栏的头），别的一组一个头，组里照树排；多选时只列顶层的、能勾
     const flat = (/** @type {any[]} */ list) => list.map((it) => ({ kind: /** @type {const} */ ('session'), session: it.session, depth: 0, item: it, hasKids: false, open: false, pick: true }));
-    const grouped = byTime(cap.shown, Date.now()).map((g) => ({ group: g.group, rows: this.selecting ? flat(g.rows) : tree(g.rows) }));
+    const grouped = byTime(cap.shown, Date.now(), spokenAt).map((g) => ({ group: g.group, rows: this.selecting ? flat(g.rows) : tree(g.rows) }));
     // 存档那一段画在「终端集成」下面、「查看全部」上面：排在别的会话后面（设计 58 第三节第 4 条）
     const groups = grouped.filter((g) => g.group !== ARCHIVE_GROUP);
     const archiveRows = grouped.find((g) => g.group === ARCHIVE_GROUP)?.rows ?? [];

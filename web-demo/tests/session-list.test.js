@@ -10,14 +10,14 @@ loadRes();
 
 const id = (tail) => `01a0f8fb-0000-7000-8000-0000${tail}`;
 const ROWS = [
-  { session: id('aaaa1111'), title: '旧的', pinned: false, active: 100 },
-  { session: id('bbbb2222'), title: '置顶的 README', pinned: true, active: 50 },
-  { session: id('cccc3333'), title: '新的 readme', pinned: false, active: 300 },
-  { session: id('dddd4444'), title: null, pinned: false, active: 200 },
+  { session: id('aaaa1111'), title: '旧的', pinned: false, active: 900, spoken: 100 },
+  { session: id('bbbb2222'), title: '置顶的 README', pinned: true, active: 50, spoken: 50 },
+  { session: id('cccc3333'), title: '新的 readme', pinned: false, active: 300, spoken: 300 },
+  { session: id('dddd4444'), title: null, pinned: false, active: 200, spoken: 200 },
 ];
 const live = (s) => ({ running: s === id('cccc3333'), unread: s === id('aaaa1111') || s === id('dddd4444') });
 
-test('先后：当前会话在最上面，别的照左栏（置顶的在前，再照最近活动）', () => {
+test('先后：当前会话在最上面，别的照左栏（置顶的在前，再照人最后一次发话，不照最近活动）', () => {
   const got = sessionList(ROWS, id('aaaa1111'), '', live);
   assert.deepEqual(got.map((r) => r.short), ['aaaa1111', 'bbbb2222', 'cccc3333', 'dddd4444']);
   assert.deepEqual(sessionList(ROWS, null, '', live).map((r) => r.short), ['bbbb2222', 'cccc3333', 'dddd4444', 'aaaa1111'], '还没开的新会话：没有当前的');

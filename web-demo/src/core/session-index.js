@@ -5,7 +5,7 @@
 
 /**
  * 表里的一项，和 `session.list` 的一样：有的才写。
- * @typedef {{session: string, busy?: boolean, cwd?: string, last_active?: string, oneshot?: boolean, parent?: string|null,
+ * @typedef {{session: string, busy?: boolean, cwd?: string, last_active?: string, last_spoken?: string, oneshot?: boolean, parent?: string|null,
  *   pinned?: boolean, project?: string, title?: string, preview?: string, tokens?: number, context?: {used: number, window?: number}, archived?: boolean,
  *   persona?: string|null, life?: boolean, life_ended?: boolean}} Entry
  *   `archived`：导进来的只读存档才有，是 `true`（核心 SE-1 下，W-1094）：左栏、全部会话排在最后一段，输入框锁住
