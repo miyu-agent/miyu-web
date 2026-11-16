@@ -563,7 +563,7 @@
       "other": "Other"
     },
     "open_usage": "Open in Usage",
-    "quota": {"title": "Quota", "in_hours": "resets in {n} h", "in_minutes": "resets in {n} min", "at": "resets {month}/{day} {time}"}
+    "quota": {"title": "Quota", "in_hours": "resets in {n} h", "in_minutes": "resets in {n} min", "at": "resets {month}/{day} {time}", "balance": "Balance {amount}", "balance_granted": "incl. {amount} granted", "balance_exhausted": "Balance exhausted"}
   },
   "model_menu": {
     "fixed_pools": { "flagship": "Flagship pool", "normal": "Everyday pool", "lite": "Lite pool" },

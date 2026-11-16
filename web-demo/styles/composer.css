@@ -318,6 +318,11 @@
 .ctx-quota-row.is-full .ctx-quota-pct { color: var(--danger); }
 .ctx-quota-pct { font: calc(12px * var(--text-scale)) var(--font-mono); text-align: right; min-width: 3.5em; }
 .ctx-quota-reset { color: var(--text-faint); white-space: nowrap; font-size: calc(12px * var(--text-scale)); }
+/* 余额（核心 QU-2，2026-11-16 主人定）：额度那一段里一种币一行「余额 ¥12.34」，赠送的暗字；不能用的整行 danger（和额度满了同一个色）；不画条 */
+.ctx-balance-row { display: flex; align-items: baseline; gap: calc(8px * var(--space)); margin-bottom: calc(6px * var(--space)); font-size: calc(12.5px * var(--text-scale)); }
+.ctx-balance-amount { white-space: nowrap; }
+.ctx-balance-granted { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
+.ctx-balance-row.is-out, .ctx-balance-row.is-out .ctx-balance-granted { color: var(--danger); }
 .ctx-rows { display: flex; flex-direction: column; }
 .ctx-row { display: flex; align-items: center; gap: calc(6px * var(--space)); min-height: 26px; padding: 0 calc(4px * var(--space)) 0 calc((4px + var(--depth, 0) * 14px) * var(--space)); border-radius: var(--r-6); }
 .ctx-row.is-parent { cursor: pointer; }

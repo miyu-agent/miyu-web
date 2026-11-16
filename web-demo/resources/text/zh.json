@@ -563,7 +563,7 @@
       "other": "其他"
     },
     "open_usage": "在用量页看",
-    "quota": {"title": "额度", "in_hours": "{n} 小时后重置", "in_minutes": "{n} 分钟后重置", "at": "{month}月{day}日 {time} 重置"}
+    "quota": {"title": "额度", "in_hours": "{n} 小时后重置", "in_minutes": "{n} 分钟后重置", "at": "{month}月{day}日 {time} 重置", "balance": "余额 {amount}", "balance_granted": "含赠送 {amount}", "balance_exhausted": "余额不足"}
   },
   "model_menu": {
     "fixed_pools": { "flagship": "旗舰池", "normal": "日常池", "lite": "轻量池" },

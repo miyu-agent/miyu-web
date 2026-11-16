@@ -158,6 +158,9 @@ export function contextPercent(used, window) {
 
 const SIGNS = /** @type {Record<string, string>} */ ({ USD: '$', CNY: '¥', EUR: '€', GBP: '£' });
 
+/** 认得的币种的记号，不认得的是 `null`。 @param {string} currency */
+export const signOf = (currency) => SIGNS[currency] ?? null;
+
 /** 一笔钱（用量页、框下面累计的浮窗）：一分钱以下的四位小数，别的两位；认得的币种写记号，别的写代码加空格。 @param {{currency: string, amount: number}} a */
 export function amountText(a) {
   const n = a.amount > 0 && a.amount < 0.01 ? a.amount.toFixed(4) : a.amount.toFixed(2);

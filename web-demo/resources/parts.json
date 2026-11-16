@@ -3625,6 +3625,24 @@
       ".ctx-quota-reset"
     ]
   },
+  "context.balance-row": {
+    "zh": "额度：余额一种币那一行（官方说不能用的带 is-out）",
+    "select": [
+      ".ctx-balance-row"
+    ]
+  },
+  "context.balance-amount": {
+    "zh": "额度：「余额 ¥12.34」",
+    "select": [
+      ".ctx-balance-amount"
+    ]
+  },
+  "context.balance-granted": {
+    "zh": "额度：「含赠送 ¥2.00」暗字",
+    "select": [
+      ".ctx-balance-granted"
+    ]
+  },
   "context.pop-foot": {
     "zh": "上下文明细：最下面那一行暗字",
     "select": [
