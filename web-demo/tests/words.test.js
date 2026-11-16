@@ -341,3 +341,14 @@ test('执行命令有短标题的只写短标题，没写的照旧「执行命�
   assert.equal(bare.name, '执行命令');
   assert.equal(bare.subject, null);
 });
+
+test('供应商侧工具（视图的 `hosted: true`，W-1198）：名字照核心的 `title.name`，谁跑的照 `title.via` 写在括号里，准备中也写', async () => {
+  const { stepOf } = await import('../src/model/entries.js');
+  const entry = (state, title, args = '') => ({ id: 'e1', kind: 'tool', group: 'g1', name: 'search_web', hosted: true, state, args, title });
+  const preparing = row(stepOf(entry('preparing', { name: '准备网络搜索', via: 'agy' })));
+  assert.equal(preparing.name, '准备网络搜索（agy）');
+  const done = row(stepOf(entry('ok', { name: '网络搜索', object: 'rust', via: 'agy' }, '{"query":"rust"}')));
+  assert.deepEqual([done.name, done.subject, done.said], ['网络搜索（agy）', 'rust', null]);
+  const raw = row(stepOf({ ...entry('ok', { name: 'code_execution', via: 'agy' }), name: 'code_execution' }));
+  assert.deepEqual([raw.name, raw.subject], ['code_execution（agy）', null], '认不得的照原名');
+});

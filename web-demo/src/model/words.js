@@ -110,11 +110,12 @@ export function forkedCall(args) {
  */
 function titled(step, kind, base) {
   const title = step.title ?? { name: res.human?.tools?.[step.name]?.name ?? step.name };
-  if (step.state === 'preparing') return { ...base, icon: 'loader-circle', name: title.name ?? '', timer: step.start != null ? { since: step.start, format: 'tenths' } : null };
+  // 经谁做的（核心 3c40e3c3 的 `title.via`，例如网络搜索的来源 Exa）写在名字后面的括号里：「网络搜索（Exa）」（2026-10-19 项目主人定，照终端）。
+  // 供应商侧工具（`hosted: true`）准备中就带 `via`：「准备网络搜索（agy）」（W-1198）
+  const name = title.via ? t('timeline.via', { name: title.name ?? step.name, via: title.via }) : title.name ?? step.name;
+  if (step.state === 'preparing') return { ...base, icon: 'loader-circle', name, timer: step.start != null ? { since: step.start, format: 'tenths' } : null };
   const bad = failed(step);
   const icon = bad ? 'circle-alert' : step.name === 'subagent' && forkedCall(step.parsed ?? step.args) ? res.timeline.icon_fork : res.timeline.icons[step.name] ?? packageIcon(step.name) ?? res.timeline.icon_default;
-  // 经谁做的（核心 3c40e3c3 的 `title.via`，例如网络搜索的来源 Exa）写在名字后面的括号里：「网络搜索（Exa）」（2026-10-19 项目主人定，照终端）
-  const name = title.via ? t('timeline.via', { name: title.name ?? step.name, via: title.via }) : title.name ?? step.name;
   const object = title.object ?? null;
   const said = title.said ?? null;
   // 用了技能（读了它的 SKILL.md，2026-10-12 项目主人）：「使用技能 · 写技能」，技能的图标；出错的照读文件的样子
