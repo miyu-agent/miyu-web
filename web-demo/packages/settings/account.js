@@ -8,7 +8,7 @@ import { h, icon } from '../../src/lib/dom.js';
 import { sectionKit } from './kit.js';
 import { groupBlock, toggle, textField } from './rows.js';
 import { plainItem } from './model.js';
-import { fold } from './privacy.js';
+import { fold } from './path-list.js';
 import { ACCESS } from '../../src/lib/launch.js';
 import { lanCard } from './lan-card.js';
 import { ALL, lanAddrs, loopbackOnly, portOf, turnOnWay } from './access-model.js';
@@ -41,7 +41,7 @@ export function avatarGroup(dialog) {
 
 /**
  * 局域网访问那张卡片（第 12c 条，W-1153）。卡片头：「允许局域网访问」、后面一个小标签写现在的状态（「仅本机」「已开启」）、一句说明、一句
- * `warn` 色的不加密，右边开关。开着时下面展开（收起展开的动画同私密目录的总开关）：监听地址和端口、访问密码、别的设备怎么打开。
+ * `warn` 色的不加密，右边开关。开着时下面展开（收起展开的动画同技能目录表的总开关，`path-list.js` 的 `fold`）：监听地址和端口、访问密码、别的设备怎么打开。
  *
  * 开关（网页软件的 `web.listen`）：开是写 `0.0.0.0`（这台电脑的所有地址，不用人再去改地址），关是去掉这一项（回到出厂的 `127.0.0.1`）。
  * 没设访问密码的打开时先弹窗设（`askPassword`），设好了才写；不设的开关拨回去、提示要先设密码（没密码不放开局域网，规矩照旧）。

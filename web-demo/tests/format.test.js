@@ -66,7 +66,7 @@ test('上下文占窗口几成：整数百分比，不到 1% 的写 <1%', () => 
   assert.equal(contextPercent(0, 200_000), '0%');
 });
 
-test('核心在 Windows 上的路径照 Windows 的写法给人看（家目录写真的路径），写的换回核心认的（蓝图「设置页」私密目录）', async () => {
+test('核心在 Windows 上的路径照 Windows 的写法给人看（家目录写真的路径），写的换回核心认的（蓝图「设置页」技能目录表）', async () => {
   const { shownPath, corePath } = await import('../src/lib/format.js');
   const home = 'C:\\Users\\shorin';
   assert.equal(shownPath('~/AppData/Local/Microsoft/Vault', home, 'windows'), 'C:\\Users\\shorin\\AppData\\Local\\Microsoft\\Vault');

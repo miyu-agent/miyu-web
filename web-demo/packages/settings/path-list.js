@@ -1,47 +1,25 @@
 // @ts-check
-//! 「隐私与安全」页的私密目录、只禁写两组（蓝图 `web.md`「设置页」第 12b 条；核心施工 5-15 下、5-17）：加了的、去掉的默认项
-//! 两项并成一张表画（私密目录上面多一个总开关，关着的表灰掉）。表放在一个能滚的框里，顶上搜索；一行一个目录，出厂的带「出厂预设」，悬停露删除（先弹窗问）；框下面写目录的框
-//! （一行一个，能一次加好几个），右边上下两个按钮「添加」「重置」。改一下存一下，拒了的照核心的话写在框下面。
+//! 一张目录表（技能页「读取其他目录的 Skills」，蓝图 `web.md`「设置页」第 20 条）：表放在一个能滚的框里，顶上搜索；一行一个目录，悬停露删除
+//! （先弹窗问）；搜索框右边「+」弹窗写目录（一行一个，能一次加好几个）、「↺」重置。改一下存一下，拒了的照核心的话写在框下面。总开关下面那一块
+//! 收起、展开（`fold`）设置页「访问」那一组也用。原来「隐私与安全」页的私密目录也画成这张表，随核心 PV-RM 去掉了。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { shownPath, corePath } from '../../src/lib/format.js';
 import { LAYER, expectFor } from './model.js';
 import { confirmIn } from './confirm.js';
-import { privateRows, dropChange, batchChange, canRestore, restoreChange, findRows, pairIn, inWorkspace } from './privacy-model.js';
+import { pathRows, dropChange, batchChange, canRestore, restoreChange, findRows } from './path-list-model.js';
 import { coreRow } from './rows.js';
 
-/** 这一组里有没有画成一张表的那一对（私密目录、只禁写） @param {any[]} items */
-export const hasPrivate = (items) => !!pairIn(items);
-
 /**
- * 私密目录那一组：组名照核心的组名，说明照 `add` 那一项的。搜着的字记在 `dialog.privateQuery`（设置页重画还是它）。
- * @param {any} dialog @param {string} name @param {any[]} items 这一组的项（只用那两项）
- */
-export function privateGroup(dialog, name, items) {
-  const pair = /** @type {NonNullable<ReturnType<typeof pairIn>>} */ (pairIn(items));
-  return pathList(dialog, {
-    name, words: pair.words,
-    add: items.find((i) => i.key === pair.add),
-    remove: items.find((i) => i.key === pair.remove),
-    // 总开关（私密目录有，核心 5-17）
-    toggle: pair.enabled ? items.find((i) => i.key === pair.enabled) ?? null : null,
-    // 这一组别的项（总开关、这一对以外的）照通用的行画在表上面
-    others: items.filter((i) => i.key !== pair.add && i.key !== pair.remove),
-  });
-}
-
-/**
- * 一张路径表（私密目录、只禁写、技能页「读取其他目录的 Skills」的目录表）：`others` 照通用的行画在表上面（总开关是其中一项，拨了表跟着收起、展开），
- * 下面能滚的框、顶上搜索。`remove` 是 `null` 的只有一张表（没有出厂项可去掉；技能目录表），表的默认值就是出厂的样子。
- * `name` 是组名（`null` 的不画组名），`restoreName` 是重置时问的那一句里的名字（没有的照组名）；`words` 是这张表自己的说法（`privacy.<words>.*`）。
+ * 一张路径表：`others` 照通用的行画在表上面（总开关是其中一项，拨了表跟着收起、展开），下面能滚的框、顶上搜索。表的默认值就是出厂的样子。
+ * `name` 是组名（`null` 的不画组名），`restoreName` 是重置时问的那一句里的名字（没有的照组名）；`words` 是这张表自己的说法（`path_list.<words>.*`）。
  * @param {any} dialog
- * @param {{name: string|null, restoreName?: string, words: string|null, add: any, remove: any, toggle: any, others: any[]}} opts
+ * @param {{name: string|null, restoreName?: string, words: string, item: any, toggle: any, others: any[]}} opts
  */
-export function pathList(dialog, { name, restoreName = name ?? '', words, add, remove, toggle, others: otherItems }) {
+export function pathList(dialog, { name, restoreName = name ?? '', words, item, toggle, others: otherItems }) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
-  // 这一组自己的说法（受保护的路径说「路径」），没有的照私密目录的
-  const w = (/** @type {string} */ k, /** @type {any} */ f) => t(words ? `privacy.${words}.${k}` : `privacy.${k}`, f);
+  const w = (/** @type {string} */ k, /** @type {any} */ f) => t(`path_list.${words}.${k}`, f);
   // 总开关：在表上面，照通用的行画；关着的表收起
   const off = toggle ? (toggle.entry?.value ?? toggle.default) === false : false;
   const others = otherItems.map((i) => {
@@ -49,11 +27,11 @@ export function pathList(dialog, { name, restoreName = name ?? '', words, add, r
     // 总开关一拨就收起、展开，不等存完（开关自己先滑完圆点再存，要两三百毫秒）
     if (row && i === toggle) row.addEventListener('click', (e) => {
       const sw = /** @type {Element} */ (e.target).closest('.set-switch');
-      if (sw && !(/** @type {HTMLButtonElement} */ (sw)).disabled && body.isConnected) queueMicrotask(() => fold.go(dialog, add.key, !sw.classList.contains('is-on'), body));
+      if (sw && !(/** @type {HTMLButtonElement} */ (sw)).disabled && body.isConnected) queueMicrotask(() => fold.go(dialog, item.key, !sw.classList.contains('is-on'), body));
     });
     return row;
   }).filter(Boolean);
-  const queryKey = `privateQuery:${add.key}`;
+  const queryKey = `pathQuery:${item.key}`;
   const home = dialog.ctx.host?.home ?? null;
   // 核心在 Windows 上的：路径照 Windows 的写法给人看（家目录写真的路径），写的换回核心认的（家目录下的写成 `~/…`）
   const platform = dialog.ctx.host?.platform ?? null;
@@ -69,29 +47,22 @@ export function pathList(dialog, { name, restoreName = name ?? '', words, add, r
    */
   const store = async (changes, quiet = false) => {
     if (!changes.length) return null;
-    const layer = LAYER;
-    const why = await dialog.saveMany(layer, changes.map((c) => {
-      const item = c.key === add.key ? add : remove;
-      return { ...c, expect: expectFor(item.entry, layer) };
-    }));
+    const why = await dialog.saveMany(LAYER, changes.map((c) => ({ ...c, expect: expectFor(item.entry, LAYER) })));
     if (!quiet) say(why);
     return why ?? null;
   };
-  const all = privateRows(add, remove);
+  const all = pathRows(item);
   const list = h('div.pv-list');
   const drawList = () => {
     const rows = findRows(all, corePath(dialog[queryKey] ?? '', home, platform));
-    replace(list, rows.length ? rows.map((row) => h('div.pv-row',
-      h('code.pv-path', { title: show(row.path) }, show(row.path)),
-      // 相对路径（只禁写的 `.git/hooks` 这类）：每个工作区里的那一处
-      inWorkspace(row.path) ? h('span.pv-tag', t('privacy.in_workspace')) : null,
-      row.shipped ? h('span.pv-tag', t('privacy.shipped')) : null,
+    replace(list, rows.length ? rows.map((path) => h('div.pv-row',
+      h('code.pv-path', { title: show(path) }, show(path)),
       h('button.icon-button.pv-drop', {
-        type: 'button', title: t('privacy.drop'), 'aria-label': t('privacy.drop'),
+        type: 'button', title: t('path_list.drop'), 'aria-label': t('path_list.drop'),
         // 先弹窗问（2026-10-21 项目主人）
         onclick: async (/** @type {Event} */ e) => {
-          if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: w('drop_ask'), yes: t('privacy.drop_yes'), no: t('privacy.cancel') }))) return;
-          store([dropChange(row, add, remove)]);
+          if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: w('drop_ask'), yes: t('path_list.drop_yes'), no: t('path_list.cancel') }))) return;
+          store([dropChange(path, item)]);
         },
       }, icon('x')))) : h('p.set-empty.pv-empty', w(all.length ? 'no_match' : 'empty')));
   };
@@ -103,27 +74,27 @@ export function pathList(dialog, { name, restoreName = name ?? '', words, add, r
   drawList();
   // 搜索框右边两个图标按钮：「+」点了弹一个写路径的小框，「↺」重置（2026-10-22 项目主人：去掉表下面写路径的框）；一直都在，跟出厂一样的「重置」灰着
   const plus = /** @type {HTMLButtonElement} */ (h('button.icon-button.pv-tool', {
-    type: 'button', title: t('privacy.add'), 'aria-label': t('privacy.add'),
+    type: 'button', title: t('path_list.add'), 'aria-label': t('path_list.add'),
     onclick: () => openAdd(dialog, w('add_title'), platform === 'windows' ? w('add_hint_windows', { home: (home ?? 'C:\\Users\\you').replace(/[\\/]+$/, '') }) : w('add_hint'), async (text) => {
-      const got = batchChange(text.split('\n').map((line) => corePath(line.trim(), home, platform)).join('\n'), add, remove);
-      if (!got.changes.length) return got.skipped.length ? t('privacy.already', { paths: got.skipped.map(show).join('、') }) : '';
+      const got = batchChange(text.split('\n').map((line) => corePath(line.trim(), home, platform)).join('\n'), item);
+      if (!got.changes.length) return got.skipped.length ? t('path_list.already', { paths: got.skipped.map(show).join('、') }) : '';
       const why = await store(got.changes, true);
       if (why) return why;
       // 加了别的、跳过了已经在的：也说一句
-      if (got.skipped.length) dialog.toast(t('privacy.already', { paths: got.skipped.map(show).join('、') }));
+      if (got.skipped.length) dialog.toast(t('path_list.already', { paths: got.skipped.map(show).join('、') }));
       return null;
     }),
   }, icon('plus')));
   const restore = h('button.icon-button.pv-tool', {
-    type: 'button', title: t('privacy.restore'), 'aria-label': t('privacy.restore'), disabled: !canRestore(add, remove),
-    // 先弹窗问（2026-10-21 项目主人）：「确认重置私密目录列表至出厂状态吗？」，名字照组名
+    type: 'button', title: t('path_list.restore'), 'aria-label': t('path_list.restore'), disabled: !canRestore(item),
+    // 先弹窗问（2026-10-21 项目主人），名字照组名
     onclick: async (/** @type {Event} */ e) => {
-      if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('privacy.restore_ask', { name: restoreName }), yes: t('privacy.restore'), no: t('privacy.cancel') }))) return;
-      store(restoreChange(add, remove));
+      if (!(await confirmIn(/** @type {Element} */ (e.currentTarget), { text: t('path_list.restore_ask', { name: restoreName }), yes: t('path_list.restore'), no: t('path_list.cancel') }))) return;
+      store(restoreChange(item));
     },
   }, icon('rotate-ccw'));
-  const body = fold(dialog, add.key, off,
-    add.description ? h('p.set-desc.pv-desc', add.description) : null,
+  const body = fold(dialog, item.key, off,
+    item.description ? h('p.set-desc.pv-desc', item.description) : null,
     h('div.pv-box', h('div.pv-find', icon('search'), find, plus, restore), list),
     error);
   return h('section.set-group',
@@ -157,7 +128,7 @@ function openAdd(dialog, title, hint, submit) {
     h('div.set-tool-pop-head', h('strong', title),
       h('button.icon-button', { type: 'button', title: t('close'), 'aria-label': t('close'), onclick: () => close() }, icon('x'))),
     input, error,
-    h('div.set-tool-pop-foot', h('button.set-btn', { type: 'button', onclick: () => close() }, t('privacy.cancel')), h('button.set-btn.is-primary', { type: 'button', onclick: go }, t('privacy.add'))));
+    h('div.set-tool-pop-foot', h('button.set-btn', { type: 'button', onclick: () => close() }, t('path_list.cancel')), h('button.set-btn.is-primary', { type: 'button', onclick: go }, t('path_list.add'))));
   const modal = h('div.set-tool-modal.pv-add-modal', { 'data-set-dismiss': '1', onclick: (/** @type {Event} */ e) => { if (e.target === e.currentTarget) close(); } }, pop);
   modal.addEventListener('set-dismiss', close);
   dialog.panel.append(modal);

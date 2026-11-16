@@ -6,7 +6,6 @@ import { h, icon, replace } from '../../src/lib/dom.js';
 import { BackHistory } from './back-history.js';
 import { drawMarket, marketPush } from './market.js';
 import { accessGroup, avatarGroup, relisten, LISTEN_KEYS } from './account.js';
-import { hasPrivate, privateGroup } from './privacy.js';
 import { leave } from '../../src/lib/motion.js';
 import { keepTypingVisible } from '../../src/lib/touch.js';
 import { buildPages, search, pagesWithErrors, LAYER, expectFor, navGroups, pkgMatch, ownerOf, headless, needsRestart } from './model.js';
@@ -424,10 +423,7 @@ export class SettingsDialog {
         this.current === 'general' ? drawLook(this) : null,
         // 用户身份页最上面是头像（第 12d 条，2026-10-30 随「访问」并进通用挪过来）
         this.current === 'user' ? avatarGroup(this) : null,
-        ...page.groups.flatMap((g) => (hasPrivate(g.items)
-          // 私密目录（隐私与安全页，核心 5-15 下）：两项并成一张表；这一组别的项照通用的行
-          ? privateGroup(this, g.name, g.items)
-          : this.extensions.entries.has(g.id)
+        ...page.groups.flatMap((g) => (this.extensions.entries.has(g.id)
           ? h('section.set-group', h('h3.set-group-name', g.name), g.description ? h('p.set-group-desc', g.description) : null, this.extensions.body(g.id, g.items.map((item) => coreRow(this, item)).filter(Boolean)))
           : groupBlock(g.name, g.items.map((item) => coreRow(this, item)), g.description))),
         // 「访问」一组（第 12c 条，2026-10-30 项目主人：原来单独一页，放进通用）：核心没有「用户身份」页的头像也放这里

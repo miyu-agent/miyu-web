@@ -61,19 +61,15 @@
       "notes_add": "添加补充",
       "decision": {
         "once": "允许本次",
-        "session": "此目录不再询问",
         "deny": "不允许"
       },
       "reason_hint": "理由（可选）",
       "edit_hint": "输入内容，Enter 保存",
       "access": {
-        "write": "写入 {count} 个文件",
-        "read": "读取 {count} 个文件",
         "exec": "运行 {tool}",
         "install": "安装或卸载软件包"
       },
       "access_other": "使用 {tool}",
-      "outside": "工作区外",
       "exec_untitled": "运行命令",
       "hazard": "高危命令",
       "guard_title": "{guard} 请你确认：{tool}",
@@ -154,11 +150,7 @@
           "preset": "预设 {name}",
           "settings": "{count} 项设置"
         }
-      },
-      "private": "私密目录",
-      "private_tip": "别的程序存钥匙、登录信息的目录",
-      "read_only": "受保护",
-      "read_only_tip": "受保护的路径：读照常，改之前要先问"
+      }
     },
     "en": {
       "asking": "{who} is asking",
@@ -169,19 +161,15 @@
       "notes_add": "Add notes",
       "decision": {
         "once": "Allow once",
-        "session": "Don’t ask again for this folder",
         "deny": "Don't allow"
       },
       "reason_hint": "Reason (optional)",
       "edit_hint": "Type, Enter to save",
       "access": {
-        "write": "Write {count} file(s)",
-        "read": "Read {count} file(s)",
         "exec": "Run {tool}",
         "install": "Install or remove a package"
       },
       "access_other": "Use {tool}",
-      "outside": "Outside workspace",
       "exec_untitled": "Run command",
       "hazard": "Dangerous command",
       "guard_title": "{guard} asks you to confirm: {tool}",
@@ -262,11 +250,7 @@
           "preset": "preset {name}",
           "settings": "{count} settings"
         }
-      },
-      "private": "Private folder",
-      "private_tip": "Where other programs keep keys and logins",
-      "read_only": "Protected",
-      "read_only_tip": "Protected path: reading is fine, changes are asked about first"
+      }
     },
     "ja": {
       "asking": "{who} が質問しています",
@@ -277,19 +261,15 @@
       "notes_add": "補足を書く",
       "decision": {
         "once": "今回だけ許可",
-        "session": "このフォルダでは確認しない",
         "deny": "許可しない"
       },
       "reason_hint": "理由を書く（なくてもよい）",
       "edit_hint": "入力して Enter で保存",
       "access": {
-        "write": "{count} 個のファイルに書き込みます",
-        "read": "{count} 個のファイルを読みます",
         "exec": "{tool} を実行します",
         "install": "パッケージのインストールまたは削除"
       },
       "access_other": "{tool} を使います",
-      "outside": "ワークスペース外",
       "exec_untitled": "コマンドを実行します",
       "hazard": "危険なコマンド",
       "guard_title": "{guard} が確認を求めています：{tool}",
@@ -370,11 +350,7 @@
           "preset": "プリセット {name}",
           "settings": "設定 {count} 項目"
         }
-      },
-      "private": "プライベートフォルダ",
-      "private_tip": "ほかのプログラムが鍵やログイン情報を保存する場所",
-      "read_only": "保護",
-      "read_only_tip": "保護するパス：読むのは自由、変更する前に確認します"
+      }
     }
   }
 }

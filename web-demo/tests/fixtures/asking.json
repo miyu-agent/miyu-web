@@ -141,22 +141,13 @@
     {
       "body": {
         "call_id": "demo_approve_1",
-        "access": "write",
-        "rule": {
-          "tool": "write",
-          "write": [
-            "/home/alice"
-          ]
-        },
+        "access": "execute",
         "detail": {
-          "paths": [
-            {
-              "path": "/home/alice/.editorconfig",
-              "write": true,
-              "zone": "outside"
-            }
-          ],
-          "tool": "write"
+          "command": "git clean -f",
+          "hazard": "git_clean",
+          "sandbox": false,
+          "title": "清掉没跟踪的文件",
+          "tool": "shell"
         }
       }
     },

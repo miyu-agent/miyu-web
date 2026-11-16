@@ -6,7 +6,7 @@ import {
   skillItem, scriptItem, mcpItems, switchValue, featureId, inSource, sourceOf, toolMatch, homeDir, shortTool,
   serverParams, formOf, envShown, editable, commandLine, splitCommand, joinCommand, flip, range, externalItems, EXTERNAL_ON, EXTERNAL_DIRS,
 } from '../../packages/settings/tool-model.js';
-import { privateRows, dropChange, batchChange, canRestore, restoreChange } from '../../packages/settings/privacy-model.js';
+import { pathRows, dropChange, batchChange, canRestore, restoreChange } from '../../packages/settings/path-list-model.js';
 import { pkgKinds, carriedBy, PKG_FILTERS } from '../../packages/settings/model.js';
 
 const PACKAGES = [
@@ -241,14 +241,14 @@ test('「读取其他目录的 Skills」两项照 config.schema 找、带上值�
   assert.equal(externalItems(null, null), null);
 });
 
-test('技能目录表只有一张（没有去掉出厂项那一项）：默认值就是表，加、删整张交，系统配置里写过的才能重置', () => {
+test('技能目录表：默认值就是表，加、删整张交，系统配置里写过的才能重置', () => {
   const fresh = { key: EXTERNAL_DIRS, default: ['~/.agents/skills'], entry: null };
-  assert.deepEqual(privateRows(fresh, null), [{ path: '~/.agents/skills', shipped: false }]);
-  assert.equal(canRestore(fresh, null), false);
-  assert.deepEqual(batchChange('~/.agents/skills\n/srv/skills\n', fresh, null), { changes: [{ key: EXTERNAL_DIRS, value: ['~/.agents/skills', '/srv/skills'] }], skipped: ['~/.agents/skills'] });
-  assert.deepEqual(dropChange({ path: '~/.agents/skills', shipped: false }, fresh, null), { key: EXTERNAL_DIRS, value: [] });
+  assert.deepEqual(pathRows(fresh), ['~/.agents/skills']);
+  assert.equal(canRestore(fresh), false);
+  assert.deepEqual(batchChange('~/.agents/skills\n/srv/skills\n', fresh), { changes: [{ key: EXTERNAL_DIRS, value: ['~/.agents/skills', '/srv/skills'] }], skipped: ['~/.agents/skills'] });
+  assert.deepEqual(dropChange('~/.agents/skills', fresh), { key: EXTERNAL_DIRS, value: [] });
   const written = { key: EXTERNAL_DIRS, default: ['~/.agents/skills'], entry: { value: [], layers: [{ value: [], origin: { layer: 'system' } }] } };
-  assert.deepEqual(privateRows(written, null), []);
-  assert.equal(canRestore(written, null), true);
-  assert.deepEqual(restoreChange(written, null), [{ key: EXTERNAL_DIRS, unset: true }]);
+  assert.deepEqual(pathRows(written), []);
+  assert.equal(canRestore(written), true);
+  assert.deepEqual(restoreChange(written), [{ key: EXTERNAL_DIRS, unset: true }]);
 });

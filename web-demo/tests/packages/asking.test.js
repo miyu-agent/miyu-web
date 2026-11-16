@@ -63,12 +63,11 @@ test('n 补一句话：带在这一道的回答里（notes），不跳题', () =
   assert.deepEqual(press(saved.d, 'enter').done, { kind: 'ask', answers: [{ picked: ['删掉'], notes: '缓存留着' }] });
 });
 
-test('确认：提了放行规则的三项（工作区那一项核心还不收），没提的两项；允许交 decision；不允许按一下 Enter 就交，理由照光标在它上面时写的（2026-10-07）', () => {
+test('确认：只有允许本次、不允许两项（核心 PV-RM 起不带放行规则）；允许交 decision；不允许按一下 Enter 就交，理由照光标在它上面时写的（2026-10-07）', () => {
   const full = openApproval(approval('demo_approve_1'));
-  assert.deepEqual(full.questions[0].options.map((o) => o.decision), ['once', 'session', 'deny']);
-  assert.deepEqual(keys(full, 'down', 'enter').done, { kind: 'approve', decision: 'session' });
+  assert.deepEqual(full.questions[0].options.map((o) => o.decision), ['once', 'deny']);
+  assert.deepEqual(keys(full, 'enter').done, { kind: 'approve', decision: 'once' });
   const bare = openApproval(approval('demo_approve_2'));
-  assert.deepEqual(bare.questions[0].options.map((o) => o.decision), ['once', 'deny']);
   assert.deepEqual(keys(bare, 'down', 'enter').done, { kind: 'approve', decision: 'deny' }, '不用再按一次 Enter');
   assert.deepEqual(keys(bare, '2').done, { kind: 'approve', decision: 'deny' }, '数字键也一样');
   const onDeny = keys(bare, 'down').d;
@@ -77,16 +76,12 @@ test('确认：提了放行规则的三项（工作区那一项核心还不收�
   assert.deepEqual(saveEdit(withReason(onDeny, '别清'), '别清了').done, { kind: 'approve', decision: 'deny', reason: '别清了' }, '理由框里按 Enter');
 });
 
-test('确认的问题行：写几个文件、家目录写 ~、工作区外和私密目录的标出来；运行的写命令', () => {
+test('确认的问题行：运行的写短标题和命令，高危的标出来；别的照 access 写；不再列碰到的路径（核心 PV-RM 起 detail 没有 paths）', () => {
   // 照 ctx.text：有的键写成「键+字段」，没有的交回键本身
-  const has = new Set(['access.write', 'access.read', 'access.exec', 'access_other']);
+  const has = new Set(['access.exec', 'access_other']);
   const text = (key, fields) => (has.has(key) ? `${key}${JSON.stringify(fields)}` : key);
   const head = approvalHead(approval('demo_approve_1').body, '/home/alice', text);
-  assert.equal(head.title, 'access.write{"count":1,"tool":"write"}');
-  assert.deepEqual(head.paths, [{ path: '~/.editorconfig', zone: 'outside' }]);
-  // 别的程序的私密目录（核心 5-13 的 `private`）也标出来；只能读的（`read_only`）、没写的不标
-  const priv = approvalHead({ call_id: 'p', access: 'read', detail: { tool: 'read', paths: [{ path: '/home/alice/.ssh/id_ed25519', write: false, zone: 'private' }, { path: '/etc/hosts', zone: 'read_only' }, { path: '/w/a' }] } }, '/home/alice', text);
-  assert.deepEqual(priv.paths, [{ path: '~/.ssh/id_ed25519', zone: 'private' }, { path: '/etc/hosts', zone: 'read_only' }, { path: '/w/a', zone: null }]);
+  assert.deepEqual([head.title, head.command, head.hazard, 'paths' in head], ['清掉没跟踪的文件', 'git clean -f', true, false]);
   // 跑命令的（D-4）：问题行是短标题，带命令原文；没有短标题的写「要运行一条命令」；老的只有 `tool` 的照原来
   const exec = approvalHead(approval('demo_approve_2').body, null, text);
   assert.deepEqual([exec.title, exec.command, 'outsideSandbox' in exec], ['清掉另一个仓库的编译产物', 'cargo clean --manifest-path ~/src/other/Cargo.toml', false], 'LV-3 起不再标沙盒外');
@@ -95,11 +90,11 @@ test('确认的问题行：写几个文件、家目录写 ~、工作区外和私
   // 高危命令（核心 5-17）：带 `hazard` 的标出来，没有的不标
   assert.equal(approvalHead({ call_id: 'h', access: 'execute', detail: { command: 'git push --force', hazard: 'git_force_push', tool: 'shell' } }, null, text).hazard, true);
   assert.equal(bare.hazard, false);
-  assert.equal(approvalHead({ call_id: 'x', access: 'execute', detail: { tool: 'shell' } }, null, text).title, 'access.exec{"count":0,"tool":"shell"}');
-  assert.equal(approvalHead({ call_id: 'x', access: 'network', detail: { tool: 'web_fetch' } }, null, text).title, 'access_other{"count":0,"tool":"web_fetch"}');
+  assert.equal(approvalHead({ call_id: 'x', access: 'execute', detail: { tool: 'shell' } }, null, text).title, 'access.exec{"tool":"shell"}');
+  assert.equal(approvalHead({ call_id: 'x', access: 'network', detail: { tool: 'web_fetch' } }, null, text).title, 'access_other{"tool":"web_fetch"}');
 });
 
-test('扩展的守卫要问人（核心 HK-1）：问题行写是哪个包、哪件工具，下面原样写它的话；没有 rule 只有允许这一次、不允许', () => {
+test('扩展的守卫要问人（核心 HK-1）：问题行写是哪个包、哪件工具，下面原样写它的话；只有允许这一次、不允许', () => {
   const text = (key, fields) => `${key}${fields ? JSON.stringify(fields) : ''}`;
   const body = { call_id: 'g', access: 'execute', detail: { guard: 'company-policy', tool: 'shell', reason: '  这条命令会删生产库的表\n请先找 DBA 确认  ' } };
   const head = approvalHead(body, null, text);
@@ -129,7 +124,7 @@ test('了结以后留下的：提问一道一块、记下是谁问的，多选�
 test('还没了结的：会话状态的 waiting 照先后开；提问照那一步的参数、确认照那一步的 approval；条目里找不到、参数读不懂的跳过', () => {
   const questions = [{ header: 'build', question: '删掉还是保留？', options: [{ label: '删掉' }, { label: '保留' }] }];
   const entries = [
-    { id: 'b65.0', kind: 'tool', name: 'write', call: 'c0', state: 'running', args: '{"file_path":"a"}', approval: { access: 'write', rule: { tool: 'write' } } },
+    { id: 'b65.0', kind: 'tool', name: 'write', call: 'c0', state: 'running', args: '{"file_path":"a"}', approval: { access: 'write' } },
     { id: 'b76.0', kind: 'tool', name: 'ask_user', call: 'c1', state: 'running', args: JSON.stringify({ questions }) },
     { id: 'b77.0', kind: 'tool', name: 'ask_user', call: 'c2', state: 'running', args: '{"quest' },
   ];
@@ -140,9 +135,7 @@ test('还没了结的：会话状态的 waiting 照先后开；提问照那一�
   assert.equal(pendingFromStatus(waiting(ask), entries)[0].questions[0].question, '删掉还是保留？');
   assert.deepEqual(pendingFromStatus(waiting({ what: 'ask', entry: 'nope', call: 'c9' }, { what: 'ask', entry: 'b77.0', call: 'c2' }), entries), [], '找不到的、读不懂的');
   assert.deepEqual(pendingFromStatus({ state: 'idle' }, entries), []);
-  assert.deepEqual(pendingFromStatus(waiting(approve), entries).at(0)?.questions[0].options.map((o) => o.decision), ['once', 'session', 'deny'], '工作区那一项核心还不收');
-  const bare = [{ ...entries[0], approval: { access: 'write' } }];
-  assert.deepEqual(pendingFromStatus(waiting(approve), bare).at(0)?.questions[0].options.map((o) => o.decision), ['once', 'deny'], '没提规则的两项');
+  assert.deepEqual(pendingFromStatus(waiting(approve), entries).at(0)?.questions[0].options.map((o) => o.decision), ['once', 'deny']);
 });
 
 test('脚本里调的确认（核心 M-7 上；BS-1中上 起装包在命令里跑 miyu pkg）：答的时候带 nested、call 是那次 shell 的；同一次 shell 先后问的两件认成两问；装包卡片照旧认得出', () => {
@@ -167,7 +160,7 @@ test('留下的照了结的那一条和问的那一条算：答了的卡片（�
   const asked = { seq: 79, kind: 'question.asked', body: { call_id: 'c1', questions: [{ header: 'build', question: '删掉还是保留？', options: [{ label: '删掉' }, { label: '保留' }] }] } };
   const answered = reportOf({ seq: 80, kind: 'question.answered', body: { call_id: 'c1', answers: [{ picked: ['保留'], notes: '下次再说' }] } }, asked);
   assert.deepEqual([answered?.type, answered?.rows], ['answered', [{ label: 'build', answer: { text: '保留', notes: '下次再说' } }]]);
-  const req = { seq: 81, kind: 'tool.approval_requested', body: { call_id: 'a', access: 'write', rule: {} } };
+  const req = { seq: 81, kind: 'tool.approval_requested', body: { call_id: 'a', access: 'write' } };
   const denied = reportOf({ seq: 82, kind: 'tool.approval_decided', body: { call_id: 'a', decision: 'deny', reason: '别覆盖' } }, req);
   assert.equal(denied, null);
   assert.equal(reportOf({ seq: 85, kind: 'tool.approval_decided', body: { call_id: 'a', decision: 'once' } }, req), null, '允许了的不留');

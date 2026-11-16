@@ -88,7 +88,7 @@ export function tilde(path, home) {
 }
 
 /**
- * 核心配置里写的路径照核心那台机器的写法给人看（蓝图 `web.md`「设置页」私密目录、受保护的路径）：Windows 上家目录写成真的路径、
+ * 核心配置里写的路径照核心那台机器的写法给人看（蓝图 `web.md`「设置页」技能目录表）：Windows 上家目录写成真的路径、
  * 分隔用 `\`（`~/AppData/Local` 写成 `C:\Users\me\AppData\Local`；2026-10-31 项目主人：写 `%USERPROFILE%` 天知道是哪个目录），
  * 不知道家目录的留着 `~`；别的系统同 [`tilde`]。
  * @param {string} path @param {string|null} home @param {string|null} platform 核心握手的 `host.platform`

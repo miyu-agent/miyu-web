@@ -265,7 +265,6 @@ export class Drawer {
         this.timerEl = d.kind === 'approve' && countdown(d.body?.expires_at, Date.now()) != null ? h('span.asking-timer') : null),
       head?.guard ? h('div.asking-guard', head.guard) : null,
       head?.command != null ? h('div.asking-paths', h('div.asking-path', h('span.asking-command', head.command.split('\n').map((l) => `$ ${l}`).join('\n')))) : null,
-      head?.paths.length ? h('div.asking-paths', head.paths.map((p) => h('div.asking-path', h('span', p.path), p.zone ? h('span.asking-outside', { title: p.zone === 'private' ? t('private_tip') : p.zone === 'read_only' ? t('read_only_tip') : null }, t(p.zone)) : null))) : null,
       head?.plan ? this.planRows(head.plan) : null,
       h(`div.asking-main${previews ? '.has-preview' : ''}`, h('div.asking-options', options), previews),
       d.kind === 'ask' ? this.notesRow() : null,

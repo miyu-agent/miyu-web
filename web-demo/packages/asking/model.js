@@ -19,9 +19,8 @@ import { packagePlan } from './package-plan.js';
  * @typedef {{d: Drawer, done: Result|null, edit: 'other'|'note'|'reason'|null}} Step 按一下以后：新的抽屉、交出去的、要进编辑的
  */
 
-/** 放行的几种决定，照先后；请求没提规则的只给头尾两种（核心会拒 `no_rule`）。`workspace` 核心还不收（D-1 回 `bad_params`），收了再加。 */
-const DECISIONS = ['once', 'session', 'deny'];
-const NEEDS_RULE = new Set(['session']);
+/** 放行的几种决定，照先后。核心 PV-RM 起确认都不带放行规则，「此目录不再询问」（`session`）随私密目录去掉了。 */
+const DECISIONS = ['once', 'deny'];
 
 /** @param {'ask'|'approve'} kind @param {{who?: string, body: any}} item @param {Question[]} questions @returns {Drawer} */
 function make(kind, item, questions) {
@@ -40,10 +39,10 @@ export function openAsk(item) {
 
 /**
  * 一次确认（`tool.approval_requested` 的 `body`）：一道题，选项是几种决定，标题由画的一方照 `decision` 写。
- * @param {{who?: string, body: {call_id: string, access: string, rule?: any, detail?: any}}} item
+ * @param {{who?: string, body: {call_id: string, access: string, detail?: any}}} item
  */
 export function openApproval(item) {
-  const options = DECISIONS.filter((x) => item.body.rule || !NEEDS_RULE.has(x)).map((decision) => ({ label: decision, decision }));
+  const options = DECISIONS.map((decision) => ({ label: decision, decision }));
   return make('approve', item, [{ question: '', options }]);
 }
 
@@ -191,7 +190,7 @@ export function answerOf(d, i) {
 }
 
 /**
- * 确认的问题行：`要写 1 个文件` 这类（`access.<种类>`，没有的 `access_other`），下面的路径（家目录写 `~`，工作区外的标出来）。
+ * 确认的问题行：`运行 shell` 这类（`access.<种类>`，没有的 `access_other`）。
  * 跑命令的（核心 D-4 起 `detail` 是 `{command, title, tool}`；沙盒没了以后不再有 `sandbox` 那一格，核心 LV-2）：问题行是她写的短标题，
  * 没有的写「要运行一条命令」；下面是命令原文。装、卸软件包的（核心 F-10 下上，`access: install`，`detail.preview`）：问题行是「安装软件包 notes 0.2.0」，
  * 下面是包文件夹和「包含」「无法加载」这几行（`package-plan.js`）。扩展的守卫要问人的（核心 HK-1，`detail.guard`）：问题行是「notes 请你确认：shell」，
@@ -201,14 +200,13 @@ export function answerOf(d, i) {
  * @param {(key: string, fields?: Record<string, any>) => string} text 照键取字（`ctx.text`：没有这个键的交回键本身）
  */
 export function approvalHead(body, home, text) {
-  const paths = body.detail?.paths ?? [];
   const access = body.access === 'execute' ? 'exec' : body.access;
-  const fields = { count: paths.length, tool: body.detail?.tool ?? access };
+  const fields = { tool: body.detail?.tool ?? access };
   const key = `access.${access}`;
   const known = text(key, fields);
   const exec = access === 'exec' && typeof body.detail?.command === 'string';
   const plan = packagePlan(body.detail, home, text);
-  // 扩展的守卫要问人的（核心 HK-1：`detail` 是 `{guard, tool, reason?}`，没有 `rule`，只能允许这一次或者不允许）：问题行写是哪个包要你确认、
+  // 扩展的守卫要问人的（核心 HK-1：`detail` 是 `{guard, tool, reason?}`，只能允许这一次或者不允许）：问题行写是哪个包要你确认、
   // 哪件工具，下面原样写它的话
   const guard = typeof body.detail?.guard === 'string' ? body.detail.guard : null;
   const said = guard && typeof body.detail?.reason === 'string' ? body.detail.reason.trim() : '';
@@ -219,8 +217,6 @@ export function approvalHead(body, home, text) {
     command: exec ? body.detail?.command ?? null : null,
     // 被认出来的高危命令（核心 5-17：`detail.hazard` 是种类，`git_force_push` 这些）：标一个「高危命令」（2026-10-20 项目主人定的字，终端一样）
     hazard: typeof body.detail?.hazard === 'string' && body.detail.hazard !== '',
-    // `zone`：`outside` 工作区外，`private` 别的程序的私密目录（`~/.ssh` 这类，核心 5-13），`read_only` 受保护的路径（核心 5-17 下上），各一个标记；别的不标
-    paths: paths.map((p) => ({ path: home && (p.path === home || p.path.startsWith(`${home}/`)) ? `~${p.path.slice(home.length)}` : p.path, zone: p.zone === 'outside' || p.zone === 'private' || p.zone === 'read_only' ? p.zone : null })),
   };
 }
 
