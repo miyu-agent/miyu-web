@@ -123,3 +123,19 @@ export function lifeSide(life, now, t) {
  * @param {{kind: string, name?: string, words?: string|null}} line `read` 认出来的那一行
  */
 export const emptyLife = (line) => line.kind === 'later' && line.name?.toLowerCase() === 'life' && !line.words;
+
+/**
+ * `/life new`、`/life kill` 发之前问不问、问什么（2026-11-17 项目主人本机验收第 25 条）：会结束一段人生的才问。
+ * - `new`：没人格的会话不问（核心回一句先选人格，什么都不动）；有人格的有在过的（在跑、暂停）才问「先结束现在这段」，没有的直接开。
+ * - `kill`：有人格的有在过的才问；没人格的会话照所有人格找（核心照办的规矩）：只有一个的问，写上是哪个人格的（`name`）；一个都没有、好几个的核心不动，不问。
+ * 不用问的交 `null`。
+ * @param {'new'|'kill'} which
+ * @param {{persona: string|null, status: 'none'|'running'|'paused'|'ended'|null, lives: Life[]}} now 这个会话的人格、它的 `life.status`、没人格时的 `life.list`
+ * @returns {{kind: 'new'|'kill', name: string|null}|null}
+ */
+export function lifeConfirm(which, now) {
+  const living = now.status === 'running' || now.status === 'paused';
+  if (now.persona) return living ? { kind: which, name: null } : null;
+  if (which === 'new') return null;
+  return now.lives.length === 1 ? { kind: 'kill', name: now.lives[0].name } : null;
+}

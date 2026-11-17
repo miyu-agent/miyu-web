@@ -18,8 +18,7 @@ import { itemsOf, seqOf } from '../model/entries.js';
 import { copy } from '../markdown/build.js';
 import { replyOf, latestReply } from '../model/reply.js';
 import { Refusal } from '../core/connection.js';
-import { lifeAsk } from '../lib/life.js';
-import { askFirst } from './ask.js';
+import { lifeAsked } from './life-ask.js';
 import { afterLife } from './life-jump.js';
 
 /** @typedef {import('../model/commands.js').Spec} Spec */
@@ -230,7 +229,7 @@ export async function runUnlisted(app, name, words, opens = false) {
       return 'keep';
     }
   }
-  if (!(await lifeAsked(name, words))) return 'keep';
+  if (!(await lifeAsked(app, name, words))) return 'keep';
   try {
     const got = await app.store.conn.request('command.run', { session: app.current, text: `/${name}${words ? ` ${words}` : ''}` });
     openPage(app, got);
@@ -276,17 +275,6 @@ function jumpTo(app, got) {
   if (typeof got?.session === 'string' && got.session && got.session !== app.current) app.open(got.session);
 }
 
-/**
- * `/life kill`、`/life new` 发之前问一句（2026-11-14 项目主人：网页确认；核心的命令打了就做）：会结束这段人生，这段人生记下的记忆清掉、恢复不了。
- * 别的命令、`/life` 别的几种直接过。交回能不能发。
- * @param {string} name @param {string|null} words
- */
-async function lifeAsked(name, words) {
-  const which = lifeAsk(name, words);
-  if (!which) return true;
-  return askFirst({ title: t(`life.${which}_title`), text: t(`life.${which}_text`), yes: t(`life.${which}_yes`), danger: true });
-}
-
 /** @type {Record<string, (app: App, spec: Spec, words: string|null) => unknown>} */
 const RUNS = {
   // 核心认的命令（`command.catalog` 列出来的，网页没有自己的做法）：原样交给核心（`command.run`），回执写进提示
@@ -295,7 +283,7 @@ const RUNS = {
       app.composer.say(t('commands.needs_session'));
       return;
     }
-    if (!(await lifeAsked(spec.name, words))) return;
+    if (!(await lifeAsked(app, spec.name, words))) return;
     // 要等一会儿的（`/dream` 要等模型，十几秒）：过了一小会儿还没回，提示「正在 …」一直留着，回了换成回执
     let waiting = false;
     const timer = setTimeout(() => { waiting = true; app.composer.say(t('commands.running', { name: `/${spec.name}` }), false, true); }, res.layout.command_wait_ms);
