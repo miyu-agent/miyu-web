@@ -472,6 +472,7 @@
     "session_speaker": "セッション {id} からのメッセージ",
     "schedule_speaker": "定期タスク {id}",
     "loop_speaker": "ループ",
+    "wake": {"loop": "ループ · 目覚め", "life": "人生 · 目覚め"},
     "peer": {
       "idle": "セッション {id} が返信しました",
       "idle_status": "セッション {id} の返信：{status}",

@@ -472,6 +472,7 @@
     "session_speaker": "从会话 {id} 收到消息",
     "schedule_speaker": "定时任务 {id}",
     "loop_speaker": "循环",
+    "wake": {"loop": "循环 · 醒来", "life": "人生 · 醒来"},
     "peer": {
       "idle": "会话 {id} 已回复",
       "idle_status": "会话 {id} 回复：{status}",

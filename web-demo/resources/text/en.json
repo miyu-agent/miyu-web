@@ -472,6 +472,7 @@
     "session_speaker": "Message from session {id}",
     "schedule_speaker": "Scheduled task {id}",
     "loop_speaker": "Loop",
+    "wake": {"loop": "Loop · woke up", "life": "Life · woke up"},
     "peer": {
       "idle": "Session {id} replied",
       "idle_status": "Session {id} replied: {status}",
