@@ -24,6 +24,7 @@ import { drawAdvanced } from './advanced.js';
 import { drawToolPage, hasToolPage } from './tool-pages.js';
 import { EXTERNAL_PREFIX } from './tool-model.js';
 import { foldCovered } from '../../src/lib/packages.js';
+import { savedWarnings } from './warned.js';
 
 /** 刚存成的那一项重画出来还画对勾的时限（毫秒） */
 const SAVED_MS = 1000;
@@ -73,6 +74,8 @@ export class SettingsDialog {
   async open(page, group = null) {
     /** 包在运行时给的选项（核心 SG-2 的 `choices_from`，`rows.js` 的 `fromPackage`）：每次打开设置重新问 */
     this.packageChoices = new Map();
+    /** 存成了、核心接了一句警告的几项（核心 CK-1，`warned.js`）：这一次开着设置时记着，那一行下面写 */
+    this.warned = new Map();
     this.isOpen = true;
     const cfg = this.ctx.config;
     this.search = h('input.set-search', { type: 'search', placeholder: this.ctx.text('search'), 'aria-label': this.ctx.text('search'), oninput: () => { this.query = this.search.value; this.drawBody(); } });
@@ -501,6 +504,8 @@ export class SettingsDialog {
     }
     // 记下刚存成的几项：重画出来的那几行照它画对勾（`rows.js`）
     this.saved = { keys: new Set(changes.map((c) => c.key)), at: performance.now() };
+    // 照收了、又说指着的人格、预设现在没有的（核心 CK-1）：记着，重画出来的那一行下面写
+    this.warned = savedWarnings(this.warned, changes, got);
     await this.reload();
     // 监听地址、端口：请网页软件当场换（第 12c 条第 1 款；这一组、「软件包」页都算）
     if (changes.some((c) => LISTEN_KEYS.includes(c.key))) void relisten(this, changes.map((c) => c.key));

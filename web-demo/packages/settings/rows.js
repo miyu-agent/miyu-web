@@ -127,7 +127,8 @@ export function coreRow(dialog, item, opts = {}) {
     description: opts.compact ? '' : item.description,
     // 名字下面什么时候生效、谁的默认、盖过了谁都不写（2026-10-24 项目主人）
     source: null,
-    problems: item.problems,
+    // 存的时候核心接的警告（核心 CK-1，`dialog.warned`）跟在配置本来的问题后面
+    problems: [...(item.problems ?? []), ...(dialog.warned?.get(item.key) ?? [])],
     control: made,
     reset: written && !opts.mark ? () => save({ unset: true }) : null,
     resetTitle: ctx.text('reset'),
