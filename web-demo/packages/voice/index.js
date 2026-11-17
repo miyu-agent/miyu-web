@@ -6,12 +6,13 @@
 //!   没听清（`clear` 是假）的不往框里放空字，说一句。
 //! - 朗读（`tts`）：她每一轮收尾那一行（复制、重做中间，挂载位 `turn.actions`）一个朗读按钮，一句一句 `tts.synthesize`、在浏览器里放，
 //!   第一句好了就放，再点一下停；念过的照这一轮记着，再听不再合成。右上角（`stage.tools`）一个自动朗读开关，只在这个标签页里生效：
-//!   开着时正在看的会话答完一轮就念。
+//!   开着时正在看的会话答完一轮就念这一轮（照轮号记，不念上一轮的）。末尾的参考链接、网址不念（`readable.js`）。
 //! 出错照 `data.code` 说一句人话（字表 `errors`），没有的照原话。
 
 import { h, icon } from '../../src/lib/dom.js';
 import { upload } from '../../src/lib/upload.js';
 import { ready, sentences, errorKey, micErrorKey, interrupted, playSentence, stopRun, chimeOn } from './model.js';
+import { readable } from './readable.js';
 import { chime } from './chime.js';
 import { Recorder } from './recorder.js';
 
@@ -170,7 +171,7 @@ export function apply(ctx) {
   });
 
   // ---- 朗读 ----
-  /** 念过的照这一轮记着：`会话:轮` → 一句一句的音频（地址、媒体类型）；再听不再合成 */
+  /** 念过的照这一轮记着：`会话:轮` → 一句一句的音频（地址、媒体类型）；再听不再合成。没有轮号的不记（老核心） */
   const cache = new Map();
   /** 正在念的：哪一轮、放着的那个 audio、停了没有 */
   let playing = /** @type {Run|null} */ (null);
@@ -211,13 +212,14 @@ export function apply(ctx) {
   const play = (run, url) => playSentence(run, () => new Audio(url), () => new Error(t('errors.play')));
   /**
    * 念一轮：一句一句合成，第一句好了就放，后面的边放边合成下一句（同一时间只多合成一句）。
-   * @param {string} session @param {number|undefined} turn @param {string} text
+   * 记音频照这一轮的轮号（W-1205：原来自动朗读都记在 `会话:last` 下，下一轮照这个键拿到上一轮合成好的，从头念起上一轮的）。
+   * @param {string} session @param {number|null} turn @param {string} text
    */
   const speak = async (session, turn, text) => {
-    const key = `${session}:${turn ?? 'last'}`;
+    const key = `${session}:${turn ?? 'unnumbered'}`;
     if (playing?.key === key) return hush();
     hush();
-    const parts = sentences(text);
+    const parts = sentences(readable(text));
     if (!parts.length) return;
     /** @type {Run} */
     const run = { key, audio: null, audios: [], stopped: false, cancel: null };
@@ -225,8 +227,8 @@ export function apply(ctx) {
     paintSpeak();
     const persona = ctx.chat.persona?.(session) ?? null;
     /** @type {Promise<{url: string, type: string}>[]} */
-    const got = cache.get(key) ?? [];
-    cache.set(key, got);
+    const got = (turn == null ? null : cache.get(key)) ?? [];
+    if (turn != null) cache.set(key, got);
     const at = (/** @type {number} */ i) => (got[i] ??= synth(parts[i], persona).catch((err) => { delete got[i]; throw err; }));
     try {
       for (let i = 0; i < parts.length && !run.stopped; i++) {
@@ -266,6 +268,8 @@ export function apply(ctx) {
   // ---- 自动朗读：只在这个标签页 ----
   // 记在这一页里：只在这个标签页生效，刷新、换个标签页都是关的
   let autoread = false;
+  /** 自动念过的（`会话:最后那一段的条目编号`） */
+  const autoSpoken = new Set();
   const autoOn = () => autoread;
   const auto = h('button.icon-button.voice-auto', { type: 'button', title: t('auto'), 'aria-label': t('auto'), onclick: () => {
     autoread = !autoread;
@@ -274,8 +278,13 @@ export function apply(ctx) {
   } }, icon('audio-lines'));
   ctx.effect(() => ctx.sessions.onAttention((/** @type {string} */ id, /** @type {string} */ what) => {
     if (what !== 'done' || !autoOn() || id !== ctx.chat.current?.()) return;
-    const text = ctx.chat.turnText();
-    if (text) speak(id, undefined, text);
+    // 最新那一轮（这一轮没开口的不念，不退回去念上一轮）；同一轮答完又报一次的不再从头念
+    const got = ctx.chat.latestReply?.();
+    if (!got?.text) return;
+    const key = `${id}:${got.last}`;
+    if (autoSpoken.has(key)) return;
+    autoSpoken.add(key);
+    speak(id, got.turn, got.text);
   }));
 
   // ---- 照总线画入口：有了挂上，没了拿掉 ----

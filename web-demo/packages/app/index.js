@@ -4,7 +4,7 @@
 
 import { App } from '../../src/ui/app.js';
 import { NestedList } from '../../src/ui/nested.js';
-import { withdrawQueued, turnText } from '../../src/ui/commands.js';
+import { withdrawQueued, turnText, latestTurnReply } from '../../src/ui/commands.js';
 import { useConnection as linkCardsUse } from '../../src/ui/linkcards.js';
 import { codeBlock, copy } from '../../src/markdown/build.js';
 import { drawMarkdown, useRenderers } from '../../src/ui/render.js';
@@ -99,6 +99,8 @@ export function apply(ctx) {
     place: (where, node) => app.chat.place(where, node),
     /** 她一轮说的全部正文（原文，段与段之间空一行）；`turn` 不写的是最后说完的那一轮（朗读，软件包 `voice`，W-1128） */
     turnText: (/** @type {number|undefined} */ turn) => turnText(app, turn),
+    /** 最新那一轮回答的正文和轮号 `{turn, text, last}`；最新的一轮没开口的是 `null`（自动朗读，W-1205：不退回去念上一轮） */
+    latestReply: () => latestTurnReply(app),
     /** 正在看的会话在哪个目录干活；账号的工作区（握手回应的 `host.workspace`，新会话默认在这里） */
     workdir: () => app.workdir(),
     defaultWorkdir: () => app.cwd,

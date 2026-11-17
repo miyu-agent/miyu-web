@@ -16,6 +16,7 @@ import { Menu, keptAttachments, talkAfterRefusal, quietReceipt, refusalText, con
 import { short } from '../model/format.js';
 import { itemsOf, seqOf } from '../model/entries.js';
 import { copy } from '../markdown/build.js';
+import { replyOf, latestReply } from '../model/reply.js';
 import { Refusal } from '../core/connection.js';
 import { lifeAsk } from '../lib/life.js';
 import { askFirst } from './ask.js';
@@ -598,12 +599,16 @@ function itemsNow(s) {
   return s ? itemsOf(s.view.list, s.view.status).items : [];
 }
 
-/** 她这一轮说的全部正文（原文，段与段之间空一行）；`turn` 不写的是最后有正文的那一轮（朗读用，W-1128）。 */
+/** 这一轮回答的全部正文（原文，段与段之间空一行）；`turn` 不写的是最后有正文的那一轮（朗读用，W-1128；`model/reply.js`）。 */
 export function turnText(app, turn) {
   const s = app.current ? app.store.sessions.get(app.current) : null;
-  const replies = itemsNow(s).filter((it) => it.type === 'reply');
-  const at = turn ?? replies.filter((it) => !it.streaming).at(-1)?.turn;
-  return replies.filter((it) => it.turn === at).map((it) => it.text.trim()).join('\n\n');
+  return replyOf(itemsNow(s), turn)?.text ?? '';
+}
+
+/** 正在看的会话最新那一轮回答的正文和轮号（自动朗读，W-1205）；最新的一轮没开口的是 `null`。 */
+export function latestTurnReply(app) {
+  const s = app.current ? app.store.sessions.get(app.current) : null;
+  return latestReply(itemsNow(s));
 }
 
 /** 复制她这一轮说的全部正文（原文，段与段之间空一行）。 */
