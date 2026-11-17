@@ -10,7 +10,7 @@ import { bare } from '../../src/lib/fuzzy.js';
  *   common?: boolean, layers: string[], applies: string, default?: any, options?: {value: any, name: string}[],
  *   min?: number, max?: number, max_chars?: number, element?: string, suggestions?: string[]}} SchemaItem 清单里的一项（`suggestions`：
  *   控件是 `combo` 的建议值，核心照连接的语言排好先后，核心 P-9 补）
- * @typedef {{origin: {layer: string, file?: string, line?: number, env?: string}, used: boolean, value: any}} LayerValue
+ * @typedef {{origin: {layer: string, file?: string, line?: number, env?: string, from?: string}, used: boolean, value: any}} LayerValue
  * @typedef {{value?: any, origin?: LayerValue['origin'], layers?: LayerValue[]}} Entry `config.get` 里一项的最终值和每一层
  * @typedef {{key?: string, level: string, message: string, file?: string, line?: number}} Problem
  * @typedef {SchemaItem & {entry: Entry|null, problems: Problem[], fact?: {value: any}}} Item 合好的一项（`fact`：配置里没写时模型目录给的值，
@@ -102,6 +102,22 @@ export const writtenIn = (entry, layer) => !!entry?.layers?.some((l) => l.origin
 
 /** 值是环境变量引用（`{env: X}`）：交回名字，不是的交 `null`。 */
 export const envRef = (value) => (value && typeof value === 'object' && !Array.isArray(value) && typeof value.env === 'string' ? value.env : null);
+
+/**
+ * 借来的值（核心 NS-1，协议参考 `config.md`）：哪一层都没写、照别的一项的值用的（来源 `{layer: 'inherited', from}`，值是 `null`，现在只有
+ * `net.search.deepseek.key` 借官方 DeepSeek 供应商的 key），交回给人看的「从哪借的」：`providers.<编号>.key` 照模型列表里那一家的显示名
+ * （没写名字的、列表还没读到的照编号），别的照原样写那一项；不是借来的交 `null`。
+ * @param {Entry|null|undefined} entry `config.get` 的一项 @param {any} models `model.list` 的回应
+ * @returns {string|null}
+ */
+export function inheritedFrom(entry, models) {
+  const origin = /** @type {any} */ (entry?.origin);
+  if (origin?.layer !== 'inherited' || typeof origin.from !== 'string') return null;
+  const parts = splitKey(origin.from);
+  if (parts.length !== 3 || parts[0] !== 'providers') return origin.from;
+  const p = (models?.providers ?? []).find((/** @type {any} */ x) => x.id === parts[1]);
+  return p ? providerName(p) : parts[1];
+}
 
 /**
  * 列表加的一个元素（控件 `list`）：核心说元素是 `int`、`float` 的，照数交（接入QQ的群白名单是群号，交字会被核心拒，2026-10-17

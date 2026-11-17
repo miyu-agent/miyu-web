@@ -208,6 +208,7 @@
         "none": "未设置"
       },
       "from_env": "来自环境变量 {name}",
+      "inherited_from": "已继承自 {name}",
       "ext": {
         "run": "运行",
         "perms": "权限",
@@ -836,6 +837,7 @@
         "none": "Not set"
       },
       "from_env": "From environment variable {name}",
+      "inherited_from": "Inherited from {name}",
       "ext": {
         "run": "Run",
         "perms": "Permissions",
@@ -1464,6 +1466,7 @@
         "none": "未設定"
       },
       "from_env": "環境変数 {name} から",
+      "inherited_from": "{name} から継承",
       "ext": {
         "run": "実行",
         "perms": "権限",

@@ -4,7 +4,7 @@
 //! （`look.js`）共用 `shell`。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { envRef, inputText, listElement, LAYER, writtenIn, secretName, referenceOptions, pickOptions, comboState, COMBO_OTHER, choicesFrom, packageChoices, choiceOptions } from './model.js';
+import { envRef, inheritedFrom, inputText, listElement, LAYER, writtenIn, secretName, referenceOptions, pickOptions, comboState, COMBO_OTHER, choicesFrom, packageChoices, choiceOptions } from './model.js';
 import { slider } from './slider.js';
 import { records } from './records.js';
 import { switchOrigin } from './pkg-enabled.js';
@@ -135,8 +135,8 @@ export function coreRow(dialog, item, opts = {}) {
     control: made,
     reset: written && !opts.mark ? () => save({ unset: true }) : null,
     resetTitle: ctx.text('reset'),
-    // 包的「启用」（来源 `package`，不在哪一层配置里）不写「默认 / 已改」
-    mark: opts.mark && !switchOrigin(item.entry) ? fieldMark(ctx, written, () => save({ unset: true })) : null,
+    // 包的「启用」（来源 `package`，不在哪一层配置里）、借来的（来源 `inherited`，写着「已继承自…」）不写「默认 / 已改」
+    mark: opts.mark && !switchOrigin(item.entry) && !inheritedFrom(item.entry, dialog.models) ? fieldMark(ctx, written, () => save({ unset: true })) : null,
   });
   // 刚存成的：存完整页重读重画了，对勾画在新的这一行上
   if (dialog.justSaved?.(item.key)) row.done();
@@ -190,6 +190,14 @@ function control(dialog, item, value, save, saveSecret) {
   if (item.control === 'list') return list(dialog, item, Array.isArray(value) ? value : [], (next) => save({ value: next }));
   if (item.control === 'combo') return combo(dialog, Array.isArray(item.suggestions) ? item.suggestions : [], value, (next) => save(next === null ? { unset: true } : { value: next }));
   const env = envRef(value);
+  // 借来的（核心 NS-1：值是 `null`，来源 `inherited`）：同环境变量引用，先写「已继承自 DeepSeek」，点了才改；不画成空的框（W-1210）
+  const borrowed = value == null ? inheritedFrom(item.entry, dialog.models) : null;
+  const stand = (/** @type {HTMLElement} */ field) => {
+    if (!env && !borrowed) return field;
+    const label = h('button.set-env', { type: 'button', onclick: () => { label.replaceWith(field); field.focus(); } },
+      env ? ctx.text('from_env', { name: env }) : ctx.text('inherited_from', { name: borrowed }));
+    return label;
+  };
   if (PICKS.has(item.type) && !env) {
     // 选模型（`reference`）、人格、预设（W-1096）、知识库（PC-3）的：下拉，第一项「不指定」（照核心的默认，写在说明里）；列表里没有的现值照原样留一项
     const options = [{ value: null, name: ctx.text('ref_unset') }, ...choices(dialog, item.type)];
@@ -208,9 +216,7 @@ function control(dialog, item, value, save, saveSecret) {
     };
     field.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); field.blur(); } });
     field.addEventListener('blur', done);
-    if (!env) return field;
-    const label = h('button.set-env', { type: 'button', onclick: () => { label.replaceWith(field); field.focus(); } }, ctx.text('from_env', { name: env }));
-    return label;
+    return stand(field);
   }
   // 选项由包在运行时给的（核心 SG-2 的 `choices_from`）：先照文字框画，问到了换成下拉；问不到、回空的留着文字框
   const from = choicesFrom(item);
@@ -220,9 +226,7 @@ function control(dialog, item, value, save, saveSecret) {
   // 几行的字（控件 `textarea`，核心 P-9 三补：「更多描述」，能分行）：几行的框，占满这一行（`.set-area` 把控件放到名字下面）
   if (item.control === 'textarea' && !env) return areaField(inputText(value), (text) => save(text === '' ? { unset: true } : { value: text }));
   const field = textField(inputText(env ? '' : value), item.control === 'number' ? 'number' : 'text', item.max != null && item.min != null ? `${item.min} – ${item.max}` : '', (text) => save(text === '' ? { unset: true } : { input: text }));
-  if (!env) return field;
-  const label = h('button.set-env', { type: 'button', onclick: () => { label.replaceWith(field); field.focus(); } }, ctx.text('from_env', { name: env }));
-  return label;
+  return stand(field);
 }
 
 /**

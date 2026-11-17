@@ -92,3 +92,16 @@ test('配置项的搜索也带上它归的那个包的字：搜 web 列出联网
   assert.deepEqual(search(pages, 'web', more).map((f) => f.item.key), ['net.search.source']);
   assert.deepEqual(search(pages, 'net search', more).map((f) => f.item.key), ['net.search.source'], '键里的点当空格');
 });
+
+test('借来的值（核心 NS-1：value 是 null，来源 {layer: inherited, from: providers.<编号>.key}）：写「已继承自 <供应商的名字>」，不当空的（W-1210）', async () => {
+  const { inheritedFrom } = await import('../../packages/settings/model.js');
+  const models = { providers: [{ id: 'deepseek', name: { value: 'DeepSeek 官方' }, models: [] }, { id: 'bare', models: [] }] };
+  const entry = (from) => ({ value: null, origin: { layer: 'inherited', from }, layers: [] });
+  assert.equal(inheritedFrom(entry('providers.deepseek.key'), models), 'DeepSeek 官方', '照模型列表里那一家的显示名');
+  assert.equal(inheritedFrom(entry('providers.bare.key'), models), 'bare', '没写名字的照编号');
+  assert.equal(inheritedFrom(entry('providers.gone.key'), null), 'gone', '模型列表还没读到的照编号');
+  assert.equal(inheritedFrom(entry('net.other.key'), models), 'net.other.key', '不是供应商的照原样写那一项');
+  assert.equal(inheritedFrom({ value: null, origin: { layer: 'default' } }, models), null, '默认的不是借来的');
+  assert.equal(inheritedFrom({ value: 'x', origin: { layer: 'system' } }, models), null);
+  assert.equal(inheritedFrom(null, models), null);
+});
