@@ -82,9 +82,9 @@
       "profile": {
         "title": "AI 怎么认识你",
         "sub": "可在设置中修改",
-        "name": "AI 怎么称呼你",
+        "name": "称呼",
         "name_hint": "名字或昵称",
-        "about": "更多关于你的描述（可选）",
+        "about": "更多描述（可选）",
         "about_hint": "职业、兴趣、希望 AI 留意的事",
         "language": "{name}（可选）"
       },
@@ -156,9 +156,9 @@
       "profile": {
         "title": "How the AI knows you",
         "sub": "Editable in Settings",
-        "name": "What should the AI call you",
+        "name": "Preferred name",
         "name_hint": "Name or nickname",
-        "about": "More about you (optional)",
+        "about": "Additional details (optional)",
         "about_hint": "Work, interests, things the AI should keep in mind",
         "language": "{name} (optional)"
       },
@@ -230,9 +230,9 @@
       "profile": {
         "title": "AI にあなたを紹介",
         "sub": "設定で変更できます",
-        "name": "AI からの呼び名",
+        "name": "呼び名",
         "name_hint": "名前やニックネーム",
-        "about": "あなたについて、そのほか（任意）",
+        "about": "補足（任意）",
         "about_hint": "仕事、趣味、AI に気をつけてほしいこと",
         "language": "{name}（任意）"
       },

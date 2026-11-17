@@ -103,11 +103,11 @@
       "remove": "删除",
       "form": {
         "title": "新建定时任务",
-        "prompt": "说什么",
+        "prompt": "提示词",
         "prompt_hint": "到点交给 AI 的那句话",
         "when": "什么时候",
         "daily": "每天",
-        "every": "每隔",
+        "every": "间隔",
         "once": "一次",
         "cron": "自定义",
         "unit": {
@@ -116,7 +116,7 @@
           "days": "天"
         },
         "cron_hint": "分 时 日 月 星期",
-        "where": "在哪跑",
+        "where": "运行位置",
         "where_new": "每次新开会话",
         "where_session": "跑在会话",
         "persona": "人格",
@@ -185,7 +185,7 @@
         "when": "什么时候",
         "next": "下次",
         "last": "上次",
-        "where": "在哪跑",
+        "where": "运行位置",
         "by": "谁建的",
         "by_person": "你",
         "by_model": "AI",
@@ -275,11 +275,11 @@
       "remove": "Delete",
       "form": {
         "title": "New scheduled task",
-        "prompt": "Say",
+        "prompt": "Prompt",
         "prompt_hint": "What to send to the AI when it's time",
         "when": "When",
         "daily": "Daily",
-        "every": "Every",
+        "every": "Interval",
         "once": "Once",
         "cron": "Custom",
         "unit": {
@@ -288,7 +288,7 @@
           "days": "days"
         },
         "cron_hint": "min hour day month weekday",
-        "where": "Run in",
+        "where": "Run location",
         "where_new": "New session each time",
         "where_session": "A session",
         "persona": "Persona",
@@ -357,7 +357,7 @@
         "when": "When",
         "next": "Next",
         "last": "Last",
-        "where": "Runs in",
+        "where": "Run location",
         "by": "Created by",
         "by_person": "You",
         "by_model": "AI",
@@ -447,7 +447,7 @@
       "remove": "削除",
       "form": {
         "title": "定期タスクを新規作成",
-        "prompt": "送る内容",
+        "prompt": "プロンプト",
         "prompt_hint": "時間になったら AI に送る文",
         "when": "いつ",
         "daily": "毎日",

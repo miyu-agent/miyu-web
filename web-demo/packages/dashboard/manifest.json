@@ -106,7 +106,7 @@
       "set": {
         "cards": "卡片",
         "cards_hint": "拖动左边的把手排先后（也可以聚焦把手按 Alt+↑、Alt+↓），右边设最多露几行、开关这张卡",
-        "rows": "最多露几行",
+        "rows": "最大行数",
         "drag": "拖动排序",
         "drag_named": "拖动「{name}」排序（Alt+↑、Alt+↓ 挪一格）",
         "reset": "恢复默认"
@@ -178,7 +178,7 @@
       "set": {
         "cards": "Cards",
         "cards_hint": "Drag the handle to reorder (or focus it and press Alt+↑ / Alt+↓); set how many rows each card shows, or turn it off",
-        "rows": "Most rows",
+        "rows": "Max rows",
         "drag": "Drag to reorder",
         "drag_named": "Drag “{name}” to reorder (Alt+↑ / Alt+↓ moves one step)",
         "reset": "Restore defaults"
