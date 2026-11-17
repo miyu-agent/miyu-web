@@ -122,6 +122,7 @@
   "too_long": "This message is too long to send (over 1 MiB)",
   "too_long_attached": "This message was too long, so it is now the attachment {name}. Press Enter to send",
   "no_bridge": "Can't reach the bridge: open the link with #k= that the bridge printed",
+  "disconnected": "Disconnected from the core",
   "signin": {
     "login_title": "Sign in to Miyu",
     "login": "Sign in",
@@ -175,6 +176,8 @@
     "down_why": "The bridge isn't running.",
     "down_how": "Start the bridge in web-demo/bridge (cargo run -- port), then open the link it prints.",
     "core_how": "Check the errors in the terminal that started the bridge.",
+    "core_title": "Can't reach the core",
+    "served_how": "Fix it, then reload the page.",
     "lost": "The bridge restarted and the key changed: open the new link it printed."
   },
   "themes": {

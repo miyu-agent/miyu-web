@@ -122,6 +122,7 @@
   "too_long": "这段话太长（超过 1 MiB），发不出去",
   "too_long_attached": "这段话太长，已转成附件 {name}，按回车发送",
   "no_bridge": "连不上桥：打开桥打出来的那个带 #k= 的链接",
+  "disconnected": "核心断开了",
   "signin": {
     "login_title": "登录 Miyu",
     "login": "登录",
@@ -175,6 +176,8 @@
     "down_why": "桥没在跑。",
     "down_how": "在 web-demo/bridge 里起桥（cargo run -- 端口），再打开它打出来的链接。",
     "core_how": "看起桥的终端里的报错。",
+    "core_title": "连不上核心",
+    "served_how": "处理好以后刷新页面。",
     "lost": "桥重启过，口令换了：打开桥新打出来的链接。"
   },
   "themes": {

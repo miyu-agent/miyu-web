@@ -27,7 +27,7 @@ import { waitScreen } from './wait.js';
 import { resolve } from './config.js';
 import { loadResources, useTexts, moreIcons, res, t } from '../util/res.js';
 import { pick, settingOf, options, languageSpec, fromConfig } from './language.js';
-import { Connection } from '../core/connection.js';
+import { Connection, Refusal } from '../core/connection.js';
 import { Store } from '../core/store.js';
 import { loadHuman } from '../core/human.js';
 import { placeOf } from '../model/paths.js';
@@ -84,9 +84,10 @@ export async function boot(root) {
   // 认识管理员模式（`scope`，核心 Y-12下上；蓝图「管理员模式」第 1 条）：核心只对声明了的连接要求改系统那一层带 `scope`
   const greeting = { protocol: [1, 1], head: { kind: 'web', version: '0.0.0' }, locale: language.tag, caps: { input: true, scope: true, prefix_ask: true } };
   // 开线、握手（凭据、登录框、「账号」那一屏在 `signin.js`）。断了自己重连（蓝图 `web.md`「连核心」第 1 条）：连上以后重新握手、补上漏掉的，
-  // 见下面 `onReopen`。连不上：走桥的问口令还对不对，照它写为什么（口令用不了、桥没在跑、桥连不上核心）；直接连的就是网页软件没在跑
+  // 见下面 `onReopen`。那一头连不上核心的（`core_unreachable`）照它给的那一句写；线开不了的：走桥的问口令还对不对，照它写为什么
+  // （口令用不了、桥没在跑），直接连的就是网页软件没在跑
   const { conn, hello, setup } = await signIn(host, greeting, root, async (err) => {
-    if (err.message !== 'bridge') throw new Offline('core', err.message);
+    if (err instanceof Refusal && err.reason === 'core_unreachable') throw new Offline(served ? 'served' : 'core', err.message);
     if (served) throw new Offline('web');
     const key = await host.check();
     throw new Offline(key === 'ok' ? 'core' : key, key === 'ok' ? t('no_bridge') : '');
@@ -415,7 +416,7 @@ export async function boot(root) {
 
 /** 连不上桥（蓝图 `web.md`「连核心」第 9 条）：为什么是哪一种，入口照它画一张卡。 */
 export class Offline extends Error {
-  /** @param {'bad'|'none'|'down'|'core'|'old'|'web'} kind @param {string} [detail] 桥的原话 */
+  /** @param {'bad'|'none'|'down'|'core'|'served'|'old'|'web'} kind @param {string} [detail] 桥、网页软件给的原因 */
   constructor(kind, detail = '') {
     super(detail || kind);
     this.kind = kind;

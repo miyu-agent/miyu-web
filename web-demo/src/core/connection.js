@@ -3,7 +3,10 @@
 //! `web/architecture.md`「宿主」）：浏览器是经桥的 WebSocket，桌面端是外壳的进程间通道；样子都照 WebSocket，这一层两边同一份。
 //! 连上过又断了的（核心重启，桥把线关了），照 `retry` 隔一会儿自己再连，连上了告诉 `onReopen` 的（重新握手、补上漏掉的由外面做，
 //! 蓝图 `web.md`「连核心」第 1 条）；一开始就连不上的不在这里重连（页面起不来，写一句）。重连没连上时问一句口令还对不对
-//! （`check`），用不了了（桥重启过换了口令）不再白试，告诉 `onLost` 的（第 9 条）。
+//! （`check`），用不了了（桥重启过换了口令）不再白试，告诉 `onLost` 的（第 9 条）。宿主那一头先接了线、后来连不上核心的，推一条
+//! 连不上的通知（[`UNREACHABLE`]），带核心那一整句原因：照它拒，原因码 `core_unreachable`（同第 9 条，W-1204）。
+
+import { t } from '../util/res.js';
 
 /** 核心拒绝的一个请求：`reason` 是稳定的原因码（蓝图 `protocol.md`「出错」），`message` 是核心按头的语言写的话。 */
 export class Refusal extends Error {
@@ -15,6 +18,9 @@ export class Refusal extends Error {
     this.data = data;
   }
 }
+
+/** 宿主那一头连不上、拉不起核心时推的通知：演示的桥推 `bridge.error`，网页软件推 `web.error`（`miyu-webserve` 的 `ws.rs`）。 */
+const UNREACHABLE = new Set(['bridge.error', 'web.error']);
 
 /** 线通着（照 WebSocket 的 `OPEN`）。 */
 const OPEN = 1;
@@ -68,7 +74,8 @@ export class Connection {
    * 连上。
    *
    * # Errors
-   * 线开不了（口令过期、桥没在跑）、那一头连不上核心（它推一条 `bridge.error`），照原因抛出来。
+   * 线开不了（口令过期、桥没在跑）抛 `bridge`；那一头连不上核心（它推一条 `bridge.error`、`web.error`）抛原因码是
+   * `core_unreachable` 的 `Refusal`，话是那一头给的原因。
    */
   connect() {
     this.status('connecting');
@@ -88,7 +95,7 @@ export class Connection {
       ws.onerror = () => { if (!open) reject(new Error('bridge')); };
       ws.onclose = () => {
         if (!open) reject(new Error('bridge'));
-        for (const w of this.waiting.values()) w.reject(new Refusal('核心断开了', -32000, 'disconnected'));
+        for (const w of this.waiting.values()) w.reject(new Refusal(t('disconnected'), -32000, 'disconnected'));
         this.waiting.clear();
         this.status('offline');
         this.later();
@@ -97,12 +104,18 @@ export class Connection {
     });
   }
 
-  /** 收到一帧：回应交给等着它的请求；推送交给订了的；桥说连不上核心的，连接失败。 */
+  /**
+   * 收到一帧：回应交给等着它的请求；推送交给订了的；那一头说连不上核心的，连接失败、等着的请求照那一句拒（线先开了的，握手正等着；
+   * 原来只拒了已经连上的那一下，握手等到线关了只拿到「核心断开了」）。
+   */
   receive(data, fail) {
     let m;
     try { m = JSON.parse(data); } catch { return; }
-    if (m.method === 'bridge.error') {
-      fail(new Error(m.params?.message ?? 'bridge'));
+    if (UNREACHABLE.has(m.method)) {
+      const why = new Refusal(String(m.params?.message ?? ''), -32000, 'core_unreachable');
+      for (const w of this.waiting.values()) w.reject(why);
+      this.waiting.clear();
+      fail(why);
       return;
     }
     // 一行超过上限、核心认不出编号的（核心 YC-5 的 `line_too_long`，`id` 是 null）：拒等着的里头最长的那一条——只有它可能超（W-1138）
@@ -155,7 +168,7 @@ export class Connection {
     const id = `web-${this.prefix}-${++this.n}`;
     return new Promise((resolve, reject) => {
       if (!this.ws || this.ws.readyState !== OPEN) {
-        reject(new Refusal('核心断开了', -32000, 'disconnected'));
+        reject(new Refusal(t('disconnected'), -32000, 'disconnected'));
         return;
       }
       const line = JSON.stringify({ jsonrpc: '2.0', id, method, params });

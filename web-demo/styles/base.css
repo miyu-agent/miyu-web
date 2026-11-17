@@ -135,7 +135,7 @@ button, textarea { font: inherit; color: inherit; }
 }
 .boot-card h1 { margin: 0 0 calc(10px * var(--space)); font-size: calc(16px * var(--text-scale)); font-weight: 600; }
 .boot-card p { margin: 0; font-size: calc(14px * var(--text-scale)); line-height: 1.7; }
-.boot-why { color: var(--text, #2b2724); }
+.boot-why { color: var(--text, #2b2724); overflow-wrap: anywhere; }
 .boot-how { margin-top: calc(6px * var(--space)) !important; color: var(--text-soft, #6b655e); }
 
 @media (prefers-reduced-motion: reduce) {

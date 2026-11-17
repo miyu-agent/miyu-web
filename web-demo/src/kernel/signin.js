@@ -260,7 +260,7 @@ async function setupScreen(root, conn) {
  * @param {ReturnType<typeof import('../host/browser.js').browserHost> & {}} host
  * @param {any} greeting `hello` 的参数（不带凭据）
  * @param {HTMLElement} root 页面的根
- * @param {(err: any) => Promise<never>} offline 线开不了时照原来的写法抛
+ * @param {(err: any) => Promise<never>} offline 线开不了、那一头连不上核心（原因码 `core_unreachable` 的 `Refusal`）时照原来的写法抛
  * @returns {Promise<{conn: Connection, hello: any, setup: boolean}>}
  */
 export async function signIn(host, greeting, root, offline, retry = /** @type {number[]} */ ([])) {
@@ -303,6 +303,8 @@ export async function signIn(host, greeting, root, offline, retry = /** @type {n
     } catch (err) {
       const why = refusedText(err);
       conn.close();
+      // 线开了、那一头连不上核心（`bridge.error`、`web.error`）：同线开不了，照 `offline` 出那张卡（蓝图「连核心」第 9 条，W-1204）
+      if (err instanceof Refusal && err.reason === 'core_unreachable') await offline(err);
       if (why == null) throw err;
       s.error = why;
       const reason = /** @type {any} */ (err).reason;
