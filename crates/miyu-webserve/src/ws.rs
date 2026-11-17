@@ -3,7 +3,7 @@
 //!
 //! - 二进制帧：关，1003。一帧超过 1 MiB：关，1009（核心那头一行也就这么长）。
 //! - 核心那头断了：关，1012，页面照自己的规矩重连。浏览器那头断了：核心的连接跟着关。
-//! - 连不上核心：发一条 `web.error` 通知，再关。
+//! - 连不上核心：发一条 `web.error` 通知（核心那一整句原因，照这台机器的语言说，[`crate::said`]），再关。
 //!
 //! 一个标签页一条核心连接，不合并（`web-module.md`「起草时定的」第 3 条）。往浏览器写的都经一个写的任务：两头都可能要关它。
 //!
@@ -298,11 +298,7 @@ where
             Ok(core) => core,
             Err(error) => {
                 tracing::warn!(target: TARGET, error = %error, "core unreachable");
-                let notice = serde_json::json!({
-                    "jsonrpc": "2.0",
-                    "method": "web.error",
-                    "params": {"message": error.to_string()},
-                });
+                let notice = unreachable(&error, crate::said::spoken);
                 send(&out, Message::text(notice.to_string())).await;
                 send(&out, close(CloseCode::Normal)).await;
                 drop(out);
@@ -438,6 +434,18 @@ async fn finish<S>(
         return;
     };
     linger(ws.get_mut()).await;
+}
+
+/// 连不上、拉不起核心时推给页面的那一条 `web.error`：原因照 `speak` 说（[`crate::said::spoken`]：核心那一整句，照这台机器的语言）。
+pub(crate) fn unreachable(
+    error: &miyu_client::connect::StartError,
+    speak: impl Fn(Option<miyu_client::protocol::Said>, &dyn std::fmt::Display) -> String,
+) -> serde_json::Value {
+    serde_json::json!({
+        "jsonrpc": "2.0",
+        "method": "web.error",
+        "params": {"message": speak(error.said(), error)},
+    })
 }
 
 /// 关写的一半，读掉、扔掉对面还在发的，读到头、出错或者到 [`LINGER`] 为止。只用一块定长的缓冲，发多少都不占内存。

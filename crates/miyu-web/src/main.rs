@@ -50,17 +50,14 @@ fn main() -> ExitCode {
         return ExitCode::from(1);
     };
     let env = Env::current();
-    let root = match DataRoot::locate(&env) {
+    // 找不到、建不了数据根：照核心的说法、这台机器的语言说（核心 EN-1，W-1204；原来印底层的中文原话）
+    let root = match miyu_webserve::said::data_root(&env, miyu_webserve::said::language(&locale)) {
         Ok(root) => root,
-        Err(error) => {
-            eprintln!("miyu-web: {error}");
+        Err(said) => {
+            eprintln!("miyu-web: {said}");
             return ExitCode::from(1);
         }
     };
-    if let Err(error) = root.prepare() {
-        eprintln!("miyu-web: {error}");
-        return ExitCode::from(1);
-    }
     match command.as_str() {
         "serve"
             if !parsed.print

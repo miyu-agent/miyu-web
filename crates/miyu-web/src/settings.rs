@@ -137,13 +137,14 @@ impl Settings {
     ///
     /// # Errors
     ///
-    /// 连不上核心、拉不起来：原话。
+    /// 连不上核心、拉不起来：核心照这台机器的语言说的那一整句。
     pub async fn from_core(self, root: &DataRoot, core: &CoreCommand) -> Result<Settings, String> {
         let mut client = miyu_client::open::Core::connect(root, core, "miyu-web")
             .await
             .map_err(|refused| {
                 tracing::warn!(target: crate::TARGET, error = %refused.message, "core unreachable");
-                format!("core unreachable: {}", refused.message)
+                // 话是 `Core::connect` 照这台机器的语言说好的整句（核心 EN-2），不再接英文前缀（W-1204）
+                refused.message
             })?;
         Ok(
             match client

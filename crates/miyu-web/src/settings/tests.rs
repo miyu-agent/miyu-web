@@ -138,3 +138,20 @@ fn the_listen_address_defaults_to_this_computer_and_takes_a_configured_address()
     let odd = shipped().configured(&json!({"web.listen": {"value": "my-laptop"}}));
     assert_eq!(odd.listen, localhost, "不是地址的照旧");
 }
+
+#[tokio::test]
+async fn a_core_that_cannot_be_launched_is_said_without_an_english_prefix() {
+    let dir = std::env::temp_dir().join(format!("miyu-web-settings-{}", std::process::id()));
+    let root = DataRoot::at(dir.join("home"));
+    root.prepare().unwrap();
+    let missing = dir.join("no-such-miyu");
+    let core: CoreCommand = std::sync::Arc::new(move || std::process::Command::new(&missing));
+    let got = shipped().from_core(&root, &core).await;
+    std::fs::remove_dir_all(&dir).unwrap();
+    let Err(said) = got else {
+        panic!("没有这个程序，拉不起来");
+    };
+    // 话是 `Core::connect` 照这台机器的语言说好的整句，照原样交回（W-1204：原来接一个英文的 `core unreachable: `）
+    assert!(!said.starts_with("core unreachable"), "{said}");
+    assert!(!said.is_empty());
+}

@@ -5,12 +5,14 @@
 //! - [`pages`]：页面文件：路径不出页面目录、类型照扩展名、响应头。
 //! - [`Site`]：Host、Origin 认的三种写法；`/ws` 要的数据根、怎么拉起核心、连着的怎么数。
 //! - [`ws`]：`/ws` 原样转给核心，一帧一行。
+//! - [`said`]：找不到数据根、连不上核心时给人看的那一句，照核心的说法、这台机器的语言（核心 EN-1、EN-2）。
 //!
 //! 函数都从 `miyu-web` 原样搬来，不改名、不改行为（`webserve.md`「搬家表」）。听端口、单实例、空闲退出、`/media` 这些
 //! 各家不一样的，留在各家。分层照 `01-架构.md` 第九节第 3 层：只依赖 `miyu-ipc`、`miyu-store`，不依赖任何一个头。
 
 pub mod pages;
 pub mod respond;
+pub mod said;
 #[cfg(test)]
 mod tests;
 pub mod ws;
