@@ -307,8 +307,11 @@
 .ctx-bar-seg { flex: none; height: 100%; background: var(--tone); }
 .ctx-bar-line { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--text-soft); }
 /* 额度（核心 QU-1，2026-11-14 主人定）：一行一个窗口，名字、条、百分比、多久后重置；条是有底色的圆角条，不描边；80% 起黄、满了红 */
-.ctx-quota-row { display: grid; grid-template-columns: auto minmax(40px, 1fr) auto auto; align-items: center; gap: calc(8px * var(--space));
-  margin-bottom: calc(6px * var(--space)); font-size: calc(12.5px * var(--text-scale)); }
+/* 几行共用一张网格（2026-11-17 主人验收第 36 条，W-1206：原来一行一张网格，右边的字宽窄不一把条挤得长短不一、百分比和重置对不齐）：
+   名字、条、百分比、重置各成一列，条一样长；整块往里缩到头一行字的左边（箭头那一格 12px 加间距 8px），和标题对齐 */
+.ctx-quota { display: grid; grid-template-columns: auto minmax(40px, 1fr) auto auto; align-items: center; column-gap: calc(8px * var(--space)); row-gap: calc(6px * var(--space));
+  margin-bottom: calc(6px * var(--space)); padding-left: calc(20px * var(--space)); font-size: calc(12.5px * var(--text-scale)); }
+.ctx-quota-row { display: contents; }
 .ctx-quota-name { color: var(--text-soft); white-space: nowrap; }
 .ctx-quota-bar { position: relative; height: 8px; overflow: hidden; border-radius: var(--r-pill); background: var(--line); }
 .ctx-quota-fill { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--accent); }
@@ -319,7 +322,7 @@
 .ctx-quota-pct { font: calc(12px * var(--text-scale)) var(--font-mono); text-align: right; min-width: 3.5em; }
 .ctx-quota-reset { color: var(--text-faint); white-space: nowrap; font-size: calc(12px * var(--text-scale)); }
 /* 余额（核心 QU-2，2026-11-16 主人定）：额度那一段里一种币一行「余额 ¥12.34」，赠送的暗字；不能用的整行 danger（和额度满了同一个色）；不画条 */
-.ctx-balance-row { display: flex; align-items: baseline; gap: calc(8px * var(--space)); margin-bottom: calc(6px * var(--space)); font-size: calc(12.5px * var(--text-scale)); }
+.ctx-balance-row { grid-column: 1 / -1; display: flex; align-items: baseline; gap: calc(8px * var(--space)); }
 .ctx-balance-amount { white-space: nowrap; }
 .ctx-balance-row.is-out { color: var(--danger); }
 .ctx-rows { display: flex; flex-direction: column; }

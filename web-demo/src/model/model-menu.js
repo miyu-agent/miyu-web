@@ -86,6 +86,20 @@ export function footerOf(ref) {
 }
 
 /**
+ * 会话这一刻用的是哪一家供应商、给人看的名字（额度、余额写是哪一家，W-1206 第 36 条）：照会话状态的 `model`（`{model, endpoint}`，
+ * 核心问额度也照它这一家），写那一家的显示名（同框下面那一截：配置写的，没写的照目录给的），列表里没有的写编号；没有端点的（池还没
+ * 跑过一轮）是 `null`。
+ * @param {{model?: string|null, endpoint?: string|null}|null|undefined} model @param {any} list `model.list` 的回应
+ * @returns {string|null}
+ */
+export function providerLabel(model, list) {
+  const id = model?.endpoint;
+  if (typeof id !== 'string' || !id) return null;
+  const p = (list?.providers ?? []).find((/** @type {any} */ x) => x.id === id);
+  return p ? providerName(p) : id;
+}
+
+/**
  * 框下面那一截给人看的样子（蓝图「换模型的菜单」第 1 条）：模型写显示名（`facts.name`；重名的也写显示名，这一截只有一行），
  * 列表里找不到的写模型名；供应商写它的显示名；`full` 是悬停写的完整 `供应商/模型`。池（`@名字`）、还没有列表的照原样。
  * @param {{model: string|null, endpoint: string|null}} left 照引用、核心报的拆出来的模型名和供应商编号

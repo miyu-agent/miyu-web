@@ -567,7 +567,7 @@
       "other": "其他"
     },
     "open_usage": "在用量页看",
-    "quota": {"title": "额度", "go_title": "Opencode GO 额度情况", "in_hours": "{n} 小时后重置", "in_minutes": "{n} 分钟后重置", "at": "{month}月{day}日 {time} 重置", "balance": "DeepSeek 余额：{amount}", "balance_granted": "赠送 {amount}", "balance_exhausted": "DeepSeek 余额不足"}
+    "quota": {"title": "额度", "title_of": "{provider} 额度情况", "in_hours": "{n} 小时后重置", "in_minutes": "{n} 分钟后重置", "at": "{month}月{day}日 {time} 重置", "balance_of": "{provider} 余额：{amount}", "balance": "余额：{amount}", "balance_granted": "赠送 {amount}", "balance_exhausted_of": "{provider} 余额不足", "balance_exhausted": "余额不足"}
   },
   "model_menu": {
     "fixed_pools": { "flagship": "旗舰池", "normal": "日常池", "lite": "轻量池" },

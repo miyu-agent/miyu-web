@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
-import { menuOf, filterRows, footerOf, footerLabel, effortLevels, effortRows, effortLabel, effortOf, effortChange, defaultModelChange } from '../src/model/model-menu.js';
+import { menuOf, filterRows, footerOf, footerLabel, effortLevels, effortRows, effortLabel, effortOf, effortChange, defaultModelChange, providerLabel } from '../src/model/model-menu.js';
 
 loadRes();
 
@@ -171,4 +171,15 @@ test('固定池的显示名三语同终端：旗舰池、日常池、轻量池�
 test('模型池拿空了（核心 8-23 的 usable 是假）：暗着选不了，悬停写原因，下面一行空着（轮流用的只写那一句）', () => {
   const { pools } = menuOf({ ...LIST, pools: [{ name: 'gone', strategy: 'pin', models: [], usable: false }, { name: 'spin', strategy: 'rotate', models: [], usable: false }] }, null);
   assert.deepEqual(pools.map((r) => [r.ref, r.desc, r.usable, r.why]), [['@gone', '', false, '池中没有可用模型'], ['@spin', '轮流使用', false, '池中没有可用模型']]);
+});
+
+test('额度、余额写哪一家（W-1206 第 36 条）：照会话状态的 model.endpoint 找供应商，写它的显示名（配置写的，没写的是目录给的，同框下面那一截）；列表里没有的写编号，没有端点的是 null', () => {
+  const list = { providers: [{ id: 'go', name: { value: 'OpenCode Go' }, models: [] }, { id: 'ds', name: 'DeepSeek', models: [] }, { id: 'bare', models: [] }] };
+  assert.equal(providerLabel({ endpoint: 'go', model: 'x' }, list), 'OpenCode Go');
+  assert.equal(providerLabel({ endpoint: 'ds', model: 'x' }, list), 'DeepSeek');
+  assert.equal(providerLabel({ endpoint: 'bare', model: 'x' }, list), 'bare');
+  assert.equal(providerLabel({ endpoint: 'gone', model: 'x' }, list), 'gone');
+  assert.equal(providerLabel({ endpoint: 'go', model: 'x' }, null), 'go');
+  assert.equal(providerLabel(null, list), null);
+  assert.equal(providerLabel({ model: '@fast' }, list), null);
 });

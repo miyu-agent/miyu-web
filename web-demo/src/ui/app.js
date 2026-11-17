@@ -36,7 +36,7 @@ import { copy } from '../markdown/build.js';
 import { childrenFromStatus, runningDeepStatus } from '../lib/jobs.js';
 import { SessionsPage } from './sessions-page.js';
 import { listFiles } from '../core/files.js';
-import { footerOf, footerLabel, effortLevels, effortLabel, effortOf, effortChange, defaultModelChange } from '../model/model-menu.js';
+import { footerOf, footerLabel, providerLabel, effortLevels, effortLabel, effortOf, effortChange, defaultModelChange } from '../model/model-menu.js';
 import { Crumbs, BackButton } from './crumbs.js';
 import { pathOf } from '../model/tree.js';
 import { draftOf, colorOf } from '../model/project.js';
@@ -1433,7 +1433,9 @@ export class App {
     // 排着的话（打断时有排着的不撤那一轮）
     this.queuedNow = view.queued ?? [];
     // 条目一并交进去：认「上下文压缩失败」（蓝图「框下面那一行的数」的「用量那一格」）
-    const f = { ...statusFooter(s?.view.status ?? null, s?.limits ?? {}, s?.view.list ?? []), status: s?.view.status ?? null };
+    const f = { ...statusFooter(s?.view.status ?? null, s?.limits ?? {}, s?.view.list ?? []), status: s?.view.status ?? null,
+      // 额度、余额写是哪一家：照核心报的这一刻的端点（核心问额度也照它），不照选了还没生效的、池的名字（W-1206 第 36 条）
+      provider: providerLabel(s?.view.status?.model, this.models) };
     // 还没开的新会话：环照核心的预览画（蓝图「上下文明细、累计按用途」第 1 条）
     if (!this.current) f.ring = previewRing(this.loadPreview()) ?? f.ring;
     // 框下面的模型（蓝图「换模型的菜单」第 1 条）：新会话、选过还没生效的、用着池的照引用写；别的照核心报的模型、端点

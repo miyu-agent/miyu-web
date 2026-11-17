@@ -3589,6 +3589,12 @@
       ".ctx-pop-note"
     ]
   },
+  "context.quota": {
+    "zh": "额度：几行共用的那张网格（名字、条、百分比、重置各一列）",
+    "select": [
+      ".ctx-quota"
+    ]
+  },
   "context.quota-row": {
     "zh": "额度：一个窗口那一行（用到 80% 带 is-warn、满了 is-full）",
     "select": [
@@ -3632,7 +3638,7 @@
     ]
   },
   "context.balance-amount": {
-    "zh": "额度：「DeepSeek 余额：$5.00 + ¥3.12 + 赠送 ¥2.00」",
+    "zh": "额度：「DeepSeek 余额：$5.00 + ¥3.12 + 赠送 ¥2.00」（哪一家照会话的供应商）",
     "select": [
       ".ctx-balance-amount"
     ]
