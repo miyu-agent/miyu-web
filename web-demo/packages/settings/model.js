@@ -126,19 +126,29 @@ export function inputText(value) {
 }
 
 /**
- * 搜索：名字、键、说明里有这几个字（不分大小写）。交回对得上的项，带上在哪一页。
+ * 搜索用的写法：不分大小写，`-`、`_`、`.` 当空格（`web search` 找得到 `web-search`、`net search` 找得到 `net.search.source`）。
+ * @param {string} text
+ */
+const searchable = (text) => text.toLowerCase().replace(/[-_.]+/g, ' ');
+
+/**
+ * 搜索：名字、键、说明、组名里有这几个字（不分大小写）；`more` 给一项再添几样字（它归的那个包的名字、编号、功能，`pkgWords`：核心的清单
+ * 只有连接语言的名字，联网搜索的键是 `net.*`，搜 `web` 要靠功能编号 `web-search` 才找得到，2026-11-17 主人验收第 10 条，W-1206）。
+ * 交回对得上的项，带上在哪一页。
  * @param {Page[]} pages
  * @param {string} query
+ * @param {(item: Item) => Array<string|null|undefined>} [more]
  * @returns {{page: Page, group: Group, item: Item}[]}
  */
-export function search(pages, query) {
-  const q = query.trim().toLowerCase();
-  if (!q) return [];
+export function search(pages, query, more = () => []) {
+  const q = searchable(query.trim());
+  if (!q.trim()) return [];
   const out = [];
   for (const page of pages) {
     for (const group of page.groups) {
       for (const item of group.items) {
-        const hay = `${item.name}\n${item.key}\n${item.description}\n${group.name}`.toLowerCase();
+        const extra = more(item).filter((x) => typeof x === 'string');
+        const hay = searchable([item.name, item.key, item.description, group.name, ...extra].join('\n'));
         if (hay.includes(q)) out.push({ page, group, item });
       }
     }
@@ -542,10 +552,25 @@ export function pkgTag(p) {
   return ['builtin', 'ui', 'mascot'].includes(p.kind) ? p.kind : 'builtin';
 }
 
-/** 搜索：名字、一句说明、编号里有这几个字（不分大小写，前后空白不算；空的都算） @param {string} query @param {...(string|null|undefined)} fields */
+/**
+ * 搜索：名字、一句说明、编号里有这几个字（不分大小写，前后空白不算，`-`、`_`、`.` 当空格；空的都算）
+ * @param {string} query @param {...(string|null|undefined)} fields
+ */
 export function pkgMatch(query, ...fields) {
-  const q = String(query ?? '').trim().toLowerCase();
-  return !q || fields.some((f) => typeof f === 'string' && f.toLowerCase().includes(q));
+  const q = searchable(String(query ?? '').trim());
+  return !q.trim() || fields.some((f) => typeof f === 'string' && searchable(f).includes(q));
+}
+
+/**
+ * 一个包拿来搜的字：名字、一句说明、编号，再加它的功能（`package.list` 的 `features`：编号、名字、说明）。核心只给连接语言的名字，
+ * 功能编号是英文的（联网搜索 `base-net` 的 `web-search`），搜 `web` 靠它找得到（W-1206）。
+ * @param {any} p `package.list` 的一项
+ * @returns {Array<string|null>}
+ */
+export function pkgWords(p) {
+  const features = Array.isArray(p?.features) ? p.features : [];
+  const str = (/** @type {any} */ x) => (typeof x === 'string' ? x : null);
+  return [str(p?.name), str(p?.summary), str(p?.package), ...features.flatMap((/** @type {any} */ f) => [str(f?.id), str(f?.name), str(f?.summary)])];
 }
 
 /**

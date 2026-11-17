@@ -8,7 +8,7 @@ import { drawMarket, marketPush } from './market.js';
 import { accessGroup, avatarGroup, relisten, LISTEN_KEYS } from './account.js';
 import { leave } from '../../src/lib/motion.js';
 import { keepTypingVisible } from '../../src/lib/touch.js';
-import { buildPages, search, pagesWithErrors, LAYER, expectFor, navGroups, pkgMatch, ownerOf, headless, needsRestart } from './model.js';
+import { buildPages, search, pagesWithErrors, LAYER, expectFor, navGroups, pkgMatch, pkgWords, ownerOf, headless, needsRestart } from './model.js';
 import { coreRow, groupBlock, banner, toggle } from './rows.js';
 import { drawLook } from './look.js';
 import { drawPackages } from './packages.js';
@@ -275,13 +275,15 @@ export class SettingsDialog {
       h('div.set-text', h('div.set-name', h('span', name)), sub ? h('p.set-desc', sub) : null), h('span.set-pkg-arrow', icon('chevron-right')));
     const pages = this.entries().filter((e) => pkgMatch(query, e.name, e.id))
       .map((e) => jump(e.name, '', () => { leave(); this.show(e.id); }));
-    const packages = (this.packages ?? []).filter((p) => p.status && pkgMatch(query, p.name, p.summary, p.package))
+    const packages = (this.packages ?? []).filter((p) => p.status && pkgMatch(query, ...pkgWords(p)))
       .map((p) => jump(p.name ?? p.package, p.summary ?? '', () => { leave(); this.show('packages'); openInfo(this, p.package); }));
     const ids = new Set((this.packages ?? []).map((/** @type {any} */ p) => p.package));
     const nameOf = (/** @type {string} */ id) => (this.packages ?? []).find((/** @type {any} */ p) => p.package === id)?.name ?? id;
     /** @type {Map<string, {label: string, items: any[]}>} */
     const groups = new Map();
-    for (const f of search(this.pages, query)) {
+    // 归包的项连它那个包的字一起搜（搜 `web` 列出联网搜索的设置，W-1206）
+    const words = (/** @type {any} */ item) => { const owner = ownerOf(item, ids); return owner ? pkgWords((this.packages ?? []).find((/** @type {any} */ p) => p.package === owner)) : []; };
+    for (const f of search(this.pages, query, words)) {
       const owner = ownerOf(f.item, ids);
       const parts = [f.page.name, owner && nameOf(owner) !== f.group.name ? nameOf(owner) : null, f.group.name !== f.page.name ? f.group.name : null].filter(Boolean);
       const key = `${f.page.id}|${f.group.id}`;

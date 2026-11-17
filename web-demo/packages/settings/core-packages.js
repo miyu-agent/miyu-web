@@ -13,7 +13,7 @@ import { tilde } from '../../src/lib/format.js';
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { coreRow, groupBlock, toggle, textField, findBox, shell } from './rows.js';
 import { cardsOf, sectionsOf, valueLookup } from './package-sections.js';
-import { splitKey, itemFor, pkgSwitch, pkgGroupsOf, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, ownerOf, carriedBy, asksOwnerNumber } from './model.js';
+import { splitKey, itemFor, pkgSwitch, pkgGroupsOf, mcpStopped, mcpNeedsLogin, packageNames, PKG_FILTERS, pkgKinds, pkgTag, pkgMatch, pkgWords, ownerOf, carriedBy, asksOwnerNumber } from './model.js';
 import { openPage, probeSites } from './backstage.js';
 import { serverRow } from './mcp-servers.js';
 import { stateText, failed } from './extensions.js';
@@ -69,7 +69,7 @@ export function drawCorePackages(dialog, page, web) {
   const update = async () => {
     const mine = ++round;
     const core = view.filter !== 'web';
-    const rows = core ? packages.filter((p) => (view.filter === 'all' || pkgKinds(p, carried).includes(view.filter)) && pkgMatch(view.query, p.name, p.summary, p.package)) : [];
+    const rows = core ? packages.filter((p) => (view.filter === 'all' || pkgKinds(p, carried).includes(view.filter)) && pkgMatch(view.query, ...pkgWords(p))) : [];
     // 组里的包（基础系统）没在搜的时候收成一行，排在最前（2026-10-27 项目主人）
     const split = pkgGroupsOf(rows, dialog.pkgGroups, view.query);
     replace(list, [...split.groups.map((g) => groupRow(dialog, g.group, g.members.length)), ...split.rows.map((p) => packageRow(dialog, p))]);

@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { navGroups, pkgKinds, pkgTag, pkgMatch, ownerOf } from '../../packages/settings/model.js';
+import { navGroups, pkgKinds, pkgTag, pkgMatch, pkgWords, ownerOf, search } from '../../packages/settings/model.js';
 
 const ORDER = ['general', 'user', 'models', 'usage', 'personas', 'memory', 'knowledge', 'presets', 'skills', 'scripts', 'mcp', 'packages', 'backstage', 'advanced'];
 
@@ -68,4 +68,27 @@ test('选人格、知识库的选项（核心设计 53 第四节）：人格写�
   assert.deepEqual(pickOptions('preset', { presets: [{ preset: 'full', name: '全功能' }, { preset: 'bad', problem: 'x' }, { preset: 'mine' }, { preset: null, name: '无工具' }] }),
     [{ value: 'full', name: '全功能' }, { value: 'mine', name: 'mine' }], '预设（W-1096）：写错的、旧核心的「无工具」不列');
   assert.deepEqual(pickOptions('knowledge', null), []);
+});
+
+/** 联网搜索包（核心 `package.list` 的样子，连接是中文：名字只有中文的；功能的编号是英文的） */
+const NET = { package: 'base-net', name: '联网搜索', summary: '搜网页、读网页', features: [{ id: 'web-search', name: '网络搜索' }, { id: 'web-fetch', name: '抓取网页', summary: '把网页读成正文' }] };
+
+test('搜 web 找得到联网搜索（2026-11-17 主人验收第 10 条，W-1206）：包的功能编号、功能名字也算；「-」「_」「.」当空格，web search 也找得到', () => {
+  assert.ok(!pkgMatch('web', NET.name, NET.summary, NET.package), '原来只看名字、说明、编号：找不到');
+  assert.ok(pkgMatch('web', ...pkgWords(NET)));
+  assert.ok(pkgMatch('Web Search', ...pkgWords(NET)));
+  assert.ok(pkgMatch('网络搜索', ...pkgWords(NET)));
+  assert.ok(pkgMatch('正文', ...pkgWords(NET)), '功能的说明也算');
+  assert.ok(!pkgMatch('mermaid', ...pkgWords(NET)));
+  assert.deepEqual(pkgWords({ package: 'x' }), [null, null, 'x'], '没有功能的照旧三样');
+});
+
+test('配置项的搜索也带上它归的那个包的字：搜 web 列出联网搜索的设置项（W-1206）', () => {
+  const item = { key: 'net.search.source', name: '联网服务', description: 'AI 用哪家服务搜网页', problems: [] };
+  const other = { key: 'log.level', name: '运行日志的级别', description: '', problems: [] };
+  const pages = [{ id: 'packages', name: '软件包', problems: [], groups: [{ id: 'net', name: '联网搜索', items: [item, other] }] }];
+  assert.deepEqual(search(pages, 'web'), [], '只看自己的名字、键、说明：找不到');
+  const more = (/** @type {any} */ it) => (it.key.startsWith('net.') ? pkgWords(NET) : []);
+  assert.deepEqual(search(pages, 'web', more).map((f) => f.item.key), ['net.search.source']);
+  assert.deepEqual(search(pages, 'net search', more).map((f) => f.item.key), ['net.search.source'], '键里的点当空格');
 });
