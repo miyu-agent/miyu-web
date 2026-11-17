@@ -105,6 +105,8 @@ export function apply(ctx) {
   ctx.provide('personas', {
     /** 一个人格、预设的名字（全部会话里的项目页照它写；没读到的写编号） @param {string} id */
     personaName: (id) => nameOf(id),
+    /** 一个人格画成什么样（`{name, avatar}`，没有这个人格的 `null`、人格列表还没读到的 `undefined`）：推演人生那一层的头像 @param {string} id */
+    look: (id) => (catalog.personas ? lookFor(id) : undefined),
     /** @param {string} id */
     presetName: (id) => presetNameOf(id),
     /** 还没开的新会话要用哪个人格（选的，没选的照默认；无人格是 `null`）；人格列表还没读到的是 `undefined`：空会话里 `/dream` 照它整理那一份 */

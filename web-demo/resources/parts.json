@@ -8058,6 +8058,43 @@
       ".life-state"
     ]
   },
+  "life.part-head": {
+    "zh": "推演人生的卡：「正在过的」「已结束的人生」栏头",
+    "select": [
+      ".life-part-head"
+    ]
+  },
+  "life.group-head": {
+    "zh": "推演人生的卡：已结束的人生按人格分组的组头",
+    "select": [
+      ".life-group-head"
+    ]
+  },
+  "life.face": {
+    "zh": "推演人生的卡：人格的小头像",
+    "select": [
+      ".life-face"
+    ]
+  },
+  "life.warn": {
+    "zh": "推演人生的卡：点了「结束人生」以后那一行后果",
+    "select": [
+      ".life-warn"
+    ]
+  },
+  "life.act": {
+    "zh": "推演人生的卡：一行右边的暂停/继续、结束人生",
+    "select": [
+      ".life-act",
+      ".life-kill"
+    ]
+  },
+  "life.unseen": {
+    "zh": "推演人生的卡：她自己结束了、还没看过的人生后面的小圆点",
+    "select": [
+      ".life-unseen"
+    ]
+  },
   "setup.life-line": {
     "zh": "人格详情「推演人生」下面那一行状态",
     "select": [

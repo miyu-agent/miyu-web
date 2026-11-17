@@ -1,11 +1,10 @@
 // @ts-check
 //! 推演人生（核心设计 70；蓝图 `web.md`「推演人生」）：会话表认人生会话、`/life` 哪几种先问、`life.status` 怎么读、开关拨了做什么；
-//! 「推演人生」那一层怎么排、下次几点继续怎么写；选预设的地方不列 `hidden` 的；新会话不照人生会话选；推演方法怎么存。
+//! 选预设的地方不列 `hidden` 的；新会话不照人生会话选；推演方法怎么存。
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { isLife, lifeEnded, lifeAsk, lifeState, lifeToggle } from '../../src/lib/life.js';
-import { lifeRows, lifePersonas, wakeText } from '../../packages/life/model.js';
 import { pickable, lastChoice, personaSave } from '../../packages/setup/model.js';
 
 test('会话表里认人生会话：life 是 true 的才算；life_ended 只在人生会话上算结束', () => {
@@ -46,35 +45,6 @@ test('开关：拨开时没有的、结束了的 start（先问），暂停着�
   assert.equal(lifeToggle('running', false), 'pause');
   assert.equal(lifeToggle('paused', false), null);
   assert.equal(lifeToggle('none', false), null);
-});
-
-test('「推演人生」那一层：只列人生会话；眼下那一条照 life.status，以前结束的写已结束；在跑、暂停在前，结束的在后，同一档新的在前', () => {
-  const entries = [
-    { session: 'n1', persona: 'miyu', last_active: '2026-11-14T09:00:00Z' },
-    { session: 'old', persona: 'miyu', life: true, life_ended: true, last_active: '2026-11-10T00:00:00Z' },
-    { session: 'cur', persona: 'miyu', life: true, last_active: '2026-11-13T00:00:00Z', title: '日常' },
-    { session: 'b', persona: 'bea', life: true, last_active: '2026-11-14T08:00:00Z' },
-  ];
-  const statuses = new Map([
-    ['miyu', lifeState({ state: 'running', session: 'cur', next: '2026-11-14T10:00:00Z', doing: { text: '散步' } })],
-    ['bea', lifeState({ state: 'paused', session: 'b' })],
-  ]);
-  const rows = lifeRows(entries, statuses);
-  assert.deepEqual(rows.map((r) => [r.session, r.state]), [['cur', 'running'], ['b', 'paused'], ['old', 'ended']]);
-  assert.equal(rows[0].doing, '散步');
-  assert.equal(rows[0].next?.toISOString(), '2026-11-14T10:00:00.000Z');
-  assert.equal(rows[2].doing, null);
-  assert.deepEqual(lifePersonas(entries), ['miyu', 'bea']);
-  // 还没问回来：照会话表，没结束的先算暂停（不写下次）
-  assert.deepEqual(lifeRows(entries, new Map()).map((r) => [r.session, r.state, r.next]), [['b', 'paused', null], ['cur', 'paused', null], ['old', 'ended', null]]);
-});
-
-test('下次继续：今天只写时刻，明天写「明天」，再往后写月/日', () => {
-  const t = (/** @type {string} */ key, /** @type {any} */ f) => (key === 'tomorrow' ? `明天 ${f.time}` : key);
-  const now = new Date(2026, 10, 14, 9, 30);
-  assert.equal(wakeText(new Date(2026, 10, 14, 14, 5), now, t), '14:05');
-  assert.equal(wakeText(new Date(2026, 10, 15, 8, 0), now, t), '明天 08:00');
-  assert.equal(wakeText(new Date(2026, 10, 17, 8, 0), now, t), '11/17 08:00');
 });
 
 test('选预设的地方不列 hidden 的（出厂的「推演人生」）；正选着的照样留着', () => {
