@@ -448,3 +448,44 @@
 .setup-acquired-text { color: var(--text); font-size: calc(13px * var(--text-scale)); line-height: 1.55; overflow-wrap: anywhere; }
 .setup-acquired-why { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); line-height: 1.5; overflow-wrap: anywhere; }
 .setup-acquired-empty { margin: 0; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
+/* 手机上新建会话的「选项」（options.js，W-1208，2026-11-17 主人 38）：窄屏上人格、预设、工作区三个按钮收成一个，下面一行小字写现在的人格；
+   宽屏不露它。点开的卡片一行一项，行高 48px 手指点得准；控件不画描边 */
+.setup-opts { display: none; }
+@media (max-width: 640px) {
+  .setup-row > .setup-btn:not(.setup-opts) { display: none; }
+  .setup-row > .setup-btn.setup-opts { display: inline-flex; height: auto; min-height: 32px; padding-block: calc(3px * var(--space)); border-radius: var(--chip-radius, var(--r-14)); }
+}
+.setup-opts-text { display: inline-flex; flex-direction: column; align-items: flex-start; min-width: 0; line-height: 1.2; }
+.setup-btn .setup-opts-text small { max-width: 12em; overflow: hidden; color: var(--text-faint); font-size: calc(10.5px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
+.setup-opt { display: grid; grid-template-columns: minmax(0, 1fr); gap: calc(2px * var(--space)); }
+.setup-opt-head { display: flex; align-items: center; gap: calc(6px * var(--space)); min-height: 40px; margin-bottom: calc(4px * var(--space)); }
+.setup-opt-head strong { overflow: hidden; color: var(--text); font-size: calc(13.5px * var(--text-scale)); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.setup-opt-row {
+  display: flex; align-items: center; gap: calc(12px * var(--space)); width: 100%; min-height: 48px; padding: calc(6px * var(--space)) calc(12px * var(--space)); border: 0; border-radius: var(--r-10);
+  background: transparent; color: var(--text); font: calc(14px * var(--text-scale)) var(--font-ui); text-align: start; cursor: pointer;
+}
+.setup-opt-row:hover, .setup-opt-row:focus-visible { outline: 0; background: var(--item-hover, var(--surface-2)); }
+.setup-opt-row:active { background: var(--item-active, var(--surface-3)); }
+.setup-opt-row.is-off { opacity: 0.5; cursor: default; }
+.setup-opt-row > .icon { width: calc(18px * var(--space)); height: calc(18px * var(--space)); flex: none; color: var(--text-faint); }
+.setup-opt-row.is-current > .icon:last-child { color: var(--accent); }
+.setup-opt-label { flex: none; color: var(--text-soft); }
+.setup-opt-value { flex: 1; min-width: 0; overflow: hidden; color: var(--text); text-align: end; text-overflow: ellipsis; white-space: nowrap; }
+.setup-opt-text { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.setup-opt-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.setup-opt-row.is-current .setup-opt-title { color: var(--accent); }
+/* 说明（工作区的完整路径）折行写全，不截 */
+.setup-opt-desc { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); overflow-wrap: anywhere; }
+.setup-opt-section { padding: calc(12px * var(--space)) calc(12px * var(--space)) calc(4px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); font-weight: 600; }
+.setup-opt-path { display: flex; gap: calc(8px * var(--space)); padding: 0 calc(4px * var(--space)); }
+.setup-opt-path .setup-menu-btn { height: 40px; }
+.setup-opt-input {
+  flex: 1; min-width: 0; height: 40px; padding: 0 calc(12px * var(--space)); border: 0; border-radius: var(--field-radius, var(--r-8)); outline: 0;
+  background: var(--field-bg, var(--surface-2)); color: var(--text); font: 16px var(--font-ui);
+}
+.setup-opt-input:focus { background: var(--field-bg-focus, var(--surface-1)); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
+.setup-opt-note, .setup-opt-error { margin: calc(6px * var(--space)) calc(12px * var(--space)); color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
+.setup-opt-error { color: var(--danger); }
+.setup-opt-error[hidden] { display: none; }
+.setup-opt-foot { display: flex; justify-content: flex-end; padding-top: calc(10px * var(--space)); }
+.setup-opt-foot .setup-menu-btn { height: 40px; }

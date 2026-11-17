@@ -216,3 +216,27 @@ test('人自己填的编号（W-1125）：小写字母开头，小写字母、�
   for (const ok of ['dev', 'my-preset_2', 'a', 'a'.repeat(64)]) assert.equal(validId(ok), true, ok);
   for (const bad of ['', 'Dev', '1dev', '-dev', 'my preset', '小白', 'a.b', 'a'.repeat(65)]) assert.equal(validId(bad), false, bad);
 });
+
+test('手机上新建会话的「选项」（W-1208，主人 38）：窄屏只露「选项」、宽屏只露三个按钮；三种语言都有字', async () => {
+  const { readFileSync } = await import('node:fs');
+  const css = readFileSync(new URL('../../packages/setup/style.css', import.meta.url), 'utf8');
+  assert.match(css, /\.setup-opts \{ display: none; \}/, '宽屏不露');
+  const narrow = css.slice(css.indexOf('.setup-opts { display: none; }'));
+  assert.match(narrow, /@media \(max-width: 640px\) \{\s*\.setup-row > \.setup-btn:not\(\.setup-opts\) \{ display: none; \}\s*\.setup-row > \.setup-btn\.setup-opts \{ display: inline-flex;/);
+  const manifest = JSON.parse(readFileSync(new URL('../../packages/setup/manifest.json', import.meta.url), 'utf8'));
+  const want = { zh: '选项', en: 'Options', ja: 'オプション' };
+  for (const [lang, title] of Object.entries(want)) {
+    const o = manifest.text[lang].options;
+    assert.equal(o.title, title);
+    for (const k of ['close', 'back', 'persona', 'preset', 'workspace', 'path', 'path_hint', 'use', 'browse']) assert.ok(o[k], `${lang} options.${k}`);
+  }
+});
+
+test('列子目录（文件夹浏览器、手机的「选项」共用）：只列目录、不列点开头的、照名字排；列不了的写为什么', async () => {
+  const { listDirs } = await import('../../packages/setup/folders.js');
+  const ctx = (/** @type {any} */ reply) => ({ text: (/** @type {string} */ k) => `<${k}>`, core: { request: async () => { if (reply instanceof Error) throw reply; return reply; } } });
+  const got = await listDirs(ctx({ items: [{ path: 'b/', full: '/h/b', dir: true }, { path: '.git/', full: '/h/.git', dir: true }, { path: 'a.txt', full: '/h/a.txt', dir: false }, { path: 'a/', full: '/h/a', dir: true }], partial: true }), '/h');
+  assert.deepEqual(got, { dirs: [{ name: 'a', full: '/h/a' }, { name: 'b', full: '/h/b' }], note: '<folders.partial>', bad: false });
+  const denied = await listDirs(ctx(Object.assign(new Error('x'), { reason: 'path_forbidden' })), '/root');
+  assert.deepEqual(denied, { dirs: [], note: '<forbidden>', bad: true });
+});

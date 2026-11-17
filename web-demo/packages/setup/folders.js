@@ -10,6 +10,27 @@
 import { h } from '../../src/lib/dom.js';
 import { plainPath } from './model.js';
 
+/**
+ * 列一个目录里的子目录（`fs.list`，以点开头的不列），照名字排；列不了的写为什么（`bad`）。文件夹浏览器和手机上的「选项」共用。
+ * @param {any} ctx @param {string} dir
+ * @returns {Promise<{dirs: {name: string, full: string}[], note: string, bad: boolean}>}
+ */
+export async function listDirs(ctx, dir) {
+  const t = (/** @type {string} */ key) => ctx.text(key);
+  try {
+    const got = await ctx.core.request('fs.list', { cwd: dir, dir: '' });
+    const name = (/** @type {any} */ x) => x.path.replace(/[\\/]+$/, '');
+    const dirs = (got?.items ?? []).filter((/** @type {any} */ x) => x.dir && !x.path.startsWith('.'))
+      .map((/** @type {any} */ x) => ({ name: name(x), full: x.full })).sort((a, b) => a.name.localeCompare(b.name));
+    return { dirs, note: got?.partial ? t('folders.partial') : '', bad: false };
+  } catch (err) {
+    return { dirs: [], note: /** @type {any} */ (err)?.reason === 'path_forbidden' ? t('forbidden') : t('not_dir'), bad: true };
+  }
+}
+
+/** 上一级目录（`fs.realpath` 的 `..`）；问不到的是 `null`。 @param {any} ctx @param {string} dir @returns {Promise<string|null>} */
+export const parentDir = (ctx, dir) => ctx.core.request('fs.realpath', { path: '..', cwd: dir }).then((/** @type {any} */ r) => r?.path ?? null, () => null);
+
 /** 正在等系统的选目录对话框回来 */
 let waiting = false;
 
@@ -29,28 +50,17 @@ export async function browse(ctx, menu, anchor, below, from, done, show) {
   const start = plainPath(from);
   const button = (label, primary, onclick, off = false) => h(`button.setup-menu-btn${primary ? '.is-primary' : ''}`, { type: 'button', onclick, disabled: off }, label);
   const go = async (/** @type {string} */ dir, /** @type {string} */ why = '') => {
-    let items = [];
-    let note = '';
-    let bad = false;
-    try {
-      const got = await ctx.core.request('fs.list', { cwd: dir, dir: '' });
-      items = (got?.items ?? []).filter((x) => x.dir && !x.path.startsWith('.'));
-      if (got?.partial) note = t('folders.partial');
-    } catch (err) {
-      note = err?.reason === 'path_forbidden' ? t('forbidden') : t('not_dir');
-      bad = true;
-    }
-    const parent = await ctx.core.request('fs.realpath', { path: '..', cwd: dir }).then((r) => r?.path ?? null, () => null);
+    const { dirs, note, bad } = await listDirs(ctx, dir);
+    const parent = await parentDir(ctx, dir);
     const up = parent && parent !== dir ? () => go(parent) : undefined;
-    const name = (x) => x.path.replace(/[\\/]+$/, '');
     menu.show(anchor, {
       title: show(dir),
       below,
       back: up,
-      note: why || note || (items.length ? '' : t('folders.empty')),
+      note: why || note || (dirs.length ? '' : t('folders.empty')),
       rows: [
         ...(up ? [{ title: t('folders.up'), icon: 'arrow-up', pick: up }] : []),
-        ...items.sort((a, b) => name(a).localeCompare(name(b))).map((x) => ({ title: name(x), icon: 'folder', pick: () => go(x.full) })),
+        ...dirs.map((x) => ({ title: x.name, icon: 'folder', pick: () => go(x.full) })),
       ],
       foot: [button(t('folders.cancel'), false, () => menu.close()), button(t('folders.choose'), true, () => { menu.close(); done(dir); }, bad)],
     });

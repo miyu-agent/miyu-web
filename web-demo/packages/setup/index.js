@@ -13,7 +13,9 @@ import { Menu } from './menu.js';
 import { personaName, presetName, presetTokens, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, lastChoice, pickable } from './model.js';
 import { Catalog } from './catalog.js';
 import { ListPage, problemText } from './page.js';
-import { browse } from './folders.js';
+import { browse, listDirs, parentDir } from './folders.js';
+import { openOptions } from './options.js';
+import { touchFirst } from '../../src/lib/touch.js';
 import { PersonaStep, PresetStep } from './welcome.js';
 import { ThemeStep } from './theme-step.js';
 import { editPersona, editPreset } from './quick-edit.js';
@@ -34,7 +36,9 @@ export function apply(ctx) {
   const personaBtn = h('button.setup-btn', { type: 'button', onclick: () => openPersonas() });
   const presetBtn = h('button.setup-btn', { type: 'button', onclick: () => openPresets() });
   const workBtn = h('button.setup-btn', { type: 'button', onclick: () => openWorkspaces(workBtn, false) });
-  const row = h('div.setup-row', { hidden: true }, personaBtn, presetBtn, workBtn, menu.el);
+  // 窄屏（手机）上三个合成一个「选项」，点开一张卡片三项各选（W-1208，主人 38）；宽屏不露它（`style.css`）
+  const optsBtn = h('button.setup-btn.setup-opts', { type: 'button', 'aria-haspopup': 'dialog', onclick: () => { menu.close(); openOptions(optionDeps()); } });
+  const row = h('div.setup-row', { hidden: true }, personaBtn, presetBtn, workBtn, optsBtn, menu.el);
   const infoMenu = new Menu(t('info.back'));
   const info = h('div.setup-info', { hidden: true });
   // 整理会话左上角标题外面、紧挨着左边的「<」（2026-10-22 项目主人：同网页常用的返回；原来是标题块里面的箭头）
@@ -190,11 +194,15 @@ export function apply(ctx) {
       replace(workBtn, icon('folder'), h('span', workLabel));
       workBtn.classList.toggle('is-set', !!draft.cwd);
       workBtn.title = tilde(draft.cwd ?? chat.defaultWorkdir(), home());
+      // 「选项」：下面一行小字写现在的人格（没读到人格列表的只写「选项」）
+      replace(optsBtn, icon('sliders-horizontal'), h('span.setup-opts-text', h('span', t('options.title')),
+        catalog.personas ? h('small', personaLabel(draft.persona === false ? null : used?.persona ?? null)) : null));
       // 没选、默认的又用不了：锁住输入框（第 2 条）。预设一定要有（Y12）；人格可以没有，只有算出来的默认人格文件写错了才锁
       const needPreset = !!catalog.presets && draft.preset == null && !defaultUsable(catalog.presets, used?.preset ?? null, 'preset');
       const needPersona = !!catalog.personas && draft.persona == null && !!used?.persona && !defaultUsable(catalog.personas, used.persona);
       presetBtn.classList.toggle('is-need', needPreset);
       personaBtn.classList.toggle('is-need', needPersona);
+      optsBtn.classList.toggle('is-need', needPreset || needPersona);
       ctx.composer.lock(needPreset ? t('locked_preset') : needPersona ? t('locked') : null);
       if (inProject && !needPreset && !needPersona) {
         row.hidden = true;
@@ -259,7 +267,12 @@ export function apply(ctx) {
   /** @param {HTMLElement} anchor @param {string} session @param {string|null} persona @param {string|null} preset @param {string} path */
   const showInfo = (anchor, session, persona, preset, path) => {
     const back = () => showInfo(anchor, session, persona, preset, path);
-    const browseHere = () => browse(ctx, infoMenu, anchor, true, chat.workdir(), pickDir, (p) => tilde(p, home()));
+    // 手机上（主要指针是手指）换工作区开手机那一张（大块的行、能手输路径），不开贴着标题弹的小菜单（W-1208）
+    const browseHere = () => {
+      if (!touchFirst()) return browse(ctx, infoMenu, anchor, true, chat.workdir(), pickDir, (p) => tilde(p, home()));
+      infoMenu.close();
+      openOptions(optionDeps(), { workspace: true });
+    };
     infoMenu.show(anchor, {
       title: '',
       below: true,
@@ -514,6 +527,41 @@ export function apply(ctx) {
       ],
     });
   };
+
+  /** 人格写给人看的名字（无人格的写「无人格」） @param {string|null} id */
+  const personaLabel = (id) => (id ? nameOf(id) : t('no_persona'));
+  /** 「选项」卡片要的（`options.js`）：照空会话现在选的、默认的写；选了照按钮那几个菜单一样改草稿 @returns {import('./options.js').Deps} */
+  const optionDeps = () => ({
+    t,
+    personas: !!catalog.personas,
+    presets: !!catalog.presets,
+    persona: () => personaLabel(chat.draft().persona === false ? null : inUse().persona ?? null),
+    preset: () => presetNameOf(chat.draft().preset ?? inUse().preset ?? null) || t('choose_preset'),
+    workspace: () => {
+      const cwd = chat.current() ? chat.workdir() : chat.draft().cwd ?? chat.defaultWorkdir();
+      return cwd === chat.defaultWorkdir() ? t('default_workspace') : dirName(tilde(cwd, home()));
+    },
+    personaRows: () => personaRows(inUse().persona ?? null, (p) => chat.setDraft({ persona: p ?? false })),
+    presetRows: () => presetRows(inUse().preset ?? null, (p) => chat.setDraft({ preset: p })),
+    workspaces: () => {
+      const def = chat.defaultWorkdir();
+      const own = chat.current() ? chat.defaultWorkdirOf?.(chat.current()) ?? null : null;
+      const now = chat.current() ? chat.workdir() : chat.draft().cwd ?? def;
+      return [
+        { path: def, title: t('default_workspace'), desc: tilde(own ?? def, home()), current: now === def || (!!own && now === own) },
+        ...recent().filter((p) => p !== def && p !== own).map((p) => ({ path: p, title: dirName(tilde(p, home())), desc: tilde(p, home()), current: now === p })),
+      ];
+    },
+    now: () => (chat.current() ? chat.workdir() : chat.draft().cwd ?? chat.defaultWorkdir()),
+    use,
+    readPath,
+    show: (p) => tilde(p, home()),
+    list: async (dir) => {
+      const got = await listDirs(ctx, dir);
+      return got.note || got.bad || got.dirs.length ? got : { ...got, note: t('folders.empty') };
+    },
+    parent: (dir) => parentDir(ctx, dir),
+  });
 
   ctx.slots.mount('composer.above', { id: 'setup', order: 90, render: () => row });
   // 设置页：「人格」「预设」两页；通用页的「默认人格」「默认预设」照列表给下拉的选项（只有一个也列，2026-10-07 项目主人）

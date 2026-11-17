@@ -277,6 +277,7 @@
         "life_context_hint": "空着用出厂的 {n}",
         "life_context_bad": "要写一个正整数（token）"
       },
+      "options": {"title": "选项", "close": "关闭", "back": "返回", "persona": "人格", "preset": "预设", "workspace": "工作区", "path": "路径", "path_hint": "绝对路径，如 ~/code", "use": "使用", "browse": "浏览文件夹"},
       "folders": {
         "open": "选择文件夹…",
         "open_short": "选择文件夹",
@@ -521,6 +522,7 @@
         "life_context_hint": "Empty uses the default {n}",
         "life_context_bad": "Enter a positive whole number (tokens)"
       },
+      "options": {"title": "Options", "close": "Close", "back": "Back", "persona": "Persona", "preset": "Preset", "workspace": "Workspace", "path": "Path", "path_hint": "Absolute path, e.g. ~/code", "use": "Use", "browse": "Browse folders"},
       "folders": {
         "open": "Select folder…",
         "open_short": "Select folder",
@@ -765,6 +767,7 @@
         "life_context_hint": "空なら既定の {n}",
         "life_context_bad": "正の整数（トークン数）を入れてください"
       },
+      "options": {"title": "オプション", "close": "閉じる", "back": "戻る", "persona": "人格", "preset": "プリセット", "workspace": "ワークスペース", "path": "パス", "path_hint": "絶対パス（例：~/code）", "use": "使用", "browse": "フォルダを参照"},
       "folders": {
         "open": "フォルダを選ぶ…",
         "open_short": "フォルダを選ぶ",
