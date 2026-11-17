@@ -13,7 +13,7 @@ const SETTLE_MS = 400;
 
 import { h } from '../../src/lib/dom.js';
 import { combine } from '../../src/lib/anchors.js';
-import { nowOf, endedOf, surfaceOf, characterOf, DENIRO } from './model.js';
+import { nowOf, endedOf, surfaceOf, characterOf, laneTarget, standable, DENIRO } from './model.js';
 import { NARROW, scaleOf, laneOf, narrowOf, setLane } from '../../src/lib/lane.js';
 
 /** @param {any} ctx */
@@ -57,7 +57,7 @@ export function apply(ctx) {
     const box = document.querySelector(composerSel);
     const shown = (/** @type {Element} */ el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
     const menuSel = pick('menu');
-    const floats = box && menuSel ? [...box.querySelectorAll(menuSel)].filter(shown).map((el) => el.getBoundingClientRect()) : [];
+    const floats = box && menuSel ? [...box.querySelectorAll(menuSel)].filter((el) => standable(el) && shown(el)).map((el) => el.getBoundingClientRect()) : [];
     const table = combine(anchors?.anchors ?? [], [], ctx.skin?.anchors?.() ?? null);
     const off = (/** @type {string} */ id) => table.find((a) => a.id === id) ?? {};
     return surfaceOf(box && shown(box) && !covered(box) ? box.getBoundingClientRect() : null, floats, { composer: off('composer'), floats: off('composer.floats') });
@@ -188,8 +188,7 @@ export function apply(ctx) {
     if (!drawn) { setLane('character', 0); return; }
     const box = document.querySelector('.composer')?.getBoundingClientRect();
     if (!s || !box || Math.abs(s.right - box.right) > 40 || Math.abs(s.top - box.top) > 40) return;
-    const root = drawn.el instanceof Element ? drawn.el : null;
-    const inner = root?.firstElementChild ?? root;
+    const inner = laneTarget(drawn.el instanceof Element ? drawn.el : null);
     if (!inner) return;
     const r = inner.getBoundingClientRect();
     if (r.width > 0) setLane('character', laneOf(r, box.right, narrowOf(ctx.config.narrow).gap));

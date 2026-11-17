@@ -64,3 +64,20 @@ export function characterOf(raw) {
   if (typeof raw !== 'string') return '';
   return raw === 'miyu' ? DENIRO : raw;
 }
+
+/**
+ * 框上面那一行让位时量角色的哪一块（`index.js` 的 `measureLane`）：角色交回的根元素里面那一层（缩过的、看得见的那一块）；根上写着
+ * `data-away`（被拖走、掉在别处，W-1209）的不量，照上一回在家时量的让。没画的也不量。
+ * @param {Element|null} root @returns {Element|null}
+ */
+export function laneTarget(root) {
+  if (!root || root.hasAttribute('data-away')) return null;
+  return root.firstElementChild ?? root;
+}
+
+/**
+ * 弹出的列表算不算台面：正在收的（`is-leaving`，退场动画还在缩）、藏着的不算（同 Deniro 的落脚点，`mascot/anchors.js`），列表一收角色当场
+ * 照重力掉下来，不跟着退场动画一点一点往下挪（W-1209，主人 33：「菜单消失它掉下来」）。
+ * @param {Element} el @returns {boolean}
+ */
+export const standable = (el) => !el.closest('.is-leaving, [hidden]');

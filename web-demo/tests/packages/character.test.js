@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { nowOf, endedOf, surfaceOf, characterOf, DENIRO, FLOAT_MIN } from '../../packages/character/model.js';
+import { nowOf, endedOf, surfaceOf, characterOf, laneTarget, standable, DENIRO, FLOAT_MIN } from '../../packages/character/model.js';
 
 test('这一刻在做什么：没在跑 idle；等人 waiting；压缩 compacting；照 doing 分想、写、工具，派子代理的工具算 subagent', () => {
   assert.equal(nowOf(null), 'idle');
@@ -54,4 +54,21 @@ test('吉祥物改名 deniro（2026-11-10 项目主人）：设置里改名以�
   assert.equal(characterOf(''), '');
   assert.equal(characterOf(undefined), '');
   assert.equal(characterOf(null), '');
+});
+
+test('框上面那一行让位量哪一块（W-1209，主人 33：螃蟹、小鲸鱼能拖走了）：量根里面那一层；根上写着 data-away 的不量，照上一回在家时的', () => {
+  const inner = { id: 'inner' };
+  const root = (/** @type {boolean} */ away) => /** @type {any} */ ({ firstElementChild: inner, hasAttribute: (/** @type {string} */ k) => away && k === 'data-away' });
+  assert.equal(laneTarget(root(false)), inner);
+  assert.equal(laneTarget(root(true)), null, '被拖走了、掉在地上');
+  assert.equal(laneTarget(null), null);
+  const bare = /** @type {any} */ ({ firstElementChild: null, hasAttribute: () => false });
+  assert.equal(laneTarget(bare), bare, '没有里面那一层的量它自己');
+});
+
+test('弹出的列表正在收（is-leaving）、藏着的不算台面（W-1209）：一收就掉下来，不跟着退场动画往下挪', () => {
+  const el = (/** @type {string|null} */ hit) => /** @type {any} */ ({ closest: (/** @type {string} */ sel) => (hit && sel.includes(hit) ? {} : null) });
+  assert.equal(standable(el(null)), true);
+  assert.equal(standable(el('.is-leaving')), false);
+  assert.equal(standable(el('[hidden]')), false);
 });
