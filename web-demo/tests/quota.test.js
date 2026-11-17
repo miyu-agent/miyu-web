@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { quotaRows, percentText, resetText, QUOTA_WARN } from '../src/lib/quota.js';
+import { quotaRows, quotaTitle, percentText, resetText, QUOTA_WARN } from '../src/lib/quota.js';
 
 const zh = JSON.parse(readFileSync(new URL('../resources/text/zh.json', import.meta.url), 'utf8'));
 const t = (/** @type {string} */ path, /** @type {any} */ fields = {}) => {
@@ -43,6 +43,12 @@ test('没额度的（{}、null、坏的）不画；百分比带小数留一位�
 test('三种语言都有额度的字', () => {
   for (const lang of ['zh', 'en', 'ja']) {
     const q = JSON.parse(readFileSync(new URL(`../resources/text/${lang}.json`, import.meta.url), 'utf8')).context_pop.quota;
-    for (const k of ['title', 'in_hours', 'in_minutes', 'at']) assert.equal(typeof q?.[k], 'string', `${lang} ${k}`);
+    for (const k of ['title', 'go_title', 'in_hours', 'in_minutes', 'at']) assert.equal(typeof q?.[k], 'string', `${lang} ${k}`);
   }
+});
+
+test('有窗口的（现在只有 opencode Go）那一段的头写「Opencode GO 额度情况」，只有余额的照旧写「额度」（2026-11-17 主人，W-1206）', () => {
+  const go = quotaRows({ windows: [{ id: 'rolling', label: '5 小时', percent: 4, resets_at: at(H) }] }, now, t);
+  assert.equal(quotaTitle(go, t), 'Opencode GO 额度情况');
+  assert.equal(quotaTitle([], t), '额度');
 });

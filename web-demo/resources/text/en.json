@@ -567,7 +567,7 @@
       "other": "Other"
     },
     "open_usage": "Open in Usage",
-    "quota": {"title": "Quota", "in_hours": "resets in {n} h", "in_minutes": "resets in {n} min", "at": "resets {month}/{day} {time}", "balance": "Balance {amount}", "balance_granted": "incl. {amount} granted", "balance_exhausted": "Balance exhausted"}
+    "quota": {"title": "Quota", "go_title": "Opencode GO quota", "in_hours": "resets in {n} h", "in_minutes": "resets in {n} min", "at": "resets {month}/{day} {time}", "balance": "DeepSeek balance: {amount}", "balance_granted": "granted {amount}", "balance_exhausted": "DeepSeek balance exhausted"}
   },
   "model_menu": {
     "fixed_pools": { "flagship": "Flagship pool", "normal": "Everyday pool", "lite": "Lite pool" },

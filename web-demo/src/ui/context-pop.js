@@ -9,7 +9,7 @@ import { show, hide, unfold } from '../lib/motion.js';
 import { t } from '../util/res.js';
 import { short, money } from '../lib/format.js';
 import { costText, ratesOf, rateName } from '../lib/cost.js';
-import { quotaRows, percentText } from '../lib/quota.js';
+import { quotaRows, quotaTitle, percentText } from '../lib/quota.js';
 import { balanceRows } from '../lib/balance.js';
 import { scaledParts, bar, share, toneOf, useRows, USE_TONES, costOf, partsMinus, usageSum, kindParts, costKinds, inputOf, KINDS, fitsBelow } from '../lib/context.js';
 
@@ -189,24 +189,23 @@ export class ContextPop {
   }
 
   /**
-   * 额度那一段（核心 QU-1，2026-11-14 主人定）：头一行「额度」，下面一行一个窗口：名字、圆角带底色的条、百分比、多久后重置；
-   * 80% 起黄、满了红。用 DeepSeek 官方供应商的（核心 QU-2，2026-11-16 主人定）同一段里一种币一行「余额 ¥12.34」，有赠送的暗字
-   * 「含赠送 ¥2.00」，不能用的整行红，不画条。窗口、余额都没有的（不是这两家、查不到）整段不出。
+   * 额度那一段（核心 QU-1，2026-11-14 主人定）：头一行「Opencode GO 额度情况」（有窗口的；只有余额的写「额度」，W-1206），下面一行
+   * 一个窗口：名字、圆角带底色的条、百分比、多久后重置；80% 起黄、满了红。用 DeepSeek 官方供应商的（核心 QU-2）同一段里一行
+   * 「DeepSeek 余额：$x + ¥y + 赠送 ¥z」（2026-11-17 主人照官网定，W-1206），不能用的整行红，不画条。窗口、余额都没有的（不是这两家、
+   * 查不到）整段不出。
    * @param {any} quota `session.quota` 的回应
    */
   quotaView(quota) {
     const rows = quotaRows(quota, new Date(), t);
     const balance = balanceRows(quota, t);
     if (!rows.length && !balance.length) return null;
-    return this.section('quota', { head: [h('strong.ctx-pop-title', t('context_pop.quota.title'))], body: null, more: h('div.ctx-quota',
+    return this.section('quota', { head: [h('strong.ctx-pop-title', quotaTitle(rows, t))], body: null, more: h('div.ctx-quota',
       rows.map((r) => h(`div.ctx-quota-row.is-${r.tone}`,
         h('span.ctx-quota-name', r.label),
         h('span.ctx-quota-bar', h('span.ctx-quota-fill', { style: `width: ${Math.min(100, Math.max(0, r.percent))}%` })),
         h('span.ctx-quota-pct', percentText(r.percent)),
         h('span.ctx-quota-reset', r.reset ?? ''))),
-      balance.map((b) => h(`div.ctx-balance-row${b.out ? '.is-out' : ''}`,
-        h('span.ctx-balance-amount', b.text),
-        b.granted ? h('span.ctx-balance-granted', b.granted) : null))) });
+      balance.map((b) => h(`div.ctx-balance-row${b.out ? '.is-out' : ''}`, h('span.ctx-balance-amount', b.text)))) });
   }
 
   /** 核心不支持的那一段：头一行加一行暗字 @param {string} title */

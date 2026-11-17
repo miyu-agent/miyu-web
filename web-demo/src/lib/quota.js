@@ -28,6 +28,13 @@ export function quotaRows(reply, now, t) {
     }));
 }
 
+/**
+ * 额度那一段的头：有窗口的（核心说现在只有 opencode Go 有窗口）写「Opencode GO 额度情况」，只有余额的照旧写「额度」（余额那一行自己写着
+ * 「DeepSeek 余额：」；2026-11-17 主人，W-1206）。
+ * @param {QuotaRow[]} rows @param {(key: string, fields?: Record<string, any>) => string} t
+ */
+export const quotaTitle = (rows, t) => t(rows.length ? 'context_pop.quota.go_title' : 'context_pop.quota.title');
+
 /** 百分比的写法：整数照写，带小数的留一位（`4%`、`4.3%`）。 @param {number} p */
 export const percentText = (p) => `${Number.isInteger(p) ? p : Math.round(p * 10) / 10}%`;
 

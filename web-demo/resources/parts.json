@@ -3626,21 +3626,15 @@
     ]
   },
   "context.balance-row": {
-    "zh": "额度：余额一种币那一行（官方说不能用的带 is-out）",
+    "zh": "额度：余额那一行（官方说不能用的带 is-out）",
     "select": [
       ".ctx-balance-row"
     ]
   },
   "context.balance-amount": {
-    "zh": "额度：「余额 ¥12.34」",
+    "zh": "额度：「DeepSeek 余额：$5.00 + ¥3.12 + 赠送 ¥2.00」",
     "select": [
       ".ctx-balance-amount"
-    ]
-  },
-  "context.balance-granted": {
-    "zh": "额度：「含赠送 ¥2.00」暗字",
-    "select": [
-      ".ctx-balance-granted"
     ]
   },
   "context.pop-foot": {
