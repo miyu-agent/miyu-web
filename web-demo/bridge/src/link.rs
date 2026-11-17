@@ -4,6 +4,7 @@
 //! `hello` 里塞上本机令牌。别的都是核心答：读历史用核心的订阅补发，家目录、工作区在握手回应的 `host` 里、真实位置问
 //! `fs.realpath`（核心施工 W-3，原来桥答 `web.info`、`web.realpath`）。
 
+use std::ffi::OsString;
 use std::process::Command;
 use std::sync::Arc;
 
@@ -121,26 +122,41 @@ pub(crate) type Connected = (miyu_client::connect::Connection, String);
 const CORE_GONE: &str = "\u{0}core-gone";
 
 /// 找数据根、连核心：给了 `MIYU_CORE_BIN` 的，没在跑就拉起来；没给的只连（照 TUI 演示和 `miyu ask`）。
+///
+/// # Errors
+///
+/// 找不到、建不了数据根，连不上、拉不起核心：交回给人看的那一句，照这台机器的语言（核心 EN-1、EN-2，`said.rs`）。
 pub(crate) async fn connect() -> Result<Connected, String> {
-    let env = Env::current();
-    let root = DataRoot::locate(&env).map_err(|e| format!("找不到数据根：{e}"))?;
-    root.prepare().map_err(|e| format!("建不了数据根：{e}"))?;
-    let connected = match std::env::var_os("MIYU_CORE_BIN") {
+    let language = crate::said::language(&miyu_client::open::locale());
+    connect_in(&Env::current(), language, std::env::var_os("MIYU_CORE_BIN")).await
+}
+
+/// 照 `env` 找数据根、连核心，拉起核心用 `bin`（没给的只连）；出错的话照 `language` 说。
+async fn connect_in(env: &Env, language: &str, bin: Option<OsString>) -> Result<Connected, String> {
+    let spoken =
+        |said, error: &dyn std::fmt::Display| crate::said::spoken(env, language, said, error);
+    let root = DataRoot::locate(env).map_err(|e| spoken(Some(e.said()), &e))?;
+    root.prepare().map_err(|e| spoken(e.said(), &e))?;
+    let connected = match bin {
         Some(bin) => miyu_client::connect::connect_or_start(&root, move || {
-            let mut core = Command::new(bin);
+            let mut core = Command::new(&bin);
             core.arg("core");
             core
         })
         .await
-        .map_err(|e| format!("拉不起核心：{e}"))?,
+        .map_err(|e| spoken(e.said(), &e))?,
         None => miyu_client::connect::connect(&root)
             .await
             .map_err(|e| match e {
+                // 桥自己的话：开发时怎么起桥
                 miyu_client::connect::ConnectError::NotRunning => {
                     "核心没在跑：启动桥时设 MIYU_CORE_BIN 指向重制版的 miyu".to_string()
                 }
-                e => format!("连不上核心：{e}"),
+                e => spoken(e.said(), &e),
             })?,
     };
     Ok(connected)
 }
+
+#[cfg(test)]
+mod tests;
