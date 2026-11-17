@@ -4,6 +4,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { filterModels } from './model.js';
+import { focusOnOpen } from '../../src/lib/touch.js';
 
 /**
  * @param {any} dialog
@@ -62,7 +63,7 @@ export function pickModels(dialog, anchor, rows, done) {
   el.style.top = `${(at.bottom - box.top) / scale + 6}px`;
   if (el.getBoundingClientRect().bottom > box.bottom - 8) el.style.top = `${Math.max(12, (at.top - box.top) / scale - el.offsetHeight - 6)}px`;
   document.addEventListener('pointerdown', outside, true);
-  search.focus();
+  focusOnOpen(search);
   return el;
 }
 

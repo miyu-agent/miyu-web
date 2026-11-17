@@ -10,6 +10,7 @@ import { show, hide, span, cubicBezier, parseBezier, snapToPixels } from '../lib
 import { res, t } from '../util/res.js';
 import { menuOf, filterRows, effortRows, effortLabel } from '../model/model-menu.js';
 import { logoEl } from '../lib/logo.js';
+import { focusOnOpen } from '../lib/touch.js';
 
 /**
  * @typedef {import('../model/model-menu.js').Row} Row
@@ -189,7 +190,7 @@ export class ModelMenu {
     this.page = page;
     this.draw();
     this.mark(Math.max(0, this.rows.findIndex((r) => r.row.current)), true);
-    if (!this.searchEl.hidden) this.searchInput.focus({ preventScroll: true });
+    if (!this.searchEl.hidden) focusOnOpen(this.searchInput, { preventScroll: true });
   }
 
   /** 筛过以后选中第一个能选的。 */

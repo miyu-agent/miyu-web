@@ -8,6 +8,7 @@ import { h, icon } from '../../src/lib/dom.js';
 import { logoEl } from '../../src/lib/logo.js';
 import { filterModels, providerName, sameNamed, whereOf } from './model.js';
 import { modelName, metaOf, sharedState } from './model-bits.js';
+import { focusOnOpen } from '../../src/lib/touch.js';
 
 /**
  * @param {any} dialog
@@ -77,6 +78,6 @@ export function pickModel(dialog, anchor, groups, current, done) {
   document.addEventListener('pointerdown', outside, true);
   // 现在选的那一行滚进来
   list.querySelector('.set-pick-row.is-on')?.scrollIntoView({ block: 'center' });
-  search.focus();
+  focusOnOpen(search);
   return el;
 }

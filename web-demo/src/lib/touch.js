@@ -216,3 +216,20 @@ export function legacyCopy(text, doc) {
   active?.focus?.({ preventScroll: true });
   return ok;
 }
+
+/**
+ * 主要指针是手指（`pointer: coarse`，同输入框的小提示 W-1082）。没有 `matchMedia` 的（测试）当不是。
+ * @param {any} [env] 有 `matchMedia` 的（默认这一页）
+ */
+export const touchFirst = (env = globalThis) => typeof env.matchMedia === 'function' && !!env.matchMedia('(pointer: coarse)').matches;
+
+/**
+ * 打开页面、菜单时把光标放进它的输入框（搜索框）：手机上不放，点了才进——不然一点开就弹输入法、盖住半屏（W-1208，2026-11-17 主人 36）。
+ * 桌面照旧。交回放没放。
+ * @param {{focus: (o?: FocusOptions) => void}|null|undefined} el @param {FocusOptions} [opts] @param {any} [env]
+ */
+export function focusOnOpen(el, opts, env = globalThis) {
+  if (!el || touchFirst(env)) return false;
+  el.focus(opts);
+  return true;
+}

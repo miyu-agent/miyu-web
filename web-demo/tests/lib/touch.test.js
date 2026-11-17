@@ -89,3 +89,27 @@ test('写剪贴板：接口拒了的也试老办法；两条路都不行的抛 u
   await assert.rejects(writeText('己', { navigator: undefined, document: undefined }), (/** @type {any} */ e) => e.reason === 'unsupported');
   assert.equal(legacyCopy('庚', null), false);
 });
+
+test('打开页面、菜单时放光标：手机（pointer: coarse）上不放、不弹输入法，桌面照旧（W-1208，主人 36）', async () => {
+  const { focusOnOpen, touchFirst } = await import('../../src/lib/touch.js');
+  const env = (/** @type {boolean} */ coarse) => ({ matchMedia: (/** @type {string} */ q) => ({ matches: coarse && q === '(pointer: coarse)' }) });
+  let n = 0;
+  const box = { focus: () => { n += 1; } };
+  assert.equal(focusOnOpen(box, undefined, env(true)), false);
+  assert.equal(n, 0, '手机上不放');
+  assert.equal(focusOnOpen(box, undefined, env(false)), true);
+  assert.equal(n, 1, '桌面照旧');
+  assert.equal(focusOnOpen(null, undefined, env(false)), false);
+  assert.equal(touchFirst({}), false, '没有 matchMedia 的当不是触屏');
+});
+
+test('一打开就放光标的几个搜索框都走 focusOnOpen（设置页、全部会话、选项菜单、选模型）', async () => {
+  const { readFileSync } = await import('node:fs');
+  const root = new URL('../../', import.meta.url);
+  const files = ['packages/settings/dialog.js', 'src/ui/sessions-page.js', 'packages/settings/model-pick.js', 'packages/settings/picker.js', 'packages/settings/rows.js', 'src/ui/model-menu.js'];
+  for (const f of files) {
+    const src = readFileSync(new URL(f, root), 'utf8');
+    assert.doesNotMatch(src, /\b(search|searchInput|find)\??\.focus\(/, `${f} 直接放光标`);
+    assert.match(src, /focusOnOpen\(/, f);
+  }
+});

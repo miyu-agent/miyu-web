@@ -8,6 +8,7 @@ import { envRef, inputText, listElement, LAYER, writtenIn, secretName, reference
 import { slider } from './slider.js';
 import { records } from './records.js';
 import { switchOrigin } from './pkg-enabled.js';
+import { focusOnOpen } from '../../src/lib/touch.js';
 
 /**
  * 一组：组名，下面一行行。
@@ -429,7 +430,7 @@ export function menu(dialog, anchor, options, value, pick) {
   // 下面放不下往上开
   if (el.getBoundingClientRect().bottom > box.bottom - 8) el.style.top = `${(at.top - box.top) / scale - el.offsetHeight - 4}px`;
   document.addEventListener('pointerdown', outside, true);
-  find?.focus();
+  focusOnOpen(find);
   return el;
 }
 

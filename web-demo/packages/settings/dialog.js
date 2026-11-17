@@ -7,7 +7,7 @@ import { BackHistory } from './back-history.js';
 import { drawMarket, marketPush } from './market.js';
 import { accessGroup, avatarGroup, relisten, LISTEN_KEYS } from './account.js';
 import { leave } from '../../src/lib/motion.js';
-import { keepTypingVisible } from '../../src/lib/touch.js';
+import { keepTypingVisible, focusOnOpen } from '../../src/lib/touch.js';
 import { buildPages, search, pagesWithErrors, LAYER, expectFor, navGroups, pkgMatch, pkgWords, ownerOf, headless, needsRestart } from './model.js';
 import { coreRow, groupBlock, banner, toggle } from './rows.js';
 import { drawLook } from './look.js';
@@ -110,7 +110,8 @@ export class SettingsDialog {
     this.ctx.core.onPush(this.onPush);
     this.current = page ?? lastPage;
     this.body.replaceChildren(h('p.set-empty', this.ctx.text('loading')));
-    this.search.focus();
+    // 手机上不点进搜索框（不弹输入法），点了才进（W-1208）
+    focusOnOpen(this.search);
     try {
       await this.load();
     } catch (err) {

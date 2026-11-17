@@ -20,6 +20,7 @@ import { short, contextPercent } from '../lib/format.js';
 import { filterRows, groupRows, timeOf } from '../model/session-filter.js';
 import { ARCHIVE_GROUP } from '../model/session.js';
 import { projectCards, projectView } from './projects-page.js';
+import { focusOnOpen } from '../lib/touch.js';
 
 /**
  * @typedef {import('../model/session-filter.js').Row} Row
@@ -102,7 +103,7 @@ export class SessionsPage {
     document.addEventListener('keydown', this.onKey);
     this.draw();
     this.el.scrollTop = 0;
-    if (this.view === 'sessions') this.search.focus();
+    if (this.view === 'sessions') focusOnOpen(this.search);
   }
 
   /** 进一个项目的页（左栏项目的菜单「打开项目」、对话区顶上那一段项目名）。 @param {string} id */
