@@ -184,7 +184,7 @@ export class ContextPop {
       this.section('context', this.contextView(this.data.context, info)),
       usage === null ? null : this.section('tokens', usage === false ? this.unsupported(t('usage_cell.tokens')) : this.tokensView(usage)),
       usage === null ? null : this.section('cost', this.costView(info.status, usage || null)),
-      this.quotaView(this.data.quota, info.provider ?? null),
+      this.quotaView(this.data.quota),
       usage ? this.foot(usage) : null);
   }
 
@@ -193,15 +193,15 @@ export class ContextPop {
    * 一个窗口：名字、圆角带底色的条、百分比、多久后重置；80% 起黄、满了红。用 DeepSeek 官方供应商的（核心 QU-2）同一段里一行
    * 「{供应商} 余额：$x + ¥y + 赠送 ¥z」（2026-11-17 主人照官网定，W-1206），不能用的整行红，不画条。窗口、余额都没有的（不是这两家、
    * 查不到）整段不出。
-   * 哪一家照会话这一刻的供应商的显示名写（`provider`，W-1206 第 36 条）；几行排成一张网格，名字、条、百分比、重置各成一列，条一样长，
+   * 哪一家照回应的 `provider` 写（核心 QU-3，W-1210）；几行排成一张网格，名字、条、百分比、重置各成一列，条一样长，
    * 和头一行的字左边对齐（同一条）。
-   * @param {any} quota `session.quota` 的回应 @param {string|null} provider
+   * @param {any} quota `session.quota` 的回应
    */
-  quotaView(quota, provider) {
+  quotaView(quota) {
     const rows = quotaRows(quota, new Date(), t);
-    const balance = balanceRows(quota, t, provider);
+    const balance = balanceRows(quota, t);
     if (!rows.length && !balance.length) return null;
-    return this.section('quota', { head: [h('strong.ctx-pop-title', quotaTitle(rows, t, provider))], body: null, more: h('div.ctx-quota',
+    return this.section('quota', { head: [h('strong.ctx-pop-title', quotaTitle(rows, t, quota))], body: null, more: h('div.ctx-quota',
       rows.map((r) => h(`div.ctx-quota-row.is-${r.tone}`,
         h('span.ctx-quota-name', r.label),
         h('span.ctx-quota-bar', h('span.ctx-quota-fill', { style: `width: ${Math.min(100, Math.max(0, r.percent))}%` })),

@@ -130,15 +130,13 @@ export class Composer {
     this.status = h('span.footer-status');
     this.middle = h('span.footer-middle');
     /** 上下文、累计那两格点了开的浮窗（蓝图「上下文明细、累计按用途」） */
-    this.contextPop = new ContextPop({ session: on.session, preview: on.preview, request: on.request, openUsage: on.openUsage, status: () => ({ ring: this.ring, status: this.sessionStatus, provider: this.provider }), compact: on.compact });
+    this.contextPop = new ContextPop({ session: on.session, preview: on.preview, request: on.request, openUsage: on.openUsage, status: () => ({ ring: this.ring, status: this.sessionStatus }), compact: on.compact });
     /** 「压缩」按钮（卡住的时候，同 `/compact`） */
     this.compact = on.compact;
     /** 用量那一格的环（`statusFooter` 交的） @type {import('../model/footer.js').Ring|null} */
     this.ring = null;
     /** 会话状态（明细里的已压缩、缓存断裂、花费照它） @type {any} */
     this.sessionStatus = null;
-    /** 会话这一刻的供应商的显示名（额度、余额写是哪一家） @type {string|null} */
-    this.provider = null;
     this.footer = h('div.composer-footer', this.left, this.middle, h('span.footer-end', this.status, this.right), this.modelMenu.el, this.contextPop.el);
     // 从命令列表里点的、选中回车的：记成 `/名字`
     this.menu = new CommandList({
@@ -1078,7 +1076,6 @@ export class Composer {
     this.parts = f.right;
     this.ring = f.ring ?? null;
     this.sessionStatus = f.status ?? null;
-    this.provider = f.provider ?? null;
     this.drawRight();
     this.freshTips();
   }

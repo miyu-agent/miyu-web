@@ -48,9 +48,10 @@ test('三种语言都有额度的字', () => {
 });
 
 test('有窗口的（现在只有 opencode Go）那一段的头写「Opencode GO 额度情况」，只有余额的照旧写「额度」（2026-11-17 主人，W-1206）', () => {
-  const go = quotaRows({ windows: [{ id: 'rolling', label: '5 小时', percent: 4, resets_at: at(H) }] }, now, t);
-  assert.equal(quotaTitle(go, t, 'Opencode GO'), 'Opencode GO 额度情况');
-  assert.equal(quotaTitle([], t, 'DeepSeek'), '额度', '只有余额的：余额那一行自己写着是哪一家');
+  const reply = { provider: { id: 'go', name: 'Opencode GO' }, windows: [{ id: 'rolling', label: '5 小时', percent: 4, resets_at: at(H) }] };
+  const go = quotaRows(reply, now, t);
+  assert.equal(quotaTitle(go, t, reply), 'Opencode GO 额度情况');
+  assert.equal(quotaTitle([], t, { provider: { id: 'ds', name: 'DeepSeek' }, balance: { available: true, items: [] } }), '额度', '只有余额的：余额那一行自己写着是哪一家');
 });
 
 test('额度那一块对齐成一张网格（2026-11-17 主人验收第 36 条，W-1206）：几行共用列、条一样长，和头一行的字左边对齐', () => {
@@ -65,8 +66,11 @@ test('额度那一块对齐成一张网格（2026-11-17 主人验收第 36 条�
   assert.match(rule('.ctx-balance-row'), /grid-column: 1 \/ -1/, '余额那一行占满整行');
 });
 
-test('额度那一段的头照会话这一刻的供应商的显示名写「X 额度情况」，不写死 Opencode GO；不知道是哪一家的写「额度」（W-1206 第 36 条）', () => {
-  const go = quotaRows({ windows: [{ id: 'rolling', label: '5 小时', percent: 4, resets_at: at(H) }] }, now, t);
-  assert.equal(quotaTitle(go, t, '我的 Go'), '我的 Go 额度情况');
+test('额度那一段的头照回应里的 provider 写（核心 QU-3，W-1210）：不再照记着的模型猜；没带 provider、没有名字的写「额度」', () => {
+  const windows = [{ id: 'rolling', label: '5 小时', percent: 4, resets_at: at(H) }];
+  const go = quotaRows({ windows }, now, t);
+  assert.equal(quotaTitle(go, t, { provider: { id: 'go', name: '我的 Go' }, windows }), '我的 Go 额度情况');
+  assert.equal(quotaTitle(go, t, { windows }), '额度');
+  assert.equal(quotaTitle(go, t, { provider: { id: 'go' }, windows }), '额度');
   assert.equal(quotaTitle(go, t, null), '额度');
 });
