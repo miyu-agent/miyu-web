@@ -126,6 +126,12 @@
       ".sidebar-more-menu"
     ]
   },
+  "sidebar.nav-mark": {
+    "zh": "左栏头上交互区软件包挂的入口：有没看过的东西时名字后面的小圆点",
+    "select": [
+      ".sidebar-nav-mark"
+    ]
+  },
   "schedules.detail-prompt": {
     "zh": "定时任务详情：头一行那句话",
     "select": [

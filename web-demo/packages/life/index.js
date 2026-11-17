@@ -1,13 +1,14 @@
 // @ts-check
 //! 推演人生（软件包 `life`，蓝图 `web.md`「推演人生」第 3 条；核心设计 70）：人生会话不进左栏和全部会话（2026-11-14 项目主人：「和别的
-//! 会话混在一起的话，万一误删了不是很尴尬？」「还记得那个 webui 左侧边栏那个更多吗？可以放那里」）。左栏「更多」（挂载位
-//! `sidebar.more`）挂一项「推演人生」，点了页面正中开一张卡：各人格的人生一个一行（`model.js` 排），点一行打开那个会话、收起卡片。
+//! 会话混在一起的话，万一误删了不是很尴尬？」「还记得那个 webui 左侧边栏那个更多吗？可以放那里」）。左栏头上交互区（挂载位 `sidebar.nav`；
+//! 2026-11-17 项目主人本机验收第 31 条：从「更多」拿出来，和别的主入口同一级，W-1211）挂一项「推演人生」，点了页面正中开一张卡：各人格的人生一个一行
+//! （`model.js` 排），点一行打开那个会话、收起卡片。
 //! 一条都没有的写这是什么、怎么开，给一个按钮去人格设置。卡开着时会话表变了照新的重画、重问 `life.status`。
-//! 停用这个包：「更多」里没有这一项，人生会话照样不进左栏（`/life` 照样能跳过去）。
+//! 停用这个包：左栏没有这一项，人生会话照样不进左栏（`/life` 照样能跳过去）。
 //! 图标是 Lucide 的 `sprout`（嫩芽），在整套图标里（`icons.more`）。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { lifeState } from '../../src/lib/life.js';
+import { isLife, lifeState } from '../../src/lib/life.js';
 import { lifeRows, lifePersonas, wakeText } from './model.js';
 
 /** @param {any} ctx */
@@ -89,5 +90,11 @@ export function apply(ctx) {
     soon = setTimeout(() => { draw(); refresh(); }, 200);
   });
   ctx.effect(() => () => close());
-  ctx.slots.mount('sidebar.more', { id: 'life', label: t('title'), icon: 'sprout', run: () => show() });
+  // 左栏头上交互区的主入口（2026-11-17 项目主人本机验收第 31 条：从「更多」拿出来，W-1211）：看着人生会话时这一行亮着。嫩芽图标在整套图标里，
+  // 读到了叫左栏重画这一行
+  /** @type {Set<() => void>} */
+  const redraw = new Set();
+  const onChange = (/** @type {() => void} */ fn) => { redraw.add(fn); return () => redraw.delete(fn); };
+  Promise.resolve(ctx.icons?.more?.()).then(() => { for (const fn of redraw) fn(); }, () => {});
+  ctx.slots.mount('sidebar.nav', { id: 'life', label: t('title'), icon: 'sprout', run: () => show(), owns: isLife, onChange });
 }

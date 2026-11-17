@@ -332,6 +332,13 @@ export class App {
     ctx.effect(() => mountList(this.sidebar.actions, ctx.slots, 'sidebar.actions', failedSlot));
     // 左上角人格的头像、名字那一块（蓝图「左栏」第 1 条，2026-11-02 外观包要的，项目主人：头像和名字也是主题能改的，可以藏掉）：
     // 有包挂了整块顶替，交 null 是藏掉；拿掉了照原来的画
+    // 左栏头上交互区软件包挂的主入口（W-1211：「推演人生」从「更多」拿出来）：`{id, label, icon?, run, owns?, mark?, onChange?}`，画在「项目」下面
+    ctx.slots.declare('sidebar.nav', 'list');
+    ctx.effect(() => {
+      const sync = () => this.sidebar.navEntries.set(ctx.slots.list('sidebar.nav'));
+      sync();
+      return ctx.slots.watch('sidebar.nav', sync);
+    });
     // 左栏「更多」（W-1071）：软件包挂入口 `{id, label, icon?, run}`，左栏画成菜单
     ctx.slots.declare('sidebar.more', 'list');
     ctx.effect(() => {
@@ -1384,9 +1391,9 @@ export class App {
 
   render() {
     const s = this.current ? this.store.sessions.get(this.current) : null;
-    // 人生会话不进左栏（2026-11-14 项目主人：怕和别的会话混在一起误删）：看着它时「更多」那一行亮着，它在「推演人生」里
+    // 人生会话不进左栏（2026-11-14 项目主人：怕和别的会话混在一起误删）：看着它时「推演人生」那一行亮着（软件包挂的入口照 `owns` 认，W-1211）
     this.sidebar.render(rank(this.store.order.filter((id) => !isLife(this.store.index.get(id))).map((id) => this.store.summary(id))), this.current);
-    this.sidebar.setMoreHere(!!this.current && isLife(this.store.index.get(this.current)));
+    this.sidebar.setHere(this.current ? this.store.index.get(this.current) ?? null : null);
     this.sessionsPage?.refresh();
     this.composer?.sessionList.refresh();
     const path = this.current ? pathOf(this.current, (id) => this.parentOf(id)).map((id) => ({ session: id, title: this.titleOf(id) })) : [];
