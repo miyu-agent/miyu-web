@@ -24,7 +24,7 @@ import { h, icon, replace } from './dom.js';
 import { res, t } from '../util/res.js';
 import { fit, ringTip } from '../model/footer.js';
 import { noStop } from '../lib/format.js';
-import { read } from '../model/commands.js';
+import { read, noticeShape } from '../model/commands.js';
 import { CommandList } from './commands.js';
 import { Picker } from './picker.js';
 import { HelpPanel, StatusPanel } from './help.js';
@@ -40,6 +40,7 @@ import { blockLabel, expand, used, erase, pieces } from '../model/blocks.js';
 import { Recall } from '../model/history.js';
 import { show, hide, span } from '../lib/motion.js';
 import { isNewline, insertNewline } from '../lib/newline.js';
+import { emptyLife } from '../lib/life.js';
 import { stash } from '../model/stash.js';
 import { emptyDesk } from '../model/desk.js';
 import { tipsFor, pickTip } from '../model/tips.js';
@@ -479,6 +480,13 @@ export class Composer {
       if (kind !== 'talk') return;
     }
     if (line.kind === 'later') {
+      // 空会话里光打 `/life`：不用先开会话，外面照 `life.list` 列（快速跳转人生会话，W-1211）
+      if (emptyLife(line) && this.on.emptyLife) {
+        this.remember(text);
+        this.set('');
+        this.on.emptyLife();
+        return;
+      }
       this.say(t('commands.needs_session'));
       return;
     }
@@ -991,13 +999,16 @@ export class Composer {
     this.backdrop.scrollTop = this.input.scrollTop;
   }
 
-  /** 提示：浮在输入框上面的小框，停一会儿；新的顶掉旧的。`good` 的底带一点绿（`tui.md`「提示」）。句末的句号去掉（核心的回执带着）。 */
-  say(text, good = false, hold = false) {
+  /**
+   * 提示：浮在输入框上面的小框，停一会儿；新的顶掉旧的。`good` 的底带一点绿（`tui.md`「提示」）。句末的句号去掉（核心的回执带着）。
+   * `whole` 的整句写全（核心的回执、拒绝的那一句，W-1211）：放不下折行，不在末尾截掉。
+   */
+  say(text, good = false, hold = false, whole = false) {
     // 等框上面那一叠走完过渡再出（2026-10-17 项目主人：有待办时 `/todo clear` 的提示先出在待办上面、待办才收）：回执和跟着它推来的
     // 清单差几毫秒，先等一下让推来的画上，再等正在长出来、收回去的走完，照走完以后的位置放；新的一句顶掉还在等的
     const turn = ++this.noticeTurn;
     clearTimeout(this.noticeTimer);
-    this.settled().then(() => { if (turn === this.noticeTurn) this.showNotice(text, good, hold); });
+    this.settled().then(() => { if (turn === this.noticeTurn) this.showNotice(text, good, hold, whole); });
   }
 
   /** 框上面那一叠（待办、运行状态行这类，框外面、`composer-dock` 里面的）没有正在走的过渡了；最多等 `notice_settle_ms`。 */
@@ -1009,17 +1020,17 @@ export class Composer {
     await Promise.race([Promise.all(moving.map((a) => a.finished.catch(() => {}))), new Promise((r) => setTimeout(r, res.layout.notice_settle_ms))]);
   }
 
-  showNotice(text, good, hold) {
+  showNotice(text, good, hold, whole = false) {
     this.notice.textContent = noStop(text);
     this.notice.title = noStop(text);
     this.notice.classList.toggle('good', good);
-    // 好几行的（扩展的命令答的一段话，核心 X-14 下）换行照留、不截，几行就多停几倍（最多 4 倍）
-    const lines = text.trim().split('\n').length;
-    this.notice.classList.toggle('is-lines', lines > 1);
+    // 好几行的（扩展的命令答的一段话，核心 X-14 下）、整句的（核心的回执）换行照留、不截，长的多停几倍（最多 4 倍，`noticeShape`）
+    const shape = noticeShape(text, whole);
+    this.notice.classList.toggle('is-lines', shape.wrap);
     // 出来从下面升上来，停一会儿淡出（蓝图「动效」）；新的顶掉旧的；`hold` 的一直留着，等下一句顶掉或者 `quiet`
     show(this.notice);
     this.placeNotice();
-    if (!hold) this.noticeTimer = setTimeout(() => hide(this.notice), res.layout.notice_ms * Math.min(lines, 4));
+    if (!hold) this.noticeTimer = setTimeout(() => hide(this.notice), res.layout.notice_ms * shape.span);
   }
 
   /**

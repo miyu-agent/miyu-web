@@ -28,6 +28,7 @@ import { SidebarWidth } from './sidebar-width.js';
 import { statusFooter, levelLabel, nextLevel, levelParams, previewRing } from '../model/footer.js';
 import { watchOnly } from '../model/watch.js';
 import { isLife, lifeEnded } from '../lib/life.js';
+import { emptyLifeList } from './life-jump.js';
 import { movedFrom } from '../model/paths.js';
 import { itemsOf, levelOf } from '../model/entries.js';
 import { statusRows } from '../model/status.js';
@@ -256,6 +257,8 @@ export class App {
       commandsOpened: () => this.refreshCommands(),
       // 空会话里核心认、要等会话的命令名（打了不当话发）
       laterCommands: () => this.commands.later,
+      // 空会话里光打 `/life`：照 `life.list` 列（快速跳转人生会话，W-1211）
+      emptyLife: () => emptyLifeList(this),
       // `/help`：核心认的全部（不照会话筛）
       allCommands: async () => this.commands.listWith(coreSpecs((await this.store.conn.request('command.catalog', {}))?.commands ?? [])),
       // 输入历史：记在这台设备上、按账号分开（内核的 `storage`）；读到坏的丢掉

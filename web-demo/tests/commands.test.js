@@ -210,8 +210,8 @@ test('空会话里列着的核心的命令（later）：带着字、开会话的
   assert.equal(read(list, '/goal', new Set(), opens).kind, 'needs_words', '只打 /goal：提示写上内容，不开会话');
   assert.equal(read(list, '/goal pause', new Set(), opens, new Set(['goal'])).kind, 'empty_fixed', '固定写法照核心「没有」的那一句，不为它白开一个会话');
   assert.deepEqual(read(list, '/goal 暂停一下这个思路', new Set(), opens).kind, 'unlisted', '目标里有「暂停」两个字的照目标');
-  assert.deepEqual(read(list, '/dream', new Set(), opens), { kind: 'later' });
-  assert.deepEqual(read(list, '/dream 现在', new Set(), opens), { kind: 'later' });
+  assert.deepEqual(read(list, '/dream', new Set(), opens), { kind: 'later', name: 'dream', words: null });
+  assert.deepEqual(read(list, '/dream 现在', new Set(), opens), { kind: 'later', name: 'dream', words: '现在' });
 });
 
 test('空会话里打 /todo、/todo clear（核心 D-3 再补，empty_none）：还没有待办，照核心「无待办。」，不开会话；别的字照旧要等会话', async () => {
@@ -365,4 +365,15 @@ test('/compact-line 后面写的（核心 CT-1，W-1163）：空的看、off 回
   const spec = list.find((s) => s.name === 'compact-line');
   assert.equal(spec?.run, 'compact_line');
   assert.match(JSON.stringify(spec?.summary), /off/);
+});
+
+test('提示里的回执（W-1211；2026-11-17 核心实测：长的回执被截成「…(pa…」）：整句的折行不截、长的多停一会儿（最多 4 倍）；别的一行照旧截', async () => {
+  const { noticeShape } = await import('../src/model/commands.js');
+  const long = '这个会话没有人格，有人生会话的人格不止一个：回声（进行中），缪斯（已暂停）。到其中一个人格的会话里再用 /life。'.repeat(2);
+  assert.deepEqual(noticeShape('已复制', false), { wrap: false, span: 1 });
+  assert.deepEqual(noticeShape('已复制', true), { wrap: true, span: 1 });
+  assert.deepEqual(noticeShape(long, true), { wrap: true, span: 2 });
+  assert.deepEqual(noticeShape(long.repeat(5), true), { wrap: true, span: 4 });
+  assert.deepEqual(noticeShape(long, false), { wrap: false, span: 1 }, '不是整句的照旧一行截掉');
+  assert.deepEqual(noticeShape('a\nb\nc', false), { wrap: true, span: 3 }, '好几行的照旧折行');
 });

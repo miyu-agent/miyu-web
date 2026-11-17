@@ -3888,6 +3888,12 @@
       ".picker-side"
     ]
   },
+  "picker.avatar": {
+    "zh": "选择列表：一行最前面的小头像（快速跳转人生会话）",
+    "select": [
+      ".picker-avatar"
+    ]
+  },
   "help.section": {
     "zh": "按键帮助：一节",
     "select": [

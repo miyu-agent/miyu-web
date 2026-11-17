@@ -12,7 +12,8 @@ import { show, hide } from '../lib/motion.js';
 /**
  * @typedef {{icon: string, title: string, key: string, run: () => void}} Action 一行右边的一个图标（选中的那一行才露），点了、移到这一行按 `key` 都是先关掉列表再 `run`，不算选了它
  *   （人格、预设的编辑，蓝图「人格、预设、工作区」第 10 条）
- * @typedef {{title: string, hint: string, note: string, items: {label: string, desc?: string, side?: string, off?: boolean, action?: Action}[], current: number,
+ * @typedef {{url: string|null, name: string}} Avatar 一行最前面的头像（快速跳转人生会话，W-1211）：有图的画图，没有的画名字的第一个字
+ * @typedef {{title: string, hint: string, note: string, items: {label: string, desc?: string, side?: string, off?: boolean, action?: Action, avatar?: Avatar}[], current: number,
  *   choose: (index: number) => void}} Ask 标题、按键的提示、「当前」怎么写、一行一样（说明、右边暗字的一小格、选不了、右边的图标）、现在是哪一行（没有是 -1）、选定了做什么
  */
 
@@ -54,7 +55,7 @@ export class Picker {
       onmousedown: (/** @type {MouseEvent} */ e) => e.preventDefault(),
       onmousemove: (/** @type {MouseEvent} */ e) => this.hover(e, i),
       onclick: () => this.pick(i),
-    }, h('span.picker-label', item.label, item.desc ? h('span.picker-desc', item.desc) : null),
+    }, item.avatar ? avatarOf(item.avatar) : null, h('span.picker-label', item.label, item.desc ? h('span.picker-desc', item.desc) : null),
     // 右边暗字的一小格（预设占多少 token，W-1123）
     item.side ? h('span.picker-side', item.side) : null, i === ask.current ? h('span.picker-note', ask.note) : null,
     item.action ? h('button.picker-action', {
@@ -107,4 +108,9 @@ export class Picker {
     this.pointer = at;
     if (moved && i !== this.selected) this.mark(i);
   }
+}
+
+/** 一行最前面的小头像：有图的画图，没有的画名字的第一个字 @param {Avatar} a */
+function avatarOf(a) {
+  return h('span.picker-avatar', { 'aria-hidden': 'true' }, a.url ? h('img', { src: a.url, alt: '' }) : [...a.name][0] ?? '');
 }

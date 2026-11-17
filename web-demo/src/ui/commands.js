@@ -20,6 +20,7 @@ import { replyOf, latestReply } from '../model/reply.js';
 import { Refusal } from '../core/connection.js';
 import { lifeAsk } from '../lib/life.js';
 import { askFirst } from './ask.js';
+import { afterLife } from './life-jump.js';
 
 /** @typedef {import('../model/commands.js').Spec} Spec */
 import { mergeSpecs } from '../model/commands.js';
@@ -201,7 +202,7 @@ export async function runCommand(app, spec, words) {
     if (err instanceof Refusal && err.reason === 'prefix_cancelled') return;
     if (!(err instanceof Refusal)) console.error(err);
     // 一行超过 1 MiB、连接没发的（施工 YC-11）：照人的语言说
-    app.composer.say(err instanceof Refusal && err.reason === 'too_large' ? t('too_long') : refusalText(err));
+    receipt(app, err instanceof Refusal && err.reason === 'too_large' ? t('too_long') : refusalText(err));
   }
 }
 
@@ -233,19 +234,30 @@ export async function runUnlisted(app, name, words, opens = false) {
   try {
     const got = await app.store.conn.request('command.run', { session: app.current, text: `/${name}${words ? ` ${words}` : ''}` });
     openPage(app, got);
+    // 光打 `/life`：几段人生的出列表让人挑（回执不再写，同一个位置），一段的直接跳过去
+    if (afterLife(app, got.command ?? name, words, got)) return 'done';
     jumpTo(app, got);
-    if (got?.said && !quietReceipt(got.command ?? name.toLowerCase(), words)) app.composer.say(got.said, true);
+    if (got?.said && !quietReceipt(got.command ?? name.toLowerCase(), words)) receipt(app, got.said, true);
   } catch (err) {
     // 前缀要变、问了以后取消的：字留在框里
     if (err instanceof Refusal && err.reason === 'prefix_cancelled') return 'keep';
     if (err instanceof Refusal && talkAfterRefusal(err.reason, words)) return 'talk';
     if (!(err instanceof Refusal)) console.error(err);
-    app.composer.say(refusalText(err));
+    receipt(app, refusalText(err));
     if (err instanceof Refusal && err.reason === 'unknown_command') return 'keep';
   }
   return 'done';
 }
 
+
+/**
+ * 核心给的回执、拒绝的那一句写进提示：整句写全、放不下折行，不在末尾截掉（2026-11-17 核心实测：「这个会话没有人格，有人生会话的人格
+ * 不止一个：…」被截成「…(pa…」）。
+ * @param {App} app @param {string} text @param {boolean} [good]
+ */
+function receipt(app, text, good = false) {
+  app.composer.say(text, good, false, true);
+}
 
 /**
  * 整页的命令（核心 X-15 下：界面块的整页可以带一个斜杠命令名）：回应带 `opens` 的打开那一整页（软件包 `backstage`，停用了的不开）。
@@ -290,8 +302,13 @@ const RUNS = {
     try {
       const got = await app.store.conn.request('command.run', { session: app.current, text: `/${spec.name}${words ? ` ${words}` : ''}` });
       openPage(app, got);
+      // 光打 `/life`：几段人生的出列表让人挑，一段的直接跳过去（`life-jump.js`）
+      if (afterLife(app, spec.name, words, got)) {
+        if (waiting) app.composer.quiet();
+        return;
+      }
       jumpTo(app, got);
-      if (got?.said && !quietReceipt(spec.name, words)) app.composer.say(got.said, true);
+      if (got?.said && !quietReceipt(spec.name, words)) receipt(app, got.said, true);
       else if (waiting) app.composer.quiet();
     } finally {
       clearTimeout(timer);
@@ -320,7 +337,7 @@ const RUNS = {
       return;
     }
     const got = await app.store.conn.request('command.run', { session: app.current, text: '/stop' });
-    if (got?.said) app.composer.say(got.said, true);
+    if (got?.said) receipt(app, got.said, true);
   },
   // 回顾（蓝图「回顾」）：提示「正在回顾…」；推来的 `session.recapped` 照日志画，`cached` 的照回应在正文末尾再画一次；
   // 还没开的新会话没什么可回顾，不去开会话
@@ -389,7 +406,7 @@ const RUNS = {
     }
     try {
       const got = await app.store.conn.request('command.run', { session: app.current, text: `/context ${want}` });
-      if (got?.said) app.composer.say(got.said, true);
+      if (got?.said) receipt(app, got.said, true);
     } catch (err) {
       // 太小、照它算不出压缩线（核心 `bad_params`，`data.field` 是 `context`，`data.min` 是最少要多少）：说最少要多少
       const min = contextMin(err);
