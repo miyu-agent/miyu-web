@@ -7,6 +7,7 @@ import { h, icon, replace } from '../../src/lib/dom.js';
 import { envRef, inputText, listElement, LAYER, writtenIn, secretName, referenceOptions, pickOptions, comboState, COMBO_OTHER, choicesFrom, packageChoices, choiceOptions } from './model.js';
 import { slider } from './slider.js';
 import { records } from './records.js';
+import { switchOrigin } from './pkg-enabled.js';
 
 /**
  * 一组：组名，下面一行行。
@@ -132,7 +133,8 @@ export function coreRow(dialog, item, opts = {}) {
     control: made,
     reset: written && !opts.mark ? () => save({ unset: true }) : null,
     resetTitle: ctx.text('reset'),
-    mark: opts.mark ? fieldMark(ctx, written, () => save({ unset: true })) : null,
+    // 包的「启用」（来源 `package`，不在哪一层配置里）不写「默认 / 已改」
+    mark: opts.mark && !switchOrigin(item.entry) ? fieldMark(ctx, written, () => save({ unset: true })) : null,
   });
   // 刚存成的：存完整页重读重画了，对勾画在新的这一行上
   if (dialog.justSaved?.(item.key)) row.done();

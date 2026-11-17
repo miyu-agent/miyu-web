@@ -594,14 +594,14 @@ export function carriedBy(skills, scripts) {
 }
 
 /**
- * 一个包右边的开关画成哪一种（蓝图「设置页」第 13 条）：必需的写「必需」（`required`，旧核心）；有总闸那一格的是总闸（`system`），
- * 没有的没有开关（`null`）。`system` 是总闸现在开没开（扩展照它的 `on`，别的照 `enabled`）。
- * @param {{required?: boolean, enabled?: boolean}} p @param {{system?: boolean}} o
- * @returns {{kind: 'required'}|{kind: 'system'}|null}
+ * 一个包右边的开关画成哪一种（蓝图「设置页」第 13 条）：必需的写「必需」（`required`）；别的都是总闸（`system`，核心 UX-1补：每个包都有开关，
+ * 皮肤、吉祥物、只带技能脚本的也有）。
+ * 总闸现在开没开扩展照它的 `on`，别的照 `enabled`（`core-packages.js` 的 `controlFor`）。
+ * @param {{required?: boolean, enabled?: boolean}} p
+ * @returns {{kind: 'required'}|{kind: 'system'}}
  */
-export function pkgSwitch(p, { system }) {
-  if (p.required) return { kind: 'required' };
-  return system !== undefined || 'enabled' in p ? { kind: 'system' } : null;
+export function pkgSwitch(p) {
+  return p.required ? { kind: 'required' } : { kind: 'system' };
 }
 
 /**

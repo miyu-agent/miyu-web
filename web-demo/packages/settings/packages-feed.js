@@ -6,6 +6,7 @@
 
 import { applyPackageChange, applyServerChange } from './model.js';
 import { foldCovered } from '../../src/lib/packages.js';
+import { followEnabled } from './pkg-enabled.js';
 
 /** 装卸包推来的 `package.changed` 一阵一阵的：停这么久再重读技能、脚本 */
 const TOOLS_SETTLE_MS = 300;
@@ -53,6 +54,8 @@ export class PackageFeed {
   push(method, params) {
     if (method === 'package.changed' && typeof params?.package === 'string') {
       this.dialog.packages = applyPackageChange(this.dialog.packages ?? [], params.package, params.entry ?? null);
+      // 开关换了（别处、别的终端）：读到的「启用」那一项跟着换，设置页搜出来的那一行不写着旧的（核心 UX-1）
+      followEnabled(this.dialog.got, params.package, params.entry?.enabled);
       this.redraw();
       this.rereadTools();
       return true;

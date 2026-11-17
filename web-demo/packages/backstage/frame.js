@@ -9,6 +9,14 @@
 /** 带给框的几个颜色：网页的样式变量 → 交出去的名字 */
 const COLORS = /** @type {const} */ ([['--accent', 'accent'], ['--surface', 'surface'], ['--surface-2', 'surface_2'], ['--text', 'text'], ['--text-soft', 'text_soft'], ['--line', 'line'], ['--danger', 'danger']]);
 
+/**
+ * 配置清单里 `package` 是 `id` 的那几项，去掉它的「启用」（`packages.<编号>.enabled`，核心 UX-1：那是包的开关，后台页不管）。
+ * @param {any} schema `config.schema` 的回应 @param {string} id
+ */
+export function ownItems(schema, id) {
+  return (schema?.items ?? []).filter((/** @type {any} */ i) => i.package === id && i.key !== `packages.${id}.enabled`);
+}
+
 /** 新密钥的名字（同设置页的 `secretName`：照键起、带上时刻，最多 64 个字） @param {string} key */
 const secretName = (key) => `${key.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now().toString(36)}`.slice(0, 64);
 
@@ -135,10 +143,9 @@ export class FrameHost {
     }
   }
 
-  /** 配置清单里 `package` 是它的那几项。 */
+  /** 配置清单里 `package` 是它的那几项（`ownItems`）。 */
   async items() {
-    const schema = await this.core.request('config.schema', {});
-    return (schema?.items ?? []).filter((/** @type {any} */ i) => i.package === this.id);
+    return ownItems(await this.core.request('config.schema', {}), this.id);
   }
 
   /** 它自己的设置项和最终值（密钥照 `config.get` 的写法，是引用不是值）。 */

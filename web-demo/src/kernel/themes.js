@@ -5,6 +5,7 @@
 //!
 //! 内核起完发行版的包以后订 `packages`（回应同 `package.list`），照它对一遍；之后跟着推来的 `package.changed`：装了新的当场加载，卸了的
 //! 当场撤回；升级了的、这一页加载过又装回来的，浏览器还拿着原来那份脚本（ES 模块同一个地址只取一次），只说一句刷新页面后生效。
+//! 关掉的外观包（`enabled` 是 false，核心 UX-1补）照卸了的办：不加载，推来关掉的那一条当场撤回。
 //! 一个外观包起不来（换不到票据、清单坏了、脚本抛错）只它故障，照别的包一样写在设置页「软件包」里；能照别的可选包停用。
 
 import { foldReply, shadowed } from '../lib/packages.js';
@@ -25,6 +26,8 @@ export function themeIds(listed, taken) {
   for (const row of rows) {
     const id = row?.package;
     if (typeof id !== 'string' || typeof row?.theme?.web?.dir !== 'string') continue;
+    // 关着的（核心 UX-1补：每个包都有开关，`enabled` 是 false）不加载：皮肤、它挂的吉祥物都不列
+    if (row.enabled === false) continue;
     if (!PACKAGE.test(id)) {
       console.error(`外观包 ${id} 的编号放不进地址，不加载`);
       continue;

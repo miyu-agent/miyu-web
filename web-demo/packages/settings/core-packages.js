@@ -19,6 +19,7 @@ import { serverRow } from './mcp-servers.js';
 import { stateText, failed } from './extensions.js';
 import { pkgFace } from './logos.js';
 import { accessTags, ACCESS_MAX } from './market-model.js';
+import { followEnabled, ownSettings } from './pkg-enabled.js';
 
 /** 列表上不写的状态：开关已经说了 */
 const QUIET = new Set(['ready', 'off']);
@@ -107,7 +108,9 @@ export function followExtension(dialog, entry) {
   // 程序不在、依赖缺了的核心不拉起，扩展推来的状态不盖它（缺的装回来了，`package.changed` 整项换）
   if (!p || BAD.has(p.status)) return false;
   const status = !entry.on ? 'off' : entry.state === 'waiting' ? 'starting' : entry.state;
-  if (p.status === status && p.enabled === entry.on) return false;
+  // 读到的「启用」那一项跟着换（设置页搜出来的那一行）
+  const followed = followEnabled(dialog.got, p.package, entry.on);
+  if (p.status === status && p.enabled === entry.on) return followed;
   dialog.packages = dialog.packages.map((x) => (x === p ? { ...x, status, enabled: entry.on } : x));
   return true;
 }
@@ -123,13 +126,12 @@ function packageRow(dialog, p, child = false) {
   // 服务全被自制的同名服务替代了（F-9 补的 `covered`，`status` 照旧 `off`）：写「被自制的服务替代」，不当关着
   const control = controlFor(dialog, p, null);
   const state = p.covered === true && !bad ? h('span.set-pkg-status', t('pkg.covered'))
-    // 卸掉了又没有开关的出厂包（核心 PE-1：删人格连带卸掉的）：写「已卸载」，点进去「装回」
-    : p.removed && !control ? h('span.set-pkg-status', t('pkg.removed'))
     : mcpStopped(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_stopped'))
     : mcpNeedsLogin(p) && !bad ? h('span.set-pkg-status.is-warn', t('pkg.mcp_login'))
     : QUIET.has(p.status) ? null : h(`span.set-pkg-status${bad ? '.is-bad' : p.status === 'running' ? '.is-on' : ''}`, t(`pkg.status.${p.status}`));
-  // 列表那一行的总闸照旧走 `package.enable`（核心照种类办），自己的开关照 `enabled`（扩展的跟着 `followExtension`）（上面先取好了）
-  return h('div.set-row.set-pkg.is-expandable', {
+  // 列表那一行的总闸照旧走 `package.enable`（核心照种类办），自己的开关照 `enabled`（扩展的跟着 `followExtension`）（上面先取好了）。
+  // 关着的整行淡一档（核心 UX-1补：每个包都有开关，关了它带来的都不在）
+  return h(`div.set-row.set-pkg.is-expandable${p.enabled === false ? '.is-off' : ''}`, {
     onclick: (/** @type {MouseEvent} */ e) => {
       if (/** @type {Element} */ (e.target).closest('.set-switch')) return;
       openInfo(dialog, id, child);
@@ -222,16 +224,13 @@ function groupPage(dialog, id) {
   return [card, shown.length ? h('section.set-group', h('div.set-rows', shown.map((/** @type {any} */ p) => packageRow(dialog, p, true)))) : null].filter(Boolean);
 }
 
-/** 配置里把包 `id` 对自己关掉的那一项（核心 U23 末上：`config.schema` 给每个能关的包现拼一项）；核心没给的是 `null`。 @param {any} dialog @param {string} id */
 /**
  * 一个包右边的开关（列表那一行、信息页卡片同一个）：总闸（`model.js` 的 `pkgSwitch`），扩展照 `e`，别的照 `enabled`。
  * @param {any} dialog @param {any} p @param {any} e 扩展的状态（不是扩展的是 `null`）
  */
 function controlFor(dialog, p, e) {
   const id = p.package;
-  const how = pkgSwitch(p, e ? { system: !!e.on } : {});
-  if (!how) return null;
-  if (how.kind === 'required') return h('span.set-pkg-status', dialog.ctx.text('pkg.required'));
+  if (pkgSwitch(p).kind === 'required') return h('span.set-pkg-status', dialog.ctx.text('pkg.required'));
   if (e) return toggle(e.on, (on) => (on ? dialog.extensions.turnOn(e) : dialog.extensions.act('extension.disable', { package: id })));
   return switchFor(dialog, p);
 }
@@ -247,6 +246,7 @@ function switchFor(dialog, p) {
     try {
       const got = await dialog.ctx.core.request(on ? 'package.enable' : 'package.disable', { package: id });
       dialog.packages = dialog.packages.map((x) => (x.package === id ? got : x));
+      followEnabled(dialog.got, id, got?.enabled);
       dialog.drawBody();
       return true;
     } catch (err) {
@@ -287,7 +287,8 @@ function infoPage(dialog, id) {
   const row = (/** @type {any} */ item) => coreRow(dialog, item, { mark: true });
   const groups = site ? [] : ((dialog.pages ?? []).find((/** @type {any} */ x) => x.id === 'packages')?.groups ?? [])
     .flatMap((/** @type {any} */ g) => {
-      const items = g.items.filter((/** @type {any} */ item) => ownerOf(item, ids) === id && item.key !== `packages.${id}.off`);
+      // 它的「启用」不画（顶上那块已经有开关，核心 UX-1）
+      const items = ownSettings(g.items, id, (/** @type {any} */ item) => ownerOf(item, ids));
       const cards = cardsOf(items, sectionsOf(g), valueOf);
       if (!cards) return [{ name: g.id === id ? t('pkg.settings') : g.name, rows: items.map(row).filter(Boolean) }];
       // 没分组的那一张：这个包自己的组不写组名（W-1141），别的组（「API Key 和地址」）照旧写它的组名
@@ -345,7 +346,6 @@ function infoCard(dialog, p, e) {
       ? h('button.set-btn', { type: 'button', onclick: () => { dialog.extensions.toggleSet(dialog.extensions.showing, id); dialog.extensions.redraw(id); } }, t(showing ? 'ext.hide_output' : 'ext.show_output')) : null,
     removeButton(dialog, p),
     purgeButton(dialog, p),
-    p.removed && !control ? reinstallButton(dialog, p) : null,
   ].filter(Boolean);
   const caps = e?.capabilities ?? [];
   const unapproved = new Set(e?.unapproved ?? []);
@@ -445,21 +445,6 @@ function purgeButton(dialog, p) {
       }
     };
   });
-  return button;
-}
-
-/** 「装回」：卸掉了又没有开关的出厂包（核心 PE-1），`package.install` 写编号；拒了照原因。 @param {any} dialog @param {any} p */
-function reinstallButton(dialog, p) {
-  const button = /** @type {HTMLButtonElement} */ (h('button.set-btn', { type: 'button', onclick: async () => {
-    button.disabled = true;
-    try {
-      await dialog.ctx.core.request('package.install', { package: p.package });
-      await dialog.reload();
-    } catch (err) {
-      button.disabled = false;
-      dialog.toast(refusal(dialog, err));
-    }
-  } }, dialog.ctx.text('pkg.reinstall')));
   return button;
 }
 

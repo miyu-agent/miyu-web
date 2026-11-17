@@ -356,13 +356,12 @@ test('模型池的先后（核心 Q-1）：三个固定池排最前、照旗舰�
   assert.deepEqual(poolOrder([{ name: 'b' }, { name: 'a' }]).map((p) => p.name), ['b', 'a'], '旧核心（没有 fixed）照原样');
 });
 
-test('软件包的开关：必需的写「必需」，有总闸那一格的是总闸，没有的没有开关（核心 SU-1 起没有成员自己的开关）', async () => {
+test('软件包的开关：必需的写「必需」，别的都是总闸（核心 UX-1补：每个包都有开关）', async () => {
   const { pkgSwitch } = await import('../../packages/settings/model.js');
   const p = { package: 'kit', enabled: true };
-  assert.deepEqual(pkgSwitch(p, {}), { kind: 'system' });
-  assert.deepEqual(pkgSwitch({ package: 'x' }, { system: false }), { kind: 'system' }, '扩展照它的 on');
-  assert.deepEqual(pkgSwitch({ package: 'x' }, {}), null, '没有总闸那一格');
-  assert.deepEqual(pkgSwitch({ ...p, required: true }, {}), { kind: 'required' });
+  assert.deepEqual(pkgSwitch(p), { kind: 'system' });
+  assert.deepEqual(pkgSwitch({ package: 'x' }), { kind: 'system' }, '没有 enabled 那一格的也有');
+  assert.deepEqual(pkgSwitch({ ...p, required: true }), { kind: 'required' });
 });
 
 test('软件包页的组：没在搜时组里的包拿出来收成一组（照 groups 的先后，空的不交）；搜着、旧核心没有 groups 的照旧单列（2026-10-27 项目主人）', async () => {

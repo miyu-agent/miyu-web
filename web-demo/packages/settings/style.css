@@ -323,6 +323,8 @@
 .set-pkg.is-expandable:hover .set-name { color: var(--text); }
 .set-pkg-arrow { display: inline-grid; flex: none; width: 16px; place-items: center; color: var(--text-faint); }
 .set-pkg.is-expandable:hover .set-pkg-arrow { color: var(--text-soft); }
+/* 关着的包（核心 UX-1补，每个包都有开关）：图标、名字淡一档，开关照旧 */
+.set-pkg.is-off .set-pkg-face, .set-pkg.is-off .set-name, .set-pkg.is-off .set-desc { opacity: 0.55; }
 /* 核心软件包的一行（core-packages.js）：左边图标，右边状态（只写要留意的）、开关、箭头 */
 /* 软件包页顶上：搜索框、一排筛选（2026-10-20）；一行右边的小标签写它是哪一种 */
 /* 软件包页的搜索框：滚的时候钉在上面，底下垫一层同框的底色（两边铺到框边） */
