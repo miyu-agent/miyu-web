@@ -25,6 +25,7 @@ import { drawToolPage, hasToolPage } from './tool-pages.js';
 import { EXTERNAL_PREFIX } from './tool-model.js';
 import { foldCovered } from '../../src/lib/packages.js';
 import { savedWarnings } from './warned.js';
+import { ChoiceMemo } from './choices-memo.js';
 
 /** 刚存成的那一项重画出来还画对勾的时限（毫秒） */
 const SAVED_MS = 1000;
@@ -72,8 +73,8 @@ export class SettingsDialog {
 
   /** 打开：画框，读配置，到 `page` 那一页（没给的回上次看的）；点名了一组的（`group`）滚到那一组。 @param {string|null} page @param {string|null} [group] */
   async open(page, group = null) {
-    /** 包在运行时给的选项（核心 SG-2 的 `choices_from`，`rows.js` 的 `fromPackage`）：每次打开设置重新问 */
-    this.packageChoices = new Map();
+    /** 包在运行时给的选项（核心 SG-2 的 `choices_from`，`rows.js` 的 `fromPackage`）：每次打开设置重新问，问到以前照上一次问到的画 */
+    (this.choiceMemo ??= new ChoiceMemo()).reset();
     /** 存成了、核心接了一句警告的几项（核心 CK-1，`warned.js`）：这一次开着设置时记着，那一行下面写 */
     this.warned = new Map();
     this.isOpen = true;

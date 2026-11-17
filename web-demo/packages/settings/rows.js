@@ -8,6 +8,7 @@ import { envRef, inputText, listElement, LAYER, writtenIn, secretName, reference
 import { slider } from './slider.js';
 import { records } from './records.js';
 import { switchOrigin } from './pkg-enabled.js';
+import { ChoiceMemo } from './choices-memo.js';
 import { focusOnOpen } from '../../src/lib/touch.js';
 
 /**
@@ -225,33 +226,31 @@ function control(dialog, item, value, save, saveSecret) {
 }
 
 /**
- * 选项由包给的文字项（核心 SG-2）：调 `package.call {package, method}`（不带 `params`）取选项。这一次开着设置时问过的照记着的直接画
- * 下拉（存了重画不闪回文字框）；头一次先画文字框，问到了、人又没在里面打字就换成下拉。调不到（包没在跑、没登记、超时）、回的不是
- * 选项的：留着文字框，照样能写。
+ * 选项由包给的文字项（核心 SG-2）：调 `package.call {package, method}`（不带 `params`）取选项，画成下拉、写选项的名字。这一次开着设置时问到了的
+ * 直接画下拉（存了重画不闪回文字框）；还没问到的先照上一次打开设置时问到的画（`choices-memo.js`），问到了不一样再换；一次都没问到过的先画
+ * 文字框，问到了、人又没在里面打字就换成下拉。调不到（包没在跑、没登记、超时）、回的不是选项的：文字框，照样能写。
  * @param {any} dialog @param {{package: string, method: string}} from @param {any} value 现在的值
  * @param {(change: {value?: any, input?: string, unset?: boolean}) => any} save
  */
 function fromPackage(dialog, from, value, save) {
   const ctx = dialog.ctx;
-  /** @type {Map<string, any>} 问过的：选项，问不到的是 `null`，还在问的是那个 Promise */
-  const asked = (dialog.packageChoices ??= new Map());
+  const memo = /** @type {ChoiceMemo} */ (dialog.choiceMemo ??= new ChoiceMemo());
   const key = `${from.package}\n${from.method}`;
   const picker = (/** @type {any[]} */ list) => select(dialog, choiceOptions(list, value, ctx.text('combo_unset')), typeof value === 'string' && value !== '' ? value : null,
     (v) => save(v === null ? { unset: true } : { value: v }));
-  const known = asked.get(key);
-  if (Array.isArray(known)) return picker(known);
   const field = textField(inputText(value), 'text', '', (text) => save(text === '' ? { unset: true } : { input: text }));
-  if (known === null) return field;
-  const asking = known ?? ctx.core.request('package.call', { package: from.package, method: from.method })
-    .then((/** @type {any} */ got) => packageChoices(got), () => null);
-  if (!known) {
-    asked.set(key, asking);
-    asking.then((/** @type {any} */ list) => asked.set(key, list));
-  }
-  asking.then((/** @type {any} */ list) => {
-    if (list && field.isConnected && document.activeElement !== field && field.dataset.dirty !== '1') field.replaceWith(picker(list));
-  });
-  return field;
+  const { list, fresh } = memo.now(key);
+  if (fresh) return list ? picker(list) : field;
+  const shown = list ? picker(list) : field;
+  memo.ask(key, () => ctx.core.request('package.call', { package: from.package, method: from.method }).then((/** @type {any} */ got) => packageChoices(got)))
+    .then((got) => {
+      if (!shown.isConnected) return;
+      if (shown === field) {
+        if (got && document.activeElement !== field && field.dataset.dirty !== '1') field.replaceWith(picker(got));
+      } else if (!got) shown.replaceWith(field);
+      else if (JSON.stringify(got) !== JSON.stringify(list)) shown.replaceWith(picker(got));
+    });
+  return shown;
 }
 
 /**

@@ -474,6 +474,10 @@ test('下拉列哪几项：头一项不设；存着的值不在列表里的照�
   assert.deepEqual(choiceOptions(list, 'a', '不设'), [{ value: null, name: '不设' }, { value: 'a', name: '甲' }]);
   assert.deepEqual(choiceOptions(list, 'old', '不设').at(-1), { value: 'old', name: 'old' });
   assert.equal(choiceOptions(list, null, '不设').length, 2);
+  // 包给的里有空值那一项（W-1208：语音输入的「本机的 SenseVoice」）：它就是不设，照它的名字写，不另列「不设」
+  const engines = [{ value: '', name: '本机的 SenseVoice' }, { value: 'deepseek-tools', name: 'DeepSeek 功能全家桶' }];
+  assert.deepEqual(choiceOptions(engines, null, '不设'), [{ value: null, name: '本机的 SenseVoice' }, { value: 'deepseek-tools', name: 'DeepSeek 功能全家桶' }]);
+  assert.deepEqual(choiceOptions(engines, 'deepseek-tools', '不设').length, 2);
 });
 
 test('终端管理员的号那一块：接平台的画；带 owner_builtin 的（voice）不画；旧核心没这一格的照旧画', () => {

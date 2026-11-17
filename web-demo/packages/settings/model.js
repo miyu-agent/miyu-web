@@ -223,13 +223,15 @@ export function packageChoices(got) {
 
 /**
  * 下拉里列哪几项：头一项「不设」（值 `null`，从这一层删掉），接着包给的；现在存着的值不在里面的照原样多留一项（核心不照列表查值，
- * 写什么存什么）。
+ * 写什么存什么）。包给的里有值是空的那一项（语音输入的「本机的 SenseVoice」：不设就是它）的，它就是「不设」，照它的名字写、选了从这一层删掉，
+ * 不再另列一项「不设」（W-1208：原来没设时写「不设」，看不出用的是哪个引擎）。
  * @param {{value: string, name: string, desc?: string}[]} list @param {any} value 现在的值 @param {string} unset 「不设」
  * @returns {{value: string|null, name: string, desc?: string}[]}
  */
 export function choiceOptions(list, value, unset) {
+  const blank = list.some((c) => c.value === '');
   /** @type {{value: string|null, name: string, desc?: string}[]} */
-  const options = [{ value: null, name: unset }, ...list];
+  const options = blank ? list.map((c) => (c.value === '' ? { ...c, value: null } : c)) : [{ value: null, name: unset }, ...list];
   if (typeof value === 'string' && value !== '' && !list.some((c) => c.value === value)) options.push({ value, name: value });
   return options;
 }
