@@ -11,6 +11,7 @@ import { SessionIndex } from './session-index.js';
 import { ProjectList } from './projects.js';
 import { ViewLog, VIEW_PUSHES } from './view.js';
 import { spokenAt, spokenOf } from '../model/session.js';
+import { autoplays } from '../model/voice.js';
 
 /**
  * @typedef {{id: string, view: ViewLog, limits: any, todos: {content: string, status: string}[],
@@ -66,6 +67,8 @@ export class Store {
     this.withdrawn = () => {};
     /** 后台开始提前压缩了（会话状态的 `preparing` 从没有变成有，核心 6-11 三补）：界面弹一句；重新订阅换上的不算 @type {(session: string) => void} */
     this.preparing = () => {};
+    /** 推送里新来的一段语音、照谁开的这一轮该在这个页面上当场放的（核心 SD-1，`model/voice.js` 的 `autoplays`）：界面去放 @type {(session: string, entry: any) => void} */
+    this.voiced = () => {};
     this.listeners = new Set();
     /** 要人留意的（系统通知照它，蓝图「系统通知」）：一轮做完了、她在问、要人确认 @type {Set<(session: string, what: 'done'|'ask'|'approve', detail: any) => void>} */
     this.attention = new Set();
@@ -345,7 +348,10 @@ export class Store {
     const waited = new Set((log.status?.waiting ?? []).map((/** @type {any} */ w) => w.call));
     const wasPreparing = !!log.status?.preparing;
     if (method === 'view.update' && p.entry?.withdrawn && !log.list.find((e) => e.id === p.entry.id)?.withdrawn) this.withdrawn(s.id, p.entry.text ?? '');
+    // 新来的语音（手里没有的 `view.add`）：读进来、重新订阅换上的老条目不走这里，不会再放一遍
+    const fresh = method === 'view.add' && p.entry?.kind === 'voice' && log.at(p.entry.id) < 0;
     log.apply(method, p);
+    if (fresh && autoplays(p.entry, { mine: (id) => !!this.conn.mine?.(id), viewing: s.id === this.viewing })) this.voiced(s.id, p.entry);
     if (method !== 'view.status') return;
     const status = log.status ?? {};
     // 待办：全做完了、清空了待办那一块当场收（2026-10-17 项目主人在终端定的），清空前那一份（`todos_done`）不用

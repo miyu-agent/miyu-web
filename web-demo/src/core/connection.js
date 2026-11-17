@@ -175,6 +175,14 @@ export class Connection {
   }
 
   /**
+   * 这个编号的请求是不是这条连接发的（照编号的前缀，重连也接着用这一个前缀）：视图流的语音照它认出是不是在这个页面上说的话（核心 SD-1，W-1212）。
+   * @param {string} id
+   */
+  mine(id) {
+    return typeof id === 'string' && id.startsWith(`web-${this.prefix}-`);
+  }
+
+  /**
    * 发一条请求、等回应（不问前缀）。编号每发一条换一个（这条连接起来时的随机前缀加一个只增不减的数，重连也接着数）：核心照编号去重，
    * 同一个编号换了参数再来拒 `id_reused`（核心 YC-7）；前缀确认以后带 `prefix` 重发的也走这里，是新编号（W-1138 查过网页里没有沿用老编号的）。
    * @param {string} method @param {any} [params]

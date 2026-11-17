@@ -201,3 +201,28 @@ p.has-link-card { margin: calc(10px * var(--space)) 0; }
 .shown-card-go .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); }
 .shown-card:hover .shown-card-go { color: var(--text-soft); }
 
+
+/* 她说出来的语音（核心 SD-1，W-1212）：一个胶囊形的播放条，播放、进度、时长、名字；不画边，一点点影 */
+.voice-clip {
+  display: flex; width: fit-content; min-width: 200px; max-width: min(100%, 360px); align-items: center; gap: calc(10px * var(--space));
+  margin: calc(8px * var(--space)) 0 calc(4px * var(--space)); padding: calc(6px * var(--space)) calc(14px * var(--space)) calc(6px * var(--space)) calc(6px * var(--space));
+  border-radius: var(--r-pill); background: var(--card-bg, var(--surface-1)); box-shadow: var(--card-elev, var(--card-shadow));
+  transition: box-shadow calc(0.15s * var(--motion-scale)) ease;
+}
+.voice-clip:hover, .voice-clip.is-playing { box-shadow: var(--card-elev-hover, var(--float-shadow)); }
+.voice-clip-play {
+  display: flex; width: 28px; height: 28px; flex: none; align-items: center; justify-content: center; border: none;
+  border-radius: var(--r-round); background: var(--accent); color: var(--on-primary); cursor: pointer;
+  transition: background calc(0.15s * var(--motion-scale)) ease, transform calc(0.1s * var(--motion-scale)) ease;
+}
+.voice-clip-play:hover { background: var(--accent-strong); }
+.voice-clip-play:active { transform: scale(0.94); }
+.voice-clip-play .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
+.voice-clip-track {
+  display: flex; min-width: 64px; height: 16px; flex: 1; align-items: center; cursor: pointer;
+  background: linear-gradient(color-mix(in srgb, var(--text-faint) 45%, transparent) 0 0) center / 100% 4px no-repeat;
+}
+.voice-clip-track-fill { width: 0%; height: 4px; border-radius: var(--r-pill); background: var(--accent); }
+.voice-clip-time { flex: none; color: var(--text-soft); font-size: calc(12px * var(--text-scale)); font-variant-numeric: tabular-nums; }
+.voice-clip-name { min-width: 0; overflow: hidden; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
+.voice-clip.is-error .voice-clip-time { color: var(--danger); }

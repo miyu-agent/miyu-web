@@ -4302,6 +4302,42 @@
       ".media-audio-volume"
     ]
   },
+  "media.voice-clip": {
+    "zh": "媒体：语音条",
+    "select": [
+      ".voice-clip"
+    ]
+  },
+  "media.voice-clip-play": {
+    "zh": "媒体：语音播放",
+    "select": [
+      ".voice-clip-play"
+    ]
+  },
+  "media.voice-clip-track": {
+    "zh": "媒体：语音进度",
+    "select": [
+      ".voice-clip-track"
+    ]
+  },
+  "media.voice-clip-track-fill": {
+    "zh": "媒体：语音进度填充",
+    "select": [
+      ".voice-clip-track-fill"
+    ]
+  },
+  "media.voice-clip-time": {
+    "zh": "媒体：语音时长",
+    "select": [
+      ".voice-clip-time"
+    ]
+  },
+  "media.voice-clip-name": {
+    "zh": "媒体：语音名字",
+    "select": [
+      ".voice-clip-name"
+    ]
+  },
   "link.card-media": {
     "zh": "链接卡片：卡片媒体",
     "select": [

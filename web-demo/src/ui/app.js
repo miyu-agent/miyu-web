@@ -50,6 +50,7 @@ import { Desks } from '../model/desk.js';
 import { openExport } from './export-dialog.js';
 import { StoppedCard } from './stopped-card.js';
 import { followVisible, onSwipe } from '../lib/touch.js';
+import { playVoice } from './voice.js';
 
 /** 皮肤样张的会话编号：只在这一页（核心那边没有这个会话） */
 const GALLERY = 'gallery:skin';
@@ -452,6 +453,8 @@ export class App {
     this.store.withdrawn = (id, text) => {
       if (id === this.current && text) this.composer.putBack(text);
     };
+    // 她说出来的语音（核心 SD-1，W-1212）：这个页面上说的话开的一轮、开着的会话里没人开口的一轮，推来的当场放（`model/voice.js`）
+    this.store.voiced = (session, entry) => playVoice(session, entry);
     // 对话区右边的挂载位：跳转条这类挂进来（软件包 rail）
     ctx.slots.declare('stage.right', 'list');
     // 正文末尾、最后一轮下面（确认和提问了结以后留的这类）

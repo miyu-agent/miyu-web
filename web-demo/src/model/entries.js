@@ -8,12 +8,14 @@
 //! - `group` 连它的 `thought`、`tool` 是时间线的一段：收起那一行照核心给的 `summary`（界面语言是自动的照 `summary_en`）；一步的标题照
 //!   `title`（`ui/steps.js` 经 `model/words.js` 的 `row`）、改了多少行照 `diff`、用时照 `took_ms`。
 //! - `end` 是收尾那一行，`notice` 是不挂在她头下的一行：字由网页写，照原来的写法（`model/notes.js`）。
+//! - `voice` 是她说出来的一段语音（核心 SD-1）：一个播放条，同她发的图（`media`）跟着她这一轮。
 //! - `hidden` 的不画；一轮在跑、这一轮还没有她的条目的，画三个球。
 
 import { res, t } from '../util/res.js';
 import { short, hitRate, seconds, hhmm } from './format.js';
 import { shownOf } from './artifacts.js';
 import { nestedTail } from '../lib/nested.js';
+import { voiceItem } from './voice.js';
 import { speakerOf, moduleNote, roundNote, pokeNote, peerNote, changeNote, modelNote, compactedNote, failureText, recapNote, compactFailedNote, workspaceNote } from './notes.js';
 
 /**
@@ -100,6 +102,14 @@ export function itemsOf(entries, status, opts = {}) {
       case 'media': {
         // 她发出去的一张图（核心 X-19）：跟着她这一轮画在正文里，和回答的字一样（2026-10-16 项目主人定）
         const item = mediaItem(e);
+        if (!item) break;
+        spoke.add(e.turn);
+        items.push(item);
+        break;
+      }
+      case 'voice': {
+        // 她说出来的一段语音（核心 SD-1，W-1212）：一个播放条，跟着她这一轮画在正文里，同她发的图
+        const item = voiceItem(e);
         if (!item) break;
         spoke.add(e.turn);
         items.push(item);
