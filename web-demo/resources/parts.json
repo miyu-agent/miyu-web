@@ -156,6 +156,18 @@
       ".sch-detail-remove"
     ]
   },
+  "schedules.life-name": {
+    "zh": "人生卡：人格名那一行",
+    "select": [
+      ".sch-life-name"
+    ]
+  },
+  "schedules.life-warn": {
+    "zh": "人生卡：点了「结束人生」以后下面那一行后果",
+    "select": [
+      ".sch-life-warn"
+    ]
+  },
   "schedules.loop-pill": {
     "zh": "定时任务：输入框右上方的循环标记",
     "select": [

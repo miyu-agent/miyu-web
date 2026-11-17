@@ -77,6 +77,9 @@
 .sch-detail-foot .set-btn { display: inline-flex; align-items: center; gap: 6px; }
 .sch-detail-foot .set-btn .icon { width: 14px; height: 14px; }
 .sch-detail-remove.is-armed { color: var(--t-error); }
+/* 人生卡（life-card.js，W-1211）：人格名大一点；点了「结束人生」下面一行红字说后果 */
+.sch-life-name { font-size: calc(15px * var(--text-scale)); font-weight: 600; }
+.sch-life-warn { margin: calc(8px * var(--space)) 0 0; color: var(--t-error); font-size: calc(12.5px * var(--text-scale)); line-height: 1.5; }
 .sch-open { cursor: pointer; }
 .sch-open:hover .sch-prompt { text-decoration: underline; text-underline-offset: 3px; }
 

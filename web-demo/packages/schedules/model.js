@@ -5,7 +5,7 @@
  * 核心的一项（`schedule.list` 的）：有的才写。
  * @typedef {{id: string, when: {cron?: string, recurring?: boolean, at?: string, every?: number}, prompt: string,
  *   target?: {session?: string, package?: {}, new?: {persona?: string|null, preset?: string, cwd?: string}}, by?: {kind: string, session?: string, package?: string},
- *   recurring?: boolean, paused?: boolean, loop?: 'fixed'|'dynamic', next?: string, last?: {at: string, result: string, session?: string}, created?: string}} Schedule
+ *   recurring?: boolean, paused?: boolean, loop?: 'fixed'|'dynamic'|'life', persona?: string, next?: string, last?: {at: string, result: string, session?: string}, created?: string, rounds?: number}} Schedule
  */
 
 /** @typedef {(path: string, fields?: Record<string, any>) => string} Text */
@@ -387,4 +387,53 @@ export function updateOf(s, prompt, when) {
   if (prompt !== s.prompt) out.prompt = prompt;
   if (when && !same(pick(when), pick(s.when))) out.when = when;
   return 'prompt' in out || 'when' in out ? out : null;
+}
+
+/**
+ * 人生循环那一行（核心 LF-13：`loop` 是 `life`，一个人格一直跑着的那一条）：通用的定时方法改它、删它回 `life_schedule`，点开是人生卡（「人生-卡」，
+ * W-1211），停、续、结束照 `life.*`。
+ * @param {Schedule|null|undefined} s
+ */
+export const isLifeRow = (s) => s?.loop === 'life';
+
+/**
+ * 人生那一行是哪个人格的：行里带的（`persona`），没带的照它跑在的那个会话的人格（`personaOf`）；都没有的 `null`。
+ * @param {Schedule} s @param {(session: string) => string|null} personaOf
+ */
+export function lifePersona(s, personaOf) {
+  if (typeof s.persona === 'string' && s.persona) return s.persona;
+  const session = s.target?.session;
+  return typeof session === 'string' ? personaOf(session) ?? null : null;
+}
+
+/**
+ * 暂停、继续、结束要调的（`life.pause`、`life.resume`、`life.kill`，参数是人格）。
+ * @param {'pause'|'resume'|'kill'} what @param {string} persona @returns {{method: string, params: {persona: string}}}
+ */
+export const lifeCall = (what, persona) => ({ method: `life.${what}`, params: { persona } });
+
+/**
+ * 人生卡写什么（2026-11-17 项目主人本机验收第 23 条；W-1211）：标题「推演人生」、人格名，下面几行名目在左、值在右：开始（`created`）、下次继续（`next`，
+ * 暂停着的不写）、上一轮（`last.at`）、状态（进行中、已暂停）；没有的不写，不写第几轮（`rounds` 头不显示，核心 LF-14）。纯的。
+ * @param {Schedule} s @param {string} name 人格的名字 @param {Date} now @param {Text} t
+ * @returns {{title: string, name: string, rows: [string, string][]}}
+ */
+export function lifeCard(s, name, now, t) {
+  /** @type {[string, string][]} */
+  const rows = [
+    [t('life.started'), s.created ? dayText(s.created, now, t) : ''],
+    [t('life.next'), !s.paused && s.next ? dayText(s.next, now, t) : ''],
+    [t('life.last'), s.last?.at ? dayText(s.last.at, now, t) : ''],
+    [t('life.state'), t(s.paused ? 'life.paused' : 'life.running')],
+  ];
+  return { title: t('life.title'), name, rows: rows.filter(([, v]) => v) };
+}
+
+/**
+ * 设置页「定时任务」里人生那一行：名字写「推演人生 · 人格名」（交给模型的那段话不写），下面一行「下次继续 今天 14:05」、停着的「已暂停」。纯的。
+ * @param {Schedule} s @param {string} name @param {Date} now @param {Text} t @returns {{name: string, meta: string}}
+ */
+export function lifeRowText(s, name, now, t) {
+  const meta = s.paused ? t('paused') : s.next ? t('life.next_at', { at: dayText(s.next, now, t) }) : '';
+  return { name: t('life.row', { name }), meta };
 }

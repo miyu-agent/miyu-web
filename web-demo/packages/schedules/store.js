@@ -2,7 +2,7 @@
 //! 这个账号的定时任务（软件包 `schedules`）：设置页那一页、右侧栏卡片共用一份。有人在用（`hold`）时订 `schedules` 流、`schedule.list`
 //! 读一次，`schedules.changed` 整项换、拿掉，掉了队（`resync`）重订重读；都不用了退订。旧核心没有 `schedule.*`：`supported` 是假的。
 
-import { sorted, applyChange } from './model.js';
+import { sorted, applyChange, lifeCall } from './model.js';
 
 export class ScheduleStore {
   /** @param {any} core 核心的连接（`ctx.core`） */
@@ -121,6 +121,32 @@ export class ScheduleStore {
     if (method === 'schedule.cancel') this.list = applyChange(this.list, { id: params.id, removed: true });
     else if (got?.schedule?.id) this.list = applyChange(this.list, { id: got.schedule.id, entry: got.schedule });
     this.emit();
+    return got;
+  }
+
+  /**
+   * 人生那一行（核心 LF-13）：停、续、结束照 `life.pause`、`life.resume`、`life.kill {persona}`（通用的定时方法回 `life_schedule`）。停、续当场换样子，
+   * 拒了换回去；结束了当场拿掉（推送再来一遍也一样）。拒了抛出来。
+   * @param {'pause'|'resume'|'kill'} what @param {string} id 那一行 @param {string} persona
+   */
+  async life(what, id, persona) {
+    const was = this.list;
+    if (what !== 'kill') {
+      this.list = this.list.map((s) => (s.id === id ? { ...s, paused: what === 'pause' } : s));
+      this.emit();
+    }
+    const { method, params } = lifeCall(what, persona);
+    let got;
+    try {
+      got = await this.core.request(method, params);
+    } catch (err) {
+      if (this.list !== was) { this.list = was; this.emit(); }
+      throw err;
+    }
+    if (what === 'kill') {
+      this.list = applyChange(this.list, { id, removed: true });
+      this.emit();
+    }
     return got;
   }
 }

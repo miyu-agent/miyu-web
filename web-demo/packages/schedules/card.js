@@ -4,8 +4,9 @@
 //! 点一行开详情（`detail.js`，2026-11-02 项目主人：原来点了没反应、看不到时间）。点标题字进设置页那一页。
 
 import { h, icon } from '../../src/lib/dom.js';
-import { cardText, onSession, rowTime } from './model.js';
+import { cardText, isLifeRow, onSession, rowTime } from './model.js';
 import { openDetail } from './detail.js';
+import { openLifeCard, lifeWho } from './life-card.js';
 
 /**
  * @param {any} ctx `schedules` 包的 ctx @param {import('./store.js').ScheduleStore} store
@@ -27,6 +28,13 @@ export function scheduleCard(ctx, store, session, onSessionChange, openPage) {
       // 停/续、删除点了不算点这一行（不开详情）
       e.stopPropagation();
       try {
+        // 人生那一行（核心 LF-13）停、续照 `life.*`（通用的回 `life_schedule`）
+        const s = store.list.find((x) => x.id === id);
+        const persona = s && isLifeRow(s) ? lifeWho(ctx, s).persona : null;
+        if (s && isLifeRow(s)) {
+          if (persona) await store.life(method === 'schedule.pause' ? 'pause' : 'resume', id, persona);
+          return;
+        }
         await store.act(/** @type {any} */ (method), { id });
       } catch (err) {
         const e = /** @type {any} */ (err);
@@ -39,20 +47,22 @@ export function scheduleCard(ctx, store, session, onSessionChange, openPage) {
       count.textContent = list.length ? t('count', { n: list.length }) : '';
       // 一行：左边那句话，右边下次的时刻（循环的前面一个循环的记号），什么时候、在哪放进悬停（2026-10-27 项目主人选「话在左、下次时刻靠右」）；
       // 悬停时右边换成停/续和删除
+      // 人生那一行（W-1211）：写推演人生 · 人格名，点开人生卡；结束要在卡里点两下，这里不给删除
+      const open = (/** @type {import('./model.js').Schedule} */ s) => (isLifeRow(s) ? openLifeCard(ctx, store, s.id, { toast: say }) : openDetail(ctx, store, s.id, { title, toast: say }));
       card.body(list.map((s) => h(`div.dash-row.dash-file.sch-card-row${s.paused ? '.is-paused' : ''}`, {
-        title: `${s.prompt}\n${cardText(s, now, t)}`, role: 'button', tabindex: '0',
-        onclick: () => openDetail(ctx, store, s.id, { title, toast: say }),
-        onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(ctx, store, s.id, { title, toast: say }); } },
+        title: isLifeRow(s) ? t('life.row', { name: lifeWho(ctx, s).name }) : `${s.prompt}\n${cardText(s, now, t)}`, role: 'button', tabindex: '0',
+        onclick: () => open(s),
+        onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(s); } },
       },
         h('span.dash-kind', icon('clock')),
-        h('span.dash-file-name.sch-card-text', s.prompt),
+        h('span.dash-file-name.sch-card-text', isLifeRow(s) ? t('life.row', { name: lifeWho(ctx, s).name }) : s.prompt),
         h('span.dash-gap'),
         h('span.sch-card-next', s.loop && !s.paused ? icon('rotate-cw') : null, rowTime(s, now, t)),
         h('button.dash-remove.sch-card-act', {
           type: 'button', title: t(s.paused ? 'resume' : 'pause'), 'aria-label': t(s.paused ? 'resume' : 'pause'),
           onclick: (/** @type {Event} */ e) => act(s.paused ? 'schedule.resume' : 'schedule.pause', s.id, e),
         }, icon(s.paused ? 'play' : 'pause')),
-        h('button.dash-remove.sch-card-act', { type: 'button', title: t('remove'), 'aria-label': t('remove'), onclick: (/** @type {Event} */ e) => act('schedule.cancel', s.id, e) }, icon('x')))));
+        isLifeRow(s) ? null : h('button.dash-remove.sch-card-act', { type: 'button', title: t('remove'), 'aria-label': t('remove'), onclick: (/** @type {Event} */ e) => act('schedule.cancel', s.id, e) }, icon('x')))));
       card.show(list.length > 0);
       card.size(list.length);
     };

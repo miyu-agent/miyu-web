@@ -4,9 +4,10 @@
 //! 开着时订着 `schedules` 流（`store.hold`），不在页面上了放开。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { metaText, skipText } from './model.js';
+import { isLifeRow, lifeRowText, metaText, skipText } from './model.js';
 import { openForm } from './form.js';
 import { openDetail } from './detail.js';
+import { openLifeCard, lifeWho } from './life-card.js';
 
 export class SchedulesPage {
   /** @param {any} ctx `schedules` 包的 ctx @param {import('./store.js').ScheduleStore} store */
@@ -64,6 +65,7 @@ export class SchedulesPage {
       openForm(this.ctx, kit, this.store, { session: from, done: (id) => { this.fresh = id; this.draw(); } });
     });
     const rows = list.map((s) => {
+      if (isLifeRow(s)) return this.lifeRow(s, now);
       const skip = skipText(s, t);
       const toggle = kit.toggle(!s.paused, async (/** @type {boolean} */ on) => {
         try {
@@ -101,5 +103,45 @@ export class SchedulesPage {
     replace(this.el,
       h('div.sch-top', add),
       rows.length ? kit.group(null, ...rows) : h('p.set-empty', t('empty')));
+  }
+
+  /**
+   * 人生那一行（核心 LF-13；W-1211）：名字写「推演人生 · 人格名」，下面下次继续、已暂停；开关是 `life.pause`、`life.resume`，删除是结束人生
+   * （`life.kill`，先问、说清后果）；点名字开人生卡。通用的定时方法对它回 `life_schedule`。
+   * @param {import('./model.js').Schedule} s @param {Date} now
+   */
+  lifeRow(s, now) {
+    const t = this.t;
+    const kit = this.kit;
+    const { persona, name } = lifeWho(this.ctx, s);
+    const text = lifeRowText(s, name, now, t);
+    const toggle = kit.toggle(!s.paused, async (/** @type {boolean} */ on) => {
+      if (!persona) return false;
+      try {
+        await this.store.life(on ? 'resume' : 'pause', s.id, persona);
+        return true;
+      } catch (err) {
+        kit.toast(/** @type {any} */ (err)?.message ?? String(err));
+        return false;
+      }
+    });
+    toggle.title = t('life.pause');
+    const end = h('button.icon-button.sch-remove', { type: 'button', title: t('life.kill'), 'aria-label': t('life.kill'), onclick: async () => {
+      if (!persona || !await kit.confirm(end, t('life.kill_hint'))) return;
+      try {
+        await this.store.life('kill', s.id, persona);
+      } catch (err) {
+        kit.toast(/** @type {any} */ (err)?.message ?? String(err));
+      }
+    } }, icon('square'));
+    const open = () => openLifeCard(this.ctx, this.store, s.id, { toast: (/** @type {string} */ x) => kit.toast(x) });
+    return h(`div.set-row.sch-row${s.paused ? '.is-paused' : ''}`, { dataset: { id: s.id } },
+      h('div.set-text.sch-open', {
+        role: 'button', tabindex: '0', onclick: open,
+        onkeydown: (/** @type {KeyboardEvent} */ e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } },
+      },
+        h('div.set-name', h('span.sch-prompt', text.name)),
+        text.meta ? h('p.set-desc', text.meta) : null),
+      h('div.set-control.sch-control', toggle, end));
   }
 }
