@@ -31,7 +31,9 @@
       "approve": "等你确认",
       "schedule_ran": "定时任务跑完了",
       "schedule_failed": "定时任务没跑完",
-      "schedules_reset": "定时任务的记录坏了，已换成新的一份，原来的定时任务都没了"
+      "schedules_reset": "定时任务的记录坏了，已换成新的一份，原来的定时任务都没了",
+      "life_ended": "{name} 的人生结束了",
+      "life_ended_bare": "一段人生结束了"
     },
     "en": {
       "done": "Done",
@@ -39,7 +41,9 @@
       "approve": "Waiting for your approval",
       "schedule_ran": "Scheduled task finished",
       "schedule_failed": "Scheduled task didn't finish",
-      "schedules_reset": "The scheduled task records were damaged and replaced with a new set; the old scheduled tasks are gone"
+      "schedules_reset": "The scheduled task records were damaged and replaced with a new set; the old scheduled tasks are gone",
+      "life_ended": "{name}'s life has ended",
+      "life_ended_bare": "A life has ended"
     },
     "ja": {
       "done": "回答しました",
@@ -47,7 +51,9 @@
       "approve": "確認待ち",
       "schedule_ran": "定期タスクが完了しました",
       "schedule_failed": "定期タスクが完了しませんでした",
-      "schedules_reset": "定期タスクの記録が壊れたため新しくしました。以前の定期タスクはなくなりました"
+      "schedules_reset": "定期タスクの記録が壊れたため新しくしました。以前の定期タスクはなくなりました",
+      "life_ended": "{name} の人生が終わりました",
+      "life_ended_bare": "ひとつの人生が終わりました"
     }
   }
 }

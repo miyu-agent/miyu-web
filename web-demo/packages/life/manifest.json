@@ -49,7 +49,11 @@
         "paused": "已暂停",
         "next": "进行中 · 下次继续 {time}",
         "tomorrow": "明天 {time}"
-      }
+      },
+      "ended_hint": "{name} 的人生结束了",
+      "ended_hint_bare": "一段人生结束了",
+      "ended_open": "查看",
+      "ended_dismiss": "收起"
     },
     "en": {
       "title": "Simulated life",
@@ -71,7 +75,11 @@
         "paused": "Paused",
         "next": "Running · continues {time}",
         "tomorrow": "tomorrow {time}"
-      }
+      },
+      "ended_hint": "{name}'s life has ended",
+      "ended_hint_bare": "A life has ended",
+      "ended_open": "View",
+      "ended_dismiss": "Dismiss"
     },
     "ja": {
       "title": "人生の推演",
@@ -93,7 +101,11 @@
         "paused": "一時停止中",
         "next": "進行中 · 次に続ける {time}",
         "tomorrow": "明日 {time}"
-      }
+      },
+      "ended_hint": "{name} の人生が終わりました",
+      "ended_hint_bare": "ひとつの人生が終わりました",
+      "ended_open": "見る",
+      "ended_dismiss": "閉じる"
     }
   }
 }

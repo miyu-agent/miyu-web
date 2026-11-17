@@ -8095,6 +8095,30 @@
       ".life-unseen"
     ]
   },
+  "life.ended-line": {
+    "zh": "对话区顶上的提示：她自己结束了、还没看过的那一段人生",
+    "select": [
+      ".life-ended-line"
+    ]
+  },
+  "life.ended-text": {
+    "zh": "对话区顶上的提示：「<名字> 的人生结束了」那句",
+    "select": [
+      ".life-ended-text"
+    ]
+  },
+  "life.ended-btn": {
+    "zh": "对话区顶上的提示：「查看」按钮",
+    "select": [
+      ".life-ended-btn"
+    ]
+  },
+  "life.ended-x": {
+    "zh": "对话区顶上的提示：收起",
+    "select": [
+      ".life-ended-x"
+    ]
+  },
   "setup.life-line": {
     "zh": "人格详情「推演人生」下面那一行状态",
     "select": [

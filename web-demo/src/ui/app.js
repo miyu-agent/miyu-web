@@ -374,6 +374,8 @@ export class App {
         h('div.stage-float',
           h('button.icon-button.mobile-menu-button', { type: 'button', title: t('sidebar.expand'), onclick: () => this.drawer(true) }, icon('panel-left'))),
         this.lostBar = h('div.bridge-lost', { hidden: true, role: 'alert' }, t('boot.lost')),
+        // 对话区顶上的提示（挂载位 `stage.top`，W-1211：她自己结束了、还没看过的人生，软件包 life）：占着地方，左上角那一条往下让
+        this.stageTop = h('div.stage-top'),
         // 对话区左上角浮着的一小条（挂载位 `stage.info`：软件包 `setup` 画标题）；看着子代理时前面接上面几层的小片（`crumbs`，CSS 排在最前）
         this.stageInfo = h('div.stage-info', this.crumbs.el),
         this.chat.el,
@@ -392,6 +394,8 @@ export class App {
       this.stageEl.style.setProperty('--stage-info-h', `${Math.round(tall)}px`);
     });
     infoSize.observe(this.stageInfo);
+    // 顶上的提示多高：左上角那一条照它往下让（`--stage-top-h`，styles/chat.css）
+    new ResizeObserver(() => this.stageEl.style.setProperty('--stage-top-h', `${Math.round(this.stageTop.getBoundingClientRect().height)}px`)).observe(this.stageTop);
     // 开着的页面，桥重启过换了口令：不再白试重连，对话区顶上挂一条提示（蓝图「连核心」第 9 条）
     this.store.conn.onLost(() => show(this.lostBar));
     // 断了以后自己重连、核心是人停的（核心 CS-5）：正中一张「核心已停止」的卡，「启动」照常连；接上了收卡（蓝图「连核心」第 1 条，W-1210）
@@ -456,6 +460,8 @@ export class App {
     ctx.effect(() => mountList(this.stageRight, ctx.slots, 'stage.right', failedSlot));
     ctx.slots.declare('stage.info', 'list');
     ctx.effect(() => mountList(this.stageInfo, ctx.slots, 'stage.info', failedSlot));
+    ctx.slots.declare('stage.top', 'list');
+    ctx.effect(() => mountList(this.stageTop, ctx.slots, 'stage.top', failedSlot));
     this.root.classList.toggle('is-sidebar-collapsed', !!ctx.storage.get(COLLAPSED, false));
     // 按页读（核心 9-6 下）：往上滚到顶自动读更早的一页（2026-10-08 项目主人定）
     this.chat.el.addEventListener('scroll', () => this.maybeOlder(), { passive: true });

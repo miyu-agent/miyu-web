@@ -11,14 +11,15 @@
 import { h, icon } from '../../src/lib/dom.js';
 import { isLife } from '../../src/lib/life.js';
 import { lifeWindow } from './card.js';
+import { watchUnseen } from './unseen.js';
 
 /** @param {any} ctx */
 export function apply(ctx) {
   const t = (/** @type {string} */ key, /** @type {any} */ fields) => ctx.text(key, fields);
   /** 开着的那张卡；没开是 `null` @type {{layer: HTMLElement, view: ReturnType<typeof lifeWindow>}|null} */
   let open = null;
-  /** 她自己结束了、还没人看过的人生（会话编号） @type {Set<string>} */
-  const unseen = new Set();
+  /** 她自己结束了、还没人看过的人生（核心 LF-14）：顶上的提示、左栏的记号、卡里的小圆点 */
+  const unseen = watchUnseen(ctx);
 
   const close = () => {
     if (!open) return;
@@ -35,7 +36,7 @@ export function apply(ctx) {
 
   const show = () => {
     if (open) return;
-    const view = lifeWindow(ctx, { close, unseen: () => unseen });
+    const view = lifeWindow(ctx, { close, unseen: () => unseen.sessions() });
     const card = h('div.prefix-ask-card.life-card', { role: 'dialog', 'aria-modal': 'true', 'aria-label': t('title') },
       h('div.life-head', h('p.prefix-ask-title', t('title')),
         h('button.icon-button.life-close', { type: 'button', title: t('close'), 'aria-label': t('close'), onclick: () => close() }, icon('x'))),
@@ -57,10 +58,11 @@ export function apply(ctx) {
   });
   ctx.effect(() => () => close());
   // 左栏头上交互区的主入口（2026-11-17 项目主人本机验收第 31 条：从「更多」拿出来，W-1211）：看着人生会话时这一行亮着。嫩芽图标在整套图标里，
-  // 读到了叫左栏重画这一行
+  // 读到了叫左栏重画这一行；有她自己结束了、还没看过的人生时带记号（核心 LF-14），变了重画；卡开着的跟着重画小圆点
   /** @type {Set<() => void>} */
   const redraw = new Set();
   const onChange = (/** @type {() => void} */ fn) => { redraw.add(fn); return () => redraw.delete(fn); };
   Promise.resolve(ctx.icons?.more?.()).then(() => { for (const fn of redraw) fn(); }, () => {});
-  ctx.slots.mount('sidebar.nav', { id: 'life', label: t('title'), icon: 'sprout', run: () => show(), owns: isLife, onChange });
+  unseen.onChange(() => { for (const fn of redraw) fn(); open?.view.draw(); });
+  ctx.slots.mount('sidebar.nav', { id: 'life', label: t('title'), icon: 'sprout', run: () => show(), owns: isLife, mark: () => unseen.has(), onChange });
 }

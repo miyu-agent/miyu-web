@@ -23,3 +23,20 @@ export function endedGroups(entries, nameOf) {
   const groups = [...by.entries()].map(([key, rows]) => ({ persona: key || null, name: key ? nameOf(key) : null, rows }));
   return [...groups.filter((g) => g.persona), ...groups.filter((g) => !g.persona)];
 }
+
+/**
+ * 还没看过的那几段（核心 LF-14 的 `ended_unseen`，会话编号 → 那一项）照推来的变（W-1211）：推来 `life.ended`（哪种结束的都重问：核心只放她自己结束的）、
+ * `notices` 流掉了队（`resync`）要重问 `life.list`；推来 `life.seen` 拿掉那一段（别的头收了、开了那个会话、删了会话）。别的不动。纯的。
+ * @template T @param {Map<string, T>} unseen @param {string} method @param {any} params @returns {{reload: boolean, unseen: Map<string, T>}}
+ */
+export function unseenAfter(unseen, method, params) {
+  if (method === 'resync' && params?.stream === 'notices') return { reload: true, unseen };
+  if (method !== 'notice') return { reload: false, unseen };
+  if (params?.kind === 'life.ended') return { reload: true, unseen };
+  if (params?.kind === 'life.seen' && typeof params.session === 'string' && unseen.has(params.session)) {
+    const next = new Map(unseen);
+    next.delete(params.session);
+    return { reload: false, unseen: next };
+  }
+  return { reload: false, unseen };
+}

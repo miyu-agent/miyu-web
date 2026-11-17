@@ -41,3 +41,24 @@ test('两栏的字三种语言都有；不写遗言、第几轮', () => {
   assert.match(src, /'life\.list'/);
   assert.match(src, /lifeSide\(/);
 });
+
+test('还没看过的那几段（核心 LF-14 的 ended_unseen）：起来、推来 life.ended、断了又连上时重问；推来 life.seen 拿掉那一段；别的推送不动', async () => {
+  const { unseenAfter } = await import('../../packages/life/model.js');
+  const now = new Map([['e1', { session: 'e1', persona: 'miyu', name: 'Miyu', at: 'x' }], ['e2', { session: 'e2', persona: null, name: null, at: 'y' }]]);
+  assert.deepEqual(unseenAfter(now, 'notice', { kind: 'life.ended', session: 'e3', by: 'self' }), { reload: true, unseen: now });
+  assert.deepEqual(unseenAfter(now, 'notice', { kind: 'life.ended', session: 'e3', by: 'owner' }), { reload: true, unseen: now }, '主人结束的也重问（核心不放进去，问了也一样）');
+  const seen = unseenAfter(now, 'notice', { kind: 'life.seen', session: 'e1' });
+  assert.equal(seen.reload, false);
+  assert.deepEqual([...seen.unseen.keys()], ['e2']);
+  assert.deepEqual(unseenAfter(now, 'resync', { stream: 'notices' }).reload, true);
+  assert.deepEqual(unseenAfter(now, 'notice', { kind: 'schedule.ran' }), { reload: false, unseen: now });
+  assert.deepEqual(unseenAfter(now, 'view.changed', {}), { reload: false, unseen: now });
+});
+
+test('顶上的提示、左栏的记号：三种语言的字；收起提示调 life.seen，打开会话照常（核心照 session.viewing 清）', () => {
+  for (const lang of ['zh', 'en', 'ja']) for (const key of ['ended_hint', 'ended_hint_bare', 'ended_open', 'ended_dismiss']) assert.ok(manifest.text[lang][key], `${lang}.${key}`);
+  const src = readFileSync(new URL('../../packages/life/unseen.js', import.meta.url), 'utf8');
+  assert.match(src, /'life\.seen', \{ session/);
+  assert.match(src, /'stage\.top'/);
+  assert.match(readFileSync(new URL('../../packages/life/index.js', import.meta.url), 'utf8'), /mark: \(\) => /);
+});

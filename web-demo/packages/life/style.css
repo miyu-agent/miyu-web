@@ -36,3 +36,13 @@
 .life-kill:hover, .life-kill.is-armed { color: var(--t-error); }
 /* 她自己结束了、还没看过的：标题后面一个 accent 小圆点 */
 .life-unseen { flex: none; width: 6px; height: 6px; border-radius: var(--r-round); background: var(--accent); }
+/* 对话区顶上的提示（挂载位 stage.top，unseen.js）：她自己结束了、还没看过的人生一段一行，accent 淡底、不描边，进来从上面落下 */
+.life-ended-bar { display: grid; animation: drop-in var(--motion-in) var(--ease-out) both; }
+.life-ended-bar[hidden] { display: none; }
+.life-ended-line { display: flex; align-items: center; justify-content: center; gap: calc(8px * var(--space)); padding: calc(6px * var(--space)) calc(16px * var(--space)); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); color: var(--text); font-size: calc(13px * var(--text-scale)); }
+.life-ended-line > .icon { width: 15px; height: 15px; flex: none; color: var(--accent); }
+.life-ended-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.life-ended-btn { flex: none; height: 26px; padding: 0 calc(10px * var(--space)); border: 0; border-radius: var(--r-6); background: var(--accent); color: var(--on-primary, #fff); font: 500 calc(12.5px * var(--text-scale)) var(--font-ui); cursor: pointer; }
+.life-ended-btn:hover { background: color-mix(in srgb, var(--accent) 88%, var(--text)); }
+.life-ended-x { width: 26px; height: 26px; flex: none; }
+.life-ended-x .icon { width: 14px; height: 14px; }

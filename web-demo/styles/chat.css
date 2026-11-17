@@ -330,6 +330,11 @@ button.crumb:hover, button.crumb:focus-visible { outline: none; color: var(--tex
   animation: drop-in var(--motion-in) var(--ease-out) both;
 }
 
+/* 对话区顶上的提示（挂载位 stage.top，W-1211：软件包 life 的「人生结束了」）：占着地方，左上角那一条往下让 */
+.stage-top { display: grid; }
+.stage-top:empty { display: none; }
+.stage-top:not(:empty) ~ .stage-info { top: calc(var(--stage-top-h, 0px) + 12px); }
+
 /* 对话区左上角浮着的一小条（挂载位 stage.info，软件包 setup 画标题，蓝图 web.md「人格、预设、工作区」第 11 条）：
    左栏收起、窄屏时让开左上角的按钮；看着子代理时前面接上面几层的小片（.chat-crumbs，order -1） */
 .stage-info { position: absolute; z-index: 14; top: 12px; left: 16px; display: flex; gap: calc(6px * var(--space)); max-width: calc(100% - 96px); pointer-events: none; }
