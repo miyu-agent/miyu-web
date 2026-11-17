@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { personaSave, lifeContextOf } from '../../packages/setup/model.js';
+import { personaSave, lifeContextOf, lifeContextHint } from '../../packages/setup/model.js';
 
 const base = { name: 'm', summary: '', persona: '', reminders: '', pairs: [], versions: { persona: null, reminders: null, examples: null } };
 
@@ -32,6 +32,21 @@ test('编辑器：「推演人生」开着才露这一格，跟着「保存」�
   assert.match(src, /bad_life_context/);
   const manifest = JSON.parse(readFileSync(new URL('../../packages/setup/manifest.json', import.meta.url), 'utf8'));
   for (const lang of ['zh', 'en', 'ja']) {
-    for (const key of ['life_context', 'life_context_desc', 'life_context_hint', 'life_context_bad']) assert.ok(manifest.text[lang].edit[key], `${lang} edit.${key}`);
+    for (const key of ['life_context', 'life_context_desc', 'life_context_bad']) assert.ok(manifest.text[lang].edit[key], `${lang} edit.${key}`);
+  }
+});
+
+test('人格卡片的字（2026-11-17 项目主人本机验收第 30 条）：空着的占位字只写出厂的数、不带千分位；说明写在人生会话里也能用 /context 改；「后天」叫「后天提示词」', () => {
+  assert.equal(lifeContextHint(100000), '100000');
+  assert.equal(lifeContextHint(null), '');
+  const src = readFileSync(new URL('../../packages/setup/persona-editor.js', import.meta.url), 'utf8');
+  assert.match(src, /lifeContextHint\(this\.lifeContextDefault\)/);
+  const edit = (/** @type {string} */ lang) => JSON.parse(readFileSync(new URL('../../packages/setup/manifest.json', import.meta.url), 'utf8')).text[lang].edit;
+  assert.equal(edit('zh').life_context_desc, '也可以在人生会话中用 /context 命令单独修改');
+  assert.equal(edit('zh').acquired, '后天提示词');
+  assert.equal(edit('zh').acquired_desc, 'AI 自己通过推演人生产生的提示词');
+  for (const lang of ['en', 'ja']) {
+    for (const key of ['life_context_desc', 'acquired', 'acquired_desc']) assert.notEqual(edit(lang)[key], edit('zh')[key], `${lang} edit.${key} 有自己语言的一份`);
+    assert.match(edit(lang).life_context_desc, /\/context/);
   }
 });

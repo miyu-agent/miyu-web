@@ -38,7 +38,7 @@ test('编辑器：核心有推演人生的才画这一行；照 memory.list 的 
   assert.match(src, /edit\.acquired_none/);
   assert.doesNotMatch(src, /memory\.(update|forget|restore|remember)/);
   const manifest = JSON.parse(read('manifest.json'));
-  const label = { zh: '后天', en: 'Acquired', ja: '後天' };
+  const label = { zh: '后天提示词', en: 'Acquired prompt', ja: '後天プロンプト' };
   for (const lang of ['zh', 'en', 'ja']) {
     const edit = manifest.text[lang].edit;
     assert.equal(edit.acquired, label[lang], `${lang} edit.acquired`);

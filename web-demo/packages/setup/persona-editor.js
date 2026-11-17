@@ -6,12 +6,12 @@
 //! 最上面三行是外观（头像、主题色、背景图，`appearance.js`）：换、删当场存，不等「保存」。
 //! 「推演人生」开关（核心设计 70，`life.js`）也当场生效；开着的才在下面露出「推演方法」（2026-11-14 下午主人改：原来收在「高级」里），
 //! 推演方法跟着「保存」存；它下面是人生会话的上下文上限（核心 LF-10，主人 11-14 下午定），同样开着才露、跟着「保存」存。
-//! 再下面是「后天」（核心 LF-11，`acquired.js`）：AI 在人生里记下的自己的变化，只看；暂停着也照带，所以开关关着也露。
+//! 再下面是「后天提示词」（核心 LF-11，`acquired.js`）：AI 在人生里记下的自己的变化，只看；暂停着也照带，所以开关关着也露。
 
 import { h, replace } from '../../src/lib/dom.js';
 import { field, switchField, area, askFirst } from './form.js';
 import { Pairs } from './pairs.js';
-import { personaSave, halfPair, newlyRemoved, lifeContextOf } from './model.js';
+import { personaSave, halfPair, newlyRemoved, lifeContextOf, lifeContextHint } from './model.js';
 import { Appearance } from './appearance.js';
 import { LifeSwitch } from './life.js';
 import { acquiredField } from './acquired.js';
@@ -112,8 +112,8 @@ export class PersonaEditor {
     const them = () => this.name?.value.trim() || t('edit.them');
     this.pairs = new Pairs(d.pairs, { you: t('edit.you'), them, add: t('edit.add_pair'), drop: t('edit.drop_pair'), userHint: t('edit.user_hint'), replyHint: t('edit.reply_hint') }, () => this.sync());
     this.name.addEventListener('input', () => { this.pairs?.rename(them()); this.sync(); });
-    // 人生会话的上下文上限：空着的照出厂的数（占位字写它）
-    this.lifeContext = typeof d.lifeContext === 'string' ? this.kit.field(d.lifeContext, this.t('edit.life_context_hint', { n: (this.lifeContextDefault ?? 0).toLocaleString() })) : null;
+    // 人生会话的上下文上限：空着的照出厂的数（占位字只写那个数）
+    this.lifeContext = typeof d.lifeContext === 'string' ? this.kit.field(d.lifeContext, lifeContextHint(this.lifeContextDefault)) : null;
     if (this.lifeContext) this.lifeContext.setAttribute('inputmode', 'numeric');
     /** 那一格下面写错了的提示（不是正整数、核心拒了 `bad_life_context`） */
     this.lifeContextNote = h('p.setup-error.setup-life-context-note', { hidden: true });

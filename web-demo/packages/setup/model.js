@@ -236,6 +236,13 @@ export function lifeContextOf(text) {
 }
 
 /**
+ * 人生会话上下文上限那一格空着时的占位字：出厂的数，只写数字、不加千分位（2026-11-17 项目主人本机验收第 30 条：原来是「空着用出厂的 100,000」）；
+ * 不知道出厂的数的空着。
+ * @param {number|null} n @returns {string}
+ */
+export const lifeContextHint = (n) => (typeof n === 'number' ? String(n) : '');
+
+/**
  * 人格详情的「后天」（核心 LF-11）：`memory.list`（`class` 写 `change`，不含作废的）交回的那几条（新的在前），排成旧的在前，只留内容和
  * 为什么（`why`，没写的是 `null`）。别的类、作废的、没有内容的不列；交回的不是列表的当没有。
  * @param {any} memories @returns {{text: string, why: string|null}[]}
