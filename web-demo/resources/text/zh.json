@@ -455,6 +455,8 @@
     "tail": "只显示最后 {count} 行",
     "no_output": "没有保存输出",
     "no_summary": "没有保存摘要",
+    "external_speaker": "{name}（{id}）",
+    "external_manager": "{who} · 管理员",
     "truncated": "（中间部分已截断）",
     "loading": "正在加载…",
     "load_failed": "加载失败：{reason}",

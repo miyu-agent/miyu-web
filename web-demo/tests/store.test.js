@@ -146,6 +146,20 @@ test('会话状态换了：待办、模型跟着换；一轮做完了、没在�
   assert.equal(store.summary('S').unread, false);
 });
 
+test('场所会话不在会话表里（核心 VW-2）：标题照订阅回应、会话状态的 title，换了跟着换；会话表里有标题的照会话表', async () => {
+  const conn = { onPush() {}, request: async (/** @type {string} */ method) => (method === 'subscribe' ? { entries: [], title: '周末吃喝群', status: { state: 'idle', title: '周末吃喝群' } } : {}) };
+  const store = new Store(/** @type {any} */ (conn));
+  await store.ensure('V');
+  assert.equal(store.summary('V').title, '周末吃喝群');
+  store.push('view.status', { session: 'V', status: { state: 'idle', title: '改了名' } });
+  assert.equal(store.summary('V').title, '改了名');
+  store.push('view.status', { session: 'V', status: { state: 'idle' } });
+  assert.equal(store.summary('V').title, null, '标题去掉了');
+  store.index.seed('V', { title: '会话表的' });
+  store.push('view.status', { session: 'V', status: { state: 'idle', title: '状态的' } });
+  assert.equal(store.summary('V').title, '会话表的');
+});
+
 test('后台开始提前压缩（会话状态的 preparing 从没有变成有，核心 6-11 三补）：告诉界面一次；一直有、变回没有的不再说', () => {
   const store = new Store(/** @type {any} */ ({ onPush() {}, request: async () => ({}) }));
   store.sessions.set('S', emptySession('S'));

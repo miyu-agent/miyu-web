@@ -268,7 +268,9 @@ export class Store {
     const state = s?.view.status?.state;
     // 人最后一次发话（核心 SX-1）：左栏照它排，切进去不挪（`spokenAt`）
     const spoken = spokenOf(e);
-    return { session: id, title: e?.title ?? e?.preview ?? null, running: state ? state !== 'idle' : !!e?.busy,
+    // 标题：会话表的；场所会话不在会话表里（核心 VW-2），照会话状态的 `title`（订阅回应带，换了推一份新的）
+    const titled = typeof s?.view.status?.title === 'string' && s.view.status.title ? s.view.status.title : null;
+    return { session: id, title: e?.title ?? titled ?? e?.preview ?? null, running: state ? state !== 'idle' : !!e?.busy,
       // 在等人确认、回答（核心 SL-1：会话表的 `waiting`；读进来了的照会话状态）
       waiting: state ? state === 'waiting' : e?.waiting === true, created: null, pinned: !!e?.pinned, active: Number.isNaN(listed) ? null : listed, spoken, unread: this.unread.has(id), project: e?.project ?? null,
       // 哪儿开的（核心 8-33 四补：终端集成开的是 `terminal`，左栏单开一栏）

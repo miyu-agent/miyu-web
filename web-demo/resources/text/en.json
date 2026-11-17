@@ -455,6 +455,8 @@
     "tail": "Showing the last {count} lines",
     "no_output": "No output saved",
     "no_summary": "No summary saved",
+    "external_speaker": "{name} ({id})",
+    "external_manager": "{who} · Admin",
     "truncated": "(middle truncated)",
     "loading": "Loading…",
     "load_failed": "Failed to load: {reason}",

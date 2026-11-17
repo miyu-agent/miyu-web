@@ -44,8 +44,20 @@ export function tasksFromStatus(jobs) {
       fork: j.what === 'agent' && j.fork === true,
     };
   });
-  const by = (/** @type {string} */ state) => list.filter((x) => (state === 'running' ? x.state === 'running' : x.state !== 'running')).sort((a, b) => compareJobs(b.job, a.job));
+  const by = (/** @type {string} */ state) => list.filter((x) => (state === 'running' ? x.state === 'running' : x.state !== 'running')).sort(newerFirst);
   return [...by('running'), ...by('done')];
+}
+
+/** 任务编号的写法（`j2`、`j2.1`）：场所会话的并行支线（核心 VW-2）的编号是支线的会话编号，不是这种。 */
+const JOB_ID = /^j\d+(\.\d+)*$/;
+
+/**
+ * 从新到旧：两个都是任务编号的照编号比；有一个是并行支线的（编号是会话编号，照编号比不出先后）照开始的时刻，没有时刻的排后面。
+ * @param {Task} a @param {Task} b
+ */
+function newerFirst(a, b) {
+  if (JOB_ID.test(a.job) && JOB_ID.test(b.job)) return compareJobs(b.job, a.job);
+  return (b.since ?? -Infinity) - (a.since ?? -Infinity) || 0;
 }
 
 /** 照会话状态挂在这个会话下面的子代理（左栏那棵树）。 @param {any[]|null|undefined} jobs */

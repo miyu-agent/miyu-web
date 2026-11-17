@@ -39,10 +39,24 @@ export function speakerOf(by, jobs, parent = null) {
     return { kind: 'session', name: t('notes.session_speaker', { id: shortSession(String(by.id ?? '')) }), id: by.id };
   }
   if (by?.kind === 'harness') return { kind: 'harness', name: t('notes.harness_speaker', { name: by.name ?? '' }) };
-  if (by?.kind === 'external') return { kind: 'external', name: n.external };
+  if (by?.kind === 'external') return { kind: 'external', name: externalName(by) };
   // 到点的定时任务、循环交进来的（核心 J-1 上、J-2）：「定时任务 t3」，循环的写「循环」
   if (by?.kind === 'schedule') return { kind: 'schedule', name: by.loop ? n.loop_speaker : t('notes.schedule_speaker', { id: String(by.schedule ?? '') }).trim() };
   return { kind: by?.kind ?? 'unknown', name: by?.kind ?? '' };
+}
+
+/**
+ * 场所里的人（`by` 是 `{kind: 'external', venue, id, role?, owner?}`，核心 VW-2 起多一格 `name`：那条消息的 `venue.name`，群名片或昵称，
+ * 只当显示名、不可信）：写「昵称（qq:号）」，没名字的写号，号也没有的写「外部」；桥报的是管理员的（`role: 'manager'`）后面接「 · 管理员」，
+ * 普通成员（`member`，桥不写时的默认）不写（2026-11-17 项目主人验收第 27 条：原来群里每个人都只写「外部」）。名字照字交出去，画的时候
+ * 照字放（`h` 写 textContent），不当标签。
+ * @param {any} by
+ */
+function externalName(by) {
+  const id = typeof by.id === 'string' ? by.id : '';
+  const name = typeof by.name === 'string' ? by.name.trim() : '';
+  const who = name && id ? t('notes.external_speaker', { name, id }) : name || id || res.text.notes.external;
+  return by.role === 'manager' ? t('notes.external_manager', { who }) : who;
 }
 
 /**

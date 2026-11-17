@@ -17,6 +17,25 @@ test('时间线：subagent 的参数里 fork 是真的才算分叉；没写完�
   assert.equal(forkedCall(null), false);
 });
 
+test('场所会话的并行支线（核心 VW-2：jobs 里 {job: 支线的会话编号, what: agent, fork: true}）：列成分叉的子代理，在跑的在前、做完的进「已完成」，各照开始的时刻从新到旧', () => {
+  const at = (s) => new Date(Date.UTC(2026, 10, 17, 10, 0, 0) + s * 1000).toISOString();
+  const B1 = '019a0000-0000-7000-8000-000000000001';
+  const B2 = '019a0000-0000-7000-8000-000000000002';
+  const B3 = '019a0000-0000-7000-8000-000000000003';
+  const tasks = tasksFromStatus([
+    { job: 'j1', what: 'command', title: '数秒', state: 'done', started: at(0), ended: at(1) },
+    { job: B1, what: 'agent', fork: true, session: B1, title: '支线一', state: 'done', started: at(10), ended: at(20) },
+    { job: B2, what: 'agent', fork: true, session: B2, title: '支线二', state: 'stopped', started: at(30), ended: at(40) },
+    { job: B3, what: 'agent', fork: true, session: B3, title: '支线三', state: 'running', started: at(50) },
+  ]);
+  assert.deepEqual(tasks.map((x) => [x.title, x.state, x.fork, x.session]), [
+    ['支线三', 'running', true, B3],
+    ['支线二', 'stopped', true, B2],
+    ['支线一', 'done', true, B1],
+    ['数秒', 'done', false, null],
+  ]);
+});
+
 test('后台任务：jobs 里 what: agent 的那一项带 fork: true 才是分叉的；命令带了也不算；没有这一格的照普通子代理', () => {
   const tasks = tasksFromStatus([
     { job: 'j1', what: 'agent', title: '查资料', state: 'running', session: 's1', fork: true },

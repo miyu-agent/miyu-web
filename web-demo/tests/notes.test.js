@@ -24,6 +24,17 @@ test('谁说的：你的、别的账号的、子代理发给她的（标题照�
   assert.deepEqual(of({ kind: 'external', platform: 'qq' }), { kind: 'external', name: '外部' });
 });
 
+test('场所里的人（核心 VW-2：from 多一格 name，venue.name）：写「昵称（qq:号）」，管理员接「 · 管理员」；没名字的写号，号也没有的照旧「外部」', () => {
+  const of = (by) => speakerOf(by, new Map(), null);
+  const venue = 'qq:group:960101';
+  assert.deepEqual(of({ kind: 'external', venue, id: 'qq:20001', role: 'member', name: '阿杰' }), { kind: 'external', name: '阿杰（qq:20001）' });
+  assert.deepEqual(of({ kind: 'external', venue, id: 'qq:20002', role: 'manager', name: '小美' }), { kind: 'external', name: '小美（qq:20002） · 管理员' });
+  assert.deepEqual(of({ kind: 'external', venue, id: 'qq:20003' }), { kind: 'external', name: 'qq:20003' }, '没写名字的写号');
+  assert.deepEqual(of({ kind: 'external', venue, id: 'qq:20003', name: '  ' }), { kind: 'external', name: 'qq:20003' }, '空白的名字当没有');
+  // 名字不可信：原样当字交出去，画的时候照字放（`h` 写 textContent），不当标签
+  assert.equal(of({ kind: 'external', venue, id: 'qq:1', name: '<b>x</b>' }).name, '<b>x</b>（qq:1）');
+});
+
 test('模型连上了却一直不出字（核心 YC-3 的 stalled，W-1138）：写「模型没有响应」，原话接在后面', () => {
   assert.equal(failureText({ class: 'stalled', message: '空闲超时：180 秒没有收到新的内容' }), '模型没有响应：空闲超时：180 秒没有收到新的内容');
   assert.equal(failureText({ class: 'stalled' }), '模型没有响应');
