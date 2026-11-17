@@ -352,7 +352,7 @@ export class SettingsDialog {
    * @returns {boolean}
    */
   dismissTop() {
-    const open = [...this.panel.querySelectorAll('.set-menu, .set-drawer, .set-form:not([hidden]), .set-pool.is-editing, [data-set-dismiss]')].at(-1);
+    const open = [...this.panel.querySelectorAll('.set-menu, .set-form:not([hidden]), .set-pool.is-editing, [data-set-dismiss]')].at(-1);
     if (!open) return false;
     open.dispatchEvent(new CustomEvent('set-dismiss'));
     return true;
@@ -383,8 +383,8 @@ export class SettingsDialog {
     if (this.query.trim()) this.sub.closeAll();
     this.root.classList.toggle('has-sub', !!this.sub.page);
     this.root.classList.toggle('is-bare-sub', !!this.sub.page?.bare);
-    // 模型的详情挂在右边整栏上：换页、搜索时收掉，模型页自己再挂
-    this.panel.querySelector('.set-drawer')?.remove();
+    // 模型的详情小窗挂在设置框上：换页、搜索时收掉，模型页自己再挂（在缩回去的那一张让它缩完）
+    this.panel.querySelector('.set-model-modal:not(.is-leaving)')?.remove();
     if (this.query.trim()) {
       this.title.textContent = this.ctx.text('search');
       this.drawNav();

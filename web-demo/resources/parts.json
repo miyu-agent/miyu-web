@@ -1483,16 +1483,16 @@
       ".set-model-meta"
     ]
   },
-  "set.drawer": {
-    "zh": "设置页：抽屉",
+  "set.model-pop": {
+    "zh": "设置页：一个模型的详情小窗",
     "select": [
-      ".set-drawer"
+      ".set-model-pop"
     ]
   },
-  "set.drawer-head": {
-    "zh": "设置页：抽屉头上一行",
+  "set.model-pop-head": {
+    "zh": "设置页：模型详情小窗头上一行",
     "select": [
-      ".set-drawer-head"
+      ".set-model-pop-head"
     ]
   },
   "set.prov-warn": {
@@ -5083,10 +5083,10 @@
       ".set-key-line span"
     ]
   },
-  "set.drawer-head-code": {
+  "set.model-pop-head-code": {
     "zh": "设置页里的行内代码",
     "select": [
-      ".set-drawer-head code"
+      ".set-model-pop-head code"
     ]
   },
   "set.prices-head-em": {

@@ -1,7 +1,7 @@
 // @ts-check
 //! 「模型」页的「供应商」（蓝图 `web.md`「设置页」第 14 条；2026-10-11 项目主人看过说丑，改成这样）：左边一家一格两行（图标、名称，
 //! 下面用不了的原因或者地址的主机名，同名的两家靠它分开）；右边头上图标、名称、地址和「测试连接」「编辑」，没设密钥的直接一个框
-//! 填，模型一个一行（名字、「1M 上下文 · 看图」），点一行滑进详情（`model-detail.js`）。接口只在编辑表里（`provider-form.js`）。
+//! 填，模型一个一行（名字、「1M 上下文 · 看图」），点一行在正中弹出详情（`model-detail.js`）。接口只在编辑表里（`provider-form.js`）。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { hasLogos, logoEl } from '../../src/lib/logo.js';
@@ -10,7 +10,7 @@ import { modelName, metaOf, sharedState, loadingRow, searchable, refreshProvider
 import { openForm } from './provider-form.js';
 import { confirmIn } from './confirm.js';
 import { openAdd } from './add-provider.js';
-import { drawer } from './model-detail.js';
+import { detailModal } from './model-detail.js';
 
 /** @param {any} dialog @param {{providers?: any[]}} list `model.list` */
 export function drawProviders(dialog, list) {
@@ -32,14 +32,14 @@ export function drawProviders(dialog, list) {
     h('button.set-prov.is-add', { type: 'button', onclick: () => openAdd(dialog) }, icon('plus'), h('span', ctx.text('models.add_provider'))));
   if (!p) return h('div.set-prov-wrap', list_);
   const main = h('div.set-prov-main', head(dialog, p, logos), keyBlock(dialog, p), models(dialog, p));
-  // 详情盖着右边整栏（挂在 `.set-main` 上，滚正文时它不跟着走）
-  const detail = dialog.modelDetail ? drawer(dialog, p, (p.models ?? []).find((m) => m.model === dialog.modelDetail)) : null;
+  // 详情是设置框正中的小窗（挂在设置框上，同添加供应商、MCP 的小窗，W-1206）
+  const detail = dialog.modelDetail ? detailModal(dialog, p, (p.models ?? []).find((m) => m.model === dialog.modelDetail)) : null;
   if (detail) {
-    // 存了一项重画时还是同一个模型：不再滑进来一次
-    if (dialog.drawerFor === dialog.modelDetail) detail.classList.add('is-settled');
-    dialog.panel.querySelector('.set-main')?.append(detail);
+    // 存了一项重画时还是同一个模型：不再弹一次
+    if (dialog.detailFor === dialog.modelDetail) detail.classList.add('is-settled');
+    dialog.panel.append(detail);
   }
-  dialog.drawerFor = dialog.modelDetail;
+  dialog.detailFor = dialog.modelDetail;
   return h('div.set-prov-wrap', list_, main);
 }
 

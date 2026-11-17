@@ -282,22 +282,18 @@
   .set-models { display: flex; flex: 1; flex-direction: column; min-height: 0; }
   .set-model-list { flex: 1; min-height: 0; overflow-y: auto; }
 }
-.set-drawer {
-  position: absolute; top: 0; right: 0; bottom: 0; z-index: 4; width: min(380px, 100%); padding: 0 calc(16px * var(--space)) calc(16px * var(--space)); overflow-y: auto;
-  border-left: var(--divider, 1px solid var(--line)); background: var(--surface); box-shadow: -12px 0 24px -18px rgba(0, 0, 0, 0.25);
-  animation: pane-in var(--motion-slide) var(--ease-out) both;
-}
-.set-drawer.is-settled { animation: none; }
-.set-drawer-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: flex-start; gap: calc(8px * var(--space)); padding: calc(10px * var(--space)) 0; background: var(--surface); }
-.set-drawer-head div { display: flex; flex: 1; flex-direction: column; gap: calc(2px * var(--space)); min-width: 0; }
-.set-drawer-head code { overflow: hidden; color: var(--text-faint); font: calc(11px * var(--text-scale)) var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
-.set-drawer .set-row { gap: calc(12px * var(--space)); }
-.set-drawer .set-text { flex: 0 0 auto; min-width: 72px; }
-.set-drawer .set-name > span { white-space: nowrap; }
-.set-drawer .set-control { flex: 1; min-width: 0; flex-wrap: wrap; }
-.set-drawer .set-control { justify-content: flex-end; }
-.set-drawer .set-chips { max-width: none; }
-.set-drawer .set-input:not(.is-number) { width: 160px; }
+/* 一个模型的详情：正中的小窗（同添加供应商、MCP 的小窗，W-1206）；存了一项重画时不再弹一次 */
+.set-model-modal.is-settled, .set-model-modal.is-settled .set-tool-pop { animation: none; }
+.set-model-pop { width: min(420px, 100%); gap: calc(4px * var(--space)); padding-top: calc(6px * var(--space)); }
+.set-model-pop-head { position: sticky; top: calc(-6px * var(--space)); z-index: 1; display: flex; align-items: flex-start; gap: calc(8px * var(--space)); padding: calc(10px * var(--space)) 0; background: var(--surface); }
+.set-model-pop-head div { display: flex; flex: 1; flex-direction: column; gap: calc(2px * var(--space)); min-width: 0; }
+.set-model-pop-head code { overflow: hidden; color: var(--text-faint); font: calc(11px * var(--text-scale)) var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
+.set-model-pop .set-row { gap: calc(12px * var(--space)); }
+.set-model-pop .set-text { flex: 0 0 auto; min-width: 72px; }
+.set-model-pop .set-name > span { white-space: nowrap; }
+.set-model-pop .set-control { flex: 1; min-width: 0; flex-wrap: wrap; justify-content: flex-end; }
+.set-model-pop .set-chips { max-width: none; }
+.set-model-pop .set-input:not(.is-number) { width: 160px; }
 .set-row.is-todo { opacity: 0.6; }
 .set-pools { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: calc(12px * var(--space)); margin-top: calc(14px * var(--space)); }
 .set-pool { display: flex; flex-direction: column; gap: calc(8px * var(--space)); padding: calc(12px * var(--space)) calc(14px * var(--space)); border: var(--card-border, 0); border-radius: var(--card-radius, var(--r-12)); background: var(--card-bg, var(--surface-1)); box-shadow: var(--card-elev, var(--card-shadow)); color: var(--text); font: calc(13px * var(--text-scale)) var(--font-ui); text-align: left; }
@@ -493,7 +489,6 @@ body > .set-ask { z-index: 95; }
   .set-side-head { display: flex; }
   .set-prov-wrap { grid-template-columns: 1fr; }
   .set-row { flex-wrap: wrap; }
-  .set-drawer { position: fixed; inset: 0; width: 100%; z-index: 7; }
 }
 
 /* 「软件包」页分两段：核心的软件包、网页自己的组件（段名比组名大一档） */
