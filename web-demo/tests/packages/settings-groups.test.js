@@ -93,6 +93,25 @@ test('配置项的搜索也带上它归的那个包的字：搜 web 列出联网
   assert.deepEqual(search(pages, 'net search', more).map((f) => f.item.key), ['net.search.source'], '键里的点当空格');
 });
 
+test('英文名字也能搜（核心 NS-1：连接不是英文时，config.schema 的项、组和 package.list 的包带 name_en）：中文界面打 web 找得到「网络搜索」（W-1210）', async () => {
+  const { buildPages } = await import('../../packages/settings/model.js');
+  const schema = {
+    pages: [{ id: 'packages', name: '软件包' }],
+    groups: [{ id: 'net', name: '联网搜索', name_en: 'Web Search', page: 'packages' }, { id: 'log', name: '运行日志', page: 'packages' }],
+    items: [
+      { key: 'net.search.source', name: '网络搜索', name_en: 'Search provider', description: '', page: 'packages', group: 'net', layers: ['system'] },
+      { key: 'net.fetch.mode', name: '抓取方式', description: '', page: 'packages', group: 'net', layers: ['system'] },
+      { key: 'log.level', name: '运行日志的级别', name_en: 'Log level', description: '', page: 'packages', group: 'log', layers: ['system'] },
+    ],
+  };
+  const pages = buildPages(/** @type {any} */ (schema), { items: {} });
+  assert.deepEqual(search(pages, 'search provider').map((f) => f.item.key), ['net.search.source'], '项的英文名字');
+  assert.deepEqual(search(pages, 'web').map((f) => f.item.key), ['net.search.source', 'net.fetch.mode'], '组的英文名字：那一组的项都算');
+  assert.deepEqual(search(pages, 'log level').map((f) => f.item.key), ['log.level']);
+  const pkg = { package: 'base-net', name: '联网搜索', name_en: 'Networking', summary: '搜网页' };
+  assert.ok(pkgMatch('networking', ...pkgWords(pkg)), '包的英文名字');
+});
+
 test('借来的值（核心 NS-1：value 是 null，来源 {layer: inherited, from: providers.<编号>.key}）：写「已继承自 <供应商的名字>」，不当空的（W-1210）', async () => {
   const { inheritedFrom } = await import('../../packages/settings/model.js');
   const models = { providers: [{ id: 'deepseek', name: { value: 'DeepSeek 官方' }, models: [] }, { id: 'bare', models: [] }] };

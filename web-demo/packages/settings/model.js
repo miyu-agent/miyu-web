@@ -49,7 +49,9 @@ export function buildPages(schema, got, opts = {}) {
     const sections = /** @type {any} */ (g).sections;
     // 组的说明（核心 HZ-1：`groups` 里可选的 `description`，现在只有「受保护的命令」带）：有字的带上，画在组名下面
     const description = typeof (/** @type {any} */ (g).description) === 'string' ? /** @type {any} */ (g).description.trim() : '';
-    if (items.length) byPage.get(merge[home] ?? home)?.groups.push({ id: g.id, name: g.name, items, ...(description ? { description } : {}), ...(Array.isArray(sections) && sections.length ? { sections } : {}) });
+    // 组的英文名字（核心 NS-1：连接不是英文时才有）：只拿来搜
+    const nameEn = typeof (/** @type {any} */ (g).name_en) === 'string' ? /** @type {any} */ (g).name_en : '';
+    if (items.length) byPage.get(merge[home] ?? home)?.groups.push({ id: g.id, name: g.name, items, ...(nameEn ? { name_en: nameEn } : {}), ...(description ? { description } : {}), ...(Array.isArray(sections) && sections.length ? { sections } : {}) });
   }
   // 对不上清单里哪一项的（整份写坏了、不认识的键、只属于带占位那几项的不算）：放那一页顶上。别的头的项连它的问题一起不列，
   // 不认识的键不管叫什么都要提示（改了名的旧键 `tui.startup` 留在文件里，人得看得到去删）
@@ -101,8 +103,6 @@ export function expectFor(entry, layer) {
 export const writtenIn = (entry, layer) => !!entry?.layers?.some((l) => l.origin.layer === layer);
 
 /** 值是环境变量引用（`{env: X}`）：交回名字，不是的交 `null`。 */
-export const envRef = (value) => (value && typeof value === 'object' && !Array.isArray(value) && typeof value.env === 'string' ? value.env : null);
-
 /**
  * 借来的值（核心 NS-1，协议参考 `config.md`）：哪一层都没写、照别的一项的值用的（来源 `{layer: 'inherited', from}`，值是 `null`，现在只有
  * `net.search.deepseek.key` 借官方 DeepSeek 供应商的 key），交回给人看的「从哪借的」：`providers.<编号>.key` 照模型列表里那一家的显示名
@@ -118,6 +118,8 @@ export function inheritedFrom(entry, models) {
   const p = (models?.providers ?? []).find((/** @type {any} */ x) => x.id === parts[1]);
   return p ? providerName(p) : parts[1];
 }
+
+export const envRef = (value) => (value && typeof value === 'object' && !Array.isArray(value) && typeof value.env === 'string' ? value.env : null);
 
 /**
  * 列表加的一个元素（控件 `list`）：核心说元素是 `int`、`float` 的，照数交（接入QQ的群白名单是群号，交字会被核心拒，2026-10-17
@@ -149,7 +151,8 @@ const searchable = (text) => text.toLowerCase().replace(/[-_.]+/g, ' ');
 
 /**
  * 搜索：名字、键、说明、组名里有这几个字（不分大小写）；`more` 给一项再添几样字（它归的那个包的名字、编号、功能，`pkgWords`：核心的清单
- * 只有连接语言的名字，联网搜索的键是 `net.*`，搜 `web` 要靠功能编号 `web-search` 才找得到，2026-11-17 主人验收第 10 条，W-1206）。
+ * 只有连接语言的名字，联网搜索的键是 `net.*`，搜 `web` 要靠功能编号 `web-search` 才找得到，2026-11-17 主人验收第 10 条，W-1206）。项、组的英文
+ * 名字（`name_en`，核心 NS-1：连接不是英文时才有）也算，中文界面打 web 找得到「网络搜索」（W-1210）。
  * 交回对得上的项，带上在哪一页。
  * @param {Page[]} pages
  * @param {string} query
@@ -164,7 +167,8 @@ export function search(pages, query, more = () => []) {
     for (const group of page.groups) {
       for (const item of group.items) {
         const extra = more(item).filter((x) => typeof x === 'string');
-        const hay = searchable([item.name, item.key, item.description, group.name, ...extra].join('\n'));
+        const en = [/** @type {any} */ (item).name_en, /** @type {any} */ (group).name_en].filter((x) => typeof x === 'string');
+        const hay = searchable([item.name, item.key, item.description, group.name, ...en, ...extra].join('\n'));
         if (hay.includes(q)) out.push({ page, group, item });
       }
     }
@@ -580,15 +584,15 @@ export function pkgMatch(query, ...fields) {
 }
 
 /**
- * 一个包拿来搜的字：名字、一句说明、编号，再加它的功能（`package.list` 的 `features`：编号、名字、说明）。核心只给连接语言的名字，
- * 功能编号是英文的（联网搜索 `base-net` 的 `web-search`），搜 `web` 靠它找得到（W-1206）。
+ * 一个包拿来搜的字：名字、一句说明、编号，再加它的功能（`package.list` 的 `features`：编号、名字、说明）。功能编号是英文的（联网搜索
+ * `base-net` 的 `web-search`），搜 `web` 靠它找得到（W-1206）；连接不是英文时包还带英文名字（`name_en`，核心 NS-1），也算（W-1210）。
  * @param {any} p `package.list` 的一项
  * @returns {Array<string|null>}
  */
 export function pkgWords(p) {
   const features = Array.isArray(p?.features) ? p.features : [];
   const str = (/** @type {any} */ x) => (typeof x === 'string' ? x : null);
-  return [str(p?.name), str(p?.summary), str(p?.package), ...features.flatMap((/** @type {any} */ f) => [str(f?.id), str(f?.name), str(f?.summary)])];
+  return [str(p?.name), str(p?.summary), str(p?.package), ...(typeof p?.name_en === 'string' ? [p.name_en] : []), ...features.flatMap((/** @type {any} */ f) => [str(f?.id), str(f?.name), str(f?.summary)])];
 }
 
 /**
