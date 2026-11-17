@@ -1,7 +1,7 @@
 // @ts-check
 //! 吉祥物的身子（软件包 `mascot`，蓝图 `web.md`「吉祥物」第 2–4、8 条）：受重力站在台子上（`world.js`）。站着的跟着脚下的台子挪
 //! （输入框左右挪了跟着它右边挪；台子往下挪多了、没了、走出了边就掉）；浮上来的台子把它顶上去（画的时候差多少慢慢缓上去，不是
-//! 一下闪过去）；越掉越快，在空中抻长一点，落地蹲下去再弹回来，摔得重的弹起来一下；跳之前先蹲一下；左键按住蹲下蓄力，没拖动
+//! 一下闪过去，最快 `carry.rise_px_s`，W-1206；往下挪一点的浮层也慢慢跟下去）；越掉越快，在空中抻长一点，落地蹲下去再弹回来，摔得重的弹起来一下；跳之前先蹲一下；左键按住蹲下蓄力，没拖动
 //! 就松手是跳（按得越久跳得越高），拖动了被拎起来跟着指针走，身子跟着甩，松手照拖的速度扔出去；侧过身沿着台子迈步走，在地上待够了走回
 //! 输入框下面跳上去；两边、顶上是墙。蹲、抻都交给模型重画（`shape` 交回 `crouch`），不拉伸图片。数都是这个包的设置项，台子、
 //! 平常站在哪、多大由 `index.js` 量。
@@ -16,6 +16,18 @@ import { ease } from './face.js';
 const pick = ([a, b]) => a + Math.random() * (b - a);
 /** 夹在 `[-max, max]` 里 */
 const clamp = (v, max) => Math.max(-max, Math.min(max, v));
+
+/**
+ * 被台子带着、还没跟上的那一截缓到 0（W-1206，2026-11-17 主人验收第 24 条：命令列表升上来它是闪上去的）：照半衰期缓，一帧最多走
+ * `rise_px_s` 那么快，高的浮层顶上来看得出是一路推上去的，矮的照旧很快；不到 0.3 像素的算到了。往上、往下（负的）都一样。
+ * @param {number} offset @param {number} dt @param {{half_life_ms: number, rise_px_s?: number}} carry
+ */
+export function settle(offset, dt, carry) {
+  if (Math.abs(offset) <= 0.3) return 0;
+  const next = ease(offset, 0, dt, carry.half_life_ms);
+  const most = ((carry.rise_px_s ?? Infinity) * dt) / 1000;
+  return Math.sign(offset) * Math.max(Math.abs(next), Math.abs(offset) - most);
+}
 
 /** 一串时刻（0 到 1）附近鼓起来的一下：动作里戳、拍的那几下 @param {number} p @param {number[]} at */
 const pulse = (p, at) => at.reduce((m, h) => Math.max(m, Math.exp(-(((p - h) / 0.07) ** 2))), 0);
@@ -317,6 +329,8 @@ export class Body {
       }
       else {
         if (same.y < b.y) this.offset += b.y - same.y;
+        // 浮层往下挪了一点（列表变短、命令列表换成提示）：画的地方先不动、慢慢跟下去，不一下跳下去（W-1206）；输入框、跟着滚的照旧当场跟
+        else if (same.y > b.y && same.carry) this.offset -= same.y - b.y;
         b = { ...b, x, y: same.y, ground: same };
       }
     }
@@ -554,7 +568,7 @@ export class Body {
     const c = this.config;
     const b = /** @type {import('./world.js').Body} */ (this.at);
     let moving = false;
-    this.offset = this.offset > 0.3 ? ease(this.offset, 0, dt, c.carry.half_life_ms) : 0;
+    this.offset = this.room.reduced() ? 0 : settle(this.offset, dt, c.carry);
     if (this.offset) moving = true;
     this.tilt = ease(this.tilt, this.tiltAim, dt, c.drag.tilt_half_life_ms);
     if (Math.abs(this.tilt - this.tiltAim) < 0.2) this.tilt = this.tiltAim;

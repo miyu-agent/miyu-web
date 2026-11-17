@@ -171,3 +171,64 @@ test('往下掉的时候框从下面长上来越过了脚（打开抽屉）：�
   body.move(16, (now += 16));
   assert.equal(body.at.ground, null, '往上跳的不被顶');
 });
+
+/**
+ * 站在框上的推若干帧，交回每一帧画在多高（`shape` 的 `y`）。`platforms` 是每一帧的台子（照第几帧给）。
+ * @param {Body} body @param {(i: number) => any[]} platforms @param {number} frames
+ */
+function drawn(body, platforms, frames) {
+  let now = performance.now();
+  const ys = [];
+  for (let i = 0; i < frames; i++) {
+    body.room = { ...body.room, platforms: () => platforms(i) };
+    body.move(16, (now += 16));
+    ys.push(body.shape(16, now, 0).y);
+  }
+  return ys;
+}
+
+test('浮层升上来把它顶上去（2026-11-17 主人验收第 24 条，W-1206）：画出来是一路往上推的，不是一下闪过去；一会儿就到顶', () => {
+  const body = new Body(config, room);
+  body.move(16, performance.now());
+  // 输入框上沿 600，命令列表从 300 起（高 300 的浮层）
+  const menu = { id: 'composer.floats', x1: 100, x2: 900, y: 300, carry: true };
+  const ys = drawn(body, () => [menu, ledge, floor], 60);
+  assert.equal(body.at?.ground?.id, 'composer.floats', '站到了浮层上');
+  // 第 6 帧（约 0.1 秒）还在半路：原来 45 毫秒的半衰期这时已经只差 60 多像素
+  assert.ok(ys[5] > 300 + 150, `0.1 秒时还在半路：${ys[5]}`);
+  const at = ys.findIndex((y) => y <= 301);
+  assert.ok(at > 12 && at < 45, `0.2 到 0.7 秒之间到顶：第 ${at} 帧`);
+  for (let i = 1; i < ys.length; i++) assert.ok(ys[i] <= ys[i - 1], '一路往上，不回头');
+});
+
+test('浮层往下挪一点（列表变短、换成提示）：慢慢跟下去，不是一下跳下去；往下挪多了照旧掉（W-1206）', () => {
+  const body = new Body(config, room);
+  body.move(16, performance.now());
+  const high = { id: 'composer.floats', x1: 100, x2: 900, y: 500, carry: true };
+  drawn(body, () => [high, ledge, floor], 80);
+  assert.equal(body.at?.ground?.id, 'composer.floats');
+  const low = { ...high, y: 525 };
+  const ys = drawn(body, () => [low, ledge, floor], 40);
+  assert.equal(body.at?.ground?.id, 'composer.floats', '还站在浮层上');
+  assert.ok(ys[0] < 515, `第一帧没跳下去：${ys[0]}`);
+  assert.ok(Math.abs(ys.at(-1) - 525) < 0.5, '跟到了');
+});
+
+test('浮层收起：掉下去落回输入框，是一帧帧掉的（W-1206 守着）', () => {
+  const body = new Body(config, room);
+  body.move(16, performance.now());
+  const menu = { id: 'composer.floats', x1: 100, x2: 900, y: 450, carry: true };
+  drawn(body, () => [menu, ledge, floor], 80);
+  const ys = drawn(body, () => [ledge, floor], 60);
+  assert.ok(ys[0] < 470, `第一帧还在上面：${ys[0]}`);
+  assert.ok(ys.findIndex((y) => y >= 599) > 5, '掉了好几帧才落到框上');
+  assert.equal(body.at?.ground?.id, 'composer');
+});
+
+test('减少动画的：浮层升上来、往下挪都当场到位，不缓（W-1206）', () => {
+  const body = new Body(config, { ...room, reduced: () => true });
+  body.move(16, performance.now());
+  const menu = { id: 'composer.floats', x1: 100, x2: 900, y: 300, carry: true };
+  assert.equal(drawn(body, () => [menu, ledge, floor], 1)[0], 300);
+  assert.equal(drawn(body, () => [{ ...menu, y: 320 }, ledge, floor], 1)[0], 320);
+});
