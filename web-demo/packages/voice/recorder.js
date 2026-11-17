@@ -26,11 +26,15 @@ export class Recorder {
     /** @type {AudioWorkletNode|null} */
     this.node = null;
     this.done = false;
+    /** 录的麦克风的名字（`MediaStreamTrack.label`）；还没开、浏览器不给的是空的 */
+    this.device = '';
   }
 
   /** 开麦：拿不到麦克风的照浏览器的错抛（`micErrorKey` 认）。 */
   async start() {
     this.stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+    // 录的是哪个麦克风（给人看的名字）：没听到说话时提示里写它（W-1208）
+    this.device = this.stream.getAudioTracks?.()[0]?.label ?? '';
     // 先要 16 kHz 的：要得到的省掉降采样；有的浏览器（Firefox 接麦克风时）不认，照它自己的采样率录、停的时候降
     try {
       this.audio = new AudioContext({ sampleRate: RATE });

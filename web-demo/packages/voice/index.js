@@ -11,7 +11,7 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { upload } from '../../src/lib/upload.js';
-import { ready, sentences, errorKey, micErrorKey, interrupted, playSentence, stopRun, chimeOn } from './model.js';
+import { ready, sentences, errorKey, micErrorKey, interrupted, playSentence, stopRun, chimeOn, heardOf } from './model.js';
 import { readable } from './readable.js';
 import { chime } from './chime.js';
 import { Recorder } from './recorder.js';
@@ -131,12 +131,13 @@ export function apply(ctx) {
       const put = await upload(request, { name: 'voice.wav', size: bytes.length }, 'audio/wav',
         async (offset, length) => bytes.subarray(offset, offset + length), { chunk: ctx.config.chunk_bytes, tries: 3 });
       const got = await call('stt', 'transcribe', { audio: put.blob });
-      const text = typeof got?.text === 'string' ? got.text.trim() : '';
-      if (got?.clear === false || !text) ctx.composer.say(t('unclear'));
-      else {
-        ctx.composer.insert(text);
+      // 没听到说话（语音包 VO-33 的 `speech: false`）：多半是麦克风选错了，写上这时录的是哪一个
+      const heard = heardOf(got, r.device);
+      if ('text' in heard) {
+        ctx.composer.insert(heard.text);
         if (ctx.config.after === 'send') ctx.composer.send();
-      }
+      } else if (heard.say === 'no_speech') ctx.composer.say(heard.device ? t('no_speech', { device: heard.device }) : t('no_speech_plain'));
+      else ctx.composer.say(t('unclear'));
     } catch (err) {
       fail(err);
     } finally {

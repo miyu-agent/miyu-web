@@ -288,3 +288,16 @@ export function chimeLength(kind) {
 export function chimeOn(got) {
   return got?.items?.['voice-input.chime']?.value !== false;
 }
+
+/**
+ * `stt.transcribe` 的回应怎么说（语音包 VO-33：电平判没听到说话的不送去认，回 `speech: false`）：认出了字的交字；没听到说话的交
+ * `no_speech`（带上浏览器这时录的麦克风名字，`MediaStreamTrack.label`，空的不带）；别的没认出来的照旧「没听清」。纯的。
+ * @param {any} got @param {string|null|undefined} device
+ * @returns {{text: string}|{say: 'unclear'}|{say: 'no_speech', device: string|null}}
+ */
+export function heardOf(got, device) {
+  const text = typeof got?.text === 'string' ? got.text.trim() : '';
+  if (got?.speech === false) return { say: 'no_speech', device: typeof device === 'string' && device.trim() ? device.trim() : null };
+  if (got?.clear === false || !text) return { say: 'unclear' };
+  return { text };
+}

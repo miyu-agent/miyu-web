@@ -175,3 +175,31 @@ test('语音输入的提示音（todolist 第 62 条，同语音包）：开始 
   assert.equal(chimeOn({ items: {} }), true, '语音包旧、没这一项的当开着');
   assert.equal(chimeOn(null), true);
 });
+
+test('stt.transcribe 回 speech: false（语音包 VO-33）：说「没听到说话」带上麦克风名字；认出字的照插；别的照旧「没听清」（W-1208，主人 22）', async () => {
+  const { heardOf } = await import('../../packages/voice/model.js');
+  assert.deepEqual(heardOf({ clear: false, text: '', speech: false }, 'fifine Microphone'), { say: 'no_speech', device: 'fifine Microphone' });
+  assert.deepEqual(heardOf({ clear: false, text: '', speech: false }, ''), { say: 'no_speech', device: null }, '浏览器不给名字');
+  assert.deepEqual(heardOf({ clear: false, text: '' }, 'fifine'), { say: 'unclear' }, '旧语音包没有 speech');
+  assert.deepEqual(heardOf({ clear: true, text: ' 你好 ', speech: true }, 'x'), { text: '你好' });
+  assert.deepEqual(heardOf(null, 'x'), { say: 'unclear' });
+});
+
+test('录音记下浏览器给的麦克风名字（假的 getUserMedia，不开真麦克风）', async () => {
+  const { Recorder } = await import('../../packages/voice/recorder.js');
+  const had = { navigator: globalThis.navigator, AudioContext: globalThis.AudioContext };
+  const track = { label: 'LCS USB Audio', stop() {} };
+  const stream = { getAudioTracks: () => [track], getTracks: () => [track] };
+  Object.defineProperty(globalThis, 'navigator', { value: { mediaDevices: { getUserMedia: async () => stream } }, configurable: true });
+  // 没有音频：开到连麦那一步就停（只看名字记下没有）
+  globalThis.AudioContext = /** @type {any} */ (class { constructor() { throw new Error('no audio here'); } });
+  try {
+    const r = new Recorder({ threshold: 0.01, quiet: 1000, maxMs: 1000, onEnd: () => {} });
+    assert.equal(r.device, '');
+    await assert.rejects(() => r.start(), /no audio here/);
+    assert.equal(r.device, 'LCS USB Audio');
+  } finally {
+    Object.defineProperty(globalThis, 'navigator', { value: had.navigator, configurable: true });
+    globalThis.AudioContext = had.AudioContext;
+  }
+});
