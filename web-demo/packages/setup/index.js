@@ -13,8 +13,8 @@ import { Menu } from './menu.js';
 import { personaName, presetName, presetTokens, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, lastChoice, pickable } from './model.js';
 import { Catalog } from './catalog.js';
 import { ListPage, problemText } from './page.js';
-import { browse, listDirs, parentDir } from './folders.js';
-import { openOptions } from './options.js';
+import { browse, listDirs, parentDir, askDir } from './folders.js';
+import { openOptions, summaryOf } from './options.js';
 import { touchFirst } from '../../src/lib/touch.js';
 import { PersonaStep, PresetStep } from './welcome.js';
 import { ThemeStep } from './theme-step.js';
@@ -33,12 +33,9 @@ export function apply(ctx) {
   const catalog = new Catalog(ctx.core, () => ctx.icons.more());
 
   const menu = new Menu();
-  const personaBtn = h('button.setup-btn', { type: 'button', onclick: () => openPersonas() });
-  const presetBtn = h('button.setup-btn', { type: 'button', onclick: () => openPresets() });
-  const workBtn = h('button.setup-btn', { type: 'button', onclick: () => openWorkspaces(workBtn, false) });
-  // 窄屏（手机）上三个合成一个「选项」，点开一张卡片三项各选（W-1208，主人 38）；宽屏不露它（`style.css`）
+  // 人格、预设、工作区合成一个「选项」，点开一张卡片三项各选（W-1208 手机，主人 38；W-1209 桌面也这样，2026-11-17 主人定）
   const optsBtn = h('button.setup-btn.setup-opts', { type: 'button', 'aria-haspopup': 'dialog', onclick: () => { menu.close(); openOptions(optionDeps()); } });
-  const row = h('div.setup-row', { hidden: true }, personaBtn, presetBtn, workBtn, optsBtn, menu.el);
+  const row = h('div.setup-row', { hidden: true }, optsBtn, menu.el);
   const infoMenu = new Menu(t('info.back'));
   const info = h('div.setup-info', { hidden: true });
   // 整理会话左上角标题外面、紧挨着左边的「<」（2026-10-22 项目主人：同网页常用的返回；原来是标题块里面的箭头）
@@ -183,25 +180,14 @@ export function apply(ctx) {
       if (project) replace(info, projectPart(project), h('span.setup-info-slash', '/'), h('span.setup-info-part.is-title.is-new', h('span', t('info.new_session'))));
       info.hidden = !project;
       row.hidden = false;
-      personaBtn.hidden = !catalog.personas;
-      replace(personaBtn, icon('user-round'), h('span', draft.persona === false ? t('no_persona') : draft.persona ? nameOf(draft.persona) : t('choose_persona')));
-      personaBtn.classList.toggle('is-set', draft.persona != null);
-      presetBtn.hidden = !catalog.presets;
-      replace(presetBtn, icon('toggle-right'), h('span', draft.preset != null ? presetNameOf(draft.preset) : t('choose_preset')));
-      presetBtn.classList.toggle('is-set', draft.preset != null);
-      // 选了默认工作区的写「默认工作区」：它的目录名是数据目录里的 `workspace`，写出来像没翻译的字（2026-10-08 项目主人）
-      const workLabel = !draft.cwd ? t('set_workspace') : draft.cwd === chat.defaultWorkdir() ? t('default_workspace') : dirName(tilde(draft.cwd, home()));
-      replace(workBtn, icon('folder'), h('span', workLabel));
-      workBtn.classList.toggle('is-set', !!draft.cwd);
-      workBtn.title = tilde(draft.cwd ?? chat.defaultWorkdir(), home());
-      // 「选项」：下面一行小字写现在的人格（没读到人格列表的只写「选项」）
+      // 「选项」：旁边一行小字写现在的人格 · 预设 · 工作区（窄屏只写人格，`style.css`）；悬停看完整的工作区路径
+      const sum = summaryOf(optionDeps());
       replace(optsBtn, icon('sliders-horizontal'), h('span.setup-opts-text', h('span', t('options.title')),
-        catalog.personas ? h('small', personaLabel(draft.persona === false ? null : used?.persona ?? null)) : null));
+        sum.length ? h('small', ...sum.map((x, i) => (i ? h('span.setup-opts-more', ` · ${x}`) : h('span', x)))) : null));
+      optsBtn.title = tilde(draft.cwd ?? chat.defaultWorkdir(), home());
       // 没选、默认的又用不了：锁住输入框（第 2 条）。预设一定要有（Y12）；人格可以没有，只有算出来的默认人格文件写错了才锁
       const needPreset = !!catalog.presets && draft.preset == null && !defaultUsable(catalog.presets, used?.preset ?? null, 'preset');
       const needPersona = !!catalog.personas && draft.persona == null && !!used?.persona && !defaultUsable(catalog.personas, used.persona);
-      presetBtn.classList.toggle('is-need', needPreset);
-      personaBtn.classList.toggle('is-need', needPersona);
       optsBtn.classList.toggle('is-need', needPreset || needPersona);
       ctx.composer.lock(needPreset ? t('locked_preset') : needPersona ? t('locked') : null);
       if (inProject && !needPreset && !needPersona) {
@@ -458,17 +444,6 @@ export function apply(ctx) {
     ...(catalog.noTools ? [{ title: presetName(catalog.noTools), desc: catalog.noTools.summary ?? '', side: tokensOf(catalog.noTools), current: chosen === false, pick: () => pick(false) }] : []),
   ];
 
-  const openPersonas = () => {
-    if (!catalog.personas) return;
-    menu.show(personaBtn, { title: t('choose_persona'), rows: personaRows(inUse().persona ?? null, (p) => chat.setDraft({ persona: p ?? false }), openPersonas, () => menu.close()) });
-  };
-
-  /** 预设的菜单。 */
-  const openPresets = () => {
-    if (!catalog.presets) return;
-    menu.show(presetBtn, { title: t('choose_preset'), rows: presetRows(inUse().preset ?? null, (p) => chat.setDraft({ preset: p }), openPresets, () => menu.close()) });
-  };
-
   /** 核心拒了换目录的原因写给人看的一句（`fs.list`、`session.set_workspace` 同一套原因码）。 @param {any} err */
   const refused = (err) => err?.reason === 'path_forbidden' ? t('forbidden') : err?.reason === 'not_a_directory' ? t('not_a_dir')
     : err?.reason === 'path_unreadable' ? t('not_dir') : err?.message ?? String(err);
@@ -561,6 +536,8 @@ export function apply(ctx) {
       return got.note || got.bad || got.dirs.length ? got : { ...got, note: t('folders.empty') };
     },
     parent: (dir) => parentDir(ctx, dir),
+    // 桌面上照旧开系统的选目录对话框；手机上（主要指针是手指）卡片里浏览
+    ask: touchFirst() ? null : (start) => askDir(ctx, start),
   });
 
   ctx.slots.mount('composer.above', { id: 'setup', order: 90, render: () => row });
@@ -678,7 +655,8 @@ export function apply(ctx) {
   ctx.commands.register({ name: 'preset', summary: t('command_preset') }, () => pickFor('preset'));
   ctx.commands.register({ name: 'workspace', summary: t('command'), args: true }, async (words) => {
     const text = (words ?? '').trim();
-    if (!text) return openWorkspaces(chat.current() ? pathBtn ?? info : workBtn, !!chat.current());
+    // 空会话里没写路径：开「选项」卡片的工作区那一页（输入框上面不再有工作区按钮，W-1209）
+    if (!text) return chat.current() ? openWorkspaces(pathBtn ?? info, true) : void openOptions(optionDeps(), { workspace: true });
     const why = await check(text);
     if (why) ctx.composer.say(why);
   });

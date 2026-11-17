@@ -448,15 +448,17 @@
 .setup-acquired-text { color: var(--text); font-size: calc(13px * var(--text-scale)); line-height: 1.55; overflow-wrap: anywhere; }
 .setup-acquired-why { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); line-height: 1.5; overflow-wrap: anywhere; }
 .setup-acquired-empty { margin: 0; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
-/* 手机上新建会话的「选项」（options.js，W-1208，2026-11-17 主人 38）：窄屏上人格、预设、工作区三个按钮收成一个，下面一行小字写现在的人格；
-   宽屏不露它。点开的卡片一行一项，行高 48px 手指点得准；控件不画描边 */
-.setup-opts { display: none; }
+/* 新建会话的「选项」（options.js，W-1208 手机、W-1209 桌面，2026-11-17 主人 38）：人格、预设、工作区三个按钮收成一个。宽屏一行：
+   「选项」旁边小字写人格 · 预设 · 工作区；窄屏两行：下面一行小字只写人格。点开的卡片一行一项，行高 48px 手指点得准；控件不画描边 */
+.setup-opts { min-width: 0; max-width: min(100%, 560px); }
+.setup-opts-text { display: inline-flex; align-items: baseline; gap: calc(8px * var(--space)); min-width: 0; line-height: 1.2; }
+.setup-btn .setup-opts-text small { min-width: 0; max-width: 32em; overflow: hidden; color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 640px) {
-  .setup-row > .setup-btn:not(.setup-opts) { display: none; }
-  .setup-row > .setup-btn.setup-opts { display: inline-flex; height: auto; min-height: 32px; padding-block: calc(3px * var(--space)); border-radius: var(--chip-radius, var(--r-14)); }
+  .setup-row > .setup-btn.setup-opts { height: auto; min-height: 32px; padding-block: calc(3px * var(--space)); border-radius: var(--chip-radius, var(--r-14)); }
+  .setup-opts-text { flex-direction: column; align-items: flex-start; gap: 0; }
+  .setup-btn .setup-opts-text small { max-width: 12em; font-size: calc(10.5px * var(--text-scale)); }
+  .setup-opts-more { display: none; }
 }
-.setup-opts-text { display: inline-flex; flex-direction: column; align-items: flex-start; min-width: 0; line-height: 1.2; }
-.setup-btn .setup-opts-text small { max-width: 12em; overflow: hidden; color: var(--text-faint); font-size: calc(10.5px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
 .setup-opt { display: grid; grid-template-columns: minmax(0, 1fr); gap: calc(2px * var(--space)); }
 .setup-opt-head { display: flex; align-items: center; gap: calc(6px * var(--space)); min-height: 40px; margin-bottom: calc(4px * var(--space)); }
 .setup-opt-head strong { overflow: hidden; color: var(--text); font-size: calc(13.5px * var(--text-scale)); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
@@ -486,6 +488,6 @@
 .setup-opt-input:focus { background: var(--field-bg-focus, var(--surface-1)); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
 .setup-opt-note, .setup-opt-error { margin: calc(6px * var(--space)) calc(12px * var(--space)); color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
 .setup-opt-error { color: var(--danger); }
-.setup-opt-error[hidden] { display: none; }
+.setup-opt-error[hidden], .setup-opt-note[hidden] { display: none; }
 .setup-opt-foot { display: flex; justify-content: flex-end; padding-top: calc(10px * var(--space)); }
 .setup-opt-foot .setup-menu-btn { height: 40px; }

@@ -35,6 +35,25 @@ export const parentDir = (ctx, dir) => ctx.core.request('fs.realpath', { path: '
 let waiting = false;
 
 /**
+ * 开系统的选目录对话框（宿主的 `files.pickDir()`，浏览器经桥开，桌面端自己开），等它回来：交回选的路径、`false`（取消了）、
+ * `{busy: true}`（已经开着一个）；开不了（宿主没有、页面开在别的机器上）是 `null`。菜单里的文件夹浏览器、「选项」卡片共用。
+ * @param {any} ctx @param {string} start @returns {Promise<any>}
+ */
+export async function askDir(ctx, start) {
+  if (waiting) return { busy: true };
+  const asking = ctx.host?.files?.pickDir?.({ title: ctx.text('folders.title'), start });
+  if (!asking) return null;
+  waiting = true;
+  try {
+    return await asking;
+  } catch {
+    return null;
+  } finally {
+    waiting = false;
+  }
+}
+
+/**
  * 在菜单里浏览文件夹，从 `start` 开始。
  * @param {any} ctx
  * @param {import('./menu.js').Menu} menu

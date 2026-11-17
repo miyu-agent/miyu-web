@@ -217,12 +217,16 @@ test('人自己填的编号（W-1125）：小写字母开头，小写字母、�
   for (const bad of ['', 'Dev', '1dev', '-dev', 'my preset', '小白', 'a.b', 'a'.repeat(65)]) assert.equal(validId(bad), false, bad);
 });
 
-test('手机上新建会话的「选项」（W-1208，主人 38）：窄屏只露「选项」、宽屏只露三个按钮；三种语言都有字', async () => {
+test('新建会话的「选项」（W-1208 手机、W-1209 桌面，主人 38）：宽屏窄屏都只有「选项」一个按钮，窄屏小字只写人格；三种语言都有字', async () => {
   const { readFileSync } = await import('node:fs');
   const css = readFileSync(new URL('../../packages/setup/style.css', import.meta.url), 'utf8');
-  assert.match(css, /\.setup-opts \{ display: none; \}/, '宽屏不露');
-  const narrow = css.slice(css.indexOf('.setup-opts { display: none; }'));
-  assert.match(narrow, /@media \(max-width: 640px\) \{\s*\.setup-row > \.setup-btn:not\(\.setup-opts\) \{ display: none; \}\s*\.setup-row > \.setup-btn\.setup-opts \{ display: inline-flex;/);
+  assert.doesNotMatch(css, /\.setup-opts \{[^}]*display: none/, '宽屏也露「选项」');
+  const js = readFileSync(new URL('../../packages/setup/index.js', import.meta.url), 'utf8');
+  const row = js.match(/const row = h\('div\.setup-row', \{ hidden: true \}, ([^)]*)\)/);
+  assert.ok(row, '输入框上面那一排');
+  assert.equal(row[1], 'optsBtn, menu.el', '那一排只有「选项」（不再有人格、预设、工作区三个按钮）');
+  const narrow = css.slice(css.indexOf('.setup-opts {'));
+  assert.match(narrow, /@media \(max-width: 640px\) \{[^}]*\}[\s\S]*?\.setup-opts-more \{ display: none; \}/, '窄屏只写人格');
   const manifest = JSON.parse(readFileSync(new URL('../../packages/setup/manifest.json', import.meta.url), 'utf8'));
   const want = { zh: '选项', en: 'Options', ja: 'オプション' };
   for (const [lang, title] of Object.entries(want)) {
@@ -239,4 +243,28 @@ test('列子目录（文件夹浏览器、手机的「选项」共用）：只�
   assert.deepEqual(got, { dirs: [{ name: 'a', full: '/h/a' }, { name: 'b', full: '/h/b' }], note: '<folders.partial>', bad: false });
   const denied = await listDirs(ctx(Object.assign(new Error('x'), { reason: 'path_forbidden' })), '/root');
   assert.deepEqual(denied, { dirs: [], note: '<forbidden>', bad: true });
+});
+
+test('「选项」按钮上的小字（W-1209）：人格 · 预设 · 工作区，读不到列表的那一样不写', async () => {
+  const { summaryOf } = await import('../../packages/setup/options.js');
+  const d = { personas: true, presets: true, persona: () => 'Miyu', preset: () => '开发', workspace: () => '默认工作区' };
+  assert.deepEqual(summaryOf(d), ['Miyu', '开发', '默认工作区']);
+  assert.deepEqual(summaryOf({ ...d, personas: false }), ['开发', '默认工作区']);
+  assert.deepEqual(summaryOf({ ...d, presets: false, persona: () => '无人格' }), ['无人格', '默认工作区']);
+});
+
+test('系统的选目录对话框（W-1209，菜单和「选项」卡片共用）：交回选的、取消、已经开着一个；开不了的是 null', async () => {
+  const { askDir } = await import('../../packages/setup/folders.js');
+  const ctx = (/** @type {any} */ pickDir) => ({ text: (/** @type {string} */ k) => k, host: pickDir ? { files: { pickDir } } : undefined });
+  assert.equal(await askDir(ctx(null), '/h'), null, '没有宿主');
+  assert.equal(await askDir(ctx(() => null), '/h'), null, '这台电脑上开不了');
+  assert.equal(await askDir(ctx(async () => '/h/src'), '/h'), '/h/src');
+  assert.equal(await askDir(ctx(async () => false), '/h'), false);
+  assert.equal(await askDir(ctx(async () => { throw new Error('x'); }), '/h'), null);
+  /** @type {(v: any) => void} */
+  let finish = () => {};
+  const first = askDir(ctx(() => new Promise((r) => { finish = r; })), '/h');
+  assert.deepEqual(await askDir(ctx(async () => '/x'), '/h'), { busy: true }, '等着的时候再点不另开');
+  finish('/h/a');
+  assert.equal(await first, '/h/a');
 });

@@ -1,9 +1,9 @@
 // @ts-check
-//! 手机上新建会话的「选项」（W-1208，2026-11-17 主人 38）：窄屏上输入框上面人格、预设、工作区三个按钮被吉祥物挤得换行，合成一个「选项」，
+//! 新建会话的「选项」（W-1208，2026-11-17 主人 38；W-1209 桌面也收成这一个）：输入框上面人格、预设、工作区三个按钮合成一个「选项」，
 //! 点开一张浮起来的卡片（标题「选项」）：三行——人格、预设、工作区，左边名字、右边现在的值和 ›，点了翻进那一页选，选完回到这三行。
 //! 工作区那一页照手机做（原来的是电脑上那种贴着按钮弹的小菜单、点不准，系统的选目录对话框又开在电脑上）：先是默认工作区、最近用过的，
 //! 再一个能手输路径的框，再「浏览」——一行一个目录（`fs.list`），点进去、「上一级」，下面「选这个目录」。行都是大块的，手指点得准。
-//! 桌面照旧三个按钮（`style.css` 照宽度只露一种）。
+//! 桌面上「浏览」那一行是「选择文件夹…」：照旧开系统的选目录对话框（`folders.js` 的 `askDir`），开不了的才在卡片里一行一个目录地浏览。
 
 import { h, icon } from '../../src/lib/dom.js';
 import { floatCard } from './float.js';
@@ -23,8 +23,18 @@ import { plainPath } from './model.js';
  *   list: (dir: string) => Promise<{dirs: {name: string, full: string}[], note: string, bad: boolean}>,
  *   parent: (dir: string) => Promise<string|null>,
  *   personas: boolean, presets: boolean,
- * }} Deps 三样现在写什么、列哪几项、选了怎么办；工作区：列表、现在的、换（交回一句错）、读手写的路径、路径写给人看的样子、列目录、上一级
+ *   ask?: ((start: string) => Promise<any>)|null,
+ * }} Deps 三样现在写什么、列哪几项、选了怎么办；工作区：列表、现在的、换（交回一句错）、读手写的路径、路径写给人看的样子、列目录、上一级；
+ *   `ask` 开系统的选目录对话框（桌面才有，交回选的路径、`false` 取消、`{busy}` 已经开着一个、`null` 开不了）
  */
+
+/**
+ * 「选项」按钮上那一行小字：现在的人格、预设、工作区（读不到列表的那一样不写）。窄屏只露第一样（`style.css`）。
+ * @param {Pick<Deps, 'personas'|'presets'|'persona'|'preset'|'workspace'>} d @returns {string[]}
+ */
+export function summaryOf(d) {
+  return [d.personas ? d.persona() : null, d.presets ? d.preset() : null, d.workspace()].filter((x) => x != null && x !== '').map(String);
+}
 
 /**
  * 一行大块的：左边图标（有的话）、名字和下面暗色一行，右边勾或者 ›。
@@ -69,7 +79,10 @@ export function openOptions(d, o = {}) {
   const say = (/** @type {string|null} */ why) => {
     error.hidden = !why;
     error.textContent = why ?? '';
+    waiting.hidden = true;
   };
+  /** 等系统的选目录对话框回来时写的一句（暗字，不是出错） */
+  const waiting = h('p.setup-opt-note', { hidden: true });
   /** 换到这个目录：成了回到三行，不成写在这一页 @param {string} path */
   const choose = async (path) => {
     const why = await d.use(path);
@@ -77,6 +90,19 @@ export function openOptions(d, o = {}) {
     say(null);
     if (only) done();
     else main();
+  };
+  /** 桌面：开系统的选目录对话框；开不了的在卡片里浏览 */
+  const ask = async () => {
+    if (!d.ask) return browse(plainPath(d.now()));
+    say(null);
+    waiting.textContent = t('folders.opening');
+    waiting.hidden = false;
+    const picked = await d.ask(plainPath(d.now()));
+    waiting.hidden = true;
+    if (typeof picked === 'string') return choose(plainPath(picked));
+    if (picked === false) return say(null);
+    if (picked?.busy) return say(t('folders.busy'));
+    return browse(plainPath(d.now()));
   };
   const workspaces = () => {
     say(null);
@@ -92,7 +118,8 @@ export function openOptions(d, o = {}) {
       h('div.setup-opt-section', t('options.path')),
       h('div.setup-opt-path', field, h('button.setup-menu-btn.is-primary', { type: 'button', onclick: go }, t('options.use'))),
       error,
-      row({ title: t('options.browse'), iconName: 'folder-open', more: true, onclick: () => browse(plainPath(d.now())) }));
+      waiting,
+      d.ask ? row({ title: t('folders.open'), iconName: 'folder-open', onclick: ask }) : row({ title: t('options.browse'), iconName: 'folder-open', more: true, onclick: () => browse(plainPath(d.now())) }));
   };
   /** 浏览目录：一行一个子目录，点进去；「上一级」；下面「选这个目录」 @param {string} dir */
   const browse = async (dir) => {
