@@ -24,7 +24,7 @@ export function lifeAsk(name, words) {
 }
 
 /**
- * `life.status` 的回应写成状态那一行的几样（人格设置、「推演人生」的列表）：`state` 照原样，`next` 是下次醒的时刻（只有在跑的有），
+ * `life.status` 的回应写成状态那一行的几样（人格设置、「推演人生」的列表）：`state` 照原样，`next` 是下一轮开始的时刻（只有在跑的有），
  * `doing` 是她最近写的「现在在干嘛」那一句（没有的 `null`）。认不得的当 `none`。
  * @param {any} got
  * @returns {{state: 'none'|'running'|'paused'|'ended', session: string|null, next: Date|null, doing: string|null}}

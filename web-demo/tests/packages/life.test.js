@@ -1,6 +1,6 @@
 // @ts-check
 //! 推演人生（核心设计 70；蓝图 `web.md`「推演人生」）：会话表认人生会话、`/life` 哪几种先问、`life.status` 怎么读、开关拨了做什么；
-//! 「推演人生」那一层怎么排、下次几点醒怎么写；选预设的地方不列 `hidden` 的；新会话不照人生会话选；推演方法怎么存。
+//! 「推演人生」那一层怎么排、下次几点继续怎么写；选预设的地方不列 `hidden` 的；新会话不照人生会话选；推演方法怎么存。
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,7 +26,7 @@ test('/life 先问的只有 kill、new（2026-11-14 项目主人：网页确认�
   assert.equal(lifeAsk('goal', 'kill'), null);
 });
 
-test('life.status：在跑的才有下次醒；在干嘛取 doing.text；认不得的当 none', () => {
+test('life.status：在跑的才有下次继续；在干嘛取 doing.text；认不得的当 none', () => {
   const run = lifeState({ state: 'running', session: 's1', next: '2026-11-14T10:00:00.000Z', doing: { text: ' 在看书 ', at: 'x' } });
   assert.equal(run.state, 'running');
   assert.equal(run.session, 's1');
@@ -69,7 +69,7 @@ test('「推演人生」那一层：只列人生会话；眼下那一条照 life
   assert.deepEqual(lifeRows(entries, new Map()).map((r) => [r.session, r.state, r.next]), [['b', 'paused', null], ['cur', 'paused', null], ['old', 'ended', null]]);
 });
 
-test('下次醒：今天只写时刻，明天写「明天」，再往后写月/日', () => {
+test('下次继续：今天只写时刻，明天写「明天」，再往后写月/日', () => {
   const t = (/** @type {string} */ key, /** @type {any} */ f) => (key === 'tomorrow' ? `明天 ${f.time}` : key);
   const now = new Date(2026, 10, 14, 9, 30);
   assert.equal(wakeText(new Date(2026, 10, 14, 14, 5), now, t), '14:05');

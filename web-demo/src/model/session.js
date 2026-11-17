@@ -6,7 +6,7 @@ import { uuidTime } from './ago.js';
 
 /**
  * 左栏、会话列表排先后的时刻（蓝图 `web.md`「左栏」，2026-11-16 项目主人）：人最后一次发话（核心 SX-1 的 `last_spoken`），只切进去不挪，
- * 循环、定时任务、人生自己醒这些没人说话的轮不算；没人说过话的照开的时刻（编号里的时间），不照最近活动：没人理的人生会话每醒一次就会跳到最上面。
+ * 循环、定时任务、人生自己继续这些没人说话的轮不算；没人说过话的照开的时刻（编号里的时间），不照最近活动：没人理的人生会话每跑一轮就会跳到最上面。
  * @param {{session: string, spoken?: number|null}} r
  */
 export const spokenAt = (r) => r.spoken ?? uuidTime(r.session) ?? 0;

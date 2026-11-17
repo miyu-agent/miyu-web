@@ -79,7 +79,7 @@
     "stopped": "●",
     "failed": "●",
     "module": "◇",
-    "wake": "◷",
+    "round": "◷",
     "lines": "○"
   },
   "report_tail_lines": 200,

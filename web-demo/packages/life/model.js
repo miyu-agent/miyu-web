@@ -1,6 +1,6 @@
 // @ts-check
 //! 「推演人生」那一层列什么（软件包 `life`，蓝图 `web.md`「推演人生」第 3 条）：会话表里的人生会话一个一行。还在的那一条照 `life.status`
-//! 写状态、下次几点醒、她在干嘛；以前结束了留着当档案的写「已结束」。先在跑的、暂停的，再结束了的；同一档照最近活动，新的在前。纯函数。
+//! 写状态、下次几点继续、她在干嘛；以前结束了留着当档案的写「已结束」。先在跑的、暂停的，再结束了的；同一档照最近活动，新的在前。纯函数。
 
 /**
  * @typedef {{session: string, persona?: string|null, last_active?: string, life?: boolean, life_ended?: boolean, title?: string, preview?: string}} Entry
@@ -37,7 +37,7 @@ export function lifeRows(entries, statuses) {
 export const lifePersonas = (entries) => [...new Set(entries.filter((e) => e.life === true && e.persona).map((e) => /** @type {string} */ (e.persona)))];
 
 /**
- * 下次醒的时刻：今天的只写「14:05」，明天「明天 14:05」，再往后「11/16 14:05」（浏览器本地时区）。
+ * 下次继续的时刻：今天的只写「14:05」，明天「明天 14:05」，再往后「11/16 14:05」（浏览器本地时区）。
  * @param {Date} at @param {Date} now @param {(key: string, fields?: any) => string} t
  */
 export function wakeText(at, now, t) {

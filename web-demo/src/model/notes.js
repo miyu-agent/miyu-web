@@ -75,15 +75,15 @@ export function moduleNote(e) {
 }
 
 /**
- * 循环、人生到点交进来的话（`from` 是 `{kind: 'schedule', loop}`，核心 J-2、LO-1、LF-2）：不当你的话画，画一行「◷ 循环 · 醒来」
- * 「◷ 人生 · 醒来」，不能点开（光打 `/loop` 交的是出厂的一句英文、人生交的是推演方法，都是给模型看的；2026-11-17 项目主人：
+ * 循环、人生到点交进来的话（`from` 是 `{kind: 'schedule', loop}`，核心 J-2、LO-1、LF-2）：不当你的话画，画一行「◷ 循环 · 继续」
+ * 「◷ 人生 · 继续」（核心 WK-2 起不说醒），不能点开（光打 `/loop` 交的是出厂的一句英文、人生交的是推演方法，都是给模型看的；2026-11-17 项目主人：
  * 不是用户发的、还是英文，W-1206）。同目标的续轮那一行。
  * @param {any} e 日志里的 `user` 条目
  */
-export function wakeNote(e) {
+export function roundNote(e) {
   const which = e.from?.loop === 'life' ? 'life' : 'loop';
-  const mark = res.layout.note_marks.wake ?? '';
-  return { type: 'note', key: e.id, seq: null, turn: null, tone: 'module', mark, text: res.text.notes.wake[which], detail: null };
+  const mark = res.layout.note_marks.round ?? '';
+  return { type: 'note', key: e.id, seq: null, turn: null, tone: 'module', mark, text: res.text.notes.round[which], detail: null };
 }
 
 /**

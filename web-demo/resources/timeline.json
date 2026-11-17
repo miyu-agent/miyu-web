@@ -42,7 +42,7 @@
     "kb_edit": "library",
     "kb_delete": "library",
     "web_fetch": "globe",
-    "schedule_wakeup": "clock",
+    "schedule_next": "clock",
     "cron_create": "clock",
     "cron_delete": "clock",
     "cron_list": "clock"
