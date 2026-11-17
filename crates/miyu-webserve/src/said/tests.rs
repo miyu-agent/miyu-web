@@ -26,6 +26,7 @@ fn resources(dir: &Path) -> PathBuf {
         "start/miyu_home_relative": "MIYU_HOME must be an absolute path, got {path}",
         "start/timeout": "Timed out waiting for the core to start",
         "start/socket_occupied": "The core couldn't start: something else is at {reason}",
+        "start/stopped_by_user": "The core was stopped",
     }});
     std::fs::write(human.join("en.json"), words.to_string()).expect("写得了字");
     dir.join("resources")
@@ -66,8 +67,8 @@ fn the_web_error_carries_the_whole_sentence_of_the_core() {
         code: Some("socket_occupied".into()),
         reason: "/x/run/core.sock".into(),
     };
-    let notice = crate::ws::unreachable(&occupied, speak);
-    let timeout = crate::ws::unreachable(&StartError::Timeout, speak);
+    let notice = crate::start::unreachable(&occupied, speak);
+    let timeout = crate::start::unreachable(&StartError::Timeout, speak);
     std::fs::remove_dir_all(&dir).expect("删得掉临时目录");
     assert_eq!(notice["method"], "web.error");
     assert_eq!(
@@ -78,6 +79,34 @@ fn the_web_error_carries_the_whole_sentence_of_the_core() {
         timeout["params"]["message"],
         "Timed out waiting for the core to start"
     );
+    assert!(
+        notice["params"].get("reason").is_none(),
+        "连不上的不带原因码"
+    );
+}
+
+/// 人停的核心、页面自己重连（核心 CS-5）：整句照核心 `core/start/stopped_by_user`，多一格 `reason`，页面照它出「核心已停止」的卡。
+#[test]
+fn a_core_stopped_by_the_user_is_told_with_its_reason() {
+    let dir = scratch("stopped");
+    let words = resources(&dir);
+    let env = env(dir.join("home"), &words);
+    let speak = |said, error: &dyn std::fmt::Display| spoken_in(&env, "en", said, error);
+    let notice = crate::start::unreachable(&StartError::StoppedByUser, speak);
+    std::fs::remove_dir_all(&dir).expect("删得掉临时目录");
+    assert_eq!(notice["method"], "web.error");
+    assert_eq!(notice["params"]["message"], "The core was stopped");
+    assert_eq!(notice["params"]["reason"], "stopped_by_user");
+}
+
+#[test]
+fn only_again_in_the_query_means_reconnecting() {
+    use crate::start::again;
+    assert!(again(Some("again=1")));
+    assert!(again(Some("k=abc&again=1")));
+    assert!(!again(None));
+    assert!(!again(Some("again=0")));
+    assert!(!again(Some("xagain=1")));
 }
 
 #[test]

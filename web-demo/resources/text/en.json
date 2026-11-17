@@ -178,6 +178,9 @@
     "core_how": "Check the errors in the terminal that started the bridge.",
     "core_title": "Can't reach the core",
     "served_how": "Fix it, then reload the page.",
+    "start": "Start",
+    "starting": "Starting…",
+    "start_failed": "Couldn't start",
     "lost": "The bridge restarted and the key changed: open the new link it printed."
   },
   "themes": {
@@ -452,11 +455,11 @@
     "harness_speaker": "{name} · External agent",
     "agent_plain": "Subagent",
     "external": "External",
+    "external_speaker": "{name} ({id})",
+    "external_manager": "{who} · Admin",
     "tail": "Showing the last {count} lines",
     "no_output": "No output saved",
     "no_summary": "No summary saved",
-    "external_speaker": "{name} ({id})",
-    "external_manager": "{who} · Admin",
     "truncated": "(middle truncated)",
     "loading": "Loading…",
     "load_failed": "Failed to load: {reason}",

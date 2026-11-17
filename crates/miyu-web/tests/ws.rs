@@ -409,6 +409,7 @@ fn the_forwarding_code_never_reads_the_local_token() {
     let crates = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
     for file in [
         "miyu-webserve/src/ws.rs",
+        "miyu-webserve/src/start.rs",
         "miyu-web/src/serve.rs",
         "miyu-webserve/src/pages.rs",
         "miyu-webserve/src/respond.rs",

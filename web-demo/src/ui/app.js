@@ -47,6 +47,7 @@ import { localeOf } from '../model/session-export.js';
 import { restBefore } from '../model/pace.js';
 import { Desks } from '../model/desk.js';
 import { openExport } from './export-dialog.js';
+import { StoppedCard } from './stopped-card.js';
 import { followVisible, onSwipe } from '../lib/touch.js';
 
 /** 皮肤样张的会话编号：只在这一页（核心那边没有这个会话） */
@@ -383,6 +384,12 @@ export class App {
     infoSize.observe(this.stageInfo);
     // 开着的页面，桥重启过换了口令：不再白试重连，对话区顶上挂一条提示（蓝图「连核心」第 9 条）
     this.store.conn.onLost(() => show(this.lostBar));
+    // 断了以后自己重连、核心是人停的（核心 CS-5）：正中一张「核心已停止」的卡，「启动」照常连；接上了收卡（蓝图「连核心」第 1 条，W-1210）
+    const stopped = new StoppedCard(() => this.store.conn.start());
+    this.root.append(stopped.el);
+    this.store.conn.onStopped((message) => stopped.stopped(message));
+    this.store.conn.onUnreached((message) => stopped.failed(message));
+    this.store.conn.onRejoin(() => stopped.joined());
     // 全部会话：占对话区那一块（左栏「查看全部」、`/sessions`）
     this.sessionsPage = new SessionsPage({
       // 全部会话照会话表（核心推的跟着变）；标题、最近活动、在不在跑读进来了的照日志，没读的照会话表

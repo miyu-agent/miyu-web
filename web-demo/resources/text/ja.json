@@ -178,6 +178,9 @@
     "core_how": "ブリッジを起動したターミナルのエラーを確認してください。",
     "core_title": "コアに接続できません",
     "served_how": "解決したらページを再読み込みしてください。",
+    "start": "起動",
+    "starting": "起動中…",
+    "start_failed": "起動できませんでした",
     "lost": "ブリッジが再起動してアクセスキーが変わりました：新しいリンクを開いてください。"
   },
   "themes": {
@@ -452,11 +455,11 @@
     "harness_speaker": "{name} · 別のエージェント",
     "agent_plain": "サブエージェント",
     "external": "外部",
+    "external_speaker": "{name}（{id}）",
+    "external_manager": "{who} · 管理者",
     "tail": "最後の {count} 行のみ表示",
     "no_output": "出力は保存されていません",
     "no_summary": "要約は保存されていません",
-    "external_speaker": "{name}（{id}）",
-    "external_manager": "{who} · 管理者",
     "truncated": "（途中を省略）",
     "loading": "取得中…",
     "load_failed": "取得できません：{reason}",

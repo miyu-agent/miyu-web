@@ -189,15 +189,15 @@ impl Cores {
     }
 }
 
-/// 连核心（没在跑就拉起来），照登录令牌握手。远程的（`remote`）握手以前先写一行 `connection.remote`，同 `/ws`
-/// （`miyu-webserve` 的 `ws.rs`，核心 `connection.md`「网页」）。
+/// 连核心（没在跑就拉起来；人停的不拉，核心 CS-5：取文件是开着的页面自己发的，不是人要启动），照登录令牌握手。远程的（`remote`）
+/// 握手以前先写一行 `connection.remote`，同 `/ws`（`miyu-webserve` 的 `ws.rs`，核心 `connection.md`「网页」）。
 async fn connect(
     root: &DataRoot,
     core: &CoreCommand,
     login: &str,
     remote: Option<IpAddr>,
 ) -> Result<Link, Failed> {
-    let connection = miyu_client::connect::connect_or_start_bare(root, || core())
+    let connection = miyu_client::connect::reconnect_or_start_bare(root, || core())
         .await
         .map_err(|error| {
             tracing::warn!(target: TARGET, error = %error, "core unreachable");

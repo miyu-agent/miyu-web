@@ -40,7 +40,10 @@ impl Core {
     ///
     /// 连不上、握手被拒：交回一句话。
     pub async fn open() -> Result<Self, String> {
-        let (connection, token) = crate::link::connect().await?;
+        // 桥自己问核心是人要用的（选目录、开文件管理器这些）：照常拉起
+        let (connection, token) = crate::link::connect(false)
+            .await
+            .map_err(|unreached| unreached.message)?;
         let (reader, writer) = tokio::io::split(connection);
         let mut core = Self {
             lines: BufReader::new(reader).lines(),

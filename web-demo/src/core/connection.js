@@ -4,7 +4,9 @@
 //! 连上过又断了的（核心重启，桥把线关了），照 `retry` 隔一会儿自己再连，连上了告诉 `onReopen` 的（重新握手、补上漏掉的由外面做，
 //! 蓝图 `web.md`「连核心」第 1 条）；一开始就连不上的不在这里重连（页面起不来，写一句）。重连没连上时问一句口令还对不对
 //! （`check`），用不了了（桥重启过换了口令）不再白试，告诉 `onLost` 的（第 9 条）。宿主那一头先接了线、后来连不上核心的，推一条
-//! 连不上的通知（[`UNREACHABLE`]），带核心那一整句原因：照它拒，原因码 `core_unreachable`（同第 9 条，W-1204）。
+//! 连不上的通知（[`UNREACHABLE`]），带核心那一整句原因：照它拒，原因码 `core_unreachable`（同第 9 条，W-1204）。自己重连的线带 `again`
+//! （宿主照它在地址上写 `again=1`），那一头不拉起人停的核心（核心 CS-5），通知带 `reason: "stopped_by_user"`：照它拒，原因码同名，告诉
+//! `onStopped` 的（出「核心已停止」的卡），不问口令、接着隔一会儿试；卡上「启动」走 `start`，照常连、那一头拉起核心（W-1210）。
 
 import { t } from '../util/res.js';
 
@@ -32,7 +34,7 @@ const PREFIX_METHODS = new Set(['session.send', 'session.redo', 'command.run']);
 
 export class Connection {
   /**
-   * @param {() => import('../host/browser.js').Channel} open 开一条线（宿主给的）
+   * @param {(again?: boolean) => import('../host/browser.js').Channel} open 开一条线（宿主给的）；`again` 是断线以后自己重连
    * @param {number[]} [retry] 断了以后第几次重连前等多久（毫秒），试完了照最后一个一直试；空的是不重连
    * @param {() => Promise<string>} [check] 问口令还对不对（宿主给的，桥的 `/key`）：`bad` 是用不了了
    */
@@ -49,8 +51,14 @@ export class Connection {
     this.gaveUp = false;
     /** @type {Set<() => void>} */
     this.losts = new Set();
+    /** 核心是人停的、自己重连没拉起（核心 CS-5）：交那一头给的那一句 @type {Set<(message: string) => void>} */
+    this.stoppeds = new Set();
+    /** 那一头连不上、拉不起核心（`core_unreachable`）：交那一头给的那一句 @type {Set<(message: string) => void>} */
+    this.unreacheds = new Set();
     /** 断了以后试了几次；连上过没有（连上过又断的才重连）；排着的下一次 */
     this.tries = 0;
+    /** 这条线开以前试了几次：那一头握手时才说连不上的照它接着退避 */
+    this.held = 0;
     this.everOpen = false;
     this.retryTimer = /** @type {any} */ (null);
     /** @type {Set<() => void>} */
@@ -75,18 +83,21 @@ export class Connection {
    *
    * # Errors
    * 线开不了（口令过期、桥没在跑）抛 `bridge`；那一头连不上核心（它推一条 `bridge.error`、`web.error`）抛原因码是
-   * `core_unreachable` 的 `Refusal`，话是那一头给的原因。
+   * `core_unreachable` 的 `Refusal`，话是那一头给的原因；`again`（自己重连）的、核心是人停的，原因码是 `stopped_by_user`。
+   * @param {boolean} [again] 断线以后自己重连：那一头不拉起人停的核心
    */
-  connect() {
+  connect(again = false) {
     this.status('connecting');
     return new Promise((resolve, reject) => {
-      const ws = this.open();
+      const ws = this.open(again);
       this.ws = ws;
       let open = false;
       ws.onopen = () => {
         open = true;
         const again = this.everOpen;
         this.everOpen = true;
+        // 线开了先清零；那一头握手时才说连不上的（`receive`）照开线以前的次数接着退避，不每秒问一次（W-1210）
+        this.held = this.tries;
         this.tries = 0;
         this.status('online');
         resolve(undefined);
@@ -112,10 +123,14 @@ export class Connection {
     let m;
     try { m = JSON.parse(data); } catch { return; }
     if (UNREACHABLE.has(m.method)) {
-      const why = new Refusal(String(m.params?.message ?? ''), -32000, 'core_unreachable');
+      const reason = m.params?.reason === 'stopped_by_user' ? 'stopped_by_user' : 'core_unreachable';
+      const why = new Refusal(String(m.params?.message ?? ''), -32000, reason);
       for (const w of this.waiting.values()) w.reject(why);
       this.waiting.clear();
+      this.tries = this.held;
       fail(why);
+      // 人停的（核心 CS-5）：那一头先接了线、等到握手才去连核心，所以在这里说，不在 `connect` 被拒时说；断了照常隔一会儿再试
+      for (const fn of reason === 'stopped_by_user' ? this.stoppeds : this.unreacheds) fn(why.message);
       return;
     }
     // 一行超过上限、核心认不出编号的（核心 YC-5 的 `line_too_long`，`id` 是 null）：拒等着的里头最长的那一条——只有它可能超（W-1138）
@@ -188,8 +203,8 @@ export class Connection {
     this.tries += 1;
     this.retryTimer = setTimeout(() => {
       this.retryTimer = null;
-      // 没连上：问一句口令还对不对，用不了了（桥重启过）不再白试，告诉外面
-      this.connect().catch(async () => {
+      // 没连上：问一句口令还对不对，用不了了（桥重启过）不再白试，告诉外面。线开了、核心是人停的（那一头等到握手才去连核心）在 `receive` 里说
+      this.connect(true).catch(async () => {
         if ((await this.check().catch(() => 'down')) !== 'bad') return;
         this.gaveUp = true;
         clearTimeout(this.retryTimer);
@@ -197,6 +212,19 @@ export class Connection {
         for (const fn of this.losts) fn();
       });
     }, ms);
+  }
+
+  /**
+   * 「核心已停止」卡上点了「启动」：不等排着的那一次，照常连（那一头拉起核心，核心起来时删掉「人停的」记号）；线开了照断了又连上的走
+   * （`onReopen`：重新握手，那一头这时才去拉起核心，补完了是 `onRejoin`）。没连上的照常排下一次。
+   *
+   * # Errors
+   * 同 `connect`。
+   */
+  start() {
+    clearTimeout(this.retryTimer);
+    this.retryTimer = null;
+    return this.connect(false);
   }
 
   /** 关掉这条线、不再重连（握手被拒了，核心回完就断开：登录这一段换一条新的线再来）。 */
@@ -209,6 +237,12 @@ export class Connection {
 
   /** 口令用不了了（桥重启过），不再重连。 */
   onLost(fn) { this.losts.add(fn); }
+
+  /** 核心是人停的，自己重连没拉起（核心 CS-5）：交那一头给的那一句（「核心已停止」）。 */
+  onStopped(fn) { this.stoppeds.add(fn); }
+
+  /** 那一头连不上、拉不起核心（`core_unreachable`）：交那一头给的那一句（「核心已停止」卡上点了「启动」以后拉不起来的写在卡上）。 */
+  onUnreached(fn) { this.unreacheds.add(fn); }
 
   /** 断了又连上了（重新握手、重新订阅、补上漏掉的由它做）。 */
   onReopen(fn) { this.reopens.add(fn); }

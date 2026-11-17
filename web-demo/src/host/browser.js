@@ -22,6 +22,7 @@
  * @typedef {import('./files.js').Store} Store
  */
 
+import { socketUrl } from './socket.js';
 import { notify } from './notify.js';
 import { fileTools, store, onThisMachine, dropFromHash, hashRoute } from './files.js';
 import { writeText } from '../lib/touch.js';
@@ -178,8 +179,8 @@ export function browserHost() {
   if (!key) return null;
   return {
     kind: 'browser',
-    /** 开一条到核心的线（经桥）。 */
-    channel: () => /** @type {Channel} */ (/** @type {unknown} */ (new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws?k=${key}`))),
+    /** 开一条到核心的线（经桥）；断线以后自己重连的带 `again`，桥不拉起人停的核心（核心 CS-5） */
+    channel: (again = false) => /** @type {Channel} */ (/** @type {unknown} */ (new WebSocket(socketUrl(location, key, again)))),
     urls: urls(key),
     /** 握手带的凭据：走桥的不带（桥出示本机令牌） */
     credential: () => null,

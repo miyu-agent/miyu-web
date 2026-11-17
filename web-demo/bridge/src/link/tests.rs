@@ -7,7 +7,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use miyu_client::places::{Env, Platform};
 
-use super::connect_in;
+use super::{Unreached, connect_in};
 
 /// 一个没用过的临时目录（测完删掉）。
 fn scratch(name: &str) -> PathBuf {
@@ -24,6 +24,7 @@ fn resources(dir: &Path) -> PathBuf {
     let words = serde_json::json!({"said": {
         "start/miyu_home_relative": "MIYU_HOME must be an absolute path, got {path}",
         "start/spawn_failed": "Cannot launch the core: {error}",
+        "start/stopped_by_user": "The core was stopped",
     }});
     std::fs::write(human.join("en.json"), words.to_string()).expect("写得了字");
     dir.join("resources")
@@ -46,9 +47,9 @@ fn env(home: impl Into<OsString>, words: &Path) -> Env {
 async fn a_relative_data_root_is_said_in_the_machine_language() {
     let dir = scratch("relative");
     let words = resources(&dir);
-    let got = connect_in(&env("rel/path", &words), "en", None).await;
+    let got = connect_in(&env("rel/path", &words), "en", None, false).await;
     std::fs::remove_dir_all(&dir).expect("删得掉临时目录");
-    let Err(said) = got else {
+    let Err(Unreached { message: said, .. }) = got else {
         panic!("相对路径找不到数据根");
     };
     assert_eq!(said, "MIYU_HOME must be an absolute path, got rel/path");
@@ -63,10 +64,11 @@ async fn a_core_that_cannot_be_launched_is_said_in_the_machine_language() {
         &env(dir.join("home"), &words),
         "en",
         Some(missing.into_os_string()),
+        false,
     )
     .await;
     std::fs::remove_dir_all(&dir).expect("删得掉临时目录");
-    let Err(said) = got else {
+    let Err(Unreached { message: said, .. }) = got else {
         panic!("没有这个程序，拉不起来");
     };
     assert!(
@@ -78,8 +80,8 @@ async fn a_core_that_cannot_be_launched_is_said_in_the_machine_language() {
 #[tokio::test]
 async fn without_words_the_original_is_said() {
     let dir = scratch("no-words");
-    let got = connect_in(&env("rel/path", &dir.join("nothing")), "en", None).await;
-    let Err(said) = got else {
+    let got = connect_in(&env("rel/path", &dir.join("nothing")), "en", None, false).await;
+    let Err(Unreached { message: said, .. }) = got else {
         panic!("相对路径找不到数据根");
     };
     assert_eq!(said, "MIYU_HOME 要写绝对路径，写的是 rel/path");
@@ -89,10 +91,40 @@ async fn without_words_the_original_is_said() {
 async fn a_core_that_is_not_running_keeps_the_bridge_hint() {
     let dir = scratch("idle");
     let words = resources(&dir);
-    let got = connect_in(&env(dir.join("home"), &words), "en", None).await;
+    let got = connect_in(&env(dir.join("home"), &words), "en", None, false).await;
     std::fs::remove_dir_all(&dir).expect("删得掉临时目录");
-    let Err(said) = got else {
+    let Err(Unreached { message: said, .. }) = got else {
         panic!("核心没在跑");
     };
     assert!(said.contains("MIYU_CORE_BIN"), "{said}");
+}
+
+/// 人停的核心（数据根 `run/stopped`，核心 CS-5）：页面自己重连（`again`）的不拉起，交回人停的那一句；页面刚打开、点了「启动」的照常去拉
+/// （这里的程序不存在，拉不起来）。
+#[tokio::test]
+async fn reconnecting_does_not_start_a_core_the_user_stopped() {
+    let dir = scratch("stopped");
+    let words = resources(&dir);
+    let env = env(dir.join("home"), &words);
+    let root = miyu_client::places::DataRoot::locate(&env).expect("找得到数据根");
+    root.prepare().expect("建得了骨架");
+    std::fs::write(root.run().join("stopped"), b"").expect("写得进记号");
+    let missing = || Some(dir.join("no-such-miyu").into_os_string());
+    let again = connect_in(&env, "en", missing(), true).await;
+    let asked = connect_in(&env, "en", missing(), false).await;
+    std::fs::remove_dir_all(&dir).expect("删得掉临时目录");
+    let Err(stopped) = again else {
+        panic!("人停的不拉起");
+    };
+    assert!(stopped.stopped);
+    assert_eq!(stopped.message, "The core was stopped");
+    let Err(launched) = asked else {
+        panic!("没有这个程序，拉不起来");
+    };
+    assert!(!launched.stopped);
+    assert!(
+        launched.message.starts_with("Cannot launch the core: "),
+        "人要用的照常去拉：{}",
+        launched.message
+    );
 }

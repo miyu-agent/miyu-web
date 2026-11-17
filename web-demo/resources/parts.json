@@ -37,7 +37,8 @@
       ".asking-submit",
       ".asking-next",
       ".wg-primary",
-      ".si-btn"
+      ".si-btn",
+      ".core-start"
     ]
   },
   "button.primary.disabled": {
@@ -354,7 +355,8 @@
     "zh": "弹窗底下盖着整页的那一层",
     "select": [
       ".set-scrim",
-      ".wg-confirm"
+      ".wg-confirm",
+      ".core-stopped"
     ]
   },
   "note": {

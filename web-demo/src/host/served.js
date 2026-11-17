@@ -16,6 +16,7 @@
  * @typedef {import('./files.js').Channel} Channel
  */
 
+import { socketUrl } from './socket.js';
 import { notify } from './notify.js';
 import { fileTools, store, dropFromHash, hashRoute, onThisComputer, download, locateQuery } from './files.js';
 import { writeText } from '../lib/touch.js';
@@ -220,8 +221,8 @@ export function servedHost() {
     formerAccount: former,
     /** 本地存储搬完了：不再记那个账号 */
     formerMoved: () => disk.remove(FORMER),
-    /** 开一条到核心的线（网页软件照转）。 */
-    channel: () => /** @type {Channel} */ (/** @type {unknown} */ (new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`))),
+    /** 开一条到核心的线（网页软件照转）；断线以后自己重连的带 `again`，网页软件不拉起人停的核心（核心 CS-5） */
+    channel: (again = false) => /** @type {Channel} */ (/** @type {unknown} */ (new WebSocket(socketUrl(location, null, again)))),
     urls,
     /**
      * 握手带的凭据：一次性码（只用一次）、记着的设备令牌、交接票（只用一次，记着的令牌没有、作废了才用）；都没有的是 `null`（内核出「输入访问密码」）。

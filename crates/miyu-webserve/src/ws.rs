@@ -1,5 +1,5 @@
-//! `/ws`（`web-ui.md`「怎么走」第一条第 7 到 9 款）：Origin 对上了才接；接了以后连核心（`connect_or_start_bare`，不读
-//! 本机令牌，核心没在跑就拉起来），两头照转：文字帧加一个 `\n` 是一行，一行去掉 `\n` 是一个文字帧，不读、不改、不加。
+//! `/ws`（`web-ui.md`「怎么走」第一条第 7 到 9 款）：Origin 对上了才接；接了以后连核心（[`crate::start`]：不读本机令牌，核心没在跑
+//! 就拉起来，页面自己重连的、核心是人停的不拉），两头照转：文字帧加一个 `\n` 是一行，一行去掉 `\n` 是一个文字帧，不读、不改、不加。
 //!
 //! - 二进制帧：关，1003。一帧超过 1 MiB：关，1009（核心那头一行也就这么长）。
 //! - 核心那头断了：关，1012，页面照自己的规矩重连。浏览器那头断了：核心的连接跟着关。
@@ -208,9 +208,10 @@ pub fn accept<S: Site>(
         return empty(StatusCode::FORBIDDEN);
     }
     let accept = derive_accept_key(key.as_bytes());
+    let again = crate::start::again(request.uri().query());
     tokio::spawn(async move {
         match hyper::upgrade::on(request).await {
-            Ok(upgraded) => bridge(TokioIo::new(upgraded), site, remote, slot).await,
+            Ok(upgraded) => bridge(TokioIo::new(upgraded), site, remote, slot, again).await,
             Err(error) => tracing::debug!(target: TARGET, error = %error, "not upgraded"),
         }
     });
@@ -233,9 +234,14 @@ fn close(code: CloseCode) -> Message {
 }
 
 /// 两头照转，直到一头断了。远程的（`remote`）在转浏览器的第一行以前先写一行 `connection.remote`（核心 `connection.md`「网页」）。
-/// 占着的那一格（`slot`）被叫关掉的（关了局域网，第四轮审查 W4-2）关 1008。
-async fn bridge<I, S: Site>(io: I, site: Arc<S>, remote: Option<IpAddr>, slot: Option<Slot>)
-where
+/// 占着的那一格（`slot`）被叫关掉的（关了局域网，第四轮审查 W4-2）关 1008。`again` 是页面自己重连（[`crate::start::again`]）。
+async fn bridge<I, S: Site>(
+    io: I,
+    site: Arc<S>,
+    remote: Option<IpAddr>,
+    slot: Option<Slot>,
+    again: bool,
+) where
     I: tokio::io::AsyncRead + tokio::io::AsyncWrite + Unpin + Send + 'static,
 {
     let _busy = site.busy();
@@ -293,19 +299,18 @@ where
             return;
         }
     };
-    let core =
-        match miyu_client::connect::connect_or_start_bare(site.root(), || (site.core())()).await {
-            Ok(core) => core,
-            Err(error) => {
-                tracing::warn!(target: TARGET, error = %error, "core unreachable");
-                let notice = unreachable(&error, crate::said::spoken);
-                send(&out, Message::text(notice.to_string())).await;
-                send(&out, close(CloseCode::Normal)).await;
-                drop(out);
-                finish(writer, frames).await;
-                return;
-            }
-        };
+    let core = match crate::start::core(&*site, again).await {
+        Ok(core) => core,
+        Err(error) => {
+            tracing::warn!(target: TARGET, error = %error, again, "core unreachable");
+            let notice = crate::start::unreachable(&error, crate::said::spoken);
+            send(&out, Message::text(notice.to_string())).await;
+            send(&out, close(CloseCode::Normal)).await;
+            drop(out);
+            finish(writer, frames).await;
+            return;
+        }
+    };
     tracing::debug!(target: TARGET, "websocket connected");
     let (read, mut write) = tokio::io::split(core);
     if let Some(from) = remote {
@@ -434,18 +439,6 @@ async fn finish<S>(
         return;
     };
     linger(ws.get_mut()).await;
-}
-
-/// 连不上、拉不起核心时推给页面的那一条 `web.error`：原因照 `speak` 说（[`crate::said::spoken`]：核心那一整句，照这台机器的语言）。
-pub(crate) fn unreachable(
-    error: &miyu_client::connect::StartError,
-    speak: impl Fn(Option<miyu_client::protocol::Said>, &dyn std::fmt::Display) -> String,
-) -> serde_json::Value {
-    serde_json::json!({
-        "jsonrpc": "2.0",
-        "method": "web.error",
-        "params": {"message": speak(error.said(), error)},
-    })
 }
 
 /// 关写的一半，读掉、扔掉对面还在发的，读到头、出错或者到 [`LINGER`] 为止。只用一块定长的缓冲，发多少都不占内存。

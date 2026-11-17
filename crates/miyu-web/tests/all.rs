@@ -21,6 +21,8 @@ mod open_flags;
 mod serve;
 // 停掉在跑的网页软件（W-1091）
 mod stop;
+// 人停的核心，页面自己重连不拉起（核心 CS-5，W-1210）
+mod stopped;
 // 网页外观（核心 TH-1）
 mod theme;
 // 本机免密要交接票（W-1089）

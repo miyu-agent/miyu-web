@@ -178,6 +178,9 @@
     "core_how": "看起桥的终端里的报错。",
     "core_title": "连不上核心",
     "served_how": "处理好以后刷新页面。",
+    "start": "启动",
+    "starting": "正在启动…",
+    "start_failed": "启动失败",
     "lost": "桥重启过，口令换了：打开桥新打出来的链接。"
   },
   "themes": {
@@ -452,11 +455,11 @@
     "harness_speaker": "{name} · 外部 agent",
     "agent_plain": "子代理",
     "external": "外部",
+    "external_speaker": "{name}（{id}）",
+    "external_manager": "{who} · 管理员",
     "tail": "只显示最后 {count} 行",
     "no_output": "没有保存输出",
     "no_summary": "没有保存摘要",
-    "external_speaker": "{name}（{id}）",
-    "external_manager": "{who} · 管理员",
     "truncated": "（中间部分已截断）",
     "loading": "正在加载…",
     "load_failed": "加载失败：{reason}",
