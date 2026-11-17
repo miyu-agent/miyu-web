@@ -457,6 +457,7 @@
     "external": "外部",
     "external_speaker": "{name}（{id}）",
     "external_manager": "{who} · 管理者",
+    "poke": "{who} があなたをつつきました{suffix}",
     "tail": "最後の {count} 行のみ表示",
     "no_output": "出力は保存されていません",
     "no_summary": "要約は保存されていません",

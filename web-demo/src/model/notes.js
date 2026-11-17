@@ -53,10 +53,26 @@ export function speakerOf(by, jobs, parent = null) {
  * @param {any} by
  */
 function externalName(by) {
-  const id = typeof by.id === 'string' ? by.id : '';
-  const name = typeof by.name === 'string' ? by.name.trim() : '';
-  const who = name && id ? t('notes.external_speaker', { name, id }) : name || id || res.text.notes.external;
+  const who = externalWho(by);
   return by.role === 'manager' ? t('notes.external_manager', { who }) : who;
+}
+
+/** 场所里的人是谁：「昵称（qq:号）」，没名字的写号，号也没有的写「外部」（不带管理员的记号）。 @param {any} by */
+function externalWho(by) {
+  const id = typeof by?.id === 'string' ? by.id : '';
+  const name = typeof by?.name === 'string' ? by.name.trim() : '';
+  return name && id ? t('notes.external_speaker', { name, id }) : name || id || res.text.notes.external;
+}
+
+/**
+ * 场所里的人戳了她一下（核心 VP-1补：`user` 条目带 `poke: true`、`poke_text`，正文是空的）：不画成气泡（原来只画出名字、下面一个空气泡），
+ * 照 QQ 群里的灰字提示画一行「阿杰（qq:20001） 戳了戳你的小脑袋」（W-1212）：名字同「不是你说的话」的写法、不带管理员的记号，后缀是
+ * `poke_text`（平台上那人自己设的那半句，不可信，照字放，`h` 写 textContent），紧接在「你」后面，没有的不写。
+ * @param {any} e 日志里的 `user` 条目
+ */
+export function pokeNote(e) {
+  const suffix = typeof e.poke_text === 'string' ? e.poke_text : '';
+  return { type: 'note', key: e.id, seq: null, turn: null, tone: 'poke', mark: null, text: t('notes.poke', { who: externalWho(e.from), suffix }), detail: null };
 }
 
 /**

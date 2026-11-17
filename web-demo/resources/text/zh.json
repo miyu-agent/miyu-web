@@ -457,6 +457,7 @@
     "external": "外部",
     "external_speaker": "{name}（{id}）",
     "external_manager": "{who} · 管理员",
+    "poke": "{who} 戳了戳你{suffix}",
     "tail": "只显示最后 {count} 行",
     "no_output": "没有保存输出",
     "no_summary": "没有保存摘要",

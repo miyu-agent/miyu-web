@@ -247,6 +247,19 @@ test('她发出去的图（核心 X-19）：一张一条，排在那一步后面
   assert.equal(only.items.some((it) => it.type === 'waiting'), false);
 });
 
+test('戳一戳（核心 VP-1补：user 条目带 poke、poke_text）：不画空气泡，画一行「名字 戳了戳你后缀」；后缀照字；排着的等她听到再画', () => {
+  const from = { kind: 'external', venue: 'qq:group:777', id: 'qq:20017', role: 'manager', name: '小林' };
+  const entries = [
+    { id: 'm2', kind: 'user', text: '', turn: 4, from, poke: true, poke_text: '的小脑袋<b>', at: AT },
+    { id: 'm3', kind: 'user', text: '', turn: 5, from: { ...from, name: undefined }, poke: true, at: AT },
+    { id: 'm4', kind: 'user', text: '', turn: 6, from, poke: true, queued: true, at: AT },
+  ];
+  const got = itemsOf(entries, { state: 'idle' });
+  assert.deepEqual(got.items.map((it) => `${it.type}:${it.text}`), ['note:小林（qq:20017） 戳了戳你的小脑袋<b>', 'note:qq:20017 戳了戳你']);
+  assert.equal(got.items[0].seq, 2);
+  assert.deepEqual(got.queued, [], '排着的戳一戳不进排着的话（退不回去）');
+});
+
 test('她 show 过的（核心 D-5）：接在那一段后面画在正文里，一样一条；没展示成的那一步不出', () => {
   const entries = [
     { id: 'u1', kind: 'user', text: '做个图', turn: 5, at: AT },

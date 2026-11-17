@@ -457,6 +457,7 @@
     "external": "External",
     "external_speaker": "{name} ({id})",
     "external_manager": "{who} · Admin",
+    "poke": "{who} poked you{suffix}",
     "tail": "Showing the last {count} lines",
     "no_output": "No output saved",
     "no_summary": "No summary saved",
