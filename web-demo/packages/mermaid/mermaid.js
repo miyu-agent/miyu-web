@@ -55,10 +55,9 @@ export function mermaidBlock(source, say, deps) {
     figure.classList.add('is-zoomable');
     figure.setAttribute('role', 'button');
     figure.tabIndex = 0;
-    const open = () => {
-      const url = standalone(node);
-      lightbox({ url, name: t('label'), vector: true });
-    };
+    // 灯箱里那份照点开时的主题现做，一张图只留最新的一个地址（审计 #090）
+    const zoomed = latestUrl(() => standalone(node), (url) => URL.revokeObjectURL(url));
+    const open = () => lightbox({ url: zoomed(), name: t('label'), vector: true });
     figure.addEventListener('click', open);
     figure.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -114,8 +113,43 @@ export function safeHref(value) {
 }
 
 /**
- * 核心给的 SVG 文字 → 一个能插进页面的 `<svg>`：只留白名单里的元素（[`KEEP`]），去掉 `on…` 属性，链接只留 http(s) 和锚点（[`safeHref`]；`use` 只能
- * 引图里自己的），`style` 照 [`safeStyle`] 清洗，最外层的 `style`、`class` 去掉（页面自己写宽高）；留下的外链一律新标签页开；读不懂的是 `null`。
+ * 一个属性留不留、留成什么（纯的）：交回留下的值，`null` 是去掉。`on…` 去掉；链接只留 http(s) 和锚点（[`safeHref`]；`use` 只能引图里自己的）；
+ * `style` 照 [`safeStyle`] 清洗，最外层的整个去掉（页面自己写宽高）；`class` 一律去掉（审计 #090：最外层的在页面里生效，里面的照页面的
+ * 样式表套样子；渲染器写它只给自己的 `<style>` 用，`<style>` 已经去掉了）；别的属性的值里有 `url(` 的，只留引图里自己的 `url(#…)`，带
+ * 反斜杠转义的、引外面的整个去掉（审计 #090：`fill="url(https://…)"` 原来照留）。
+ * @param {string} element 元素名（小写）
+ * @param {string} name 属性名
+ * @param {string} value
+ * @param {boolean} root 是不是最外层的 `<svg>`
+ * @returns {string|null}
+ */
+export function keptAttr(element, name, value, root) {
+  const key = name.toLowerCase();
+  if (key.startsWith('on') || key === 'class') return null;
+  if (/href$/.test(key)) return safeHref(value) && (element !== 'use' || value.trim().startsWith('#')) ? value : null;
+  if (key === 'style') return (root ? '' : safeStyle(value)) || null;
+  if (value.includes('\\') && value.includes('(')) return null;
+  const outside = [...value.matchAll(/url\(\s*['"]?\s*([^\s'")]*)/gi)].some((m) => !m[1].startsWith('#'));
+  return outside ? null : value;
+}
+
+/**
+ * 一张图点开大图的地址：每次照 `make` 现做一个，做之前用 `revoke` 收掉上一个，只留最新的一个（审计 #090）。纯的。
+ * @param {() => string} make
+ * @param {(url: string) => void} revoke
+ */
+export function latestUrl(make, revoke) {
+  /** @type {string|null} */
+  let last = null;
+  return () => {
+    if (last) revoke(last);
+    last = make();
+    return last;
+  };
+}
+
+/**
+ * 核心给的 SVG 文字 → 一个能插进页面的 `<svg>`：只留白名单里的元素（[`KEEP`]），属性照 [`keptAttr`] 洗；留下的外链一律新标签页开；读不懂的是 `null`。
  * @param {string} text
  */
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -132,16 +166,10 @@ function clean(text) {
       continue;
     }
     for (const attr of [...el.attributes]) {
-      const key = attr.name.toLowerCase();
-      const bad = key.startsWith('on') || (/href$/i.test(key) && (!safeHref(attr.value) || (name === 'use' && !attr.value.trim().startsWith('#'))));
-      if (bad) el.removeAttribute(attr.name);
-      else if (key === 'style') {
-        const kept = el === svg ? '' : safeStyle(attr.value);
-        if (kept) el.setAttribute('style', kept);
-        else el.removeAttribute('style');
-      }
+      const kept = keptAttr(name, attr.name, attr.value, el === svg);
+      if (kept === null) el.removeAttribute(attr.name);
+      else if (kept !== attr.value) el.setAttribute(attr.name, kept);
     }
-    if (el === svg) el.removeAttribute('class');
     if (el.nodeName.toLowerCase() === 'a' && [...el.attributes].some((attr) => /href$/i.test(attr.name) && !attr.value.trim().startsWith('#'))) {
       el.setAttribute('target', '_blank');
       el.setAttribute('rel', 'noopener noreferrer');

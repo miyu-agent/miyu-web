@@ -100,3 +100,44 @@ test('图的清洗是白名单（2026-11-02 第四轮审查 W4-1）：<style>、
   assert.equal(safeStyle('font-family: a\\62 c; color: green'), 'color: green', '转义去掉');
   assert.equal(safeStyle('display: none; @import x'), '');
 });
+
+test('灯箱里那份的地址一张图只留一个（审计 #090：原来每点一次造一个 blob: 地址，从不收）：再点开先收掉上一个', async () => {
+  const { latestUrl } = await import('../../packages/mermaid/mermaid.js');
+  let made = 0;
+  const revoked = [];
+  const next = latestUrl(() => `blob:x/${++made}`, (url) => revoked.push(url));
+  assert.equal(next(), 'blob:x/1');
+  assert.deepEqual(revoked, []);
+  assert.equal(next(), 'blob:x/2');
+  assert.equal(next(), 'blob:x/3');
+  assert.deepEqual(revoked, ['blob:x/1', 'blob:x/2'], '收的是上一个，最新的留着给灯箱用');
+  const source = readFileSync(new URL('../../packages/mermaid/mermaid.js', import.meta.url), 'utf8');
+  assert.match(source, /latestUrl\(\(\) => standalone\(node\), \(url\) => URL\.revokeObjectURL\(url\)\)/, '点开大图走 latestUrl');
+});
+
+test('属性清洗（审计 #090）：别的属性里引外面的 url( 整个去掉、只留图里的 url(#…)；每个元素的 class 都去掉；其余照旧', async () => {
+  const { keptAttr } = await import('../../packages/mermaid/mermaid.js');
+  const gone = [
+    ['rect', 'fill', 'url(https://evil.example/x.svg#a)', false],
+    ['path', 'marker-end', 'URL( "https://evil.example/m.svg#m" )', false],
+    ['rect', 'fill', 'url(#ok) url(https://evil.example/x)', false],
+    ['rect', 'fill', '\\75 rl(https://evil.example/x)', false],
+    ['g', 'class', 'node default', false],
+    ['svg', 'class', 'flowchart', true],
+    ['svg', 'style', 'fill: red', true],
+    ['rect', 'onclick', 'alert(1)', false],
+    ['a', 'href', 'javascript:alert(1)', false],
+    ['use', 'href', 'https://example.com/x.svg#a', false],
+  ];
+  for (const [element, name, value, root] of gone) assert.equal(keptAttr(element, name, value, root), null, `${element} ${name}="${value}"`);
+  const kept = [
+    ['path', 'marker-end', 'url(#arrowhead)', 'url(#arrowhead)'],
+    ['rect', 'fill', "url('#grad-1')", "url('#grad-1')"],
+    ['rect', 'fill', '#ffffff', '#ffffff'],
+    ['text', 'font-family', '"trebuchet ms", verdana, arial', '"trebuchet ms", verdana, arial'],
+    ['a', 'href', 'https://example.com', 'https://example.com'],
+    ['use', 'href', '#node-1', '#node-1'],
+    ['rect', 'style', 'fill: red; position: fixed', 'fill: red'],
+  ];
+  for (const [element, name, value, want] of kept) assert.equal(keptAttr(element, name, value, false), want, `${element} ${name}="${value}"`);
+});
