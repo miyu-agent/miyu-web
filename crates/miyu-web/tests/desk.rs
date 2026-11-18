@@ -107,3 +107,31 @@ async fn wallpaper_streams_are_capped() {
         .expect("读得到");
     assert_eq!(&head, b"HTTP/1.1 200");
 }
+
+/// 审计 #088：数据根外面、上一层在的目录不建，回「不在」（原来建出来再开）。不真开文件管理器：外面的不建也就不开。
+#[tokio::test]
+async fn reveal_does_not_make_folders_outside_the_data_root() {
+    let (home, _core, port) = site().await;
+    let host = format!("127.0.0.1:{port}");
+    let outside = home.dir.join("made-by-reveal");
+    let encoded: String = outside
+        .to_string_lossy()
+        .bytes()
+        .map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' => (b as char).to_string(),
+            other => format!("%{other:02X}"),
+        })
+        .collect();
+    let good = bearer(LOGIN);
+    let answer = request(
+        port,
+        "GET",
+        &format!("/reveal?path={encoded}"),
+        &host,
+        &[("Authorization", &good)],
+    )
+    .await;
+    assert_eq!(answer.status, 200);
+    assert_eq!(String::from_utf8_lossy(&answer.body), r#"{"missing":true}"#);
+    assert!(!outside.exists(), "数据根外面的不建");
+}

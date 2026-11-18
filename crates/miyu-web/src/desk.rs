@@ -59,7 +59,9 @@ pub(crate) async fn handle(
     let said = |key: &str| query.get(key).map(String::as_str);
     match path.as_str() {
         "/reveal" => {
-            let got = miyu_desk::reveal::reveal(said("path").unwrap_or_default()).await;
+            // 不在的只在数据根里面建（技能、脚本的文件夹；审计 #088）
+            let makeable = [site.root.path().to_path_buf()];
+            let got = miyu_desk::reveal::reveal(said("path").unwrap_or_default(), &makeable).await;
             json_reply(got.json().to_string())
         }
         "/pick-dir" => {

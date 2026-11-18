@@ -5,6 +5,7 @@
 use std::io;
 use std::path::Path;
 
+use miyu_client::places::{DataRoot, Env};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 
@@ -92,7 +93,16 @@ pub async fn serve(mut stream: TcpStream, site: &Site) -> io::Result<()> {
             )
             .await;
         }
-        let got = miyu_desk::reveal::reveal(q.get("path").map_or("", String::as_str)).await;
+        // 不在的只在数据根里面建（技能、脚本的文件夹；审计 #088）；找不到数据根的只开在的
+        let makeable: Vec<_> = match DataRoot::locate(&Env::current()) {
+            Ok(root) => vec![root.path().to_path_buf()],
+            Err(e) => {
+                eprintln!("reveal: no data root, folders are not made: {e}");
+                Vec::new()
+            }
+        };
+        let got =
+            miyu_desk::reveal::reveal(q.get("path").map_or("", String::as_str), &makeable).await;
         return reply(
             &mut stream,
             "200 OK",
