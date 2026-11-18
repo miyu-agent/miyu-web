@@ -162,7 +162,7 @@ pub(crate) async fn swap(
 fn answer(site: &Site, error: Option<String>) -> Response<Body> {
     let listen = miyu_webserve::Site::listen(site);
     let port = miyu_webserve::Site::port(site);
-    let all = lans(listen, port);
+    let all = lans(listen, port, site.dual());
     let first = all.first().map(|lan| lan.url.clone());
     let mut body = json!({"listen": listen.to_string(), "port": port, "lan": first, "lans": all});
     if let Some(error) = error {
@@ -187,8 +187,8 @@ pub(crate) struct Lan {
 }
 
 /// 别的设备打开用的地址：听回环的没有；听某一个地址的就是它；听 `0.0.0.0`、`::` 的照这台电脑的网卡全列（[`pick`]），读不到网卡的照往外的
-/// 那个地址（[`outward`]）。
-pub(crate) fn lans(listen: IpAddr, port: u16) -> Vec<Lan> {
+/// 那个地址（[`outward`]）。`dual` 是听 `::` 的套接字也收 IPv4 的（[`dual_stack`]）：IPv4 的也列、排在前面（审计 #078 第 2 点）。
+pub(crate) fn lans(listen: IpAddr, port: u16, dual: bool) -> Vec<Lan> {
     let url = |ip: IpAddr| format!("http://{}", SocketAddr::new(ip, port));
     match listen {
         ip if ip.is_loopback() => Vec::new(),
@@ -200,7 +200,13 @@ pub(crate) fn lans(listen: IpAddr, port: u16) -> Vec<Lan> {
                         .collect()
                 })
                 .unwrap_or_default();
-            pick(&cards, outward(ip), ip.is_ipv6())
+            let v4 = IpAddr::V4(Ipv4Addr::UNSPECIFIED);
+            let families: &[IpAddr] = match ip.is_ipv6() && dual {
+                true => &[v4, ip],
+                false => &[ip],
+            };
+            let outward: Vec<IpAddr> = families.iter().filter_map(|any| outward(*any)).collect();
+            pick(&cards, &outward, families)
                 .into_iter()
                 .map(|(card, ip)| Lan { url: url(ip), card })
                 .collect()
@@ -214,25 +220,56 @@ pub(crate) fn lans(listen: IpAddr, port: u16) -> Vec<Lan> {
 
 /// 网卡上别的设备可能连得进来的地址，全列、照网卡的先后，带上网卡名（2026-11-10 项目主人在提问里选的「全部列出、不分先后」：Tailscale、
 /// EasyTier 这类组网的地址在同一个虚拟网里打得开，跳过就把能用的藏起来了；代理 TUN 的假地址也照列，人看网卡名自己挑。原来只照往外的那个
-/// 地址，开着 TUN 时只给了一个虚拟地址）：同一族（听 `::` 的列 IPv6）；回环、链路本地这种本来就不给别的设备用的不列；一个地址只列一次。
-/// 读不到网卡的照往外的那个地址（不知道网卡名）。
+/// 地址，开着 TUN 时只给了一个虚拟地址）：照 `families` 的族、一族一族列（双栈的是 IPv4、IPv6，IPv4 在前）；回环、链路本地这种本来就不给
+/// 别的设备用的不列；一个地址只列一次。读不到网卡的照往外的那几个地址（`outward`，不知道网卡名）。
 fn pick(
     cards: &[(String, IpAddr)],
-    outward: Option<IpAddr>,
-    v6: bool,
+    outward: &[IpAddr],
+    families: &[IpAddr],
 ) -> Vec<(Option<String>, IpAddr)> {
     let mut got: Vec<(Option<String>, IpAddr)> = Vec::new();
-    for (name, ip) in cards {
-        if ip.is_ipv6() == v6 && usable(*ip) && !got.iter().any(|(_, seen)| seen == ip) {
-            got.push((Some(name.clone()), *ip));
+    let fresh = |got: &Vec<(Option<String>, IpAddr)>, ip: &IpAddr| {
+        usable(*ip) && !got.iter().any(|(_, seen)| seen == ip)
+    };
+    for family in families {
+        for (name, ip) in cards {
+            if ip.is_ipv6() == family.is_ipv6() && fresh(&got, ip) {
+                got.push((Some(name.clone()), *ip));
+            }
         }
     }
-    if got.is_empty()
-        && let Some(ip) = outward.filter(|ip| ip.is_ipv6() == v6 && usable(*ip))
-    {
-        got.push((None, ip));
+    if got.is_empty() {
+        for family in families {
+            for ip in outward {
+                if ip.is_ipv6() == family.is_ipv6() && fresh(&got, ip) {
+                    got.push((None, *ip));
+                }
+            }
+        }
     }
     got
+}
+
+/// 听着的套接字是不是双栈：听的是 IPv6、而且也收 IPv4 的（照它实际的 `IPV6_V6ONLY` 读，不照系统猜：Linux、macOS 默认双栈，Windows
+/// 默认只收 IPv6；审计 #078 第 2 点）。听 IPv4 的不是；读不出来的当不是（不列不一定连得进的地址），记一笔。
+pub(crate) fn dual_stack(listener: &TcpListener) -> bool {
+    let at = match listener.local_addr() {
+        Ok(at) => at,
+        Err(error) => {
+            tracing::warn!(target: TARGET, error = %error, "listener address unreadable");
+            return false;
+        }
+    };
+    if at.is_ipv4() {
+        return false;
+    }
+    match socket2::SockRef::from(listener).only_v6() {
+        Ok(only) => !only,
+        Err(error) => {
+            tracing::warn!(target: TARGET, error = %error, "IPV6_V6ONLY unreadable");
+            false
+        }
+    }
 }
 
 /// 别的设备可能连得进来：不是回环、没指定、链路本地（`169.254.0.0/16`、`fe80::/10`）。

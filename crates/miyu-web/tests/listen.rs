@@ -240,6 +240,52 @@ async fn a_new_address_is_listened_on_at_once_and_the_idle_exit_waits() {
         .expect("正常退");
 }
 
+#[tokio::test]
+async fn listening_on_any_v6_lists_the_v4_addresses_when_the_socket_takes_them() {
+    // 审计 #078 第 2 点：听 `::` 的原来只列 IPv6；Linux、macOS 上 `::` 默认双栈，能用的 IPv4 地址被藏了。照套接字实际的
+    // IPV6_V6ONLY 算（这里另听一个 `::` 读它，和网页软件听的是同一种默认）：收 IPv4 的列、排在前面、照它连得进来；只收 IPv6 的不列
+    let Ok(probe) = std::net::TcpListener::bind("[::]:0") else {
+        eprintln!("这台机器听不了 ::，跳过");
+        return;
+    };
+    let dual = !socket2::SockRef::from(&probe)
+        .only_v6()
+        .expect("读得到 IPV6_V6ONLY");
+    drop(probe);
+    let home = Home::new();
+    core_with(&home, Arc::new(Mutex::new(config("::", 0))));
+    let mut any = settings(600);
+    any.listen = "::".parse().expect("是地址");
+    let (_, port, _serving) = start_with(&home, 0, any).await;
+    let here = std::net::IpAddr::from(std::net::Ipv6Addr::LOCALHOST);
+    let (status, body) = send_to(here, port, &format!("[::1]:{port}"), "GET").await;
+    assert_eq!(status, 200);
+    assert_eq!(body["listen"], json!("::"), "{body}");
+    let urls: Vec<&str> = body["lans"]
+        .as_array()
+        .expect("有 lans")
+        .iter()
+        .filter_map(|lan| lan["url"].as_str())
+        .collect();
+    let v4 = |url: &&str| !url.starts_with("http://[");
+    if !dual {
+        assert!(!urls.iter().any(v4), "只收 IPv6 的不列 IPv4：{body}");
+        return;
+    }
+    let Some(lan) = lan_address().filter(std::net::IpAddr::is_ipv4) else {
+        eprintln!("这台机器没有 IPv4 局域网地址，跳过");
+        return;
+    };
+    let url = format!("http://{lan}:{port}");
+    assert!(urls.contains(&url.as_str()), "双栈的列 IPv4：{body}");
+    assert!(
+        body["lan"].as_str().is_some_and(|first| v4(&first)),
+        "IPv4 排在前面：{body}"
+    );
+    let (status, _) = send_to(lan, port, &format!("{lan}:{port}"), "GET").await;
+    assert_eq!(status, 200, "照列出来的 IPv4 地址连得进来");
+}
+
 /// 从 `ip` 连进来 `<method> /listen`（Host 写 `host`），带好的登录令牌：交回状态码和回应的 JSON（不是 JSON 的是 `null`）。
 async fn send_to(ip: std::net::IpAddr, port: u16, host: &str, method: &str) -> (u16, Value) {
     let mut stream = tokio::net::TcpStream::connect((ip, port))

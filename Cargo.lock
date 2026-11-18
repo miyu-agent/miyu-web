@@ -1377,6 +1377,7 @@ dependencies = [
  "miyu-webserve",
  "serde",
  "serde_json",
+ "socket2",
  "tokio",
  "tokio-tungstenite",
  "tracing",

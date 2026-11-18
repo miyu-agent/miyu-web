@@ -15,7 +15,7 @@
 use std::convert::Infallible;
 use std::net::{IpAddr, SocketAddr};
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU16, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU16, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
@@ -83,6 +83,8 @@ pub(crate) struct Site {
     /// 在听的端口、地址（`/listen` 换了跟着换）。
     port: AtomicU16,
     listen: Mutex<IpAddr>,
+    /// 在听的套接字是不是双栈（听 `::` 也收 IPv4 的，[`listen::dual_stack`]）：局域网的地址照它列不列 IPv4。
+    dual: AtomicBool,
     /// 现在的端口是照配置里哪个端口起的（[`Serve::configured`]）。
     wanted: Mutex<Option<u16>>,
     /// 请接连接的那一圈换监听。
@@ -145,9 +147,15 @@ impl Site {
         *self.wanted.lock().unwrap_or_else(PoisonError::into_inner) = Some(port);
     }
 
-    /// 换了监听：记下在听的地址、端口，端口换了重写 `run/webui/address`。
-    fn listening(&self, at: SocketAddr) {
+    /// 在听的套接字是不是双栈（[`listen::dual_stack`]）。
+    pub(crate) fn dual(&self) -> bool {
+        self.dual.load(Ordering::Acquire)
+    }
+
+    /// 换了监听：记下在听的地址、端口、是不是双栈，端口换了重写 `run/webui/address`。
+    fn listening(&self, at: SocketAddr, dual: bool) {
         *self.listen.lock().unwrap_or_else(PoisonError::into_inner) = at.ip();
+        self.dual.store(dual, Ordering::Release);
         if self.port.swap(at.port(), Ordering::AcqRel) != at.port() {
             let url = format!("http://127.0.0.1:{}", at.port());
             if let Err(error) = write_address(&runtime(&self.root), &url) {
@@ -275,6 +283,7 @@ pub async fn run(serve: Serve, said: impl FnOnce(Ready)) -> Result<(), String> {
         root: serve.root,
         port: AtomicU16::new(port),
         listen: Mutex::new(at.ip()),
+        dual: AtomicBool::new(listen::dual_stack(&listener)),
         wanted: Mutex::new(serve.configured),
         swaps,
         pages: serve.pages,
@@ -353,7 +362,7 @@ async fn accept(
         if done.is_ok()
             && let Ok(at) = listener.local_addr()
         {
-            site.listening(at);
+            site.listening(at, listen::dual_stack(&listener));
             // 先记下新地址再打扫：刚接的那条在 `ws::accept` 里照新地址再看一遍（第四轮审查 W4-2）
             let closed = site.slots.close_unreached(at.ip());
             if closed > 0 {

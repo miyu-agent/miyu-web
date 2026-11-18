@@ -4,7 +4,12 @@ use super::*;
 
 #[test]
 fn lan_address_follows_what_is_listened_on() {
-    let lan = |listen: IpAddr, port: u16| lans(listen, port).into_iter().next().map(|lan| lan.url);
+    let lan = |listen: IpAddr, port: u16| {
+        lans(listen, port, false)
+            .into_iter()
+            .next()
+            .map(|lan| lan.url)
+    };
     assert_eq!(
         lan(IpAddr::V4(Ipv4Addr::LOCALHOST), 8300),
         None,
@@ -44,6 +49,7 @@ fn the_lan_addresses_list_every_card_in_order_with_its_name() {
             .map(|(n, a)| (Some((*n).to_owned()), ip(a)))
             .collect()
     };
+    let (v4, v6) = (ip("0.0.0.0"), ip("::"));
     let mac = cards(&[
         ("lo0", "127.0.0.1"),
         ("utun4", "198.18.0.1"),
@@ -54,7 +60,7 @@ fn the_lan_addresses_list_every_card_in_order_with_its_name() {
         ("en0", "172.20.10.12"),
     ]);
     assert_eq!(
-        pick(&mac, Some(ip("198.18.0.3")), false),
+        pick(&mac, &[ip("198.18.0.3")], &[v4]),
         named(&[
             ("utun4", "198.18.0.1"),
             ("en0", "172.20.10.12"),
@@ -62,19 +68,70 @@ fn the_lan_addresses_list_every_card_in_order_with_its_name() {
         ])
     );
     assert_eq!(
-        pick(&[], Some(ip("192.168.0.3")), false),
+        pick(&[], &[ip("192.168.0.3")], &[v4]),
         vec![(None, ip("192.168.0.3"))]
     );
-    assert_eq!(pick(&[], Some(ip("169.254.0.3")), false), Vec::new());
+    assert_eq!(pick(&[], &[ip("169.254.0.3")], &[v4]), Vec::new());
     let six = cards(&[
         ("en0", "fe80::1"),
         ("en0", "2001:db8::5"),
         ("tailscale0", "fd7a::5"),
     ]);
     assert_eq!(
-        pick(&six, None, true),
+        pick(&six, &[], &[v6]),
         named(&[("en0", "2001:db8::5"), ("tailscale0", "fd7a::5")])
     );
+    // 听 `::` 的套接字双栈（审计 #078 第 2 点）：IPv4 的也列、排在前面，各族里照网卡的先后；只收 IPv6 的不列 IPv4
+    let both = cards(&[
+        ("en0", "2001:db8::5"),
+        ("en0", "192.168.1.5"),
+        ("tailscale0", "fd7a::5"),
+        ("tailscale0", "100.64.0.7"),
+    ]);
+    assert_eq!(
+        pick(&both, &[], &[v4, v6]),
+        named(&[
+            ("en0", "192.168.1.5"),
+            ("tailscale0", "100.64.0.7"),
+            ("en0", "2001:db8::5"),
+            ("tailscale0", "fd7a::5")
+        ])
+    );
+    assert_eq!(
+        pick(&both, &[], &[v6]),
+        named(&[("en0", "2001:db8::5"), ("tailscale0", "fd7a::5")])
+    );
+    // 读不到网卡的：往外的两族各一个，IPv4 在前
+    assert_eq!(
+        pick(&[], &[ip("2001:db8::9"), ip("192.168.0.3")], &[v4, v6]),
+        vec![(None, ip("192.168.0.3")), (None, ip("2001:db8::9"))]
+    );
+}
+
+/// 双栈照套接字实际的 `IPV6_V6ONLY` 读（审计 #078 第 2 点）：同是听 `::`，只收 IPv6 的不是、也收 IPv4 的是；听 IPv4 的不是。
+#[tokio::test]
+async fn dual_stack_follows_the_socket_not_the_system() {
+    let any = |only: bool| -> Option<TcpListener> {
+        let socket =
+            socket2::Socket::new(socket2::Domain::IPV6, socket2::Type::STREAM, None).ok()?;
+        socket.set_only_v6(only).ok()?;
+        socket
+            .bind(&SocketAddr::from((Ipv6Addr::UNSPECIFIED, 0)).into())
+            .ok()?;
+        socket.listen(8).ok()?;
+        socket.set_nonblocking(true).ok()?;
+        TcpListener::from_std(socket.into()).ok()
+    };
+    let (Some(six), Some(both)) = (any(true), any(false)) else {
+        eprintln!("这台机器听不了 ::，跳过");
+        return;
+    };
+    assert!(!dual_stack(&six), "只收 IPv6 的");
+    assert!(dual_stack(&both), "也收 IPv4 的");
+    let four = TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
+        .await
+        .expect("听得上");
+    assert!(!dual_stack(&four), "听 IPv4 的");
 }
 
 #[tokio::test]
