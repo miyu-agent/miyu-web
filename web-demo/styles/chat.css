@@ -142,6 +142,8 @@
 /* 点开、收起：和时间线点开一步同一个壳（高度从 0 长出来、收回去，淡入淡出，timeline.css 的 .tl-fold） */
 .note .tl-fold { --tl-ease: cubic-bezier(0.22, 0.61, 0.36, 1); }
 .note.is-open > .tl-fold { grid-template-rows: 1fr; opacity: 1; }
+/* 群里旁听的话点开（W-1221，蓝图 web.md「群里旁听的话」）：下面照原来的样子一条条画气泡，字不跟提示行的 600、11.5px */
+.overheard-list { padding-top: calc(14px * var(--space)); font: 400 calc(13px * var(--text-scale)) var(--font-ui); }
 .note-detail pre { max-height: 360px; margin: 0; overflow: auto; font: calc(12px * var(--text-scale))/1.55 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
 .note-detail-head { margin-bottom: calc(6px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
 /* 子代理交回的报告：照她的回答画，字小一档 */

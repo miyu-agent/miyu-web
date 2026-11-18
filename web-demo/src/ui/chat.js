@@ -15,6 +15,7 @@ import { Follow } from './follow.js';
 import { Deferred } from './defer.js';
 import { userNode, endNode } from './said.js';
 import { noteNode } from './notes.js';
+import { overheardNode } from './overheard.js';
 import { CompactingRow } from './compacting.js';
 import { group } from '../model/group.js';
 import { imageCard, stickerCard } from './media.js';
@@ -82,6 +83,8 @@ export class Chat {
     this.settled = false;
     /** 换了会话、还没画出块来：头一次画出来的视口外的先不排版（W-1110） */
     this.switched = false;
+    /** 点开了的群里旁听的那几行（`overheard.js`，W-1221）：编号照那一串的第一条，又来了一条重画时照旧开着；换会话清掉 */
+    this.unfolded = /** @type {Set<string>} */ (new Set());
     /** @type {Map<string, {node: HTMLElement, content: HTMLElement|null, sig: string, items: Map<string, {node: HTMLElement, sig: string, view?: ReturnType<typeof segmentView>}>}>} */
     this.blocks = new Map();
   }
@@ -195,6 +198,7 @@ export class Chat {
     if (animate && old.length && !reduced() && this.el.isConnected) this.ghost = this.fadeOut(old);
     this.blocks.clear();
     this.anchored.clear();
+    this.unfolded.clear();
     this.list.replaceChildren(this.compacting.el, this.tail);
     this.scroll.toLatest(true);
     this.settled = false;
@@ -363,13 +367,15 @@ export class Chat {
   /** 一块：你的（别人的）一句话、她的一轮，或者不挂在她头下的一行（`bare`：前面那一块她的回复没有头，这一行不缩进）。没变的直接用记着的节点。 */
   block(block, bare = false) {
     const look = block.kind === 'her' ? this.lookOf(block) : null;
-    const sig = block.kind === 'her' ? `her${block.cont ? '+' : ''}|${look ? `${look.name}|${look.avatar ?? ''}` : '-'}` : `${block.kind === 'note' && bare ? 'bare|' : ''}${JSON.stringify(block.item)}`;
+    const line = block.kind === 'note' || block.kind === 'overheard';
+    const sig = block.kind === 'her' ? `her${block.cont ? '+' : ''}|${look ? `${look.name}|${look.avatar ?? ''}` : '-'}` : `${line && bare ? 'bare|' : ''}${JSON.stringify(block.item)}`;
     let rec = this.blocks.get(block.key);
     if (!rec || rec.sig !== sig) {
       const node = block.kind === 'user'
         ? userNode(block.item, this.on, { session: this.where.session, lightbox: this.ext.lightbox, mine: this.mine(block.item), titleOf: this.ext.titleOf, skills: this.ext.skills?.() })
-        : block.kind === 'note' ? (block.item.slot ? slotNode(block.item, this) : noteNode(block.item, this.where, this.markdown)) : herNode(!!block.cont, look);
-      if (block.kind === 'note') node.classList.toggle('is-bare', bare);
+        : block.kind === 'note' ? (block.item.slot ? slotNode(block.item, this) : noteNode(block.item, this.where, this.markdown))
+          : block.kind === 'overheard' ? this.overheard(block.item) : herNode(!!block.cont, look);
+      if (line) node.classList.toggle('is-bare', bare);
       rec?.node.replaceWith(node);
       // 记下这是哪一块：钉在它后面的照它找（`anchor`）
       node.dataset.block = block.key;
@@ -378,6 +384,16 @@ export class Chat {
     }
     if (rec.content) reconcile(rec.content, rec.items, block.items, this);
     return rec.node;
+  }
+
+  /** 群里旁听的一串收起的那一行（W-1221）：点开的一条条照别人说的话画。 @param {import('../model/overheard.js').Overheard} it */
+  overheard(it) {
+    const media = { session: this.where.session, lightbox: this.ext.lightbox, mine: false, titleOf: this.ext.titleOf, skills: this.ext.skills?.() };
+    return overheardNode(it, {
+      open: this.unfolded.has(it.key),
+      toggled: (open) => (open ? this.unfolded.add(it.key) : this.unfolded.delete(it.key)),
+      said: (item) => userNode(item, this.on, media),
+    });
   }
 }
 

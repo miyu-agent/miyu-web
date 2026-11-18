@@ -2,23 +2,26 @@
 //! 正文的条目分块（蓝图 `web.md`「对话区」）：你的话一条一块；她的条目照回合连成一块，挂在一个头像下面；回报、压缩和清空
 //! 那一行（`note`）自己一块，不挂在她的头下（「后台命令、子代理的回报」「压缩、清空」）；可夹在她同一轮中间的（她正在回答时来的
 //! 回报），放进她那一块里，头不再画一次（2026-09-30 项目主人定）。插进她正在回答的一轮的话（你的、子代理的），前后照回合分成两块，
-//! 后一块接着画、不再写头像和名字（`cont`，同一天项目主人定）。纯函数。
+//! 后一块接着画、不再写头像和名字（`cont`，同一天项目主人定）。群里旁听的话先收成一串（`overheard.js`），一串一块（W-1221）。纯函数。
+
+import { foldOverheard } from './overheard.js';
 
 /**
- * @typedef {{key: string, kind: 'user'|'her'|'note', turn?: number|null, item?: any, items: any[], cont?: boolean, persona?: string|null}} Block
+ * @typedef {{key: string, kind: 'user'|'her'|'note'|'overheard', turn?: number|null, item?: any, items: any[], cont?: boolean, persona?: string|null}} Block
  *   `cont` 的是接着她同一轮的（中间插进来一句话），不再画头像和名字；`persona` 是她那一块里回复条目带的人格（无人格 `null`），
  *   一条带它的都没有的不写（照会话现在的人格画）
  */
 
 /** @param {any[]} items @returns {Block[]} */
-export function group(items) {
+export function group(all) {
+  const items = foldOverheard(all);
   /** @type {Block[]} */
   const out = [];
   // 编号照回合和这一轮的第几块：在收的回答落了盘换了编号，这一块照旧，头像不重画
   const seen = new Map();
   items.forEach((it, i) => {
     const last = out.at(-1);
-    if (it.type === 'user') out.push({ key: it.key, kind: 'user', item: it, items: [] });
+    if (it.type === 'user' || it.type === 'overheard') out.push({ key: it.key, kind: it.type, item: it, items: [] });
     else if (it.type === 'note' && last?.kind === 'her' && inTurn(items, i, last)) last.items.push(it);
     else if (it.type === 'note') out.push({ key: it.key, kind: 'note', item: it, items: [] });
     else if (last?.kind === 'her' && last.turn === it.turn) last.items.push(it);

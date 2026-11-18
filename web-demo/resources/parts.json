@@ -3288,6 +3288,12 @@
       ".note-detail"
     ]
   },
+  "note.overheard": {
+    "zh": "群里旁听的话收起的那一行：点开的那几条",
+    "select": [
+      ".overheard-list"
+    ]
+  },
   "tl.fold": {
     "zh": "时间线：折叠",
     "select": [
