@@ -1166,6 +1166,7 @@ dependencies = [
  "miyu-log",
  "miyu-seeds",
  "miyu-store",
+ "miyu-wallpaper",
  "serde_json",
  "tokio",
 ]
@@ -1354,6 +1355,7 @@ dependencies = [
 [[package]]
 name = "miyu-wallpaper"
 version = "2026.11.0"
+source = "git+https://github.com/miyu-agent/miyu?rev=eeef66d9e4bfcf34fcb729b60b2791a43e997732#eeef66d9e4bfcf34fcb729b60b2791a43e997732"
 dependencies = [
  "notify",
 ]
@@ -1373,7 +1375,6 @@ dependencies = [
  "miyu-desk",
  "miyu-ipc",
  "miyu-store",
- "miyu-wallpaper",
  "miyu-webserve",
  "serde",
  "serde_json",

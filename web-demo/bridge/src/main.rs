@@ -19,7 +19,7 @@
 //! - 选工作区的「选择文件夹…」经 `/pick-dir?k=口令&title=…&start=…` 开系统的选目录对话框（crate `miyu-desk` 的 `pick`），回选的绝对路径。
 //! - 技能、脚本两页的「打开目录」经 `/reveal?k=口令&path=…` 在这台机器上用文件管理器打开那个文件夹（crate `miyu-desk` 的 `reveal`）。
 //! - 主题「跟随壁纸」经 `/wallpaper?k=口令&dark=0|1` 问桌面壁纸（matugen 那一份优先）换没换、带 `data=1` 取那一份，
-//!   `/wallpaper/events?k=口令` 盯着壁纸来处的文件、变了推一条（`wallpaper.rs`，crate `miyu-wallpaper`；不轮询）。
+//!   `/wallpaper/events?k=口令` 盯着壁纸来处的文件、变了推一条（`wallpaper.rs`，核心的 `miyu_client::wallpaper`；不轮询）。
 //! - 软件后台页经 `POST /page` 换票据、`/p/<票据>/<包>/<路径>` 给文件（`pages.rs`，核心 F-6 中）：文件经核心的 `package.file` 读。
 //!
 //! 用法：`cargo run -- [端口] [--package <编号>]`，默认 8765；页面文件是这个 crate 上一层的 `web-demo/`。带 `--package` 的打出的网址

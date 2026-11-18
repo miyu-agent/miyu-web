@@ -8,13 +8,13 @@
 //! - `/wallpaper/events?k=口令`：一条 `text/event-stream`，壁纸来处的文件变了发一条 `changed`，页面收到再问一次 `/wallpaper`（2026-10-14
 //!   项目主人定：换了壁纸跟着变，不轮询）。盯哪些文件照 crate 交的清单（[`Follow`]），每次找完照这次找到的换。
 //!
-//! 找、认图、盯文件在 crate `miyu-wallpaper`：找要跑命令（awww、gsettings……），放到阻塞的线程上做。
+//! 找、认图、盯文件在核心仓库的 crate `miyu-wallpaper`（经门面 `miyu_client::wallpaper`，审计 #092）：找要跑命令（awww、gsettings……），放到阻塞的线程上做。
 
 use std::io;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use miyu_wallpaper::watch::{Watch, watch_list};
+use miyu_client::wallpaper::watch::{Watch, watch_list};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::sync::broadcast;
@@ -168,7 +168,7 @@ pub async fn events(stream: &mut TcpStream, site: &Site, query: &str) -> io::Res
 fn seeds_of(
     cache: &SeedCache,
     sig: &str,
-    image: &miyu_wallpaper::Wallpaper,
+    image: &miyu_client::wallpaper::Wallpaper,
 ) -> io::Result<Vec<String>> {
     if let Ok(cached) = cache.lock()
         && let Some((seen, seeds)) = cached.as_ref()
@@ -195,7 +195,7 @@ enum Found {
 
 /// 先找 matugen 那一份，没有的找壁纸（阻塞：跑命令、读文件）；一起交回以后要盯的文件。
 fn look(cache: &SeedCache, dark: bool, data: bool) -> io::Result<(Option<Found>, Vec<PathBuf>)> {
-    if let Some(m) = miyu_wallpaper::matugen::find() {
+    if let Some(m) = miyu_client::wallpaper::matugen::find() {
         let found = if data {
             Found::Data(m.read()?, JSON)
         } else {
@@ -203,7 +203,7 @@ fn look(cache: &SeedCache, dark: bool, data: bool) -> io::Result<(Option<Found>,
         };
         return Ok((Some(found), watch_list()));
     }
-    let Some(w) = miyu_wallpaper::find(dark)? else {
+    let Some(w) = miyu_client::wallpaper::find(dark)? else {
         return Ok((None, watch_list()));
     };
     let found = if data {

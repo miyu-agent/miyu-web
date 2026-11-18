@@ -15,7 +15,8 @@ path = "src/main.rs"
 [dependencies]
 # 核心只经门面 miyu-client 用（设计 32 第二节）：连核心（转发浏览器的连接不读本机令牌，`open` 要一次性码那一下照终端
 # 出示，拉起 `serve` 照拉起核心的办法）、数据根和资源目录在哪、读自己的清单、运行日志。
-miyu-client.workspace = true
+# `wallpaper`：主题「跟随壁纸」读桌面壁纸、盯着它换没换，用核心仓库的 crate `miyu-wallpaper`（审计 #092：只留核心一份，和终端、桥同一份）。
+miyu-client = { workspace = true, features = ["wallpaper"] }
 # 起来时调打开文件数的软上限（施工 YC-11，核心 YC-1 的 `open_files::raise`）：门面上没有，函数在 miyu-ipc（本来就在依赖图里）。
 miyu-ipc.workspace = true
 # 给页面、核对 Host 和 Origin、`/ws` 照转：共用的底子（施工 O-16，webserve.md）。
@@ -26,8 +27,6 @@ hyper-util = { version = "0.1", default-features = false, features = ["tokio"] }
 http-body-util = "0.1"
 # 「打开目录」「选择文件夹…」（`desk`，2026-10-30）：这个仓库的 crate，和演示的桥共用。
 miyu-desk = { path = "../miyu-desk" }
-# 主题「跟随壁纸」读桌面壁纸、盯着它换没换：这个仓库的 crate，和演示的桥共用。
-miyu-wallpaper = { path = "../miyu-wallpaper" }
 # `/media` 一块块给的正文是一条流。
 futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
 # `/media`（施工 W-10）：票据是 32 个随机字节；核心一块块给的是 base64。两个都本来就在依赖图里，和别的 crate 用的同一份。

@@ -7,7 +7,7 @@
 //!   （页面开着总连着 `/ws`，那条才算），同时最多 [`MOST_WALLPAPER_STREAMS`] 条，满了 503（2026-11-02 第四轮审查 W4-3：原来这台电脑上
 //!   随便哪个程序、哪个网页开一条不关，网页软件就一直不空闲退出，条数也不限）。
 //!
-//! 找、认图、盯文件在 crate `miyu-wallpaper`：找要跑命令，放到阻塞的线程上做。
+//! 找、认图、盯文件在核心仓库的 crate `miyu-wallpaper`（经门面 `miyu_client::wallpaper`，审计 #092）：找要跑命令，放到阻塞的线程上做。
 //!
 //! 记着上一次的回答（2026-10-30 桌面端在 Win11 上抓到：页面每次拿回焦点都问一次，网页软件每次都拉一个 `reg.exe`）：Windows、macOS 上换
 //! 壁纸一定会改盯着的那几份文件（`TranscodedWallpaper`、`Index.plist`），盯着、文件没变的就交记着的，不再去找。Linux 上有只经 IPC 换、
@@ -23,7 +23,7 @@ use http_body_util::{BodyExt, StreamBody};
 use hyper::body::{Bytes, Frame};
 use hyper::header::{self, HeaderValue};
 use hyper::{Response, StatusCode};
-use miyu_wallpaper::watch::{Watch, watch_list};
+use miyu_client::wallpaper::watch::{Watch, watch_list};
 use tokio::sync::{broadcast, mpsc};
 
 use super::{json_reply, not_found};
@@ -251,7 +251,7 @@ pub(crate) fn events(site: &Arc<Site>) -> Response<Body> {
 fn seeds_of(
     cache: &SeedCache,
     sig: &str,
-    image: &miyu_wallpaper::Wallpaper,
+    image: &miyu_client::wallpaper::Wallpaper,
 ) -> io::Result<Vec<String>> {
     if let Some((seen, seeds)) = cache
         .lock()
@@ -279,7 +279,7 @@ enum Found {
 
 /// 先找 matugen 那一份，没有的找壁纸（阻塞：跑命令、读文件）；一起交回以后要盯的文件。
 fn look(cache: &SeedCache, dark: bool, data: bool) -> io::Result<(Option<Found>, Vec<PathBuf>)> {
-    if let Some(found) = miyu_wallpaper::matugen::find() {
+    if let Some(found) = miyu_client::wallpaper::matugen::find() {
         let found = if data {
             Found::Data(found.read()?, "application/json")
         } else {
@@ -287,7 +287,7 @@ fn look(cache: &SeedCache, dark: bool, data: bool) -> io::Result<(Option<Found>,
         };
         return Ok((Some(found), watch_list()));
     }
-    let Some(image) = miyu_wallpaper::find(dark)? else {
+    let Some(image) = miyu_client::wallpaper::find(dark)? else {
         return Ok((None, watch_list()));
     };
     let found = if data {
