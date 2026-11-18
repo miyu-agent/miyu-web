@@ -33,7 +33,7 @@ test('生成的是整份：格子和原色表（默认主题）一样多，浅�
     const got = themeOf('#7a573e', scheme);
     assert.deepEqual(Object.keys(got.page).sort(), Object.keys(DESIGN[scheme].page).sort(), `${scheme} 页面那一组`);
     assert.deepEqual(Object.keys(got.tui).sort(), Object.keys(DESIGN[scheme].tui).sort(), `${scheme} 终端那一组`);
-    assert.equal(Object.keys(got.page).length + Object.keys(got.tui).length, 93);
+    assert.equal(Object.keys(got.page).length + Object.keys(got.tui).length, 92, '工作区那一档的颜色 2026-11-19 去掉了（审计 #093）');
   }
 });
 

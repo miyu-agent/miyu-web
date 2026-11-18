@@ -52,7 +52,6 @@ export const DESIGN = {
     tui: {
       dim: '#8a857c',
       accent: '#3a63c9',
-      workspace: '#3a63c9',
       full: '#b14a5c',
       read_only: '#a0741f',
       thought: '#2d6f7b',
@@ -151,7 +150,6 @@ export const DESIGN = {
     tui: {
       dim: '#7c84ad',
       accent: '#7aa2f7',
-      workspace: '#7aa2f7',
       full: '#f7768e',
       read_only: '#e0af68',
       thought: '#41a6b5',

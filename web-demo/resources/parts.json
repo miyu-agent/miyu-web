@@ -3468,12 +3468,6 @@
       ".footer-level"
     ]
   },
-  "level.workspace": {
-    "zh": "权限级别：工作区",
-    "select": [
-      ".level-workspace"
-    ]
-  },
   "level.full": {
     "zh": "权限级别：开放",
     "select": [

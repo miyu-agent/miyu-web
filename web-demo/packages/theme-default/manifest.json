@@ -375,14 +375,6 @@
       },
       "applies": "live"
     },
-    "light_t_workspace": {
-      "type": "color",
-      "default": "#3a63c9",
-      "name": {
-        "zh": "浅色 终端色 workspace"
-      },
-      "applies": "live"
-    },
     "light_t_full": {
       "type": "color",
       "default": "#3a63c9",
@@ -1116,14 +1108,6 @@
       "default": "#7aa2f7",
       "name": {
         "zh": "深色 终端色 accent"
-      },
-      "applies": "live"
-    },
-    "dark_t_workspace": {
-      "type": "color",
-      "default": "#7aa2f7",
-      "name": {
-        "zh": "深色 终端色 workspace"
       },
       "applies": "live"
     },
