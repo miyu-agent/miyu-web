@@ -1,2 +1,4 @@
 /target/
 /web-demo/bridge/target/
+/.worktrees/
+/pin.log
