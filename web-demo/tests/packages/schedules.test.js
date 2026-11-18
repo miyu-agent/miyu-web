@@ -205,3 +205,19 @@ test('修改时能选哪几种（核心 J-5 不让循环换种类）；保存只
   assert.deepEqual(updateOf(s, '看看 CI', { every: 120 }), { id: 't1', when: { every: 120 } });
   assert.deepEqual(updateOf(s, '看看部署', null), { id: 't1', prompt: '看看部署' });
 });
+
+test('上一次只记下、没开轮的（核心 SC-1 的 held，W-1216）：列表多一行「已记下」，详情的「上次」也写「已记下」；三种语言都有；别的结果不写这一行', async () => {
+  const { heldText } = await import('../../packages/schedules/model.js');
+  const held = { id: 't1', prompt: 'x', when: {}, last: { at: 'x', result: 'held' } };
+  assert.equal(heldText(held, t), '已记下');
+  assert.equal(skipText(held, t), null, '不是跳过');
+  for (const result of ['ran', 'queued', 'sent', 'skipped:session_gone']) assert.equal(heldText({ ...held, last: { at: 'x', result } }, t), null, result);
+  assert.equal(heldText({ id: 't1', prompt: 'x', when: {} }, t), null, '没跑过的');
+  const want = { zh: '已记下', en: 'Recorded', ja: '記録済み' };
+  for (const lang of /** @type {const} */ (['zh', 'en', 'ja'])) {
+    assert.equal(heldText(held, textOf(lang)), want[lang], lang);
+    assert.equal(textOf(lang)('detail.result.held'), want[lang], `${lang} 详情`);
+  }
+  const page = readFileSync(new URL('../../packages/schedules/page.js', import.meta.url), 'utf8');
+  assert.match(page, /held \? h\('p\.set-desc\.sch-held', held\)/);
+});

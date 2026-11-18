@@ -7,6 +7,8 @@
 .sch-tag { flex: none; padding: 1px calc(6px * var(--space)); border-radius: var(--r-6); background: var(--surface-3); color: var(--text-soft); font-size: calc(11px * var(--text-scale)); font-weight: 500; }
 .sch-row.is-paused .sch-prompt { color: var(--text-soft); }
 .set-desc.sch-skip { color: var(--t-warn, var(--gold)); }
+/* 上一次只记下、没开轮的（核心 SC-1 的 held）：暗字，不是 warn */
+.set-desc.sch-held { color: var(--text-faint); }
 .sch-control { display: flex; align-items: center; gap: calc(6px * var(--space)); }
 .sch-remove .icon { width: calc(15px * var(--space)); height: calc(15px * var(--space)); }
 .sch-remove:hover { color: var(--danger); }

@@ -128,6 +128,12 @@ export function skipText(s, t) {
   return said === key ? t('skipped.other', { why }) : said;
 }
 
+/**
+ * 上一次只记下、没开轮的（`last.result` 是 `held`，核心 SC-1：那句话记进了会话，等人下一次开口时一起看到）：「已记下」；别的是 `null`。
+ * @param {Schedule} s @param {Text} t
+ */
+export const heldText = (s, t) => (s.last?.result === 'held' ? t('held') : null);
+
 /** 卡片里那一行：什么时候 · 下次 @param {Schedule} s @param {Date} now @param {Text} t */
 export function cardText(s, now, t) {
   return [whenText(s, now, t), nextText(s, now, t)].filter(Boolean).join(' · ');

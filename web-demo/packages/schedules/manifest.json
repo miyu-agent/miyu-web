@@ -195,10 +195,12 @@
         "result": {
           "ran": "跑了",
           "queued": "排着（会话正在跑一轮）",
-          "sent": "交给了建它的软件包"
+          "sent": "交给了建它的软件包",
+          "held": "已记下"
         }
       },
-      "loop_tag": "循环"
+      "loop_tag": "循环",
+      "held": "已记下"
     },
     "en": {
       "title": "Scheduled tasks",
@@ -367,10 +369,12 @@
         "result": {
           "ran": "Ran",
           "queued": "Queued (session was busy)",
-          "sent": "Sent to its package"
+          "sent": "Sent to its package",
+          "held": "Recorded"
         }
       },
-      "loop_tag": "Loop"
+      "loop_tag": "Loop",
+      "held": "Recorded"
     },
     "ja": {
       "title": "定期タスク",
@@ -539,10 +543,12 @@
         "result": {
           "ran": "実行した",
           "queued": "待機中（セッションが実行中）",
-          "sent": "作成したパッケージに渡した"
+          "sent": "作成したパッケージに渡した",
+          "held": "記録済み"
         }
       },
-      "loop_tag": "ループ"
+      "loop_tag": "ループ",
+      "held": "記録済み"
     }
   }
 }

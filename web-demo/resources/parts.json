@@ -7542,6 +7542,12 @@
       ".sch-skip"
     ]
   },
+  "sch.held": {
+    "zh": "定时任务：上一次只记下、没开轮的「已记下」",
+    "select": [
+      ".sch-held"
+    ]
+  },
   "sch.remove": {
     "zh": "定时任务：remove",
     "select": [

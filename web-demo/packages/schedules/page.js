@@ -4,7 +4,7 @@
 //! 开着时订着 `schedules` 流（`store.hold`），不在页面上了放开。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { metaText, skipText } from './model.js';
+import { heldText, metaText, skipText } from './model.js';
 import { openForm } from './form.js';
 import { openDetail } from './detail.js';
 
@@ -65,6 +65,7 @@ export class SchedulesPage {
     });
     const rows = list.map((s) => {
       const skip = skipText(s, t);
+      const held = heldText(s, t);
       const toggle = kit.toggle(!s.paused, async (/** @type {boolean} */ on) => {
         try {
           await this.store.act(on ? 'schedule.resume' : 'schedule.pause', { id: s.id });
@@ -94,7 +95,8 @@ export class SchedulesPage {
         },
           h('div.set-name', h('span.sch-prompt', { title: s.prompt }, s.prompt), s.by?.kind === 'model' ? h('span.sch-tag', t('ai_made')) : null),
           h('p.set-desc', metaText(s, now, (id) => this.title(id), t)),
-          skip ? h('p.set-desc.sch-skip', skip) : null),
+          skip ? h('p.set-desc.sch-skip', skip) : null,
+          held ? h('p.set-desc.sch-held', held) : null),
         h('div.set-control.sch-control', toggle, remove));
     });
     this.fresh = null;
