@@ -68,7 +68,7 @@ fn the_defaults_come_from_the_manifest_and_the_constants_from_web_json() {
             settings.ticket_idle_seconds,
             settings.most_tickets
         ),
-        (8300, 600, 43_200, 4096)
+        (8300, 0, 43_200, 4096)
     );
     assert!(settings.csp.starts_with("default-src 'self'"));
     assert_eq!(

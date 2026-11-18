@@ -12,6 +12,10 @@ pub enum Parsed {
     Open(Open),
     /// 有 `-h`、`--help`：印帮助，别的参数不管。
     Help,
+    /// `stop`（W-1091 起的 `--stop`，W-1214 改子命令）：停掉在跑的网页软件，不连核心、不开浏览器（托盘「停止」「退出」先停它）。
+    Stop,
+    /// `status`（W-1214）：在不在跑，不连核心。
+    Status,
 }
 
 /// 参数哪里不对。
@@ -25,20 +29,33 @@ pub enum Bad {
     Value(&'static str, String),
     /// `--ticket` 和 `--reset` 一起写。
     TicketWithReset,
-    /// `--stop` 和别的选项一起写。
-    StopWithOthers,
+    /// 子命令（`stop`、`status`）后面又写了别的。
+    Alone(&'static str),
 }
 
 /// 读 `open` 的参数：`--port <端口>`、`--print`、`--format text|json`（`json` 当 `--print`）、`--ticket`（和 `--reset` 不一起写）、
 /// `--reset`、`--logout`、`--package <编号>`（编号的写法不对的不认）、`--session <编号>`（照会话编号的写法查）、`--settings [<分页>]`
-/// （分页可以不写：下一个是 `-` 打头的、没有下一个的算没写，写了的照包编号的写法查）、`--stop`（只能单独写）；哪里有 `-h`、`--help` 都是印帮助。
+/// （分页可以不写：下一个是 `-` 打头的、没有下一个的算没写，写了的照包编号的写法查）；头一个是 `stop`、`status` 的是子命令，后面不能再写别的；哪里有 `-h`、`--help` 都是印帮助。
 ///
 /// # Errors
 ///
-/// 不认识的选项、少了值、值不对、`--ticket` 和 `--reset` 一起写、`--stop` 和别的一起写，交回 [`Bad`]。
+/// 不认识的选项、少了值、值不对、`--ticket` 和 `--reset` 一起写、子命令后面又写了别的，交回 [`Bad`]。
 pub fn parse(args: &[String]) -> Result<Parsed, Bad> {
     if args.iter().any(|arg| arg == "-h" || arg == "--help") {
         return Ok(Parsed::Help);
+    }
+    if let Some((first, rest)) = args.split_first() {
+        let sub = match first.as_str() {
+            "stop" => Some(("stop", Parsed::Stop)),
+            "status" => Some(("status", Parsed::Status)),
+            _ => None,
+        };
+        if let Some((name, parsed)) = sub {
+            return match rest.is_empty() {
+                true => Ok(parsed),
+                false => Err(Bad::Alone(name)),
+            };
+        }
     }
     let mut open = Open::default();
     let mut args = args.iter().peekable();
@@ -58,7 +75,6 @@ pub fn parse(args: &[String]) -> Result<Parsed, Bad> {
             "--reset" => open.reset = true,
             "--ticket" => open.ticket = true,
             "--logout" => open.logout = true,
-            "--stop" => open.stop = true,
             "--package" => {
                 let id = value("--package")?;
                 if !crate::backstage::valid_package(&id) {
@@ -85,13 +101,6 @@ pub fn parse(args: &[String]) -> Result<Parsed, Bad> {
             }
             other => return Err(Bad::Unknown(other.to_string())),
         }
-    }
-    let alone = Open {
-        stop: true,
-        ..Open::default()
-    };
-    if open.stop && open != alone {
-        return Err(Bad::StopWithOthers);
     }
     match open.ticket && open.reset {
         true => Err(Bad::TicketWithReset),
@@ -131,10 +140,8 @@ pub fn bad(locale: &str, bad: &Bad) -> String {
         (Bad::TicketWithReset, false) => {
             "miyu: '--ticket' cannot be used with '--reset'".to_string()
         }
-        (Bad::StopWithOthers, true) => "miyu: '--stop' 不能和别的选项一起使用".to_string(),
-        (Bad::StopWithOthers, false) => {
-            "miyu: '--stop' cannot be used with other options".to_string()
-        }
+        (Bad::Alone(name), true) => format!("miyu: '{name}' 后面不能再写别的参数"),
+        (Bad::Alone(name), false) => format!("miyu: '{name}' takes no other arguments"),
     };
     let hint = match zh {
         true => "提示：运行 'miyu web --help' 查看用法",

@@ -1,9 +1,9 @@
-//! `miyu web --stop`、`/stop`（W-1091：托盘「停止」「退出」先停网页软件，免得开着的页面一重连又把核心拉起来）：叫停的照常收尾（删地址、
+//! `miyu web stop`、`status`、`/stop`（W-1091、W-1214：托盘「停止」「退出」先停网页软件，免得开着的页面一重连又把核心拉起来）：叫停的照常收尾（删地址、
 //! 删钥匙、放锁）；没在跑的照实说；钥匙不对、带 Origin、从别的机器来的、不是 `POST` 的不认，照旧跑着。
 
 use crate::support::*;
 use miyu_web::serve::{address, running, runtime};
-use miyu_web::shutdown::{KEY, Stopped, stop};
+use miyu_web::shutdown::{KEY, NOT_RUNNING, Stopped, status, stop};
 
 /// 一种叫法：方法、另带的头、该回的状态码。
 type Case<'a> = (&'a str, Vec<(&'a str, &'a str)>, u16);
@@ -33,6 +33,23 @@ async fn stop_ends_the_running_one_and_cleans_up() {
 async fn stop_says_nothing_was_running() {
     let home = Home::new();
     assert_eq!(stop(&home.root).await, Stopped::NotRunning);
+}
+
+/// `status`（W-1214）：在跑的退出码 0、印出地址；停了以后退出码 3（照 `systemctl`）。
+#[tokio::test]
+async fn status_tells_running_from_not_running() {
+    let home = Home::new();
+    let (_, _port, serving) = start(&home, 0, 600).await;
+    let mut out = Vec::new();
+    assert_eq!(status(&home.root, &mut out), 0, "在跑");
+    let said = String::from_utf8(out).unwrap();
+    let url = address(&home.root).expect("写了地址");
+    assert!(said.contains(&url), "印出地址：{said}");
+    assert_eq!(within("停", stop(&home.root)).await, Stopped::Stopped);
+    assert_eq!(within("收尾", serving).await.expect("没崩"), Ok(()));
+    let mut out = Vec::new();
+    assert_eq!(status(&home.root, &mut out), NOT_RUNNING, "停了");
+    assert!(!String::from_utf8(out).unwrap().contains(&url));
 }
 
 #[tokio::test]

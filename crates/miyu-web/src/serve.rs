@@ -8,7 +8,7 @@
 //! 2. 听 `web.listen` 的那个地址的端口（`run/webui/address` 里照旧写 `http://127.0.0.1:<端口>`：本机开浏览器走回环）：被占了写 `error port <端口> in use`（`open` 认这个前缀，照人的语言说），别的起不来写 `error <原因>`。
 //! 3. 地址写进 `run/webui/address`（先写临时文件再改名），写一行 `ready`。
 //! 4. 没有 WebSocket 连着、没有 `/media`、后台页在给，连续空闲到点就退出（听局域网的不退；`/wallpaper/events` 不算，第四轮审查 W4-3）；收到停的信号、
-//!    `miyu web --stop` 叫停的（`/stop`，W-1091）也退出。退出时先删 `run/webui/address` 和停止钥匙、再放锁。
+//!    `miyu web stop` 叫停的（`/stop`，W-1091）也退出。退出时先删 `run/webui/address` 和停止钥匙、再放锁。
 //! 5. `/listen` 请换地址、端口的（`listen`）：接连接的这一圈照它换监听，在听的地址、端口跟着换，端口换了重写 `run/webui/address`。新地址不再包含
 //!    别的机器连进来的那个地址的（关了局域网）：连着的 WebSocket 关掉，keep-alive 连接上再来的请求 403（第四轮审查 W4-2）。
 

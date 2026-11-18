@@ -1,4 +1,5 @@
 Usage: miyu web [options]
+       miyu web <command>
 
 Open the web interface: start it if it is not running, then open it in a
 browser
@@ -15,5 +16,8 @@ Options:
       --session <id> Open this session
       --settings [<page>]
                      Open Settings; access opens Access under General
-      --stop         Stop the web interface (the core keeps running)
   -h, --help         Print help
+
+Commands:
+  stop    Stop the web interface (the core keeps running)
+  status  Show whether the web interface is running

@@ -112,17 +112,28 @@ impl Language {
         )
     }
 
-    /// `--stop` 停了（W-1091）。
+    /// `stop` 停了（W-1091）。
     pub(crate) fn web_stopped(self) -> String {
         self.pick("已停止网页界面", "stopped the web interface")
     }
 
-    /// `--stop` 时本来就没在跑。
+    /// `stop`、`status` 时本来就没在跑。
     pub(crate) fn web_not_running(self) -> String {
         self.pick("网页界面没有在运行", "the web interface is not running")
     }
 
-    /// `--stop` 没停成。
+    /// `status`：在跑（W-1214）；读不到地址的（刚起来还没写）不带地址。
+    pub(crate) fn web_running(self, address: Option<&str>) -> String {
+        match address {
+            Some(address) => self.pick(
+                &format!("网页界面正在运行：{address}"),
+                &format!("the web interface is running: {address}"),
+            ),
+            None => self.pick("网页界面正在运行", "the web interface is running"),
+        }
+    }
+
+    /// `stop` 没停成。
     pub(crate) fn web_not_stopped(self, reason: &str) -> String {
         self.pick(
             &format!("miyu: 无法停止网页界面：{reason}"),

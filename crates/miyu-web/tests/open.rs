@@ -124,7 +124,7 @@ fn launch(home: &Home) -> Launch {
     // 空闲多久照清单的默认值（施工 9-1 下）：这里改成 1 秒，测完很快就走。核心没在跑，`serve` 照默认起。
     let ours = package.join("package.toml");
     let manifest = std::fs::read_to_string(ours).expect("出厂的读得到");
-    let quick = manifest.replace("default = 600\n", "default = 1\n");
+    let quick = manifest.replace("max = 86400\ndefault = 0\n", "max = 86400\ndefault = 1\n");
     assert_ne!(quick, manifest, "清单里有空闲的默认值");
     std::fs::write(resources.join("packages/webui/package.toml"), quick).expect("写得进");
     let data = home.root.path().to_path_buf();

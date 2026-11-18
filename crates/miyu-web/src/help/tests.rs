@@ -70,19 +70,21 @@ fn session_and_settings_name_where_to_go() {
 }
 
 #[test]
-fn stop_stands_alone() {
-    let want = Open {
-        stop: true,
-        ..Open::default()
-    };
-    assert_eq!(parse(&args(&["--stop"])), Ok(Parsed::Open(want)));
+fn stop_and_status_are_commands_that_stand_alone() {
+    assert_eq!(parse(&args(&["stop"])), Ok(Parsed::Stop));
+    assert_eq!(parse(&args(&["status"])), Ok(Parsed::Status));
+    assert_eq!(parse(&args(&["stop", "--print"])), Err(Bad::Alone("stop")));
+    assert_eq!(parse(&args(&["status", "x"])), Err(Bad::Alone("status")));
+    assert_eq!(parse(&args(&["stop", "-h"])), Ok(Parsed::Help));
     assert_eq!(
-        parse(&args(&["--stop", "--print"])),
-        Err(Bad::StopWithOthers)
+        parse(&args(&["--print", "stop"])),
+        Err(Bad::Unknown("stop".into())),
+        "子命令只认头一个"
     );
     assert_eq!(
-        parse(&args(&["--settings", "--stop"])),
-        Err(Bad::StopWithOthers)
+        parse(&args(&["--stop"])),
+        Err(Bad::Unknown("--stop".into())),
+        "不留旧的选项"
     );
 }
 
@@ -175,6 +177,11 @@ fn the_page_picks_the_language_and_leaves_out_ticket() {
             assert!(text.contains(option), "{option} 在帮助里");
         }
         assert!(!text.contains("--ticket"), "--ticket 不写进帮助");
+        assert!(
+            text.contains("  stop  ") && text.contains("  status  "),
+            "两个子命令在帮助里"
+        );
+        assert!(!text.contains("--stop"), "不留旧的选项");
         assert!(
             !text.contains('她') && !text.contains("用户名"),
             "照命令行文案"

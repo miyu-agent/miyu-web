@@ -1,10 +1,10 @@
-//! `miyu web --stop`（W-1091）：停掉这个数据根上在跑的网页软件。2026-11-03 托盘 AP-2 在 Windows 虚拟机上测出来的：托盘「停止」「退出
+//! `miyu web stop`（W-1091 起是 `--stop`，W-1214 改子命令）：停掉这个数据根上在跑的网页软件；`miyu web status`（W-1214）说在不在跑。2026-11-03 托盘 AP-2 在 Windows 虚拟机上测出来的：托盘「停止」「退出
 //! Miyu」照 `miyu core stop` 停了核心，开着的页面一重连，网页软件就照 `connect_or_start` 把核心又拉了起来；托盘蓝图写的是「网页服务、
-//! im 这些跟着停」，托盘先 `miyu web --stop`、再停核心。
+//! im 这些跟着停」，托盘先 `miyu web stop`、再停核心。
 //!
 //! - `serve` 起来时在运行时目录写一把钥匙（[`KEY`]，32 个随机字节，Unix 上只给本人读），退出时删掉。
-//! - `--stop` 不连核心（`open` 一上来就连，会把核心拉起来）：没在跑的说一句、退出码 0；在跑的读地址和钥匙，照回环 `POST /stop`、头
-//!   `X-Miyu-Stop` 带钥匙；`serve` 照常收尾（删地址、删钥匙、放锁，运行日志 `stopped reason=stop`），`--stop` 等锁放掉（最多
+//! - `stop` 不连核心（`open` 一上来就连，会把核心拉起来）：没在跑的说一句、退出码 0；在跑的读地址和钥匙，照回环 `POST /stop`、头
+//!   `X-Miyu-Stop` 带钥匙；`serve` 照常收尾（删地址、删钥匙、放锁，运行日志 `stopped reason=stop`），`stop` 等锁放掉（最多
 //!   [`WAIT`]）再走。
 //! - `/stop` 只认：对端是回环、不带反向代理的头、不带 Origin（浏览器发 `POST` 都带）、钥匙逐字对上；不是的一律 403，不说为什么。
 //! - 不发信号、不结束进程：仓库不许 `unsafe`，Windows 上也没有能让它照常收尾的信号。
@@ -47,7 +47,7 @@ pub enum Stopped {
     Failed(String),
 }
 
-/// `--stop`：停掉在跑的网页软件，结果照这台机器的语言印在 `err` 上，交回退出码（停了、本来没在跑的 0，没停成的 1）。
+/// `stop`：停掉在跑的网页软件，结果照这台机器的语言印在 `err` 上，交回退出码（停了、本来没在跑的 0，没停成的 1）。
 pub async fn command(root: &DataRoot, err: &mut dyn Write) -> u8 {
     let language = Language::of_locale(&miyu_client::open::locale());
     let (said, code) = match stop(root).await {
@@ -57,6 +57,22 @@ pub async fn command(root: &DataRoot, err: &mut dyn Write) -> u8 {
     };
     if writeln!(err, "{said}").is_err() {
         // 标准错误关了：照样交回退出码。
+    }
+    code
+}
+
+/// `status` 的退出码：没在跑（照 `systemctl`，核心的 `miyu core status` 同一套）。
+pub const NOT_RUNNING: u8 = 3;
+
+/// `status`：在不在跑，不连核心，照这台机器的语言印在 `out` 上，交回退出码（在跑 0，没在跑 [`NOT_RUNNING`]）。
+pub fn status(root: &DataRoot, out: &mut dyn Write) -> u8 {
+    let language = Language::of_locale(&miyu_client::open::locale());
+    let (said, code) = match running(root) {
+        true => (language.web_running(address(root).as_deref()), 0),
+        false => (language.web_not_running(), NOT_RUNNING),
+    };
+    if writeln!(out, "{said}").is_err() {
+        // 标准输出关了：照样交回退出码。
     }
     code
 }
@@ -133,7 +149,7 @@ async fn released(lock: PathBuf) -> Stopped {
     }
 }
 
-/// 起来时写钥匙（先写临时文件再改名，Unix 上只给本人读）：写不成的记一行、是空的（`--stop` 停不了它，空闲到点照样退）。
+/// 起来时写钥匙（先写临时文件再改名，Unix 上只给本人读）：写不成的记一行、是空的（`miyu web stop` 停不了它，只能发停的信号）。
 pub(crate) fn write_key(run: &Path) -> Option<String> {
     let Some(key) = crate::media::tickets::fresh() else {
         tracing::warn!(target: TARGET, "no random bytes for the stop key");

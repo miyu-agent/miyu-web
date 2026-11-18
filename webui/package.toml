@@ -43,11 +43,11 @@ description = { en = "0.0.0.0 is every address of this computer; or write just o
 type = "int"
 min = 0
 max = 86400
-default = 600
+default = 0
 layers = ["system"]
 hidden = true
 name = { en = "Idle seconds", zh = "空闲多久退出（秒）", ja = "待機して終了するまで（秒）" }
-description = { en = "Quit after this many seconds with no browser connected and no media being served; 0 never quits (for a server where a service manager starts it).", zh = "没有浏览器连着、没有媒体在给，连续这么多秒就退出；0 是不退（服务器上由服务管理器起的）。", ja = "ブラウザがつながっておらずメディアも送っていない状態がこの秒数続いたら終了します。0 は終了しません（サーバーでサービスマネージャーが起動する場合）。" }
+description = { en = "Quit after this many seconds with no browser connected and no media being served; 0 never quits (the default).", zh = "没有浏览器连着、没有媒体在给，连续这么多秒就退出；0 是不退（出厂）。", ja = "ブラウザがつながっておらずメディアも送っていない状態がこの秒数続いたら終了します。0 は終了しません（既定）。" }
 
 [settings.ticket_idle_seconds]
 type = "int"

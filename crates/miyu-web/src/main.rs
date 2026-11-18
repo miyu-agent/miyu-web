@@ -3,7 +3,7 @@
 //!
 //! - `miyu-web serve [--port <端口>]`
 //! - `miyu-web open [--port <端口>] [--print] [--format text|json] [--ticket] [--reset] [--logout] [--package <编号>] [--session <编号>]
-//!   [--settings [<分页>]] [--stop] [-h|--help]`：核心 CL-7 起 `miyu web` 是网页包的命令，清单 `args = ["open"]`，转交过来就是它；`-h` 印帮助页，
+//!   [--settings [<分页>]] [-h|--help]`、`miyu-web open stop|status`：核心 CL-7 起 `miyu web` 是网页包的命令，清单 `args = ["open"]`，转交过来就是它；`-h` 印帮助页，
 //!   写错的照命令行文案说（[`miyu_web::help`]）
 
 use std::path::{Path, PathBuf};
@@ -32,7 +32,8 @@ fn main() -> ExitCode {
     }
     let locale = miyu_client::open::locale();
     let parsed = match (miyu_web::help::parse(rest), command.as_str()) {
-        (Ok(Parsed::Open(open)), _) => open,
+        (Ok(Parsed::Open(open)), _) => Parsed::Open(open),
+        (Ok(sub @ (Parsed::Stop | Parsed::Status)), "open") => sub,
         (Ok(Parsed::Help), "open") => {
             print!("{}", miyu_web::help::page(&locale));
             return ExitCode::SUCCESS;
@@ -58,21 +59,29 @@ fn main() -> ExitCode {
             return ExitCode::from(1);
         }
     };
+    let parsed = match parsed {
+        // 不连核心（W-1091、W-1214）：`open` 一上来就连，会把核心拉起来
+        Parsed::Stop => {
+            return ExitCode::from(
+                runtime.block_on(miyu_web::shutdown::command(&root, &mut std::io::stderr())),
+            );
+        }
+        Parsed::Status => {
+            return ExitCode::from(miyu_web::shutdown::status(&root, &mut std::io::stdout()));
+        }
+        Parsed::Help => return usage(),
+        Parsed::Open(open) => open,
+    };
     match command.as_str() {
         "serve"
             if !parsed.print
                 && !parsed.json
                 && !parsed.ticket
                 && !parsed.reset
-                && !parsed.logout
-                && !parsed.stop =>
+                && !parsed.logout =>
         {
             ExitCode::from(runtime.block_on(serve(root, &env, parsed.port, raised)))
         }
-        // 不连核心（W-1091）：`open` 一上来就连，会把核心拉起来
-        "open" if parsed.stop => ExitCode::from(
-            runtime.block_on(miyu_web::shutdown::command(&root, &mut std::io::stderr())),
-        ),
         "open" => {
             let launch = Launch {
                 serve: Box::new(|port| {
@@ -196,7 +205,7 @@ fn forget(rest: &[String]) -> ExitCode {
 /// 用法不对。
 fn usage() -> ExitCode {
     eprintln!(
-        "usage: miyu-web open [--port <port>] [--print] [--format text|json] [--ticket] [--reset] [--logout] [--package <id>] [--session <id>] [--settings [<page>]] [--stop]"
+        "usage: miyu-web open [--port <port>] [--print] [--format text|json] [--ticket] [--reset] [--logout] [--package <id>] [--session <id>] [--settings [<page>]] | miyu-web open stop|status"
     );
     ExitCode::from(USAGE)
 }
