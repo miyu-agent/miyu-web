@@ -422,7 +422,7 @@
           "local": "本地"
         },
         "search": "搜索软件包",
-        "no_match": "没有对得上的软件包",
+        "no_match": "没有匹配的软件包",
         "filter": {
           "all": "全部",
           "builtin": "内置",
