@@ -24,7 +24,7 @@
 
 | 代码 | 管什么 |
 |---|---|
-| `web-demo/bridge/` | 桥（Rust，不进工作区）：只听本机、访问口令；页面文件（目录运行时找：写了 `MIYU_WEB_ROOT` 照它，不然编译时的源码目录还在就用它，再不然照程序自己的位置往上找带 `index.html` 和 `bridge/` 的那一层；2026-10-22 仓库挪到 `miyu-agent/miyu-web` 以后，编进去的旧路径找不到，页面一律 404）；WebSocket 和核心的套接字两头照转，握手时塞本机令牌；读历史不再由桥顶替（2026-10-01 起用核心的订阅补发 `subscribe` 的 `after`，施工 3-8 六补，原来桥读日志顶替 `events.read`）；`/file`、`/blob` 给本机文件和 blob |
+| `web-demo/bridge/` | 桥（Rust，不进工作区）：只听本机、访问口令；页面文件（目录运行时找：写了 `MIYU_WEB_ROOT` 照它，不然编译时的源码目录还在就用它，再不然照程序自己的位置往上找带 `index.html` 和 `bridge/` 的那一层；2026-10-22 仓库挪到 `miyu-agent/miyu-web` 以后，编进去的旧路径找不到，页面一律 404）；WebSocket 和核心的套接字两头照转，握手时塞本机令牌；读历史不再由桥顶替（2026-10-01 起用核心的订阅补发 `subscribe` 的 `after`，施工 3-8 六补，原来桥读日志顶替 `events.read`）；页面文件的媒体类型照扩展名（应用清单 `manifest.webmanifest` 是 `application/manifest+json`，审计 #087；外观包 `/theme`、原始包 `/export`、找原文件 `/locate` 是网页软件的，桥不给，页面照宿主交 `null` 的退回）；`/file`、`/blob` 给本机文件和 blob |
 | `web-demo/index.html`、`src/main.js` | 入口：读资源、套主题、经桥连核心、握手、读会话表、画页面；起不来的整页写一句为什么 |
 | `web-demo/src/host/` | 宿主：和平台有关的（连核心的线和口令、地址、上传、选文件、拖放、外链、剪贴板），浏览器两份（经桥的 `browser.js`、经网页软件的 `served.js`），桌面窗口用经网页软件的那一份（`web/architecture.md`「宿主」） |
 | `web-demo/src/core/host.js` | 旧代码经它用宿主：本机文件、blob、链接卡片配图的地址，外链，剪贴板（拆完旧代码就没了） |

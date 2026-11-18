@@ -212,6 +212,8 @@ fn kind(file: &Path) -> &'static str {
         Some("js" | "mjs") => "text/javascript; charset=utf-8",
         Some("css") => "text/css; charset=utf-8",
         Some("json") => "application/json; charset=utf-8",
+        // 应用清单（审计 #087，同 `webui/web.json` 的表）
+        Some("webmanifest") => "application/manifest+json",
         Some("png") => "image/png",
         Some("svg") => "image/svg+xml",
         Some("md") => "text/markdown; charset=utf-8",

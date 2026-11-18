@@ -28,3 +28,12 @@ fn the_bridge_source_is_not_served_however_the_path_is_written() {
     }
     std::fs::remove_dir_all(&dir).expect("删得掉");
 }
+
+#[test]
+fn the_app_manifest_comes_as_a_manifest() {
+    // 审计 #087：页面带的应用清单 `manifest.webmanifest`（蓝图 `web.md`「装成应用」）原来照 `application/octet-stream` 给
+    assert_eq!(
+        super::kind(std::path::Path::new("/web-demo/manifest.webmanifest")),
+        "application/manifest+json"
+    );
+}
