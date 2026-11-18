@@ -1,7 +1,8 @@
 //! `/listen`（`web-ui.md`「怎么走」第一条第 11 款，2026-10-30 项目主人：网页默认只给本机，设置页一个开关放开到局域网、能填监听地址和
 //! 端口；网页软件开着就不空闲退出，等它重启才生效等于不生效）：
 //!
-//! - `GET`：在听的地址、端口，别的设备打开用的网址（`lan`；每块网卡的地址带网卡名全列在 `lans`，[`lans`]）。
+//! - `GET`：在听的地址、端口，别的设备打开用的网址（`lan`；每块网卡的地址带网卡名全列在 `lans`，[`lans`]）。别的机器来的要带设备令牌
+//!   （审计 #078：原来不认令牌也回，没登录的也拿得到这台电脑每块网卡的名字和地址）。
 //! - `POST`：带设备令牌（同 `/media`），拿它连核心读 `web.listen`、`web.port`（不替请求出示本机令牌），和在听的不一样就请接连接的那一圈
 //!   换监听（[`Swap`]，[`swap`] 照它换）。已经连着的不断；别的机器来的、新地址不再包含它连进来的地址的（关了局域网）例外：WebSocket
 //!   关掉，再来的请求 403（2026-11-02 第四轮审查 W4-2，`serve`）。
@@ -29,7 +30,7 @@ pub(crate) struct Swap {
 /// 往接连接的那一圈递 [`Swap`] 的口子。
 pub(crate) type Swaps = mpsc::Sender<Swap>;
 
-/// 一个 `/listen` 请求。`POST` 只给这台电脑上来的（`remote` 是空的）：它替请求连核心用的是另一条连法，不说远程（第二轮审查 W2-1）；
+/// 一个 `/listen` 请求。别的机器来的 `GET` 要带核心认的设备令牌。`POST` 只给这台电脑上来的（`remote` 是空的）：它替请求连核心用的是另一条连法，不说远程（第二轮审查 W2-1）；
 /// 局域网上的页面照样改配置，网页软件自己跟着配置换（`follow`），用不着它。
 pub(crate) async fn handle(
     request: Request<Incoming>,
@@ -37,7 +38,17 @@ pub(crate) async fn handle(
     remote: Option<std::net::IpAddr>,
 ) -> Response<Body> {
     match *request.method() {
-        Method::GET | Method::HEAD => answer(&site, None),
+        Method::GET | Method::HEAD => {
+            if remote.is_some() {
+                let Some(login) = crate::media::bearer(&request) else {
+                    return empty(StatusCode::UNAUTHORIZED);
+                };
+                if let Err(status) = crate::desk::check(&site, &login, remote).await {
+                    return empty(status);
+                }
+            }
+            answer(&site, None)
+        }
         Method::POST if remote.is_some() => empty(StatusCode::FORBIDDEN),
         Method::POST => {
             let Some(login) = crate::media::bearer(&request) else {

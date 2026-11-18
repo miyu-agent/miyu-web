@@ -187,11 +187,11 @@ export function servedHost() {
     if (!onThisComputer() || !token) return null;
     return fetch(`${path}?${new URLSearchParams(params)}`, { cache: 'no-store', headers: { Authorization: `Bearer ${token}` } });
   };
-  /** 问、请换监听（`/listen`）：`POST` 带登录令牌；回的不是 JSON、不成的交 `null` @param {'GET'|'POST'} method */
+  /** 问、请换监听（`/listen`）：有登录令牌就带上（`POST` 一定要；别的设备上 `GET` 也要，审计 #078）；回的不是 JSON、不成的交 `null` @param {'GET'|'POST'} method */
   const listenCall = async (method) => {
     if (method === 'POST' && !token) return null;
     try {
-      const got = await fetch('/listen', { method, cache: 'no-store', headers: method === 'POST' ? { Authorization: `Bearer ${token}` } : {} });
+      const got = await fetch('/listen', { method, cache: 'no-store', headers: token ? { Authorization: `Bearer ${token}` } : {} });
       if (!got.ok) return null;
       const reply = await got.json();
       return reply && typeof reply.port === 'number' ? reply : null;

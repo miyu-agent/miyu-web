@@ -26,6 +26,11 @@ fn core_with(home: &Home, config: Arc<Mutex<Value>>) -> Arc<tokio::sync::Notify>
                 let mut line = String::new();
                 while lines.read_line(&mut line).await.is_ok_and(|read| read > 0) {
                     let request: Value = serde_json::from_str(&line).expect("是 JSON");
+                    // 不带编号的（远程来的先写的 `connection.remote`）不回，同真核心
+                    if request["id"].is_null() {
+                        line.clear();
+                        continue;
+                    }
                     let params = &request["params"];
                     let reply = match request["method"].as_str() {
                         Some("hello")
@@ -148,6 +153,35 @@ async fn post_needs_a_login_and_a_core() {
     assert_eq!(
         body,
         json!({"listen": "127.0.0.1", "port": port, "lan": null, "lans": []})
+    );
+}
+
+#[tokio::test]
+async fn get_from_another_device_needs_a_login() {
+    // 审计 #078：别的设备来的 GET /listen 原来不认令牌也回，没登录的也拿得到这台电脑每块网卡的名字和地址。同机的反向代理转进来的算
+    // 别的设备，每一种头各试一次；本机的照旧不要令牌
+    let home = Home::new();
+    let (_, port, _serving) =
+        start_configured(&home, 0, settings(600), false, Some(0), false).await;
+    core_with(&home, Arc::new(Mutex::new(config("127.0.0.1", 0))));
+    let host = format!("127.0.0.1:{port}");
+    for header in PROXIED {
+        let bare = request(port, "GET", "/listen", &host, &[header]).await;
+        assert_eq!(bare.status, 401, "没令牌：{}", header.0);
+        let bad = [("Authorization", "Bearer bad"), header];
+        let bad = request(port, "GET", "/listen", &host, &bad).await;
+        assert_eq!(bad.status, 401, "令牌不认：{}", header.0);
+        let good = [("Authorization", "Bearer good"), header];
+        assert_eq!(
+            request(port, "GET", "/listen", &host, &good).await.status,
+            200,
+            "令牌认得：{}",
+            header.0
+        );
+    }
+    assert_eq!(
+        request(port, "GET", "/listen", &host, &[]).await.status,
+        200
     );
 }
 

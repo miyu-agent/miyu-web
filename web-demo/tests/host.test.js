@@ -574,3 +574,21 @@ test('找文件在这台电脑上的哪儿（/locate）：查询串带名字、�
   assert.equal(tools.local(), false);
   assert.equal(await tools.locate({ name: 'a.txt' }), null);
 });
+
+test('问网页软件在听的（GET /listen）：有令牌就带上（别的设备上要它，审计 #078）；没令牌的照样问、不带', async () => {
+  const disk = new Map([['miyu.web.login', JSON.stringify({ token: 'tok', expires: LATER })]]);
+  const calls = [];
+  await withGlobals({
+    location: at('', '192.168.1.20'),
+    history: { replaceState: () => {} },
+    localStorage: fakeStorage(disk),
+    sessionStorage: fakeStorage(new Map()),
+    fetch: async (path, init) => { calls.push([path, init.method, init.headers.Authorization]); return { ok: true, json: async () => ({ listen: '0.0.0.0', port: 8300, lan: null, lans: [] }) }; },
+  }, async () => {
+    const { servedHost } = await import('../src/host/served.js');
+    assert.equal((await servedHost().listen.get())?.port, 8300);
+    disk.clear();
+    assert.equal((await servedHost().listen.get())?.port, 8300);
+  });
+  assert.deepEqual(calls, [['/listen', 'GET', 'Bearer tok'], ['/listen', 'GET', undefined]]);
+});
