@@ -148,19 +148,18 @@ test('模块替她开的一轮（长期目标的续轮）：一行「目标 · �
   assert.deepEqual(group(got.items).map((b) => b.kind), ['note', 'her', 'note', 'note'], '下一轮的那一行不并进她上一轮');
 });
 
-test('循环、人生到点交进来的话（`from` 是 schedule、带 `loop`，W-1206）：不当你的话画，画一行「◷ 循环 · 继续」「◷ 人生 · 继续」，不能点开；排着的不画；不是循环的定时任务照旧是你的话', () => {
+test('循环到点交进来的话（`from` 是 schedule、带 `loop`，W-1206）：不当你的话画，画一行「◷ 循环 · 继续」，不能点开；排着的不画；不是循环的定时任务照旧是你的话', () => {
   const auto = 'No new instructions. Continue on your own judgment, then schedule the next round or stop.';
   const entries = [
     { id: 'm1', kind: 'user', text: auto, turn: 1, from: { kind: 'schedule', schedule: 't1', loop: 'dynamic' }, at: AT },
     { id: 'b2.0', kind: 'reply', turn: 1, text: '看了一圈。', at: AT },
     { id: 'm3', kind: 'user', text: '看 CI', turn: 2, from: { kind: 'schedule', schedule: 't2', loop: 'fixed' }, at: AT },
-    { id: 'm4', kind: 'user', text: 'Life method…', turn: 3, from: { kind: 'schedule', schedule: 't3', loop: 'life' }, at: AT },
     { id: 'm5', kind: 'user', text: '提醒我喝水', turn: 4, from: { kind: 'schedule', schedule: 't4' }, at: AT },
     { id: 'm6', kind: 'user', text: auto, turn: 5, queued: true, from: { kind: 'schedule', schedule: 't1', loop: 'dynamic' }, at: AT },
   ];
   const got = itemsOf(entries, { state: 'idle' });
-  assert.deepEqual(brief(got.items), ['note: 循环 · 继续', 'reply: 看了一圈。', 'note: 循环 · 继续', 'note: 人生 · 继续', 'user: 提醒我喝水']);
-  assert.deepEqual(got.items.slice(0, 4).filter((it) => it.type === 'note').map((it) => [it.mark, it.tone, it.detail]), [['◷', 'module', null], ['◷', 'module', null], ['◷', 'module', null]]);
+  assert.deepEqual(brief(got.items), ['note: 循环 · 继续', 'reply: 看了一圈。', 'note: 循环 · 继续', 'user: 提醒我喝水']);
+  assert.deepEqual(got.items.slice(0, 4).filter((it) => it.type === 'note').map((it) => [it.mark, it.tone, it.detail]), [['◷', 'module', null], ['◷', 'module', null]]);
   assert.equal(got.queued.length, 0, '排着的下一轮不进排着的话（退不回去）');
   assert.ok(!JSON.stringify(got.items).includes('No new instructions'), '给模型看的那句英文不给人');
 });

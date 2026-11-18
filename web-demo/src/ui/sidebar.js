@@ -25,8 +25,6 @@ import { toggle, range } from '../model/select.js';
 import { treeRows, capTops, pathOf } from '../model/tree.js';
 import { TIME_GROUPS, ARCHIVE_GROUP, byTime, archiveLast, spokenAt } from '../model/session.js';
 import { SessionDrag } from './sidebar-drag.js';
-import { NavEntries } from './sidebar-nav.js';
-import { navRows } from '../model/nav.js';
 import { projectBlock } from './sidebar-projects.js';
 import { projectRows, colorOf } from '../model/project.js';
 
@@ -118,14 +116,10 @@ export class Sidebar {
     this.moreEntries = [];
     /** @type {HTMLElement|null} */
     this.moreMenu = null;
-    /** 软件包挂的主入口（挂载位 `sidebar.nav`，W-1211：「推演人生」）：「项目」下面、「更多」上面 */
-    this.navEntries = new NavEntries();
-    this.navSlot = this.navEntries.el;
     this.nav = h('nav.sidebar-nav',
       navRow('plus', t('sidebar.new_session_nav'), () => on.newSession(), 'new'),
       navRow('messages-square', t('sidebar.all_sessions_nav'), () => on.viewAll(), 'sessions'),
       this.navProjects,
-      this.navSlot,
       this.moreBox);
     /** 左上角的头像、名字：正在看的会话用的人格（`setLook`），点了打开这个人格的编辑页 */
     this.face = h('span.brand-face');
@@ -218,15 +212,6 @@ export class Sidebar {
     this.navMore.setAttribute('aria-expanded', 'false');
     this.navMore.classList.remove('is-on');
     if (m) leave(m, () => m.remove());
-  }
-
-  /**
-   * 正在看的会话归哪个软件包挂的入口（入口的 `owns`）：头上交互区那一行照选中的亮着；归「更多」里的某一项的，「更多」那一行亮着（菜单开着的 `is-on` 另算）。
-   * @param {any} entry 正在看的会话的会话表那一项；没有的 `null`
-   */
-  setHere(entry) {
-    this.navEntries.setHere(entry);
-    this.navMore.classList.toggle('is-here', navRows(this.moreEntries, entry).some((r) => r.here));
   }
 
   /** 全部会话那一页开着哪一页（`null` 是关着）：头上交互区那一行亮着。 @param {'sessions'|'projects'|null} view */

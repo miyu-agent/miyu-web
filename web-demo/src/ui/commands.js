@@ -18,8 +18,6 @@ import { itemsOf, seqOf } from '../model/entries.js';
 import { copy } from '../markdown/build.js';
 import { replyOf, latestReply } from '../model/reply.js';
 import { Refusal } from '../core/connection.js';
-import { lifeAsked } from './life-ask.js';
-import { afterLife } from './life-jump.js';
 
 /** @typedef {import('../model/commands.js').Spec} Spec */
 import { mergeSpecs } from '../model/commands.js';
@@ -229,13 +227,9 @@ export async function runUnlisted(app, name, words, opens = false) {
       return 'keep';
     }
   }
-  if (!(await lifeAsked(app, name, words))) return 'keep';
   try {
     const got = await app.store.conn.request('command.run', { session: app.current, text: `/${name}${words ? ` ${words}` : ''}` });
     openPage(app, got);
-    // 光打 `/life`：几段人生的出列表让人挑（回执不再写，同一个位置），一段的直接跳过去
-    if (afterLife(app, got.command ?? name, words, got)) return 'done';
-    jumpTo(app, got);
     if (got?.said && !quietReceipt(got.command ?? name.toLowerCase(), words)) receipt(app, got.said, true);
   } catch (err) {
     // 前缀要变、问了以后取消的：字留在框里
@@ -250,8 +244,8 @@ export async function runUnlisted(app, name, words, opens = false) {
 
 
 /**
- * 核心给的回执、拒绝的那一句写进提示：整句写全、放不下折行，不在末尾截掉（2026-11-17 核心实测：「这个会话没有人格，有人生会话的人格
- * 不止一个：…」被截成「…(pa…」）。
+ * 核心给的回执、拒绝的那一句写进提示：整句写全、放不下折行，不在末尾截掉（2026-11-17 核心实测：长的回执被截成
+ * 「…(pa…」）。
  * @param {App} app @param {string} text @param {boolean} [good]
  */
 function receipt(app, text, good = false) {
@@ -267,14 +261,6 @@ function openPage(app, got) {
   if (o && typeof o.package === 'string') app.ctx.backstage?.open(o.package, typeof o.widget === 'string' ? o.widget : null);
 }
 
-/**
- * 回应带 `session` 的（核心 LF-5 下：`/life` 系列回人生会话的编号）跳过去，回执照常写在提示里。正看着它的不跳。
- * @param {App} app @param {any} got `command.run` 的回应
- */
-function jumpTo(app, got) {
-  if (typeof got?.session === 'string' && got.session && got.session !== app.current) app.open(got.session);
-}
-
 /** @type {Record<string, (app: App, spec: Spec, words: string|null) => unknown>} */
 const RUNS = {
   // 核心认的命令（`command.catalog` 列出来的，网页没有自己的做法）：原样交给核心（`command.run`），回执写进提示
@@ -283,19 +269,12 @@ const RUNS = {
       app.composer.say(t('commands.needs_session'));
       return;
     }
-    if (!(await lifeAsked(app, spec.name, words))) return;
     // 要等一会儿的（`/dream` 要等模型，十几秒）：过了一小会儿还没回，提示「正在 …」一直留着，回了换成回执
     let waiting = false;
     const timer = setTimeout(() => { waiting = true; app.composer.say(t('commands.running', { name: `/${spec.name}` }), false, true); }, res.layout.command_wait_ms);
     try {
       const got = await app.store.conn.request('command.run', { session: app.current, text: `/${spec.name}${words ? ` ${words}` : ''}` });
       openPage(app, got);
-      // 光打 `/life`：几段人生的出列表让人挑，一段的直接跳过去（`life-jump.js`）
-      if (afterLife(app, spec.name, words, got)) {
-        if (waiting) app.composer.quiet();
-        return;
-      }
-      jumpTo(app, got);
       if (got?.said && !quietReceipt(spec.name, words)) receipt(app, got.said, true);
       else if (waiting) app.composer.quiet();
     } finally {

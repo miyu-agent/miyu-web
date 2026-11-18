@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { CLASSES, ADD_CLASSES, isChange, editable, counts, visible, isRetired, updateOf, canSave, saveNote, chars, hasKeywords, shortId, TEXT_MAX, tidying, splitKeywords, joinKeywords, cardMatches, cardProblem, cardChange, cardLimit, CARD_MAX } from '../../packages/memory/model.js';
+import { CLASSES, counts, visible, isRetired, updateOf, canSave, saveNote, chars, hasKeywords, shortId, TEXT_MAX, tidying, splitKeywords, joinKeywords, cardMatches, cardProblem, cardChange, cardLimit, CARD_MAX } from '../../packages/memory/model.js';
 
 const m = (id, cls, text, extra = {}) => ({ id, class: cls, text, ...extra });
 const list = [
@@ -13,7 +13,7 @@ const list = [
 ];
 
 test('数的是没作废的：一共几条、每一类几条', () => {
-  assert.deepEqual(counts(list), { all: 4, user: 1, person: 0, feedback: 1, episode: 1, reference: 1, change: 0 });
+  assert.deepEqual(counts(list), { all: 4, user: 1, person: 0, feedback: 1, episode: 1, reference: 1 });
 });
 
 test('筛：类别、作废的看不看', () => {
@@ -122,36 +122,14 @@ test('人卡最多 400 字（核心 E-2）；核心拒绝时给了 data.limit �
   assert.equal(cardLimit(new Error('x'), 400), 400);
 });
 
-test('「后天」（核心 LF-11）：单列一类、能筛能数；「记一条」选不到；只看不改（作废的同样不改）', () => {
-  assert.ok(CLASSES.includes('change'));
-  assert.ok(!ADD_CLASSES.includes('change'), '核心 memory.remember 不收这一类');
-  assert.deepEqual(ADD_CLASSES, CLASSES.filter((c) => c !== 'change'));
-  const notes = [...list, m('m7', 'change', '以前十一点睡，这阵子常看书到十二点多', { why: '连着两周每晚看书' }), m('m8', 'change', '淡掉了的', { retired: '' })];
-  assert.equal(counts(notes).change, 1, '作废的不数');
-  assert.deepEqual(visible(notes, { cls: ['change'], retired: false }).map((x) => x.id), ['m7']);
-  assert.deepEqual(visible(notes, { cls: ['change'], retired: true }).map((x) => x.id), ['m7', 'm8']);
-  assert.equal(isChange(notes[6]), true);
-  assert.equal(isChange(list[0]), false);
-  assert.equal(editable(notes[6]), false, 'memory.update 对它回 change_note');
-  assert.equal(editable(list[0]), true);
-  assert.equal(editable(list[2]), false, '作废的');
-});
-
-test('「后天」在页面上：一行内容下面写 why；详情多一行「为什么」、没有「保存」、留着「作废」；核心回 change_note 照字说；三种语言都有', () => {
+test('推演人生移除以后（核心 RM-1，W-1216）：类别里没有「后天」，记一条能选全部几类，三种语言的词条里没有它', () => {
+  assert.deepEqual([...CLASSES], ['user', 'person', 'feedback', 'episode', 'reference']);
   const src = readFileSync(new URL('../../packages/memory/page.js', import.meta.url), 'utf8');
-  assert.match(src, /span\.mem-why', m\.why/, '列表一行写 why');
-  assert.match(src, /ADD_CLASSES\.map/, '「记一条」只列能记的几类');
-  assert.match(src, /const ro = !editable\(m\)/, '「后天」的内容、关键词框只看');
-  assert.match(src, /isChange\(m\) \? null : save/, '「后天」没有保存');
-  assert.match(src, /const withKw = !isChange\(m\) && /, '「后天」没有关键词那一格');
-  assert.match(src, /detail\.forget/);
-  assert.match(src, /reason === 'change_note'/);
+  assert.doesNotMatch(src, /change_note|isChange|mem-why/);
   const manifest = JSON.parse(readFileSync(new URL('../../packages/memory/manifest.json', import.meta.url), 'utf8'));
-  const label = { zh: '后天', en: 'Acquired', ja: '後天' };
   for (const lang of ['zh', 'en', 'ja']) {
     const text = manifest.text[lang];
-    assert.equal(text.classes.change, label[lang], `${lang} classes.change`);
-    for (const key of ['why', 'no_why', 'change_note']) assert.ok(text.detail[key], `${lang} detail.${key}`);
-    assert.doesNotMatch(JSON.stringify([text.classes.change, text.detail.why, text.detail.no_why, text.detail.change_note]), /她|彼女|\b(she|her)\b/i);
+    assert.equal(text.classes.change, undefined, `${lang} classes.change`);
+    for (const key of ['why', 'no_why', 'change_note']) assert.equal(text.detail[key], undefined, `${lang} detail.${key}`);
   }
 });

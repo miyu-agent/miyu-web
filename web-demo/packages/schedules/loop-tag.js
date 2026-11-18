@@ -5,9 +5,8 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { unfold } from '../../src/lib/motion.js';
-import { cardText, fitOf, isLifeRow, loopOn, loopTag } from './model.js';
+import { cardText, fitOf, loopOn, loopTag } from './model.js';
 import { openDetail } from './detail.js';
-import { openLifeCard, lifeWho } from './life-card.js';
 
 /**
  * @param {any} ctx `schedules` 包的 ctx @param {import('./store.js').ScheduleStore} store
@@ -26,10 +25,7 @@ export function loopTagLane(ctx, store, session, onSessionChange) {
     type: 'button',
     onclick: () => {
       if (!shown) return;
-      const toast = (/** @type {string} */ s) => ctx.composer?.say?.(s);
-      // 人生那一行开人生卡（「人生-卡」，W-1211），别的开定时任务的详情
-      if (isLifeRow(store.list.find((x) => x.id === shown))) openLifeCard(ctx, store, shown, { toast });
-      else openDetail(ctx, store, shown, { title, toast });
+      openDetail(ctx, store, shown, { title, toast: (/** @type {string} */ s) => ctx.composer?.say?.(s) });
     },
   }, mark, text));
   const body = h('div.loop-body', pill);
@@ -54,10 +50,8 @@ export function loopTagLane(ctx, store, session, onSessionChange) {
     const tag = loopTag(s, now, t);
     text.textContent = tag.text;
     pill.dataset.state = tag.state;
-    // 人生那一行不写交给模型的那段话：写推演人生 · 人格名
-    const life = isLifeRow(s);
-    pill.title = life ? t('life.row', { name: lifeWho(ctx, s).name }) : `${s.prompt}\n${cardText(s, now, t)}`;
-    const label = t(life ? 'life.title' : 'loop_tag');
+    pill.title = `${s.prompt}\n${cardText(s, now, t)}`;
+    const label = t('loop_tag');
     pill.setAttribute('aria-label', tag.text ? `${label} ${tag.text}` : label);
     fit();
   };

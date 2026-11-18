@@ -19,7 +19,6 @@
     "slots",
     "core",
     "chat~",
-    "personas~",
     "sessions",
     "settings~",
     "composer~",
@@ -199,22 +198,6 @@
           "sent": "交给了建它的软件包"
         }
       },
-      "life": {
-        "title": "推演人生",
-        "row": "推演人生 · {name}",
-        "started": "开始",
-        "next": "下次继续",
-        "next_at": "下次继续 {at}",
-        "last": "上一轮",
-        "state": "状态",
-        "running": "进行中",
-        "paused": "已暂停",
-        "pause": "暂停",
-        "resume": "继续",
-        "kill": "结束人生",
-        "kill_sure": "确认结束",
-        "kill_hint": "结束以后这段人生不会再继续，会话变成只读，这段人生里记下的记忆会清掉，恢复不了"
-      },
       "loop_tag": "循环"
     },
     "en": {
@@ -387,22 +370,6 @@
           "sent": "Sent to its package"
         }
       },
-      "life": {
-        "title": "Simulated life",
-        "row": "Simulated life · {name}",
-        "started": "Started",
-        "next": "Next round",
-        "next_at": "Next round {at}",
-        "last": "Last round",
-        "state": "Status",
-        "running": "Running",
-        "paused": "Paused",
-        "pause": "Pause",
-        "resume": "Resume",
-        "kill": "End life",
-        "kill_sure": "Confirm end",
-        "kill_hint": "Once ended, this life never continues, the session becomes read-only, and the memories from this life are erased for good"
-      },
       "loop_tag": "Loop"
     },
     "ja": {
@@ -574,22 +541,6 @@
           "queued": "待機中（セッションが実行中）",
           "sent": "作成したパッケージに渡した"
         }
-      },
-      "life": {
-        "title": "人生の推演",
-        "row": "人生の推演 · {name}",
-        "started": "開始",
-        "next": "次の回",
-        "next_at": "次の回 {at}",
-        "last": "前の回",
-        "state": "状態",
-        "running": "進行中",
-        "paused": "一時停止中",
-        "pause": "一時停止",
-        "resume": "再開",
-        "kill": "人生を終える",
-        "kill_sure": "終了を確定",
-        "kill_hint": "終えるとこの人生はもう続かず、セッションは読むだけになり、この人生の記憶は消えて元に戻せません"
       },
       "loop_tag": "ループ"
     }

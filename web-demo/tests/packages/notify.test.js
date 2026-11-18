@@ -73,12 +73,8 @@ test('托盘认领了后台通知：只为正在看的会话弹（标签页不�
   assert.deepEqual(popOf('b', 'a', false, false, false), { silent: true }, '没认领的照旧');
 });
 
-test('人生结束了（核心 LF-14，W-1211）：她自己结束的弹「<名字> 的人生结束了」，标题、图标照那个会话的人格，点了去那个会话；主人结束的不弹；不写遗言', () => {
-  const tf = (/** @type {string} */ path, /** @type {any} */ f = {}) => String(manifest.text.zh[path] ?? path).replace(/\{(\w+)\}/g, (_, k) => String(f[k]));
-  const self = noticeNote({ kind: 'life.ended', session: 's9', persona: 'miyuki', name: '美雪', by: 'self', last_words: '再见了' }, { title: '日子' }, MIYUKI, null, tf);
-  assert.deepEqual(self, { title: '美雪', body: '美雪 的人生结束了', icon: 'blob:x/1', tag: 's9:life', session: 's9', say: null });
-  assert.doesNotMatch(JSON.stringify(self), /再见了/);
-  assert.equal(noticeNote({ kind: 'life.ended', session: 's9', name: '美雪', by: 'owner' }, null, MIYUKI, null, tf), null, '主人结束的不弹');
-  assert.equal(noticeNote({ kind: 'life.ended', session: 's9', by: 'self' }, null, null, null, tf)?.body, '一段人生结束了', '没名字的（那时不带人格）');
-  for (const lang of ['zh', 'en', 'ja']) for (const k of ['life_ended', 'life_ended_bare']) assert.ok(manifest.text[lang][k], `${lang} ${k}`);
+test('推演人生移除以后（核心 RM-1，W-1216）：认不得的提醒都不弹，旧的 life.ended 也一样；词条里没有人生的字', () => {
+  const tf = (/** @type {string} */ path) => String(manifest.text.zh[path] ?? path);
+  assert.equal(noticeNote({ kind: 'life.ended', session: 's9', name: '美雪', by: 'self' }, { title: '日子' }, MIYUKI, null, tf), null);
+  for (const lang of ['zh', 'en', 'ja']) assert.doesNotMatch(JSON.stringify(manifest.text[lang]), /life|人生/i, lang);
 });

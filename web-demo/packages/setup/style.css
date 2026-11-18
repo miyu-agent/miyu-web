@@ -429,25 +429,6 @@
 /* 带子项的块（2026-10-30 项目主人：一直展开）：头一行暗字开了几项 */
 .setup-fold-count { flex: none; color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); font-variant-numeric: tabular-nums; }
 .setup-feature-fold > .setup-tools { margin-top: 0; }
-/* 推演人生（核心设计 70，蓝图 web.md「推演人生」第 1 条）：开关右边一行暗字写状态，后面「打开」 */
-.setup-life-status { display: flex; align-items: baseline; gap: calc(4px * var(--space)); min-width: 0; }
-.setup-life-line { overflow: hidden; color: var(--text-soft); font-size: calc(12px * var(--text-scale)); line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
-.setup-life-status .setup-link { flex: none; margin-left: calc(4px * var(--space)); font-size: calc(12px * var(--text-scale)); }
-.setup-life-control { display: flex; align-items: center; gap: calc(10px * var(--space)); min-width: 0; }
-.setup-life-control > .set-switch { flex: none; }
-.setup-field.setup-life-method[hidden] { display: none; }
-/* 人生会话的上下文上限（核心 LF-10）：一格数字框，不占满一行；写错的那句贴在框下面 */
-.setup-life-context { display: flex; flex-direction: column; align-items: flex-start; gap: calc(4px * var(--space)); min-width: 0; }
-.setup-life-context > input { width: min(100%, 14em); }
-.setup-life-context > p.setup-life-context-note { margin: 0; }
-/* 「后天」（核心 LF-11）：一条一行、旧的在前，内容下面暗字写为什么；只看 */
-.setup-field.setup-acquired-row[hidden] { display: none; }
-.setup-acquired { min-width: 0; padding-top: calc(4px * var(--space)); }
-.setup-acquired-list { display: flex; flex-direction: column; gap: calc(8px * var(--space)); margin: 0; padding: 0; list-style: none; }
-.setup-acquired-list > li { display: flex; flex-direction: column; gap: calc(2px * var(--space)); min-width: 0; }
-.setup-acquired-text { color: var(--text); font-size: calc(13px * var(--text-scale)); line-height: 1.55; overflow-wrap: anywhere; }
-.setup-acquired-why { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); line-height: 1.5; overflow-wrap: anywhere; }
-.setup-acquired-empty { margin: 0; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
 /* 新建会话的「选项」（options.js，W-1208 手机、W-1209 桌面，2026-11-17 主人 38）：人格、预设、工作区三个按钮收成一个。宽屏一行：
    「选项」旁边小字写人格 · 预设 · 工作区；窄屏两行：下面一行小字只写人格。点开的卡片一行一项，行高 48px 手指点得准；控件不画描边 */
 .setup-opts { min-width: 0; max-width: min(100%, 560px); }

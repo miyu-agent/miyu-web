@@ -369,7 +369,7 @@ test('/compact-line 后面写的（核心 CT-1，W-1163）：空的看、off 回
 
 test('提示里的回执（W-1211；2026-11-17 核心实测：长的回执被截成「…(pa…」）：整句的折行不截、长的多停一会儿（最多 4 倍）；别的一行照旧截', async () => {
   const { noticeShape } = await import('../src/model/commands.js');
-  const long = '这个会话没有人格，有人生会话的人格不止一个：回声（进行中），缪斯（已暂停）。到其中一个人格的会话里再用 /life。'.repeat(2);
+  const long = '这个会话没有人格，有好几个人格能用：回声（默认），缪斯（自建）。先用 /persona 选一个再用这条命令。'.repeat(2);
   assert.deepEqual(noticeShape('已复制', false), { wrap: false, span: 1 });
   assert.deepEqual(noticeShape('已复制', true), { wrap: true, span: 1 });
   assert.deepEqual(noticeShape(long, true), { wrap: true, span: 2 });

@@ -126,12 +126,6 @@
       ".sidebar-more-menu"
     ]
   },
-  "sidebar.nav-mark": {
-    "zh": "左栏头上交互区软件包挂的入口：有没看过的东西时名字后面的小圆点",
-    "select": [
-      ".sidebar-nav-mark"
-    ]
-  },
   "schedules.detail-prompt": {
     "zh": "定时任务详情：头一行那句话",
     "select": [
@@ -160,18 +154,6 @@
     "zh": "定时任务详情：删除按钮（点一下变「确认删除」）",
     "select": [
       ".sch-detail-remove"
-    ]
-  },
-  "schedules.life-name": {
-    "zh": "人生卡：人格名那一行",
-    "select": [
-      ".sch-life-name"
-    ]
-  },
-  "schedules.life-warn": {
-    "zh": "人生卡：点了「结束人生」以后下面那一行后果",
-    "select": [
-      ".sch-life-warn"
     ]
   },
   "schedules.loop-pill": {
@@ -3904,12 +3886,6 @@
     "zh": "选择列表：右边暗字",
     "select": [
       ".picker-side"
-    ]
-  },
-  "picker.avatar": {
-    "zh": "选择列表：一行最前面的小头像（快速跳转人生会话）",
-    "select": [
-      ".picker-avatar"
     ]
   },
   "help.section": {
@@ -8062,127 +8038,6 @@
     "zh": "下载软件页卡片上版本后面的下载次数",
     "select": [
       ".mk-downloads"
-    ]
-  },
-  "life.empty": {
-    "zh": "推演人生的卡：一条人生都没有时那段说明",
-    "select": [
-      ".life-empty"
-    ]
-  },
-  "life.row": {
-    "zh": "推演人生的卡：一个人生一行",
-    "select": [
-      ".life-row"
-    ]
-  },
-  "life.name": {
-    "zh": "推演人生的卡：人格名",
-    "select": [
-      ".life-name"
-    ]
-  },
-  "life.doing": {
-    "zh": "推演人生的卡：现在在干嘛那一句",
-    "select": [
-      ".life-doing"
-    ]
-  },
-  "life.state": {
-    "zh": "推演人生的卡：进行中、已暂停、下次几点继续",
-    "select": [
-      ".life-state"
-    ]
-  },
-  "life.part-head": {
-    "zh": "推演人生的卡：「正在过的」「已结束的人生」栏头",
-    "select": [
-      ".life-part-head"
-    ]
-  },
-  "life.group-head": {
-    "zh": "推演人生的卡：已结束的人生按人格分组的组头",
-    "select": [
-      ".life-group-head"
-    ]
-  },
-  "life.face": {
-    "zh": "推演人生的卡：人格的小头像",
-    "select": [
-      ".life-face"
-    ]
-  },
-  "life.warn": {
-    "zh": "推演人生的卡：点了「结束人生」以后那一行后果",
-    "select": [
-      ".life-warn"
-    ]
-  },
-  "life.act": {
-    "zh": "推演人生的卡：一行右边的暂停/继续、结束人生",
-    "select": [
-      ".life-act",
-      ".life-kill"
-    ]
-  },
-  "life.unseen": {
-    "zh": "推演人生的卡：她自己结束了、还没看过的人生后面的小圆点",
-    "select": [
-      ".life-unseen"
-    ]
-  },
-  "life.ended-line": {
-    "zh": "对话区顶上的提示：她自己结束了、还没看过的那一段人生",
-    "select": [
-      ".life-ended-line"
-    ]
-  },
-  "life.ended-text": {
-    "zh": "对话区顶上的提示：「<名字> 的人生结束了」那句",
-    "select": [
-      ".life-ended-text"
-    ]
-  },
-  "life.ended-btn": {
-    "zh": "对话区顶上的提示：「查看」按钮",
-    "select": [
-      ".life-ended-btn"
-    ]
-  },
-  "life.ended-x": {
-    "zh": "对话区顶上的提示：收起",
-    "select": [
-      ".life-ended-x"
-    ]
-  },
-  "setup.life-line": {
-    "zh": "人格详情「推演人生」下面那一行状态",
-    "select": [
-      ".setup-life-line"
-    ]
-  },
-  "mem.why": {
-    "zh": "记忆页「后天」一条下面写为什么的那一行",
-    "select": [
-      ".mem-why"
-    ]
-  },
-  "setup.acquired-text": {
-    "zh": "人格详情「后天」里一条的内容",
-    "select": [
-      ".setup-acquired-text"
-    ]
-  },
-  "setup.acquired-why": {
-    "zh": "人格详情「后天」里一条下面写为什么的那一行",
-    "select": [
-      ".setup-acquired-why"
-    ]
-  },
-  "setup.acquired-empty": {
-    "zh": "人格详情「后天」还没有时那一行",
-    "select": [
-      ".setup-acquired-empty"
     ]
   }
 }

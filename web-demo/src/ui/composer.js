@@ -40,7 +40,6 @@ import { blockLabel, expand, used, erase, pieces } from '../model/blocks.js';
 import { Recall } from '../model/history.js';
 import { show, hide, span } from '../lib/motion.js';
 import { isNewline, insertNewline } from '../lib/newline.js';
-import { emptyLife } from '../lib/life.js';
 import { stash } from '../model/stash.js';
 import { emptyDesk } from '../model/desk.js';
 import { tipsFor, pickTip } from '../model/tips.js';
@@ -480,13 +479,6 @@ export class Composer {
       if (kind !== 'talk') return;
     }
     if (line.kind === 'later') {
-      // 空会话里光打 `/life`：不用先开会话，外面照 `life.list` 列（快速跳转人生会话，W-1211）
-      if (emptyLife(line) && this.on.emptyLife) {
-        this.remember(text);
-        this.set('');
-        this.on.emptyLife();
-        return;
-      }
       this.say(t('commands.needs_session'));
       return;
     }

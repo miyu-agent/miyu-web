@@ -27,8 +27,6 @@ import { SideColumn } from './side.js';
 import { SidebarWidth } from './sidebar-width.js';
 import { statusFooter, levelLabel, nextLevel, levelParams, previewRing } from '../model/footer.js';
 import { watchOnly } from '../model/watch.js';
-import { isLife, lifeEnded } from '../lib/life.js';
-import { emptyLifeList } from './life-jump.js';
 import { movedFrom } from '../model/paths.js';
 import { itemsOf, levelOf } from '../model/entries.js';
 import { statusRows } from '../model/status.js';
@@ -258,8 +256,6 @@ export class App {
       commandsOpened: () => this.refreshCommands(),
       // 空会话里核心认、要等会话的命令名（打了不当话发）
       laterCommands: () => this.commands.later,
-      // 空会话里光打 `/life`：照 `life.list` 列（快速跳转人生会话，W-1211）
-      emptyLife: () => emptyLifeList(this),
       // `/help`：核心认的全部（不照会话筛）
       allCommands: async () => this.commands.listWith(coreSpecs((await this.store.conn.request('command.catalog', {}))?.commands ?? [])),
       // 输入历史：记在这台设备上、按账号分开（内核的 `storage`）；读到坏的丢掉
@@ -283,8 +279,7 @@ export class App {
       // 换模型的菜单（蓝图「换模型的菜单」）：每次打开问一次 `model.list`；选了下一轮生效
       // 会话列表（`/sessions`，蓝图「会话列表」）：全部顶层会话照会话表；在不在跑、看没看过：读过日志的照日志，没读过的照会话表
       sessions: {
-        // 人生会话不列（设计 70，从左栏「更多」的「推演人生」打开）
-        rows: async () => this.store.index.all().filter((s) => !s.oneshot && !s.parent && !isLife(s)).map((s) => {
+        rows: async () => this.store.index.all().filter((s) => !s.oneshot && !s.parent).map((s) => {
           const it = this.store.summary(s.session);
           return { session: s.session, title: this.titleOf(s.session), pinned: it.pinned, active: it.active, spoken: it.spoken };
         }),
@@ -333,13 +328,6 @@ export class App {
     ctx.effect(() => mountList(this.sidebar.actions, ctx.slots, 'sidebar.actions', failedSlot));
     // 左上角人格的头像、名字那一块（蓝图「左栏」第 1 条，2026-11-02 外观包要的，项目主人：头像和名字也是主题能改的，可以藏掉）：
     // 有包挂了整块顶替，交 null 是藏掉；拿掉了照原来的画
-    // 左栏头上交互区软件包挂的主入口（W-1211：「推演人生」从「更多」拿出来）：`{id, label, icon?, run, owns?, mark?, onChange?}`，画在「项目」下面
-    ctx.slots.declare('sidebar.nav', 'list');
-    ctx.effect(() => {
-      const sync = () => this.sidebar.navEntries.set(ctx.slots.list('sidebar.nav'));
-      sync();
-      return ctx.slots.watch('sidebar.nav', sync);
-    });
     // 左栏「更多」（W-1071）：软件包挂入口 `{id, label, icon?, run}`，左栏画成菜单
     ctx.slots.declare('sidebar.more', 'list');
     ctx.effect(() => {
@@ -375,8 +363,6 @@ export class App {
         h('div.stage-float',
           h('button.icon-button.mobile-menu-button', { type: 'button', title: t('sidebar.expand'), onclick: () => this.drawer(true) }, icon('panel-left'))),
         this.lostBar = h('div.bridge-lost', { hidden: true, role: 'alert' }, t('boot.lost')),
-        // 对话区顶上的提示（挂载位 `stage.top`，W-1211：她自己结束了、还没看过的人生，软件包 life）：占着地方，左上角那一条往下让
-        this.stageTop = h('div.stage-top'),
         // 对话区左上角浮着的一小条（挂载位 `stage.info`：软件包 `setup` 画标题）；看着子代理时前面接上面几层的小片（`crumbs`，CSS 排在最前）
         this.stageInfo = h('div.stage-info', this.crumbs.el),
         this.chat.el,
@@ -395,8 +381,6 @@ export class App {
       this.stageEl.style.setProperty('--stage-info-h', `${Math.round(tall)}px`);
     });
     infoSize.observe(this.stageInfo);
-    // 顶上的提示多高：左上角那一条照它往下让（`--stage-top-h`，styles/chat.css）
-    new ResizeObserver(() => this.stageEl.style.setProperty('--stage-top-h', `${Math.round(this.stageTop.getBoundingClientRect().height)}px`)).observe(this.stageTop);
     // 开着的页面，桥重启过换了口令：不再白试重连，对话区顶上挂一条提示（蓝图「连核心」第 9 条）
     this.store.conn.onLost(() => show(this.lostBar));
     // 断了以后自己重连、核心是人停的（核心 CS-5）：正中一张「核心已停止」的卡，「启动」照常连；接上了收卡（蓝图「连核心」第 1 条，W-1210）
@@ -463,8 +447,6 @@ export class App {
     ctx.effect(() => mountList(this.stageRight, ctx.slots, 'stage.right', failedSlot));
     ctx.slots.declare('stage.info', 'list');
     ctx.effect(() => mountList(this.stageInfo, ctx.slots, 'stage.info', failedSlot));
-    ctx.slots.declare('stage.top', 'list');
-    ctx.effect(() => mountList(this.stageTop, ctx.slots, 'stage.top', failedSlot));
     this.root.classList.toggle('is-sidebar-collapsed', !!ctx.storage.get(COLLAPSED, false));
     // 按页读（核心 9-6 下）：往上滚到顶自动读更早的一页（2026-10-08 项目主人定）
     this.chat.el.addEventListener('scroll', () => this.maybeOlder(), { passive: true });
@@ -1400,9 +1382,7 @@ export class App {
 
   render() {
     const s = this.current ? this.store.sessions.get(this.current) : null;
-    // 人生会话不进左栏（2026-11-14 项目主人：怕和别的会话混在一起误删）：看着它时「推演人生」那一行亮着（软件包挂的入口照 `owns` 认，W-1211）
-    this.sidebar.render(rank(this.store.order.filter((id) => !isLife(this.store.index.get(id))).map((id) => this.store.summary(id))), this.current);
-    this.sidebar.setHere(this.current ? this.store.index.get(this.current) ?? null : null);
+    this.sidebar.render(rank(this.store.order.map((id) => this.store.summary(id))), this.current);
     this.sessionsPage?.refresh();
     this.composer?.sessionList.refresh();
     const path = this.current ? pathOf(this.current, (id) => this.parentOf(id)).map((id) => ({ session: id, title: this.titleOf(id) })) : [];
@@ -1418,8 +1398,6 @@ export class App {
     // 导进来的只读存档（核心 SE-1 下，设计 58 第三节第 3 条，W-1094）：输入框换成一行「这是存档」，编辑、重做不出；换到别的会话就解开。
     // 照会话表每画一次交一次：刚导进来、会话表那一项后到的，到了就锁上
     const archived = this.archivedOf(this.current);
-    // 结束了的人生会话（核心 LF-4 的 `life_ended`）：封存了，只读，照存档那样锁住输入框
-    const ended = !!this.current && lifeEnded(this.store.index.get(this.current));
     // 日志中间坏了一行（核心 YC-6 的 `session_read_only`）：坏行以前的照 `view.page` 只读地看，框锁住写核心那一句，发送按钮那里换成「新开会话」；
     // 这一刻读不了（核心 YC-2 的 `session_unavailable`）：一时的错，框锁住写那一句，过一会儿自己再订阅（`store.js`），不当成坏了（W-1138）
     const broken = s?.broken ?? null;
@@ -1427,11 +1405,11 @@ export class App {
     // 通讯平台上的群、私聊（W-1168）：输入框连框下面那一行一起收起，换成一行「只能看」；编辑、重做不出
     const watching = this.watchOnlyOf(this.current);
     this.composer.watch(watching ? t('venue_readonly') : null);
-    const sealed = watching ? t('venue_readonly') : archived ? t('archived_readonly') : ended ? t('life_ended_readonly')
+    const sealed = watching ? t('venue_readonly') : archived ? t('archived_readonly')
       : broken ? broken.message || t('session_read_only', { line: broken.line ?? '?' })
         : away ? away.message || t('session_unavailable') : null;
     this.composer.seal(sealed, broken && !archived ? { label: t('new_session'), run: () => this.open(null) } : null);
-    this.chat.setReadonly(archived || ended || watching || !!broken);
+    this.chat.setReadonly(archived || watching || !!broken);
     this.chat.setCompacting(s ? compactingOf(s.view.list, s.view.status) : null, this.current);
     // 先照空不空摆好输入框（居中时对话区没有高度），再画对话：不然第一句话照 0 高算停在哪，被顶到视口上面
     this.centerIfEmpty(!this.current);

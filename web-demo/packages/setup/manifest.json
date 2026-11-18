@@ -264,17 +264,7 @@
         "delete_ask": "确认删除「{name}」吗？",
         "restore_ask": "确认把「{name}」恢复出厂吗？改过的内容会丢掉。",
         "by_global": "跟随全局",
-        "follow_global": "跟随全局默认",
-        "life": "推演人生",
-        "life_method": "推演方法",
-        "life_method_desc": "AI 每一轮照着过日子的那段话；空着用出厂的",
-        "life_method_hint": "空着用出厂的推演方法",
-        "life_context": "人生会话上下文窗口",
-        "life_context_desc": "也可以在人生会话中用 /context 命令单独修改",
-        "acquired": "后天提示词",
-        "acquired_desc": "AI 自己通过推演人生产生的提示词",
-        "acquired_none": "还没有",
-        "life_context_bad": "要写一个正整数（token）"
+        "follow_global": "跟随全局默认"
       },
       "options": {"title": "选项", "close": "关闭", "back": "返回", "persona": "人格", "preset": "预设", "workspace": "工作区", "path": "路径", "path_hint": "绝对路径，如 ~/code", "use": "使用", "browse": "浏览文件夹"},
       "folders": {
@@ -386,18 +376,7 @@
       "project_fixed": "这个会话在项目里，人格和预设由项目定",
       "picker_hint": "↑↓ 选择 · Enter 确定 · Esc 关闭",
       "picker_hint_edit": "↑↓ 选择 · Enter 确定 · Esc 关闭 · E 编辑",
-      "picker_current": "当前",
-      "life": {
-        "open": "打开",
-        "ask": "开启推演人生？AI 会到点自己继续，过一段自己的日子；每一轮是一次模型请求，会多花 token；AI 会自己记事，记下的进这个人格的记忆。关掉算暂停。",
-        "hint": "AI 到点自己继续过日子，每一轮多花一次请求",
-        "running_next": "进行中 · 下次继续 {time}",
-        "state": {
-          "running": "进行中",
-          "paused": "已暂停",
-          "ended": "上一段已结束"
-        }
-      }
+      "picker_current": "当前"
     },
     "en": {
       "choose_persona": "Select persona",
@@ -508,17 +487,7 @@
         "delete_ask": "Delete \"{name}\"?",
         "restore_ask": "Restore \"{name}\" to its built-in version? Your changes will be lost.",
         "by_global": "Follows global",
-        "follow_global": "Follow global default",
-        "life": "Simulated life",
-        "life_method": "Life method",
-        "life_method_desc": "What the AI follows each round to live its day; leave empty for the built-in one",
-        "life_method_hint": "Empty uses the built-in life method",
-        "life_context": "Life session context window",
-        "life_context_desc": "You can also change it on its own with /context in the life session",
-        "acquired": "Acquired prompt",
-        "acquired_desc": "Prompts the AI produced itself through its simulated life",
-        "acquired_none": "None yet",
-        "life_context_bad": "Enter a positive whole number (tokens)"
+        "follow_global": "Follow global default"
       },
       "options": {"title": "Options", "close": "Close", "back": "Back", "persona": "Persona", "preset": "Preset", "workspace": "Workspace", "path": "Path", "path_hint": "Absolute path, e.g. ~/code", "use": "Use", "browse": "Browse folders"},
       "folders": {
@@ -630,18 +599,7 @@
       "project_fixed": "This session is in a project; the project sets its persona and preset",
       "picker_hint": "↑↓ select · Enter confirm · Esc close",
       "picker_hint_edit": "↑↓ select · Enter confirm · Esc close · E edit",
-      "picker_current": "current",
-      "life": {
-        "open": "Open",
-        "ask": "Turn on simulated life? The AI continues on its own schedule and lives a little of its own day. Each round is one model request and costs tokens. It notes things down itself, and they go into this persona's memory. Turning it off pauses it.",
-        "hint": "The AI continues on its own to live its day; each round costs a request",
-        "running_next": "Running · continues {time}",
-        "state": {
-          "running": "Running",
-          "paused": "Paused",
-          "ended": "The last one has ended"
-        }
-      }
+      "picker_current": "current"
     },
     "ja": {
       "choose_persona": "人格を選ぶ",
@@ -752,17 +710,7 @@
         "delete_ask": "「{name}」を削除しますか？",
         "restore_ask": "「{name}」を初期状態に戻しますか？変更内容は失われます。",
         "by_global": "全体設定に従う",
-        "follow_global": "全体の既定に従う",
-        "life": "人生の推演",
-        "life_method": "推演のしかた",
-        "life_method_desc": "AIが1回ごとに一日を過ごすときに従う文章。空なら既定のもの",
-        "life_method_hint": "空なら既定の推演のしかたを使います",
-        "life_context": "人生セッションのコンテキスト上限",
-        "life_context_desc": "人生セッションで /context コマンドを使って個別に変更することもできます",
-        "acquired": "後天プロンプト",
-        "acquired_desc": "AI が人生の推演を通して自分で生み出したプロンプト",
-        "acquired_none": "まだありません",
-        "life_context_bad": "正の整数（トークン数）を入れてください"
+        "follow_global": "全体の既定に従う"
       },
       "options": {"title": "オプション", "close": "閉じる", "back": "戻る", "persona": "人格", "preset": "プリセット", "workspace": "ワークスペース", "path": "パス", "path_hint": "絶対パス（例：~/code）", "use": "使用", "browse": "フォルダを参照"},
       "folders": {
@@ -874,18 +822,7 @@
       "project_fixed": "このセッションはプロジェクト内のため、人格とプリセットはプロジェクトが決めます",
       "picker_hint": "↑↓ 選択 · Enter 決定 · Esc 閉じる",
       "picker_hint_edit": "↑↓ 選択 · Enter 決定 · Esc 閉じる · E 編集",
-      "picker_current": "現在",
-      "life": {
-        "open": "開く",
-        "ask": "人生の推演をオンにしますか？AIは時間になると自分で続けて、自分の一日を過ごします。1回ごとにモデルへのリクエストが1回発生し、トークンを使います。書き留めたことはこの人格の記憶に残ります。オフにすると一時停止です。",
-        "hint": "時間になると自分で続けて一日を過ごします。1回ごとにリクエストが1回",
-        "running_next": "進行中 · 次に続ける {time}",
-        "state": {
-          "running": "進行中",
-          "paused": "一時停止中",
-          "ended": "前回の人生は終了"
-        }
-      }
+      "picker_current": "現在"
     }
   }
 }

@@ -10,7 +10,7 @@
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { short } from '../../src/lib/format.js';
 import { Menu } from './menu.js';
-import { personaName, presetName, presetTokens, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, lastChoice, pickable } from './model.js';
+import { personaName, presetName, presetTokens, defaultUsable, presetInUse, personaInUse, dirName, readPath, remember, tilde, lastChoice } from './model.js';
 import { Catalog } from './catalog.js';
 import { ListPage, problemText } from './page.js';
 import { browse, listDirs, parentDir, askDir } from './folders.js';
@@ -105,8 +105,6 @@ export function apply(ctx) {
   ctx.provide('personas', {
     /** 一个人格、预设的名字（全部会话里的项目页照它写；没读到的写编号） @param {string} id */
     personaName: (id) => nameOf(id),
-    /** 一个人格画成什么样（`{name, avatar}`，没有这个人格的 `null`、人格列表还没读到的 `undefined`）：推演人生那一层的头像 @param {string} id */
-    look: (id) => (catalog.personas ? lookFor(id) : undefined),
     /** @param {string} id */
     presetName: (id) => presetNameOf(id),
     /** 还没开的新会话要用哪个人格（选的，没选的照默认；无人格是 `null`）；人格列表还没读到的是 `undefined`：空会话里 `/dream` 照它整理那一份 */
@@ -305,7 +303,7 @@ export function apply(ctx) {
     m.show(anchor, {
       title: t('info.switch_preset'), below: true, back,
       rows: [
-        ...pickable(catalog.presets ?? [], now).map((p) => ({
+        ...(catalog.presets ?? []).map((p) => ({
           title: presetName(p), desc: p.problem ? t('preset_bad') : p.summary ?? '', side: p.problem ? undefined : tokensOf(p), current: sameAs(p.preset, now), off: !!p.problem, keep: true,
           action: p.problem ? undefined : editAction('preset', p.preset, () => { if (anchor.isConnected) switchPreset(anchor, session, now, back, m); }, () => m.close()),
           pick: () => { if (!sameAs(p.preset, now)) confirmSwitch(anchor, session, { preset: p.preset }, back, m); },
@@ -433,7 +431,7 @@ export function apply(ctx) {
    * @param {string|false|null} chosen @param {(preset: string|false) => void} pick @param {() => void} [reopen] @param {() => void} [before]
    */
   const presetRows = (chosen, pick, reopen, before) => [
-    ...pickable(catalog.presets ?? [], chosen).map((p) => ({
+    ...(catalog.presets ?? []).map((p) => ({
       title: presetName(p),
       desc: p.problem ? t('preset_bad') : p.summary ?? '',
       tip: p.problem ? catalog.problemOf('preset', p).map((x) => problemText(ctx, x)).join('\n') : undefined,
@@ -568,7 +566,7 @@ export function apply(ctx) {
   ctx.slots.mount('settings.editor', {
     id: 'setup-preset',
     key: 'preset.default',
-    options: () => pickable(catalog.presets ?? []).filter((p) => !p.problem).map((p) => ({ value: p.preset, name: presetName(p) })),
+    options: () => (catalog.presets ?? []).filter((p) => !p.problem).map((p) => ({ value: p.preset, name: presetName(p) })),
   });
   // 终端会话（核心 8-33，给 shellhook 开的会话）用哪个人格、预设：不写是跟随默认人格、默认预设（没有单独的无人格）；那一项写
   // 「跟随新会话设置」（发版前 check 第 21 条，2026-11-09 项目主人，同终端）
@@ -580,7 +578,7 @@ export function apply(ctx) {
   ctx.slots.mount('settings.editor', {
     id: 'setup-terminal-preset',
     key: 'terminal.preset',
-    options: () => [{ value: null, name: t('follow_default') }, ...pickable(catalog.presets ?? []).filter((p) => !p.problem).map((p) => ({ value: p.preset, name: presetName(p) }))],
+    options: () => [{ value: null, name: t('follow_default') }, ...(catalog.presets ?? []).filter((p) => !p.problem).map((p) => ({ value: p.preset, name: presetName(p) }))],
   });
   ctx.slots.mount('stage.info', { id: 'setup', order: 10, render: () => infoWrap });
   ctx.on('view.changed', () => draw());

@@ -49,14 +49,6 @@ export function noticeNote(notice, entry, look, prompt, t) {
     const body = bodyOf(topic, t(notice.ok === false ? 'schedule_failed' : 'schedule_ran'));
     return { ...whoOf(look), body, tag: `${notice.session}:done`, session: notice.session, say: null };
   }
-  // 一段人生结束了（核心 LF-14，W-1211）：她自己结束的才弹（主人结束的不弹，主人自己点的）；正文「<名字> 的人生结束了」，标题、图标照那个会话的
-  // 人格，点了去那个会话；遗言不写
-  if (notice?.kind === 'life.ended' && typeof notice.session === 'string') {
-    if (notice.by !== 'self') return null;
-    const name = typeof notice.name === 'string' && notice.name.trim() ? notice.name.trim() : null;
-    const body = name ? t('life_ended', { name }) : t('life_ended_bare');
-    return { ...whoOf(look), body, tag: `${notice.session}:life`, session: notice.session, say: null };
-  }
   if (notice?.kind === 'schedules.reset') {
     return { title: MIYU, body: t('schedules_reset'), tag: 'schedules.reset', session: null, say: t('schedules_reset') };
   }

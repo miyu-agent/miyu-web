@@ -74,7 +74,7 @@ export function itemsOf(entries, status, opts = {}) {
           items.push({ ...moduleNote(e), seq: seqOf(e.id) });
           break;
         }
-        // 循环、人生到点开始下一轮的那句（W-1206）：一行小字，不当你的话；排着的等她听到再画（退不回去，不进排着的话）
+        // 循环到点开始下一轮的那句（W-1206）：一行小字，不当你的话；排着的等她听到再画（退不回去，不进排着的话）
         if (e.from?.kind === 'schedule' && e.from.loop) {
           if (!e.queued) items.push({ ...roundNote(e), seq: seqOf(e.id) });
           break;
