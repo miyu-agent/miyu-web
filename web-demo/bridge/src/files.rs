@@ -174,15 +174,15 @@ async fn body(stream: &mut TcpStream, got: &[u8], head: &str) -> io::Result<Vec<
     Ok(body)
 }
 
-/// 路径换成页面目录里的文件：带 `..` 的、跑到目录外的、不是文件的都不给。
+/// 路径换成页面目录里的文件：带 `..` 的、跑到目录外的、不是文件的都不给。`dir` 是解析过的真实路径。
 fn resolve(dir: &Path, path: &str) -> Option<std::path::PathBuf> {
-    // 桥自己的源码和编出来的东西不给
-    if path.split('/').any(|seg| seg == "..") || path.trim_start_matches('/').starts_with("bridge/")
-    {
+    if path.split('/').any(|seg| seg == "..") {
         return None;
     }
     let file = dir.join(path.trim_start_matches('/')).canonicalize().ok()?;
-    (file.starts_with(dir) && file.is_file()).then_some(file)
+    // 桥自己的源码和编出来的东西不给：照解析完的路径比（审计 #079：原来照写法比开头，`/./bridge/…` 绕得过去）
+    (file.starts_with(dir) && !file.starts_with(dir.join("bridge")) && file.is_file())
+        .then_some(file)
 }
 
 /// `%xx` 换回字节（中文文件名、空格）。
@@ -235,3 +235,6 @@ pub(crate) async fn reply(
     stream.write_all(body).await?;
     stream.shutdown().await
 }
+
+#[cfg(test)]
+mod tests;
