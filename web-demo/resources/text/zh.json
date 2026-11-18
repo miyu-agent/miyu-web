@@ -74,11 +74,11 @@
   "tips": {
     "slash": "输入 / 看所有命令",
     "mention": "输入 @ 选文件写进话里",
-    "skill": "输入 $ 点名技能，一句话能点几个",
+    "skill": "输入 $ 点名技能，一句话里可以点名多个",
     "newline": "Shift+Enter 换行",
     "history": "空着按 ↑ 翻出上一句",
     "history_list": "Ctrl+R 搜以前发过的话",
-    "stash": "Ctrl+S 先存起这句，空着再按取回来",
+    "stash": "Ctrl+S 暂存这句话，输入框为空时再按一次取回",
     "level": "Tab 换权限级别",
     "attach": "把图片、文件拖进来或粘贴进来，跟着话一起发",
     "attach_touch": "点框里的回形针选图片、文件，跟着话一起发",

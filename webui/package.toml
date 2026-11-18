@@ -29,7 +29,7 @@ max = 65535
 default = 8300
 layers = ["system"]
 name = { en = "Port", zh = "端口", ja = "ポート" }
-description = { en = "The port the web interface listens on, for this computer and the local network alike.", zh = "网页界面听的端口，本机和局域网打开都用它。", ja = "ウェブ画面が待ち受けるポート。このコンピューターからもローカルネットワークからも使います。" }
+description = { en = "The port the web interface listens on, for this computer and the local network alike.", zh = "网页界面监听的端口，本机和局域网访问都使用这个端口。", ja = "ウェブ画面が待ち受けるポート。このコンピューターからもローカルネットワークからも使います。" }
 
 [settings.listen]
 type = "text"
@@ -47,7 +47,7 @@ default = 0
 layers = ["system"]
 hidden = true
 name = { en = "Idle seconds", zh = "空闲多久退出（秒）", ja = "待機して終了するまで（秒）" }
-description = { en = "Quit after this many seconds with no browser connected and no media being served; 0 never quits (the default).", zh = "没有浏览器连着、没有媒体在给，连续这么多秒就退出；0 是不退（出厂）。", ja = "ブラウザがつながっておらずメディアも送っていない状態がこの秒数続いたら終了します。0 は終了しません（既定）。" }
+description = { en = "Quit after this many seconds with no browser connected and no media being served; 0 never quits (the default).", zh = "没有浏览器连接、也没有在传送媒体时，持续这么多秒后退出；0 表示不退出（默认）。", ja = "ブラウザがつながっておらずメディアも送っていない状態がこの秒数続いたら終了します。0 は終了しません（既定）。" }
 
 [settings.ticket_idle_seconds]
 type = "int"
@@ -57,7 +57,7 @@ default = 43200
 layers = ["system"]
 hidden = true
 name = { en = "Media ticket idle seconds", zh = "媒体票据多久作废（秒）", ja = "メディアチケットの有効期限（秒）" }
-description = { en = "A /media ticket unused for this many seconds stops working.", zh = "/media 的票据这么多秒没用过就作废。", ja = "/media のチケットはこの秒数使われないと無効になります。" }
+description = { en = "A /media ticket unused for this many seconds stops working.", zh = "/media 的票据超过这么多秒没有使用就作废。", ja = "/media のチケットはこの秒数使われないと無効になります。" }
 
 [settings.most_tickets]
 type = "int"
@@ -67,4 +67,4 @@ default = 4096
 layers = ["system"]
 hidden = true
 name = { en = "Most media tickets", zh = "最多几张媒体票据", ja = "メディアチケットの上限" }
-description = { en = "At most this many /media tickets; the one unused longest goes first.", zh = "/media 的票据最多几张，满了丢最久没用的。", ja = "/media のチケットの上限。いっぱいになると一番長く使われていないものから捨てます。" }
+description = { en = "At most this many /media tickets; the one unused longest goes first.", zh = "/media 票据的数量上限，满了以后丢弃最久没有使用的一张。", ja = "/media のチケットの上限。いっぱいになると一番長く使われていないものから捨てます。" }

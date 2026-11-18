@@ -7,7 +7,7 @@
     "ja": "テキストだけのタイムライン（見本）"
   },
   "summary": {
-    "zh": "换画法的样板：一步一行等宽字，点一行展开细节",
+    "zh": "示例：每一步写成一行等宽字，点击一行展开细节",
     "en": "A sample replacement timeline: one monospace line per step, click to expand",
     "ja": "差し替えの見本：1 ステップ 1 行の等幅表示、クリックで詳細"
   },

@@ -51,7 +51,7 @@ test('带模型驱动的扩展（核心 MD-1 的 drivers）：接在 MCP 服务�
 test('驱动会让供应商自己跑的工具（核心 HT-4）：接在「包含」下面，一个驱动一行，名目空着；没声明的驱动不写，卸的不写', () => {
   const preview = { package: 'antigravity', program: 'process', drivers: ['ag', 'ag-lite'], hosted: { ag: ['search_web', 'read_url_content'] }, capabilities: [] };
   const plan = packagePlan({ tool: 'package', install: '/w/ag', preview }, null, t);
-  assert.deepEqual(flat(plan), ['安装软件包 antigravity', '/w/ag', '包含：扩展程序、模型驱动 ag、模型驱动 ag-lite', '：模型驱动 ag 会让供应商自己跑：search_web、read_url_content']);
+  assert.deepEqual(flat(plan), ['安装软件包 antigravity', '/w/ag', '包含：扩展程序、模型驱动 ag、模型驱动 ag-lite', '：模型驱动 ag 会让供应商自己执行这些工具：search_web、read_url_content']);
   assert.equal(plan.rows[1].each, true, '一项一行');
   assert.ok(!flat(packagePlan({ tool: 'package', install: '/w/ag', preview: { ...preview, hosted: undefined } }, null, t)).some((x) => x?.includes('自己跑')), '没有 hosted 的不写');
   assert.ok(!flat(packagePlan({ tool: 'package', remove: 'antigravity', preview }, null, t)).some((x) => x?.includes('自己跑')), '卸的不写');

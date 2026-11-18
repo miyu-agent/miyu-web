@@ -7,7 +7,7 @@
     "ja": "シンプルな回答レイアウト（見本）"
   },
   "summary": {
-    "zh": "换画法的样板：只认段落、标题、列表、代码和媒体，别的照原文",
+    "zh": "示例：只排版段落、标题、列表、代码和媒体，其他内容显示原文",
     "en": "A sample replacement layout: paragraphs, headings, lists, code and media only",
     "ja": "差し替えの見本：段落・見出し・リスト・コード・メディアだけ"
   },

@@ -84,7 +84,7 @@
       },
       "errors": {
         "read_only": "这个库是只读的",
-        "packaged": "随软件包来的库只能改自动想起",
+        "packaged": "随软件包安装的知识库只能修改「自动想起」",
         "unknown_kb": "这个库已经不在了",
         "unknown_document": "这篇文档已经不在了",
         "old_core": "这一版核心还没有知识库，更新核心后再看"

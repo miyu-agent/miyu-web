@@ -388,8 +388,8 @@
         },
         "required": "必需",
         "version": "版本 {version}",
-        "covers": "盖过了{layer} {version}",
-        "covers_newer": "盖过了{layer} {version}（那一份更新）",
+        "covers": "覆盖了{layer} {version}",
+        "covers_newer": "覆盖了{layer} {version}（那一份版本较新）",
         "features": "功能",
         "settings": "设置",
         "uninstall": "卸载",
@@ -687,9 +687,9 @@
         "download": "下载 {size}",
         "cancel": "取消",
         "skip": {
-          "moved": "{name}：来源仓库变了，不升",
+          "moved": "{name}：来源仓库变了，不升级",
           "gone": "{name}：软件源里没有了",
-          "blocked": "{name}：被拉黑（{reason}），不升",
+          "blocked": "{name}：被拉黑（{reason}），不升级",
           "held": "{name}：设置了不升级"
         },
         "bad": {
@@ -704,7 +704,7 @@
         "origin": "来源",
         "license": "许可证",
         "includes": "包含",
-        "hosted_by": "模型驱动 {driver} 会让供应商自己跑：{names}",
+        "hosted_by": "模型驱动 {driver} 会让供应商自己执行这些工具：{names}",
         "provides": "提供",
         "tool": "{title}（{name}）",
         "nothing": "无",
@@ -768,7 +768,7 @@
         "lan_mac_firewall": "别的设备打不开的话，到「系统设置 → 网络 → 防火墙 → 选项」里允许 miyu-web 的传入连接",
         "copy": "复制",
         "copied": "已复制",
-        "lan_failed": "没能换过去：{error}，网页还在用原来的",
+        "lan_failed": "切换失败：{error}，网页仍在使用原来的地址",
         "lan_port_moved": "端口换成了 {port}，这个页面照旧连着；以后打开 http://127.0.0.1:{port}",
         "port_now": "现在用的是 {port}（这个端口被占了，往后挪了）",
         "cancel": "取消"

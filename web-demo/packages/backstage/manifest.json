@@ -7,7 +7,7 @@
     "ja": "ソフトのページ"
   },
   "summary": {
-    "zh": "带页面的软件在网页里一个一整页",
+    "zh": "带页面的软件在网页里各占一整页",
     "en": "Each package with a page gets a full page in the web UI",
     "ja": "ページを持つソフトをウェブで一画面ずつ表示"
   },
