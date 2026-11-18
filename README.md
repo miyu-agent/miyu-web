@@ -2,7 +2,7 @@
 
 在浏览器里用 Miyu：网页软件 `miyu-web` 默认只听本机的端口（设置「通用」→「访问」能放开到局域网），给页面文件，把浏览器的 WebSocket 转成核心协议。核心在 [miyu-agent/miyu](https://github.com/miyu-agent/miyu)，这里照 `Cargo.toml` 的 git 依赖钉住核心的一个提交，只经门面 `miyu-client` 用核心的东西（核心仓库的设计 `32-仓库拆分.md`）。
 
-怎么用见 [网页](https://github.com/miyu-agent/miyu/blob/main/docs/guide/heads/web.md)，放到服务器上、从别的机器打开见 [常驻和服务器](https://github.com/miyu-agent/miyu/blob/main/docs/guide/service.md)。
+怎么用见 [网页](https://github.com/miyu-agent/miyu/blob/main/docs/zh/guide/heads/web.md)，放到服务器上、从别的机器打开见 [常驻和服务器](https://github.com/miyu-agent/miyu/blob/main/docs/zh/guide/service.md)。
 
 - `crates/miyu-web`：网页软件（`miyu-web serve`、`miyu-web open`），图纸 `docs/blueprint/web-module.md`。
 - `crates/miyu-webserve`：网页端口的底子：给页面文件、核对 Host 和 Origin、`/ws` 原样转给核心，图纸 `docs/blueprint/webserve.md`。
