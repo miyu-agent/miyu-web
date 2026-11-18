@@ -50,6 +50,17 @@ test('静下来：开过口以后连着安静够久才算说完，还没开口�
   assert.ok(Math.abs(loudness(new Float32Array([0.5, -0.5])) - 0.5) < 1e-9);
 });
 
+test('切句：行内代码跳过，不念反引号里的内容（W-1215）', () => {
+  const said = sentences('先运行 `cargo build --release` 编译，再看结果。');
+  assert.ok(said.every((x) => !x.includes('`') && !x.includes('cargo')), JSON.stringify(said));
+  assert.deepEqual(sentences('把 `a.b` 改成 `c` 就好了。'), ['把 改成 就好了。']);
+  assert.deepEqual(sentences('只有 `code`'), ['只有']);
+  assert.deepEqual(sentences('`x`'), []);
+  // 双反引号包着单反引号的整体跳过；围起来的代码块照旧整块交出去
+  assert.deepEqual(sentences('用 ``a ` b`` 试试这个写法吧。'), ['用 试试这个写法吧。']);
+  assert.deepEqual(sentences('图：\n```js\nlet a = `x`;\n```\n看吧。'), ['图：', '```js\nlet a = `x`;\n```', '看吧。']);
+});
+
 test('切句：照句末标点、换行切，短的并进下一句，长的照逗号再切', () => {
   assert.deepEqual(sentences('好的。今天下午三点开会，记得带电脑。明天见！'), ['好的。今天下午三点开会，记得带电脑。', '明天见！']);
   assert.deepEqual(sentences('First sentence here. Second one is here.\nThird line'), ['First sentence here.', 'Second one is here.', 'Third line']);

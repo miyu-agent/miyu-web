@@ -100,6 +100,9 @@ const END = /([。！？!?；;]+["'」』）)]*|\.(?=\s)|\n+)/;
 /** 围起来的代码块（三个以上的反引号、波浪线，到同样的收尾或者结尾） */
 const FENCE = /(^|\n)(`{3,}|~{3,})[^\n]*\n[\s\S]*?(\n\2[^\S\n]*(?=\n|$)|$)/g;
 
+/** 行内代码：n 个反引号包着的、到同样 n 个反引号收尾（W-1215：朗读整个跳过） */
+const INLINE = /(`+)(?!`)[^\n]*?[^`\n]\1(?!`)|``/g;
+
 /**
  * 回答切成一句一句交给 `tts.synthesize`（设计 20 第七节：一句一句合成，第一句好了就放）：照句末的标点、换行切，太短的并进下一句，
  * 一句最长 `max` 个字（超出的照逗号、空格再切，再不行硬切）。围起来的代码块整块是一段、不切开（念不念由合成的一方定，`say`
@@ -123,7 +126,7 @@ export function sentences(text, opts = {}) {
 
 /** 没有代码块的一段照句切。 @param {string} text @param {{min?: number, max?: number}} opts */
 function prose(text, { min = 12, max = 300 }) {
-  const parts = text.split(END);
+  const parts = skipInline(text).split(END);
   /** @type {string[]} */
   const pieces = [];
   for (let i = 0; i < parts.length; i += 2) pieces.push((parts[i] ?? '') + (parts[i + 1] ?? ''));
@@ -139,6 +142,11 @@ function prose(text, { min = 12, max = 300 }) {
   }
   if (held.trim()) out.push(...cut(held.trim(), max));
   return out.filter((s) => s.trim());
+}
+
+/** 行内代码整个去掉（连带多出来的空格），不念。 @param {string} text */
+function skipInline(text) {
+  return text.replace(INLINE, '').replace(/[^\S\n]{2,}/g, ' ');
 }
 
 /** 一句太长：照逗号、空格切到 `max` 以内，切不开的硬切。 @param {string} s @param {number} max */
