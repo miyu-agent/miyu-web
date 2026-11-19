@@ -81,6 +81,17 @@ export function shownOf(all, view, upgradable) {
 }
 
 /**
+ * 卡片最下面那几个小标签（接入方式的另算）：「官方」或「社区」，被拉黑的换成「被拉黑」；不支持本机系统的（核心 PL-2：`packages.other_systems`
+ * 开着时软件源也列这种包，那一行带 `unsupported: true`）再接一个「不支持当前系统」。列不列由核心定，这里不滤。
+ * @param {any} p `package.search` 的一项
+ * @returns {string[]} `market.<键>` 的键
+ */
+export function marksOf(p) {
+  const first = p.blocked ? 'blocked' : p.official ? 'official' : 'community';
+  return p.unsupported === true ? [first, 'unsupported'] : [first];
+}
+
+/**
  * 卡片右下角那个按钮是哪一种：被拉黑的不画（`blocked`）、在装的（`busy`）、能升级的、装着的、没装的。
  * @param {any} p @param {Set<string>} upgradable @param {string|null} busy 在装、在升的那一个
  * @returns {'blocked'|'busy'|'upgrade'|'installed'|'install'}

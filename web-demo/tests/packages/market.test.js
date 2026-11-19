@@ -176,3 +176,18 @@ test('带知识库的（核心 PV-3，W-1172）：种类 knowledge 排在 MCP �
   assert.equal(faceOf({ provides: { knowledge: ['manual'] } }), 'library');
   assert.equal(providesLine(kb.provides, { knowledge: '知识库', skills: '技能', command: '命令' }), '技能 read-manual；知识库 manual；命令 notes');
 });
+
+test('不支持本机系统的（核心 PL-2，那一行带 `unsupported: true`）多一个「不支持当前系统」标签；照核心回的列，不自己滤（W-1227）', async () => {
+  const { marksOf } = await import('../../packages/settings/market-model.js');
+  const win = { ...cat, package: 'win', name: '只给 Windows', unsupported: true };
+  assert.deepEqual(marksOf(win), ['community', 'unsupported']);
+  assert.deepEqual(marksOf({ ...embed, unsupported: true }), ['official', 'unsupported']);
+  assert.deepEqual(marksOf(cat), ['community'], '没带这一格的照旧');
+  assert.deepEqual(marksOf({ ...bad, unsupported: true }), ['blocked', 'unsupported'], '被拉黑的照样标');
+  const listed = shownOf([...all, win], { query: '', filter: 'all', kind: null }, new Set()).list.map((p) => p.package);
+  assert.ok(listed.includes('win'), '核心列了的照列');
+  const { readFileSync } = await import('node:fs');
+  const manifest = JSON.parse(readFileSync(new URL('../../packages/settings/manifest.json', import.meta.url), 'utf8'));
+  const said = ['zh', 'en', 'ja'].map((lang) => manifest.text[lang].market.unsupported);
+  assert.deepEqual(said, ['不支持当前系统', 'Not supported on this system', 'このシステムには対応していません'], '三语和核心字表里引用的一致');
+});

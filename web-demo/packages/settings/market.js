@@ -8,7 +8,7 @@ import { leave } from '../../src/lib/motion.js';
 import { bytes, short } from '../../src/lib/format.js';
 import { pkgFace } from './logos.js';
 import { hostedByDriver, infoHosted } from '../../src/lib/packages.js';
-import { STATUS_FILTERS, QUICK_KINDS, SORTS, shownOf, sortedBy, sortsAvailable, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf, capabilityRows, toolRows, approveOf, accessTags } from './market-model.js';
+import { STATUS_FILTERS, QUICK_KINDS, SORTS, shownOf, sortedBy, sortsAvailable, actionOf, faceOf, needsLook, hasProgram, providesLine, percentOf, capabilityRows, toolRows, approveOf, accessTags, marksOf } from './market-model.js';
 import { select } from './rows.js';
 import { confirmIn } from './confirm.js';
 
@@ -203,16 +203,17 @@ function whenOf(at) {
 }
 
 /**
- * 一张卡片：图标、名字、版本、一句说明，最下面「官方」「社区」（被拉黑的「被拉黑」）和按钮；点别处进详情。
+ * 一张卡片：图标、名字、版本、一句说明，最下面「官方」「社区」（被拉黑的「被拉黑」，不支持本机系统的再接「不支持当前系统」）和按钮；点别处进详情。
  * @param {any} dialog @param {any} p @param {Set<string>} upgradable
  */
 function card(dialog, p, upgradable) {
   const t = (/** @type {string} */ k, /** @type {any} */ f) => dialog.ctx.text(k, f);
   const m = stateOf(dialog);
   const face = faceOf(p);
-  const tag = p.blocked
+  // 不支持本机系统的（核心 PL-2）在「官方」「社区」后面接「不支持当前系统」，同一种小标签
+  const tags = marksOf(p).map((k) => (k === 'blocked'
     ? h('span.mk-tag.is-blocked', { title: String(p.blocked) }, t('market.blocked'))
-    : h(`span.mk-tag${p.official ? '.is-official' : ''}`, t(p.official ? 'market.official' : 'market.community'));
+    : h(`span.mk-tag${k === 'official' ? '.is-official' : ''}`, t(`market.${k}`))));
   const fresh = !m.seen.has(p.package);
   m.seen.add(p.package);
   return h(`div.mk-card${fresh ? '.is-new' : ''}`, { role: 'button', tabindex: '0', 'data-mk-card': p.package, onclick: (/** @type {Event} */ e) => { if (!(/** @type {HTMLElement} */ (e.target)).closest('button')) openDetail(dialog, p.package); },
@@ -223,7 +224,7 @@ function card(dialog, p, upgradable) {
         typeof p.downloads === 'number' ? h('span.mk-downloads', { title: t('market.downloads_n', { n: p.downloads.toLocaleString() }) }, icon('download'), short(p.downloads)) : null)),
     h('p.mk-summary', p.summary ?? ''),
     // 接入方式的标签（2026-11-12 项目主人：编号不再带接入方式）：脚本、技能、MCP、带程序……，和官方、社区那一个排在一起
-    h('div.mk-card-foot', h('div.mk-tags', tag, ...accessTags(p).map((k) => h('span.mk-tag.mk-access', t(`market.access.${k}`)))), actionButton(dialog, p, upgradable, false)),
+    h('div.mk-card-foot', h('div.mk-tags', ...tags, ...accessTags(p).map((k) => h('span.mk-tag.mk-access', t(`market.access.${k}`)))), actionButton(dialog, p, upgradable, false)),
     m.problems[p.package] ? h('p.mk-problem', m.problems[p.package]) : null);
 }
 
@@ -452,7 +453,9 @@ function detailPage(dialog, id) {
     h('div.mk-detail-text', h('strong', p.name ?? p.package), h('p', p.summary ?? ''),
       h('p.mk-version', [t('market.version', { version: p.version ?? '' }), t(p.official ? 'market.official' : 'market.community')].join(' · ')),
       warn,
-      p.blocked ? h('p.mk-warn.is-blocked', t('market.blocked_why', { reason: String(p.blocked) })) : null));
+      p.blocked ? h('p.mk-warn.is-blocked', t('market.blocked_why', { reason: String(p.blocked) })) : null,
+      // 不支持本机系统的（核心 PL-2）：装会被核心拒（`wrong_target`），先在这里说
+      p.unsupported === true ? h('p.mk-warn', t('market.unsupported')) : null));
   const rows = h('div.set-rows', h('p.set-empty', t('market.loading')));
   const line = (/** @type {string} */ label, /** @type {any} */ value) => h('div.set-row', h('div.set-text', h('div.set-name', h('span', label))), h('div.set-control.mk-value', value));
   previewOf(dialog, id).then((got) => {
