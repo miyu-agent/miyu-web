@@ -141,14 +141,27 @@ async fn same_port_new_address_rebinds_in_place() {
         eprintln!("这台机器没有局域网地址，跳过");
         return;
     };
-    let first = TcpListener::bind((Ipv4Addr::LOCALHOST, 0))
-        .await
-        .expect("听得上");
+    let first = outside_ephemeral().await;
     let port = first.local_addr().expect("有地址").port();
     let (kept, done) = swap(first, lan, None).await;
     assert_eq!(done, Ok(()));
     let at = kept.expect("接着听").local_addr().expect("有地址");
     assert_eq!(at, SocketAddr::new(lan, port), "端口不变、换了地址");
+}
+
+/// 在回环上听一个系统临时端口段以外的端口（20000–29999，从进程号错开起点）。
+///
+/// 让系统挑（端口 0）会落进临时端口段（Windows 是 49152–65535），同一时刻并行的测试往外连时也从这一段拿端口、绑在通配地址上；
+/// 撞上同一个号，再在局域网地址上绑这个端口，Windows 就报占用（2026-11-19 CI 撞见过一次：`port 62622 in use`）。
+async fn outside_ephemeral() -> TcpListener {
+    let start = std::process::id() % 10_000;
+    for step in 0..10_000 {
+        let port = 20_000 + u16::try_from((start + step) % 10_000).expect("不到一万");
+        if let Ok(listener) = TcpListener::bind((Ipv4Addr::LOCALHOST, port)).await {
+            return listener;
+        }
+    }
+    panic!("20000–29999 都被占了");
 }
 
 #[tokio::test]
