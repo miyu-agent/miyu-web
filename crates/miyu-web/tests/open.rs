@@ -111,7 +111,7 @@ fn went(browser: &FakeBrowser) -> Vec<String> {
 }
 
 /// 拉起的是真的 `miyu-web serve`：数据根、资源目录照这个临时目录，空闲 1 秒就走。
-fn launch(home: &Home) -> Launch {
+pub(crate) fn launch(home: &Home) -> Launch {
     let resources = home.dir.join("resources");
     std::fs::create_dir_all(resources.join("packages/webui")).expect("建得了");
     // 网页包（这个仓库的 `webui/`：清单、`web.json`）照装好的样子放进 `packages/webui/`

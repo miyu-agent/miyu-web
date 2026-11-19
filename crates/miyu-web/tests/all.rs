@@ -13,6 +13,9 @@ mod backstage;
 mod desk;
 // 导出原始包（W-1098）
 mod export;
+// 常驻的 serve 关掉自己的透明大页（核心 YC-12）
+#[cfg(target_os = "linux")]
+mod huge_pages;
 mod jump;
 mod listen;
 mod media;

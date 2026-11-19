@@ -46,6 +46,11 @@ fn main() -> ExitCode {
     };
     // 打开文件数的软上限调到够用（施工 YC-11，压测报告 F1）：常驻的 `serve` 才调，起运行时的线程之前；调不上去的照旧跑，装好日志再记
     let raised = (command == "serve").then(miyu_ipc::open_files::raise);
+    // 堆的两个参数（glibc 上限 arena、定大块门槛）和透明大页（Linux 上给这个进程关掉，核心 YC-12）：常驻的 `serve` 才调，
+    // 还没起别的线程时定，同终端、核心的做法。`open`、`forget` 一下就退，不调。别的平台什么都不做。
+    if command == "serve" {
+        miyu_client::heap::tune();
+    }
     let Ok(runtime) = tokio::runtime::Runtime::new() else {
         eprintln!("miyu-web: no runtime");
         return ExitCode::from(1);
