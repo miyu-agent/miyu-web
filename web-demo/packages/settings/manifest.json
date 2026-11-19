@@ -695,7 +695,7 @@
         "bad": {
           "unknown": "软件源里没有这个软件",
           "depends": "缺少依赖：{names}",
-          "target": "这个软件没有本机能用的版本",
+          "target": "不支持当前系统",
           "download": "下载失败"
         },
         "version": "版本 {version}",
