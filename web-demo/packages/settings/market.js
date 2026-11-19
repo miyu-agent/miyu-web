@@ -453,9 +453,7 @@ function detailPage(dialog, id) {
     h('div.mk-detail-text', h('strong', p.name ?? p.package), h('p', p.summary ?? ''),
       h('p.mk-version', [t('market.version', { version: p.version ?? '' }), t(p.official ? 'market.official' : 'market.community')].join(' · ')),
       warn,
-      p.blocked ? h('p.mk-warn.is-blocked', t('market.blocked_why', { reason: String(p.blocked) })) : null,
-      // 不支持本机系统的（核心 PL-2）：装会被核心拒（`wrong_target`），先在这里说
-      p.unsupported === true ? h('p.mk-warn', t('market.unsupported')) : null));
+      p.blocked ? h('p.mk-warn.is-blocked', t('market.blocked_why', { reason: String(p.blocked) })) : null));
   const rows = h('div.set-rows', h('p.set-empty', t('market.loading')));
   const line = (/** @type {string} */ label, /** @type {any} */ value) => h('div.set-row', h('div.set-text', h('div.set-name', h('span', label))), h('div.set-control.mk-value', value));
   previewOf(dialog, id).then((got) => {
