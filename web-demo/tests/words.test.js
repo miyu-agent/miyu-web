@@ -352,3 +352,13 @@ test('供应商侧工具（视图的 `hosted: true`，W-1198）：名字照核�
   const raw = row(stepOf({ ...entry('ok', { name: 'code_execution', via: 'agy' }), name: 'code_execution' }));
   assert.deepEqual([raw.name, raw.subject], ['code_execution（agy）', null], '认不得的照原名');
 });
+
+test('DeepSeek 自己跑的搜索、读网页（核心 DSR-4 的 `deepseek_web_search`、`deepseek_read_url`）：照核心的标题写「网络搜索（DeepSeek）· 第一句查的词」，不露它自己的工具名', async () => {
+  const { stepOf } = await import('../src/model/entries.js');
+  const entry = (name, args, title) => ({ id: 'e1', kind: 'tool', group: 'g1', name, hosted: true, state: 'ok', args: JSON.stringify(args), title });
+  const search = row(stepOf(entry('deepseek_web_search', { type: 'search', queries: ['rust 1.90 release', 'rust blog'] }, { name: '网络搜索', object: 'rust 1.90 release', via: 'DeepSeek' })));
+  assert.deepEqual([search.name, search.subject, search.said], ['网络搜索（DeepSeek）', 'rust 1.90 release', null]);
+  const page = row(stepOf(entry('deepseek_read_url', { type: 'open_page', url: 'https://blog.rust-lang.org/' }, { name: '抓取网页', object: 'https://blog.rust-lang.org/', via: 'DeepSeek' })));
+  assert.deepEqual([page.name, page.subject], ['抓取网页（DeepSeek）', 'https://blog.rust-lang.org/']);
+  assert.ok(![search.name, page.name].some((n) => n.includes('deepseek_')));
+});
