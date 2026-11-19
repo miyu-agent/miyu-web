@@ -280,7 +280,7 @@ function infoPage(dialog, id) {
   if (!p) return [h('p.set-empty', t('pkg.gone'))];
   const missing = p.status === 'program_missing';
   const site = !!dialog.sites?.get(id);
-  // 它的设置项：照每一项归哪个包（`ownerOf`），一组一块；组就是这个包的写「设置」，别的组（联网搜索的「API Key 和地址」）照组名。
+  // 它的设置项：照每一项归哪个包（`ownerOf`），一组一块；组就是这个包的写「设置」，别的组（联网搜索的「API 密钥和地址」）照组名。
   // 名字后面写「默认 / 已改」（W-1141）；核心给了 `sections` 的照它一组一张卡（`package-sections.js`）
   const ids = new Set((dialog.packages ?? []).map((/** @type {any} */ x) => x.package));
   const valueOf = valueLookup(dialog.pages);
@@ -291,7 +291,7 @@ function infoPage(dialog, id) {
       const items = ownSettings(g.items, id, (/** @type {any} */ item) => ownerOf(item, ids));
       const cards = cardsOf(items, sectionsOf(g), valueOf);
       if (!cards) return [{ name: g.id === id ? t('pkg.settings') : g.name, rows: items.map(row).filter(Boolean) }];
-      // 没分组的那一张：这个包自己的组不写组名（W-1141），别的组（「API Key 和地址」）照旧写它的组名
+      // 没分组的那一张：这个包自己的组不写组名（W-1141），别的组（「API 密钥和地址」）照旧写它的组名
       return cards.map((c) => ({ name: c.id === null ? (g.id === id ? null : g.name) : c.name, rows: c.items.map(row).filter(Boolean) }));
     })
     .filter((/** @type {any} */ x) => x.rows.length);

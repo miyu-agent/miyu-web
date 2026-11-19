@@ -18,7 +18,7 @@ test('口令用不了（桥重启过）、没带口令：说回起桥的终端�
 });
 
 test('桥没在跑：说怎么起桥；桥连不上核心：照原话，叫看终端里的报错', () => {
-  assert.match(offline('down').why, /桥没在跑/);
+  assert.match(offline('down').why, /桥没有在运行/);
   assert.match(offline('down').how, /cargo run/);
   const core = offline('core', '找不到数据根：没有权限');
   assert.equal(core.why, '找不到数据根：没有权限');

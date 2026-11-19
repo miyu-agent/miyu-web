@@ -197,7 +197,7 @@ async fn connect_in(
             .map_err(|e| match e {
                 // 桥自己的话：开发时怎么起桥
                 miyu_client::connect::ConnectError::NotRunning => {
-                    "核心没在跑：启动桥时设 MIYU_CORE_BIN 指向 Miyu 主程序 miyu".to_string()
+                    "核心没有在运行：启动桥时设 MIYU_CORE_BIN 指向 Miyu 主程序 miyu".to_string()
                 }
                 e => spoken(e.said(), &e),
             })?,

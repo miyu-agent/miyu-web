@@ -44,8 +44,8 @@ test('核心报的问题挂到第几项的哪一格；只到第几项的挂在�
   assert.deepEqual([...spots.keys()].sort(), [0, 2]);
   assert.deepEqual(spots.get(2)?.get('key'), ['少写了 key']);
   // 写在那一格下面的不再带开头的键（核心的话是「键 + 原因」）
-  const said = problemSpots('draw.accounts', [{ key: 'draw.accounts[0].name', message: 'draw.accounts[0].name 没写：这个字段没有默认值，要写。' }]);
-  assert.deepEqual(said.get(0)?.get('name'), ['没写：这个字段没有默认值，要写。']);
+  const said = problemSpots('draw.accounts', [{ key: 'draw.accounts[0].name', message: 'draw.accounts[0].name 没有填写：这个字段没有默认值，必须填写。' }]);
+  assert.deepEqual(said.get(0)?.get('name'), ['没有填写：这个字段没有默认值，必须填写。']);
   assert.deepEqual(spots.get(0)?.get(''), ['不认识的字段 foo']);
 });
 

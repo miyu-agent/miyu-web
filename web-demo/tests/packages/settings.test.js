@@ -36,7 +36,7 @@ const got = {
     'log.level': { layers: [{ origin: { layer: 'default' }, used: true, value: 'info' }], origin: { layer: 'default' }, value: 'info' },
   },
   problems: [
-    { code: 'env_not_set', key: 'providers.dev.base_url', level: 'warning', message: '引用的环境变量没有设。' },
+    { code: 'env_not_set', key: 'providers.dev.base_url', level: 'warning', message: '引用的环境变量没有设置。' },
     { code: 'bad_format', key: 'log.level', level: 'error', message: 'log.level 只能是 error、warn……' },
     { code: 'syntax', level: 'error', message: 'TOML 写法不对' },
   ],

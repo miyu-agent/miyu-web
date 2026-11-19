@@ -121,7 +121,7 @@
         "held": "（已批）",
         "hosted_by": "模型驱动 {driver} 会让供应商自己执行这些工具：{names}",
         "source_feed": "{source}（{feed}）",
-        "sources": {"official": "官方软件源", "community": "社区", "file": "本机文件", "shipped": "内置", "distro": "系统装的"},
+        "sources": {"official": "官方软件源", "community": "社区", "file": "本机文件", "shipped": "内置", "distro": "系统的包管理器安装"},
         "state_dir": "状态目录",
         "state_dir_at": "状态目录 {path}（{size}）",
         "state_dir_path": "状态目录 {path}",

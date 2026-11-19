@@ -90,7 +90,7 @@
         "session_gone": "会话已不在，任务停了",
         "preset_off": "会话的预设关了这个功能，这次没跑",
         "not_opened": "新会话开不成，这次没跑",
-        "package_unavailable": "包没在跑，这次没送到",
+        "package_unavailable": "软件包没有在运行，这次没有送到",
         "other": "上一次跳过了：{why}"
       },
       "running": "在跑（关了就暂停）",

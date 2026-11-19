@@ -67,7 +67,7 @@ test('底下那一行：什么时候 · 在哪 · 下次；停着的写已暂停
 test('上一次跳过了的原因：认得的写人话，认不得的照原样；没跳过的是 null', () => {
   assert.equal(skipText({ id: 't1', prompt: 'x', when: {}, last: { at: 'x', result: 'skipped:session_gone' } }, t), '会话已不在，任务停了');
   assert.equal(skipText({ id: 't1', prompt: 'x', when: {}, last: { at: 'x', result: 'skipped:later' } }, t), '上一次跳过了：later');
-  assert.equal(skipText({ id: 't1', prompt: 'x', when: {}, last: { at: 'x', result: 'skipped:package_unavailable' } }, t), '包没在跑，这次没送到');
+  assert.equal(skipText({ id: 't1', prompt: 'x', when: {}, last: { at: 'x', result: 'skipped:package_unavailable' } }, t), '软件包没有在运行，这次没有送到');
   assert.equal(skipText({ id: 't1', prompt: 'x', when: {}, last: { at: 'x', result: 'sent' } }, t), null);
   assert.equal(skipText({ id: 't1', prompt: 'x', when: {}, last: { at: 'x', result: 'ran' } }, t), null);
   assert.equal(skipText({ id: 't1', prompt: 'x', when: {} }, t), null);

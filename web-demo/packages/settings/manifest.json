@@ -416,7 +416,7 @@
         "license": "许可证 {license}",
         "from": {
           "shipped": "内置",
-          "distro": "系统装的",
+          "distro": "系统的包管理器安装",
           "official": "官方软件源",
           "community": "社区软件源",
           "local": "本地"
@@ -634,7 +634,7 @@
       "market": {
         "access": {"connection": "接入平台", "program": "带程序", "mcp": "MCP", "skills": "技能", "scripts": "脚本", "theme": "外观", "mascot": "吉祥物", "ui": "界面", "personas": "人格"},
         "loading": "正在读软件源…",
-        "unreachable": "连不上软件源",
+        "unreachable": "无法连接软件源",
         "retry": "重试",
         "search": "搜索软件",
         "no_match": "没有符合条件的软件",
@@ -642,7 +642,7 @@
         "refresh": "刷新软件源",
         "refreshed": "已更新：{n} 个软件",
         "meta": "{at} 更新 · 共 {n} 个",
-        "stale": "软件源连不上，用的是 {at} 的索引",
+        "stale": "无法连接软件源，使用 {at} 的索引",
         "filter": {
           "all": "全部",
           "installed": "已安装",
