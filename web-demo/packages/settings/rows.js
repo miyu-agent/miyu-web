@@ -10,6 +10,8 @@ import { records } from './records.js';
 import { switchOrigin } from './pkg-enabled.js';
 import { ChoiceMemo } from './choices-memo.js';
 import { focusOnOpen } from '../../src/lib/touch.js';
+import { menuOptions, noticeFor } from './option-menu.js';
+import { noticeIn } from './confirm.js';
 
 /**
  * 一组：组名，下面一行行。
@@ -169,10 +171,16 @@ function control(dialog, item, value, save, saveSecret) {
   const ctx = dialog.ctx;
   if (item.control === 'toggle') return toggle(!!value, (on) => save({ value: on }));
   if (item.control === 'select') {
-    // 选项带说明的（核心设计 53 第一节）：菜单里那一项名字下面暗色写一行
-    const options = (item.options ?? []).map((o) => ({ value: o.value, name: o.name, desc: o.description }));
-    // 选了值是 `null` 的那一项（「默认」）：从这一层删掉
-    return select(dialog, options, value ?? null, (v) => save(v === null ? { unset: true } : { value: v }));
+    // 选项带说明的（核心设计 53 第一节）名字下面暗色写一行；核心的暗字（「需要密钥」）接在名字后面；带 `notice` 的选了照常存，
+    // 同时弹一句提示（核心设计 72，W-1228；`option-menu.js`）
+    const options = menuOptions(item.options);
+    return select(dialog, options, value ?? null, (v) => {
+      // 选了值是 `null` 的那一项（「默认」）：从这一层删掉
+      const saved = save(v === null ? { unset: true } : { value: v });
+      const notice = noticeFor(options, v);
+      if (notice) noticeIn(dialog.panel, { text: notice, ok: ctx.text('notice_ok') });
+      return saved;
+    });
   }
   // 滑块（核心设计 53 第三节）：松手存数
   if (item.control === 'slider') return slider(item, value, (n) => save({ value: n }));

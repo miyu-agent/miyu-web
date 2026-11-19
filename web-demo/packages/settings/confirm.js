@@ -41,3 +41,33 @@ export function confirmIn(from, ask) {
     yes.focus({ preventScroll: true });
   });
 }
+
+/**
+ * 只说一句的提示（核心设计 72，W-1228：选了带 `notice` 的选项）：同上面那张小卡片，一句话加一个按钮（不是红的）；按钮、`Esc`、
+ * 点外面都是关掉。不等它：叫的人照常往下做。
+ * @param {Element|null} from 设置框里的一个元素（找它所在的设置框）
+ * @param {{text: string, ok: string}} say
+ */
+export function noticeIn(from, say) {
+  const host = from?.closest('.set-panel') ?? document.body;
+  host.querySelector(':scope > .set-ask')?.remove();
+  const back = /** @type {HTMLElement|null} */ (document.activeElement);
+  let done = false;
+  const close = () => {
+    if (done) return;
+    done = true;
+    leave(layer, () => layer.remove());
+    if (back?.isConnected) back.focus({ preventScroll: true });
+  };
+  const ok = h('button.set-btn.is-primary', { type: 'button', onclick: close }, say.ok);
+  const card = h('div.set-ask-card', { role: 'alertdialog', 'aria-modal': 'true', 'aria-label': say.text },
+    h('p.set-ask-text', say.text),
+    h('div.set-ask-foot', ok));
+  const layer = h('div.set-ask', { 'data-set-dismiss': '1', onclick: (/** @type {Event} */ e) => { if (e.target === e.currentTarget) close(); } }, card);
+  layer.addEventListener('set-dismiss', close);
+  layer.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && host === document.body) { e.stopPropagation(); close(); }
+  });
+  host.append(layer);
+  ok.focus({ preventScroll: true });
+}

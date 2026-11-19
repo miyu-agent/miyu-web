@@ -527,6 +527,7 @@
       "record": { "nth": "第 {n} 项", "add": "加一项", "up": "上移", "down": "下移", "remove": "删掉这一项", "remove_ask": "确认删除「{name}」吗？", "full": "最多 {n} 项" },
       "ask_yes": "确认",
       "ask_no": "取消",
+      "notice_ok": "知道了",
       "tools": {
         "warnings": "提示",
         "search": {
@@ -1158,6 +1159,7 @@
       "record": { "nth": "Item {n}", "add": "Add item", "up": "Move up", "down": "Move down", "remove": "Delete this item", "remove_ask": "Delete “{name}”?", "full": "At most {n} items" },
       "ask_yes": "Confirm",
       "ask_no": "Cancel",
+      "notice_ok": "Got it",
       "tools": {
         "warnings": "Warnings",
         "search": {
@@ -1789,6 +1791,7 @@
       "record": { "nth": "{n} 件目", "add": "項目を追加", "up": "上へ", "down": "下へ", "remove": "この項目を削除", "remove_ask": "「{name}」を削除しますか？", "full": "最大 {n} 件" },
       "ask_yes": "確認",
       "ask_no": "キャンセル",
+      "notice_ok": "了解",
       "tools": {
         "warnings": "注意",
         "search": {
