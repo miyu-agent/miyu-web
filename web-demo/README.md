@@ -1,17 +1,17 @@
-## 网页演示程序
+## 网页界面的页面
 
-网页界面的页面部分，连接真实的核心。长什么样、为什么这样，见蓝图 `docs/blueprint/web.md`。
+这个目录是网页界面的页面部分，它连接真实的核心。页面的样子和这样设计的原因，见 `docs/blueprint/web.md`。
 
-原生 JavaScript，按 ES 模块组织，不用框架、不用构建（设计 21 X2）。不进仓库的 workspace，门禁不查它。
+页面使用原生 JavaScript，按 ES 模块组织，不使用框架，也不需要构建。这个目录不在仓库的 workspace 里，仓库统一的检查不包括它。
 
-### 怎么跑
+### 运行
 
-浏览器只会说 WebSocket，核心听的是本机的套接字，中间要一个桥（`bridge/`）：它给页面文件，把 `/ws` 转到核心，
-替页面出示本机令牌。核心在另一个仓库（`miyu-agent/miyu`），先在它的检出里编一次核心（`cargo build -p miyu`），下面的
-`<核心检出>` 换成它的路径。
+浏览器只能使用 WebSocket，而核心监听的是本机的套接字，所以两者之间需要一个桥（`bridge/`）。桥负责提供页面文件，把 `/ws` 转给核心，并替页面出示本机的令牌。
+
+核心在另一个仓库（`miyu-agent/miyu`）。运行之前，先在核心仓库的检出里编译一次核心（`cargo build -p miyu`），下面命令里的 `<核心检出>` 要换成它的路径。
 
 ```sh
-# 第一次：在核心检出的根目录建数据根的骨架、写模型的配置（etc/config.toml；已经有配置的不覆盖）
+# 第一次运行：在核心检出的根目录建立数据根的骨架，并写入模型的配置（etc/config.toml；已经有配置时不会覆盖）
 MIYU_DEV_BASE_URL=<地址，写到 /v1> MIYU_DEV_MODEL=<模型> MIYU_DEV_WINDOW=300000 cargo xtask dev-home <单独的测试目录>
 # 回到这个仓库的根目录
 cargo build --manifest-path web-demo/bridge/Cargo.toml
@@ -19,18 +19,23 @@ MIYU_HOME=<同一个目录> MIYU_RESOURCES=<核心检出>/resources MIYU_CORE_BI
   MIYU_DEV_API_KEY=<key> MIYU_DEV_BASE_URL=<地址，写到 /v1> web-demo/bridge/target/debug/miyu-web-bridge 8766
 ```
 
-- 打开桥打出来的链接（`http://127.0.0.1:8766/#k=…`）。口令这一次启动有效，没有它连不上。最后那个数是端口，不写是 8765。
-- 模型从数据根的配置来：`dev-home` 写一家供应商 `dev`，地址引用环境变量 `MIYU_DEV_BASE_URL`、key 引用 `MIYU_DEV_API_KEY`，配置文件里没有地址和 key（`dev-home` 要设着地址，只查它的写法、不写进去）。
-- 变量写在命令前面，不要 `export`；key 和地址只放在命令里，不写进任何文件。
-- 核心没在跑时桥用 `MIYU_CORE_BIN` 拉起来；核心只在起来那一刻读环境变量，改了变量先停核心。桥停了核心不跟着停。
-- 新会话在起桥的那个目录里干活。
-- 时间线上工具的显示名、结果那一句由桥照 `MIYU_RESOURCES` 读（`web.human`）；换了桥的代码要重新编、重启桥。
-- 桥还顶着核心以后的网页模块做几样（蓝图 `web.md` 最后一节）：给本机文件和 blob（`/file`、`/blob`，带口令，数据根不给）、抓链接卡片（`web.link_preview`、`/link-image`，要能联网，内网地址不抓）。
-- 预览工作区：让 AI 用 `write` 把产物写进这个会话工作目录下的 `artifacts/`，写完右边自动打开（窗口够宽时）。
+桥启动以后会输出一个链接（`http://127.0.0.1:8766/#k=…`），用浏览器打开它即可。链接里的口令只在这一次启动期间有效，没有口令就无法连接。命令最后的数字是端口，不写时使用 8765。
+
+运行时需要注意：
+
+- 模型来自数据根里的配置。`dev-home` 会写入一家名叫 `dev` 的供应商，它的地址引用环境变量 `MIYU_DEV_BASE_URL`，密钥引用 `MIYU_DEV_API_KEY`，配置文件里不保存地址和密钥。运行 `dev-home` 时需要设置好地址，它只检查地址的写法，不会把地址写进文件。
+- 环境变量写在命令前面，不要 `export`。密钥和地址只放在命令里，不要写进任何文件。
+- 核心没有在运行时，桥会用 `MIYU_CORE_BIN` 启动它。核心只在启动的那一刻读取环境变量，所以修改环境变量以后要先停止核心。桥停止时，核心不会跟着停止。
+- 新会话的工作目录是启动桥时所在的目录。
+- 时间线上工具的显示名和结果的那一句话，由桥按照 `MIYU_RESOURCES` 读取（`web.human`）。修改了桥的代码以后，要重新编译并重启桥。
+- 桥还暂时代替核心将来的网页模块做几件事（见 `docs/blueprint/web.md` 的最后一节）：提供本机文件和 blob（`/file`、`/blob`，需要口令，不提供数据根里的文件）；抓取链接卡片（`web.link_preview`、`/link-image`，需要能够联网，不抓取内网地址）。
+- 预览工作区：让 AI 用 `write` 把产物写进这个会话工作目录下的 `artifacts/`，写完以后右侧会自动打开预览（窗口足够宽时）。
 
 ### 测试
 
-纯逻辑（事件 → 条目、时间线的段和字、差异、左栏的一项、框下面那一行、数的写法、回答的 Markdown 怎么解析和上色、预览工作区放什么、媒体卡片）有测试，拿仓库里事件的样本当底料，不开浏览器：
+页面的纯逻辑部分有测试，用仓库里的事件样本作为输入，不需要打开浏览器。测试覆盖的内容有：事件转成条目、时间线的分段和文字、差异、左栏的一项、输入框下面的一行、数字的写法、回答里 Markdown 的解析和上色、预览工作区里放什么、媒体卡片。
+
+运行：
 
 ```sh
 MIYU_RESOURCES=<核心检出>/resources node --test 'web-demo/tests/**/*.test.js'
@@ -38,17 +43,16 @@ cargo clippy --manifest-path web-demo/bridge/Cargo.toml --all-targets -- -D warn
 cargo test --manifest-path web-demo/bridge/Cargo.toml
 ```
 
-只在开发时用 Node；页面本身不需要 Node。
+Node 只在开发时使用，页面本身不需要 Node。
 
-### 拷进来的库（`vendor/`）
+### 复制进来的库
 
-回答的 Markdown 用（蓝图 `web.md`「她的回答：Markdown」第 8 条），照旧版网页 `~/Documents/github/Miyu/web/vendor/` 的那几份原样拷来，
-一个字没改；页面只从本机取，不往外连：
+下面这些库用来显示回答里的 Markdown 和生成二维码。它们都是原样复制进来的，没有修改；页面只从本机读取它们，不会连接外部的地址。
 
-| 库 | 版本 | 许可证 | 拷了什么 | 怎么用 |
+| 库 | 版本 | 许可证 | 复制了什么 | 用法 |
 |---|---|---|---|---|
-| [Prism](https://prismjs.com) | 1.29.0 | MIT | `prism/prism.min.js`：旧版挑的几种语言拼成一个文件，文件头写着怎么重拼 | `data-manual` 载进来，只调 `Prism.tokenize`（`src/markdown/highlight.js`） |
-| [KaTeX](https://katex.org) | 0.18.4 | 代码 MIT（`katex/LICENSE`），字体 SIL OFL 1.1（`katex/fonts/OFL.txt`） | `katex/katex.min.js`、`katex/katex.min.css`、`katex/fonts/*.woff2` | `katex.render`（`src/markdown/math.js`） |
-| [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) | 2.0.4 | MIT（`src/lib/qr/vendor/LICENSE`，取自上游仓库） | npm 包的 `dist/qrcode.mjs`，放在 `src/lib/qr/vendor/`（软件包只能 `import` `src/lib/`，同 material-color-utilities） | `qrcode(0, 'M')`、`addData`、`isDark`（`src/lib/qr/index.js`：局域网地址的二维码） |
+| [Prism](https://prismjs.com) | 1.29.0 | MIT | `vendor/prism/prism.min.js`：把需要的几种语言拼成的一个文件，文件开头写着重新拼接的方法 | 用 `data-manual` 加载，只调用 `Prism.tokenize`（`src/markdown/highlight.js`） |
+| [KaTeX](https://katex.org) | 0.18.4 | 代码是 MIT（`vendor/katex/LICENSE`），字体是 SIL OFL 1.1（`vendor/katex/fonts/OFL.txt`） | `vendor/katex/katex.min.js`、`vendor/katex/katex.min.css`、`vendor/katex/fonts/*.woff2` | 调用 `katex.render`（`src/markdown/math.js`） |
+| [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) | 2.0.4 | MIT（`src/lib/qr/vendor/LICENSE`，取自上游仓库） | npm 包里的 `dist/qrcode.mjs`，放在 `src/lib/qr/vendor/` | 调用 `qrcode(0, 'M')`、`addData`、`isDark`（`src/lib/qr/index.js`），用来生成局域网地址的二维码 |
 
-qrcode-generator 不是旧版带的：2026-11-03 第一次引导、设置「访问」一组画局域网地址的二维码要用，照 npm 上的 2.0.4 原样拷来，一个字没改。
+> qrcode-generator 放在 `src/lib/` 下而不是 `vendor/` 下，是因为页面里的软件包只能 `import` `src/lib/` 里的文件，material-color-utilities 也是同样的做法。
