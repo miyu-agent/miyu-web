@@ -383,6 +383,23 @@ export function providerRemoval(id, got, layer) {
   return Object.keys(got.items ?? {}).filter((k) => k.startsWith(prefix) && writtenIn(got.items[k], layer)).map((k) => ({ key: k, unset: true, expect: expectFor(got.items[k], layer) }));
 }
 
+/**
+ * 这一家是不是软件包带的（核心 PV-4，协议参考 `config.md`）：`providers.<id>.*` 有一项的来源是 `{layer: 'package', package}` 的，交那个包的编号；
+ * 人全改过的，核心在系统配置里写了 `providers.<id>.package`，照它。包的「启用」也是 `layer: 'package'`，但不带 `package`，不算。不是的交 `null`。
+ * @param {string} id @param {{items?: Record<string, any>}|null|undefined} got `config.get`（`all`）
+ * @returns {string|null}
+ */
+export function providerPackage(id, got) {
+  const prefix = `providers.${keySegment(id)}.`;
+  const items = got?.items ?? {};
+  for (const [key, entry] of Object.entries(items)) {
+    const from = entry?.origin;
+    if (key.startsWith(prefix) && from?.layer === 'package' && typeof from.package === 'string') return from.package;
+  }
+  const written = items[`${prefix}package`]?.value;
+  return typeof written === 'string' && written ? written : null;
+}
+
 /** 模型池那一页的先后（蓝图「设置页」第 14 条）：同换模型的菜单，固定池照旗舰、日常、轻量排最前 */
 export { poolOrder } from '../../src/lib/fixed-pools.js';
 

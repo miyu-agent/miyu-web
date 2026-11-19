@@ -124,3 +124,28 @@ test('借来的值（核心 NS-1：value 是 null，来源 {layer: inherited, fr
   assert.equal(inheritedFrom({ value: 'x', origin: { layer: 'system' } }, models), null);
   assert.equal(inheritedFrom(null, models), null);
 });
+
+test('软件包带的供应商（核心 PV-4：几项的来源是 {layer: package, package}）：那一家交包的编号，头下面写「来自软件包 <包的名字>」（W-1227）', async () => {
+  const { providerPackage, packageNames } = await import('../../packages/settings/model.js');
+  const packaged = (value) => ({ value, origin: { layer: 'package', package: 'acme-suite' }, layers: [] });
+  const system = (value) => ({ value, origin: { file: 'config.toml', layer: 'system', line: 3 }, layers: [{ origin: { layer: 'system' }, value, used: true }] });
+  const got = { items: {
+    'providers.acme.name': system('我改的名字'),
+    'providers.acme.base_url': packaged('https://acme.example.invalid/v1'),
+    'providers.mine.name': system('自己的'),
+    'providers.acme-2.name': system('另一家'),
+    'packages.acme-suite.enabled': { value: true, origin: { layer: 'package' }, layers: [] },
+  } };
+  assert.equal(providerPackage('acme', got), 'acme-suite', '有一项是包给的就是包带的那一家');
+  assert.equal(providerPackage('mine', got), null, '自己写的不是');
+  assert.equal(providerPackage('acme-2', got), null, '编号是前缀的另一家不算');
+  assert.equal(providerPackage('acme', null), null, '配置还没读到');
+  const overridden = { items: { 'providers.acme.name': system('全改了'), 'providers.acme.package': system('acme-suite') } };
+  assert.equal(providerPackage('acme', overridden), 'acme-suite', '人全改了的照核心写的 providers.<编号>.package');
+  assert.equal(providerPackage('acme', { items: { 'packages.acme.enabled': { value: true, origin: { layer: 'package' } } } }), null, '包的「启用」不带 package，不算');
+  assert.deepEqual(packageNames([{ package: 'acme-suite', name: 'Acme 全家桶' }], ['acme-suite']), ['Acme 全家桶'], '名字照 package.list');
+  assert.deepEqual(packageNames([], ['acme-suite']), ['acme-suite'], '取不到的写编号');
+  const { readFileSync } = await import('node:fs');
+  const manifest = JSON.parse(readFileSync(new URL('../../packages/settings/manifest.json', import.meta.url), 'utf8'));
+  assert.equal(manifest.text.zh.models.from_package, '来自软件包 {name}');
+});

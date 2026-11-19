@@ -352,6 +352,7 @@
           "cooling": "冷却中"
         },
         "driver_guess_line": "未识别接口，正在使用 {driver}",
+        "from_package": "来自软件包 {name}",
         "key_saved": "已设置",
         "key_change": "更换",
         "key_save": "保存",
@@ -982,6 +983,7 @@
           "cooling": "Cooling down"
         },
         "driver_guess_line": "API not recognized, using {driver}",
+        "from_package": "From package {name}",
         "key_saved": "Set",
         "key_change": "Change",
         "key_save": "Save",
@@ -1612,6 +1614,7 @@
           "cooling": "クールダウン中"
         },
         "driver_guess_line": "API を認識できないため {driver} を使用中",
+        "from_package": "パッケージ {name} から",
         "key_saved": "設定済み",
         "key_change": "変更",
         "key_save": "保存",

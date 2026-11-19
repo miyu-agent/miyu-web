@@ -5,7 +5,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { hasLogos, logoEl } from '../../src/lib/logo.js';
-import { duplicates, inputText, providerName, hostOf, whereOf, sameNamed, secretName, keyChange, providerRemoval, LAYER } from './model.js';
+import { duplicates, inputText, providerName, hostOf, whereOf, sameNamed, secretName, keyChange, providerRemoval, providerPackage, packageNames, LAYER } from './model.js';
 import { modelName, metaOf, sharedState, loadingRow, searchable, refreshProvider, testLine } from './model-bits.js';
 import { openForm } from './provider-form.js';
 import { confirmIn } from './confirm.js';
@@ -61,7 +61,7 @@ function providerItem(dialog, x, on, logos, same) {
 }
 
 /**
- * 头上：图标、名称、地址，「测试连接」「编辑」「删除」；接口是猜的写一行；测试的结果写在下面。
+ * 头上：图标、名称、地址，「测试连接」「编辑」「删除」；接口是猜的写一行，软件包带的写「来自软件包 X」一行；测试的结果写在下面。
  * @param {any} dialog @param {any} p @param {boolean} logos
  */
 function head(dialog, p, logos) {
@@ -93,11 +93,14 @@ function head(dialog, p, logos) {
   logo?.classList.add('is-big');
   // 别的「用不了」（没有密钥的在密钥那一块说）在头下面写一次
   const shared = sharedState(p.models ?? []);
+  const pkg = providerPackage(p.id, dialog.got);
   return h('div.set-prov-head',
     h('div.set-prov-title', logo, h('div', h('strong', providerName(p)), h('span', { title: address }, address)),
       h('div.set-prov-buttons', test, h('button.set-btn', { type: 'button', onclick: openForm(dialog, p.id) }, ctx.text('models.edit')), removeButton(dialog, p))),
     // 核心推不出接口、先照 openai-chat 用的（`driver_from: default`，核心 8-26）：写明是猜的，猜错了请求会出错
     p.driver_from === 'default' ? h('p.set-prov-note', ctx.text('models.driver_guess_line', { driver: p.driver ?? '' })) : null,
+    // 软件包带的这一家（核心 PV-4）：「来自软件包 <包的名字>」，名字照 `package.list`，取不到的写编号
+    pkg ? h('p.set-prov-note', ctx.text('models.from_package', { name: packageNames(dialog.packages, [pkg])[0] })) : null,
     shared && shared !== 'no_key' ? h('p.set-prov-warn', ctx.text(`models.states.${shared}`)) : null,
     result);
 }
