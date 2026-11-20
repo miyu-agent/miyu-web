@@ -1,5 +1,5 @@
 // @ts-check
-//! 项目的几样纯逻辑（蓝图 `web.md`「会话整理和项目」；核心 H-1、H-2，`docs/reference/projects.md`）：十二种颜色、左栏里一个项目露哪几个会话、
+//! 项目的几样纯逻辑（蓝图 `web.md`「会话整理和项目」；核心 H-1、H-2，`docs/zh/reference/projects.md`）：十二种颜色、左栏里一个项目露哪几个会话、
 //! 在项目里开的新会话先选上什么。新建、项目设置那一张表在软件包 `setup`（`project-form.js`），颜色经服务 `chat` 交过去。
 
 /**

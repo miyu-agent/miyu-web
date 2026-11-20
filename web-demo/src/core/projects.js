@@ -1,5 +1,5 @@
 // @ts-check
-//! 项目（核心 H-1，`docs/reference/projects.md`；蓝图 `web.md`「会话整理和项目」）：`subscribe {stream: "projects"}` 拿到整张表，之后照
+//! 项目（核心 H-1，`docs/zh/reference/projects.md`；蓝图 `web.md`「会话整理和项目」）：`subscribe {stream: "projects"}` 拿到整张表，之后照
 //! `projects.changed` 整项换、删掉；掉了队（`resync`）重新订阅。旧核心没有这个流的（`unknown_stream` 这类）当没有项目，左栏不画「项目」
 //! 那一栏（`supported` 是假）。
 

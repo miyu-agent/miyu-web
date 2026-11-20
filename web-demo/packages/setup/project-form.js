@@ -1,5 +1,5 @@
 // @ts-check
-//! 新建项目、项目设置那一张表的纯逻辑（蓝图 `web.md`「会话整理和项目」第 8 条；核心 H-1，`docs/reference/projects.md`）：一个项目填进表里的样子、
+//! 新建项目、项目设置那一张表的纯逻辑（蓝图 `web.md`「会话整理和项目」第 8 条；核心 H-1，`docs/zh/reference/projects.md`）：一个项目填进表里的样子、
 //! 表里有什么不对、交给核心的参数（`project.create`、`project.update`）。
 
 /**
