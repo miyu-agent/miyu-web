@@ -341,12 +341,12 @@
         "uses": {
           "chat": "对话",
           "chat_desc": "新会话默认用的模型",
-          "vision": "看图",
-          "vision_desc": "看图片、截图用的模型",
+          "vision": "多模态",
+          "vision_desc": "在对话模型不支持多模态时提供多模态能力",
           "embedding": "语义检索"
         },
         "meta_window": "{n} 上下文",
-        "meta_vision": "看图",
+        "meta_vision": "多模态",
         "short_states": {
           "no_key": "未设置密钥",
           "cooling": "冷却中"
@@ -973,12 +973,12 @@
         "uses": {
           "chat": "Chat",
           "chat_desc": "Default model for new sessions",
-          "vision": "Images",
-          "vision_desc": "Model for reading pictures and screenshots",
+          "vision": "Multimodal",
+          "vision_desc": "Provides multimodal input when the chat model doesn't support it",
           "embedding": "Semantic search"
         },
         "meta_window": "{n} context",
-        "meta_vision": "Vision",
+        "meta_vision": "Multimodal",
         "short_states": {
           "no_key": "No API key",
           "cooling": "Cooling down"
@@ -1605,12 +1605,12 @@
         "uses": {
           "chat": "会話",
           "chat_desc": "新しい会話で使うモデル",
-          "vision": "画像",
-          "vision_desc": "画像やスクリーンショットを読むモデル",
+          "vision": "マルチモーダル",
+          "vision_desc": "会話のモデルがマルチモーダルに対応していないとき、マルチモーダルの機能を提供します",
           "embedding": "セマンティック検索"
         },
         "meta_window": "{n} コンテキスト",
-        "meta_vision": "画像",
+        "meta_vision": "マルチモーダル",
         "short_states": {
           "no_key": "API キー未設定",
           "cooling": "クールダウン中"

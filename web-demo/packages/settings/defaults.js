@@ -1,6 +1,6 @@
 // @ts-check
 //! 「模型」页的「默认模型」（蓝图 `web.md`「设置页」第 14 条；2026-10-11 项目主人定：默认文本模型、默认视觉模型、语义模型三个标签
-//! 合成这一页，一个用途一行）：对话（`models.chat`）、看图（`models.vision`）右边一个选择按钮，点开按供应商分组的选择器
+//! 合成这一页，一个用途一行）：对话（`models.chat`）、多模态（`models.vision`）右边一个选择按钮，点开按供应商分组的选择器
 //! （`model-pick.js`）；语义检索（`models.embedding`）右边一个下拉（内置模型、关，没装的暗着）。选了当场存，不改开着的会话。
 
 import { h, icon } from '../../src/lib/dom.js';
@@ -15,7 +15,7 @@ export function drawDefaults(dialog, list) {
   return h('div.set-rows.set-uses', useRow(dialog, list, 'chat'), useRow(dialog, list, 'vision'), embeddingRow(dialog));
 }
 
-/** 对话、看图：名称、说明，右边一个按钮写着现在选的（图标、名字、哪一家）。 @param {'chat'|'vision'} which */
+/** 对话、多模态：名称、说明，右边一个按钮写着现在选的（图标、名字、哪一家）。 @param {'chat'|'vision'} which */
 function useRow(dialog, list, which) {
   const ctx = dialog.ctx;
   const item = plainItem(dialog.schema, dialog.got, `models.${which}`);

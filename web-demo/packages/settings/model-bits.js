@@ -1,5 +1,5 @@
 // @ts-check
-//! 「模型」页几块共用的（蓝图 `web.md`「设置页」第 14 条）：模型的显示名、看不看得了图、一行暗字写窗口和「看图」、一家都一样的
+//! 「模型」页几块共用的（蓝图 `web.md`「设置页」第 14 条）：模型的显示名、看不看得了图、一行暗字写窗口和「多模态」、一家都一样的
 //! 「用不了」、「正在读模型列表」、搜索框、重读一家的模型。
 
 import { h, icon } from '../../src/lib/dom.js';
@@ -11,7 +11,7 @@ export const modelName = (m) => m.facts?.name?.value ?? m.model;
 export const seesImages = (m) => (m.facts?.inputs?.value ?? []).includes('image');
 
 /**
- * 一行暗字：窗口、看得了图的写「看图」（原来是一个没说明的小图标）。`long` 的窗口后面写「上下文」（供应商那一页地方够）。
+ * 一行暗字：窗口、看得了图的写「多模态」（原来是一个没说明的小图标）。`long` 的窗口后面写「上下文」（供应商那一页地方够）。
  * @param {any} ctx @param {any} m @param {boolean} [long]
  */
 export function metaOf(ctx, m, long = false) {

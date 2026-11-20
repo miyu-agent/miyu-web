@@ -567,3 +567,17 @@ test('新建模型池：固定、没有成员，子代理能选照白卡上的�
   assert.equal(newPoolChanges('fast', false)[2].value, false);
   assert.equal(newPoolChanges('a.b', false)[0].key, 'pools."a.b".strategy');
 });
+
+test('默认模型的 models.vision 那一行叫「多模态」（2026-11-20 主人验收第 6 条，W-1241）；网页自己的字里不再有「看图」', () => {
+  const text = (/** @type {string} */ pkg) => JSON.parse(readFileSync(new URL(`../../packages/${pkg}/manifest.json`, import.meta.url), 'utf8')).text;
+  const uses = (/** @type {string} */ lang) => text('settings')[lang].models.uses;
+  assert.equal(uses('zh').vision, '多模态');
+  assert.equal(uses('zh').vision_desc, '在对话模型不支持多模态时提供多模态能力');
+  assert.equal(uses('en').vision, 'Multimodal');
+  assert.equal(uses('en').vision_desc, "Provides multimodal input when the chat model doesn't support it");
+  assert.equal(uses('ja').vision, 'マルチモーダル');
+  // 网页自己的字（各软件包的字表、页面的字表）里旧的说法一处都不留：模型那一行的「1M · 看图」、用量页的用途也跟着改
+  const all = ['settings', 'usage'].map((p) => JSON.stringify(text(p))).join('')
+    + ['zh', 'en', 'ja'].map((l) => readFileSync(new URL(`../../resources/text/${l}.json`, import.meta.url), 'utf8')).join('');
+  for (const old of ['看图', '"Images"', '"Vision"', 'can\'t see', '画像を見られない']) assert.ok(!all.includes(old), `还写着 ${old}`);
+});
