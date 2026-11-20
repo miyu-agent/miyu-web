@@ -1,4 +1,4 @@
-# 网页界面的软件包清单（施工 9-1 上，docs/blueprint/packages.md）。给人看的字，不发给模型。
+# 网页界面的软件包清单（施工 9-1 上，internal/blueprint/packages.md）。给人看的字，不发给模型。
 
 [package]
 # 版本和 Cargo.toml 的工作区版本一样（tools/pack-web.py 核对）；推 v<版本> 的标签发版（.github/workflows/release.yml）

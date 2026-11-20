@@ -2,7 +2,7 @@
 
 ### 是什么
 
-一个只听本机的网页端口要的几样：给页面文件、核对 Host 和 Origin、`/ws` 原样转给核心、照终端的样子连核心要一次性码再开浏览器。网页软件 `miyu-web`（`web-ui.md`）用它；QQ 桥原来的 WebUI 也用（`docs/designs/18-通讯平台.md` 第三节「抽成两边共用的库，不抄一份」），随施工 O-28 下去掉，桥只剩 `start`、`stop`、`restart`、`status` 照终端的样子连核心用 `open::Core`（`onebot.md` 第一条「施工时定的」第 166 条）。施工 S-1 起 `open` 和 `CoreCommand` 挪进给界面的门面 `miyu-client`（`client.md`，设计 `32-仓库拆分.md` 第一节），这里只剩听端口、给页面、`/ws` 转发，以后随网页搬进 `miyu-web` 的仓库。
+一个只听本机的网页端口要的几样：给页面文件、核对 Host 和 Origin、`/ws` 原样转给核心、照终端的样子连核心要一次性码再开浏览器。网页软件 `miyu-web`（`web-ui.md`）用它；QQ 桥原来的 WebUI 也用（`internal/designs/18-通讯平台.md` 第三节「抽成两边共用的库，不抄一份」），随施工 O-28 下去掉，桥只剩 `start`、`stop`、`restart`、`status` 照终端的样子连核心用 `open::Core`（`onebot.md` 第一条「施工时定的」第 166 条）。施工 S-1 起 `open` 和 `CoreCommand` 挪进给界面的门面 `miyu-client`（`client.md`，设计 `32-仓库拆分.md` 第一节），这里只剩听端口、给页面、`/ws` 转发，以后随网页搬进 `miyu-web` 的仓库。
 
 状态：施工 O-16 从 `miyu-web` 抽出来（2026-10-07）。函数原样搬，不改名、不改行为，`miyu-web` 的行为一个字节不变；每个函数从哪搬到哪见「搬家表」（W-11 打包的分支变基时照它挪）。
 
