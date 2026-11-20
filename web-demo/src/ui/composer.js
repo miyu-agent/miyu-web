@@ -36,7 +36,8 @@ import { MentionList } from './mention.js';
 import { SkillList } from './skill-list.js';
 import { skillWordAt, filterSkills, skillsIn } from '../model/skills.js';
 import { wordAt, plan, pathText, dirWord, splice, failure } from '../model/mention.js';
-import { blockLabel, expand, used, erase, pieces } from '../model/blocks.js';
+import { blockLabel, expand, used, erase, backdropPlan } from '../model/blocks.js';
+import { keepsHeight } from '../model/grow.js';
 import { Recall } from '../model/history.js';
 import { show, hide, span } from '../lib/motion.js';
 import { isNewline, insertNewline } from '../lib/newline.js';
@@ -176,7 +177,16 @@ export class Composer {
     this.blocks = /** @type {Map<string, string>} */ (new Map());
     /** 框底下垫的那层字：和框同样排版，只给块铺底（框里的字是框自己画的） */
     this.backdrop = h('div.composer-backdrop', { 'aria-hidden': 'true' });
+    /** 那层上一次画的（`model/blocks.js` 的 `backdropPlan`；记在这里比，不写进 HTML 属性） @type {{text: string, labels: string}|null} */
+    this.backdropDrawn = null;
     this.input.addEventListener('scroll', () => { this.backdrop.scrollTop = this.input.scrollTop; });
+    /** 上一次量高度时的字、超没超过最高、行高（`grow` 照它定要不要量，`model/grow.js`）；框变宽变窄了作废 @type {{text: string, full: boolean, line: number}|null} */
+    this.measured = null;
+    let width = -1;
+    new ResizeObserver(([e]) => {
+      if (e.contentRect.width !== width) this.measured = null;
+      width = e.contentRect.width;
+    }).observe(this.input);
     /** 选一样的浮层（`/language`）：和命令列表同一个位置 */
     this.picker = new Picker();
     /** 帮助（`/help`）：和命令列表同一个位置 */
@@ -319,7 +329,7 @@ export class Composer {
       for (const p of this.payload()) p.settle?.();
     }
     this.menu.update(this.input.value);
-    this.fit();
+    this.grow();
     this.drawBlocks();
     this.syncButton();
     this.syncMention();
@@ -333,7 +343,27 @@ export class Composer {
     const el = this.input;
     // 还没挂进页面时量不出高度（是 0），挂上以后由页面再调一次
     if (!el.isConnected) return;
+    this.measure(parseFloat(getComputedStyle(el).lineHeight) || 24);
+  }
+
+  /**
+   * 字变了跟着长高：框已经到最高、字只增不减的不量（只加字不会变矮；量一次浏览器要把整段字同步排两三遍，粘了一大段以后每打一个字
+   * 都卡，W-1237）；别的照 `fit` 量。
+   */
+  grow() {
+    const el = this.input;
+    if (!el.isConnected) return;
     const line = parseFloat(getComputedStyle(el).lineHeight) || 24;
+    if (keepsHeight(this.measured, el.value, el.selectionEnd ?? el.value.length, line)) {
+      this.measured = { ...this.measured, text: el.value };
+      return;
+    }
+    this.measure(line);
+  }
+
+  /** 照行高 `line` 量一次、定高度，记下这一次的（`grow` 拿它比）。 @param {number} line */
+  measure(line) {
+    const el = this.input;
     const max = line * res.layout.composer_max_rows;
     // 变高变矮缓过去（蓝图「动效」，CSS 的 height 过渡）：量新高度要先放开成 auto，量完放回原来的高度、让浏览器记住起点，再定
     // 新的高度；字多过最多那几行的才在框里滚，平时不出滚动条（变高的那一下不闪一根）
@@ -344,7 +374,9 @@ export class Composer {
     // 取整到像素：最多那几行的高带小数（行高 1.6），量回来的 offsetHeight 是整数，不取整的话到了最高以后每打一个字两头差一点，
     // 框的底边上下抖一个像素（2026-10-31 项目主人）
     const to = Math.ceil(Math.min(el.scrollHeight, max));
-    el.style.overflowY = el.scrollHeight > max ? 'auto' : 'hidden';
+    const full = el.scrollHeight > max;
+    el.style.overflowY = full ? 'auto' : 'hidden';
+    this.measured = { text: el.value, full, line };
     if (from && from !== to) {
       el.style.height = `${from}px`;
       void el.offsetHeight;
@@ -984,10 +1016,15 @@ export class Composer {
   drawBlocks() {
     const value = this.input.value;
     const labels = [...this.blocks.keys()].filter((l) => value.includes(l));
-    const sig = `${value}\u0000${labels.join('\u0000')}`;
-    if (this.backdrop.dataset.sig === sig) return;
-    this.backdrop.dataset.sig = sig;
-    replace(this.backdrop, [...pieces(value, labels).map((p) => (p.block ? h('mark.composer-block', p.text) : p.text)), ' ']);
+    // 没有块的那层清空、不排版（W-1237：原来整段字照样放进去、还写进 `data-sig`，几十万字时每打一个字多排一遍）
+    const plan = backdropPlan(this.backdropDrawn, value, labels);
+    this.backdropDrawn = plan.drawn;
+    if (!plan.pieces) return;
+    if (!plan.pieces.length) {
+      replace(this.backdrop);
+      return;
+    }
+    replace(this.backdrop, [...plan.pieces.map((p) => (p.block ? h('mark.composer-block', p.text) : p.text)), ' ']);
     this.backdrop.scrollTop = this.input.scrollTop;
   }
 

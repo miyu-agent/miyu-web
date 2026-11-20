@@ -60,6 +60,21 @@ export function erase(value, caret, labels, dir) {
 }
 
 /**
+ * 底下垫的那层这一次怎么画（W-1237）：`pieces` 是 `null` 的不动（和上一次画的一样）；`[]` 是清空——框里没有块时那层不放字：
+ * 它只给块铺底，字是透明的，放着几十万字的一段每打一个字都要重新排一遍；别的是照 `pieces` 切好的几段。`last` 是上一次画的
+ * （`drawn`，没画过的 `null`），记在 JS 里比，不写进 HTML 属性。
+ * @param {{text: string, labels: string}|null} last
+ * @param {string} text
+ * @param {string[]} labels 框里还在的块
+ * @returns {{drawn: {text: string, labels: string}, pieces: {text: string, block: boolean}[]|null}}
+ */
+export function backdropPlan(last, text, labels) {
+  const drawn = labels.length ? { text, labels: labels.join('\u0000') } : { text: '', labels: '' };
+  if (last && last.text === drawn.text && last.labels === drawn.labels) return { drawn: last, pieces: null };
+  return { drawn, pieces: labels.length ? pieces(text, labels) : [] };
+}
+
+/**
  * 底下垫的那层字：块单独成一段（铺底），别的照原样。
  * @param {string} text
  * @param {string[]} labels

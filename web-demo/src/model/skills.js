@@ -16,10 +16,12 @@ const GOES_ON = /[A-Za-z0-9_]/;
  * @param {string} value @param {number} caret
  */
 export function skillWordAt(value, caret) {
-  const before = value.slice(0, caret);
+  // 只看光标这一行（同 `model/mention.js` 的 `wordAt`，W-1237）
+  const from = caret > 0 ? Math.max(value.lastIndexOf('\n', caret - 1), 0) : 0;
+  const before = value.slice(from, caret);
   const m = /(?:^|\s)\$([\p{L}\p{N}_.:-]*)$/u.exec(before);
   if (!m) return null;
-  return { start: before.length - m[1].length - 1, end: caret, word: m[1] };
+  return { start: from + before.length - m[1].length - 1, end: caret, word: m[1] };
 }
 
 /**

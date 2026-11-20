@@ -14,10 +14,12 @@ const NO_METHOD = -32601;
  * @param {number} caret
  */
 export function wordAt(value, caret) {
-  const before = value.slice(0, caret);
+  // 只看光标这一行（从它前面那个换行起，换行本身算 `@` 前面的空白）：词里不会有换行，粘了几十万字的一段不用每打一个字从头扫（W-1237）
+  const from = caret > 0 ? Math.max(value.lastIndexOf('\n', caret - 1), 0) : 0;
+  const before = value.slice(from, caret);
   const m = /(?:^|\s)@((?:\\ |[^\s])*)$/.exec(before);
   if (!m) return null;
-  const start = before.length - m[1].length - 1;
+  const start = from + before.length - m[1].length - 1;
   return { start, end: caret, word: m[1].replace(/\\ /g, ' ') };
 }
 
