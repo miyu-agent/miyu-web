@@ -52,6 +52,10 @@ jobs:
       - name: 许可证
         if: runner.os == 'Linux'
         run: cargo xtask licenses
+      # 被 git 跟踪的文本里不许有带真实用户名的路径（xtask/src/privacy.rs，照核心的同名门禁）。
+      - name: 私密路径
+        if: runner.os == 'Linux'
+        run: cargo xtask privacy
       # 网页的纯逻辑测试读核心的出厂资源（给人看的字）：照钉住的那份核心检出找（cargo 取 git 依赖时检出的整个仓库）。
       - name: 网页的纯逻辑测试
         if: runner.os == 'Linux'

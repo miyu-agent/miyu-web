@@ -14,4 +14,5 @@ Miyu 的网页（头）：网页软件 `miyu-web`（`crates/miyu-web`，只听�
 - 图纸在 `docs/blueprint/`（`web.md`、`web-ui.md`、`web-module.md`、`webserve.md`、`web/`）；改了界面先改图纸。
 - 本机编译（`build`、`clippy`、`cargo test --no-run`、编测试用的核心）整条套整机编译锁 `flock ~/.cache/miyu-cargo.lock …`；跑测试、起测试服务、node 和 Playwright 不占锁（2026-10-22 项目主人定：锁只管编译），例如 `flock <锁> … cargo test --no-run && … cargo test`。
 - 本机测：沙箱数据根（`MIYU_HOME` 指到单独的目录），不碰 `~/.miyu`，不重启别人在用的核心；key 和地址只放在命令里。
+- 仓库是公开的：被 git 跟踪的文本里不写带真实用户名的路径和会话的临时目录。推之前跑 `cargo xtask privacy`（CI 也跑）；测试要用家目录时，写 `xtask/src/privacy.rs` 里列的虚构名字。
 - 平台：Linux、macOS（M 系列）、Windows 都要编得过、测试过；网页的纯逻辑测试和演示的桥只在 Linux 上跑。
