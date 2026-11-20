@@ -1,20 +1,38 @@
 // @ts-check
 //! 新建会话的「选项」（W-1208，2026-11-17 主人 38；W-1209 桌面也收成这一个）：输入框上面人格、预设、工作区三个按钮合成一个「选项」，
-//! 点开一张浮起来的卡片（标题「选项」）：三行——人格、预设、工作区，左边名字、右边现在的值和 ›，点了翻进那一页选，选完回到这三行。
-//! 工作区那一页照手机做（原来的是电脑上那种贴着按钮弹的小菜单、点不准，系统的选目录对话框又开在电脑上）：先是默认工作区、最近用过的，
-//! 再一个能手输路径的框，再「浏览」——一行一个目录（`fs.list`），点进去、「上一级」，下面「选这个目录」。行都是大块的，手指点得准。
-//! 桌面上「浏览」那一行是「选择文件夹…」：照旧开系统的选目录对话框（`folders.js` 的 `askDir`），开不了的才在卡片里一行一个目录地浏览。
+//! 按钮上只写图标和「选项」（2026-11-20 主人验收：不写里面选了什么）。点了贴着按钮往上弹一个小菜单（`menu.js`：宽度跟着字、一行 32px，
+//! 同换模型那个菜单里「思考程度　默认 ›」那一行的样子），三行：左边名字，右边暗字写现在的值、›——人格、预设、工作区，点了在菜单里翻进
+//! 那一页选，选完回到三行（2026-11-20 主人验收：原来是一张盖整页的大卡片，又宽又空）。
+//! 手机上（主要指针是手指）工作区那一页开一张大块的卡片（`openWorkspaceCard`，原来贴着按钮弹的小菜单点不准、系统的选目录对话框又开在
+//! 电脑上）：先是默认工作区、最近用过的，再一个能手输路径的框，再「浏览」——一行一个目录（`fs.list`），点进去、「上一级」，下面
+//! 「选这个目录」。行都是大块的，手指点得准。开着的会话在手机上换工作区、空会话里不带路径的 `/workspace` 也开它。桌面上「浏览」那一行是
+//! 「选择文件夹…」：照旧开系统的选目录对话框（`folders.js` 的 `askDir`），开不了的才在卡片里一行一个目录地浏览。
 
 import { h, icon } from '../../src/lib/dom.js';
 import { floatCard } from './float.js';
 import { plainPath } from './model.js';
 
 /**
- * @typedef {{title: string, desc?: string, current?: boolean, off?: boolean, pick: () => void}} Pick 一行（同 `index.js` 的 `personaRows`、`presetRows`）
+ * 「选项」小菜单的第一屏：三行「名字　暗字的值 ›」，读不到列表的那一样（旧核心）不列。点一行翻进那一页（`keep`：菜单不收）。
+ * @param {{t: (key: string) => string, personas: boolean, presets: boolean, persona: () => string, preset: () => string, workspace: () => string,
+ *   openPersona: () => void, openPreset: () => void, openWorkspace: () => void}} d
+ * @returns {import('./menu.js').View}
+ */
+export function optionsView(d) {
+  const line = (/** @type {string} */ key, /** @type {string} */ value, /** @type {() => void} */ open) => ({ title: d.t(`options.${key}`), side: value, more: true, keep: true, pick: open });
+  return {
+    title: '',
+    rows: [
+      ...(d.personas ? [line('persona', d.persona(), d.openPersona)] : []),
+      ...(d.presets ? [line('preset', d.preset(), d.openPreset)] : []),
+      line('workspace', d.workspace(), d.openWorkspace),
+    ],
+  };
+}
+
+/**
  * @typedef {{
  *   t: (key: string, fields?: any) => string,
- *   persona: () => string, preset: () => string, workspace: () => string,
- *   personaRows: () => Pick[], presetRows: () => Pick[],
  *   workspaces: () => {path: string, title: string, desc: string, current: boolean}[],
  *   now: () => string,
  *   use: (path: string) => Promise<string|null>,
@@ -22,59 +40,40 @@ import { plainPath } from './model.js';
  *   show: (path: string) => string,
  *   list: (dir: string) => Promise<{dirs: {name: string, full: string}[], note: string, bad: boolean}>,
  *   parent: (dir: string) => Promise<string|null>,
- *   personas: boolean, presets: boolean,
  *   ask?: ((start: string) => Promise<any>)|null,
- * }} Deps 三样现在写什么、列哪几项、选了怎么办；工作区：列表、现在的、换（交回一句错）、读手写的路径、路径写给人看的样子、列目录、上一级；
+ * }} Deps 工作区：列表、现在的、换（交回一句错）、读手写的路径、路径写给人看的样子、列目录、上一级；
  *   `ask` 开系统的选目录对话框（桌面才有，交回选的路径、`false` 取消、`{busy}` 已经开着一个、`null` 开不了）
  */
 
 /**
- * 「选项」按钮上那一行小字：现在的人格、预设、工作区（读不到列表的那一样不写）。窄屏只露第一样（`style.css`）。
- * @param {Pick<Deps, 'personas'|'presets'|'persona'|'preset'|'workspace'>} d @returns {string[]}
- */
-export function summaryOf(d) {
-  return [d.personas ? d.persona() : null, d.presets ? d.preset() : null, d.workspace()].filter((x) => x != null && x !== '').map(String);
-}
-
-/**
  * 一行大块的：左边图标（有的话）、名字和下面暗色一行，右边勾或者 ›。
- * @param {{title: string, desc?: string, label?: string, value?: string, iconName?: string, current?: boolean, off?: boolean, more?: boolean, onclick: () => void}} o
+ * @param {{title: string, desc?: string, iconName?: string, current?: boolean, more?: boolean, onclick: () => void}} o
  */
 function row(o) {
-  return h(`button.setup-opt-row${o.current ? '.is-current' : ''}${o.off ? '.is-off' : ''}`, { type: 'button', disabled: o.off ? true : null, onclick: o.onclick },
+  return h(`button.setup-opt-row${o.current ? '.is-current' : ''}`, { type: 'button', onclick: o.onclick },
     o.iconName ? icon(o.iconName) : null,
-    o.label != null
-      ? [h('span.setup-opt-label', o.label), h('span.setup-opt-value', o.value ?? '')]
-      : h('span.setup-opt-text', h('span.setup-opt-title', o.title), o.desc ? h('span.setup-opt-desc', o.desc) : null),
+    h('span.setup-opt-text', h('span.setup-opt-title', o.title), o.desc ? h('span.setup-opt-desc', o.desc) : null),
     o.current ? icon('check') : o.more ? icon('chevron-right') : null);
 }
 
-/** 一页的头：返回、这一页的名字（三行那一页不画） @param {string} title @param {() => void} back @param {string} backLabel */
+/** 一页的头：返回、这一页的名字 @param {string} title @param {() => void} back @param {string} backLabel */
 function pageHead(title, back, backLabel) {
   return h('div.setup-opt-head', h('button.icon-button.setup-opt-back', { type: 'button', title: backLabel, 'aria-label': backLabel, onclick: back }, icon('chevron-left')),
     h('strong', title));
 }
 
 /**
- * 开「选项」卡片。`workspace` 的只有工作区那一页（开着的会话在手机上换工作区，标题「工作区」，选完收起）。
- * @param {Deps} d @param {{workspace?: boolean, closed?: () => void}} [o]
+ * 开工作区的卡片（标题「工作区」，选完收起）：手机上换工作区、空会话里不带路径的 `/workspace`。
+ * @param {Deps} d @param {{closed?: () => void}} [o]
  */
-export function openOptions(d, o = {}) {
+export function openWorkspaceCard(d, o = {}) {
   const { t } = d;
-  const only = !!o.workspace;
-  const card = floatCard({ title: t(only ? 'options.workspace' : 'options.title'), body: h('div'), close: t('options.close'), onDismiss: () => done() });
+  const card = floatCard({ title: t('options.workspace'), body: h('div'), close: t('options.close'), onDismiss: () => done() });
   const done = () => {
     card.close();
     o.closed?.();
   };
   const body = (/** @type {Node[]} */ ...nodes) => card.setBody(h('div.setup-opt', ...nodes));
-  const main = () => body(
-    d.personas ? row({ title: '', label: t('options.persona'), value: d.persona(), more: true, onclick: personas }) : null,
-    d.presets ? row({ title: '', label: t('options.preset'), value: d.preset(), more: true, onclick: presets }) : null,
-    row({ title: '', label: t('options.workspace'), value: d.workspace(), more: true, onclick: workspaces }));
-  const picks = (/** @type {Pick[]} */ rows) => rows.map((r) => row({ title: r.title, desc: r.desc, current: r.current, off: r.off, onclick: () => { r.pick(); main(); } }));
-  const personas = () => body(pageHead(t('options.persona'), main, t('options.back')), ...picks(d.personaRows()));
-  const presets = () => body(pageHead(t('options.preset'), main, t('options.back')), ...picks(d.presetRows()));
   const error = h('p.setup-opt-error', { hidden: true });
   const say = (/** @type {string|null} */ why) => {
     error.hidden = !why;
@@ -83,13 +82,12 @@ export function openOptions(d, o = {}) {
   };
   /** 等系统的选目录对话框回来时写的一句（暗字，不是出错） */
   const waiting = h('p.setup-opt-note', { hidden: true });
-  /** 换到这个目录：成了回到三行，不成写在这一页 @param {string} path */
+  /** 换到这个目录：成了收起，不成写在这一页 @param {string} path */
   const choose = async (path) => {
     const why = await d.use(path);
     if (why) return say(why);
     say(null);
-    if (only) done();
-    else main();
+    done();
   };
   /** 桌面：开系统的选目录对话框；开不了的在卡片里浏览 */
   const ask = async () => {
@@ -113,8 +111,7 @@ export function openOptions(d, o = {}) {
       choose(path);
     };
     field.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); go(); } });
-    body(only ? null : pageHead(t('options.workspace'), main, t('options.back')),
-      ...d.workspaces().map((w) => row({ title: w.title, desc: w.desc, current: w.current, onclick: () => choose(w.path) })),
+    body(...d.workspaces().map((w) => row({ title: w.title, desc: w.desc, current: w.current, onclick: () => choose(w.path) })),
       h('div.setup-opt-section', t('options.path')),
       h('div.setup-opt-path', field, h('button.setup-menu-btn.is-primary', { type: 'button', onclick: go }, t('options.use'))),
       error,
@@ -132,8 +129,7 @@ export function openOptions(d, o = {}) {
       error,
       h('div.setup-opt-foot', h('button.setup-menu-btn.is-primary', { type: 'button', disabled: got.bad ? true : null, onclick: () => choose(dir) }, t('folders.choose'))));
   };
-  if (only) workspaces();
-  else main();
+  workspaces();
   // 盖整页（同左上角头像开的编辑卡片）；`Esc` 收起，不冒到输入框那边
   card.el.classList.add('is-page');
   card.el.addEventListener('keydown', (e) => {

@@ -429,17 +429,8 @@
 /* 带子项的块（2026-10-30 项目主人：一直展开）：头一行暗字开了几项 */
 .setup-fold-count { flex: none; color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); font-variant-numeric: tabular-nums; }
 .setup-feature-fold > .setup-tools { margin-top: 0; }
-/* 新建会话的「选项」（options.js，W-1208 手机、W-1209 桌面，2026-11-17 主人 38）：人格、预设、工作区三个按钮收成一个。宽屏一行：
-   「选项」旁边小字写人格 · 预设 · 工作区；窄屏两行：下面一行小字只写人格。点开的卡片一行一项，行高 48px 手指点得准；控件不画描边 */
-.setup-opts { min-width: 0; max-width: min(100%, 560px); }
-.setup-opts-text { display: inline-flex; align-items: baseline; gap: calc(8px * var(--space)); min-width: 0; line-height: 1.2; }
-.setup-btn .setup-opts-text small { min-width: 0; max-width: 32em; overflow: hidden; color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); text-overflow: ellipsis; white-space: nowrap; }
-@media (max-width: 640px) {
-  .setup-row > .setup-btn.setup-opts { height: auto; min-height: 32px; padding-block: calc(3px * var(--space)); border-radius: var(--chip-radius, var(--r-14)); }
-  .setup-opts-text { flex-direction: column; align-items: flex-start; gap: 0; }
-  .setup-btn .setup-opts-text small { max-width: 12em; font-size: calc(10.5px * var(--text-scale)); }
-  .setup-opts-more { display: none; }
-}
+/* 新建会话的「选项」（options.js，W-1208 手机、W-1209 桌面，2026-11-17 主人 38）：人格、预设、工作区三个按钮收成一个，按钮上只写图标和「选项」；
+   点了弹的是上面那种小菜单（.setup-menu）。下面是手机上换工作区的那张卡片：行高 48px 手指点得准；控件不画描边 */
 .setup-opt { display: grid; grid-template-columns: minmax(0, 1fr); gap: calc(2px * var(--space)); }
 .setup-opt-head { display: flex; align-items: center; gap: calc(6px * var(--space)); min-height: 40px; margin-bottom: calc(4px * var(--space)); }
 .setup-opt-head strong { overflow: hidden; color: var(--text); font-size: calc(13.5px * var(--text-scale)); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
@@ -449,11 +440,8 @@
 }
 .setup-opt-row:hover, .setup-opt-row:focus-visible { outline: 0; background: var(--item-hover, var(--surface-2)); }
 .setup-opt-row:active { background: var(--item-active, var(--surface-3)); }
-.setup-opt-row.is-off { opacity: 0.5; cursor: default; }
 .setup-opt-row > .icon { width: calc(18px * var(--space)); height: calc(18px * var(--space)); flex: none; color: var(--text-faint); }
 .setup-opt-row.is-current > .icon:last-child { color: var(--accent); }
-.setup-opt-label { flex: none; color: var(--text-soft); }
-.setup-opt-value { flex: 1; min-width: 0; overflow: hidden; color: var(--text); text-align: end; text-overflow: ellipsis; white-space: nowrap; }
 .setup-opt-text { display: flex; flex: 1; flex-direction: column; min-width: 0; }
 .setup-opt-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .setup-opt-row.is-current .setup-opt-title { color: var(--accent); }

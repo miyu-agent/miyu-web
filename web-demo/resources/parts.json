@@ -83,8 +83,7 @@
       ".mem-chip",
       ".sessions-chip",
       ".wg-chip",
-      ".wg-badge",
-      ".setup-opts"
+      ".wg-badge"
     ]
   },
   "chip.active": {
@@ -2124,56 +2123,38 @@
       ".setup-menu-back"
     ]
   },
-  "setup.opts-sub": {
-    "zh": "人格、预设、工作区：手机上「选项」按钮下面那行小字",
-    "select": [
-      ".setup-opts-text small"
-    ]
-  },
   "setup.opt-head": {
-    "zh": "人格、预设、工作区：「选项」卡片一页的标题",
+    "zh": "人格、预设、工作区：手机上工作区的卡片一页的标题",
     "select": [
       ".setup-opt-head strong"
     ]
   },
-  "setup.opt-label": {
-    "zh": "人格、预设、工作区：「选项」卡片一行左边的名字",
-    "select": [
-      ".setup-opt-label"
-    ]
-  },
-  "setup.opt-value": {
-    "zh": "人格、预设、工作区：「选项」卡片一行右边的值",
-    "select": [
-      ".setup-opt-value"
-    ]
-  },
   "setup.opt-title": {
-    "zh": "人格、预设、工作区：「选项」卡片里一项的名字",
+    "zh": "人格、预设、工作区：手机上工作区的卡片里一项的名字",
     "select": [
       ".setup-opt-title"
     ]
   },
   "setup.opt-desc": {
-    "zh": "人格、预设、工作区：「选项」卡片里一项的说明",
+    "zh": "人格、预设、工作区：手机上工作区的卡片里一项的说明",
     "select": [
       ".setup-opt-desc"
     ]
   },
   "setup.opt-section": {
-    "zh": "人格、预设、工作区：「选项」卡片的段名",
+    "zh": "人格、预设、工作区：手机上工作区的卡片的段名",
     "select": [
       ".setup-opt-section"
     ]
   },
   "setup.opt-note": {
-    "zh": "人格、预设、工作区：「选项」卡片的提示",
+    "zh": "人格、预设、工作区：手机上工作区的卡片的提示",
     "select": [
       ".setup-opt-note"
     ]
   },
   "setup.opt-error": {
-    "zh": "人格、预设、工作区：「选项」卡片的出错",
+    "zh": "人格、预设、工作区：手机上工作区的卡片的出错",
     "select": [
       ".setup-opt-error"
     ]

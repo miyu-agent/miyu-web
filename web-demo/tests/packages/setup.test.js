@@ -217,7 +217,7 @@ test('人自己填的编号（W-1125）：小写字母开头，小写字母、�
   for (const bad of ['', 'Dev', '1dev', '-dev', 'my preset', '小白', 'a.b', 'a'.repeat(65)]) assert.equal(validId(bad), false, bad);
 });
 
-test('新建会话的「选项」（W-1208 手机、W-1209 桌面，主人 38）：宽屏窄屏都只有「选项」一个按钮，窄屏小字只写人格；三种语言都有字', async () => {
+test('新建会话的「选项」（W-1208 手机、W-1209 桌面，主人 38）：宽屏窄屏都只有「选项」一个按钮，只写图标和「选项」、不写里面选了什么（2026-11-20 主人验收）；三种语言都有字', async () => {
   const { readFileSync } = await import('node:fs');
   const css = readFileSync(new URL('../../packages/setup/style.css', import.meta.url), 'utf8');
   assert.doesNotMatch(css, /\.setup-opts \{[^}]*display: none/, '宽屏也露「选项」');
@@ -225,8 +225,10 @@ test('新建会话的「选项」（W-1208 手机、W-1209 桌面，主人 38）
   const row = js.match(/const row = h\('div\.setup-row', \{ hidden: true \}, ([^)]*)\)/);
   assert.ok(row, '输入框上面那一排');
   assert.equal(row[1], 'optsBtn, menu.el', '那一排只有「选项」（不再有人格、预设、工作区三个按钮）');
-  const narrow = css.slice(css.indexOf('.setup-opts {'));
-  assert.match(narrow, /@media \(max-width: 640px\) \{[^}]*\}[\s\S]*?\.setup-opts-more \{ display: none; \}/, '窄屏只写人格');
+  const button = js.match(/const optsBtn = h\('button\.setup-btn\.setup-opts', \{[^\n]*\n\s*icon\('sliders-horizontal'\), h\('span', t\('options\.title'\)\)\);/);
+  assert.ok(button, '按钮上只有图标和「选项」');
+  assert.doesNotMatch(js, /replace\(optsBtn/, '画的时候不往按钮上写人格、预设、工作区');
+  assert.doesNotMatch(css, /setup-opts-text|setup-opts-more/, '没有写值的那一行小字');
   const manifest = JSON.parse(readFileSync(new URL('../../packages/setup/manifest.json', import.meta.url), 'utf8'));
   const want = { zh: '选项', en: 'Options', ja: 'オプション' };
   for (const [lang, title] of Object.entries(want)) {
@@ -245,12 +247,24 @@ test('列子目录（文件夹浏览器、手机的「选项」共用）：只�
   assert.deepEqual(denied, { dirs: [], note: '<forbidden>', bad: true });
 });
 
-test('「选项」按钮上的小字（W-1209）：人格 · 预设 · 工作区，读不到列表的那一样不写', async () => {
-  const { summaryOf } = await import('../../packages/setup/options.js');
-  const d = { personas: true, presets: true, persona: () => 'Miyu', preset: () => '开发', workspace: () => '默认工作区' };
-  assert.deepEqual(summaryOf(d), ['Miyu', '开发', '默认工作区']);
-  assert.deepEqual(summaryOf({ ...d, personas: false }), ['开发', '默认工作区']);
-  assert.deepEqual(summaryOf({ ...d, presets: false, persona: () => '无人格' }), ['无人格', '默认工作区']);
+test('「选项」点开是贴着按钮的小菜单（2026-11-20 主人验收：原来是盖整页的大卡片）：三行「名字　暗字的值 ›」（同换模型菜单里「思考程度」那一行），点了翻进那一页、菜单不收；读不到列表的那一样不列', async () => {
+  const { optionsView } = await import('../../packages/setup/options.js');
+  /** @type {string[]} */
+  const opened = [];
+  const d = {
+    t: (/** @type {string} */ k) => `<${k}>`, personas: true, presets: true, persona: () => 'Miyu', preset: () => '开发', workspace: () => '默认工作区',
+    openPersona: () => opened.push('persona'), openPreset: () => opened.push('preset'), openWorkspace: () => opened.push('workspace'),
+  };
+  const view = optionsView(d);
+  assert.equal(view.title, '', '不画标题那一行');
+  const rows = /** @type {any[]} */ (view.rows);
+  assert.deepEqual(rows.map((r) => [r.title, r.side, r.more, r.keep]), [
+    ['<options.persona>', 'Miyu', true, true], ['<options.preset>', '开发', true, true], ['<options.workspace>', '默认工作区', true, true],
+  ]);
+  for (const r of rows) r.pick();
+  assert.deepEqual(opened, ['persona', 'preset', 'workspace']);
+  assert.deepEqual(/** @type {any[]} */ (optionsView({ ...d, personas: false }).rows).map((r) => r.title), ['<options.preset>', '<options.workspace>']);
+  assert.deepEqual(/** @type {any[]} */ (optionsView({ ...d, presets: false }).rows).map((r) => r.title), ['<options.persona>', '<options.workspace>']);
 });
 
 test('系统的选目录对话框（W-1209，菜单和「选项」卡片共用）：交回选的、取消、已经开着一个；开不了的是 null', async () => {

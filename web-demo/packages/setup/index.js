@@ -14,7 +14,7 @@ import { personaName, presetName, presetTokens, defaultUsable, presetInUse, pers
 import { Catalog } from './catalog.js';
 import { ListPage, problemText } from './page.js';
 import { browse, listDirs, parentDir, askDir } from './folders.js';
-import { openOptions, summaryOf } from './options.js';
+import { optionsView, openWorkspaceCard } from './options.js';
 import { touchFirst } from '../../src/lib/touch.js';
 import { PersonaStep, PresetStep } from './welcome.js';
 import { ThemeStep } from './theme-step.js';
@@ -33,8 +33,10 @@ export function apply(ctx) {
   const catalog = new Catalog(ctx.core, () => ctx.icons.more());
 
   const menu = new Menu();
-  // 人格、预设、工作区合成一个「选项」，点开一张卡片三项各选（W-1208 手机，主人 38；W-1209 桌面也这样，2026-11-17 主人定）
-  const optsBtn = h('button.setup-btn.setup-opts', { type: 'button', 'aria-haspopup': 'dialog', onclick: () => { menu.close(); openOptions(optionDeps()); } });
+  // 人格、预设、工作区合成一个「选项」（W-1208 手机，主人 38；W-1209 桌面也这样，2026-11-17 主人定）：按钮上只写图标和「选项」，点了贴着它往上
+  // 弹小菜单三项各选（2026-11-20 主人验收：原来是盖整页的大卡片），再点收起
+  const optsBtn = h('button.setup-btn.setup-opts', { type: 'button', 'aria-haspopup': 'menu', onclick: () => (menu.open ? menu.close() : openOptionsMenu()) },
+    icon('sliders-horizontal'), h('span', t('options.title')));
   const row = h('div.setup-row', { hidden: true }, optsBtn, menu.el);
   const infoMenu = new Menu(t('info.back'));
   const info = h('div.setup-info', { hidden: true });
@@ -180,11 +182,6 @@ export function apply(ctx) {
       if (project) replace(info, projectPart(project), h('span.setup-info-slash', '/'), h('span.setup-info-part.is-title.is-new', h('span', t('info.new_session'))));
       info.hidden = !project;
       row.hidden = false;
-      // 「选项」：旁边一行小字写现在的人格 · 预设 · 工作区（窄屏只写人格，`style.css`）；悬停看完整的工作区路径
-      const sum = summaryOf(optionDeps());
-      replace(optsBtn, icon('sliders-horizontal'), h('span.setup-opts-text', h('span', t('options.title')),
-        sum.length ? h('small', ...sum.map((x, i) => (i ? h('span.setup-opts-more', ` · ${x}`) : h('span', x)))) : null));
-      optsBtn.title = tilde(draft.cwd ?? chat.defaultWorkdir(), home());
       // 没选、默认的又用不了：锁住输入框（第 2 条）。预设一定要有（Y12）；人格可以没有，只有算出来的默认人格文件写错了才锁
       const needPreset = !!catalog.presets && draft.preset == null && !defaultUsable(catalog.presets, used?.preset ?? null, 'preset');
       const needPersona = !!catalog.personas && draft.persona == null && !!used?.persona && !defaultUsable(catalog.personas, used.persona);
@@ -257,7 +254,7 @@ export function apply(ctx) {
     const browseHere = () => {
       if (!touchFirst()) return browse(ctx, infoMenu, anchor, true, chat.workdir(), pickDir, (p) => tilde(p, home()));
       infoMenu.close();
-      openOptions(optionDeps(), { workspace: true });
+      openWorkspaceCard(workspaceDeps());
     };
     infoMenu.show(anchor, {
       title: '',
@@ -482,42 +479,74 @@ export function apply(ctx) {
     return path ? use(path) : t('relative');
   };
 
-  /** 工作区的菜单：默认工作区、最近用过的、「选择文件夹…」（2026-10-08 项目主人：不要手写路径的框；要写路径用 `/workspace 路径`）。 @param {HTMLElement} anchor @param {boolean} below */
-  const openWorkspaces = (anchor, below) => {
+  /**
+   * 工作区的菜单：默认工作区、最近用过的、「选择文件夹…」（2026-10-08 项目主人：不要手写路径的框；要写路径用 `/workspace 路径`）。
+   * 给了 `back` 的（「选项」菜单翻进来的）标题前面一个返回，选了换好回到那一屏，不收菜单。
+   * @param {HTMLElement} anchor @param {boolean} below @param {() => void} [back]
+   */
+  const openWorkspaces = (anchor, below, back) => {
     const def = chat.defaultWorkdir();
     // 开着的会话的「默认」是它自己的那一个（核心 5-14 中）；点了照旧交账号的工作区，核心换成这个会话自己的
     const own = chat.current() ? chat.defaultWorkdirOf?.(chat.current()) ?? null : null;
     const now = chat.current() ? chat.workdir() : chat.draft().cwd ?? def;
     const others = recent().filter((p) => p !== def && p !== own);
     const which = below ? infoMenu : menu;
+    // 选了一个：翻进来的换好了回到上一屏（菜单不收），不然照旧收起
+    const pick = (/** @type {string} */ path) => (back ? pickDir(path).then(() => { if (which.open) back(); }) : pickDir(path));
     which.show(anchor, {
       title: t('set_workspace'),
+      back,
       // 选文件夹：标题右边一个图标（2026-10-09 项目主人：做成右上角的一个图标，不占一行）
       action: { icon: 'folder-open', title: t('folders.open_short'), run: () => browse(ctx, which, anchor, below, now, pickDir, (p) => tilde(p, home())) },
       below,
       rows: [
-        { title: t('default_workspace'), desc: tilde(own ?? def, home()), current: now === def || (!!own && now === own), pick: () => pickDir(def) },
+        { title: t('default_workspace'), desc: tilde(own ?? def, home()), current: now === def || (!!own && now === own), keep: !!back, pick: () => pick(def) },
         ...(others.length ? [{ section: t('recent') }] : []),
-        ...others.map((p) => ({ title: dirName(tilde(p, home())), desc: tilde(p, home()), current: now === p, pick: () => pickDir(p) })),
+        ...others.map((p) => ({ title: dirName(tilde(p, home())), desc: tilde(p, home()), current: now === p, keep: !!back, pick: () => pick(p) })),
       ],
     });
   };
 
   /** 人格写给人看的名字（无人格的写「无人格」） @param {string|null} id */
   const personaLabel = (id) => (id ? nameOf(id) : t('no_persona'));
-  /** 「选项」卡片要的（`options.js`）：照空会话现在选的、默认的写；选了照按钮那几个菜单一样改草稿 @returns {import('./options.js').Deps} */
-  const optionDeps = () => ({
+  /**
+   * 「选项」小菜单（`options.js` 的 `optionsView`）：三行人格、预设、工作区，照空会话现在选的、默认的写；点一行翻进那一页，选了改草稿、回到三行。
+   * 人格、预设那一页同左上角会话信息卡里换人格、换预设的那一页（每行右边一个编辑）；工作区那一页桌面上同工作区的菜单，手机上开大块的卡片。
+   */
+  const openOptionsMenu = () => {
+    const keep = (/** @type {any[]} */ rows) => rows.map((r) => ({ ...r, keep: true }));
+    const main = () => menu.show(optsBtn, optionsView({
+      t,
+      personas: !!catalog.personas,
+      presets: !!catalog.presets,
+      persona: () => personaLabel(chat.draft().persona === false ? null : inUse().persona ?? null),
+      preset: () => presetNameOf(chat.draft().preset ?? inUse().preset ?? null) || t('choose_preset'),
+      workspace: () => {
+        const cwd = chat.draft().cwd ?? chat.defaultWorkdir();
+        return cwd === chat.defaultWorkdir() ? t('default_workspace') : dirName(tilde(cwd, home()));
+      },
+      openPersona: personas,
+      openPreset: presets,
+      openWorkspace: () => {
+        if (!touchFirst()) return openWorkspaces(optsBtn, false, main);
+        menu.close();
+        openWorkspaceCard(workspaceDeps());
+      },
+    }));
+    const personas = () => menu.show(optsBtn, {
+      title: t('options.persona'), back: main,
+      rows: keep(personaRows(inUse().persona ?? null, (p) => { chat.setDraft({ persona: p ?? false }); main(); }, personas, () => menu.close())),
+    });
+    const presets = () => menu.show(optsBtn, {
+      title: t('options.preset'), back: main,
+      rows: keep(presetRows(inUse().preset ?? null, (p) => { chat.setDraft({ preset: p }); main(); }, presets, () => menu.close())),
+    });
+    main();
+  };
+
+  /** 工作区的卡片要的（`options.js` 的 `openWorkspaceCard`）：空会话照草稿、开着的会话照它现在的工作区 @returns {import('./options.js').Deps} */
+  const workspaceDeps = () => ({
     t,
-    personas: !!catalog.personas,
-    presets: !!catalog.presets,
-    persona: () => personaLabel(chat.draft().persona === false ? null : inUse().persona ?? null),
-    preset: () => presetNameOf(chat.draft().preset ?? inUse().preset ?? null) || t('choose_preset'),
-    workspace: () => {
-      const cwd = chat.current() ? chat.workdir() : chat.draft().cwd ?? chat.defaultWorkdir();
-      return cwd === chat.defaultWorkdir() ? t('default_workspace') : dirName(tilde(cwd, home()));
-    },
-    personaRows: () => personaRows(inUse().persona ?? null, (p) => chat.setDraft({ persona: p ?? false })),
-    presetRows: () => presetRows(inUse().preset ?? null, (p) => chat.setDraft({ preset: p })),
     workspaces: () => {
       const def = chat.defaultWorkdir();
       const own = chat.current() ? chat.defaultWorkdirOf?.(chat.current()) ?? null : null;
@@ -655,8 +684,8 @@ export function apply(ctx) {
   ctx.commands.register({ name: 'preset', summary: t('command_preset') }, () => pickFor('preset'));
   ctx.commands.register({ name: 'workspace', summary: t('command'), args: true }, async (words) => {
     const text = (words ?? '').trim();
-    // 空会话里没写路径：开「选项」卡片的工作区那一页（输入框上面不再有工作区按钮，W-1209）
-    if (!text) return chat.current() ? openWorkspaces(pathBtn ?? info, true) : void openOptions(optionDeps(), { workspace: true });
+    // 空会话里没写路径：开工作区的卡片（输入框上面不再有工作区按钮，W-1209）
+    if (!text) return chat.current() ? openWorkspaces(pathBtn ?? info, true) : void openWorkspaceCard(workspaceDeps());
     const why = await check(text);
     if (why) ctx.composer.say(why);
   });
