@@ -1,8 +1,10 @@
 // @ts-check
 //! 「核心已停止」的卡（蓝图 `web.md`「连核心」第 1 条，核心 CS-5，W-1210）：开着的页面断了以后自己重连，核心是人停的（`miyu core stop`、
 //! 托盘的「退出」），那一头不拉起它。页面正中一张卡（同「连不上核心」那张的样子，`boot-card`；淡遮罩），标题照那一头给的那一句（核心
-//! `core/start/stopped_by_user`，照那台机器的语言），下面一个「启动」：点了照常连、那一头拉起核心，按钮写「正在启动…」、灰着；接上了
-//! （重新握手、补完）收卡；拉不起来的照那一句写在标题下面，按钮放开。断着时照常隔一会儿再试：别处把核心起来了就自己接上、收卡。
+//! `core/start/stopped_by_user`，照那台机器的语言），下面一个「启动」：点了照常连、那一头拉起核心，按钮写「正在启动…」、灰着，一直到
+//! 接上了（重新握手、补完）收卡——卡淡出的时候也还是「正在启动…」，下次出卡才写回「启动」（2026-11-20 主人验收：原来接上的那一下就写回
+//! 「启动」，淡出的卡上按钮闪一下又变回「启动」）；拉不起来的照那一句写在标题下面，按钮放开。断着时照常隔一会儿再试：别处把核心起来了
+//! 就自己接上、收卡。
 
 import { h } from './dom.js';
 import { show, hide } from '../lib/motion.js';
@@ -20,10 +22,10 @@ export class StoppedCard {
       h('div.boot-card', this.title, this.why, h('div.core-stopped-foot', this.button)));
   }
 
-  /** 人停的：出卡，标题照那一头给的那一句；正在启动的不打断。 @param {string} message */
+  /** 人停的：出卡，标题照那一头给的那一句；正在启动的不打断。正在淡出的（刚接上又停了）停掉淡出、照新出卡。 @param {string} message */
   stopped(message) {
     this.title.textContent = message;
-    if (this.el.hidden) {
+    if (this.el.hidden || this.el.classList.contains('is-leaving')) {
       this.idle();
       this.why.hidden = true;
       show(this.el);
@@ -39,10 +41,9 @@ export class StoppedCard {
     this.idle();
   }
 
-  /** 接上了（重新握手、补完）：收卡。 */
+  /** 接上了（重新握手、补完）：收卡。按钮不在这时写回「启动」（卡还在淡出），下次出卡时再写（`stopped`）。 */
   joined() {
     if (!this.el.hidden) hide(this.el);
-    this.idle();
   }
 
   /** 点了「启动」。 */
