@@ -133,10 +133,10 @@ test('没测成以后的动作：重试排最前（照填的原样再测）；�
 test('配好了的照密钥取不取得到算：引用的密钥没了的不算，没写密钥的算（2026-10-13 项目主人实测）', () => {
   const got = usableIds([
     { id: 'deepseek', key: { ref: 'secret:deepseek-1', set: false } },
-    { id: 'magpie', key: { ref: 'secret:magpie-1', set: true } },
+    { id: 'gateway', key: { ref: 'secret:gateway-1', set: true } },
     { id: 'local', models: [] },
   ]);
-  assert.deepEqual([...got].sort(), ['local', 'magpie']);
+  assert.deepEqual([...got].sort(), ['gateway', 'local']);
   const rows = providerRows([{ id: 'deepseek', name: 'DeepSeek', supported: true }], null, got);
   assert.equal(rows.common[0].configured, null, '密钥没了的那一家照没配过的走，不标已配置');
 });
@@ -154,10 +154,10 @@ test('自定义的编号：人起的照它存，写法不对、重了的说哪�
 
 test('找模型：空格分开的几个词都要有，词也可以跳着；连着含着的排前面（2026-10-23 项目主人：搜索不支持模糊搜索）', async () => {
   const { filterNames } = await import('../../packages/settings/onboard/logic.js');
-  const list = ['clinepass/cline-free/mimo-v2.6-flash', 'clinepass/cline-pass/deepseek-v4.1-flash', 'deepseek/deepseek-flash', 'anthropic/claude-haiku-5-5'];
-  assert.deepEqual(filterNames(list, 'cline deepseek'), ['clinepass/cline-pass/deepseek-v4.1-flash']);
-  assert.deepEqual(filterNames(list, 'dsflash'), ['clinepass/cline-pass/deepseek-v4.1-flash', 'deepseek/deepseek-flash']);
-  assert.deepEqual(filterNames(list, 'flash'), ['clinepass/cline-free/mimo-v2.6-flash', 'clinepass/cline-pass/deepseek-v4.1-flash', 'deepseek/deepseek-flash']);
+  const list = ['relaypass/relay-free/mimo-v2.6-flash', 'relaypass/relay-pass/deepseek-v4.1-flash', 'deepseek/deepseek-flash', 'anthropic/claude-haiku-5-5'];
+  assert.deepEqual(filterNames(list, 'relay deepseek'), ['relaypass/relay-pass/deepseek-v4.1-flash']);
+  assert.deepEqual(filterNames(list, 'dsflash'), ['relaypass/relay-pass/deepseek-v4.1-flash', 'deepseek/deepseek-flash']);
+  assert.deepEqual(filterNames(list, 'flash'), ['relaypass/relay-free/mimo-v2.6-flash', 'relaypass/relay-pass/deepseek-v4.1-flash', 'deepseek/deepseek-flash']);
   assert.deepEqual(filterNames(list, '  '), list);
 });
 
@@ -180,15 +180,15 @@ test('设置页找模型也不管标点（同一个办法）', async () => {
 
 test('自定义的显示名称写进 providers.<id>.name，空着的不写', async () => {
   const { setupChanges } = await import('../../packages/settings/onboard/logic.js');
-  const named = setupChanges({ kind: 'custom', driver: 'openai-chat', base_url: 'http://h:1/v1', id: 'magpie', name: 'Magpie 中转' }, null, { taken: new Set() });
-  assert.ok(named.changes.some((c) => c.key === 'providers.magpie.name' && c.value === 'Magpie 中转'));
-  const plain = setupChanges({ kind: 'custom', driver: 'openai-chat', base_url: 'http://h:1/v1', id: 'magpie', name: null }, null, { taken: new Set() });
-  assert.ok(!plain.changes.some((c) => c.key === 'providers.magpie.name'));
+  const named = setupChanges({ kind: 'custom', driver: 'openai-chat', base_url: 'http://h:1/v1', id: 'gateway', name: 'Gateway 中转' }, null, { taken: new Set() });
+  assert.ok(named.changes.some((c) => c.key === 'providers.gateway.name' && c.value === 'Gateway 中转'));
+  const plain = setupChanges({ kind: 'custom', driver: 'openai-chat', base_url: 'http://h:1/v1', id: 'gateway', name: null }, null, { taken: new Set() });
+  assert.ok(!plain.changes.some((c) => c.key === 'providers.gateway.name'));
 });
 
 test('配置里有、常用和本机里都没有的几家另列一组「已配好」（2026-10-23 项目主人：建好了自定义的点了返回，列表里没有）', async () => {
   const { mineRows } = await import('../../packages/settings/onboard/logic.js');
   const shown = [{ kind: 'catalog', id: 'deepseek', name: 'DeepSeek', supported: true, configured: 'deepseek', env: null }];
-  const rows = mineRows([{ id: 'deepseek', name: 'DeepSeek' }, { id: 'magpie', name: { value: 'Magpie 中转' } }, { id: 'local2' }], shown);
-  assert.deepEqual(rows.map((r) => [r.kind, r.id, r.name, r.configured]), [['mine', 'magpie', 'Magpie 中转', 'magpie'], ['mine', 'local2', 'local2', 'local2']]);
+  const rows = mineRows([{ id: 'deepseek', name: 'DeepSeek' }, { id: 'gateway', name: { value: 'Gateway 中转' } }, { id: 'local2' }], shown);
+  assert.deepEqual(rows.map((r) => [r.kind, r.id, r.name, r.configured]), [['mine', 'gateway', 'Gateway 中转', 'gateway'], ['mine', 'local2', 'local2', 'local2']]);
 });

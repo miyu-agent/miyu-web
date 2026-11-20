@@ -12,21 +12,21 @@ loadRes();
 const model = (provider, name, more = {}) => ({ model: name, ref: `${provider}/${name}`, facts: {}, state: 'ok', ...more });
 const LIST = {
   providers: [
-    { id: 'dev', models: [model('dev', 'cline-pass/deepseek-v4.1-flash'), model('dev', 'deepseek-v4-pro')] },
+    { id: 'dev', models: [model('dev', 'relay-pass/deepseek-v4.1-flash'), model('dev', 'deepseek-v4-pro')] },
     { id: 'bigmodel', models: [model('bigmodel', 'glm-5.3-flash', { state: 'cooling', until: '2026-10-01T14:41:00.000Z', class: 'rate_limited' })] },
     { id: 'anthropic', models: [model('anthropic', 'claude-sonnet-5', { state: 'no_key' })] },
   ],
   pools: [
-    { name: 'duo', strategy: 'pin', models: ['bigmodel/glm-5.3-flash', 'dev/cline-pass/deepseek-v4.1-flash'], subagent: true, description: 'Two fast models.' },
+    { name: 'duo', strategy: 'pin', models: ['bigmodel/glm-5.3-flash', 'dev/relay-pass/deepseek-v4.1-flash'], subagent: true, description: 'Two fast models.' },
     { name: 'spread', strategy: 'rotate', models: ['dev/deepseek-v4-pro'], subagent: false, description: '' },
   ],
-  uses: { chat: 'dev/cline-pass/deepseek-v4.1-flash', vision: null },
+  uses: { chat: 'dev/relay-pass/deepseek-v4.1-flash', vision: null },
 };
 
 test('模型那一页：一个模型一行，上面模型名、下面供应商，别的不写；现在用着的打勾；用不了的不能选、写原因', () => {
   const { models } = menuOf(LIST, 'dev/deepseek-v4-pro');
   assert.deepEqual(models.map((r) => [r.ref, r.title, r.desc, r.current, r.usable, r.why]), [
-    ['dev/cline-pass/deepseek-v4.1-flash', 'cline-pass/deepseek-v4.1-flash', 'dev', false, true, ''],
+    ['dev/relay-pass/deepseek-v4.1-flash', 'relay-pass/deepseek-v4.1-flash', 'dev', false, true, ''],
     ['dev/deepseek-v4-pro', 'deepseek-v4-pro', 'dev', true, true, ''],
     ['bigmodel/glm-5.3-flash', 'glm-5.3-flash', 'bigmodel', false, false, '冷却到 14:41'],
     ['anthropic/claude-sonnet-5', 'claude-sonnet-5', 'anthropic', false, false, '未设置密钥'],
@@ -36,7 +36,7 @@ test('模型那一页：一个模型一行，上面模型名、下面供应商�
 test('模型池那一页：@名字，下面写它的模型（照先后，只写模型名）；轮流用的打头写一句，出错时换下一个的不写；没配池的是空的', () => {
   const { pools } = menuOf(LIST, '@duo');
   assert.deepEqual(pools.map((r) => [r.ref, r.title, r.desc, r.current, r.usable]), [
-    ['@duo', '@duo', 'glm-5.3-flash、cline-pass/deepseek-v4.1-flash', true, true],
+    ['@duo', '@duo', 'glm-5.3-flash、relay-pass/deepseek-v4.1-flash', true, true],
     ['@spread', '@spread', '轮流使用 · deepseek-v4-pro', false, true],
   ]);
   assert.deepEqual(menuOf({ ...LIST, pools: [] }, null).pools, []);
@@ -47,7 +47,7 @@ test('还没有列表（问着、问不到）：两页都是空的', () => {
 });
 
 test('框下面那一截：引用照第一个 / 拆成模型名和供应商（模型名里可以带 /）；池照原样写、不写供应商', () => {
-  assert.deepEqual(footerOf('dev/cline-pass/deepseek-v4.1-flash'), { model: 'cline-pass/deepseek-v4.1-flash', endpoint: 'dev' });
+  assert.deepEqual(footerOf('dev/relay-pass/deepseek-v4.1-flash'), { model: 'relay-pass/deepseek-v4.1-flash', endpoint: 'dev' });
   assert.deepEqual(footerOf('@duo'), { model: '@duo', endpoint: null });
   assert.deepEqual(footerOf('cheap'), { model: 'cheap', endpoint: null });
 });
@@ -110,18 +110,18 @@ test('手动选的模型记成新会话的默认（2026-10-02 项目主人定）
 test('模型那一行写显示名（目录给的），下面写供应商的显示名；显示名重了的下面接模型名；搜索照显示名、模型名、供应商找', () => {
   const named = (provider, name, display) => ({ model: name, ref: `${provider}/${name}`, facts: { name: { value: display, from: 'catalog' } }, state: 'ok' });
   const list = { providers: [
-    { id: 'magpie', name: { value: 'magpie', from: 'id' }, models: [named('magpie', 'clinepass/cline-pass/deepseek-v4.1-flash', 'DeepSeek V4.1 Flash'), named('magpie', 'workbuddy/deepseek-v4.1-flash', 'DeepSeek V4.1 Flash'), named('magpie', 'clinepass/cline-pass/qwen3.7-max', 'Qwen3.7 Max')] },
+    { id: 'gateway', name: { value: 'gateway', from: 'id' }, models: [named('gateway', 'relaypass/relay-pass/deepseek-v4.1-flash', 'DeepSeek V4.1 Flash'), named('gateway', 'workbuddy/deepseek-v4.1-flash', 'DeepSeek V4.1 Flash'), named('gateway', 'relaypass/relay-pass/qwen3.7-max', 'Qwen3.7 Max')] },
     { id: 'dev', name: { value: 'DeepSeek', from: 'catalog' }, models: [named('dev', 'glm-5.3-flash', 'GLM-5.3-Flash')] },
   ], pools: [] };
   const { models } = menuOf(list, null);
   assert.deepEqual(models.map((r) => [r.title, r.desc]), [
-    ['DeepSeek V4.1 Flash', 'magpie · clinepass/cline-pass/deepseek-v4.1-flash'],
-    ['DeepSeek V4.1 Flash', 'magpie · workbuddy/deepseek-v4.1-flash'],
-    ['Qwen3.7 Max', 'magpie'],
+    ['DeepSeek V4.1 Flash', 'gateway · relaypass/relay-pass/deepseek-v4.1-flash'],
+    ['DeepSeek V4.1 Flash', 'gateway · workbuddy/deepseek-v4.1-flash'],
+    ['Qwen3.7 Max', 'gateway'],
     ['GLM-5.3-Flash', 'DeepSeek'],
   ]);
   assert.deepEqual(filterRows(models, 'qwen').map((r) => r.title), ['Qwen3.7 Max']);
-  assert.deepEqual(filterRows(models, 'workbuddy flash').map((r) => r.ref), ['magpie/workbuddy/deepseek-v4.1-flash'], '模型名也算，几段都要有');
+  assert.deepEqual(filterRows(models, 'workbuddy flash').map((r) => r.ref), ['gateway/workbuddy/deepseek-v4.1-flash'], '模型名也算，几段都要有');
   assert.deepEqual(filterRows(models, 'deepseek').map((r) => r.title), ['DeepSeek V4.1 Flash', 'DeepSeek V4.1 Flash', 'GLM-5.3-Flash'], '供应商的显示名也算');
   assert.equal(filterRows(models, '  ').length, 4);
   // 标点、空白不算（2026-11-10 项目主人：搜 opus5.5 找不到 claude-opus-5-5；同 im I-191）
@@ -133,14 +133,14 @@ test('模型那一行写显示名（目录给的），下面写供应商的显�
 });
 
 test('框下面那一截写显示名和供应商的显示名（重名的也写显示名，悬停写完整的）；找不到的写模型名；池、没有列表的照原样', () => {
-  const named = (name, display) => ({ model: name, ref: `magpie/${name}`, facts: { name: { value: display } }, state: 'ok' });
-  const list = { providers: [{ id: 'magpie', name: { value: 'Magpie', from: 'config' }, models: [
-    named('clinepass/cline-free/mimo-v2.6-flash', 'MiMo-V2.6-Flash'),
+  const named = (name, display) => ({ model: name, ref: `gateway/${name}`, facts: { name: { value: display } }, state: 'ok' });
+  const list = { providers: [{ id: 'gateway', name: { value: 'Gateway', from: 'config' }, models: [
+    named('relaypass/relay-free/mimo-v2.6-flash', 'MiMo-V2.6-Flash'),
     named('a/deepseek-v4.1-flash', 'DeepSeek V4.1 Flash'), named('b/deepseek-v4.1-flash', 'DeepSeek V4.1 Flash'),
   ] }] };
-  assert.deepEqual(footerLabel({ model: 'clinepass/cline-free/mimo-v2.6-flash', endpoint: 'magpie' }, list), { model: 'MiMo-V2.6-Flash', endpoint: 'Magpie', full: 'magpie/clinepass/cline-free/mimo-v2.6-flash' });
-  assert.equal(footerLabel({ model: 'a/deepseek-v4.1-flash', endpoint: 'magpie' }, list).model, 'DeepSeek V4.1 Flash', '显示名重了也写显示名');
-  assert.deepEqual(footerLabel({ model: 'gone', endpoint: 'magpie' }, list), { model: 'gone', endpoint: 'Magpie', full: 'magpie/gone' }, '列表里找不到这个模型');
+  assert.deepEqual(footerLabel({ model: 'relaypass/relay-free/mimo-v2.6-flash', endpoint: 'gateway' }, list), { model: 'MiMo-V2.6-Flash', endpoint: 'Gateway', full: 'gateway/relaypass/relay-free/mimo-v2.6-flash' });
+  assert.equal(footerLabel({ model: 'a/deepseek-v4.1-flash', endpoint: 'gateway' }, list).model, 'DeepSeek V4.1 Flash', '显示名重了也写显示名');
+  assert.deepEqual(footerLabel({ model: 'gone', endpoint: 'gateway' }, list), { model: 'gone', endpoint: 'Gateway', full: 'gateway/gone' }, '列表里找不到这个模型');
   assert.deepEqual(footerLabel({ model: '@duo', endpoint: null }, list), { model: '@duo', endpoint: null });
   assert.deepEqual(footerLabel({ model: 'x', endpoint: 'nope' }, null), { model: 'x', endpoint: 'nope' }, '还没有列表');
 });

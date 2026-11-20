@@ -27,7 +27,7 @@ const got = {
     'models.chat': {
       layers: [
         { origin: { file: 'system/settings.toml', layer: 'system', line: 7 }, used: true, value: 'dev/deepseek-v4.1-flash' },
-        { origin: { file: 'system/config.toml', layer: 'system', line: 14 }, used: false, value: 'dev/cline-pass/deepseek-v4.1-flash' },
+        { origin: { file: 'system/config.toml', layer: 'system', line: 14 }, used: false, value: 'dev/relay-pass/deepseek-v4.1-flash' },
       ],
       origin: { file: 'system/settings.toml', layer: 'system', line: 7 },
       value: 'dev/deepseek-v4.1-flash',
@@ -81,10 +81,10 @@ test('搜索：名字、键、说明都算，不分大小写，跨页；空的�
 });
 
 test('带占位的键：拆键认双引号，真键对得上哪一项，人起的名字照 TOML 写（带斜杠、点的加引号）', () => {
-  assert.deepEqual(splitKey('providers.dev.models."cline-pass/deepseek-v4.1-flash".window'), ['providers', 'dev', 'models', 'cline-pass/deepseek-v4.1-flash', 'window']);
+  assert.deepEqual(splitKey('providers.dev.models."relay-pass/deepseek-v4.1-flash".window'), ['providers', 'dev', 'models', 'relay-pass/deepseek-v4.1-flash', 'window']);
   assert.equal(templateOf('providers.dev.base_url', schema.items)?.key, 'providers.<id>.base_url');
   assert.equal(templateOf('ui.language', schema.items), null);
-  assert.equal(realKey('providers.<id>.models.<model>.window', { id: 'dev', model: 'cline-pass/deepseek-v4.1-flash' }), 'providers.dev.models."cline-pass/deepseek-v4.1-flash".window');
+  assert.equal(realKey('providers.<id>.models.<model>.window', { id: 'dev', model: 'relay-pass/deepseek-v4.1-flash' }), 'providers.dev.models."relay-pass/deepseek-v4.1-flash".window');
   assert.equal(realKey('providers.<id>.models.<model>.window', { id: 'dev', model: 'deepseek-v4-pro' }), 'providers.dev.models.deepseek-v4-pro.window');
   const item = itemFor(schema, got, 'providers.<id>.base_url', { id: 'dev' });
   assert.equal(item?.key, 'providers.dev.base_url');
@@ -175,13 +175,13 @@ test('删一家供应商：这一层写着的 providers.<id>.* 各一条 unset�
 test('找模型：显示名、模型名、供应商名都算，空格分开的几段都要有，不分大小写；空的全给', async () => {
   const { filterModels } = await import('../../packages/settings/model.js');
   const rows = [
-    { name: 'DeepSeek V4.1 Flash', model: 'cline-pass/deepseek-v4.1-flash', provider: 'magpie' },
-    { name: 'GLM-5.3', model: 'clinepass/cline-pass/glm-5.3', provider: 'magpie' },
+    { name: 'DeepSeek V4.1 Flash', model: 'relay-pass/deepseek-v4.1-flash', provider: 'gateway' },
+    { name: 'GLM-5.3', model: 'relaypass/relay-pass/glm-5.3', provider: 'gateway' },
     { name: 'DeepSeek V4 Pro', model: 'deepseek-v4-pro', provider: 'DeepSeek' },
   ];
   assert.equal(filterModels(rows, '').length, 3);
   assert.deepEqual(filterModels(rows, 'glm').map((r) => r.name), ['GLM-5.3']);
-  assert.deepEqual(filterModels(rows, 'deepseek MAGPIE').map((r) => r.name), ['DeepSeek V4.1 Flash'], '几段都要有');
+  assert.deepEqual(filterModels(rows, 'deepseek GATEWAY').map((r) => r.name), ['DeepSeek V4.1 Flash'], '几段都要有');
   assert.deepEqual(filterModels(rows, 'v4-pro').map((r) => r.provider), ['DeepSeek'], '模型名也算');
 });
 
@@ -429,15 +429,15 @@ test('打开局域网：写的是 0.0.0.0；没设访问密码的先弹窗设，
 
 test('别的设备能开的地址：卡上画的是 lan（带它的网卡名），别的网卡的照先后列在「更多地址」里、去掉重的；没有 lan 的什么都不列', async () => {
   const { lanAddrs } = await import('../../packages/settings/access-model.js');
-  const info = { lan: 'http://192.168.0.55:8300', lans: [
-    { url: 'http://192.168.0.55:8300', card: 'enp5s0' }, { url: 'http://100.93.205.44:8300', card: 'tailscale0' },
-    { url: 'http://100.93.205.44:8300', card: 'tailscale0' }, { url: 'http://192.168.0.155:8300' }, { card: 'bad' }, null] };
+  const info = { lan: 'http://192.168.1.10:8300', lans: [
+    { url: 'http://192.168.1.10:8300', card: 'enp5s0' }, { url: 'http://100.64.0.7:8300', card: 'tailscale0' },
+    { url: 'http://100.64.0.7:8300', card: 'tailscale0' }, { url: 'http://192.168.1.11:8300' }, { card: 'bad' }, null] };
   assert.deepEqual(lanAddrs(info), {
-    main: { url: 'http://192.168.0.55:8300', card: 'enp5s0' },
-    others: [{ url: 'http://100.93.205.44:8300', card: 'tailscale0' }, { url: 'http://192.168.0.155:8300', card: null }],
+    main: { url: 'http://192.168.1.10:8300', card: 'enp5s0' },
+    others: [{ url: 'http://100.64.0.7:8300', card: 'tailscale0' }, { url: 'http://192.168.1.11:8300', card: null }],
   });
   // 旧的网页软件只有 lan
-  assert.deepEqual(lanAddrs({ lan: 'http://192.168.0.55:8300' }), { main: { url: 'http://192.168.0.55:8300', card: null }, others: [] });
+  assert.deepEqual(lanAddrs({ lan: 'http://192.168.1.10:8300' }), { main: { url: 'http://192.168.1.10:8300', card: null }, others: [] });
   for (const none of [null, undefined, {}, { lans: [{ url: 'http://10.0.0.2:8300' }] }]) assert.deepEqual(lanAddrs(none), { main: null, others: [] });
 });
 

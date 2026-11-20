@@ -202,7 +202,7 @@ export function modelOrder(models, tried) {
 
 /** 照搜索框里的字挑模型（不分大小写，空着全部）。 @param {string[]} models @param {string} query */
 export function filterNames(models, query) {
-  // 空格分开的几个词都要有（不分先后），每个词也可以是跳着的几个字（「cline deepseek」找得到 clinepass/cline-pass/deepseek-v4.1-flash，
+  // 空格分开的几个词都要有（不分先后），每个词也可以是跳着的几个字（「relay deepseek」找得到 relaypass/relay-pass/deepseek-v4.1-flash，
   // 「dsflash」找得到 deepseek-flash；2026-10-23 项目主人：搜索不支持模糊搜索）；连着含着的排前面
   // 比的时候两边都去掉标点、空白（`bare`：2026-11-10 项目主人：引导里搜 opus5.5 搜不到 opus5-5），只有标点的那一段不算
   const words = query.split(/\s+/).map(bare).filter(Boolean);

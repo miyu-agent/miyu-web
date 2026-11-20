@@ -182,7 +182,7 @@ export function pagesWithErrors(pages) {
   return new Set(pages.filter(bad).map((p) => p.id));
 }
 
-/** 照 TOML 点号连着的键写一段：只有字母、数字、`-`、`_` 的裸着写，别的带双引号（`"cline-pass/deepseek-v4.1-flash"`）。 */
+/** 照 TOML 点号连着的键写一段：只有字母、数字、`-`、`_` 的裸着写，别的带双引号（`"relay-pass/deepseek-v4.1-flash"`）。 */
 export const keySegment = (name) => (/^[A-Za-z0-9_-]+$/.test(name) ? name : `"${name.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`);
 
 /**

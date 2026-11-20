@@ -74,22 +74,22 @@ test('这台设备上存的（核心 SU-1 起只有主人一份）：键是 miyu
   assert.deepEqual(me.get('packages', {}), { rail: { disabled: true } });
 
   const old = fakeStore();
-  old.table.set('miyu.shorin.cards', '[1]');
+  old.table.set('miyu.alice.cards', '[1]');
   old.table.set('miyu.admin.cards', '[2]');
   old.table.set('miyu.admin.theme', '"dark"');
   old.table.set('miyu.packages', '{"todo":{"disabled":true}}');
-  const moved = ownerStorage(old, { packages: 'miyu.packages' }, ['shorin', 'admin']);
+  const moved = ownerStorage(old, { packages: 'miyu.packages' }, ['alice', 'admin']);
   assert.deepEqual(moved.get('cards', null), [1], '先照上次用的那个账号');
   assert.deepEqual(moved.get('theme', null), 'dark', '再照 admin（走桥的）');
   assert.deepEqual(moved.get('packages', {}), { todo: { disabled: true } }, '更早不分账号的旧键');
-  assert.equal(old.table.has('miyu.shorin.cards'), false);
+  assert.equal(old.table.has('miyu.alice.cards'), false);
   assert.equal(old.table.has('miyu.packages'), false);
   // 能列出全部键的：还没读到的键也一次搬完
   const all = fakeStore();
-  all.table.set('miyu.shorin.later', '5');
-  ownerStorage(all, {}, ['shorin']);
+  all.table.set('miyu.alice.later', '5');
+  ownerStorage(all, {}, ['alice']);
   assert.equal(all.table.get('miyu.me.later'), '5');
-  assert.equal(all.table.has('miyu.shorin.later'), false);
+  assert.equal(all.table.has('miyu.alice.later'), false);
 });
 
 test('存法读写抛错、存的不是 JSON 的，照没有算，不让页面起不来', () => {

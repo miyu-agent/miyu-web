@@ -127,8 +127,8 @@ test('点开的细节：参数一行一个「键: 值」，再是结果；没有
 });
 
 test('记忆、知识库点开画给人看的（2026-10-17 项目主人在终端定的）：记下的、写进去的、差异；忘掉、删文档点不开；出错的接着结果', () => {
-  assert.deepEqual(details(tool('remember', { text: 'shorin 最喜欢的动物是猫。', class: 'user' }, { output: 'Saved as m9.' })),
-    [{ kind: 'text', label: '记下的', text: 'shorin 最喜欢的动物是猫。' }], '不画 Saved as m9.');
+  assert.deepEqual(details(tool('remember', { text: 'alice 最喜欢的动物是猫。', class: 'user' }, { output: 'Saved as m9.' })),
+    [{ kind: 'text', label: '记下的', text: 'alice 最喜欢的动物是猫。' }], '不画 Saved as m9.');
   assert.deepEqual(details(tool('kb_save', { kb: 'notes', path: 'fruit.md', text: '# 水果' }, { output: 'Saved fruit.md in notes.' })),
     [{ kind: 'text', label: '写进去的', text: '# 水果' }]);
   assert.equal(details(tool('kb_save', { kb: 'notes', path: 'fruit.md', text: '- 梨', append: true }))[0].label, '接在后面的');

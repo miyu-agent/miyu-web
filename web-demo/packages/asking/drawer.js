@@ -202,7 +202,7 @@ export class Drawer {
     }
   }
 
-  /** 倒计时那几个字：「4:32 后自动拒绝」（2026-11-12 core1 转主人定：所有允许、拒绝的确认都倒计时，到时按拒绝）。 */
+  /** 倒计时那几个字：「4:32 后自动拒绝」（2026-11-12 主人定：所有允许、拒绝的确认都倒计时，到时按拒绝）。 */
   tick() {
     if (!this.timerEl || !this.d) return;
     const left = countdown(this.d.body?.expires_at, Date.now());

@@ -157,7 +157,7 @@ export const EMBED_KEY = 'models.embedding';
 
 /**
  * 内置语义模型的包（`embed`）装没装、没装的能不能从软件源装（核心 G-8，`docs/construction/G-8-引导里下语义模型.md`）：
- * - 装了：`config.schema` 里这一项的 `local` 选项不带 `available: false`（2026-10-18 shorin-ee 转来），交 `{installed: true}`；
+ * - 装了：`config.schema` 里这一项的 `local` 选项不带 `available: false`（2026-10-18），交 `{installed: true}`；
  * - 没装：`package.install {"source": "embed", "preview": true}` 看一眼，交 `{installed: false, size}`（要下的字节数，照回应的 `download`）；
  *   连不上软件源（`source_unreachable`）的大小交 `null`，这一屏照样出，点「是」装的时候照核心的原话说装不上；
  * - 旧核心没有这一项、软件源里没有、没有本机能用的文件、旧核心不认 `source` 的：交 `null`，这一屏跳过。

@@ -38,5 +38,5 @@ test('下一步：没选的不动；不开放到完成，开过的先关上；�
 
 test('这时开没开着：回环的不算，问不到的不算，别的地址算', () => {
   for (const x of ['127.0.0.1', '127.0.1.1', '::1', '[::1]', 'localhost', '', null, undefined]) assert.equal(lanOpen(x), false, String(x));
-  for (const x of ['0.0.0.0', '::', '192.168.0.55', '[fe80::1]']) assert.equal(lanOpen(x), true, String(x));
+  for (const x of ['0.0.0.0', '::', '192.168.1.10', '[fe80::1]']) assert.equal(lanOpen(x), true, String(x));
 });
