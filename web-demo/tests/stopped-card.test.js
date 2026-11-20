@@ -4,6 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync, readdirSync } from 'node:fs';
 import { loadRes } from './support.js';
 
 loadRes();
@@ -113,4 +114,28 @@ test('拉不起来：写出那一头给的整句原因，按钮放开写回「�
   assert.equal(c.why.textContent, '拉不起核心：找不到 miyu 程序');
   assert.equal(c.button.textContent, '启动');
   assert.equal(c.button.disabled, false);
+});
+
+test('卡盖在页面上所有浮层的上面（2026-11-20 主人验收第 31 条，W-1241）：开着设置、看图、仪表盘时停核心，卡和「启动」照样看得见、点得到', () => {
+  const dirs = ['styles', 'packages'];
+  /** @type {{file: string, sel: string, z: number}[]} */
+  const all = [];
+  const walk = (/** @type {URL} */ dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const at = new URL(entry.name + (entry.isDirectory() ? '/' : ''), dir);
+      if (entry.isDirectory()) walk(at);
+      else if (entry.name.endsWith('.css')) {
+        const css = readFileSync(at, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+        for (const m of css.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
+          const z = m[2].match(/z-index:\s*(\d+)/);
+          if (z) all.push({ file: at.pathname.split('/web-demo/')[1], sel: m[1].trim(), z: Number(z[1]) });
+        }
+      }
+    }
+  };
+  for (const d of dirs) walk(new URL(`../${d}/`, import.meta.url));
+  const card = all.find((r) => r.sel === '.core-stopped');
+  assert.ok(card, '找得到卡的那一条');
+  const above = all.filter((r) => r !== card && r.z >= card.z);
+  assert.deepEqual(above, [], '没有浮层压在卡上面');
 });

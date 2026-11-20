@@ -185,8 +185,9 @@ button, textarea { font: inherit; color: inherit; }
   .footer-usage::after { content: ""; position: absolute; inset: 0 -7px; }
 }
 
-/* 「核心已停止」的卡（蓝图 web.md「连核心」第 1 条，核心 CS-5，W-1210）：开着的页面正中，淡遮罩；同「连不上核心」那张卡的样子，下面一个「启动」，不描边 */
-.core-stopped { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: calc(16px * var(--space)); background: color-mix(in srgb, var(--text) 18%, transparent); animation: core-stopped-in calc(0.16s * var(--motion-scale)) ease-out; }
+/* 「核心已停止」的卡（蓝图 web.md「连核心」第 1 条，核心 CS-5，W-1210）：开着的页面正中，淡遮罩；同「连不上核心」那张卡的样子，下面一个「启动」，不描边。
+   盖在所有浮层上面（设置、看图、仪表盘、拖进来的附件……）：核心停了它们都用不了，卡被压在下面就只剩左上角一个「离线」 */
+.core-stopped { position: fixed; inset: 0; z-index: 130; display: grid; place-items: center; padding: calc(16px * var(--space)); background: color-mix(in srgb, var(--text) 18%, transparent); animation: core-stopped-in calc(0.16s * var(--motion-scale)) ease-out; }
 .core-stopped[hidden] { display: none; }
 .core-stopped .boot-card { width: min(460px, 100%); }
 .core-stopped .boot-why { margin-top: calc(4px * var(--space)); color: var(--t-danger, var(--danger)); }
