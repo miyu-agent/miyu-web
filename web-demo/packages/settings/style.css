@@ -43,7 +43,7 @@
 .set-back { display: none; align-items: center; gap: calc(2px * var(--space)); padding: calc(4px * var(--space)) calc(6px * var(--space)) calc(4px * var(--space)) calc(2px * var(--space)); border: 0; border-radius: var(--r-8); background: transparent; color: var(--text-soft); font: calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer; }
 /* `--set-hold`：页尾那一块收起时垫在最底下的空，免得整页跟着往下滑（总开关下面那一块，`path-list.js` 的 `fold`） */
 .set-body { position: relative; flex: 1; min-height: 0; padding: 0 calc(24px * var(--space)) calc(24px * var(--space) + var(--set-hold, 0px)); overflow-x: hidden; overflow-y: auto; overflow-anchor: none; }
-/* 点进去的一层（subpage.js）：页头左边的返回箭头一直在（不写字），进去新的从右边滑进来、原来的往左滑走，回来反过来 */
+/* 点进去的一层（subpage.js）：页头左边的返回箭头一直在（不写字），进去新的从右边滑进来、回来从左边滑进来，原来的那一页当场换掉 */
 .set-layer.has-sub .set-back { display: inline-flex; }
 .set-layer.has-sub .set-back-text { display: none; }
 /* 里面的卡片已经写了名字的那一层：页头不写名字，返回箭头后面写「返回」（2026-10-21 项目主人） */
@@ -51,13 +51,8 @@
 .set-layer.has-sub.is-bare-sub .set-back-sub { display: inline; }
 .set-slide.is-push { animation: set-slide-from-right calc(0.26s * var(--motion-scale)) var(--ease-out); }
 .set-slide.is-pop { animation: set-slide-from-left calc(0.26s * var(--motion-scale)) var(--ease-out); }
-.set-slide-ghost { position: absolute; left: 24px; right: 24px; pointer-events: none; }
-.set-slide-ghost.is-push { animation: set-slide-to-left calc(0.26s * var(--motion-scale)) var(--ease-out) forwards; }
-.set-slide-ghost.is-pop { animation: set-slide-to-right calc(0.26s * var(--motion-scale)) var(--ease-out) forwards; }
 @keyframes set-slide-from-right { from { opacity: 0; transform: translateX(48px); } }
 @keyframes set-slide-from-left { from { opacity: 0; transform: translateX(-48px); } }
-@keyframes set-slide-to-left { to { opacity: 0; transform: translateX(-48px); } }
-@keyframes set-slide-to-right { to { opacity: 0; transform: translateX(48px); } }
 /* 管理员模式（蓝图「管理员模式」第 2、4 条）：页名旁边一颗淡橙色小标签；左栏最下面一行开关；锁着的地方一行暗字，管理员隔开一点后面「进入管理员模式」；
    齿轮右上角一个橙色小点。页名不撑满，关闭按钮靠右 */
 .set-head .set-close { margin-left: auto; }

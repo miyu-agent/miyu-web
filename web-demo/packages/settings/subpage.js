@@ -1,7 +1,8 @@
 // @ts-check
 //! 设置页里点进去的一层（蓝图 `web.md`「设置页」第 13 条；2026-10-10 项目主人：软件包页点一个软件包，滑动进入它的设置页，左上角一个箭头
-//! 返回软件包页）：右边整栏换成这一层，页头写它的名字、左边一个返回箭头；进去时新的从右边滑进来、原来的往左滑走，返回时反过来。
-//! 换左边的分页、搜索时直接收掉，不滑。回来时列表回到进去前滚到的地方。
+//! 返回软件包页）：右边整栏换成这一层，页头写它的名字、左边一个返回箭头；进去时新的从右边滑进来，返回时从左边滑进来。原来的那一页
+//! 当场换掉，不留一层淡出（2026-11-20 主人验收：旧的一页淡出时和新的叠在一起，没必要）。换左边的分页、搜索时直接收掉，不滑。
+//! 回来时列表回到进去前滚到的地方。
 
 import { h, replace } from '../../src/lib/dom.js';
 
@@ -48,7 +49,7 @@ export class Subpage {
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * 换右边的内容，滑一下：原来的内容原地留一层往旁边滑走、淡掉，新的从另一边滑进来。`dir` 是空的直接换。
+ * 换右边的内容，滑一下：原来的内容当场换掉，新的从一边滑进来（进去从右边、回来从左边）。`dir` 是空的直接换。
  * @param {HTMLElement} body 右边那一栏（能滚的那一层） @param {any} kids 新的内容（节点、套着的数组、空的都行） @param {Dir|null} dir @param {number} scroll 新的内容滚到哪
  */
 export function swap(body, kids, dir, scroll) {
@@ -57,13 +58,6 @@ export function swap(body, kids, dir, scroll) {
     body.scrollTop = scroll;
     return;
   }
-  const before = body.scrollTop;
-  const old = [...body.childNodes];
-  const next = h(`div.set-slide.is-${dir}`, kids);
-  body.replaceChildren(next);
+  replace(body, h(`div.set-slide.is-${dir}`, kids));
   body.scrollTop = scroll;
-  // 原来的那一层摆在原来看得到的位置：滚动换了，照差值往上下挪
-  const ghost = h(`div.set-slide-ghost.is-${dir}`, { 'aria-hidden': 'true', style: { top: `${body.scrollTop - before}px` } }, old);
-  body.append(ghost);
-  ghost.addEventListener('animationend', () => ghost.remove(), { once: true });
 }
