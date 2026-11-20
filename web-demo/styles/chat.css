@@ -242,9 +242,11 @@ button.user-file { border: 0; font: inherit; cursor: pointer; }
   .turn-end.is-fit.is-wrap > .turn-end-text { overflow: visible; white-space: normal; }
   .turn-end.is-short > .turn-end-text { cursor: pointer; }
 }
-/* 权限级别的记号（`⏵⏵`、`⏸`）画成自带的图标（`level-glyph.js`）：跟着字的颜色，实心；连后面的空一共占三个字符宽（原来「两个记号加一个空格」
-   那么宽，后面的字不挪地方）；底边坐在基线上、比字矮，不把这一行撑高，再往下挪一点对齐字的中线 */
+/* 权限级别的记号（`▣`、`⏸`）画成自带的图标（`level-glyph.js`）：跟着字的颜色，实心；连后面的空一共占三个字符宽（`⏵⏵ ` 时定的「两个记号加一个空格」
+   那么宽，两级之间切换后面的字不挪地方）；底边坐在基线上、比字矮，不把这一行撑高，再往下挪一点对齐字的中线 */
 .level-glyph { position: relative; top: 0.1em; display: inline-block; width: 1.2em; height: 0.9em; margin-right: calc(3ch - 1.2em); fill: currentColor; stroke: currentColor; stroke-width: 0.6; vertical-align: baseline; }
+/* 开放权限的 `▣`（`square-square`）：外框只描边、里面的小方块实心，整个涂满就成了一块 `■`（像素风那一套是一条路径，不碰） */
+.level-glyph[data-icon="square-square"] > rect:first-child { fill: none; stroke-width: 2; }
 /* 打断的那一轮后面那一句「· 后台仍有 N 个任务在运行」（蓝图「后台任务」第 6 条，点了打开后台任务）：字体、字号、颜色、字距同前面的「已中断」（2026-10-26 项目主人：原来 `text_soft`，看着像另一种字；按钮默认的字距、
    词距不跟着父元素，照样写 inherit），能点只靠悬停时字亮一档、加下划线 */
 .turn-end-jobs { padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; word-spacing: inherit; cursor: pointer; }

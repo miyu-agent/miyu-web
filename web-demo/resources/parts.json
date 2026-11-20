@@ -6954,6 +6954,12 @@
       ".level-glyph"
     ]
   },
+  "level.glyph.frame": {
+    "zh": "开放权限的记号 ▣ 画成的图标的外框（只描边，里面的小方块实心）",
+    "select": [
+      ".level-glyph[data-icon=\"square-square\"] > rect:first-child"
+    ]
+  },
   "dash": {
     "zh": "仪表盘：整块（右边那一栏里）",
     "select": [

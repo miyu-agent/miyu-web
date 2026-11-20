@@ -22,7 +22,7 @@ const status = {
 
 test('一个会话的底栏：级别、模型照会话状态；右边一格累计 token 接缓存命中率「12.4k(C88%)」（2026-11-10 项目主人），环照上下文占窗口多少；会话状态里有速度也不写（2026-10-26 项目主人：挪到每轮收尾那一行）', () => {
   const f = statusFooter(status);
-  assert.deepEqual(f.left, { level: 'full', label: '⏵⏵ 开放权限', model: 'deepseek-v4', endpoint: 'deepseek' }, '旧的工作区读成开放权限（LV-3）');
+  assert.deepEqual(f.left, { level: 'full', label: '▣ 开放权限', model: 'deepseek-v4', endpoint: 'deepseek' }, '旧的工作区读成开放权限（LV-3）');
   assert.deepEqual(f.right.map((p) => p.text), ['12.4k(C88%)']);
   assert.deepEqual(f.ring, { ratio: 0.0023, used: 2300, window: 1_000_000, stuck: null, cap: null });
   assert.equal(ringTip(/** @type {any} */ (f.ring)), '上下文 2.3k / 1M（0.2%）');
@@ -41,7 +41,7 @@ test('只读开着写只读，只读盖过常用的那一级；还是 0 的不�
   assert.equal(fresh.left.model, null);
   assert.deepEqual(fresh.right, []);
   assert.equal(fresh.ring, null);
-  assert.deepEqual(statusFooter(null), { left: { level: 'full', label: '⏵⏵ 开放权限', model: null, endpoint: null }, right: [], ring: null });
+  assert.deepEqual(statusFooter(null), { left: { level: 'full', label: '▣ 开放权限', model: null, endpoint: null }, right: [], ring: null });
 });
 
 test('会话状态不知道窗口多大的照订阅回应的限额；都不知道的环不画比例，悬停只写用了多少', () => {
@@ -98,7 +98,7 @@ test('点一下换下一级：开放权限 ⇄ 只读（LV-3 起没有工作区�
   const { nextLevel, levelLabel } = await import('../src/model/footer.js');
   // LV-3（2026-11-09 项目主人）：只剩开放权限、只读两样，来回换
   assert.deepEqual(['full', 'read_only'].map(nextLevel), ['read_only', 'full']);
-  assert.equal(levelLabel('full'), '⏵⏵ 开放权限');
+  assert.equal(levelLabel('full'), '▣ 开放权限');
 });
 
 test('换级别发给核心的参数：只读只开只读开关；开放权限写 full 并关掉只读（LV-3）', async () => {
@@ -119,9 +119,9 @@ test('会话设了上下文上限（核心 CTX-1，设计 68，W-1129）：底�
 
 test('权限级别的记号拆成「画哪个图标、后面的字」（W-1154，手机上那两个字是方块、emoji）：打头是记号的换成自带图标的名字，别的原样', async () => {
   const { levelParts } = await import('../src/model/footer.js');
-  assert.deepEqual(levelParts('⏵⏵ 开放权限'), { icon: 'fast-forward', text: '开放权限' });
+  assert.deepEqual(levelParts('▣ 开放权限'), { icon: 'square-square', text: '开放权限' });
   assert.deepEqual(levelParts('⏸ 只读'), { icon: 'pause', text: '只读' });
-  assert.deepEqual(levelParts('⏵⏵ 16:06 · fake/fake · 501k(C99%)'), { icon: 'fast-forward', text: '16:06 · fake/fake · 501k(C99%)' }, '收尾那一行');
+  assert.deepEqual(levelParts('▣ 16:06 · fake/fake · 501k(C99%)'), { icon: 'square-square', text: '16:06 · fake/fake · 501k(C99%)' }, '收尾那一行');
   assert.deepEqual(levelParts('✻ 16:06 · fake/fake'), { icon: null, text: '✻ 16:06 · fake/fake' }, '没记着级别的照旧是字');
   assert.deepEqual(levelParts('出错了：⏸ 不在开头'), { icon: null, text: '出错了：⏸ 不在开头' });
   // 两个图标都在内核自带的那一套里（不等整套图标读进来）
