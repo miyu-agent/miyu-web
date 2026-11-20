@@ -2,12 +2,13 @@
 //! 「模型」页的「＋ 添加供应商」（蓝图 `web.md`「第一次引导」第 12 条：和引导用同一份，2026-10-08 项目主人）：一个浮窗里接一家供应商的
 //! 几屏（`onboard/flow.js`，设置页的那一种：最后的按钮是「保存」，只写这一家）。浮窗同 MCP「添加服务」（`mcp-form.js`：盖一层淡底、正中一张卡，
 //! 进出照它的动画，2026-10-24 项目主人：原来占了右边整页），后面的供应商列表不动。存好了关上浮窗、选中它。还想照原来那张表一项项填的
-//! （自己起编号、写显示名、写环境变量名），选一家那一屏最下面「手动填写…」关上浮窗、打开原来的表（`provider-form.js`）。
+//! （自己起编号、写显示名、写环境变量名），选一家那一屏最下面「手动填写…」关上浮窗、打开原来的表（`provider-form.js`，也是正中的小窗）。
 //! 浮窗挂在设置框上、不在正文里：收到配置推送整页重画时它不动，写了一半的字不丢。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
 import { ProviderFlow } from './onboard/flow.js';
+import { openProviderForm } from './provider-form.js';
 
 /**
  * 开始添加：开浮窗，先画选一家。
@@ -16,7 +17,6 @@ import { ProviderFlow } from './onboard/flow.js';
 export function openAdd(dialog) {
   dialog.panel.querySelector('.set-add-modal')?.remove();
   dialog.modelDetail = null;
-  dialog.providerForm = null;
   const pop = h('div.set-tool-pop.set-add-pop', { role: 'dialog', 'aria-modal': 'true', 'aria-label': dialog.ctx.text('models.add_provider') });
   /** 现在这一屏：`Esc`、点外面照它走 @type {import('./onboard/flow.js').Screen|null} */
   let current = null;
@@ -46,8 +46,7 @@ export function openAdd(dialog) {
     },
     manual: () => {
       close();
-      dialog.providerForm = { id: null };
-      dialog.drawBody();
+      openProviderForm(dialog, null);
     },
   }, 'settings');
   replace(pop, h('p.set-empty', dialog.ctx.text('loading')));

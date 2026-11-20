@@ -1,13 +1,14 @@
 // @ts-check
 //! 「模型」页的「供应商」（蓝图 `web.md`「设置页」第 14 条；2026-10-11 项目主人看过说丑，改成这样）：左边一家一格两行（图标、名称，
 //! 下面用不了的原因或者地址的主机名，同名的两家靠它分开）；右边头上图标、名称、地址和「测试连接」「编辑」，没设密钥的直接一个框
-//! 填，模型一个一行（名字、「1M 上下文 · 看图」），点一行在正中弹出详情（`model-detail.js`）。接口只在编辑表里（`provider-form.js`）。
+//! 填，模型一个一行（名字、「1M 上下文 · 看图」），点一行在正中弹出详情（`model-detail.js`）。接口只在编辑表里（`provider-form.js`，「编辑」在
+//! 正中弹出的小窗）。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { hasLogos, logoEl } from '../../src/lib/logo.js';
 import { duplicates, inputText, providerName, hostOf, whereOf, sameNamed, secretName, keyChange, providerRemoval, providerPackage, packageNames, LAYER } from './model.js';
 import { modelName, metaOf, sharedState, loadingRow, searchable, refreshProvider, testLine } from './model-bits.js';
-import { openForm } from './provider-form.js';
+import { openProviderForm } from './provider-form.js';
 import { confirmIn } from './confirm.js';
 import { openAdd } from './add-provider.js';
 import { detailModal } from './model-detail.js';
@@ -96,7 +97,7 @@ function head(dialog, p, logos) {
   const pkg = providerPackage(p.id, dialog.got);
   return h('div.set-prov-head',
     h('div.set-prov-title', logo, h('div', h('strong', providerName(p)), h('span', { title: address }, address)),
-      h('div.set-prov-buttons', test, h('button.set-btn', { type: 'button', onclick: openForm(dialog, p.id) }, ctx.text('models.edit')), removeButton(dialog, p))),
+      h('div.set-prov-buttons', test, h('button.set-btn', { type: 'button', onclick: () => openProviderForm(dialog, p.id) }, ctx.text('models.edit')), removeButton(dialog, p))),
     // 核心推不出接口、先照 openai-chat 用的（`driver_from: default`，核心 8-26）：写明是猜的，猜错了请求会出错
     p.driver_from === 'default' ? h('p.set-prov-note', ctx.text('models.driver_guess_line', { driver: p.driver ?? '' })) : null,
     // 软件包带的这一家（核心 PV-4）：「来自软件包 <包的名字>」，名字照 `package.list`，取不到的写编号
