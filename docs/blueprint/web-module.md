@@ -358,14 +358,14 @@ http://127.0.0.1:<端口>/#setup=9f03b21c…
 ```json
 {"id":"h1","jsonrpc":"2.0","method":"hello","params":{"protocol":[1,1],"head":{"kind":"web","version":"0.1.0"},"locale":"zh-CN","code":"9f03b21c…"}}
 {"id":"h1","jsonrpc":"2.0","result":{"account":"admin","core":{"version":"0.1.0"},"host":{…},"language":"zh","protocol":1,"sandbox":{"usable":true},"setup":true}}
-{"id":"s1","jsonrpc":"2.0","method":"account.setup","params":{"username":"shorin","password":"…"}}
-{"id":"s1","jsonrpc":"2.0","result":{"login":{"expires":"2026-11-03T06:00:00.000Z","token":"5c1e…"},"username":"shorin"}}
+{"id":"s1","jsonrpc":"2.0","method":"account.setup","params":{"username":"alice","password":"…"}}
+{"id":"s1","jsonrpc":"2.0","result":{"login":{"expires":"2026-11-03T06:00:00.000Z","token":"5c1e…"},"username":"alice"}}
 ```
 
 以后（登录令牌过期了的）：
 
 ```json
-{"id":"h1","jsonrpc":"2.0","method":"hello","params":{"protocol":[1,1],"head":{"kind":"web","version":"0.1.0"},"user":"shorin","password":"…"}}
+{"id":"h1","jsonrpc":"2.0","method":"hello","params":{"protocol":[1,1],"head":{"kind":"web","version":"0.1.0"},"user":"alice","password":"…"}}
 ```
 
 ### 出错
