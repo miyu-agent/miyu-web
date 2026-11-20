@@ -3,6 +3,7 @@
 //! 不一条条画成气泡，连着的几条收成一行，放在它们后面那一轮前面；叫 AI 的、AI 的回复照常画。条目照核心视图投影的写法（`view.md`）。
 
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
 import { itemsOf } from '../src/model/entries.js';
@@ -65,4 +66,15 @@ test('本机会话、子代理发来的话不收：只收平台上的人没叫 A
     { id: 'm9', kind: 'user', at: AT, text: '子代理说的', from: { kind: 'session', id: 's1' } },
   ];
   assert.deepEqual(shape(group(itemsOf(entries, null).items)), ['你说的', 'her', '子代理说的']);
+});
+
+test('「群里另有 N 条」和群消息同一侧（2026-11-20 主人验收第 7 条，W-1241）：靠右、不缩进到她那一列，和气泡一样各空一行', () => {
+  const css = readFileSync(new URL('../styles/chat.css', import.meta.url), 'utf8');
+  const rule = (/** @type {string} */ sel) => css.match(new RegExp(`(^|\\n)${sel.replace(/[.+]/g, '\\$&')} \\{([^}]*)\\}`))?.[2] ?? '';
+  const heard = rule('.note.is-overheard');
+  assert.match(heard, /justify-items: end/, '靠右，同群消息的气泡');
+  assert.match(heard, /padding-left: 0/, '不缩进到她的内容那一列');
+  assert.match(heard, /padding-bottom: calc\(27px \* var\(--space\)\)/, '下面空的同一条群消息（.user-message）');
+  assert.match(rule('.user-message'), /padding-bottom: calc\(27px \* var\(--space\)\)/, '群消息下面空的还是这么多');
+  assert.match(rule('.assistant-message + .note.is-overheard'), /margin-top: 0/, '跟在她的回复后面不往上提（那是她的提示行的写法）');
 });
