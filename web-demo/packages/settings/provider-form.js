@@ -1,13 +1,15 @@
 // @ts-check
 //! 添加、编辑供应商的表（蓝图 `web.md`「设置页」第 14 条，照 `tui.md`「全屏配置页」第 3、7 条）：编号（新建时写）、显示名、地址、
-//! 接口、密钥（粘贴或者环境变量）。存的先后：粘贴了密钥的先 `secret.set` 存成新名字，再一条 `config.set` 写别的几项和密钥的引用。
+//! 接口、密钥（粘贴或者环境变量）。这一家没有的项（`model.list` 的 `needs` 写 `none`）不画，软件包给的值写成暗的占位字
+//! （`provider-fields.js`，核心 FX-11）。存的先后：粘贴了密钥的先 `secret.set` 存成新名字，再一条 `config.set` 写别的几项和密钥的引用。
 //! 明文只在框里，存完、取消就扔。
 //! 表开在设置框正中的小窗里（同 MCP「添加服务」、模型详情的小窗：淡遮罩、正中一张卡，进出照它们的动画），后面的供应商列表不动；
 //! `Esc`、✕、「取消」、点遮罩收起，回到原来的列表。小窗挂在设置框上、不在正文里：收到配置推送整页重画时它不动，写了一半的字不丢。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { leave } from '../../src/lib/motion.js';
-import { validId, secretName, providerChanges, envRef, inputText, LAYER } from './model.js';
+import { validId, secretName, providerChanges, LAYER } from './model.js';
+import { formPlan, driverToWrite } from './provider-fields.js';
 import { select } from './rows.js';
 
 /**
@@ -31,12 +33,13 @@ export function openProviderForm(dialog, id) {
   // 占位写空着时显示什么：编辑的照现在退到的名字（目录的、编号），新建的是编号
   const fallback = p && typeof p.name === 'object' && p.name.from !== 'config' ? p.name.value : editing;
   const nameField = input({ value: nameWritten, placeholder: fallback ? t('name_empty', { name: fallback }) : t('name_empty_new') });
-  // 地址是环境变量引用的：框空着就是不改（照写「来自环境变量 X」当占位）
-  const urlEnv = envRef(p?.base_url);
-  const urlField = input({ value: urlEnv ? '' : inputText(p?.base_url ?? ''), placeholder: urlEnv ? ctx.text('from_env', { name: urlEnv }) : 'https://…' });
+  // 画哪几项、包给的值（核心 FX-11）：地址是环境变量引用的、包给的，框空着就是不改（占位写「来自环境变量 X」、包给的地址）
+  const plan = formPlan(p, dialog.got, editing);
+  const hint = plan.url?.hint;
+  const urlField = plan.url ? input({ value: plan.url.value, placeholder: hint && 'env' in hint ? ctx.text('from_env', { name: hint.env }) : hint && 'package' in hint ? hint.package : 'https://…' }) : null;
   // 接口：用这一页自己的下拉（浏览器自带的下拉有边框），选了换掉按钮
   const drivers = template('driver')?.options ?? [];
-  let driver = p?.driver ?? drivers[0]?.value ?? '';
+  let driver = plan.driver.current ?? drivers[0]?.value ?? '';
   const driverBox = h('div.set-form-select');
   const drawDriver = () => replace(driverBox, select(dialog, drivers, driver, (/** @type {string} */ v) => { driver = v; drawDriver(); }));
   drawDriver();
@@ -77,9 +80,9 @@ export function openProviderForm(dialog, id) {
     }
     const form = {
       name: nameField.value,
-      base_url: urlEnv && !urlField.value.trim() ? null : urlField.value,
-      driver,
-      key: { kind: /** @type {'secret'|'env'|'keep'} */ (keyKind === 'secret' && !secret ? 'keep' : keyKind), value: envField.value },
+      base_url: !urlField || (plan.url?.keepWhenEmpty && !urlField.value.trim()) ? null : urlField.value,
+      driver: driverToWrite(plan, driver),
+      key: { kind: /** @type {'secret'|'env'|'keep'} */ (!plan.key || (keyKind === 'secret' && !secret) ? 'keep' : keyKind), value: envField.value },
     };
     const why = await dialog.saveMany(layer, providerChanges(id, form, dialog.got, layer, secret));
     if (why) return fail(secret ? `${why}\n${t('secret_kept', { name: secret })}` : why);
@@ -96,9 +99,9 @@ export function openProviderForm(dialog, id) {
     h('div.set-prov-form',
       row(t('id'), idField),
       row(t('name'), nameField),
-      row(t('url'), urlField),
+      plan.url ? row(t('url'), urlField) : null,
       row(t('driver'), driverBox),
-      row(t('key'), h('div.set-form-keyrow', h('div.set-seg', kindButtons), keyBox))),
+      plan.key ? row(t('key'), h('div.set-form-keyrow', h('div.set-seg', kindButtons), keyBox)) : null),
     error,
     h('div.set-tool-pop-foot', h('button.set-btn', { type: 'button', onclick: close }, t('cancel')), saveButton));
   const modal = h('div.set-tool-modal.set-prov-modal', { 'data-set-dismiss': '1', onclick: (/** @type {Event} */ e) => { if (e.target === e.currentTarget) close(); } }, pop);

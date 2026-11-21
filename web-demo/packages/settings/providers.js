@@ -32,7 +32,8 @@ export function drawProviders(dialog, list) {
     all.map((x) => providerItem(dialog, x, x.id === p?.id, logos, same.has(x.id))),
     h('button.set-prov.is-add', { type: 'button', onclick: () => openAdd(dialog) }, icon('plus'), h('span', ctx.text('models.add_provider'))));
   if (!p) return h('div.set-prov-wrap', list_);
-  const main = h('div.set-prov-main', head(dialog, p, logos), keyBlock(dialog, p), models(dialog, p));
+  // 不要密钥的一家（`needs.key` 是 `none`，核心 FX-11：Antigravity 这种扩展驱动）不画密钥那一块
+  const main = h('div.set-prov-main', head(dialog, p, logos), p.needs?.key === 'none' ? null : keyBlock(dialog, p), models(dialog, p));
   // 详情是设置框正中的小窗（挂在设置框上，同添加供应商、MCP 的小窗，W-1206）
   const detail = dialog.modelDetail ? detailModal(dialog, p, (p.models ?? []).find((m) => m.model === dialog.modelDetail)) : null;
   if (detail) {
