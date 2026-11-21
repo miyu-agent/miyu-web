@@ -78,3 +78,53 @@ test('「群里另有 N 条」和群消息同一侧（2026-11-20 主人验收第
   assert.match(rule('.user-message'), /padding-bottom: calc\(27px \* var\(--space\)\)/, '群消息下面空的还是这么多');
   assert.match(rule('.assistant-message + .note.is-overheard'), /margin-top: 0/, '跟在她的回复后面不往上提（那是她的提示行的写法）');
 });
+
+test('一轮收走一批群消息（im 隔一阵看一眼群，核心给每一条都记上那一轮）：照旧收起，只有单独开一轮的那一句画气泡（W-1250）', () => {
+  // 20、21、30、31 被第 40 轮一起收走；22 单独开了第 23 轮
+  const entries = [
+    said(20, 'qq:20001', '闲聊一', 40),
+    said(21, 'qq:20017', '闲聊二', 40),
+    said(22, 'qq:20090', '@Miyu 在吗', 23),
+    ...herTurn(23),
+    said(30, 'qq:20001', '闲聊三', 40),
+    said(31, 'qq:20017', '闲聊四', 40),
+    ...herTurn(40),
+  ];
+  assert.deepEqual(shape(group(itemsOf(entries, null).items)), ['heard:2', '@Miyu 在吗', 'her', 'heard:2', 'her']);
+});
+
+test('她正在答别人时来的、后来被别的轮收走的话不切开她的一轮（W-1250：原来前半块只剩时间线、回答掉到那句话后面）', () => {
+  const [g, thought, reply, end] = herTurn(6);
+  const entries = [said(5, 'qq:20017', '@Miyu 在吗', 6), g, thought, said(8, 'qq:20001', '插一句', 30), reply, end, said(15, 'qq:20033', '再插一句', 30), ...herTurn(30)];
+  const blocks = group(itemsOf(entries, null).items);
+  assert.deepEqual(shape(blocks), ['@Miyu 在吗', 'her', 'heard:2', 'her']);
+  assert.deepEqual(blocks[1].items.map((/** @type {any} */ it) => it.type), ['steps', 'reply', 'done'], '她的一轮还是一块：时间线、回答、收尾');
+});
+
+test('她正在答别人时有人叫她、排到后面单独答：不切开她这一轮，挪到后面照常画气泡，不收进「群里另有」', () => {
+  const [g, thought, reply, end] = herTurn(6);
+  const entries = [
+    said(5, 'qq:20017', '@Miyu 在吗', 6), g, thought, said(8, 'qq:20001', '闲聊', 30), said(9, 'qq:20090', '@Miyu 我也问一下', 20), reply, end,
+    ...herTurn(20), said(27, 'qq:20001', '闲聊二', 30), ...herTurn(30),
+  ];
+  const blocks = group(itemsOf(entries, null).items);
+  assert.deepEqual(shape(blocks), ['@Miyu 在吗', 'her', 'heard:1', '@Miyu 我也问一下', 'her', 'heard:1', 'her']);
+  assert.equal(blocks[1].items.length, 3, '她的一轮还是一块');
+});
+
+test('并进她正在答的这一轮的话照旧把这一轮切成两块，叫她的那一句不因此算成一批', () => {
+  const [g, thought, reply, end] = herTurn(6);
+  const blocks = group(itemsOf([said(5, 'qq:20017', '@Miyu 在吗', 6), g, thought, said(8, 'qq:20017', '补一句', 6), reply, end], null).items);
+  assert.deepEqual(shape(blocks), ['@Miyu 在吗', 'her', '补一句', 'her']);
+  assert.equal(blocks[3].cont, true);
+});
+
+test('这一轮刚开、她的第一步还没来：带着这一轮的话照常画气泡', () => {
+  const entries = [said(2, 'qq:20001', '闲聊'), said(5, 'qq:20017', '@Miyu 在吗', 6)];
+  assert.deepEqual(shape(group(itemsOf(entries, null).items)), ['heard:1', '@Miyu 在吗']);
+});
+
+test('叫她的那一句后面、她的第一步以前来的旁听不隔在那一句和她的回答中间：这一轮已经开了，挪到这一轮后面', () => {
+  const entries = [said(2, 'qq:20001', '早'), said(5, 'qq:20017', '@Miyu 在吗', 6), said(7, 'qq:20001', '闲聊', 30), ...herTurn(6), said(20, 'qq:20033', '闲聊二', 30), ...herTurn(30)];
+  assert.deepEqual(shape(group(itemsOf(entries, null).items)), ['heard:1', '@Miyu 在吗', 'her', 'heard:2', 'her']);
+});
