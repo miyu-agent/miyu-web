@@ -1,0 +1,110 @@
+{
+ "_note": "核心 62d294acd 真跑录下的一份（W-1244，LM-24 那一查）：子代理第一步（执行命令）已经落了盘、还在跑时才订阅它的视图流，回应的样子。路径、会话编号换成了假的，用量那几格去掉。status 里没有 doing（核心照日志补的状态只有流式的那几样才记 doing），条目里有在跑的那一步。",
+ "subscribe": {
+  "compactable": false,
+  "default_workspace": "/home/me/.miyu/root/workspace/sess-parent",
+  "entries": [
+   {
+    "at": "2026-11-21T08:16:31.880Z",
+    "from": {
+     "id": "sess-parent",
+     "kind": "session"
+    },
+    "id": "m2",
+    "kind": "user",
+    "level": "full",
+    "text": "CHILD-TASK: run one long command.",
+    "turn": 3
+   },
+   {
+    "at": "2026-11-21T08:16:31.891Z",
+    "id": "g7.0",
+    "kind": "group",
+    "open": true,
+    "steps": [
+     "b7.0"
+    ],
+    "summary": [
+     {
+      "text": "算一个慢的数 · 1s"
+     }
+    ],
+    "summary_en": [
+     {
+      "text": "算一个慢的数 · 1s"
+     }
+    ],
+    "turn": 3
+   },
+   {
+    "args": "{\"command\": \"python3 -c \\\"import time; time.sleep(45); print(42)\\\"\", \"description\": \"算一个慢的数\"}",
+    "at": "2026-11-21T08:16:31.891Z",
+    "call": "call_8_1",
+    "group": "g7.0",
+    "id": "b7.0",
+    "kind": "tool",
+    "name": "shell",
+    "state": "running",
+    "title": {
+     "name": "执行命令",
+     "object": "算一个慢的数"
+    },
+    "turn": 3
+   }
+  ],
+  "first": 1,
+  "jobs": [],
+  "last": 9,
+  "limits": {
+   "compaction_line": 255000,
+   "window": 300000
+  },
+  "model": {
+   "endpoint": "dev",
+   "model": "fake-chat",
+   "ref": "dev/fake-chat"
+  },
+  "more": false,
+  "permission": {
+   "level": "full",
+   "read_only": false
+  },
+  "preset": "full",
+  "status": {
+   "compactable": false,
+   "context": {
+    "compaction_line": 255000,
+    "used": 15,
+    "window": 300000
+   },
+   "default_workspace": "/home/me/.miyu/root/workspace/sess-parent",
+   "jobs": [],
+   "model": {
+    "endpoint": "dev",
+    "model": "fake-chat",
+    "ref": "dev/fake-chat"
+   },
+   "permission": {
+    "level": "full",
+    "read_only": false
+   },
+   "preset": "full",
+   "running_deep": 0,
+   "since": "2026-11-21T08:16:31.880Z",
+   "speed": {
+    "ms": 101,
+    "output": 5
+   },
+   "state": "running",
+   "todos": [],
+   "workspace": {
+    "cwd": "/home/me/.miyu/root/workspace/sess-parent",
+    "dirs": []
+   }
+  },
+  "workspace": {
+   "cwd": "/home/me/.miyu/root/workspace/sess-parent",
+   "dirs": []
+  }
+ }
+}
