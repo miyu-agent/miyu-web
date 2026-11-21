@@ -836,7 +836,7 @@ export class App {
 
   /**
    * 她展示过的文件还读不读得到（核心 SW-1，W-1172：`session.shown` 写 `length: 0` 只问大小，核心照展示时的大小和修改时间核对）：读得到、
-   * 问不到的（旧核心、没这一步）交 `null`，照常画；`file_changed`、`file_gone` 交原因，画成「文件已变」「文件已不在」。照「会话 调用 修改时间」记着
+   * 问不到的（旧核心、没这一步）交 `null`，照常画；`file_changed`、`file_gone` 交原因，画成「文件已更改。」「文件已不存在。」。照「会话 调用 修改时间」记着
    * 只问一次。
    * @param {string|null} session @param {import('../model/artifacts.js').Shown} s
    * @returns {Promise<string|null>}

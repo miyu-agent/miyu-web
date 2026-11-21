@@ -6,7 +6,7 @@
 
 /**
  * 一页上的一项，三种合成一个样子。`own` 是自己放的（技能、脚本 `from` 是 `home`；MCP 是配置里自己写的），`package` 是随哪个包来的（出厂又没有编号的是 `null`），
- * `shared` 是从别的应用共用的目录读来的技能（`from` 是 `agents`：从外部目录读到的，核心 PT-2外；「读取其他目录的 Skills」）。
+ * `shared` 是从别的应用共用的目录读来的技能（`from` 是 `agents`：从外部目录读到的，核心 PT-2外；「读取其他目录的技能」）。
  * `on` 是全局开关（没有这一格的：`null`，不画开关）。`raw` 是核心给的那一项。
  * @typedef {{kind: ToolKind, id: string, name: string, title: string|null, desc: string|null, own: boolean, shared: boolean, package: string|null,
  *   on: boolean|null, covered: boolean, raw: any}} ToolItem
@@ -339,7 +339,7 @@ export function skippedOf(skipped) {
   return { kinds: prompts && tools ? 'both' : prompts ? 'prompts' : tools ? 'tools' : null, rows };
 }
 
-/** 「读取其他目录的 Skills」的两项（核心 PT-2外，系统配置）：总开关、目录表 */
+/** 「读取其他目录的技能」的两项（核心 PT-2外，系统配置）：总开关、目录表 */
 export const EXTERNAL_ON = 'skills.external.enabled';
 export const EXTERNAL_DIRS = 'skills.external.dirs';
 /** 这两项键名的开头（通用的设置页不列，`dialog.js`） */

@@ -46,7 +46,7 @@ test('Markdown 的参数：放进回应、照用途、最近几轮写成 {turns}
 });
 
 test('没成怎么说：export_too_big 另写一句，别的照核心的原话，没有原话的写原因码', () => {
-  assert.deepEqual(exportProblem({ reason: 'export_too_big', message: '导出超过 512 KiB，请存成文件。' }), { key: 'too_big' });
+  assert.deepEqual(exportProblem({ reason: 'export_too_big', message: '导出内容超过 512 KiB，请保存到文件。' }), { key: 'too_big' });
   assert.deepEqual(exportProblem({ reason: 'session_broken', message: '会话载入不了。' }), { key: 'failed', reason: '会话载入不了。' });
   assert.deepEqual(exportProblem({ reason: 'session_not_found' }), { key: 'failed', reason: 'session_not_found' });
   assert.deepEqual(exportProblem(new Error('HTTP 502')), { key: 'failed', reason: 'HTTP 502' });

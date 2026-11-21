@@ -189,7 +189,7 @@ test('有几种写法的命令（核心 O-6 四补的 usage）：只收它自己
   const { coreSpecs } = await import('../src/model/commands.js');
   const [goal, dream] = coreSpecs([
     { name: 'goal', summary: '长期目标', argument: '[<目标> | pause | resume | clear]', usage: [
-      { form: '/goal', summary: '看进度' }, { form: '/goal <目标>', summary: '设定长期目标；已经有一个就改它' },
+      { form: '/goal', summary: '查看进度' }, { form: '/goal <目标>', summary: '设定长期目标；已有目标时修改当前目标' },
       { form: '/goal pause', summary: '暂停' }, { form: '/other', summary: '不是它的不要' }, { summary: '没写法的不要' },
     ] },
     { name: 'dream', summary: '整理记忆' },
@@ -202,7 +202,7 @@ test('有几种写法的命令（核心 O-6 四补的 usage）：只收它自己
 test('空会话里列着的核心的命令（later）：带着字、开会话的先开会话再交核心；只打名字的提示写上内容，固定写法照核心「没有」的那一句；别的提示开了会话才能用', async () => {
   const { coreSpecs, read } = await import('../src/model/commands.js');
   const list = coreSpecs([
-    { name: 'goal', summary: '长期目标', argument: '<目标>', usage: [{ form: '/goal', summary: '看进度' }, { form: '/goal <目标>', summary: '设定' }, { form: '/goal pause', summary: '暂停' }] },
+    { name: 'goal', summary: '长期目标', argument: '<目标>', usage: [{ form: '/goal', summary: '查看进度' }, { form: '/goal <目标>', summary: '设定' }, { form: '/goal pause', summary: '暂停' }] },
     { name: 'dream', summary: '整理记忆' },
   ]).map((s) => ({ ...s, later: true }));
   const opens = new Set(['goal']);
@@ -217,8 +217,8 @@ test('空会话里列着的核心的命令（later）：带着字、开会话的
 test('空会话里打 /todo、/todo clear（核心 D-3 再补，empty_none）：还没有待办，照核心「无待办。」，不开会话；别的字照旧要等会话', async () => {
   const { coreSpecs } = await import('../src/model/commands.js');
   const list = coreSpecs([
-    { name: 'goal', summary: '长期目标', argument: '<目标>', usage: [{ form: '/goal', summary: '看进度' }, { form: '/goal <目标>', summary: '设定' }, { form: '/goal pause', summary: '暂停' }] },
-    { name: 'todo', summary: '待办', argument: '[clear]', usage: [{ form: '/todo', summary: '看待办' }, { form: '/todo clear', summary: '清空' }] },
+    { name: 'goal', summary: '长期目标', argument: '<目标>', usage: [{ form: '/goal', summary: '查看进度' }, { form: '/goal <目标>', summary: '设定' }, { form: '/goal pause', summary: '暂停' }] },
+    { name: 'todo', summary: '待办', argument: '[clear]', usage: [{ form: '/todo', summary: '查看待办' }, { form: '/todo clear', summary: '清空' }] },
   ]).map((s) => ({ ...s, later: true }));
   const opens = new Set(res.commands.opens_session);
   const nones = new Set(res.commands.empty_none);
@@ -230,10 +230,10 @@ test('空会话里打 /todo、/todo clear（核心 D-3 再补，empty_none）：
   assert.equal(read(list, '/goal 写完文档', new Set(), opens, nones).kind, 'unlisted');
 });
 
-test('空会话里打 /loop（核心 J-2）：带着话的和 /goal 一样先开会话；只打 /loop 提示写上要说的话；/loop off 照核心「此会话没有循环。」，不开会话（2026-10-27 项目主人）', async () => {
+test('空会话里打 /loop（核心 J-2）：带着话的和 /goal 一样先开会话；只打 /loop 提示写上要说的话；/loop off 照核心「这个会话没有循环。」，不开会话（2026-10-27 项目主人）', async () => {
   const { coreSpecs } = await import('../src/model/commands.js');
   const list = coreSpecs([
-    { name: 'loop', summary: '循环执行', argument: '[<间隔>] <要说的话> | off', usage: [{ form: '/loop <间隔> <要说的话>', summary: '每隔一段时间' }, { form: '/loop <要说的话>', summary: '由 AI 定' }, { form: '/loop off', summary: '停' }] },
+    { name: 'loop', summary: '循环执行', argument: '[<间隔>] <内容> | off', usage: [{ form: '/loop <间隔> <内容>', summary: '每隔一段时间' }, { form: '/loop <内容>', summary: '由 AI 定' }, { form: '/loop off', summary: '停' }] },
   ]).map((s) => ({ ...s, later: true }));
   const opens = new Set(res.commands.opens_session);
   const nones = new Set(res.commands.empty_none);

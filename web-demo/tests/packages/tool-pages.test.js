@@ -227,7 +227,7 @@ test('共用目录里的技能（核心 PT-2外 from: agents）：来源「共�
   assert.equal(mcpItems([{ name: 'a' }], []).every((x) => x.shared === false), true);
 });
 
-test('「读取其他目录的 Skills」两项照 config.schema 找、带上值；旧核心没有的是 null', () => {
+test('「读取其他目录的技能」两项照 config.schema 找、带上值；旧核心没有的是 null', () => {
   const schema = { items: [
     { key: EXTERNAL_ON, type: 'bool', default: false, layers: ['system'] },
     { key: EXTERNAL_DIRS, type: 'list', default: ['~/.agents/skills'], layers: ['system'] },

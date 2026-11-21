@@ -38,7 +38,7 @@ const got = {
   problems: [
     { code: 'env_not_set', key: 'providers.dev.base_url', level: 'warning', message: '引用的环境变量没有设置。' },
     { code: 'bad_format', key: 'log.level', level: 'error', message: 'log.level 只能是 error、warn……' },
-    { code: 'syntax', level: 'error', message: 'TOML 写法不对' },
+    { code: 'syntax', level: 'error', message: 'TOML 语法错误：expected `=`' },
   ],
 };
 
@@ -125,7 +125,7 @@ test('别的头的项不列：键名以 hide 里的开头的（tui.），连它�
     groups: [...schema.groups, { id: 'tui', name: '终端界面', page: 'general' }],
     items: [...schema.items, { key: 'tui.startup', type: 'option', control: 'select', name: '启动时打开', description: '', page: 'general', group: 'tui', layers: ['system'], applies: 'head_start' }],
   };
-  const withBad = { items: got.items, problems: [{ key: 'tui.startup', level: 'error', message: '写错了' }, { key: 'tui.gone', code: 'unknown_key', level: 'warning', message: '没有 tui.gone 这一项' }] };
+  const withBad = { items: got.items, problems: [{ key: 'tui.startup', level: 'error', message: '写错了' }, { key: 'tui.gone', code: 'unknown_key', level: 'warning', message: '配置项 tui.gone 不存在' }] };
   const shown = buildPages(extra, withBad, { hide: ['tui.'] });
   assert.deepEqual(shown[0].groups.map((g) => g.id), ['display']);
   assert.deepEqual(shown.flatMap((p) => p.problems).map((p) => p.key), ['tui.gone'], '别的头的项的问题不挂；改了名留下的旧键要提示');

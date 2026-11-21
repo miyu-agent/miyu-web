@@ -548,7 +548,7 @@
         "shared": "共用",
         "shared_note": "这个技能在 {dir} 里，别的应用也在用，要删请到那里删除。",
         "external": {
-          "title": "读取其他目录的 Skills",
+          "title": "读取其他目录的技能",
           "desc": "读 Codex、opencode 等应用共用的技能文件夹",
           "list": "技能目录"
         },

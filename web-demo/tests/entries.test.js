@@ -16,7 +16,7 @@ const turn3 = [
   { id: 'm2', kind: 'user', text: '你好', turn: 3, level: 'full', at: AT },
   { id: 'g6.0', kind: 'group', turn: 3, steps: ['b6.0', 'b6.1'], summary: [{ text: '思考了 1s' }], summary_en: [{ text: 'Thought for 1s' }, { text: ' · ' }, { text: '+3', tone: 'added' }], took_ms: 900, at: AT },
   { id: 'b6.0', kind: 'thought', group: 'g6.0', turn: 3, text: '想一想', took_ms: 300, at: AT },
-  { id: 'b6.1', kind: 'tool', group: 'g6.0', turn: 3, call: 'c1', name: 'edit', state: 'ok', args: '{"file_path":"a.txt"}', title: { name: '编辑', object: '~/a.txt', said: '改了 1 处' }, diff: { added: 3, removed: 1 }, took_ms: 40, at: AT },
+  { id: 'b6.1', kind: 'tool', group: 'g6.0', turn: 3, call: 'c1', name: 'edit', state: 'ok', args: '{"file_path":"a.txt"}', title: { name: '编辑', object: '~/a.txt', said: '编辑了 1 处' }, diff: { added: 3, removed: 1 }, took_ms: 40, at: AT },
   { id: 'b6.2', kind: 'reply', turn: 3, text: '汪！', at: AT },
   { id: 'e9', kind: 'end', turn: 3, level: 'full', reason: 'completed', endpoint: 'dev', model: 'm1', took_ms: 2216, usage: { uncached: 3000, cache_read: 1000, cache_write: 0, output: 150 }, at: AT },
 ];
@@ -42,7 +42,7 @@ test('一步：思考的起止照 took_ms；工具做完了照状态、带核心
   assert.equal(tool.state, 'done');
   assert.equal(tool.status, 'ok');
   assert.equal(tool.duration, 40);
-  assert.deepEqual(tool.title, { name: '编辑', object: '~/a.txt', said: '改了 1 处' });
+  assert.deepEqual(tool.title, { name: '编辑', object: '~/a.txt', said: '编辑了 1 处' });
   assert.deepEqual(tool.lines, { added: 3, removed: 1 });
   assert.deepEqual(tool.parsed, { file_path: 'a.txt' });
   const preparing = stepOf({ id: 'b7.0', kind: 'tool', name: 'shell', state: 'preparing', args: '{"comm', at: AT });

@@ -3,7 +3,7 @@
 //! 三页一个样子——顶上搜索框和一个按钮（技能、脚本「打开目录」，MCP「添加服务」），一排来源筛选（全部、自制、随软件包来的、共用），一项一行：
 //! 名字、一句说明，右边来源、加载方式（脚本、MCP）、全局开关、箭头；点一行滑进详情（`subpage.js`）。列表在设置框打开、改了配置时重读
 //! （`dialog.js` 的 `load`）；MCP 服务另跟 `mcp.changed`、`package.changed`。添加、编辑服务的小窗在 `mcp-form.js`。
-//! 技能页最上面多一块「读取其他目录的 Skills」（核心 PT-2外；2026-10-29 项目主人定）：总开关，开着时下面一张目录表（`path-list.js`）。
+//! 技能页最上面多一块「读取其他目录的技能」（核心 PT-2外；2026-10-29 项目主人定）：总开关，开着时下面一张目录表（`path-list.js`）。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { tilde } from '../../src/lib/format.js';
@@ -94,7 +94,7 @@ export function drawToolPage(dialog, kind) {
 }
 
 /**
- * 「读取其他目录的 Skills」（核心 PT-2外：系统配置 `skills.external.enabled`、`skills.external.dirs`；2026-10-29 项目主人定：一个总开关加一张
+ * 「读取其他目录的技能」（核心 PT-2外：系统配置 `skills.external.enabled`、`skills.external.dirs`；2026-10-29 项目主人定：一个总开关加一张
  * 目录表，默认关，放技能页列表顶上）：开关照通用的行画、字照网页的；开着时下面一张目录表，能加、删、重置。旧核心没有这两项的不出。
  * 改了核心推 `config.changed`，设置框照它重读（连 `skill.list`）。
  * @param {any} dialog

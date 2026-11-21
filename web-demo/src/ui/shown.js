@@ -15,7 +15,7 @@ const ICONS = /** @type {Record<string, string>} */ ({ html: 'globe', markdown: 
 
 /**
  * 一样展示过的。内容照「会话 + 调用编号」读（核心 SW-1，W-1172）；`state` 问一次文件还在不在、变没变，变了、没了的换成一张写着
- * 「文件已变」「文件已不在」的卡片（核心每次读都核对展示时的大小和修改时间）。
+ * 「文件已更改。」「文件已不存在。」的卡片（核心每次读都核对展示时的大小和修改时间）。
  * @param {import('../model/artifacts.js').Shown} s
  * @param {{session: string|null, lightbox?: () => any, reveal?: (path: string) => void, state?: (s: import('../model/artifacts.js').Shown) => Promise<string|null>}} how
  *   正在看的会话；现在的灯箱；在右栏打开它；问文件还在不在
@@ -54,7 +54,7 @@ function drawn(s, how) {
 }
 
 /**
- * 读不了的那一样：同一张卡片，小字写为什么（「文件已变」「文件已不在」），点不了。
+ * 读不了的那一样：同一张卡片，小字写为什么（「文件已更改。」「文件已不存在。」），点不了。
  * @param {import('../model/artifacts.js').Shown} s @param {string} problem `file_changed`、`file_gone`
  */
 function missingCard(s, problem) {

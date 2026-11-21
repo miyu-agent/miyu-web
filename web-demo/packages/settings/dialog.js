@@ -204,7 +204,7 @@ export class SettingsDialog {
     this.schema = schema;
     this.got = got;
     const cfg = this.ctx.config;
-    // 「读取其他目录的 Skills」两项画在技能页顶上（`tool-pages.js`），通用的页不列
+    // 「读取其他目录的技能」两项画在技能页顶上（`tool-pages.js`），通用的页不列
     this.pages = buildPages(schema, got, { merge: cfg.merge, moveGroups: cfg.move_groups, hide: [...(cfg.hide_prefixes ?? []), EXTERNAL_PREFIX, ...headless(this.heads)] });
     this.modelsPromise = this.loadModels();
     // 选人格、知识库的列表每次打开重读（`pickList`）

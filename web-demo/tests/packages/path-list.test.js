@@ -1,5 +1,5 @@
 // @ts-check
-//! 目录表（技能页「读取其他目录的 Skills」，`packages/settings/path-list-model.js`）：一项配置的值是一串路径，默认值就是出厂的样子。
+//! 目录表（技能页「读取其他目录的技能」，`packages/settings/path-list-model.js`）：一项配置的值是一串路径，默认值就是出厂的样子。
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

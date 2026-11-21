@@ -460,7 +460,7 @@ test('一行超过上限、核心认不出编号的（核心 YC-5 的 line_too_l
   await up;
   const short = conn.request('session.list', {});
   const long = conn.request('package.call', { data: 'a'.repeat(5000) });
-  const said = { code: -32010, message: '消息超过 1 MiB，没有收。大的内容请用附件发。', data: { reason: 'line_too_long', limit: 1048576 } };
+  const said = { code: -32010, message: '消息超过 1 MiB，未接收。较大的内容请用附件发送。', data: { reason: 'line_too_long', limit: 1048576 } };
   ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', id: null, error: said }) });
   await assert.rejects(long, (e) => e instanceof Refusal && e.reason === 'line_too_long' && e.message === said.message && e.data.limit === 1048576);
   ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', id: ch.sent[0].id, result: { ok: 1 } }) });

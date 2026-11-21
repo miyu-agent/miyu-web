@@ -313,7 +313,7 @@ fn refused(site: &Site, login: &str, failed: &Failed) -> Response<Body> {
         Failed::Refused(reason) => match reason.as_str() {
             "unknown_blob" | "path_unreadable" | "unknown_shown" => StatusCode::NOT_FOUND,
             "path_forbidden" => StatusCode::FORBIDDEN,
-            // 展示的文件改过、换过（核心每次读都核对大小和修改时间）、没了：页面照状态码写「文件已变」「文件已不在」
+            // 展示的文件改过、换过（核心每次读都核对大小和修改时间）、没了：页面照状态码写「文件已更改。」「文件已不存在。」
             "file_changed" => StatusCode::CONFLICT,
             "file_gone" => StatusCode::GONE,
             "bad_params" => StatusCode::BAD_REQUEST,

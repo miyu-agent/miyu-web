@@ -709,7 +709,7 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .mk-ask-list code { color: var(--text-faint); font: calc(12px * var(--text-scale)) var(--font-mono); }
 .mk-ask-size { margin: 0; color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
 .mk-ask-foot { display: flex; justify-content: flex-end; gap: calc(8px * var(--space)); margin-top: calc(4px * var(--space)); }
-/* 目录表（`path-list.js`，技能页「读取其他目录的 Skills」）：一个能滚的框（顶上搜索、「+」「↺」），一行一个目录（等宽），悬停露删除 */
+/* 目录表（`path-list.js`，技能页「读取其他目录的技能」）：一个能滚的框（顶上搜索、「+」「↺」），一行一个目录（等宽），悬停露删除 */
 .pv-desc { margin: calc(-2px * var(--space)) 0 calc(8px * var(--space)); }
 /* 关着的收起：高度收到 0、淡出（2026-10-22 项目主人） */
 .pv-fold { overflow: hidden; }

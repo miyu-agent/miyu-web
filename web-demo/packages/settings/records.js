@@ -63,8 +63,11 @@ export function problemSpots(key, problems) {
     const field = m[2] ?? '';
     if (!spots.has(i)) spots.set(i, new Map());
     const at = /** @type {Map<string, string[]>} */ (spots.get(i));
-    // 写在那一格下面了，开头的键（`draw.accounts[0].name 没写：…`）不再写
-    const text = p.message.startsWith(p.key) ? p.message.slice(p.key.length).replace(/^[\s:：]+/, '') : p.message;
+    // 写在那一格下面了，键不再写：开头是键的（`draw.accounts[0].name 必须是 …`）去掉键；键在中间、后面接冒号的
+    // （核心 WD-4 起的「缺少 draw.accounts[0].name：原因」）只写冒号后面的原因
+    const inner = p.message.indexOf(`${p.key}：`);
+    const text = p.message.startsWith(p.key) ? p.message.slice(p.key.length).replace(/^[\s:：]+/, '')
+      : inner > 0 ? p.message.slice(inner + p.key.length + 1).trim() : p.message;
     at.set(field, [...(at.get(field) ?? []), text]);
   }
   return spots;

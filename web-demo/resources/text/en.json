@@ -266,8 +266,8 @@
     "audio_failed": "Can't play"
   },
   "artifacts": {
-    "file_changed": "File changed",
-    "file_gone": "File no longer exists",
+    "file_changed": "The file has changed.",
+    "file_gone": "The file no longer exists.",
     "text_head": "Showing the first {size} only",
     "toggle": "Preview panel",
     "preview": "Preview",

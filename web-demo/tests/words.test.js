@@ -249,8 +249,8 @@ test('留言那一步：对象照核心写好的（任务编号、父会话、�
   assert.equal(details(tool('send_message', { to: '019a6f2e-7c41-7d3b-9a52-1f0e8c3b4d5a', message: 'x' }))[0].text, '会话 8c3b4d5a');
   assert.equal(details(tool('send_message', { to: 'j12', message: 'x' }))[0].text, 'j12', '任务编号不是会话');
   // 没送到、存下了的照写结果那一句，点开接着结果
-  const stopped = tool('send_message', { to: 'j2', message: 'x' }, { status: 'error', title: { name: '留言', object: 'j2', said: 'j2 已经停了' }, output: 'Subagent j2 was stopped.' });
-  assert.equal(row(stopped).said, 'j2 已经停了');
+  const stopped = tool('send_message', { to: 'j2', message: 'x' }, { status: 'error', title: { name: '留言', object: 'j2', said: 'j2 已停止' }, output: 'Subagent j2 was stopped.' });
+  assert.equal(row(stopped).said, 'j2 已停止');
   assert.equal(details(stopped).at(-1)?.label, '结果');
   const held = tool('send_message', { to: '8c3b4d5a', message: 'x' }, { title: { name: '留言', object: '会话 8c3b4d5a', said: '给 8c3b4d5a 存下了' }, output: 'Saved.' });
   assert.equal(row(held).said, '给 8c3b4d5a 存下了');

@@ -75,7 +75,7 @@
         "part_revised": "修改 {n} 条",
         "part_retired": "作废 {n} 条",
         "sep": "，",
-        "part_unchanged": "没有要改的",
+        "part_unchanged": "不需要修改",
         "part_summary": "摘要已更新",
         "view": {
           "raw": "原文",
@@ -87,7 +87,7 @@
           "sep": "、",
           "writing": "正在写… {n} 字",
           "unreadable": "这一段读不出来，看原文",
-          "nothing": "这一批没有要改的",
+          "nothing": "这一批不需要修改",
           "open": "查看过程",
           "history": "整理记录",
           "history_empty": "还没有整理过",

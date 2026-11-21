@@ -266,8 +266,8 @@
     "audio_failed": "无法播放"
   },
   "artifacts": {
-    "file_changed": "文件已变",
-    "file_gone": "文件已不在",
+    "file_changed": "文件已更改。",
+    "file_gone": "文件已不存在。",
     "text_head": "只显示开头 {size}",
     "toggle": "预览工作区",
     "preview": "预览",
@@ -339,7 +339,7 @@
     "empty_fixed": {
       "goal": "无长期目标。",
       "todo": "无待办。",
-      "loop": "此会话没有循环。"
+      "loop": "这个会话没有循环。"
     }
   },
   "language": {
@@ -403,7 +403,7 @@
   "archived_readonly": "这是存档，只能看，不能接着聊",
   "venue_readonly": "通讯平台上的会话，只能看",
   "overheard": "群里另有 {count} 条",
-  "session_read_only": "会话日志第 {line} 行坏了，只能看到这一行以前的内容，不能接着聊。要继续请新开一个会话。",
+  "session_read_only": "会话日志第 {line} 行已损坏，只能查看这一行之前的内容，不能继续对话。如果要继续，请新建一个会话。",
   "session_unavailable": "会话暂时无法读取，请稍后重试。",
   "new_session": "新开会话",
   "interrupt": "打断",

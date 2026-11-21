@@ -12,7 +12,7 @@ loadRes();
 const SAMPLE = {
   window: 128000, line: 102400, used: 45231, basis: 'measured', anchor: 41000, estimated_total: 43800,
   parts: [
-    { part: 'system', label: '系统提示', tokens: 6100, children: [{ part: 'system.skills', label: '技能目录', tokens: 900 }, { part: 'system.other', label: '人设和其余说明', tokens: 5200 }] },
+    { part: 'system', label: '系统提示词', tokens: 6100, children: [{ part: 'system.skills', label: '技能目录', tokens: 900 }, { part: 'system.other', label: '人设和其余说明', tokens: 5200 }] },
     { part: 'tools', label: '工具说明', tokens: 9800 },
     { part: 'summary', label: '检查点摘要', tokens: 2100 },
     { part: 'messages', label: '对话', tokens: 25800, children: [{ part: 'messages.memory', label: '记忆', tokens: 1100, children: [{ part: 'messages.memory.resident', label: '常驻记忆', tokens: 800 }] }] },
@@ -83,19 +83,19 @@ test('用途归到一起时换算成的也加在一起，没换成的、没换�
 
 test('子代理的各部分：连子代理的逐块减去主会话自己的，子项一样；减成 0、负的不要（2026-10-24 项目主人问子代理为什么没有明细）', () => {
   const all = [
-    { part: 'system', label: '系统提示', tokens: 300 },
-    { part: 'messages', label: '对话', tokens: 900, children: [{ part: 'messages.user', label: '你说的', tokens: 400 }, { part: 'messages.tool', label: '工具结果', tokens: 500 }] },
+    { part: 'system', label: '系统提示词', tokens: 300 },
+    { part: 'messages', label: '对话', tokens: 900, children: [{ part: 'messages.user', label: '你的消息', tokens: 400 }, { part: 'messages.tool', label: '工具结果', tokens: 500 }] },
     { part: 'output', label: 'AI 输出', tokens: 120 },
     { part: 'tools', label: '工具说明', tokens: 50 },
   ];
   const own = [
-    { part: 'system', label: '系统提示', tokens: 100 },
-    { part: 'messages', label: '对话', tokens: 600, children: [{ part: 'messages.user', label: '你说的', tokens: 400 }, { part: 'messages.tool', label: '工具结果', tokens: 200 }] },
+    { part: 'system', label: '系统提示词', tokens: 100 },
+    { part: 'messages', label: '对话', tokens: 600, children: [{ part: 'messages.user', label: '你的消息', tokens: 400 }, { part: 'messages.tool', label: '工具结果', tokens: 200 }] },
     { part: 'output', label: 'AI 输出', tokens: 130 },
     { part: 'tools', label: '工具说明', tokens: 50 },
   ];
   assert.deepEqual(partsMinus(all, own), [
-    { part: 'system', label: '系统提示', tokens: 200, children: undefined },
+    { part: 'system', label: '系统提示词', tokens: 200, children: undefined },
     { part: 'messages', label: '对话', tokens: 300, children: [{ part: 'messages.tool', label: '工具结果', tokens: 300, children: undefined }] },
   ]);
   // 主会话自己没有的块照原样
