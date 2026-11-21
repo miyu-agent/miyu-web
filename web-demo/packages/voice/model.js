@@ -236,6 +236,18 @@ export function errorKey(err) {
 }
 
 /**
+ * 照原话说的那一句（「语音出错：…」）用哪句原话：提供方、引擎的原话在 `data.message`（`method_failed` 的顶层 `message` 只是
+ * 「方法执行失败。」，2026-11-21 主人验收），没有的照顶层的 `message`，都不是的照它本身。
+ * @param {any} err
+ * @returns {string}
+ */
+export function errorReason(err) {
+  const inner = err?.data?.message;
+  if (typeof inner === 'string' && inner) return inner;
+  return err?.message ?? String(err);
+}
+
+/**
  * 浏览器拿麦克风时抛的（`getUserMedia`）换成哪一句：没给权限、没有麦克风、被别的程序占着；别的交 `null`。
  * @param {any} err
  * @returns {'mic_denied'|'no_microphone'|'mic_busy'|null}

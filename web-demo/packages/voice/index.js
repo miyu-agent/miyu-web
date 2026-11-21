@@ -11,7 +11,7 @@
 
 import { h, icon } from '../../src/lib/dom.js';
 import { upload } from '../../src/lib/upload.js';
-import { ready, sentences, errorKey, micErrorKey, interrupted, playSentence, stopRun, chimeOn, heardOf } from './model.js';
+import { ready, sentences, errorKey, errorReason, micErrorKey, interrupted, playSentence, stopRun, chimeOn, heardOf } from './model.js';
 import { readable } from './readable.js';
 import { chime } from './chime.js';
 import { Recorder } from './recorder.js';
@@ -31,7 +31,7 @@ export function apply(ctx) {
   /** 出错说一句：认得的出错码照字表，不认得的照原话。 @param {any} err */
   const fail = (err) => {
     const key = errorKey(err);
-    ctx.composer.say(key ? t(`errors.${key}`) : t('errors.other', { reason: err?.message ?? String(err) }));
+    ctx.composer.say(key ? t(`errors.${key}`) : t('errors.other', { reason: errorReason(err) }));
   };
 
   // ---- 总线上有什么 ----

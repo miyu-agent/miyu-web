@@ -1,7 +1,7 @@
 // 语音（软件包 voice，W-1128）的纯逻辑：总线上能不能用、降采样、打 wav、静下来算说完、切句、出错码。
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ready, downsample, wav, loudness, Silence, sentences, errorKey, micErrorKey, insertAt, RATE, interrupted, playSentence, stopRun, chimeTones, chimeLength, chimeOn, CHIME } from '../../packages/voice/model.js';
+import { ready, downsample, wav, loudness, Silence, sentences, errorKey, errorReason, micErrorKey, insertAt, RATE, interrupted, playSentence, stopRun, chimeTones, chimeLength, chimeOn, CHIME } from '../../packages/voice/model.js';
 
 test('总线上 stt、tts 有人提供、ready 才算能用，不认包名', () => {
   const names = [
@@ -213,4 +213,15 @@ test('录音记下浏览器给的麦克风名字（假的 getUserMedia，不开�
     Object.defineProperty(globalThis, 'navigator', { value: had.navigator, configurable: true });
     globalThis.AudioContext = had.AudioContext;
   }
+});
+
+test('「语音出错：…」的原因先照 data.message（引擎的原话），没有的照核心顶层那一句（2026-11-21 主人验收：终端写成了「方法执行失败。」，ACC-1121-#5）', async () => {
+  assert.equal(errorReason({ message: '方法执行失败。', reason: 'method_failed', data: { code: 'model_missing', message: 'whisper 模型文件不在' } }), 'whisper 模型文件不在');
+  assert.equal(errorReason({ message: '方法执行失败。', reason: 'method_failed', data: { code: 'x' } }), '方法执行失败。');
+  assert.equal(errorReason({ message: '方法执行失败。', data: { message: '' } }), '方法执行失败。');
+  assert.equal(errorReason(new Error('boom')), 'boom');
+  assert.equal(errorReason('plain'), 'plain');
+  const { readFile } = await import('node:fs/promises');
+  const index = await readFile(new URL('../../packages/voice/index.js', import.meta.url), 'utf8');
+  assert.match(index, /errors\.other', \{ reason: errorReason\(err\) \}/, '总线、核心拒的那一处照它取');
 });
