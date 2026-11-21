@@ -593,3 +593,8 @@ test('网页自己的字里不再有「看图」（W-1241）：留着的「多�
     + ['zh', 'en', 'ja'].map((l) => readFileSync(new URL(`../../resources/text/${l}.json`, import.meta.url), 'utf8')).join('');
   for (const old of ['看图', '"Images"', '"Vision"', 'can\'t see', '画像を見られない']) assert.ok(!all.includes(old), `还写着 ${old}`);
 });
+
+test('选人格、预设、模型、知识库的下拉：第一项写「继承默认设置」，选了照核心的默认（2026-11-22 项目主人）', () => {
+  const text = JSON.parse(readFileSync(new URL('../../packages/settings/manifest.json', import.meta.url), 'utf8')).text;
+  assert.deepEqual([text.zh.ref_unset, text.en.ref_unset, text.ja.ref_unset], ['继承默认设置', 'Inherit default', 'デフォルト設定を継承']);
+});

@@ -207,7 +207,7 @@ function control(dialog, item, value, save, saveSecret) {
     return label;
   };
   if (PICKS.has(item.type) && !env) {
-    // 选模型（`reference`）、人格、预设（W-1096）、知识库（PC-3）的：下拉，第一项「不指定」（照核心的默认，写在说明里）；列表里没有的现值照原样留一项
+    // 选模型（`reference`）、人格、预设（W-1096）、知识库（PC-3）的：下拉，第一项「继承默认设置」（照核心的默认，写在说明里）；列表里没有的现值照原样留一项
     const options = [{ value: null, name: ctx.text('ref_unset') }, ...choices(dialog, item.type)];
     if (value != null && !options.some((o) => o.value === value)) options.push({ value, name: inputText(value) });
     return select(dialog, options, value ?? null, (v) => save(v === null ? { unset: true } : { value: v }));
