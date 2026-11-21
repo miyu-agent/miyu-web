@@ -568,15 +568,26 @@ test('新建模型池：固定、没有成员，子代理能选照白卡上的�
   assert.equal(newPoolChanges('a.b', false)[0].key, 'pools."a.b".strategy');
 });
 
-test('默认模型的 models.vision 那一行叫「多模态」（2026-11-20 主人验收第 6 条，W-1241）；网页自己的字里不再有「看图」', () => {
+test('默认模型的 models.vision 那一行的名字、说明照核心配置清单里这一项的（2026-11-21 主人：两个头都照核心的字表，ACC-1121-#3）；核心没给的才用网页自己的字', async () => {
+  const { useWords } = await import('../../packages/settings/model.js');
+  const ctx = { text: (/** @type {string} */ k) => `local:${k}` };
+  // 核心 FX-9 改名以后的样子（假的清单，不等核心 main）
+  const core = { key: 'models.vision', name: '多模态模型', description: '在对话模型不支持多模态时提供多模态能力' };
+  assert.deepEqual(useWords(ctx, core, 'vision'), { name: '多模态模型', description: '在对话模型不支持多模态时提供多模态能力' });
+  assert.deepEqual(useWords(ctx, { ...core, name: 'Multimodal model' }, 'vision').name, 'Multimodal model');
+  // 核心没给（旧核心、空字）的退回网页自己的字
+  assert.deepEqual(useWords(ctx, { key: 'models.vision' }, 'vision'), { name: 'local:models.uses.vision', description: 'local:models.uses.vision_desc' });
+  assert.deepEqual(useWords(ctx, { key: 'models.vision', name: '', description: '' }, 'vision'), { name: 'local:models.uses.vision', description: 'local:models.uses.vision_desc' });
+  // 对话那一行照旧是网页自己的字（W-1241 定的，这次没改）
+  assert.deepEqual(useWords(ctx, { key: 'models.chat', name: '主对话的模型', description: '新会话默认用的模型，写成 供应商/模型' }, 'chat'), { name: 'local:models.uses.chat', description: 'local:models.uses.chat_desc' });
+  // 画这一行的照它取字，不再直接写字表的键
+  const src = readFileSync(new URL('../../packages/settings/defaults.js', import.meta.url), 'utf8');
+  assert.match(src, /useWords\(ctx, item, which\)/);
+  assert.doesNotMatch(src, /models\.uses\.\$\{which\}/);
+});
+
+test('网页自己的字里不再有「看图」（W-1241）：留着的「多模态」只是核心没给名字时的后备', () => {
   const text = (/** @type {string} */ pkg) => JSON.parse(readFileSync(new URL(`../../packages/${pkg}/manifest.json`, import.meta.url), 'utf8')).text;
-  const uses = (/** @type {string} */ lang) => text('settings')[lang].models.uses;
-  assert.equal(uses('zh').vision, '多模态');
-  assert.equal(uses('zh').vision_desc, '在对话模型不支持多模态时提供多模态能力');
-  assert.equal(uses('en').vision, 'Multimodal');
-  assert.equal(uses('en').vision_desc, "Provides multimodal input when the chat model doesn't support it");
-  assert.equal(uses('ja').vision, 'マルチモーダル');
-  // 网页自己的字（各软件包的字表、页面的字表）里旧的说法一处都不留：模型那一行的「1M · 看图」、用量页的用途也跟着改
   const all = ['settings', 'usage'].map((p) => JSON.stringify(text(p))).join('')
     + ['zh', 'en', 'ja'].map((l) => readFileSync(new URL(`../../resources/text/${l}.json`, import.meta.url), 'utf8')).join('');
   for (const old of ['看图', '"Images"', '"Vision"', 'can\'t see', '画像を見られない']) assert.ok(!all.includes(old), `还写着 ${old}`);

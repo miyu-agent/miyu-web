@@ -256,6 +256,21 @@ export function purposeKey(purpose) {
   return ['recap', 'title', 'vision', 'memory', 'embedding'].includes(purpose) ? purpose : null;
 }
 
+/** 用途的名字照核心给的（`usage.query` 照 `purpose` 分组时每一行的 `purpose_name`，照连接的语言）的几样：多模态（2026-11-21 主人：照核心的字表） */
+const CORE_NAMED = new Set(['vision']);
+
+/**
+ * 用途那一格写什么：多模态、扩展写的用途（认不得的）照核心给的 `purpose_name`；别的认得的照网页自己的字（`purpose.*`）；
+ * 核心没给名字的（旧核心、扩展没声明）认得的照网页的字，认不得的照原样。
+ * @param {{purpose?: string|null, purpose_name?: string}} row @param {(key: string) => string} t
+ */
+export function purposeName(row, t) {
+  const key = purposeKey(row?.purpose ?? null);
+  const core = typeof row?.purpose_name === 'string' && row.purpose_name ? row.purpose_name : null;
+  if (core && (key === null || CORE_NAMED.has(key))) return core;
+  return key ? t(`purpose.${key}`) : String(row?.purpose);
+}
+
 /**
  * 场所写成什么：`local` 本机，`qq:group:<号>` QQ 群，`qq:private:<号>` QQ 私聊，别的照原样；`null` 是其他。
  * @param {string|null} venue @returns {{key: string, fields?: any}|{raw: string}}
@@ -324,5 +339,6 @@ export function mergeBy(rows, key) {
     if (!list.length) by.set(r[key], list);
     list.push(r);
   }
-  return [...by].map(([v, list]) => ({ ...sum(list), [key]: v }));
+  // 照用途拆的，核心给的名字跟着留下（`purposeName`）
+  return [...by].map(([v, list]) => ({ ...sum(list), [key]: v, ...(key === 'purpose' && list[0].purpose_name ? { purpose_name: list[0].purpose_name } : {}) }));
 }

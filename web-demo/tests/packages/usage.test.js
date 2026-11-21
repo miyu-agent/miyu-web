@@ -4,7 +4,8 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { input, total, sum, money, amountText, offsetOf, spanOf, spanParams, parseDay, daysBetween, midnight, hours, hourBars, dayBars, allBars, monthBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, venueOf, splitModel, dayKey, tipPlace, foldVenues, mergeBy } from '../../packages/usage/model.js';
+import { readFileSync } from 'node:fs';
+import { input, total, sum, money, amountText, offsetOf, spanOf, spanParams, parseDay, daysBetween, midnight, hours, hourBars, dayBars, allBars, monthBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, purposeName, venueOf, splitModel, dayKey, tipPlace, foldVenues, mergeBy } from '../../packages/usage/model.js';
 
 const t = (/** @type {string} */ key, /** @type {any} */ f = {}) => `${key}${Object.keys(f).length ? JSON.stringify(f) : ''}`;
 const row = (/** @type {any} */ extra = {}) => ({ requests: 1, usage: { uncached: 10, cache_read: 90, cache_write: 0, output: 5 }, amounts: [], unpriced: 0, ...extra });
@@ -197,4 +198,23 @@ test('按会话：场所里的会话同一个场所并成一行（2026-11-02 项
   assert.equal(group?.venue, 'qq:group:1');
   const parts = mergeBy([{ ...row('q1', '', 1), model: 'x' }, { ...row('q2', '', 2), model: 'x' }, { ...row('q2', '', 4), model: 'y' }], 'model');
   assert.deepEqual(parts.map((r) => [r.model, r.requests]), [['x', 3], ['y', 4]]);
+});
+
+test('用途的名字：多模态、扩展写的用途照核心给的 purpose_name（2026-11-21 主人：照核心的字表，ACC-1121-#3）；别的认得的照网页的字，都没有的照原样', () => {
+  const t = (/** @type {string} */ k) => `local:${k}`;
+  assert.equal(purposeName({ purpose: 'vision', purpose_name: '多模态模型' }, t), '多模态模型');
+  assert.equal(purposeName({ purpose: 'vision', purpose_name: 'Multimodal model' }, t), 'Multimodal model');
+  assert.equal(purposeName({ purpose: 'vision' }, t), 'local:purpose.vision', '旧核心没有 purpose_name');
+  assert.equal(purposeName({ purpose: 'vision', purpose_name: '' }, t), 'local:purpose.vision');
+  assert.equal(purposeName({ purpose: 'platform', purpose_name: '平台回复' }, t), '平台回复', '扩展在清单里声明的用途');
+  assert.equal(purposeName({ purpose: 'platform' }, t), 'platform');
+  // 对话、记忆这几样照旧是网页自己的字（这次只改多模态）
+  assert.equal(purposeName({ purpose: null, purpose_name: '主对话' }, t), 'local:purpose.chat');
+  assert.equal(purposeName({ purpose: 'memory', purpose_name: '记忆整理' }, t), 'local:purpose.memory');
+  // 场所会话并成一行再拆开时，名字跟着留下
+  const merged = mergeBy([{ purpose: 'vision', purpose_name: '多模态模型', requests: 1, usage: {}, amounts: [] }, { purpose: 'vision', purpose_name: '多模态模型', requests: 2, usage: {}, amounts: [] }], 'purpose');
+  assert.equal(purposeName(merged[0], t), '多模态模型');
+  // 页面上用途那几处都照它取
+  const src = readFileSync(new URL('../../packages/usage/page.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(src, /this\.t\(`purpose\.\$\{key\}`\)/);
 });

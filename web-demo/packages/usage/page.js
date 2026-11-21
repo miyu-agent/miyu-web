@@ -6,7 +6,7 @@
 
 import { h, icon, replace } from '../../src/lib/dom.js';
 import { short, hitRate, hhmm } from '../../src/lib/format.js';
-import { input, total, sum, amountText, costText, costParts, uniqueRates, rateName, offsetOf, spanOf, spanParams, daysBetween, dayKey, hours, hourBars, dayBars, allBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, venueOf, splitModel, tipPlace, foldVenues, mergeBy } from './model.js';
+import { input, total, sum, amountText, costText, costParts, uniqueRates, rateName, offsetOf, spanOf, spanParams, daysBetween, dayKey, hours, hourBars, dayBars, allBars, rangeBars, niceStep, sorted, splitsOf, exact, purposeKey, purposeName, venueOf, splitModel, tipPlace, foldVenues, mergeBy } from './model.js';
 
 /** 分组表先列几行 */
 const FIRST = 10;
@@ -497,7 +497,7 @@ export class UsagePage {
       const own = r.sessions ? mergeBy(got.filter((x) => r.sessions.includes(x.session)), sub) : got.filter((x) => x[this.group] === value);
       const mine = sorted(own.filter((x) => x.requests > 0), { by: 'tokens', desc: true }, sub);
       parts.push(h('div.use-split', head, mine.map((x) => h('div.use-split-row',
-        h('span.use-split-name', this.subName(sub, x[sub])),
+        h('span.use-split-name', this.subName(sub, x)),
         h('span.num', this.t('times', { n: x.requests.toLocaleString() })),
         h('span.num', short(total(x.usage))),
         h('span.num', costText(x) || this.noCost(x))))));
@@ -529,14 +529,13 @@ export class UsagePage {
     return h('span.use-faint', r.unpriced ? this.t('unpriced_only', { n: r.unpriced.toLocaleString() }) : '—');
   }
 
-  /** 拆开的那一行写什么名字 @param {string} sub @param {any} v */
-  subName(sub, v) {
+  /** 拆开的那一行写什么名字 @param {string} sub @param {Row} x 拆开的那一行 */
+  subName(sub, x) {
     if (sub === 'model') {
-      const { provider, name } = splitModel(v ?? '');
+      const { provider, name } = splitModel(x.model ?? '');
       return h('span', name, provider ? h('span.use-sub', ` ${provider}`) : null);
     }
-    const key = purposeKey(v);
-    return h('span', key ? this.t(`purpose.${key}`) : String(v));
+    return h('span', purposeName(x, this.t));
   }
 
   /** 名字那一格悬停写全的（一行放不下截掉的照它看） @param {Row} r */
@@ -553,7 +552,7 @@ export class UsagePage {
   nameText(r) {
     const v = r[this.group];
     if (this.group === 'model') return splitModel(v).name;
-    if (this.group === 'purpose') { const key = purposeKey(v); return key ? this.t(`purpose.${key}`) : String(v); }
+    if (this.group === 'purpose') return purposeName(r, this.t);
     if (this.group === 'venue') return v === null || v === undefined ? this.t('other') : this.venueText(v);
     if (v === null) return this.t('other');
     const s = this.sessions.get(v);

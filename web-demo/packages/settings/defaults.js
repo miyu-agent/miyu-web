@@ -6,7 +6,7 @@
 import { h, icon } from '../../src/lib/dom.js';
 import { logoEl, hasLogos } from '../../src/lib/logo.js';
 import { shell, select } from './rows.js';
-import { plainItem, providerName, pickGroups, sameNamed, whereOf } from './model.js';
+import { plainItem, providerName, pickGroups, sameNamed, whereOf, useWords } from './model.js';
 import { modelName, seesImages } from './model-bits.js';
 import { pickModel } from './model-pick.js';
 
@@ -15,7 +15,7 @@ export function drawDefaults(dialog, list) {
   return h('div.set-rows.set-uses', useRow(dialog, list, 'chat'), useRow(dialog, list, 'vision'), embeddingRow(dialog));
 }
 
-/** 对话、多模态：名称、说明，右边一个按钮写着现在选的（图标、名字、哪一家）。 @param {'chat'|'vision'} which */
+/** 对话、多模态：名称、说明（多模态的照核心配置清单，`useWords`），右边一个按钮写着现在选的（图标、名字、哪一家）。 @param {'chat'|'vision'} which */
 function useRow(dialog, list, which) {
   const ctx = dialog.ctx;
   const item = plainItem(dialog.schema, dialog.got, `models.${which}`);
@@ -38,8 +38,7 @@ function useRow(dialog, list, which) {
     if (why) row.fail(why);
   }));
   row = shell({
-    name: ctx.text(`models.uses.${which}`),
-    description: ctx.text(`models.uses.${which}_desc`),
+    ...useWords(ctx, item, which),
     problems: (item.problems ?? []).map((p) => ({ level: p.level, message: p.message })),
     control: button,
   });
