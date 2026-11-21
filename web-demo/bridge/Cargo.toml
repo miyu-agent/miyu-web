@@ -10,7 +10,7 @@ description = "网页演示的桥：给页面文件，把浏览器的 WebSocket 
 # 连核心：和 miyu ask、TUI 演示同一套（找数据根、拉起核心、本机令牌、会话日志）。
 # 核心只经门面 miyu-client 用（设计 32 第二节），照 git 依赖钉住核心的一个提交，和仓库根的 Cargo.toml 钉同一个。
 # `wallpaper`：主题「跟随壁纸」读桌面壁纸，用核心仓库的 crate `miyu-wallpaper`（只用标准库；审计 #092：只留核心一份）。
-miyu-client = { git = "https://github.com/miyu-agent/miyu", rev = "dfffbf7f398260a97f35ce7be90e9b9a5b7f6743", features = ["wallpaper"] }
+miyu-client = { git = "https://github.com/miyu-agent/miyu", rev = "62d294acdf536c4b14b21aa22fc2bc6e0cfe0c88", features = ["wallpaper"] }
 # 协议是 JSON-RPC：握手要往里塞本机令牌，`events.read` 要自己回。
 serde_json = "1"
 # 异步：一个浏览器标签页一条核心连接，互不等。
