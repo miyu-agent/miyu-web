@@ -256,18 +256,14 @@ export function purposeKey(purpose) {
   return ['recap', 'title', 'vision', 'memory', 'embedding'].includes(purpose) ? purpose : null;
 }
 
-/** 用途的名字照核心给的（`usage.query` 照 `purpose` 分组时每一行的 `purpose_name`，照连接的语言）的几样：多模态（2026-11-21 主人：照核心的字表） */
-const CORE_NAMED = new Set(['vision']);
-
 /**
- * 用途那一格写什么：多模态、扩展写的用途（认不得的）照核心给的 `purpose_name`；别的认得的照网页自己的字（`purpose.*`）；
- * 核心没给名字的（旧核心、扩展没声明）认得的照网页的字，认不得的照原样。
+ * 用途那一格写什么：照核心给的 `purpose_name`（`usage.query` 照 `purpose` 分组时每一行带的，照连接的语言；2026-11-21 主人：照核心的
+ * 字表），扩展写的用途也是；核心没给的（旧核心、扩展没声明）认得的照网页自己的字（`purpose.*`），认不得的照原样。
  * @param {{purpose?: string|null, purpose_name?: string}} row @param {(key: string) => string} t
  */
 export function purposeName(row, t) {
+  if (typeof row?.purpose_name === 'string' && row.purpose_name) return row.purpose_name;
   const key = purposeKey(row?.purpose ?? null);
-  const core = typeof row?.purpose_name === 'string' && row.purpose_name ? row.purpose_name : null;
-  if (core && (key === null || CORE_NAMED.has(key))) return core;
   return key ? t(`purpose.${key}`) : String(row?.purpose);
 }
 

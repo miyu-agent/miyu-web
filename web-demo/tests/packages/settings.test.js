@@ -568,7 +568,7 @@ test('新建模型池：固定、没有成员，子代理能选照白卡上的�
   assert.equal(newPoolChanges('a.b', false)[0].key, 'pools."a.b".strategy');
 });
 
-test('默认模型的 models.vision 那一行的名字、说明照核心配置清单里这一项的（2026-11-21 主人：两个头都照核心的字表，ACC-1121-#3）；核心没给的才用网页自己的字', async () => {
+test('默认模型的对话、多模态两行的名字、说明照核心配置清单里那一项的（2026-11-21 主人：两个头都照核心的字表，ACC-1121-#3）；核心没给的才用网页自己的字', async () => {
   const { useWords } = await import('../../packages/settings/model.js');
   const ctx = { text: (/** @type {string} */ k) => `local:${k}` };
   // 核心 FX-9 改名以后的样子（假的清单，不等核心 main）
@@ -578,8 +578,9 @@ test('默认模型的 models.vision 那一行的名字、说明照核心配置�
   // 核心没给（旧核心、空字）的退回网页自己的字
   assert.deepEqual(useWords(ctx, { key: 'models.vision' }, 'vision'), { name: 'local:models.uses.vision', description: 'local:models.uses.vision_desc' });
   assert.deepEqual(useWords(ctx, { key: 'models.vision', name: '', description: '' }, 'vision'), { name: 'local:models.uses.vision', description: 'local:models.uses.vision_desc' });
-  // 对话那一行照旧是网页自己的字（W-1241 定的，这次没改）
-  assert.deepEqual(useWords(ctx, { key: 'models.chat', name: '主对话的模型', description: '新会话默认用的模型，写成 供应商/模型' }, 'chat'), { name: 'local:models.uses.chat', description: 'local:models.uses.chat_desc' });
+  // 对话那一行同样照核心的（2026-11-21 core1 转主人：对话那一行也照核心的字表）；核心没给的照网页的字
+  assert.deepEqual(useWords(ctx, { key: 'models.chat', name: '主对话的模型', description: '新会话默认用的模型' }, 'chat'), { name: '主对话的模型', description: '新会话默认用的模型' });
+  assert.deepEqual(useWords(ctx, { key: 'models.chat' }, 'chat'), { name: 'local:models.uses.chat', description: 'local:models.uses.chat_desc' });
   // 画这一行的照它取字，不再直接写字表的键
   const src = readFileSync(new URL('../../packages/settings/defaults.js', import.meta.url), 'utf8');
   assert.match(src, /useWords\(ctx, item, which\)/);

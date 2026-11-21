@@ -200,7 +200,7 @@ test('按会话：场所里的会话同一个场所并成一行（2026-11-02 项
   assert.deepEqual(parts.map((r) => [r.model, r.requests]), [['x', 3], ['y', 4]]);
 });
 
-test('用途的名字：多模态、扩展写的用途照核心给的 purpose_name（2026-11-21 主人：照核心的字表，ACC-1121-#3）；别的认得的照网页的字，都没有的照原样', () => {
+test('用途的名字照核心给的 purpose_name（2026-11-21 主人：照核心的字表，ACC-1121-#3），扩展写的用途也是；核心没给的认得的照网页的字，认不得的照原样', () => {
   const t = (/** @type {string} */ k) => `local:${k}`;
   assert.equal(purposeName({ purpose: 'vision', purpose_name: '多模态模型' }, t), '多模态模型');
   assert.equal(purposeName({ purpose: 'vision', purpose_name: 'Multimodal model' }, t), 'Multimodal model');
@@ -208,9 +208,12 @@ test('用途的名字：多模态、扩展写的用途照核心给的 purpose_na
   assert.equal(purposeName({ purpose: 'vision', purpose_name: '' }, t), 'local:purpose.vision');
   assert.equal(purposeName({ purpose: 'platform', purpose_name: '平台回复' }, t), '平台回复', '扩展在清单里声明的用途');
   assert.equal(purposeName({ purpose: 'platform' }, t), 'platform');
-  // 对话、记忆这几样照旧是网页自己的字（这次只改多模态）
-  assert.equal(purposeName({ purpose: null, purpose_name: '主对话' }, t), 'local:purpose.chat');
-  assert.equal(purposeName({ purpose: 'memory', purpose_name: '记忆整理' }, t), 'local:purpose.memory');
+  // 对话、记忆、向量这几样同样照核心的（2026-11-21 core1 转主人）；核心没给的照网页的字
+  assert.equal(purposeName({ purpose: null, purpose_name: '主对话' }, t), '主对话');
+  assert.equal(purposeName({ purpose: 'memory', purpose_name: '记忆整理' }, t), '记忆整理');
+  assert.equal(purposeName({ purpose: 'embedding', purpose_name: '向量化' }, t), '向量化');
+  assert.equal(purposeName({ purpose: null }, t), 'local:purpose.chat');
+  assert.equal(purposeName({ purpose: 'memory' }, t), 'local:purpose.memory');
   // 场所会话并成一行再拆开时，名字跟着留下
   const merged = mergeBy([{ purpose: 'vision', purpose_name: '多模态模型', requests: 1, usage: {}, amounts: [] }, { purpose: 'vision', purpose_name: '多模态模型', requests: 2, usage: {}, amounts: [] }], 'purpose');
   assert.equal(purposeName(merged[0], t), '多模态模型');

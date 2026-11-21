@@ -216,14 +216,13 @@ export function plainItem(schema, got, key) {
 }
 
 /**
- * 「默认模型」一行的名字、说明（蓝图 `web.md`「设置页」第 14 条）：多模态（`models.vision`）照核心配置清单里这一项的 `name`、
- * `description`（2026-11-21 主人：两个头都照核心的字表，核心改名网页跟着变）；核心没给的（空的、旧核心）照网页自己的字。
- * 对话（`models.chat`）照旧是网页自己的字（W-1241）。
+ * 「默认模型」一行的名字、说明（蓝图 `web.md`「设置页」第 14 条）：对话（`models.chat`）、多模态（`models.vision`）照核心配置清单里
+ * 这一项的 `name`、`description`（2026-11-21 主人：两个头都照核心的字表，核心改名网页跟着变）；核心没给的（空的、旧核心）照网页自己的字。
  * @param {{text: (key: string) => string}} ctx @param {{name?: string, description?: string}|null} item @param {'chat'|'vision'} which
  * @returns {{name: string, description: string}}
  */
 export function useWords(ctx, item, which) {
-  const core = (/** @type {unknown} */ v) => (which === 'vision' && typeof v === 'string' && v ? v : null);
+  const core = (/** @type {unknown} */ v) => (typeof v === 'string' && v ? v : null);
   return {
     name: core(item?.name) ?? ctx.text(`models.uses.${which}`),
     description: core(item?.description) ?? ctx.text(`models.uses.${which}_desc`),
