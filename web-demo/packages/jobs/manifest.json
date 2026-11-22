@@ -66,7 +66,7 @@
         "timed_out": "超时已停止",
         "too_large": "输出太大，已停止",
         "too_chatty": "输出太频繁，已停止",
-        "undone": "随撤销停止",
+        "undone": "随撤回停止",
         "restarted": "因重启停止",
         "aborted": "中断：核心已退出",
         "paused": "等待输入",

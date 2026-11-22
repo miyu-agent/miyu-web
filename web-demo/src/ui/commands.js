@@ -480,7 +480,7 @@ function opened(app) {
 }
 
 /**
- * `/undo`：撤掉最近一轮，那一轮里你说的话放回输入框（框里有字的不覆盖），提示「已撤销」。放回的字照条目找整段，
+ * `/undo`：撤掉最近一轮，那一轮里你说的话放回输入框（框里有字的不覆盖），提示「已撤回」。放回的字照条目找整段，
  * 找不到的用回应的 `said`（只有第一行）。等回应的时候换了会话的不放回。
  */
 async function undo(app) {
@@ -517,7 +517,7 @@ export async function withdrawQueued(app, session, seq) {
 }
 
 /**
- * 撤掉一个会话最近的一轮，那一轮里你说的话放回输入框（还看着这个会话、框里没字的才放），提示「已撤销」。`/undo` 和打断时她还没开始做事
+ * 撤掉一个会话最近的一轮，那一轮里你说的话放回输入框（还看着这个会话、框里没字的才放），提示「已撤回」。`/undo` 和打断时她还没开始做事
  * （蓝图「按键」两下 `Esc`）都走这里；拒了的照抛。
  * @param {App} app
  * @param {string} session
@@ -536,7 +536,7 @@ export async function revertLatest(app, session) {
   app.composer.say(stopped ? t('commands.undone_jobs', { count: stopped }) : t('commands.undone'));
 }
 
-/** `/restore`：恢复刚才撤销的；撤销时放回框里、还没动过的那句一并收回，免得再发一遍。 */
+/** `/restore`：恢复刚才撤回的；撤回时放回框里、还没动过的那句一并收回，免得再发一遍。 */
 async function restore(app) {
   const session = opened(app);
   if (!session) return;
