@@ -213,7 +213,8 @@ export function niceStep(max) {
 
 /**
  * 表的排法：照哪一列、正着还是倒着。数的那几列（请求、token、命中率、输出、花费）倒着是从大到小，名字照 `nameOf` 的字；
- * 花费照换算成的那个数比，没换成的、没换算的照币种的先后（`order`，核心给的合计里的先后）一种一种比（`costKey`），只有没价格的最小。一样的照名字，`null` 那一行总在最后。
+ * 花费照换算成的那个数比，没换成的、没换算的照币种的先后（`order`，核心给的合计里的先后）一种一种比（`costKey`），只有没价格的最小。一样的照名字，`null` 那一行总在最后
+ * （没模型、不在会话里、不在场所里）；照用途分的 `null` 是主对话，和别的用途一起排（2026-11-21 主人本机：它有 2220.7M 却排在最后）。
  * @typedef {'name'|'requests'|'tokens'|'hit'|'output'|'cost'} Column
  * @param {Row[]} rows @param {{by: Column, desc: boolean}} sort @param {string} group @param {string[]} [order] @param {(r: Row) => string} [nameOf]
  */
@@ -238,8 +239,9 @@ export function sorted(rows, sort, group, order = [], nameOf = (r) => String(r[g
     }
     return /** @type {number} */ (va) - /** @type {number} */ (vb);
   };
+  const nullLast = group !== 'purpose';
   return [...rows].sort((a, b) => {
-    if ((a[group] === null) !== (b[group] === null)) return a[group] === null ? 1 : -1;
+    if (nullLast && (a[group] === null) !== (b[group] === null)) return a[group] === null ? 1 : -1;
     return (sort.desc ? -cmp(a, b) : cmp(a, b)) || byName(a, b);
   });
 }

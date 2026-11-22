@@ -135,6 +135,19 @@ test('排法：每一列都能排，再点反过来；花费照币种的先后�
   assert.deepEqual(sorted(rows.slice(0, 3), { by: 'name', desc: false }, 'model', [], (r) => ({ a: '乙', b: '甲' })[r.model] ?? '').map((r) => r.model), ['b', 'a', null]);
 });
 
+test('照用途排：用途是 null 的那一行是主对话，和别的用途一起照数排，不压到最后（2026-11-21 主人本机：表头写 ↓token，2220.7M 的主对话却排在最后）', () => {
+  const u = (/** @type {number} */ i) => ({ uncached: i, cache_read: 0, cache_write: 0, output: 0 });
+  const rows = [
+    row({ purpose: 'title', requests: 3, usage: u(30) }),
+    row({ purpose: null, requests: 9, usage: u(2_000_000) }),
+    row({ purpose: 'recap', requests: 1, usage: u(500) }),
+  ];
+  const ids = (/** @type {any} */ sort) => sorted(rows, sort, 'purpose').map((r) => r.purpose);
+  assert.deepEqual(ids({ by: 'tokens', desc: true }), [null, 'recap', 'title']);
+  assert.deepEqual(ids({ by: 'tokens', desc: false }), ['title', 'recap', null]);
+  assert.deepEqual(ids({ by: 'requests', desc: true }), [null, 'title', 'recap']);
+});
+
 test('自定义：两天连头带尾，选反了对调，晚于今天的当今天；一天的照小时，90 天以内照天，再长照月', () => {
   const now = new Date(2026, 9, 20, 15, 30);
   assert.equal(parseDay('2026-10-14')?.getTime(), new Date(2026, 9, 14).getTime());
