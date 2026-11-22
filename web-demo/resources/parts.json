@@ -6785,6 +6785,12 @@
       ".si-eye"
     ]
   },
+  "setup.foot": {
+    "zh": "人格、预设编辑器底下一排按钮",
+    "select": [
+      ".setup-foot"
+    ]
+  },
   "signin.corner": {
     "zh": "登录、注册：右上角的明暗按钮",
     "select": [

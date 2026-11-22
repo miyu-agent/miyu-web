@@ -300,6 +300,9 @@
 .setup-tools.is-off .set-switch { opacity: 0.4; cursor: default; }
 .setup-missing { color: var(--t-warn); font-size: calc(12px * var(--text-scale)); }
 .setup-foot { display: flex; align-items: center; gap: calc(8px * var(--space)); margin-top: calc(14px * var(--space)); }
+/* 浮卡里的那一排（删除、取消、保存）贴在卡片底下，不跟着内容滚走：提示词长的时候不用滚到底才能保存（对照报告 A17）。底色同浮卡，
+   滚过去的内容从它下面过；往下伸出浮卡正文的下边距，贴到卡片的底 */
+.setup-float-body .setup-foot { position: sticky; z-index: 1; bottom: calc(-18px * var(--space)); margin-bottom: calc(-18px * var(--space)); padding: calc(10px * var(--space)) 0 calc(18px * var(--space)); background: var(--modal-bg, var(--surface)); }
 .setup-grow { flex: 1; }
 .setup-card p.setup-error, .setup-error { margin: calc(10px * var(--space)) 0 0; color: var(--danger); font-size: calc(12.5px * var(--text-scale)); }
 .setup-link { margin-left: calc(8px * var(--space)); padding: 0; border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; }
