@@ -35,10 +35,13 @@ test('第 1 条：内容区里选中的一项不退回左栏的选中色（大�
   assert.match(block(read('packages/settings/style.css'), '.set-prov.is-on'), /background: var\(--item-active, var\(--surface-3\)\)/);
 });
 
-test('第 3 条：手机上用量表照内容排宽、横着滚，名字不压后面几列；表头一律对中线', () => {
+test('第 3 条：手机上用量表的名字写全、不压后面几列；表头一律对中线。2026-11-22 起名字单独占一行，四个数在下面分四列，不用横着滚（对照报告 B22）', () => {
   const css = read('packages/usage/style.css');
   const phone = css.slice(css.lastIndexOf('@media (max-width: 640px)'));
-  assert.match(phone, /\.use-table \{ width: max-content; min-width: 100%; table-layout: auto; \}/);
+  assert.match(phone, /\.use-table tr \{ display: grid; grid-template-columns: repeat\(4, minmax\(0, 1fr\)\); \}/);
+  assert.match(phone, /\.use-table th:first-child, \.use-table td\.use-name \{ grid-column: 1 \/ -1; \}/);
+  assert.match(phone, /\.use-table td\.use-name \{[^}]*white-space: normal;/);
+  assert.doesNotMatch(phone, /max-content/, '不再照内容排宽、横着滚');
   assert.match(block(css, '.use-table th button'), /vertical-align: middle/);
 });
 

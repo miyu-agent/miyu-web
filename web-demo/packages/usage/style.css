@@ -18,10 +18,11 @@
 .use-date:focus-visible { outline: var(--focus-ring, 2px solid var(--accent)); outline-offset: 2px; }
 
 .use-tile { display: grid; gap: calc(2px * var(--space)); min-width: 0; padding: calc(10px * var(--space)) calc(12px * var(--space)); border-radius: var(--card-radius, var(--r-10)); background: var(--card-bg, var(--surface-2)); }
-.use-tile-k { color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
+/* 指标卡上的小字用 text-soft：text-faint 在深色的卡上对比度只有 2.87（对照报告 B31） */
+.use-tile-k { color: var(--text-soft); font-size: calc(12px * var(--text-scale)); }
 .use-tile-v, .use-tile-s { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .use-tile-v { color: var(--text); font-size: calc(19px * var(--text-scale)); font-weight: 600; }
-.use-tile-s { min-height: 1.4em; color: var(--text-faint); font-size: calc(11.5px * var(--text-scale)); }
+.use-tile-s { min-height: 1.4em; color: var(--text-soft); font-size: calc(11.5px * var(--text-scale)); }
 
 .use-block { display: grid; gap: calc(8px * var(--space)); min-width: 0; }
 .use-block-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(6px * var(--space)) calc(12px * var(--space)); }
@@ -119,11 +120,16 @@
   .use-seg { margin-left: 0; }
 }
 
-/* 手机上（蓝图「手机上」）：表本来就能横着滚，名字那一格不截成 …，照字宽写全：表照内容排宽（不照固定列宽），名字那一列跟着字变宽、
-   整张表横着滚；原来列宽固定，写全的名字压在后面几列上（2026-11-14 UI review 第 3 条） */
+/* 手机上（蓝图「手机上」）：名字那一格不截成 …，照字写全（2026-11-14 UI review 第 3 条）；名字单独占一行，下面四个数分四列排开，
+   不用横着滚就看得到 token、命中、花费（对照报告 B22：原来表照内容排宽、整张表横着滚，400 宽时只看得到名字和请求） */
 @media (max-width: 640px) {
-  .use-table { width: max-content; min-width: 100%; table-layout: auto; }
-  .use-table td { overflow: visible; text-overflow: clip; }
-  .use-name-line, .use-name-line > * { overflow: visible; text-overflow: clip; }
-  .use-name-line > :first-child, .use-name-line > .use-sub { flex: none; }
+  .use-table, .use-table thead, .use-table tbody { display: block; width: 100%; min-width: 0; }
+  .use-table colgroup { display: none; }
+  .use-table tr { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .use-table th:first-child, .use-table td.use-name { grid-column: 1 / -1; }
+  .use-table th:first-child { padding-bottom: 0; }
+  .use-table td.use-name { padding-bottom: calc(2px * var(--space)); white-space: normal; overflow: visible; }
+  .use-table td + td { padding-top: calc(2px * var(--space)); border-top: 0; }
+  .use-name-line { flex-wrap: wrap; }
+  .use-name-line, .use-name-line > * { overflow: visible; text-overflow: clip; white-space: normal; }
 }
