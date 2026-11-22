@@ -16,7 +16,7 @@ import { short, hitRate, seconds, hhmm } from './format.js';
 import { shownOf } from './artifacts.js';
 import { nestedTail } from '../lib/nested.js';
 import { voiceItem } from './voice.js';
-import { speakerOf, moduleNote, roundNote, pokeNote, peerNote, changeNote, modelNote, compactedNote, failureText, recapNote, compactFailedNote, workspaceNote } from './notes.js';
+import { speakerOf, moduleNote, pokeNote, peerNote, changeNote, modelNote, compactedNote, failureText, recapNote, compactFailedNote, workspaceNote } from './notes.js';
 
 /**
  * 记下的级别读成现在的两样（LV-3，2026-11-09 项目主人定：级别只剩「只读」「开放权限」）：`full` 是 `full`，别的都按只读
@@ -76,9 +76,11 @@ export function itemsOf(entries, status, opts = {}) {
           items.push({ ...moduleNote(e), seq: seqOf(e.id) });
           break;
         }
-        // 循环到点开始下一轮的那句（W-1206）：一行小字，不当你的话；排着的等她听到再画（退不回去，不进排着的话）
-        if (e.from?.kind === 'schedule' && e.from.loop && !typed) {
-          if (!e.queued) items.push({ ...roundNote(e), seq: seqOf(e.id) });
+        // 循环、定时任务到点交进来的那句（W-1206；2026-11-22 主人：画成用户消息的样子）：别人说的话那样的气泡，上面一行小字
+        // 「◷ 循环」，字淡一档（`said.js`）；光打 `/loop` 交的出厂英文（`from.builtin`，核心 FX-15）写「由 AI 自己决定」。排着的等她听到
+        // 再画（退不回去，不进排着的话）
+        if (e.from?.kind === 'schedule' && !typed) {
+          if (!e.queued) items.push(userItem(e.from.builtin === true ? { ...e, text: res.text.notes.builtin_words } : e, jobs, opts));
           break;
         }
         // 场所里的人戳了她一下（核心 VP-1补，W-1212）：一行灰字「名字 戳了戳你后缀」，不画空气泡；排着的等她听到再画

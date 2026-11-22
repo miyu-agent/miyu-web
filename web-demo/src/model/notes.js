@@ -40,8 +40,12 @@ export function speakerOf(by, jobs, parent = null) {
   }
   if (by?.kind === 'harness') return { kind: 'harness', name: t('notes.harness_speaker', { name: by.name ?? '' }) };
   if (by?.kind === 'external') return { kind: 'external', name: externalName(by) };
-  // 到点的定时任务、循环交进来的（核心 J-1 上、J-2）：「定时任务 t3」，循环的写「循环」
-  if (by?.kind === 'schedule') return { kind: 'schedule', name: by.loop ? n.loop_speaker : t('notes.schedule_speaker', { id: String(by.schedule ?? '') }).trim() };
+  // 到点的定时任务、循环交进来的（核心 J-1 上、J-2）：「定时任务 t3」，循环的写「循环」，AI 自己挂的定时触发（核心 FX-21：没有 `loop`、
+  // 不是人建的）写「定时触发」
+  if (by?.kind === 'schedule') {
+    const name = by.loop ? n.loop_speaker : by.person === true ? t('notes.schedule_speaker', { id: String(by.schedule ?? '') }).trim() : n.once_speaker;
+    return { kind: 'schedule', name };
+  }
   return { kind: by?.kind ?? 'unknown', name: by?.kind ?? '' };
 }
 
@@ -87,19 +91,6 @@ export function moduleNote(e) {
   const name = typeof names[id] === 'string' ? names[id] : id;
   const mark = res.layout.note_marks.module ?? '';
   const text = Number.isInteger(e.round) && e.round > 0 ? t('notes.module.round', { name, round: e.round }) : name;
-  return { type: 'note', key: e.id, seq: null, turn: null, tone: 'module', mark, text, detail: null };
-}
-
-/**
- * 循环到点交进来的话（`from` 是 `{kind: 'schedule', loop}`，核心 J-2、LO-1）：不当你的话画，画一行旁白「◷ 循环 · <那一句的第一行>」，
- * 不能点开（2026-11-17 项目主人：不是用户发的，W-1206；11-22 补：要看得出循环这次说了什么）。光打 `/loop` 交的是出厂的一句英文
- * （`from.builtin`，核心 FX-15），给模型看的，不照原文写，写「由 AI 自己决定」。同目标的续轮那一行。
- * @param {any} e 日志里的 `user` 条目
- */
-export function roundNote(e) {
-  const mark = res.layout.note_marks.round ?? '';
-  const words = String(e.text ?? '').split('\n').map((l) => l.trim()).find((l) => l !== '');
-  const text = e.from?.builtin === true || !words ? res.text.notes.round.builtin : t('notes.round.loop', { words });
   return { type: 'note', key: e.id, seq: null, turn: null, tone: 'module', mark, text, detail: null };
 }
 

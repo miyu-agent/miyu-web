@@ -148,18 +148,20 @@ test('模块替她开的一轮（长期目标的续轮）：一行「目标 · �
   assert.deepEqual(group(got.items).map((b) => b.kind), ['note', 'her', 'note', 'note'], '下一轮的那一行不并进她上一轮');
 });
 
-test('循环到点交进来的话（`from` 是 schedule、带 `loop`，W-1206）：不当你的话画，画一行旁白「◷ 循环 · <那一句的第一行>」，出厂的英文（`from.builtin`，核心 FX-15）写「由 AI 自己决定」，不能点开；排着的不画；不是循环的定时任务照旧是你的话', () => {
+test('到点交进来的话（`from` 是 schedule）画成别人说的话那样的气泡，小字写「循环」「定时触发」「定时任务 编号」（2026-11-22 主人：画成用户消息的样子）；出厂的英文（`from.builtin`，核心 FX-15）写「由 AI 自己决定」；排着的不画', () => {
   const auto = 'No new instructions. Continue on your own judgment, then schedule the next round or stop.';
   const entries = [
     { id: 'm1', kind: 'user', text: auto, turn: 1, from: { kind: 'schedule', schedule: 't1', loop: 'dynamic', person: true, builtin: true }, at: AT },
     { id: 'b2.0', kind: 'reply', turn: 1, text: '看了一圈。', at: AT },
-    { id: 'm3', kind: 'user', text: '\n看 CI\n顺便看看覆盖率', turn: 2, from: { kind: 'schedule', schedule: 't2', loop: 'fixed' }, at: AT },
-    { id: 'm5', kind: 'user', text: '提醒我喝水', turn: 4, from: { kind: 'schedule', schedule: 't4' }, at: AT },
+    { id: 'm3', kind: 'user', text: '看 CI\n顺便看看覆盖率', turn: 2, from: { kind: 'schedule', schedule: 't2', loop: 'fixed' }, at: AT },
+    { id: 'm4', kind: 'user', text: '该提醒了', turn: 3, from: { kind: 'schedule', schedule: 't3' }, at: AT },
+    { id: 'm5', kind: 'user', text: '提醒我喝水', turn: 4, from: { kind: 'schedule', schedule: 't4', person: true }, at: AT },
     { id: 'm6', kind: 'user', text: auto, turn: 5, queued: true, from: { kind: 'schedule', schedule: 't1', loop: 'dynamic', builtin: true }, at: AT },
   ];
   const got = itemsOf(entries, { state: 'idle' });
-  assert.deepEqual(brief(got.items), ['note: 循环 · 由 AI 自己决定', 'reply: 看了一圈。', 'note: 循环 · 看 CI', 'user: 提醒我喝水']);
-  assert.deepEqual(got.items.slice(0, 4).filter((it) => it.type === 'note').map((it) => [it.mark, it.tone, it.detail]), [['◷', 'module', null], ['◷', 'module', null]]);
+  assert.deepEqual(brief(got.items), ['user: 由 AI 自己决定', 'reply: 看了一圈。', 'user: 看 CI\n顺便看看覆盖率', 'user: 该提醒了', 'user: 提醒我喝水']);
+  assert.deepEqual(got.items.filter((it) => it.type === 'user').map((it) => [it.speaker.kind, it.speaker.name]),
+    [['schedule', '循环'], ['schedule', '循环'], ['schedule', '定时触发'], ['schedule', '定时任务 t4']]);
   assert.equal(got.queued.length, 0, '排着的下一轮不进排着的话（退不回去）');
   assert.ok(!JSON.stringify(got.items).includes('No new instructions'), '给模型看的那句英文不给人');
 });

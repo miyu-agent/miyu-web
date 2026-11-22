@@ -485,7 +485,8 @@
     "session_speaker": "セッション {id} からのメッセージ",
     "schedule_speaker": "定期タスク {id}",
     "loop_speaker": "ループ",
-    "round": {"loop": "ループ · {words}", "builtin": "ループ · AI が判断"},
+    "once_speaker": "定時トリガー",
+    "builtin_words": "AI が判断",
     "peer": {
       "idle": "セッション {id} が返信しました",
       "idle_status": "セッション {id} の返信：{status}",

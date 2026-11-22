@@ -55,7 +55,9 @@ export function userNode(it, on, media) {
   const mine = media.mine !== false;
   const actions = h('div.msg-actions.user-actions', it.text ? button('copy', t('said.copy'), () => on.copy(it.text)) : null, mine ? edit : null);
   const who = mine ? null : speakerNode(it.speaker, on, media);
-  const node = h(`div.user-message${mine ? '' : '.is-other'}`, who, attachmentsNode(it.attachments ?? [], media, on), bubble, actions);
+  // 到点交进来的（循环、定时任务）：小字前面一个 ◷，气泡的字淡一档（2026-11-22 主人：表示是到点自动发的）
+  const auto = it.speaker?.kind === 'schedule';
+  const node = h(`div.user-message${mine ? '' : '.is-other'}${auto ? '.is-auto' : ''}`, who, attachmentsNode(it.attachments ?? [], media, on), bubble, actions);
 
   // 编辑：气泡换成一个输入框，原话填好、全选；Enter 发、Shift+Enter 换行、Esc 取消
   const startEdit = () => {
@@ -245,6 +247,7 @@ function videoThumb(a, card) {
  */
 function speakerNode(speaker, on, media) {
   const id = speaker?.id;
+  if (speaker?.kind === 'schedule') return h('div.user-speaker', h('span.user-speaker-mark', res.layout.note_marks.round ?? ''), speaker.name);
   if ((speaker?.kind !== 'parent' && speaker?.kind !== 'session') || !id) return h('div.user-speaker', speaker?.name ?? '');
   const title = media.titleOf?.(id) ?? null;
   if (speaker.kind === 'session' && !title) return h('div.user-speaker', speaker.name);

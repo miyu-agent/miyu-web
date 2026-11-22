@@ -485,7 +485,8 @@
     "session_speaker": "Message from session {id}",
     "schedule_speaker": "Scheduled task {id}",
     "loop_speaker": "Loop",
-    "round": {"loop": "Loop · {words}", "builtin": "Loop · AI decides"},
+    "once_speaker": "Schedule",
+    "builtin_words": "AI decides",
     "peer": {
       "idle": "Session {id} replied",
       "idle_status": "Session {id} replied: {status}",

@@ -44,6 +44,9 @@
 .user-message { position: relative; display: grid; justify-items: end; padding-bottom: calc(27px * var(--space)); }
 /* 别人说的（别的账号、子代理、别的 harness、平台上的人）：气泡上面一行小字写是谁（蓝图 web.md「不是你说的话」） */
 .user-speaker { margin-bottom: calc(4px * var(--space)); color: var(--text-faint); font-size: calc(12px * var(--text-scale)); }
+/* 到点交进来的（循环、定时任务）：小字前面一个 ◷，气泡的字淡一档，看得出是到点自动发的（2026-11-22 主人） */
+.user-speaker-mark { margin-right: 0.35em; }
+.user-message.is-auto .user-bubble { color: var(--text-soft); }
 /* 子代理的会话里「来自「父会话」」：能点，回到那个会话 */
 .user-speaker.is-link {
   display: inline-flex; max-width: min(62%, 420px); align-items: center; gap: calc(3px * var(--space)); padding: 0; border: 0; background: none;

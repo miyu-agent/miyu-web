@@ -31,9 +31,10 @@ test('没有软件包 life；出厂的包表里也没有它', () => {
   assert.ok(!JSON.stringify(distro).includes('"life"'));
 });
 
-test('续轮那一行只有循环一种：三种语言的 notes.round 只剩 loop 和 builtin（没有 life）', () => {
+test('续轮那一行没有了（循环到点画成气泡，2026-11-22 主人），也没有 life 那一种：三种语言都没有 notes.round', () => {
   for (const lang of ['zh', 'en', 'ja']) {
     const text = JSON.parse(readFileSync(join(root, `resources/text/${lang}.json`), 'utf8'));
-    assert.deepEqual(Object.keys(text.notes.round), ['loop', 'builtin'], lang);
+    assert.equal(text.notes.round, undefined, lang);
+    assert.equal(typeof text.notes.builtin_words, 'string', lang);
   }
 });

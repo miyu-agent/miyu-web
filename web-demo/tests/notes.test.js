@@ -40,12 +40,13 @@ test('模型连上了却一直不出字（核心 YC-3 的 stalled，W-1138）：
   assert.equal(failureText({ class: 'stalled' }), '模型没有响应');
 });
 
-test('定时任务、循环交进来的（核心 J-1 上、J-2）：写「定时任务 编号」，带 loop 的写「循环」', () => {
+test('定时任务、循环交进来的（核心 J-1 上、J-2）：人建的写「定时任务 编号」，带 loop 的写「循环」，AI 挂的定时触发（核心 FX-21）写「定时触发」', () => {
   const of = (by) => speakerOf(by, new Map());
-  assert.deepEqual(of({ kind: 'schedule', schedule: 't3' }), { kind: 'schedule', name: '定时任务 t3' });
+  assert.deepEqual(of({ kind: 'schedule', schedule: 't3', person: true }), { kind: 'schedule', name: '定时任务 t3' });
   assert.equal(of({ kind: 'schedule', schedule: 't4', loop: 'fixed' }).name, '循环');
   assert.equal(of({ kind: 'schedule', schedule: 't5', loop: 'dynamic' }).name, '循环');
-  assert.equal(of({ kind: 'schedule' }).name, '定时任务', '没写编号的不留空格');
+  assert.equal(of({ kind: 'schedule', schedule: 't6' }).name, '定时触发');
+  assert.equal(of({ kind: 'schedule', person: true }).name, '定时任务', '没写编号的不留空格');
 });
 
 test('出错那一句：402、404 加人话；内核自己查出来的写分类，有原话的接后面；没原话的写分类', () => {
