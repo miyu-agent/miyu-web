@@ -14,14 +14,14 @@ const brief = (items) => items.map((it) => `${it.type}: ${it.type === 'steps' ? 
 
 const turn3 = [
   { id: 'm2', kind: 'user', text: '你好', turn: 3, level: 'full', at: AT },
-  { id: 'g6.0', kind: 'group', turn: 3, steps: ['b6.0', 'b6.1'], summary: [{ text: '思考了 1s' }, { text: ' · ' }, { text: '+3', tone: 'added' }], summary_en: [{ text: 'Thought for 1s' }], took_ms: 900, at: AT },
+  { id: 'g6.0', kind: 'group', turn: 3, steps: ['b6.0', 'b6.1'], summary: [{ text: '思考了 1s' }], summary_en: [{ text: 'Thought for 1s' }, { text: ' · ' }, { text: '+3', tone: 'added' }], took_ms: 900, at: AT },
   { id: 'b6.0', kind: 'thought', group: 'g6.0', turn: 3, text: '想一想', took_ms: 300, at: AT },
   { id: 'b6.1', kind: 'tool', group: 'g6.0', turn: 3, call: 'c1', name: 'edit', state: 'ok', args: '{"file_path":"a.txt"}', title: { name: '编辑', object: '~/a.txt', said: '编辑了 1 处' }, diff: { added: 3, removed: 1 }, took_ms: 40, at: AT },
   { id: 'b6.2', kind: 'reply', turn: 3, text: '汪！', at: AT },
   { id: 'e9', kind: 'end', turn: 3, level: 'full', reason: 'completed', endpoint: 'dev', model: 'm1', took_ms: 2216, usage: { uncached: 3000, cache_read: 1000, cache_write: 0, output: 150 }, at: AT },
 ];
 
-test('一轮：你的话（开轮那一句）、时间线的一段、她的回答、收尾那一行；收起那一行照核心给的 summary（跟着浏览器时也是，不挑英文那份）', () => {
+test('一轮：你的话（开轮那一句）、时间线的一段、她的回答、收尾那一行；收起那一行照核心给的（界面语言是自动的照英文那份）', () => {
   const got = itemsOf(turn3, { state: 'idle', permission: { level: 'full' } });
   assert.deepEqual(brief(got.items), ['user: 你好', 'steps: thought,tool', 'reply: 汪！', 'done: ▣ 12:02 · dev/m1 · 2.2s · 4.2k(C25%)'.replace('12:02', got.items[3].text.match(/\d\d:\d\d/)[0])]);
   const user = got.items[0];
@@ -29,7 +29,7 @@ test('一轮：你的话（开轮那一句）、时间线的一段、她的回�
   assert.deepEqual(user.speaker, { kind: 'person', name: '' });
   const seg = got.items[1];
   assert.equal(seg.finished, true);
-  assert.deepEqual(seg.summary, { failed: false, spans: [{ text: '思考了 1s', tone: 'base' }, { text: ' · ', tone: 'base' }, { text: '+3', tone: 'added' }] });
+  assert.deepEqual(seg.summary, { failed: false, spans: [{ text: 'Thought for 1s', tone: 'base' }, { text: ' · ', tone: 'base' }, { text: '+3', tone: 'added' }] });
   assert.equal(got.running, null);
   assert.equal(got.level, 'full', '旧的工作区读成开放权限（LV-3）');
 });

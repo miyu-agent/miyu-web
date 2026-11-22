@@ -120,24 +120,33 @@ test('运行状态行的词：每一档每种语言各一组', () => {
   }
 });
 
-test('时间线收起那一行一律照核心给的 summary：跟着浏览器时也是界面那一种，不挑英文那一份（2026-11-22 主人定）', async () => {
-  assert.equal('auto_summary' in TABLE, false);
+test('时间线收起那一行：跟着浏览器（auto）的挑核心给的英文那一份，手动定了语言的挑那种语言的（2026-10-01 项目主人定）', async () => {
+  assert.equal(TABLE.auto_summary, 'en');
+  assert.equal(pick('auto', ['ja-JP'], TABLE).summary, 'en');
+  assert.equal(pick('ja', [], TABLE).summary, 'ja');
+  assert.equal(pick('zh', ['ja-JP'], TABLE).summary, 'zh');
   const { itemsOf } = await import('../src/model/entries.js');
   const zh = json('resources/text/zh.json');
   const ja = json('resources/text/ja.json');
+  const lang = (code, summary) => ({ ...TABLE.languages.find((l) => l.code === code), fallback: 'zh', summary });
   const group = [{ id: 'g1', kind: 'group', turn: 1, steps: [], summary: [{ text: '执行了 1 条命令' }], summary_en: [{ text: 'Ran 1 command' }] }];
   const line = () => itemsOf(group, { state: 'idle' }).items[0].summary.spans[0].text;
-  settle(zh, ja, pick('auto', ['zh-CN'], TABLE), []);
-  assert.equal(line(), '执行了 1 条命令', '跟着浏览器（中文）的照核心照连接的语言写的那一份');
-  settle(zh, ja, pick('zh', [], TABLE), []);
-  assert.equal(line(), '执行了 1 条命令');
+  settle(zh, ja, lang('ja', 'en'), []);
+  assert.equal(line(), 'Ran 1 command');
+  assert.equal(res.text.timeline.thought, ja.timeline.thought, '别的字照界面语言');
+  settle(zh, ja, lang('ja', 'ja'), []);
+  assert.equal(line(), '执行了 1 条命令', '手动定的照核心照连接的语言写的那一份');
 });
 
-test('个人设置写了网页的表里没有的语言：界面照浏览器认；写了 en 的就是英文（2026-10-10 起表里有）（蓝图「界面语言」第 5 条）', () => {
+test('个人设置写了网页的表里没有的语言：界面照浏览器认，收起那一行照界面那一种；写了 en 的就是英文（2026-10-10 起表里有）（蓝图「界面语言」第 5 条）', () => {
   const table = JSON.parse(readFileSync(new URL('../resources/languages.json', import.meta.url), 'utf8'));
-  assert.equal(pick('en', ['ja-JP'], table).code, 'en');
-  assert.equal(pick('ko', ['ja-JP'], table).code, 'ja');
-  assert.equal(pick('fr', ['zh-CN'], table).code, 'zh');
+  const en = pick('en', ['ja-JP'], table);
+  assert.equal(en.code, 'en');
+  assert.equal(en.summary, 'en');
+  const ko = pick('ko', ['ja-JP'], table);
+  assert.equal(ko.code, 'ja');
+  assert.equal(ko.summary, 'ja');
+  assert.equal(pick('fr', ['zh-CN'], table).summary, 'zh', '连收起那一行的字都没有的：照界面那一种');
 });
 
 test('从核心读个人设置的界面语言：config.get 的 items、config.changed 的 keys（取 effective）；没有的是 null', () => {
