@@ -32,15 +32,24 @@ import { skillPieces } from '../model/skills.js';
  */
 
 /**
+ * 场所消息带的、没下载进来的图片表情视频（核心 FX-16 `media`，字是 `entries.js` 的 `mediaTag` 写好的）：接在字后面，隔一个空格。
+ * @param {string[]} list @param {boolean} after 前面有字
+ */
+function mediaTags(list, after) {
+  return list.map((text, i) => h('span.user-media', i === 0 && !after ? text : ` ${text}`));
+}
+
+/**
  * 你说的一句话：附件一排、靠右的气泡，下面悬停才露的按钮。
- * @param {{text: string, attachments?: Attachment[], speaker?: {kind: string, name: string, id?: string}}} it
+ * @param {{text: string, attachments?: Attachment[], media?: string[], speaker?: {kind: string, name: string, id?: string}}} it
  * @param {Actions} on
  * @param {Media} media
  */
 export function userNode(it, on, media) {
   // 点了名的技能（`$名字`）照人打的字写、着色，不展开正文（蓝图「`$` 点名技能」第 4 条，W-1124）
   const said = media.skills?.size ? skillPieces(it.text, media.skills).map((p) => (p.skill ? h('span.user-skill', p.text) : p.text)) : it.text;
-  const bubble = it.text ? h('div.user-bubble', said) : null;
+  const tags = mediaTags(it.media ?? [], !!it.text);
+  const bubble = it.text || tags.length ? h('div.user-bubble', said, ...tags) : null;
   const edit = button('pencil', t('said.edit'), () => startEdit());
   edit.classList.add('is-edit');
   const mine = media.mine !== false;

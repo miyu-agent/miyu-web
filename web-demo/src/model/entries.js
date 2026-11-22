@@ -216,10 +216,26 @@ function userItem(e, jobs, opts) {
       ...(typeof a.path === 'string' && a.path ? { path: a.path } : {}),
       ...(a.path_only === true || (!a.blob && typeof a.path === 'string') ? { path_only: true, size: typeof a.size === 'number' ? a.size : null } : {}),
     })),
+    // 场所消息带的、没下载进来的图片表情视频（核心 FX-16 `media`）：画成「[图片]」这样的字；`name` 不可信，只当字画
+    media: (Array.isArray(e.media) ? e.media : []).filter((/** @type {any} */ m) => typeof m?.kind === 'string').map(mediaTag),
+    // 叫了 AI 的那一条（核心 FX-16 `trigger`）：群里只把它画成气泡，一起收进这一轮的旁听收起来（`overheard.js`）
+    trigger: e.trigger === true,
     speaker,
     opens: false,
     level: levelName(e.level),
   };
+}
+
+/**
+ * 群里的话带的一样没下载进来的东西写成什么：「[图片]」「[表情：狗头]」，跟平台上原来的写法一样。表情、文件带上名字（表情的字、文件名），
+ * 图片视频语音的文件名是一串乱码，不写；名字不可信，界面只当字放进去。认不得的种类照文件写。
+ * @param {{kind: string, name?: unknown}} m @returns {string}
+ */
+export function mediaTag(m) {
+  const words = res.text.said.media;
+  const kind = words[m.kind] ?? words.file;
+  const named = typeof m.name === 'string' && m.name && (m.kind === 'sticker' || m.kind === 'file');
+  return named ? t('said.media_named', { kind, name: m.name }) : t('said.media_tag', { kind });
 }
 
 /** 开这一轮的那一句：每一轮第一条不是你的话的条目前面，最后一条这一轮的你的话。 @param {any[]} items */

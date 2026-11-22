@@ -397,7 +397,16 @@
     "path_copied": "パスをコピーしました：{path}",
     "path_missing": "フォルダーがありません：{path}",
     "from": "「{title}」から",
-    "from_session": "セッション {id}「{title}」からのメッセージ"
+    "from_session": "セッション {id}「{title}」からのメッセージ",
+    "media": {
+      "image": "画像",
+      "sticker": "スタンプ",
+      "video": "動画",
+      "voice": "音声",
+      "file": "ファイル"
+    },
+    "media_tag": "[{kind}]",
+    "media_named": "[{kind}：{name}]"
   },
   "esc_interrupt_hint": "もう一度 Esc で中断",
   "archived_readonly": "アーカイブです。読むだけで、続きは話せません",

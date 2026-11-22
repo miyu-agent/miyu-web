@@ -4025,6 +4025,12 @@
       ".user-skill"
     ]
   },
+  "said.media": {
+    "zh": "群里的话：没下载的图片表情",
+    "select": [
+      ".user-media"
+    ]
+  },
   "mention.title": {
     "zh": "提到文件：标题",
     "select": [

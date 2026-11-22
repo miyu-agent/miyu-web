@@ -212,6 +212,8 @@ button.user-file { border: 0; font: inherit; cursor: pointer; }
 }
 /* 气泡里点了名的技能（`$名字`，W-1124）：强调色，不展开正文 */
 .user-skill { color: var(--accent); font-weight: 600; }
+/* 群里的话带的、没下载进来的图片表情（「[图片]」，核心 FX-16）：淡一档，和人打的字分开 */
+.user-media { color: var(--text-soft); }
 
 /* 她的一轮 */
 .assistant-message { position: relative; max-width: 92%; margin-bottom: calc(30px * var(--space)); padding-left: calc(40px * var(--space)); }

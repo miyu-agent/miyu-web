@@ -397,7 +397,16 @@
     "path_copied": "Path copied: {path}",
     "path_missing": "Folder not found: {path}",
     "from": "From “{title}”",
-    "from_session": "Message from session {id} “{title}”"
+    "from_session": "Message from session {id} “{title}”",
+    "media": {
+      "image": "Image",
+      "sticker": "Sticker",
+      "video": "Video",
+      "voice": "Voice",
+      "file": "File"
+    },
+    "media_tag": "[{kind}]",
+    "media_named": "[{kind}: {name}]"
   },
   "esc_interrupt_hint": "Press Esc again to interrupt",
   "archived_readonly": "This is an archive. You can read it but not continue it",
