@@ -604,6 +604,11 @@ a.set-row.is-anchor { color: inherit; text-decoration: none; }
 .set-prov-pop { width: min(520px, 100%); }
 .set-prov-pop .set-error { margin: 0; }
 /* 运行中前面一个绿点（同软件包页的状态）；多选、删除 */
+/* 添加供应商：列表长、整个浮窗在滚，标题和底下那一排（「取消」、「‹ 上一步」、「保存」）贴着上下边不滚走（对照报告 A18：原来标题滚走、
+   「取消」落在列表最后）。底色同浮窗，往外伸出浮窗的内边距，贴到上下边 */
+.set-add-pop .set-tool-pop-head, .set-add-pop .set-tool-pop-foot { position: sticky; z-index: 1; background: var(--surface); }
+.set-add-pop .set-tool-pop-head { top: calc(-16px * var(--space)); margin: calc(-16px * var(--space)) 0 0; padding: calc(16px * var(--space)) 0 calc(6px * var(--space)); }
+.set-add-pop .set-tool-pop-foot { bottom: calc(-18px * var(--space)); margin: 0 0 calc(-18px * var(--space)); padding: calc(10px * var(--space)) 0 calc(18px * var(--space)); }
 .set-tool-state.is-on::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: calc(6px * var(--space)); border-radius: var(--r-round); background: var(--online); vertical-align: 1px; }
 .set-tool-state.is-error { color: var(--danger); }
 .set-tool-state.is-warn { color: var(--t-warn, var(--gold)); }

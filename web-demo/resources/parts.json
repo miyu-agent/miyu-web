@@ -6119,6 +6119,12 @@
       ".set-tool-pop-head"
     ]
   },
+  "set.tool-pop-foot": {
+    "zh": "设置页：小窗底下一排按钮",
+    "select": [
+      ".set-tool-pop-foot"
+    ]
+  },
   "set.tool-label": {
     "zh": "设置页：tool label",
     "select": [
