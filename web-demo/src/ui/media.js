@@ -17,8 +17,12 @@ const withUrl = (el, attr, url) => {
   return el;
 };
 
+/** 比这还瘦（宽比高）的图算长图：缩略图定宽、高到上限，从顶上裁（2026-11-22 主人：很长的竖截图缩成一根细条，看不出是什么） */
+export const TALL = 1 / 2;
+
 /**
- * 一张图（`.conversation-media`）。知道宽高的先按比例占好地方，图来了不跳。
+ * 一张图（`.conversation-media`）。知道宽高的先按比例占好地方，图来了不跳；长图（[`TALL`]）照最大边长的一半定宽、从顶上裁，
+ * 点开照旧看原图。
  * @param {{url: string|Promise<string>, name?: string, alt?: string, width?: number, height?: number, workspace?: () => void, lightbox?: () => any, tried?: string, download?: string|Promise<string>, vector?: boolean}} what
  *   `lightbox` 交回现在的灯箱（软件包 lightbox 的服务；没装是 `undefined`）；`tried` 本机的图按哪个路径找（读不出来时写出来）；
  *   `alt` 一句描述（她发出去的图带的）：写进图的 alt，读不出来时写在那一句下面；`workspace` 给了的灯箱里多「在右栏打开」；
@@ -37,8 +41,15 @@ export function imageCard(what) {
   const fallback = h('div.conversation-media-fallback', { hidden: true }, icon('circle-alert'), h('span', t('media.image_failed')),
     what.alt ? h('span.conversation-media-alt', what.alt) : null, what.tried ? h('span.conversation-media-tried', what.tried) : null);
   const ratio = what.width && what.height && what.width / what.height;
-  const visual = h(`div.conversation-media-visual${ratio && ratio > 0.05 && ratio < 20 ? '.has-aspect' : ''}`,
-    { role: 'button', tabindex: '0', title: what.name ?? '', style: ratio ? `aspect-ratio: ${what.width} / ${what.height}` : null }, img, fallback);
+  const tall = !!ratio && ratio < TALL;
+  const visual = h(`div.conversation-media-visual${tall ? '.is-tall' : ratio && ratio > 0.05 && ratio < 20 ? '.has-aspect' : ''}`,
+    { role: 'button', tabindex: '0', title: what.name ?? '', style: ratio && !tall ? `aspect-ratio: ${what.width} / ${what.height}` : null }, img, fallback);
+  // 不知道宽高的：图到了再看是不是长图
+  if (!ratio) {
+    img.addEventListener('load', () => {
+      if (img.naturalWidth && img.naturalHeight && img.naturalWidth / img.naturalHeight < TALL) visual.classList.add('is-tall');
+    }, { once: true });
+  }
   img.addEventListener('error', () => {
     img.remove();
     fallback.hidden = false;

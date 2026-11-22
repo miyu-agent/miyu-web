@@ -166,6 +166,7 @@
 .user-attachments .conversation-media img { max-height: var(--user-media); }
 .user-attachments .conversation-media-visual { border-radius: var(--r-10); }
 .user-attachments .conversation-media-visual.has-aspect { width: min(var(--user-media), 100%); max-height: var(--user-media); }
+.user-attachments .conversation-media:has(> .is-tall), .user-attachments .conversation-media-visual.is-tall { width: min(100%, calc(var(--user-media) / 2)); max-width: none; }
 .user-file {
   position: relative; display: flex; width: 112px; height: 104px; flex: none; flex-direction: column; gap: calc(4px * var(--space)); padding: calc(10px * var(--space)) calc(11px * var(--space)); overflow: hidden;
   border-radius: var(--card-radius, var(--r-12)); background: var(--card-bg, color-mix(in srgb, var(--surface-2) 50%, var(--surface-1))); box-shadow: var(--card-elev, var(--card-shadow)); color: var(--text); text-align: left;
