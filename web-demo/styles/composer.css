@@ -195,8 +195,9 @@
 .footer-model:hover, .footer-model.is-open { background: var(--surface-2); }
 .footer-model:focus { outline: none; }
 .footer-model:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); }
-.footer-model-name { min-width: 0; overflow: hidden; color: var(--text); font-weight: 400; text-overflow: ellipsis; }
-.footer-model-prov { flex: none; margin-left: 0.4em; color: var(--t-dim); font-size: calc(11px * var(--text-scale)); }
+/* 窄屏放不下不折行（2026-11-22 主人：400 宽下模型名在连字符处折成两行），截掉加省略号 */
+.footer-model-name { min-width: 0; overflow: hidden; color: var(--text); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.footer-model-prov { flex: none; margin-left: 0.4em; white-space: nowrap; color: var(--t-dim); font-size: calc(11px * var(--text-scale)); }
 /* 思考强度用工作区那个蓝（蓝图「换模型的菜单」第 1 条）；前面的点照框下面那一行的暗色 */
 .footer-model-sep { flex: none; white-space: pre; }
 .footer-model-effort { flex: none; color: var(--t-full); }
