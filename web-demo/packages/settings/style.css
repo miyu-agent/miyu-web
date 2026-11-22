@@ -152,8 +152,8 @@
 .set-combo { display: inline-flex; align-items: center; justify-content: flex-end; gap: calc(8px * var(--space)); flex-wrap: wrap; }
 .set-combo .set-input { width: 180px; }
 .set-input:hover { background: var(--field-hover, var(--surface-3)); }
-/* 聚焦：换亮底加一层软影（输入框那层影带一圈 1px 的环，放在白卡片里像描边，不用它） */
-.set-input:focus { background: var(--field-bg-focus, var(--surface-1)); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
+/* 聚焦：底色照旧，加一层软影，不变白（2026-11-22 项目主人：聚焦照「底色加聚焦影」做；输入框那层影带一圈 1px 的环，放在白卡片里像描边，不用它） */
+.set-input:focus { background: var(--field-bg-focus, var(--field-bg, var(--surface-2))); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
 .set-chips { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: calc(6px * var(--space)); max-width: 320px; }
 .set-chip { display: inline-flex; align-items: center; gap: calc(4px * var(--space)); height: 26px; padding: 0 calc(4px * var(--space)) 0 calc(10px * var(--space)); border: var(--chip-border, 0); border-radius: var(--chip-radius, var(--r-pill)); background: var(--chip-bg, var(--surface-2)); color: var(--chip-fg, var(--text)); font: calc(12.5px * var(--text-scale)) var(--font-ui); }
 .set-chip button { display: inline-grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: var(--r-round); background: transparent; color: var(--text-faint); cursor: pointer; }
@@ -328,7 +328,7 @@
 .set-pkg-tools { display: grid; gap: calc(10px * var(--space)); margin-bottom: calc(4px * var(--space)); }
 .set-pkg-find { display: flex; align-items: center; gap: calc(6px * var(--space)); height: 32px; padding: 0 calc(10px * var(--space)); border-radius: var(--field-radius, var(--r-8)); background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text-faint)); transition: background-color calc(0.15s * var(--motion-scale)) ease, box-shadow calc(0.15s * var(--motion-scale)) ease; }
 .set-pkg-find:hover { background: var(--field-hover, var(--surface-3)); }
-.set-pkg-find:focus-within { background: var(--field-bg-focus, var(--surface-1)); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
+.set-pkg-find:focus-within { background: var(--field-bg-focus, var(--field-bg, var(--surface-2))); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
 .set-pkg-find .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); flex: none; }
 .set-pkg-find-input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: calc(13px * var(--text-scale)) var(--font-ui); }
 .set-pkg-find-input::-webkit-search-cancel-button { display: none; }
@@ -396,11 +396,12 @@ body > .set-ask { z-index: 95; }
 .set-pinned { position: sticky; bottom: -24px; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: calc(12px * var(--space)); margin: auto calc(-24px * var(--space)) calc(-24px * var(--space)); padding: calc(16px * var(--space)) calc(24px * var(--space)) calc(8px * var(--space)); background: color-mix(in srgb, var(--surface) 94%, transparent); -webkit-backdrop-filter: blur(calc(16px * var(--blur))); backdrop-filter: blur(calc(16px * var(--blur)));
   /* 上沿 10px 羽化（2026-10-20 项目主人：边缘可以羽化一下） */
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 10px); mask-image: linear-gradient(to bottom, transparent, #000 10px); color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
-/* 分段切换：一条浅底的槽，选中的那一段浮起来（2026-10-22 项目主人：原来选中的只铺一层浅底，看不出是切换、容易忽略） */
-.set-seg { display: inline-flex; gap: calc(2px * var(--space)); padding: 2px; border-radius: var(--r-8); background: var(--surface-3); width: fit-content; }
+/* 分段切换：一条浅底的槽，看得出是切换（2026-10-22 项目主人：原来选中的只铺一层浅底，看不出是切换、容易忽略）；选中的那一段比槽深一档，
+   不浮起来变白（2026-11-22 项目主人：选中再深一档，任何时候都不许变白） */
+.set-seg { display: inline-flex; gap: calc(2px * var(--space)); padding: 2px; border-radius: var(--r-8); background: var(--seg-bg, var(--surface-2)); width: fit-content; }
 .set-seg-item { height: 24px; padding: 0 calc(12px * var(--space)); border: 0; border-radius: var(--r-6); background: transparent; color: var(--text-soft); font: calc(12.5px * var(--text-scale)) var(--font-ui); cursor: pointer; transition: background-color calc(0.15s * var(--motion-scale)), color calc(0.15s * var(--motion-scale)); }
 .set-seg-item:hover { color: var(--text); }
-.set-seg-item.is-on { background: var(--surface-1); color: var(--accent); font-weight: 600; box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 14%, transparent); }
+.set-seg-item.is-on { background: var(--seg-thumb-bg, var(--surface-3)); color: var(--text); font-weight: 600; box-shadow: var(--seg-thumb-elev, none); }
 .set-pool-head .set-seg { margin-left: auto; }
 .set-reset.is-shown { opacity: 1; }
 .set-chip.is-member { padding: 0 calc(4px * var(--space)); }

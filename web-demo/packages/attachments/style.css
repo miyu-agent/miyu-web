@@ -91,7 +91,7 @@
 /* 在卡里贴路径：贴着卡的下沿一个输入框，盖住两个标签；不描边，底色加聚焦的影 */
 .attach-path-input {
   position: absolute; right: 6px; bottom: 6px; left: 6px; z-index: 2; width: auto; height: 26px; padding: 0 calc(7px * var(--space)); border: var(--field-border, 0); border-radius: var(--field-radius, var(--r-8)); outline: 0;
-  background: var(--field-bg-focus, var(--surface-1)); box-shadow: var(--field-elev-focus, var(--card-shadow)); color: var(--field-fg, var(--text)); font: calc(12px * var(--text-scale)) var(--font-mono);
+  background: var(--field-bg-focus, var(--field-bg, var(--surface-2))); box-shadow: var(--field-elev-focus, var(--card-shadow)); color: var(--field-fg, var(--text)); font: calc(12px * var(--text-scale)) var(--font-mono);
 }
 .attach-chip.is-editing .attach-tag, .attach-chip.is-editing .attach-ext, .attach-chip.is-editing .attach-sub { visibility: hidden; }
 

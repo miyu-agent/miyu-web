@@ -9,7 +9,7 @@
 .mem-tools { display: flex; flex-wrap: wrap; align-items: center; gap: calc(8px * var(--space)); }
 .mem-find { display: flex; flex: 1; align-items: center; gap: calc(6px * var(--space)); min-width: 180px; height: 30px; padding: 0 calc(10px * var(--space)); border-radius: var(--field-radius, var(--r-8)); background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text-faint)); transition: background-color calc(0.15s * var(--motion-scale)) ease, box-shadow calc(0.15s * var(--motion-scale)) ease; }
 .mem-find:hover { background: var(--field-hover, var(--surface-3)); }
-.mem-find:focus-within { background: var(--field-bg-focus, var(--surface-1)); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
+.mem-find:focus-within { background: var(--field-bg-focus, var(--field-bg, var(--surface-2))); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
 .mem-find .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); flex: none; }
 .mem-find-input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: calc(13px * var(--text-scale)) var(--font-ui); }
 .mem-find-input::-webkit-search-cancel-button { display: none; }

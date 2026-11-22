@@ -7,7 +7,7 @@
 .kb-tools { display: flex; flex-wrap: wrap; align-items: center; gap: calc(8px * var(--space)); }
 .kb-find { display: flex; flex: 1; align-items: center; gap: calc(6px * var(--space)); min-width: 180px; height: 30px; padding: 0 calc(10px * var(--space)); border-radius: var(--r-8); background: var(--surface-2); color: var(--text-faint); transition: background-color calc(0.15s * var(--motion-scale)) ease, box-shadow calc(0.15s * var(--motion-scale)) ease; }
 .kb-find:hover { background: var(--surface-3); }
-.kb-find:focus-within { background: var(--surface-1); box-shadow: var(--card-shadow); }
+.kb-find:focus-within { background: var(--field-bg-focus, var(--field-bg, var(--surface-2))); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
 .kb-find .icon { width: calc(14px * var(--space)); height: calc(14px * var(--space)); flex: none; }
 .kb-find-input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: calc(13px * var(--text-scale)) var(--font-ui); }
 .kb-find-input::-webkit-search-cancel-button { display: none; }

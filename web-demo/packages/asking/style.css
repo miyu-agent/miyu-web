@@ -69,7 +69,7 @@
   background: var(--field-bg, var(--surface-2)); color: var(--field-fg, var(--text)); font: inherit; font-size: calc(13.5px * var(--text-scale)); line-height: 1.5; outline: none;
   transition: background-color calc(0.15s * var(--motion-scale)) ease, box-shadow calc(0.15s * var(--motion-scale)) ease;
 }
-.asking-edit:focus { background: var(--field-bg-focus, var(--surface-1)); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
+.asking-edit:focus { background: var(--field-bg-focus, var(--field-bg, var(--surface-2))); box-shadow: var(--field-elev-focus, var(--card-shadow)); }
 
 /* 选项的文字画：右边（窄了在下面），高度照最高的那张，换选项不跳 */
 .asking-previews { display: grid; }
