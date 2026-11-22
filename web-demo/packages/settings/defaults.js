@@ -7,7 +7,7 @@ import { h, icon } from '../../src/lib/dom.js';
 import { logoEl, hasLogos } from '../../src/lib/logo.js';
 import { shell, select } from './rows.js';
 import { plainItem, providerName, pickGroups, sameNamed, whereOf, useWords } from './model.js';
-import { modelName, seesImages } from './model-bits.js';
+import { modelName, seesImages, withdrawn } from './model-bits.js';
 import { pickModel } from './model-pick.js';
 
 /** @param {any} dialog @param {{providers?: any[]}} list `model.list` */
@@ -39,7 +39,11 @@ function useRow(dialog, list, which) {
   }));
   row = shell({
     ...useWords(ctx, item, which),
-    problems: (item.problems ?? []).map((p) => ({ level: p.level, message: p.message })),
+    problems: [
+      // 选着的模型那一家已经不提供了：下面一行黄字，同语义检索没装内置模型
+      ...(withdrawn(providers, current) ? [{ level: 'warn', message: ctx.text('models.withdrawn') }] : []),
+      ...(item.problems ?? []).map((p) => ({ level: p.level, message: p.message })),
+    ],
     control: button,
   });
   return row.el;

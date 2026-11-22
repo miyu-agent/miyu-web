@@ -471,6 +471,7 @@ body > .set-ask { z-index: 95; }
 .set-member:hover { background: var(--surface-2); }
 .set-member-n { flex: 0 0 16px; color: var(--text-faint); font: calc(11px * var(--text-scale)) var(--font-mono); text-align: right; }
 .set-member .set-pick-provider { flex: none; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.set-pick-provider.is-warn { color: var(--t-warn, var(--gold)); }
 .set-member-tools { display: flex; flex: none; gap: calc(2px * var(--space)); opacity: 0; transition: opacity calc(0.12s * var(--motion-scale)) ease; }
 .set-member:hover .set-member-tools, .set-member:focus-within .set-member-tools { opacity: 1; }
 .set-member-tool { display: inline-grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: var(--r-5); background: transparent; color: var(--text-faint); cursor: pointer; }

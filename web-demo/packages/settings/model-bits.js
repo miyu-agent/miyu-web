@@ -7,6 +7,16 @@ import { shortCount, filterModels } from './model.js';
 
 /** 模型的显示名：目录给的名字，没有的写模型名。 */
 export const modelName = (m) => m.facts?.name?.value ?? m.model;
+/**
+ * 配置里写着的模型引用，那一家还在、它的模型列表里却没有（2026-11-22 主人定：上游的列表是什么样就显示什么样，核心不再列已经没有的
+ * 模型，头自己比对）。连那一家都没有、没写的都不算。 @param {any[]} providers @param {unknown} ref
+ */
+export const withdrawn = (providers, ref) => {
+  if (typeof ref !== 'string' || !ref.includes('/')) return false;
+  const p = providers.find((x) => ref.startsWith(`${x.id}/`));
+  return !!p && !(p.models ?? []).some((m) => m.ref === ref);
+};
+
 /** 看得了图。 */
 export const seesImages = (m) => (m.facts?.inputs?.value ?? []).includes('image');
 

@@ -9,6 +9,7 @@ import { h, icon } from '../../src/lib/dom.js';
 import { pickModels } from './picker.js';
 import { toggle } from './rows.js';
 import { itemFor, LAYER, validId, keySegment, moveMember, poolRemoval, duplicates, providerName, poolOrder, strategiesOf, newPoolChanges } from './model.js';
+import { withdrawn } from './model-bits.js';
 import { isFixedPool } from '../../src/lib/fixed-pools.js';
 
 /** 卡片头上的池名：固定池写显示名、后面暗字接 `@flagship`。 @param {any} ctx @param {string} name */
@@ -79,7 +80,8 @@ export function drawPools(dialog, list) {
     const rows = known.map((r, i) => h('div.set-member',
       h('span.set-member-n', String(i + 1)),
       h('span.set-model-name', { title: r.provider ? `${r.provider} / ${r.model}` : r.ref }, r.name, dup.has(r.name) ? h('code.set-model-id', r.model) : null),
-      h('span.set-pick-provider', r.provider),
+      // 那一家还在、列表里没有这个模型的：写「供应商已不提供此模型」、黄字
+      withdrawn(list.providers ?? [], r.ref) ? h('span.set-pick-provider.is-warn', t('withdrawn')) : h('span.set-pick-provider', r.provider),
       h('span.set-member-tools',
         tool(t('pool_up'), 'arrow-up', () => setMembers(moveMember(now, i, -1)), i === 0),
         tool(t('pool_down'), 'arrow-down', () => setMembers(moveMember(now, i, 1)), i === now.length - 1),

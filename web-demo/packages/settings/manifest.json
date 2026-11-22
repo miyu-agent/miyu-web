@@ -360,6 +360,7 @@
         "key_use_paste": "改用 API 密钥",
         "count": "模型 {count}",
         "unset": "未设置",
+        "withdrawn": "供应商已不提供此模型",
         "remove": "删除",
         "remove_confirm": "确认删除「{name}」吗？",
         "remove_confirm_in_use": "默认模型在用「{name}」，删了要另选。确认删除吗？"
@@ -992,6 +993,7 @@
         "key_use_paste": "Use an API key",
         "count": "Models {count}",
         "unset": "Not set",
+        "withdrawn": "No longer offered by the provider",
         "remove": "Delete",
         "remove_confirm": "Delete \"{name}\"?",
         "remove_confirm_in_use": "The default model uses \"{name}\"; you'll need to pick another. Delete it?"
@@ -1624,6 +1626,7 @@
         "key_use_paste": "API キーを使う",
         "count": "モデル {count}",
         "unset": "未設定",
+        "withdrawn": "プロバイダーが提供を終了",
         "remove": "削除",
         "remove_confirm": "「{name}」を削除しますか？",
         "remove_confirm_in_use": "既定のモデルが「{name}」を使っています。削除後に選び直す必要があります。削除しますか？"
