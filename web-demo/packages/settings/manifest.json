@@ -160,7 +160,7 @@
         "user": "circle-user-round",
         "personas": "user-round",
         "memory": "brain",
-        "usage": "gauge",
+        "usage": "chart-column",
         "knowledge": "library",
         "schedules": "clock",
         "models": "cpu",

@@ -598,3 +598,11 @@ test('选人格、预设、模型、知识库的下拉：第一项写「继承�
   const text = JSON.parse(readFileSync(new URL('../../packages/settings/manifest.json', import.meta.url), 'utf8')).text;
   assert.deepEqual([text.zh.ref_unset, text.en.ref_unset, text.ja.ref_unset], ['继承默认设置', 'Inherit default', 'デフォルト設定を継承']);
 });
+
+test('侧栏每一页的图标各不相同（对照报告 B21：「用量」和「软件后台」原来都是 gauge），都在整套图标表里（设置弹窗打开时读整套，`dialog.js`）', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../../packages/settings/manifest.json', import.meta.url), 'utf8'));
+  const icons = Object.values(manifest.settings.icons.default);
+  assert.deepEqual(icons.filter((name, i) => icons.indexOf(name) !== i), [], '重复的图标');
+  const bundled = JSON.parse(readFileSync(new URL('../../resources/lucide-all.json', import.meta.url), 'utf8')).icons;
+  assert.deepEqual(icons.filter((name) => !(name in bundled)), [], '图标表里没有的');
+});
