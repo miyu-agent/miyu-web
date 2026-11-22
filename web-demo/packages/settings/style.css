@@ -538,6 +538,8 @@ a.set-btn.set-link { display: inline-flex; align-items: center; }
 .set-pkg-card-meta .is-bad { color: var(--danger); }
 .set-pkg-upstream { display: flex; align-items: center; gap: calc(6px * var(--space)); min-width: 0; }
 .set-pkg-upstream > span { flex: none; }
+/* 状态那几个字不拆成两行（对照报告 B23：400 宽时「运行中」拆成两行） */
+.set-pkg-card-meta > span { white-space: nowrap; }
 .set-pkg-upstream a { display: inline-flex; align-items: center; gap: calc(3px * var(--space)); min-width: 0; color: var(--text-soft); text-decoration: none; }
 .set-pkg-upstream a span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .set-pkg-upstream a:hover { color: var(--accent); text-decoration: underline; }
