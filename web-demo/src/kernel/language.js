@@ -7,9 +7,8 @@ import { resolve } from './config.js';
 /**
  * @typedef {{code: string, name: string, tag: string, locales: string[]}} Entry 表里的一种：代码（`zh`，和核心资源目录的
  *   `human/<代码>.json` 同一套）、自己的名字、认哪些浏览器语言的前缀、页面的语言标签（`<html lang>`、握手的 `locale`）
- * @typedef {{fallback: string, auto_summary?: string, languages: Entry[]}} Table `auto_summary`：跟着浏览器时时间线收起那一行用哪一种
- * @typedef {Entry & {fallback: string, summary: string}} Language 定下来的一种，带着缺字时退回哪一种、时间线收起那一行用哪一种
- *   （手动定了语言的是它自己，跟着浏览器的是表里的 `auto_summary`，英文；2026-10-01 项目主人定）
+ * @typedef {{fallback: string, languages: Entry[]}} Table
+ * @typedef {Entry & {fallback: string}} Language 定下来的一种，带着缺字时退回哪一种
  */
 
 /** 跟着浏览器的那个值 */
@@ -48,9 +47,7 @@ export function pick(setting, browser, table) {
   const matched = (tag) => table.languages.find((l) => l.locales.some((p) => tag.toLowerCase().startsWith(p.toLowerCase())));
   const chosen = setting !== AUTO ? byCode(setting) : null;
   const entry = chosen || browser.map(matched).find(Boolean) || byCode(table.fallback) || table.languages[0];
-  // 表里没有的（配置写了 `en`，英文界面还没写）：界面照浏览器认，收起那一行照它写——只有它有那一套字（`auto_summary`）时
-  const summary = setting === AUTO ? table.auto_summary ?? entry.code : chosen ? entry.code : setting === table.auto_summary ? setting : entry.code;
-  return { ...entry, fallback: table.fallback, summary };
+  return { ...entry, fallback: table.fallback };
 }
 
 /**

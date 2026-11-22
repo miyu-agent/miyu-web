@@ -5,7 +5,7 @@
 //! - `user` 是你的话：`queued` 的不进正文（画在运行状态行下面），`withdrawn` 的不画；开这一轮的那一句（这一轮第一条她的条目前面最后
 //!   一条你的话）记 `opens`，编辑只在它上面。
 //! - `reply` 是她的回答，`open` 的照在收的画。
-//! - `group` 连它的 `thought`、`tool` 是时间线的一段：收起那一行照核心给的 `summary`（界面语言是自动的照 `summary_en`）；一步的标题照
+//! - `group` 连它的 `thought`、`tool` 是时间线的一段：收起那一行照核心给的 `summary`（核心照连接的语言写，跟着浏览器时也一样）；一步的标题照
 //!   `title`（`ui/steps.js` 经 `model/words.js` 的 `row`）、改了多少行照 `diff`、用时照 `took_ms`。
 //! - `end` 是收尾那一行，`notice` 是不挂在她头下的一行：字由网页写，照原来的写法（`model/notes.js`）。
 //! - `voice` 是她说出来的一段语音（核心 SD-1）：一个播放条，同她发的图（`media`）跟着她这一轮。
@@ -260,8 +260,7 @@ function markOpeners(items) {
  * @param {any} g @param {Map<string, any>} byId
  */
 function segmentOf(g, byId) {
-  const en = res.language?.summary === 'en';
-  const parts = (en ? g.summary_en : g.summary) ?? g.summary ?? [];
+  const parts = g.summary ?? [];
   return {
     type: 'steps',
     key: g.id,

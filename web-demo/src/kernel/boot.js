@@ -121,7 +121,7 @@ export async function boot(root) {
   // 别处改了、掉了队的推送；重连以后重订（同软件包自己的订阅）
   conn.onPush((method, params) => { prefs.push(method, params); });
   conn.onRejoin(() => { followPrefs(); });
-  // 知道账号了：照个人那一层再定一次界面语言；界面的字、收起那一行的写法有一样变了重装字（重连时的握手照新的写）。
+  // 知道账号了：照个人那一层再定一次界面语言；界面的字变了重装字（重连时的握手照新的写）。
   // 核心有配置的：配置的 `ui.language` 说了算（蓝图「界面语言」第 5 条，规矩 A，和终端界面一样）；旧核心照这台设备上记的
   let setting = settingOf(res.languages, distro.kernel ?? {}, prefs.get()[KERNEL]?.config ?? {});
   /** 核心有没有配置的接口（`config.get`）：没有的，`/language` 只记在这台设备上 */
@@ -136,7 +136,7 @@ export async function boot(root) {
   const fromCore = await readCore();
   if (fromCore) setting = fromCore;
   const chosen = pick(setting, browser, res.languages);
-  if (chosen.code !== language.code || chosen.summary !== language.summary) {
+  if (chosen.code !== language.code) {
     await useTexts(resources, chosen);
     document.documentElement.lang = chosen.tag;
     greeting.locale = chosen.tag;
@@ -179,7 +179,7 @@ export async function boot(root) {
   });
 
   /**
-   * 换成这个设置（`auto` 或一种语言）：记进个人那一层（下次起来、旧核心照它）；界面的字、收起那一行的写法有一样变了，
+   * 换成这个设置（`auto` 或一种语言）：记进个人那一层（下次起来、旧核心照它）；界面的字变了，
    * 重新载入页面。交回换完用哪一种、重不重载。
    * @param {string} value
    */
@@ -188,7 +188,7 @@ export async function boot(root) {
       .catch((err) => console.error(`记不下界面语言：${err?.message ?? err}`));
     setting = value;
     const next = pick(value, browser, res.languages);
-    const reload = next.code !== language.code || next.summary !== language.summary;
+    const reload = next.code !== language.code;
     if (reload) location.reload();
     return { language: next, reload };
   };
@@ -334,7 +334,7 @@ export async function boot(root) {
       ctx.provide('seams', seams);
       ctx.provide('storage', storage);
       // 界面语言（蓝图 `web.md`「界面语言」）：现在用哪一种、设置项写的什么、能写哪些、浮层里的几行；改了记进个人那一层，
-      // 界面的字、收起那一行的写法有一样变了重新载入页面（界面的字在内核起来时装，包的字在加载时取）
+      // 界面的字变了重新载入页面（界面的字在内核起来时装，包的字在加载时取）
       ctx.provide('language', {
         current: language,
         get setting() { return setting; },
@@ -342,7 +342,7 @@ export async function boot(root) {
         /** `/language` 浮层里的几行 */
         options: () => options(setting, browser, res.languages),
         /**
-         * 改设置项（`auto` 或表里的一种）；界面的字、时间线收起那一行的写法有一样变了，重新载入页面。交回改完用哪一种、
+         * 改设置项（`auto` 或表里的一种）；界面的字变了，重新载入页面。交回改完用哪一种、
          * 重不重载。
          */
         set: async (value) => {
