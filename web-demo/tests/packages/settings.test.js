@@ -606,3 +606,14 @@ test('侧栏每一页的图标各不相同（对照报告 B21：「用量」和�
   const bundled = JSON.parse(readFileSync(new URL('../../resources/lucide-all.json', import.meta.url), 'utf8')).icons;
   assert.deepEqual(icons.filter((name) => !(name in bundled)), [], '图标表里没有的');
 });
+
+test('换了一页从顶上开始：上一页滚到的位置不带过来（2026-11-21 主人本机：「用量」往下滚过再切到「软件包」，列表停在原来的位置，上面的页签被藏住）', async () => {
+  const { ScrollKeeper } = await import('../../packages/settings/keep-scroll.js');
+  const body = { top: 0, get scrollTop() { return this.top; }, set scrollTop(v) { this.top = v; } };
+  const keep = new ScrollKeeper(body, () => () => {});
+  body.scrollTop = 900;
+  assert.equal(keep.wanted(), 900, '同一页重画回到原来的地方');
+  assert.equal(keep.wanted(true), 0, '换了一页回到顶上');
+  keep.restore(1200);
+  assert.equal(keep.wanted(true), 0, '上一页还没回到的那一处也不带过来');
+});

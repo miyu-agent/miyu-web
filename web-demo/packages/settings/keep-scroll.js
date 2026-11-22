@@ -23,8 +23,13 @@ export class ScrollKeeper {
     this.stop = null;
   }
 
-  /** 重画以前问：这一次要回到哪。上一次没到的照上一次要的，不照被收过的位置。 */
-  wanted() {
+  /**
+   * 重画以前问：这一次要回到哪。上一次没到的照上一次要的，不照被收过的位置。换了一页（`turned`）的从顶上开始，上一页滚到的地方不带过来
+   * （2026-11-21 主人本机：「用量」往下滚过再切到「软件包」，列表停在原来的位置，上面的页签被藏住）。
+   * @param {boolean} [turned]
+   */
+  wanted(turned = false) {
+    if (turned) return 0;
     return this.want ?? this.body.scrollTop;
   }
 

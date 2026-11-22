@@ -383,7 +383,7 @@ export class SettingsDialog {
   drawBody(dir = null, restore = null) {
     // 上一次重画没回到的那一处照旧要回去（`keep-scroll.js`，W-1153）；搜着的、开着一层的不守
     if (this.query.trim() || this.sub.page) this.keep.drop();
-    const scroll = this.keep.wanted();
+    const scroll = this.keep.wanted(this.turned);
     if (this.query.trim()) this.sub.closeAll();
     this.root.classList.toggle('has-sub', !!this.sub.page);
     this.root.classList.toggle('is-bare-sub', !!this.sub.page?.bare);
