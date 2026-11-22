@@ -6785,16 +6785,16 @@
       ".setup-float-foot"
     ]
   },
-  "signin.eye": {
-    "zh": "登录、注册：密码框右边的眼睛",
-    "select": [
-      ".si-eye"
-    ]
-  },
   "setup.foot": {
     "zh": "人格、预设编辑器底下一排按钮",
     "select": [
       ".setup-foot"
+    ]
+  },
+  "signin.eye": {
+    "zh": "登录、注册：密码框右边的眼睛",
+    "select": [
+      ".si-eye"
     ]
   },
   "signin.corner": {

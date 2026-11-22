@@ -41,6 +41,16 @@ const HOME_RIGHT = 40;
  * @typedef {{model: {id: string, model: string|null, name: string}|null, persona: string, preset: string}} Result 走完写的
  */
 
+/**
+ * 焦点该不该拉回引导：引导把焦点关在自己里面，后面的页面点不到、Tab 不过去；盖在引导上面的对话框（`aria-modal`，设置框、确认框）里的
+ * 不拉（对照报告：开着引导打开设置，焦点停在背后的「开始」上，点设置里的输入框也被拉回去、打不了字）。
+ * @param {Node} layer 引导那一层 @param {Node} target 焦点落到的地方
+ */
+export function pullsFocus(layer, target) {
+  if (layer.contains(target)) return false;
+  return !(/** @type {Element} */ (target)?.closest?.('[aria-modal="true"]'));
+}
+
 export class Guide {
   /**
    * @param {any} ctx `welcome` 包的 ctx @param {() => void} uncover 揭掉一打开就盖上的那层底色（收起时）
@@ -97,8 +107,7 @@ export class Guide {
     this.held = null;
     this.onKey = (/** @type {KeyboardEvent} */ e) => this.key(e);
     this.onFocus = (/** @type {FocusEvent} */ e) => {
-      // 焦点关在引导里：后面的页面点不到、Tab 不过去
-      if (!this.layer.contains(/** @type {Node} */ (e.target))) this.focusScreen();
+      if (pullsFocus(this.layer, /** @type {Node} */ (e.target))) this.focusScreen();
     };
     this.onScroll = () => this.ctx.mascot?.refresh?.();
     // 窗口变了：吉祥物照新的台子站（原来也量步骤条放不放得下，换成小点以后不用量了）

@@ -88,7 +88,7 @@ export class SettingsDialog {
     this.revealing = false;
     /** 点进去的一层（软件包的设置，`subpage.js`） */
     this.sub = new Subpage();
-    this.panel = h('section.set-panel', { role: 'dialog', 'aria-modal': 'true', 'aria-label': this.ctx.text('title'), style: `--set-w: ${cfg.width}px; --set-h: ${cfg.height}px` },
+    this.panel = h('section.set-panel', { role: 'dialog', 'aria-modal': 'true', 'aria-label': this.ctx.text('title'), tabindex: '-1', style: `--set-w: ${cfg.width}px; --set-h: ${cfg.height}px` },
       // 窄屏的分页列表顶上一行：「设置」和关掉（2026-11-13 主人验 check 7：手机上列表这一层没有关的按钮，回不到对话）
       h('aside.set-side', h('div.set-side-head', h('strong.set-side-title', this.ctx.text('title')),
         h('button.icon-button.set-close', { type: 'button', title: this.ctx.text('close'), 'aria-label': this.ctx.text('close'), onclick: () => this.close() }, icon('x'))),
@@ -111,8 +111,9 @@ export class SettingsDialog {
     this.ctx.core.onPush(this.onPush);
     this.current = page ?? lastPage;
     this.body.replaceChildren(h('p.set-empty', this.ctx.text('loading')));
-    // 手机上不点进搜索框（不弹输入法），点了才进（W-1208）
-    focusOnOpen(this.search);
+    // 手机上不点进搜索框（不弹输入法），点了才进（W-1208）；这时焦点放在设置框上，不留在背后那一页的按钮上（对照报告：打开设置时焦点停在
+    // 欢迎页的「开始」上，按 Enter、Tab 都落到背后）
+    if (!focusOnOpen(this.search)) this.panel.focus({ preventScroll: true });
     try {
       await this.load();
     } catch (err) {
