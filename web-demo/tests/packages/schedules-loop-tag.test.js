@@ -32,6 +32,10 @@ test('写哪个：只看跑在这个会话上的循环；在跑的在前、有�
   assert.equal(loopOn(list, 's1')?.id, 't4', '不是循环的定时任务（t5）不算');
   assert.equal(loopOn(list.filter((s) => s.id !== 't3' && s.id !== 't4'), 's1')?.id, 't2', '没定下一次的排在停着的前面');
   assert.equal(loopOn([list[0]], 's1')?.id, 't1');
+  // 核心 FX-21：AI 用 schedule_next 挂的一次（by 是 model、when 是 at、没有 loop）也算，人建的一次照旧不算
+  const trigger = one({ id: 't7', loop: undefined, when: { at: at([2026, 11, 14, 9, 40]) }, by: { kind: 'model', session: 's1' }, next: at([2026, 11, 14, 9, 40]) });
+  const mine = one({ id: 't8', loop: undefined, when: { at: at([2026, 11, 14, 9, 33]) }, by: { kind: 'person' }, next: at([2026, 11, 14, 9, 33]) });
+  assert.equal(loopOn([...list, trigger, mine], 's1')?.id, 't7');
 });
 
 test('换会话：照看着的会话挑，别的会话的、没有会话的不写', () => {

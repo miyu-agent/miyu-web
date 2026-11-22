@@ -225,7 +225,8 @@ export function onSession(list, session) {
 }
 
 /**
- * 输入框右上方那一截写哪个循环（蓝图「定时任务」第 2b 条，照终端 `loop_tag.rs` 的 `of`）：跑在这个会话上的循环（带 `loop` 的）里，
+ * 输入框右上方那一截写哪个循环（蓝图「定时任务」第 2b 条，照终端 `loop_tag.rs` 的 `of`）：跑在这个会话上的循环（带 `loop` 的）、
+ * AI 挂的一次定时触发（核心 FX-21：`by` 是 `model`、`when` 是 `at`、没有 `loop`）里，
  * 在跑的在前，有下一次的在前，下一次早的在前；没有的、没有会话的是 `null`。纯的。
  * @param {Schedule[]} list @param {string|null} session @returns {Schedule|null}
  */
@@ -236,7 +237,8 @@ export function loopOn(list, session) {
     const at = s.next ? Date.parse(s.next) : NaN;
     return [s.paused ? 1 : 0, Number.isFinite(at) ? 0 : 1, Number.isFinite(at) ? at : 0];
   };
-  const mine = list.filter((s) => s.loop && s.target?.session === session);
+  const once = (/** @type {Schedule} */ s) => !s.loop && s.by?.kind === 'model' && typeof s.when?.at === 'string';
+  const mine = list.filter((s) => (s.loop || once(s)) && s.target?.session === session);
   mine.sort((a, b) => {
     const x = key(a);
     const y = key(b);
