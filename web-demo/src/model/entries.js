@@ -69,13 +69,15 @@ export function itemsOf(entries, status, opts = {}) {
           items.push({ type: 'note', key: e.id, seq: seqOf(e.id), turn: e.turn ?? null, slot: 'dream.batch', batch, text: e.text ?? '' });
           break;
         }
+        // 人敲 `/loop`、`/goal <目标>` 当场开的第一轮（视图带 `command`，核心 FX-15）：照人敲的那一行画成你的话（2026-11-22 项目主人）
+        const typed = e.command != null && (e.from?.kind === 'module' || e.from?.kind === 'schedule');
         // 模块替她开的一轮（长期目标的续轮）：一行小字，不当你的话（2026-10-12 项目主人定）
-        if (e.from?.kind === 'module') {
+        if (e.from?.kind === 'module' && !typed) {
           items.push({ ...moduleNote(e), seq: seqOf(e.id) });
           break;
         }
         // 循环到点开始下一轮的那句（W-1206）：一行小字，不当你的话；排着的等她听到再画（退不回去，不进排着的话）
-        if (e.from?.kind === 'schedule' && e.from.loop) {
+        if (e.from?.kind === 'schedule' && e.from.loop && !typed) {
           if (!e.queued) items.push({ ...roundNote(e), seq: seqOf(e.id) });
           break;
         }
@@ -84,7 +86,7 @@ export function itemsOf(entries, status, opts = {}) {
           if (!e.queued) items.push({ ...pokeNote(e), seq: seqOf(e.id) });
           break;
         }
-        const item = userItem(e, jobs, opts);
+        const item = userItem(typed ? { ...e, from: null } : e, jobs, opts);
         if (e.queued) queued.push(item);
         else items.push(item);
         break;

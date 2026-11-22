@@ -1,6 +1,6 @@
 // @ts-check
 //! 推演人生整个移除（2026-11-18 项目主人定，核心 RM-1，W-1216）：网页不再调 `life.*`、不认 `/life`、没有软件包 `life`，
-//! 只有它在用的挂载位 `sidebar.nav`、`stage.top` 跟着拿掉；预设不再照 `hidden` 筛。普通循环的「◷ 循环 · 继续」留着。
+//! 只有它在用的挂载位 `sidebar.nav`、`stage.top` 跟着拿掉；预设不再照 `hidden` 筛。普通循环的「◷ 循环 · …」旁白留着。
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -31,9 +31,9 @@ test('没有软件包 life；出厂的包表里也没有它', () => {
   assert.ok(!JSON.stringify(distro).includes('"life"'));
 });
 
-test('续轮那一行只有循环一种：三种语言的 notes.round 只剩 loop', () => {
+test('续轮那一行只有循环一种：三种语言的 notes.round 只剩 loop 和 builtin（没有 life）', () => {
   for (const lang of ['zh', 'en', 'ja']) {
     const text = JSON.parse(readFileSync(join(root, `resources/text/${lang}.json`), 'utf8'));
-    assert.deepEqual(Object.keys(text.notes.round), ['loop'], lang);
+    assert.deepEqual(Object.keys(text.notes.round), ['loop', 'builtin'], lang);
   }
 });

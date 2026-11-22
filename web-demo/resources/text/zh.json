@@ -476,7 +476,7 @@
     "session_speaker": "从会话 {id} 收到消息",
     "schedule_speaker": "定时任务 {id}",
     "loop_speaker": "循环",
-    "round": {"loop": "循环 · 继续"},
+    "round": {"loop": "循环 · {words}", "builtin": "循环 · 由 AI 自己决定"},
     "peer": {
       "idle": "会话 {id} 已回复",
       "idle_status": "会话 {id} 回复：{status}",

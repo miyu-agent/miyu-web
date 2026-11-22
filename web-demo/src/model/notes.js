@@ -91,13 +91,16 @@ export function moduleNote(e) {
 }
 
 /**
- * 循环到点交进来的话（`from` 是 `{kind: 'schedule', loop}`，核心 J-2、LO-1）：不当你的话画，画一行「◷ 循环 · 继续」（核心 WK-2 起不说醒），
- * 不能点开（光打 `/loop` 交的是出厂的一句英文，是给模型看的；2026-11-17 项目主人：不是用户发的、还是英文，W-1206）。同目标的续轮那一行。
+ * 循环到点交进来的话（`from` 是 `{kind: 'schedule', loop}`，核心 J-2、LO-1）：不当你的话画，画一行旁白「◷ 循环 · <那一句的第一行>」，
+ * 不能点开（2026-11-17 项目主人：不是用户发的，W-1206；11-22 补：要看得出循环这次说了什么）。光打 `/loop` 交的是出厂的一句英文
+ * （`from.builtin`，核心 FX-15），给模型看的，不照原文写，写「由 AI 自己决定」。同目标的续轮那一行。
  * @param {any} e 日志里的 `user` 条目
  */
 export function roundNote(e) {
   const mark = res.layout.note_marks.round ?? '';
-  return { type: 'note', key: e.id, seq: null, turn: null, tone: 'module', mark, text: res.text.notes.round.loop, detail: null };
+  const words = String(e.text ?? '').split('\n').map((l) => l.trim()).find((l) => l !== '');
+  const text = e.from?.builtin === true || !words ? res.text.notes.round.builtin : t('notes.round.loop', { words });
+  return { type: 'note', key: e.id, seq: null, turn: null, tone: 'module', mark, text, detail: null };
 }
 
 /**
