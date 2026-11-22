@@ -4,6 +4,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { loadRes } from './support.js';
 import { statusFooter, fit, stuckOf, previewRing, ringTip, capOf } from '../src/model/footer.js';
 
@@ -129,4 +130,13 @@ test('权限级别的记号拆成「画哪个图标、后面的字」（W-1154�
   const icons = JSON.parse(readFileSync(new URL('../resources/lucide.json', import.meta.url), 'utf8')).icons;
   const layout = JSON.parse(readFileSync(new URL('../resources/layout.json', import.meta.url), 'utf8'));
   for (const [level, name] of Object.entries(layout.level_svg)) assert.ok(icons[name] && layout.level_icons[level], `${level} → ${name}`);
+});
+
+test('点级别那一格的提示照 `level_cycle` 列出来回切的两级，不再写已经没有的「工作区」（LV-3；DOC-31 查出提示还写着三级）', () => {
+  const layout = JSON.parse(readFileSync(new URL('../resources/layout.json', import.meta.url), 'utf8'));
+  for (const lang of ['zh', 'en', 'ja']) {
+    const text = JSON.parse(readFileSync(new URL(`../resources/text/${lang}.json`, import.meta.url), 'utf8'));
+    const names = layout.level_cycle.map((/** @type {string} */ l) => text.levels[l]);
+    assert.equal(text.level_tip.split('：').pop().split(': ').pop(), names.join(' ⇄ '), lang);
+  }
 });
