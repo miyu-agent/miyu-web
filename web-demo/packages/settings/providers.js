@@ -120,7 +120,8 @@ function removeButton(dialog, p) {
   const chat = dialog.got?.items?.['models.chat']?.value;
   const inUse = typeof chat === 'string' && chat.startsWith(`${p.id}/`);
   const note = h('small.set-prov-danger', { hidden: true });
-  const button = h('button.set-btn', { type: 'button', onclick: async () => {
+  // 红字，同人格编辑器、软件包的「删除」（对照报告 A19：原来是灰底黑字的普通按钮）
+  const button = h('button.set-btn.is-danger', { type: 'button', onclick: async () => {
     const text = ctx.text(inUse ? 'models.remove_confirm_in_use' : 'models.remove_confirm', { name: providerName(p) });
     if (!await confirmIn(button, { text, yes: ctx.text('ask_yes'), no: ctx.text('ask_no') })) return;
     button.setAttribute('disabled', '');
