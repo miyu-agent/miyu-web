@@ -68,7 +68,8 @@
 .setup-card .setup-card-text p { margin: calc(2px * var(--space)) 0 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: calc(12.5px * var(--text-scale)); }
 /* 人格的头像、预设的图标：核心还没有，先画名字的第一个字；人格是圆的，预设是圆角方块 */
 .setup-face { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--r-round); background: color-mix(in srgb, var(--accent) 16%, var(--surface-1)); color: var(--accent); font-size: calc(16px * var(--text-scale)); font-weight: 600; }
-.setup-face.is-preset { border-radius: var(--r-10); background: var(--surface-1); color: var(--text-soft); }
+/* 预设的图标底：灰的一块，不用白的（对照报告 A30：白方块违反「不许变白」） */
+.setup-face.is-preset { border-radius: var(--r-10); background: var(--surface-3); color: var(--text-soft); }
 /* 头像是图的铺满那个圆；预设的图标画在方块正中（核心 P-5） */
 .setup-face { overflow: hidden; }
 .setup-face img { width: 100%; height: 100%; object-fit: cover; }
@@ -202,8 +203,8 @@
    正中一张白卡片，浮起来的影；里面左边字段名、右边灰底的框。控件照设置页的（`settings/kit.js`），不画描边 */
 .setup-bar { display: flex; align-items: center; justify-content: flex-end; gap: calc(12px * var(--space)); margin: calc(-4px * var(--space)) 0 0; }
 .setup-bar .setup-intro { flex: 1; margin: 0; color: var(--text-faint); font-size: calc(12.5px * var(--text-scale)); }
-.setup-new { display: inline-flex; align-items: center; gap: calc(4px * var(--space)); height: 30px; padding: 0 calc(12px * var(--space)); border: var(--btn-border, 0); border-radius: var(--btn-radius, var(--r-8)); background: var(--btn-bg, var(--surface-2)); color: var(--btn-fg, var(--text)); font: calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer; }
-.setup-new:hover { background: var(--btn-hover, var(--surface-3)); }
+.setup-new { display: inline-flex; align-items: center; gap: calc(4px * var(--space)); height: 30px; padding: 0 calc(12px * var(--space)); border: var(--btn-border, 0); border-radius: var(--btn-radius, var(--r-8)); background: var(--btn-primary-bg, var(--accent)); color: var(--btn-primary-fg, var(--on-primary)); font: calc(13px * var(--text-scale)) var(--font-ui); cursor: pointer; }
+.setup-new:hover { filter: brightness(1.06); }
 .setup-new svg { width: calc(14px * var(--space)); height: calc(14px * var(--space)); }
 .setup-card.is-clickable { cursor: pointer; transition: background-color calc(0.15s * var(--motion-scale)) ease; }
 .setup-card.is-clickable:hover { background: var(--surface-2); }

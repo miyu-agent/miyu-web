@@ -47,7 +47,7 @@ const KINDS = {
   },
   preset: {
     // 预设也写简单描述（2026-10-23 项目主人定，推翻 10-08 的「预设不写说明」）；没有的不写
-    list: (c) => c.presets, fallback: (c) => c.presetDefault ?? 'full', name: presetName, none: 'presets.none', add: 'edit.new_preset', intro: null, summary: true,
+    list: (c) => c.presets, fallback: (c) => c.presetDefault ?? 'full', name: presetName, none: 'presets.none', add: 'edit.new_preset', intro: 'presets.intro', summary: true,
     create: (core, name, id) => core.request('preset.set', { ...(id ? { preset: id, new: true } : {}), changes: [{ key: 'preset.name', value: name }] }).then((r) => r?.preset),
     editor: (ctx, kit, catalog, id, hooks, look) => new PresetEditor(ctx, kit, catalog, id, hooks, look),
   },
@@ -108,7 +108,7 @@ export class ListPage {
       });
       return card;
     });
-    // 顶上一行：这一页管什么（人格页，2026-10-08 项目主人），右边「＋ 新建」
+    // 顶上一行：这一页管什么（人格页，2026-10-08 项目主人；预设页 2026-11-22 项目主人补），右边「＋ 新建」，用主色（2026-11-22 项目主人）
     const add = h('div.setup-bar', this.k.intro ? h('p.setup-intro', t(this.k.intro)) : null, h('button.setup-new', { type: 'button', onclick: () => this.startNew() }, icon('plus'), h('span', t(this.k.add))));
     replace(this.el, add, cards.length ? h('div.setup-grid', cards) : h('p.setup-empty', t(this.k.none)));
   }

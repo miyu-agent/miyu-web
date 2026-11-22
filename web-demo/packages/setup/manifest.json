@@ -174,7 +174,7 @@
       "command": "切换工作区",
       "page": {
         "title": "人格",
-        "intro": "决定AI的人格和记忆",
+        "intro": "决定 AI 的人格和记忆",
         "loading": "正在加载…",
         "none": "暂无人格",
         "default": "默认",
@@ -288,6 +288,7 @@
       "preset_bad": "文件有误",
       "presets": {
         "title": "预设",
+        "intro": "决定 AI 能用哪些功能",
         "none": "暂无预设"
       },
       "not_a_dir": "不是目录",
@@ -511,6 +512,7 @@
       "preset_bad": "Invalid file",
       "presets": {
         "title": "Presets",
+        "intro": "Sets which features the AI can use",
         "none": "No presets"
       },
       "not_a_dir": "Not a directory",
@@ -734,6 +736,7 @@
       "preset_bad": "ファイルに誤りがあります",
       "presets": {
         "title": "プリセット",
+        "intro": "AI が使える機能を決めます",
         "none": "プリセットがありません"
       },
       "not_a_dir": "これはディレクトリではありません",
