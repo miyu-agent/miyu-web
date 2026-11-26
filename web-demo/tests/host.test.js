@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { urls } from '../src/host/browser.js';
 import { ownerStorage } from '../src/kernel/storage.js';
 import { Connection, Refusal, LINE_MAX, tooLong, sendTooLong } from '../src/core/connection.js';
+import { starting } from '../src/kernel/wait.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -130,6 +131,64 @@ test('连核心只认一条像 WebSocket 的线：通了才发，回应对上请
   ch.onclose();
   await assert.rejects(pending, (e) => e.reason === 'disconnected');
   assert.deepEqual(states, ['connecting', 'online', 'offline']);
+});
+
+test('那一头连核心过了 3 秒还没好（核心 CS-6 的 web.starting、bridge.starting）：状态记成 starting、告诉 onStarting 的，握手照常等；核心回了第一句回到 online，连不上的照旧拒', async () => {
+  for (const method of ['web.starting', 'bridge.starting']) {
+    const ch = /** @type {any} */ (fakeChannel());
+    const conn = new Connection(() => ch);
+    const states = [];
+    let told = 0;
+    conn.onStatus((s) => states.push(s));
+    conn.onStarting(() => { told += 1; });
+    const pushed = [];
+    conn.onPush((m) => pushed.push(m));
+    const up = conn.connect();
+    ch.readyState = 1;
+    ch.onopen();
+    await up;
+    const hello = conn.request('hello', {});
+    ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', method, params: {} }) });
+    assert.equal(told, 1);
+    assert.equal(conn.state, 'starting');
+    assert.deepEqual(pushed, [], '这条通知不当推送交出去');
+    ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', id: ch.sent[0].id, result: { ok: 1 } }) });
+    assert.deepEqual(await hello, { ok: 1 });
+    assert.deepEqual(states, ['connecting', 'online', 'starting', 'online']);
+  }
+  // 等了以后还是连不上：照旧拒握手，线关了是离线
+  const ch = /** @type {any} */ (fakeChannel());
+  const conn = new Connection(() => ch);
+  const states = [];
+  conn.onStatus((s) => states.push(s));
+  const up = conn.connect();
+  ch.readyState = 1;
+  ch.onopen();
+  await up;
+  const hello = conn.request('hello', {});
+  ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', method: 'web.starting', params: {} }) });
+  ch.onmessage({ data: JSON.stringify({ jsonrpc: '2.0', method: 'web.error', params: { message: '起不来' } }) });
+  await assert.rejects(hello, (e) => e instanceof Refusal && e.reason === 'core_unreachable' && e.message === '起不来');
+  ch.readyState = 3;
+  ch.onclose();
+  assert.deepEqual(states, ['connecting', 'online', 'starting', 'offline']);
+});
+
+test('「正在连接」那一屏：核心还在启动的换成那一句、代理那一行拿掉；没有这一屏的不动', () => {
+  const removed = [];
+  const line = { textContent: '正在连接…' };
+  const classes = new Set();
+  const el = {
+    classList: { add: (c) => classes.add(c), contains: (c) => classes.has(c) },
+    querySelector: (sel) => (sel === '.boot-wait-why' ? { remove: () => removed.push(sel) } : null),
+    firstElementChild: line,
+  };
+  const root = /** @type {any} */ ({ querySelector: (sel) => (sel === '.boot-wait' ? el : null) });
+  starting(root, '核心还在启动…');
+  assert.equal(line.textContent, '核心还在启动…');
+  assert.ok(classes.has('is-starting'), '记下了：过 10 秒不再接代理那一行');
+  assert.deepEqual(removed, ['.boot-wait-why']);
+  starting(/** @type {any} */ ({ querySelector: () => null }), '核心还在启动…');
 });
 
 test('断了自己重连：隔一会儿再开一条线，连上了告诉外面（重新握手、补上漏掉的由外面做）；一开始就连不上的不在这里重连', async () => {

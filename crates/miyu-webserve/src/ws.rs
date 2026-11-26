@@ -299,7 +299,16 @@ async fn bridge<I, S: Site>(
             return;
         }
     };
-    let core = match crate::start::core(&*site, again).await {
+    // 核心起得慢（过 3 秒）先告诉页面一声，接着等（核心 CS-6）。借着 `out`、不拷一份：拷的那份活到这个函数完，写的那一头等不到通道关上
+    let slow = || {
+        if out
+            .try_send(Message::text(crate::start::starting().to_string()))
+            .is_err()
+        {
+            tracing::debug!(target: TARGET, "starting notice not sent");
+        }
+    };
+    let core = match crate::start::core(&*site, again, &slow).await {
         Ok(core) => core,
         Err(error) => {
             tracing::warn!(target: TARGET, error = %error, again, "core unreachable");

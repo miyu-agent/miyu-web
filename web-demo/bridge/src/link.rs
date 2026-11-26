@@ -58,25 +58,9 @@ pub async fn run(stream: TcpStream, site: Arc<Site>) {
         return;
     };
     let (mut sink, mut source) = ws.split();
-    let connected = match connect(again.load(std::sync::atomic::Ordering::Relaxed)).await {
-        Ok(ok) => ok,
-        Err(unreached) => {
-            let mut params = json!({"message": unreached.message});
-            if unreached.stopped {
-                params["reason"] = json!("stopped_by_user");
-            }
-            let note = json!({"jsonrpc": "2.0", "method": "bridge.error", "params": params});
-            if let Err(e) = sink.send(Message::text(note.to_string())).await {
-                eprintln!("{}；告诉页面时又出错了：{e}", unreached.message);
-            }
-            return;
-        }
-    };
-    let (connection, token) = connected;
-    let (reader, mut writer) = tokio::io::split(connection);
     let (out, mut outbox) = mpsc::unbounded_channel::<String>();
-    // 往浏览器写：核心的推送、回应，和桥自己回的，一条一帧、照先后；核心那头断了（`CORE_GONE`），发一个关闭帧把页面这条线也关掉，
-    // 页面收到关闭就去重连（蓝图 `web.md`「连核心」第 1 条；原来只停了读核心的那一半，页面以为自己还在线）
+    // 往浏览器写：核心起得慢时桥说的那一句、核心的推送、回应，和桥自己回的，一条一帧、照先后；核心那头断了（`CORE_GONE`），发一个关闭帧
+    // 把页面这条线也关掉，页面收到关闭就去重连（蓝图 `web.md`「连核心」第 1 条；原来只停了读核心的那一半，页面以为自己还在线）
     let writing = tokio::spawn(async move {
         while let Some(text) = outbox.recv().await {
             if text == CORE_GONE {
@@ -88,6 +72,29 @@ pub async fn run(stream: TcpStream, site: Arc<Site>) {
             }
         }
     });
+    // 核心起得慢（过 3 秒还没好）：先告诉页面一声，接着等（核心 CS-6）
+    let slow = || {
+        let note = json!({"jsonrpc": "2.0", "method": "bridge.starting", "params": {}});
+        drop(out.send(note.to_string()));
+    };
+    let connected = match connect(again.load(std::sync::atomic::Ordering::Relaxed), &slow).await {
+        Ok(ok) => ok,
+        Err(unreached) => {
+            let mut params = json!({"message": unreached.message});
+            if unreached.stopped {
+                params["reason"] = json!("stopped_by_user");
+            }
+            let note = json!({"jsonrpc": "2.0", "method": "bridge.error", "params": params});
+            drop(out.send(note.to_string()));
+            drop(out);
+            if writing.await.is_err() {
+                eprintln!("{}；告诉页面时又出错了", unreached.message);
+            }
+            return;
+        }
+    };
+    let (connection, token) = connected;
+    let (reader, mut writer) = tokio::io::split(connection);
     let reading = {
         let out = out.clone();
         tokio::spawn(async move {
@@ -149,28 +156,33 @@ impl From<String> for Unreached {
 }
 
 /// 找数据根、连核心：给了 `MIYU_CORE_BIN` 的，没在跑就拉起来；没给的只连（照 TUI 演示和 `miyu ask`）。`again` 是页面断线以后
-/// 自己重连：核心是人停的不拉起（`reconnect_or_start`，核心 CS-5）。
+/// 自己重连：核心是人停的不拉起（`reconnect_or_start`，核心 CS-5）。从开始连算起过了 3 秒还没好，叫一次 `slow`（核心 CS-6）。
 ///
 /// # Errors
 ///
 /// 找不到、建不了数据根，连不上、拉不起核心：交回给人看的那一句，照这台机器的语言（核心 EN-1、EN-2，`said.rs`）。
-pub(crate) async fn connect(again: bool) -> Result<Connected, Unreached> {
+pub(crate) async fn connect(
+    again: bool,
+    slow: &(dyn Fn() + Send + Sync),
+) -> Result<Connected, Unreached> {
     let language = crate::said::language(&miyu_client::open::locale());
     connect_in(
         &Env::current(),
         language,
         std::env::var_os("MIYU_CORE_BIN"),
         again,
+        slow,
     )
     .await
 }
 
-/// 照 `env` 找数据根、连核心，拉起核心用 `bin`（没给的只连；`again` 的人停的不拉）；出错的话照 `language` 说。
+/// 照 `env` 找数据根、连核心，拉起核心用 `bin`（没给的只连；`again` 的人停的不拉；慢了叫一次 `slow`）；出错的话照 `language` 说。
 async fn connect_in(
     env: &Env,
     language: &str,
     bin: Option<OsString>,
     again: bool,
+    slow: &(dyn Fn() + Send + Sync),
 ) -> Result<Connected, Unreached> {
     let spoken =
         |said, error: &dyn std::fmt::Display| crate::said::spoken(env, language, said, error);
@@ -184,8 +196,8 @@ async fn connect_in(
                 core
             };
             let started = match again {
-                true => miyu_client::connect::reconnect_or_start(&root, start).await,
-                false => miyu_client::connect::connect_or_start(&root, start).await,
+                true => miyu_client::connect::reconnect_or_start_waiting(&root, start, slow).await,
+                false => miyu_client::connect::connect_or_start_waiting(&root, start, slow).await,
             };
             started.map_err(|e| Unreached {
                 message: spoken(e.said(), &e),

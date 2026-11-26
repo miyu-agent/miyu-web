@@ -4,6 +4,7 @@
   "status": {
     "online": "Online",
     "connecting": "Connecting",
+    "starting": "Starting",
     "offline": "Offline"
   },
   "sidebar": {
@@ -161,6 +162,7 @@
   },
   "boot": {
     "connecting_web": "Connecting…",
+    "core_starting": "The core is still starting…",
     "connecting_slow": "Still connecting. If this device uses a proxy or VPN (such as TUN mode), turn it off or let this address connect directly, then try again.",
     "web_title": "Can't reach the web app",
     "web_why": "The web app isn't running.",

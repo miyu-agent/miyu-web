@@ -4,6 +4,7 @@
   "status": {
     "online": "在线",
     "connecting": "连接中",
+    "starting": "启动中",
     "offline": "离线"
   },
   "sidebar": {
@@ -161,6 +162,7 @@
   },
   "boot": {
     "connecting_web": "正在连接…",
+    "core_starting": "核心还在启动…",
     "connecting_slow": "连了很久还没连上。这台设备开着代理或 VPN（比如 TUN 模式）的话，关掉或者把这个地址设成直连再试。",
     "web_title": "连不上网页软件",
     "web_why": "网页软件没有在运行。",

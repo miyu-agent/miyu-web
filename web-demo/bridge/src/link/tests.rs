@@ -47,7 +47,7 @@ fn env(home: impl Into<OsString>, words: &Path) -> Env {
 async fn a_relative_data_root_is_said_in_the_machine_language() {
     let dir = scratch("relative");
     let words = resources(&dir);
-    let got = connect_in(&env("rel/path", &words), "en", None, false).await;
+    let got = connect_in(&env("rel/path", &words), "en", None, false, &|| {}).await;
     std::fs::remove_dir_all(&dir).expect("删得掉临时目录");
     let Err(Unreached { message: said, .. }) = got else {
         panic!("相对路径找不到数据根");
@@ -65,6 +65,7 @@ async fn a_core_that_cannot_be_launched_is_said_in_the_machine_language() {
         "en",
         Some(missing.into_os_string()),
         false,
+        &|| {},
     )
     .await;
     std::fs::remove_dir_all(&dir).expect("删得掉临时目录");
@@ -80,7 +81,14 @@ async fn a_core_that_cannot_be_launched_is_said_in_the_machine_language() {
 #[tokio::test]
 async fn without_words_the_original_is_said() {
     let dir = scratch("no-words");
-    let got = connect_in(&env("rel/path", &dir.join("nothing")), "en", None, false).await;
+    let got = connect_in(
+        &env("rel/path", &dir.join("nothing")),
+        "en",
+        None,
+        false,
+        &|| {},
+    )
+    .await;
     let Err(Unreached { message: said, .. }) = got else {
         panic!("相对路径找不到数据根");
     };
@@ -91,7 +99,7 @@ async fn without_words_the_original_is_said() {
 async fn a_core_that_is_not_running_keeps_the_bridge_hint() {
     let dir = scratch("idle");
     let words = resources(&dir);
-    let got = connect_in(&env(dir.join("home"), &words), "en", None, false).await;
+    let got = connect_in(&env(dir.join("home"), &words), "en", None, false, &|| {}).await;
     std::fs::remove_dir_all(&dir).expect("删得掉临时目录");
     let Err(Unreached { message: said, .. }) = got else {
         panic!("核心没在跑");
@@ -110,8 +118,8 @@ async fn reconnecting_does_not_start_a_core_the_user_stopped() {
     root.prepare().expect("建得了骨架");
     std::fs::write(root.run().join("stopped"), b"").expect("写得进记号");
     let missing = || Some(dir.join("no-such-miyu").into_os_string());
-    let again = connect_in(&env, "en", missing(), true).await;
-    let asked = connect_in(&env, "en", missing(), false).await;
+    let again = connect_in(&env, "en", missing(), true, &|| {}).await;
+    let asked = connect_in(&env, "en", missing(), false, &|| {}).await;
     std::fs::remove_dir_all(&dir).expect("删得掉临时目录");
     let Err(stopped) = again else {
         panic!("人停的不拉起");

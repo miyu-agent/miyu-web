@@ -102,7 +102,7 @@ button, textarea { font: inherit; color: inherit; }
 .icon-button:hover { background: var(--ghost-hover, color-mix(in srgb, var(--text) 6%, transparent)); color: var(--ghost-fg-hover, var(--text)); }
 .icon-button:focus-visible, button:focus-visible { outline: var(--focus-ring, 2px solid color-mix(in srgb, var(--accent) 55%, transparent)); outline-offset: 1px; }
 
-/* 在线的圆点：连着绿，连接中金，断了红（旧版 .status-dot）；只在连接中 2.4 秒往外呼一圈（蓝图 web.md「左栏」状态、「动效」第 4 条） */
+/* 在线的圆点：连着绿，连接中、核心还在启动金，断了红（旧版 .status-dot）；只在连接中、启动中 2.4 秒往外呼一圈（蓝图 web.md「左栏」状态、「动效」第 4 条） */
 .status-dot {
   position: relative; display: inline-block; width: 6px; height: 6px; flex: 0 0 6px; border-radius: var(--r-round);
   color: var(--online); background: currentColor;
@@ -112,10 +112,10 @@ button, textarea { font: inherit; color: inherit; }
 .status-dot::after, .session-unread-dot::after {
   position: absolute; inset: 0; border-radius: var(--r-round); background: currentColor; content: ""; opacity: 0;
 }
-.status-dot.is-connecting::after, .session-unread-dot::after {
+.status-dot.is-connecting::after, .status-dot.is-starting::after, .session-unread-dot::after {
   animation: status-pulse calc(2.4s * var(--motion-scale)) ease-in-out infinite; will-change: transform, opacity;
 }
-.status-dot.is-connecting { color: var(--gold); }
+.status-dot.is-connecting, .status-dot.is-starting { color: var(--gold); }
 .status-dot.is-offline { color: var(--danger); }
 @keyframes status-pulse {
   0% { transform: scale(1); opacity: 0.45; }

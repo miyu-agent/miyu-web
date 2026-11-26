@@ -139,18 +139,28 @@ pub async fn start_configured(
     follow: bool,
 ) -> (Ready, u16, JoinHandle<Result<(), String>>) {
     let serve = Serve {
-        root: home.root.clone(),
-        port,
-        fallback,
         configured,
         follow,
+        fallback,
+        ..serve_for(home, port, settings)
+    };
+    launch(home, serve).await
+}
+
+/// 照 `home` 起的 `serve`：端口、设置照给的，核心是拉不起来的那一个（[`no_core`]），不往后挪端口、不跟配置。
+pub fn serve_for(home: &Home, port: u16, settings: Settings) -> Serve {
+    Serve {
+        root: home.root.clone(),
+        port,
+        fallback: false,
+        configured: None,
+        follow: false,
         pages: home.pages.clone(),
         settings,
         core: no_core(),
         temp: home.dir.join("tmp"),
         export_idle: miyu_web::export::IDLE,
-    };
-    launch(home, serve).await
+    }
 }
 
 /// 起照给的 `serve`：交回那一行、端口（起来了的）和跑着的任务。

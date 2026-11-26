@@ -9,7 +9,7 @@
 //! 蹲在卡片上沿（静态图，2026-10-22 项目主人选的样板二 B）。
 
 import { h, icon, replace } from '../lib/dom.js';
-import { waitScreen } from './wait.js';
+import { starting, waitScreen } from './wait.js';
 import { t } from '../util/res.js';
 import { Connection, Refusal } from '../core/connection.js';
 import { onThisComputer } from '../host/files.js';
@@ -288,6 +288,8 @@ export async function signIn(host, greeting, root, offline, retry = /** @type {n
       replace(root, waitScreen(t('boot.connecting_web'), t('boot.connecting_slow')));
     }
     const conn = new Connection(host.channel, retry, host.check);
+    // 那一头连核心过了 3 秒还没好（核心 CS-6）：「正在连接」那一屏换成「核心还在启动…」，接着等
+    conn.onStarting(() => starting(root, t('boot.core_starting')));
     await conn.connect().catch(offline);
     try {
       const hello = await conn.request('hello', { ...greeting, ...(credential ?? {}) });

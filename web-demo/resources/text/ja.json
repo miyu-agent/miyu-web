@@ -4,6 +4,7 @@
   "status": {
     "online": "オンライン",
     "connecting": "接続中",
+    "starting": "起動中",
     "offline": "オフライン"
   },
   "sidebar": {
@@ -161,6 +162,7 @@
   },
   "boot": {
     "connecting_web": "接続中…",
+    "core_starting": "コアはまだ起動中です…",
     "connecting_slow": "なかなかつながりません。この端末でプロキシや VPN（TUN モードなど）を使っている場合は、オフにするか、このアドレスを直接接続にしてからもう一度お試しください。",
     "web_title": "Web アプリに接続できません",
     "web_why": "Web アプリが起動していません。",

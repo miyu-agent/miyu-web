@@ -360,6 +360,47 @@ async fn an_oversized_frame_is_closed_without_a_reset() {
     assert_eq!(u16::from_be_bytes([got[2], got[3]]), 1009);
 }
 
+/// 核心起得慢（核心 CS-6）：过 3 秒还没好的先推一条 `web.starting`，接着等；拉起的核心什么都没说就退了的，照旧推 `web.error` 再关。
+/// 拉起的「核心」是一个睡 5 秒就退的 `sh`（只在 Unix 上有）。
+#[cfg(unix)]
+#[tokio::test]
+async fn a_slow_core_is_told_as_starting_then_still_waited_for() {
+    let home = Home::new();
+    let serve = miyu_web::serve::Serve {
+        core: std::sync::Arc::new(|| {
+            let mut sleep = std::process::Command::new("sh");
+            sleep.args(["-c", "sleep 5"]);
+            sleep
+        }),
+        ..serve_for(&home, 0, settings(600))
+    };
+    let (_, port, _serving) = launch(&home, serve).await;
+    let mut ws = browser(port, Some(&format!("http://127.0.0.1:{port}")))
+        .await
+        .expect("接了");
+    let asked = std::time::Instant::now();
+    ws.send(Message::text("{}")).await.expect("发得出");
+    let notice = |message: Option<Message>| match message {
+        Some(Message::Text(text)) => {
+            serde_json::from_str::<serde_json::Value>(text.as_str()).expect("是 JSON")
+        }
+        other => panic!("{other:?}"),
+    };
+    let starting = notice(next(&mut ws).await);
+    assert_eq!(starting["method"], "web.starting", "{starting}");
+    assert!(
+        asked.elapsed() >= Duration::from_millis(2900),
+        "过了 3 秒才说"
+    );
+    let error = notice(next(&mut ws).await);
+    assert_eq!(error["method"], "web.error", "{error}");
+    assert!(
+        asked.elapsed() >= Duration::from_millis(4900),
+        "等到核心退了才说连不上"
+    );
+    assert_eq!(close_code(next(&mut ws).await), Some(CloseCode::Normal));
+}
+
 #[tokio::test]
 async fn an_unreachable_core_is_reported_then_closed() {
     let home = Home::new();
@@ -422,6 +463,7 @@ fn the_forwarding_code_never_reads_the_local_token() {
             "read_token",
             "connect::connect(",
             "connect_or_start(",
+            "connect_or_start_waiting(",
             "run/token",
             "\"token\"",
         ] {

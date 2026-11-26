@@ -7,6 +7,8 @@
 //! 连不上的通知（[`UNREACHABLE`]），带核心那一整句原因：照它拒，原因码 `core_unreachable`（同第 9 条，W-1204）。自己重连的线带 `again`
 //! （宿主照它在地址上写 `again=1`），那一头不拉起人停的核心（核心 CS-5），通知带 `reason: "stopped_by_user"`：照它拒，原因码同名，告诉
 //! `onStopped` 的（出「核心已停止」的卡），不问口令、接着隔一会儿试；卡上「启动」走 `start`，照常连、那一头拉起核心（W-1210）。
+//! 那一头连核心过了 3 秒还没好的推一条「还在启动」（[`STARTING`]，核心 CS-6）：状态记成 `starting`，告诉 `onStarting` 的，接着等；
+//! 核心说了第一句（握手的回应）回到 `online`。
 
 import { t } from '../util/res.js';
 
@@ -23,6 +25,8 @@ export class Refusal extends Error {
 
 /** 宿主那一头连不上、拉不起核心时推的通知：演示的桥推 `bridge.error`，网页软件推 `web.error`（`miyu-webserve` 的 `ws.rs`）。 */
 const UNREACHABLE = new Set(['bridge.error', 'web.error']);
+/** 宿主那一头连核心过了 3 秒还没好（核心 CS-6）时推的通知：桥推 `bridge.starting`，网页软件推 `web.starting`。 */
+const STARTING = new Set(['bridge.starting', 'web.starting']);
 
 /** 线通着（照 WebSocket 的 `OPEN`）。 */
 const OPEN = 1;
@@ -55,6 +59,8 @@ export class Connection {
     this.stoppeds = new Set();
     /** 那一头连不上、拉不起核心（`core_unreachable`）：交那一头给的那一句 @type {Set<(message: string) => void>} */
     this.unreacheds = new Set();
+    /** 那一头连核心过了 3 秒还没好，接着等（核心 CS-6） @type {Set<() => void>} */
+    this.startings = new Set();
     /** 断了以后试了几次；连上过没有（连上过又断的才重连）；排着的下一次 */
     this.tries = 0;
     /** 这条线开以前试了几次：那一头握手时才说连不上的照它接着退避 */
@@ -72,8 +78,10 @@ export class Connection {
     this.waiting = new Map();
     /** @type {Set<(method: string, params: any) => void>} */
     this.pushes = new Set();
-    /** @type {Set<(status: 'connecting'|'online'|'offline') => void>} */
+    /** @type {Set<(status: 'connecting'|'starting'|'online'|'offline') => void>} */
     this.statuses = new Set();
+    /** 现在的状态：`starting` 的，核心说第一句时回到 `online` @type {'connecting'|'starting'|'online'|'offline'} */
+    this.state = 'offline';
     /** @type {import('../host/browser.js').Channel|null} */
     this.ws = null;
   }
@@ -122,6 +130,11 @@ export class Connection {
   receive(data, fail) {
     let m;
     try { m = JSON.parse(data); } catch { return; }
+    if (STARTING.has(m.method)) {
+      this.status('starting');
+      for (const fn of this.startings) fn();
+      return;
+    }
     if (UNREACHABLE.has(m.method)) {
       const reason = m.params?.reason === 'stopped_by_user' ? 'stopped_by_user' : 'core_unreachable';
       const why = new Refusal(String(m.params?.message ?? ''), -32000, reason);
@@ -133,6 +146,8 @@ export class Connection {
       for (const fn of reason === 'stopped_by_user' ? this.stoppeds : this.unreacheds) fn(why.message);
       return;
     }
+    // 核心说了第一句（握手的回应）：连上了
+    if (this.state === 'starting') this.status('online');
     // 一行超过上限、核心认不出编号的（核心 YC-5 的 `line_too_long`，`id` 是 null）：拒等着的里头最长的那一条——只有它可能超（W-1138）
     if (m.id == null && m.error?.data?.reason === 'line_too_long') {
       const longest = [...this.waiting.entries()].sort((x, y) => y[1].size - x[1].size)[0];
@@ -252,6 +267,9 @@ export class Connection {
   /** 那一头连不上、拉不起核心（`core_unreachable`）：交那一头给的那一句（「核心已停止」卡上点了「启动」以后拉不起来的写在卡上）。 */
   onUnreached(fn) { this.unreacheds.add(fn); }
 
+  /** 那一头连核心过了 3 秒还没好，接着等（核心 CS-6）：起页面的那一屏照它写「核心还在启动…」。 */
+  onStarting(fn) { this.startings.add(fn); }
+
   /** 断了又连上了（重新握手、重新订阅、补上漏掉的由它做）。 */
   onReopen(fn) { this.reopens.add(fn); }
 
@@ -269,10 +287,14 @@ export class Connection {
   /** 收推送。 */
   onPush(fn) { this.pushes.add(fn); }
 
-  /** 连接的状态变了：连接中、在线、离线（左栏的状态照它）。 */
+  /** 连接的状态变了：连接中、核心还在启动、在线、离线（左栏的状态照它）。 */
   onStatus(fn) { this.statuses.add(fn); }
 
-  status(s) { for (const fn of this.statuses) fn(s); }
+  /** @param {'connecting'|'starting'|'online'|'offline'} s */
+  status(s) {
+    this.state = s;
+    for (const fn of this.statuses) fn(s);
+  }
 }
 
 /**

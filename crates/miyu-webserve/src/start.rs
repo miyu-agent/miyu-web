@@ -1,7 +1,8 @@
 //! `/ws` 怎么连核心（核心 CS-5，`connection.md`「头怎么拉起核心」；`web-ui.md`「怎么走」第一条第 7 款）：页面刚打开、点了「启动」的是人要用，
 //! 照 `connect_or_start_bare` 连，核心没在跑就拉起来；页面断线以后自己重连的在地址上带 `again=1`，照 `reconnect_or_start_bare` 连：
 //! 人停的核心（`miyu core stop`、托盘的「退出」）不拉起，回一条带 `reason: "stopped_by_user"` 的 `web.error`，页面出「核心已停止」
-//! 的卡和「启动」。崩了、空闲退出的照旧拉起。两样都不读本机令牌。
+//! 的卡和「启动」。崩了、空闲退出的照旧拉起。两样都不读本机令牌。核心起得慢的（核心 CS-6：过 3 秒还没好）叫一次 `slow`，`/ws` 照它给页面
+//! 推一条 [`starting`]，页面写「核心还在启动…」，接着等，最多 10 分钟。
 
 use miyu_client::connect::{Connection, StartError};
 use miyu_client::protocol::Said;
@@ -17,17 +18,32 @@ pub fn again(query: Option<&str>) -> bool {
     query.is_some_and(|query| query.split('&').any(|part| part == AGAIN))
 }
 
-/// 连核心：`again`（页面自己重连）的人停的不拉起，别的没在跑就拉起来。
+/// 连核心：`again`（页面自己重连）的人停的不拉起，别的没在跑就拉起来；从开始连算起过了 3 秒还没好，叫一次 `slow`（核心 CS-6）。
 ///
 /// # Errors
 ///
 /// 连不上、拉不起来；`again` 的、核心是人停的是 [`StartError::StoppedByUser`]。
-pub async fn core<S: Site>(site: &S, again: bool) -> Result<Connection, StartError> {
+pub async fn core<S: Site>(
+    site: &S,
+    again: bool,
+    slow: &(dyn Fn() + Send + Sync),
+) -> Result<Connection, StartError> {
     let start = || (site.core())();
     match again {
-        true => miyu_client::connect::reconnect_or_start_bare(site.root(), start).await,
-        false => miyu_client::connect::connect_or_start_bare(site.root(), start).await,
+        true => {
+            miyu_client::connect::reconnect_or_start_bare_waiting(site.root(), start, slow).await
+        }
+        false => {
+            miyu_client::connect::connect_or_start_bare_waiting(site.root(), start, slow).await
+        }
     }
+}
+
+/// 核心起得慢时推给页面的那一条 `web.starting`（核心 CS-6）：页面照它写「核心还在启动…」（照页面的语言），连上了照常往下走，
+/// 连不上的照旧再推连不上的那一条（`unreachable`）。
+#[must_use]
+pub fn starting() -> serde_json::Value {
+    serde_json::json!({"jsonrpc": "2.0", "method": "web.starting", "params": {}})
 }
 
 /// 连不上、拉不起核心时推给页面的那一条 `web.error`：原因照 `speak` 说（[`crate::said::spoken`]：核心那一整句，照这台机器的语言）；
