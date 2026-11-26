@@ -11,7 +11,7 @@ import { short, money } from '../lib/format.js';
 import { costText, ratesOf, rateName } from '../lib/cost.js';
 import { quotaRows, quotaTitle, percentText } from '../lib/quota.js';
 import { balanceRows } from '../lib/balance.js';
-import { scaledParts, bar, share, toneOf, useRows, USE_TONES, costOf, partsMinus, usageSum, kindParts, costKinds, inputOf, KINDS, fitsBelow } from '../lib/context.js';
+import { scaledParts, bar, share, toneOf, useRows, USE_TONES, costOf, partsMinus, usageSum, kindParts, costKinds, inputOf, KINDS, fitsBelow, roomFor } from '../lib/context.js';
 
 /** @typedef {'context'|'tokens'|'cost'|'quota'} Section */
 
@@ -134,7 +134,11 @@ export class ContextPop {
     if (!parent || !this.anchor) return;
     const scale = scaleOf(parent);
     const box = this.anchor.getBoundingClientRect();
-    this.el.classList.toggle('is-below', !!this.el.closest('.is-empty') && fitsBelow(box.bottom, this.el.offsetHeight * scale, innerHeight));
+    // 先照整张的高定往哪边弹，再限住高：放不下的在浮窗里面滚，不顶出窗口（`roomFor`）
+    this.el.style.maxHeight = '';
+    const below = !!this.el.closest('.is-empty') && fitsBelow(box.bottom, this.el.offsetHeight * scale, innerHeight);
+    this.el.classList.toggle('is-below', below);
+    this.el.style.maxHeight = `${Math.floor(roomFor(box.top, box.bottom, below, innerHeight) / scale)}px`;
     const root = parent.getBoundingClientRect();
     const width = this.el.offsetWidth;
     const left = Math.min((box.right - root.left) / scale - width, root.width / scale - width);

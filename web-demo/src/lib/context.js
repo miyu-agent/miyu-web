@@ -156,3 +156,13 @@ const BELOW_MARGIN = 8;
 export function fitsBelow(bottom, height, viewport) {
   return bottom + BELOW_GAP + height + BELOW_MARGIN <= viewport;
 }
+
+/**
+ * 浮窗最高能有多高（屏幕像素）：往上弹的是那一格上沿到窗口顶，往下弹的是那一格下沿到窗口底，都隔 6、留 8；
+ * 再高的在浮窗里面滚（2026-11-26 主人：展开上下文详情，卡片顶破窗口）。
+ * @param {number} top 那一格的上沿 @param {number} bottom 那一格的下沿 @param {boolean} below 往下弹 @param {number} viewport 窗口多高
+ */
+export function roomFor(top, bottom, below, viewport) {
+  const room = below ? viewport - bottom - BELOW_GAP - BELOW_MARGIN : top - BELOW_GAP - BELOW_MARGIN;
+  return Math.max(0, Math.floor(room));
+}

@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { scaledParts, bar, share, toneOf, useRows, partsMinus, costOf, fitsBelow } from '../src/lib/context.js';
+import { scaledParts, bar, share, toneOf, useRows, partsMinus, costOf, fitsBelow, roomFor } from '../src/lib/context.js';
 import { costText } from '../src/lib/cost.js';
 import { loadRes } from './support.js';
 
@@ -108,4 +108,11 @@ test('用量明细往下弹：那一格下面放得下才往下，放不下的�
   assert.equal(fitsBelow(980, 300, 1000), false, '主题把输入框放到最底下，下面不够');
   assert.equal(fitsBelow(686, 300, 1000), true, '刚好放下（隔 6、留 8）');
   assert.equal(fitsBelow(687, 300, 1000), false);
+});
+
+test('用量明细最高只到窗口边：往上弹到窗口顶，往下弹到窗口底，再高的在里面滚', () => {
+  assert.equal(roomFor(600, 620, false, 640), 586, '往上：那一格上沿 600，隔 6、留 8');
+  assert.equal(roomFor(300, 320, true, 1000), 666, '往下：窗口 1000，那一格下沿 320，隔 6、留 8');
+  assert.equal(roomFor(10, 30, false, 640), 0, '上面一点地方都没有的不给负数');
+  assert.equal(roomFor(600.7, 620, false, 640), 586, '取整往小了取，不多出半个像素');
 });

@@ -285,6 +285,8 @@
   -webkit-backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur)))); backdrop-filter: var(--float-blur, blur(calc(16px * var(--blur)))); box-shadow: var(--float-elev, var(--float-shadow));
   color: var(--text); font: calc(13px * var(--text-scale))/1.35 var(--font-ui); white-space: normal; text-align: left;
   will-change: opacity;
+  /* 高由 `place` 限在窗口里（`roomFor`），再高的在这里面滚，不顶出窗口（2026-11-26） */
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
   animation: ctx-rise 0.16s ease-out both;
 }
 .ctx-pop.is-leaving { animation: ctx-sink 0.12s var(--ease-in) both; }
