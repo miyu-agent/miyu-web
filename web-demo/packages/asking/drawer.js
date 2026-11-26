@@ -26,6 +26,12 @@ export class Drawer {
     this.d = null;
     /** @type {'other'|'note'|'reason'|null} 在编辑哪一样 */
     this.editing = null;
+    /**
+     * 正在写、还没保存的字（「输入其他答案」、补充；键是 `other:第几道` 这样）：随写随记，抽屉重画、退出编辑再进来都还在
+     * （蓝图「确认和提问」：`Esc` 退出编辑，打的字留着；2026-11-26 主人转来：手机上写完再点一下那一行，字没了、什么都没交）
+     * @type {Map<string, string>}
+     */
+    this.drafts = new Map();
     /** 按过一下 `Esc` 的时刻（两下取消） */
     this.escAt = 0;
     this.pointer = '';
@@ -45,6 +51,7 @@ export class Drawer {
   show(d) {
     this.d = d;
     this.editing = null;
+    this.drafts.clear();
     this.escAt = 0;
     this.el.hidden = false;
     this.draw();
@@ -57,6 +64,7 @@ export class Drawer {
   }
 
   close() {
+    this.drafts.clear();
     clearInterval(this.timer);
     this.timer = 0;
     this.d = null;
@@ -151,6 +159,7 @@ export class Drawer {
     if (!this.d || !this.editing) return;
     const what = this.editing;
     this.editing = null;
+    this.drafts.delete(`${what}:${this.d.tab}`);
     this.step(saveEdit(this.d, value, what));
     if (this.open) this.el.focus({ preventScroll: true });
   }
@@ -184,7 +193,7 @@ export class Drawer {
       hasReview(d) ? this.tabs() : null,
       scroll,
       this.foot = h('div.asking-foot', this.keysEl = h('span.asking-keys'),
-        h('span.asking-foot-right', h('button.asking-cancel', { type: 'button', onclick: () => this.cancel() }, t('cancel')), review ? null : this.nextButton())));
+        h('span.asking-foot-right', h('button.asking-cancel', { type: 'button', onclick: () => this.cancel() }, t('cancel')), review ? null : this.editing === 'other' || this.editing === 'note' ? this.saveButton() : this.nextButton())));
     this.drawKeys();
     // 确认的倒计时（核心 CD-1）：一秒走一格；没带 `expires_at` 的不走
     this.tick();
@@ -249,6 +258,22 @@ export class Drawer {
     }, this.text(hasReview(d) ? 'next_question' : 'submit'));
   }
 
+  /**
+   * 编辑「输入其他答案」、补充时「取消」右边的主按钮：等于在框里按 `Enter`（2026-11-26 主人转来：手机上收起键盘就没有回车可按，
+   * 界面上也没处点，只能取消，AI 收不到回答；接了键盘的平板、电脑上用鼠标的也一样，所以都有）。鼠标按下去不抢焦点；手指按的不拦
+   * （拦了 iOS 就不出点击）。
+   */
+  saveButton() {
+    const keep = (/** @type {Event} */ e) => e.preventDefault();
+    return h('button.asking-next.asking-save', {
+      type: 'button', onmousedown: keep,
+      onclick: () => {
+        const box = /** @type {HTMLTextAreaElement|null} */ (this.el.querySelector('textarea.asking-edit:not(.asking-reason)'));
+        if (box) this.save(box.value);
+      },
+    }, this.text('save'));
+  }
+
   questionPage() {
     const d = /** @type {import('./model.js').Drawer} */ (this.d);
     const t = this.text;
@@ -305,7 +330,7 @@ export class Drawer {
     const selected = onOther(d);
     const saved = d.custom[d.tab];
     const body = this.editing === 'other' && selected
-      ? this.editBox(this.text('edit_hint'), saved)
+      ? this.draftBox(`other:${d.tab}`, saved)
       : h('strong', saved ? this.text('custom', { text: saved }) : this.text('other'));
     return h(`div.asking-option.is-other${selected ? '.is-selected' : ''}`, this.pointerProps(i), h('span.asking-num', String(i + 1)), h('div.asking-text', body));
   }
@@ -314,7 +339,7 @@ export class Drawer {
   notesRow() {
     const d = /** @type {import('./model.js').Drawer} */ (this.d);
     const t = this.text;
-    if (this.editing === 'note') return h('div.asking-notes', h('span.asking-notes-label', t('notes_label')), this.editBox(t('edit_hint'), d.notes[d.tab]));
+    if (this.editing === 'note') return h('div.asking-notes', h('span.asking-notes-label', t('notes_label')), this.draftBox(`note:${d.tab}`, d.notes[d.tab]));
     if (d.notes[d.tab]) return h('div.asking-notes', h('span.asking-notes-label', t('notes_label')), h('span', d.notes[d.tab]));
     return h('button.asking-notes-add', { type: 'button', onclick: () => this.step({ d, done: null, edit: 'note' }) }, t('notes_add'));
   }
@@ -366,6 +391,13 @@ export class Drawer {
   }
 
   /** 编辑的框：跟着字长高。 @param {string} hint @param {string} value */
+  /** 写「输入其他答案」、补充的框：先放没保存的那份（`drafts`），没有的放保存了的；写的字随写随记。 @param {string} key @param {string} saved */
+  draftBox(key, saved) {
+    const box = this.editBox(this.text('edit_hint'), this.drafts.get(key) ?? saved);
+    box.addEventListener('input', () => this.drafts.set(key, box.value));
+    return box;
+  }
+
   editBox(hint, value) {
     const box = /** @type {HTMLTextAreaElement} */ (h('textarea.asking-edit', { rows: 1, placeholder: hint, spellcheck: 'false' }));
     box.value = value;
