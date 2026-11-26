@@ -40,14 +40,16 @@
 .markdown-body hr { height: 1px; margin: calc(14px * var(--space)) 0; border: 0; background: var(--md-hr, var(--line)); }
 .markdown-body del { color: var(--text-faint); }
 
-/* 表格：去外框和竖线，只留淡横线，太宽的自己横着滚 */
+/* 表格：去外框和竖线，只留淡横线。照这一栏的宽排：铺满、字在格子里折行（2026-11-26 项目主人：表格应该自动适配区域宽度，
+   不是写死；原来每列照自己的字排开、一格最宽 360px，两列长字就撑出这一栏，右边一列被裁掉）。一格最窄 4 个字宽：
+   列多到这样都放不下的（手机上七列）才横着滚，不把每列挤成一两个字一行 */
 .markdown-body .markdown-table-scroll {
   max-width: 100%; margin: 0 0 calc(10px * var(--space)); overflow-x: auto; border-radius: var(--card-radius, var(--radius));
   background: var(--card-bg, color-mix(in srgb, var(--surface-2) 45%, transparent)); scrollbar-color: var(--line-strong) transparent;
 }
-.markdown-body table { width: max-content; min-width: 100%; border-collapse: collapse; font-size: var(--md-table-size, calc(13.5px * var(--text-scale))); }
+.markdown-body table { width: 100%; border-collapse: collapse; font-size: var(--md-table-size, calc(13.5px * var(--text-scale))); }
 .markdown-body th, .markdown-body td {
-  max-width: 360px; padding: calc(7px * var(--space)) calc(14px * var(--space)); border: 0; text-align: left; vertical-align: top; overflow-wrap: anywhere;
+  min-width: calc(4em + 28px * var(--space)); padding: calc(7px * var(--space)) calc(14px * var(--space)); border: 0; text-align: left; vertical-align: top; overflow-wrap: anywhere;
 }
 .markdown-body th {
   border-bottom: var(--md-th-line, var(--divider, 1px solid var(--line))); color: var(--md-th-fg, var(--text-soft)); font-size: calc(11px * var(--text-scale)); font-weight: 600; letter-spacing: 0.07em;
