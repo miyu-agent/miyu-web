@@ -1172,7 +1172,13 @@ export class Composer {
     const middle = this.middle.offsetWidth;
     // 用量前面挂着界面块那一小段的：让出它的宽
     const status = this.status.offsetWidth;
-    const room = this.footer.clientWidth - this.left.scrollWidth - res.layout.footer_gap - (middle ? middle + res.layout.footer_gap : 0) - (status ? status + res.layout.footer_gap : 0);
+    // 量的是摆字的那一截：底栏两边的内边距不算，左边那一截两边各缩进去的 6px（给悬停的底，负的外边距）要还回来。
+    // 原来拿 `clientWidth` 减，多出约 24px，手机上该先丢的花费没丢，被挤出屏幕右边一截
+    const box = getComputedStyle(this.footer);
+    const side = getComputedStyle(this.left);
+    const inner = this.footer.clientWidth - parseFloat(box.paddingLeft) - parseFloat(box.paddingRight);
+    const left = this.left.scrollWidth + parseFloat(side.marginLeft) + parseFloat(side.marginRight);
+    const room = inner - left - res.layout.footer_gap - (middle ? middle + res.layout.footer_gap : 0) - (status ? status + res.layout.footer_gap : 0);
     const ring = this.ring;
     // 字、环和地方都没变：不再写一遍、量一遍（每画一次都量，一写一量逼着整页重排，收长思考时很费，蓝图「性能」）
     const sig = `${room}|${ring ? `${ring.stuck}|${ring.ratio?.toFixed(3)}|${ring.used}` : ''}|${this.parts.map((p) => p.text).join('\n')}`;
