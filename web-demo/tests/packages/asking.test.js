@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { openAsk, openApproval, press, saveEdit, approvalHead, report, pendingFromStatus, reportOf, multiReady, submitMulti, withReason, askKey, answerParams, countdown } from '../../packages/asking/model.js';
+import { openAsk, openApproval, press, saveEdit, approvalHead, report, pendingFromStatus, reportOf, multiReady, submitMulti, withReason, askKey, answerParams, countdown, rowEdge } from '../../packages/asking/model.js';
 
 const fake = JSON.parse(readFileSync(new URL('../fixtures/asking.json', import.meta.url), 'utf8'));
 const ask = (id) => fake.asks.find((a) => a.body.call_id === id);
@@ -211,4 +211,13 @@ test('确认的倒计时（核心 CD-1，todolist 第 49 条）：分:秒，一�
   const status = { waiting: [{ what: 'approve', entry: 'e1', call: 'c1' }] };
   const entries = [{ id: 'e1', approval: { access: 'write', expires_at: '2026-11-12T10:05:00Z' } }];
   assert.equal(pendingFromStatus(status, entries)[0].body.expires_at, '2026-11-12T10:05:00Z');
+});
+
+test('理由框的 ↑↓（2026-11-27 主人定）：光标前面的字和空框一样高是第一行、和整段一样高是最后一行，只写一行的两头都是', () => {
+  // 一行 30 高：三行的字，光标在第一行、中间、最后一行
+  assert.deepEqual(rowEdge(30, 30, 90), { top: true, bottom: false });
+  assert.deepEqual(rowEdge(60, 30, 90), { top: false, bottom: false });
+  assert.deepEqual(rowEdge(90, 30, 90), { top: false, bottom: true });
+  // 只写一行：↑↓ 照旧移走
+  assert.deepEqual(rowEdge(30, 30, 30), { top: true, bottom: true });
 });

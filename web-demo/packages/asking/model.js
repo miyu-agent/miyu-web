@@ -313,3 +313,11 @@ export function countdown(expiresAt, now) {
   const mins = Math.floor((left % 3600) / 60);
   return hours ? `${hours}:${pad(mins)}:${pad(left % 60)}` : `${mins}:${pad(left % 60)}`;
 }
+
+/**
+ * 光标前面的字排出来高 `here`，空框高 `empty`、整段高 `full`：在第一行（和空的一样高）、最后一行（和整段一样高）吗。
+ * @param {number} here @param {number} empty @param {number} full
+ */
+export function rowEdge(here, empty, full) {
+  return { top: here <= empty, bottom: here >= full };
+}

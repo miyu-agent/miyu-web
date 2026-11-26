@@ -4,7 +4,7 @@
 //! 跟着字长高的框：`Enter` 保存、`Shift+Enter` 换行、`Esc` 退出编辑。
 
 import { h, icon, replace } from '../../src/lib/dom.js';
-import { press, saveEdit, cancel, hasReview, onOther, answerOf, approvalHead, multiReady, submitMulti, onDeny, withReason, countdown } from './model.js';
+import { press, saveEdit, cancel, hasReview, onOther, answerOf, approvalHead, multiReady, submitMulti, onDeny, withReason, countdown, rowEdge } from './model.js';
 import { isNewline, insertNewline } from '../../src/lib/newline.js';
 
 /** 键 → `model.js` 的按键名 */
@@ -88,12 +88,15 @@ export class Drawer {
   key(e) {
     if (!this.d || e.isComposing || e.keyCode === 229) return;
     const inBox = /** @type {HTMLElement} */ (e.target).tagName === 'TEXTAREA';
-    // 「不允许」后面的理由框：Enter 交，↑↓ 移走（写的字留着），Esc 照旧是两下取消的一下（照终端，2026-10-07）
+    // 「不允许」后面的理由框：Enter 交，↑↓ 移走（写的字留着），Esc 照旧是两下取消的一下（照终端，2026-10-07）。写了几行的，
+    // 只在第一行按 ↑、最后一行按 ↓ 才移走，中间的行照框自己在行之间走（2026-11-27 主人定；软换行折出来的行也算）
     if (inBox && /** @type {HTMLElement} */ (e.target).classList.contains('asking-reason')) {
       if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
         e.preventDefault();
         this.step(press(this.d, 'enter'));
       } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        const edge = caretEdge(/** @type {HTMLTextAreaElement} */ (e.target));
+        if (!(e.key === 'ArrowUp' ? edge.top : edge.bottom)) return;
         e.preventDefault();
         this.step(press(this.d, e.key === 'ArrowUp' ? 'up' : 'down'));
         this.el.focus({ preventScroll: true });
@@ -436,5 +439,21 @@ export class Drawer {
 function grow(box) {
   box.style.height = '';
   if (box.scrollHeight > box.clientHeight) box.style.height = `${box.scrollHeight}px`;
+}
+
+/**
+ * 光标在框里折好的第一行、最后一行吗（理由框的 ↑↓ 照它，2026-11-27）：拿一个同宽、同样子、看不见的框量光标前面的字排出来多高，
+ * 和空着的、整段的比（软换行折出来的行也算，只数换行符的话长的一段折成几行时 ↑ 就直接移走了）。
+ * @param {HTMLTextAreaElement} box
+ */
+function caretEdge(box) {
+  const probe = /** @type {HTMLTextAreaElement} */ (box.cloneNode());
+  probe.style.cssText = `position:absolute;visibility:hidden;pointer-events:none;height:0;min-height:0;overflow:hidden;width:${getComputedStyle(box).width}`;
+  box.after(probe);
+  const tall = (/** @type {string} */ text) => { probe.value = text; return probe.scrollHeight; };
+  const at = box.selectionDirection === 'backward' ? box.selectionStart : box.selectionEnd;
+  const edge = rowEdge(tall(box.value.slice(0, at)), tall(''), tall(box.value));
+  probe.remove();
+  return edge;
 }
 
