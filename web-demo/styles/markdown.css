@@ -16,8 +16,10 @@
 .markdown-body h3 { margin: calc(14px * var(--space)) 0 calc(6px * var(--space)); font-size: var(--md-h3-size, calc(15.5px * var(--text-scale))); }
 .markdown-body h4, .markdown-body h5, .markdown-body h6 { margin: calc(12px * var(--space)) 0 calc(5px * var(--space)); font-size: var(--md-h4-size, calc(15px * var(--text-scale))); }
 
-/* 列表：不嵌套；任务列表的勾选框不能点 */
-.markdown-body ul, .markdown-body ol { display: grid; margin: 0 0 var(--md-gap, calc(10px * var(--space))); padding-left: var(--md-list-indent, calc(20px * var(--space))); gap: var(--md-list-gap, calc(3px * var(--space))); }
+/* 列表：不嵌套；任务列表的勾选框不能点。
+   列宽封顶在列表宽度（minmax(0, 1fr)）：网格默认的列按最宽的内容算，项里的代码块、表格、公式会把整个列表撑宽，
+   超出的部分被外面裁掉，它们自己的横向滚动条也出不来 */
+.markdown-body ul, .markdown-body ol { display: grid; grid-template-columns: minmax(0, 1fr); margin: 0 0 var(--md-gap, calc(10px * var(--space))); padding-left: var(--md-list-indent, calc(20px * var(--space))); gap: var(--md-list-gap, calc(3px * var(--space))); }
 /* 套着的子列表、项里的第二段（2026-10-23）：上面空 3px，和上一层的字之间不空行 */
 .markdown-body li > :is(ul, ol, p, .code-block, blockquote, .markdown-table-scroll) { margin: calc(3px * var(--space)) 0 0; }
 .markdown-body li::marker { color: var(--md-marker, var(--text-soft)); }
