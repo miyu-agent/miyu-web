@@ -284,7 +284,10 @@ export function stepOf(e) {
   const done = !RUNNING.has(e.state);
   let parsed = null;
   try {
-    parsed = e.args ? JSON.parse(e.args) : null;
+    // 读、写、改文件的参数不是标准写法的（`path`、`oldText` 这些别名，顶层直接写一处，`edits` 写成一个对象），核心另给一格整理过的
+    // `standard_args`（核心 ED-3）：差异、合计、侧栏、标题里的路径照它算；给人看的参数原文照旧是 `args`
+    const raw = e.standard_args ?? e.args;
+    parsed = raw ? JSON.parse(raw) : null;
   } catch {
     // 还在写的参数读不全：照原文
   }

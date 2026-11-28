@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadRes } from './support.js';
 import { itemsOf, stepOf, levelName, levelOf } from '../src/model/entries.js';
+import { fromArgs } from '../src/model/diff.js';
 
 loadRes();
 
@@ -48,6 +49,19 @@ test('一步：思考的起止照 took_ms；工具做完了照状态、带核心
   const preparing = stepOf({ id: 'b7.0', kind: 'tool', name: 'shell', state: 'preparing', args: '{"comm', at: AT });
   assert.equal(preparing.state, 'preparing');
   assert.equal(preparing.parsed, null);
+});
+
+test('参数不是标准写法的编辑（核心 ED-3）：照核心给的 standard_args 解析，差异算得出 +1 -1；给人看的原文照旧是 args', () => {
+  const raw = '{"path":"a.txt","oldText":"x","newText":"y","replaceAll":"true"}';
+  const standard = '{"file_path":"a.txt","edits":[{"old_string":"x","new_string":"y","replace_all":"true"}]}';
+  const step = stepOf({ id: 'b9.0', kind: 'tool', name: 'edit', state: 'ok', args: raw, standard_args: standard, at: AT });
+  assert.equal(step.args, raw);
+  assert.equal(step.parsed.file_path, 'a.txt');
+  const d = fromArgs(step.parsed);
+  assert.deepEqual([d.added, d.removed], [1, 1]);
+  // 没有这一格（本来就是标准写法）照 args
+  const plain = stepOf({ id: 'b9.1', kind: 'tool', name: 'edit', state: 'ok', args: standard, at: AT });
+  assert.equal(plain.parsed.file_path, 'a.txt');
 });
 
 test('在跑：这一轮还没有她的条目画三个球；排着的话不进正文；撤回的、藏起的不画；在收的回答 streaming', () => {
